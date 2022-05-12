@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.2](https://github.com/OptimistikSAS/OIBus/compare/v2.0.1...v2.0.2) (2022-05-12)
+
+
+### Bug Fixes
+
+* **doc:** truncate changelog ([203d28f](https://github.com/OptimistikSAS/OIBus/commit/203d28f51dffb01d01292afa56e50cb60fd21745))
+* **engine:** stop cache when stopping OIBus Engine ([cd51260](https://github.com/OptimistikSAS/OIBus/commit/cd51260fe697cf8c25bb06c0ce373373961fddf6))
+* **south:** fix lastCompletedDate on Rest API connector ([69a10f0](https://github.com/OptimistikSAS/OIBus/commit/69a10f0728992d6aa9bd0a504f5836be152fdde0))
+
 ### [2.0.1](https://github.com/OptimistikSAS/OIBus/compare/v2.0.0...v2.0.1) (2022-05-10)
 
 
