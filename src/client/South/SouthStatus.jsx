@@ -25,7 +25,7 @@ const generateRowEntry = (key, value) => [
 ]
 
 const SouthStatus = () => {
-  const [connectorData, setConnectorData] = React.useState([])
+  const [connectorData, setConnectorData] = React.useState(null)
   const { newConfig } = React.useContext(ConfigContext)
   const navigate = useNavigate()
   const { id } = useParams() // the dataSource id passed in the url
@@ -87,7 +87,7 @@ const SouthStatus = () => {
       </div>
 
       <Container>
-        {connectorData.length > 0 ? (
+        {connectorData ? (
           <Table headers={[]} rows={connectorData} />
         ) : (
           <div className="oi-status-error">

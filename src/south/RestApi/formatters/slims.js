@@ -37,7 +37,8 @@ const format = (httpResult) => {
       latestDateRetrieved = new Date(rsltCfSamplingDateAndTime.value)
     }
   })
-  return { httpResults: formattedData, latestDateRetrieved }
+  // increment the latest date retrieved to avoid loop in history query from slims
+  return { httpResults: formattedData, latestDateRetrieved: new Date(latestDateRetrieved.getTime() + 1) }
 }
 
 module.exports = format
