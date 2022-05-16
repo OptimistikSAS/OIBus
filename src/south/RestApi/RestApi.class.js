@@ -136,6 +136,8 @@ class RestApi extends ProtocolHandler {
     let updatedStartTime = startTime
 
     let results = null
+    this.logger.debug(`Read from ${startTime.toISOString()} to ${endTime.toISOString()} (${endTime - startTime}ms)`)
+
     try {
       results = await this.getDataFromRestApi(startTime, endTime)
     } catch (error) {
@@ -264,6 +266,9 @@ class RestApi extends ProtocolHandler {
         path: this.endpoint,
         headers,
       }
+
+      // eslint-disable-next-line max-len
+      this.logger.info(`Requesting data ${this.authentication?.type ? `with ${this.authentication.type}` : 'without'} authentication and ${this.requestMethod} method: ${requestOptions.host}`)
 
       results = await requestWithBody(bodyToSend, requestOptions)
     } else {
