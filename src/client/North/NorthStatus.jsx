@@ -24,7 +24,7 @@ const generateRowEntry = (key, value) => [
 ]
 
 const NorthStatus = () => {
-  const [connectorData, setConnectorData] = React.useState([])
+  const [connectorData, setConnectorData] = React.useState(null)
   const { newConfig } = React.useContext(ConfigContext)
   const navigate = useNavigate()
   const { id } = useParams() // the application id passed in the url
@@ -82,7 +82,7 @@ const NorthStatus = () => {
         </h6>
       </div>
       <Container>
-        {connectorData.length > 0 ? (
+        {connectorData ? (
           <Table headers={[]} rows={connectorData} />
         ) : (
           <div className="oi-status-error">
