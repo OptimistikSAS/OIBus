@@ -21,11 +21,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16.14
+          node-version: 16.15
 
       - name: Use npm
         run: |
-          npm install -g npm@8.3.1
+          npm install -g npm@8.5.5
       - name: Package OIBus for ${{ matrix.config['platform'] }}
         id: pkg
         run: |
@@ -56,11 +56,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16.14
+          node-version: 16.15
 
       - name: Use npm
         run: |
-          npm install -g npm@8.3.1
+          npm install -g npm@8.5.5
       - name: Package OIBus for win
         id: pkg
         run: |
