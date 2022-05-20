@@ -134,6 +134,22 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -180,6 +196,11 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -209,6 +230,9 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -289,6 +313,9 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -365,6 +392,9 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -688,6 +718,22 @@ exports[`ConfigurePoints check add new point 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -734,6 +780,11 @@ exports[`ConfigurePoints check add new point 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -763,6 +814,9 @@ exports[`ConfigurePoints check add new point 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -843,6 +897,9 @@ exports[`ConfigurePoints check add new point 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -919,6 +976,9 @@ exports[`ConfigurePoints check add new point 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -1242,6 +1302,22 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -1288,6 +1364,11 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -1317,6 +1398,9 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -1397,6 +1481,9 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -1473,6 +1560,9 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -1796,6 +1886,22 @@ exports[`ConfigurePoints check delete all points 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -1842,6 +1948,11 @@ exports[`ConfigurePoints check delete all points 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -1871,6 +1982,9 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -1951,6 +2065,9 @@ exports[`ConfigurePoints check delete all points 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -2027,6 +2144,9 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -2350,6 +2470,22 @@ exports[`ConfigurePoints check delete first point 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -2396,6 +2532,11 @@ exports[`ConfigurePoints check delete first point 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -2425,6 +2566,9 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -2505,6 +2649,9 @@ exports[`ConfigurePoints check delete first point 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -2581,6 +2728,9 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -2904,6 +3054,22 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -2950,6 +3116,11 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -2979,6 +3150,9 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -3059,6 +3233,9 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -3135,6 +3312,9 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -3458,6 +3638,22 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -3504,6 +3700,11 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -3533,6 +3734,9 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -3613,6 +3817,9 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -3689,6 +3896,9 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -4012,6 +4222,22 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -4058,6 +4284,11 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -4087,6 +4318,9 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -4167,6 +4401,9 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -4243,6 +4480,9 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -4566,6 +4806,22 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -4612,6 +4868,11 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -4641,6 +4902,9 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -4721,6 +4985,9 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -4797,6 +5064,9 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -5120,6 +5390,22 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -5166,6 +5452,11 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -5195,6 +5486,9 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -5275,6 +5569,9 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -5351,6 +5648,9 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -5674,6 +5974,22 @@ exports[`ConfigurePoints check export points 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -5720,6 +6036,11 @@ exports[`ConfigurePoints check export points 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -5749,6 +6070,9 @@ exports[`ConfigurePoints check export points 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -5829,6 +6153,9 @@ exports[`ConfigurePoints check export points 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -5905,6 +6232,9 @@ exports[`ConfigurePoints check export points 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -6228,6 +6558,22 @@ exports[`ConfigurePoints check import points file input 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -6274,6 +6620,11 @@ exports[`ConfigurePoints check import points file input 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -6303,6 +6654,9 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -6383,6 +6737,9 @@ exports[`ConfigurePoints check import points file input 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -6459,6 +6816,9 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -6782,6 +7142,22 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -6828,6 +7204,11 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -6857,6 +7238,9 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -6937,6 +7321,9 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -7013,6 +7400,9 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -7336,6 +7726,22 @@ exports[`ConfigurePoints check import points press 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -7382,6 +7788,11 @@ exports[`ConfigurePoints check import points press 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -7411,6 +7822,9 @@ exports[`ConfigurePoints check import points press 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -7491,6 +7905,9 @@ exports[`ConfigurePoints check import points press 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -7567,6 +7984,9 @@ exports[`ConfigurePoints check import points press 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -7890,6 +8310,22 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -7936,6 +8372,11 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -7965,6 +8406,9 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -8045,6 +8489,9 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -8121,6 +8568,9 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -8444,6 +8894,22 @@ exports[`ConfigurePoints check import points success 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -8490,6 +8956,11 @@ exports[`ConfigurePoints check import points success 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -8519,6 +8990,9 @@ exports[`ConfigurePoints check import points success 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -8599,6 +9073,9 @@ exports[`ConfigurePoints check import points success 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -8675,6 +9152,9 @@ exports[`ConfigurePoints check import points success 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -9018,6 +9498,22 @@ exports[`ConfigurePoints check no points 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -9060,6 +9556,11 @@ exports[`ConfigurePoints check no points 1`] = `
               <span>
                 Point id
               </span>
+            </th>
+            <th
+              scope="col"
+            >
+              Node id
             </th>
             <th
               scope="col"
@@ -9244,6 +9745,22 @@ exports[`ConfigurePoints check pagination 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -9290,6 +9807,11 @@ exports[`ConfigurePoints check pagination 1`] = `
             <th
               scope="col"
             >
+              Node id
+            </th>
+            <th
+              scope="col"
+            >
               Scan mode
             </th>
             <th
@@ -9319,6 +9841,9 @@ exports[`ConfigurePoints check pagination 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -9399,6 +9924,9 @@ exports[`ConfigurePoints check pagination 1`] = `
             </td>
             <td
               class="align-top"
+            />
+            <td
+              class="align-top"
             >
               <div
                 class="mb-3"
@@ -9475,6 +10003,9 @@ exports[`ConfigurePoints check pagination 1`] = `
                 />
               </div>
             </td>
+            <td
+              class="align-top"
+            />
             <td
               class="align-top"
             >
@@ -9798,6 +10329,22 @@ exports[`ConfigurePoints check render with filterText 1`] = `
             >
               <div>
                 <b>
+                  Point id: 
+                </b>
+                <div>
+                  The pointId to used to send the data
+                </div>
+              </div>
+              <div>
+                <b>
+                  Node id: 
+                </b>
+                <div>
+                  The nodeId referenced in the OPCUA server
+                </div>
+              </div>
+              <div>
+                <b>
                   Scan mode: 
                 </b>
                 <div>
@@ -9840,6 +10387,11 @@ exports[`ConfigurePoints check render with filterText 1`] = `
               <span>
                 Point id
               </span>
+            </th>
+            <th
+              scope="col"
+            >
+              Node id
             </th>
             <th
               scope="col"
