@@ -7,6 +7,7 @@ const databaseService = require('../../services/database.service')
  * @param {string} ctx.query.fromDate - From date in milliseconds
  * @param {string} ctx.query.toDate - To date in milliseconds
  * @param {string} ctx.query.verbosity - Verbosity
+ * @param {function} ctx.ok - The context response
  * @return {void}
  */
 const getLogs = async (ctx) => {
@@ -16,7 +17,7 @@ const getLogs = async (ctx) => {
   const dayAgo = new Date(now - 86400000)
   const fromDate = ctx.query.fromDate || new Date(dayAgo).toISOString()
   const toDate = ctx.query.toDate || new Date(now).toISOString()
-  const verbosity = ctx.query.verbosity.replace(/\[|\]/g, '').split(',')
+  const verbosity = ctx.query.verbosity?.replace(/\[|\]/g, '').split(',') || 'info'
 
   const logs = await databaseService.getLogs(databasePath, fromDate, toDate, verbosity)
   ctx.ok(logs)
@@ -33,13 +34,12 @@ const addLogs = async (ctx) => {
   if (Array.isArray(streams)) {
     streams.forEach((element) => {
       element?.values.forEach((value) => {
-        const log = JSON.parse(value[1])
         const formattedLog = {
           oibus: element.oibus,
           time: new Date(value[0] / 1000000),
-          scope: `${element.stream.oibus}-${log.scope}`,
-          source: log.source,
-          msg: log.message,
+          scope: `${element.stream.oibus}:${element.stream.scope}`,
+          source: element.stream.source,
+          msg: value[1],
         }
         switch (element.stream.level) {
           case 'trace':

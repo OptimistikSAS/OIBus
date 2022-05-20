@@ -4,7 +4,6 @@ const bodyParser = require('koa-bodyparser')
 const helmet = require('koa-helmet')
 const respond = require('koa-respond')
 const { PassThrough } = require('stream')
-
 const authCrypto = require('./middlewares/auth')
 const ipFilter = require('./middlewares/ipFilter')
 const clientController = require('./controllers/clientController')
@@ -60,6 +59,7 @@ class Server {
     this.app = new Koa()
     this.app.engine = this.engine
     this.app.historyQueryEngine = this.historyQueryEngine
+    this.app.logger = this.logger
     // eslint-disable-next-line consistent-return
     this.app.use(async (ctx, next) => {
       // check https://medium.com/trabe/server-sent-events-sse-streams-with-node-and-koa-d9330677f0bf
