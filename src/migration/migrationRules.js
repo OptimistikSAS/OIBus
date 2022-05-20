@@ -713,11 +713,27 @@ module.exports = {
           }
         }
 
+        dataSource.OPCUA_HA.scanGroups = dataSource.OPCUA_HA.scanGroups.map((scanGroup) => ({
+          aggregate: scanGroup.Aggregate,
+          resampling: scanGroup.resampling,
+          scanMode: scanGroup.scanMode,
+        }))
+
         dataSource.OPCUA_HA.securityMode = 'None'
         dataSource.OPCUA_HA.securityPolicy = 'None'
         dataSource.OPCUA_HA.keepSessionAlive = false
         dataSource.OPCUA_HA.certFile = ''
         dataSource.OPCUA_HA.keyFile = ''
+
+        if (!Object.prototype.hasOwnProperty.call(dataSource.OPCUA_HA, 'username')) {
+          logger.info(`Add empty username for ${dataSource.name}`)
+          dataSource.OPCUA_HA.username = ''
+        }
+
+        if (!Object.prototype.hasOwnProperty.call(dataSource.OPCUA_HA, 'password')) {
+          logger.info(`Add empty password for ${dataSource.name}`)
+          dataSource.OPCUA_HA.password = ''
+        }
 
         logger.info(`Add pointId fields in the points for ${dataSource.name}`)
         dataSource.points?.forEach((point) => {
@@ -766,6 +782,12 @@ module.exports = {
           }
         }
 
+        dataSource.OPCUA_HA.scanGroups = dataSource.OPCUA_HA.scanGroups.map((scanGroup) => ({
+          aggregate: scanGroup.Aggregate,
+          resampling: scanGroup.resampling,
+          scanMode: scanGroup.scanMode,
+        }))
+
         if (dataSource.agentFilename) {
           if (!dataSource.OPCHDA.agentFilename) {
             dataSource.OPCHDA.agentFilename = dataSource.agentFilename
@@ -813,8 +835,8 @@ module.exports = {
 
         logger.info(`Add pointId fields in the points for ${dataSource.name}`)
         dataSource.points?.forEach((point) => {
-          if (Object.prototype.hasOwnProperty.call(point, 'nodeId') && !Object.prototype.hasOwnProperty.call(point, 'pointId')) {
-            point.pointId = point.nodeId
+          if (Object.prototype.hasOwnProperty.call(point, 'pointId') && !Object.prototype.hasOwnProperty.call(point, 'nodeId')) {
+            point.nodeId = point.pointId
           }
         })
       }
