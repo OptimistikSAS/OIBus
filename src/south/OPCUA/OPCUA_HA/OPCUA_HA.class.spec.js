@@ -1,9 +1,9 @@
 const Opcua = require('node-opcua')
-
 const OPCUA_HA = require('./OPCUA_HA.class')
-const config = require('../../config/defaultConfig.json')
-const databaseService = require('../../services/database.service')
-const EncryptionService = require('../../services/EncryptionService.class')
+
+const config = require('../../../config/defaultConfig.json')
+const databaseService = require('../../../services/database.service')
+const EncryptionService = require('../../../services/EncryptionService.class')
 
 // Mock node-opcua
 jest.mock('node-opcua', () => ({
@@ -13,8 +13,13 @@ jest.mock('node-opcua', () => ({
   UserTokenType: { UserName: 1, Certificate: 2 },
 }))
 
+jest.mock('node-opcua-certificate-manager', () => ({ OPCUACertificateManager: jest.fn(() => ({})) }))
+
+// Mock opcua service
+jest.mock('../opcua.service', () => ({ initOpcuaCertificateFolders: jest.fn() }))
+
 // Mock database service
-jest.mock('../../services/database.service', () => ({
+jest.mock('../../../services/database.service', () => ({
   createConfigDatabase: jest.fn(() => 'configDatabase'),
   getConfig: jest.fn((_database, _key) => '1587640141001.0'),
   upsertConfig: jest.fn(),
@@ -24,21 +29,22 @@ jest.mock('../../services/database.service', () => ({
 EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock logger
-jest.mock('../../engine/logger/Logger.class')
+jest.mock('../../../engine/logger/Logger.class')
 
 // Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
+const engine = jest.mock('../../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
 engine.getCacheFolder = () => config.engine.caching.cacheFolder
 engine.eventEmitters = {}
 engine.engineName = 'Test OPCUA_DA'
 
-const CertificateService = jest.mock('../../services/CertificateService.class')
+const CertificateService = jest.mock('../../../services/CertificateService.class')
 CertificateService.init = jest.fn()
 CertificateService.logger = engine.logger
 
 let opcuaSouth = null
 const opcuaConfig = {
+  id: 'myConnectorId',
   name: 'OPCUA-HA',
   protocol: 'OPCUA_HA',
   enabled: true,
@@ -157,8 +163,8 @@ describe('OPCUA-HA south', () => {
   it('should properly connect to OPC UA server without password', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
-      applicationName: 'Test OPCUA_DA',
-      clientName: 'Test OPCUA_DA',
+      applicationName: 'OIBus',
+      clientName: 'myConnectorId',
       connectionStrategy: {
         initialDelay: 1000,
         maxRetry: 1,
@@ -167,7 +173,7 @@ describe('OPCUA-HA south', () => {
       securityPolicy: Opcua.SecurityPolicy.None,
       endpointMustExist: false,
       keepSessionAlive: false,
-
+      clientCertificateManager: { state: 2 },
     }
     Opcua.OPCUAClient.create.mockReturnValue({
       connect: jest.fn(),
@@ -192,8 +198,8 @@ describe('OPCUA-HA south', () => {
   it('should properly connect to OPC UA server with password', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
-      applicationName: 'Test OPCUA_DA',
-      clientName: 'Test OPCUA_DA',
+      applicationName: 'OIBus',
+      clientName: 'myConnectorId',
       connectionStrategy: {
         initialDelay: 1000,
         maxRetry: 1,
@@ -202,6 +208,7 @@ describe('OPCUA-HA south', () => {
       securityPolicy: Opcua.SecurityPolicy.None,
       endpointMustExist: false,
       keepSessionAlive: false,
+      clientCertificateManager: { state: 2 },
     }
     Opcua.OPCUAClient.create.mockReturnValue({
       connect: jest.fn(),
@@ -235,8 +242,8 @@ describe('OPCUA-HA south', () => {
   it('should properly retry connection to OPC UA server', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
-      applicationName: 'Test OPCUA_DA',
-      clientName: 'Test OPCUA_DA',
+      applicationName: 'OIBus',
+      clientName: 'myConnectorId',
       connectionStrategy: {
         initialDelay: 1000,
         maxRetry: 1,
@@ -245,6 +252,7 @@ describe('OPCUA-HA south', () => {
       securityPolicy: Opcua.SecurityPolicy.None,
       endpointMustExist: false,
       keepSessionAlive: false,
+      clientCertificateManager: { state: 2 },
     }
     Opcua.OPCUAClient.create.mockReturnValue({
       connect: jest.fn(() => Promise.reject()),

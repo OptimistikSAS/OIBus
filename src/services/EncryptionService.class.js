@@ -1,6 +1,8 @@
+const os = require('os')
 const crypto = require('crypto')
 const fs = require('fs')
 const path = require('path')
+const selfSigned = require('selfsigned')
 
 class EncryptionService {
   static getInstance() {
@@ -10,6 +12,11 @@ class EncryptionService {
     return EncryptionService.instance
   }
 
+  constructor() {
+    this.keyFolder = null
+    this.certsFolder = null
+  }
+
   /**
    * Set the key folder.
    * @param {string} keyFolder - The folder to store the keys
@@ -17,6 +24,83 @@ class EncryptionService {
    */
   setKeyFolder(keyFolder) {
     this.keyFolder = keyFolder
+  }
+
+  /**
+   * Set the cert folder.
+   * @param {string} certsFolder - The folder to store the keys
+   * @returns {void}
+   */
+  setCertsFolder(certsFolder) {
+    this.certsFolder = certsFolder
+  }
+
+  /**
+   * Check if local certificates exist and create them if not.
+   * @returns {void}
+   */
+  checkOrCreateCertFiles() {
+    const privateKeyPath = path.join(this.certsFolder, 'privateKey.pem')
+    const publicKeyPath = path.join(this.certsFolder, 'publicKey.pem')
+    const certPath = path.join(this.certsFolder, 'cert.pem')
+    if (!fs.existsSync(this.certsFolder)) {
+      fs.mkdirSync(this.certsFolder, { recursive: true })
+    }
+    if (
+      !fs.existsSync(privateKeyPath)
+        || !fs.existsSync(publicKeyPath)
+        || !fs.existsSync(certPath)
+    ) {
+      const certificate = selfSigned.generate([
+        { name: 'commonName', value: 'OIBus' },
+        { name: 'countryName', value: 'FR' },
+        { name: 'stateOrProvinceName', value: 'Savoie' },
+        { name: 'localityName', value: 'Chambery' },
+        { name: 'organizationName', value: 'Optimistik' },
+        { name: 'organizationalUnitName', value: 'R&D' },
+      ], {
+        keySize: 2048,
+        days: 36500,
+        algorithm: 'sha256',
+        pkcs7: true,
+        extensions: [
+          {
+            name: 'basicConstraints',
+            cA: false,
+          },
+          {
+            name: 'keyUsage',
+            keyCertSign: true,
+            digitalSignature: true,
+            nonRepudiation: true,
+            keyEncipherment: true,
+            dataEncipherment: true,
+          },
+          {
+            name: 'extKeyUsage',
+            clientAuth: true,
+            serverAuth: true,
+          },
+          {
+            name: 'subjectAltName',
+            altNames: [
+              {
+                type: 6, // URI
+                value: `urn:${os.hostname()}:OIBus`,
+              },
+              {
+                type: 2, // DNS
+                value: os.hostname(),
+              },
+            ],
+          },
+        ],
+      })
+
+      fs.writeFileSync(privateKeyPath, certificate.private)
+      fs.writeFileSync(publicKeyPath, certificate.public)
+      fs.writeFileSync(certPath, certificate.cert)
+    }
   }
 
   /**

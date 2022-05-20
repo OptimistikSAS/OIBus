@@ -1,10 +1,9 @@
 const Opcua = require('node-opcua')
-
-const ProtocolHandler = require('../ProtocolHandler.class')
+const { OPCUACertificateManager } = require('node-opcua-certificate-manager')
+const ProtocolHandler = require('../../ProtocolHandler.class')
+const { initOpcuaCertificateFolders } = require('../opcua.service')
 
 /**
- *
- *
  * @class OPCUA_DA
  * @extends {ProtocolHandler}
  */
@@ -39,13 +38,14 @@ class OPCUA_DA extends ProtocolHandler {
     this.securityMode = securityMode
     this.securityPolicy = securityPolicy
     this.retryInterval = retryInterval
-    this.clientName = engine.engineName
+    this.clientName = dataSource.id
     this.keepSessionAlive = keepSessionAlive
     this.certFile = certFile
     this.keyFile = keyFile
     this.reconnectTimeout = null
 
     this.handlesPoints = true
+    this.clientCertificateManager = null
   }
 
   /**
@@ -55,6 +55,17 @@ class OPCUA_DA extends ProtocolHandler {
   async connect() {
     await super.connect()
     await this.connectToOpcuaServer()
+  }
+
+  async init() {
+    await super.init()
+    await initOpcuaCertificateFolders(this.encryptionService.certsFolder)
+    if (!this.clientCertificateManager) {
+      this.clientCertificateManager = new OPCUACertificateManager({ rootFolder: `${this.encryptionService.certsFolder}/opcua` })
+      // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
+      // It is useful for offline instances of OIBus where downloading openssl is not possible
+      this.clientCertificateManager.state = 2
+    }
   }
 
   /**
@@ -184,13 +195,14 @@ class OPCUA_DA extends ProtocolHandler {
         maxRetry: 1,
       }
       const options = {
-        applicationName: this.clientName,
+        applicationName: 'OIBus',
         connectionStrategy,
         securityMode: Opcua.MessageSecurityMode[this.securityMode],
         securityPolicy: Opcua.SecurityPolicy[this.securityPolicy],
         endpointMustExist: false,
         keepSessionAlive: this.keepSessionAlive,
-        clientName: this.clientName,
+        clientName: this.clientName, // the id of the connector
+        clientCertificateManager: this.clientCertificateManager,
       }
       this.client = Opcua.OPCUAClient.create(options)
       await this.client.connect(this.url)
