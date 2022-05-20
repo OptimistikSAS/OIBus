@@ -31,6 +31,7 @@ class ConfigService {
     this.modifiedConfig = JSON.parse(JSON.stringify(this.config))
 
     this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
+    this.certFolder = path.join(this.config.engine.caching.cacheFolder, 'certs')
   }
 
   /**

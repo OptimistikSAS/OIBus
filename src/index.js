@@ -9,6 +9,7 @@ const Server = require('./server/Server.class')
 const OIBusEngine = require('./engine/OIBusEngine.class')
 const HistoryQueryEngine = require('./HistoryQuery/HistoryQueryEngine.class')
 const Logger = require('./engine/logger/Logger.class')
+const EncryptionService = require('./services/EncryptionService.class')
 
 // In case there is an error the worker process will exit.
 // If this happens MAX_RESTART_COUNT times in less than MAX_INTERVAL_MILLISECOND interval
@@ -112,11 +113,18 @@ logger.changeParameters({
       // so this is here where we start the web-server, OIBusEngine and HistoryQueryEngine
 
       const configService = new ConfigService(configFile)
+
+      const encryptionService = EncryptionService.getInstance()
+      encryptionService.setKeyFolder(configService.keyFolder)
+      encryptionService.setCertsFolder(configService.certFolder)
+      encryptionService.checkOrCreatePrivateKey()
+      encryptionService.checkOrCreateCertFiles()
+
       const safeMode = process.env.SAFE_MODE === 'true'
 
-      const oibusEngine = new OIBusEngine(configService)
-      const historyQueryEngine = new HistoryQueryEngine(configService)
-      const server = new Server(oibusEngine, historyQueryEngine)
+      const oibusEngine = new OIBusEngine(configService, encryptionService)
+      const historyQueryEngine = new HistoryQueryEngine(configService, encryptionService)
+      const server = new Server(encryptionService, oibusEngine, historyQueryEngine)
 
       if (check) {
         logger.warn('OIBus is running in check mode')

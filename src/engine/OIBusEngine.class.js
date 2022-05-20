@@ -23,9 +23,10 @@ class OIBusEngine extends BaseEngine {
    * Checks for critical entries such as scanModes and data sources.
    * @constructor
    * @param {ConfigService} configService - The config service
+   * @param {EncryptionService} encryptionService - The encryption service
    */
-  constructor(configService) {
-    super(configService)
+  constructor(configService, encryptionService) {
+    super(configService, encryptionService)
 
     // Will only contain protocols/application used
     // based on the config file
