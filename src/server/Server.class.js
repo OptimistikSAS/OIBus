@@ -11,7 +11,6 @@ const clientController = require('./controllers/clientController')
 const Logger = require('../engine/logger/Logger.class')
 
 const router = require('./routes')
-const EncryptionService = require('../services/EncryptionService.class')
 
 /**
  * Class Server - Provides general attributes and methods for protocols.
@@ -20,21 +19,18 @@ class Server {
   /**
    * Constructor for Protocol
    * @constructor
+   * @param {EncryptionService} encryptionService - The encryption service
    * @param {OIBusEngine} oibusEngine - The OIBus engine
    * @param {HistoryQueryEngine} historyQueryEngine - The HistoryQuery engine
    * @return {void}
    */
-  constructor(oibusEngine, historyQueryEngine) {
+  constructor(encryptionService, oibusEngine, historyQueryEngine) {
+    this.encryptionService = encryptionService
     // capture the engine and logger under app for reuse in routes.
     this.engine = oibusEngine
     this.historyQueryEngine = historyQueryEngine
     this.logger = new Logger('web-server')
     this.webServer = null // store the listening web server
-
-    this.encryptionService = EncryptionService.getInstance()
-    this.encryptionService.setKeyFolder(oibusEngine.configService.keyFolder)
-    this.encryptionService.checkOrCreatePrivateKey()
-
     this.logger.setEncryptionService(this.encryptionService)
   }
 

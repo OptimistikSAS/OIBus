@@ -237,9 +237,11 @@ class ADS extends ProtocolHandler {
           this.connected = false
           this.statusData['Connected at'] = 'Not connected'
           this.updateStatusDataStream()
+          super.disconnect()
         })
+    } else {
+      super.disconnect()
     }
-    super.disconnect()
   }
 }
 

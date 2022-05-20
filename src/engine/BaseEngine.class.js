@@ -16,8 +16,8 @@ apiList.CsvToHttp = require('../north/csvtohttp/CsvToHttp.class')
 const protocolList = {}
 protocolList.SQL = require('../south/SQL/SQL.class')
 protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
-protocolList.OPCUA_HA = require('../south/OPCUA_HA/OPCUA_HA.class')
-protocolList.OPCUA_DA = require('../south/OPCUA_DA/OPCUA_DA.class')
+protocolList.OPCUA_HA = require('../south/OPCUA/OPCUA_HA/OPCUA_HA.class')
+protocolList.OPCUA_DA = require('../south/OPCUA/OPCUA_DA/OPCUA_DA.class')
 protocolList.MQTT = require('../south/MQTT/MQTT.class')
 protocolList.ADS = require('../south/ADS/ADS.class')
 protocolList.Modbus = require('../south/Modbus/Modbus.class')
@@ -26,7 +26,6 @@ protocolList.RestApi = require('../south/RestApi/RestApi.class')
 
 // BaseEngine classes
 const Logger = require('./logger/Logger.class')
-const EncryptionService = require('../services/EncryptionService.class')
 const { createRequestService } = require('../services/request')
 
 /**
@@ -42,14 +41,16 @@ class BaseEngine {
    * Checks for critical entries such as scanModes and data sources.
    * @constructor
    * @param {ConfigService} configService - The config service
+   * @param {EncryptionService} encryptionService - The encryption service
    */
-  constructor(configService) {
+  constructor(configService, encryptionService) {
     this.version = VERSION
 
     this.eventEmitters = {}
     this.statusData = {}
 
     this.configService = configService
+    this.encryptionService = encryptionService
   }
 
   /**
@@ -59,11 +60,6 @@ class BaseEngine {
    * @returns {Promise<void>} - The promise returns when the services are set
    */
   async initEngineServices(engineConfig, loggerScope) {
-    // Check for private key
-    this.encryptionService = EncryptionService.getInstance()
-    this.encryptionService.setKeyFolder(this.configService.keyFolder)
-    this.encryptionService.checkOrCreatePrivateKey()
-
     // Configure the logger
     this.logger = new Logger(loggerScope)
     this.logger.setEncryptionService(this.encryptionService)

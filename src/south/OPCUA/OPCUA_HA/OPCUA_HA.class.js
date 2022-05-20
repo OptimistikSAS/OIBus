@@ -1,13 +1,9 @@
 const Opcua = require('node-opcua')
-
-const { StatusCodes } = require('node-opcua')
-const ProtocolHandler = require('../ProtocolHandler.class')
-
-const MAX_NUMBER_OF_NODE_TO_LOG = 10
+const { OPCUACertificateManager } = require('node-opcua-certificate-manager')
+const ProtocolHandler = require('../../ProtocolHandler.class')
+const { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG } = require('../opcua.service')
 
 /**
- *
- *
  * @class OPCUA_HA
  * @extends {ProtocolHandler}
  */
@@ -55,7 +51,7 @@ class OPCUA_HA extends ProtocolHandler {
     this.readTimeout = readTimeout
     this.securityMode = securityMode
     this.securityPolicy = securityPolicy
-    this.clientName = engine.engineName
+    this.clientName = dataSource.id
     this.keepSessionAlive = keepSessionAlive
     this.certFile = certFile
     this.keyFile = keyFile
@@ -63,6 +59,7 @@ class OPCUA_HA extends ProtocolHandler {
 
     this.canHandleHistory = true
     this.handlesPoints = true
+    this.clientCertificateManager = null
   }
 
   /**
@@ -71,8 +68,18 @@ class OPCUA_HA extends ProtocolHandler {
    */
   async connect() {
     await super.connect()
-
     await this.connectToOpcuaServer()
+  }
+
+  async init() {
+    await super.init()
+    await initOpcuaCertificateFolders(this.encryptionService.certsFolder)
+    if (!this.clientCertificateManager) {
+      this.clientCertificateManager = new OPCUACertificateManager({ rootFolder: `${this.encryptionService.certsFolder}/opcua` })
+      // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
+      // It is useful for offline instances of OIBus where downloading openssl is not possible
+      this.clientCertificateManager.state = 2
+    }
   }
 
   /**
@@ -200,7 +207,7 @@ class OPCUA_HA extends ProtocolHandler {
 
     Object.keys(logs).forEach((statusCode) => {
       switch (statusCode) {
-        case StatusCodes.BadIndexRangeNoData: // No data exists for the requested time range or event filter.
+        case Opcua.StatusCodes.BadIndexRangeNoData: // No data exists for the requested time range or event filter.
         default:
           if (logs[statusCode].affectedNodes.length > MAX_NUMBER_OF_NODE_TO_LOG) {
             this.logger.debug(`${logs[statusCode].description} (${statusCode}): [${
@@ -380,13 +387,14 @@ class OPCUA_HA extends ProtocolHandler {
         maxRetry: 1,
       }
       const options = {
-        applicationName: this.clientName,
+        applicationName: 'OIBus',
         connectionStrategy,
         securityMode: Opcua.MessageSecurityMode[this.securityMode],
         securityPolicy: Opcua.SecurityPolicy[this.securityPolicy],
         endpointMustExist: false,
         keepSessionAlive: this.keepSessionAlive,
-        clientName: this.clientName,
+        clientName: this.clientName, // the id of the connector
+        clientCertificateManager: this.clientCertificateManager,
       }
 
       this.client = Opcua.OPCUAClient.create(options)
