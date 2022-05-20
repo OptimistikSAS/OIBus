@@ -1205,10 +1205,6 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             </small>
           </div>
         </div>
-      </div>
-      <div
-        class="row"
-      >
         <div
           class="col-md-2"
         >
@@ -1219,7 +1215,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
               class="form-label"
               for="south.dataSources.8.OPCHDA.retryInterval"
             >
-              Retry interval
+              Retry interval (ms)
             </label>
             <input
               aria-invalid="false"
@@ -1232,11 +1228,72 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             <div
               class="invalid-feedback"
             />
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.dataSources.8.OPCHDA.maxReadInterval"
+            >
+              Max read interval (s)
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.8.OPCHDA.maxReadInterval"
+              name="south.dataSources.8.OPCHDA.maxReadInterval"
+              type="integer"
+              value="3600"
+            />
+            <div
+              class="invalid-feedback"
+            />
             <small
               class="form-text text-muted"
             >
               <div>
-                Retry Interval (ms)
+                Split the time interval into smaller intervals of this duration (in s).
+              </div>
+            </small>
+          </div>
+        </div>
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.dataSources.8.OPCHDA.readIntervalDelay"
+            >
+              Read interval delay (ms)
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.8.OPCHDA.readIntervalDelay"
+              name="south.dataSources.8.OPCHDA.readIntervalDelay"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Time to wait between the read interval iterations (ms)
               </div>
             </small>
           </div>
@@ -1268,71 +1325,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Max return values
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.maxReadInterval"
-            >
-              Max read interval
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.maxReadInterval"
-              name="south.dataSources.8.OPCHDA.maxReadInterval"
-              type="integer"
-              value="3600"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Max read interval (s)
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.readIntervalDelay"
-            >
-              Read interval delay
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.readIntervalDelay"
-              name="south.dataSources.8.OPCHDA.readIntervalDelay"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Time to wait between the read interval iterations (ms)
+                Max number of values returned for one point during a read interval
               </div>
             </small>
           </div>
@@ -2678,10 +2671,6 @@ exports[`ConfigureProtocol check update 1`] = `
             </small>
           </div>
         </div>
-      </div>
-      <div
-        class="row"
-      >
         <div
           class="col-md-2"
         >
@@ -2692,7 +2681,7 @@ exports[`ConfigureProtocol check update 1`] = `
               class="form-label"
               for="south.dataSources.8.OPCHDA.retryInterval"
             >
-              Retry interval
+              Retry interval (ms)
             </label>
             <input
               aria-invalid="false"
@@ -2705,11 +2694,72 @@ exports[`ConfigureProtocol check update 1`] = `
             <div
               class="invalid-feedback"
             />
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.dataSources.8.OPCHDA.maxReadInterval"
+            >
+              Max read interval (s)
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.8.OPCHDA.maxReadInterval"
+              name="south.dataSources.8.OPCHDA.maxReadInterval"
+              type="integer"
+              value="3600"
+            />
+            <div
+              class="invalid-feedback"
+            />
             <small
               class="form-text text-muted"
             >
               <div>
-                Retry Interval (ms)
+                Split the time interval into smaller intervals of this duration (in s).
+              </div>
+            </small>
+          </div>
+        </div>
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.dataSources.8.OPCHDA.readIntervalDelay"
+            >
+              Read interval delay (ms)
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.8.OPCHDA.readIntervalDelay"
+              name="south.dataSources.8.OPCHDA.readIntervalDelay"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Time to wait between the read interval iterations (ms)
               </div>
             </small>
           </div>
@@ -2741,71 +2791,7 @@ exports[`ConfigureProtocol check update 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Max return values
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.maxReadInterval"
-            >
-              Max read interval
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.maxReadInterval"
-              name="south.dataSources.8.OPCHDA.maxReadInterval"
-              type="integer"
-              value="3600"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Max read interval (s)
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.readIntervalDelay"
-            >
-              Read interval delay
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.readIntervalDelay"
-              name="south.dataSources.8.OPCHDA.readIntervalDelay"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Time to wait between the read interval iterations (ms)
+                Max number of values returned for one point during a read interval
               </div>
             </small>
           </div>

@@ -195,7 +195,13 @@ class OPCHDA extends ProtocolHandler {
       Request: 'Initialize',
       TransactionId: this.generateTransactionId(),
       Content: {
-        Groups: this.scanGroups,
+        Groups: this.scanGroups.map((scanGroup) => ({
+          name: scanGroup.name,
+          aggregate: scanGroup.aggregate,
+          resampling: scanGroup.resampling,
+          scanMode: scanGroup.scanMode,
+          points: scanGroup.points.map((point) => point.nodeId),
+        })),
         MaxReturnValues: this.maxReturnValues,
         MaxReadInterval: this.maxReadInterval,
       },
@@ -277,59 +283,62 @@ class OPCHDA extends ProtocolHandler {
           this.logger.info(`HDAAgent initialized: ${this.connected}`)
           break
         case 'Read':
-          if (messageObject.Content.Error) {
-            this.ongoingReads[messageObject.Content.Group] = false
-            this.logger.error(messageObject.Content.Error)
-
-            if (messageObject.Content.Disconnected) {
-              this.logger.error('Agent disconnected from OPC HDA server')
-              this.connected = false
-              if (this.reconnectTimeout) {
-                clearTimeout(this.reconnectTimeout)
+          {
+            if (messageObject.Content.Error) {
+              this.ongoingReads[messageObject.Content.Group] = false
+              this.logger.error(messageObject.Content.Error)
+              if (messageObject.Content.Disconnected) {
+                this.logger.error('Agent disconnected from OPC HDA server')
+                this.connected = false
+                if (this.reconnectTimeout) {
+                  clearTimeout(this.reconnectTimeout)
+                }
+                this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), retryInterval)
               }
-              this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), retryInterval)
+              return
             }
 
-            return
-          }
-
-          if (messageObject.Content.Points === undefined) {
-            this.ongoingReads[messageObject.Content.Group] = false
-            this.logger.error(`Missing Points entry in response for ${messageObject.Content.Group}`)
-            return
-          }
-
-          if (messageObject.Content.Points.length === 0) {
-            this.ongoingReads[messageObject.Content.Group] = false
-            this.logger.debug(`Empty Points response for ${messageObject.Content.Group}`)
-            return
-          }
-
-          this.logger.trace(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
-
-          // eslint-disable-next-line no-case-declarations
-          const values = messageObject.Content.Points.map((point) => {
-            if (point.Timestamp != null && point.Value != null) {
-              return {
-                pointId: point.ItemId,
-                timestamp: new Date(point.Timestamp).toISOString(),
-                data: { value: point.Value.toString(), quality: JSON.stringify(point.Quality) },
-              }
+            if (messageObject.Content.Points === undefined) {
+              this.ongoingReads[messageObject.Content.Group] = false
+              this.logger.error(`Missing Points entry in response for ${messageObject.Content.Group}`)
+              return
             }
-            this.logger.error(`point: ${point.ItemId} is invalid:${JSON.stringify(point)}`)
-            return {}
-          })
-          this.addValues(values)
 
-          dateString = messageObject.Content.Points.slice(-1).pop().Timestamp
-          this.lastCompletedAt[messageObject.Content.Group] = new Date(new Date(dateString).getTime() + 1)
-          await this.setConfig(
-            `lastCompletedAt-${messageObject.Content.Group}`,
-            this.lastCompletedAt[messageObject.Content.Group].toISOString(),
-          )
-          this.logger.trace(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`)
+            if (messageObject.Content.Points.length === 0) {
+              this.ongoingReads[messageObject.Content.Group] = false
+              this.logger.debug(`Empty Points response for ${messageObject.Content.Group}`)
+              return
+            }
 
-          this.ongoingReads[messageObject.Content.Group] = false
+            this.logger.trace(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
+
+            const associatedScanGroup = this.scanGroups.find((scanGroup) => scanGroup.name === messageObject.Content.Group)
+            // eslint-disable-next-line no-case-declarations
+            const values = messageObject.Content.Points.map((point) => {
+              if (point.Timestamp != null && point.Value != null) {
+                const associatedPointId = associatedScanGroup?.points
+                  .find((scanGroupPoint) => scanGroupPoint.nodeId === point.ItemId)?.pointId || point.ItemId
+                return {
+                  pointId: associatedPointId,
+                  timestamp: new Date(point.Timestamp).toISOString(),
+                  data: { value: point.Value.toString(), quality: JSON.stringify(point.Quality) },
+                }
+              }
+              this.logger.error(`point: ${point.ItemId} is invalid:${JSON.stringify(point)}`)
+              return {}
+            })
+            this.addValues(values)
+
+            dateString = messageObject.Content.Points.slice(-1).pop().Timestamp
+            this.lastCompletedAt[messageObject.Content.Group] = new Date(new Date(dateString).getTime() + 1)
+            await this.setConfig(
+              `lastCompletedAt-${messageObject.Content.Group}`,
+              this.lastCompletedAt[messageObject.Content.Group].toISOString(),
+            )
+            this.logger.trace(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`)
+
+            this.ongoingReads[messageObject.Content.Group] = false
+          }
           break
         case 'Disconnect':
           this.connected = false
