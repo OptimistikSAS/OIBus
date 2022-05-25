@@ -7,7 +7,12 @@ jest.spyOn(global.console, 'table').mockImplementation(() => {})
 jest.spyOn(process.stdout, 'write').mockImplementation(() => {})
 
 // Mock database service
-jest.mock('../../services/database.service', () => {})
+jest.mock('../../services/database.service', () => ({
+  createValueErrorsDatabase: jest.fn(),
+  getCount: jest.fn(),
+  createValuesDatabase: jest.fn(),
+  createFilesDatabase: jest.fn(),
+}))
 
 // Mock logger
 jest.mock('../../engine/logger/Logger.class')
