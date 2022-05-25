@@ -535,6 +535,7 @@ class Cache {
   async getCacheStatsForApis() {
     // Get points APIs stats
     const pointApis = Object.values(this.apis).filter((api) => api.canHandleValues)
+
     const valuesTotalCounts = pointApis.map((api) => this.cacheStats[api.name])
     const valuesCacheSizeActions = pointApis.map((api) => databaseService.getCount(api.database))
     const valuesCacheSizes = await Promise.all(valuesCacheSizeActions)

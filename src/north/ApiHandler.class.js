@@ -3,6 +3,7 @@ const EventEmitter = require('events')
 const EncryptionService = require('../services/EncryptionService.class')
 const Logger = require('../engine/logger/Logger.class')
 const CertificateService = require('../services/CertificateService.class')
+const ValueCache = require('../engine/cache/ValueCache.class')
 
 class ApiHandler {
   static STATUS = {
@@ -50,6 +51,7 @@ class ApiHandler {
     this.keyFile = null
     this.certFile = null
     this.caFile = null
+    this.valueCache = null
   }
 
   async init() {
@@ -61,6 +63,9 @@ class ApiHandler {
     this.certificate = new CertificateService(this.logger)
     await this.certificate.init(this.keyFile, this.certFile, this.caFile)
     this.initializeStatusData()
+
+    const { engineConfig } = this.engine.configService.getConfig()
+    this.valueCache = new ValueCache(this, this.engine.queue, engineConfig.caching)
   }
 
   /**
@@ -70,6 +75,7 @@ class ApiHandler {
    * @return {void}
    */
   connect(additionalInfo) {
+    this.valueCache.initialize()
     const { name, api } = this.application
     this.connected = true
     this.updateStatusDataStream({ 'Connected at': new Date().toISOString() })
@@ -101,6 +107,7 @@ class ApiHandler {
    * @return {void}
    */
   async disconnect() {
+    this.valueCache.stop()
     this.connected = false
     const { name, id } = this.application
     this.updateStatusDataStream({ 'Connected at': 'Not connected' })
@@ -124,6 +131,17 @@ class ApiHandler {
     this.statusData = { ...this.statusData, ...statusData }
     this.engine.eventEmitters[`/north/${this.application.id}/sse`].statusData = this.statusData
     this.engine.eventEmitters[`/north/${this.application.id}/sse`]?.events?.emit('data', this.statusData)
+  }
+
+  /**
+   * Method called by the Engine to cache an array of values in order to cache them
+   * and send them to a third party application.
+   * @param {string} id - The data source id
+   * @param {object[]} values - The values to handle
+   * @return {Promise<void>} - The result
+   */
+  async cacheValues(id, values) {
+    if (values.length) await this.valueCache.cacheValues(id, values)
   }
 
   /**
@@ -180,6 +198,21 @@ class ApiHandler {
     const data = JSON.stringify(values)
     const headers = { 'Content-Type': 'application/json' }
     return this.engine.requestService.httpSend(this.valuesUrl, 'POST', this.authentication, this.proxy, data, headers)
+  }
+
+  /**
+   * Check whether the North is subscribed to a South.
+   * If subscribedTo is not defined or an empty array, the subscription is true.
+   * @param {string} id - The data source id
+   * @returns {boolean} - The North is subscribed to the given South
+   */
+  isSubscribed(id) {
+    if (!Array.isArray(this.application.subscribedTo) || this.application.subscribedTo.length === 0) return true
+    return this.application.subscribedTo.includes(id)
+  }
+
+  async getValueCacheStats() {
+    return this.valueCache.getStats()
   }
 }
 
