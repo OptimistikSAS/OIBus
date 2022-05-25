@@ -5,7 +5,7 @@ node_modules/
 dist/
 docs/
 logs/
-cache/
+tests/cache/
 build/
 coverage/
 oibus-*.json

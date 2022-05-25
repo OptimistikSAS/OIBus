@@ -7,7 +7,8 @@ const humanizeDuration = require('humanize-duration')
 // Engine classes
 const BaseEngine = require('./BaseEngine.class')
 const HealthSignal = require('./HealthSignal.class')
-const Cache = require('./Cache.class')
+const MainCache = require('./cache/MainCache.class')
+const Queue = require('../services/queue.class')
 
 /**
  *
@@ -38,6 +39,9 @@ class OIBusEngine extends BaseEngine {
     this.addValuesCount = 0
     this.addFileCount = 0
     this.forwardedHealthSignalMessages = 0
+
+    // manage a queue for concurrent request to write to SQL
+    this.queue = new Queue(this.logger)
   }
 
   /**
@@ -58,10 +62,6 @@ class OIBusEngine extends BaseEngine {
 
     this.engineName = engineConfig.engineName
 
-    // Configure the Cache
-    this.cache = new Cache(this)
-    this.cache.initialize()
-
     this.logger.info(`Starting Engine ${this.version}
     architecture: ${process.arch}
     This platform is ${process.platform}
@@ -81,7 +81,12 @@ class OIBusEngine extends BaseEngine {
    */
   async addValues(id, values) {
     this.logger.trace(`Engine: Add ${values?.length} values from "${this.activeProtocols[id]?.dataSource.name || id}"`)
-    if (values.length) await this.cache.cacheValues(id, values)
+    Object.values(this.activeApis)
+      .forEach((api) => {
+        if (api.canHandleValues && api.isSubscribed(id)) {
+          api.cacheValues(id, values)
+        }
+      })
   }
 
   /**
@@ -92,47 +97,28 @@ class OIBusEngine extends BaseEngine {
    * @param {boolean} preserveFiles - Whether to preserve the file at the original location
    * @return {void}
    */
-  addFile(id, filePath, preserveFiles) {
-    this.logger.trace(`Engine addFile() from "${this.activeProtocols[id]?.dataSource.name || id}" with ${filePath}`)
-    this.cache.cacheFile(id, filePath, preserveFiles)
-  }
+  async addFile(id, filePath, preserveFiles) {
+    this.logger.debug(`Engine addFile(${filePath}) from "${this.activeProtocols[id]?.dataSource.name || id}", preserveFiles:${preserveFiles}`)
 
-  /**
-   * Send values to a North application.
-   * @param {string} id - The application id
-   * @param {object[]} values - The values to send
-   * @return {Promise<number>} - The sent status
-   */
-  async handleValuesFromCache(id, values) {
-    this.logger.trace(`handleValuesFromCache() call with "${this.activeApis[id]?.application.name || id}" and ${values.length} values`)
+    const timestamp = new Date().getTime()
+    // When compressed file is received the name looks like filename.txt.gz
+    const filenameInfo = path.parse(filePath)
+    const cacheFilename = `${filenameInfo.name}-${timestamp}${filenameInfo.ext}`
+    const cachePath = path.join(this.getCacheFolder(), cacheFilename)
 
-    let status
     try {
-      status = await this.activeApis[id].handleValues(values)
+      // Move or copy the file into the cache folder
+      await MainCache.transferFile(this.logger, filePath, cachePath, preserveFiles)
+
+      Object.values(this.activeApis)
+        .forEach((api) => {
+          if (api.canHandleFiles && api.isSubscribed(id)) {
+            api.cacheFile(cachePath, timestamp)
+          }
+        })
     } catch (error) {
-      status = error
+      this.logger.error(error)
     }
-
-    return status
-  }
-
-  /**
-   * Send file to a North application.
-   * @param {string} id - The application id
-   * @param {string} filePath - The file to send
-   * @return {Promise<number>} - The sent status
-   */
-  async sendFile(id, filePath) {
-    this.logger.trace(`Engine sendFile() call with "${this.activeApis[id]?.application.name || id}" and ${filePath}`)
-
-    let status
-    try {
-      status = await this.activeApis[id].handleFile(filePath)
-    } catch (error) {
-      status = error
-    }
-
-    return status
   }
 
   /**
@@ -211,9 +197,6 @@ class OIBusEngine extends BaseEngine {
         }
       }
     }
-
-    // 4. Initiate the cache for every North
-    await this.cache.initializeApis(this.activeApis)
 
     // 5. Initialize scan lists
 
@@ -316,6 +299,13 @@ class OIBusEngine extends BaseEngine {
     }
     this.activeProtocols = {}
 
+    // Log cache data
+    const apisCacheStats = this.getCacheStatsForApis()
+    this.logger.info(`API stats: ${JSON.stringify(apisCacheStats)}`)
+
+    const protocolsCacheStats = this.getCacheStatsForProtocols()
+    this.logger.info(`Protocol stats: ${JSON.stringify(protocolsCacheStats)}`)
+
     // Stop Applications
     // eslint-disable-next-line no-restricted-syntax
     for (const application of Object.values(this.activeApis)) {
@@ -324,17 +314,6 @@ class OIBusEngine extends BaseEngine {
       await application.disconnect()
     }
     this.activeApis = {}
-
-    // Log cache data
-    const apisCacheStats = await this.cache.getCacheStatsForApis()
-    this.logger.info(`API stats: ${JSON.stringify(apisCacheStats)}`)
-
-    const protocolsCacheStats = await this.cache.getCacheStatsForProtocols()
-    this.logger.info(`Protocol stats: ${JSON.stringify(protocolsCacheStats)}`)
-
-    // stop the cache timers
-    this.cache.stop()
-    this.cache = null
 
     // Stop the listener
     this.eventEmitters['/engine/sse']?.events?.removeAllListeners()
@@ -419,6 +398,27 @@ class OIBusEngine extends BaseEngine {
         result[key] = `${min} / ${current} / ${max} MB`
         return result
       }, {})
+  }
+
+  getCacheStatsForApis() {
+    // Get points APIs stats
+    const pointApis = Object.values(this.activeApis).filter((api) => api.canHandleValues)
+    const pointApisStats = pointApis.map((api) => api.getValueCacheStats())
+
+    // Get files APIs stats
+    const fileApis = Object.values(this.activeApis).filter((api) => api.canHandleFiles)
+    const fileApisStats = fileApis.map((api) => api.getFileCacheStats())
+
+    // Merge results
+    return [...pointApisStats, ...fileApisStats]
+  }
+
+  getCacheStatsForProtocols() {
+    const pointProtocols = Object.values(this.activeProtocols).filter((protocol) => protocol.handlesPoints)
+    return pointProtocols.map((protocol) => ({
+      name: protocol.dataSource.name,
+      count: protocol.addPointsCount || 0,
+    }))
   }
 
   /**
