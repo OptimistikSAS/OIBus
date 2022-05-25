@@ -5,7 +5,12 @@ const FileWriter = require('./FileWriter.class')
 const { defaultConfig: config } = require('../../../tests/testConfig')
 
 // Mock database service
-jest.mock('../../services/database.service', () => {})
+jest.mock('../../services/database.service', () => ({
+  createValueErrorsDatabase: jest.fn(),
+  getCount: jest.fn(),
+  createValuesDatabase: jest.fn(),
+  createFilesDatabase: jest.fn(),
+}))
 
 // Mock logger
 jest.mock('../../engine/logger/Logger.class')
