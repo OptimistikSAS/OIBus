@@ -1,6 +1,7 @@
 const fs = require('fs/promises')
 
 const ApiHandler = require('../ApiHandler.class')
+const MainCache = require('../../engine/cache/MainCache.class')
 
 class Console extends ApiHandler {
   static category = 'Debug'
