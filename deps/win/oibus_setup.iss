@@ -4,7 +4,6 @@
 #define MyDateTime GetDateTimeString('yyyy/mm/dd hh:nn:ss', '-', ':')
 
 [Setup]
-SignTool=signtool.exe sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 /a $p $f
 AppId={{A4DCC920-510F-4D9D-AD02-67AA402EC010}
 AppName={#MyAppName}
 // MyAppVersion is set by the npm command build-win-setup on release
