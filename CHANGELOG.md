@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.4](https://github.com/OptimistikSAS/OIBus/compare/v2.0.3...v2.0.4) (2022-05-30)
+
+
+### Bug Fixes
+
+* **install:** fix go.bat creation at install ([c222112](https://github.com/OptimistikSAS/OIBus/commit/c222112c7c0221fbbf21ee70168ecafb490ea347))
+* **install:** fix go.bat file generation ([8e5b38d](https://github.com/OptimistikSAS/OIBus/commit/8e5b38d8e90e35235ce7a8018297c07f0e8cd0b4))
+* **install:** fix overwriting of config and removing of data folder ([bb666c3](https://github.com/OptimistikSAS/OIBus/commit/bb666c3cdf4869a671d10e168fc2e6a85475c481))
+* **install:** fix pkg dependencies ([a362706](https://github.com/OptimistikSAS/OIBus/commit/a362706a6790daca4e4bf4cc4f61b79c3bdb9184))
+* **install:** remove sign tool ([e95a0a4](https://github.com/OptimistikSAS/OIBus/commit/e95a0a440ad5a59bb2683e5d0c7597485a76f182))
+* **logger:** fix webserver logger and redundancy logs ([d6ad591](https://github.com/OptimistikSAS/OIBus/commit/d6ad59197eed2523b2a3b6b86974a11efce133b7))
+* **opchda:** fix pointId vs nodeId opchda ([1648ef5](https://github.com/OptimistikSAS/OIBus/commit/1648ef5f88bc5fad42c9620201dce1c08e832512))
+* **opcua:** manage certificate generation with selfsigned package instead of downloading openssl at runtime ([67bdc74](https://github.com/OptimistikSAS/OIBus/commit/67bdc74bc0247145a702a5789039321a8c8163be))
+* **south:** fix slims latestDateRetrieved ([2755797](https://github.com/OptimistikSAS/OIBus/commit/2755797bc1085db2ef39a63b0abd0518b9991896))
+
 ### [2.0.3](https://github.com/OptimistikSAS/OIBus/compare/v2.0.2...v2.0.3) (2022-05-16)
 
 
