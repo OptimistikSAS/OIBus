@@ -1267,12 +1267,6 @@ describe('ADS south', () => {
       .toBeFalsy()
 
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1)
-
-    await adsSouth.lastPointQuery()
-
-    expect(adsSouth.client.readSymbol)
-      .not
-      .toBeCalled()
   })
 
   it('disconnect should do nothing if not connected', async () => {

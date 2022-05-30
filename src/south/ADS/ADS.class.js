@@ -141,48 +141,62 @@ class ADS extends ProtocolHandler {
   }
 
   /**
-   * On scan.
+   * Query the value of the points to read
    * @param {String} scanMode - The scan mode
    * @return {Promise<void>} - The on scan promise
    */
   async lastPointQuery(scanMode) {
-    if (!this.connected) {
-      this.logger.debug(`onScan ignored: connected: ${this.connected}`)
-      return
-    }
-
     const nodesToRead = this.dataSource.points.filter((point) => point.scanMode === scanMode)
     if (!nodesToRead.length) {
-      this.logger.error(`onScan ignored: no points to read for scanMode: ${scanMode}`)
+      this.logger.error(`lastPointQuery ignored: no points to read for scanMode: ${scanMode}`)
+      return
+    }
+    if (!this.connected) {
+      this.logger.debug(`lastPointQuery ignored: connected: ${this.connected}`)
       return
     }
 
-    try {
-      await nodesToRead.forEach((node) => {
-        this.client.readSymbol(node.pointId)
-          .then((nodeResult) => {
-            const timestamp = new Date().toISOString()
-            this.parseValues(
-              `${this.plcName}${node.pointId}`,
-              nodeResult.symbol?.type,
-              nodeResult.value,
-              timestamp,
-              nodeResult.type?.subItems,
-              nodeResult.type?.enumInfo,
-            )
-          })
-          .catch((error) => {
-            if (error.message === 'Client is not connected. Use connect() to connect to the target first.') {
-              this.disconnect()
-              throw error
-            }
-            this.logger.error(`on Scan ${scanMode}:${error.stack}`)
-          })
-      })
-    } catch (connectionError) {
-      this.logger.error('Connection error, trying to reconnect.')
-      await this.connect()
+    // eslint-disable-next-line guard-for-in,no-restricted-syntax
+    for (const node of nodesToRead) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const result = await this.readAdsSymbol(node.pointId)
+        const timestamp = new Date().toISOString()
+        this.parseValues(
+          `${this.plcName}${node.pointId}`,
+          result.symbol?.type,
+          result.value,
+          timestamp,
+          result.type?.subItems,
+          result.type?.enumInfo,
+        )
+      } catch (error) {
+        this.logger.error(`lastPointQuery ${scanMode}:${error.stack}`)
+        const message = error?.message || ''
+        if (message.startsWith('Client is not connected')) {
+          // eslint-disable-next-line no-await-in-loop
+          await this.disconnect()
+          // eslint-disable-next-line no-await-in-loop
+          await this.connect()
+          return
+        }
+      }
     }
+  }
+
+  /**
+   * @param {string} pointId - the point id to read
+   * @returns {Promise<object>} - the result retrieved
+   */
+  readAdsSymbol(pointId) {
+    return new Promise((resolve, reject) => {
+      this.client.readSymbol(pointId)
+        .then((nodeResult) => {
+          resolve(nodeResult)
+        }).catch((error) => {
+          reject(error)
+        })
+    })
   }
 
   /**
@@ -191,15 +205,31 @@ class ADS extends ProtocolHandler {
    */
   async connect() {
     await super.connect()
-    this.client = new ads.Client({
+
+    const options = {
       targetAmsNetId: this.netId, // example: 192.168.1.120.1.1
       targetAdsPort: this.port, // example: 851
-      localAmsNetId: this.clientAmsNetId, // needs to match a route declared in PLC StaticRoutes.xml file. Example: 10.211.55.2.1.1
-      localAdsPort: this.clientAdsPort, // should be an unused port. Example: 32750
-      routerAddress: this.routerAddress, // distant address of the PLC. Example: 10.211.55.3
-      routerTcpPort: this.routerTcpPort, // port of the Ams router (must be open on the PLC). Example : 48898 (which is default)
-    })
+      autoReconnect: false,
+    }
+    if (this.clientAmsNetId) {
+      // needs to match a route declared in PLC StaticRoutes.xml file. Example: 10.211.55.2.1.1
+      options.localAmsNetId = this.clientAmsNetId
+    }
+    if (this.clientAdsPort) {
+      // should be an unused port. Example: 32750
+      options.localAdsPort = this.clientAdsPort
+    }
+    if (this.routerAddress) {
+      // distant address of the PLC. Example: 10.211.55.3
+      options.routerAddress = this.routerAddress
+    }
+    if (this.routerTcpPort) {
+      // port of the Ams router (must be open on the PLC). Example : 48898 (which is default)
+      options.routerTcpPort = this.routerTcpPort
+    }
 
+    this.logger.info(`Connecting to ADS Client with options ${JSON.stringify(options)}`)
+    this.client = new ads.Client(options)
     await this.connectToAdsServer()
   }
 
@@ -223,25 +253,40 @@ class ADS extends ProtocolHandler {
   }
 
   /**
+   * Disconnect the ADS Client
+   * @returns {Promise<unknown>} - The promise resolved after the disconnection
+   */
+  disconnectAdsClient() {
+    return new Promise((resolve, reject) => {
+      if (!this.client || !this.client.connection.connected) {
+        resolve()
+      } else {
+        this.client.disconnect().then(() => resolve()).catch((error) => reject(error))
+      }
+    })
+  }
+
+  /**
    * Close the connection
    * @return {void}
    */
-  disconnect() {
+  async disconnect() {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout)
     }
     if (this.connected) {
-      this.client.disconnect()
-        .finally(() => {
-          this.logger.info(`ADS client disconnected from ${this.netId}:${this.port}`)
-          this.connected = false
-          this.statusData['Connected at'] = 'Not connected'
-          this.updateStatusDataStream()
-          super.disconnect()
-        })
-    } else {
-      super.disconnect()
+      try {
+        await this.disconnectAdsClient()
+      } catch (error) {
+        this.logger.error(`ADS disconnect error: ${JSON.stringify(error)}`)
+      }
+      this.logger.info(`ADS client disconnected from ${this.netId}:${this.port}`)
+      this.connected = false
+      this.statusData['Connected at'] = 'Not connected'
+      this.updateStatusDataStream()
+      this.client = null
     }
+    super.disconnect()
   }
 }
 
