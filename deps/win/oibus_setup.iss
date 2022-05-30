@@ -202,7 +202,11 @@ end;
 
 // Generate go.bat file used to run OIBus from a terminal window
 function CreateLauncherFile: Boolean;
-begin
+var
+  FileContent: ansistring;
+  ConfigFilePath: string;
+begin;
+    ConfigFilePath := OIBus_DataDirPage.Values[0] + '\oibus.json';
     FileContent := 'echo Stopping OIBus service...' + #13#10
       + 'nssm.exe stop OIBus' + #13#10
       + '@echo Starting OIBus in the console...' + #13#10
@@ -210,10 +214,7 @@ begin
     if not SaveStringToFile(ExpandConstant('{app}') + '\go.bat', FileContent, False) then
       Result := False
     else
-    begin
-      if CreateDir(OIBus_DataDirPage.Values[0] + '\cache\') and CreateDir(OIBus_DataDirPage.Values[0] + '\logs\') then
-        Result := True
-    end
+      Result := True
 end;
 
 // Set configuration by altering oibus.json according to user input
@@ -255,7 +256,7 @@ begin;
             Result := False
           else
             Result := True
-        end;
+        end
         else
           Result := False;
       end;
@@ -418,7 +419,7 @@ begin
   begin
     // 1# Creating/overwriting OIBusData
     if not CreateDataDir then
-      MsgBox('ERROR : OIBus data directory Setup failed.', mbCriticalError, MB_OK)
+      MsgBox('ERROR : OIBus data directory Setup failed when creating data directory.', mbCriticalError, MB_OK)
     else begin
       // 2# Saving OIBusData folder-path to registry for later use
       if not RegWriteStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'DataDir', OIBus_DataDirPage.Values[0]) then
@@ -432,12 +433,12 @@ begin
         MsgBox('ERROR : Configuration-setup failed', mbCriticalError, MB_OK);
         DeleteMyRegistry
       end
-      // 5# creating go.bat file
+      // 4# creating go.bat file
       else if not CreateLauncherFile() then
-        begin
-          MsgBox('ERROR : Configuration-setup failed', mbCriticalError, MB_OK);
-          DeleteMyRegistry
-        end
+      begin
+        MsgBox('ERROR : Launcher file creation failed', mbCriticalError, MB_OK);
+        DeleteMyRegistry
+      end
       // 5# executing install related commands
       else if not InstallProgram() then
       begin
