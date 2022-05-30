@@ -73,24 +73,45 @@ function DeleteDataDir(DirToDelete: string): Boolean;
 var
   CacheFolder: string;
   LogsFolder: string;
+  HistoryFolder: string;
   JsonFile: string;
+  HistoryDb: string;
+  JournalLog: string;
 begin
     CacheFolder := DirToDelete + '\cache\'
     LogsFolder := DirToDelete + '\logs\'
+    HistoryFolder := DirToDelete + '\historyQuery\'
     JsonFile := DirToDelete + '\oibus*.json'
-    if not DelTree(CacheFolder, True, True, True) then
+    HistoryDb := DirToDelete + '\historyQuery.db'
+    JournalLog := DirToDelete + '\*journal.log'
+    if (DirExists(CacheFolder) and not DelTree(CacheFolder, True, True, True)) then
     begin
       MsgBox('Error: Directory ' + CacheFolder + ' could not be removed', mbError, MB_OK)
       Result := False
     end
-    else if not DelTree(LogsFolder, True, True, True) then
+    else if (DirExists(LogsFolder) and not DelTree(LogsFolder, True, True, True)) then
     begin
       MsgBox('Error: Directory ' + LogsFolder + ' could not be removed', mbError, MB_OK)
+      Result := False
+    end
+    else if (DirExists(HistoryFolder) and not DelTree(HistoryFolder, True, True, True)) then
+    begin
+      MsgBox('Error: Directory ' + HistoryFolder + ' could not be removed', mbError, MB_OK)
       Result := False
     end
     else if not DelTree(JsonFile, False, True, False) then
     begin
       MsgBox('Error: File ' + JsonFile + ' could not be removed', mbError, MB_OK)
+      Result := False
+    end
+    else if not DelTree(HistoryDb, False, True, False) then
+    begin
+      MsgBox('Error: File ' + HistoryDb + ' could not be removed', mbError, MB_OK)
+      Result := False
+    end
+    else if not DelTree(JournalLog, False, True, False) then
+    begin
+      MsgBox('Error: File ' + JournalLog + ' could not be removed', mbError, MB_OK)
       Result := False
     end
     else
@@ -131,7 +152,7 @@ begin
   end
   else
   begin
-    if OverwriteConfig = True then
+    if (OverwriteConfig and DirExists(OIBus_DataDirPage.Values[0])) then
     begin
       if not DeleteDataDir(OIBus_DataDirPage.Values[0]) then
         Result := False
@@ -285,7 +306,9 @@ begin
       if MsgBox('An oibus.json file was found at ' + OIBus_DataDirPage.Values[0] + '. Do you want to use it for this OIBus?', mbInformation, MB_YESNO) = IDNO then
       begin
         if MsgBox('WARNING : Overwriting the current setup will delete all logins, passwords and data you saved so far.' + #13#10 + 'Are you sure you want to proceed?', mbInformation, MB_YESNO) = IDNO then
-          OverwriteConfig := False;
+          OverwriteConfig := False
+        else
+          OverwriteConfig := True
       end
       else
         OverwriteConfig := False;
@@ -311,7 +334,7 @@ begin
   MyPortNum := NamesQueryPage.Values[2];
   Memo := 'Destination location:' + Newline + Space + ExpandConstant('{app}') + Newline + Newline
   Memo := Memo + 'OIBus data folder location:' + Newline + Space + OIBus_DataDirPage.Values[0] + Newline + Newline
-  if OverwriteConfig = True then
+  if  ((ConfExists and OverwriteConfig) or not ConfExists) then
   begin
     Memo := Memo + 'OIBus name:' + Newline + Space + MyOIBusName + Newline + Newline
     Memo := Memo + 'Username:' + Newline + Space + MyAdminName + Newline + Newline
@@ -451,7 +474,7 @@ end;
 
 function InitializeSetup: Boolean;
 begin
-  OverwriteConfig := True;
+  OverwriteConfig := False;
   ConfExists := False;
   Result := True;
 end;
