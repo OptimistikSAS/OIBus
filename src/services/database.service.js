@@ -210,7 +210,7 @@ const getFileCount = (database, filePath) => {
  * Get file count for a North connector.
  * @param {object} database - The database to use
  * @param {string} northId - The North connector to get file count
- * @return {number} - The file count
+ * @return {Promise<number>} - The file count
  */
 const getFileCountForNorthConnector = (database, northId) => {
   const query = `SELECT COUNT(*) AS count FROM ${CACHE_TABLE_NAME} WHERE application = ?`
