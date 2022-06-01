@@ -13,18 +13,10 @@ class ValueCache {
     this.logger = api.logger
     this.apiCacheConfig = api.application.caching
     this.queue = queue
-    const {
-      cacheFolder,
-      archive,
-    } = engineCacheConfig
-    const cacheFolderPath = path.resolve(cacheFolder)
+    const cacheFolderPath = path.resolve(engineCacheConfig.cacheFolder)
     this.cacheFolder = cacheFolderPath
     this.databasePath = `${cacheFolderPath}/${api.application.id}.db`
-    this.archiveMode = archive.enabled
-    this.archiveFolder = path.resolve(archive.archiveFolder)
-    this.retentionDuration = (archive.retentionDuration) * 3600000
     this.valuesErrorDatabase = null
-
     this.database = null
     this.timeout = null
     this.sendInProgress = false
@@ -37,7 +29,7 @@ class ValueCache {
    * @returns {Promise<void>} - The result
    */
   async initialize() {
-    this.valuesErrorDatabase = await MainCache.getValuesErrorDatabaseInstance(this.logger, this.cacheFolder)
+    this.valuesErrorDatabase = MainCache.getValuesErrorDatabaseInstance(this.logger, this.cacheFolder)
     try {
       await fs.stat(this.cacheFolder)
     } catch (error) {
@@ -46,8 +38,8 @@ class ValueCache {
     }
 
     this.logger.debug(`Use db: ${this.databasePath} for ${this.api.application.name}`)
-    this.database = await databaseService.createValuesDatabase(this.databasePath, {})
-    this.logger.debug(`Value db count: ${await databaseService.getCount(this.database)}`)
+    this.database = databaseService.createValuesDatabase(this.databasePath, {})
+    this.logger.debug(`Value db count: ${databaseService.getCount(this.database)}`)
 
     if (this.apiCacheConfig?.sendInterval) {
       this.resetTimeout(this.apiCacheConfig.sendInterval)
@@ -63,16 +55,16 @@ class ValueCache {
    * @returns {Promise<void>} - The result
    */
   async cacheValues(id, values) {
-    // Update stat for datasource id
+    // Update stat
     this.cacheStat = (this.cacheStat || 0) + values.length
 
     await this.queue.add(databaseService.saveValues, this.database, this.api.engine.activeProtocols[id]?.dataSource.name || id, values)
     // If the group size is over the groupCount => we immediately send the cache
     // to the North even if the timeout is not finished.
-    const count = await databaseService.getCount(this.database)
+    const count = databaseService.getCount(this.database)
     if (count >= this.apiCacheConfig.groupCount) {
       this.logger.trace(`groupCount reached: ${count} >= ${this.apiCacheConfig.groupCount}`)
-      this.sendCallback()
+      await this.sendCallback()
     }
   }
 
@@ -110,7 +102,7 @@ class ValueCache {
     this.logger.trace(`Cache sendCallbackForValues() for ${name}`)
 
     try {
-      const values = await databaseService.getValuesToSend(this.database, this.apiCacheConfig.maxSendCount)
+      const values = databaseService.getValuesToSend(this.database, this.apiCacheConfig.maxSendCount)
       let removed = null
 
       if (values.length) {
@@ -130,7 +122,7 @@ class ValueCache {
           await this.queue.add(databaseService.saveErroredValues, this.valuesErrorDatabase, id, values)
 
           // Remove them from the cache table
-          removed = await databaseService.removeSentValues(this.database, values)
+          removed = databaseService.removeSentValues(this.database, values)
           this.logger.trace(`Cache:removeSentValues, removed: ${removed} AppId: ${name}`)
           if (removed !== values.length) {
             this.logger.debug(`Cache for ${name} can't be deleted: ${removed}/${values.length}`)
@@ -139,7 +131,7 @@ class ValueCache {
         // If some values were successfully sent
         if (successCountStatus > 0) {
           const valuesSent = values.slice(0, successCountStatus)
-          removed = await databaseService.removeSentValues(this.database, valuesSent)
+          removed = databaseService.removeSentValues(this.database, valuesSent)
           this.logger.trace(`Cache:removeSentValues, removed: ${removed} AppId: ${name}`)
           if (removed !== valuesSent.length) {
             this.logger.debug(`Cache for ${name} can't be deleted: ${removed}/${valuesSent.length}`)
@@ -156,11 +148,10 @@ class ValueCache {
   }
 
   async getStats() {
-    const totalCount = this.cacheStat
-    const cacheSize = await databaseService.getCount(this.database)
+    const cacheSize = databaseService.getCount(this.database)
     return {
       name: `${this.api.application.name} (points)`,
-      count: totalCount || 0,
+      count: this.cacheStat || 0,
       cache: cacheSize || 0,
     }
   }

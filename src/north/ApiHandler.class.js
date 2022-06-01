@@ -4,6 +4,7 @@ const EncryptionService = require('../services/EncryptionService.class')
 const Logger = require('../engine/logger/Logger.class')
 const CertificateService = require('../services/CertificateService.class')
 const ValueCache = require('../engine/cache/ValueCache.class')
+const FileCache = require('../engine/cache/FileCache.class')
 
 class ApiHandler {
   static STATUS = {
@@ -52,6 +53,7 @@ class ApiHandler {
     this.certFile = null
     this.caFile = null
     this.valueCache = null
+    this.fileCache = null
   }
 
   async init() {
@@ -66,6 +68,8 @@ class ApiHandler {
 
     const { engineConfig } = this.engine.configService.getConfig()
     this.valueCache = new ValueCache(this, this.engine.queue, engineConfig.caching)
+    await this.valueCache.initialize()
+    this.fileCache = await FileCache.getFileCacheInstance(this, engineConfig.caching)
   }
 
   /**
@@ -74,8 +78,7 @@ class ApiHandler {
    * @param {string} additionalInfo - connection information to display in the logger
    * @return {void}
    */
-  connect(additionalInfo) {
-    this.valueCache.initialize()
+  async connect(additionalInfo) {
     const { name, api } = this.application
     this.connected = true
     this.updateStatusDataStream({ 'Connected at': new Date().toISOString() })
@@ -141,7 +144,20 @@ class ApiHandler {
    * @return {Promise<void>} - The result
    */
   async cacheValues(id, values) {
-    if (values.length) await this.valueCache.cacheValues(id, values)
+    if (values.length) {
+      await this.valueCache.cacheValues(id, values)
+    }
+  }
+
+  /**
+   * Method called by the Engine to cache an array of values in order to cache them
+   * and send them to a third party application.
+   * @param {String} cachePath - The path of the raw file
+   * @param {number} timestamp - The timestamp the file was received
+   * @return {Promise<void>} - The result
+   */
+  async cacheFile(cachePath, timestamp) {
+    await this.fileCache.cacheFile(cachePath, timestamp)
   }
 
   /**
@@ -213,6 +229,10 @@ class ApiHandler {
 
   async getValueCacheStats() {
     return this.valueCache.getStats()
+  }
+
+  async getFileCacheStats() {
+    return this.fileCache.getStats(this.application.name)
   }
 }
 
