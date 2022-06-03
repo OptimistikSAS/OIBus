@@ -286,7 +286,7 @@ class ADS extends ProtocolHandler {
       this.updateStatusDataStream()
       this.client = null
     }
-    super.disconnect()
+    await super.disconnect()
   }
 }
 

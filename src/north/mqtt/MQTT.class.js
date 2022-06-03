@@ -114,12 +114,12 @@ class MQTT extends ApiHandler {
    * Disconnection from MQTT Broker
    * @return {void}
    */
-  disconnect() {
+  async disconnect() {
     this.logger.info(`Disconnecting ${this.application.name} from ${this.url}`)
     this.client.end(true)
     this.statusData['Connected at'] = 'Not connected'
     this.updateStatusDataStream()
-    super.disconnect()
+    await super.disconnect()
   }
 
   /**

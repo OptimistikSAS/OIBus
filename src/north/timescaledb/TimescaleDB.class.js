@@ -86,11 +86,12 @@ class TimescaleDB extends ApiHandler {
    * Disconnection from TimescaleDB
    * @return {void}
    */
-  disconnect() {
+  async disconnect() {
     this.logger.info('Disconnection from TimeScaleDB')
     if (this.timescaleClient) {
       this.timescaleClient.end()
     }
+    await super.disconnect()
   }
 
   /**

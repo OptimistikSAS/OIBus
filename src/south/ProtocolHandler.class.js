@@ -286,7 +286,7 @@ class ProtocolHandler {
     this.currentlyOnScan[scanMode] = false
   }
 
-  disconnect() {
+  async disconnect() {
     const {
       name,
       id,

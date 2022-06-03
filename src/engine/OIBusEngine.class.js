@@ -175,8 +175,7 @@ class OIBusEngine extends BaseEngine {
             this.activeProtocols[id] = south
             // eslint-disable-next-line no-await-in-loop
             await this.activeProtocols[id].init()
-            // eslint-disable-next-line no-await-in-loop
-            await this.activeProtocols[id].connect()
+            this.activeProtocols[id].connect()
           } else {
             this.logger.error(`Protocol for ${name} is not found: ${protocol}`)
           }
@@ -204,8 +203,7 @@ class OIBusEngine extends BaseEngine {
             this.activeApis[id] = north
             // eslint-disable-next-line no-await-in-loop
             await this.activeApis[id].init()
-            // eslint-disable-next-line no-await-in-loop
-            await this.activeApis[id].connect()
+            this.activeApis[id].connect()
           } else {
             this.logger.error(`API for ${name} is not found: ${api}`)
           }
@@ -320,20 +318,22 @@ class OIBusEngine extends BaseEngine {
     this.jobs = []
 
     // Stop Protocols
-    Object.entries(this.activeProtocols)
-      .forEach(([id, protocol]) => {
-        this.logger.info(`Stopping south ${protocol.dataSource.name} (${id})`)
-        protocol.disconnect()
-      })
-    this.activeProtocols = []
+    // eslint-disable-next-line no-restricted-syntax
+    for (const protocol of Object.values(this.activeProtocols)) {
+      this.logger.info(`Stopping south ${protocol.dataSource.name} (${protocol.dataSource.id})`)
+      // eslint-disable-next-line no-await-in-loop
+      await protocol.disconnect()
+    }
+    this.activeProtocols = {}
 
     // Stop Applications
-    Object.entries(this.activeApis)
-      .forEach(([id, application]) => {
-        this.logger.info(`Stopping north ${application.application.name} (${id})`)
-        application.disconnect()
-      })
-    this.activeApis = []
+    // eslint-disable-next-line no-restricted-syntax
+    for (const application of Object.values(this.activeApis)) {
+      this.logger.info(`Stopping north ${application.application.name} (${application.application.id})`)
+      // eslint-disable-next-line no-await-in-loop
+      await application.disconnect()
+    }
+    this.activeApis = {}
 
     // Log cache data
     const apisCacheStats = await this.cache.getCacheStatsForApis()

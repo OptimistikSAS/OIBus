@@ -114,7 +114,7 @@ class MongoDB extends ApiHandler {
     if (this.client) {
       await this.client.close()
     }
-    super.disconnect()
+    await super.disconnect()
     this.statusData['Connected at'] = 'Not connected'
     this.updateStatusDataStream()
   }
