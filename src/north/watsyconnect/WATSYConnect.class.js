@@ -102,11 +102,11 @@ class WATSYConnect extends ApiHandler {
    * Disconnection from WATSYConnect
    * @return {void}
    */
-  disconnect() {
+  async disconnect() {
     this.client.end(true)
     this.statusData['Connected at'] = 'Not connected'
     this.updateStatusDataStream()
-    super.disconnect()
+    await super.disconnect()
   }
 
   /**

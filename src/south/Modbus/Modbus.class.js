@@ -134,7 +134,7 @@ class Modbus extends ProtocolHandler {
    * Close the connection
    * @return {void}
    */
-  disconnect() {
+  async disconnect() {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout)
     }
@@ -144,7 +144,7 @@ class Modbus extends ProtocolHandler {
       this.statusData['Connected at'] = 'Not connected'
       this.updateStatusDataStream()
     }
-    super.disconnect()
+    await super.disconnect()
   }
 
   connectorToModbusServer() {
