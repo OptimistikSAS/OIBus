@@ -214,12 +214,12 @@ class MQTT extends ProtocolHandler {
    * Close the connection
    * @return {void}
    */
-  disconnect() {
+  async disconnect() {
     if (this.client) {
       this.client.end(true)
       this.logger.info(`Disconnecting from ${this.url}...`)
     }
-    super.disconnect()
+    await super.disconnect()
   }
 
   /**

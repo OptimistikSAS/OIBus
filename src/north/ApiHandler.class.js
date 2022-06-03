@@ -105,7 +105,7 @@ class ApiHandler {
    * North api implementation to allow disconnecting to a third party application for example.
    * @return {void}
    */
-  disconnect() {
+  async disconnect() {
     this.connected = false
     const { name, id } = this.application
     this.logger.info(`North API ${name} (${id}) disconnected`)

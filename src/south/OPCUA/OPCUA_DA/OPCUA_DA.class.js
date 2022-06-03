@@ -137,7 +137,7 @@ class OPCUA_DA extends ProtocolHandler {
       this.statusData['Connected at'] = 'Not connected'
       this.updateStatusDataStream()
     }
-    super.disconnect()
+    await super.disconnect()
   }
 
   /*
