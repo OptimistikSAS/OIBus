@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.0.5](https://github.com/OptimistikSAS/OIBus/compare/v2.0.4...v2.0.5) (2022-06-07)
+
+
+### Bug Fixes
+
+* **ads:** fix ads local connection ([386a489](https://github.com/OptimistikSAS/OIBus/commit/386a48945233a7863a2415f399b7f3a4f16c73c2))
+* **engine:** fix async disconnection when oibus stop ([1ceeda6](https://github.com/OptimistikSAS/OIBus/commit/1ceeda6b679a75cf95debf259d00a949a029c174))
+
 ### [2.0.4](https://github.com/OptimistikSAS/OIBus/compare/v2.0.3...v2.0.4) (2022-05-30)
 
 
