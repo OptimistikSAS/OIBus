@@ -1,7 +1,7 @@
 const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const { Client } = require('pg')
-const oracledb = require('oracledb')
+// const oracledb = require('oracledb')
 const Logger = require('../../src/engine/logger/Logger.class')
 
 const host = '127.0.0.1'
@@ -17,8 +17,8 @@ const insertValueIntoMSSQL = async (query) => {
     server: host,
     user: 'sa', // lgtm [js/hardcoded-credentials]
     password: 'Oibus123@', // lgtm [js/hardcoded-credentials]
-    database,
-    connectionTimeout: 500,
+    // database,
+    connectionTimeout: 1000,
     encrypt: false,
   }
 
@@ -40,7 +40,7 @@ const insertValueIntoMySQL = async (query) => {
   }
 
   const connection = await mysql.createConnection(config)
-  await connection.query('CREATE TABLE IF NOT EXISTS history (temperature double)')
+  await connection.query('CREATE TABLE IF NOT EXISTS history (temperature double, created_at datetime)')
   await connection.query(query)
   await connection.close()
 }
@@ -63,25 +63,26 @@ const insertValueIntoPostgreSQL = async (query) => {
 }
 
 const insertValueIntoOracle = async (query) => {
-  const config = {
-    user,
-    password,
-    connectString: 'localhost:1433',
-    poolTimeout: 500,
-    privilege: oracledb.SYSDBA,
-  }
+  // const config = {
+  //   user,
+  //   password,
+  //   connectString: 'localhost:1433',
+  //   poolTimeout: 500,
+  //   privilege: oracledb.SYSDBA,
+  // }
 
-  oracledb.autoCommit = true
-  const connection = await oracledb.getConnection(config)
-  connection.callTimeout = 500
-  await connection.execute('CREATE TABLE IF NOT EXISTS history (temperature number)')
-  await connection.execute(query)
-  await connection.close()
+  // oracledb.autoCommit = true
+  // const connection = await oracledb.getConnection(config)
+  // connection.callTimeout = 500
+  // await connection.execute('CREATE TABLE IF NOT EXISTS history (temperature number)')
+  // await connection.execute(query)
+  // await connection.close()
 }
 
-const insertValue = async (destination) => {
+// eslint-disable-next-line import/prefer-default-export
+export const insertValue = async (destination, date) => {
   const value = (100 * Math.random()).toFixed(2)
-  const query = `INSERT INTO ${table} (temperature) VALUES (${value})`
+  const query = `INSERT INTO ${table} (temperature, created_at) VALUES (${value}, '${date || new Date()}')`
   try {
     switch (destination) {
       case 'mysql': {
@@ -145,4 +146,4 @@ const seedDestination = () => {
   }
 }
 
-seedDestination()
+// seedDestination()

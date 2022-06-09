@@ -289,6 +289,7 @@ class SQL extends ProtocolHandler {
       const result = await request.query(adaptedQuery)
       const [first] = result.recordsets
       data = first
+      await pool.close()
     } catch (error) {
       this.logger.error(error)
     } finally {
