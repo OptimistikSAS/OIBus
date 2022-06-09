@@ -23,7 +23,8 @@
     "build-linux": "npm run build-client && npm run build-lib-linux && rimraf ./dist/linux && pkg ./src/index.js --public --compress GZip --config package.json --output ./dist/linux/oibus --target node16-linux-x64 && ncp ./deps/linux ./dist/linux && ncp ./src/config/defaultConfig.json ./dist/linux/defaultConfig.json",
     "build-win-setup": "rimraf ./dist/win/win-setup-release && C:\\\"Program Files (x86)\"\\\"Inno Setup 6\"\\iscc.exe \"./deps/win/oibus_setup.iss\" \"/DMyAppVersion=\"%npm_package_version%",
     "start-client": "webpack --mode development --watch",
-    "test": "jest --coverage",
+    "test": "jest --coverage --modulePathIgnorePatterns='.*\\.test\\.js$'",
+    "int-test": "jest --coverage --testPathPattern='.*\\.test\\.js$'",
     "lint": "eslint src --ext .jsx --ext .js",
     "lint-fix": "eslint src --ext .jsx --ext .js --fix",
     "version": "npm run build && gulp build-archives",
@@ -31,7 +32,7 @@
     "bump": "standard-version -i CHANGELOG.md",
     "postbump": "git push --follow-tags origin",
     "setup-dev-env": "cd local-development && docker-compose --env-file ./.env.dev up",
-    "seed-destinations": "node ./local-developent/database-seeder/seed-db.js"
+    "seed-destinations": "node ./local-development/database-seeder/seed-db.js"
   },
   "keywords": [
     "Optimistik"
@@ -140,9 +141,6 @@
       "\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js",
       "monaco-editor": "<rootDir>/__mocks__/monacoEditorMock.js",
       "nanoid": "<rootDir>/__mocks__/nanoidMock.js"
-    },
-    "fakeTimers": {
-      "enableGlobally": true
     }
   },
   "pkg": {

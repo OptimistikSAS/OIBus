@@ -75,10 +75,12 @@ const nowDateString = '2020-02-02T02:02:02.222Z'
 const sqlConfig = config.south.dataSources[7]
 Settings.now = () => new Date(nowDateString).valueOf()
 const RealDate = Date
+
+jest.useFakeTimers()
+
 beforeEach(async () => {
   jest.resetAllMocks()
   jest.clearAllMocks()
-  jest.useFakeTimers()
   jest.restoreAllMocks()
   sqlSouth = new SQL(sqlConfig, engine)
   global.Date = jest.fn(() => new RealDate(nowDateString))
