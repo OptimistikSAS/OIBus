@@ -18,6 +18,9 @@ class DeferredPromise {
   }
 }
 
+// Time to wait before closing the connection by timeout and killing the Agent process
+const DISCONNECTION_TIMEOUT = 10000
+
 /**
  * Class OPCHDA.
  */
@@ -50,6 +53,8 @@ class OPCHDA extends ProtocolHandler {
 
     this.canHandleHistory = true
     this.handlesPoints = true
+
+    this.disconnectionTimeout = null
   }
 
   /**
@@ -62,7 +67,7 @@ class OPCHDA extends ProtocolHandler {
       await this.runTcpServer()
       await this.connection$.promise
     } else {
-      this.logger.error(`OIBusOPCHDA agent only supported on Windows: ${process.platform}`)
+      this.logger.error(`OIBus OPCHDA Agent only supported on Windows: ${process.platform}`)
     }
   }
 
@@ -105,7 +110,7 @@ class OPCHDA extends ProtocolHandler {
   }
 
   /**
-   * Close the connection.
+   * Close the connection and reinitialize the connector.
    * @return {void}
    */
   async disconnect() {
@@ -113,10 +118,26 @@ class OPCHDA extends ProtocolHandler {
       clearTimeout(this.reconnectTimeout)
     }
 
-    this.sendStopMessage()
-    await this.disconnection$.promise
+    if (this.agentConnected) { // TCP connection with the HDA Agent was previously established
+      // In this case, we ask the HDA Agent to stop and disconnect gracefully
+      this.sendStopMessage()
+      await this.disconnection$.promise
+    }
 
-    this.tcpServer.stop()
+    if (this.disconnectionTimeout) {
+      clearTimeout(this.disconnectionTimeout)
+    }
+
+    // Child process HDA Agent is now ready to be killed
+    this.child.kill()
+    this.child = null
+
+    if (this.tcpServer) {
+      this.tcpServer.stop()
+    }
+
+    this.tcpServer = null
+
     this.agentConnected = false
 
     this.statusData['Connected at'] = 'Not connected'
@@ -266,6 +287,9 @@ class OPCHDA extends ProtocolHandler {
     }
     this.sendMessage(message)
     this.disconnection$ = new DeferredPromise()
+    this.disconnectionTimeout = setTimeout(() => {
+      this.disconnection$.resolve()
+    }, DISCONNECTION_TIMEOUT)
   }
 
   /**
@@ -308,8 +332,9 @@ class OPCHDA extends ProtocolHandler {
           this.agentConnected = true
           this.sendConnectMessage()
           break
-        case 'Connect': // The HDA answer on connection request. The Content.Connected variable tell if the HDA Agent is connected to the HDA Server
-          this.logger.info(`HDAAgent connected: ${messageObject.Content.Connected}`)
+        case 'Connect':
+          // The HDA Agent answer on connection request. The Content.Connected variable tell if the HDA Agent is connected to the HDA Server
+          this.logger.info(`HDA Agent connected: ${messageObject.Content.Connected}`)
           if (messageObject.Content.Connected) {
             // Now that the HDA Agent is connected, the Agent can be initialized with the scan groups
             this.sendInitializeMessage()
@@ -327,7 +352,7 @@ class OPCHDA extends ProtocolHandler {
           this.updateStatusDataStream()
           // resolve the connection promise
           this.connection$.resolve()
-          this.logger.info(`HDAAgent initialized: ${this.connected}`)
+          this.logger.info(`HDA Agent initialized: ${this.connected}`)
           break
         case 'Read': // Receive the values for the requested scan group (Content.Group) after a read request from historyQuery
           {
@@ -387,11 +412,16 @@ class OPCHDA extends ProtocolHandler {
             this.ongoingReads[messageObject.Content.Group] = false
           }
           break
-        case 'Stop': // The HDA Agent has received the stop message and is disconnecting from the HDA Server
-          this.logger.info('HDAAgent stopping...')
+        case 'Stop': // The HDA Agent has received the stop message and the disconnection promise can be resolved
+          this.logger.info('HDA Agent stopping...')
+          if (!this.connected) {
+            // If the connection with the OPC HDA server could not be established,
+            // The promise can be resolved right away since we won't receive the disconnect message
+            this.disconnection$.resolve()
+          }
           break
-        case 'Disconnect': // The HDA Agent is disconnected, the disconnection promise can be resolved
-          this.logger.info('HDAAgent disconnected')
+        case 'Disconnect': // The HDA Agent is disconnected from the server
+          this.logger.info('HDA Agent disconnected')
           this.disconnection$.resolve()
           break
         default:
