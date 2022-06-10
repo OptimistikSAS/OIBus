@@ -262,6 +262,7 @@ class OPCHDA extends ProtocolHandler {
         })),
         MaxReturnValues: this.maxReturnValues,
         MaxReadInterval: this.maxReadInterval,
+        ReadIntervalDelay: this.readIntervalDelay,
       },
     }
     this.sendMessage(message)
