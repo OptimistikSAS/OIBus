@@ -20,7 +20,7 @@ const selectStyle = (level) => {
       return 'text-info'
     case 'info':
       return 'text-success'
-    case 'warning':
+    case 'warn':
       return 'text-warning'
     case 'error':
       return 'text-danger'
@@ -30,7 +30,7 @@ const selectStyle = (level) => {
 }
 
 const Log = () => {
-  const verbosityOptions = ['error', 'warning', 'info', 'debug', 'trace']
+  const verbosityOptions = ['error', 'warn', 'info', 'debug', 'trace']
   const defaultMaxLog = 300
   const [fromDate, setFromDate] = React.useState()
   const [toDate, setToDate] = React.useState()
