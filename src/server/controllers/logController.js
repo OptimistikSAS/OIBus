@@ -17,7 +17,7 @@ const getLogs = async (ctx) => {
   const dayAgo = new Date(now - 86400000)
   const fromDate = ctx.query.fromDate || new Date(dayAgo).toISOString()
   const toDate = ctx.query.toDate || new Date(now).toISOString()
-  const verbosity = ctx.query.verbosity?.replace(/\[|\]/g, '').split(',') || 'info'
+  const verbosity = ctx.query.verbosity?.replace(/[[\]]/g, '').split(',') || 'info'
 
   const logs = await databaseService.getLogs(databasePath, fromDate, toDate, verbosity)
   ctx.ok(logs)

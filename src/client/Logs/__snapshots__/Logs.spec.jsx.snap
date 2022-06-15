@@ -104,7 +104,7 @@ exports[`Logs check Logs 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  warning
+                  warn
                 </label>
               </div>
               <div
@@ -301,7 +301,7 @@ exports[`Logs check Logs 1`] = `
                     </td>
                   </tr>
                   <tr
-                    class="oi-log text-warning"
+                    class="oi-log text-primary"
                   >
                     <td
                       style="width: 120px;"
@@ -453,7 +453,7 @@ exports[`Logs check change filterText 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  warning
+                  warn
                 </label>
               </div>
               <div
@@ -687,7 +687,7 @@ exports[`Logs check change fromDate 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  warning
+                  warn
                 </label>
               </div>
               <div
@@ -884,7 +884,7 @@ exports[`Logs check change fromDate 1`] = `
                     </td>
                   </tr>
                   <tr
-                    class="oi-log text-warning"
+                    class="oi-log text-primary"
                   >
                     <td
                       style="width: 120px;"
@@ -1036,7 +1036,7 @@ exports[`Logs check change toDate 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  warning
+                  warn
                 </label>
               </div>
               <div
@@ -1233,7 +1233,7 @@ exports[`Logs check change toDate 1`] = `
                     </td>
                   </tr>
                   <tr
-                    class="oi-log text-warning"
+                    class="oi-log text-primary"
                   >
                     <td
                       style="width: 120px;"
@@ -1385,7 +1385,7 @@ exports[`Logs check change verbosity, check trace 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  warning
+                  warn
                 </label>
               </div>
               <div
@@ -1619,7 +1619,7 @@ exports[`Logs check change verbosity, uncheck error 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  warning
+                  warn
                 </label>
               </div>
               <div
@@ -1853,7 +1853,7 @@ exports[`Logs check press Show Logs, error in logs call 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  warning
+                  warn
                 </label>
               </div>
               <div
@@ -2087,7 +2087,7 @@ exports[`Logs check press showMore 1`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  warning
+                  warn
                 </label>
               </div>
               <div
@@ -8029,7 +8029,7 @@ exports[`Logs check press showMore 2`] = `
                     id="verbosity"
                     type="checkbox"
                   />
-                  warning
+                  warn
                 </label>
               </div>
               <div
