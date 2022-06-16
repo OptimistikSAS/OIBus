@@ -68,11 +68,13 @@ class OIAnalytics extends ApiHandler {
   async handleFile(filePath) {
     const stats = await fs.stat(filePath)
     this.logger.debug(`OIAnalytics ${this.application.name} handleFile(${filePath}) (${stats.size} bytes)`)
+
+    const result = await this.postFile(filePath)
     this.statusData['Last uploaded file'] = filePath
     this.statusData['Number of files sent since OIBus has started'] += 1
     this.statusData['Last upload at'] = new Date().toISOString()
     this.updateStatusDataStream()
-    return this.postFile(filePath)
+    return result
   }
 }
 
