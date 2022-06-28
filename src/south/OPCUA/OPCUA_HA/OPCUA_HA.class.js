@@ -121,7 +121,7 @@ class OPCUA_HA extends ProtocolHandler {
   }
 
   async readHistoryValue(nodes, startTime, endTime, options) {
-    this.logger.trace(`Read with options ${JSON.stringify(options)}`)
+    this.logger.trace(`Reading ${nodes.length} with options ${JSON.stringify(options)}`)
     const numValuesPerNode = options?.numValuesPerNode ?? 0
     let nodesToRead = nodes.map((node) => ({
       continuationPoint: null,
@@ -167,8 +167,14 @@ class OPCUA_HA extends ProtocolHandler {
       if (response?.responseHeader.serviceResult.isNot(Opcua.StatusCodes.Good)) {
         this.logger.error(new Error(response.responseHeader.serviceResult.toString()))
       }
+      if (response?.results) {
+        this.logger.trace(`Received a response of size ${response?.results?.length}`)
+      }
       // eslint-disable-next-line no-loop-func
       response?.results?.forEach((result, i) => {
+        /* eslint-disable no-underscore-dangle */
+        this.logger.trace(`Result ${i} for node ${nodesToRead[i].nodeId} contains ${result.historyData?.dataValues.length}
+        values and has status code ${result.statusCode._description}, continuation point is ${result.continuationPoint}`)
         if (!dataValues[i]) dataValues.push([])
         dataValues[i].push(...result.historyData?.dataValues ?? [])
         /**
