@@ -75,7 +75,7 @@ class FolderScanner extends ProtocolHandler {
         this.logger.error(`Error sending the file ${file}: ${sendFileError.message}`)
       }
     }
-    this.logger.trace('Leaving onscan method')
+    this.logger.trace('Leaving fileQuery method')
   }
 
   /**

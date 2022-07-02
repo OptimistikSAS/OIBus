@@ -266,16 +266,7 @@ class OIBusEngine extends BaseEngine {
         const job = timexe(cronTime, () => {
           // on each scan, activate each protocols
           this.scanLists[scanMode].forEach(async (id) => {
-            if (!this.activeProtocols[id].currentlyOnScan[scanMode]) {
-              try {
-                await this.activeProtocols[id].onScan(scanMode)
-              } catch (error) {
-                this.logger.error(`scan for "${this.activeProtocols[id]?.dataSource.name || id}" failed: ${error}`)
-              }
-            } else {
-              // eslint-disable-next-line max-len
-              this.logger.warn(`${this.activeProtocols[id]?.dataSource.name || id} currently on scan. Skipping it. Maybe the duration of scanMode (${scanMode}) should be increased`)
-            }
+            await this.activeProtocols[id].onScan(scanMode)
           })
         })
         if (job.result !== 'ok') {
