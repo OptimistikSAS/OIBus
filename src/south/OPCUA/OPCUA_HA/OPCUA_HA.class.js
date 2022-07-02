@@ -90,7 +90,7 @@ class OPCUA_HA extends ProtocolHandler {
    * @param {String} scanMode - the current scanMode
    * @return {Promise<void>} The connection promise
    */
-  manageDataValues = (dataValues, nodesToRead, opcStartTime, scanMode) => {
+  manageDataValues = async (dataValues, nodesToRead, opcStartTime, scanMode) => {
     const values = []
     let maxTimestamp = opcStartTime.getTime()
     dataValues.forEach((dataValue, i) => {
@@ -101,6 +101,9 @@ class OPCUA_HA extends ProtocolHandler {
         const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
         return selectedTimestamp.getTime() >= opcStartTime.getTime()
       })
+      if (newerValues.length < dataValue.length) {
+        this.logger.debug(`Received ${newerValues.length} new values for ${nodesToRead[i].pointId} among ${dataValue.length} values retrieved`)
+      }
       values.push(...newerValues.map((value) => {
         const selectedTimestamp = value.sourceTimestamp ?? value.serverTimestamp
         const selectedTime = selectedTimestamp.getTime()
@@ -115,9 +118,15 @@ class OPCUA_HA extends ProtocolHandler {
         }
       }))
     })
-    // send the packet immediately to the engine
-    this.addValues(values)
-    this.lastCompletedAt[scanMode] = new Date(maxTimestamp + 1)
+    if (values.length > 0) {
+      // send the packet immediately to the engine
+      this.addValues(values)
+      this.lastCompletedAt[scanMode] = new Date(maxTimestamp + 1)
+      await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
+      this.logger.debug(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
+    } else {
+      this.logger.debug(`No value for ${scanMode}`)
+    }
   }
 
   async readHistoryValue(nodes, startTime, endTime, options) {
@@ -168,7 +177,7 @@ class OPCUA_HA extends ProtocolHandler {
         this.logger.error(new Error(response.responseHeader.serviceResult.toString()))
       }
       if (response?.results) {
-        this.logger.trace(`Received a response of size ${response?.results?.length}`)
+        this.logger.debug(`Received a response of size ${response?.results?.length}`)
       }
       // eslint-disable-next-line no-loop-func
       response?.results?.forEach((result, i) => {
@@ -204,12 +213,16 @@ class OPCUA_HA extends ProtocolHandler {
       indexRange: undefined,
       nodeId: node.nodeId,
     }))
-    await this.session.performMessageTransaction(new Opcua.HistoryReadRequest({
+    const response = await this.session.performMessageTransaction(new Opcua.HistoryReadRequest({
       historyReadDetails,
       nodesToRead,
       releaseContinuationPoints: true,
       timestampsToReturn: Opcua.TimestampsToReturn.Both,
     }))
+
+    if (response.responseHeader.serviceResult._value !== 0) {
+      this.logger.error(`Error while releasing continuation points: ${response.responseHeader.serviceResult._description}`)
+    }
 
     Object.keys(logs).forEach((statusCode) => {
       switch (statusCode) {
@@ -349,9 +362,6 @@ class OPCUA_HA extends ProtocolHandler {
       }
 
       await this.manageDataValues(dataValues, nodesToRead, startTime, scanMode)
-
-      await this.setConfig(`lastCompletedAt-${scanMode}`, this.lastCompletedAt[scanMode].toISOString())
-      this.logger.debug(`Updated lastCompletedAt for ${scanMode} to ${this.lastCompletedAt[scanMode]}`)
     } catch (error) {
       this.logger.error(`on Scan ${scanMode}:${error.stack}`)
       await this.disconnect()
