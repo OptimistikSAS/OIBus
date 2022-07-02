@@ -183,7 +183,7 @@ class HistoryQueryEngine extends BaseEngine {
         this.historyQuery.start()
       }
     } else {
-      this.logger.warn('No HistoryQuery to execute')
+      this.logger.info('No HistoryQuery to execute')
       this.statusData.ongoingHistoryQueryId = null
       this.updateStatusDataStream()
     }
