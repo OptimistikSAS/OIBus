@@ -96,13 +96,13 @@ class OPCUA_DA extends ProtocolHandler {
    */
   async lastPointQuery(scanMode) {
     if (!this.connected) {
-      this.logger.debug(`onScan ignored: connected: ${this.connected}`)
+      this.logger.debug(`lastPointQuery ignored: connected: ${this.connected}`)
       return
     }
 
     const nodesToRead = this.dataSource.points.filter((point) => point.scanMode === scanMode)
     if (!nodesToRead.length) {
-      this.logger.error(`onScan ignored: no points to read for scanMode: ${scanMode}`)
+      this.logger.error(`lastPointQuery ignored: no points to read for scanMode: ${scanMode}`)
       return
     }
 

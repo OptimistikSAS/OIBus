@@ -99,7 +99,8 @@ class ProtocolHandler {
   prepareHistorySupport() {
     this.lastCompletedAt = {}
     this.queryParts = {}
-    this.ongoingReads = {}
+    this.ongoingReads = {} // each scanMode will have a value equal to True if a read is ongoing
+    this.ignoredReadsCounters = {} // each scanMode will maintain a counter on the number of ignored reads
     if (this.dataSource.scanMode) {
       this.lastCompletedAt[this.dataSource.scanMode] = new Date().getTime()
       this.queryParts[this.dataSource.scanMode] = 0
@@ -204,9 +205,12 @@ class ProtocolHandler {
 
   async historyQueryHandler(scanMode) {
     if (!this.connected || this.ongoingReads[scanMode]) {
-      this.logger.debug(`onScan ignored: connected: ${this.connected}, ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
+      this.ignoredReadsCounters[scanMode] += 1
+      // eslint-disable-next-line max-len
+      this.logger.debug(`onScan ignored (counter= ${this.ignoredReadsCounters[scanMode]}): connected: ${this.connected}, ongoingReads[${scanMode}]: ${this.ongoingReads[scanMode]}`)
       return
     }
+    this.ignoredReadsCounters[scanMode] = 0 // reset the counter as the read is not ignored.
 
     if (this.dataSource[this.constructor.name].scanGroups) {
       const scanGroup = this.scanGroups.find((item) => item.scanMode === scanMode)
@@ -266,24 +270,31 @@ class ProtocolHandler {
   }
 
   async onScan(scanMode) {
-    this.currentlyOnScan[scanMode] = true
     this.logger.debug(`${this.constructor.name} activated on scanMode: ${scanMode}.`)
-    this.statusData['Last scan at'] = new Date().toLocaleString()
-    this.updateStatusDataStream()
-    try {
-      if (this.supportedModes?.supportLastPoint) {
-        await this.lastPointQuery(scanMode)
+    this.currentlyOnScan[scanMode] ??= 0 // initialize if undefined
+    if (this.currentlyOnScan[scanMode] === 0) {
+      this.currentlyOnScan[scanMode] = 1
+      this.statusData['Last scan at'] = new Date().toLocaleString()
+      this.updateStatusDataStream()
+      try {
+        if (this.supportedModes?.supportLastPoint) {
+          await this.lastPointQuery(scanMode)
+        }
+        if (this.supportedModes?.supportFile) {
+          await this.fileQuery(scanMode)
+        }
+        if (this.supportedModes?.supportHistory) {
+          await this.historyQueryHandler(scanMode)
+        }
+      } catch (error) {
+        this.logger.error(`${this.dataSource.name} on scan error: ${error}.`)
       }
-      if (this.supportedModes?.supportFile) {
-        await this.fileQuery(scanMode)
-      }
-      if (this.supportedModes?.supportHistory) {
-        await this.historyQueryHandler(scanMode)
-      }
-    } catch (error) {
-      this.logger.error(`${this.constructor.name} on scan error: ${error}.`)
+      this.currentlyOnScan[scanMode] = 0
+    } else {
+      this.currentlyOnScan[scanMode] += 1
+      this.logger.warn(`${this.dataSource.name} currently on scan = ${
+        this.currentlyOnScan[scanMode]}. Skipping it. Maybe the duration of scanMode (${scanMode}) should be increased`)
     }
-    this.currentlyOnScan[scanMode] = false
   }
 
   async disconnect() {
