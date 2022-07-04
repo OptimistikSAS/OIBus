@@ -24,6 +24,9 @@ class Logger {
     if (specificParameters.consoleLevel && specificParameters.consoleLevel !== ENGINE_LOG_LEVEL_ENTRY) {
       logParameters.consoleLog.level = specificParameters.consoleLevel
     }
+    if (specificParameters.fileLevel && specificParameters.fileLevel !== ENGINE_LOG_LEVEL_ENTRY) {
+      logParameters.fileLog.level = specificParameters.fileLevel
+    }
     if (specificParameters.sqliteLevel && specificParameters.sqliteLevel !== ENGINE_LOG_LEVEL_ENTRY) {
       logParameters.sqliteLog.level = specificParameters.sqliteLevel
     }
