@@ -387,18 +387,20 @@ class OPCHDA extends ProtocolHandler {
 
             const associatedScanGroup = this.scanGroups.find((scanGroup) => scanGroup.name === messageObject.Content.Group)
             // eslint-disable-next-line no-case-declarations
-            const values = messageObject.Content.Points.map((point) => {
+            const values = messageObject.Content.Points.filter((point) => {
               if (point.Timestamp != null && point.Value != null) {
-                const associatedPointId = associatedScanGroup?.points
-                  .find((scanGroupPoint) => scanGroupPoint.nodeId === point.ItemId)?.pointId || point.ItemId
-                return {
-                  pointId: associatedPointId,
-                  timestamp: new Date(point.Timestamp).toISOString(),
-                  data: { value: point.Value.toString(), quality: JSON.stringify(point.Quality) },
-                }
+                return true
               }
               this.logger.error(`point: ${point.ItemId} is invalid:${JSON.stringify(point)}`)
-              return {}
+              return false
+            }).map((point) => {
+              const associatedPointId = associatedScanGroup?.points
+                .find((scanGroupPoint) => scanGroupPoint.nodeId === point.ItemId)?.pointId || point.ItemId
+              return {
+                pointId: associatedPointId,
+                timestamp: new Date(point.Timestamp).toISOString(),
+                data: { value: point.Value.toString(), quality: JSON.stringify(point.Quality) },
+              }
             })
             this.addValues(values)
 
