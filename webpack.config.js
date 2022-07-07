@@ -1,6 +1,7 @@
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const ESLintPlugin = require('eslint-webpack-plugin')
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
 
 module.exports = {
   entry: ['./src/client/index.jsx'],
@@ -24,25 +25,23 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(js|jsx)$/,
+        test: /\.(js|jsx)$/i,
         exclude: /node_modules/,
         use: ['babel-loader'],
       },
       {
-        test: /\.(css)$/,
-        use: [
-          { loader: 'style-loader' }, // creates style nodes from JS strings
-          { loader: 'css-loader' }, // translates CSS into CommonJS
-        ],
+        test: /\.(css)$/i,
+        // creates style nodes from JS strings and translates CSS into CommonJS
+        use: ['style-loader', 'css-loader'],
+
       },
       {
-        test: /\.(png|jpg|gif|svg)$/i,
-        use: [
-          {
-            loader: 'url-loader',
-            options: { limit: 40000 },
-          },
-        ],
+        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+        type: 'asset/inline',
+      },
+      {
+        test: /\.(woff|woff2|eot|ttf|otf)$/i,
+        type: 'asset/resource',
       },
     ],
   },
@@ -52,5 +51,6 @@ module.exports = {
       favicon: path.resolve('./src/client/favicon.ico'),
     }),
     new ESLintPlugin(),
+    new MonacoWebpackPlugin({ languages: ['json', 'sql'] }),
   ],
 }

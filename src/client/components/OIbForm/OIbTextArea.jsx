@@ -1,26 +1,56 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { FormFeedback, FormGroup, FormText, Input, Label } from 'reactstrap'
-import MonacoEditor from '@monaco-editor/react'
+import * as monaco from 'monaco-editor'
+
+const REBOUND_TIMEOUT = 350
 
 const OIbTextArea = ({ label, contentType, help, valid, value, name, onChange, defaultValue }) => {
   React.useEffect(() => {
     if (value === null) onChange(name, defaultValue)
   }, [value])
+
+  useEffect(() => {
+    let editor
+    let reboundTimeout
+    if (contentType) {
+      editor = monaco.editor.create(document.getElementById('monaco-editor'), {
+        value,
+        language: contentType,
+        theme: 'vs',
+        selectOnLineNumbers: true,
+        minimap: { enabled: false },
+        scrollbar: { alwaysConsumeMouseWheel: false },
+      })
+      editor.onDidChangeModelContent(() => {
+        if (reboundTimeout) {
+          clearTimeout(reboundTimeout)
+        }
+
+        reboundTimeout = setTimeout(() => {
+          const newRequest = editor.getValue()
+          onChange(name, newRequest, valid(newRequest))
+        }, REBOUND_TIMEOUT)
+      })
+    }
+    return () => {
+      if (reboundTimeout) {
+        clearTimeout(reboundTimeout)
+        if (editor) {
+          const newRequest = editor.getValue()
+          onChange(name, newRequest, valid(newRequest))
+        }
+      }
+      if (editor) {
+        editor.dispose()
+      }
+    }
+  }, [value, contentType])
+
   const handleInputChange = (event) => {
     const { target } = event
     const { value: newVal } = target
     onChange(name, newVal, valid(newVal))
-  }
-
-  const handleMonacoEditorChange = (newRequest) => {
-    onChange(name, newRequest, valid(newRequest))
-  }
-
-  const monacoEditorOptions = {
-    selectOnLineNumbers: true,
-    minimap: { enabled: false },
-    scrollbar: { alwaysConsumeMouseWheel: false },
   }
 
   const validCheck = valid(value)
@@ -48,14 +78,7 @@ const OIbTextArea = ({ label, contentType, help, valid, value, name, onChange, d
       <>
         <div className="invalid-feedback">{validCheck}</div>
         {help && <div className="mb-2"><FormText>{help}</FormText></div>}
-        <MonacoEditor
-          language={contentType}
-          theme="vs"
-          height="400px"
-          value={value}
-          options={monacoEditorOptions}
-          onChange={handleMonacoEditorChange}
-        />
+        <div id="monaco-editor" style={{ height: '400px' }} />
       </>
       )}
     </FormGroup>
