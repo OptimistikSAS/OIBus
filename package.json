@@ -68,7 +68,7 @@
     "micromatch": "4.0.5",
     "minimist": "1.2.6",
     "monaco-editor": "0.33.0",
-    "mongodb": "4.6.0",
+    "mongodb": "4.7.0",
     "mqtt": "4.3.7",
     "mqtt-wildcard": "3.0.9",
     "mssql": "8.1.0",
