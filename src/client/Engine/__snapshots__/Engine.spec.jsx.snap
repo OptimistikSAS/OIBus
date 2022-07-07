@@ -220,7 +220,7 @@ exports[`Engine check Engine 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Safe mode
             </label>
@@ -871,7 +871,7 @@ exports[`Engine check Engine 1`] = `
                 class="mb-3 mb-3"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   Tailable
                 </label>
@@ -3757,7 +3757,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Safe mode
             </label>
@@ -4408,7 +4408,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                 class="mb-3 mb-3"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   Tailable
                 </label>
@@ -6880,7 +6880,7 @@ exports[`Engine check change engineName 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Safe mode
             </label>
@@ -7531,7 +7531,7 @@ exports[`Engine check change engineName 1`] = `
                 class="mb-3 mb-3"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   Tailable
                 </label>
@@ -10417,7 +10417,7 @@ exports[`Engine check change password 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Safe mode
             </label>
@@ -11068,7 +11068,7 @@ exports[`Engine check change password 1`] = `
                 class="mb-3 mb-3"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   Tailable
                 </label>
@@ -13954,7 +13954,7 @@ exports[`Engine check change port 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Safe mode
             </label>
@@ -14605,7 +14605,7 @@ exports[`Engine check change port 1`] = `
                 class="mb-3 mb-3"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   Tailable
                 </label>
@@ -17491,7 +17491,7 @@ exports[`Engine check change user 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Safe mode
             </label>
@@ -18142,7 +18142,7 @@ exports[`Engine check change user 1`] = `
                 class="mb-3 mb-3"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   Tailable
                 </label>
