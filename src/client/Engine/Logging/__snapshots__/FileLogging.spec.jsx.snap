@@ -177,7 +177,7 @@ exports[`FileLogging check FileLogging 1`] = `
           class="mb-3 mb-3"
         >
           <label
-            class="form-check-label form-label"
+            class="form-check-label"
           >
             Tailable
           </label>
@@ -372,7 +372,7 @@ exports[`FileLogging check change file level to "warning" 1`] = `
           class="mb-3 mb-3"
         >
           <label
-            class="form-check-label form-label"
+            class="form-check-label"
           >
             Tailable
           </label>
@@ -567,7 +567,7 @@ exports[`FileLogging check change file name to "new_filename" 1`] = `
           class="mb-3 mb-3"
         >
           <label
-            class="form-check-label form-label"
+            class="form-check-label"
           >
             Tailable
           </label>
@@ -762,7 +762,7 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
           class="mb-3 mb-3"
         >
           <label
-            class="form-check-label form-label"
+            class="form-check-label"
           >
             Tailable
           </label>
@@ -957,7 +957,7 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
           class="mb-3 mb-3"
         >
           <label
-            class="form-check-label form-label"
+            class="form-check-label"
           >
             Tailable
           </label>
@@ -1152,7 +1152,7 @@ exports[`FileLogging check change fileLog tailable to false 1`] = `
           class="mb-3 mb-3"
         >
           <label
-            class="form-check-label form-label"
+            class="form-check-label"
           >
             Tailable
           </label>

@@ -3419,7 +3419,7 @@ exports[`NorthForm check NorthForm with application: Timescale 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               use key "value" of Json "data"
             </label>
@@ -8382,7 +8382,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Reject Unauthorized Connection
             </label>
@@ -8582,7 +8582,7 @@ exports[`NorthForm check NorthForm with application: mqtt 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               use key "value" of Json "data"
             </label>

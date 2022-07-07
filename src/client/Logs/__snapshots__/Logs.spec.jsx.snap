@@ -81,7 +81,7 @@ exports[`Logs check Logs 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -96,7 +96,7 @@ exports[`Logs check Logs 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -111,7 +111,7 @@ exports[`Logs check Logs 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -126,7 +126,7 @@ exports[`Logs check Logs 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -141,7 +141,7 @@ exports[`Logs check Logs 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -430,7 +430,7 @@ exports[`Logs check change filterText 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -445,7 +445,7 @@ exports[`Logs check change filterText 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -460,7 +460,7 @@ exports[`Logs check change filterText 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -475,7 +475,7 @@ exports[`Logs check change filterText 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -490,7 +490,7 @@ exports[`Logs check change filterText 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -664,7 +664,7 @@ exports[`Logs check change fromDate 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -679,7 +679,7 @@ exports[`Logs check change fromDate 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -694,7 +694,7 @@ exports[`Logs check change fromDate 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -709,7 +709,7 @@ exports[`Logs check change fromDate 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -724,7 +724,7 @@ exports[`Logs check change fromDate 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1013,7 +1013,7 @@ exports[`Logs check change toDate 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1028,7 +1028,7 @@ exports[`Logs check change toDate 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1043,7 +1043,7 @@ exports[`Logs check change toDate 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1058,7 +1058,7 @@ exports[`Logs check change toDate 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1073,7 +1073,7 @@ exports[`Logs check change toDate 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1362,7 +1362,7 @@ exports[`Logs check change verbosity, check trace 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1377,7 +1377,7 @@ exports[`Logs check change verbosity, check trace 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1392,7 +1392,7 @@ exports[`Logs check change verbosity, check trace 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1407,7 +1407,7 @@ exports[`Logs check change verbosity, check trace 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1422,7 +1422,7 @@ exports[`Logs check change verbosity, check trace 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1596,7 +1596,7 @@ exports[`Logs check change verbosity, uncheck error 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1611,7 +1611,7 @@ exports[`Logs check change verbosity, uncheck error 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1626,7 +1626,7 @@ exports[`Logs check change verbosity, uncheck error 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1641,7 +1641,7 @@ exports[`Logs check change verbosity, uncheck error 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1656,7 +1656,7 @@ exports[`Logs check change verbosity, uncheck error 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1830,7 +1830,7 @@ exports[`Logs check press Show Logs, error in logs call 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1845,7 +1845,7 @@ exports[`Logs check press Show Logs, error in logs call 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1860,7 +1860,7 @@ exports[`Logs check press Show Logs, error in logs call 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1875,7 +1875,7 @@ exports[`Logs check press Show Logs, error in logs call 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -1890,7 +1890,7 @@ exports[`Logs check press Show Logs, error in logs call 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -2064,7 +2064,7 @@ exports[`Logs check press showMore 1`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -2079,7 +2079,7 @@ exports[`Logs check press showMore 1`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -2094,7 +2094,7 @@ exports[`Logs check press showMore 1`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -2109,7 +2109,7 @@ exports[`Logs check press showMore 1`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -2124,7 +2124,7 @@ exports[`Logs check press showMore 1`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -8006,7 +8006,7 @@ exports[`Logs check press showMore 2`] = `
                 class="text-danger form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -8021,7 +8021,7 @@ exports[`Logs check press showMore 2`] = `
                 class="text-warning form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -8036,7 +8036,7 @@ exports[`Logs check press showMore 2`] = `
                 class="text-success form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -8051,7 +8051,7 @@ exports[`Logs check press showMore 2`] = `
                 class="text-info form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
@@ -8066,7 +8066,7 @@ exports[`Logs check press showMore 2`] = `
                 class="text-primary form-check"
               >
                 <label
-                  class="form-check-label form-label"
+                  class="form-check-label"
                 >
                   <input
                     checked=""
