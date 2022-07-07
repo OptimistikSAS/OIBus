@@ -311,7 +311,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Compress
             </label>
@@ -664,7 +664,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Compress
             </label>
@@ -994,7 +994,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Compress
             </label>

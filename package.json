@@ -91,7 +91,7 @@
     "react-icons": "4.4.0",
     "react-router": "6.3.0",
     "react-router-dom": "6.3.0",
-    "reactstrap": "9.0.2",
+    "reactstrap": "9.1.1",
     "real-require": "git://github.com/burgerni10/real-require.git",
     "selfsigned": "2.0.1",
     "sprintf-js": "1.1.2",

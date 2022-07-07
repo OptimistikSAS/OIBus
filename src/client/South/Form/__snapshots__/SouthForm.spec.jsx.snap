@@ -1809,7 +1809,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Preserve File?
             </label>
@@ -1829,7 +1829,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Ignore modified date
             </label>
@@ -1917,7 +1917,7 @@ exports[`SouthForm check SouthForm with dataSource: FolderScanner 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Compress File?
             </label>
@@ -2732,7 +2732,7 @@ exports[`SouthForm check SouthForm with dataSource: MQTTServer 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Reject Unauthorized Connection
             </label>
@@ -7655,7 +7655,7 @@ exports[`SouthForm check SouthForm with dataSource: SQL 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Compress File?
             </label>

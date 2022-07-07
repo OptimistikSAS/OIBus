@@ -384,7 +384,7 @@ exports[`Logging check Logging 1`] = `
             class="mb-3 mb-3"
           >
             <label
-              class="form-check-label form-label"
+              class="form-check-label"
             >
               Tailable
             </label>
