@@ -3,7 +3,7 @@ import { Container, ListGroup, ListGroupItem } from 'reactstrap'
 import apis from '../services/apis'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
-import logo from './OIBus.png'
+import logo from '../OIBus.png'
 
 const About = () => {
   const [staticStatus, setstaticStatus] = React.useState({})
