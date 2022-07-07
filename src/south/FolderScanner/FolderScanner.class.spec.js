@@ -26,6 +26,7 @@ beforeEach(async () => {
   jest.clearAllMocks()
   jest.resetAllMocks()
   jest.restoreAllMocks()
+  jest.useRealTimers()
   folderScanner = new FolderScanner(folderScannerConfig, engine)
   await folderScanner.init()
 })
