@@ -48,7 +48,7 @@
     "@aws-sdk/node-http-handler": "3.118.1",
     "@koa/cors": "3.3.0",
     "@koa/multer": "3.0.0",
-    "@koa/router": "10.1.1",
+    "@koa/router": "11.0.1",
     "ads-client": "1.13.2",
     "axios": "0.27.2",
     "basic-auth": "2.0.1",
