@@ -7397,18 +7397,10 @@ exports[`SouthForm check SouthForm with dataSource: SQL 1`] = `
                 </div>
               </small>
             </div>
-            <section
-              style="display: flex; position: relative; text-align: initial; width: 100%; height: 400px;"
-            >
-              <div
-                style="display: flex; height: 100%; width: 100%; justify-content: center; align-items: center;"
-              >
-                Loading...
-              </div>
-              <div
-                style="width: 100%; display: none;"
-              />
-            </section>
+            <div
+              id="monaco-editor"
+              style="height: 400px;"
+            />
           </div>
         </div>
       </div>
