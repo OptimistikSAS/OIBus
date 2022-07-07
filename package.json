@@ -80,7 +80,7 @@
     "object-path": "0.11.8",
     "papaparse": "5.3.2",
     "pg": "8.7.3",
-    "pino": "git://github.com/burgerni10/pino.git",
+    "pino": "https://github.com/burgerni10/pino.git",
     "pino-abstract-transport": "0.5.0",
     "pino-pretty": "7.6.1",
     "prop-types": "15.8.1",
@@ -92,12 +92,12 @@
     "react-router": "6.3.0",
     "react-router-dom": "6.3.0",
     "reactstrap": "9.1.1",
-    "real-require": "git://github.com/burgerni10/real-require.git",
+    "real-require": "https://github.com/burgerni10/real-require.git",
     "selfsigned": "2.0.1",
     "sprintf-js": "1.1.2",
     "sqlite": "4.1.1",
     "sqlite3": "5.0.8",
-    "thread-stream": "git://github.com/burgerni10/thread-stream.git",
+    "thread-stream": "https://github.com/burgerni10/thread-stream.git",
     "timexe": "1.0.5",
     "tunnel": "0.0.6"
   },
@@ -110,7 +110,7 @@
     "@babel/plugin-proposal-optional-chaining": "7.18.6",
     "@babel/preset-env": "7.18.6",
     "@babel/preset-react": "7.18.6",
-    "babel-jest": "27.5.1",
+    "babel-jest": "28.1.2",
     "babel-loader": "8.2.5",
     "css-loader": "6.7.1",
     "eslint": "8.19.0",
@@ -120,7 +120,8 @@
     "eslint-plugin-react-hooks": "4.6.0",
     "eslint-webpack-plugin": "3.2.0",
     "html-webpack-plugin": "5.5.0",
-    "jest": "27.5.1",
+    "jest": "28.1.2",
+    "jest-environment-jsdom": "28.1.2",
     "monaco-editor-webpack-plugin": "7.0.1",
     "ncp": "2.0.0",
     "path-browserify": "1.0.1",
@@ -138,7 +139,11 @@
     "globalSetup": "./jest-config.js",
     "moduleNameMapper": {
       "\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js",
-      "monaco-editor": "<rootDir>/__mocks__/monacoEditorMock.js"
+      "monaco-editor": "<rootDir>/__mocks__/monacoEditorMock.js",
+      "nanoid": "<rootDir>/__mocks__/nanoidMock.js"
+    },
+    "fakeTimers": {
+       "enableGlobally": true
     }
   },
   "pkg": {
