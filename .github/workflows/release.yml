@@ -67,13 +67,16 @@ jobs:
           git config --global user.name 'optimistik-actions'
           git config --global user.email 'optimistiksas@users.noreply.github.com'
           VERSION_ARGS=""
+          PRERELEASE=false
           BRANCH=$(git branch --show-current| tr '\\/' - | tr -dc '[:alnum:]-+.\n\r' ) # first tr replace / and \ to -, second tr removes all non alphanums except .+-\n\r)
           if [ "$BRANCH" != master ]; then
             VERSION_ARGS="--prerelease ${BRANCH}"
+            PRERELEASE=true
           fi
           npm ci
           npm run bump -- $VERSION_ARGS
-          echo ::set-output name=version-tag::$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo ::set-output name=version-tag::$(git describe --tags $(git rev-list --tags --max-count=1)) 
+          echo ::set-output name=prerelease::$PRERELEASE 
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -81,7 +84,7 @@ jobs:
           tag_name: ${{ steps.standard-version.outputs.version-tag }}
           name: ${{ steps.standard-version.outputs.version-tag }}
           body_path: CHANGELOG.md
-          prerelease: false
+          prerelease: ${{ steps.standard-version.outputs.prerelease }}
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN}} # Need REPO_ACCESS_TOKEN to propagate 'release published' event
 
