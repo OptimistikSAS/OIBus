@@ -416,6 +416,8 @@ describe('SQL', () => {
     await sqlSouth.init()
     await sqlSouth.connect()
 
+    sqlSouth.logger.error.mockClear()
+
     sqlSouth.driver = 'postgresql'
 
     types.setTypeParser = jest.fn()
