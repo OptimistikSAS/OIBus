@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { FormFeedback, FormGroup, FormText, Input, Label } from 'reactstrap'
 import * as monaco from 'monaco-editor'
@@ -6,46 +6,54 @@ import * as monaco from 'monaco-editor'
 const REBOUND_TIMEOUT = 350
 
 const OIbTextArea = ({ label, contentType, help, valid, value, name, onChange, defaultValue }) => {
+  const [editor, setEditor] = useState(null)
+
   React.useEffect(() => {
-    if (value === null) onChange(name, defaultValue)
-  }, [value])
+    if (value === null) {
+      onChange(name, defaultValue)
+      if (editor) {
+        editor.setValue(defaultValue)
+      }
+    }
+  }, [value, defaultValue, editor])
 
   useEffect(() => {
-    let editor
+    let monacoEditor
     let reboundTimeout
     if (contentType) {
-      editor = monaco.editor.create(document.getElementById('monaco-editor'), {
-        value,
+      monacoEditor = monaco.editor.create(document.getElementById('monaco-editor'), {
+        value: value === null ? defaultValue : value,
         language: contentType,
         theme: 'vs',
         selectOnLineNumbers: true,
         minimap: { enabled: false },
         scrollbar: { alwaysConsumeMouseWheel: false },
       })
-      editor.onDidChangeModelContent(() => {
+      monacoEditor.onDidChangeModelContent(() => {
         if (reboundTimeout) {
           clearTimeout(reboundTimeout)
         }
 
         reboundTimeout = setTimeout(() => {
-          const newRequest = editor.getValue()
+          const newRequest = monacoEditor.getValue()
           onChange(name, newRequest, valid(newRequest))
         }, REBOUND_TIMEOUT)
       })
+      setEditor(monacoEditor)
     }
     return () => {
       if (reboundTimeout) {
         clearTimeout(reboundTimeout)
-        if (editor) {
-          const newRequest = editor.getValue()
+        if (monacoEditor) {
+          const newRequest = monacoEditor.getValue()
           onChange(name, newRequest, valid(newRequest))
         }
       }
-      if (editor) {
-        editor.dispose()
+      if (monacoEditor) {
+        monacoEditor.dispose()
       }
     }
-  }, [value, contentType])
+  }, [contentType])
 
   const handleInputChange = (event) => {
     const { target } = event
@@ -54,8 +62,6 @@ const OIbTextArea = ({ label, contentType, help, valid, value, name, onChange, d
   }
 
   const validCheck = valid(value)
-  // if value is null, no need to render
-  if (value === null) return null
   return (
     <FormGroup>
       {label && <Label for={name}>{label}</Label>}
