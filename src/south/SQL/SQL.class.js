@@ -15,13 +15,6 @@ const humanizeDuration = require('humanize-duration')
 const ProtocolHandler = require('../ProtocolHandler.class')
 
 let oracledb
-try {
-  // eslint-disable-next-line global-require,import/no-unresolved,import/no-extraneous-dependencies
-  oracledb = require('oracledb')
-} catch {
-  console.error('Could not load node oracledb')
-}
-
 /**
  * Class SQL
  */
@@ -95,6 +88,12 @@ class SQL extends ProtocolHandler {
 
   async init() {
     await super.init()
+    try {
+      // eslint-disable-next-line global-require,import/no-unresolved,import/no-extraneous-dependencies
+      oracledb = require('oracledb')
+    } catch {
+      this.logger.error('Could not load node oracledb')
+    }
     try {
       await fs.mkdir(this.tmpFolder, { recursive: true })
     } catch (mkdirError) {
@@ -390,8 +389,8 @@ class SQL extends ProtocolHandler {
    * @returns {Promise<array>} - The data
    */
   async getDataFromOracle(startTime, endTime) {
-    if (this.engine.m1) {
-      this.logger.error('Oracle not supported on apple m1')
+    if (!oracledb) {
+      this.logger.error('oracledb library not loaded')
       return []
     }
 
