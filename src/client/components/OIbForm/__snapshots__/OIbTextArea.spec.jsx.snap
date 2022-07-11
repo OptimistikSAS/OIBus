@@ -1,6 +1,28 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`OIbTextArea check TextArea no value 1`] = `<div />`;
+exports[`OIbTextArea check TextArea no value 1`] = `
+<div>
+  <div
+    class="mb-3"
+  >
+    <label
+      class="form-label"
+      for="name"
+    >
+      label
+    </label>
+    <textarea
+      aria-invalid="false"
+      class="oi-form-input form-control"
+      id="name"
+      name="name"
+    />
+    <div
+      class="invalid-feedback"
+    />
+  </div>
+</div>
+`;
 
 exports[`OIbTextArea check TextArea with inline 1`] = `
 <div>
