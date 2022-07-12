@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import { Spinner } from 'reactstrap'
 import { PropTypes } from 'prop-types'
-import * as monaco from 'monaco-editor'
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api'
 
 const ConfigJsonRenderer = ({ loading, activeConfig, newConfig, isModified }) => {
   useEffect(() => {

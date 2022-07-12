@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { FormFeedback, FormGroup, FormText, Input, Label } from 'reactstrap'
-import * as monaco from 'monaco-editor'
+import * as monaco from 'monaco-editor/esm/vs/editor/editor.api'
 
 const REBOUND_TIMEOUT = 350
 
