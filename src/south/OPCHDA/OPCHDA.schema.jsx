@@ -12,7 +12,7 @@ schema.form = {
       <>
         <p>
           OPCHDA Agent is an external executable that will handle the protocol HDA. We decided to externalize it to
-          avoid combining relatively old librairies in the main OIBus code and also because OPCHDA is only supported on
+          avoid combining relatively old libraries in the main OIBus code and also because OPCHDA is only supported on
           Microsoft Windows.
         </p>
         <ul>
@@ -22,10 +22,10 @@ schema.form = {
             start with &apos;debug&apos; and to switch to &apos;info&apos; when the communication is stabilized.
           </li>
           <li>
-            By default, when you restart the agent, it will query from the last succesful timestamp (for each scan
+            By default, when you restart the agent, it will query from the last successful timestamp (for each scan
             group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the
             first startup), the default start time will be the current time except if a key &apos;startTime&apos; (only
-            accessible by editing manually the oibus configuration time) indicates a different start time. This feature
+            accessible by editing manually the OIBus configuration time) indicates a different start time. This feature
             has been added to be allow recovering of values from the past when needed.
           </li>
           <p><b>DA Quality code</b></p>
@@ -482,9 +482,9 @@ schema.form = {
     newRow: false,
     md: 2,
     label: 'Logging Level',
-    options: ['silly', 'debug', 'info', 'warning', 'error'],
+    options: ['trace', 'debug', 'info', 'warning', 'error'],
     defaultValue: 'debug',
-    help: <div>Logging Level</div>,
+    help: <div>Logging level for the HDA agent</div>,
   },
   HDASection: {
     type: 'OIbTitle',
@@ -589,6 +589,7 @@ schema.form = {
         type: 'OIbSelect',
         options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Start', 'End'],
         defaultValue: 'Raw',
+        help: <div>Check that the aggregate is supported by the OPC Server</div>,
       },
       resampling: {
         type: 'OIbSelect',
@@ -613,7 +614,7 @@ schema.points = {
     valid: notEmpty(),
     defaultValue: '',
     unique: true,
-    help: <div>The nodeId referenced in the OPCUA server</div>,
+    help: <div>The nodeId referenced in the OPCHDA server</div>,
   },
   scanMode: {
     type: 'OIbScanMode',
