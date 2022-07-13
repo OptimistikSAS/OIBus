@@ -4065,7 +4065,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
                   class="col"
                 >
                   <p>
-                    OPCHDA Agent is an external executable that will handle the protocol HDA. We decided to externalize it to avoid combining relatively old librairies in the main OIBus code and also because OPCHDA is only supported on Microsoft Windows.
+                    OPCHDA Agent is an external executable that will handle the protocol HDA. We decided to externalize it to avoid combining relatively old libraries in the main OIBus code and also because OPCHDA is only supported on Microsoft Windows.
                   </p>
                   <ul>
                     <li>
@@ -4075,7 +4075,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
                       It is possible to decide the level of logs that will be sent by the agent to OIBus. It is recommended to start with 'debug' and to switch to 'info' when the communication is stabilized.
                     </li>
                     <li>
-                      By default, when you restart the agent, it will query from the last succesful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the oibus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed.
+                      By default, when you restart the agent, it will query from the last successful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the OIBus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed.
                     </li>
                     <p>
                       <b>
@@ -4608,9 +4608,9 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
               name="south.dataSources.0.OPCHDA.logLevel"
             >
               <option
-                value="silly"
+                value="trace"
               >
-                silly
+                trace
               </option>
               <option
                 value="debug"
@@ -4640,7 +4640,7 @@ exports[`SouthForm check SouthForm with dataSource: OPC-HDA 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Logging Level
+                Logging level for the HDA agent
               </div>
             </small>
           </div>

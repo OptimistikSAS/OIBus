@@ -217,7 +217,7 @@ class OPCHDA extends ProtocolHandler {
         case 'debug':
           this.logger.debug(message)
           break
-        case 'silly':
+        case 'trace':
           this.logger.trace(message)
           break
         default:

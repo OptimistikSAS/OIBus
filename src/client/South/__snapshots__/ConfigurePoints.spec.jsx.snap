@@ -145,7 +145,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -729,7 +729,7 @@ exports[`ConfigurePoints check add new point 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -1313,7 +1313,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -1897,7 +1897,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -2481,7 +2481,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -3065,7 +3065,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -3649,7 +3649,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -4233,7 +4233,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -4817,7 +4817,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -5401,7 +5401,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -5985,7 +5985,7 @@ exports[`ConfigurePoints check export points 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -6569,7 +6569,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -7153,7 +7153,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -7737,7 +7737,7 @@ exports[`ConfigurePoints check import points press 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -8321,7 +8321,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -8905,7 +8905,7 @@ exports[`ConfigurePoints check import points success 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -9509,7 +9509,7 @@ exports[`ConfigurePoints check no points 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -9756,7 +9756,7 @@ exports[`ConfigurePoints check pagination 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
@@ -10340,7 +10340,7 @@ exports[`ConfigurePoints check render with filterText 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCUA server
+                  The nodeId referenced in the OPCHDA server
                 </div>
               </div>
               <div>
