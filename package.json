@@ -125,7 +125,7 @@
     "monaco-editor-webpack-plugin": "7.0.1",
     "ncp": "2.0.0",
     "path-browserify": "1.0.1",
-    "pkg": "5.7.0",
+    "pkg": "5.8.0",
     "rimraf": "3.0.2",
     "standard-version": "9.5.0",
     "style-loader": "3.3.1",
