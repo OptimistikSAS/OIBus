@@ -1,17 +1,17 @@
 const VERSION = require('../../package.json').version
 
 const apiList = {}
-apiList.OIAnalytics = require('../north/oianalytics/OIAnalytics.class')
-apiList.OIConnect = require('../north/oiconnect/OIConnect.class')
-apiList.FileWriter = require('../north/filewriter/FileWriter.class')
-apiList.AmazonS3 = require('../north/amazon/AmazonS3.class')
-apiList.InfluxDB = require('../north/influxdb/InfluxDB.class')
-apiList.TimescaleDB = require('../north/timescaledb/TimescaleDB.class')
-apiList.MongoDB = require('../north/mongodb/MongoDB.class')
-apiList.MQTT = require('../north/mqtt/MQTT.class')
-apiList.Console = require('../north/console/Console.class')
-apiList.WATSYConnect = require('../north/watsyconnect/WATSYConnect.class')
-apiList.CsvToHttp = require('../north/csvtohttp/CsvToHttp.class')
+apiList.OIAnalytics = require('../north/OIAnalytics/OIAnalytics.class')
+apiList.OIConnect = require('../north/OIConnect/OIConnect.class')
+apiList.FileWriter = require('../north/FileWriter/FileWriter.class')
+apiList.AmazonS3 = require('../north/AmazonS3/AmazonS3.class')
+apiList.InfluxDB = require('../north/InfluxDB/InfluxDB.class')
+apiList.TimescaleDB = require('../north/TimescaleDB/TimescaleDB.class')
+apiList.MongoDB = require('../north/MongoDB/MongoDB.class')
+apiList.MQTT = require('../north/MQTT/MQTT.class')
+apiList.Console = require('../north/Console/Console.class')
+apiList.WATSYConnect = require('../north/WATSYConnect/WATSYConnect.class')
+apiList.CsvToHttp = require('../north/CsvToHttp/CsvToHttp.class')
 
 const protocolList = {}
 protocolList.SQL = require('../south/SQL/SQL.class')
