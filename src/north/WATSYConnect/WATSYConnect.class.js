@@ -1,5 +1,5 @@
 const mqtt = require('mqtt')
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 
 /**
  * Expected caching parameters:
@@ -30,7 +30,7 @@ const ApiHandler = require('../ApiHandler.class')
   }
  */
 
-class WATSYConnect extends ApiHandler {
+class WATSYConnect extends NorthHandler {
   static category = 'API'
 
   /**
@@ -118,7 +118,7 @@ class WATSYConnect extends ApiHandler {
     this.logger.trace(`Link handleValues() call with ${messages.length} messages`)
     const successCount = await this.publishOIBusMessages(messages)
     if (successCount === 0) {
-      throw ApiHandler.STATUS.COMMUNICATION_ERROR
+      throw NorthHandler.STATUS.COMMUNICATION_ERROR
     }
     this.statusData['Last handled values at'] = new Date().toISOString()
     this.statusData['Number of values sent since OIBus has started'] += messages.length

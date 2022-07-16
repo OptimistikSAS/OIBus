@@ -5,7 +5,7 @@ const fetch = require('node-fetch')
 const https = require('https')
 const http = require('http')
 
-const ProtocolHandler = require('../ProtocolHandler.class')
+const {SouthHandler} = global
 
 const oiaTimeValues = require('./formatters/oia-time-values')
 const slims = require('./formatters/slims')
@@ -43,7 +43,7 @@ const requestWithBody = (body, options = {}) => new Promise((resolve, reject) =>
 /**
  * Class RestApi
  */
-class RestApi extends ProtocolHandler {
+class RestApi extends SouthHandler {
   static category = 'API'
 
   /**

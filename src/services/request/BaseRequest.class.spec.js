@@ -1,7 +1,7 @@
 const FormData = require('form-data')
 
 const BaseRequest = require('./BaseRequest.class')
-const ApiHandler = require('../../north/ApiHandler.class')
+const NorthHandler = require('../../north/NorthHandler.class')
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
@@ -50,7 +50,7 @@ describe('RequestFactory', () => {
 
     const expectedAuthorizationHeader = Buffer.from('username:password').toString('base64')
     const expectedHeader = { Authorization: `Basic ${expectedAuthorizationHeader}` }
-    expect(result).toEqual(ApiHandler.STATUS.SUCCESS)
+    expect(result).toEqual(NorthHandler.STATUS.SUCCESS)
     expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(1)
     expect(baseRequest.sendImplementation).toHaveBeenCalledWith(requestUrl, method, expectedHeader, proxy, data, 1000 * 10000)
   })
@@ -71,7 +71,7 @@ describe('RequestFactory', () => {
     const result = await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
 
     const expectedHeader = { key: 'secretKey' }
-    expect(result).toEqual(ApiHandler.STATUS.SUCCESS)
+    expect(result).toEqual(NorthHandler.STATUS.SUCCESS)
     expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(1)
     expect(baseRequest.sendImplementation).toHaveBeenCalledWith(requestUrl, method, expectedHeader, proxy, data, 1000 * 10000)
   })
@@ -91,7 +91,7 @@ describe('RequestFactory', () => {
     const result = await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
 
     const expectedHeader = { Authorization: 'Bearer token' }
-    expect(result).toEqual(ApiHandler.STATUS.SUCCESS)
+    expect(result).toEqual(NorthHandler.STATUS.SUCCESS)
     expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(1)
     expect(baseRequest.sendImplementation).toHaveBeenCalledWith(requestUrl, method, expectedHeader, proxy, data, 1000 * 10000)
   })
@@ -112,7 +112,7 @@ describe('RequestFactory', () => {
       result = response
     }
 
-    expect(result).toEqual(ApiHandler.STATUS.LOGIC_ERROR)
+    expect(result).toEqual(NorthHandler.STATUS.LOGIC_ERROR)
     expect(baseRequest.sendImplementation).not.toBeCalled()
   })
 
@@ -139,7 +139,7 @@ describe('RequestFactory', () => {
       result = response
     }
 
-    expect(result).toEqual(ApiHandler.STATUS.LOGIC_ERROR)
+    expect(result).toEqual(NorthHandler.STATUS.LOGIC_ERROR)
     expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(3)
   })
 
@@ -166,7 +166,7 @@ describe('RequestFactory', () => {
       result = response
     }
 
-    expect(result).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
+    expect(result).toEqual(NorthHandler.STATUS.COMMUNICATION_ERROR)
     expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(1)
   })
 
@@ -185,7 +185,7 @@ describe('RequestFactory', () => {
 
     const result = await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
 
-    expect(result).toEqual(ApiHandler.STATUS.SUCCESS)
+    expect(result).toEqual(NorthHandler.STATUS.SUCCESS)
     expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(1)
   })
 })

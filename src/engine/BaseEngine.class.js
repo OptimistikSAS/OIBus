@@ -1,28 +1,15 @@
 const VERSION = require('../../package.json').version
-
+// the generic class need to be imported to be used by extensions
+global.NorthHandler = require('../north/NorthHandler.class')
+global.SouthHandler = require('../south/SouthHandler.class')
+// HERE WE NEED TO DECIDE WHERE WE FIND THE LIST OF ADDITIONAL MODULES
+// Scan a folder? a key in OIBus.json? Another file or db?
+// We store them in variables below
 const apiList = {}
-apiList.OIAnalytics = require('../north/OIAnalytics/OIAnalytics.class')
-apiList.OIConnect = require('../north/OIConnect/OIConnect.class')
-apiList.FileWriter = require('../north/FileWriter/FileWriter.class')
-apiList.AmazonS3 = require('../north/AmazonS3/AmazonS3.class')
-apiList.InfluxDB = require('../north/InfluxDB/InfluxDB.class')
-apiList.TimescaleDB = require('../north/TimescaleDB/TimescaleDB.class')
-apiList.MongoDB = require('../north/MongoDB/MongoDB.class')
-apiList.MQTT = require('../north/MQTT/MQTT.class')
-apiList.Console = require('../north/Console/Console.class')
-apiList.WATSYConnect = require('../north/WATSYConnect/WATSYConnect.class')
-apiList.CsvToHttp = require('../north/CsvToHttp/CsvToHttp.class')
+const northModules = ['OIAnalytics', 'OIConnect', 'FileWriter', 'AmazonS3', 'InfluxDB', 'TimescaleDB', 'MongoDB', 'MQTT', 'Console', 'WATSYConnect', 'CsvToHttp']
 
 const protocolList = {}
-protocolList.SQL = require('../south/SQL/SQL.class')
-protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
-protocolList.OPCUA_HA = require('../south/OPCUA/OPCUA_HA/OPCUA_HA.class')
-protocolList.OPCUA_DA = require('../south/OPCUA/OPCUA_DA/OPCUA_DA.class')
-protocolList.MQTT = require('../south/MQTT/MQTT.class')
-protocolList.ADS = require('../south/ADS/ADS.class')
-protocolList.Modbus = require('../south/Modbus/Modbus.class')
-protocolList.OPCHDA = require('../south/OPCHDA/OPCHDA.class')
-protocolList.RestApi = require('../south/RestApi/RestApi.class')
+const southModules = ['SQL', 'FolderScanner', 'OPCUA_HA', 'OPCUA_DA', 'MQTT', 'ADS', 'Modbus', 'OPCHDA', 'RestApi']
 
 // BaseEngine classes
 const Logger = require('./logger/Logger.class')
@@ -64,6 +51,26 @@ class BaseEngine {
     this.logger = new Logger(loggerScope)
     this.logger.setEncryptionService(this.encryptionService)
     await this.logger.changeParameters(engineConfig, {})
+    // load north modules
+    await Promise.all(northModules.map(async (name) => {
+      try {
+        const extension = await import(`../north/${name}/${name}.class.js`)
+        apiList[name] = extension.default
+        this.logger.debug(`North ${name} is added`)
+      } catch (error) {
+        this.logger.error(`North ${name} can't be loaded ${error}`)
+      }
+    }))
+    // load south modules
+    await Promise.all(southModules.map(async (name) => {
+      try {
+        const extension = await import(`../south/${name}/${name}.class.js`)
+        protocolList[name] = extension.default
+        this.logger.debug(`South ${name} is added`)
+      } catch (error) {
+        this.logger.error(`South ${name} can't be loaded ${error}`)
+      }
+    }))
 
     // Request service
     this.requestService = createRequestService(this)
@@ -150,7 +157,7 @@ class BaseEngine {
    *
    * @param {string} protocol - The protocol
    * @param {object} dataSource - The data source
-   * @returns {ProtocolHandler|null} - The South
+   * @returns {SouthHandler|null} - The South
    */
   createSouth(protocol, dataSource) {
     const SouthHandler = protocolList[protocol]
@@ -174,7 +181,7 @@ class BaseEngine {
    *
    * @param {string} api - The api
    * @param {object} application - The application
-   * @returns {ProtocolHandler|null} - The South
+   * @returns {SouthHandler|null} - The South
    */
   createNorth(api, application) {
     const NorthHandler = apiList[api]

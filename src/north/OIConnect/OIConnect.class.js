@@ -1,8 +1,8 @@
 const fs = require('fs/promises')
 
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 
-class OIConnect extends ApiHandler {
+class OIConnect extends NorthHandler {
   static category = 'Optimistik'
 
   /**

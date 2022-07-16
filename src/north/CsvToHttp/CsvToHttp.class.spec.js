@@ -1,6 +1,6 @@
 const path = require('path')
 const CsvToHttp = require('./CsvToHttp.class')
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 const config = require('../../../tests/testConfig').default
 const EncryptionService = require('../../services/EncryptionService.class')
 
@@ -37,13 +37,13 @@ describe('CsvToHttp', () => {
   it('should properly reject file if type is other than csv', async () => {
     const response = await csvToHttpNorth.handleFile('../../../tests/csvToHttpTest')
 
-    expect(response).toEqual(ApiHandler.STATUS.LOGIC_ERROR)
+    expect(response).toEqual(NorthHandler.STATUS.LOGIC_ERROR)
   })
 
   it('should properly handle csv files', async () => {
     const response = await csvToHttpNorth.handleFile(path.resolve('./tests/csvToHttpTest.csv'))
 
-    expect(response).toEqual(ApiHandler.STATUS.SUCCESS)
+    expect(response).toEqual(NorthHandler.STATUS.SUCCESS)
   })
 
   it('should properly test validity of header', async () => {
@@ -88,7 +88,7 @@ describe('CsvToHttp', () => {
     })
     const response = await csvToHttpNorth.handleFile(path.resolve('./tests/csvToHttpTest.csv'))
 
-    expect(response).toEqual(ApiHandler.STATUS.SUCCESS)
+    expect(response).toEqual(NorthHandler.STATUS.SUCCESS)
     csvToHttpNorth.mapping.pop()
   })
 

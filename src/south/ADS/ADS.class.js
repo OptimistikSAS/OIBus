@@ -1,11 +1,11 @@
 const ads = require('ads-client')
 
-const ProtocolHandler = require('../ProtocolHandler.class')
+const {SouthHandler} = global
 
 /**
  * Class ADS - Provides instruction for Modbus client connection
  */
-class ADS extends ProtocolHandler {
+class ADS extends SouthHandler {
   static category = 'IoT'
 
   /**

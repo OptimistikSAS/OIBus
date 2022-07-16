@@ -1,9 +1,9 @@
 const fs = require('fs/promises')
 const path = require('path')
 
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 
-class FileWriter extends ApiHandler {
+class FileWriter extends NorthHandler {
   static category = 'FileIn'
 
   /**
@@ -47,7 +47,7 @@ class FileWriter extends ApiHandler {
       return values.length
     } catch (error) {
       this.logger.error(`Error handling values: ${error}`)
-      return ApiHandler.STATUS.LOGIC_ERROR
+      return NorthHandler.STATUS.LOGIC_ERROR
     }
   }
 
@@ -69,10 +69,10 @@ class FileWriter extends ApiHandler {
       this.statusData['Number of files sent since OIBus has started'] += 1
       this.statusData['Last upload at'] = new Date().toISOString()
       this.updateStatusDataStream()
-      return ApiHandler.STATUS.SUCCESS
+      return NorthHandler.STATUS.SUCCESS
     } catch (error) {
       this.logger.error(`Error handling file, ${error}`)
-      return ApiHandler.STATUS.LOGIC_ERROR
+      return NorthHandler.STATUS.LOGIC_ERROR
     }
   }
 }

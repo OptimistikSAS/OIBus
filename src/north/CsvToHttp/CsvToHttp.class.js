@@ -1,7 +1,7 @@
 const Papa = require('papaparse')
 const fs = require('fs')
 
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 
 const ERROR_PRINT_SIZE = 5
 const REGEX_CONTAIN_VARIABLE_STRING = /\${[^}]*}/ // match if the string contains ${...}
@@ -12,7 +12,7 @@ const REGEX_GET_VARIABLE = /[^${}]+/ // Get the value inside ${}
 /**
  * Class CsvToHttp - convert a csv file into http request such as POST/PUT/PACTH
  */
-class CsvToHttp extends ApiHandler {
+class CsvToHttp extends NorthHandler {
   static category = 'API'
 
   /**
@@ -59,14 +59,14 @@ class CsvToHttp extends ApiHandler {
 
     if (!regexExp.test(filePath)) {
       this.logger.error(`Invalid file format (.csv file expected), file (${filePath} skipped`)
-      return ApiHandler.STATUS.LOGIC_ERROR
+      return NorthHandler.STATUS.LOGIC_ERROR
     }
 
     const csvDataParsed = await this.parseCsvFile(filePath)
 
     if (csvDataParsed.length === 0) {
       this.logger.debug('The parsed file is empty')
-      return ApiHandler.STATUS.LOGIC_ERROR
+      return NorthHandler.STATUS.LOGIC_ERROR
     }
 
     // The csv parsing is a success so we begin to map the content
@@ -76,7 +76,7 @@ class CsvToHttp extends ApiHandler {
     if (httpBody.length !== 0) {
       if (!await this.sendData(httpBody)) {
         this.logger.error('Impossible to send data')
-        return ApiHandler.STATUS.LOGIC_ERROR
+        return NorthHandler.STATUS.LOGIC_ERROR
       }
     }
     // Logs all the erros
@@ -93,7 +93,7 @@ class CsvToHttp extends ApiHandler {
         })
       }
     }
-    return ApiHandler.STATUS.SUCCESS
+    return NorthHandler.STATUS.SUCCESS
   }
 
   /**

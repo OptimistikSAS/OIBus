@@ -1,8 +1,8 @@
 const fs = require('fs/promises')
 
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 
-class Console extends ApiHandler {
+class Console extends NorthHandler {
   static category = 'Debug'
 
   /**
@@ -54,7 +54,7 @@ class Console extends ApiHandler {
     this.statusData['Number of files sent since OIBus has started'] += 1
     this.statusData['Last upload at'] = new Date().toISOString()
     this.updateStatusDataStream()
-    return ApiHandler.STATUS.SUCCESS
+    return NorthHandler.STATUS.SUCCESS
   }
 }
 

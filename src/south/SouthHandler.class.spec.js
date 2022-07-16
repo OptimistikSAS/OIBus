@@ -1,5 +1,5 @@
 const config = require('../config/defaultConfig.json')
-const ProtocolHandler = require('./ProtocolHandler.class')
+const SouthHandler = require('./SouthHandler.class')
 
 jest.mock('../engine/logger/Logger.class')
 
@@ -17,12 +17,12 @@ beforeEach(() => {
   jest.restoreAllMocks()
 })
 
-describe('ProtocolHandler', () => {
+describe('SouthHandler', () => {
   it('should properly handle addValues call', async () => {
     const RealDate = Date
     global.Date = jest.fn(() => new RealDate(nowDateString))
 
-    const south = new ProtocolHandler({ id: 'id' }, engine, {})
+    const south = new SouthHandler({ id: 'id' }, engine, {})
     await south.init()
     const values = [{
       timestamp: '2020-02-02T01:02:02.000Z',
@@ -43,7 +43,7 @@ describe('ProtocolHandler', () => {
     const RealDate = Date
     global.Date = jest.fn(() => new RealDate(nowDateString))
 
-    const south = new ProtocolHandler({ id: 'id' }, engine, {})
+    const south = new SouthHandler({ id: 'id' }, engine, {})
     await south.init()
 
     const filePath = 'path'
@@ -55,7 +55,7 @@ describe('ProtocolHandler', () => {
   })
 
   it('should format date properly', () => {
-    const test1 = ProtocolHandler.generateDateWithTimezone(
+    const test1 = SouthHandler.generateDateWithTimezone(
       '2020-02-22 22:22:22.666',
       'Europe/Paris',
       'yyyy-MM-dd HH:mm:ss.SSS',
@@ -64,7 +64,7 @@ describe('ProtocolHandler', () => {
     expect(test1)
       .toBe(expectedResult1)
 
-    const test2 = ProtocolHandler.generateDateWithTimezone(
+    const test2 = SouthHandler.generateDateWithTimezone(
       '2020-02-22T22:22:22.666Z',
       'Europe/Paris',
       'yyyy-MM-dd HH:mm:ss.SSS',
@@ -78,9 +78,9 @@ describe('ProtocolHandler', () => {
     const RealDate = Date
     global.Date = jest.fn(() => new RealDate(nowDateString))
 
-    const south = new ProtocolHandler({}, engine)
+    const south = new SouthHandler({}, engine)
     await south.init()
-    const mockGenerateDateWithTimezone = jest.spyOn(ProtocolHandler, 'generateDateWithTimezone')
+    const mockGenerateDateWithTimezone = jest.spyOn(SouthHandler, 'generateDateWithTimezone')
 
     const timestampOrigin = 'oibus'
     const timestampElement = 'timestamp'
@@ -95,9 +95,9 @@ describe('ProtocolHandler', () => {
   })
 
   it('should properly return timestamp when timestampOrigin is payload and timestamp field is present', async () => {
-    const south = new ProtocolHandler({}, engine)
+    const south = new SouthHandler({}, engine)
     await south.init()
-    const mockGenerateDateWithTimezone = jest.spyOn(ProtocolHandler, 'generateDateWithTimezone')
+    const mockGenerateDateWithTimezone = jest.spyOn(SouthHandler, 'generateDateWithTimezone')
 
     const timestampOrigin = 'payload'
     const timestampElement = '2020-02-02 02:02:02.222'
@@ -110,9 +110,9 @@ describe('ProtocolHandler', () => {
   })
 
   it('should properly return timestamp when timestampOrigin is payload but timezone is not properly set', async () => {
-    const south = new ProtocolHandler({}, engine)
+    const south = new SouthHandler({}, engine)
     await south.init()
-    const mockGenerateDateWithTimezone = jest.spyOn(ProtocolHandler, 'generateDateWithTimezone')
+    const mockGenerateDateWithTimezone = jest.spyOn(SouthHandler, 'generateDateWithTimezone')
 
     const timestampOrigin = 'payload'
     const timestampElement = '2020-02-02 02:02:02'
@@ -125,9 +125,9 @@ describe('ProtocolHandler', () => {
   })
 
   it('should properly return timestamp when timestampOrigin is payload but the timestamp field is missing', async () => {
-    const south = new ProtocolHandler({}, engine)
+    const south = new SouthHandler({}, engine)
     await south.init()
-    const mockGenerateDateWithTimezone = jest.spyOn(ProtocolHandler, 'generateDateWithTimezone')
+    const mockGenerateDateWithTimezone = jest.spyOn(SouthHandler, 'generateDateWithTimezone')
 
     const timestampElement = null
     const timestampOrigin = 'payload'

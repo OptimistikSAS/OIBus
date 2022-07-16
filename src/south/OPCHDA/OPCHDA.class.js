@@ -1,7 +1,7 @@
 // eslint-disable-next-line max-classes-per-file
 const { spawn } = require('child_process')
 
-const ProtocolHandler = require('../ProtocolHandler.class')
+const {SouthHandler} = global
 const TcpServer = require('./TcpServer')
 
 /**
@@ -24,7 +24,7 @@ const DISCONNECTION_TIMEOUT = 10000
 /**
  * Class OPCHDA.
  */
-class OPCHDA extends ProtocolHandler {
+class OPCHDA extends SouthHandler {
   static category = 'IoT'
 
   /**

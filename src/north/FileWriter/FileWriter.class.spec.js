@@ -1,6 +1,6 @@
 const fs = require('fs/promises')
 const path = require('path')
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 const FileWriter = require('./FileWriter.class')
 const config = require('../../../tests/testConfig').default
 
@@ -73,7 +73,7 @@ describe('FileWriter north', () => {
     })
     const handleValuesResult = await fileWriterNorth.handleValues(values)
     expect(fileWriterNorth.logger.error).toHaveBeenCalledTimes(1)
-    expect(handleValuesResult).toEqual(ApiHandler.STATUS.LOGIC_ERROR)
+    expect(handleValuesResult).toEqual(NorthHandler.STATUS.LOGIC_ERROR)
   })
 
   it('should properly handle files', async () => {
@@ -86,7 +86,7 @@ describe('FileWriter north', () => {
     const expectedOutputFolder = path.resolve(fileWriterNorth.outputFolder)
     const handleFileResult = await fileWriterNorth.handleFile(filePath)
     expect(fs.copyFile).toBeCalledWith(filePath, path.join(expectedOutputFolder, expectedFileName))
-    expect(handleFileResult).toEqual(ApiHandler.STATUS.SUCCESS)
+    expect(handleFileResult).toEqual(NorthHandler.STATUS.SUCCESS)
   })
 
   it('should properly catch handle file error', async () => {
@@ -97,6 +97,6 @@ describe('FileWriter north', () => {
     const filePath = '/path/to/file/example.file'
     const handlerFileResult = await fileWriterNorth.handleFile(filePath)
     expect(fileWriterNorth.logger.error).toHaveBeenCalledTimes(1)
-    expect(handlerFileResult).toEqual(ApiHandler.STATUS.LOGIC_ERROR)
+    expect(handlerFileResult).toEqual(NorthHandler.STATUS.LOGIC_ERROR)
   })
 })

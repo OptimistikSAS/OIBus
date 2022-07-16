@@ -34,7 +34,7 @@ const COMPRESSION_LEVEL = 9
  * handled by the OIBus engine and should not be taken care at the South level.
  *
  */
-class ProtocolHandler {
+class SouthHandler {
   /**
    * Constructor for Protocol
    * @constructor
@@ -503,7 +503,7 @@ class ProtocolHandler {
 
     if (timestampOrigin === 'payload') {
       if (timezone && elementTimestamp) {
-        timestamp = ProtocolHandler.generateDateWithTimezone(elementTimestamp, timezone, timestampFormat)
+        timestamp = SouthHandler.generateDateWithTimezone(elementTimestamp, timezone, timestampFormat)
       } else {
         this.logger.error('Invalid timezone specified or the timestamp key is missing in the payload')
       }
@@ -541,4 +541,4 @@ class ProtocolHandler {
   }
 }
 
-module.exports = ProtocolHandler
+module.exports = SouthHandler

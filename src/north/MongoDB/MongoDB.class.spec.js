@@ -3,7 +3,7 @@ const mongodb = require('mongodb')
 const MongoDB = require('./MongoDB.class')
 const config = require('../../config/defaultConfig.json')
 const EncryptionService = require('../../services/EncryptionService.class')
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 
 // Mock logger
 jest.mock('../../engine/logger/Logger.class')
@@ -203,7 +203,7 @@ describe('MongoDB north', () => {
       await mongoDbNorth.handleValues(values)
     } catch (error) {
       expect(mongoDbNorth.logger.error).toHaveBeenCalledWith(new Error('request error'))
-      expect(error).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
+      expect(error).toEqual(NorthHandler.STATUS.COMMUNICATION_ERROR)
     }
   })
 

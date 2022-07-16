@@ -2,12 +2,12 @@ const mongo = require('mongodb')
 const { vsprintf } = require('sprintf-js')
 const objectPath = require('object-path')
 
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 
 /**
  * Class MongoDB - generates and sends MongoDB requests
  */
-class MongoDB extends ApiHandler {
+class MongoDB extends NorthHandler {
   static category = 'DatabaseIn'
 
   /**
@@ -62,7 +62,7 @@ class MongoDB extends ApiHandler {
       this.updateStatusDataStream()
     } catch (error) {
       this.logger.error(error)
-      throw ApiHandler.STATUS.COMMUNICATION_ERROR
+      throw NorthHandler.STATUS.COMMUNICATION_ERROR
     }
     return values.length
   }

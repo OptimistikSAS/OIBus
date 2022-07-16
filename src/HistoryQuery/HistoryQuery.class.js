@@ -3,7 +3,7 @@
 const fs = require('fs/promises')
 const path = require('path')
 const EventEmitter = require('events')
-const ApiHandler = require('../north/ApiHandler.class')
+const NorthHandler = require('../north/NorthHandler.class')
 
 class HistoryQuery {
   // Waiting to be started
@@ -253,7 +253,7 @@ class HistoryQuery {
 
       const archiveFolder = path.join(this.cacheFolder, HistoryQuery.IMPORTED_FOLDER)
       const errorFolder = path.join(this.cacheFolder, HistoryQuery.ERROR_FOLDER)
-      if (status === ApiHandler.STATUS.SUCCESS) {
+      if (status === NorthHandler.STATUS.SUCCESS) {
         await HistoryQuery.createFolder(archiveFolder)
         await fs.rename(filePath, path.join(this.cacheFolder, HistoryQuery.IMPORTED_FOLDER, filename))
       } else {

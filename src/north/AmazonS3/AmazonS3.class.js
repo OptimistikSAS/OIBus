@@ -5,12 +5,12 @@ const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3')
 const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
 const ProxyAgent = require('proxy-agent')
 
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 
 /**
  * Class AmazonS3 - sends files to Amazon AWS S3
  */
-class AmazonS3 extends ApiHandler {
+class AmazonS3 extends NorthHandler {
   static category = 'FileIn'
 
   /**
@@ -71,13 +71,13 @@ class AmazonS3 extends ApiHandler {
       await this.s3.send(new PutObjectCommand(params))
     } catch (error) {
       this.logger.error(error)
-      return ApiHandler.STATUS.COMMUNICATION_ERROR
+      return NorthHandler.STATUS.COMMUNICATION_ERROR
     }
     this.statusData['Last uploaded file'] = filePath
     this.statusData['Number of files sent since OIBus has started'] += 1
     this.statusData['Last upload at'] = new Date().toISOString()
     this.updateStatusDataStream()
-    return ApiHandler.STATUS.SUCCESS
+    return NorthHandler.STATUS.SUCCESS
   }
 
   /**

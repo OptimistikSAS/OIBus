@@ -2,7 +2,7 @@ const fs = require('fs')
 const path = require('path')
 const FormData = require('form-data')
 
-const ApiHandler = require('../../north/ApiHandler.class')
+const NorthHandler = require('../../north/NorthHandler.class')
 
 class BaseRequest {
   constructor(engine) {
@@ -93,7 +93,7 @@ class BaseRequest {
           headers.Authorization = `Bearer ${this.engine.encryptionService.decryptText(authentication.token)}`
           break
         }
-        default: throw ApiHandler.STATUS.LOGIC_ERROR
+        default: throw NorthHandler.STATUS.LOGIC_ERROR
       }
     }
 
@@ -109,17 +109,17 @@ class BaseRequest {
             const incrementedRetryCount = retryCount + 1
             await this.httpSend(requestUrl, method, authentication, proxy, data, baseHeaders, incrementedRetryCount)
           } else {
-            throw ApiHandler.STATUS.LOGIC_ERROR
+            throw NorthHandler.STATUS.LOGIC_ERROR
           }
         }
       }
 
-      throw ApiHandler.STATUS.COMMUNICATION_ERROR
+      throw NorthHandler.STATUS.COMMUNICATION_ERROR
     }
 
     this.logger.trace(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack Ok`)
 
-    return ApiHandler.STATUS.SUCCESS
+    return NorthHandler.STATUS.SUCCESS
   }
 }
 

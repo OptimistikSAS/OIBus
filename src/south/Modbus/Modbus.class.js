@@ -2,12 +2,12 @@ const jsmodbus = require('jsmodbus')
 const net = require('net')
 
 const { getOptimizedScanModes } = require('./config/getOptimizedConfig')
-const ProtocolHandler = require('../ProtocolHandler.class')
+const {SouthHandler} = global
 
 /**
  * Class Modbus - Provides instruction for Modbus client connection
  */
-class Modbus extends ProtocolHandler {
+class Modbus extends SouthHandler {
   static category = 'IoT'
 
   /**

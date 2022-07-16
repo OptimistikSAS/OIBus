@@ -3,9 +3,9 @@ const mqttWildcard = require('mqtt-wildcard')
 const { vsprintf } = require('sprintf-js')
 const { DateTime } = require('luxon')
 
-const ProtocolHandler = require('../ProtocolHandler.class')
+const {SouthHandler} = global
 
-class MQTT extends ProtocolHandler {
+class MQTT extends SouthHandler {
   static category = 'IoT'
 
   /**

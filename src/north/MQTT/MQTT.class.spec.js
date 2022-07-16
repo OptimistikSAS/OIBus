@@ -1,6 +1,6 @@
 const mqtt = require('mqtt')
 
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 const MQTT = require('./MQTT.class')
 const config = require('../../../tests/testConfig').default
 const EncryptionService = require('../../services/EncryptionService.class')
@@ -140,7 +140,7 @@ describe('MQTT north', () => {
 
     expect(mqttNorth.client.publish).toBeCalledWith('paris', JSON.stringify(values[0].data), { qos: 1 }, expect.any(Function))
     expect(expectedResult).toBeNull()
-    expect(expectedError).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
+    expect(expectedError).toEqual(NorthHandler.STATUS.COMMUNICATION_ERROR)
   })
 
   it('should properly disconnect', () => {

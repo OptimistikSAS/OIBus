@@ -2,9 +2,9 @@ const { Client } = require('pg')
 const { vsprintf } = require('sprintf-js')
 const objectPath = require('object-path')
 
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 
-class TimescaleDB extends ApiHandler {
+class TimescaleDB extends NorthHandler {
   static category = 'DatabaseIn'
 
   /**
@@ -55,7 +55,7 @@ class TimescaleDB extends ApiHandler {
       this.updateStatusDataStream()
     } catch (error) {
       this.logger.error(error)
-      throw ApiHandler.STATUS.COMMUNICATION_ERROR
+      throw NorthHandler.STATUS.COMMUNICATION_ERROR
     }
     return values.length
   }

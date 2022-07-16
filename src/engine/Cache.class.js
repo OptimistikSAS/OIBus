@@ -3,7 +3,7 @@ const path = require('path')
 
 const databaseService = require('../services/database.service')
 const Queue = require('../services/queue.class')
-const ApiHandler = require('../north/ApiHandler.class')
+const NorthHandler = require('../north/NorthHandler.class')
 
 // Time between two checks of the Archive Folder
 const ARCHIVE_TIMEOUT = 3600000 // one hour
@@ -305,7 +305,7 @@ class Cache {
    */
   async sendCallback(api) {
     const { name, canHandleValues, canHandleFiles, config } = api
-    let status = ApiHandler.STATUS.SUCCESS
+    let status = NorthHandler.STATUS.SUCCESS
 
     this.logger.trace(`sendCallback ${name}, sendInProgress ${!!this.sendInProgress[name]}`)
 
@@ -322,7 +322,7 @@ class Cache {
       }
 
       const successTimeout = this.resendImmediately[name] ? 0 : config.sendInterval
-      const timeout = (status === ApiHandler.STATUS.SUCCESS) ? successTimeout : config.retryInterval
+      const timeout = (status === NorthHandler.STATUS.SUCCESS) ? successTimeout : config.retryInterval
       this.resetTimeout(api, timeout)
 
       this.sendInProgress[name] = false
@@ -334,7 +334,7 @@ class Cache {
   /**
    * handle the values for the callback
    * @param {object} application - The application to send the values to
-   * @return {ApiHandler.Status} - The callback status
+   * @return {NorthHandler.Status} - The callback status
    */
   async sendCallbackForValues(application) {
     this.logger.trace(`Cache sendCallbackForValues() for ${application.name}`)
@@ -349,7 +349,7 @@ class Cache {
         const successCountStatus = await this.engine.handleValuesFromCache(id, values)
         this.logger.trace(`Cache:handleValuesFromCache, successCountStatus: ${successCountStatus}, Application: ${application.name}`)
         // If there was a logic error
-        if (successCountStatus === ApiHandler.STATUS.LOGIC_ERROR) {
+        if (successCountStatus === NorthHandler.STATUS.LOGIC_ERROR) {
           // Add errored values into error table
           this.logger.trace(`Cache:addErroredValues, add ${values.length} values to error database for ${name}`)
           await databaseService.saveErroredValues(this.valuesErrorDatabase, id, values)
@@ -373,17 +373,17 @@ class Cache {
       } else {
         this.logger.trace(`no values in the db for ${name}`)
       }
-      return ApiHandler.STATUS.SUCCESS
+      return NorthHandler.STATUS.SUCCESS
     } catch (error) {
       this.logger.error(error)
-      return ApiHandler.STATUS.COMMUNICATION_ERROR
+      return NorthHandler.STATUS.COMMUNICATION_ERROR
     }
   }
 
   /**
    * Handle files resending.
    * @param {object} application - The application to send the values to
-   * @return {ApiHandler.Status} - The callback status
+   * @return {NorthHandler.Status} - The callback status
    */
   async sendCallbackForFiles(application) {
     const { id, name } = application
@@ -394,7 +394,7 @@ class Cache {
 
       if (!fileToSend) {
         this.logger.trace('sendCallbackForFiles(): no file to send')
-        return ApiHandler.STATUS.SUCCESS
+        return NorthHandler.STATUS.SUCCESS
       }
 
       this.logger.trace(`sendCallbackForFiles() file:${fileToSend.path}`)
@@ -405,17 +405,17 @@ class Cache {
         // file in cache does not exist on filesystem
         await databaseService.deleteSentFile(this.filesDatabase, id, fileToSend.path)
         this.logger.error(new Error(`${fileToSend.path} not found! Removing it from db.`))
-        return ApiHandler.STATUS.SUCCESS
+        return NorthHandler.STATUS.SUCCESS
       }
       this.logger.trace(`sendCallbackForFiles(${fileToSend.path}) call sendFile() ${name}`)
       const status = await this.engine.sendFile(id, fileToSend.path)
       switch (status) {
-        case ApiHandler.STATUS.SUCCESS:
+        case NorthHandler.STATUS.SUCCESS:
           this.logger.trace(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${name}`)
           await databaseService.deleteSentFile(this.filesDatabase, id, fileToSend.path)
           await this.handleSentFile(fileToSend.path)
           break
-        case ApiHandler.STATUS.LOGIC_ERROR:
+        case NorthHandler.STATUS.LOGIC_ERROR:
           this.logger.error(`sendCallbackForFiles(${fileToSend.path}) move to error database for ${name}`)
           await databaseService.saveFile(this.filesErrorDatabase, fileToSend.timestamp, id, fileToSend.path)
 
@@ -428,7 +428,7 @@ class Cache {
       return status
     } catch (error) {
       this.logger.error(error)
-      return ApiHandler.STATUS.COMMUNICATION_ERROR
+      return NorthHandler.STATUS.COMMUNICATION_ERROR
     }
   }
 

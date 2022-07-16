@@ -2,12 +2,12 @@ const { vsprintf } = require('sprintf-js')
 const mqtt = require('mqtt')
 const objectPath = require('object-path')
 
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 
 /**
  * Class MQTT - generates and sends MQTT messages
  */
-class MQTT extends ApiHandler {
+class MQTT extends NorthHandler {
   static category = 'IoT'
 
   /**
@@ -61,7 +61,7 @@ class MQTT extends ApiHandler {
     this.logger.trace(`MQTT handleValues() call with ${values.length} values`)
     const successCount = await this.publishValues(values)
     if (successCount === 0) {
-      throw ApiHandler.STATUS.COMMUNICATION_ERROR
+      throw NorthHandler.STATUS.COMMUNICATION_ERROR
     }
     this.statusData['Last handled values at'] = new Date().toISOString()
     this.statusData['Number of values sent since OIBus has started'] += values.length

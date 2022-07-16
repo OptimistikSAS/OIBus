@@ -1,12 +1,12 @@
 const fs = require('fs/promises')
 const path = require('path')
 
-const ProtocolHandler = require('../ProtocolHandler.class')
+const {SouthHandler} = global
 
 /**
  * Class FolderScanner
  */
-class FolderScanner extends ProtocolHandler {
+class FolderScanner extends SouthHandler {
   static category = 'FileOut'
 
   /**

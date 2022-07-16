@@ -4,7 +4,7 @@ const EncryptionService = require('../services/EncryptionService.class')
 const Logger = require('../engine/logger/Logger.class')
 const CertificateService = require('../services/CertificateService.class')
 
-class ApiHandler {
+class NorthHandler {
   static STATUS = {
     SUCCESS: 0,
     LOGIC_ERROR: -1,
@@ -185,4 +185,4 @@ class ApiHandler {
   }
 }
 
-module.exports = ApiHandler
+module.exports = NorthHandler

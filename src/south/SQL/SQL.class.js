@@ -12,13 +12,13 @@ const csv = require('papaparse')
 const { DateTime } = require('luxon')
 const humanizeDuration = require('humanize-duration')
 
-const ProtocolHandler = require('../ProtocolHandler.class')
+const {SouthHandler} = global
 
 let oracledb
 /**
  * Class SQL
  */
-class SQL extends ProtocolHandler {
+class SQL extends SouthHandler {
   static category = 'DatabaseOut'
 
   /**

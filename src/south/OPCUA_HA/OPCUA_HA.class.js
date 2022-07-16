@@ -1,13 +1,13 @@
 const Opcua = require('node-opcua')
 const { OPCUACertificateManager } = require('node-opcua-certificate-manager')
-const ProtocolHandler = require('../../ProtocolHandler.class')
-const { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG } = require('../opcua.service')
+
+const { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG } = require('../opcua.service/opcua.service')
 
 /**
  * @class OPCUA_HA
- * @extends {ProtocolHandler}
+ * @extends {SouthHandler}
  */
-class OPCUA_HA extends ProtocolHandler {
+class OPCUA_HA extends SouthHandler {
   static category = 'IoT'
 
   /**

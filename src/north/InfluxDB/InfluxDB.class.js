@@ -1,12 +1,12 @@
 const { vsprintf } = require('sprintf-js')
 const objectPath = require('object-path')
 
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 
 /**
  * Class InfluxDB - generates and sends InfluxDB requests
  */
-class InfluxDB extends ApiHandler {
+class InfluxDB extends NorthHandler {
   static category = 'DatabaseIn'
 
   /**

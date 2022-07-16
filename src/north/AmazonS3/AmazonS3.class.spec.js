@@ -3,7 +3,7 @@ const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3')
 const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
 
 const ProxyAgent = require('proxy-agent')
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 const AmazonS3 = require('./AmazonS3.class')
 const config = require('../../../tests/testConfig').default
 const EncryptionService = require('../../services/EncryptionService.class')
@@ -147,7 +147,7 @@ describe('Amazone S3 north', () => {
 
     expect(fs.createReadStream).toHaveBeenCalledWith(filePath)
     expect(amazonS3.s3.send).toHaveBeenCalledWith(expectedParams)
-    expect(expectedResult).toEqual(ApiHandler.STATUS.SUCCESS)
+    expect(expectedResult).toEqual(NorthHandler.STATUS.SUCCESS)
   })
 
   it('should properly catch handle file error', async () => {
@@ -159,6 +159,6 @@ describe('Amazone S3 north', () => {
     })
     const expectedResult = await amazonS3.handleFile(filePath)
     expect(amazonS3.logger.error).toHaveBeenCalledTimes(1)
-    expect(expectedResult).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
+    expect(expectedResult).toEqual(NorthHandler.STATUS.COMMUNICATION_ERROR)
   })
 })

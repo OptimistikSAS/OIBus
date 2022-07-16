@@ -1,6 +1,6 @@
 const pg = require('pg')
 
-const ApiHandler = require('../ApiHandler.class')
+global.NorthHandler = require('../NorthHandler.class')
 const TimescaleDB = require('./TimescaleDB.class')
 const config = require('../../../tests/testConfig').default
 const EncryptionService = require('../../services/EncryptionService.class')
@@ -101,7 +101,7 @@ describe('TimescaleDB north', () => {
     }
 
     expect(expectedResult).toBeNull()
-    expect(expectedError).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
+    expect(expectedError).toEqual(NorthHandler.STATUS.COMMUNICATION_ERROR)
 
     // test error building query
     try {
@@ -114,7 +114,7 @@ describe('TimescaleDB north', () => {
       expectedError = error
     }
 
-    expect(expectedError).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
+    expect(expectedError).toEqual(NorthHandler.STATUS.COMMUNICATION_ERROR)
 
     // eslint-disable-next-line max-len
     expect(timescaleDbNorth.logger.error).toHaveBeenCalledWith(expect.stringContaining('Issue to build query: BEGIN; TypeError: Cannot convert undefined or null to object'))
