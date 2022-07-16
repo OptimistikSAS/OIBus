@@ -31,18 +31,18 @@ const Main = () => (
         <div className="oi-container-with-top-nav">
           <AlertContainer />
           <Routes>
-            <Route exact path="/" element={<HomePage />} />
-            <Route exact path="/engine" element={<Engine />} />
-            <Route exact path="/history-query" element={<HistoryQuery />} />
-            <Route exact path="/history-query/:id" element={<ConfigureHistoryQuery />} />
-            <Route exact path="/south/:id" element={<ConfigureProtocol />} />
-            <Route exact path="/south/:id/live" element={<SouthStatus />} />
-            <Route exact path="/south/:id/points" element={<ConfigurePoints />} />
-            <Route exact path="/north/:id" element={<ConfigureApi />} />
-            <Route exact path="/north/:id/live" element={<NorthStatus />} />
-            <Route exact path="/log" element={<Logs />} />
-            <Route exact path="/about" element={<About />} />
-            <Route exact path="/activation" element={<Activation />} />
+            <Route end path="/" element={<HomePage />} />
+            <Route end path="/engine" element={<Engine />} />
+            <Route end path="/history-query" element={<HistoryQuery />} />
+            <Route end path="/history-query/:id" element={<ConfigureHistoryQuery />} />
+            <Route end path="/south/:id" element={<ConfigureProtocol />} />
+            <Route end path="/south/:id/live" element={<SouthStatus />} />
+            <Route end path="/south/:id/points" element={<ConfigurePoints />} />
+            <Route end path="/north/:id" element={<ConfigureApi />} />
+            <Route end path="/north/:id/live" element={<NorthStatus />} />
+            <Route end path="/log" element={<Logs />} />
+            <Route end path="/about" element={<About />} />
+            <Route end path="/activation" element={<Activation />} />
             <Route element={<NotFound />} />
           </Routes>
         </div>
