@@ -15,7 +15,7 @@ const NewSouth = ({
   const {
     newConfig,
     dispatchNewConfig,
-    protocolList,
+    southList,
   } = React.useContext(ConfigContext)
   const [name, setName] = React.useState('')
   const [active, setActive] = useState(false)
@@ -25,7 +25,7 @@ const NewSouth = ({
   const dataSources = newConfig?.south?.dataSources ?? []
   const navigate = useNavigate()
 
-  const southCategoryList = protocolList ? [...new Set(protocolList.map((e) => e.category))] : []
+  const southCategoryList = southList ? [...new Set(southList.map((e) => e.category))] : []
 
   const addDataSource = () => {
     if (protocol === null && name !== '') {
@@ -91,7 +91,7 @@ const NewSouth = ({
                 </div>
               </div>
               <div>
-                {protocolList.filter((e) => e.category === category)
+                {southList.filter((e) => e.category === category)
                   .map(({ connectorName }) => (
                     <button
                       id="icon-connector"

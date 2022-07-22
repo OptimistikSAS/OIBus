@@ -13,10 +13,10 @@ global.fetch = jest.fn().mockImplementation((uri) => {
   let jsonString
   switch (uri) {
     case '/config/schemas/north':
-      jsonString = JSON.stringify(testConfig.apiList)
+      jsonString = JSON.stringify(testConfig.northList)
       break
     case '/config/schemas/south':
-      jsonString = JSON.stringify(testConfig.protocolList)
+      jsonString = JSON.stringify(testConfig.southList)
       break
     case '/config':
       jsonString = JSON.stringify({ config: testConfig })
@@ -39,7 +39,7 @@ global.fetch = jest.fn().mockImplementation((uri) => {
 describe('apis', () => {
   it('check getSouthProtocols', async () => {
     const result = await apis.getSouthProtocols()
-    expect(result).toEqual(testConfig.protocolList)
+    expect(result).toEqual(testConfig.southList)
   })
 
   it('check getSouthProtocolswith status 500', async () => {
@@ -75,7 +75,7 @@ describe('apis', () => {
 
   it('check getNorthApis', async () => {
     const result = await apis.getNorthApis()
-    expect(result).toEqual(testConfig.apiList)
+    expect(result).toEqual(testConfig.northList)
   })
 
   it('check getConfig', async () => {

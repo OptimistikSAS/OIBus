@@ -5,6 +5,8 @@ const testConfig = {
     password: '23423423',
     filter: ['127.0.0.1', '::1', '::ffff:127.0.0.1', '*'],
     safeMode: false,
+    northModules: ['OIAnalytics', 'OIConnect', 'FileWriter', 'AmazonS3', 'InfluxDB', 'TimescaleDB', 'MongoDB', 'MQTT', 'Console', 'WATSYConnect', 'CsvToHttp'],
+    southModules: ['SQL', 'FolderScanner', 'OPCUA_HA', 'OPCUA_DA', 'MQTT', 'ADS', 'Modbus', 'OPCHDA', 'RestApi'],
     logParameters: {
       consoleLog: { level: 'debug' },
       fileLog: {
@@ -652,8 +654,6 @@ const testConfig = {
     ],
   },
   schemaVersion: 5,
-  apiList: ['Console', 'OIConnect', 'OIAnalytics'],
-  protocolList: ['CSV', 'OPCHDA', 'SQL', 'FolderScanner', 'Modbus', 'OPCUA_HA', 'MQTT'],
 }
 
 export default testConfig

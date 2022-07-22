@@ -2,15 +2,6 @@ const VERSION = require('../../package.json').version
 // the generic class need to be imported to be used by extensions
 global.NorthHandler = require('../north/NorthHandler.class')
 global.SouthHandler = require('../south/SouthHandler.class')
-// HERE WE NEED TO DECIDE WHERE WE FIND THE LIST OF ADDITIONAL MODULES
-// Scan a folder? a key in OIBus.json? Another file or db?
-// We store them in variables below
-const apiList = {}
-const northModules = ['OIAnalytics', 'OIConnect', 'FileWriter', 'AmazonS3', 'InfluxDB', 'TimescaleDB', 'MongoDB', 'MQTT', 'Console', 'WATSYConnect', 'CsvToHttp']
-
-const protocolList = {}
-const southModules = ['SQL', 'FolderScanner', 'OPCUA_HA', 'OPCUA_DA', 'MQTT', 'ADS', 'Modbus', 'OPCHDA', 'RestApi']
-
 // BaseEngine classes
 const Logger = require('./logger/Logger.class')
 const { createRequestService } = require('../services/request')
@@ -38,6 +29,8 @@ class BaseEngine {
 
     this.configService = configService
     this.encryptionService = encryptionService
+    this.northList = {}
+    this.southList = {}
   }
 
   /**
@@ -52,20 +45,20 @@ class BaseEngine {
     this.logger.setEncryptionService(this.encryptionService)
     await this.logger.changeParameters(engineConfig, {})
     // load north modules
-    await Promise.all(northModules.map(async (name) => {
+    await Promise.all(engineConfig.northModules.map(async (name) => {
       try {
         const extension = await import(`../north/${name}/${name}.class.js`)
-        apiList[name] = extension.default
+        this.northList[name] = extension.default
         this.logger.debug(`North ${name} is added`)
       } catch (error) {
         this.logger.error(`North ${name} can't be loaded ${error}`)
       }
     }))
     // load south modules
-    await Promise.all(southModules.map(async (name) => {
+    await Promise.all(engineConfig.southModules.map(async (name) => {
       try {
         const extension = await import(`../south/${name}/${name}.class.js`)
-        protocolList[name] = extension.default
+        this.southList[name] = extension.default
         this.logger.debug(`South ${name} is added`)
       } catch (error) {
         this.logger.error(`South ${name} can't be loaded ${error}`)
@@ -160,7 +153,7 @@ class BaseEngine {
    * @returns {SouthHandler|null} - The South
    */
   createSouth(protocol, dataSource) {
-    const SouthHandler = protocolList[protocol]
+    const SouthHandler = this.southList[protocol]
     if (SouthHandler) {
       return new SouthHandler(dataSource, this)
     }
@@ -173,7 +166,7 @@ class BaseEngine {
    */
   // eslint-disable-next-line class-methods-use-this
   getSouthEngineList() {
-    return protocolList
+    return this.southList
   }
 
   /**
@@ -184,7 +177,7 @@ class BaseEngine {
    * @returns {SouthHandler|null} - The South
    */
   createNorth(api, application) {
-    const NorthHandler = apiList[api]
+    const NorthHandler = this.northList[api]
     if (NorthHandler) {
       return new NorthHandler(application, this)
     }
@@ -197,7 +190,7 @@ class BaseEngine {
    */
   // eslint-disable-next-line class-methods-use-this
   getNorthEngineList() {
-    return apiList
+    return this.northList
   }
 }
 

@@ -24,7 +24,7 @@ beforeEach(() => {
   React.useContext = jest.fn().mockReturnValue({
     newConfig,
     dispatchNewConfig,
-    protocolList: [
+    southList: [
       {
         connectorName: 'OPCUA_HA',
         category: 'IoT',
@@ -71,7 +71,7 @@ describe('NewSouth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: null,
       dispatchNewConfig,
-      protocolList: [
+      southList: [
         {
           connectorName: 'OPCUA_HA',
           category: 'IoT',
@@ -105,7 +105,7 @@ describe('NewSouth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: {},
       dispatchNewConfig,
-      protocolList: [
+      southList: [
         {
           connectorName: 'OPCUA_HA',
           category: 'IoT',
@@ -139,7 +139,7 @@ describe('NewSouth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: { south: {} },
       dispatchNewConfig,
-      protocolList: [
+      southList: [
         {
           connectorName: 'OPCUA_HA',
           category: 'IoT',
@@ -173,7 +173,7 @@ describe('NewSouth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: { south: { dataSources: [] } },
       dispatchNewConfig,
-      protocolList: [
+      southList: [
         {
           connectorName: 'OPCUA_HA',
           category: 'IoT',
@@ -209,7 +209,7 @@ describe('NewSouth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: { south: { dataSources: [] } },
       dispatchNewConfig,
-      protocolList: [
+      southList: [
         {
           connectorName: 'OPCUA_HA',
           category: 'IoT',

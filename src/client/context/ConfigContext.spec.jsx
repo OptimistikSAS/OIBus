@@ -14,10 +14,10 @@ global.fetch = jest.fn().mockImplementation((uri) => {
   let jsonString
   switch (uri) {
     case '/config/schemas/north':
-      jsonString = JSON.stringify(testConfig.apiList)
+      jsonString = JSON.stringify(testConfig.northList)
       break
     case '/config/schemas/south':
-      jsonString = JSON.stringify(testConfig.protocolList)
+      jsonString = JSON.stringify(testConfig.southList)
       break
     case '/config':
       jsonString = JSON.stringify({ config: testConfig })
@@ -34,21 +34,21 @@ global.fetch = jest.fn().mockImplementation((uri) => {
 // mock states
 let initState = 'activeConfig'
 const setActiveConfig = jest.fn()
-const setApiList = jest.fn()
-const setProtocolList = jest.fn()
+const setNorthList = jest.fn()
+const setSouthList = jest.fn()
 const setState = jest.fn()
 React.useState = jest.fn().mockImplementation((init) => {
   if (init === null && initState === 'activeConfig') {
-    initState = 'apiList'
+    initState = 'northList'
     return [init, setActiveConfig]
   }
-  if (init === undefined && initState === 'apiList') {
-    initState = 'protocolList'
-    return [init, setApiList]
+  if (init === undefined && initState === 'northList') {
+    initState = 'southList'
+    return [init, setNorthList]
   }
-  if (init === undefined && initState === 'protocolList') {
+  if (init === undefined && initState === 'southList') {
     initState = 'activeConfig'
-    return [init, setProtocolList]
+    return [init, setSouthList]
   }
   return [init, setState]
 })
@@ -92,8 +92,8 @@ describe('ConfigProvider', () => {
       )
     })
     expect(setActiveConfig).toBeCalledWith(testConfig)
-    expect(setApiList).toBeCalledWith(testConfig.apiList)
-    expect(setProtocolList).toBeCalledWith(testConfig.protocolList)
+    expect(setNorthList).toBeCalledWith(testConfig.northList)
+    expect(setSouthList).toBeCalledWith(testConfig.southList)
     expect(container).toMatchSnapshot()
   })
   test('check initial data fail', async () => {
