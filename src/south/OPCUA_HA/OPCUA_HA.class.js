@@ -1,3 +1,4 @@
+const { SouthHandler } = global
 const Opcua = require('node-opcua')
 const { OPCUACertificateManager } = require('node-opcua-certificate-manager')
 
@@ -444,5 +445,7 @@ class OPCUA_HA extends SouthHandler {
     }
   }
 }
+
+OPCUA_HA.schema = require('./OPCUA_HA.schema')
 
 module.exports = OPCUA_HA

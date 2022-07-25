@@ -2,7 +2,7 @@ const { Client } = require('pg')
 const { vsprintf } = require('sprintf-js')
 const objectPath = require('object-path')
 
-global.NorthHandler = require('../NorthHandler.class')
+const { NorthHandler } = global
 
 class TimescaleDB extends NorthHandler {
   static category = 'DatabaseIn'
@@ -201,5 +201,7 @@ class TimescaleDB extends NorthHandler {
     await this.timescaleClient.query(query)
   }
 }
+
+TimescaleDB.schema = require('./TimescaleDB.schema')
 
 module.exports = TimescaleDB

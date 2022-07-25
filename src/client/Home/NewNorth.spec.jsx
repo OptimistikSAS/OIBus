@@ -24,7 +24,7 @@ beforeEach(() => {
   React.useContext = jest.fn().mockReturnValue({
     newConfig,
     dispatchNewConfig,
-    northList: [
+    northSchemas: [
       {
         connectorName: 'Console',
         category: 'Debug',
@@ -70,7 +70,7 @@ describe('NewNorth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: null,
       dispatchNewConfig,
-      northList: [
+      northSchemas: [
         {
           connectorName: 'Console',
           category: 'Debug',
@@ -104,7 +104,7 @@ describe('NewNorth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: {},
       dispatchNewConfig,
-      northList: [
+      northSchemas: [
         {
           connectorName: 'Console',
           category: 'Debug',
@@ -138,7 +138,7 @@ describe('NewNorth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: { north: {} },
       dispatchNewConfig,
-      northList: [
+      northSchemas: [
         {
           connectorName: 'Console',
           category: 'Debug',
@@ -170,7 +170,7 @@ describe('NewNorth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: { north: { applications: [] } },
       dispatchNewConfig,
-      northList: [
+      northSchemas: [
         {
           connectorName: 'Console',
           category: 'Debug',
@@ -206,7 +206,7 @@ describe('NewNorth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: { north: { applications: [] } },
       dispatchNewConfig,
-      northList: [
+      northSchemas: [
         {
           connectorName: 'Console',
           category: 'Debug',

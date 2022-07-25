@@ -32,8 +32,8 @@ const getStatusForNorth = async (ctx) => {
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const getNorthList = (ctx) => {
-  ctx.ok(ctx.app.engine.getNorthList())
+const getNorthSchemas = (ctx) => {
+  ctx.ok(ctx.app.engine.getNorthSchemas())
 }
 
 /**
@@ -41,8 +41,8 @@ const getNorthList = (ctx) => {
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const getSouthList = (ctx) => {
-  ctx.ok(ctx.app.engine.getSouthList())
+const getSouthSchemas = (ctx) => {
+  ctx.ok(ctx.app.engine.getSouthSchemas())
 }
 
 /**
@@ -108,8 +108,8 @@ module.exports = {
   getStatus,
   getStatusForSouth,
   getStatusForNorth,
-  getNorthList,
-  getSouthList,
+  getNorthSchemas,
+  getSouthSchemas,
   addValues,
   addFile,
   aliveSignal,

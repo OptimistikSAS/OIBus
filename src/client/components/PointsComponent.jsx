@@ -6,7 +6,6 @@ import PropTypes from 'prop-types'
 import Table from './table/Table.jsx'
 import TablePagination from './table/TablePagination.jsx'
 import Modal from './Modal.jsx'
-import ProtocolSchemas from '../South/Protocols.jsx'
 import * as Controls from './OIbForm'
 import utils from '../helpers/utils'
 import validation from '../South/Form/South.validation'
@@ -20,6 +19,7 @@ const PointsComponent = ({
   handleDelete,
   handleImportPoints,
   onUpdate,
+  ProtocolSchemas,
 }) => {
   const [filterText, setFilterText] = React.useState('') // used to limit the list of points
   const [selectedPage, setSelectedPage] = React.useState(1)
@@ -202,6 +202,7 @@ PointsComponent.propTypes = {
   handleDelete: PropTypes.func.isRequired,
   handleImportPoints: PropTypes.func.isRequired,
   onUpdate: PropTypes.func.isRequired,
+  ProtocolSchemas: PropTypes.arrayOf(PropTypes.object).isRequired,
 }
 
 export default PointsComponent

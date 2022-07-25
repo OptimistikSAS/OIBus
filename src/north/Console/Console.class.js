@@ -1,6 +1,6 @@
 const fs = require('fs/promises')
 
-global.NorthHandler = require('../NorthHandler.class')
+const { NorthHandler } = global
 
 class Console extends NorthHandler {
   static category = 'Debug'
@@ -57,5 +57,6 @@ class Console extends NorthHandler {
     return NorthHandler.STATUS.SUCCESS
   }
 }
+Console.schema = require('./Console.schema')
 
 module.exports = Console

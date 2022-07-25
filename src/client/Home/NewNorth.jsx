@@ -15,7 +15,7 @@ const NewNorth = ({
   const {
     newConfig,
     dispatchNewConfig,
-    northList,
+    northSchemas,
   } = React.useContext(ConfigContext)
   const [name, setName] = React.useState('')
   const [active, setActive] = useState(false)
@@ -25,7 +25,7 @@ const NewNorth = ({
   const applications = newConfig?.north?.applications ?? []
   const navigate = useNavigate()
 
-  const northCategoryList = northList ? [...new Set(northList.map((e) => e.category))] : []
+  const northCategoryList = northSchemas ? [...new Set(northSchemas.map((e) => e.category))] : []
 
   const addApplication = () => {
     if (api === null && name !== '') {
@@ -94,7 +94,7 @@ const NewNorth = ({
                 </div>
               </div>
               <div>
-                {northList.filter((e) => e.category === category)
+                {northSchemas.filter((e) => e.category === category)
                   .map(({ connectorName }) => (
                     <button
                       id="icon-connector"

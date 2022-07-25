@@ -1,7 +1,7 @@
 const fs = require('fs/promises')
 const path = require('path')
 
-const {SouthHandler} = global
+const { SouthHandler } = global
 
 /**
  * Class FolderScanner
@@ -136,5 +136,7 @@ class FolderScanner extends SouthHandler {
     }
   }
 }
+
+FolderScanner.schema = require('./FolderScanner.schema')
 
 module.exports = FolderScanner

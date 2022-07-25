@@ -1,4 +1,4 @@
-const schema = require('./SQL.schema.jsx').default
+const schema = require('./SQL.schema').default
 const testSchema = require('../../services/testSchema').default
 
 testSchema(schema)

@@ -1,7 +1,5 @@
+const { NorthHandler } = global
 const fs = require('fs/promises')
-
-global.NorthHandler = require('../NorthHandler.class')
-
 /**
  * Class OIAnalytics - sends files through a POST Multipart HTTP and values as json payload
  */
@@ -77,5 +75,7 @@ class OIAnalytics extends NorthHandler {
     return result
   }
 }
+
+OIAnalytics.schema = require('./OIAnalytics.schema')
 
 module.exports = OIAnalytics

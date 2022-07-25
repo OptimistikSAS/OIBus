@@ -1,17 +1,14 @@
-import React from 'react'
-import { inRange, minValue, notEmpty, optional, startsWith } from '../../services/validation.service'
-
 const schema = { name: 'RestApi' }
 schema.form = {
   RestApiSettings: {
     type: 'OIbTitle',
     label: 'REST API Network Settings',
     md: 12,
-    children: (
+    children: `
       <p>
         Specify the protocol, the HTTP method to use, the host name (or ip address), the port to use and the endpoint to retrieve the data.
       </p>
-    ),
+    `,
   },
   protocol: {
     type: 'OIbSelect',
@@ -31,23 +28,23 @@ schema.form = {
     newRow: false,
     md: 4,
     defaultValue: 'localhost',
-    valid: notEmpty(),
-    help: <div>IP address or host name of the API server</div>,
+    valid: 'notEmpty',
+    help: 'IP address or host name of the API server</div>',
   },
   port: {
     type: 'OIbInteger',
     newRow: false,
     md: 1,
-    valid: inRange(0, 65535),
+    valid: 'inRange(0, 65535)',
     defaultValue: 80,
-    help: <div>Port number of the API server</div>,
+    help: 'Port number of the API server</div>',
   },
   endpoint: {
     type: 'OIbText',
     newRow: false,
     md: 4,
-    valid: startsWith('/'),
-    help: <div>Endpoint to request</div>,
+    valid: 'startsWith(/)',
+    help: 'Endpoint to request</div>',
   },
   authentication: { type: 'OIbAuthentication' },
   acceptSelfSigned: {
@@ -59,7 +56,7 @@ schema.form = {
   connectionTimeout: {
     type: 'OIbInteger',
     label: 'Connection timeout (ms)',
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 1000,
     md: 2,
   },
@@ -67,7 +64,7 @@ schema.form = {
     type: 'OIbInteger',
     label: 'Request timeout (ms)',
     newRow: false,
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 1000,
     md: 2,
   },
@@ -75,25 +72,25 @@ schema.form = {
     type: 'OIbInteger',
     label: 'Max read interval (s)',
     md: 2,
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 0,
-    help: <div>Split the time interval into smaller intervals of this duration (in s). 0 to not split the query.</div>,
+    help: 'Split the time interval into smaller intervals of this duration (in s). 0 to not split the query.</div>',
   },
   readIntervalDelay: {
     type: 'OIbInteger',
     label: 'Read interval delay (ms)',
     newRow: false,
     md: 2,
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 200,
-    help: <div>Time to wait between the read interval iterations (ms)</div>,
+    help: 'Time to wait between the read interval iterations (ms)</div>',
   },
   querySettings: {
     type: 'OIbTitle',
     label: 'Query Settings',
     md: 12,
-    children: (
-      <>
+    children: `
+      <div>
         <div>
           You can add query params directly from the table (key/value pairs), or enter a body in a json format.
           The following variables can be used in the query:
@@ -125,8 +122,8 @@ schema.form = {
           @StartTime is then incremented at each sub-query until @EndTime reaches the current date.
           Each sub-query stores its results in its own csv file. See the File Settings help section below for more information.
         </p>
-      </>
-    ),
+      </div>
+    `,
   },
   queryParams: {
     type: 'OIbTable',
@@ -134,13 +131,13 @@ schema.form = {
       queryParamKey: {
         type: 'OIbText',
         label: 'Key',
-        valid: notEmpty(),
+        valid: 'notEmpty',
         defaultValue: '',
       },
       queryParamValue: {
         type: 'OIbText',
         label: 'Value',
-        valid: notEmpty(),
+        valid: 'notEmpty',
         defaultValue: '',
       },
     },
@@ -152,8 +149,8 @@ schema.form = {
     type: 'OIbTextArea',
     contentType: 'json',
     defaultValue: '',
-    valid: optional(),
-    help: <div>Available variables: @StartTime, @EndTime. See Query Settings help section.</div>,
+    valid: 'optional',
+    help: 'Available variables: @StartTime, @EndTime. See Query Settings help section.</div>',
   },
   variableDateFormat: {
     type: 'OIbSelect',
@@ -165,7 +162,7 @@ schema.form = {
     type: 'OIbTitle',
     label: 'File Settings',
     md: 12,
-    children: (
+    children: `
       <div>
         The query results are converted into a CSV file following the parser specified below.
         It is possible to specify the delimiter used in the CSV file, how to format the timestamp field and also
@@ -190,7 +187,7 @@ schema.form = {
           </li>
         </ul>
       </div>
-    ),
+    `,
   },
   payloadParser: {
     type: 'OIbSelect',
@@ -208,15 +205,15 @@ schema.form = {
     type: 'OIbText',
     newRow: false,
     defaultValue: ',',
-    valid: notEmpty(),
-    help: <div>Delimiter in the CSV file</div>,
+    valid: 'notEmpty',
+    help: 'Delimiter in the CSV file</div>',
     md: 1,
   },
   fileName: {
     type: 'OIbText',
     defaultValue: '@ConnectorName-results_@CurrentDate-@QueryPart.csv',
-    valid: notEmpty(),
-    help: <div>The name of the CSV file containing the results</div>,
+    valid: 'notEmpty',
+    help: 'The name of the CSV file containing the results</div>',
     md: 3,
   },
   compression: {

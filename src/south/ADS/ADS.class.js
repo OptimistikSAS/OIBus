@@ -1,6 +1,6 @@
 const ads = require('ads-client')
 
-const {SouthHandler} = global
+const { SouthHandler } = global
 
 /**
  * Class ADS - Provides instruction for Modbus client connection
@@ -289,5 +289,6 @@ class ADS extends SouthHandler {
     await super.disconnect()
   }
 }
+ADS.schema = require('./ADS.schema')
 
 module.exports = ADS

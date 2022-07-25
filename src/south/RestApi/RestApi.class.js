@@ -5,7 +5,7 @@ const fetch = require('node-fetch')
 const https = require('https')
 const http = require('http')
 
-const {SouthHandler} = global
+const { SouthHandler } = global
 
 const oiaTimeValues = require('./formatters/oia-time-values')
 const slims = require('./formatters/slims')
@@ -353,5 +353,6 @@ class RestApi extends SouthHandler {
     return csv.unparse(result, options)
   }
 }
+RestApi.schema = require('./RestApi.schema')
 
 module.exports = RestApi

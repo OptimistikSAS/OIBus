@@ -12,7 +12,7 @@ const csv = require('papaparse')
 const { DateTime } = require('luxon')
 const humanizeDuration = require('humanize-duration')
 
-const {SouthHandler} = global
+const { SouthHandler } = global
 
 let oracledb
 /**
@@ -549,5 +549,7 @@ class SQL extends SouthHandler {
     return occurrences
   }
 }
+
+SQL.schema = require('./SQL.schema')
 
 module.exports = SQL

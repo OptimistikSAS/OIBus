@@ -1,6 +1,6 @@
 const mqtt = require('mqtt')
 
-global.NorthHandler = require('../NorthHandler.class')
+const { NorthHandler } = global
 const MQTT = require('./MQTT.class')
 const config = require('../../../tests/testConfig').default
 const EncryptionService = require('../../services/EncryptionService.class')

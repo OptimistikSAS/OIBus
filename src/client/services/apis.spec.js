@@ -13,10 +13,10 @@ global.fetch = jest.fn().mockImplementation((uri) => {
   let jsonString
   switch (uri) {
     case '/config/schemas/north':
-      jsonString = JSON.stringify(testConfig.northList)
+      jsonString = JSON.stringify(testConfig.northSchemas)
       break
     case '/config/schemas/south':
-      jsonString = JSON.stringify(testConfig.southList)
+      jsonString = JSON.stringify(testConfig.southSchemas)
       break
     case '/config':
       jsonString = JSON.stringify({ config: testConfig })
@@ -37,18 +37,18 @@ global.fetch = jest.fn().mockImplementation((uri) => {
 })
 
 describe('apis', () => {
-  it('check getSouthProtocols', async () => {
-    const result = await apis.getSouthProtocols()
-    expect(result).toEqual(testConfig.southList)
+  it('check getSouthSchemas', async () => {
+    const result = await apis.getSouthSchemas()
+    expect(result).toEqual(testConfig.southSchemas)
   })
 
-  it('check getSouthProtocolswith status 500', async () => {
+  it('check getSouthSchemaswith status 500', async () => {
     const originalError = console.error
     console.error = jest.fn()
     const originalGlobalFetchMock = global.fetch
     global.fetch = jest.fn().mockImplementation(() => ({ status: 500 }))
 
-    const request = apis.getSouthProtocols()
+    const request = apis.getSouthSchemas()
     await expect(request).rejects.toThrow()
     expect(console.error).toBeCalled()
 
@@ -56,7 +56,7 @@ describe('apis', () => {
     console.error = originalError
   })
 
-  it('check getSouthProtocolswith catch error', async () => {
+  it('check getSouthSchemaswith catch error', async () => {
     const originalError = console.error
     console.error = jest.fn()
     const originalGlobalFetchMock = global.fetch
@@ -65,7 +65,7 @@ describe('apis', () => {
       throw error
     })
 
-    const request = apis.getSouthProtocols()
+    const request = apis.getSouthSchemas()
     await expect(request).rejects.toThrowError('test error')
     expect(console.error).toBeCalled()
 
@@ -73,9 +73,9 @@ describe('apis', () => {
     console.error = originalError
   })
 
-  it('check getNorthApis', async () => {
-    const result = await apis.getNorthApis()
-    expect(result).toEqual(testConfig.northList)
+  it('check getNorthSchemas', async () => {
+    const result = await apis.getNorthSchemas()
+    expect(result).toEqual(testConfig.northSchemas)
   })
 
   it('check getConfig', async () => {

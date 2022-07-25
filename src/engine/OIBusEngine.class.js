@@ -347,9 +347,9 @@ class OIBusEngine extends BaseEngine {
    * @return {String[]} - Available North applications
    */
   /* eslint-disable-next-line class-methods-use-this */
-  getNorthList() {
+  getNorthSchemas() {
     this.logger.debug('Getting North applications')
-    return Object.entries(this.getNorthEngineList())
+    return Object.entries(this.northSchemas())
       .map(([connectorName, { category }]) => ({
         connectorName,
         category,
@@ -362,7 +362,7 @@ class OIBusEngine extends BaseEngine {
    */
 
   /* eslint-disable-next-line class-methods-use-this */
-  getSouthList() {
+  getSouthSchemas() {
     this.logger.debug('Getting South protocols')
     return Object.entries(this.getSouthEngineList())
       .map(([connectorName, { category }]) => ({

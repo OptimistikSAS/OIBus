@@ -1,6 +1,6 @@
 const fs = require('fs/promises')
 
-global.NorthHandler = require('../NorthHandler.class')
+const { NorthHandler } = global
 
 class OIConnect extends NorthHandler {
   static category = 'Optimistik'
@@ -55,5 +55,7 @@ class OIConnect extends NorthHandler {
     return this.postFile(filePath)
   }
 }
+
+OIConnect.schema = require('./OIConnect.schema')
 
 module.exports = OIConnect

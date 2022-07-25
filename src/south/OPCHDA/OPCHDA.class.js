@@ -1,7 +1,7 @@
 // eslint-disable-next-line max-classes-per-file
 const { spawn } = require('child_process')
 
-const {SouthHandler} = global
+const { SouthHandler } = global
 const TcpServer = require('./TcpServer')
 
 /**
@@ -435,5 +435,6 @@ class OPCHDA extends SouthHandler {
     }
   }
 }
+OPCHDA.schema = require('./OPCHDA.schema')
 
 module.exports = OPCHDA

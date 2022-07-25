@@ -1,4 +1,4 @@
-const schema = require('./MongoDB.schema.jsx').default
+const schema = require('./MongoDB.schema').default
 const testSchema = require('../../services/testSchema').default
 
 testSchema(schema)

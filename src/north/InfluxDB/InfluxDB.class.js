@@ -1,7 +1,7 @@
 const { vsprintf } = require('sprintf-js')
 const objectPath = require('object-path')
 
-global.NorthHandler = require('../NorthHandler.class')
+const { NorthHandler } = global
 
 /**
  * Class InfluxDB - generates and sends InfluxDB requests
@@ -181,5 +181,6 @@ class InfluxDB extends NorthHandler {
     }
   }
 }
+InfluxDB.schema = require('./InfluxDB.schema')
 
 module.exports = InfluxDB

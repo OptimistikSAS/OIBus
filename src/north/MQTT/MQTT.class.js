@@ -2,7 +2,7 @@ const { vsprintf } = require('sprintf-js')
 const mqtt = require('mqtt')
 const objectPath = require('object-path')
 
-global.NorthHandler = require('../NorthHandler.class')
+const { NorthHandler } = global
 
 /**
  * Class MQTT - generates and sends MQTT messages
@@ -183,5 +183,6 @@ class MQTT extends NorthHandler {
     return successCount
   }
 }
+MQTT.schema = require('./MQTT.schema')
 
 module.exports = MQTT

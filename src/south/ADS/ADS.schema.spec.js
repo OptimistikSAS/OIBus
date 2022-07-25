@@ -1,4 +1,4 @@
-const schema = require('./ADS.schema.jsx').default
+const schema = require('./ADS.schema').default
 const testSchema = require('../../services/testSchema').default
 
 testSchema(schema)

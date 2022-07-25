@@ -14,10 +14,10 @@ global.fetch = jest.fn().mockImplementation((uri) => {
   let jsonString
   switch (uri) {
     case '/config/schemas/north':
-      jsonString = JSON.stringify(testConfig.northList)
+      jsonString = JSON.stringify(testConfig.northSchemas)
       break
     case '/config/schemas/south':
-      jsonString = JSON.stringify(testConfig.southList)
+      jsonString = JSON.stringify(testConfig.southSchemas)
       break
     case '/config':
       jsonString = JSON.stringify({ config: testConfig })
@@ -34,21 +34,21 @@ global.fetch = jest.fn().mockImplementation((uri) => {
 // mock states
 let initState = 'activeConfig'
 const setActiveConfig = jest.fn()
-const setNorthList = jest.fn()
-const setSouthList = jest.fn()
+const setNorthSchemas = jest.fn()
+const setSouthSchemas = jest.fn()
 const setState = jest.fn()
 React.useState = jest.fn().mockImplementation((init) => {
   if (init === null && initState === 'activeConfig') {
-    initState = 'northList'
+    initState = 'northSchemas'
     return [init, setActiveConfig]
   }
-  if (init === undefined && initState === 'northList') {
-    initState = 'southList'
-    return [init, setNorthList]
+  if (init === undefined && initState === 'northSchemas') {
+    initState = 'southSchemas'
+    return [init, setNorthSchemas]
   }
-  if (init === undefined && initState === 'southList') {
+  if (init === undefined && initState === 'southSchemas') {
     initState = 'activeConfig'
-    return [init, setSouthList]
+    return [init, setSouthSchemas]
   }
   return [init, setState]
 })
@@ -92,8 +92,8 @@ describe('ConfigProvider', () => {
       )
     })
     expect(setActiveConfig).toBeCalledWith(testConfig)
-    expect(setNorthList).toBeCalledWith(testConfig.northList)
-    expect(setSouthList).toBeCalledWith(testConfig.southList)
+    expect(setNorthSchemas).toBeCalledWith(testConfig.northSchemas)
+    expect(setSouthSchemas).toBeCalledWith(testConfig.southSchemas)
     expect(container).toMatchSnapshot()
   })
   test('check initial data fail', async () => {

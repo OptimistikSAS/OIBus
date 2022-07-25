@@ -1,13 +1,10 @@
-import React from 'react'
-import { notEmpty, inRange } from '../../services/validation.service'
-
 const schema = { name: 'CsvToHttp' }
 
 schema.form = {
   WebParameters: {
     type: 'OIbTitle',
     label: 'Http Endpoint Parameters',
-    children: (
+    children: `
       <div>
         <p>
           The aim of this North is to send a batch of converted value into a request.
@@ -26,7 +23,7 @@ schema.form = {
           </li>
         </ul>
       </div>
-    ),
+    `,
   },
   applicativeHostUrl: {
     label: 'Host url',
@@ -45,7 +42,7 @@ schema.form = {
     label: 'Max Length of the body',
     type: 'OIbInteger',
     newRow: false,
-    valid: inRange(1, 10000),
+    valid: 'inRange(1, 10000)',
     defaultValue: 100,
   },
   acceptUnconvertedRows: {
@@ -58,7 +55,7 @@ schema.form = {
   CsvToHttpParameters: {
     type: 'OIbTitle',
     label: 'Mapping Parameters',
-    children: (
+    children: `
       <div>
         <p>
           The CSV file sent will be converted row by row into an http request. It is necessary to configure the mapping parameters in order to convert
@@ -102,7 +99,7 @@ schema.form = {
           resulting value will be &lsquo;value1 and value2&lsquo;.
         </p>
       </div>
-    ),
+    `,
   },
   csvDelimiter: {
     type: 'OIbSelect',
@@ -118,14 +115,14 @@ schema.form = {
         type: 'OIbText',
         newRow: false,
         label: 'Header in csv file',
-        valid: notEmpty(),
+        valid: 'notEmpty',
         defaultValue: '',
       },
       httpField: {
         type: 'OIbText',
         newRow: false,
         label: 'Field in http body',
-        valid: notEmpty(),
+        valid: 'notEmpty',
         defaultValue: '',
       },
       type: {
@@ -141,12 +138,12 @@ schema.form = {
   networkSection: {
     type: 'OIbTitle',
     label: 'Network',
-    children: (
-      <>
+    children: `
+      <div>
         <p>Please specify here the proxy name to use</p>
         <p>(proxy names are defined in the Engine page)</p>
-      </>
-    ),
+      </div>
+    `,
   },
   proxy: { type: 'OIbProxy' },
 }

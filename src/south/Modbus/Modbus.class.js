@@ -2,7 +2,8 @@ const jsmodbus = require('jsmodbus')
 const net = require('net')
 
 const { getOptimizedScanModes } = require('./config/getOptimizedConfig')
-const {SouthHandler} = global
+
+const { SouthHandler } = global
 
 /**
  * Class Modbus - Provides instruction for Modbus client connection
@@ -167,5 +168,7 @@ class Modbus extends SouthHandler {
     })
   }
 }
+
+Modbus.schema = require('./Modbus.schema')
 
 module.exports = Modbus

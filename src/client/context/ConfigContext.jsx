@@ -54,8 +54,8 @@ const ConfigContext = React.createContext(configInitialState)
 const ConfigProvider = ({ children }) => {
   const [newConfig, dispatchNewConfig] = React.useReducer(reducer, configInitialState)
   const [activeConfig, setActiveConfig] = React.useState(null)
-  const [northList, setNorthList] = React.useState()
-  const [southList, setSouthList] = React.useState()
+  const [northSchemas, setNorthSchemas] = React.useState()
+  const [southSchemas, setSouthSchemas] = React.useState()
   // context for sorting south/north list
   const [sortNorthBy, setSortNorthBy] = React.useState()
   const [isNorthAscending, setIsNorthAscending] = React.useState()
@@ -79,7 +79,7 @@ const ConfigProvider = ({ children }) => {
   React.useEffect(() => {
     const call = async () => {
       try {
-        setNorthList(await apis.getNorthApis())
+        setNorthSchemas(await apis.getNorthSchemas())
       } catch (error) {
         console.error(error)
       }
@@ -94,7 +94,7 @@ const ConfigProvider = ({ children }) => {
   React.useEffect(() => {
     const call = async () => {
       try {
-        setSouthList(await apis.getSouthProtocols())
+        setSouthSchemas(await apis.getSouthSchemas())
       } catch (error) {
         console.error(error)
       }
@@ -124,13 +124,13 @@ const ConfigProvider = ({ children }) => {
   }, [])
 
   const configValueProvided = React.useMemo(
-    () => ({ newConfig, dispatchNewConfig, activeConfig, setActiveConfig, northList, southList, sort }),
-    [newConfig, dispatchNewConfig, activeConfig, setActiveConfig, northList, southList, sort],
+    () => ({ newConfig, dispatchNewConfig, activeConfig, setActiveConfig, northSchemas, southSchemas, sort }),
+    [newConfig, dispatchNewConfig, activeConfig, setActiveConfig, northSchemas, southSchemas, sort],
   )
   // the provider return the new and active config and their respective setters
   /**
    * @todo: component using this context (.i.e the whole application) will rerender
-   * 4 times (when northList, southList, activeConfig and newConfig are updated).
+   * 4 times (when northSchemas, southSchemas, activeConfig and newConfig are updated).
    * we could make a single call to the server to avoid this effect.
    */
   return (

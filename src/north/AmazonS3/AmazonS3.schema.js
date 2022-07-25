@@ -1,6 +1,3 @@
-import React from 'react'
-import { notEmpty, optional } from '../../services/validation.service'
-
 const schema = { name: 'CSV' }
 schema.form = {
   AmazonS3Settings: {
@@ -11,21 +8,21 @@ schema.form = {
   bucket: {
     type: 'OIbText',
     md: 4,
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
   },
   region: {
     type: 'OIbText',
     md: 4,
     newRow: false,
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
   },
   folder: {
     type: 'OIbText',
     md: 4,
     newRow: false,
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
   },
   authentication: {
@@ -35,12 +32,12 @@ schema.form = {
   networkSection: {
     type: 'OIbTitle',
     label: 'Network',
-    children: (
-      <>
+    children: `
+      <div>
         <p>Please specify here the proxy name to use</p>
         <p>(proxy names are defined in the Engine page)</p>
-      </>
-    ),
+      </div>
+    `,
   },
   proxy: { type: 'OIbProxy' },
 }

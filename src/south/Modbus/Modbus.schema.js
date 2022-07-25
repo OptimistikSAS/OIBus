@@ -1,17 +1,8 @@
-import React from 'react'
-import {
-  inRange,
-  isHost,
-  notEmpty,
-  isHexaOrDecimal,
-  combinedValidations, minValue,
-} from '../../services/validation.service'
-
 const schema = { name: 'Modbus' }
 schema.form = {
   ModbusSettings: {
     type: 'OIbTitle',
-    children: (
+    children: `
       <div>
         <p>The Modbus address scheme follows the Modicon Convention Notation.</p>
         <ul>
@@ -52,35 +43,35 @@ schema.form = {
           </li>
         </ul>
       </div>
-    ),
+    `,
   },
   host: {
     type: 'OIbText',
     defaultValue: '127.0.0.1',
-    valid: isHost(),
-    help: <div>IP address of the Modbus source</div>,
+    valid: 'isHost',
+    help: '<div>IP address of the Modbus source</div>',
   },
   port: {
     type: 'OIbInteger',
     newRow: false,
-    valid: inRange(1, 65535),
+    valid: 'inRange(1, 65535)',
     defaultValue: 502,
-    help: <div>Port number of the Modbus source</div>,
+    help: '<div>Port number of the Modbus source</div>',
   },
   slaveId: {
     type: 'OIbInteger',
     newRow: false,
-    valid: inRange(1, 255),
+    valid: 'inRange(1, 255)',
     defaultValue: 1,
-    help: <div>Slave ID of the Modbus source</div>,
+    help: 'Slave ID of the Modbus source</div>',
   },
   retryInterval: {
     type: 'OIbInteger',
     newRow: true,
     md: 2,
-    valid: minValue(1000),
+    valid: 'minValue(1000)',
     defaultValue: 10000,
-    help: <div>Retry Interval (ms)</div>,
+    help: 'Retry Interval (ms)</div>',
   },
   addressOffset: {
     type: 'OIbSelect',
@@ -104,7 +95,7 @@ schema.form = {
     newRow: true,
     label: 'Swap Bytes ?',
     defaultValue: false,
-    help: <div>Swap Bytes (8 bits) in groups of 16 bits?</div>,
+    help: '<div>Swap Bytes (8 bits) in groups of 16 bits?</div>',
   },
   swapWordsInDWords: {
     type: 'OIbCheckBox',
@@ -112,56 +103,56 @@ schema.form = {
     newRow: false,
     label: 'Swap Bytes ?',
     defaultValue: false,
-    help: <div>Swap Bytes (16 bits) in groups of 32 bits?</div>,
+    help: '<div>Swap Bytes (16 bits) in groups of 32 bits?</div>',
   },
 }
 
 schema.points = {
   pointId: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
-    help: <div>The id of the data. This id can then be used by another application where the data is sent by a north connector.</div>,
+    help: '<div>The id of the data. This id can then be used by another application where the data is sent by a north connector.</div>',
   },
   address: {
     type: 'OIbText',
     defaultValue: '',
-    valid: combinedValidations([isHexaOrDecimal(), notEmpty()]),
-    help: (
+    valid: 'isHexaOrDecimal, notEmpty',
+    help: `
       <div>
         The address must be in hexadecimal form, without the type number in front.
         For example, holdingRegister 400001 must be written 0x00001.
         The number &quot;4&quot; mst not be written since it will be infer from the modbus data typ field.
-      </div>),
+      </div>`,
   },
   modbusType: {
     type: 'OIbSelect',
     options: ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'],
     label: 'Modbus type',
     defaultValue: 'holdingRegister',
-    help: <div>Modbus data type (Coil, DiscreteInput, InputRegister, HoldingRegister).</div>,
+    help: '<div>Modbus data type (Coil, DiscreteInput, InputRegister, HoldingRegister).</div>',
   },
   dataType: {
     type: 'OIbSelect',
     options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'UInt64', 'Int64', 'Float', 'Double'],
     label: 'Data type',
     defaultValue: 'Uint16',
-    help: (
+    help: `
       <div>
         HoldingRegisters and inputRegisters can have one of the above types. Default type is UInt16.
         This field does not apply for coils and discreteInputs.
-      </div>),
+      </div>`,
   },
   multiplierCoefficient: {
     type: 'OIbText',
     label: 'Multiplier Coefficient',
-    valid: combinedValidations([notEmpty(), inRange(-1000, 1000)]),
+    valid: 'notEmpty, inRange(-1000, 1000)',
     defaultValue: 1,
-    help: (
+    help: `
       <div>
         Multiply retrieved data by a coefficient.
         Useful in case the value is stored as an integer while it is a decimal value, or to reverse the sign of the value.
-      </div>),
+      </div>`,
   },
   scanMode: {
     type: 'OIbScanMode',

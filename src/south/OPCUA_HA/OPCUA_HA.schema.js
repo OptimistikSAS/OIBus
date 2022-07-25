@@ -1,13 +1,9 @@
-import React from 'react'
-import { notEmpty, minValue, optional } from '../../services/validation.service'
-import validation from '../../client/South/Form/South.validation'
-
 const schema = { name: 'OPCUA_HA' }
 schema.form = {
   opcuaNetworkSettings: {
     type: 'OIbTitle',
-    children: (
-      <>
+    children: `
+      <div>
         <p>
           By default, when you restart, OPCUA-HA South will query from the last successful timestamp (for each scan group)
           so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first
@@ -50,14 +46,14 @@ schema.form = {
           <b>Read timeout:</b>
           This timeout in milliseconds is used in the Client side Communication Stack to set the timeout on a per-call base.
         </p>
-      </>
-    ),
+      </div>
+    `,
   },
   url: {
     type: 'OIbLink',
     protocols: ['http', 'opc.tcp'],
     defaultValue: 'opc.tcp://servername:port/endpoint',
-    help: <div>The URL of the OPCUA server</div>,
+    help: 'The URL of the OPCUA server</div>',
     md: 6,
   },
   keepSessionAlive: {
@@ -71,16 +67,16 @@ schema.form = {
     label: 'Read timeout (ms)',
     newRow: true,
     md: 2,
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 180000,
-    help: <div>Read timeout (ms)</div>,
+    help: 'Read timeout (ms)</div>',
   },
   retryInterval: {
     type: 'OIbInteger',
     newRow: false,
     label: 'Retry interval (ms)',
     md: 2,
-    valid: minValue(1000),
+    valid: 'minValue(1000)',
     defaultValue: 10000,
   },
   maxReadInterval: {
@@ -88,45 +84,42 @@ schema.form = {
     newRow: true,
     label: 'Max read interval (s)',
     md: 2,
-    valid: minValue(60),
+    valid: 'minValue(60)',
     defaultValue: 3600,
-    help: <div>Split the time interval into smaller intervals of this duration (in s).</div>,
+    help: 'Split the time interval into smaller intervals of this duration (in s).</div>',
   },
   readIntervalDelay: {
     type: 'OIbInteger',
     label: 'Read interval delay (ms)',
     newRow: false,
     md: 2,
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 200,
-    help: <div>Time to wait between the read interval iterations (ms)</div>,
+    help: 'Time to wait between the read interval iterations (ms)</div>',
   },
   maxReturnValues: {
     type: 'OIbInteger',
     newRow: false,
     md: 2,
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 1000,
-    help: <div>Max number of values returned for one point during a read interval</div>,
+    help: 'Max number of values returned for one point during a read interval</div>',
   },
   opcuaSecuritySettings: {
     type: 'OIbTitle',
-    children: (
-      <>
-      </>
-    ),
+    children: '',
   },
   username: {
     type: 'OIbText',
     md: 2,
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
   },
   password: {
     type: 'OIbPassword',
     newRow: false,
     md: 2,
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
   },
   securityMode: {
@@ -158,23 +151,23 @@ schema.form = {
   certFile: {
     type: 'OIbText',
     label: 'Cert File',
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>Client certificate (PEM format)</div>,
+    help: 'Client certificate (PEM format)</div>',
   },
   keyFile: {
     type: 'OIbText',
     label: 'Key File',
     newRow: false,
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>OPCUA client private key (PEM format)</div>,
+    help: 'OPCUA client private key (PEM format)</div>',
   },
   scanGroupsSection: {
     type: 'OIbTitle',
     label: 'ScanGroups',
     md: 12,
-    children: (
+    children: `
       <p>
         OPCUA HA application will request all points in the same scanMode. OPCUA HA can query raw values but can also
         aggregate points on a given period. If an aggregate is chosen, the resampling period must also be selected.
@@ -182,7 +175,7 @@ schema.form = {
         <br />
         <b>In the current version, aggregates are NOT supported for production mode. Please use &quot;Raw&quot;</b>
       </p>
-    ),
+    `,
   },
   scanGroups: {
     type: 'OIbTable',
@@ -190,7 +183,7 @@ schema.form = {
       scanMode: {
         type: 'OIbScanMode',
         label: 'Scan Mode',
-        valid: validation.scanMode.isSelectedOnce,
+        valid: 'isSelectedOnce',
       },
       aggregate: {
         type: 'OIbSelect',
@@ -210,29 +203,29 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
     unique: true,
-    help: <div>The pointId to used to send the data</div>,
+    help: 'The pointId to used to send the data</div>',
   },
   nodeId: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
     unique: true,
-    help: <div>The nodeId referenced in the OPCUA server</div>,
+    help: 'The nodeId referenced in the OPCUA server</div>',
   },
   scanMode: {
     type: 'OIbScanMode',
     label: 'Scan Group',
-    help: (
+    help: `
       <div>
         <ul>
           <li>Only scan modes set in scan groups are displayed</li>
           <li>A new scan group must be added to be able to select other scan modes</li>
         </ul>
       </div>
-    ),
+    `,
   },
 }
 schema.category = 'IoT'

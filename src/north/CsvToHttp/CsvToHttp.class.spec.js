@@ -1,9 +1,9 @@
 const path = require('path')
 const CsvToHttp = require('./CsvToHttp.class')
-global.NorthHandler = require('../NorthHandler.class')
 const config = require('../../../tests/testConfig').default
 const EncryptionService = require('../../services/EncryptionService.class')
 
+const { NorthHandler } = global
 // Mock logger
 jest.mock('../../engine/logger/Logger.class')
 

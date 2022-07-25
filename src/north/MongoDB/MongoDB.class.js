@@ -2,7 +2,7 @@ const mongo = require('mongodb')
 const { vsprintf } = require('sprintf-js')
 const objectPath = require('object-path')
 
-global.NorthHandler = require('../NorthHandler.class')
+const { NorthHandler } = global
 
 /**
  * Class MongoDB - generates and sends MongoDB requests
@@ -275,5 +275,7 @@ class MongoDB extends NorthHandler {
     this.collectionChecked = true
   }
 }
+
+MongoDB.schema = require('./MongoDB.schema')
 
 module.exports = MongoDB

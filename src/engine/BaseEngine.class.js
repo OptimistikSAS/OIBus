@@ -29,8 +29,8 @@ class BaseEngine {
 
     this.configService = configService
     this.encryptionService = encryptionService
-    this.northList = {}
-    this.southList = {}
+    this.northSchemas = {}
+    this.southSchemas = {}
   }
 
   /**
@@ -48,7 +48,7 @@ class BaseEngine {
     await Promise.all(engineConfig.northModules.map(async (name) => {
       try {
         const extension = await import(`../north/${name}/${name}.class.js`)
-        this.northList[name] = extension.default
+        this.northSchemas[name] = extension.default
         this.logger.debug(`North ${name} is added`)
       } catch (error) {
         this.logger.error(`North ${name} can't be loaded ${error}`)
@@ -58,7 +58,7 @@ class BaseEngine {
     await Promise.all(engineConfig.southModules.map(async (name) => {
       try {
         const extension = await import(`../south/${name}/${name}.class.js`)
-        this.southList[name] = extension.default
+        this.southSchemas[name] = extension.default
         this.logger.debug(`South ${name} is added`)
       } catch (error) {
         this.logger.error(`South ${name} can't be loaded ${error}`)
@@ -153,7 +153,7 @@ class BaseEngine {
    * @returns {SouthHandler|null} - The South
    */
   createSouth(protocol, dataSource) {
-    const SouthHandler = this.southList[protocol]
+    const SouthHandler = this.southSchemas[protocol]
     if (SouthHandler) {
       return new SouthHandler(dataSource, this)
     }
@@ -166,7 +166,7 @@ class BaseEngine {
    */
   // eslint-disable-next-line class-methods-use-this
   getSouthEngineList() {
-    return this.southList
+    return this.southSchemas
   }
 
   /**
@@ -177,20 +177,11 @@ class BaseEngine {
    * @returns {SouthHandler|null} - The South
    */
   createNorth(api, application) {
-    const NorthHandler = this.northList[api]
+    const NorthHandler = this.northSchemas[api]
     if (NorthHandler) {
       return new NorthHandler(application, this)
     }
     return null
-  }
-
-  /**
-   * Return available North applications
-   * @return {Object} - Available North applications
-   */
-  // eslint-disable-next-line class-methods-use-this
-  getNorthEngineList() {
-    return this.northList
   }
 }
 

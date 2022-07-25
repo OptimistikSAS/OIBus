@@ -1,5 +1,5 @@
+const { NorthHandler } = global
 const mqtt = require('mqtt')
-global.NorthHandler = require('../NorthHandler.class')
 
 /**
  * Expected caching parameters:
@@ -254,5 +254,7 @@ class WATSYConnect extends NorthHandler {
     }
   }
 }
+
+WATSYConnect.schema = require('./WATSYConnect.schema')
 
 module.exports = WATSYConnect

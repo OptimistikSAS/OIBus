@@ -1,8 +1,9 @@
 const fs = require('fs/promises')
 const path = require('path')
-global.NorthHandler = require('../NorthHandler.class')
 const FileWriter = require('./FileWriter.class')
 const config = require('../../../tests/testConfig').default
+
+const { NorthHandler } = global
 
 // Mock database service
 jest.mock('../../services/database.service', () => {})

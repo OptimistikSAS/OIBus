@@ -1,6 +1,6 @@
 const pg = require('pg')
 
-global.NorthHandler = require('../NorthHandler.class')
+const { NorthHandler } = global
 const TimescaleDB = require('./TimescaleDB.class')
 const config = require('../../../tests/testConfig').default
 const EncryptionService = require('../../services/EncryptionService.class')

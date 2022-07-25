@@ -3,7 +3,8 @@ const mongodb = require('mongodb')
 const MongoDB = require('./MongoDB.class')
 const config = require('../../config/defaultConfig.json')
 const EncryptionService = require('../../services/EncryptionService.class')
-global.NorthHandler = require('../NorthHandler.class')
+
+const { NorthHandler } = global
 
 // Mock logger
 jest.mock('../../engine/logger/Logger.class')

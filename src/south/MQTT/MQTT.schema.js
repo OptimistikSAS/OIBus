@@ -1,11 +1,8 @@
-import React from 'react'
-import { minValue, notEmpty, optional } from '../../services/validation.service'
-
 const schema = { name: 'MQTT' }
 schema.form = {
   MqttSettings: {
     type: 'OIbTitle',
-    children: (
+    children: `
       <div>
         <p>This protocol is in restricted release. Please contact Optimistik</p>
         <ul>
@@ -73,13 +70,13 @@ schema.form = {
           </li>
         </ul>
       </div>
-    ),
+    `,
   },
   url: {
     type: 'OIbLink',
     protocols: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'],
     defaultValue: '',
-    help: <div>The URL of the MQTT server. The protocol should be one of mqtt, mqtts, tcp, tls, ws, wss</div>,
+    help: 'The URL of the MQTT server. The protocol should be one of mqtt, mqtts, tcp, tls, ws, wss</div>',
   },
   qos: {
     type: 'OIbSelect',
@@ -96,37 +93,37 @@ schema.form = {
   },
   username: {
     type: 'OIbText',
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
   },
   password: {
     type: 'OIbPassword',
     newRow: false,
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
   },
   certFile: {
     type: 'OIbText',
     label: 'Cert File',
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>Server certificate (used for MQTTS protocol)</div>,
+    help: 'Server certificate (used for MQTTS protocol)</div>',
   },
   keyFile: {
     type: 'OIbText',
     label: 'Key File',
     newRow: false,
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>MQTT client private key</div>,
+    help: 'MQTT client private key</div>',
   },
   caFile: {
     type: 'OIbText',
     label: 'CA File',
     newRow: false,
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>Certificate Authority file (if empty we consider the Cert File as a self-signed certificate)</div>,
+    help: 'Certificate Authority file (if empty we consider the Cert File as a self-signed certificate)</div>',
   },
   rejectUnauthorized: {
     type: 'OIbCheckBox',
@@ -136,26 +133,26 @@ schema.form = {
   keepalive: {
     type: 'OIbInteger',
     label: 'Keep Alive Interval',
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 60000,
   },
   reconnectPeriod: {
     type: 'OIbInteger',
     newRow: false,
     label: 'Reconnect period (ms)',
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 1000,
   },
   connectTimeout: {
     type: 'OIbInteger',
     newRow: false,
     label: 'Connect Timeout (ms)',
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 30000,
   },
   MqttPayload: {
     type: 'OIbTitle',
-    children: (
+    children: `
       <div>
         <ul>
           <li>
@@ -183,32 +180,32 @@ schema.form = {
           </li>
         </ul>
       </div>
-    ),
+    `,
   },
   dataArrayPath: {
     type: 'OIbText',
-    valid: optional(),
+    valid: 'optional',
   },
   valuePath: {
     type: 'OIbText',
     defaultValue: 'value',
-    valid: notEmpty(),
+    valid: 'notEmpty',
   },
   pointIdPath: {
     type: 'OIbText',
     defaultValue: '',
     newRow: false,
-    valid: optional(),
+    valid: 'optional',
   },
   qualityPath: {
     type: 'OIbText',
     defaultValue: 'quality',
     newRow: false,
-    valid: notEmpty(),
+    valid: 'notEmpty',
   },
   timestampSettings: {
     type: 'OIbTitle',
-    children: (
+    children: `
       <div>
         <p>These parameters describe how to determine the timeStamp</p>
         <ul>
@@ -240,7 +237,7 @@ schema.form = {
           </li>
         </ul>
       </div>
-    ),
+    `,
   },
   timestampOrigin: {
     type: 'OIbSelect',
@@ -250,13 +247,13 @@ schema.form = {
   timestampPath: {
     type: 'OIbText',
     newRow: false,
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: 'timestamp',
   },
   timestampFormat: {
     type: 'OIbText',
     newRow: false,
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
   },
   timestampTimezone: {
@@ -269,10 +266,10 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     unique: true,
     defaultValue: '',
-    help: (
+    help: `
       <ul>
         <li>
           Point Id should be unique and it must be checked manually in case of wildcards(# or +)
@@ -284,11 +281,11 @@ schema.points = {
           <b> point.id</b>
         </li>
       </ul>
-    ),
+    `,
   },
   scanMode: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: 'listen',
     disabled: true,
     label: 'Scan Mode',
@@ -296,7 +293,7 @@ schema.points = {
   topic: {
     type: 'OIbText',
     defaultValue: '',
-    valid: notEmpty(),
+    valid: 'notEmpty',
   },
 }
 

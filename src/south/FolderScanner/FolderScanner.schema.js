@@ -1,21 +1,18 @@
-import React from 'react'
-import { notEmpty, minValue } from '../../services/validation.service'
-
 const schema = { name: 'FolderScanner' }
 schema.form = {
   FolderScannerSettings: {
     type: 'OIbTitle',
     label: 'FolderScanner settings',
     md: 12,
-    children: (
-      <>
+    children: `
+      <div>
         <p>
           The FolderScanner South periodically checks the input folder for new files at an interval specified by scan mode.
           When a new file is detected it will be sent to any North capable of handling files and configured to accept files from this South.
         </p>
         <p>
           Please use always the / separator. OIBus will convert it according to the platform.
-          For example, on Windows, c:/input/ will be converted to c:\input\
+          For example, on Windows, c:/input/ will be converted to c:\\input\\
           Make sure OIBus has READ and WRITE access to this folder.
           <b>
             When OIBus is started as a Windows service,
@@ -41,14 +38,14 @@ schema.form = {
             The RegExp option can be used to filter what kind of files to be handled.
           </li>
         </ul>
-      </>
-    ),
+      </div>
+    `,
   },
   inputFolder: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: './input/',
-    help: <div>Path to folder such as: c:/input/</div>,
+    help: 'Path to folder such as: c:/input/</div>',
   },
   preserveFiles: {
     type: 'OIbCheckBox',
@@ -64,15 +61,15 @@ schema.form = {
   minAge: {
     type: 'OIbInteger',
     label: 'Minimum Age',
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 1000,
   },
   regex: {
     type: 'OIbText',
     label: 'RegExp',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '.txt',
-    help: <div>RegExp to filter the folder</div>,
+    help: 'RegExp to filter the folder</div>',
   },
   compression: {
     type: 'OIbCheckBox',

@@ -3,7 +3,8 @@ const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3')
 const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
 
 const ProxyAgent = require('proxy-agent')
-global.NorthHandler = require('../NorthHandler.class')
+
+const { NorthHandler } = global
 const AmazonS3 = require('./AmazonS3.class')
 const config = require('../../../tests/testConfig').default
 const EncryptionService = require('../../services/EncryptionService.class')

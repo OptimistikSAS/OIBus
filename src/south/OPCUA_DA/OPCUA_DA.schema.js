@@ -1,22 +1,19 @@
-import React from 'react'
-import { notEmpty, minValue, optional } from '../../services/validation.service'
-
 const schema = { name: 'OPCUA_DA' }
 schema.form = {
   opcuaNetworkSettings: {
     type: 'OIbTitle',
-    children: (
+    children: `
       <p>
         <b>Retry interval:</b>
         Retry interval before trying to connect again
       </p>
-    ),
+    `,
   },
   url: {
     type: 'OIbLink',
     protocols: ['http', 'opc.tcp'],
     defaultValue: 'opc.tcp://servername:port/endpoint',
-    help: <div>The URL of the OPCUA server</div>,
+    help: 'The URL of the OPCUA server</div>',
     md: 6,
   },
   keepSessionAlive: {
@@ -28,28 +25,28 @@ schema.form = {
   retryInterval: {
     type: 'OIbInteger',
     md: 2,
-    valid: minValue(1000),
+    valid: 'minValue(1000)',
     defaultValue: 10000,
-    help: <div>Retry Interval (ms)</div>,
+    help: 'Retry Interval (ms)</div>',
   },
   opcuaSecuritySettings: {
     type: 'OIbTitle',
-    children: (
-      <>
-      </>
-    ),
+    children: `
+      <div>
+      </div>
+    `,
   },
   username: {
     type: 'OIbText',
     md: 2,
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
   },
   password: {
     type: 'OIbPassword',
     newRow: false,
     md: 2,
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
   },
   securityMode: {
@@ -79,38 +76,38 @@ schema.form = {
   certFile: {
     type: 'OIbText',
     label: 'Cert File',
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>Client certificate (PEM format)</div>,
+    help: 'Client certificate (PEM format)</div>',
   },
   keyFile: {
     type: 'OIbText',
     label: 'Key File',
     newRow: false,
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>OPCUA client private key (PEM format)</div>,
+    help: 'OPCUA client private key (PEM format)</div>',
   },
 }
 
 schema.points = {
   pointId: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
     unique: true,
-    help: (
+    help: `
       <div>The pointId to used to send the data</div>
-    ),
+    `,
   },
   nodeId: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
     unique: true,
-    help: (
+    help: `
       <div>The nodeId referenced in the OPCUA server</div>
-    ),
+    `,
   },
   scanMode: { type: 'OIbScanMode', label: 'Scan Mode' },
 }

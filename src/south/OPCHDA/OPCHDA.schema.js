@@ -1,15 +1,11 @@
-import React from 'react'
-import { notEmpty, inRange, isPath, minValue, isHost } from '../../services/validation.service'
-import validation from '../../client/South/Form/South.validation'
-
 const schema = { name: 'OPCHDA' }
 schema.form = {
   AgentSection: {
     type: 'OIbTitle',
     label: 'HDA Agent',
     md: 12,
-    children: (
-      <>
+    children: `
+      <div>
         <p>
           OPCHDA Agent is an external executable that will handle the protocol HDA. We decided to externalize it to
           avoid combining relatively old librairies in the main OIBus code and also because OPCHDA is only supported on
@@ -459,23 +455,23 @@ schema.form = {
             </tbody>
           </table>
         </ul>
-      </>
-    ),
+      </div>
+    `,
   },
   agentFilename: {
     type: 'OIbText',
-    valid: isPath(),
+    valid: 'isPath',
     defaultValue: '\\HdaAgent\\HdaAgent.exe',
-    help: <div>ex: c:\HdaAgent\HdaAgent.exe</div>,
+    help: 'ex: c:\\HdaAgent\\HdaAgent.exe</div>',
   },
   tcpPort: {
     type: 'OIbInteger',
     newRow: false,
     md: 2,
     label: 'TCP Port',
-    valid: inRange(1, 65535),
+    valid: 'inRange(1, 65535)',
     defaultValue: '2224',
-    help: <div>HDA Agent port</div>,
+    help: 'HDA Agent port</div>',
   },
   logLevel: {
     type: 'OIbSelect',
@@ -484,14 +480,14 @@ schema.form = {
     label: 'Logging Level',
     options: ['silly', 'debug', 'info', 'warning', 'error'],
     defaultValue: 'debug',
-    help: <div>Logging Level</div>,
+    help: 'Logging Level</div>',
   },
   HDASection: {
     type: 'OIbTitle',
     label: 'HDA Server',
     md: 12,
-    children: (
-      <>
+    children: `
+      <div>
         <p>
           OPCHDA Server is hosted on the equipment or server on which we want to retrieve values. You need to give the
           host name as well as the HDA server name.
@@ -515,26 +511,26 @@ schema.form = {
             that range on the restart.
           </li>
         </ul>
-      </>
-    ),
+      </div>
+    `,
   },
   host: {
     type: 'OIbText',
-    valid: isHost(),
-    help: <div>IP address or hostname of the HDA server</div>,
+    valid: 'isHost',
+    help: 'IP address or hostname of the HDA server</div>',
   },
   serverName: {
     type: 'OIbText',
     newRow: false,
-    valid: notEmpty(),
-    help: <div>HDA server (Matrikon.OPC.Simulation)</div>,
+    valid: 'notEmpty',
+    help: 'HDA server (Matrikon.OPC.Simulation)</div>',
   },
   retryInterval: {
     type: 'OIbInteger',
     newRow: false,
     label: 'Retry interval (ms)',
     md: 2,
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 10000,
   },
   maxReadInterval: {
@@ -542,32 +538,32 @@ schema.form = {
     newRow: true,
     label: 'Max read interval (s)',
     md: 2,
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 3600,
-    help: <div>Split the time interval into smaller intervals of this duration (in s).</div>,
+    help: 'Split the time interval into smaller intervals of this duration (in s).</div>',
   },
   readIntervalDelay: {
     type: 'OIbInteger',
     label: 'Read interval delay (ms)',
     newRow: false,
     md: 2,
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 200,
-    help: <div>Time to wait between the read interval iterations (ms)</div>,
+    help: 'Time to wait between the read interval iterations (ms)</div>',
   },
   maxReturnValues: {
     type: 'OIbInteger',
     newRow: false,
     md: 2,
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 0,
-    help: <div>Max number of values returned for one point during a read interval</div>,
+    help: 'Max number of values returned for one point during a read interval</div>',
   },
   scanGroupsSection: {
     type: 'OIbTitle',
     label: 'ScanGroups',
     md: 12,
-    children: (
+    children: `
       <p>
         OPCHDA application will request all points in the same scanMode. OPCHDA can query raw values but can also
         aggregate points on a given period. If an aggregate is chosen, the resampling period must also be selected.
@@ -575,7 +571,7 @@ schema.form = {
         <br />
         <b>In the current version, aggregates are NOT supported for production mode. Please use &quot;Raw&quot;</b>
       </p>
-    ),
+    `,
   },
   scanGroups: {
     type: 'OIbTable',
@@ -583,7 +579,7 @@ schema.form = {
       scanMode: {
         type: 'OIbScanMode',
         label: 'Scan Mode',
-        valid: validation.scanMode.isSelectedOnce,
+        valid: 'scanMode.isSelectedOnce',
       },
       aggregate: {
         type: 'OIbSelect',
@@ -603,28 +599,28 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
     unique: true,
-    help: <div>The pointId to used to send the data</div>,
+    help: 'The pointId to used to send the data</div>',
   },
   nodeId: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
     unique: true,
-    help: <div>The nodeId referenced in the OPCUA server</div>,
+    help: 'The nodeId referenced in the OPCUA server</div>',
   },
   scanMode: {
     type: 'OIbScanMode',
-    help: (
+    help: `
       <div>
         <ul>
           <li>Only scan modes set in scan groups are displayed</li>
           <li>A new scan group must be added to be able to select other scan modes</li>
         </ul>
       </div>
-    ),
+    `,
   },
 }
 

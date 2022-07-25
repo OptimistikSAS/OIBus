@@ -1,4 +1,4 @@
-const schema = require('./TimescaleDB.schema.jsx').default
+const schema = require('./TimescaleDB.schema').default
 const testSchema = require('../../services/testSchema').default
 
 testSchema(schema)

@@ -1,7 +1,7 @@
 const Papa = require('papaparse')
 const fs = require('fs')
 
-global.NorthHandler = require('../NorthHandler.class')
+const { NorthHandler } = global
 
 const ERROR_PRINT_SIZE = 5
 const REGEX_CONTAIN_VARIABLE_STRING = /\${[^}]*}/ // match if the string contains ${...}
@@ -366,5 +366,6 @@ class CsvToHttp extends NorthHandler {
     }
   }
 }
+CsvToHttp.schema = require('./CsvToHttp.schema')
 
 module.exports = CsvToHttp

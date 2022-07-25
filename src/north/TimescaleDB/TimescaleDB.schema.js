@@ -1,62 +1,46 @@
-import React from 'react'
-import { notEmpty, hasLengthBetween, optional } from '../../services/validation.service'
-
-const schema = { name: 'MongoDB' }
+const schema = { name: 'TimescaleDB' }
 schema.form = {
-  MongodbParameters: {
+  TimescaledbParameters: {
     type: 'OIbTitle',
-    children: (
-      <>
-        <p>Send points data to MongoDB</p>
-        <ul>
-          <li>
-            <b>Host and Port:</b>
-            MongoDB host to connect. Make sure you specify right host and port number depending on MongoDB connection protocol
-            you selected.
-          </li>
-          <li>
-            <b>Username:</b>
-            Username required by MongoDB server, if any. MongoDB allows to send username for authenticating and authorization of
-            client.
-          </li>
-          <li>
-            <b>Password:</b>
-            Password required by MongoDB Server, if any. MongoDB allows to send password for authenticating and authorization of
-            client.
-          </li>
-        </ul>
-      </>
-    ),
+    label: 'Timescale parameters',
+    children: `
+      <div>
+        <p>Send points data to Timescale Database</p>
+        <p>
+          Please enter here required information to access the database.
+        </p>
+      </div>
+    `,
   },
   user: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
   },
   password: {
     type: 'OIbPassword',
     newRow: false,
-    valid: hasLengthBetween(0, 256),
+    valid: 'hasLengthBetween(0, 256)',
     defaultValue: '',
   },
   host: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
-    help: <div>The host is only the mongoDB server with port separated by &ldquo;:&ldquo; (it not includes mongodb:// protocol)</div>,
+    help: 'The host is only the postgresql server with port separated by &ldquo;:&ldquo; character (it not includes postgres:// protocol)</div>',
   },
   db: {
     type: 'OIbText',
     newRow: false,
     label: 'Database',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
   },
   pointIdParameters: {
     type: 'OIbTitle',
-    children: (
-      <>
-        <p>Regexp will be used to identify token in the pointId that will be used to build the MongoDB query.</p>
+    children: `
+      <div>
+        <p>Regexp will be used to identify token in the pointId that will be used to build the TimescaleDB query.</p>
         <ul>
           <li>
             {'(.*)\\/(.{2})(.)(.*)'}
@@ -64,48 +48,43 @@ schema.form = {
           </li>
           <li>(.*) This example will split into 1 group: MMMMM/SSNCCC...CC gives %1=MMMMM/SSNCCC...CC</li>
         </ul>
-      </>
-    ),
+      </div>
+    `,
   },
   regExp: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '(.*)',
-    help: (
+    help: `
       <div>
         For example (.*)\\/(.
         {2}
         )(.)(.*) to split in 4 groups
-      </div>),
+      </div>`,
   },
-  collection: {
+  table: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '%1$s',
   },
-  indexFields: {
+  optFields: {
     type: 'OIbText',
     defaultValue: '',
-    valid: hasLengthBetween(0, 256),
+    valid: 'hasLengthBetween(0, 256)',
     newRow: false,
-    help: <div>For example, site:%2$s,unit:%3$s,sensor:%4$s</div>,
+    help: 'Field(s) extracted from pointID, for example, site:%2$s,unit:%3$s,sensor:%4$s</div>',
   },
-  createCollection: {
-    type: 'OIbCheckBox',
-    label: 'Create collection with its indexes when collection does not exist',
-    defaultValue: false,
-  },
-  timeStampKey: {
+  timestampPathInDataValue: {
     type: 'OIbText',
-    valid: notEmpty(),
+    defaultValue: '',
+    valid: 'optional',
     newRow: false,
-    defaultValue: 'timestamp',
-    help: <div>Field in engine data which contain timestamp value</div>,
+    help: 'Timestamp field extracted from the JSON object (empty means the JSON &quot;timestamp&quot; field is used)</div>',
   },
   valueParameters: {
     type: 'OIbTitle',
-    children: (
-      <>
+    children: `
+      <div>
         <p>data value to process by north connector is a Json object which contains :  </p>
         <ul>
           <li>
@@ -153,28 +132,21 @@ schema.form = {
             </ul>
           </li>
         </ul>
-      </>
-    ),
+      </div>
+    `,
   },
   useDataKeyValue: {
     type: 'OIbCheckBox',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     label: 'use key "value" of Json "data"',
-    help: <div>When checked, means that the field &quot;value&quot; will be parsed as JSON object</div>,
+    help: 'When checked, means that the field &quot;value&quot; will be parsed as JSON object</div>',
     defaultValue: false,
   },
   keyParentValue: {
     type: 'OIbText',
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>,
-  },
-  timestampPathInDataValue: {
-    type: 'OIbText',
-    defaultValue: '',
-    valid: optional(),
-    newRow: false,
-    help: <div>Timestamp field extracted from the JSON object (empty means the JSON &quot;timestamp&quot; field is used)</div>,
+    help: 'Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>',
   },
 }
 schema.category = 'DatabaseIn'

@@ -75,6 +75,11 @@ const startsWithAnyOf = (tests, common = '', name = 'Value') => (val) => {
 // always return null (ie. no validation)
 const optional = () => () => null
 
+const string2valid = (input) => {
+  console.log(input)
+  return (function valid() { return null })
+}
+
 export {
   notEmpty,
   isPath,
@@ -95,4 +100,5 @@ export {
   startsWithAnyOf,
   combinedValidations,
   optional,
+  string2valid,
 }

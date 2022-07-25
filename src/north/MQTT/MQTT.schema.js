@@ -1,11 +1,8 @@
-import React from 'react'
-import { notEmpty, optional } from '../../services/validation.service'
-
 const schema = { name: 'MQTT' }
 schema.form = {
   MQTTParameters: {
     type: 'OIbTitle',
-    children: (
+    children: `
       <div>
         <ul>
           <li>
@@ -79,13 +76,13 @@ schema.form = {
           </li>
         </ul>
       </div>
-    ),
+    `,
   },
   url: {
     type: 'OIbLink',
     protocols: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'],
     defaultValue: '',
-    help: <div>The URL of the MQTT server. The protocol should be one of mqtt, mqtts, tcp, tls, ws, wss</div>,
+    help: 'The URL of the MQTT server. The protocol should be one of mqtt, mqtts, tcp, tls, ws, wss</div>',
   },
   qos: {
     type: 'OIbSelect',
@@ -96,37 +93,37 @@ schema.form = {
   },
   username: {
     type: 'OIbText',
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
   },
   password: {
     type: 'OIbPassword',
     newRow: false,
-    valid: optional,
+    valid: 'optional',
     defaultValue: '',
   },
   certFile: {
     type: 'OIbText',
     label: 'Cert File',
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>Server certificate (used for MQTTS protocol)</div>,
+    help: 'Server certificate (used for MQTTS protocol)</div>',
   },
   keyFile: {
     type: 'OIbText',
     newRow: false,
     label: 'Key File',
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>MQTT client private key</div>,
+    help: 'MQTT client private key</div>',
   },
   caFile: {
     type: 'OIbText',
     newRow: false,
     label: 'CA File',
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>Certificate Authority file (if empty we consider the Cert File as a self-signed certificate)</div>,
+    help: 'Certificate Authority file (if empty we consider the Cert File as a self-signed certificate)</div>',
   },
   rejectUnauthorized: {
     type: 'OIbCheckBox',
@@ -135,25 +132,25 @@ schema.form = {
   },
   regExp: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '(.*)',
-    help: (
+    help: `
       <div>
         For example (.*)\\/(.
         {2}
         )(.)(.*) to split in 4 groups
-      </div>),
+      </div>`,
   },
   topic: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '%1$s',
-    help: <div>Topic value used to publish data to broker MQTT. Topic is based on PointId group part(s) split using Regexp (see help)</div>,
+    help: 'Topic value used to publish data to broker MQTT. Topic is based on PointId group part(s) split using Regexp (see help)</div>',
   },
   valueParameters: {
     type: 'OIbTitle',
-    children: (
-      <>
+    children: `
+      <div>
         <p>data value to process by north connector is a Json object which contains :  </p>
         <ul>
           <li>
@@ -201,21 +198,21 @@ schema.form = {
             </ul>
           </li>
         </ul>
-      </>
-    ),
+      </div>
+    `,
   },
   useDataKeyValue: {
     type: 'OIbCheckBox',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     label: 'use key "value" of Json "data"',
-    help: <div>When checked, means that the field &quot;value&quot; will be parsed as JSON object</div>,
+    help: 'When checked, means that the field &quot;value&quot; will be parsed as JSON object</div>',
     defaultValue: false,
   },
   keyParentValue: {
     type: 'OIbText',
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>,
+    help: 'Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>',
   },
 }
 schema.category = 'IoT'

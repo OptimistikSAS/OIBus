@@ -1,12 +1,9 @@
-import React from 'react'
-import { notEmpty, hasLengthBetween, inRange } from '../../services/validation.service'
-
 const schema = { name: 'WATSYConnect' }
 schema.form = {
   WATSYConnectParameters: {
     type: 'OIbTitle',
     label: 'WATSY Connect Parameters',
-    children: (
+    children: `
       <div>
         <ul>
           <li>
@@ -20,12 +17,12 @@ schema.form = {
           </li>
         </ul>
       </div>
-    ),
+    `,
   },
   MQTTParameters: {
     type: 'OIbTitle',
     label: 'MQTT Authentication',
-    children: (
+    children: `
       <div>
         <ul>
           <li>
@@ -46,7 +43,7 @@ schema.form = {
           </li>
         </ul>
       </div>
-    ),
+    `,
   },
   MQTTUrl: {
     type: 'OIbLink',
@@ -56,24 +53,24 @@ schema.form = {
   port: {
     type: 'OIbInteger',
     newRow: false,
-    valid: inRange(1, 65535),
+    valid: 'inRange(1, 65535)',
     defaultValue: 1883,
   },
   username: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
   },
   password: {
     type: 'OIbPassword',
     newRow: false,
-    valid: hasLengthBetween(0, 256),
+    valid: 'hasLengthBetween(0, 256)',
     defaultValue: '',
   },
   WebParameters: {
     type: 'OIbTitle',
     label: 'Web Service Authentication',
-    children: (
+    children: `
       <div>
         <ul>
           <li>
@@ -86,7 +83,7 @@ schema.form = {
           </li>
         </ul>
       </div>
-    ),
+    `,
   },
   applicativeHostUrl: {
     type: 'OIbLink',
@@ -97,7 +94,7 @@ schema.form = {
     type: 'OIbPassword',
     label: 'Token',
     newRow: false,
-    valid: hasLengthBetween(0, 256),
+    valid: 'hasLengthBetween(0, 256)',
     defaultValue: '',
   },
 }

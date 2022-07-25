@@ -1,4 +1,4 @@
-const schema = require('./MQTT.schema.jsx').default
+const schema = require('./MQTT.schema').default
 const testSchema = require('../../services/testSchema').default
 
 testSchema(schema)

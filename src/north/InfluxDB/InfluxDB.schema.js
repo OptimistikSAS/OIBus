@@ -1,49 +1,57 @@
-import React from 'react'
-import { notEmpty, hasLengthBetween, optional } from '../../services/validation.service'
-
-const schema = { name: 'TimescaleDB' }
+const schema = { name: 'InfluxDB' }
 schema.form = {
-  TimescaledbParameters: {
+  InfluxdbParameters: {
     type: 'OIbTitle',
-    label: 'Timescale parameters',
-    children: (
-      <>
-        <p>Send points data to Timescale Database</p>
+    children: `
+      <div>
+        <p>Send points data to InfluxDB</p>
         <p>
-          Please enter here required information to access the database.
+          Please enter here required information to access the database. The precision configuration setting determines
+          how much timestamp precision is retained with points.
         </p>
-      </>
-    ),
+      </div>
+    `,
   },
   user: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
   },
   password: {
     type: 'OIbPassword',
     newRow: false,
-    valid: hasLengthBetween(0, 256),
+    valid: 'hasLengthBetween(0, 256)',
     defaultValue: '',
   },
   host: {
-    type: 'OIbText',
-    valid: notEmpty(),
-    defaultValue: '',
-    help: <div>The host is only the postgresql server with port separated by &ldquo;:&ldquo; character (it not includes postgres:// protocol)</div>,
+    type: 'OIbLink',
+    protocols: ['http'],
+    defaultValue: 'http://localhost:8086',
   },
   db: {
     type: 'OIbText',
     newRow: false,
     label: 'Database',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
+  },
+  timestampPathInDataValue: {
+    type: 'OIbText',
+    defaultValue: '',
+    valid: 'optional',
+    newRow: false,
+    help: 'Timestamp field extracted from the JSON object (empty means the JSON &quot;timestamp&quot; field is used)</div>',
+  },
+  precision: {
+    type: 'OIbSelect',
+    defaultValue: 'ms',
+    options: ['ns', 'u', 'ms', 's', 'm', 'h'],
   },
   pointIdParameters: {
     type: 'OIbTitle',
-    children: (
-      <>
-        <p>Regexp will be used to identify token in the pointId that will be used to build the TimescaleDB query.</p>
+    children: `
+      <div>
+        <p>Regexp will be used to identify token in the pointId that will be used to build the InfluxDB query.</p>
         <ul>
           <li>
             {'(.*)\\/(.{2})(.)(.*)'}
@@ -51,43 +59,36 @@ schema.form = {
           </li>
           <li>(.*) This example will split into 1 group: MMMMM/SSNCCC...CC gives %1=MMMMM/SSNCCC...CC</li>
         </ul>
-      </>
-    ),
+      </div>
+    `,
   },
   regExp: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '(.*)',
-    help: (
+    help: `
       <div>
         For example (.*)\\/(.
         {2}
         )(.)(.*) to split in 4 groups
-      </div>),
+      </div>`,
   },
-  table: {
+  measurement: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '%1$s',
   },
-  optFields: {
+  tags: {
     type: 'OIbText',
     defaultValue: '',
-    valid: hasLengthBetween(0, 256),
+    valid: 'hasLengthBetween(0, 256)',
     newRow: false,
-    help: <div>Field(s) extracted from pointID, for example, site:%2$s,unit:%3$s,sensor:%4$s</div>,
-  },
-  timestampPathInDataValue: {
-    type: 'OIbText',
-    defaultValue: '',
-    valid: optional(),
-    newRow: false,
-    help: <div>Timestamp field extracted from the JSON object (empty means the JSON &quot;timestamp&quot; field is used)</div>,
+    help: 'For example, site=%2$s,unit=%3$s,sensor=%4$s</div>',
   },
   valueParameters: {
     type: 'OIbTitle',
-    children: (
-      <>
+    children: `
+      <div>
         <p>data value to process by north connector is a Json object which contains :  </p>
         <ul>
           <li>
@@ -135,21 +136,21 @@ schema.form = {
             </ul>
           </li>
         </ul>
-      </>
-    ),
+      </div>
+    `,
   },
   useDataKeyValue: {
     type: 'OIbCheckBox',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     label: 'use key "value" of Json "data"',
-    help: <div>When checked, means that the field &quot;value&quot; will be parsed as JSON object</div>,
+    help: 'When checked, means that the field &quot;value&quot; will be parsed as JSON object</div>',
     defaultValue: false,
   },
   keyParentValue: {
     type: 'OIbText',
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>,
+    help: 'Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>',
   },
 }
 schema.category = 'DatabaseIn'

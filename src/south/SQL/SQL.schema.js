@@ -1,14 +1,11 @@
-import React from 'react'
-import { notEmpty, isHost, inRange, minValue, hasLengthBetween, optional } from '../../services/validation.service'
-
 const schema = { name: 'SQL' }
 schema.form = {
   SQLSettings: {
     type: 'OIbTitle',
     label: 'SQL Settings',
     md: 12,
-    children: (
-      <>
+    children: `
+      <div>
         <p>
           SQL periodically connects to the specified SQL server at an interval specified by scan mode.
           It gets values from the database based on the &apos;query&apos; parameter, saves the result in a CSV file
@@ -24,8 +21,8 @@ schema.form = {
           Note for all SQL connections with username:
           To avoid accidental data deletion/alteration the SQL user should have only readonly access to the database.
         </p>
-      </>
-    ),
+      </div>
+    `,
   },
   driver: {
     type: 'OIbSelect',
@@ -33,70 +30,70 @@ schema.form = {
     options: ['mssql', 'mysql', 'postgresql', 'oracle', 'sqlite'],
     label: 'SQL Driver',
     defaultValue: 'mssql',
-    help: <div>Driver SQL</div>,
+    help: 'Driver SQL</div>',
   },
   databasePath: {
     type: 'OIbText',
     defaultValue: './test.db',
-    valid: optional(),
-    help: <div>The path of the SQLite database</div>,
+    valid: 'optional',
+    help: 'The path of the SQLite database</div>',
   },
   host: {
     type: 'OIbText',
     defaultValue: 'localhost',
-    valid: isHost(),
-    help: <div>IP address of the SQL server</div>,
+    valid: 'isHost',
+    help: 'IP address of the SQL server</div>',
   },
   port: {
     type: 'OIbInteger',
     newRow: false,
     md: 2,
-    valid: inRange(0, 65535),
+    valid: 'inRange(0, 65535)',
     defaultValue: 1433,
-    help: <div>Port number of the SQL server</div>,
+    help: 'Port number of the SQL server</div>',
   },
   database: {
     type: 'OIbText',
     defaultValue: 'db',
     md: 3,
-    valid: notEmpty(),
-    help: <div>Name of the SQL database (SID or Service Name for Oracle)</div>,
+    valid: 'notEmpty',
+    help: 'Name of the SQL database (SID or Service Name for Oracle)</div>',
   },
   username: {
     type: 'OIbText',
     defaultValue: '',
-    valid: notEmpty(),
-    help: <div>(Preferably with only readonly access to the database)</div>,
+    valid: 'notEmpty',
+    help: '(Preferably with only readonly access to the database)</div>',
     md: 3,
   },
   password: {
     newRow: false,
     type: 'OIbPassword',
     defaultValue: '',
-    valid: hasLengthBetween(0, 256),
+    valid: 'hasLengthBetween(0, 256)',
     md: 3,
   },
   domain: {
     newRow: false,
     type: 'OIbText',
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>(optional used for ntlm authentication for mssql</div>,
+    help: '(optional used for ntlm authentication for mssql</div>',
     md: 3,
   },
   encryption: {
     type: 'OIbCheckBox',
     label: 'Encryption?',
     defaultValue: true,
-    help: <div>Disable encryption for mssql if TLS 1.2 patch is not installed</div>,
+    help: 'Disable encryption for mssql if TLS 1.2 patch is not installed</div>',
     md: 2,
   },
   QuerySettings: {
     type: 'OIbTitle',
     label: 'Query Settings',
     md: 12,
-    children: (
-      <>
+    children: `
+      <div>
         <div>
           The query must be adapted to the selected driver (MSSQL, Oracle...).
           The following variables can be used in the query:
@@ -140,21 +137,21 @@ schema.form = {
           Connection timeout can be specified in the &apos;sqlnet.ora&apos; file (E.g. in /opt/oracle/instantclient_19_5/network/admin/sqlnet.ora)
           like this: &apos;SQLNET.OUTBOUND_CONNECT_TIMEOUT=500 ms&apos;
         </p>
-      </>
-    ),
+      </div>
+    `,
   },
   query: {
     md: 12,
     type: 'OIbTextArea',
     contentType: 'sql',
     defaultValue: 'SELECT * FROM Table WHERE timestamp > @StartTime',
-    valid: notEmpty(),
-    help: <div>Available variables: @StartTime, @EndTime. See Query Settings help section.</div>,
+    valid: 'notEmpty',
+    help: 'Available variables: @StartTime, @EndTime. See Query Settings help section.</div>',
   },
   connectionTimeout: {
     type: 'OIbInteger',
     label: 'Connection timeout (ms)',
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 1000,
     md: 2,
   },
@@ -162,7 +159,7 @@ schema.form = {
     type: 'OIbInteger',
     label: 'Request timeout (ms)',
     newRow: false,
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 1000,
     md: 2,
   },
@@ -170,25 +167,25 @@ schema.form = {
     type: 'OIbInteger',
     label: 'Max read interval (s)',
     md: 2,
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 0,
-    help: <div>Split the time interval into smaller intervals of this duration (in s). 0 to not split the query.</div>,
+    help: 'Split the time interval into smaller intervals of this duration (in s). 0 to not split the query.</div>',
   },
   readIntervalDelay: {
     type: 'OIbInteger',
     label: 'Read interval delay (ms)',
     newRow: false,
     md: 2,
-    valid: minValue(0),
+    valid: 'minValue(0)',
     defaultValue: 200,
-    help: <div>Time to wait between the read interval iterations (ms)</div>,
+    help: 'Time to wait between the read interval iterations (ms)</div>',
   },
   FileSettings: {
     type: 'OIbTitle',
     label: 'File Settings',
     md: 12,
-    children: (
-      <>
+    children: `
+      <div>
         <div>
           The query results are converted into a CSV file. It is possible to specify the delimiter used in the CSV file, how to format
           the timestamp field and also the name of the file with a template.
@@ -220,14 +217,14 @@ schema.form = {
           Ex: With timezone &apos;Europe/Paris&apos; the date &apos;2019-01-01 00:00:00&apos;
           will be converted to &apos;Tue Jan 01 2019 00:00:00 GMT+0100&apos;
         </p>
-      </>
-    ),
+      </div>
+    `,
   },
   filename: {
     type: 'OIbText',
     defaultValue: 'sql-@CurrentDate.csv',
-    valid: notEmpty(),
-    help: <div>The name of the CSV file. Available variables: @CurrentDate, @ConnectorName, @QueryPart</div>,
+    valid: 'notEmpty',
+    help: 'The name of the CSV file. Available variables: @CurrentDate, @ConnectorName, @QueryPart</div>',
     md: 3,
   },
   compression: {
@@ -240,15 +237,15 @@ schema.form = {
   delimiter: {
     type: 'OIbText',
     defaultValue: ',',
-    valid: notEmpty(),
-    help: <div>Delimiter in the CSV file</div>,
+    valid: 'notEmpty',
+    help: 'Delimiter in the CSV file</div>',
     md: 1,
   },
   dateFormat: {
     newRow: false,
     type: 'OIbText',
     defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     md: 2,
   },
   timeColumn: {
@@ -256,7 +253,7 @@ schema.form = {
     type: 'OIbText',
     md: 2,
     defaultValue: 'timestamp',
-    valid: notEmpty(),
+    valid: 'notEmpty',
   },
   timezone: {
     type: 'OIbTimezone',

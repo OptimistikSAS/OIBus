@@ -1,4 +1,4 @@
-const schema = require('./FileWriter.schema.jsx').default
+const schema = require('./FileWriter.schema').default
 const testSchema = require('../../services/testSchema').default
 
 testSchema(schema)

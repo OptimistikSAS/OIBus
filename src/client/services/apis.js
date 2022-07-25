@@ -73,8 +73,8 @@ const putRequest = async (uri, body) => {
   }
 }
 
-const getSouthProtocols = () => getRequest('/config/schemas/south')
-const getNorthApis = () => getRequest('/config/schemas/north')
+const getSouthSchemas = () => getRequest('/config/schemas/south')
+const getNorthSchemas = () => getRequest('/config/schemas/north')
 const getConfig = () => getRequest('/config')
 const updateConfig = (body) => putRequest('/config', body)
 const activateConfig = () => putRequest('/config/activate')
@@ -97,8 +97,8 @@ const reload = () => getRequest('/reload')
 const shutdown = () => getRequest('/shutdown')
 
 export default {
-  getSouthProtocols,
-  getNorthApis,
+  getSouthSchemas,
+  getNorthSchemas,
   getConfig,
   activateConfig,
   updateConfig,

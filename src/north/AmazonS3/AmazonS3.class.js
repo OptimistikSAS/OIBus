@@ -5,14 +5,12 @@ const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3')
 const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
 const ProxyAgent = require('proxy-agent')
 
-global.NorthHandler = require('../NorthHandler.class')
+const { NorthHandler } = global
 
 /**
  * Class AmazonS3 - sends files to Amazon AWS S3
  */
 class AmazonS3 extends NorthHandler {
-  static category = 'FileIn'
-
   /**
    * Constructor for AmazonS3
    * @constructor
@@ -92,5 +90,7 @@ class AmazonS3 extends NorthHandler {
     return `${filename}${ext}`
   }
 }
+
+AmazonS3.schema = require('./AmazonS3.schema')
 
 module.exports = AmazonS3

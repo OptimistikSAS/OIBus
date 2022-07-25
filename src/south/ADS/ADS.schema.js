@@ -1,17 +1,19 @@
-import React from 'react'
-import { inRange, optional, notEmpty, minValue } from '../../services/validation.service'
-
+/**
+ * @todo: how should we pass a valid function specific to a given South/North???
+ *  - propose to load a specific js file
+ * - propose a "generic regexp feature test(regexp, errormsg)
+ */
 // eslint-disable-next-line max-len
-const adsNetId = /^\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*$/
-const isAdsNetId = (name = 'Value') => (val) => (
-  adsNetId.test(val) ? null : `${name} should be a valid ads net ip`
-)
+// const adsNetId = /^\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*$/
+// const isAdsNetId = (name = 'Value') => (val) => (
+//  adsNetId.test(val) ? null : `${name} should be a valid ads net ip`
+// )
 
 const schema = { name: 'ADS' }
 schema.form = {
   AdsSettings: {
     type: 'OIbTitle',
-    children: (
+    children: `
       <div>
         <p>
           ADS is a protocol used with TwinCAT to communicate with Beckhoff PLCs.
@@ -37,60 +39,60 @@ schema.form = {
           documentation for more information.
         </p>
       </div>
-    ),
+    `,
   },
   netId: {
     type: 'OIbText',
     defaultValue: '127.0.0.1.1.1',
-    valid: isAdsNetId(),
-    help: <div>The ADS net id of the PLC</div>,
+    valid: 'isAdsNetId',
+    help: 'The ADS net id of the PLC</div>',
   },
   port: {
     type: 'OIbInteger',
     newRow: false,
-    valid: inRange(1, 65535),
+    valid: 'inRange(1, 65535)',
     defaultValue: 851,
-    help: <div>Port number of the ADS source</div>,
+    help: 'Port number of the ADS source</div>',
   },
 
   routerAddress: {
     type: 'OIbText',
-    valid: optional(),
-    help: <div>The IP address where the AMS router is</div>,
+    valid: 'optional',
+    help: 'The IP address where the AMS router is</div>',
   },
   routerTcpPort: {
     type: 'OIbInteger',
     newRow: false,
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>Port number of the AMS router</div>,
+    help: 'Port number of the AMS router</div>',
   },
 
   clientAmsNetId: {
     type: 'OIbText',
-    valid: optional(),
-    help: <div>The AMS net id set to this client from the AMS router settings</div>,
+    valid: 'optional',
+    help: 'The AMS net id set to this client from the AMS router settings</div>',
   },
   clientAdsPort: {
     type: 'OIbInteger',
     newRow: false,
-    valid: optional(),
+    valid: 'optional',
     defaultValue: '',
-    help: <div>Port number that will be set for this client (must be unused on the server side)</div>,
+    help: 'Port number that will be set for this client (must be unused on the server side)</div>',
   },
 
   retryInterval: {
     type: 'OIbInteger',
     newRow: true,
     md: 2,
-    valid: minValue(1000),
+    valid: 'minValue(1000)',
     defaultValue: 10000,
-    help: <div>Retry Interval (ms)</div>,
+    help: 'Retry Interval (ms)</div>',
   },
 
   AdsDataSettings: {
     type: 'OIbTitle',
-    children: (
+    children: `
       <div>
         <ul>
           <li>
@@ -128,13 +130,13 @@ schema.form = {
           </li>
         </ul>
       </div>
-    ),
+    `,
   },
   plcName: {
     type: 'OIbText',
     defaultValue: '',
-    valid: optional(),
-    help: <div>The name of the PLC that will be added to the points ID as prefix.</div>,
+    valid: 'optional',
+    help: 'The name of the PLC that will be added to the points ID as prefix.</div>',
   },
   enumAsText: {
     defaultValue: 'Integer',
@@ -151,13 +153,13 @@ schema.form = {
   },
   AdsStructures: {
     type: 'OIbTitle',
-    children: (
+    children: `
       <div>
         Only specified structures will be taken into account. To take all fields of a structure, you can use the wildcard *.
         To take some of the fields only, specify them (case sensitive), separated by commas.
         For example, E_ANA is the name of the structure, and the fields to take are : Mesure,a,b
       </div>
-    ),
+    `,
   },
   structureFiltering: {
     type: 'OIbTable',
@@ -166,14 +168,14 @@ schema.form = {
         type: 'OIbText',
         newRow: false,
         label: 'Name',
-        valid: notEmpty(),
+        valid: 'notEmpty',
         defaultValue: '',
       },
       fields: {
         type: 'OIbText',
         newRow: false,
         label: 'Fields',
-        valid: notEmpty(),
+        valid: 'notEmpty',
         defaultValue: '',
       },
     },
@@ -183,7 +185,7 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OIbText',
-    valid: notEmpty(),
+    valid: 'notEmpty',
     defaultValue: '',
   },
   scanMode: {

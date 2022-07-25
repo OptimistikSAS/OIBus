@@ -1,7 +1,7 @@
 const fs = require('fs/promises')
 const path = require('path')
 
-global.NorthHandler = require('../NorthHandler.class')
+const { NorthHandler } = global
 
 class FileWriter extends NorthHandler {
   static category = 'FileIn'
@@ -76,5 +76,6 @@ class FileWriter extends NorthHandler {
     }
   }
 }
+FileWriter.schema = require('./FileWriter.schema')
 
 module.exports = FileWriter
