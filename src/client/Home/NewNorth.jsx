@@ -9,7 +9,7 @@ import { OIbText } from '../components/OIbForm'
 import imageCategories from './imageCategories'
 
 const NewNorth = ({
-  modal,
+  openModal,
   toggle,
 }) => {
   const {
@@ -25,7 +25,7 @@ const NewNorth = ({
   const applications = newConfig?.north?.applications ?? []
   const navigate = useNavigate()
 
-  const northCategoryList = northSchemas ? [...new Set(northSchemas.map((e) => e.category))] : []
+  const northCategoryList = northSchemas ? [...new Set(northSchemas.map((schema) => schema.category))] : []
 
   const addApplication = () => {
     if (api === null && name !== '') {
@@ -63,7 +63,7 @@ const NewNorth = ({
 
   return (
     <Modal
-      isOpen={modal}
+      isOpen={openModal}
       toggle={toggle}
       aria-labelledby="contained-modal-title-vcenter"
       centered
@@ -162,7 +162,7 @@ const NewNorth = ({
 }
 
 NewNorth.propTypes = {
-  modal: PropTypes.bool.isRequired,
+  openModal: PropTypes.bool.isRequired,
   toggle: PropTypes.func.isRequired,
 }
 export default NewNorth

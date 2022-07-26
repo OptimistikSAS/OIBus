@@ -78,8 +78,8 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
         </DropdownMenu>
 
       </Dropdown>
-      <NewSouth modal={southModal} toggle={() => setSouthModal(false)} />
-      <NewNorth modal={northModal} toggle={() => setNorthModal(false)} />
+      <NewSouth openModal={southModal} toggle={() => setSouthModal(false)} />
+      <NewNorth openModal={northModal} toggle={() => setNorthModal(false)} />
     </>
   )
 }

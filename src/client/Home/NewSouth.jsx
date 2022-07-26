@@ -9,7 +9,7 @@ import { OIbText } from '../components/OIbForm'
 import imageCategories from './imageCategories'
 
 const NewSouth = ({
-  modal,
+  openModal,
   toggle,
 }) => {
   const {
@@ -60,7 +60,7 @@ const NewSouth = ({
 
   return (
     <Modal
-      isOpen={modal}
+      isOpen={openModal}
       toggle={toggle}
       aria-labelledby="contained-modal-title-vcenter"
       centered
@@ -159,7 +159,7 @@ const NewSouth = ({
 }
 
 NewSouth.propTypes = {
-  modal: PropTypes.bool.isRequired,
+  openModal: PropTypes.bool.isRequired,
   toggle: PropTypes.func.isRequired,
 }
 export default NewSouth
