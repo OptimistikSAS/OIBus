@@ -17,7 +17,7 @@ const updateConfig = (ctx) => {
     ctx.app.engine.configService.updateConfig(ctx.request.body)
     ctx.ok()
   } catch (error) {
-    ctx.throw(500, 'Unable to update Config')
+    ctx.throw(500, `Unable to update Config, (${error.message})`)
   }
 }
 
@@ -34,7 +34,7 @@ const activateConfiguration = (ctx) => {
     process.send({ type: 'reload-historyquery-engine' })
     ctx.ok('Reloading...')
   } catch (error) {
-    ctx.throw(500, 'Unable to activate configuration')
+    ctx.throw(500, `Unable to activate configuration, (${error.message})`)
   }
 }
 
