@@ -33,7 +33,7 @@ const getStatusForNorth = async (ctx) => {
  * @return {void}
  */
 const getNorthSchemas = (ctx) => {
-  ctx.ok(ctx.app.engine.getNorthSchemas())
+  ctx.ok(ctx.app.engine.northSchemas)
 }
 
 /**
@@ -42,7 +42,7 @@ const getNorthSchemas = (ctx) => {
  * @return {void}
  */
 const getSouthSchemas = (ctx) => {
-  ctx.ok(ctx.app.engine.getSouthSchemas())
+  ctx.ok(ctx.app.engine.southSchemas)
 }
 
 /**

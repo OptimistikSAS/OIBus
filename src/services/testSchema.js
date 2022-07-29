@@ -17,8 +17,14 @@ const controls = [
 
 const testSchema = (schema) => {
   describe('a valid schema', () => {
-    it('should have a name', () => {
+    it('should have a name, category, etc...', () => {
       expect(typeof schema.name).toBe('string')
+      expect(typeof schema.category).toBe('string')
+      expect(typeof schema.supportListen).toBe('boolean')
+      expect(typeof schema.supportLastPoint).toBe('boolean')
+      expect(typeof schema.supportFiles).toBe('boolean')
+      expect(typeof schema.supportHistory).toBe('boolean')
+      expect(typeof schema.supportPoints).toBe('boolean')
     })
     Object.entries(schema.form).forEach(([field, parameters]) => {
       const keys = Object.keys(parameters)

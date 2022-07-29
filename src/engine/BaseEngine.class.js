@@ -31,6 +31,8 @@ class BaseEngine {
     this.encryptionService = encryptionService
     this.northSchemas = {}
     this.southSchemas = {}
+    this.northModules = {}
+    this.southModules = {}
   }
 
   /**
@@ -45,20 +47,22 @@ class BaseEngine {
     this.logger.setEncryptionService(this.encryptionService)
     await this.logger.changeParameters(engineConfig, {})
     // load north modules
-    await Promise.all(engineConfig.northModules.map(async (name) => {
+    await Promise.all(engineConfig.northList.map(async (name) => {
       try {
         const extension = await import(`../north/${name}/${name}.class.js`)
-        this.northSchemas[name] = extension.default
+        this.northModules[name] = extension.default
+        this.northSchemas[name] = this.northModules[name].schema
         this.logger.debug(`North ${name} is added`)
       } catch (error) {
         this.logger.error(`North ${name} can't be loaded ${error}`)
       }
     }))
     // load south modules
-    await Promise.all(engineConfig.southModules.map(async (name) => {
+    await Promise.all(engineConfig.southList.map(async (name) => {
       try {
         const extension = await import(`../south/${name}/${name}.class.js`)
-        this.southSchemas[name] = extension.default
+        this.southModules[name] = extension.default
+        this.southSchemas[name] = this.southModules[name].schema
         this.logger.debug(`South ${name} is added`)
       } catch (error) {
         this.logger.error(`South ${name} can't be loaded ${error}`)
@@ -153,20 +157,11 @@ class BaseEngine {
    * @returns {SouthHandler|null} - The South
    */
   createSouth(protocol, dataSource) {
-    const SouthHandler = this.southSchemas[protocol]
+    const SouthHandler = this.southModules[protocol]
     if (SouthHandler) {
       return new SouthHandler(dataSource, this)
     }
     return null
-  }
-
-  /**
-   * Return available South protocols
-   * @return {Object} - Available South protocols
-   */
-  // eslint-disable-next-line class-methods-use-this
-  getSouthEngineList() {
-    return this.southSchemas
   }
 
   /**
@@ -177,7 +172,7 @@ class BaseEngine {
    * @returns {SouthHandler|null} - The South
    */
   createNorth(api, application) {
-    const NorthHandler = this.northSchemas[api]
+    const NorthHandler = this.northModules[api]
     if (NorthHandler) {
       return new NorthHandler(application, this)
     }
