@@ -54,8 +54,6 @@ const ConfigContext = React.createContext(configInitialState)
 const ConfigProvider = ({ children }) => {
   const [newConfig, dispatchNewConfig] = React.useReducer(reducer, configInitialState)
   const [activeConfig, setActiveConfig] = React.useState(null)
-  const [northSchemas, setNorthSchemas] = React.useState()
-  const [southSchemas, setSouthSchemas] = React.useState()
   // context for sorting south/north list
   const [sortNorthBy, setSortNorthBy] = React.useState()
   const [isNorthAscending, setIsNorthAscending] = React.useState()
@@ -71,36 +69,6 @@ const ConfigProvider = ({ children }) => {
     isSouthAscending,
     setIsSouthAscending,
   }
-
-  /**
-   * Acquire the list of API
-   * @returns {void}
-   */
-  React.useEffect(() => {
-    const call = async () => {
-      try {
-        setNorthSchemas(await apis.getNorthSchemas())
-      } catch (error) {
-        console.error(error)
-      }
-    }
-    call()
-  }, [])
-
-  /**
-   * Acquire the list of Protocols
-   * @returns {void}
-   */
-  React.useEffect(() => {
-    const call = async () => {
-      try {
-        setSouthSchemas(await apis.getSouthSchemas())
-      } catch (error) {
-        console.error(error)
-      }
-    }
-    call()
-  }, [])
 
   // On mount, acquire the Active config from server.
   React.useEffect(() => {
@@ -124,8 +92,8 @@ const ConfigProvider = ({ children }) => {
   }, [])
 
   const configValueProvided = React.useMemo(
-    () => ({ newConfig, dispatchNewConfig, activeConfig, setActiveConfig, northSchemas, southSchemas, sort }),
-    [newConfig, dispatchNewConfig, activeConfig, setActiveConfig, northSchemas, southSchemas, sort],
+    () => ({ newConfig, dispatchNewConfig, activeConfig, setActiveConfig, sort }),
+    [newConfig, dispatchNewConfig, activeConfig, setActiveConfig, sort],
   )
   // the provider return the new and active config and their respective setters
   /**
