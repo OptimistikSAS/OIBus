@@ -20,10 +20,6 @@ class NorthHandler {
    * - **connect**: to allow establishing proper connection to the external application (optional)
    * - **disconnect**: to allow proper disconnection (optional)
    *
-   * The constructor of the API need to initialize:
-   * - **this.canHandleValues** to true in order to receive values with handleValues()
-   * - **this.canHandleFiles** to true in order to receive a file with handleFile()
-   *
    * In addition, it is possible to use a number of helper functions:
    * - **getProxy**: get the proxy handler
    * - **logger**: to log an event with different levels (error,warning,info,debug)
@@ -31,14 +27,15 @@ class NorthHandler {
    * @constructor
    * @param {Object} applicationParameters - The application parameters
    * @param {BaseEngine} engine - The Engine
+   * @param {Object} schema - The schema defining this North
    * @return {void}
    */
   constructor(applicationParameters, engine) {
-    this.canHandleValues = false
-    this.canHandleFiles = false
-
     this.application = applicationParameters
     this.engine = engine
+    const schema = engine.northSchemas[applicationParameters.name]
+    this.supportPoints = schema.supportPoints
+    this.supportFiles = schema.supportFiles
     this.encryptionService = EncryptionService.getInstance()
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
@@ -82,10 +79,10 @@ class NorthHandler {
   }
 
   initializeStatusData() {
-    if (this.canHandleValues) {
+    if (this.supportPoints) {
       this.statusData['Number of values sent since OIBus has started'] = 0
     }
-    if (this.canHandleFiles) {
+    if (this.supportFiles) {
       this.statusData['Number of files sent since OIBus has started'] = 0
     }
     if (!this.engine.eventEmitters[`/north/${this.application.id}/sse`]) {

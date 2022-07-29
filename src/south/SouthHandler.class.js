@@ -40,39 +40,32 @@ class SouthHandler {
    * @constructor
    * @param {*} dataSource - The data source
    * @param {BaseEngine} engine - The engine
-   * @param {object} supportedModes - The supported modes
+   * @param {Object} schema - The schema defining this South
    * @return {void}
    */
-  constructor(dataSource, engine, supportedModes) {
+  constructor(dataSource, engine) {
     this.dataSource = dataSource
     this.engine = engine
+    const schema = engine.southSchemas[dataSource.name]
     this.encryptionService = EncryptionService.getInstance()
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
-    this.supportedModes = supportedModes
-
     this.connected = false
-
     this.addFileCount = 0
     this.addPointsCount = 0
     this.currentlyOnScan = {}
     this.buffer = []
     this.bufferTimeout = null
     this.statusData = {}
-
     this.keyFile = null
     this.certFile = null
     this.caFile = null
+    this.supportedModes = this.checkSupportedModes(schema)
   }
 
-  checkSupportedModes() {
-    const {
-      supportListen,
-      supportLastPoint,
-      supportFile,
-      supportHistory,
-    } = this.supportedModes
-    if (!supportListen && !supportLastPoint && !supportFile && !supportHistory) {
+  checkSupportedModes(schema) {
+    const { supportListen, supportLastPoint, supportPoints, supportFiles, supportHistory } = schema
+    if (!supportListen && !supportLastPoint && !supportFiles && !supportHistory) {
       this.logger.error(`${this.constructor.name} should support at least 1 operation mode.`)
     }
     if (supportListen && typeof this.listen !== 'function') {
@@ -81,18 +74,25 @@ class SouthHandler {
     if (supportLastPoint && typeof this.lastPointQuery !== 'function') {
       this.logger.error(`${this.constructor.name} should implement the lastPointQuery() method.`)
     }
-    if (supportFile && typeof this.fileQuery !== 'function') {
+    if (supportFiles && typeof this.fileQuery !== 'function') {
       this.logger.error(`${this.constructor.name} should implement the fileQuery() method.`)
     }
     if (supportHistory && typeof this.historyQuery !== 'function') {
       this.logger.error(`${this.constructor.name} should implement the historyQuery() method.`)
     }
 
-    if (this.handlesPoints) {
+    if (supportPoints) {
       this.statusData['Number of values since OIBus has started'] = 0
     }
-    if (this.handlesFiles) {
+    if (supportFiles) {
       this.statusData['Number of files since OIBus has started'] = 0
+    }
+    return {
+      supportListen,
+      supportLastPoint,
+      supportFiles,
+      supportPoints,
+      supportHistory,
     }
   }
 
@@ -130,11 +130,8 @@ class SouthHandler {
     this.logger = new Logger(`South:${this.dataSource.name}`)
     this.logger.setEncryptionService(this.encryptionService)
     await this.logger.changeParameters(this.engineConfig, logParameters)
-    if (this.supportedModes) {
-      this.checkSupportedModes()
-      if (this.supportedModes.supportHistory) {
-        this.prepareHistorySupport()
-      }
+    if (this.supportedModes.supportHistory) {
+      this.prepareHistorySupport()
     }
 
     this.certificate = new CertificateService(this.logger)
@@ -251,8 +248,7 @@ class SouthHandler {
       const historyQueryResult = await this.historyQuery(scanMode, startTime, intervalEndTime)
 
       if (historyQueryResult === -1) {
-        this.logger.error(`Error while retrieving data. Exiting historyQueryHandler. queryPart-${scanMode}: ${
-          this.queryParts[scanMode]}, startTime: ${startTime.toISOString()}, intervalEndTime: ${intervalEndTime.toISOString()}`)
+        this.logger.error(`Error while retrieving data. Exiting historyQueryHandler. queryPart-${scanMode}: ${this.queryParts[scanMode]}, startTime: ${startTime.toISOString()}, intervalEndTime: ${intervalEndTime.toISOString()}`)
         this.ongoingReads[scanMode] = false
         return
       }
@@ -280,7 +276,7 @@ class SouthHandler {
         if (this.supportedModes?.supportLastPoint) {
           await this.lastPointQuery(scanMode)
         }
-        if (this.supportedModes?.supportFile) {
+        if (this.supportedModes?.supportFiles) {
           await this.fileQuery(scanMode)
         }
         if (this.supportedModes?.supportHistory) {
@@ -292,8 +288,7 @@ class SouthHandler {
       this.currentlyOnScan[scanMode] = 0
     } else {
       this.currentlyOnScan[scanMode] += 1
-      this.logger.warn(`${this.dataSource.name} currently on scan = ${
-        this.currentlyOnScan[scanMode]}. Skipping it. Maybe the duration of scanMode (${scanMode}) should be increased`)
+      this.logger.warn(`${this.dataSource.name} currently on scan = ${this.currentlyOnScan[scanMode]}. Skipping it. Maybe the duration of scanMode (${scanMode}) should be increased`)
     }
   }
 
@@ -469,7 +464,7 @@ class SouthHandler {
       status['Last file added time'] = this.statusData['Last added file at'] ? this.statusData['Last added file at'] : 'Never'
       status['Number of files added'] = this.addFileCount
     }
-    if (this.handlesPoints) {
+    if (this.supportPoints) {
       status['Last values added time'] = this.statusData['Last added points at'] ? this.statusData['Last added points at'] : 'Never'
       status['Number of values added'] = this.addPointsCount
     }

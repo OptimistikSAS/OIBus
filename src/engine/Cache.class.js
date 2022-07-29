@@ -60,12 +60,12 @@ class Cache {
       id: activeApi.application.id,
       name: activeApi.application.name,
       config: activeApi.application.caching,
-      canHandleValues: activeApi.canHandleValues,
-      canHandleFiles: activeApi.canHandleFiles,
+      supportPoints: activeApi.supportPoints,
+      supportFiles: activeApi.supportFiles,
       subscribedTo: activeApi.application.subscribedTo,
     }
     // only initialize the db if the api can handle values
-    if (api.canHandleValues) {
+    if (api.supportPoints) {
       this.logger.debug(`use db: ${this.cacheFolder}/${api.id}.db for ${api.name}`)
       api.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${api.id}.db`, {})
       this.logger.debug(`db count: ${await databaseService.getCount(api.database)}`)
@@ -160,9 +160,9 @@ class Cache {
    * @return {object} the api object or null if api should do nothing.
    */
   async cacheValuesForApi(api, id, values) {
-    const { id: applicationId, database, config, canHandleValues, subscribedTo } = api
+    const { id: applicationId, database, config, supportPoints, subscribedTo } = api
     // save the value in the North's queue if it is subscribed to the dataSource
-    if (canHandleValues && Cache.isSubscribed(id, subscribedTo)) {
+    if (supportPoints && Cache.isSubscribed(id, subscribedTo)) {
       // Update stats for api
       this.cacheStats[applicationId] = (this.cacheStats[applicationId] || 0) + values.length
 
@@ -218,8 +218,8 @@ class Cache {
    * @return {object} the api object or null if api should do nothing.
    */
   async cacheFileForApi(api, id, cachePath, timestamp) {
-    const { name: applicationName, id: applicationId, canHandleFiles, subscribedTo } = api
-    if (canHandleFiles && Cache.isSubscribed(id, subscribedTo)) {
+    const { name: applicationName, id: applicationId, supportFiles, subscribedTo } = api
+    if (supportFiles && Cache.isSubscribed(id, subscribedTo)) {
       // Update stats for api
       this.cacheStats[applicationName] = (this.cacheStats[applicationName] || 0) + 1
 
@@ -304,7 +304,7 @@ class Cache {
    * @return {void}
    */
   async sendCallback(api) {
-    const { name, canHandleValues, canHandleFiles, config } = api
+    const { name, supportPoints, supportFiles, config } = api
     let status = NorthHandler.STATUS.SUCCESS
 
     this.logger.trace(`sendCallback ${name}, sendInProgress ${!!this.sendInProgress[name]}`)
@@ -313,11 +313,11 @@ class Cache {
       this.sendInProgress[name] = true
       this.resendImmediately[name] = false
 
-      if (canHandleValues) {
+      if (supportPoints) {
         status = await this.sendCallbackForValues(api)
       }
 
-      if (canHandleFiles) {
+      if (supportFiles) {
         status = await this.sendCallbackForFiles(api)
       }
 
@@ -534,14 +534,14 @@ class Cache {
    */
   async getCacheStatsForApis() {
     // Get points APIs stats
-    const pointApis = Object.values(this.apis).filter((api) => api.canHandleValues)
+    const pointApis = Object.values(this.apis).filter((api) => api.supportPoints)
     const valuesTotalCounts = pointApis.map((api) => this.cacheStats[api.name])
     const valuesCacheSizeActions = pointApis.map((api) => databaseService.getCount(api.database))
     const valuesCacheSizes = await Promise.all(valuesCacheSizeActions)
     const pointApisStats = this.generateApiCacheStat(pointApis, valuesTotalCounts, valuesCacheSizes, 'points')
 
     // Get file APIs stats
-    const fileApis = Object.values(this.apis).filter((api) => api.canHandleFiles)
+    const fileApis = Object.values(this.apis).filter((api) => api.supportFiles)
     const filesTotalCounts = fileApis.map((api) => this.cacheStats[api.name])
     const filesCacheSizeActions = fileApis.map((api) => databaseService.getFileCountForApi(this.filesDatabase, api.name))
     const filesCacheSizes = await Promise.all(filesCacheSizeActions)

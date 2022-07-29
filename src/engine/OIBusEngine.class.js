@@ -343,35 +343,6 @@ class OIBusEngine extends BaseEngine {
   }
 
   /**
-   * Return available North applications
-   * @return {String[]} - Available North applications
-   */
-  /* eslint-disable-next-line class-methods-use-this */
-  getNorthSchemas() {
-    this.logger.debug('Getting North applications')
-    return Object.entries(this.northSchemas())
-      .map(([connectorName, { category }]) => ({
-        connectorName,
-        category,
-      }))
-  }
-
-  /**
-   * Return available South protocols
-   * @return {String[]} - Available South protocols
-   */
-
-  /* eslint-disable-next-line class-methods-use-this */
-  getSouthSchemas() {
-    this.logger.debug('Getting South protocols')
-    return Object.entries(this.getSouthEngineList())
-      .map(([connectorName, { category }]) => ({
-        connectorName,
-        category,
-      }))
-  }
-
-  /**
    * Get OIBus version
    * @returns {string} - The OIBus version
    */
@@ -548,18 +519,18 @@ class OIBusEngine extends BaseEngine {
     this.statusData['Array buffers memory (min / current / max)'] = memoryUsage.arrayBuffers
 
     Object.values(this.activeApis).forEach((activeNorthConnector) => {
-      if (activeNorthConnector.canHandleValues) {
+      if (activeNorthConnector.supportPoints) {
         this.statusData[`Number of values sent to North "${
           activeNorthConnector.application.name}"`] = activeNorthConnector.statusData['Number of values sent since OIBus has started']
       }
-      if (activeNorthConnector.canHandleFiles) {
+      if (activeNorthConnector.supportFiles) {
         this.statusData[`Number of files sent to North "${
           activeNorthConnector.application.name}"`] = activeNorthConnector.statusData['Number of files sent since OIBus has started']
       }
     })
 
     Object.values(this.activeProtocols).forEach((activeSouthConnector) => {
-      if (activeSouthConnector.handlesPoints) {
+      if (activeSouthConnector.supportPoints) {
         this.statusData[`Number of values retrieved from South "${
           activeSouthConnector.dataSource.name}"`] = activeSouthConnector.statusData['Number of values since OIBus has started']
       }
