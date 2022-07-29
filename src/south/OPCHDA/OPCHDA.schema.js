@@ -1,4 +1,12 @@
-const schema = { name: 'OPCHDA' }
+const schema = {
+  name: 'OPCHDA',
+  category: 'IoT',
+  supportListen: false,
+  supportLastPoint: false,
+  supportFiles: false,
+  supportHistory: true,
+  supportPoints: true,
+}
 schema.form = {
   AgentSection: {
     type: 'OIbTitle',
@@ -624,6 +632,4 @@ schema.points = {
   },
 }
 
-schema.category = 'IoT'
-
-export default schema
+module.exports = schema

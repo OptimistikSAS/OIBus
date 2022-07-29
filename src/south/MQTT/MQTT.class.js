@@ -6,8 +6,6 @@ const { DateTime } = require('luxon')
 const { SouthHandler } = global
 
 class MQTT extends SouthHandler {
-  static category = 'IoT'
-
   /**
    * Constructor for MQTT
    * @constructor
@@ -16,12 +14,7 @@ class MQTT extends SouthHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, {
-      supportListen: true,
-      supportLastPoint: false,
-      supportFile: false,
-      supportHistory: false,
-    })
+    super(dataSource, engine)
 
     const {
       url,
@@ -67,8 +60,6 @@ class MQTT extends SouthHandler {
     this.timestampPath = timestampPath
     this.timezone = timestampTimezone
     this.timestampFormat = timestampFormat
-
-    this.handlesPoints = true
   }
 
   async init() {

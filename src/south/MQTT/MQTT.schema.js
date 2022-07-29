@@ -1,4 +1,12 @@
-const schema = { name: 'MQTT' }
+const schema = {
+  name: 'MQTT',
+  supportListen: true,
+  supportLastPoint: false,
+  supportFiles: false,
+  supportHistory: false,
+  supportPoints: true,
+  category: 'IoT',
+}
 schema.form = {
   MqttSettings: {
     type: 'OIbTitle',
@@ -297,6 +305,4 @@ schema.points = {
   },
 }
 
-schema.category = 'IoT'
-
-export default schema
+module.exports = schema

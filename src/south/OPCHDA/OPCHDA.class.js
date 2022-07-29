@@ -25,8 +25,6 @@ const DISCONNECTION_TIMEOUT = 10000
  * Class OPCHDA.
  */
 class OPCHDA extends SouthHandler {
-  static category = 'IoT'
-
   /**
    * Constructor for OPCHDA
    * @constructor
@@ -35,7 +33,7 @@ class OPCHDA extends SouthHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, { supportListen: false, supportLastPoint: false, supportFile: false, supportHistory: true })
+    super(dataSource, engine)
 
     const { maxReadInterval, readIntervalDelay, maxReturnValues } = dataSource.OPCHDA
 
@@ -50,9 +48,6 @@ class OPCHDA extends SouthHandler {
 
     this.connection$ = null
     this.disconnection$ = null
-
-    this.canHandleHistory = true
-    this.handlesPoints = true
 
     this.disconnectionTimeout = null
   }

@@ -9,7 +9,6 @@ const { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG } = require('../o
  * @extends {SouthHandler}
  */
 class OPCUA_HA extends SouthHandler {
-  static category = 'IoT'
 
   /**
    * Constructor for OPCUA_HA
@@ -19,12 +18,7 @@ class OPCUA_HA extends SouthHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, {
-      supportListen: false,
-      supportLastPoint: false,
-      supportFile: false,
-      supportHistory: true,
-    })
+    super(dataSource, engine)
 
     const {
       url,
@@ -57,9 +51,6 @@ class OPCUA_HA extends SouthHandler {
     this.certFile = certFile
     this.keyFile = keyFile
     this.reconnectTimeout = null
-
-    this.canHandleHistory = true
-    this.handlesPoints = true
     this.clientCertificateManager = null
   }
 

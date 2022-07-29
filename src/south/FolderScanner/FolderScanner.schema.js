@@ -1,4 +1,11 @@
-const schema = { name: 'FolderScanner' }
+const schema = {
+  name: 'FolderScanner',
+  category: 'FileOut',
+  supportListen: false,
+  supportLastPoint: false,
+  supportFiles: true,
+  supportHistory: false,
+}
 schema.form = {
   FolderScannerSettings: {
     type: 'OIbTitle',
@@ -80,5 +87,4 @@ schema.form = {
 
 schema.points = null
 
-schema.category = 'FileOut'
-export default schema
+module.exports = schema

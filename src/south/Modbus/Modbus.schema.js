@@ -1,4 +1,8 @@
-const schema = { name: 'Modbus' }
+const schema = {
+  name: 'Modbus',
+  category: 'IoT',
+  supportPoints: true,
+}
 schema.form = {
   ModbusSettings: {
     type: 'OIbTitle',
@@ -160,6 +164,4 @@ schema.points = {
   },
 }
 
-schema.category = 'IoT'
-
-export default schema
+module.exports = schema

@@ -1,4 +1,11 @@
-const schema = { name: 'SQL' }
+const schema = {
+  name: 'SQL',
+  category: 'DatabaseOut',
+  supportListen: false,
+  supportLastPoint: false,
+  supportFiles: true,
+  supportHistory: true,
+}
 schema.form = {
   SQLSettings: {
     type: 'OIbTitle',
@@ -275,6 +282,4 @@ schema.withDriver = (driver) => {
   return schema
 }
 
-schema.category = 'DatabaseOut'
-
-export default schema
+module.exports = schema

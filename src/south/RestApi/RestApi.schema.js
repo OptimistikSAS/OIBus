@@ -1,4 +1,11 @@
-const schema = { name: 'RestApi' }
+const schema = {
+  name: 'RestApi',
+  category: 'API',
+  supportListen: false,
+  supportLastPoint: false,
+  supportFiles: true,
+  supportHistory: true,
+}
 schema.form = {
   RestApiSettings: {
     type: 'OIbTitle',
@@ -225,6 +232,4 @@ schema.form = {
   },
 }
 
-schema.category = 'API'
-
-export default schema
+module.exports = schema

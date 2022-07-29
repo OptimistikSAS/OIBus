@@ -7,8 +7,6 @@ const { SouthHandler } = global
  * Class FolderScanner
  */
 class FolderScanner extends SouthHandler {
-  static category = 'FileOut'
-
   /**
    * Constructor for FolderScanner
    * @constructor
@@ -17,7 +15,7 @@ class FolderScanner extends SouthHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, { supportListen: false, supportLastPoint: false, supportFile: true, supportHistory: false })
+    super(dataSource, engine)
 
     const { inputFolder, preserveFiles, ignoreModifiedDate, minAge, regex, compression } = this.dataSource.FolderScanner
 

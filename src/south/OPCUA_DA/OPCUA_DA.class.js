@@ -9,7 +9,6 @@ const { initOpcuaCertificateFolders } = require('../opcua.service/opcua.service'
  * @extends {SouthHandler}
  */
 class OPCUA_DA extends SouthHandler {
-  static category = 'IoT'
 
   /**
    * Constructor for OPCUA_DA
@@ -19,7 +18,7 @@ class OPCUA_DA extends SouthHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportFile: false, supportHistory: false })
+    super(dataSource, engine)
 
     const {
       url,
@@ -44,8 +43,6 @@ class OPCUA_DA extends SouthHandler {
     this.certFile = certFile
     this.keyFile = keyFile
     this.reconnectTimeout = null
-
-    this.handlesPoints = true
     this.clientCertificateManager = null
   }
 

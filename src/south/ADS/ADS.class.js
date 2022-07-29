@@ -6,8 +6,6 @@ const { SouthHandler } = global
  * Class ADS - Provides instruction for Modbus client connection
  */
 class ADS extends SouthHandler {
-  static category = 'IoT'
-
   /**
    * Constructor for ADS
    * @constructor
@@ -16,8 +14,7 @@ class ADS extends SouthHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportFile: false, supportHistory: false })
-
+    super(dataSource, engine)
     const {
       netId,
       port,
@@ -43,8 +40,6 @@ class ADS extends SouthHandler {
     this.boolAsText = boolAsText
     this.enumAsText = enumAsText
     this.structureFiltering = structureFiltering
-
-    this.handlesPoints = true
   }
 
   parseValues(nodeId, dataType, valueToParse, timestamp, subItems, enumInfo) {

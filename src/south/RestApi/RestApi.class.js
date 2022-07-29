@@ -44,8 +44,6 @@ const requestWithBody = (body, options = {}) => new Promise((resolve, reject) =>
  * Class RestApi
  */
 class RestApi extends SouthHandler {
-  static category = 'API'
-
   /**
    * Constructor for RestApi
    * @constructor
@@ -54,12 +52,7 @@ class RestApi extends SouthHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, {
-      supportListen: false,
-      supportLastPoint: false,
-      supportFile: false,
-      supportHistory: true,
-    })
+    super(dataSource, engine)
 
     const {
       requestMethod,
@@ -104,9 +97,6 @@ class RestApi extends SouthHandler {
     this.variableDateFormat = variableDateFormat
 
     this.tmpFolder = path.resolve(this.engineConfig.caching.cacheFolder, this.dataSource.id)
-
-    this.canHandleHistory = true
-    this.handlesFiles = true
   }
 
   async init() {

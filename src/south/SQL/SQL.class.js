@@ -19,7 +19,6 @@ let oracledb
  * Class SQL
  */
 class SQL extends SouthHandler {
-  static category = 'DatabaseOut'
 
   /**
    * Constructor for SQL
@@ -29,12 +28,7 @@ class SQL extends SouthHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, {
-      supportListen: false,
-      supportLastPoint: false,
-      supportFile: false,
-      supportHistory: true,
-    })
+    super(dataSource, engine)
 
     const {
       driver,
@@ -81,9 +75,6 @@ class SQL extends SouthHandler {
     this.readIntervalDelay = readIntervalDelay
     this.timezone = timezone
     this.tmpFolder = path.resolve(this.engine.getCacheFolder(), this.dataSource.id)
-
-    this.canHandleHistory = true
-    this.handlesFiles = true
   }
 
   async init() {

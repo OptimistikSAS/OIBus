@@ -1,4 +1,12 @@
-const schema = { name: 'OPCUA_HA' }
+const schema = {
+  name: 'OPCUA_HA',
+  supportListen: false,
+  supportLastPoint: false,
+  supportFiles: false,
+  supportHistory: true,
+  supportPoints: true,
+  category: 'IoT',
+}
 schema.form = {
   opcuaNetworkSettings: {
     type: 'OIbTitle',
@@ -228,6 +236,5 @@ schema.points = {
     `,
   },
 }
-schema.category = 'IoT'
 
-export default schema
+module.exports = schema

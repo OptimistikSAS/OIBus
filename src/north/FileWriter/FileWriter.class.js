@@ -4,8 +4,6 @@ const path = require('path')
 const { NorthHandler } = global
 
 class FileWriter extends NorthHandler {
-  static category = 'FileIn'
-
   /**
    * Constructor for FileWriter
    * @constructor

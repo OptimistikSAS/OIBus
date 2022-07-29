@@ -9,7 +9,16 @@
 //  adsNetId.test(val) ? null : `${name} should be a valid ads net ip`
 // )
 
-const schema = { name: 'ADS' }
+const schema = {
+  name: 'ADS',
+  category: 'IoT',
+  supportListen: false,
+  supportLastPoint: true,
+  supportFiles: false,
+  supportHistory: false,
+  supportPoints: true,
+}
+
 schema.form = {
   AdsSettings: {
     type: 'OIbTitle',
@@ -193,6 +202,5 @@ schema.points = {
     label: 'Scan Mode',
   },
 }
-schema.category = 'IoT'
 
-export default schema
+module.exports = schema

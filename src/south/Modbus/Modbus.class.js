@@ -9,7 +9,6 @@ const { SouthHandler } = global
  * Class Modbus - Provides instruction for Modbus client connection
  */
 class Modbus extends SouthHandler {
-  static category = 'IoT'
 
   /**
    * Constructor for Modbus
@@ -19,7 +18,7 @@ class Modbus extends SouthHandler {
    * @return {void}
    */
   constructor(dataSource, engine) {
-    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportFile: false, supportHistory: false })
+    super(dataSource, engine)
     const { addressOffset, retryInterval } = this.dataSource.Modbus
 
     this.optimizedScanModes = getOptimizedScanModes(this.dataSource.points, addressOffset, this.logger)
@@ -27,7 +26,6 @@ class Modbus extends SouthHandler {
     this.reconnectTimeout = null
 
     this.retryInterval = retryInterval // retry interval before trying to connect again
-    this.handlesPoints = true
   }
 
   /**
