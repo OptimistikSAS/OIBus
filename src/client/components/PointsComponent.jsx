@@ -13,13 +13,12 @@ import validation from '../South/Form/South.validation'
 const PointsComponent = ({
   southId,
   points: pointsOrdered,
-  protocol,
   handleDeleteAllPoint,
   handleAdd,
   handleDelete,
   handleImportPoints,
   onUpdate,
-  ProtocolSchemas,
+  pointsSchema,
 }) => {
   const [filterText, setFilterText] = React.useState('') // used to limit the list of points
   const [selectedPage, setSelectedPage] = React.useState(1)
@@ -72,7 +71,7 @@ const PointsComponent = ({
    */
   const handleAddPoint = () => {
     setSelectedPage(1) // jump to first page, to see new row
-    handleAdd(Object.entries(ProtocolSchemas[protocol].points).map(([name]) => name))
+    handleAdd(Object.entries(pointsSchema).map(([name]) => name))
   }
 
   /**
@@ -107,9 +106,8 @@ const PointsComponent = ({
     document.body.removeChild(element)
   }
 
-  const ProtocolSchema = ProtocolSchemas[protocol]
   // configure help if exists
-  const pointsWithHelp = Object.entries(ProtocolSchema.points).filter(([name, value]) => name && value.help)
+  const pointsWithHelp = Object.entries(pointsSchema).filter(([name, value]) => name && value.help)
   const tableHelps = pointsWithHelp.length > 0 && pointsWithHelp.map(([name, value]) => (
     <div key={name}>
       <b>{`${value.label || humanizeString(name)}: `}</b>
@@ -117,18 +115,18 @@ const PointsComponent = ({
     </div>
   ))
   // configure table header and rows
-  const tableHeaders = Object.entries(ProtocolSchema.points).map(([name, value]) => value.label || humanizeString(name))
+  const tableHeaders = Object.entries(pointsSchema).map(([name, value]) => value.label || humanizeString(name))
 
   // paging
   const pagedPoints = filteredPoints.filter((_, index) => index >= pageOffset && index < selectedPage * MAX_ON_PAGE)
-  const tableRows = pagedPoints.map((point, index) => Object.entries(ProtocolSchema.points).map(([key, value]) => {
+  const tableRows = pagedPoints.map((point, index) => Object.entries(pointsSchema).map(([key, value]) => {
     const { type, ...rest } = value
     const Control = Controls[type]
     rest.value = point[key]
     rest.label = null // remove field title in table rows
     rest.help = null // remove help in table rows
     // check if must be unique and extend already existing validation with isUnique check
-    if (ProtocolSchema.points[key].unique) {
+    if (pointsSchema[key].unique) {
       const indexOffset = (selectedPage - 1) * MAX_ON_PAGE
       const pointIds = points.filter((_point) => _point.virtualIndex !== filteredPoints[indexOffset + index].virtualIndex).map((p) => p[key])
       const oldValid = rest.valid.bind({})
@@ -196,13 +194,13 @@ const PointsComponent = ({
 PointsComponent.propTypes = {
   southId: PropTypes.string.isRequired,
   points: PropTypes.arrayOf(PropTypes.object).isRequired,
-  protocol: PropTypes.string.isRequired,
   handleDeleteAllPoint: PropTypes.func.isRequired,
   handleAdd: PropTypes.func.isRequired,
   handleDelete: PropTypes.func.isRequired,
   handleImportPoints: PropTypes.func.isRequired,
   onUpdate: PropTypes.func.isRequired,
-  ProtocolSchemas: PropTypes.arrayOf(PropTypes.object).isRequired,
+  pointsSchema: PropTypes.arrayOf(PropTypes.object),
 }
+PointsComponent.defaultProps = { pointsSchema: [] }
 
 export default PointsComponent
