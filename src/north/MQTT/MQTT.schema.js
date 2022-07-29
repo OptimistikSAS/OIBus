@@ -1,4 +1,8 @@
-const schema = { name: 'MQTT' }
+const schema = {
+  name: 'MQTT',
+  category: 'IoT',
+  supportPoints: true,
+ }
 schema.form = {
   MQTTParameters: {
     type: 'OIbTitle',
@@ -215,6 +219,5 @@ schema.form = {
     help: 'Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>',
   },
 }
-schema.category = 'IoT'
 
-export default schema
+module.exports = schema

@@ -1,4 +1,8 @@
-const schema = { name: 'MongoDB' }
+const schema = {
+  name: 'MongoDB',
+  category: 'DatabaseIn',
+  supportPoints: true,
+}
 schema.form = {
   MongodbParameters: {
     type: 'OIbTitle',
@@ -174,6 +178,5 @@ schema.form = {
     help: 'Timestamp field extracted from the JSON object (empty means the JSON &quot;timestamp&quot; field is used)</div>',
   },
 }
-schema.category = 'DatabaseIn'
 
-export default schema
+module.exports = schema

@@ -57,8 +57,6 @@ class WATSYConnect extends NorthHandler {
     this.initMQTTTopic()
 
     this.successCount = 0
-
-    this.canHandleValues = true
   }
 
   /**

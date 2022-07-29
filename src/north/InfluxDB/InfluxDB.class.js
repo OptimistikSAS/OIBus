@@ -7,8 +7,6 @@ const { NorthHandler } = global
  * Class InfluxDB - generates and sends InfluxDB requests
  */
 class InfluxDB extends NorthHandler {
-  static category = 'DatabaseIn'
-
   /**
    * Constructor for InfluxDB
    * @constructor
@@ -42,8 +40,6 @@ class InfluxDB extends NorthHandler {
     this.useDataKeyValue = useDataKeyValue
     this.keyParentValue = keyParentValue
     this.timestampPathInDataValue = timestampPathInDataValue
-
-    this.canHandleValues = true
   }
 
   /**

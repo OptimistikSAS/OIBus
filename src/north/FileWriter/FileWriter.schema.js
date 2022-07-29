@@ -1,4 +1,9 @@
-const schema = { name: 'FileWriter' }
+const schema = {
+  name: 'FileWriter',
+  supportPoints: true,
+  supportFiles: true,
+  category: 'FileIn',
+ }
 schema.form = {
   OIConnectSettings: {
     type: 'OIbTitle',
@@ -29,5 +34,4 @@ schema.form = {
     valid: 'hasLengthBetween(0, 256)',
   },
 }
-schema.category = 'FileIn'
-export default schema
+module.exports = schema

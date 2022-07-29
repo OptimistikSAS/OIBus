@@ -5,8 +5,6 @@ const objectPath = require('object-path')
 const { NorthHandler } = global
 
 class TimescaleDB extends NorthHandler {
-  static category = 'DatabaseIn'
-
   /**
    * Constructor for TimescaleDB
    * @constructor
@@ -36,8 +34,6 @@ class TimescaleDB extends NorthHandler {
     this.optFields = optFields
     this.useDataKeyValue = useDataKeyValue
     this.keyParentValue = keyParentValue
-
-    this.canHandleValues = true
   }
 
   /**

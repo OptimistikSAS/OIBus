@@ -49,8 +49,6 @@ class AmazonS3 extends NorthHandler {
       },
       requestHandler: httpAgent ? new NodeHttpHandler({ httpAgent }) : null,
     })
-
-    this.canHandleFiles = true
   }
 
   /**

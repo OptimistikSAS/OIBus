@@ -15,9 +15,6 @@ class FileWriter extends NorthHandler {
    */
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
-    this.canHandleValues = true
-    this.canHandleFiles = true
-
     this.outputFolder = path.resolve(applicationParameters.FileWriter.outputFolder)
     this.prefixFileName = applicationParameters.FileWriter.prefixFileName ?? ''
     this.suffixFileName = applicationParameters.FileWriter.suffixFileName ?? ''

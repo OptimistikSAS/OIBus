@@ -1,4 +1,9 @@
-const schema = { name: 'OIConnect' }
+const schema = {
+  name: 'OIConnect',
+  supportPoints: true,
+  supportFiles: true,
+  category: 'Optimistik',
+}
 schema.form = {
   OIConnectSettings: {
     type: 'OIbTitle',
@@ -49,6 +54,5 @@ schema.form = {
   },
   proxy: { type: 'OIbProxy' },
 }
-schema.category = 'Optimistik'
 
-export default schema
+module.exports = schema

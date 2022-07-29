@@ -1,4 +1,8 @@
-const schema = { name: 'CSV' }
+const schema = {
+  name: 'AmazonS3',
+  supportFiles: true,
+  category: 'FileIn',
+}
 schema.form = {
   AmazonS3Settings: {
     type: 'OIbTitle',
@@ -41,6 +45,4 @@ schema.form = {
   },
   proxy: { type: 'OIbProxy' },
 }
-schema.category = 'FileIn'
-
-export default schema
+module.exports = schema

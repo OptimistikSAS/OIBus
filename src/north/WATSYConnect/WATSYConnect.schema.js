@@ -1,4 +1,8 @@
-const schema = { name: 'WATSYConnect' }
+const schema = {
+  name: 'WATSYConnect',
+  supportPoints: true,
+  category: 'API',
+}
 schema.form = {
   WATSYConnectParameters: {
     type: 'OIbTitle',
@@ -98,6 +102,5 @@ schema.form = {
     defaultValue: '',
   },
 }
-schema.category = 'API'
 
-export default schema
+module.exports = schema

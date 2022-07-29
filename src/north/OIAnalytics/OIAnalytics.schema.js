@@ -1,4 +1,9 @@
-const schema = { name: 'OIAnalytics' }
+const schema = {
+  name: 'OIAnalytics',
+  supportPoints: true,
+  supportFiles: true,
+  category: 'Optimistik',
+}
 schema.form = {
   OIAnalyticsSettings: {
     type: 'OIbTitle',
@@ -47,6 +52,5 @@ schema.form = {
   },
   proxy: { type: 'OIbProxy' },
 }
-schema.category = 'Optimistik'
 
-export default schema
+module.exports = schema

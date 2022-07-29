@@ -8,8 +8,6 @@ const { NorthHandler } = global
  * Class MQTT - generates and sends MQTT messages
  */
 class MQTT extends NorthHandler {
-  static category = 'IoT'
-
   /**
    * Constructor for MQTT
    * @constructor
@@ -48,8 +46,6 @@ class MQTT extends NorthHandler {
     this.topic = topic
     this.useDataKeyValue = useDataKeyValue
     this.keyParentValue = keyParentValue
-
-    this.canHandleValues = true
   }
 
   /**

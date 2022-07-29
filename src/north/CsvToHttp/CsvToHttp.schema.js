@@ -1,4 +1,9 @@
-const schema = { name: 'CsvToHttp' }
+const schema = {
+  name: 'CsvToHttp',
+  supportFiles: true,
+  supportPoints: false,
+  category: 'API'
+}
 
 schema.form = {
   WebParameters: {
@@ -147,5 +152,4 @@ schema.form = {
   },
   proxy: { type: 'OIbProxy' },
 }
-schema.category = 'API'
-export default schema
+module.exports = schema

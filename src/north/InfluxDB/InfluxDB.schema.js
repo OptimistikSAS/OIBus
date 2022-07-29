@@ -1,4 +1,8 @@
-const schema = { name: 'InfluxDB' }
+const schema = {
+  name: 'InfluxDB',
+  supportPoints: true,
+  category: 'DatabaseIn',
+}
 schema.form = {
   InfluxdbParameters: {
     type: 'OIbTitle',
@@ -153,6 +157,4 @@ schema.form = {
     help: 'Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>',
   },
 }
-schema.category = 'DatabaseIn'
-
-export default schema
+module.exports = schema

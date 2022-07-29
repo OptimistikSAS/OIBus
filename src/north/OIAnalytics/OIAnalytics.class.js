@@ -4,8 +4,6 @@ const fs = require('fs/promises')
  * Class OIAnalytics - sends files through a POST Multipart HTTP and values as json payload
  */
 class OIAnalytics extends NorthHandler {
-  static category = 'Optimistik'
-
   /**
    * Constructor for OIAnalytics
    * @constructor
@@ -28,9 +26,6 @@ class OIAnalytics extends NorthHandler {
     this.fileUrl = `${host}${fileEndpoint}${queryParam}`
     this.authentication = authentication
     this.proxy = this.getProxy(proxy)
-
-    this.canHandleValues = true
-    this.canHandleFiles = true
   }
 
   /**

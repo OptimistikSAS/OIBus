@@ -3,8 +3,6 @@ const fs = require('fs/promises')
 const { NorthHandler } = global
 
 class Console extends NorthHandler {
-  static category = 'Debug'
-
   /**
    * Constructor for Console
    * @constructor
@@ -14,8 +12,6 @@ class Console extends NorthHandler {
    */
   constructor(applicationParameters, engine) {
     super(applicationParameters, engine)
-    this.canHandleValues = true
-    this.canHandleFiles = true
     this.verbose = applicationParameters.Console.verbose ?? false
   }
 

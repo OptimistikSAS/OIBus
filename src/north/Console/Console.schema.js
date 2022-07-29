@@ -1,4 +1,9 @@
-const schema = { name: 'Console' }
+const schema = {
+  name: 'Console',
+  category: 'Debug',
+  supportPoints: true,
+  supportFiles: true,
+}
 schema.form = {
   ConsoleSettings: {
     type: 'OIbTitle',
@@ -19,5 +24,4 @@ schema.form = {
     defaultValue: false,
   },
 }
-schema.category = 'Debug'
-export default schema
+module.exports = schema

@@ -3,8 +3,6 @@ const fs = require('fs/promises')
 const { NorthHandler } = global
 
 class OIConnect extends NorthHandler {
-  static category = 'Optimistik'
-
   /**
    * Constructor for OIConnect
    * @constructor
@@ -20,9 +18,6 @@ class OIConnect extends NorthHandler {
     this.fileUrl = `${host}${fileEndpoint}?name=${name}`
     this.authentication = authentication
     this.proxy = this.getProxy(proxy)
-
-    this.canHandleValues = true
-    this.canHandleFiles = true
   }
 
   /**

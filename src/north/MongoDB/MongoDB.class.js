@@ -8,7 +8,6 @@ const { NorthHandler } = global
  * Class MongoDB - generates and sends MongoDB requests
  */
 class MongoDB extends NorthHandler {
-  static category = 'DatabaseIn'
 
   /**
    * Constructor for MongoDB
@@ -43,8 +42,6 @@ class MongoDB extends NorthHandler {
     this.timestampKey = timeStampKey
     this.useDataKeyValue = useDataKeyValue
     this.keyParentValue = keyParentValue
-
-    this.canHandleValues = true
   }
 
   /**

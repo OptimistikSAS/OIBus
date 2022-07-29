@@ -13,8 +13,6 @@ const REGEX_GET_VARIABLE = /[^${}]+/ // Get the value inside ${}
  * Class CsvToHttp - convert a csv file into http request such as POST/PUT/PACTH
  */
 class CsvToHttp extends NorthHandler {
-  static category = 'API'
-
   /**
    * Constructor for CsvToHttp
    * @constructor
@@ -43,9 +41,6 @@ class CsvToHttp extends NorthHandler {
     this.mapping = mapping || {}
     this.csvDelimiter = csvDelimiter
     this.proxy = this.getProxy(proxy)
-
-    this.canHandleFiles = true
-    this.canHandleValues = false
   }
 
   /**
