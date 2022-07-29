@@ -2,7 +2,7 @@ const schema = {
   name: 'CsvToHttp',
   supportFiles: true,
   supportPoints: false,
-  category: 'API'
+  category: 'API',
 }
 
 schema.form = {

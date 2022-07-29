@@ -9,7 +9,6 @@ const { SouthHandler } = global
  * Class Modbus - Provides instruction for Modbus client connection
  */
 class Modbus extends SouthHandler {
-
   /**
    * Constructor for Modbus
    * @constructor

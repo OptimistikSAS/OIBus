@@ -248,6 +248,7 @@ class SouthHandler {
       const historyQueryResult = await this.historyQuery(scanMode, startTime, intervalEndTime)
 
       if (historyQueryResult === -1) {
+        // eslint-disable-next-line max-len
         this.logger.error(`Error while retrieving data. Exiting historyQueryHandler. queryPart-${scanMode}: ${this.queryParts[scanMode]}, startTime: ${startTime.toISOString()}, intervalEndTime: ${intervalEndTime.toISOString()}`)
         this.ongoingReads[scanMode] = false
         return
@@ -288,6 +289,7 @@ class SouthHandler {
       this.currentlyOnScan[scanMode] = 0
     } else {
       this.currentlyOnScan[scanMode] += 1
+      // eslint-disable-next-line max-len
       this.logger.warn(`${this.dataSource.name} currently on scan = ${this.currentlyOnScan[scanMode]}. Skipping it. Maybe the duration of scanMode (${scanMode}) should be increased`)
     }
   }

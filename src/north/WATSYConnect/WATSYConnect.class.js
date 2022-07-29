@@ -31,7 +31,6 @@ const mqtt = require('mqtt')
  */
 
 class WATSYConnect extends NorthHandler {
-
   /**
    * Constructor for WATSYConnect
    * @constructor

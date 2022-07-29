@@ -3,7 +3,7 @@ const schema = {
   supportPoints: true,
   supportFiles: true,
   category: 'FileIn',
- }
+}
 schema.form = {
   OIConnectSettings: {
     type: 'OIbTitle',

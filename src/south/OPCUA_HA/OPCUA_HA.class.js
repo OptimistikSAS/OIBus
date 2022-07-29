@@ -9,7 +9,6 @@ const { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG } = require('../o
  * @extends {SouthHandler}
  */
 class OPCUA_HA extends SouthHandler {
-
   /**
    * Constructor for OPCUA_HA
    * @constructor

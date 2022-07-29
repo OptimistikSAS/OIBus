@@ -8,7 +8,6 @@ const { NorthHandler } = global
  * Class MongoDB - generates and sends MongoDB requests
  */
 class MongoDB extends NorthHandler {
-
   /**
    * Constructor for MongoDB
    * @constructor

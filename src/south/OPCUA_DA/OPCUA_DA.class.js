@@ -9,7 +9,6 @@ const { initOpcuaCertificateFolders } = require('../opcua.service/opcua.service'
  * @extends {SouthHandler}
  */
 class OPCUA_DA extends SouthHandler {
-
   /**
    * Constructor for OPCUA_DA
    * @constructor

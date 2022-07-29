@@ -19,7 +19,6 @@ let oracledb
  * Class SQL
  */
 class SQL extends SouthHandler {
-
   /**
    * Constructor for SQL
    * @constructor

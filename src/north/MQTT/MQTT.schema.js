@@ -2,7 +2,7 @@ const schema = {
   name: 'MQTT',
   category: 'IoT',
   supportPoints: true,
- }
+}
 schema.form = {
   MQTTParameters: {
     type: 'OIbTitle',
