@@ -5,17 +5,20 @@ import { Tooltip } from 'reactstrap'
 import SouthMenu from './SouthMenu.jsx'
 import imageCategories from './imageCategories'
 import OIbCheckBox from '../components/OIbForm/OIbCheckBox.jsx'
-import ProtocolSchemas from '../South/Protocols.jsx'
+import { SchemaContext } from '../context/SchemaContext.jsx'
 
 const SouthNode = ({ dataSource, indexSouth, onChange }) => {
+  const { southSchemas } = React.useContext(SchemaContext)
   const [tooltipOpenedId, setTooltipOpenedId] = React.useState()
+  console.log(southSchemas)
+  if (!southSchemas[dataSource.protocol]) return <p>loading</p>
   return (
     <div className="d-flex flex-column h-100 w-100">
       <div className="w-100 d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
         <img
           src={
             `${
-              imageCategories[ProtocolSchemas[dataSource.protocol].category]
+              imageCategories[southSchemas[dataSource.protocol].category]
                 .image
             }` ?? imageCategories.Default.image
           }

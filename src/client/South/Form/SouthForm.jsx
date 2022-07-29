@@ -13,13 +13,15 @@ import OIbForm from '../../components/OIbForm/OIbForm.jsx'
 import validation from './South.validation'
 import EditableIdField from '../../components/EditableIdField.jsx'
 import { ConfigContext } from '../../context/ConfigContext.jsx'
-import ProtocolSchemas from '../Protocols.jsx'
+import { SchemaContext } from '../../context/SchemaContext.jsx'
 import PointsButton from '../PointsButton.jsx'
 import StatusButton from '../../StatusButton.jsx'
 
 const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
+  /** @todo usecontext to retrieve SouthSchema */
   const { id, protocol } = dataSource
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  const { southSchemas } = React.useContext(SchemaContext)
   const [renamingConnector, setRenamingConnector] = useState(null)
   const [pencil, setPencil] = useState(true)
   const dataSources = newConfig?.south?.dataSources ?? []
@@ -32,8 +34,8 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   // load the proper schema based on the protocol name.
   // in case of SQL protocol load schema based on selected driver
   const schema = protocol === 'SQL'
-    ? ProtocolSchemas.SQL.withDriver(dataSource.SQL.driver)
-    : ProtocolSchemas[protocol]
+    ? southSchemas.SQL.withDriver(dataSource.SQL.driver)
+    : southSchemas[protocol]
   const prefix = `south.dataSources.${dataSourceIndex}`
 
   const handleConnectorNameChanged = (name) => (oldConnectorName, newConnectorName) => {

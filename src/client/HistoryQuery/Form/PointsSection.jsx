@@ -3,6 +3,7 @@ import { Spinner } from 'reactstrap'
 
 import PropTypes from 'prop-types'
 import { ConfigContext } from '../../context/ConfigContext.jsx'
+import { SchemaContext } from '../../context/SchemaContext.jsx'
 import PointsComponent from '../../components/PointsComponent.jsx'
 
 const PointsSection = ({
@@ -11,6 +12,7 @@ const PointsSection = ({
   handleImportPoints,
 }) => {
   const { newConfig } = React.useContext(ConfigContext)
+  const { southSchemas } = React.useContext(SchemaContext)
 
   if (!newConfig?.south) {
     return (
@@ -31,13 +33,13 @@ const PointsSection = ({
   return (
     <PointsComponent
       southId={query.southId}
-      protocol={protocol}
       points={pointsOrdered}
       handleAdd={handleAddPoint}
       handleDelete={handleDeletePoint}
       handleDeleteAllPoint={handleDeleteAllPoint}
       handleImportPoints={handleImportPoints}
       onUpdate={handleChange}
+      pointsSchema={southSchemas[protocol].points}
     />
   )
 }

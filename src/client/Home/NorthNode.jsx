@@ -3,18 +3,21 @@ import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import { Tooltip } from 'reactstrap'
 import NorthMenu from './NorthMenu.jsx'
-import ApiSchemas from '../North/Apis.jsx'
 import imageCategories from './imageCategories'
 import OIbCheckBox from '../components/OIbForm/OIbCheckBox.jsx'
+import { SchemaContext } from '../context/SchemaContext.jsx'
 
 const NorthNode = ({ application, indexNorth, onChange }) => {
+  const { northSchemas } = React.useContext(SchemaContext)
   const [tooltipOpenedId, setTooltipOpenedId] = React.useState()
+  console.log(northSchemas)
+  if (!northSchemas[application.api]) return <p>loading</p>
   return (
     <div className="d-flex flex-column h-100 w-100">
       <div className="w-100 d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
         <img
           src={
-            `${imageCategories[ApiSchemas[application.api].category].image}`
+            `${imageCategories[northSchemas[application.api].category].image}`
             ?? imageCategories.Default.image
           }
           alt="logo"

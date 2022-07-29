@@ -2,20 +2,24 @@ import React from 'react'
 import { Button, Form, Col, Row } from 'reactstrap'
 import PropTypes from 'prop-types'
 import { OIbSelect } from '../components/OIbForm/index'
-import ProtocolSchemas from '../South/Protocols.jsx'
+import { SchemaContext } from '../context/SchemaContext.jsx'
 
+/*
 const HISTORY_QUERY_CAPABLE_PROTOCOLS = [
   'OPCUA_HA', 'OPCHDA', 'SQL',
 ]
+*/
 
 const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
-  const filteredSouthHandlers = southHandlers.filter((handler) => HISTORY_QUERY_CAPABLE_PROTOCOLS.includes(handler.protocol))
+  const { southSchemas } = React.useContext(SchemaContext)
+  const filteredSouthHandlers = southHandlers.filter((handler) => southSchemas[handler.protocol].supportHistory === true)
   const [southHandler, setSouthHandler] = React.useState(filteredSouthHandlers[0])
   const [northHandler, setNorthHandler] = React.useState(northHandlers[0])
   const { protocol } = southHandler
+  /** @todo we should not have SQL haard coded here. need to be a schema attribute? */
   const schema = protocol === 'SQL'
-    ? ProtocolSchemas.SQL.withDriver(southHandler.SQL.driver)
-    : ProtocolSchemas[protocol]
+    ? southSchemas.SQL.withDriver(southHandler.SQL.driver)
+    : southSchemas[protocol]
 
   /**
    * Creates a new history query with the chosen north and south handler

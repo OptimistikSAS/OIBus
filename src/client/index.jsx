@@ -21,33 +21,36 @@ import HomePage from './Home/HomePage.jsx'
 import AlertContainer from './components/AlertContainer.jsx'
 import { AlertProvider } from './context/AlertContext.jsx'
 import ConfigProviders from './context/ConfigProviders.jsx'
+import { SchemaProvider } from './context/SchemaContext.jsx'
 import ConfigureHistoryQuery from './HistoryQuery/ConfigureHistoryQuery.jsx'
 
 const Main = () => (
   <Router>
-    <ConfigProviders>
-      <AlertProvider>
-        <TopHeader />
-        <div className="oi-container-with-top-nav">
-          <AlertContainer />
-          <Routes>
-            <Route end path="/" element={<HomePage />} />
-            <Route end path="/engine" element={<Engine />} />
-            <Route end path="/history-query" element={<HistoryQuery />} />
-            <Route end path="/history-query/:id" element={<ConfigureHistoryQuery />} />
-            <Route end path="/south/:id" element={<ConfigureProtocol />} />
-            <Route end path="/south/:id/live" element={<SouthStatus />} />
-            <Route end path="/south/:id/points" element={<ConfigurePoints />} />
-            <Route end path="/north/:id" element={<ConfigureApi />} />
-            <Route end path="/north/:id/live" element={<NorthStatus />} />
-            <Route end path="/log" element={<Logs />} />
-            <Route end path="/about" element={<About />} />
-            <Route end path="/activation" element={<Activation />} />
-            <Route element={<NotFound />} />
-          </Routes>
-        </div>
-      </AlertProvider>
-    </ConfigProviders>
+    <SchemaProvider>
+      <ConfigProviders>
+        <AlertProvider>
+          <TopHeader />
+          <div className="oi-container-with-top-nav">
+            <AlertContainer />
+            <Routes>
+              <Route end path="/" element={<HomePage />} />
+              <Route end path="/engine" element={<Engine />} />
+              <Route end path="/history-query" element={<HistoryQuery />} />
+              <Route end path="/history-query/:id" element={<ConfigureHistoryQuery />} />
+              <Route end path="/south/:id" element={<ConfigureProtocol />} />
+              <Route end path="/south/:id/live" element={<SouthStatus />} />
+              <Route end path="/south/:id/points" element={<ConfigurePoints />} />
+              <Route end path="/north/:id" element={<ConfigureApi />} />
+              <Route end path="/north/:id/live" element={<NorthStatus />} />
+              <Route end path="/log" element={<Logs />} />
+              <Route end path="/about" element={<About />} />
+              <Route end path="/activation" element={<Activation />} />
+              <Route element={<NotFound />} />
+            </Routes>
+          </div>
+        </AlertProvider>
+      </ConfigProviders>
+    </SchemaProvider>
   </Router>
 )
 

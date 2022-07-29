@@ -14,12 +14,14 @@ import validation from './North.validation'
 import EditableIdField from '../../components/EditableIdField.jsx'
 import { ConfigContext } from '../../context/ConfigContext.jsx'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
-import ApiSchemas from '../Apis.jsx'
 import StatusButton from '../../StatusButton.jsx'
+
+import { SchemaContext } from '../../context/SchemaContext.jsx'
 
 const NorthForm = ({ application, applicationIndex, onChange }) => {
   const { id, api } = application
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  const { northSchemas } = React.useContext(SchemaContext)
   const [renamingConnector, setRenamingConnector] = useState(null)
   const [pencil, setPencil] = useState(true)
   const applications = newConfig?.north?.applications ?? []
@@ -30,7 +32,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
   if (!application.subscribedTo) application.subscribedTo = []
 
   // load the proper schema based on the api name.
-  const schema = ApiSchemas[api]
+  const schema = northSchemas[api]
   const prefix = `north.applications.${applicationIndex}`
   const handleConnectorNameChanged = (name) => (oldConnectorName, newConnectorName) => {
     setRenamingConnector(null)

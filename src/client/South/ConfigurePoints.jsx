@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { Button, Container, Spinner } from 'reactstrap'
 import { FaArrowLeft } from 'react-icons/fa'
 import { AlertContext } from '../context/AlertContext.jsx'
+import { SchemaContext } from '../context/SchemaContext.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import utils from '../helpers/utils'
 import PointsComponent from '../components/PointsComponent.jsx'
@@ -10,6 +11,7 @@ import StatusButton from '../StatusButton.jsx'
 
 const ConfigurePoints = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
+  const { southSchemas } = React.useContext(SchemaContext)
   const { setAlert } = React.useContext(AlertContext)
   const navigate = useNavigate()
 
@@ -120,13 +122,13 @@ const ConfigurePoints = () => {
       <Container fluid>
         <PointsComponent
           southId={id}
-          protocol={protocol}
           points={pointsOrdered}
           handleAdd={handleAdd}
           handleDelete={handleDelete}
           handleDeleteAllPoint={handleDeleteAllPoint}
           handleImportPoints={handleImportPoints}
           onUpdate={onChange}
+          pointsSchema={southSchemas[protocol].points}
         />
       </Container>
     </>

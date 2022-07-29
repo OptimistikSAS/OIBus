@@ -2,12 +2,13 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Button } from 'reactstrap'
 import { useNavigate } from 'react-router-dom'
-import ProtocolSchemas from './Protocols.jsx'
+import { SchemaContext } from '../context/SchemaContext.jsx'
 
 const PointsButton = ({ dataSource }) => {
   const navigate = useNavigate()
   const { points, protocol, enabled } = dataSource
-  const hasPoints = ProtocolSchemas[protocol]?.points !== null
+  const { southSchemas } = React.useContext(SchemaContext)
+  const hasPoints = southSchemas[protocol]?.points !== null
   return hasPoints ? (
     <Button
       className="inline-button autosize oi-points-button"
