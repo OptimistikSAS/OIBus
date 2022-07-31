@@ -84,7 +84,7 @@
     "selfsigned": "2.0.1",
     "sprintf-js": "1.1.2",
     "sqlite": "4.1.1",
-    "sqlite3": "5.0.8",
+    "sqlite3": "5.0.11",
     "thread-stream": "https://github.com/burgerni10/thread-stream.git",
     "timexe": "1.0.5",
     "tunnel": "0.0.6"
