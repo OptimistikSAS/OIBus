@@ -1,0 +1,40 @@
+name: Publish OIBus binaries
+
+on: workflow_call
+
+jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
+
+  standard-version:
+    uses: ./.github/workflows/standard-version.yml
+
+  build-binaries:
+    uses: ./.github/workflows/build-binaries.yml
+
+  publish:
+    name: 'Publish binaries'
+    needs: [builds, release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download OIBus artifacts
+        id: download
+        uses: actions/download-artifact@v3
+
+      - name: Display structure of downloaded files
+        run: ls -R
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.release.outputs.version-tag }}
+          name: ${{ needs.release.outputs.version-tag }}
+          body_path: ./artifact/CHANGELOG.md
+          prerelease: ${{ needs.release.outputs.prerelease }}
+          files: |
+            ./artifact/OIBus-setup-win32x64.exe
+            ./artifact/OIBus-linux.zip
+            ./artifact/OIBus-macos.zip
+            ./artifact/OIBus-win32x64.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }} # Need REPO_ACCESS_TOKEN to propagate 'release published' event

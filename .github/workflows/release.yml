@@ -1,90 +1,24 @@
-name: release
+name: Release next OIBus version
+
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to bump to'
+        required: false
+
 jobs:
-  build-all:
-    name: 'Build'
-    runs-on: ${{ matrix.config['os'] }}
-    strategy:
-      matrix:
-        config:
-          - { os: 'macos-latest',   platform: 'macos', archiveName: 'OIBus-macos.zip',    zip: 'zip -r'     }
-          - { os: 'ubuntu-latest',  platform: 'linux', archiveName: 'OIBus-linux.zip',    zip: 'zip -r'     }
-          - { os: 'windows-latest', platform: 'win',   archiveName: 'OIBus-win32x64.zip', zip: '7z a -tzip' }
-    timeout-minutes: 20
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+  tests:
+    uses: ./.github/workflows/tests.yml
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16.15
+  standard-version:
+    needs: tests
+    uses: ./.github/workflows/standard-version.yml
 
-      - name: Use npm
-        run: |
-          npm install -g npm@8.5.5
+  build-binaries:
+    needs: standard-version
+    uses: ./.github/workflows/build-binaries.yml
 
-      - name: Package OIBus for ${{ matrix.config['platform'] }}
-        id: pkg
-        shell: pwsh
-        run: |
-          npm ci
-          npm run build-${{ matrix.config['platform'] }}
-          cd dist/${{ matrix.config['platform'] }}
-          dir
-          ./oibus --config ../../tests/oibus.json --check true
-          ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }} .
-
-      - name: Upload ${{ matrix.config['archiveName'] }}
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.config['archiveName'] }}
-          path: ./dist/${{ matrix.config['archiveName'] }}
-
-  release:
-    name: 'Release'
-    needs: build-all
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16.15
-
-      - name: Use npm
-        run: |
-          npm install -g npm@8.5.5
-
-      - name: Bump version
-        id: standard-version
-        run: |
-          git config --global user.name 'optimistik-actions'
-          git config --global user.email 'optimistiksas@users.noreply.github.com'
-          VERSION_ARGS=""
-          PRERELEASE=false
-          BRANCH=$(git branch --show-current| tr '\\/' - | tr -dc '[:alnum:]-+.\n\r' ) # first tr replace / and \ to -, second tr removes all non alphanums except .+-\n\r)
-          if [ "$BRANCH" != master ]; then
-            VERSION_ARGS="--prerelease ${BRANCH}"
-            PRERELEASE=true
-          fi
-          npm ci
-          npm run bump -- $VERSION_ARGS
-          echo ::set-output name=version-tag::$(git describe --tags $(git rev-list --tags --max-count=1)) 
-          echo ::set-output name=prerelease::$PRERELEASE 
-
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ steps.standard-version.outputs.version-tag }}
-          name: ${{ steps.standard-version.outputs.version-tag }}
-          body_path: CHANGELOG.md
-          prerelease: ${{ steps.standard-version.outputs.prerelease }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN}} # Need REPO_ACCESS_TOKEN to propagate 'release published' event
-
+  publish-binaries:
+    needs: build-binaries
+    uses: ./.github/workflows/publish-binaries.yml

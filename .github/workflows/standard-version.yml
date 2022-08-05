@@ -1,0 +1,47 @@
+name: Bump OIBus version
+
+on: workflow_call
+
+jobs:
+  release:
+    name: 'Create new version'
+    needs: tests
+    runs-on: ubuntu-latest
+    outputs:
+      version-tag: ${{ steps.standard-version.outputs.version-tag }}
+      prerelease: ${{ steps.standard-version.outputs.prerelease }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup environment
+        uses: ./.github/actions/setup_environment
+        with:
+          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
+
+      - name: Bump version
+        id: standard-version
+        run: |
+          git config --global user.name 'optimistik-actions'
+          git config --global user.email 'optimistiksas@users.noreply.github.com'
+          VERSION_ARGS=""
+          PRERELEASE=false
+          BRANCH=$(git branch --show-current| tr '\\/' - | tr -dc '[:alnum:]-+.\n\r' ) # first tr replace / and \ to -, second tr removes all non alphanums except .+-\n\r)
+          if [ "$BRANCH" == main ]; then
+            VERSION_ARGS="--prerelease beta"
+            PRERELEASE=true
+          elif [ "$BRANCH" != release ]; then
+            VERSION_ARGS="--prerelease ${BRANCH}"
+            PRERELEASE=true
+          fi
+          if [ "${{ github.event.inputs.version }}" != "" ] && [ "$BRANCH" == release ]; then
+            VERSION_ARGS="$VERSION_ARGS --release-as ${{ github.event.inputs.version }}"
+          fi
+          npm run bump -- $VERSION_ARGS
+          echo ::set-output name=version-tag::$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo ::set-output name=prerelease::$PRERELEASE
+
+      - name: Upload artifact CHANGELOG.md
+        uses: actions/upload-artifact@v3
+        with:
+          path: ./CHANGELOG.md
