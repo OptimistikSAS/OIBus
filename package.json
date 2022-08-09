@@ -24,7 +24,7 @@
     "build:win": "npm run build:web-client && npm run internal:build:lib-win && rimraf ./dist/win && pkg ./src/index.js --public --compress GZip --config package.json --output ./dist/win/oibus --target node16-win-x64 && ncp ./deps/win ./dist/win",
     "build:macos": "npm run build:web-client && npm run internal:build:lib-macos && rimraf ./dist/macos && pkg ./src/index.js --public --compress GZip --config package.json --output ./dist/macos/oibus --target node16-macos-x64",
     "build:linux": "npm run build:web-client && npm run internal:build:lib-linux && rimraf ./dist/linux && pkg ./src/index.js --public --compress GZip --config package.json --output ./dist/linux/oibus --target node16-linux-x64 && ncp ./deps/linux ./dist/linux && ncp ./src/config/defaultConfig.json ./dist/linux/defaultConfig.json",
-    "build:win-setup": "rimraf ./dist/win/win-setup-release && C:\\\"Program Files (x86)\"\\\"Inno Setup 6\"\\iscc.exe \"./deps/win/oibus_setup.iss\" \"/DMyAppVersion=\"%npm_package_version%",
+    "build:win-setup": "rimraf ./dist/win/win-setup-release && C:\\\"Program Files (x86)\"\\\"Inno Setup 6\"\\iscc.exe \"./deps/win/oibus_setup.iss\" \"/DMyAppVersion=\"%npm_package_version% \"/DMyCertFile=\"%PFX_PATH% \"/DMyCertPassword=\"%PFX_PASSWORD% \"/ssigntool=./deps/signtool/signtool.exe sign /debug $p\"",
     "internal:build:lib-win": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.16.0 --arch=x64",
     "internal:build:lib-macos": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.16.0 --arch=x64",
     "internal:build:lib-linux": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.16.0 --arch=x64"
