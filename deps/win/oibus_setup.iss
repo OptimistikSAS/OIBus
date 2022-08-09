@@ -1,10 +1,12 @@
 #define MyAppName "OIBus"
-#define MyAppPublisher "OPTIMISTIK SAS"
+#define MyAppPublisher "Optimistik SAS"
 #define MyAppURL "https://optimistik.io/oibus/"
 #define MyDateTime GetDateTimeString('yyyy/mm/dd hh:nn:ss', '-', ':')
 
 [Setup]
-AppId={{A4DCC920-510F-4D9D-AD02-67AA402EC010}
+SignedUninstaller=yes
+SignTool=signtool /fd SHA256 /tr http://timestamp.comodoca.com /td SHA256 /n $q{#MyAppPublisher}$q /d $q{#MyAppName}$q /f $q{#MyCertFile}$q /p $q{#MyCertPassword}$q $f
+AppId=A4DCC920-510F-4D9D-AD02-67AA402EC010
 AppName={#MyAppName}
 // MyAppVersion is set by the npm command build-win-setup on release
 AppVersion={#MyAppVersion}
@@ -49,7 +51,7 @@ Source: "..\..\src\config\defaultConfig.json"; DestDir: "{app}"; Flags: ignoreve
 
 
 [Messages]
-WelcomeLabel2=This will install [name/ver] on your computer.%n%nIt is recommended that you close all other applications before continuing.%n%n%nIMPORTANT :%nInternet Explorer is NOT supported. OIBus can only be configured using an up-to-date browser, like Google Chrome, Mozilla Firefox or Microsoft Edge.
+WelcomeLabel2=This will install [name/ver] on your computer.%n%nIt is recommended that you close all other applications before continuing.%n%n%nIMPORTANT:%nInternet Explorer is NOT supported. OIBus can only be configured using an up-to-date browser, like Google Chrome, Mozilla Firefox or Microsoft Edge.
 
 
 [Code]

@@ -5,6 +5,7 @@ on:
 
 jobs:
   tests:
+    name: 'Test OIBus'
     uses: ./.github/workflows/tests.yml
 
   standard-version:
@@ -60,9 +61,62 @@ jobs:
 
   build-binaries:
     needs: standard-version
-    uses: ./.github/workflows/build-binaries.yml
-    with:
-      branch-release: ${{ needs.standard-version.outputs.branch-release }}
+    name: Build on ${{ matrix.config['os'] }}
+    runs-on: ${{ matrix.config['os'] }}
+    strategy:
+      matrix:
+        config:
+          - { os: 'macos-latest',   platform: 'macos', archiveName: 'OIBus-macos.zip', zip: 'zip -r' }
+          - { os: 'windows-latest', platform: 'win',   archiveName: 'OIBus-win32x64.zip', zip: '7z a -tzip' }
+          - { os: 'ubuntu-latest',  platform: 'linux', archiveName: 'OIBus-linux.zip', zip: 'zip -r' }
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ needs.standard-version.outputs.branch-release }}
+
+      - name: Setup environment
+        uses: ./.github/actions/setup_environment
+        with:
+          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
+
+      - name: Package OIBus for ${{ matrix.config['platform'] }}
+        run: |
+          npm run build:${{ matrix.config['platform'] }}
+          cd dist/${{ matrix.config['platform'] }}
+          ./oibus --config ../../tests/oibus.json --check true
+          ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }} .
+
+      - name: Upload artifact ${{ matrix.config['archiveName'] }}
+        uses: actions/upload-artifact@v3
+        with:
+          path: ./dist/${{ matrix.config['archiveName'] }}
+
+      - name: Package Windows installer
+        env:
+          PFX_PASSWORD: ${{ secrets.PFX_PASSWORD }}
+          PFX_BASE64_CONTENT: ${{ secrets.PFX_BASE64_CONTENT }}
+          PFX_PATH: C://oibus.pfx
+        if: ${{ matrix.config['platform'] == 'win' }}
+        shell: pwsh
+        working-directory: ./dist/win
+        run: |
+          $encodedBytes = [System.Convert]::FromBase64String("$env:PFX_BASE64_CONTENT")
+          Set-Content -Path "$env:PFX_PATH" -AsByteStream -Value $encodedBytes
+          npm run build:win-setup
+          Remove-Item -Path "$env:PFX_PATH";
+
+      - name: Rename windows installer
+        if: ${{ matrix.config['platform'] == 'win' }}
+        run: mv ./dist/win-setup-release/oibus_setup.exe ./dist/win-setup-release/OIBus-setup-win32x64.exe
+
+      - name: Upload Windows installer
+        if: ${{ matrix.config['platform'] == 'win' }}
+        uses: actions/upload-artifact@v3
+        with:
+          path: ./dist/win-setup-release/OIBus-setup-win32x64.exe
 
   publish-binaries:
     needs: [build-binaries, standard-version]
