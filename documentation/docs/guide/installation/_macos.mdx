@@ -1,0 +1,34 @@
+import CodeBlock from '@theme/CodeBlock';
+import DownloadButton from '@site/src/components/DownloadButton';
+
+<DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/latest/download/OIBus-macos.zip'>
+  Download OIBus for MacOS (intel)
+</DownloadButton>
+
+:::caution
+
+Apple chip Mac (M1) are not supported yet with binaries. However, it is possible to start OIBus from the
+[source code](https://github.com/OptimistikSAS/OIBus)!
+
+:::
+
+MacOS OIBus binary can be run through its executable. Once unzipped, start a Terminal and enter the following command:
+
+<CodeBlock>
+    {`./oibus --config ./oibus.json`}
+</CodeBlock>
+
+The `./oibus.json` file path must be adapted according to the place where the OIBus cache and config will be stored.
+
+For example, if the binary is stored in `/bin/` and the cache and configuration files are stored in
+`~/test/oibus-data`, the command will be:
+
+<CodeBlock>
+    {`/bin/oibus --config ~/test/oibus-data/oibus.json`}
+</CodeBlock>
+
+:::caution
+
+Be sure to have admin permissions to run the binary
+
+:::

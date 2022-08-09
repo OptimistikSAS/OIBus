@@ -1,0 +1,8 @@
+{
+  "label": "South connectors",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Learn how to use and set up south connectors."
+  }
+}
