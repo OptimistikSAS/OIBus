@@ -8,7 +8,7 @@ on:
     paths-ignore: [ "docs/**", "deps/**", "**.md" ]
   pull_request:
     types: [ opened, synchronize, ready_for_review ]
-    paths-ignore: [ "docs/**", "deps/**", "**.md" ]
+    paths-ignore: [ "documentation/**", "deps/**", "**.md" ]
 
 
 concurrency:
