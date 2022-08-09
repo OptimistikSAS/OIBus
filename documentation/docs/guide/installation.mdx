@@ -1,0 +1,48 @@
+---
+sidebar_position: 2
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import WindowsInstallation from './installation/_windows.mdx';
+import LinuxInstallation from './installation/_linux.mdx';
+import MacOSInstallation from './installation/_macos.mdx';
+
+# Installation
+
+Let's install OIBus in less than 2 minutes.
+
+## Requirements
+To operate, OIBus must be installed on an environment with the following minimum characteristics:
+- **64 bits architecture**. 32bits and ARM architectures are not supported.
+- **RAM: 2GB minimum**. OIBus may require more RAM depending on the configuration of South and North connectors.
+- **Disk space: 200 MB**. For the application. It is however recommended to have extra space (several GB, depending on
+your data stream) to store the collected data in the cache if an upstream network failure occurs.
+- **Admin rights** on the environment to install OIBus and register it as a service (for Windows and Linux).
+- **Modern web browser** (IE not supported). Used to access the OIBus configuration interface. The browser can be on the
+targeted computer or on another, provided you have configured the [necessary access](engine/access.md).
+
+## Installation steps
+<Tabs>
+    <TabItem value="windows" label="Windows x64" default>
+        <WindowsInstallation/>
+    </TabItem>
+    <TabItem value="linux" label="Linux">
+        <LinuxInstallation/>
+    </TabItem>
+    <TabItem value="macos" label="MacOS">
+        <MacOSInstallation/>
+    </TabItem>
+</Tabs>
+
+## Access OIBus interface
+OIBus configuration interface is available on `http://localhost:2223` (assuming the default port has been kept).
+
+:::caution Default access
+By default, the user is **admin** and the password is **pass**.
+
+We strongly advise to change the password in the Engines settings.
+
+:::
+
+When installing OIBus, remember to choose an appropriate name. The _Engine name_ is important mainly if you use several
+OIBus and send the logs to a remote [loki instance](docs/guide/engine/logging-parameters.md#loki).
