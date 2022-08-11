@@ -399,8 +399,10 @@ begin
   Result := False;
   if (PageID = NamesQueryPage.ID) then
   begin
-    if OverwriteConfig = False then
-      Result := True;
+    if ((ConfExists and OverwriteConfig) or not ConfExists) then
+      Result := False
+    else
+      Result := True
   end;
 end;
 
