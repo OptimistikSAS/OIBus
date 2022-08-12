@@ -6,20 +6,20 @@ import { ConfigContext } from '../context/ConfigContext.jsx'
 import logo from '../OIBus.png'
 
 const About = () => {
-  const [staticStatus, setstaticStatus] = React.useState({})
-  const [dynamicStatus, setdynamicStatus] = React.useState({})
+  const [oibusInfo, setOibusInfo] = React.useState({})
+  const [oibusStatus, setOibusStatus] = React.useState({})
   const { setAlert } = React.useContext(AlertContext)
   const { activeConfig } = React.useContext(ConfigContext)
 
   /**
-   * Acquire the status
+   * Retrieve OIBus info
    * @returns {void}
    */
-  const fetchStatus = () => {
+  const fetchOIBusInfo = () => {
     apis
-      .getStatus()
+      .getOIBusInfo()
       .then((response) => {
-        setstaticStatus(response)
+        setOibusInfo(response)
       })
       .catch((error) => {
         console.error(error)
@@ -35,7 +35,7 @@ const About = () => {
    * @returns {void}
    */
   React.useEffect(() => {
-    fetchStatus()
+    fetchOIBusInfo()
   }, [])
 
   /**
@@ -53,7 +53,7 @@ const About = () => {
     source.onmessage = (event) => {
       if (event && event.data) {
         const myData = JSON.parse(event.data)
-        setdynamicStatus(myData)
+        setOibusStatus(myData)
       }
     }
     return () => {
@@ -64,56 +64,56 @@ const About = () => {
   return (
     <div className="p-3">
       <Container fluid>
-        {staticStatus && (
+        {oibusInfo && (
           <ListGroup>
             <ListGroupItem tag="a" href="https://optimistik.io/oibus">
               <img src={logo} alt="logo" height="100px" />
             </ListGroupItem>
             <ListGroupItem>
               <b className="me-1">Version:</b>
-              {staticStatus.version}
+              {oibusInfo.version}
             </ListGroupItem>
             <ListGroupItem>
               <b className="me-1">Architecture:</b>
-              {staticStatus.architecture}
+              {oibusInfo.architecture}
             </ListGroupItem>
             <ListGroupItem>
               <b className="me-1">currentDirectory:</b>
-              {staticStatus.currentDirectory}
+              {oibusInfo.currentDirectory}
             </ListGroupItem>
             <ListGroupItem>
               <b className="me-1">nodeVersion:</b>
-              {staticStatus.nodeVersion}
+              {oibusInfo.nodeVersion}
             </ListGroupItem>
             <ListGroupItem>
               <b className="me-1">Executable:</b>
-              {staticStatus.executable}
+              {oibusInfo.executable}
             </ListGroupItem>
             <ListGroupItem>
               <b className="me-1">ConfigurationFile:</b>
-              {staticStatus.configurationFile}
+              {oibusInfo.configurationFile}
             </ListGroupItem>
             <ListGroupItem>
               <b className="me-1">Hostname:</b>
-              {staticStatus.hostname}
+              {oibusInfo.hostname}
             </ListGroupItem>
             <ListGroupItem>
               <b className="me-1">Operating System:</b>
-              {staticStatus.osType}
+              {oibusInfo.osType}
               {' '}
-              {staticStatus.osRelease}
+              {oibusInfo.osRelease}
             </ListGroupItem>
             <ListGroupItem tag="a" href="https://optimistik.io/oibus">
               Official site
             </ListGroupItem>
             <ListGroupItem>
               Copyright:
-              {staticStatus.copyright}
+              {oibusInfo.copyright}
             </ListGroupItem>
             <ListGroupItem tag="a" href="https://joinup.ec.europa.eu/sites/default/files/custom-page/attachment/2020-03/EUPL-1.2%20EN.txt">
               Licensed under the EUPL-1.2-or-later
             </ListGroupItem>
-            {Object.entries(dynamicStatus)
+            {Object.entries(oibusStatus)
               .map(([key, value]) => (
                 <ListGroupItem key={key}>
                   <div key={key}>

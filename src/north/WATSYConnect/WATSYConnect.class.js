@@ -104,26 +104,25 @@ class WATSYConnect extends ApiHandler {
    */
   async disconnect() {
     this.client.end(true)
-    this.statusData['Connected at'] = 'Not connected'
-    this.updateStatusDataStream()
     await super.disconnect()
   }
 
   /**
    * Handle messages by sending them to WATSYConnect North.
-   * @param {object[]} messages - The messages
+   * @param {object[]} values - The messages
    * @return {Promise} - The handle status
    */
-  async handleValues(messages) {
-    this.logger.trace(`Link handleValues() call with ${messages.length} messages`)
-    const successCount = await this.publishOIBusMessages(messages)
+  async handleValues(values) {
+    this.logger.trace(`Link handleValues() call with ${values.length} messages`)
+    const successCount = await this.publishOIBusMessages(values)
     if (successCount === 0) {
       throw ApiHandler.STATUS.COMMUNICATION_ERROR
     }
-    this.statusData['Last handled values at'] = new Date().toISOString()
-    this.statusData['Number of values sent since OIBus has started'] += messages.length
-    this.statusData['Last added point id (value)'] = `${messages[messages.length - 1].pointId} (${messages[messages.length - 1].data.value})`
-    this.updateStatusDataStream()
+    this.updateStatusDataStream({
+      'Last handled values at': new Date().toISOString(),
+      'Number of values sent since OIBus has started': this.statusData['Number of values sent since OIBus has started'] + values.length,
+      'Last added point id (value)': `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`,
+    })
     return successCount
   }
 

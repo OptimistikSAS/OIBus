@@ -43,8 +43,7 @@ describe('HealthSignal', () => {
     proxies: [proxy],
   }
   engine.configService = { getConfig: () => ({ engineConfig }) }
-  engine.getStatus = jest.fn()
-  engine.getVersion = jest.fn()
+  engine.getOIBusInfo = jest.fn()
   engine.requestService = { httpSend: jest.fn() }
 
   it('should be properly initialized', () => {
@@ -98,25 +97,24 @@ describe('HealthSignal', () => {
 
   it('should prepare simple status info when verbose is not enabled', async () => {
     const healthSignal = new HealthSignal(engine)
-    engine.getVersion.mockReturnValue('version')
+    engine.getOIBusInfo.mockReturnValue({ version: 'version' })
+    engine.statusData = { randomStatusData: 'test' }
 
     const status = await healthSignal.prepareStatus(false)
 
-    expect(engine.getVersion).toHaveBeenCalledTimes(1)
-    expect(engine.getStatus).not.toHaveBeenCalled()
+    expect(engine.getOIBusInfo).toHaveBeenCalledTimes(1)
     expect(status).toEqual({ version: 'version' })
   })
 
   it('should prepare full status info when verbose is enabled', async () => {
     const healthSignal = new HealthSignal(engine)
-    engine.getVersion.mockReturnValue('ver')
-    engine.getStatus.mockReturnValue({ status: 'status', version: 'version' })
+    engine.getOIBusInfo.mockReturnValue({ status: 'status', version: 'version' })
+    engine.statusData = { randomStatusData: 'test' }
 
     const status = await healthSignal.prepareStatus(true)
 
-    expect(engine.getVersion).toHaveBeenCalledTimes(1)
-    expect(engine.getStatus).toHaveBeenCalledTimes(1)
-    expect(status).toEqual({ status: 'status', version: 'version' })
+    expect(engine.getOIBusInfo).toHaveBeenCalledTimes(1)
+    expect(status).toEqual({ status: 'status', version: 'version', randomStatusData: 'test' })
   })
 
   it('should call RequestService httpSend()', async () => {

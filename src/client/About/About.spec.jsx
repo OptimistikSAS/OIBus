@@ -82,7 +82,7 @@ const status = {
 let resolve
 let reject
 const setAlert = jest.fn()
-apis.getStatus = () => new Promise((_resolve, _reject) => {
+apis.getOIBusInfo = () => new Promise((_resolve, _reject) => {
   resolve = _resolve
   reject = _reject
 })

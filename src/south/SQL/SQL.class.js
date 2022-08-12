@@ -108,8 +108,6 @@ class SQL extends ProtocolHandler {
 
   async connect() {
     await super.connect()
-    this.statusData['Connected at'] = new Date().toISOString()
-    this.updateStatusDataStream()
     this.connected = true
   }
 
@@ -511,8 +509,7 @@ class SQL extends ProtocolHandler {
     const startTimeLog = query.indexOf('@StartTime') !== -1 ? `StartTime = ${startTime.toISOString()}` : ''
     const endTimeLog = query.indexOf('@EndTime') !== -1 ? `EndTime = ${endTime.toISOString()}` : ''
     this.logger.info(`Executing "${query}" with ${startTimeLog} ${endTimeLog}`)
-    this.statusData['Last SQL request'] = `"${query}" with ${startTimeLog} ${endTimeLog}`
-    this.updateStatusDataStream()
+    this.updateStatusDataStream({ 'Last SQL request': `"${query}" with ${startTimeLog} ${endTimeLog}` })
   }
 
   /**

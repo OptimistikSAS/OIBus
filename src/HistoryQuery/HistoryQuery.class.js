@@ -42,7 +42,7 @@ class HistoryQuery {
     this.filePattern = config.filePattern
     this.cacheFolder = `${this.engine.cacheFolder}/${this.id}`
     this.dataCacheFolder = `${this.engine.cacheFolder}/${this.id}/${HistoryQuery.DATA_FOLDER}`
-    this.statusData = { status: this.status }
+    this.statusData = {}
     this.numberOfQueryParts = Math.round((this.endTime.getTime() - this.startTime.getTime()) / (1000 * this.config.settings.maxReadInterval))
 
     if (!this.engine.eventEmitters[`/history/${this.id}/sse`]) {
@@ -53,8 +53,7 @@ class HistoryQuery {
     }
     this.engine.eventEmitters[`/history/${this.id}/sse`].events = new EventEmitter()
     this.engine.eventEmitters[`/history/${this.id}/sse`].events.on('data', this.listener)
-    this.engine.eventEmitters[`/history/${this.id}/sse`].statusData = this.statusData
-    this.updateStatusDataStream()
+    this.updateStatusDataStream({ status: this.status })
   }
 
   /**
@@ -192,8 +191,7 @@ class HistoryQuery {
       for (const scanGroup of this.south.scanGroups) {
         const { scanMode } = scanGroup
         if (scanGroup.points && scanGroup.points.length) {
-          this.statusData.scanGroup = `${scanGroup.scanMode} - ${scanGroup.aggregate}`
-          this.updateStatusDataStream()
+          this.updateStatusDataStream({ scanGroup: `${scanGroup.scanMode} - ${scanGroup.aggregate}` })
           // eslint-disable-next-line no-await-in-loop
           const exportResult = await this.exportScanMode(scanMode)
           if (exportResult === -1) {
@@ -204,8 +202,7 @@ class HistoryQuery {
           this.logger.error(`scanMode ${scanMode} ignored: scanGroup.points undefined or empty`)
         }
       }
-      this.statusData.scanGroup = null
-      this.updateStatusDataStream()
+      this.updateStatusDataStream({ scanGroup: null })
     } else {
       const exportResult = await this.exportScanMode(this.dataSource.scanMode)
       if (exportResult === -1) {
@@ -283,9 +280,10 @@ class HistoryQuery {
       } else {
         intervalEndTime = this.endTime
       }
-      this.statusData.currentTime = startTime.toISOString()
-      this.statusData.progress = Math.round((this.south.queryParts[scanMode] / this.numberOfQueryParts) * 10000) / 100
-      this.updateStatusDataStream()
+      this.updateStatusDataStream({
+        currentTime: startTime.toISOString(),
+        progress: Math.round((this.south.queryParts[scanMode] / this.numberOfQueryParts) * 10000) / 100,
+      })
 
       // Wait between the read interval iterations
       if (!firstIteration) {
@@ -312,9 +310,10 @@ class HistoryQuery {
     this.south.queryParts[scanMode] = 0
     // eslint-disable-next-line no-await-in-loop
     await this.south.setConfig(`queryPart-${scanMode}`, this.south.queryParts[scanMode])
-    this.statusData.currentTime = startTime.toISOString()
-    this.statusData.progress = 100
-    this.updateStatusDataStream()
+    this.updateStatusDataStream({
+      currentTime: startTime.toISOString(),
+      progress: 100,
+    })
     return 0
   }
 
@@ -327,8 +326,7 @@ class HistoryQuery {
     this.status = status
     this.config.status = status
     await this.engine.historyQueryRepository.update(this.config)
-    this.statusData.status = status
-    this.updateStatusDataStream()
+    this.updateStatusDataStream({ status })
   }
 
   /**
@@ -365,7 +363,9 @@ class HistoryQuery {
     }
   }
 
-  updateStatusDataStream() {
+  updateStatusDataStream(statusData = {}) {
+    this.statusData = { ...this.statusData, ...statusData }
+    this.engine.eventEmitters[`/history/${this.id}/sse`].statusData = this.statusData
     this.engine.eventEmitters[`/history/${this.id}/sse`]?.events?.emit('data', this.statusData)
   }
 }

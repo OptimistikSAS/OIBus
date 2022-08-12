@@ -120,8 +120,6 @@ class RestApi extends ProtocolHandler {
 
   async connect() {
     await super.connect()
-    this.statusData['Connected at'] = new Date().toISOString()
-    this.updateStatusDataStream()
     this.connected = true
   }
 

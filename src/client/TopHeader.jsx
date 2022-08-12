@@ -11,7 +11,7 @@ const TopHeader = () => {
   const { newConfig, activeConfig } = React.useContext(ConfigContext)
   const [isOpen, setIsOpen] = React.useState(false)
   const { setAlert } = React.useContext(AlertContext)
-  const [status, setStatus] = React.useState({})
+  const [oibusInfo, setOibusInfo] = React.useState({})
   const location = useLocation()
 
   React.useEffect(() => {
@@ -28,9 +28,9 @@ const TopHeader = () => {
    */
   const fetchStatus = () => {
     apis
-      .getStatus()
+      .getOIBusInfo()
       .then((response) => {
-        setStatus(response)
+        setOibusInfo(response)
       })
       .catch((error) => {
         console.error(error)
@@ -67,7 +67,7 @@ const TopHeader = () => {
             About
           </NavItem>
           <NavItem className="oi-navname text-muted">
-            {`version ${status.version}`}
+            {`version ${oibusInfo.version}`}
           </NavItem>
         </Nav>
       </Collapse>

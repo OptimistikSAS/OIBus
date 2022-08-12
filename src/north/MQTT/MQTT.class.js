@@ -63,10 +63,11 @@ class MQTT extends ApiHandler {
     if (successCount === 0) {
       throw ApiHandler.STATUS.COMMUNICATION_ERROR
     }
-    this.statusData['Last handled values at'] = new Date().toISOString()
-    this.statusData['Number of values sent since OIBus has started'] += values.length
-    this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`
-    this.updateStatusDataStream()
+    this.updateStatusDataStream({
+      'Last handled values at': new Date().toISOString(),
+      'Number of values sent since OIBus has started': this.statusData['Number of values sent since OIBus has started'] + values.length,
+      'Last added point id (value)': `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`,
+    })
     return successCount
   }
 
@@ -117,8 +118,6 @@ class MQTT extends ApiHandler {
   async disconnect() {
     this.logger.info(`Disconnecting ${this.application.name} from ${this.url}`)
     this.client.end(true)
-    this.statusData['Connected at'] = 'Not connected'
-    this.updateStatusDataStream()
     await super.disconnect()
   }
 

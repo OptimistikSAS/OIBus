@@ -72,8 +72,7 @@ class ApiHandler {
   connect(additionalInfo) {
     const { name, api } = this.application
     this.connected = true
-    this.statusData['Connected at'] = new Date().toISOString()
-    this.updateStatusDataStream()
+    this.updateStatusDataStream({ 'Connected at': new Date().toISOString() })
     if (additionalInfo) {
       this.logger.info(`North API ${name} started with protocol ${api} ${additionalInfo}`)
     } else {
@@ -82,12 +81,6 @@ class ApiHandler {
   }
 
   initializeStatusData() {
-    if (this.canHandleValues) {
-      this.statusData['Number of values sent since OIBus has started'] = 0
-    }
-    if (this.canHandleFiles) {
-      this.statusData['Number of files sent since OIBus has started'] = 0
-    }
     if (!this.engine.eventEmitters[`/north/${this.application.id}/sse`]) {
       this.engine.eventEmitters[`/north/${this.application.id}/sse`] = {}
     } else {
@@ -96,8 +89,10 @@ class ApiHandler {
     }
     this.engine.eventEmitters[`/north/${this.application.id}/sse`].events = new EventEmitter()
     this.engine.eventEmitters[`/north/${this.application.id}/sse`].events.on('data', this.listener)
-    this.engine.eventEmitters[`/north/${this.application.id}/sse`].statusData = this.statusData
-    this.updateStatusDataStream()
+    this.updateStatusDataStream({
+      'Number of values sent since OIBus has started': this.canHandleValues ? 0 : undefined,
+      'Number of files sent since OIBus has started': this.canHandleFiles ? 0 : undefined,
+    })
   }
 
   /**
@@ -108,6 +103,7 @@ class ApiHandler {
   async disconnect() {
     this.connected = false
     const { name, id } = this.application
+    this.updateStatusDataStream({ 'Connected at': 'Not connected' })
     this.logger.info(`North API ${name} (${id}) disconnected`)
     this.engine.eventEmitters[`/north/${id}/sse`]?.events?.removeAllListeners()
     this.engine.eventEmitters[`/north/${id}/sse`]?.stream?.destroy()
@@ -124,7 +120,9 @@ class ApiHandler {
     }
   }
 
-  updateStatusDataStream() {
+  updateStatusDataStream(statusData = {}) {
+    this.statusData = { ...this.statusData, ...statusData }
+    this.engine.eventEmitters[`/north/${this.application.id}/sse`].statusData = this.statusData
     this.engine.eventEmitters[`/north/${this.application.id}/sse`]?.events?.emit('data', this.statusData)
   }
 
