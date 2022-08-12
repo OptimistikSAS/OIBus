@@ -1,7 +1,8 @@
 const Opcua = require('node-opcua')
 const OPCUA_HA = require('./OPCUA_HA.class')
 
-const config = require('../../../config/defaultConfig.json')
+const { defaultConfig: config } = require('../../../../tests/testConfig')
+
 const databaseService = require('../../../services/database.service')
 const EncryptionService = require('../../../services/EncryptionService.class')
 

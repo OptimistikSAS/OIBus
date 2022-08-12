@@ -4,7 +4,7 @@
 import React from 'react'
 import { act, Simulate } from 'react-dom/test-utils'
 import * as ReactDOMClient from 'react-dom/client'
-import newConfig from '../../../tests/testConfig'
+import { testConfig } from '../../../tests/testConfig'
 
 import SouthStatus from './SouthStatus.jsx'
 
@@ -16,10 +16,10 @@ global.EventSource = class {
     this.close = () => {}
   }
 }
-React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
+React.useContext = jest.fn().mockReturnValue({ newConfig: testConfig, dispatchNewConfig, setAlert })
 jest.mock('react-router-dom', () => (
   {
-    useParams: jest.fn().mockReturnValue({ id: 'datasource-uuid-1' }),
+    useParams: jest.fn().mockReturnValue({ id: 'south-uuid-1' }),
     useNavigate: () => mockNavigate,
   }
 ))
@@ -45,7 +45,7 @@ afterEach(() => {
 })
 
 describe('South Status', () => {
-  React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
+  React.useContext = jest.fn().mockReturnValue({ newConfig: testConfig, dispatchNewConfig, setAlert })
   test('display SouthStatus page based on config', () => {
     act(() => {
       root.render(<SouthStatus />)

@@ -5,7 +5,7 @@ import React from 'react'
 import { act } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import newConfig from '../../../../tests/testConfig'
+import { testConfig } from '../../../../tests/testConfig'
 import SouthForm from './SouthForm.jsx'
 
 const mockNavigate = jest.fn()
@@ -16,7 +16,7 @@ jest.mock('react-router-dom', () => ({
 }))
 
 const dispatchNewConfig = jest.fn()
-React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
+React.useContext = jest.fn().mockReturnValue({ newConfig: testConfig, dispatchNewConfig })
 
 const mockMath = Object.create(global.Math)
 mockMath.random = () => 1
@@ -39,7 +39,7 @@ afterEach(() => {
 })
 
 describe('SouthForm', () => {
-  newConfig.south.dataSources.forEach((dataSource) => {
+  testConfig.south.dataSources.forEach((dataSource) => {
     test(`check SouthForm with dataSource: ${dataSource.name}`, () => {
       act(() => {
         root.render(

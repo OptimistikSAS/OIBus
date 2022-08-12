@@ -1,6 +1,6 @@
 const Opcua = require('node-opcua')
 const OPCUA_DA = require('./OPCUA_DA.class')
-const config = require('../../../config/defaultConfig.json')
+const { defaultConfig: config } = require('../../../../tests/testConfig')
 const EncryptionService = require('../../../services/EncryptionService.class')
 
 // Mock node-opcua

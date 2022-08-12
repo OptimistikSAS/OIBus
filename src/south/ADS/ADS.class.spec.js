@@ -1,7 +1,7 @@
 const ads = require('ads-client')
 const ADS = require('./ADS.class')
 const databaseService = require('../../services/database.service')
-const config = require('../../../tests/testConfig').default
+const { defaultConfig: config } = require('../../../tests/testConfig')
 const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock ads client
@@ -634,7 +634,132 @@ const GVLTestBadType = {
 const nowDateString = '2020-02-02T02:02:02.222Z'
 // End of global variables
 
-const adsConfig = config.south.dataSources[9]
+const adsConfig = {
+  id: 'datasource-uuid-10',
+  name: 'ADS - Test',
+  protocol: 'ADS',
+  enabled: true,
+  ADS: {
+    port: 851,
+    netId: '10.211.55.3.1.1',
+    clientAdsPort: 32750,
+    routerTcpPort: 48898,
+    clientAmsNetId: '10.211.55.2.1.1',
+    routerAddress: '10.211.55.3',
+    retryInterval: 10000,
+    plcName: 'PLC_TEST.',
+    boolAsText: 'Integer',
+    enumAsText: 'Text',
+    structureFiltering: [
+      {
+        name: 'ST_Example',
+        fields: 'SomeReal,SomeDate',
+      },
+      {
+        name: 'Tc2_Standard.TON',
+        fields: '*',
+      },
+    ],
+  },
+  points: [
+    {
+      pointId: 'GVL_Test.TestENUM',
+      scanMode: 'every10Seconds',
+    },
+    {
+      pointId: 'GVL_Test.TestINT',
+      scanMode: 'every10Seconds',
+    },
+    {
+      pointId: 'GVL_Test.TestSTRING',
+      scanMode: 'every10Seconds',
+    },
+    {
+      pointId: 'GVL_Test.ExampleSTRUCT',
+      scanMode: 'everySecond',
+    },
+    {
+      pointId: 'GVL_Test.TestARRAY',
+      scanMode: 'every10Seconds',
+    },
+    {
+      pointId: 'GVL_Test.TestARRAY2',
+      scanMode: 'every10Seconds',
+    },
+    {
+      pointId: 'GVL_Test.TestTimer',
+      scanMode: 'every10Seconds',
+    },
+    {
+      pointId: 'GVL_Test.TestBadType',
+      scanMode: 'every1Hour',
+    },
+    {
+      pointId: 'GVL_Test.TestByte',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestWord',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestDWord',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestSINT',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestUSINT',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestUINT',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestDINT',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestUDINT',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestLINT',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestULINT',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestTIME',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestTIME_OF_DAY',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestREAL',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestLREAL',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestDATE',
+      scanMode: 'every3Hours',
+    },
+    {
+      pointId: 'GVL_Test.TestDATE_AND_TIME',
+      scanMode: 'every3Hours',
+    },
+  ],
+}
 let adsSouth = null
 
 beforeEach(async () => {

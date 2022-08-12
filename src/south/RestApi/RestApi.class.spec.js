@@ -5,7 +5,7 @@ const { Settings } = require('luxon')
 
 const RestApi = require('./RestApi.class')
 const databaseService = require('../../services/database.service')
-const config = require('../../config/defaultConfig.json')
+const { defaultConfig: config } = require('../../../tests/testConfig')
 
 // Mock node-fetch
 jest.mock('node-fetch')

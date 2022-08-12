@@ -9,7 +9,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
       class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
-        monoiconnect
+        TestConsole
       </div>
       <button
         class="util-button btn btn-outline-secondary"
@@ -112,9 +112,9 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             <input
               class="mb-3 form-check-input"
               color="secondary"
-              id="north.applications.1.enabled"
+              id="north.applications.0.enabled"
               label="Disabled"
-              name="north.applications.1.enabled"
+              name="north.applications.0.enabled"
               type="checkbox"
             />
             <small
@@ -265,15 +265,15 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.1.logParameters.consoleLevel"
+              for="north.applications.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="north.applications.1.logParameters.consoleLevel"
-              name="north.applications.1.logParameters.consoleLevel"
+              id="north.applications.0.logParameters.consoleLevel"
+              name="north.applications.0.logParameters.consoleLevel"
             >
               <option
                 value="engine"
@@ -324,15 +324,15 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.1.logParameters.fileLevel"
+              for="north.applications.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="north.applications.1.logParameters.fileLevel"
-              name="north.applications.1.logParameters.fileLevel"
+              id="north.applications.0.logParameters.fileLevel"
+              name="north.applications.0.logParameters.fileLevel"
             >
               <option
                 value="engine"
@@ -383,15 +383,15 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.1.logParameters.sqliteLevel"
+              for="north.applications.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="north.applications.1.logParameters.sqliteLevel"
-              name="north.applications.1.logParameters.sqliteLevel"
+              id="north.applications.0.logParameters.sqliteLevel"
+              name="north.applications.0.logParameters.sqliteLevel"
             >
               <option
                 value="engine"
@@ -448,7 +448,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             class="row"
           >
             <h5>
-              OIConnect settings
+              OIConsole settings
               <button
                 class="util-button mt-1 btn btn-link"
                 id="id"
@@ -485,13 +485,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
                   class="col"
                 >
                   <p>
-                    OIConnect sends values to an another OIBus or OIAnalytics instance. The target OIBus instance will handle the received data the same way as the data coming from its own South. It can be useful in situation when multiple OIBus installations are present on the same network but only one of them has access to the internet.
-                  </p>
-                  <p>
-                    Endpoint for OIBus is /engine/addValues
-                  </p>
-                  <p>
-                    Endpoint for OIAnalytics is /api/optimistik/oibus/data/time_values
+                    Console just displays what is received from the South on the server console. It is mainly used to debug OIBus. In normal operations, console should be disabled because the console is relatively slow and may cause memory issues. The verbose mode can be set to False to limit what is sent to the console.
                   </p>
                 </div>
               </div>
@@ -503,295 +497,22 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
         class="row"
       >
         <div
-          class="col-md-4"
+          class="col-md-2"
         >
           <div
-            class="mb-3"
+            class="mb-3 mb-3"
           >
             <label
-              class="form-label"
-              for="north.applications.1.OIConnect.host"
+              class="form-check-label"
             >
-              Host
+              Verbose
             </label>
             <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="north.applications.1.OIConnect.host"
-              name="north.applications.1.OIConnect.host"
-              type="text"
-              value="http://hostname:2223"
+              class="oi-form-input checkbox form-check-input"
+              id="north.applications.0.Console.verbose"
+              name="north.applications.0.Console.verbose"
+              type="checkbox"
             />
-            <div
-              class="invalid-feedback"
-            />
-          </div>
-        </div>
-        <div
-          class="col-md-4"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="north.applications.1.OIConnect.valuesEndpoint"
-            >
-              Values endpoint
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="north.applications.1.OIConnect.valuesEndpoint"
-              name="north.applications.1.OIConnect.valuesEndpoint"
-              type="text"
-              value="/addValues"
-            />
-            <div
-              class="invalid-feedback"
-            />
-          </div>
-        </div>
-        <div
-          class="col-md-4"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="north.applications.1.OIConnect.fileEndpoint"
-            >
-              File endpoint
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="north.applications.1.OIConnect.fileEndpoint"
-              name="north.applications.1.OIConnect.fileEndpoint"
-              type="text"
-              value="/addFile"
-            />
-            <div
-              class="invalid-feedback"
-            />
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-12"
-        >
-          <h6>
-            Authentication
-          </h6>
-          <div
-            class="row"
-          >
-            <div
-              class="col-md-2"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="type"
-                >
-                  Type
-                </label>
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="type"
-                  name="type"
-                >
-                  <option
-                    value="Basic"
-                  >
-                    Basic
-                  </option>
-                  <option
-                    value="API Key"
-                  >
-                    API Key
-                  </option>
-                  <option
-                    value="Bearer"
-                  >
-                    Bearer
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </div>
-          </div>
-          <div
-            class="row"
-          >
-            <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="username"
-                >
-                  User name
-                </label>
-                <input
-                  aria-invalid="true"
-                  class="oi-form-input is-invalid form-control"
-                  id="username"
-                  name="username"
-                  type="text"
-                  value=""
-                />
-                <div
-                  class="invalid-feedback"
-                >
-                  Value should not be empty
-                </div>
-              </div>
-            </div>
-            <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="password"
-                >
-                  Password
-                </label>
-                <div
-                  class="input-group"
-                >
-                  <input
-                    aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="password"
-                    name="password"
-                    type="password"
-                    value=""
-                  />
-                </div>
-                <div
-                  class="invalid-feedback"
-                  style="display: inline;"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-12"
-        >
-          <div
-            class="row"
-          >
-            <h5>
-              Network
-              <button
-                class="util-button mt-1 btn btn-link"
-                id="id"
-              >
-                <svg
-                  class="oi-help"
-                  fill="currentColor"
-                  height="12"
-                  stroke="currentColor"
-                  stroke-width="0"
-                  viewBox="0 0 512 512"
-                  width="12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-                  />
-                </svg>
-              </button>
-            </h5>
-          </div>
-          <div
-            class="container-fluid"
-          >
-            <div
-              class="collapse"
-              toggler="id"
-            >
-              <div
-                class="row"
-                style="margin-bottom: 15px;"
-              >
-                <div
-                  class="col"
-                >
-                  <div>
-                    Please specify here network specific parameters
-                  </div>
-                  <ul>
-                    <li>
-                      Proxy: proxy name to use (proxy parameters are defined in the Engine page)
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-4"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="north.applications.1.OIConnect.proxy"
-            >
-              Proxy
-            </label>
-            <select
-              class="oi-form-input form-select"
-              id="north.applications.1.OIConnect.proxy"
-              name="north.applications.1.OIConnect.proxy"
-            >
-              <option
-                value=""
-              />
-              <option
-                value="sss"
-              >
-                sss
-              </option>
-              <option
-                value="ff"
-              >
-                ff
-              </option>
-              <option
-                value="no-auth"
-              >
-                no-auth
-              </option>
-            </select>
           </div>
         </div>
       </div>
@@ -867,15 +588,15 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.1.caching.sendInterval"
+              for="north.applications.0.caching.sendInterval"
             >
               Send interval (ms)
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.1.caching.sendInterval"
-              name="north.applications.1.caching.sendInterval"
+              id="north.applications.0.caching.sendInterval"
+              name="north.applications.0.caching.sendInterval"
               type="integer"
               value="10000"
             />
@@ -892,15 +613,15 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.1.caching.retryInterval"
+              for="north.applications.0.caching.retryInterval"
             >
               Retry interval (ms)
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.1.caching.retryInterval"
-              name="north.applications.1.caching.retryInterval"
+              id="north.applications.0.caching.retryInterval"
+              name="north.applications.0.caching.retryInterval"
               type="integer"
               value="5000"
             />
@@ -921,17 +642,17 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.1.caching.groupCount"
+              for="north.applications.0.caching.groupCount"
             >
               Group count
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.1.caching.groupCount"
-              name="north.applications.1.caching.groupCount"
+              id="north.applications.0.caching.groupCount"
+              name="north.applications.0.caching.groupCount"
               type="integer"
-              value="1000"
+              value="1"
             />
             <div
               class="invalid-feedback"
@@ -946,15 +667,15 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.1.caching.maxSendCount"
+              for="north.applications.0.caching.maxSendCount"
             >
               Max group count
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.1.caching.maxSendCount"
-              name="north.applications.1.caching.maxSendCount"
+              id="north.applications.0.caching.maxSendCount"
+              name="north.applications.0.caching.maxSendCount"
               type="integer"
               value="10000"
             />
@@ -1048,7 +769,56 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
                 />
               </tr>
             </thead>
-            <tbody />
+            <tbody>
+              <tr>
+                <td
+                  class="align-top"
+                >
+                  <div
+                    class="mb-3"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="subscribedTo.0"
+                      name="subscribedTo.0"
+                    >
+                      <option
+                        value="south-uuid-1"
+                      >
+                        TestFolderScanner
+                      </option>
+                      <option
+                        value="any"
+                      >
+                        any
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </td>
+                <td
+                  class="align-center"
+                >
+                  <svg
+                    class="oi-icon"
+                    fill="currentColor"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-width="0"
+                    viewBox="0 0 448 512"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                    />
+                  </svg>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -1086,7 +856,7 @@ exports[`ConfigureApi check update 1`] = `
       class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
-        monoiconnect
+        TestConsole
       </div>
       <button
         class="util-button btn btn-outline-secondary"
@@ -1189,9 +959,9 @@ exports[`ConfigureApi check update 1`] = `
             <input
               class="mb-3 form-check-input"
               color="secondary"
-              id="north.applications.1.enabled"
+              id="north.applications.0.enabled"
               label="Disabled"
-              name="north.applications.1.enabled"
+              name="north.applications.0.enabled"
               type="checkbox"
             />
             <small
@@ -1342,15 +1112,15 @@ exports[`ConfigureApi check update 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.1.logParameters.consoleLevel"
+              for="north.applications.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="north.applications.1.logParameters.consoleLevel"
-              name="north.applications.1.logParameters.consoleLevel"
+              id="north.applications.0.logParameters.consoleLevel"
+              name="north.applications.0.logParameters.consoleLevel"
             >
               <option
                 value="engine"
@@ -1401,15 +1171,15 @@ exports[`ConfigureApi check update 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.1.logParameters.fileLevel"
+              for="north.applications.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="north.applications.1.logParameters.fileLevel"
-              name="north.applications.1.logParameters.fileLevel"
+              id="north.applications.0.logParameters.fileLevel"
+              name="north.applications.0.logParameters.fileLevel"
             >
               <option
                 value="engine"
@@ -1460,15 +1230,15 @@ exports[`ConfigureApi check update 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.1.logParameters.sqliteLevel"
+              for="north.applications.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="north.applications.1.logParameters.sqliteLevel"
-              name="north.applications.1.logParameters.sqliteLevel"
+              id="north.applications.0.logParameters.sqliteLevel"
+              name="north.applications.0.logParameters.sqliteLevel"
             >
               <option
                 value="engine"
@@ -1525,7 +1295,7 @@ exports[`ConfigureApi check update 1`] = `
             class="row"
           >
             <h5>
-              OIConnect settings
+              OIConsole settings
               <button
                 class="util-button mt-1 btn btn-link"
                 id="id"
@@ -1562,13 +1332,7 @@ exports[`ConfigureApi check update 1`] = `
                   class="col"
                 >
                   <p>
-                    OIConnect sends values to an another OIBus or OIAnalytics instance. The target OIBus instance will handle the received data the same way as the data coming from its own South. It can be useful in situation when multiple OIBus installations are present on the same network but only one of them has access to the internet.
-                  </p>
-                  <p>
-                    Endpoint for OIBus is /engine/addValues
-                  </p>
-                  <p>
-                    Endpoint for OIAnalytics is /api/optimistik/oibus/data/time_values
+                    Console just displays what is received from the South on the server console. It is mainly used to debug OIBus. In normal operations, console should be disabled because the console is relatively slow and may cause memory issues. The verbose mode can be set to False to limit what is sent to the console.
                   </p>
                 </div>
               </div>
@@ -1580,295 +1344,22 @@ exports[`ConfigureApi check update 1`] = `
         class="row"
       >
         <div
-          class="col-md-4"
+          class="col-md-2"
         >
           <div
-            class="mb-3"
+            class="mb-3 mb-3"
           >
             <label
-              class="form-label"
-              for="north.applications.1.OIConnect.host"
+              class="form-check-label"
             >
-              Host
+              Verbose
             </label>
             <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="north.applications.1.OIConnect.host"
-              name="north.applications.1.OIConnect.host"
-              type="text"
-              value="http://hostname:2223"
+              class="oi-form-input checkbox form-check-input"
+              id="north.applications.0.Console.verbose"
+              name="north.applications.0.Console.verbose"
+              type="checkbox"
             />
-            <div
-              class="invalid-feedback"
-            />
-          </div>
-        </div>
-        <div
-          class="col-md-4"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="north.applications.1.OIConnect.valuesEndpoint"
-            >
-              Values endpoint
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="north.applications.1.OIConnect.valuesEndpoint"
-              name="north.applications.1.OIConnect.valuesEndpoint"
-              type="text"
-              value="/addValues"
-            />
-            <div
-              class="invalid-feedback"
-            />
-          </div>
-        </div>
-        <div
-          class="col-md-4"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="north.applications.1.OIConnect.fileEndpoint"
-            >
-              File endpoint
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="north.applications.1.OIConnect.fileEndpoint"
-              name="north.applications.1.OIConnect.fileEndpoint"
-              type="text"
-              value="/addFile"
-            />
-            <div
-              class="invalid-feedback"
-            />
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-12"
-        >
-          <h6>
-            Authentication
-          </h6>
-          <div
-            class="row"
-          >
-            <div
-              class="col-md-2"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="type"
-                >
-                  Type
-                </label>
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="type"
-                  name="type"
-                >
-                  <option
-                    value="Basic"
-                  >
-                    Basic
-                  </option>
-                  <option
-                    value="API Key"
-                  >
-                    API Key
-                  </option>
-                  <option
-                    value="Bearer"
-                  >
-                    Bearer
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </div>
-          </div>
-          <div
-            class="row"
-          >
-            <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="username"
-                >
-                  User name
-                </label>
-                <input
-                  aria-invalid="true"
-                  class="oi-form-input is-invalid form-control"
-                  id="username"
-                  name="username"
-                  type="text"
-                  value=""
-                />
-                <div
-                  class="invalid-feedback"
-                >
-                  Value should not be empty
-                </div>
-              </div>
-            </div>
-            <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="password"
-                >
-                  Password
-                </label>
-                <div
-                  class="input-group"
-                >
-                  <input
-                    aria-invalid="false"
-                    class="oi-form-input form-control"
-                    id="password"
-                    name="password"
-                    type="password"
-                    value=""
-                  />
-                </div>
-                <div
-                  class="invalid-feedback"
-                  style="display: inline;"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-12"
-        >
-          <div
-            class="row"
-          >
-            <h5>
-              Network
-              <button
-                class="util-button mt-1 btn btn-link"
-                id="id"
-              >
-                <svg
-                  class="oi-help"
-                  fill="currentColor"
-                  height="12"
-                  stroke="currentColor"
-                  stroke-width="0"
-                  viewBox="0 0 512 512"
-                  width="12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-                  />
-                </svg>
-              </button>
-            </h5>
-          </div>
-          <div
-            class="container-fluid"
-          >
-            <div
-              class="collapse"
-              toggler="id"
-            >
-              <div
-                class="row"
-                style="margin-bottom: 15px;"
-              >
-                <div
-                  class="col"
-                >
-                  <div>
-                    Please specify here network specific parameters
-                  </div>
-                  <ul>
-                    <li>
-                      Proxy: proxy name to use (proxy parameters are defined in the Engine page)
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-4"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="north.applications.1.OIConnect.proxy"
-            >
-              Proxy
-            </label>
-            <select
-              class="oi-form-input form-select"
-              id="north.applications.1.OIConnect.proxy"
-              name="north.applications.1.OIConnect.proxy"
-            >
-              <option
-                value=""
-              />
-              <option
-                value="sss"
-              >
-                sss
-              </option>
-              <option
-                value="ff"
-              >
-                ff
-              </option>
-              <option
-                value="no-auth"
-              >
-                no-auth
-              </option>
-            </select>
           </div>
         </div>
       </div>
@@ -1944,15 +1435,15 @@ exports[`ConfigureApi check update 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.1.caching.sendInterval"
+              for="north.applications.0.caching.sendInterval"
             >
               Send interval (ms)
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.1.caching.sendInterval"
-              name="north.applications.1.caching.sendInterval"
+              id="north.applications.0.caching.sendInterval"
+              name="north.applications.0.caching.sendInterval"
               type="integer"
               value="10000"
             />
@@ -1969,15 +1460,15 @@ exports[`ConfigureApi check update 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.1.caching.retryInterval"
+              for="north.applications.0.caching.retryInterval"
             >
               Retry interval (ms)
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.1.caching.retryInterval"
-              name="north.applications.1.caching.retryInterval"
+              id="north.applications.0.caching.retryInterval"
+              name="north.applications.0.caching.retryInterval"
               type="integer"
               value="5000"
             />
@@ -1998,17 +1489,17 @@ exports[`ConfigureApi check update 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.1.caching.groupCount"
+              for="north.applications.0.caching.groupCount"
             >
               Group count
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.1.caching.groupCount"
-              name="north.applications.1.caching.groupCount"
+              id="north.applications.0.caching.groupCount"
+              name="north.applications.0.caching.groupCount"
               type="integer"
-              value="1000"
+              value="1"
             />
             <div
               class="invalid-feedback"
@@ -2023,15 +1514,15 @@ exports[`ConfigureApi check update 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.1.caching.maxSendCount"
+              for="north.applications.0.caching.maxSendCount"
             >
               Max group count
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.1.caching.maxSendCount"
-              name="north.applications.1.caching.maxSendCount"
+              id="north.applications.0.caching.maxSendCount"
+              name="north.applications.0.caching.maxSendCount"
               type="integer"
               value="10000"
             />
@@ -2125,7 +1616,56 @@ exports[`ConfigureApi check update 1`] = `
                 />
               </tr>
             </thead>
-            <tbody />
+            <tbody>
+              <tr>
+                <td
+                  class="align-top"
+                >
+                  <div
+                    class="mb-3"
+                  >
+                    <select
+                      aria-invalid="false"
+                      class="oi-form-input form-select"
+                      id="subscribedTo.0"
+                      name="subscribedTo.0"
+                    >
+                      <option
+                        value="south-uuid-1"
+                      >
+                        TestFolderScanner
+                      </option>
+                      <option
+                        value="any"
+                      >
+                        any
+                      </option>
+                    </select>
+                    <div
+                      class="invalid-feedback"
+                    />
+                  </div>
+                </td>
+                <td
+                  class="align-center"
+                >
+                  <svg
+                    class="oi-icon"
+                    fill="currentColor"
+                    height="1em"
+                    stroke="currentColor"
+                    stroke-width="0"
+                    viewBox="0 0 448 512"
+                    width="1em"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
+                    />
+                  </svg>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>

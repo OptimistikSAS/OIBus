@@ -34,7 +34,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -145,12 +145,12 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -201,7 +201,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -223,7 +223,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -232,7 +232,24 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -251,19 +268,9 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -304,7 +311,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -313,7 +320,24 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -332,100 +356,9 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -618,7 +551,7 @@ exports[`ConfigurePoints check add new point 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -729,12 +662,12 @@ exports[`ConfigurePoints check add new point 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -785,7 +718,7 @@ exports[`ConfigurePoints check add new point 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -807,7 +740,7 @@ exports[`ConfigurePoints check add new point 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -816,7 +749,24 @@ exports[`ConfigurePoints check add new point 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -835,19 +785,9 @@ exports[`ConfigurePoints check add new point 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -888,7 +828,7 @@ exports[`ConfigurePoints check add new point 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -897,7 +837,24 @@ exports[`ConfigurePoints check add new point 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -916,100 +873,9 @@ exports[`ConfigurePoints check add new point 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -1202,7 +1068,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -1313,12 +1179,12 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -1369,7 +1235,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -1391,7 +1257,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -1400,7 +1266,24 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -1419,19 +1302,9 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -1472,7 +1345,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -1481,7 +1354,24 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -1500,100 +1390,9 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -1786,7 +1585,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -1897,12 +1696,12 @@ exports[`ConfigurePoints check delete all points 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -1953,7 +1752,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -1975,7 +1774,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -1984,7 +1783,24 @@ exports[`ConfigurePoints check delete all points 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -2003,19 +1819,9 @@ exports[`ConfigurePoints check delete all points 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -2056,7 +1862,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -2065,7 +1871,24 @@ exports[`ConfigurePoints check delete all points 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -2084,100 +1907,9 @@ exports[`ConfigurePoints check delete all points 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -2370,7 +2102,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -2481,12 +2213,12 @@ exports[`ConfigurePoints check delete first point 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -2537,7 +2269,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -2559,7 +2291,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -2568,7 +2300,24 @@ exports[`ConfigurePoints check delete first point 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -2587,19 +2336,9 @@ exports[`ConfigurePoints check delete first point 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -2640,7 +2379,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -2649,7 +2388,24 @@ exports[`ConfigurePoints check delete first point 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -2668,100 +2424,9 @@ exports[`ConfigurePoints check delete first point 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -2954,7 +2619,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -3065,12 +2730,12 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -3121,7 +2786,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -3143,7 +2808,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -3152,7 +2817,24 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -3171,19 +2853,9 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -3224,7 +2896,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -3233,7 +2905,24 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -3252,100 +2941,9 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -3538,7 +3136,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -3649,12 +3247,12 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -3705,7 +3303,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -3727,7 +3325,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -3736,7 +3334,24 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -3755,19 +3370,9 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -3808,7 +3413,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -3817,7 +3422,24 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -3836,100 +3458,9 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -4122,7 +3653,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -4233,12 +3764,12 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -4289,7 +3820,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -4311,7 +3842,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -4320,7 +3851,24 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -4339,19 +3887,9 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -4392,7 +3930,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -4401,7 +3939,24 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -4420,100 +3975,9 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -4706,7 +4170,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -4817,12 +4281,12 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -4873,7 +4337,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -4895,7 +4359,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -4904,7 +4368,24 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -4923,19 +4404,9 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -4976,7 +4447,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -4985,7 +4456,24 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -5004,100 +4492,9 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -5290,7 +4687,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -5401,12 +4798,12 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -5457,7 +4854,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -5479,7 +4876,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -5488,7 +4885,24 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -5507,19 +4921,9 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -5560,7 +4964,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -5569,7 +4973,24 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -5588,100 +5009,9 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -5874,7 +5204,7 @@ exports[`ConfigurePoints check export points 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -5985,12 +5315,12 @@ exports[`ConfigurePoints check export points 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -6041,7 +5371,7 @@ exports[`ConfigurePoints check export points 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -6063,7 +5393,7 @@ exports[`ConfigurePoints check export points 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -6072,7 +5402,24 @@ exports[`ConfigurePoints check export points 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -6091,19 +5438,9 @@ exports[`ConfigurePoints check export points 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -6144,7 +5481,7 @@ exports[`ConfigurePoints check export points 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -6153,7 +5490,24 @@ exports[`ConfigurePoints check export points 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -6172,100 +5526,9 @@ exports[`ConfigurePoints check export points 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -6458,7 +5721,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -6569,12 +5832,12 @@ exports[`ConfigurePoints check import points file input 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -6625,7 +5888,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -6647,7 +5910,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -6656,7 +5919,24 @@ exports[`ConfigurePoints check import points file input 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -6675,19 +5955,9 @@ exports[`ConfigurePoints check import points file input 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -6728,7 +5998,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -6737,7 +6007,24 @@ exports[`ConfigurePoints check import points file input 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -6756,100 +6043,9 @@ exports[`ConfigurePoints check import points file input 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -7042,7 +6238,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -7153,12 +6349,12 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -7209,7 +6405,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -7231,7 +6427,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -7240,7 +6436,24 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -7259,19 +6472,9 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -7312,7 +6515,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -7321,7 +6524,24 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -7340,100 +6560,9 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -7626,7 +6755,7 @@ exports[`ConfigurePoints check import points press 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -7737,12 +6866,12 @@ exports[`ConfigurePoints check import points press 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -7793,7 +6922,7 @@ exports[`ConfigurePoints check import points press 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -7815,7 +6944,7 @@ exports[`ConfigurePoints check import points press 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -7824,7 +6953,24 @@ exports[`ConfigurePoints check import points press 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -7843,19 +6989,9 @@ exports[`ConfigurePoints check import points press 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -7896,7 +7032,7 @@ exports[`ConfigurePoints check import points press 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -7905,7 +7041,24 @@ exports[`ConfigurePoints check import points press 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -7924,100 +7077,9 @@ exports[`ConfigurePoints check import points press 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -8210,7 +7272,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -8321,12 +7383,12 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -8377,7 +7439,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -8399,7 +7461,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -8408,7 +7470,24 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -8427,19 +7506,9 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -8480,7 +7549,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -8489,7 +7558,24 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -8508,100 +7594,9 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -8794,7 +7789,7 @@ exports[`ConfigurePoints check import points success 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -8905,12 +7900,12 @@ exports[`ConfigurePoints check import points success 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -8961,7 +7956,7 @@ exports[`ConfigurePoints check import points success 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -8983,7 +7978,7 @@ exports[`ConfigurePoints check import points success 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -8992,7 +7987,24 @@ exports[`ConfigurePoints check import points success 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -9011,19 +8023,9 @@ exports[`ConfigurePoints check import points success 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -9064,7 +8066,7 @@ exports[`ConfigurePoints check import points success 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -9073,7 +8075,24 @@ exports[`ConfigurePoints check import points success 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -9092,100 +8111,9 @@ exports[`ConfigurePoints check import points success 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -9398,7 +8326,7 @@ exports[`ConfigurePoints check no points 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -9509,12 +8437,12 @@ exports[`ConfigurePoints check no points 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -9565,7 +8493,7 @@ exports[`ConfigurePoints check no points 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -9645,7 +8573,7 @@ exports[`ConfigurePoints check pagination 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -9756,12 +8684,12 @@ exports[`ConfigurePoints check pagination 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -9812,7 +8740,7 @@ exports[`ConfigurePoints check pagination 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"
@@ -9834,7 +8762,7 @@ exports[`ConfigurePoints check pagination 1`] = `
                   id="points.0.pointId"
                   name="points.0.pointId"
                   type="text"
-                  value="_FC42404/PID1/PV.CV"
+                  value="222.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -9843,7 +8771,24 @@ exports[`ConfigurePoints check pagination 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.0.nodeId"
+                  name="points.0.nodeId"
+                  type="text"
+                  value="222.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -9862,19 +8807,9 @@ exports[`ConfigurePoints check pagination 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -9915,7 +8850,7 @@ exports[`ConfigurePoints check pagination 1`] = `
                   id="points.1.pointId"
                   name="points.1.pointId"
                   type="text"
-                  value="_FC42404/PID1/OUT.CV"
+                  value="111.temperature"
                 />
                 <div
                   class="invalid-feedback"
@@ -9924,7 +8859,24 @@ exports[`ConfigurePoints check pagination 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="points.1.nodeId"
+                  name="points.1.nodeId"
+                  type="text"
+                  value="111.temperature"
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             >
@@ -9943,100 +8895,9 @@ exports[`ConfigurePoints check pagination 1`] = `
                     everySecond
                   </option>
                   <option
-                    value="every10Second"
+                    value="every10Seconds"
                   >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
-                  </option>
-                </select>
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-center"
-            >
-              <svg
-                class="oi-icon"
-                fill="currentColor"
-                height="1em"
-                stroke="currentColor"
-                stroke-width="0"
-                viewBox="0 0 448 512"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"
-                />
-              </svg>
-            </td>
-          </tr>
-          <tr>
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-                style="margin-bottom: 0px;"
-              >
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="points.2.pointId"
-                  name="points.2.pointId"
-                  type="text"
-                  value="A13518/AI1/PV.CV"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-              </div>
-            </td>
-            <td
-              class="align-top"
-            />
-            <td
-              class="align-top"
-            >
-              <div
-                class="mb-3"
-              >
-                <select
-                  aria-invalid="false"
-                  class="oi-form-input form-select"
-                  id="points.2.scanMode"
-                  name="points.2.scanMode"
-                >
-                  <option
-                    value="everySecond"
-                  >
-                    everySecond
-                  </option>
-                  <option
-                    value="every10Second"
-                  >
-                    every10Second
-                  </option>
-                  <option
-                    value="every1Min"
-                  >
-                    every1Min
-                  </option>
-                  <option
-                    value="listen"
-                  >
-                    listen
+                    every10Seconds
                   </option>
                 </select>
                 <div
@@ -10229,7 +9090,7 @@ exports[`ConfigurePoints check render with filterText 1`] = `
         |
       </span>
       <span>
-        OPC-HDA
+        TestOPCUA
       </span>
     </h6>
     <div
@@ -10340,12 +9201,12 @@ exports[`ConfigurePoints check render with filterText 1`] = `
                   Node id: 
                 </b>
                 <div>
-                  The nodeId referenced in the OPCHDA server
+                  The nodeId referenced in the OPCUA server
                 </div>
               </div>
               <div>
                 <b>
-                  Scan mode: 
+                  Scan Group: 
                 </b>
                 <div>
                   <ul>
@@ -10396,7 +9257,7 @@ exports[`ConfigurePoints check render with filterText 1`] = `
             <th
               scope="col"
             >
-              Scan mode
+              Scan Group
             </th>
             <th
               scope="col"

@@ -5,17 +5,41 @@ import React from 'react'
 import { act, Simulate } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import newConfig from '../../../tests/testConfig'
+import { defaultConfig } from '../../../tests/testConfig'
 import ConfigurePoints from './ConfigurePoints.jsx'
 import utils from '../helpers/utils'
 
 // mock context
 const dispatchNewConfig = jest.fn()
 const setAlert = jest.fn()
-React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
+React.useContext = jest.fn().mockReturnValue({
+  newConfig: {
+    ...defaultConfig,
+    south: {
+      dataSources: [{
+        id: 'south-uuid-1',
+        name: 'TestOPCUA',
+        protocol: 'OPCUA_HA',
+        enabled: false,
+        OPCUA_HA: {
+          scanGroups: [
+            { aggregate: 'Raw', resampling: 'None', scanMode: 'everySecond' },
+            { aggregate: 'Raw', resampling: 'None', scanMode: 'every10Seconds' },
+          ],
+        },
+        points: [
+          { pointId: '111.temperature', nodeId: '111.temperature', scanMode: 'everySecond' },
+          { pointId: '222.temperature', nodeId: '222.temperature', scanMode: 'everySecond' },
+        ],
+      }],
+    },
+  },
+  dispatchNewConfig,
+  setAlert,
+})
 jest.mock('react-router-dom', () => (
   {
-    useParams: jest.fn().mockReturnValue({ id: 'datasource-uuid-9' }),
+    useParams: jest.fn().mockReturnValue({ id: 'south-uuid-1' }),
     useNavigate: jest.fn(),
   }
 ))
@@ -112,7 +136,7 @@ describe('ConfigurePoints', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
-      name: 'south.dataSources.8.points',
+      name: 'south.dataSources.0.points',
       value: {},
     })
     expect(container).toMatchSnapshot()
@@ -127,7 +151,7 @@ describe('ConfigurePoints', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.8.points.2.pointId',
+      name: 'south.dataSources.0.points.1.pointId',
       value: 'new_point_id',
       validity: null,
     })
@@ -143,7 +167,7 @@ describe('ConfigurePoints', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.8.points.2.scanMode',
+      name: 'south.dataSources.0.points.1.scanMode',
       value: 'everySecond',
       validity: null,
     })
@@ -159,7 +183,7 @@ describe('ConfigurePoints', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.8.points.2.pointId',
+      name: 'south.dataSources.0.points.1.pointId',
       value: 'new_value',
       validity: null,
     })
@@ -175,7 +199,7 @@ describe('ConfigurePoints', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.8.points.2.scanMode',
+      name: 'south.dataSources.0.points.1.scanMode',
       value: 'every1Min',
       validity: null,
     })
@@ -252,14 +276,18 @@ describe('ConfigurePoints', () => {
       resolve('')
     })
 
-    const newPoints = newConfig.south.dataSources[0].points
+    const newPoints = [
+      { pointId: '111.temperature', nodeId: '111.temperature', scanMode: 'everySecond' },
+      { pointId: '222.temperature', nodeId: '222.temperature', scanMode: 'everySecond' },
+    ]
+
     // await utils.parseCSV to success
     await act(async () => {
       resolve(newPoints)
     })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'importPoints',
-      name: 'south.dataSources.8.points',
+      name: 'south.dataSources.0.points',
       value: newPoints,
     })
   })
@@ -303,26 +331,9 @@ describe('ConfigurePoints', () => {
 
     expect(container).toMatchSnapshot()
   })
-  test('check no config', () => {
-    React.useContext = jest.fn().mockReturnValue({ newConfig: null, dispatchNewConfig, setAlert })
-    act(() => {
-      root.render(<ConfigurePoints />)
-    })
-    expect(container).toMatchSnapshot()
-    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
-  })
-  test('check no points', () => {
-    const configNoPoints = utils.jsonCopy(newConfig)
-    configNoPoints.south.dataSources[8].points = undefined
-    React.useContext = jest.fn().mockReturnValue({ newConfig: configNoPoints, dispatchNewConfig, setAlert })
-    act(() => {
-      root.render(<ConfigurePoints />)
-    })
-    expect(container).toMatchSnapshot()
-    React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig, setAlert })
-  })
   test('check confirm on delete all points', () => {
     React.useState = originalUseState
+
     act(() => {
       root.render(<ConfigurePoints />)
     })
@@ -334,7 +345,7 @@ describe('ConfigurePoints', () => {
     })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteAllRows',
-      name: 'south.dataSources.8.points',
+      name: 'south.dataSources.0.points',
     })
     expect(container).toMatchSnapshot()
   })
@@ -350,7 +361,39 @@ describe('ConfigurePoints', () => {
     })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
-      name: 'south.dataSources.8.points.2',
+      name: 'south.dataSources.0.points.1',
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check no config', () => {
+    React.useContext = jest.fn().mockReturnValue({ newConfig: null, dispatchNewConfig, setAlert })
+    act(() => {
+      root.render(<ConfigurePoints />)
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check no points', () => {
+    const configNoPoints = {
+      ...defaultConfig,
+      south: {
+        dataSources: [{
+          id: 'south-uuid-1',
+          name: 'TestOPCUA',
+          protocol: 'OPCUA_HA',
+          enabled: false,
+          OPCUA_HA: {
+            scanGroups: [
+              { Aggregate: 'Raw', resampling: 'None', scanMode: 'everySecond' },
+              { Aggregate: 'Raw', resampling: 'None', scanMode: 'everySecond' },
+            ],
+          },
+          points: undefined,
+        }],
+      },
+    }
+    React.useContext = jest.fn().mockReturnValue({ newConfig: configNoPoints, dispatchNewConfig, setAlert })
+    act(() => {
+      root.render(<ConfigurePoints />)
     })
     expect(container).toMatchSnapshot()
   })

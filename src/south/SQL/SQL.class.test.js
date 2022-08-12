@@ -3,7 +3,7 @@ const { Client } = require('pg')
 const mssql = require('mssql')
 
 const SQL = require('./SQL.class')
-const config = require('../../../tests/integration-test/testConfig').default
+const { integrationTestConfig: testConfig } = require('../../../tests/testConfig')
 const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock logger
@@ -14,13 +14,13 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.configService = { getConfig: () => ({ engineConfig: testConfig.engine }) }
 engine.addFile = jest.fn()
-engine.getCacheFolder = () => config.engine.caching.cacheFolder
+engine.getCacheFolder = () => testConfig.engine.caching.cacheFolder
 engine.eventEmitters = {}
 
 describe('MySQL Integration test', () => {
-  const southMysqlConfig = config.south.dataSources[0]
+  const southMysqlConfig = testConfig.south.dataSources[0]
   const mysqlConfig = {
     host: southMysqlConfig.SQL.host,
     user: southMysqlConfig.SQL.username,
@@ -69,7 +69,7 @@ describe('MySQL Integration test', () => {
 })
 
 describe('PostgreSQL Integration test', () => {
-  const southPostgresqlConfig = config.south.dataSources[1]
+  const southPostgresqlConfig = testConfig.south.dataSources[1]
   const postgresqlConfig = {
     host: southPostgresqlConfig.SQL.host,
     user: southPostgresqlConfig.SQL.username,
@@ -119,7 +119,7 @@ describe('PostgreSQL Integration test', () => {
 })
 
 describe('MSSQL Integration test', () => {
-  const southMssqlConfig = config.south.dataSources[2]
+  const southMssqlConfig = testConfig.south.dataSources[2]
   const mssqlConfig = {
     user: southMssqlConfig.SQL.username,
     password: southMssqlConfig.SQL.password,
@@ -134,24 +134,22 @@ describe('MSSQL Integration test', () => {
   }
 
   beforeAll(async () => {
-    // const pool = await new mssql.ConnectionPool(mssqlConfig).connect()
     await mssql.connect(mssqlConfig)
-    // const request = pool.request()
 
-    await mssql.query('CREATE DATABASE oibus;')
+    await mssql.query(`CREATE DATABASE ${process.env.MSSQL_DATABASE};`)
 
-    await mssql.query('USE oibus; CREATE TABLE history (temperature INT, created_at DATETIME);')
-    await mssql.query('USE oibus; INSERT INTO history (temperature, created_at) '
-        + 'VALUES (18, \'2018-10-03T13:40:40\'), (19, \'2019-10-03T13:40:40\'), (20, \'2020-10-03T13:40:40\'), (21, \'2021-10-03T13:40:40\');')
+    await mssql.query(`USE ${process.env.MSSQL_DATABASE}; CREATE TABLE history (temperature INT, created_at DATETIME);`)
+    await mssql.query(`USE ${process.env.MSSQL_DATABASE}; INSERT INTO history (temperature, created_at)
+        VALUES (18, '2018-10-03T13:40:40'), (19, '2019-10-03T13:40:40'), (20, '2020-10-03T13:40:40'), (21, '2021-10-03T13:40:40');`)
     await mssql.close()
 
-    southMssqlConfig.SQL.query = 'USE oibus; SELECT temperature, created_at as timestamp FROM history '
-        + 'WHERE created_at > @StartTime AND created_at < @EndTime'
+    southMssqlConfig.SQL.query = `USE ${process.env.MSSQL_DATABASE}; SELECT temperature, created_at as timestamp FROM history
+        WHERE created_at > @StartTime AND created_at < @EndTime`
   })
 
   afterAll(async () => {
     await mssql.connect(mssqlConfig)
-    await mssql.query('DROP DATABASE oibus;')
+    await mssql.query(`DROP DATABASE ${process.env.MSSQL_DATABASE};`)
     await mssql.close()
   })
 

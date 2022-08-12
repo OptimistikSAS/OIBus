@@ -74,7 +74,7 @@ const OIbTextArea = ({ label, contentType, help, valid, value, name, onChange, d
           name={name}
           invalid={validCheck !== null}
           onChange={handleInputChange}
-          value={value}
+          value={value || ''}
         />
         <FormFeedback>{validCheck}</FormFeedback>
         {help && <FormText>{help}</FormText>}

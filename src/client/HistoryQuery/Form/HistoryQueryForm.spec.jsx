@@ -5,10 +5,10 @@ import React from 'react'
 import { act } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import newConfig from '../../../../tests/testHistoryConfig'
+import { testHistoryConfig } from '../../../../tests/testConfig'
 import HistoryQueryForm from './HistoryQueryForm.jsx'
 
-React.useContext = jest.fn().mockReturnValue({ newConfig })
+React.useContext = jest.fn().mockReturnValue({ newConfig: testHistoryConfig })
 jest.mock('react-router-dom', () => (
   { useNavigate: jest.fn().mockReturnValue({}) }
 ))
@@ -38,7 +38,7 @@ afterEach(() => {
 })
 
 describe('HistoryQueryForm', () => {
-  newConfig.forEach((historyQuery) => {
+  testHistoryConfig.forEach((historyQuery) => {
     test(`check HistoryQueryForm with data: ${historyQuery.name}`, () => {
       act(() => {
         root.render(

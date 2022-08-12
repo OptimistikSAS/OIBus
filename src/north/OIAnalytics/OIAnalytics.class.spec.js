@@ -1,6 +1,6 @@
 const fs = require('fs/promises')
 const OIAnalytics = require('./OIAnalytics.class')
-const config = require('../../../tests/testConfig').default
+const { defaultConfig: config } = require('../../../tests/testConfig')
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
@@ -13,7 +13,27 @@ jest.mock('../../engine/logger/Logger.class')
 
 let oiAnalytics = null
 const timestamp = new Date().toISOString()
-const oiAnalyticsConfig = config.north.applications[2]
+const oiAnalyticsConfig = {
+  id: 'north-oianalytics',
+  name: 'RawFileSender',
+  enabled: false,
+  api: 'OIAnalytics',
+  caching: {
+    sendInterval: 15000,
+    retryInterval: 10000,
+  },
+  OIAnalytics: {
+    host: 'https://hostname',
+    endpoint: '/api/optimistik/data/values/upload',
+    authentication: {
+      type: 'Basic',
+      username: 'anyuser',
+      password: 'anypass',
+    },
+  },
+  proxy: '',
+  subscribedTo: [],
+}
 
 beforeEach(async () => {
   jest.resetAllMocks()

@@ -31,8 +31,7 @@
     "postversion": "git push && git push --tags",
     "bump": "standard-version -i CHANGELOG.md",
     "postbump": "git push --follow-tags origin",
-    "setup-dev-env": "cd local-development && docker-compose --env-file ./.env.dev up",
-    "seed-destinations": "node ./local-development/database-seeder/seed-db.js"
+    "setup-dev-env": "docker-compose --env-file ./tests/.env.dev up"
   },
   "keywords": [
     "Optimistik"
@@ -102,6 +101,7 @@
     "babel-jest": "28.1.3",
     "babel-loader": "8.2.5",
     "css-loader": "6.7.1",
+    "dotenv": "16.0.1",
     "eslint": "8.21.0",
     "eslint-config-airbnb": "19.0.4",
     "eslint-plugin-import": "2.26.0",

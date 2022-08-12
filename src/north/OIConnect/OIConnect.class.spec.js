@@ -1,6 +1,6 @@
 const fs = require('fs/promises')
 const OIConnect = require('./OIConnect.class')
-const config = require('../../../tests/testConfig').default
+const { defaultConfig: config } = require('../../../tests/testConfig')
 
 // Mock logger
 jest.mock('../../engine/logger/Logger.class')
@@ -12,7 +12,23 @@ engine.requestService = { httpSend: jest.fn() }
 engine.eventEmitters = {}
 
 let oiConnect = null
-const oiConnectConfig = config.north.applications[1]
+const oiConnectConfig = {
+  id: 'north-oiconnect',
+  name: 'monoiconnect',
+  api: 'OIConnect',
+  enabled: false,
+  OIConnect: {
+    authentication: { password: '', type: 'Basic', username: '' },
+    timeout: 180000,
+    host: 'http://hostname:2223',
+    valuesEndpoint: '/addValues',
+    fileEndpoint: '/addFile',
+    proxy: '',
+    stack: 'fetch',
+  },
+  caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1000, maxSendCount: 10000 },
+  subscribedTo: [],
+}
 const timestamp = new Date().toISOString()
 
 beforeEach(async () => {

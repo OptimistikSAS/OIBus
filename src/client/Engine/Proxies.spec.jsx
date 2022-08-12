@@ -5,7 +5,7 @@ import React from 'react'
 import { act, Simulate } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import testConfig from '../../../tests/testConfig'
+import { testConfig } from '../../../tests/testConfig'
 import Proxies from './Proxies.jsx'
 
 const dispatchNewConfig = jest.fn()

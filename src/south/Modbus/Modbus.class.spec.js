@@ -1,5 +1,5 @@
 const Modbus = require('./Modbus.class')
-const config = require('../../config/defaultConfig.json')
+const { defaultConfig: config } = require('../../../tests/testConfig')
 const databaseService = require('../../services/database.service')
 
 // Mock jsmobdus

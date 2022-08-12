@@ -2,7 +2,7 @@ const fs = require('fs/promises')
 const path = require('path')
 const ApiHandler = require('../ApiHandler.class')
 const FileWriter = require('./FileWriter.class')
-const config = require('../../../tests/testConfig').default
+const { defaultConfig: config } = require('../../../tests/testConfig')
 
 // Mock database service
 jest.mock('../../services/database.service', () => {})
@@ -18,7 +18,15 @@ engine.eventEmitters = {}
 let fileWriterNorth = null
 const nowDateString = '2020-02-02T02:02:02.222Z'
 const localTimezoneOffsetInMs = new Date('2020-02-02T02:02:02.222Z').getTimezoneOffset() * 60000
-const fileWriterConfig = config.north.applications[7]
+const fileWriterConfig = {
+  id: 'application-uuid-8',
+  name: 'filewriter',
+  api: 'FileWriter',
+  enabled: true,
+  FileWriter: { outputFolder: './output' },
+  caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1000, maxSendCount: 10000 },
+  subscribedTo: [],
+}
 
 beforeEach(async () => {
   jest.resetAllMocks()
