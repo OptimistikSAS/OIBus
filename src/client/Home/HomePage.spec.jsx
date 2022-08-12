@@ -6,7 +6,7 @@ import { act } from 'react-dom/test-utils'
 import * as ReactDOMClient from 'react-dom/client'
 import HomePage from './HomePage.jsx'
 
-import activeConfig from '../../../tests/testConfig'
+import { testConfig } from '../../../tests/testConfig'
 
 // ReacFlow does not seem to be working with jest.
 // so we have to mock this component
@@ -36,7 +36,7 @@ afterEach(() => {
 
 const setAlert = jest.fn()
 
-React.useContext = jest.fn().mockReturnValue({ activeConfig, setAlert })
+React.useContext = jest.fn().mockReturnValue({ activeConfig: testConfig, setAlert })
 describe('HomePage', () => {
   test('display Health page based on config', async () => {
     act(() => {
@@ -54,6 +54,6 @@ describe('HomePage', () => {
       )
     })
     expect(container).toMatchSnapshot()
-    React.useContext = jest.fn().mockReturnValue({ activeConfig, setAlert })
+    React.useContext = jest.fn().mockReturnValue({ activeConfig: testConfig, setAlert })
   })
 })

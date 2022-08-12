@@ -19,21 +19,6 @@ exports[`OIbProxy check Proxy change 1`] = `
       <option
         value=""
       />
-      <option
-        value="sss"
-      >
-        sss
-      </option>
-      <option
-        value="ff"
-      >
-        ff
-      </option>
-      <option
-        value="no-auth"
-      >
-        no-auth
-      </option>
     </select>
     <small
       class="form-text text-muted"
@@ -67,21 +52,6 @@ exports[`OIbProxy check Proxy with value and help text 1`] = `
       <option
         value=""
       />
-      <option
-        value="sss"
-      >
-        sss
-      </option>
-      <option
-        value="ff"
-      >
-        ff
-      </option>
-      <option
-        value="no-auth"
-      >
-        no-auth
-      </option>
     </select>
     <small
       class="form-text text-muted"
@@ -113,21 +83,6 @@ exports[`OIbProxy check Proxy with value="proxy" 1`] = `
       <option
         value=""
       />
-      <option
-        value="sss"
-      >
-        sss
-      </option>
-      <option
-        value="ff"
-      >
-        ff
-      </option>
-      <option
-        value="no-auth"
-      >
-        no-auth
-      </option>
     </select>
   </div>
 </div>
@@ -146,21 +101,6 @@ exports[`OIbProxy check Proxy with value="proxy" and no label 1`] = `
       <option
         value=""
       />
-      <option
-        value="sss"
-      >
-        sss
-      </option>
-      <option
-        value="ff"
-      >
-        ff
-      </option>
-      <option
-        value="no-auth"
-      >
-        no-auth
-      </option>
     </select>
   </div>
 </div>

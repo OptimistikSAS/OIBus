@@ -4,13 +4,13 @@ services:
         container_name: oibus-mysql
         image: 'mysql:8.0-oracle'
         ports:
-            - ${FORWARD_MYSQL_PORT:-5306}:3306
+            - ${MYSQL_PORT:-5306}:3306
         environment:
             TZ: 'Europe/Paris'
-            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD:-oibus123}'
-            MYSQL_DATABASE: '${DB_DATABASE:-oibus}'
-            MYSQL_USER: '${DB_USERNAME:-oibus}'
-            MYSQL_PASSWORD: '${DB_PASSWORD:-oibus123}'
+            MYSQL_ROOT_PASSWORD: '${MYSQL_PASSWORD:-oibus123}'
+            MYSQL_DATABASE: '${MYSQL_DATABASE:-oibus}'
+            MYSQL_USER: '${MYSQL_USERNAME:-oibus}'
+            MYSQL_PASSWORD: '${MYSQL_PASSWORD:-oibus123}'
         volumes:
             - /var/lib/mysql
 
@@ -20,20 +20,20 @@ services:
          volumes:
              - /var/lib/postgresql/data
          ports:
-             - ${FORWARD_POSTGRESQL_PORT:-5432}:5432
+             - ${POSTGRESQL_PORT:-5432}:5432
          environment:
              - TZ=Europe/Paris
-             - POSTGRES_USER=${DB_USERNAME:-oibus}
-             - POSTGRES_PASSWORD=${DB_PASSWORD:-oibus123}
-             - POSTGRES_DB=${DB_DATABASE:-oibus}
+             - POSTGRES_USER=${POSTGRESQL_USERNAME:-oibus}
+             - POSTGRES_PASSWORD=${POSTGRESQL_PASSWORD:-oibus123}
+             - POSTGRES_DB=${POSTGRESQL_DATABASE:-oibus}
 
     mssql:
          container_name: oibus-mssql
          image: mcr.microsoft.com/azure-sql-edge:latest
          ports:
-             - ${FORWARD_MSSQL_PORT:-1433}:1433
+             - ${MSSQL_PORT:-1433}:1433
          environment:
-             SA_PASSWORD: ${MSSQL_SA_PASSWORD:-Oibus123@}
+             SA_PASSWORD: ${MSSQL_PASSWORD:-Oibus123@}
              ACCEPT_EULA: "Y"
 
 #    rabbitmq:

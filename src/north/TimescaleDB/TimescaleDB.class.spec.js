@@ -2,7 +2,7 @@ const pg = require('pg')
 
 const ApiHandler = require('../ApiHandler.class')
 const TimescaleDB = require('./TimescaleDB.class')
-const config = require('../../../tests/testConfig').default
+const { defaultConfig: config } = require('../../../tests/testConfig')
 const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock logger
@@ -18,7 +18,31 @@ engine.eventEmitters = {}
 
 jest.mock('pg', () => ({ Client: jest.fn() }))
 
-const timescaleDbConfig = config.north.applications[4]
+const timescaleDbConfig = {
+  id: 'north-timescaledb',
+  name: 'Timescale',
+  api: 'TimescaleDB',
+  enabled: false,
+  TimescaleDB: {
+    password: 'anypass',
+    user: 'anyuser',
+    host: 'anyhost',
+    db: 'anydb',
+    useDataKeyValue: false,
+    regExp: '(.*)',
+    table: '%1$s',
+    optFields: '',
+    keyParentValue: '',
+    timestampPathInDataValue: '',
+  },
+  caching: {
+    sendInterval: 10000,
+    retryInterval: 5000,
+    groupCount: 1000,
+    maxSendCount: 10000,
+  },
+  subscribedTo: [],
+}
 const timestamp = new Date('2020-02-29T12:12:12Z').toISOString()
 const values = [
   {

@@ -2,7 +2,8 @@ const mqtt = require('mqtt')
 
 const ApiHandler = require('../ApiHandler.class')
 const MQTT = require('./MQTT.class')
-const config = require('../../../tests/testConfig').default
+const { defaultConfig: config } = require('../../../tests/testConfig')
+
 const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock mqtt
@@ -25,7 +26,33 @@ const CertificateService = jest.mock('../../services/CertificateService.class')
 CertificateService.init = jest.fn()
 CertificateService.logger = engine.logger
 
-const mqttConfig = config.north.applications[3]
+const mqttConfig = {
+  id: 'north-mqtt',
+  name: 'mqtt',
+  api: 'MQTT',
+  enabled: true,
+  MQTT: {
+    password: 'anypass',
+    url: 'mqtt://hostname:1883',
+    username: 'anyuser',
+    qos: 1,
+    regExp: '(.*)/',
+    topic: '%1$s',
+    keyFile: '',
+    certFile: '',
+    caFile: '',
+    rejectUnauthorized: false,
+    useDataKeyValue: false,
+    keyParentValue: '',
+  },
+  caching: {
+    sendInterval: 10000,
+    retryInterval: 5000,
+    groupCount: 1000,
+    maxSendCount: 10000,
+  },
+  subscribedTo: [],
+}
 let mqttNorth = null
 
 beforeEach(async () => {

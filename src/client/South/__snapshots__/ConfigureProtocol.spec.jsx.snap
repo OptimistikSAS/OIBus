@@ -9,7 +9,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
       class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
-        OPC-HDA
+        TestFolderScanner
       </div>
       <button
         class="util-button btn btn-outline-secondary"
@@ -41,10 +41,10 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         Status
       </button>
       <button
-        class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
-        type="button"
+        class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
+        disabled=""
       >
-        Points (3)
+        File
       </button>
     </div>
   </div>
@@ -118,9 +118,9 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             <input
               class="mb-3 form-check-input"
               color="secondary"
-              id="south.dataSources.8.enabled"
+              id="south.dataSources.0.enabled"
               label="Disabled"
-              name="south.dataSources.8.enabled"
+              name="south.dataSources.0.enabled"
               type="checkbox"
             />
             <small
@@ -130,6 +130,44 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                 Enable this application
               </div>
             </small>
+          </div>
+        </div>
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3"
+          >
+            <select
+              aria-invalid="false"
+              class="oi-form-input form-select"
+              id="south.dataSources.0.scanMode"
+              name="south.dataSources.0.scanMode"
+            >
+              <option
+                value="everySecond"
+              >
+                everySecond
+              </option>
+              <option
+                value="every10Second"
+              >
+                every10Second
+              </option>
+              <option
+                value="every1Min"
+              >
+                every1Min
+              </option>
+              <option
+                value="listen"
+              >
+                listen
+              </option>
+            </select>
+            <div
+              class="invalid-feedback"
+            />
           </div>
         </div>
       </div>
@@ -271,15 +309,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.8.logParameters.consoleLevel"
+              for="south.dataSources.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.8.logParameters.consoleLevel"
-              name="south.dataSources.8.logParameters.consoleLevel"
+              id="south.dataSources.0.logParameters.consoleLevel"
+              name="south.dataSources.0.logParameters.consoleLevel"
             >
               <option
                 value="engine"
@@ -330,15 +368,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.8.logParameters.fileLevel"
+              for="south.dataSources.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.8.logParameters.fileLevel"
-              name="south.dataSources.8.logParameters.fileLevel"
+              id="south.dataSources.0.logParameters.fileLevel"
+              name="south.dataSources.0.logParameters.fileLevel"
             >
               <option
                 value="engine"
@@ -389,15 +427,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.8.logParameters.sqliteLevel"
+              for="south.dataSources.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.8.logParameters.sqliteLevel"
-              name="south.dataSources.8.logParameters.sqliteLevel"
+              id="south.dataSources.0.logParameters.sqliteLevel"
+              name="south.dataSources.0.logParameters.sqliteLevel"
             >
               <option
                 value="engine"
@@ -454,7 +492,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             class="row"
           >
             <h5>
-              HDA Agent
+              FolderScanner settings
               <button
                 class="util-button mt-1 btn btn-link"
                 id="id"
@@ -491,899 +529,31 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
                   class="col"
                 >
                   <p>
-                    OPCHDA Agent is an external executable that will handle the protocol HDA. We decided to externalize it to avoid combining relatively old libraries in the main OIBus code and also because OPCHDA is only supported on Microsoft Windows.
+                    The FolderScanner South periodically checks the input folder for new files at an interval specified by scan mode. When a new file is detected it will be sent to any North capable of handling files and configured to accept files from this South.
                   </p>
-                  <ul>
-                    <li>
-                      The agent communicate with OIBus using a TCP port that can be configured in this section.
-                    </li>
-                    <li>
-                      It is possible to decide the level of logs that will be sent by the agent to OIBus. It is recommended to start with 'debug' and to switch to 'info' when the communication is stabilized.
-                    </li>
-                    <li>
-                      By default, when you restart the agent, it will query from the last successful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the OIBus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed.
-                    </li>
-                    <p>
-                      <b>
-                        DA Quality code
-                      </b>
-                    </p>
-                    <table
-                      border="1"
-                    >
-                      <tbody>
-                        <tr>
-                          <td>
-                            0x00000000
-                          </td>
-                          <td>
-                            Bad [Non-Specific]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000004
-                          </td>
-                          <td>
-                            Bad [Configuration Error]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000008
-                          </td>
-                          <td>
-                            Bad [Not Connected]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x0000000c
-                          </td>
-                          <td>
-                            Bad [Device Failure]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000010
-                          </td>
-                          <td>
-                            Bad [Sensor Failure]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000014
-                          </td>
-                          <td>
-                            Bad [Last Known Value]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000018
-                          </td>
-                          <td>
-                            Bad [Communication Failure]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x0000001C
-                          </td>
-                          <td>
-                            Bad [Out of Service]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000040
-                          </td>
-                          <td>
-                            Uncertain [Non-Specific]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000041
-                          </td>
-                          <td>
-                            Uncertain [Non-Specific] (Low Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000042
-                          </td>
-                          <td>
-                            Uncertain [Non-Specific] (High Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000043
-                          </td>
-                          <td>
-                            Uncertain [Non-Specific] (Constant)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000044
-                          </td>
-                          <td>
-                            Uncertain [Last Usable]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000045
-                          </td>
-                          <td>
-                            Uncertain [Last Usable] (Low Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000046
-                          </td>
-                          <td>
-                            Uncertain [Last Usable] (High Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000047
-                          </td>
-                          <td>
-                            Uncertain [Last Usable] (Constant)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000050
-                          </td>
-                          <td>
-                            Uncertain [Sensor Not Accurate]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000051
-                          </td>
-                          <td>
-                            Uncertain [Sensor Not Accurate] (Low Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000052
-                          </td>
-                          <td>
-                            Uncertain [Sensor Not Accurate] (High Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000053
-                          </td>
-                          <td>
-                            Uncertain [Sensor Not Accurate] (Constant)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000054
-                          </td>
-                          <td>
-                            Uncertain [EU Exceeded]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000055
-                          </td>
-                          <td>
-                            Uncertain [EU Exceeded] (Low Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000056
-                          </td>
-                          <td>
-                            Uncertain [EU Exceeded] (High Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000057
-                          </td>
-                          <td>
-                            Uncertain [EU Exceeded] (Constant)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000058
-                          </td>
-                          <td>
-                            Uncertain [Sub-Normal]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000059
-                          </td>
-                          <td>
-                            Uncertain [Sub-Normal] (Low Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x0000005a
-                          </td>
-                          <td>
-                            Uncertain [Sub-Normal] (High Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x0000005b
-                          </td>
-                          <td>
-                            Uncertain [Sub-Normal] (Constant)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000c0
-                          </td>
-                          <td>
-                            Good [Non-Specific]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000c1
-                          </td>
-                          <td>
-                            Good [Non-Specific] (Low Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000c2
-                          </td>
-                          <td>
-                            Good [Non-Specific] (High Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000c3
-                          </td>
-                          <td>
-                            Good [Non-Specific] (Constant)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000d8
-                          </td>
-                          <td>
-                            Good [Local Override]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000d9
-                          </td>
-                          <td>
-                            Good [Local Override] (Low Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000da
-                          </td>
-                          <td>
-                            Good [Local Override] (High Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000db
-                          </td>
-                          <td>
-                            Good [Local Override] (Constant)
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                    <p>
-                      <b>
-                        HDA Quality code
-                      </b>
-                    </p>
-                    <table
-                      border="1"
-                    >
-                      <tbody>
-                        <tr>
-                          <td>
-                            0x00010000
-                          </td>
-                          <td>
-                            Bad [Non-Specific] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010004
-                          </td>
-                          <td>
-                            Bad [Configuration Error] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010008
-                          </td>
-                          <td>
-                            Bad [Not Connected] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x0001000c
-                          </td>
-                          <td>
-                            Bad [Device Failure] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010010
-                          </td>
-                          <td>
-                            Bad [Sensor Failure] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010014
-                          </td>
-                          <td>
-                            Bad [Last Known Value] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010018
-                          </td>
-                          <td>
-                            Bad [Communication Failure] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x0001001c
-                          </td>
-                          <td>
-                            Bad [Out of Service] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010040
-                          </td>
-                          <td>
-                            Uncertain [Non-Specific] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010041
-                          </td>
-                          <td>
-                            Uncertain [Non-Specific] (Low Limited) : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010042
-                          </td>
-                          <td>
-                            Uncertain [Non-Specific] (High Limited) : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00040000
-                          </td>
-                          <td>
-                            Indicates the quality of raw data transmission.
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00080000
-                          </td>
-                          <td>
-                            Indicates the quality of calculated data transmission.
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00100000
-                          </td>
-                          <td>
-                            No bounding values were found at the starting or ending point.
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00200000
-                          </td>
-                          <td>
-                            No raw data were found for the specified time interval.
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00400000
-                          </td>
-                          <td>
-                            The raw data in the selected interval were not completely archived.
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-4"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.agentFilename"
-            >
-              Agent filename
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.agentFilename"
-              name="south.dataSources.8.OPCHDA.agentFilename"
-              type="text"
-              value="./deps/win/HdaAgent/HdaAgent.exe"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                ex: c:\\HdaAgent\\HdaAgent.exe
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.tcpPort"
-            >
-              TCP Port
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.tcpPort"
-              name="south.dataSources.8.OPCHDA.tcpPort"
-              type="integer"
-              value="3333"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                HDA Agent port
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.logLevel"
-            >
-              Logging Level
-            </label>
-            <select
-              aria-invalid="false"
-              class="oi-form-input form-select"
-              id="south.dataSources.8.OPCHDA.logLevel"
-              name="south.dataSources.8.OPCHDA.logLevel"
-            >
-              <option
-                value="trace"
-              >
-                trace
-              </option>
-              <option
-                value="debug"
-              >
-                debug
-              </option>
-              <option
-                value="info"
-              >
-                info
-              </option>
-              <option
-                value="warning"
-              >
-                warning
-              </option>
-              <option
-                value="error"
-              >
-                error
-              </option>
-            </select>
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Logging level for the HDA agent
-              </div>
-            </small>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-12"
-        >
-          <div
-            class="row"
-          >
-            <h5>
-              HDA Server
-              <button
-                class="util-button mt-1 btn btn-link"
-                id="id"
-              >
-                <svg
-                  class="oi-help"
-                  fill="currentColor"
-                  height="12"
-                  stroke="currentColor"
-                  stroke-width="0"
-                  viewBox="0 0 512 512"
-                  width="12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-                  />
-                </svg>
-              </button>
-            </h5>
-          </div>
-          <div
-            class="container-fluid"
-          >
-            <div
-              class="collapse"
-              toggler="id"
-            >
-              <div
-                class="row"
-                style="margin-bottom: 15px;"
-              >
-                <div
-                  class="col"
-                >
                   <p>
-                    OPCHDA Server is hosted on the equipment or server on which we want to retrieve values. You need to give the host name as well as the HDA server name.
-                  </p>
-                  <ul>
-                    <li>
-                      The retry interval will be used when the HDA server cant be connected to the HDA Agent to indicate when the next retry will occur.
-                    </li>
-                    <li>
-                      Max return values is an OPC HDA parameters allowing to indicate the maximum number of values that can be returned in a single read request. Most HDA implementations allows to specify 0 so the maximum is defined by the HDA server. Some memory conditions may cause the HDA server to send errors that can be solved by minimizing this parameters. A low value requires the server to split a single reply in multiple chunks creating more network traffic.
-                    </li>
-                    <li>
-                      Max read interval is used when a query request a very long range (one month for example). The range will be divided in smaller request (one hour by default) to avoid the memory issues on the HDA server. This parameter is typically used when OIBus was stopped for a long time and that we need to recover values from that range on the restart.
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-4"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.host"
-            >
-              Host
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.host"
-              name="south.dataSources.8.OPCHDA.host"
-              type="text"
-              value="opcserver"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                IP address or hostname of the HDA server
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-4"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.serverName"
-            >
-              Server name
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.serverName"
-              name="south.dataSources.8.OPCHDA.serverName"
-              type="text"
-              value="Matrikon.OPC.Simulation"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                HDA server (Matrikon.OPC.Simulation)
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.retryInterval"
-            >
-              Retry interval (ms)
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.retryInterval"
-              name="south.dataSources.8.OPCHDA.retryInterval"
-              type="integer"
-              value="10000"
-            />
-            <div
-              class="invalid-feedback"
-            />
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.maxReadInterval"
-            >
-              Max read interval (s)
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.maxReadInterval"
-              name="south.dataSources.8.OPCHDA.maxReadInterval"
-              type="integer"
-              value="3600"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Split the time interval into smaller intervals of this duration (in s).
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.readIntervalDelay"
-            >
-              Read interval delay (ms)
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.readIntervalDelay"
-              name="south.dataSources.8.OPCHDA.readIntervalDelay"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Time to wait between the read interval iterations (ms)
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.maxReturnValues"
-            >
-              Max return values
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.maxReturnValues"
-              name="south.dataSources.8.OPCHDA.maxReturnValues"
-              type="integer"
-              value="10000"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Max number of values returned for one point during a read interval
-              </div>
-            </small>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-12"
-        >
-          <div
-            class="row"
-          >
-            <h5>
-              ScanGroups
-              <button
-                class="util-button mt-1 btn btn-link"
-                id="id"
-              >
-                <svg
-                  class="oi-help"
-                  fill="currentColor"
-                  height="12"
-                  stroke="currentColor"
-                  stroke-width="0"
-                  viewBox="0 0 512 512"
-                  width="12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-                  />
-                </svg>
-              </button>
-            </h5>
-          </div>
-          <div
-            class="container-fluid"
-          >
-            <div
-              class="collapse"
-              toggler="id"
-            >
-              <div
-                class="row"
-                style="margin-bottom: 15px;"
-              >
-                <div
-                  class="col"
-                >
-                  <p>
-                    OPCHDA application will request all points in the same scanMode. OPCHDA can query raw values but can also aggregate points on a given period. If an aggregate is chosen, the resampling period must also be selected. Important: a point with a scanMode without the corresponding scangroup will not be requested.
-                    <br />
+                    Please use always the / separator. OIBus will convert it according to the platform. For example, on Windows, c:/input/ will be converted to c:\\input\\ Make sure OIBus has READ and WRITE access to this folder.
                     <b>
-                      In the current version, aggregates are NOT supported for production mode. Please use "Raw"
+                      When OIBus is started as a Windows service, you may have to assign a user logon in the Windows services.msc console.
                     </b>
                   </p>
+                  <p>
+                    It is possible to specify how to handle files.
+                  </p>
+                  <ul>
+                    <li>
+                      If Preserve File is checked the files will be left intact, otherwise they will be removed from the input folder.
+                    </li>
+                    <li>
+                      If Ignore Modified Date is checked the last edited time of the file will be ignored when the file is preserved. This implies that a file will be sent at each scan of the folder
+                    </li>
+                    <li>
+                      The Minimum Age option is used to specify the time since the file was last modified. It is used to prevent handling files that are still populated.
+                    </li>
+                    <li>
+                      The RegExp option can be used to filter what kind of files to be handled.
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -1394,51 +564,167 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
         class="row"
       >
         <div
-          class="col-md-6"
+          class="col-md-4"
         >
-          <table
-            class="table table table-sm table-striped table-hover"
+          <div
+            class="mb-3"
           >
-            <thead>
-              <tr>
-                <th
-                  scope="col"
-                >
-                  <svg
-                    class="oi-icon"
-                    fill="currentColor"
-                    height="1em"
-                    stroke="currentColor"
-                    stroke-width="0"
-                    viewBox="0 0 512 512"
-                    width="1em"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm144 276c0 6.6-5.4 12-12 12h-92v92c0 6.6-5.4 12-12 12h-56c-6.6 0-12-5.4-12-12v-92h-92c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h92v-92c0-6.6 5.4-12 12-12h56c6.6 0 12 5.4 12 12v92h92c6.6 0 12 5.4 12 12v56z"
-                    />
-                  </svg>
-                  <span>
-                    Scan Mode
-                  </span>
-                </th>
-                <th
-                  scope="col"
-                >
-                  aggregate
-                </th>
-                <th
-                  scope="col"
-                >
-                  resampling
-                </th>
-                <th
-                  scope="col"
-                />
-              </tr>
-            </thead>
-            <tbody />
-          </table>
+            <label
+              class="form-label"
+              for="south.dataSources.0.FolderScanner.inputFolder"
+            >
+              Input folder
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.0.FolderScanner.inputFolder"
+              name="south.dataSources.0.FolderScanner.inputFolder"
+              type="text"
+              value="./input/"
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Path to folder such as: c:/input/
+              </div>
+            </small>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3 mb-3"
+          >
+            <label
+              class="form-check-label"
+            >
+              Preserve File?
+            </label>
+            <input
+              checked=""
+              class="oi-form-input checkbox form-check-input"
+              id="south.dataSources.0.FolderScanner.preserveFiles"
+              name="south.dataSources.0.FolderScanner.preserveFiles"
+              type="checkbox"
+            />
+          </div>
+        </div>
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3 mb-3"
+          >
+            <label
+              class="form-check-label"
+            >
+              Ignore modified date
+            </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="south.dataSources.0.FolderScanner.ignoreModifiedDate"
+              name="south.dataSources.0.FolderScanner.ignoreModifiedDate"
+              type="checkbox"
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.dataSources.0.FolderScanner.minAge"
+            >
+              Minimum Age
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.0.FolderScanner.minAge"
+              name="south.dataSources.0.FolderScanner.minAge"
+              type="integer"
+              value="0"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.dataSources.0.FolderScanner.regex"
+            >
+              RegExp
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.0.FolderScanner.regex"
+              name="south.dataSources.0.FolderScanner.regex"
+              type="text"
+              value=".csv"
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                RegExp to filter the folder
+              </div>
+            </small>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3 mb-3"
+          >
+            <label
+              class="form-check-label"
+            >
+              Compress File?
+            </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="south.dataSources.0.FolderScanner.compression"
+              name="south.dataSources.0.FolderScanner.compression"
+              type="checkbox"
+            />
+          </div>
         </div>
       </div>
     </form>
@@ -1446,7 +732,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
 </div>
 `;
 
-exports[`ConfigureProtocol check datasource not found 1`] = `
+exports[`ConfigureProtocol check south not found 1`] = `
 <div>
   <div
     class="spinner-container"
@@ -1475,7 +761,7 @@ exports[`ConfigureProtocol check update 1`] = `
       class="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0"
     >
       <div>
-        OPC-HDA
+        TestFolderScanner
       </div>
       <button
         class="util-button btn btn-outline-secondary"
@@ -1507,10 +793,10 @@ exports[`ConfigureProtocol check update 1`] = `
         Status
       </button>
       <button
-        class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
-        type="button"
+        class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
+        disabled=""
       >
-        Points (3)
+        File
       </button>
     </div>
   </div>
@@ -1584,9 +870,9 @@ exports[`ConfigureProtocol check update 1`] = `
             <input
               class="mb-3 form-check-input"
               color="secondary"
-              id="south.dataSources.8.enabled"
+              id="south.dataSources.0.enabled"
               label="Disabled"
-              name="south.dataSources.8.enabled"
+              name="south.dataSources.0.enabled"
               type="checkbox"
             />
             <small
@@ -1596,6 +882,44 @@ exports[`ConfigureProtocol check update 1`] = `
                 Enable this application
               </div>
             </small>
+          </div>
+        </div>
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3"
+          >
+            <select
+              aria-invalid="false"
+              class="oi-form-input form-select"
+              id="south.dataSources.0.scanMode"
+              name="south.dataSources.0.scanMode"
+            >
+              <option
+                value="everySecond"
+              >
+                everySecond
+              </option>
+              <option
+                value="every10Second"
+              >
+                every10Second
+              </option>
+              <option
+                value="every1Min"
+              >
+                every1Min
+              </option>
+              <option
+                value="listen"
+              >
+                listen
+              </option>
+            </select>
+            <div
+              class="invalid-feedback"
+            />
           </div>
         </div>
       </div>
@@ -1737,15 +1061,15 @@ exports[`ConfigureProtocol check update 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.8.logParameters.consoleLevel"
+              for="south.dataSources.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.8.logParameters.consoleLevel"
-              name="south.dataSources.8.logParameters.consoleLevel"
+              id="south.dataSources.0.logParameters.consoleLevel"
+              name="south.dataSources.0.logParameters.consoleLevel"
             >
               <option
                 value="engine"
@@ -1796,15 +1120,15 @@ exports[`ConfigureProtocol check update 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.8.logParameters.fileLevel"
+              for="south.dataSources.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.8.logParameters.fileLevel"
-              name="south.dataSources.8.logParameters.fileLevel"
+              id="south.dataSources.0.logParameters.fileLevel"
+              name="south.dataSources.0.logParameters.fileLevel"
             >
               <option
                 value="engine"
@@ -1855,15 +1179,15 @@ exports[`ConfigureProtocol check update 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.8.logParameters.sqliteLevel"
+              for="south.dataSources.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.8.logParameters.sqliteLevel"
-              name="south.dataSources.8.logParameters.sqliteLevel"
+              id="south.dataSources.0.logParameters.sqliteLevel"
+              name="south.dataSources.0.logParameters.sqliteLevel"
             >
               <option
                 value="engine"
@@ -1920,7 +1244,7 @@ exports[`ConfigureProtocol check update 1`] = `
             class="row"
           >
             <h5>
-              HDA Agent
+              FolderScanner settings
               <button
                 class="util-button mt-1 btn btn-link"
                 id="id"
@@ -1957,899 +1281,31 @@ exports[`ConfigureProtocol check update 1`] = `
                   class="col"
                 >
                   <p>
-                    OPCHDA Agent is an external executable that will handle the protocol HDA. We decided to externalize it to avoid combining relatively old libraries in the main OIBus code and also because OPCHDA is only supported on Microsoft Windows.
+                    The FolderScanner South periodically checks the input folder for new files at an interval specified by scan mode. When a new file is detected it will be sent to any North capable of handling files and configured to accept files from this South.
                   </p>
-                  <ul>
-                    <li>
-                      The agent communicate with OIBus using a TCP port that can be configured in this section.
-                    </li>
-                    <li>
-                      It is possible to decide the level of logs that will be sent by the agent to OIBus. It is recommended to start with 'debug' and to switch to 'info' when the communication is stabilized.
-                    </li>
-                    <li>
-                      By default, when you restart the agent, it will query from the last successful timestamp (for each scan group) so we dont loose values during the time the HDA was not active. if the cache is deleted (or on the first startup), the default start time will be the current time except if a key 'startTime' (only accessible by editing manually the OIBus configuration time) indicates a different start time. This feature has been added to be allow recovering of values from the past when needed.
-                    </li>
-                    <p>
-                      <b>
-                        DA Quality code
-                      </b>
-                    </p>
-                    <table
-                      border="1"
-                    >
-                      <tbody>
-                        <tr>
-                          <td>
-                            0x00000000
-                          </td>
-                          <td>
-                            Bad [Non-Specific]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000004
-                          </td>
-                          <td>
-                            Bad [Configuration Error]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000008
-                          </td>
-                          <td>
-                            Bad [Not Connected]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x0000000c
-                          </td>
-                          <td>
-                            Bad [Device Failure]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000010
-                          </td>
-                          <td>
-                            Bad [Sensor Failure]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000014
-                          </td>
-                          <td>
-                            Bad [Last Known Value]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000018
-                          </td>
-                          <td>
-                            Bad [Communication Failure]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x0000001C
-                          </td>
-                          <td>
-                            Bad [Out of Service]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000040
-                          </td>
-                          <td>
-                            Uncertain [Non-Specific]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000041
-                          </td>
-                          <td>
-                            Uncertain [Non-Specific] (Low Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000042
-                          </td>
-                          <td>
-                            Uncertain [Non-Specific] (High Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000043
-                          </td>
-                          <td>
-                            Uncertain [Non-Specific] (Constant)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000044
-                          </td>
-                          <td>
-                            Uncertain [Last Usable]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000045
-                          </td>
-                          <td>
-                            Uncertain [Last Usable] (Low Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000046
-                          </td>
-                          <td>
-                            Uncertain [Last Usable] (High Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000047
-                          </td>
-                          <td>
-                            Uncertain [Last Usable] (Constant)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000050
-                          </td>
-                          <td>
-                            Uncertain [Sensor Not Accurate]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000051
-                          </td>
-                          <td>
-                            Uncertain [Sensor Not Accurate] (Low Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000052
-                          </td>
-                          <td>
-                            Uncertain [Sensor Not Accurate] (High Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000053
-                          </td>
-                          <td>
-                            Uncertain [Sensor Not Accurate] (Constant)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000054
-                          </td>
-                          <td>
-                            Uncertain [EU Exceeded]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000055
-                          </td>
-                          <td>
-                            Uncertain [EU Exceeded] (Low Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000056
-                          </td>
-                          <td>
-                            Uncertain [EU Exceeded] (High Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000057
-                          </td>
-                          <td>
-                            Uncertain [EU Exceeded] (Constant)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000058
-                          </td>
-                          <td>
-                            Uncertain [Sub-Normal]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00000059
-                          </td>
-                          <td>
-                            Uncertain [Sub-Normal] (Low Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x0000005a
-                          </td>
-                          <td>
-                            Uncertain [Sub-Normal] (High Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x0000005b
-                          </td>
-                          <td>
-                            Uncertain [Sub-Normal] (Constant)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000c0
-                          </td>
-                          <td>
-                            Good [Non-Specific]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000c1
-                          </td>
-                          <td>
-                            Good [Non-Specific] (Low Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000c2
-                          </td>
-                          <td>
-                            Good [Non-Specific] (High Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000c3
-                          </td>
-                          <td>
-                            Good [Non-Specific] (Constant)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000d8
-                          </td>
-                          <td>
-                            Good [Local Override]
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000d9
-                          </td>
-                          <td>
-                            Good [Local Override] (Low Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000da
-                          </td>
-                          <td>
-                            Good [Local Override] (High Limited)
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x000000db
-                          </td>
-                          <td>
-                            Good [Local Override] (Constant)
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                    <p>
-                      <b>
-                        HDA Quality code
-                      </b>
-                    </p>
-                    <table
-                      border="1"
-                    >
-                      <tbody>
-                        <tr>
-                          <td>
-                            0x00010000
-                          </td>
-                          <td>
-                            Bad [Non-Specific] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010004
-                          </td>
-                          <td>
-                            Bad [Configuration Error] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010008
-                          </td>
-                          <td>
-                            Bad [Not Connected] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x0001000c
-                          </td>
-                          <td>
-                            Bad [Device Failure] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010010
-                          </td>
-                          <td>
-                            Bad [Sensor Failure] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010014
-                          </td>
-                          <td>
-                            Bad [Last Known Value] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010018
-                          </td>
-                          <td>
-                            Bad [Communication Failure] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x0001001c
-                          </td>
-                          <td>
-                            Bad [Out of Service] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010040
-                          </td>
-                          <td>
-                            Uncertain [Non-Specific] : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010041
-                          </td>
-                          <td>
-                            Uncertain [Non-Specific] (Low Limited) : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00010042
-                          </td>
-                          <td>
-                            Uncertain [Non-Specific] (High Limited) : Extra Data
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00040000
-                          </td>
-                          <td>
-                            Indicates the quality of raw data transmission.
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00080000
-                          </td>
-                          <td>
-                            Indicates the quality of calculated data transmission.
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00100000
-                          </td>
-                          <td>
-                            No bounding values were found at the starting or ending point.
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00200000
-                          </td>
-                          <td>
-                            No raw data were found for the specified time interval.
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            0x00400000
-                          </td>
-                          <td>
-                            The raw data in the selected interval were not completely archived.
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-4"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.agentFilename"
-            >
-              Agent filename
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.agentFilename"
-              name="south.dataSources.8.OPCHDA.agentFilename"
-              type="text"
-              value="./deps/win/HdaAgent/HdaAgent.exe"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                ex: c:\\HdaAgent\\HdaAgent.exe
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.tcpPort"
-            >
-              TCP Port
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.tcpPort"
-              name="south.dataSources.8.OPCHDA.tcpPort"
-              type="integer"
-              value="3333"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                HDA Agent port
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.logLevel"
-            >
-              Logging Level
-            </label>
-            <select
-              aria-invalid="false"
-              class="oi-form-input form-select"
-              id="south.dataSources.8.OPCHDA.logLevel"
-              name="south.dataSources.8.OPCHDA.logLevel"
-            >
-              <option
-                value="trace"
-              >
-                trace
-              </option>
-              <option
-                value="debug"
-              >
-                debug
-              </option>
-              <option
-                value="info"
-              >
-                info
-              </option>
-              <option
-                value="warning"
-              >
-                warning
-              </option>
-              <option
-                value="error"
-              >
-                error
-              </option>
-            </select>
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Logging level for the HDA agent
-              </div>
-            </small>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-12"
-        >
-          <div
-            class="row"
-          >
-            <h5>
-              HDA Server
-              <button
-                class="util-button mt-1 btn btn-link"
-                id="id"
-              >
-                <svg
-                  class="oi-help"
-                  fill="currentColor"
-                  height="12"
-                  stroke="currentColor"
-                  stroke-width="0"
-                  viewBox="0 0 512 512"
-                  width="12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-                  />
-                </svg>
-              </button>
-            </h5>
-          </div>
-          <div
-            class="container-fluid"
-          >
-            <div
-              class="collapse"
-              toggler="id"
-            >
-              <div
-                class="row"
-                style="margin-bottom: 15px;"
-              >
-                <div
-                  class="col"
-                >
                   <p>
-                    OPCHDA Server is hosted on the equipment or server on which we want to retrieve values. You need to give the host name as well as the HDA server name.
-                  </p>
-                  <ul>
-                    <li>
-                      The retry interval will be used when the HDA server cant be connected to the HDA Agent to indicate when the next retry will occur.
-                    </li>
-                    <li>
-                      Max return values is an OPC HDA parameters allowing to indicate the maximum number of values that can be returned in a single read request. Most HDA implementations allows to specify 0 so the maximum is defined by the HDA server. Some memory conditions may cause the HDA server to send errors that can be solved by minimizing this parameters. A low value requires the server to split a single reply in multiple chunks creating more network traffic.
-                    </li>
-                    <li>
-                      Max read interval is used when a query request a very long range (one month for example). The range will be divided in smaller request (one hour by default) to avoid the memory issues on the HDA server. This parameter is typically used when OIBus was stopped for a long time and that we need to recover values from that range on the restart.
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-4"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.host"
-            >
-              Host
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.host"
-              name="south.dataSources.8.OPCHDA.host"
-              type="text"
-              value="opcserver"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                IP address or hostname of the HDA server
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-4"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.serverName"
-            >
-              Server name
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.serverName"
-              name="south.dataSources.8.OPCHDA.serverName"
-              type="text"
-              value="Matrikon.OPC.Simulation"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                HDA server (Matrikon.OPC.Simulation)
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.retryInterval"
-            >
-              Retry interval (ms)
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.retryInterval"
-              name="south.dataSources.8.OPCHDA.retryInterval"
-              type="integer"
-              value="10000"
-            />
-            <div
-              class="invalid-feedback"
-            />
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.maxReadInterval"
-            >
-              Max read interval (s)
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.maxReadInterval"
-              name="south.dataSources.8.OPCHDA.maxReadInterval"
-              type="integer"
-              value="3600"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Split the time interval into smaller intervals of this duration (in s).
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.readIntervalDelay"
-            >
-              Read interval delay (ms)
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.readIntervalDelay"
-              name="south.dataSources.8.OPCHDA.readIntervalDelay"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Time to wait between the read interval iterations (ms)
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="south.dataSources.8.OPCHDA.maxReturnValues"
-            >
-              Max return values
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="south.dataSources.8.OPCHDA.maxReturnValues"
-              name="south.dataSources.8.OPCHDA.maxReturnValues"
-              type="integer"
-              value="10000"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                Max number of values returned for one point during a read interval
-              </div>
-            </small>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-12"
-        >
-          <div
-            class="row"
-          >
-            <h5>
-              ScanGroups
-              <button
-                class="util-button mt-1 btn btn-link"
-                id="id"
-              >
-                <svg
-                  class="oi-help"
-                  fill="currentColor"
-                  height="12"
-                  stroke="currentColor"
-                  stroke-width="0"
-                  viewBox="0 0 512 512"
-                  width="12"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-                  />
-                </svg>
-              </button>
-            </h5>
-          </div>
-          <div
-            class="container-fluid"
-          >
-            <div
-              class="collapse"
-              toggler="id"
-            >
-              <div
-                class="row"
-                style="margin-bottom: 15px;"
-              >
-                <div
-                  class="col"
-                >
-                  <p>
-                    OPCHDA application will request all points in the same scanMode. OPCHDA can query raw values but can also aggregate points on a given period. If an aggregate is chosen, the resampling period must also be selected. Important: a point with a scanMode without the corresponding scangroup will not be requested.
-                    <br />
+                    Please use always the / separator. OIBus will convert it according to the platform. For example, on Windows, c:/input/ will be converted to c:\\input\\ Make sure OIBus has READ and WRITE access to this folder.
                     <b>
-                      In the current version, aggregates are NOT supported for production mode. Please use "Raw"
+                      When OIBus is started as a Windows service, you may have to assign a user logon in the Windows services.msc console.
                     </b>
                   </p>
+                  <p>
+                    It is possible to specify how to handle files.
+                  </p>
+                  <ul>
+                    <li>
+                      If Preserve File is checked the files will be left intact, otherwise they will be removed from the input folder.
+                    </li>
+                    <li>
+                      If Ignore Modified Date is checked the last edited time of the file will be ignored when the file is preserved. This implies that a file will be sent at each scan of the folder
+                    </li>
+                    <li>
+                      The Minimum Age option is used to specify the time since the file was last modified. It is used to prevent handling files that are still populated.
+                    </li>
+                    <li>
+                      The RegExp option can be used to filter what kind of files to be handled.
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
@@ -2860,51 +1316,167 @@ exports[`ConfigureProtocol check update 1`] = `
         class="row"
       >
         <div
-          class="col-md-6"
+          class="col-md-4"
         >
-          <table
-            class="table table table-sm table-striped table-hover"
+          <div
+            class="mb-3"
           >
-            <thead>
-              <tr>
-                <th
-                  scope="col"
-                >
-                  <svg
-                    class="oi-icon"
-                    fill="currentColor"
-                    height="1em"
-                    stroke="currentColor"
-                    stroke-width="0"
-                    viewBox="0 0 512 512"
-                    width="1em"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M256 8C119 8 8 119 8 256s111 248 248 248 248-111 248-248S393 8 256 8zm144 276c0 6.6-5.4 12-12 12h-92v92c0 6.6-5.4 12-12 12h-56c-6.6 0-12-5.4-12-12v-92h-92c-6.6 0-12-5.4-12-12v-56c0-6.6 5.4-12 12-12h92v-92c0-6.6 5.4-12 12-12h56c6.6 0 12 5.4 12 12v92h92c6.6 0 12 5.4 12 12v56z"
-                    />
-                  </svg>
-                  <span>
-                    Scan Mode
-                  </span>
-                </th>
-                <th
-                  scope="col"
-                >
-                  aggregate
-                </th>
-                <th
-                  scope="col"
-                >
-                  resampling
-                </th>
-                <th
-                  scope="col"
-                />
-              </tr>
-            </thead>
-            <tbody />
-          </table>
+            <label
+              class="form-label"
+              for="south.dataSources.0.FolderScanner.inputFolder"
+            >
+              Input folder
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.0.FolderScanner.inputFolder"
+              name="south.dataSources.0.FolderScanner.inputFolder"
+              type="text"
+              value="./input/"
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Path to folder such as: c:/input/
+              </div>
+            </small>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3 mb-3"
+          >
+            <label
+              class="form-check-label"
+            >
+              Preserve File?
+            </label>
+            <input
+              checked=""
+              class="oi-form-input checkbox form-check-input"
+              id="south.dataSources.0.FolderScanner.preserveFiles"
+              name="south.dataSources.0.FolderScanner.preserveFiles"
+              type="checkbox"
+            />
+          </div>
+        </div>
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3 mb-3"
+          >
+            <label
+              class="form-check-label"
+            >
+              Ignore modified date
+            </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="south.dataSources.0.FolderScanner.ignoreModifiedDate"
+              name="south.dataSources.0.FolderScanner.ignoreModifiedDate"
+              type="checkbox"
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.dataSources.0.FolderScanner.minAge"
+            >
+              Minimum Age
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.0.FolderScanner.minAge"
+              name="south.dataSources.0.FolderScanner.minAge"
+              type="integer"
+              value="0"
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.dataSources.0.FolderScanner.regex"
+            >
+              RegExp
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.dataSources.0.FolderScanner.regex"
+              name="south.dataSources.0.FolderScanner.regex"
+              type="text"
+              value=".csv"
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                RegExp to filter the folder
+              </div>
+            </small>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3 mb-3"
+          >
+            <label
+              class="form-check-label"
+            >
+              Compress File?
+            </label>
+            <input
+              class="oi-form-input checkbox form-check-input"
+              id="south.dataSources.0.FolderScanner.compression"
+              name="south.dataSources.0.FolderScanner.compression"
+              type="checkbox"
+            />
+          </div>
         </div>
       </div>
     </form>

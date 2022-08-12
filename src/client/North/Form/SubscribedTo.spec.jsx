@@ -5,11 +5,11 @@ import React from 'react'
 import { act, Simulate } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import newConfig from '../../../../tests/testConfig'
+import { testConfig } from '../../../../tests/testConfig'
 import SubscribedTo from './SubscribedTo.jsx'
 
 const dispatchNewConfig = jest.fn()
-React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
+React.useContext = jest.fn().mockReturnValue({ newConfig: testConfig, dispatchNewConfig })
 
 const mockMath = Object.create(global.Math)
 mockMath.random = () => 1
@@ -31,7 +31,7 @@ afterEach(() => {
   root = null
 })
 
-newConfig.north.applications.forEach((application) => {
+testConfig.north.applications.forEach((application) => {
   describe('SubscribedTo', () => {
     test(`check SubscribedTo with application: ${application.name}`, () => {
       act(() => {
@@ -45,7 +45,7 @@ newConfig.north.applications.forEach((application) => {
   })
 })
 
-const application = newConfig.north.applications[0]
+const application = testConfig.north.applications[0]
 describe('SubscribedTo click changes', () => {
   test('check SubscribedTo add row', () => {
     act(() => {
@@ -61,7 +61,7 @@ describe('SubscribedTo click changes', () => {
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
       name: 'north.applications.0.subscribedTo',
-      value: newConfig.south.dataSources[0].id,
+      value: testConfig.south.dataSources[0].id,
     })
     expect(container).toMatchSnapshot()
   })
@@ -79,7 +79,7 @@ describe('SubscribedTo click changes', () => {
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
       name: 'north.applications.0.subscribedTo.0',
-      value: 'datasource-uuid-1',
+      value: 'south-uuid-1',
     })
     expect(container).toMatchSnapshot()
   })

@@ -3,7 +3,7 @@ const path = require('path')
 
 const FolderScanner = require('./FolderScanner.class')
 const databaseService = require('../../services/database.service')
-const config = require('../../../tests/testConfig').default
+const { defaultConfig: config } = require('../../../tests/testConfig')
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
@@ -19,7 +19,23 @@ jest.mock('../../engine/logger/Logger.class')
 jest.mock('../../services/database.service')
 
 let folderScanner = null
-const folderScannerConfig = config.south.dataSources[6]
+const folderScannerConfig = {
+  id: 'south-folder-scanner',
+  name: 'FolderScanner',
+  protocol: 'FolderScanner',
+  enabled: true,
+  FolderScanner: {
+    preserveFiles: true,
+    ignoreModifiedDate: false,
+    minAge: 0,
+    inputFolder: './input/',
+    scanMode: 'every5Second',
+    regex: '.csv',
+    compression: false,
+  },
+  points: [],
+  scanMode: 'every10Second',
+}
 
 beforeEach(async () => {
   // Clears mock.calls and mock.instances before each it()

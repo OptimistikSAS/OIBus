@@ -5,7 +5,7 @@ const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
 const ProxyAgent = require('proxy-agent')
 const ApiHandler = require('../ApiHandler.class')
 const AmazonS3 = require('./AmazonS3.class')
-const config = require('../../../tests/testConfig').default
+const { defaultConfig: config } = require('../../../tests/testConfig')
 const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock database service
@@ -31,7 +31,29 @@ jest.mock('@aws-sdk/node-http-handler', () => ({ NodeHttpHandler: jest.fn() }))
 jest.mock('proxy-agent')
 
 let amazonS3 = null
-const amazonS3Config = config.north.applications[8]
+const amazonS3Config = {
+  id: 'north-aws',
+  name: 'test04',
+  api: 'AmazonS3',
+  enabled: false,
+  AmazonS3: {
+    bucket: 'aef',
+    region: 'eu-west-3',
+    folder: 'azsdfcv',
+    proxy: '',
+    authentication: {
+      key: 'myAccessKey',
+      secretKey: 'mySecretKey',
+    },
+  },
+  caching: {
+    sendInterval: 10000,
+    retryInterval: 5000,
+    groupCount: 1000,
+    maxSendCount: 10000,
+  },
+  subscribedTo: [],
+}
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -62,6 +84,30 @@ describe('Amazone S3 north', () => {
   it('should be properly initialized with a proxy', () => {
     const amazonS3WithProxyConfig = amazonS3Config
     amazonS3WithProxyConfig.AmazonS3.proxy = 'sss'
+    amazonS3.engineConfig.proxies = [
+      {
+        name: 'sss',
+        protocol: 'http',
+        host: 'hhh',
+        port: 123,
+        username: 'uuu',
+        password: 'pppppppppp',
+      },
+      {
+        name: 'ff',
+        protocol: 'http',
+        host: 'tt',
+        port: 1,
+        username: 'uii',
+        password: 'ppppppppppppp',
+      },
+      {
+        name: 'no-auth',
+        protocol: 'http',
+        host: 'tt',
+        port: 1,
+      },
+    ]
 
     const expectedAgent = {
       auth: 'uuu:pppppppppp',

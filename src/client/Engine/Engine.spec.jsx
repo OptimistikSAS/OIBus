@@ -6,11 +6,11 @@ import { act, Simulate } from 'react-dom/test-utils'
 import timexe from 'timexe'
 
 import * as ReactDOMClient from 'react-dom/client'
-import newConfig from '../../../tests/testConfig'
+import { testConfig } from '../../../tests/testConfig'
 import Engine from './Engine.jsx'
 
 const dispatchNewConfig = jest.fn()
-React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
+React.useContext = jest.fn().mockReturnValue({ newConfig: testConfig, dispatchNewConfig })
 
 // fixing date to match snapshot
 const RealDate = Date
@@ -100,14 +100,14 @@ describe('Engine', () => {
     expect(container).toMatchSnapshot()
   })
   test('check Engine when config has no proxies', () => {
-    newConfig.engine.proxies = null
+    testConfig.engine.proxies = null
     act(() => {
       root.render(<Engine />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check Engine when no engine', () => {
-    newConfig.engine = null
+    testConfig.engine = null
     act(() => {
       root.render(<Engine />)
     })

@@ -6,7 +6,7 @@ import { act, Simulate } from 'react-dom/test-utils'
 import timexe from 'timexe'
 
 import * as ReactDOMClient from 'react-dom/client'
-import testConfig from '../../../tests/testConfig'
+import { testConfig } from '../../../tests/testConfig'
 import ScanModes from './ScanModes.jsx'
 
 // fixing date to match snapshot

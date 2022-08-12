@@ -4,15 +4,15 @@
 import React from 'react'
 import { act, Simulate } from 'react-dom/test-utils'
 import * as ReactDOMClient from 'react-dom/client'
-import newConfig from '../../../tests/testConfig'
+import { testConfig } from '../../../tests/testConfig'
 import ConfigureProtocol from './ConfigureProtocol.jsx'
 import utils from '../helpers/utils'
 
 const dispatchNewConfig = jest.fn()
-React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
+React.useContext = jest.fn().mockReturnValue({ newConfig: testConfig, dispatchNewConfig })
 jest.mock('react-router-dom', () => (
   {
-    useParams: jest.fn().mockReturnValue({ id: 'datasource-uuid-9' }),
+    useParams: jest.fn().mockReturnValue({ id: 'south-uuid-1' }),
     useNavigate: jest.fn(),
   }
 ))
@@ -49,21 +49,22 @@ describe('ConfigureProtocol', () => {
       root.render(<ConfigureProtocol />)
     })
     act(() => {
-      Simulate.change(document.getElementById('south.dataSources.8.OPCHDA.host'), { target: { value: 'newhost' } })
+      Simulate.change(document.getElementById('south.dataSources.0.FolderScanner.inputFolder'), { target: { value: './myNewInputFolder' } })
     })
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.8.OPCHDA.host',
-      value: 'newhost',
+      name: 'south.dataSources.0.FolderScanner.inputFolder',
+      value: './myNewInputFolder',
       validity: null,
     })
     expect(container).toMatchSnapshot()
   })
-  test('check datasource not found', () => {
+
+  test('check south not found', () => {
     const reactUseContextMock = React.useContext
     // temporary empty array
-    const config = utils.jsonCopy(newConfig)
+    const config = utils.jsonCopy(testConfig)
     config.south.dataSources = []
     React.useContext = jest.fn().mockReturnValue({ newConfig: config, dispatchNewConfig })
     act(() => {

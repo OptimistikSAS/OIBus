@@ -1,6 +1,6 @@
 const mqtt = require('mqtt')
 const WATSYConnect = require('./WATSYConnect.class')
-const config = require('../../../tests/testConfig').default
+const { defaultConfig: config } = require('../../../tests/testConfig')
 const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock logger
@@ -16,7 +16,27 @@ engine.decryptPassword = (password) => password
 engine.eventEmitters = {}
 
 let WATSYNorth = null
-const WATSYConfig = config.north.applications[5]
+const WATSYConfig = {
+  id: 'north-watsy',
+  name: 'WATSYConnect',
+  api: 'WATSYConnect',
+  enabled: false,
+  WATSYConnect: {
+    MQTTUrl: 'mqtt://hostname',
+    port: 1883,
+    username: 'anyuser',
+    password: 'anypass',
+    applicativeHostUrl: 'https://localhost.com', // Random path
+    secretKey: 'anytoken',
+  },
+  caching: {
+    sendInterval: 1000,
+    retryInterval: 5000,
+    groupCount: 10000,
+    maxSendCount: 10000,
+  },
+  subscribedTo: [],
+}
 // Data for tests
 const values = [
   {

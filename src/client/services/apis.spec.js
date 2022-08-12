@@ -1,5 +1,5 @@
 import apis from './apis'
-import testConfig from '../../../tests/testConfig'
+import { testConfig } from '../../../tests/testConfig'
 
 const logSample = {
   id: 12852,
@@ -13,10 +13,10 @@ global.fetch = jest.fn().mockImplementation((uri) => {
   let jsonString
   switch (uri) {
     case '/config/schemas/north':
-      jsonString = JSON.stringify(testConfig.apiList)
+      jsonString = JSON.stringify(['a', 'b', 'c'])
       break
     case '/config/schemas/south':
-      jsonString = JSON.stringify(testConfig.protocolList)
+      jsonString = JSON.stringify(['d', 'e', 'f'])
       break
     case '/config':
       jsonString = JSON.stringify({ config: testConfig })
@@ -39,10 +39,10 @@ global.fetch = jest.fn().mockImplementation((uri) => {
 describe('apis', () => {
   it('check getSouthProtocols', async () => {
     const result = await apis.getSouthProtocols()
-    expect(result).toEqual(testConfig.protocolList)
+    expect(result).toEqual(['d', 'e', 'f'])
   })
 
-  it('check getSouthProtocolswith status 500', async () => {
+  it('check getSouthProtocols with status 500', async () => {
     const originalError = console.error
     console.error = jest.fn()
     const originalGlobalFetchMock = global.fetch
@@ -56,7 +56,7 @@ describe('apis', () => {
     console.error = originalError
   })
 
-  it('check getSouthProtocolswith catch error', async () => {
+  it('check getSouthProtocols with catch error', async () => {
     const originalError = console.error
     console.error = jest.fn()
     const originalGlobalFetchMock = global.fetch
@@ -75,7 +75,7 @@ describe('apis', () => {
 
   it('check getNorthApis', async () => {
     const result = await apis.getNorthApis()
-    expect(result).toEqual(testConfig.apiList)
+    expect(result).toEqual(['a', 'b', 'c'])
   })
 
   it('check getConfig', async () => {

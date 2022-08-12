@@ -35,7 +35,7 @@ exports[`North Status display NorthStatus page based on config 1`] = `
         |
       </span>
       <span>
-        c
+        TestConsole
       </span>
     </h6>
   </div>
@@ -86,7 +86,7 @@ exports[`North Status go to previous page 1`] = `
         |
       </span>
       <span>
-        c
+        TestConsole
       </span>
     </h6>
   </div>

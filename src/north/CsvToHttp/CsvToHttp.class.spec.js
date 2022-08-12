@@ -1,7 +1,7 @@
 const path = require('path')
 const CsvToHttp = require('./CsvToHttp.class')
 const ApiHandler = require('../ApiHandler.class')
-const config = require('../../../tests/testConfig').default
+const { defaultConfig: config } = require('../../../tests/testConfig')
 const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock logger
@@ -18,7 +18,43 @@ engine.decryptPassword = (password) => password
 engine.eventEmitters = {}
 
 // Define the CsvToHttp North
-const csvToHttpConfig = config.north.applications[6]
+const csvToHttpConfig = {
+  id: 'north-csv-to-http',
+  name: 'CsvToHttp',
+  api: 'CsvToHttp',
+  enabled: false,
+  CsvToHttp: {
+    applicativeHostUrl: 'https://localhost.com',
+    requestMethod: 'POST',
+    proxy: '',
+    mapping: [
+      {
+        csvField: 'Id',
+        httpField: 'Identification',
+        type: 'integer',
+      },
+      {
+        csvField: 'Begin',
+        httpField: 'date',
+        type: 'short date (yyyy-mm-dd)',
+      },
+    ],
+    authentication: {
+      type: 'API Key',
+      secretKey: 'anytoken',
+      key: 'anyvalue',
+    },
+    bodyMaxLength: 100,
+    csvDelimiter: ';',
+  },
+  caching: {
+    sendInterval: 1000,
+    retryInterval: 5000,
+    groupCount: 1000,
+    maxSendCount: 10000,
+  },
+  subscribedTo: [],
+}
 let csvToHttpNorth = null
 
 beforeEach(async () => {

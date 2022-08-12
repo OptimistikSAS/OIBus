@@ -6,7 +6,7 @@ import { act } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
 import utils from '../helpers/utils'
-import testConfig from '../../../tests/testConfig'
+import { testConfig } from '../../../tests/testConfig'
 import { ConfigProvider, reducer } from './ConfigContext.jsx'
 
 // mock fetch
@@ -14,10 +14,10 @@ global.fetch = jest.fn().mockImplementation((uri) => {
   let jsonString
   switch (uri) {
     case '/config/schemas/north':
-      jsonString = JSON.stringify(testConfig.apiList)
+      jsonString = JSON.stringify(['a', 'b', 'c'])
       break
     case '/config/schemas/south':
-      jsonString = JSON.stringify(testConfig.protocolList)
+      jsonString = JSON.stringify(['d', 'e', 'f'])
       break
     case '/config':
       jsonString = JSON.stringify({ config: testConfig })
@@ -92,8 +92,8 @@ describe('ConfigProvider', () => {
       )
     })
     expect(setActiveConfig).toBeCalledWith(testConfig)
-    expect(setApiList).toBeCalledWith(testConfig.apiList)
-    expect(setProtocolList).toBeCalledWith(testConfig.protocolList)
+    expect(setApiList).toBeCalledWith(['a', 'b', 'c'])
+    expect(setProtocolList).toBeCalledWith(['d', 'e', 'f'])
     expect(container).toMatchSnapshot()
   })
   test('check initial data fail', async () => {

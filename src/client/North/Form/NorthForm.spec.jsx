@@ -5,7 +5,7 @@ import React from 'react'
 import { act } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import newConfig from '../../../../tests/testConfig'
+import { testConfig } from '../../../../tests/testConfig'
 import NorthForm from './NorthForm.jsx'
 
 const mockNavigate = jest.fn()
@@ -15,7 +15,7 @@ jest.mock('react-router-dom', () => ({
   useParams: jest.fn().mockReturnValue({ id: 'north-id' }),
 }))
 
-React.useContext = jest.fn().mockReturnValue({ newConfig })
+React.useContext = jest.fn().mockReturnValue({ newConfig: testConfig })
 
 const mockMath = Object.create(global.Math)
 mockMath.random = () => 1
@@ -38,7 +38,7 @@ afterEach(() => {
 })
 
 describe('NorthForm', () => {
-  newConfig.north.applications.forEach((application) => {
+  testConfig.north.applications.forEach((application) => {
     test(`check NorthForm with application: ${application.name}`, () => {
       act(() => {
         root.render(

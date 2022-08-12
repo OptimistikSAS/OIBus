@@ -5,7 +5,6 @@ import React from 'react'
 import { act, Simulate } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import testConfig from '../../../tests/testConfig'
 import PointsButton from './PointsButton.jsx'
 
 const mockNavigate = jest.fn()
@@ -29,11 +28,16 @@ afterEach(() => {
   root = null
 })
 
-const dataSource = testConfig.south.dataSources[0]
-const emptyPointsDataSource = testConfig.south.dataSources[1]
-const nullPointsDataSource = testConfig.south.dataSources[2]
-emptyPointsDataSource.points = []
-nullPointsDataSource.points = null
+const dataSource = {
+  id: 'south-uuid-1',
+  points: [
+    { pointId: 'A13518/AI1/PV.CV', scanMode: 'everySecond' },
+    { pointId: '_FC42404/PID1/OUT.CV', scanMode: 'everySecond' },
+    { pointId: '_FC42404/PID1/PV.CV', scanMode: 'every10Second' },
+  ],
+}
+const emptyPointsDataSource = { id: 'south-uuid-1', points: [] }
+const nullPointsDataSource = { id: 'south-uuid-1', points: null }
 
 describe('PointsButton', () => {
   test('check PointsButton disabled', () => {

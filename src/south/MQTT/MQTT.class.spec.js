@@ -1,7 +1,7 @@
 const mqtt = require('mqtt')
 
 const MQTT = require('./MQTT.class')
-const config = require('../../config/defaultConfig.json')
+const { defaultConfig: config } = require('../../../tests/testConfig')
 const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock mqtt

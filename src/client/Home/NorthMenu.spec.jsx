@@ -6,7 +6,7 @@ import * as nanoid from 'nanoid'
 import { act, Simulate } from 'react-dom/test-utils'
 import * as ReactDOMClient from 'react-dom/client'
 import NorthMenu from './NorthMenu.jsx'
-import newConfig from '../../../tests/testConfig'
+import { testConfig } from '../../../tests/testConfig'
 
 // mocking the nanoid method
 jest.mock('nanoid')
@@ -20,14 +20,14 @@ jest.mock('react-router-dom', () => (
   { useNavigate: () => mockNavigate }
 ))
 
-const application = newConfig.north.applications[0]
+const application = testConfig.north.applications[0]
 
 let container
 let root
 // eslint-disable-next-line no-undef
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
 beforeEach(() => {
-  React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
+  React.useContext = jest.fn().mockReturnValue({ newConfig: testConfig, dispatchNewConfig })
   container = document.createElement('div')
   root = ReactDOMClient.createRoot(container)
   document.body.appendChild(container)
@@ -104,7 +104,7 @@ describe('NorthMenu', () => {
       name: 'north.applications',
       value: {
         ...application,
-        name: 'c copy',
+        name: 'TestConsole copy',
         enabled: false,
         id: 'generated-uuid',
       },
@@ -113,7 +113,8 @@ describe('NorthMenu', () => {
   })
 
   test('check duplicate application already copied', () => {
-    const applicationWithCopyInName = newConfig.north.applications[8]
+    const applicationWithCopyInName = application
+    applicationWithCopyInName.name = 'TestConsole copy'
 
     act(() => {
       root.render(<NorthMenu application={applicationWithCopyInName} />)
@@ -129,7 +130,7 @@ describe('NorthMenu', () => {
       name: 'north.applications',
       value: {
         ...applicationWithCopyInName,
-        name: 'test04 copy2',
+        name: 'TestConsole copy copy',
         enabled: false,
         id: 'generated-uuid',
       },
@@ -147,7 +148,7 @@ describe('NorthMenu', () => {
     act(() => {
       Simulate.click(document.getElementById('oi-settings'))
     })
-    expect(mockNavigate).toBeCalledWith(`/north/${newConfig.north.applications[0].id}`)
+    expect(mockNavigate).toBeCalledWith(`/north/${testConfig.north.applications[0].id}`)
     expect(container).toMatchSnapshot()
   })
 
@@ -161,7 +162,7 @@ describe('NorthMenu', () => {
     act(() => {
       Simulate.click(document.getElementById('oi-status'))
     })
-    expect(mockNavigate).toBeCalledWith(`/north/${newConfig.north.applications[0].id}/live`)
+    expect(mockNavigate).toBeCalledWith(`/north/${testConfig.north.applications[0].id}/live`)
     expect(container).toMatchSnapshot()
   })
 

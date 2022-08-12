@@ -5,15 +5,15 @@ import React from 'react'
 import { act, Simulate } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import newConfig from '../../../tests/testConfig'
+import { testConfig } from '../../../tests/testConfig'
 import ConfigureApi from './ConfigureApi.jsx'
 import utils from '../helpers/utils'
 
 const dispatchNewConfig = jest.fn()
-React.useContext = jest.fn().mockReturnValue({ newConfig, dispatchNewConfig })
+React.useContext = jest.fn().mockReturnValue({ newConfig: testConfig, dispatchNewConfig })
 jest.mock('react-router-dom', () => (
   {
-    useParams: jest.fn().mockReturnValue({ id: 'application-uuid-2' }),
+    useParams: jest.fn().mockReturnValue({ id: 'north-uuid-1' }),
     useNavigate: jest.fn(),
   }
 ))
@@ -50,13 +50,13 @@ describe('ConfigureApi', () => {
       root.render(<ConfigureApi />)
     })
     act(() => {
-      Simulate.change(document.getElementById('north.applications.1.OIConnect.host'), { target: { value: 'http://new_host' } })
+      Simulate.change(document.getElementById('north.applications.0.Console.verbose'), { target: { checked: true } })
     })
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'north.applications.1.OIConnect.host',
-      value: 'http://new_host',
+      name: 'north.applications.0.Console.verbose',
+      value: true,
       validity: null,
     })
     expect(container).toMatchSnapshot()
@@ -64,7 +64,7 @@ describe('ConfigureApi', () => {
   test('check application not found', () => {
     const reactUseContextMock = React.useContext
     // temporary empty applications array
-    const config = utils.jsonCopy(newConfig)
+    const config = utils.jsonCopy(testConfig)
     config.north.applications = []
     React.useContext = jest.fn().mockReturnValue({ newConfig: config, dispatchNewConfig })
     act(() => {

@@ -24,7 +24,7 @@ const csv = require('papaparse')
 
 const SQL = require('./SQL.class')
 const databaseService = require('../../services/database.service')
-const config = require('../../../tests/testConfig').default
+const { defaultConfig: config } = require('../../../tests/testConfig')
 const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock fs
@@ -72,7 +72,37 @@ engine.eventEmitters = {}
 
 let sqlSouth = null
 const nowDateString = '2020-02-02T02:02:02.222Z'
-const sqlConfig = config.south.dataSources[7]
+const sqlConfig = {
+  id: 'south-sql',
+  name: 'SQL',
+  protocol: 'SQL',
+  enabled: false,
+  SQL: {
+    port: 1433,
+    password: 'popopopopopopopopo',
+    connectionTimeout: 1000,
+    requestTimeout: 1000,
+    databasePath: './test.db',
+    host: '192.168.0.11',
+    driver: 'mssql',
+    username: 'oibus_user',
+    database: 'oibus',
+    query:
+            'SELECT created_at AS timestamp, value1 AS temperature '
+            + 'FROM oibus_test WHERE created_at > @StartTime AND created_at <= @EndTime',
+    delimiter: ',',
+    filename: 'sql-@CurrentDate.csv',
+    scanMode: 'everySecond',
+    timeColumn: 'timestamp',
+    timezone: 'Europe/Paris',
+    dateFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+    timeFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+    compression: false,
+  },
+  scanMode: 'every10Second',
+  points: [],
+}
+
 Settings.now = () => new Date(nowDateString).valueOf()
 const RealDate = Date
 
@@ -666,7 +696,7 @@ describe('SQL', () => {
     expect(fs.writeFile)
       .toBeCalledWith(expectedPath, csvContent)
     expect(engine.addFile)
-      .toBeCalledWith('datasource-uuid-8', expectedPath, false)
+      .toBeCalledWith('south-sql', expectedPath, false)
   })
 
   it('should send compressed file when the result is not empty and compression is true', async () => {
@@ -707,7 +737,7 @@ describe('SQL', () => {
     expect(fs.writeFile)
       .toBeCalledWith(targetCsv, csvContent)
     expect(engine.addFile)
-      .toBeCalledWith('datasource-uuid-8', targetGzip, false)
+      .toBeCalledWith('south-sql', targetGzip, false)
   })
 
   it('should manage fs unlink error and catch error', async () => {
