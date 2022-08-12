@@ -56,10 +56,11 @@ class MongoDB extends ApiHandler {
     this.logger.trace(`MongoDB handleValues() call with ${values.length} values`)
     try {
       await this.makeRequest(values)
-      this.statusData['Last handled values at'] = new Date().toISOString()
-      this.statusData['Number of values sent since OIBus has started'] += values.length
-      this.statusData['Last added point id (value)'] = `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`
-      this.updateStatusDataStream()
+      this.updateStatusDataStream({
+        'Last handled values at': new Date().toISOString(),
+        'Number of values sent since OIBus has started': this.statusData['Number of values sent since OIBus has started'] + values.length,
+        'Last added point id (value)': `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`,
+      })
     } catch (error) {
       this.logger.error(error)
       throw ApiHandler.STATUS.COMMUNICATION_ERROR
@@ -115,8 +116,6 @@ class MongoDB extends ApiHandler {
       await this.client.close()
     }
     await super.disconnect()
-    this.statusData['Connected at'] = 'Not connected'
-    this.updateStatusDataStream()
   }
 
   /**

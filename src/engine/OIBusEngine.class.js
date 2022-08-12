@@ -3,7 +3,6 @@ const path = require('path')
 const os = require('os')
 const EventEmitter = require('events')
 const humanizeDuration = require('humanize-duration')
-const databaseService = require('../services/database.service')
 
 // Engine classes
 const BaseEngine = require('./BaseEngine.class')
@@ -426,62 +425,21 @@ class OIBusEngine extends BaseEngine {
    * Get status information.
    * @returns {object} - The status information
    */
-  async getStatus() {
-    const apisCacheStats = await this.cache.getCacheStatsForApis()
-    const protocolsCacheStats = await this.cache.getCacheStatsForProtocols()
-    const memoryUsage = this.getMemoryUsage()
-
-    const freeMemory = Number(os.freemem() / 1024 / 1024).toFixed(2)
-    const totalMemory = Number(os.totalmem() / 1024 / 1024).toFixed(2)
-    const percentMemory = Number((freeMemory / totalMemory) * 100).toFixed(2)
-
-    const { engineConfig } = this.configService.getConfig()
-    const logsCount = await databaseService.getLogsCount(engineConfig.logParameters.sqliteLog.fileName)
-
-    const processUptime = 1000 * 1000 * process.uptime()
-    const processCpuUsage = process.cpuUsage()
-    const cpuUsagePercentage = Number((100 * (processCpuUsage.user + processCpuUsage.system)) / processUptime).toFixed(2)
-
-    const filesErrorCount = await databaseService.getErroredFilesCount(this.cache.filesErrorDatabasePath)
-    const valuesErrorCount = await databaseService.getErroredValuesCount(this.cache.valuesErrorDatabasePath)
-
+  async getOIBusInfo() {
     return {
       version: this.getVersion(),
       architecture: process.arch,
-      currentDirectory: process.cwd(),
-      nodeVersion: process.version,
+      'Current directory': process.cwd(),
+      'Node version': process.version,
       executable: process.execPath,
-      configurationFile: this.configService.getConfigurationFileLocation(),
-      historyQueryConfigurationFile: this.configService.getHistoryQueryConfigurationFileLocation(),
-      memory: `${freeMemory}/${totalMemory}/${percentMemory} MB/%`,
-      ...memoryUsage,
-      cpuUsage: `${cpuUsagePercentage}%`,
+      'Configuration file': this.configService.getConfigurationFileLocation(),
+      'History Query Database': this.configService.getHistoryQueryConfigurationFileLocation(),
       processId: process.pid,
-      uptime: humanizeDuration(1000 * process.uptime(), { round: true }),
       hostname: os.hostname(),
       osRelease: os.release(),
       osType: os.type(),
-      apisCacheStats,
-      protocolsCacheStats,
-      addValuesMessages: this.addValuesMessages,
-      addValuesCount: this.addValuesCount,
-      addFileCount: this.addFileCount,
-      logError: logsCount.error,
-      logWarning: logsCount.warn,
-      filesErrorCount,
-      valuesErrorCount,
       copyright: '(c) Copyright 2019-2022 Optimistik, all rights reserved.',
     }
-  }
-
-  /**
-   * Get live status for a given South.
-   * @param {string} id - The datasource id
-   * @returns {object} - The live status
-   */
-  getStatusForSouth(id) {
-    const south = this.activeProtocols[id]
-    return south ? south.getStatus() : {}
   }
 
   /**
@@ -494,34 +452,21 @@ class OIBusEngine extends BaseEngine {
   }
 
   /**
-   * Get live status for a given North.
-   * @param {string} id - The application id
-   * @returns {object} - The live status
-   */
-  getStatusForNorth(id) {
-    const north = this.activeApis[id]
-    return north ? north.getStatus() : {}
-  }
-
-  /**
    * Update engine status data to be displayed on the home screen
    * @returns {void}
    */
   initializeStatusData() {
-    this.updateEngineStatusData()
     if (!this.eventEmitters['/engine/sse']) {
       this.eventEmitters['/engine/sse'] = {}
     }
     this.eventEmitters['/engine/sse'].events = new EventEmitter()
     this.eventEmitters['/engine/sse'].events.on('data', this.listener)
-    this.eventEmitters['/engine/sse'].statusData = this.statusData
-    this.updateStatusDataStream()
+    this.updateEngineStatusData()
     if (this.liveStatusInterval) {
       clearInterval(this.liveStatusInterval)
     }
     this.liveStatusInterval = setInterval(() => {
       this.updateEngineStatusData()
-      this.updateStatusDataStream()
     }, 5000)
   }
 
@@ -538,39 +483,47 @@ class OIBusEngine extends BaseEngine {
       .toFixed(2)
     const memoryUsage = this.getMemoryUsage()
 
-    this.statusData['Up time'] = humanizeDuration(1000 * process.uptime(), { round: true })
-    this.statusData['CPU usage'] = `${cpuUsagePercentage}%`
-    this.statusData['OS free memory'] = `${freeMemory} GB / ${totalMemory} GB (${percentMemory} %)`
-    this.statusData['RAM occupation (min / current / max)'] = memoryUsage.rss
-    this.statusData['Total heap size (min / current / max)'] = memoryUsage.heapTotal
-    this.statusData['Heap used (min / current / max)'] = memoryUsage.heapUsed
-    this.statusData['External C++ V8 memory (min / current / max)'] = memoryUsage.external
-    this.statusData['Array buffers memory (min / current / max)'] = memoryUsage.arrayBuffers
-
+    const northConnectorsStatus = {}
     Object.values(this.activeApis).forEach((activeNorthConnector) => {
       if (activeNorthConnector.canHandleValues) {
-        this.statusData[`Number of values sent to North "${
+        northConnectorsStatus[`Number of values sent to North "${
           activeNorthConnector.application.name}"`] = activeNorthConnector.statusData['Number of values sent since OIBus has started']
       }
       if (activeNorthConnector.canHandleFiles) {
-        this.statusData[`Number of files sent to North "${
+        northConnectorsStatus[`Number of files sent to North "${
           activeNorthConnector.application.name}"`] = activeNorthConnector.statusData['Number of files sent since OIBus has started']
       }
     })
 
+    const southConnectorsStatus = {}
     Object.values(this.activeProtocols).forEach((activeSouthConnector) => {
       if (activeSouthConnector.handlesPoints) {
-        this.statusData[`Number of values retrieved from South "${
+        southConnectorsStatus[`Number of values retrieved from South "${
           activeSouthConnector.dataSource.name}"`] = activeSouthConnector.statusData['Number of values since OIBus has started']
       }
       if (activeSouthConnector.handlesFiles) {
-        this.statusData[`Number of files retrieved from South "${
+        southConnectorsStatus[`Number of files retrieved from South "${
           activeSouthConnector.dataSource.name}"`] = activeSouthConnector.statusData['Number of files since OIBus has started']
       }
     })
+
+    this.updateStatusDataStream({
+      'Up time': humanizeDuration(1000 * process.uptime(), { round: true }),
+      'CPU usage': `${cpuUsagePercentage}%`,
+      'OS free memory': `${freeMemory} GB / ${totalMemory} GB (${percentMemory} %)`,
+      'RAM occupation (min / current / max)': memoryUsage.rss,
+      'Total heap size (min / current / max)': memoryUsage.heapTotal,
+      'Heap used (min / current / max)': memoryUsage.heapUsed,
+      'External C++ V8 memory (min / current / max)': memoryUsage.external,
+      'Array buffers memory (min / current / max)': memoryUsage.arrayBuffers,
+      ...northConnectorsStatus,
+      ...southConnectorsStatus,
+    })
   }
 
-  updateStatusDataStream() {
+  updateStatusDataStream(statusData = {}) {
+    this.statusData = { ...this.statusData, ...statusData }
+    this.eventEmitters['/engine/sse'].statusData = this.statusData
     this.eventEmitters['/engine/sse']?.events?.emit('data', this.statusData)
   }
 

@@ -89,7 +89,7 @@ const deleteHistoryQuery = async (id, position) => deleteRequest(`/history-queri
 const getLastCompletedForHistoryQuery = async (id) => getRequest(`/history-queries/${id}/status`)
 
 const getLogs = (fromDate, toDate, verbosity) => getRequest(`/logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&verbosity=[${verbosity}]`)
-const getStatus = () => getRequest('/status')
+const getOIBusInfo = () => getRequest('/info')
 const getSouthStatus = (id) => getRequest(`/status/south/${id}`)
 const getNorthStatus = (id) => getRequest(`/status/north/${id}`)
 
@@ -111,7 +111,7 @@ export default {
   deleteHistoryQuery,
   getLastCompletedForHistoryQuery,
   getLogs,
-  getStatus,
+  getOIBusInfo,
   getSouthStatus,
   getNorthStatus,
   reload,

@@ -21,7 +21,7 @@ global.fetch = jest.fn().mockImplementation((uri) => {
     case '/config':
       jsonString = JSON.stringify({ config: testConfig })
       break
-    case '/status':
+    case '/info':
       jsonString = JSON.stringify({ version: '1.0' })
       break
     default:
@@ -117,7 +117,7 @@ describe('apis', () => {
   })
 
   it('check getStatus', async () => {
-    const result = await apis.getStatus()
+    const result = await apis.getOIBusInfo()
     expect(result).toEqual({ version: '1.0' })
   })
 })

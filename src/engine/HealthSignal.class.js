@@ -92,12 +92,12 @@ class HealthSignal {
   /**
    * Retrieve status information from the engine
    * @param {boolean} verbose - return only the id when false, return full status when true
-   * @returns {object} - the status of oibus
+   * @returns {object} - the status of OIBus
    */
   async prepareStatus(verbose) {
-    let status = { version: this.engine.getVersion() }
+    let status = await this.engine.getOIBusInfo()
     if (verbose) {
-      status = await this.engine.getStatus()
+      status = { ...status, ...this.engine.statusData }
     }
     return status
   }

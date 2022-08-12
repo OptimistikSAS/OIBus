@@ -59,7 +59,6 @@ class HistoryQueryEngine extends BaseEngine {
    * @returns {void}
    */
   initializeStatusData() {
-    this.statusData = { ongoingHistoryQueryId: null }
     if (!this.eventEmitters['/history/engine/sse']) {
       this.eventEmitters['/history/engine/sse'] = {}
     } else {
@@ -67,11 +66,12 @@ class HistoryQueryEngine extends BaseEngine {
     }
     this.eventEmitters['/history/engine/sse'].events = new EventEmitter()
     this.eventEmitters['/history/engine/sse'].events.on('data', this.listener)
-    this.eventEmitters['/history/engine/sse'].statusData = this.statusData
-    this.updateStatusDataStream()
+    this.updateStatusDataStream({ ongoingHistoryQueryId: null })
   }
 
-  updateStatusDataStream() {
+  updateStatusDataStream(statusData = {}) {
+    this.statusData = { ...this.statusData, ...statusData }
+    this.eventEmitters['/history/engine/sse'].statusData = this.statusData
     this.eventEmitters['/history/engine/sse']?.events?.emit('data', this.statusData)
   }
 
@@ -149,8 +149,7 @@ class HistoryQueryEngine extends BaseEngine {
 
     if (this.historyQuery) {
       await this.historyQuery.stop()
-      this.statusData.ongoingHistorQueryId = null
-      this.updateStatusDataStream()
+      this.updateStatusDataStream({ ongoingHistoryQueryId: null })
       this.eventEmitters['/history/engine/sse']?.events?.removeAllListeners()
       this.eventEmitters['/history/engine/sse']?.stream?.destroy()
       this.historyQuery = null
@@ -178,14 +177,12 @@ class HistoryQueryEngine extends BaseEngine {
 
       if (dataSourceToUse && applicationToUse) {
         this.historyQuery = new HistoryQuery(this, this.logger, historyQueryConfig, dataSourceToUse, applicationToUse)
-        this.statusData.ongoingHistoryQueryId = this.historyQuery.id
-        this.updateStatusDataStream()
+        this.updateStatusDataStream({ ongoingHistoryQueryId: this.historyQuery.id })
         this.historyQuery.start()
       }
     } else {
       this.logger.info('No HistoryQuery to execute')
-      this.statusData.ongoingHistoryQueryId = null
-      this.updateStatusDataStream()
+      this.updateStatusDataStream({ ongoingHistoryQueryId: null })
     }
   }
 

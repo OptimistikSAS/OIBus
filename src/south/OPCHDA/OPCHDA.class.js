@@ -66,6 +66,8 @@ class OPCHDA extends ProtocolHandler {
       await super.connect()
       await this.runTcpServer()
       await this.connection$.promise
+      this.connected = true
+      this.updateStatusDataStream({ 'Connected at': new Date().toISOString() })
     } else {
       this.logger.error(`OIBus OPCHDA Agent only supported on Windows: ${process.platform}`)
     }
@@ -80,7 +82,6 @@ class OPCHDA extends ProtocolHandler {
       try {
         const { agentFilename, tcpPort, logLevel } = this.dataSource.OPCHDA
         this.tcpServer = new TcpServer(tcpPort, this.handleMessage.bind(this), this.logger)
-
         this.tcpServer.start(() => {
           this.launchAgent(agentFilename, tcpPort, logLevel)
           this.connection$ = new DeferredPromise()
@@ -137,11 +138,7 @@ class OPCHDA extends ProtocolHandler {
     }
 
     this.tcpServer = null
-
     this.agentConnected = false
-
-    this.statusData['Connected at'] = 'Not connected'
-    this.updateStatusDataStream()
     await super.disconnect()
   }
 
@@ -306,8 +303,7 @@ class OPCHDA extends ProtocolHandler {
       const messageString = JSON.stringify(message)
       this.logger.trace(`Sent at ${new Date().toISOString()}: ${messageString}`)
       this.tcpServer.sendMessage(messageString)
-      this.statusData['Last message sent at'] = new Date().toISOString()
-      this.updateStatusDataStream()
+      this.updateStatusDataStream({ 'Last message sent at': new Date().toISOString() })
     } else {
       this.logger.debug(`sendMessage ignored, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`)
     }
@@ -348,12 +344,9 @@ class OPCHDA extends ProtocolHandler {
           }
           break
         case 'Initialize': // The HDA Agent is connected and ready to read values
-          this.connected = true
-          this.statusData['Connected at'] = new Date().toISOString()
-          this.updateStatusDataStream()
+          this.logger.info(`HDA Agent initialized: ${this.connected}`)
           // resolve the connection promise
           this.connection$.resolve()
-          this.logger.info(`HDA Agent initialized: ${this.connected}`)
           break
         case 'Read': // Receive the values for the requested scan group (Content.Group) after a read request from historyQuery
           {

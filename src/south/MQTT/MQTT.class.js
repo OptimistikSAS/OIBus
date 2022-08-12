@@ -85,9 +85,10 @@ class MQTT extends ProtocolHandler {
    * @return {void}
    */
   async connect() {
-    this.statusData['Connected at'] = 'Not connected'
-    this.statusData['Last scan at'] = 'Subscription'
-    this.updateStatusDataStream()
+    this.updateStatusDataStream({
+      'Connected at': 'Not connected',
+      'Last scan at': 'Subscription',
+    })
     await super.connect()
     this.logger.info(`Connecting to ${this.url}...`)
 
@@ -130,8 +131,6 @@ class MQTT extends ProtocolHandler {
    */
   handleConnectError(error) {
     this.logger.error(error)
-    this.statusData['Connected at'] = 'Not connected'
-    this.updateStatusDataStream()
   }
 
   /**
@@ -142,8 +141,7 @@ class MQTT extends ProtocolHandler {
     this.logger.info(`Connected to ${this.url}`)
 
     this.listen({ pointList: this.dataSource.points })
-    this.statusData['Connected at'] = new Date().toISOString()
-    this.updateStatusDataStream()
+    this.updateStatusDataStream({ 'Connected at': new Date().toISOString() })
   }
 
   /**

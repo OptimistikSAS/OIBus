@@ -10,7 +10,7 @@ const REGEX_MATCH_VARIABLE_STRING = /^\${[^}]*}$/ // match if the string starts 
 const REGEX_GET_VARIABLE = /[^${}]+/ // Get the value inside ${}
 
 /**
- * Class CsvToHttp - convert a csv file into http request such as POST/PUT/PACTH
+ * Class CsvToHttp - convert a csv file into http request such as POST/PUT/PATCH
  */
 class CsvToHttp extends ApiHandler {
   static category = 'API'
@@ -51,7 +51,7 @@ class CsvToHttp extends ApiHandler {
   /**
    * Send the file.
    * @param {String} filePath - The path of the file
-   * @return {Promise} - The send status
+   * @return {Promise} - The status after sending a file
    */
   async handleFile(filePath) {
     // Verify that the file receive is a csv one
@@ -69,9 +69,9 @@ class CsvToHttp extends ApiHandler {
       return ApiHandler.STATUS.LOGIC_ERROR
     }
 
-    // The csv parsing is a success so we begin to map the content
+    // The csv parsing is a success, so we begin to map the content
     // Initialize the body to an empty array
-    const { httpBody, convertionErrorBuffer } = this.convertToHttpBody(csvDataParsed)
+    const { httpBody, conversionErrorBuffer } = this.convertToHttpBody(csvDataParsed)
 
     if (httpBody.length !== 0) {
       if (!await this.sendData(httpBody)) {
@@ -79,16 +79,16 @@ class CsvToHttp extends ApiHandler {
         return ApiHandler.STATUS.LOGIC_ERROR
       }
     }
-    // Logs all the erros
-    if (convertionErrorBuffer.length > 0) {
-      this.logger.error(`${convertionErrorBuffer.length} convertions error`)
+    // Logs all the errors
+    if (conversionErrorBuffer.length > 0) {
+      this.logger.error(`${conversionErrorBuffer.length} conversions error`)
 
-      if (convertionErrorBuffer.length > ERROR_PRINT_SIZE) {
+      if (conversionErrorBuffer.length > ERROR_PRINT_SIZE) {
         for (let i = 0; i < ERROR_PRINT_SIZE; i += 1) {
-          this.logger.error(`${convertionErrorBuffer[i]}`)
+          this.logger.error(`${conversionErrorBuffer[i]}`)
         }
       } else {
-        convertionErrorBuffer.forEach((error) => {
+        conversionErrorBuffer.forEach((error) => {
           this.logger.error(`${error}`)
         })
       }
@@ -102,7 +102,7 @@ class CsvToHttp extends ApiHandler {
    */
   parseCsvFile(filePath) {
     return new Promise((resolve, reject) => {
-      // Initialize array wich will be filled at each step
+      // Initialize array which will be filled at each step
       const csvDataParsed = []
       const csvFile = fs.createReadStream(filePath)
 
@@ -120,10 +120,11 @@ class CsvToHttp extends ApiHandler {
         },
         complete: () => {
           this.logger.trace(`File ${filePath} parsed`)
-          this.statusData['Last Parsed file'] = filePath
-          this.statusData['Number of files sent since OIBus has started'] += 1
-          this.statusData['Last Parsed file at'] = new Date().toISOString()
-          this.updateStatusDataStream()
+          this.updateStatusDataStream({
+            'Last Parsed file': filePath,
+            'Number of files sent since OIBus has started': this.statusData['Number of files sent since OIBus has started'] + 1,
+            'Last Parsed file at': new Date().toISOString(),
+          })
           resolve(csvDataParsed)
         },
       })
@@ -137,7 +138,7 @@ class CsvToHttp extends ApiHandler {
   convertToHttpBody(csvFileInJson) {
     const httpBody = []
     // Reset the buffer for error
-    const convertionErrorBuffer = []
+    const conversionErrorBuffer = []
 
     // Log all headers in the csv file and log the value ine the mapping not present in headers
     this.logger.trace(`All available headers are: ${Object.keys(csvFileInJson[0])}`)
@@ -148,25 +149,25 @@ class CsvToHttp extends ApiHandler {
     csvFileInJson.forEach((csvRowInJson, index) => {
       const { value, error } = CsvToHttp.convertCSVRowIntoHttpBody(csvRowInJson, onlyValidMappingValue)
 
-      // Test the result of the mapping/convertion before add it in the httpBody
-      // Add if we accept error convertion or if everything is fine
+      // Test the result of the mapping/conversion before add it in the httpBody
+      // Add if we accept error conversion or if everything is fine
       if ((!error && value) || (error && value && this.acceptUnconvertedRows)) {
         httpBody.push(value)
       }
 
-      // Add all the errors catched into the buffer
+      // Add all the errors caught into the buffer
       if (error) {
         error.forEach((err) => {
-          convertionErrorBuffer.push(`Line ${index + 1} in csv file: ${err}`)
+          conversionErrorBuffer.push(`Line ${index + 1} in csv file: ${err}`)
         })
       }
     })
-    return { httpBody, convertionErrorBuffer }
+    return { httpBody, conversionErrorBuffer }
   }
 
   /**
    * Get only the valid mapping fields
-   * @param {Mixed} allHeaders - available headears in the csvFile
+   * @param {object} allHeaders - available headers in the csvFile
    * @return {Array} - Return a bool
    */
   getOnlyValidMappingValue(allHeaders) {
@@ -189,7 +190,7 @@ class CsvToHttp extends ApiHandler {
     return new Promise((resolve, reject) => {
       try {
         if (httpBody.length > this.bodyMaxLength) {
-          // Divide the current body in array of maximun maxLength elements
+          // Divide the current body in array of maximum maxLength elements
           let i = 0
           for (i; i < httpBody.length; i += this.bodyMaxLength) {
             this.sendRequest(httpBody.slice(i, i + this.bodyMaxLength - 1))
@@ -229,8 +230,8 @@ class CsvToHttp extends ApiHandler {
 
   /**
    * Test if the field is valid thanks to all headers
-   * @param {Mixed} allHeaders - available headears in the csvFile
-   * @param {Mixed} field - field to test if it matchs with the available headears
+   * @param {object} allHeaders - available headers in the csvFile
+   * @param {object} field - field to test if it matches with the available headers
    * @return {Boolean} - Return a bool
    */
   static isHeaderValid(allHeaders, field) {
@@ -306,10 +307,10 @@ class CsvToHttp extends ApiHandler {
 
   /**
    * It returns the concatenation of value with the previous object
-   * If the oject is empty it return the value sent
-   * @param {Mixed} currentJsonValue - currentJsonValue
-   * @param {Mixed} valueToAdd - valueToAdd
-   * @return {Mixed} - The converted value
+   * If the object is empty it return the value sent
+   * @param {object} currentJsonValue - currentJsonValue
+   * @param {object} valueToAdd - valueToAdd
+   * @return {object} - The converted value
    */
   static insertValueInObject(currentJsonValue, valueToAdd) {
     if (currentJsonValue) {
@@ -320,9 +321,9 @@ class CsvToHttp extends ApiHandler {
 
   /**
    * Convert the value in the selected type (string by default)
-   * @param {Mixed} valueToConvert - valueToConvert
+   * @param {*} valueToConvert - valueToConvert
    * @param {string} type - type
-   * @return {Mixed} - The converted value
+   * @return {object} - The converted value
    */
   static convertToCorrectType(valueToConvert, type) {
     switch (type) {
