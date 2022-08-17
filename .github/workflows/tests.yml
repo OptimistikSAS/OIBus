@@ -1,0 +1,40 @@
+name: Run OIBus tests
+
+on: workflow_call
+
+jobs:
+  tests:
+    name: Test on ${{ matrix.config['os'] }}
+    runs-on: ${{ matrix.config['os'] }}
+    strategy:
+      matrix:
+        config:
+          - { os: 'macos-latest' }
+          - { os: 'windows-latest' }
+          - { os: 'ubuntu-latest' }
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup environment
+        uses: ./.github/actions/setup_environment
+        with:
+          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
+
+      - name: Run unit tests
+        uses: ./.github/actions/unit_tests
+
+      - name: Prepare integration test
+        if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
+        run: npm run setup-dev-env
+
+      - name: Wait for docker containers
+        if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
+        uses: jakejarvis/wait-action@master
+        with:
+          time: '15s'
+
+      - name: Integration test
+        if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
+        run: npm run int-test
