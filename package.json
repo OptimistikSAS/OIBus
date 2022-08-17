@@ -31,7 +31,7 @@
     "postversion": "git push && git push --tags",
     "bump": "standard-version -i CHANGELOG.md",
     "postbump": "git push --follow-tags origin",
-    "setup-dev-env": "docker-compose --env-file ./tests/.env.dev up"
+    "setup-dev-env": "docker-compose --env-file ./tests/.env.test up -d"
   },
   "keywords": [
     "Optimistik"

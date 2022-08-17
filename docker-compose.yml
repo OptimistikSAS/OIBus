@@ -2,7 +2,7 @@ version: '3.5'
 services:
     mysql:
         container_name: oibus-mysql
-        image: 'mysql:8.0-oracle'
+        image: 'mysql/mysql-server'
         ports:
             - ${MYSQL_PORT:-5306}:3306
         environment:
