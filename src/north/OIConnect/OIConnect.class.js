@@ -1,8 +1,8 @@
-const fs = require('fs/promises')
+import fs from 'node:fs/promises'
 
-const ApiHandler = require('../ApiHandler.class')
+import ApiHandler from '../ApiHandler.class.js'
 
-class OIConnect extends ApiHandler {
+export default class OIConnect extends ApiHandler {
   static category = 'Optimistik'
 
   /**
@@ -57,5 +57,3 @@ class OIConnect extends ApiHandler {
     return this.postFile(filePath)
   }
 }
-
-module.exports = OIConnect

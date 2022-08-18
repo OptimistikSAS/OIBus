@@ -1,39 +1,59 @@
-const VERSION = require('../../package.json').version
-
-const apiList = {}
-apiList.OIAnalytics = require('../north/OIAnalytics/OIAnalytics.class')
-apiList.OIConnect = require('../north/OIConnect/OIConnect.class')
-apiList.FileWriter = require('../north/FileWriter/FileWriter.class')
-apiList.AmazonS3 = require('../north/AmazonS3/AmazonS3.class')
-apiList.InfluxDB = require('../north/InfluxDB/InfluxDB.class')
-apiList.TimescaleDB = require('../north/TimescaleDB/TimescaleDB.class')
-apiList.MongoDB = require('../north/MongoDB/MongoDB.class')
-apiList.MQTT = require('../north/MQTT/MQTT.class')
-apiList.Console = require('../north/Console/Console.class')
-apiList.WATSYConnect = require('../north/WATSYConnect/WATSYConnect.class')
-apiList.CsvToHttp = require('../north/CsvToHttp/CsvToHttp.class')
-
-const protocolList = {}
-protocolList.SQL = require('../south/SQL/SQL.class')
-protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
-protocolList.OPCUA_HA = require('../south/OPCUA/OPCUA_HA/OPCUA_HA.class')
-protocolList.OPCUA_DA = require('../south/OPCUA/OPCUA_DA/OPCUA_DA.class')
-protocolList.MQTT = require('../south/MQTT/MQTT.class')
-protocolList.ADS = require('../south/ADS/ADS.class')
-protocolList.Modbus = require('../south/Modbus/Modbus.class')
-protocolList.OPCHDA = require('../south/OPCHDA/OPCHDA.class')
-protocolList.RestApi = require('../south/RestApi/RestApi.class')
+import fs from 'node:fs/promises'
 
 // BaseEngine classes
-const Logger = require('./logger/Logger.class')
-const { createRequestService } = require('../services/request')
+import Logger from './logger/Logger.class.js'
+import createRequestService from '../services/request/index.js'
+import OIAnalytics from '../north/OIAnalytics/OIAnalytics.class.js'
+import OIConnect from '../north/OIConnect/OIConnect.class.js'
+import FileWriter from '../north/FileWriter/FileWriter.class.js'
+import AmazonS3 from '../north/AmazonS3/AmazonS3.class.js'
+import InfluxDB from '../north/InfluxDB/InfluxDB.class.js'
+import TimescaleDB from '../north/TimescaleDB/TimescaleDB.class.js'
+import MongoDB from '../north/MongoDB/MongoDB.class.js'
+import MQTTNorth from '../north/MQTT/MQTT.class.js'
+import Console from '../north/Console/Console.class.js'
+import WATSYConnect from '../north/WATSYConnect/WATSYConnect.class.js'
+import CsvToHttp from '../north/CsvToHttp/CsvToHttp.class.js'
+import SQL from '../south/SQL/SQL.class.js'
+import FolderScanner from '../south/FolderScanner/FolderScanner.class.js'
+import OPCUA_HA from '../south/OPCUA/OPCUA_HA/OPCUA_HA.class.js'
+import OPCUA_DA from '../south/OPCUA/OPCUA_DA/OPCUA_DA.class.js'
+import MQTTSouth from '../south/MQTT/MQTT.class.js'
+import ADS from '../south/ADS/ADS.class.js'
+import Modbus from '../south/Modbus/Modbus.class.js'
+import OPCHDA from '../south/OPCHDA/OPCHDA.class.js'
+import RestApi from '../south/RestApi/RestApi.class.js'
+
+const apiList = {}
+apiList.OIAnalytics = OIAnalytics
+apiList.OIConnect = OIConnect
+apiList.FileWriter = FileWriter
+apiList.AmazonS3 = AmazonS3
+apiList.InfluxDB = InfluxDB
+apiList.TimescaleDB = TimescaleDB
+apiList.MongoDB = MongoDB
+apiList.MQTT = MQTTNorth
+apiList.Console = Console
+apiList.WATSYConnect = WATSYConnect
+apiList.CsvToHttp = CsvToHttp
+
+const protocolList = {}
+protocolList.SQL = SQL
+protocolList.FolderScanner = FolderScanner
+protocolList.OPCUA_HA = OPCUA_HA
+protocolList.OPCUA_DA = OPCUA_DA
+protocolList.MQTT = MQTTSouth
+protocolList.ADS = ADS
+protocolList.Modbus = Modbus
+protocolList.OPCHDA = OPCHDA
+protocolList.RestApi = RestApi
 
 /**
  *
  * at startup, handles initialization of applications, protocols and config.
  * @class BaseEngine
  */
-class BaseEngine {
+export default class BaseEngine {
   /**
    * Constructor for BaseEngine
    * Reads the config file and create the corresponding Object.
@@ -44,8 +64,6 @@ class BaseEngine {
    * @param {EncryptionService} encryptionService - The encryption service
    */
   constructor(configService, encryptionService) {
-    this.version = VERSION
-
     this.eventEmitters = {}
     this.statusData = {}
 
@@ -60,6 +78,9 @@ class BaseEngine {
    * @returns {Promise<void>} - The promise returns when the services are set
    */
   async initEngineServices(engineConfig, loggerScope) {
+    const packageJson = JSON.parse(await fs.readFile('package.json'))
+    this.version = packageJson.version
+
     // Configure the logger
     this.logger = new Logger(loggerScope)
     this.logger.setEncryptionService(this.encryptionService)
@@ -193,5 +214,3 @@ class BaseEngine {
     return apiList
   }
 }
-
-module.exports = BaseEngine

@@ -5,7 +5,7 @@ import React from 'react'
 import { act, Simulate } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import apis from '../services/apis'
+import apis from '../services/apis.js'
 import Logs from './Logs.jsx'
 
 // fixing date to match snapshot

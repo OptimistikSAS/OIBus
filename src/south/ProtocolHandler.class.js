@@ -1,12 +1,12 @@
-const fs = require('fs')
-const zlib = require('zlib')
-const EventEmitter = require('events')
-const { DateTime } = require('luxon')
+import fs from 'node:fs'
+import zlib from 'node:zlib'
+import EventEmitter from 'node:events'
+import { DateTime } from 'luxon'
 
-const EncryptionService = require('../services/EncryptionService.class')
-const databaseService = require('../services/database.service')
-const Logger = require('../engine/logger/Logger.class')
-const CertificateService = require('../services/CertificateService.class')
+import EncryptionService from '../services/EncryptionService.class.js'
+import databaseService from '../services/database.service.js'
+import Logger from '../engine/logger/Logger.class.js'
+import CertificateService from '../services/CertificateService.class.js'
 
 const COMPRESSION_LEVEL = 9
 
@@ -34,7 +34,7 @@ const COMPRESSION_LEVEL = 9
  * handled by the OIBus engine and should not be taken care at the South level.
  *
  */
-class ProtocolHandler {
+export default class ProtocolHandler {
   /**
    * Constructor for Protocol
    * @constructor
@@ -507,5 +507,3 @@ class ProtocolHandler {
     return DateTime.fromFormat(date, dateFormat, { zone: timezone }).toJSDate().toISOString()
   }
 }
-
-module.exports = ProtocolHandler

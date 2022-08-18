@@ -2,10 +2,10 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
-import { OIbTitle, OIbText, OIbCron } from '../components/OIbForm'
+import { OIbTitle, OIbText, OIbCron } from '../components/OIbForm/index.js'
 import { ConfigContext } from '../context/ConfigContext.jsx'
-import validation from './Engine.validation'
-import utils from '../helpers/utils'
+import validation from './Engine.validation.js'
+import utils from '../helpers/utils.js'
 
 const ScanModes = ({ scanModes }) => {
   const { dispatchNewConfig } = React.useContext(ConfigContext)

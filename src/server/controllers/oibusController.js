@@ -29,7 +29,4 @@ const shutdown = async (ctx) => {
   ctx.ok('Shutting down...')
 }
 
-module.exports = {
-  reload,
-  shutdown,
-}
+export default { reload, shutdown }

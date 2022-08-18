@@ -1,7 +1,8 @@
-const db = require('better-sqlite3')
-const HistoryQuery = require('./HistoryQuery.class')
+import db from 'better-sqlite3'
 
-class HistoryQueryRepository {
+import HistoryQuery from './HistoryQuery.class.js'
+
+export default class HistoryQueryRepository {
   static TABLE = 'history_queries'
 
   constructor(databasePath) {
@@ -14,7 +15,7 @@ class HistoryQueryRepository {
    * @return {Promise<void>} - The result promise
    */
   async initialize() {
-    this.database = await db(this.databasePath)
+    this.database = db(this.databasePath)
     const query = `CREATE TABLE IF NOT EXISTS ${HistoryQueryRepository.TABLE} (
                    id TEXT PRIMARY KEY,
                    orderColumn INTEGER,
@@ -29,7 +30,7 @@ class HistoryQueryRepository {
                    compress INTEGER,
                    settings TEXT
                  );`
-    await this.database.prepare(query).run()
+    this.database.prepare(query).run()
   }
 
   /**
@@ -207,5 +208,3 @@ class HistoryQueryRepository {
     return null
   }
 }
-
-module.exports = HistoryQueryRepository

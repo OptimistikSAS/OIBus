@@ -1,10 +1,13 @@
-const Opcua = require('node-opcua-client')
-const OPCUA_HA = require('./OPCUA_HA.class')
+import { jest } from '@jest/globals'
 
-const { defaultConfig: config } = require('../../../../tests/testConfig')
+import nodeOPCUA from 'node-opcua-client'
 
-const databaseService = require('../../../services/database.service')
-const EncryptionService = require('../../../services/EncryptionService.class')
+import OPCUA_HA from './OPCUA_HA.class.js'
+
+import { defaultConfig } from '../../../../tests/testConfig.js'
+
+import databaseService from '../../../services/database.service.js'
+import EncryptionService from '../../../services/EncryptionService.class.js'
 
 // Mock node-opcua
 jest.mock('node-opcua-client', () => ({
@@ -34,8 +37,8 @@ jest.mock('../../../engine/logger/Logger.class')
 
 // Mock engine
 const engine = jest.mock('../../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.getCacheFolder = () => config.engine.caching.cacheFolder
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
+engine.getCacheFolder = () => defaultConfig.engine.caching.cacheFolder
 engine.eventEmitters = {}
 engine.engineName = 'Test OPCUA_DA'
 
@@ -108,7 +111,7 @@ describe('OPCUA-HA south', () => {
     expect(Object.keys(opcuaSouth.lastCompletedAt)).toEqual([opcuaConfig.OPCUA_HA.scanGroups[0].scanMode])
     expect(Object.keys(opcuaSouth.ongoingReads)).toEqual([opcuaConfig.OPCUA_HA.scanGroups[0].scanMode])
 
-    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.id}.db`)
+    expect(databaseService.createConfigDatabase).toBeCalledWith(`${defaultConfig.engine.caching.cacheFolder}/${opcuaConfig.id}.db`)
     expect(databaseService.getConfig).toHaveBeenCalledTimes(2)
     expect(opcuaSouth.lastCompletedAt.every10Second).toEqual(new Date('2020-04-23T11:09:01.001Z'))
     expect(opcuaSouth.connectToOpcuaServer).toHaveBeenCalledTimes(1)
@@ -119,7 +122,7 @@ describe('OPCUA-HA south', () => {
     opcuaSouth.connectToOpcuaServer = jest.fn()
     await opcuaSouth.connect()
 
-    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.id}.db`)
+    expect(databaseService.createConfigDatabase).toBeCalledWith(`${defaultConfig.engine.caching.cacheFolder}/${opcuaConfig.id}.db`)
     expect(databaseService.getConfig).toHaveBeenCalledTimes(2)
     expect(opcuaSouth.lastCompletedAt.every10Second).toEqual(new Date(opcuaConfig.startTime))
     expect(opcuaSouth.connectToOpcuaServer).toHaveBeenCalledTimes(1)
@@ -135,7 +138,7 @@ describe('OPCUA-HA south', () => {
     opcuaSouthWithoutStartTime.connectToOpcuaServer = jest.fn()
     await opcuaSouthWithoutStartTime.connect()
 
-    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${opcuaConfig.id}.db`)
+    expect(databaseService.createConfigDatabase).toBeCalledWith(`${defaultConfig.engine.caching.cacheFolder}/${opcuaConfig.id}.db`)
     expect(databaseService.getConfig).toHaveBeenCalledTimes(2)
     expect(opcuaSouthWithoutStartTime.lastCompletedAt.every10Second).not.toEqual(new Date(opcuaConfig.originalStartTime).getTime())
     expect(opcuaSouthWithoutStartTime.connectToOpcuaServer).toHaveBeenCalledTimes(1)
@@ -150,8 +153,8 @@ describe('OPCUA-HA south', () => {
         initialDelay: 1000,
         maxRetry: 1,
       },
-      securityMode: Opcua.MessageSecurityMode.None,
-      securityPolicy: Opcua.SecurityPolicy.None,
+      securityMode: nodeOPCUA.MessageSecurityMode.None,
+      securityPolicy: nodeOPCUA.SecurityPolicy.None,
       endpointMustExist: false,
       keepSessionAlive: false,
       keepPendingSessionsOnDisconnect: false,
@@ -175,8 +178,8 @@ describe('OPCUA-HA south', () => {
         initialDelay: 1000,
         maxRetry: 1,
       },
-      securityMode: Opcua.MessageSecurityMode.None,
-      securityPolicy: Opcua.SecurityPolicy.None,
+      securityMode: nodeOPCUA.MessageSecurityMode.None,
+      securityPolicy: nodeOPCUA.SecurityPolicy.None,
       endpointMustExist: false,
       keepSessionAlive: false,
       keepPendingSessionsOnDisconnect: false,
@@ -194,7 +197,7 @@ describe('OPCUA-HA south', () => {
       userName: 'username',
       password: 'password',
     }
-    expect(Opcua.OPCUAClient.createSession).toBeCalledWith(opcuaSouth.url, expectedUserIdentity, expectedOptions)
+    expect(nodeOPCUA.OPCUAClient.createSession).toBeCalledWith(opcuaSouth.url, expectedUserIdentity, expectedOptions)
     expect(opcuaSouth.connected).toBeTruthy()
     expect(setTimeoutSpy).not.toBeCalled()
   })

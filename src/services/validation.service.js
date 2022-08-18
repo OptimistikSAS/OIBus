@@ -72,7 +72,7 @@ const startsWithAnyOf = (tests, common = '', name = 'Value') => (val) => {
   }
 }
 
-// always return null (ie. no validation)
+// always return null (i.e. no validation)
 const optional = () => () => null
 
 export {

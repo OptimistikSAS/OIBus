@@ -1,6 +1,6 @@
 import React from 'react'
 import { Container, ListGroup, ListGroupItem } from 'reactstrap'
-import apis from '../services/apis'
+import apis from '../services/apis.js'
 import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import logo from '../OIBus.png'
@@ -78,11 +78,11 @@ const About = () => {
               {oibusInfo.architecture}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="me-1">currentDirectory:</b>
-              {oibusInfo.currentDirectory}
+              <b className="me-1">Configuration directory:</b>
+              {oibusInfo.configurationDirectory}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="me-1">nodeVersion:</b>
+              <b className="me-1">Node version:</b>
               {oibusInfo.nodeVersion}
             </ListGroupItem>
             <ListGroupItem>
@@ -90,7 +90,7 @@ const About = () => {
               {oibusInfo.executable}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="me-1">ConfigurationFile:</b>
+              <b className="me-1">Configuration File:</b>
               {oibusInfo.configurationFile}
             </ListGroupItem>
             <ListGroupItem>

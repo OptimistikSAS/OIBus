@@ -1,9 +1,11 @@
-const path = require('path')
-const pino = require('pino')
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+import pino from 'pino'
 
 const ENGINE_LOG_LEVEL_ENTRY = 'engine'
 
-class Logger {
+export default class Logger {
   constructor(scope = 'main') {
     this.logger = null
     this.encryptionService = null
@@ -44,9 +46,11 @@ class Logger {
       targets.push({ target: 'pino/file', options: { destination: fileLog.fileName, mkdir: true }, level: fileLog.level })
     }
 
+    const dirName = path.dirname(fileURLToPath(import.meta.url))
+
     if (sqliteLog.level !== 'none') {
       targets.push({
-        target: path.join(__dirname, 'SqliteLoggerTransport.class.js'),
+        target: path.join(dirName, 'SqliteLoggerTransport.class.js'),
         options: {
           fileName: sqliteLog.fileName,
           maxFileSize: sqliteLog.maxSize,
@@ -58,7 +62,7 @@ class Logger {
     if (lokiLog.level !== 'none') {
       try {
         targets.push({
-          target: path.join(__dirname, 'LokiLoggerTransport.class.js'),
+          target: path.join(dirName, 'LokiLoggerTransport.class.js'),
           options: {
             username: lokiLog.username,
             password: this.encryptionService.decryptText(lokiLog.password),
@@ -121,7 +125,8 @@ class Logger {
       Error.prepareStackTrace = (err, structuredStackTrace) => structuredStackTrace
       Error.captureStackTrace(this)
       // Get the first CallSite outside the logger and outside pino library
-      const callSite = this.stack.find((line) => line.getFileName().indexOf(path.basename(__filename)) === -1
+      const fileName = fileURLToPath(import.meta.url)
+      const callSite = this.stack.find((line) => line.getFileName().indexOf(path.basename(fileName)) === -1
         && line.getFileName().indexOf('pino') === -1)
       return `${path.parse(callSite.getFileName()).name}(${callSite.getLineNumber()})`
     } finally {
@@ -129,5 +134,3 @@ class Logger {
     }
   }
 }
-
-module.exports = Logger

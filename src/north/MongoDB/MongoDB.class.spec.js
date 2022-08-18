@@ -1,9 +1,11 @@
-const mongodb = require('mongodb')
+import { jest } from '@jest/globals'
 
-const MongoDB = require('./MongoDB.class')
-const config = require('../../config/defaultConfig.json')
-const EncryptionService = require('../../services/EncryptionService.class')
-const ApiHandler = require('../ApiHandler.class')
+import mongodb from 'mongodb'
+
+import MongoDB from './MongoDB.class.js'
+import { defaultConfig } from '../../../tests/testConfig.js'
+import EncryptionService from '../../services/EncryptionService.class.js'
+import ApiHandler from '../ApiHandler.class.js'
 
 // Mock logger
 jest.mock('../../engine/logger/Logger.class')
@@ -13,7 +15,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
 engine.requestService = { httpSend: jest.fn() }
 engine.eventEmitters = {}
 

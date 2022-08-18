@@ -1,7 +1,9 @@
-const fs = require('fs/promises')
-const path = require('path')
+import { jest } from '@jest/globals'
 
-const { initOpcuaCertificateFolders } = require('./opcua.service')
+import fs from 'node:fs/promises'
+import path from 'node:path'
+
+import { initOpcuaCertificateFolders } from './opcua.service.js'
 
 describe('opcua service', () => {
   it('should copy certificates', async () => {

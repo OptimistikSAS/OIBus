@@ -7,7 +7,7 @@ import { act } from 'react-dom/test-utils'
 import * as ReactDOMClient from 'react-dom/client'
 import ConfirmationModal from './ConfirmationModal.jsx'
 
-import activeConfig from '../../../tests/testConfig'
+import activeConfig from '../../../tests/testConfig.js'
 
 const mockHistoryPush = jest.fn()
 

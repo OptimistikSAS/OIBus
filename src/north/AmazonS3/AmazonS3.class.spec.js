@@ -1,12 +1,14 @@
-const fs = require('fs')
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3')
-const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
+import { jest } from '@jest/globals'
 
-const ProxyAgent = require('proxy-agent')
-const ApiHandler = require('../ApiHandler.class')
-const AmazonS3 = require('./AmazonS3.class')
-const { defaultConfig: config } = require('../../../tests/testConfig')
-const EncryptionService = require('../../services/EncryptionService.class')
+import fs from 'node:fs'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { NodeHttpHandler } from '@aws-sdk/node-http-handler'
+import ProxyAgent from 'proxy-agent'
+
+import ApiHandler from '../ApiHandler.class.js'
+import AmazonS3 from './AmazonS3.class.js'
+import { defaultConfig } from '../../../tests/testConfig.js'
+import EncryptionService from '../../services/EncryptionService.class.js'
 
 // Mock database service
 jest.mock('../../services/database.service', () => {
@@ -17,7 +19,7 @@ jest.mock('../../engine/logger/Logger.class')
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
 engine.eventEmitters = {}
 
 // Mock EncryptionService

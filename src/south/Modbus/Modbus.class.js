@@ -1,13 +1,14 @@
-const jsmodbus = require('jsmodbus')
-const net = require('net')
+import net from 'node:net'
 
-const { getOptimizedScanModes } = require('./config/getOptimizedConfig')
-const ProtocolHandler = require('../ProtocolHandler.class')
+import jsmodbus from 'jsmodbus'
+
+import getOptimizedScanModes from './config/getOptimizedConfig.js'
+import ProtocolHandler from '../ProtocolHandler.class.js'
 
 /**
  * Class Modbus - Provides instruction for Modbus client connection
  */
-class Modbus extends ProtocolHandler {
+export default class Modbus extends ProtocolHandler {
   static category = 'IoT'
 
   /**
@@ -164,5 +165,3 @@ class Modbus extends ProtocolHandler {
     })
   }
 }
-
-module.exports = Modbus

@@ -5,8 +5,8 @@ import React from 'react'
 import { act } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import utils from '../helpers/utils'
-import { testConfig } from '../../../tests/testConfig'
+import utils from '../helpers/utils.js'
+import { testConfig } from '../../../tests/testConfig.js'
 import { ConfigProvider, reducer } from './ConfigContext.jsx'
 
 // mock fetch

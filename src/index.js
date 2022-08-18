@@ -1,15 +1,14 @@
-const cluster = require('cluster')
-const path = require('path')
+import cluster from 'node:cluster'
+import path from 'node:path'
+import fs from 'node:fs/promises'
 
-const VERSION = require('../package.json').version
-
-const migrationService = require('./migration/migration.service')
-const ConfigService = require('./services/config.service.class')
-const Server = require('./server/Server.class')
-const OIBusEngine = require('./engine/OIBusEngine.class')
-const HistoryQueryEngine = require('./HistoryQuery/HistoryQueryEngine.class')
-const Logger = require('./engine/logger/Logger.class')
-const EncryptionService = require('./services/EncryptionService.class')
+import migrationService from './migration/migration.service.js'
+import ConfigService from './services/config.service.class.js'
+import Server from './server/Server.class.js'
+import OIBusEngine from './engine/OIBusEngine.class.js'
+import HistoryQueryEngine from './HistoryQuery/HistoryQueryEngine.class.js'
+import Logger from './engine/logger/Logger.class.js'
+import EncryptionService from './services/EncryptionService.class.js'
 
 // In case there is an error the worker process will exit.
 // If this happens MAX_RESTART_COUNT times in less than MAX_INTERVAL_MILLISECOND interval
@@ -39,11 +38,12 @@ logger.changeParameters({
     sqliteLog: { level: 'none' },
     lokiLog: { level: 'none' },
   },
-}).then(() => {
+}).then(async () => {
   if (cluster.isMaster) {
+    const packageJson = JSON.parse(await fs.readFile('package.json'))
     // Master role is nothing except launching a worker and relaunching another
     // one if exit is detected (typically to load a new configuration)
-    logger.info(`Starting OIBus version: ${VERSION}`)
+    logger.info(`Starting OIBus version: ${packageJson.version}`)
 
     let restartCount = 0
     let startTime = (new Date()).getTime()
@@ -108,7 +108,7 @@ logger.changeParameters({
     process.chdir(path.parse(configFile).dir)
 
     // Migrate config file, if needed
-    migrationService.migrate(configFile).then(async () => {
+    migrationService(configFile).then(async () => {
       // this condition is reached only for a worker (i.e. not master)
       // so this is here where we start the web-server, OIBusEngine and HistoryQueryEngine
 

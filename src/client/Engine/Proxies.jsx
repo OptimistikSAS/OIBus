@@ -2,9 +2,9 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Col, Row } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
-import { OIbTitle, OIbText, OIbSelect, OIbInteger, OIbPassword } from '../components/OIbForm'
+import { OIbTitle, OIbText, OIbSelect, OIbInteger, OIbPassword } from '../components/OIbForm/index.js'
 import { ConfigContext } from '../context/ConfigContext.jsx'
-import validation from './Engine.validation'
+import validation from './Engine.validation.js'
 
 const Proxies = ({ proxies }) => {
   const { dispatchNewConfig } = React.useContext(ConfigContext)

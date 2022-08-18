@@ -5,7 +5,7 @@ import { Col, Row } from 'reactstrap'
 import OIbText from './OIbText.jsx'
 import OIbPassword from './OIbPassword.jsx'
 import OIbSelect from './OIbSelect.jsx'
-import { hasLengthBetween, notEmpty } from '../../../services/validation.service'
+import { hasLengthBetween, notEmpty } from '../../../services/validation.service.js'
 
 /*
   OIBAuthentication is a form reused in several places.

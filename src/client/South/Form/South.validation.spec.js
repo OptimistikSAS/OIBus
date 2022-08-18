@@ -1,4 +1,4 @@
-import validation from './South.validation'
+import validation from './South.validation.js'
 
 describe('South.validation', () => {
   it('check protocol.isValidName no error', () => {

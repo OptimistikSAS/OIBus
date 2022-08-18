@@ -1,10 +1,10 @@
-const EventEmitter = require('events')
+import EventEmitter from 'node:events'
 
-const EncryptionService = require('../services/EncryptionService.class')
-const Logger = require('../engine/logger/Logger.class')
-const CertificateService = require('../services/CertificateService.class')
+import EncryptionService from '../services/EncryptionService.class.js'
+import Logger from '../engine/logger/Logger.class.js'
+import CertificateService from '../services/CertificateService.class.js'
 
-class ApiHandler {
+export default class ApiHandler {
   static STATUS = {
     SUCCESS: 0,
     LOGIC_ERROR: -1,
@@ -182,5 +182,3 @@ class ApiHandler {
     return this.engine.requestService.httpSend(this.valuesUrl, 'POST', this.authentication, this.proxy, data, headers)
   }
 }
-
-module.exports = ApiHandler

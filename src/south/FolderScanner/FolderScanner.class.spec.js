@@ -1,15 +1,17 @@
-const fs = require('fs/promises')
-const path = require('path')
+import { jest } from '@jest/globals'
 
-const FolderScanner = require('./FolderScanner.class')
-const databaseService = require('../../services/database.service')
-const { defaultConfig: config } = require('../../../tests/testConfig')
+import fs from 'node:fs/promises'
+import path from 'node:path'
+
+import FolderScanner from './FolderScanner.class.js'
+import databaseService from '../../services/database.service.js'
+import { defaultConfig } from '../../../tests/testConfig.js'
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
 engine.addFile = jest.fn()
-engine.getCacheFolder = () => config.engine.caching.cacheFolder
+engine.getCacheFolder = () => defaultConfig.engine.caching.cacheFolder
 engine.eventEmitters = {}
 
 // Mock the logger

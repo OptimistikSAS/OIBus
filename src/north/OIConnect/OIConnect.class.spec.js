@@ -1,13 +1,16 @@
-const fs = require('fs/promises')
-const OIConnect = require('./OIConnect.class')
-const { defaultConfig: config } = require('../../../tests/testConfig')
+import { jest } from '@jest/globals'
+
+import fs from 'node:fs/promises'
+
+import OIConnect from './OIConnect.class.js'
+import { defaultConfig } from '../../../tests/testConfig.js'
 
 // Mock logger
 jest.mock('../../engine/logger/Logger.class')
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
 engine.requestService = { httpSend: jest.fn() }
 engine.eventEmitters = {}
 

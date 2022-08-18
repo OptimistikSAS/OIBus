@@ -1,11 +1,11 @@
-const url = require('url')
+import url from 'node:url'
 
-const fetch = require('node-fetch')
-const ProxyAgent = require('proxy-agent')
+import fetch from 'node-fetch'
+import ProxyAgent from 'proxy-agent'
 
-const BaseRequest = require('./BaseRequest.class')
+import BaseRequest from './BaseRequest.class.js'
 
-class FetchRequest extends BaseRequest {
+export default class FetchRequest extends BaseRequest {
   /**
    * Send the request using node-fetch
    * If "headers" contains Content-Type "data" is sent as string in the body.
@@ -76,5 +76,3 @@ class FetchRequest extends BaseRequest {
     return true
   }
 }
-
-module.exports = FetchRequest

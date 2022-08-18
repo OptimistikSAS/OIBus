@@ -1,19 +1,20 @@
-const csv = require('papaparse')
-const path = require('path')
-const fs = require('fs/promises')
-const EventEmitter = require('events')
+import path from 'node:path'
+import fs from 'node:fs/promises'
+import EventEmitter from 'node:events'
 
-const HistoryQuery = require('./HistoryQuery.class')
-const BaseEngine = require('../engine/BaseEngine.class')
-const HistoryQueryRepository = require('./HistoryQueryRepository.class')
-const databaseService = require('../services/database.service')
+import csv from 'papaparse'
+
+import HistoryQuery from './HistoryQuery.class.js'
+import BaseEngine from '../engine/BaseEngine.class.js'
+import HistoryQueryRepository from './HistoryQueryRepository.class.js'
+import databaseService from '../services/database.service.js'
 
 /**
  *
  * at startup, handles initialization of applications, protocols and config.
  * @class HistoryQueryEngine
  */
-class HistoryQueryEngine extends BaseEngine {
+export default class HistoryQueryEngine extends BaseEngine {
   /**
    * Constructor for Engine
    * Reads the config file and create the corresponding Object.
@@ -246,5 +247,3 @@ class HistoryQueryEngine extends BaseEngine {
     return flatValue
   }
 }
-
-module.exports = HistoryQueryEngine

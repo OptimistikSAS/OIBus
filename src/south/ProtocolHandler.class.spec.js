@@ -1,10 +1,13 @@
-const config = require('../config/defaultConfig.json')
-const ProtocolHandler = require('./ProtocolHandler.class')
+import { jest } from '@jest/globals'
+import ProtocolHandler from './ProtocolHandler.class.js'
 
-jest.mock('../engine/logger/Logger.class')
+import { defaultConfig } from '../../tests/testConfig.js'
 
+jest.mock('../engine/logger/Logger.class.js')
+
+// Mock engine
 const engine = jest.mock('../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
 engine.addValues = jest.fn()
 engine.addFile = jest.fn()
 engine.eventEmitters = {}
@@ -13,14 +16,14 @@ const nowDateString = '2020-02-02T02:02:02.222Z'
 
 beforeEach(() => {
   jest.resetAllMocks()
-  jest.clearAllMocks()
-  jest.restoreAllMocks()
+  jest.useFakeTimers()
 })
 
 describe('ProtocolHandler', () => {
   it('should properly handle addValues call', async () => {
     const RealDate = Date
     global.Date = jest.fn(() => new RealDate(nowDateString))
+    global.Date.now = () => 1577836799000
 
     const south = new ProtocolHandler({ id: 'id' }, engine, {})
     await south.init()
@@ -42,6 +45,7 @@ describe('ProtocolHandler', () => {
   it('should properly handle addFile call', async () => {
     const RealDate = Date
     global.Date = jest.fn(() => new RealDate(nowDateString))
+    global.Date.now = () => 1577836799000
 
     const south = new ProtocolHandler({ id: 'id' }, engine, {})
     await south.init()
@@ -61,8 +65,7 @@ describe('ProtocolHandler', () => {
       'yyyy-MM-dd HH:mm:ss.SSS',
     )
     const expectedResult1 = '2020-02-22T21:22:22.666Z'
-    expect(test1)
-      .toBe(expectedResult1)
+    expect(test1).toBe(expectedResult1)
 
     const test2 = ProtocolHandler.generateDateWithTimezone(
       '2020-02-22T22:22:22.666Z',
@@ -70,13 +73,13 @@ describe('ProtocolHandler', () => {
       'yyyy-MM-dd HH:mm:ss.SSS',
     )
     const expectedResult2 = '2020-02-22T22:22:22.666Z'
-    expect(test2)
-      .toBe(expectedResult2)
+    expect(test2).toBe(expectedResult2)
   })
 
   it('should properly return timestamp when timestampOrigin is oibus', async () => {
     const RealDate = Date
     global.Date = jest.fn(() => new RealDate(nowDateString))
+    global.Date.now = () => 1577836799000
 
     const south = new ProtocolHandler({}, engine)
     await south.init()

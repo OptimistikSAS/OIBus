@@ -8,9 +8,9 @@ import {
   OIbCheckBox,
   OIbScanMode,
   OIbLogLevel,
-} from '../../components/OIbForm'
+} from '../../components/OIbForm/index.js'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
-import validation from './South.validation'
+import validation from './South.validation.js'
 import EditableIdField from '../../components/EditableIdField.jsx'
 import { ConfigContext } from '../../context/ConfigContext.jsx'
 import ProtocolSchemas from '../Protocols.jsx'

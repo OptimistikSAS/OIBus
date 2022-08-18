@@ -1,4 +1,4 @@
-const {
+import {
   OPCUAClient,
   MessageSecurityMode,
   SecurityPolicy,
@@ -9,17 +9,17 @@ const {
   ReadRawModifiedDetails,
   HistoryReadRequest,
   AggregateFunction,
-} = require('node-opcua-client')
-const { OPCUACertificateManager } = require('node-opcua-certificate-manager')
+} from 'node-opcua-client'
+import { OPCUACertificateManager } from 'node-opcua-certificate-manager'
 
-const ProtocolHandler = require('../../ProtocolHandler.class')
-const { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG } = require('../opcua.service')
+import ProtocolHandler from '../../ProtocolHandler.class.js'
+import { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG } from '../opcua.service.js'
 
 /**
  * @class OPCUA_HA
  * @extends {ProtocolHandler}
  */
-class OPCUA_HA extends ProtocolHandler {
+export default class OPCUA_HA extends ProtocolHandler {
   static category = 'IoT'
 
   /**
@@ -198,8 +198,8 @@ class OPCUA_HA extends ProtocolHandler {
       // eslint-disable-next-line no-loop-func
       response?.results?.forEach((result, i) => {
         /* eslint-disable no-underscore-dangle */
-        this.logger.trace(`Result ${i} for node ${nodesToRead[i].nodeId} contains ${result.historyData?.dataValues.length}
-        values and has status code ${result.statusCode._description}, continuation point is ${result.continuationPoint}`)
+        this.logger.trace(`Result ${i} for node ${nodesToRead[i].nodeId} contains ${result.historyData?.dataValues.length
+        } values and has status code ${result.statusCode._description}, continuation point is ${result.continuationPoint}`)
         if (!dataValues[i]) dataValues.push([])
         dataValues[i].push(...result.historyData?.dataValues ?? [])
         /**
@@ -454,5 +454,3 @@ class OPCUA_HA extends ProtocolHandler {
     }
   }
 }
-
-module.exports = OPCUA_HA

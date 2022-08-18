@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import timexe from 'timexe'
-import utils from './utils'
+import utils from './utils.js'
 
 // fixing date to match snapshot
 const RealDate = Date
@@ -92,8 +92,7 @@ describe('utils', () => {
   it('check nextTime with * * *', () => {
     // mock timexe.nextTime
     const realTimexeNextTime = timexe.nextTime
-    const mockTimexeNextTime = () => ({ time: '1600905600.000', error: '' })
-    timexe.nextTime = mockTimexeNextTime
+    timexe.nextTime = () => ({ time: '1600905600.000', error: '' })
 
     const result = utils.nextTime('* * *')
     expect(result).toEqual('Next occurrence in: 267.0 Days at: Sat, 01 Feb 2020 00:00:00 GMT')

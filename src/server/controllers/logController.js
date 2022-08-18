@@ -1,4 +1,4 @@
-const databaseService = require('../../services/database.service')
+import databaseService from '../../services/database.service.js'
 
 /**
  * Get logs.
@@ -71,4 +71,4 @@ const addLogs = async (ctx) => {
   }
 }
 
-module.exports = { getLogs, addLogs }
+export default { getLogs, addLogs }

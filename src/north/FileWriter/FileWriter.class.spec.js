@@ -1,8 +1,11 @@
-const fs = require('fs/promises')
-const path = require('path')
-const ApiHandler = require('../ApiHandler.class')
-const FileWriter = require('./FileWriter.class')
-const { defaultConfig: config } = require('../../../tests/testConfig')
+import { jest } from '@jest/globals'
+
+import fs from 'node:fs/promises'
+import path from 'node:path'
+
+import ApiHandler from '../ApiHandler.class.js'
+import FileWriter from './FileWriter.class.js'
+import { defaultConfig } from '../../../tests/testConfig.js'
 
 // Mock database service
 jest.mock('../../services/database.service', () => {})
@@ -12,7 +15,7 @@ jest.mock('../../engine/logger/Logger.class')
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
 engine.eventEmitters = {}
 
 let fileWriterNorth = null

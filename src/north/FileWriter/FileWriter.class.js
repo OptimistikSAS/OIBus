@@ -1,9 +1,9 @@
-const fs = require('fs/promises')
-const path = require('path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const ApiHandler = require('../ApiHandler.class')
+import ApiHandler from '../ApiHandler.class.js'
 
-class FileWriter extends ApiHandler {
+export default class FileWriter extends ApiHandler {
   static category = 'FileIn'
 
   /**
@@ -81,5 +81,3 @@ class FileWriter extends ApiHandler {
     }
   }
 }
-
-module.exports = FileWriter

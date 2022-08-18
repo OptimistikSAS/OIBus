@@ -1,12 +1,12 @@
-const { vsprintf } = require('sprintf-js')
-const objectPath = require('object-path')
+import { vsprintf } from 'sprintf-js'
+import objectPath from 'object-path'
 
-const ApiHandler = require('../ApiHandler.class')
+import ApiHandler from '../ApiHandler.class.js'
 
 /**
  * Class InfluxDB - generates and sends InfluxDB requests
  */
-class InfluxDB extends ApiHandler {
+export default class InfluxDB extends ApiHandler {
   static category = 'DatabaseIn'
 
   /**
@@ -182,5 +182,3 @@ class InfluxDB extends ApiHandler {
     }
   }
 }
-
-module.exports = InfluxDB

@@ -5,7 +5,7 @@ import React from 'react'
 import { act } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import { testConfig } from '../../../../tests/testConfig'
+import { testConfig } from '../../../../tests/testConfig.js'
 import NorthForm from './NorthForm.jsx'
 
 const mockNavigate = jest.fn()

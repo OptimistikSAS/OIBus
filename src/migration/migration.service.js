@@ -1,8 +1,8 @@
-const fs = require('fs/promises')
+import fs from 'node:fs/promises'
 
-const ConfigService = require('../services/config.service.class')
-const migrationRules = require('./migrationRules')
-const Logger = require('../engine/logger/Logger.class')
+import ConfigService from '../services/config.service.class.js'
+import migrationRules from './migrationRules.js'
+import Logger from '../engine/logger/Logger.class.js'
 
 const REQUIRED_SCHEMA_VERSION = 25
 const DEFAULT_VERSION = 1
@@ -96,4 +96,4 @@ const migrate = async (configFile) => {
   }
 }
 
-module.exports = { migrate }
+export default migrate

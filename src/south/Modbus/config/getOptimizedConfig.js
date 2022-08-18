@@ -1,5 +1,3 @@
-/* istanbul ignore file */
-
 /**
  * Retrieves a nested property from an object
  * @param {Object} obj - Object which contains the nested property
@@ -111,4 +109,4 @@ const getOptimizedScanModes = (points, addressOffset, logger) => {
   return scanModes
 }
 
-module.exports = { getOptimizedScanModes }
+export default getOptimizedScanModes

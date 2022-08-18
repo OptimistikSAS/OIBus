@@ -1,5 +1,6 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
-require('dotenv').config({ path: './tests/.env.test' })
+import dotenv from 'dotenv'
+
+dotenv.config({ path: './tests/.env.test' })
 
 const defaultConfig = {
   engine: {

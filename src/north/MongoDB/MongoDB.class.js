@@ -1,13 +1,13 @@
-const mongo = require('mongodb')
-const { vsprintf } = require('sprintf-js')
-const objectPath = require('object-path')
+import mongo from 'mongodb'
+import { vsprintf } from 'sprintf-js'
+import objectPath from 'object-path'
 
-const ApiHandler = require('../ApiHandler.class')
+import ApiHandler from '../ApiHandler.class.js'
 
 /**
  * Class MongoDB - generates and sends MongoDB requests
  */
-class MongoDB extends ApiHandler {
+export default class MongoDB extends ApiHandler {
   static category = 'DatabaseIn'
 
   /**
@@ -274,5 +274,3 @@ class MongoDB extends ApiHandler {
     this.collectionChecked = true
   }
 }
-
-module.exports = MongoDB

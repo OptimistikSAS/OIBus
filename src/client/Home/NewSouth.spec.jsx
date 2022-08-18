@@ -8,7 +8,7 @@ import * as ReactDOMClient from 'react-dom/client'
 import NewSouth from './NewSouth.jsx'
 import EngineMenu from './EngineMenu.jsx'
 
-import newConfig from '../../../tests/testConfig'
+import newConfig from '../../../tests/testConfig.js'
 
 const dispatchNewConfig = jest.fn()
 const restartFunction = jest.fn()

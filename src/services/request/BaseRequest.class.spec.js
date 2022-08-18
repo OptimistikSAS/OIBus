@@ -1,25 +1,25 @@
-const FormData = require('form-data')
+import { jest } from '@jest/globals'
 
-const BaseRequest = require('./BaseRequest.class')
-const ApiHandler = require('../../north/ApiHandler.class')
+import FormData from 'form-data'
+
+import BaseRequest from './BaseRequest.class.js'
+import ApiHandler from '../../north/ApiHandler.class.js'
 
 // Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
+const engine = jest.mock('../../engine/OIBusEngine.class.js')
 engine.configService = { getConfig: () => ({ engineConfig: { httpRequest: { timeout: 10000, retryCount: 2 } } }) }
 engine.encryptionService = { decryptText: (password) => password }
 engine.logger = { trace: jest.fn(), error: jest.fn() }
 
+let baseRequest = null
 beforeEach(() => {
   jest.resetAllMocks()
-  jest.clearAllMocks()
+  baseRequest = new BaseRequest(engine)
 })
 
 describe('RequestFactory', () => {
-  const baseRequest = new BaseRequest(engine)
-
   it('should properly get filename without timestamp', () => {
     const filepath = '/path/to/note-1610983920007.txt'
-
     const filename = baseRequest.getFilenameWithoutTimestamp(filepath)
 
     expect(filename).toEqual('note.txt')
@@ -27,7 +27,6 @@ describe('RequestFactory', () => {
 
   it('should properly generate form-data body', () => {
     const filepath = '/path/to/note-1610983920007.txt'
-
     const formData = baseRequest.generateFormDataBody(filepath)
 
     expect(formData).toBeInstanceOf(FormData)

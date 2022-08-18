@@ -1,9 +1,9 @@
-const fs = require('fs/promises')
+import fs from 'node:fs/promises'
 
 /**
  * Class used to manage certificate files and their content
  */
-class CertificateService {
+export default class CertificateService {
   constructor(logger) {
     this.logger = logger
     this.privateKey = null
@@ -51,5 +51,3 @@ class CertificateService {
     }
   }
 }
-
-module.exports = CertificateService

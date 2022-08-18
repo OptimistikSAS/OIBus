@@ -1,8 +1,11 @@
-const path = require('path')
-const CsvToHttp = require('./CsvToHttp.class')
-const ApiHandler = require('../ApiHandler.class')
-const { defaultConfig: config } = require('../../../tests/testConfig')
-const EncryptionService = require('../../services/EncryptionService.class')
+import { jest } from '@jest/globals'
+
+import path from 'node:path'
+
+import CsvToHttp from './CsvToHttp.class.js'
+import ApiHandler from '../ApiHandler.class.js'
+import { defaultConfig } from '../../../tests/testConfig.js'
+import EncryptionService from '../../services/EncryptionService.class.js'
 
 // Mock logger
 jest.mock('../../engine/logger/Logger.class')
@@ -12,7 +15,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
 engine.requestService = { httpSend: jest.fn() }
 engine.decryptPassword = (password) => password
 engine.eventEmitters = {}

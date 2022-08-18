@@ -2,7 +2,7 @@ import React from 'react'
 import { useParams } from 'react-router'
 import { Spinner } from 'reactstrap'
 import HistoryQueryForm from './Form/HistoryQueryForm.jsx'
-import apis from '../services/apis'
+import apis from '../services/apis.js'
 
 const ConfigureHistoryQuery = () => {
   const { id } = useParams()

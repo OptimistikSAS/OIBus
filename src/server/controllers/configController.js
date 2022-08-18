@@ -38,7 +38,7 @@ const activateConfiguration = (ctx) => {
   }
 }
 
-module.exports = {
+export default {
   getActiveConfiguration,
   updateConfig,
   activateConfiguration,

@@ -1,7 +1,4 @@
-/**
- * Module dependencies.
- */
-const micromatch = require('micromatch')
+import micromatch from 'micromatch'
 
 /**
  * Return ipFilter middleware:
@@ -20,4 +17,4 @@ const ipFilter = (filter) => async (ctx, next) => {
   }
 }
 
-module.exports = ipFilter
+export default ipFilter

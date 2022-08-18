@@ -1,9 +1,11 @@
-const pg = require('pg')
+import { jest } from '@jest/globals'
 
-const ApiHandler = require('../ApiHandler.class')
-const TimescaleDB = require('./TimescaleDB.class')
-const { defaultConfig: config } = require('../../../tests/testConfig')
-const EncryptionService = require('../../services/EncryptionService.class')
+import pg from 'pg'
+
+import ApiHandler from '../ApiHandler.class.js'
+import TimescaleDB from './TimescaleDB.class.js'
+import { defaultConfig } from '../../../tests/testConfig.js'
+import EncryptionService from '../../services/EncryptionService.class.js'
 
 // Mock logger
 jest.mock('../../engine/logger/Logger.class')
@@ -13,7 +15,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
 engine.eventEmitters = {}
 
 jest.mock('pg', () => ({ Client: jest.fn() }))

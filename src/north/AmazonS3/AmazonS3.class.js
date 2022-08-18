@@ -1,16 +1,16 @@
-const fs = require('fs')
-const url = require('url')
-const path = require('path')
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3')
-const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
-const ProxyAgent = require('proxy-agent')
+import fs from 'node:fs'
+import url from 'node:url'
+import path from 'node:path'
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { NodeHttpHandler } from '@aws-sdk/node-http-handler'
+import ProxyAgent from 'proxy-agent'
 
-const ApiHandler = require('../ApiHandler.class')
+import ApiHandler from '../ApiHandler.class.js'
 
 /**
  * Class AmazonS3 - sends files to Amazon AWS S3
  */
-class AmazonS3 extends ApiHandler {
+export default class AmazonS3 extends ApiHandler {
   static category = 'FileIn'
 
   /**
@@ -93,5 +93,3 @@ class AmazonS3 extends ApiHandler {
     return `${filename}${ext}`
   }
 }
-
-module.exports = AmazonS3

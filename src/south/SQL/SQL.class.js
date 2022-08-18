@@ -1,23 +1,22 @@
-const fs = require('fs/promises')
-const path = require('path')
-const db = require('better-sqlite3')
-const mssql = require('mssql')
-const mysql = require('mysql2/promise')
-const {
-  Client,
-  types,
-} = require('pg')
-const csv = require('papaparse')
-const { DateTime } = require('luxon')
-const humanizeDuration = require('humanize-duration')
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import db from 'better-sqlite3'
+import mssql from 'mssql'
+import mysql from 'mysql2/promise'
+// import oracledb from 'oracledb'
+import * as pg from 'pg'
+import csv from 'papaparse'
+import { DateTime } from 'luxon'
+import humanizeDuration from 'humanize-duration'
 
-const ProtocolHandler = require('../ProtocolHandler.class')
+import ProtocolHandler from '../ProtocolHandler.class.js'
 
-let oracledb
+const { Client, types } = pg
+
 /**
  * Class SQL
  */
-class SQL extends ProtocolHandler {
+export default class SQL extends ProtocolHandler {
   static category = 'DatabaseOut'
 
   /**
@@ -87,12 +86,12 @@ class SQL extends ProtocolHandler {
 
   async init() {
     await super.init()
-    try {
-      // eslint-disable-next-line global-require,import/no-unresolved,import/no-extraneous-dependencies
-      oracledb = require('oracledb')
-    } catch {
-      this.logger.error('Could not load node oracledb')
-    }
+    // try {
+    //   // eslint-disable-next-line global-require,import/no-unresolved,import/no-extraneous-dependencies
+    //   oracledb = require('oracledb')
+    // } catch {
+    //   this.logger.error('Could not load node oracledb')
+    // }
     try {
       await fs.mkdir(this.tmpFolder, { recursive: true })
     } catch (mkdirError) {
@@ -183,9 +182,9 @@ class SQL extends ProtocolHandler {
         case 'postgresql':
           result = await this.getDataFromPostgreSQL(updatedStartTime, endTime)
           break
-        case 'oracle':
-          result = await this.getDataFromOracle(updatedStartTime, endTime)
-          break
+          // case 'oracle':
+          //   result = await this.getDataFromOracle(updatedStartTime, endTime)
+          // break
         case 'sqlite':
           result = await this.getDataFromSqlite(updatedStartTime, endTime)
           break
@@ -386,41 +385,41 @@ class SQL extends ProtocolHandler {
    * @param {Date} endTime - The end time
    * @returns {Promise<array>} - The data
    */
-  async getDataFromOracle(startTime, endTime) {
-    if (!oracledb) {
-      this.logger.error('oracledb library not loaded')
-      return []
-    }
-
-    const adaptedQuery = this.query.replace(/@StartTime/g, ':date1')
-      .replace(/@EndTime/g, ':date2')
-
-    const config = {
-      user: this.username,
-      password: this.encryptionService.decryptText(this.password),
-      connectString: `${this.host}:${this.port}/${this.database}`,
-    }
-
-    let connection = null
-    let data = []
-    try {
-      process.env.ORA_SDTZ = 'UTC'
-      oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT
-      connection = await oracledb.getConnection(config)
-      connection.callTimeout = this.requestTimeout
-      const params = SQL.generateReplacementParameters(this.query, startTime, endTime)
-      const { rows } = await connection.execute(adaptedQuery, params)
-      data = rows
-    } catch (error) {
-      this.logger.error(error)
-    } finally {
-      if (connection) {
-        await connection.close()
-      }
-    }
-
-    return data
-  }
+  // async getDataFromOracle(startTime, endTime) {
+  //   if (!oracledb) {
+  //     this.logger.error('oracledb library not loaded')
+  //     return []
+  //   }
+  //
+  //   const adaptedQuery = this.query.replace(/@StartTime/g, ':date1')
+  //     .replace(/@EndTime/g, ':date2')
+  //
+  //   const config = {
+  //     user: this.username,
+  //     password: this.encryptionService.decryptText(this.password),
+  //     connectString: `${this.host}:${this.port}/${this.database}`,
+  //   }
+  //
+  //   let connection = null
+  //   let data = []
+  //   try {
+  //     process.env.ORA_SDTZ = 'UTC'
+  //     oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT
+  //     connection = await oracledb.getConnection(config)
+  //     connection.callTimeout = this.requestTimeout
+  //     const params = SQL.generateReplacementParameters(this.query, startTime, endTime)
+  //     const { rows } = await connection.execute(adaptedQuery, params)
+  //     data = rows
+  //   } catch (error) {
+  //     this.logger.error(error)
+  //   } finally {
+  //     if (connection) {
+  //       await connection.close()
+  //     }
+  //   }
+  //
+  //   return data
+  // }
 
   /**
    * Get new entries from local SQLite db file
@@ -542,5 +541,3 @@ class SQL extends ProtocolHandler {
     return occurrences
   }
 }
-
-module.exports = SQL

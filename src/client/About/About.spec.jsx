@@ -5,10 +5,10 @@ import React from 'react'
 import { act } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import apis from '../services/apis'
+import apis from '../services/apis.js'
 import About from './About.jsx'
 
-import activeConfig from '../../../tests/testConfig'
+import activeConfig from '../../../tests/testConfig.js'
 
 global.EventSource = class {
   constructor() {

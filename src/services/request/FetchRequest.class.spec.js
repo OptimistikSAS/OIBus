@@ -1,29 +1,28 @@
-const fetch = require('node-fetch')
-const ProxyAgent = require('proxy-agent')
+import { jest } from '@jest/globals'
 
-const FetchRequest = require('./FetchRequest.class')
+import fetch, { Response } from 'node-fetch'
+import ProxyAgent from 'proxy-agent'
+
+import FetchRequest from './FetchRequest.class.js'
 
 // Mock node-fetch
 jest.mock('node-fetch')
-const { Response } = jest.requireActual('node-fetch')
 
 // Mock ProxyAgent
 jest.mock('proxy-agent')
 
 // Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
+const engine = jest.mock('../../engine/OIBusEngine.class.js')
 engine.configService = { getConfig: () => ({ engineConfig: { httpRequest: { timeout: 10000, retryCount: 2 } } }) }
 engine.encryptionService = { decryptText: (password) => password }
 engine.logger = { trace: jest.fn(), error: jest.fn() }
 
+let fetchRequest
 beforeEach(() => {
-  jest.resetAllMocks()
-  jest.clearAllMocks()
+  fetchRequest = new FetchRequest(engine)
 })
 
 describe('RequestFactory', () => {
-  const fetchRequest = new FetchRequest(engine)
-
   it('should properly call node-fetch without proxy for JSON data', async () => {
     fetchRequest.generateFormDataBody = jest.fn()
     const requestUrl = 'https://www.example.com'

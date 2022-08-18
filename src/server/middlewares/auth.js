@@ -1,7 +1,4 @@
-/**
- * Module dependencies.
- */
-const basicAuth = require('basic-auth')
+import basicAuth from 'basic-auth'
 
 const DEFAULT_PASSWORD = 'pass'
 
@@ -35,4 +32,4 @@ const auth = (opts = {}) => {
   }
 }
 
-module.exports = auth
+export default auth

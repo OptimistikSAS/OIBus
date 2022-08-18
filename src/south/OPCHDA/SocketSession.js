@@ -1,7 +1,7 @@
 /**
  * Class representing a connected session.
  */
-class SocketSession {
+export default class SocketSession {
   constructor(socket, tcpServer, handleMessage) {
     this.socket = socket
     this.tcpServer = tcpServer
@@ -87,5 +87,3 @@ class SocketSession {
     }
   }
 }
-
-module.exports = SocketSession

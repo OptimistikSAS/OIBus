@@ -1,10 +1,12 @@
-const mqtt = require('mqtt')
+import { jest } from '@jest/globals'
 
-const ApiHandler = require('../ApiHandler.class')
-const MQTT = require('./MQTT.class')
-const { defaultConfig: config } = require('../../../tests/testConfig')
+import mqtt from 'mqtt'
 
-const EncryptionService = require('../../services/EncryptionService.class')
+import ApiHandler from '../ApiHandler.class.js'
+import MQTT from './MQTT.class.js'
+import { defaultConfig } from '../../../tests/testConfig.js'
+
+import EncryptionService from '../../services/EncryptionService.class.js'
 
 // Mock mqtt
 jest.mock('mqtt', () => ({ connect: jest.fn() }))
@@ -17,7 +19,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
 engine.engineName = 'Test MQTT'
 engine.logger = { error: jest.fn(), info: jest.fn(), trace: jest.fn() }
 engine.eventEmitters = {}

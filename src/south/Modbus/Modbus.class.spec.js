@@ -1,6 +1,8 @@
-const Modbus = require('./Modbus.class')
-const { defaultConfig: config } = require('../../../tests/testConfig')
-const databaseService = require('../../services/database.service')
+import { jest } from '@jest/globals'
+
+import Modbus from './Modbus.class.js'
+import { defaultConfig } from '../../../tests/testConfig.js'
+import databaseService from '../../services/database.service.js'
 
 // Mock jsmobdus
 jest.mock('jsmodbus', () => ({ client: { TCP: jest.fn() } }))
@@ -38,8 +40,8 @@ jest.mock('../../engine/logger/Logger.class')
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.getCacheFolder = () => config.engine.caching.cacheFolder
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
+engine.getCacheFolder = () => defaultConfig.engine.caching.cacheFolder
 engine.eventEmitters = {}
 
 const modbusConfig = {
@@ -244,7 +246,7 @@ describe('Modbus', () => {
     databaseService.getConfig.mockReturnValue('1587640141001.0')
     await modbusSouth.connect()
     expect(databaseService.createConfigDatabase)
-      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${modbusConfig.id}.db`)
+      .toBeCalledWith(`${defaultConfig.engine.caching.cacheFolder}/${modbusConfig.id}.db`)
     expect(modbusSouth.connected)
       .toBeTruthy()
   })

@@ -1,14 +1,14 @@
-const fs = require('fs/promises')
-const path = require('path')
-const csv = require('papaparse')
-const fetch = require('node-fetch')
-const https = require('https')
-const http = require('http')
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import https from 'node:https'
+import http from 'node:http'
 
-const ProtocolHandler = require('../ProtocolHandler.class')
+import csv from 'papaparse'
+import fetch from 'node-fetch'
 
-const oiaTimeValues = require('./formatters/oia-time-values')
-const slims = require('./formatters/slims')
+import ProtocolHandler from '../ProtocolHandler.class.js'
+import oiaTimeValues from './formatters/oia-time-values.js'
+import slims from './formatters/slims.js'
 
 const parsers = {
   Raw: (httpResults) => ({ httpResults, latestDateRetrieved: new Date().toISOString() }),
@@ -43,7 +43,7 @@ const requestWithBody = (body, options = {}) => new Promise((resolve, reject) =>
 /**
  * Class RestApi
  */
-class RestApi extends ProtocolHandler {
+export default class RestApi extends ProtocolHandler {
   static category = 'API'
 
   /**
@@ -351,5 +351,3 @@ class RestApi extends ProtocolHandler {
     return csv.unparse(result, options)
   }
 }
-
-module.exports = RestApi

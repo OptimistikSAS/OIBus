@@ -1,13 +1,13 @@
-const { vsprintf } = require('sprintf-js')
-const mqtt = require('mqtt')
-const objectPath = require('object-path')
+import { vsprintf } from 'sprintf-js'
+import mqtt from 'mqtt'
+import objectPath from 'object-path'
 
-const ApiHandler = require('../ApiHandler.class')
+import ApiHandler from '../ApiHandler.class.js'
 
 /**
  * Class MQTT - generates and sends MQTT messages
  */
-class MQTT extends ApiHandler {
+export default class MQTT extends ApiHandler {
   static category = 'IoT'
 
   /**
@@ -182,5 +182,3 @@ class MQTT extends ApiHandler {
     return successCount
   }
 }
-
-module.exports = MQTT

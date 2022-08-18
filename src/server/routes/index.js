@@ -1,11 +1,11 @@
-const Router = require('@koa/router')
-const multer = require('@koa/multer')
+import Router from '@koa/router'
+import multer from '@koa/multer'
 
-const configController = require('../controllers/configController')
-const logController = require('../controllers/logController')
-const engineController = require('../controllers/engineController')
-const historyQueryController = require('../controllers/historyQueryController')
-const oibusController = require('../controllers/oibusController')
+import configController from '../controllers/configController.js'
+import logController from '../controllers/logController.js'
+import engineController from '../controllers/engineController.js'
+import historyQueryController from '../controllers/historyQueryController.js'
+import oibusController from '../controllers/oibusController.js'
 
 const router = new Router()
 
@@ -39,4 +39,4 @@ router.put('/history-queries/:id/order', historyQueryController.orderHistoryQuer
 router.delete('/history-queries/:id', historyQueryController.deleteHistoryQuery)
 router.get('/history-queries/:id/status', historyQueryController.getStatus)
 
-module.exports = router
+export default router

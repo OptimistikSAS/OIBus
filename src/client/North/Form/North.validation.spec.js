@@ -1,4 +1,4 @@
-import validation from './North.validation'
+import validation from './North.validation.js'
 
 describe('North.validation', () => {
   it('check caching.sendInterval no error', () => {

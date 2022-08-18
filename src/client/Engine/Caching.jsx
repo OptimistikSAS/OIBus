@@ -1,8 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Col, Row } from 'reactstrap'
-import { OIbText, OIbTitle, OIbCheckBox, OIbInteger } from '../components/OIbForm'
-import validation from './Engine.validation'
+import { OIbText, OIbTitle, OIbCheckBox, OIbInteger } from '../components/OIbForm/index.js'
+import validation from './Engine.validation.js'
 
 const Caching = ({ onChange, caching }) => (
   <>

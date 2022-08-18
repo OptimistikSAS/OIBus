@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { Button } from 'reactstrap'
 import { FaCheck } from 'react-icons/fa'
-import { OIbText } from './OIbForm'
+import { OIbText } from './OIbForm/index.js'
 
 const EditableIdField = ({
   connectorName,

@@ -1,7 +1,10 @@
-const Opcua = require('node-opcua-client')
-const OPCUA_DA = require('./OPCUA_DA.class')
-const { defaultConfig: config } = require('../../../../tests/testConfig')
-const EncryptionService = require('../../../services/EncryptionService.class')
+import { jest } from '@jest/globals'
+
+import nodeOPCUA from 'node-opcua-client'
+import OPCUA_DA from './OPCUA_DA.class.js'
+
+import { defaultConfig } from '../../../../tests/testConfig.js'
+import EncryptionService from '../../../services/EncryptionService.class.js'
 
 // Mock node-opcua
 jest.mock('node-opcua-client', () => ({
@@ -83,8 +86,8 @@ describe('OPCUA-DA south', () => {
         initialDelay: 1000,
         maxRetry: 1,
       },
-      securityMode: Opcua.MessageSecurityMode.None,
-      securityPolicy: Opcua.SecurityPolicy.None,
+      securityMode: nodeOPCUA.MessageSecurityMode.None,
+      securityPolicy: nodeOPCUA.SecurityPolicy.None,
       endpointMustExist: false,
       keepSessionAlive: false,
       keepPendingSessionsOnDisconnect: false,
@@ -93,7 +96,7 @@ describe('OPCUA-DA south', () => {
     const expectedUserIdentity = { type: 0 }
     await opcuaSouth.connect()
 
-    expect(Opcua.OPCUAClient.createSession).toBeCalledTimes(1)
+    expect(nodeOPCUA.OPCUAClient.createSession).toBeCalledTimes(1)
     expect(Opcua.OPCUAClient.createSession).toBeCalledWith(opcuaSouth.url, expectedUserIdentity, expectedOptions)
     expect(opcuaSouth.connected).toBeTruthy()
     expect(setTimeoutSpy).not.toBeCalled()
@@ -108,8 +111,8 @@ describe('OPCUA-DA south', () => {
         initialDelay: 1000,
         maxRetry: 1,
       },
-      securityMode: Opcua.MessageSecurityMode.None,
-      securityPolicy: Opcua.SecurityPolicy.None,
+      securityMode: nodeOPCUA.MessageSecurityMode.None,
+      securityPolicy: nodeOPCUA.SecurityPolicy.None,
       endpointMustExist: false,
       keepSessionAlive: false,
       keepPendingSessionsOnDisconnect: false,
@@ -127,7 +130,7 @@ describe('OPCUA-DA south', () => {
       userName: 'username',
       password: 'password',
     }
-    expect(Opcua.OPCUAClient.createSession).toBeCalledWith(opcuaSouth.url, expectedUserIdentity, expectedOptions)
+    expect(nodeOPCUA.OPCUAClient.createSession).toBeCalledWith(opcuaSouth.url, expectedUserIdentity, expectedOptions)
     expect(opcuaSouth.connected).toBeTruthy()
     expect(setTimeoutSpy).not.toBeCalled()
   })

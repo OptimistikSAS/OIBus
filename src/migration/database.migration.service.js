@@ -1,4 +1,4 @@
-const db = require('better-sqlite3')
+import db from 'better-sqlite3'
 
 const CACHE_TABLE_NAME = 'cache'
 
@@ -25,8 +25,4 @@ const changeColumnValue = async (databasePath, columnName, oldValue, newValue) =
   return true
 }
 
-module.exports = {
-  changeColumnName,
-  addColumn,
-  changeColumnValue,
-}
+export default { changeColumnName, addColumn, changeColumnValue }

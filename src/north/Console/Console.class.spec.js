@@ -1,6 +1,9 @@
-const fs = require('fs/promises')
-const Console = require('./Console.class')
-const config = require('../../config/defaultConfig.json')
+import { jest } from '@jest/globals'
+
+import fs from 'node:fs/promises'
+
+import Console from './Console.class.js'
+import { defaultConfig } from '../../../tests/testConfig.js'
 
 // Spy on console table and info
 jest.spyOn(global.console, 'table').mockImplementation(() => {})
@@ -14,7 +17,7 @@ jest.mock('../../engine/logger/Logger.class')
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
 engine.eventEmitters = {}
 
 let consoleNorth = null

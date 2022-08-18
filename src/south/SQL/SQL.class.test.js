@@ -1,10 +1,14 @@
-const mysql = require('mysql2/promise')
-const { Client } = require('pg')
-const mssql = require('mssql')
+import { jest } from '@jest/globals'
 
-const SQL = require('./SQL.class')
-const { integrationTestConfig: testConfig } = require('../../../tests/testConfig')
-const EncryptionService = require('../../services/EncryptionService.class')
+import mysql from 'mysql2/promise'
+import * as pg from 'pg'
+import mssql from 'mssql'
+
+import SQL from './SQL.class.js'
+import { integrationTestConfig } from '../../../tests/testConfig.js'
+import EncryptionService from '../../services/EncryptionService.class.js'
+
+const { Client } = pg
 
 // Mock logger
 jest.mock('../../engine/logger/Logger.class')
@@ -14,13 +18,13 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: testConfig.engine }) }
+engine.configService = { getConfig: () => ({ engineConfig: integrationTestConfig.engine }) }
 engine.addFile = jest.fn()
-engine.getCacheFolder = () => testConfig.engine.caching.cacheFolder
+engine.getCacheFolder = () => integrationTestConfig.engine.caching.cacheFolder
 engine.eventEmitters = {}
 
 describe('MySQL Integration test', () => {
-  const southMysqlConfig = testConfig.south.dataSources[0]
+  const southMysqlConfig = integrationTestConfig.south.dataSources[0]
   const mysqlConfig = {
     host: southMysqlConfig.SQL.host,
     user: southMysqlConfig.SQL.username,
@@ -69,7 +73,7 @@ describe('MySQL Integration test', () => {
 })
 
 describe('PostgreSQL Integration test', () => {
-  const southPostgresqlConfig = testConfig.south.dataSources[1]
+  const southPostgresqlConfig = integrationTestConfig.south.dataSources[1]
   const postgresqlConfig = {
     host: southPostgresqlConfig.SQL.host,
     user: southPostgresqlConfig.SQL.username,
@@ -119,7 +123,7 @@ describe('PostgreSQL Integration test', () => {
 })
 
 describe('MSSQL Integration test', () => {
-  const southMssqlConfig = testConfig.south.dataSources[2]
+  const southMssqlConfig = integrationTestConfig.south.dataSources[2]
   const mssqlConfig = {
     user: southMssqlConfig.SQL.username,
     password: southMssqlConfig.SQL.password,

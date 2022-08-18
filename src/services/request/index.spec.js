@@ -1,8 +1,10 @@
-const { createRequestService } = require('./index')
-const AxiosRequest = require('./AxiosRequest.class')
-const FetchRequest = require('./FetchRequest.class')
+import { jest } from '@jest/globals'
 
-const config = require('../../config/defaultConfig.json')
+import createRequestService from './index.js'
+import AxiosRequest from './AxiosRequest.class.js'
+import FetchRequest from './FetchRequest.class.js'
+
+import { defaultConfig } from '../../../tests/testConfig.js'
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
@@ -13,8 +15,8 @@ beforeEach(() => {
 
 describe('RequestFactory', () => {
   it('should initialize AxiosRequest when stack is axios', () => {
-    config.engine.httpRequest.stack = 'axios'
-    engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+    defaultConfig.engine.httpRequest.stack = 'axios'
+    engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
 
     const request = createRequestService(engine)
 
@@ -22,8 +24,8 @@ describe('RequestFactory', () => {
   })
 
   it('should initialize FetchRequest when stack is fetch', () => {
-    config.engine.httpRequest.stack = 'fetch'
-    engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+    defaultConfig.engine.httpRequest.stack = 'fetch'
+    engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
 
     const request = createRequestService(engine)
 

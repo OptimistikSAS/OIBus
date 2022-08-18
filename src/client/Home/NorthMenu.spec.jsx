@@ -6,7 +6,7 @@ import * as nanoid from 'nanoid'
 import { act, Simulate } from 'react-dom/test-utils'
 import * as ReactDOMClient from 'react-dom/client'
 import NorthMenu from './NorthMenu.jsx'
-import { testConfig } from '../../../tests/testConfig'
+import { testConfig } from '../../../tests/testConfig.js'
 
 // mocking the nanoid method
 jest.mock('nanoid')

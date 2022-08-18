@@ -1,9 +1,9 @@
-const fs = require('fs/promises')
-const path = require('path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const databaseService = require('../services/database.service')
-const Queue = require('../services/queue.class')
-const ApiHandler = require('../north/ApiHandler.class')
+import databaseService from '../services/database.service.js'
+import Queue from '../services/queue.class.js'
+import ApiHandler from '../north/ApiHandler.class.js'
 
 // Time between two checks of the Archive Folder
 const ARCHIVE_TIMEOUT = 3600000 // one hour
@@ -11,7 +11,7 @@ const ARCHIVE_TIMEOUT = 3600000 // one hour
 /**
  * Local cache implementation to group events and store them when the communication if North is down.
  */
-class Cache {
+export default class Cache {
   /**
    * Constructor for Cache
    * The Engine parameters is used for the following parameters
@@ -562,5 +562,3 @@ class Cache {
     }))
   }
 }
-
-module.exports = Cache

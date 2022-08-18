@@ -1,48 +1,36 @@
-const OIBusEngine = require('./OIBusEngine.class')
-const EncryptionService = require('../services/EncryptionService.class')
-const config = require('../config/defaultConfig.json')
-const ConfigService = require('../services/config.service.class')
+import { jest } from '@jest/globals'
 
-jest.mock('./Cache.class')
+import OIBusEngine from './OIBusEngine.class.js'
+import EncryptionService from '../services/EncryptionService.class.js'
+import { defaultConfig } from '../../tests/testConfig.js'
+
+jest.mock('./Cache.class.js')
 
 // Mock EncryptionService
 EncryptionService.getInstance = () => ({
   decryptText: (password) => password,
-  setKeyFolder: () => {
-  },
-  checkOrCreatePrivateKey: () => {
-  },
+  setKeyFolder: () => {},
+  checkOrCreatePrivateKey: () => {},
 })
-
-// Mock configService
-jest.mock('../services/config.service.class')
 
 let engine = null
 
 beforeEach(async () => {
-  jest.resetAllMocks()
-  jest.useFakeTimers()
-
   const mockConfigService = { getConfig: jest.fn() }
   mockConfigService.getConfig.mockReturnValue({
-    engineConfig: config.engine,
-    southConfig: config.south,
+    engineConfig: defaultConfig.engine,
+    southConfig: defaultConfig.south,
   })
 
-  ConfigService.mockImplementation(() => mockConfigService)
-
-  engine = new OIBusEngine(mockConfigService)
-  await engine.initEngineServices(config.engine)
+  engine = new OIBusEngine(mockConfigService, EncryptionService.getInstance())
+  await engine.initEngineServices(defaultConfig.engine)
 })
 
 describe('Engine', () => {
   it('should be properly initialized', () => {
-    expect(engine.addFileCount)
-      .toEqual(0)
-    expect(engine.addValuesCount)
-      .toEqual(0)
-    expect(engine.addValuesMessages)
-      .toEqual(0)
+    expect(engine.addFileCount).toEqual(0)
+    expect(engine.addValuesCount).toEqual(0)
+    expect(engine.addValuesMessages).toEqual(0)
   })
 
   it('should add values', async () => {
@@ -54,7 +42,8 @@ describe('Engine', () => {
           value: 0,
           quality: 192,
         },
-      }, {
+      },
+      {
         timestamp: 'today',
         pointId: 'point2',
         data: {
@@ -69,14 +58,16 @@ describe('Engine', () => {
           value: null,
           quality: 192,
         },
-      }, {
+      },
+      {
         timestamp: 'today',
         pointId: 'point4',
         data: {
           value: undefined,
           quality: 192,
         },
-      }, {
+      },
+      {
         timestamp: 'today',
         pointId: 'point5',
         data: undefined,
@@ -85,11 +76,11 @@ describe('Engine', () => {
         timestamp: 'today',
         pointId: 'point6',
         data: { value: '' },
-      }]
+      },
+    ]
 
     engine.cache.cacheValues = jest.fn()
     await engine.addValues('sourceId', sampleValues)
-    expect(engine.cache.cacheValues)
-      .toBeCalledWith('sourceId', sampleValues)
+    expect(engine.cache.cacheValues).toBeCalledWith('sourceId', sampleValues)
   })
 })

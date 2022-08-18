@@ -1,9 +1,10 @@
-const path = require('path')
-const fs = require('fs')
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import fs from 'node:fs'
 
-const minimist = require('minimist')
+import minimist from 'minimist'
 
-const EncryptionService = require('./EncryptionService.class')
+import EncryptionService from './EncryptionService.class.js'
 
 /**
  * Class responsible for managing the configuration.
@@ -11,7 +12,7 @@ const EncryptionService = require('./EncryptionService.class')
  * @param {string} configFile - The config file
  * @return {void}
  */
-class ConfigService {
+export default class ConfigService {
   constructor(configFile) {
     this.encryptionService = EncryptionService.getInstance()
 
@@ -24,7 +25,8 @@ class ConfigService {
 
     this.historyQueryConfigFile = `${baseDir}/historyQuery.db`
 
-    const defaultConfig = JSON.parse(fs.readFileSync(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
+    const dirName = path.dirname(fileURLToPath(import.meta.url))
+    const defaultConfig = JSON.parse(fs.readFileSync(`${dirName}/../config/defaultConfig.json`, 'utf8'))
     this.checkOrCreateConfigFile(this.configFile, defaultConfig)
 
     this.config = ConfigService.tryReadFile(this.configFile)
@@ -154,5 +156,3 @@ class ConfigService {
     return this.historyQueryConfigFile
   }
 }
-
-module.exports = ConfigService

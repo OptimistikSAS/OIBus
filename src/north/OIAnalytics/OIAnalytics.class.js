@@ -1,11 +1,11 @@
-const fs = require('fs/promises')
+import fs from 'node:fs/promises'
 
-const ApiHandler = require('../ApiHandler.class')
+import ApiHandler from '../ApiHandler.class.js'
 
 /**
  * Class OIAnalytics - sends files through a POST Multipart HTTP and values as json payload
  */
-class OIAnalytics extends ApiHandler {
+export default class OIAnalytics extends ApiHandler {
   static category = 'Optimistik'
 
   /**
@@ -79,5 +79,3 @@ class OIAnalytics extends ApiHandler {
     return result
   }
 }
-
-module.exports = OIAnalytics

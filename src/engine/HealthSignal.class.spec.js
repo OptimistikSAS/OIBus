@@ -1,54 +1,54 @@
-const HealthSignal = require('./HealthSignal.class')
+import { jest } from '@jest/globals'
+
+import HealthSignal from './HealthSignal.class.js'
+
+// Mocked config
+const proxy = {
+  name: 'proxy_name',
+  protocol: 'http',
+  host: 'proxy.host',
+  port: 666,
+  username: 'proxy_user',
+  password: 'proxy_pass',
+}
+const healthSignalConfig = {
+  logging: {
+    enabled: true,
+    frequency: 3600,
+    id: 'OIBus',
+  },
+  http: {
+    enabled: true,
+    host: 'https://example.com',
+    endpoint: '/endpoint/info',
+    authentication: {
+      type: 'Basic',
+      username: 'username',
+      password: 'password',
+    },
+    frequency: 300,
+    proxy: 'proxy_name',
+  },
+}
+const engineConfig = {
+  healthSignal: healthSignalConfig,
+  proxies: [proxy],
+}
 
 // Mock engine
-const engine = jest.mock('./OIBusEngine.class')
+const engine = jest.mock('./OIBusEngine.class.js')
 engine.logger = { error: jest.fn(), debug: jest.fn(), info: jest.fn(), trace: jest.fn() }
 
 beforeEach(() => {
-  jest.resetAllMocks()
   jest.useFakeTimers()
-})
-
-describe('HealthSignal', () => {
-  const proxy = {
-    name: 'proxy_name',
-    protocol: 'http',
-    host: 'proxy.host',
-    port: 666,
-    username: 'proxy_user',
-    password: 'proxy_pass',
-  }
-
-  const healthSignalConfig = {
-    logging: {
-      enabled: true,
-      frequency: 3600,
-      id: 'OIBus',
-    },
-    http: {
-      enabled: true,
-      host: 'https://example.com',
-      endpoint: '/endpoint/info',
-      authentication: {
-        type: 'Basic',
-        username: 'username',
-        password: 'password',
-      },
-      frequency: 300,
-      proxy: 'proxy_name',
-    },
-  }
-  const engineConfig = {
-    healthSignal: healthSignalConfig,
-    proxies: [proxy],
-  }
   engine.configService = { getConfig: () => ({ engineConfig }) }
   engine.getOIBusInfo = jest.fn()
   engine.requestService = { httpSend: jest.fn() }
+})
 
+describe('HealthSignal', () => {
   it('should be properly initialized', () => {
     const healthSignal = new HealthSignal(engine)
-
     expect(healthSignal.http.enabled).toBe(healthSignalConfig.http.enabled)
     expect(healthSignal.http.host).toBe(healthSignalConfig.http.host)
     expect(healthSignal.http.endpoint).toBe(healthSignalConfig.http.endpoint)

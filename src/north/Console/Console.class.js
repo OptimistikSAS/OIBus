@@ -1,8 +1,8 @@
-const fs = require('fs/promises')
+import fs from 'fs/promises'
 
-const ApiHandler = require('../ApiHandler.class')
+import ApiHandler from '../ApiHandler.class.js'
 
-class Console extends ApiHandler {
+export default class Console extends ApiHandler {
   static category = 'Debug'
 
   /**
@@ -59,5 +59,3 @@ class Console extends ApiHandler {
     return ApiHandler.STATUS.SUCCESS
   }
 }
-
-module.exports = Console

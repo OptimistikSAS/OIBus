@@ -5,7 +5,7 @@ import { nanoid } from 'nanoid'
 import Table from '../components/table/Table.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import NewHistoryQueryRow from './NewHistoryQueryRow.jsx'
-import apis from '../services/apis'
+import apis from '../services/apis.js'
 
 const HistoryQuery = () => {
   const { newConfig } = React.useContext(ConfigContext)

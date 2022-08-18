@@ -1,12 +1,12 @@
-const fs = require('fs/promises')
-const path = require('path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const ProtocolHandler = require('../ProtocolHandler.class')
+import ProtocolHandler from '../ProtocolHandler.class.js'
 
 /**
  * Class FolderScanner
  */
-class FolderScanner extends ProtocolHandler {
+export default class FolderScanner extends ProtocolHandler {
   static category = 'FileOut'
 
   /**
@@ -136,5 +136,3 @@ class FolderScanner extends ProtocolHandler {
     }
   }
 }
-
-module.exports = FolderScanner

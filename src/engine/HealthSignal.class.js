@@ -1,7 +1,7 @@
 /**
  * Class HealthSignal - sends health signal to a remote host
  */
-class HealthSignal {
+export default class HealthSignal {
   /**
    * Constructor for HealthSignal
    * @constructor
@@ -117,5 +117,3 @@ class HealthSignal {
     }
   }
 }
-
-module.exports = HealthSignal

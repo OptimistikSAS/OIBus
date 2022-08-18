@@ -1,17 +1,20 @@
-const fs = require('fs/promises')
-const fetch = require('node-fetch')
-const csv = require('papaparse')
-const { Settings } = require('luxon')
+import { jest } from '@jest/globals'
 
-const RestApi = require('./RestApi.class')
-const databaseService = require('../../services/database.service')
-const { defaultConfig: config } = require('../../../tests/testConfig')
+import fs from 'node:fs/promises'
+
+import fetch from 'node-fetch'
+import csv from 'papaparse'
+import { Settings } from 'luxon'
+
+import RestApi from './RestApi.class.js'
+import databaseService from '../../services/database.service.js'
+import { defaultConfig } from '../../../tests/testConfig.js'
 
 // Mock node-fetch
 jest.mock('node-fetch')
 
 // Mock fs
-jest.mock('fs/promises', () => ({
+jest.mock('node:fs/promises', () => ({
   stat: jest.fn(() => new Promise((resolve) => {
     resolve(true)
   })),
@@ -31,8 +34,8 @@ jest.mock('../../engine/logger/Logger.class')
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.getCacheFolder = () => config.engine.caching.cacheFolder
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
+engine.getCacheFolder = () => defaultConfig.engine.caching.cacheFolder
 engine.eventEmitters = {}
 engine.addFile = jest.fn()
 engine.addValues = jest.fn()

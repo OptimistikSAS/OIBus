@@ -1,7 +1,7 @@
 import React from 'react'
 import { Col, Row, Form, Spinner, Container } from 'reactstrap'
 import { ConfigContext } from '../context/ConfigContext.jsx'
-import { OIbInteger, OIbText, OIbPassword, OIbTitle, OIbCheckBox } from '../components/OIbForm'
+import { OIbInteger, OIbText, OIbPassword, OIbTitle, OIbCheckBox } from '../components/OIbForm/index.js'
 import Filters from './Filters.jsx'
 import Logging from './Logging/Logging.jsx'
 import ScanModes from './ScanModes.jsx'
@@ -11,7 +11,7 @@ import HistoryQuery from './HistoryQuery.jsx'
 import HealthSignal from './HealthSignal.jsx'
 import HttpRequest from './HttpRequest.jsx'
 import ExternalSources from './ExternalSources.jsx'
-import validation from './Engine.validation'
+import validation from './Engine.validation.js'
 
 const Engine = () => {
   const {

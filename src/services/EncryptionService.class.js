@@ -1,10 +1,11 @@
-const os = require('os')
-const crypto = require('crypto')
-const fs = require('fs')
-const path = require('path')
-const selfSigned = require('selfsigned')
+import os from 'node:os'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
 
-class EncryptionService {
+import selfSigned from 'selfsigned'
+
+export default class EncryptionService {
   static getInstance() {
     if (!EncryptionService.instance) {
       EncryptionService.instance = new EncryptionService()
@@ -206,5 +207,3 @@ class EncryptionService {
     return decrypted.toString('utf8')
   }
 }
-
-module.exports = EncryptionService

@@ -1,5 +1,5 @@
-const mqtt = require('mqtt')
-const ApiHandler = require('../ApiHandler.class')
+import mqtt from 'mqtt'
+import ApiHandler from '../ApiHandler.class.js'
 
 /**
  * Expected caching parameters:
@@ -30,7 +30,7 @@ const ApiHandler = require('../ApiHandler.class')
   }
  */
 
-class WATSYConnect extends ApiHandler {
+export default class WATSYConnect extends ApiHandler {
   static category = 'API'
 
   /**
@@ -253,5 +253,3 @@ class WATSYConnect extends ApiHandler {
     }
   }
 }
-
-module.exports = WATSYConnect

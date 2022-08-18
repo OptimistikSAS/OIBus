@@ -5,7 +5,7 @@ import { FaArrowLeft } from 'react-icons/fa'
 import PointsButton from './PointsButton.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import Table from '../components/table/Table.jsx'
-import utils from '../helpers/utils'
+import utils from '../helpers/utils.js'
 
 /**
  * Generate row entry for the status table.

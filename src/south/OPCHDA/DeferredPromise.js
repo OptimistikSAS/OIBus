@@ -3,7 +3,7 @@
  * It is used in OPCHDA to resolve the connection and disconnection when the
  * HDA Agent sends the associated messages
  */
-class DeferredPromise {
+export default class DeferredPromise {
   constructor() {
     this.promise = new Promise((resolve, reject) => {
       this.reject = reject
@@ -11,5 +11,3 @@ class DeferredPromise {
     })
   }
 }
-
-module.exports = DeferredPromise

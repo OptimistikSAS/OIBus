@@ -1,7 +1,9 @@
-const axios = require('axios').default
-const tunnel = require('tunnel')
+import { jest } from '@jest/globals'
 
-const AxiosRequest = require('./AxiosRequest.class')
+import axios from 'axios'
+import tunnel from 'tunnel'
+
+import AxiosRequest from './AxiosRequest.class.js'
 
 // Mock axios
 jest.mock('axios', () => ({

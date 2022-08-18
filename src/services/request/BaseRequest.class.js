@@ -1,10 +1,11 @@
-const fs = require('fs')
-const path = require('path')
-const FormData = require('form-data')
+import fs from 'node:fs'
+import path from 'node:path'
 
-const ApiHandler = require('../../north/ApiHandler.class')
+import FormData from 'form-data'
 
-class BaseRequest {
+import ApiHandler from '../../north/ApiHandler.class.js'
+
+export default class BaseRequest {
   constructor(engine) {
     this.engine = engine
     this.logger = engine.logger
@@ -122,5 +123,3 @@ class BaseRequest {
     return ApiHandler.STATUS.SUCCESS
   }
 }
-
-module.exports = BaseRequest

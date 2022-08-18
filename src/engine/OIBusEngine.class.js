@@ -1,20 +1,21 @@
-const timexe = require('timexe')
-const path = require('path')
-const os = require('os')
-const EventEmitter = require('events')
-const humanizeDuration = require('humanize-duration')
+import path from 'node:path'
+import os from 'node:os'
+import EventEmitter from 'node:events'
+
+import timexe from 'timexe'
+import humanizeDuration from 'humanize-duration'
 
 // Engine classes
-const BaseEngine = require('./BaseEngine.class')
-const HealthSignal = require('./HealthSignal.class')
-const Cache = require('./Cache.class')
+import BaseEngine from './BaseEngine.class.js'
+import HealthSignal from './HealthSignal.class.js'
+import Cache from './Cache.class.js'
 
 /**
  *
  * at startup, handles initialization of applications, protocols and config.
  * @class OIBusEngine
  */
-class OIBusEngine extends BaseEngine {
+export default class OIBusEngine extends BaseEngine {
   /**
    * Constructor for OIBusEngine
    * Reads the config file and create the corresponding Object.
@@ -429,11 +430,11 @@ class OIBusEngine extends BaseEngine {
     return {
       version: this.getVersion(),
       architecture: process.arch,
-      'Current directory': process.cwd(),
-      'Node version': process.version,
+      configurationDirectory: process.cwd(),
+      nodeVersion: process.version,
       executable: process.execPath,
-      'Configuration file': this.configService.getConfigurationFileLocation(),
-      'History Query Database': this.configService.getHistoryQueryConfigurationFileLocation(),
+      configurationFile: this.configService.getConfigurationFileLocation(),
+      historyQueryDatabase: this.configService.getHistoryQueryConfigurationFileLocation(),
       processId: process.pid,
       hostname: os.hostname(),
       osRelease: os.release(),
@@ -538,5 +539,3 @@ class OIBusEngine extends BaseEngine {
     }
   }
 }
-
-module.exports = OIBusEngine

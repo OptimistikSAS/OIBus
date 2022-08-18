@@ -85,7 +85,7 @@ const aliveSignal = async (ctx) => {
   }
 }
 
-module.exports = {
+export default {
   getOIBusInfo,
   getNorthList,
   getSouthList,

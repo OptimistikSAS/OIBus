@@ -5,7 +5,7 @@ import React from 'react'
 import { act } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import { testHistoryConfig } from '../../../../tests/testConfig'
+import { testHistoryConfig } from '../../../../tests/testConfig.js'
 import HistoryQueryForm from './HistoryQueryForm.jsx'
 
 React.useContext = jest.fn().mockReturnValue({ newConfig: testHistoryConfig })

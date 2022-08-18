@@ -1,9 +1,9 @@
-const axios = require('axios').default
-const tunnel = require('tunnel')
+import axios from 'axios'
+import tunnel from 'tunnel'
 
-const BaseRequest = require('./BaseRequest.class')
+import BaseRequest from './BaseRequest.class.js'
 
-class AxiosRequest extends BaseRequest {
+export default class AxiosRequest extends BaseRequest {
   /**
    * Send the values using axios
    * If "headers" contains Content-Type "data" is sent as string in the body.
@@ -88,5 +88,3 @@ class AxiosRequest extends BaseRequest {
     return true
   }
 }
-
-module.exports = AxiosRequest

@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
-import { notEmpty, minValue, inRange } from '../../../services/validation.service'
+import { notEmpty, minValue, inRange } from '../../../services/validation.service.js'
 
 const schema = { name: 'FileLogging' }
 schema.form = {

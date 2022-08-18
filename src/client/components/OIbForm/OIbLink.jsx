@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
-import { combinedValidations, startsWithAnyOf, notEndsWith } from '../../../services/validation.service'
+import { combinedValidations, startsWithAnyOf, notEndsWith } from '../../../services/validation.service.js'
 
 const OIbLink = ({ label, help, value, protocols, name, onChange, defaultValue, inline }) => {
   React.useEffect(() => {

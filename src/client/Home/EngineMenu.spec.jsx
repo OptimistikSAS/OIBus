@@ -7,7 +7,7 @@ import { act, Simulate } from 'react-dom/test-utils'
 import * as ReactDOMClient from 'react-dom/client'
 import EngineMenu from './EngineMenu.jsx'
 
-import activeConfig from '../../../tests/testConfig'
+import activeConfig from '../../../tests/testConfig.js'
 
 const mockNavigate = jest.fn()
 

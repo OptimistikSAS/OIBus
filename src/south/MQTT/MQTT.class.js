@@ -1,11 +1,11 @@
-const mqtt = require('mqtt')
-const mqttWildcard = require('mqtt-wildcard')
-const { vsprintf } = require('sprintf-js')
-const { DateTime } = require('luxon')
+import mqtt from 'mqtt'
+import mqttWildcard from 'mqtt-wildcard'
+import { vsprintf } from 'sprintf-js'
+import { DateTime } from 'luxon'
 
-const ProtocolHandler = require('../ProtocolHandler.class')
+import ProtocolHandler from '../ProtocolHandler.class.js'
 
-class MQTT extends ProtocolHandler {
+export default class MQTT extends ProtocolHandler {
   static category = 'IoT'
 
   /**
@@ -263,5 +263,3 @@ class MQTT extends ProtocolHandler {
     return pointId
   }
 }
-
-module.exports = MQTT

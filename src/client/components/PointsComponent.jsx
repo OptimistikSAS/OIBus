@@ -7,9 +7,9 @@ import Table from './table/Table.jsx'
 import TablePagination from './table/TablePagination.jsx'
 import Modal from './Modal.jsx'
 import ProtocolSchemas from '../South/Protocols.jsx'
-import * as Controls from './OIbForm'
-import utils from '../helpers/utils'
-import validation from '../South/Form/South.validation'
+import * as Controls from './OIbForm/index.js'
+import utils from '../helpers/utils.js'
+import validation from '../South/Form/South.validation.js'
 
 const PointsComponent = ({
   southId,

@@ -1,10 +1,12 @@
-const { Client } = require('pg')
-const { vsprintf } = require('sprintf-js')
-const objectPath = require('object-path')
+import * as pg from 'pg'
+import { vsprintf } from 'sprintf-js'
+import objectPath from 'object-path'
 
-const ApiHandler = require('../ApiHandler.class')
+import ApiHandler from '../ApiHandler.class.js'
 
-class TimescaleDB extends ApiHandler {
+const { Client } = pg
+
+export default class TimescaleDB extends ApiHandler {
   static category = 'DatabaseIn'
 
   /**
@@ -202,5 +204,3 @@ class TimescaleDB extends ApiHandler {
     await this.timescaleClient.query(query)
   }
 }
-
-module.exports = TimescaleDB

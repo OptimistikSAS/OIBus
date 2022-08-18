@@ -1,12 +1,14 @@
 /* eslint-disable no-restricted-syntax, no-await-in-loop */
 
-const fs = require('fs/promises')
-const { nanoid } = require('nanoid')
-const path = require('path')
-const databaseMigrationService = require('./database.migration.service')
-const databaseService = require('../services/database.service')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-module.exports = {
+import { nanoid } from 'nanoid'
+
+import databaseMigrationService from './database.migration.service.js'
+import databaseService from '../services/database.service.js'
+
+export default {
   2: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'RawFile') {

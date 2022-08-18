@@ -1,6 +1,8 @@
-const InfluxDB = require('./InfluxDB.class')
-const config = require('../../config/defaultConfig.json')
-const EncryptionService = require('../../services/EncryptionService.class')
+import { jest } from '@jest/globals'
+
+import InfluxDB from './InfluxDB.class.js'
+import { defaultConfig } from '../../../tests/testConfig.js'
+import EncryptionService from '../../services/EncryptionService.class.js'
 
 // Mock logger
 jest.mock('../../engine/logger/Logger.class')
@@ -10,7 +12,7 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
 engine.requestService = { httpSend: jest.fn() }
 engine.eventEmitters = {}
 

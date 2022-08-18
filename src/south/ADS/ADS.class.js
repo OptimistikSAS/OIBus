@@ -1,11 +1,11 @@
-const ads = require('ads-client')
+import ads from 'ads-client'
 
-const ProtocolHandler = require('../ProtocolHandler.class')
+import ProtocolHandler from '../ProtocolHandler.class.js'
 
 /**
- * Class ADS - Provides instruction for Modbus client connection
+ * Class ADS - Provides instruction for ADS client connection
  */
-class ADS extends ProtocolHandler {
+export default class ADS extends ProtocolHandler {
   static category = 'IoT'
 
   /**
@@ -280,5 +280,3 @@ class ADS extends ProtocolHandler {
     await super.disconnect()
   }
 }
-
-module.exports = ADS

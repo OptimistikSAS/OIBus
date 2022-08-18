@@ -1,8 +1,8 @@
-const net = require('net')
+import net from 'node:net'
 
-const SocketSession = require('./SocketSession')
+import SocketSession from './SocketSession.js'
 
-class TcpServer {
+export default class TcpServer {
   constructor(port, handleMessage, logger) {
     this.port = port
     this.handleMessage = handleMessage
@@ -97,5 +97,3 @@ class TcpServer {
     }
   }
 }
-
-module.exports = TcpServer

@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button, Form, Col, Row } from 'reactstrap'
 import PropTypes from 'prop-types'
-import { OIbSelect } from '../components/OIbForm/index'
+import { OIbSelect } from '../components/OIbForm/index.js'
 import ProtocolSchemas from '../South/Protocols.jsx'
 
 const HISTORY_QUERY_CAPABLE_PROTOCOLS = [

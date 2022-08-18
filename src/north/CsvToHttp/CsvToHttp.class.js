@@ -1,7 +1,8 @@
-const Papa = require('papaparse')
-const fs = require('fs')
+import fs from 'node:fs'
 
-const ApiHandler = require('../ApiHandler.class')
+import Papa from 'papaparse'
+
+import ApiHandler from '../ApiHandler.class.js'
 
 const ERROR_PRINT_SIZE = 5
 const REGEX_CONTAIN_VARIABLE_STRING = /\${[^}]*}/ // match if the string contains ${...}
@@ -12,7 +13,7 @@ const REGEX_GET_VARIABLE = /[^${}]+/ // Get the value inside ${}
 /**
  * Class CsvToHttp - convert a csv file into http request such as POST/PUT/PATCH
  */
-class CsvToHttp extends ApiHandler {
+export default class CsvToHttp extends ApiHandler {
   static category = 'API'
 
   /**
@@ -367,5 +368,3 @@ class CsvToHttp extends ApiHandler {
     }
   }
 }
-
-module.exports = CsvToHttp

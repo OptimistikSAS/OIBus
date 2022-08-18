@@ -1,18 +1,19 @@
-const {
+import {
   OPCUAClient,
   MessageSecurityMode,
   SecurityPolicy,
   UserTokenType,
-} = require('node-opcua-client')
-const { OPCUACertificateManager } = require('node-opcua-certificate-manager')
-const ProtocolHandler = require('../../ProtocolHandler.class')
-const { initOpcuaCertificateFolders } = require('../opcua.service')
+} from 'node-opcua-client'
+import { OPCUACertificateManager } from 'node-opcua-certificate-manager'
+
+import ProtocolHandler from '../../ProtocolHandler.class.js'
+import { initOpcuaCertificateFolders } from '../opcua.service.js'
 
 /**
  * @class OPCUA_DA
  * @extends {ProtocolHandler}
  */
-class OPCUA_DA extends ProtocolHandler {
+export default class OPCUA_DA extends ProtocolHandler {
   static category = 'IoT'
 
   /**
@@ -238,5 +239,3 @@ class OPCUA_DA extends ProtocolHandler {
     }
   }
 }
-
-module.exports = OPCUA_DA

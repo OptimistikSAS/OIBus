@@ -1,8 +1,8 @@
-const { spawn } = require('child_process')
+import { spawn } from 'node:child_process'
 
-const ProtocolHandler = require('../ProtocolHandler.class')
-const TcpServer = require('./TcpServer')
-const DeferredPromise = require('./DeferredPromise')
+import ProtocolHandler from '../ProtocolHandler.class.js'
+import DeferredPromise from './DeferredPromise.js'
+import TcpServer from './TcpServer.js'
 
 // Time to wait before closing the connection by timeout and killing the Agent process
 const DISCONNECTION_TIMEOUT = 10000
@@ -10,7 +10,7 @@ const DISCONNECTION_TIMEOUT = 10000
 /**
  * Class OPCHDA.
  */
-class OPCHDA extends ProtocolHandler {
+export default class OPCHDA extends ProtocolHandler {
   static category = 'IoT'
 
   /**
@@ -438,5 +438,3 @@ class OPCHDA extends ProtocolHandler {
     }
   }
 }
-
-module.exports = OPCHDA

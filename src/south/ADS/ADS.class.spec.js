@@ -1,8 +1,10 @@
-const ads = require('ads-client')
-const ADS = require('./ADS.class')
-const databaseService = require('../../services/database.service')
-const { defaultConfig: config } = require('../../../tests/testConfig')
-const EncryptionService = require('../../services/EncryptionService.class')
+import { jest } from '@jest/globals'
+
+import ads from 'ads-client'
+import ADS from './ADS.class.js'
+import databaseService from '../../services/database.service.js'
+import { defaultConfig } from '../../../tests/testConfig.js'
+import EncryptionService from '../../services/EncryptionService.class.js'
 
 // Mock ads client
 jest.mock('ads-client')
@@ -22,9 +24,9 @@ jest.mock('../../engine/logger/Logger.class')
 
 // Mock engine
 const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
+engine.configService = { getConfig: () => ({ engineConfig: defaultConfig.engine }) }
 engine.addValues = jest.fn()
-engine.getCacheFolder = () => config.engine.caching.cacheFolder
+engine.getCacheFolder = () => defaultConfig.engine.caching.cacheFolder
 engine.eventEmitters = {}
 
 // Global variable used to simulate ADS library returned values
@@ -791,7 +793,7 @@ describe('ADS south', () => {
   it('should properly connect', async () => {
     await adsSouth.connect()
     expect(databaseService.createConfigDatabase)
-      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${adsConfig.id}.db`)
+      .toBeCalledWith(`${defaultConfig.engine.caching.cacheFolder}/${adsConfig.id}.db`)
 
     expect(adsSouth.connected)
       .toBeTruthy()

@@ -2,9 +2,9 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import Table from '../components/table/Table.jsx'
-import { OIbText, OIbTitle } from '../components/OIbForm'
+import { OIbText, OIbTitle } from '../components/OIbForm/index.js'
 import { ConfigContext } from '../context/ConfigContext.jsx'
-import validation from './Engine.validation'
+import validation from './Engine.validation.js'
 
 const ExternalSources = ({ externalSources }) => {
   const { dispatchNewConfig } = React.useContext(ConfigContext)

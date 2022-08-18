@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
-import { minValue, optional } from '../../../services/validation.service'
+import { minValue, optional } from '../../../services/validation.service.js'
 
 const schema = { name: 'LokiLogging' }
 schema.form = {

@@ -2,7 +2,7 @@
  * Create a Queue with auto
  * @class Queue
  */
-class Queue {
+export default class Queue {
   constructor(logger) {
     this.queue = []
     this.run = false
@@ -47,5 +47,3 @@ class Queue {
     await this.next()
   }
 }
-
-module.exports = Queue

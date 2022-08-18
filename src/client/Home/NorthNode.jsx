@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import { Tooltip } from 'reactstrap'
 import NorthMenu from './NorthMenu.jsx'
 import ApiSchemas from '../North/Apis.jsx'
-import imageCategories from './imageCategories'
+import imageCategories from './imageCategories.js'
 import OIbCheckBox from '../components/OIbForm/OIbCheckBox.jsx'
 
 const NorthNode = ({ application, indexNorth, onChange }) => {

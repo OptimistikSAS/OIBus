@@ -1,11 +1,12 @@
 /* eslint-disable no-await-in-loop */
 
-const fs = require('fs/promises')
-const path = require('path')
-const EventEmitter = require('events')
-const ApiHandler = require('../north/ApiHandler.class')
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import EventEmitter from 'node:events'
 
-class HistoryQuery {
+import ApiHandler from '../north/ApiHandler.class.js'
+
+export default class HistoryQuery {
   // Waiting to be started
   static STATUS_PENDING = 'pending'
 
@@ -369,5 +370,3 @@ class HistoryQuery {
     this.engine.eventEmitters[`/history/${this.id}/sse`]?.events?.emit('data', this.statusData)
   }
 }
-
-module.exports = HistoryQuery

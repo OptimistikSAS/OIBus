@@ -1,5 +1,5 @@
-const AxiosRequest = require('./AxiosRequest.class')
-const FetchRequest = require('./FetchRequest.class')
+import AxiosRequest from './AxiosRequest.class.js'
+import FetchRequest from './FetchRequest.class.js'
 
 const createRequestService = (engine) => {
   const { engineConfig: { httpRequest } } = engine.configService.getConfig()
@@ -10,4 +10,4 @@ const createRequestService = (engine) => {
   return new FetchRequest(engine)
 }
 
-module.exports = { createRequestService }
+export default createRequestService

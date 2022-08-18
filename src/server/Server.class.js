@@ -1,20 +1,20 @@
-const Koa = require('koa')
-const cors = require('@koa/cors')
-const bodyParser = require('koa-bodyparser')
-const helmet = require('koa-helmet')
-const respond = require('koa-respond')
-const { PassThrough } = require('stream')
-const authCrypto = require('./middlewares/auth')
-const ipFilter = require('./middlewares/ipFilter')
-const clientController = require('./controllers/clientController')
-const Logger = require('../engine/logger/Logger.class')
+import Koa from 'koa'
+import cors from '@koa/cors'
+import bodyParser from 'koa-bodyparser'
+import helmet from 'koa-helmet'
+import respond from 'koa-respond'
+import { PassThrough } from 'stream'
 
-const router = require('./routes')
+import authCrypto from './middlewares/auth.js'
+import ipFilter from './middlewares/ipFilter.js'
+import clientController from './controllers/clientController.js'
+import Logger from '../engine/logger/Logger.class.js'
+import router from './routes/index.js'
 
 /**
  * Class Server - Provides general attributes and methods for protocols.
  */
-class Server {
+export default class Server {
   /**
    * Constructor for Protocol
    * @constructor
@@ -139,7 +139,7 @@ class Server {
     // Define routes
     this.app.use(router.routes())
     this.app.use(router.allowedMethods())
-    this.app.use(clientController.serveClient)
+    this.app.use(clientController)
 
     this.logger.changeParameters(engineConfig).then(() => {
       this.webServer = this.app.listen(this.port, () => {
@@ -152,5 +152,3 @@ class Server {
     await this.webServer?.close()
   }
 }
-
-module.exports = Server

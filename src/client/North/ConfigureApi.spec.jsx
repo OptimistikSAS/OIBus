@@ -5,9 +5,9 @@ import React from 'react'
 import { act, Simulate } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import { testConfig } from '../../../tests/testConfig'
+import { testConfig } from '../../../tests/testConfig.js'
 import ConfigureApi from './ConfigureApi.jsx'
-import utils from '../helpers/utils'
+import utils from '../helpers/utils.js'
 
 const dispatchNewConfig = jest.fn()
 React.useContext = jest.fn().mockReturnValue({ newConfig: testConfig, dispatchNewConfig })

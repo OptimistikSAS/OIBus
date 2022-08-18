@@ -1,4 +1,4 @@
-const db = require('better-sqlite3')
+import db from 'better-sqlite3'
 
 const CACHE_TABLE_NAME = 'cache'
 
@@ -275,7 +275,7 @@ const getHistoryQuerySouthData = (databasePath) => {
   return database.prepare(query).all()
 }
 
-module.exports = {
+export default {
   createValuesDatabase,
   createFilesDatabase,
   createConfigDatabase,

@@ -1,18 +1,19 @@
-const fs = require('fs')
-const crypto = require('crypto')
+import { jest } from '@jest/globals'
 
-const EncryptionService = require('./EncryptionService.class')
+import fs from 'node:fs'
+import crypto from 'node:crypto'
+
+import EncryptionService from './EncryptionService.class.js'
+
+let encryptionService = null
+const keyFolder = './tests/testKeys'
 
 beforeEach(() => {
-  jest.resetAllMocks()
-  jest.restoreAllMocks()
+  encryptionService = new EncryptionService()
+  encryptionService.setKeyFolder(keyFolder)
 })
 
 describe('Encryption service', () => {
-  const keyFolder = './tests/testKeys'
-  const encryptionService = new EncryptionService()
-  encryptionService.setKeyFolder(keyFolder)
-
   it('should not create key folder if exists', async () => {
     jest.spyOn(fs, 'existsSync').mockImplementation(() => true)
     jest.spyOn(fs, 'mkdirSync')
