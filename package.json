@@ -121,7 +121,7 @@
     "prop-types": "15.8.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-flow-renderer": "10.3.12",
+    "react-flow-renderer": "10.3.16",
     "react-icons": "4.4.0",
     "react-router": "6.3.0",
     "react-router-dom": "6.3.0",
