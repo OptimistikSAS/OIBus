@@ -1,5 +1,4 @@
-const sqlite = require('sqlite')
-const sqlite3 = require('sqlite3')
+const db = require('better-sqlite3')
 const HistoryQuery = require('./HistoryQuery.class')
 
 class HistoryQueryRepository {
@@ -15,7 +14,7 @@ class HistoryQueryRepository {
    * @return {Promise<void>} - The result promise
    */
   async initialize() {
-    this.database = await sqlite.open({ filename: this.databasePath, driver: sqlite3.cached.Database })
+    this.database = await db(this.databasePath)
     const query = `CREATE TABLE IF NOT EXISTS ${HistoryQueryRepository.TABLE} (
                    id TEXT PRIMARY KEY,
                    orderColumn INTEGER,
@@ -30,8 +29,7 @@ class HistoryQueryRepository {
                    compress INTEGER,
                    settings TEXT
                  );`
-    const stmt = await this.database.prepare(query)
-    await stmt.run()
+    await this.database.prepare(query).run()
   }
 
   /**
@@ -42,8 +40,7 @@ class HistoryQueryRepository {
   async create(historyQuery) {
     let order = 1
     const orderQuery = `SELECT MAX(orderColumn) AS maxOrder FROM ${HistoryQueryRepository.TABLE}`
-    const orderStmt = await this.database.prepare(orderQuery)
-    const orderResult = await orderStmt.get()
+    const orderResult = await this.database.prepare(orderQuery).get()
     if (orderResult) {
       order = orderResult.maxOrder + 1
     }
