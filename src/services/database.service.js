@@ -1,40 +1,38 @@
-const sqlite = require('sqlite')
-const sqlite3 = require('sqlite3')
+const db = require('better-sqlite3')
 
 const CACHE_TABLE_NAME = 'cache'
 
 /**
- * Initiate SQLite3 database and create the cache table.
+ * Initiate SQLite database and create the cache table.
  * @param {string} databasePath - The database file path
  * @param {any} options - options
- * @return {sqlite.Database} - The SQLite3 database
+ * @return {object} - The SQLite database
  */
 const createValuesDatabase = async (databasePath, options) => {
-  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
-  await database.run(`CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
-                   id INTEGER PRIMARY KEY,
-                   timestamp TEXT KEY,
-                   data TEXT,
-                   point_id TEXT,
-                   data_source TEXT
-                 );`)
-  await database.run('PRAGMA secure_delete = OFF;')
-  await database.run('PRAGMA cache_size = 100000;')
-  await database.run('PRAGMA locking_mode = exclusive;')
-  if (options?.wal) await database.run('PRAGMA journal_mode = WAL;')
-  if (options?.optimize) await database.run('PRAGMA optimize;')
-  if (options?.vacuum) await database.run('PRAGMA vacuum;')
+  const database = await db(databasePath)
+  await database.prepare(`CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
+                               id INTEGER PRIMARY KEY,
+                               timestamp TEXT KEY,
+                               data TEXT,
+                               point_id TEXT,
+                               data_source TEXT);`).run()
+  await database.prepare('PRAGMA secure_delete = OFF;').run()
+  await database.prepare('PRAGMA cache_size = 100000;').run()
+  await database.prepare('PRAGMA locking_mode = exclusive;').run()
+  if (options?.wal) await database.prepare('PRAGMA journal_mode = WAL;').run()
+  if (options?.optimize) await database.prepare('PRAGMA optimize;').run()
+  if (options?.vacuum) await database.prepare('PRAGMA vacuum;').run()
 
   return database
 }
 
 /**
- * Initiate SQLite3 database and create the cache table.
+ * Initiate SQLite database and create the cache table.
  * @param {string} databasePath - The database file path
- * @return {sqlite.Database} - The SQLite3 database
+ * @return {object} - The SQLite database
  */
 const createFilesDatabase = async (databasePath) => {
-  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
+  const database = await db(databasePath)
 
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
                    id INTEGER PRIMARY KEY,
@@ -49,12 +47,12 @@ const createFilesDatabase = async (databasePath) => {
 }
 
 /**
- * Initiate SQLite3 database and create the cache table.
+ * Initiate SQLite database and create the cache table.
  * @param {string} databasePath - The database file path
- * @return {sqlite.Database} - The SQLite3 database
+ * @return {object} - The SQLite database
  */
 const createConfigDatabase = async (databasePath) => {
-  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
+  const database = await db(databasePath)
 
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
                    id INTEGER PRIMARY KEY,
@@ -68,12 +66,12 @@ const createConfigDatabase = async (databasePath) => {
 }
 
 /**
- * Initiate SQLite3 database and create the cache table.
+ * Initiate SQLite database and create the cache table.
  * @param {string} databasePath - The database file path
- * @return {sqlite.Database} - The SQLite3 database
+ * @return {object} - The SQLite database
  */
 const createValueErrorsDatabase = async (databasePath) => {
-  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
+  const database = await db(databasePath)
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (
                    id INTEGER PRIMARY KEY,
                    timestamp TEXT,
@@ -88,8 +86,8 @@ const createValueErrorsDatabase = async (databasePath) => {
 }
 
 /**
- * Save values in database.
- * @param {sqlite.Database} database - The database to use
+ * Save values in a SQLite database.
+ * @param {object} database - The SQLite database to use
  * @param {String} dataSourceName - The name of the data source to be sent with the value
  * @param {object} values - The values to save
  * @return {void}
@@ -99,42 +97,39 @@ const saveValues = async (database, dataSourceName, values) => {
                       VALUES `
   const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}','${dataSourceName}')`)
   const query = `${queryStart}${prepValues.join(',')};`
-  await database.run(query)
+  await database.prepare(query).run()
 }
 
 /**
- * Save errored values in database.
- * @param {sqlite.Database} database - The database to use
+ * Save errored values in a SQLite database.
+ * @param {object} database - The database to use
  * @param {String} id - The application id
  * @param {object} values - The values to save
  * @return {void}
  */
 const saveErroredValues = async (database, id, values) => {
-  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, application)
-                 VALUES (?, ?, ?, ?)`
-  await database.run('BEGIN;')
-  const stmt = await database.prepare(query)
-  const actions = values.map((value) => stmt.run(value.timestamp, encodeURI(JSON.stringify(value.data)), value.pointId, id))
-  await Promise.all(actions)
-  await database.run('COMMIT;')
+  const queryStart = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, application)
+                 VALUES `
+  const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}','${id}')`)
+  const query = `${queryStart}${prepValues.join(',')};`
+  await database.prepare(query).run()
 }
 
 /**
  * Get values count.
- * @param {sqlite.Database} database - The database to use
+ * @param {object} database - The SQLite database to use
  * @return {Promise<number>} - The values count
  */
 const getCount = async (database) => {
   const query = `SELECT COUNT(*) AS count
                  FROM ${CACHE_TABLE_NAME}`
-  const stmt = await database.prepare(query)
-  const result = await stmt.get()
+  const result = await database.prepare(query).get()
   return result.count
 }
 
 /**
- * Get values to send to a given North application.
- * @param {sqlite.Database} database - The database to use
+ * Get values to send to a given North.
+ * @param {object} database - The SQLite database to use
  * @param {string} count - The number of values to get
  * @return {array|null} - The values
  */
@@ -144,16 +139,17 @@ const getValuesToSend = async (database, count) => {
                  ORDER BY timestamp
                  LIMIT ${count}`
   const values = []
-  await database.each(query, (err, value) => {
-    if (err) throw err
+  const stmt = database.prepare(query)
+  // eslint-disable-next-line no-restricted-syntax
+  for (const value of stmt.iterate()) {
     values.push({ ...value, data: JSON.parse(decodeURI(value.data)) })
-  })
+  }
   return values
 }
 
 /**
  * Remove sent values from the cache for a given North application.
- * @param {sqlite.Database} database - The database to use
+ * @param {object} database - The database to use
  * @param {Object} values - The values to remove
  * @return {Promise<number>} number of deleted values
  */
@@ -161,13 +157,13 @@ const removeSentValues = async (database, values) => {
   const ids = values.map((value) => value.id).join()
   const query = `DELETE FROM ${CACHE_TABLE_NAME}
                    WHERE id IN (${ids})`
-  const result = await database.run(query)
+  const result = await database.prepare(query).run()
   return result.changes
 }
 
 /**
  * Save file for a given application.
- * @param {sqlite.Database} database - The database to use
+ * @param {object} database - The database to use
  * @param {number} timestamp - The timestamp
  * @param {string} id - The application id
  * @param {string} filePath - The file path
@@ -182,7 +178,7 @@ const saveFile = async (database, timestamp, id, filePath) => {
 
 /**
  * Get file to send to a given North application.
- * @param {sqlite.Database} database - The database to use
+ * @param {object} database - The database to use
  * @param {string} id - The application id
  * @return {Promise<{path: string, timestamp: number}>} - The file path
  */
@@ -200,7 +196,7 @@ const getFileToSend = async (database, id) => {
 
 /**
  * Delete sent file from the cache for a given North application.
- * @param {sqlite.Database} database - The database to use
+ * @param {object} database - The database to use
  * @param {string} id - The application id
  * @param {string} filePath - The file path
  * @return {void}
@@ -215,7 +211,7 @@ const deleteSentFile = async (database, id, filePath) => {
 
 /**
  * Get file count.
- * @param {sqlite.Database} database - The database to use
+ * @param {object} database - The database to use
  * @param {string} filePath - The file path
  * @return {Promise<number>} - The file count
  */
@@ -231,7 +227,7 @@ const getFileCount = async (database, filePath) => {
 
 /**
  * Get file count for API.
- * @param {sqlite.Database} database - The database to use
+ * @param {object} database - The database to use
  * @param {string} api - The api to get file count
  * @return {number} - The file count
  */
@@ -247,7 +243,7 @@ const getFileCountForApi = async (database, api) => {
 
 /**
  * Upsert config entry.
- * @param {sqlite.Database} database - The database to use
+ * @param {object} database - The database to use
  * @param {string} name - The config entry
  * @param {string} value - The config value
  * @return {void}
@@ -262,7 +258,7 @@ const upsertConfig = async (database, name, value) => {
 
 /**
  * Get configuration.
- * @param {sqlite.Database} database - The database to use
+ * @param {object} database - The database to use
  * @param {string} name - The config name
  * @return {Promise<string>} - The config value
  */
@@ -289,7 +285,7 @@ const getConfig = async (database, name) => {
  * @return {object[]} - The logs
  */
 const getLogs = async (databasePath, fromDate, toDate, verbosity) => {
-  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
+  const database = await db(databasePath)
   const query = `SELECT *
                  FROM logs
                  WHERE timestamp BETWEEN ? AND ?
@@ -304,7 +300,7 @@ const getLogs = async (databasePath, fromDate, toDate, verbosity) => {
  * @return {Promise<{error: number, warn: number}>} - The logs count
  */
 const getLogsCount = async (databasePath) => {
-  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
+  const database = await db(databasePath)
   const query = `SELECT level, COUNT(level) AS count
                  FROM logs
                  GROUP BY level`
@@ -324,7 +320,7 @@ const getLogsCount = async (databasePath) => {
  * @returns {Promise<number>} - The count
  */
 const getErroredValuesCount = async (databasePath) => {
-  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
+  const database = await db(databasePath)
   const query = `SELECT COUNT(*) AS count
                  FROM ${CACHE_TABLE_NAME}`
   const stmt = await database.prepare(query)
@@ -338,7 +334,7 @@ const getErroredValuesCount = async (databasePath) => {
  * @returns {Promise<number>} - The count
  */
 const getErroredFilesCount = async (databasePath) => {
-  const database = await sqlite.open({ filename: databasePath, driver: sqlite3.cached.Database })
+  const database = await db(databasePath)
   const query = `SELECT COUNT(*) AS count
                  FROM ${CACHE_TABLE_NAME}`
   const stmt = await database.prepare(query)
@@ -352,10 +348,7 @@ const getErroredFilesCount = async (databasePath) => {
  * @returns {Promise<object>} - The data
  */
 const getHistoryQuerySouthData = async (databasePath) => {
-  const database = await sqlite.open({
-    filename: databasePath,
-    driver: sqlite3.cached.Database,
-  })
+  const database = await db(databasePath)
   const query = `SELECT * FROM ${CACHE_TABLE_NAME}`
   const stmt = await database.prepare(query)
   return stmt.all()

@@ -1,7 +1,6 @@
 const fs = require('fs/promises')
 const path = require('path')
-const sqlite = require('sqlite')
-const sqlite3 = require('sqlite3')
+const db = require('better-sqlite3')
 const mssql = require('mssql')
 const mysql = require('mysql2/promise')
 const {
@@ -435,10 +434,7 @@ class SQL extends ProtocolHandler {
     let database = null
     let data = []
     try {
-      database = await sqlite.open({
-        filename: this.databasePath,
-        driver: sqlite3.Database,
-      })
+      database = await db(this.databasePath)
       const stmt = await database.prepare(adaptedQuery)
       const preparedParameters = {}
       if (this.query.indexOf('@StartTime') !== -1) {
@@ -449,7 +445,6 @@ class SQL extends ProtocolHandler {
       }
 
       data = await stmt.all(preparedParameters)
-      await stmt.finalize()
     } catch (error) {
       this.logger.error(error)
     } finally {

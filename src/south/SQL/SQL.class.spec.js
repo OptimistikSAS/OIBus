@@ -1,16 +1,9 @@
 const fs = require('fs/promises')
 const path = require('path')
-const {
-  Settings,
-  DateTime,
-} = require('luxon')
-
+const { Settings, DateTime } = require('luxon')
 const mssql = require('mssql')
 const mysql = require('mysql2/promise')
-const {
-  Client,
-  types,
-} = require('pg')
+const { Client, types } = require('pg')
 
 let oracledb
 try {
@@ -19,13 +12,21 @@ try {
 } catch (e) {
   console.error('node-oracledb could not be loaded. Skipping oracle tests')
 }
-const sqlite = require('sqlite')
 const csv = require('papaparse')
 
 const SQL = require('./SQL.class')
 const databaseService = require('../../services/database.service')
 const { defaultConfig: config } = require('../../../tests/testConfig')
 const EncryptionService = require('../../services/EncryptionService.class')
+
+const mockDatabase = {
+  prepare: jest.fn(() => ({
+    all: jest.fn(),
+    finalize: jest.fn(),
+  })),
+  close: jest.fn(),
+}
+jest.mock('better-sqlite3', () => () => (mockDatabase))
 
 // Mock fs
 jest.mock('fs/promises', () => ({
@@ -550,60 +551,27 @@ describe('SQL', () => {
     await sqlSouth.connect()
 
     sqlSouth.driver = 'sqlite'
-    const startTime = DateTime.fromISO('2019-10-03T13:36:36.360Z')
-      .toJSDate()
-    const endTime = DateTime.fromISO('2019-10-03T13:40:40.400Z')
-      .toJSDate()
-    const valueTimestamp = DateTime.fromSQL('2019-10-03 15:38:38.380', { zone: sqlSouth.timezone })
-      .toJSDate()
-
-    const finalize = jest.fn()
-    const all = jest.fn((preparedParameters) => (
-      preparedParameters['@StartTime'] < valueTimestamp
-        ? [{
-          value: 75.2,
-          timestamp: '2019-10-03 15:38:38.380',
-        }]
-        : []
-    ))
-    const prepare = jest.fn(() => ({
-      all,
-      finalize,
-    }))
-    const close = jest.fn()
-    const database = {
-      prepare,
-      close,
-    }
-    jest.spyOn(sqlite, 'open')
-      .mockResolvedValue(database)
+    const startTime = DateTime.fromISO('2019-10-03T13:36:36.360Z').toJSDate()
+    const endTime = DateTime.fromISO('2019-10-03T13:40:40.400Z').toJSDate()
 
     await sqlSouth.historyQuery(sqlConfig.scanMode, startTime, endTime)
 
-    expect(database.prepare)
-      .toBeCalledTimes(1)
-    expect(database.close)
-      .toBeCalledTimes(1)
-
-    database.close.mockClear()
-    database.prepare.mockClear()
+    expect(mockDatabase.prepare).toBeCalledTimes(1)
+    expect(mockDatabase.close).toBeCalledTimes(1)
   })
 
   it('should interact with SQLite database and catch request error', async () => {
+    mockDatabase.prepare = () => {
+      throw new Error('test')
+    }
     await sqlSouth.init()
     await sqlSouth.connect()
 
     sqlSouth.driver = 'sqlite'
 
-    jest.spyOn(sqlite, 'open')
-      .mockImplementation(() => {
-        throw new Error('test')
-      })
-
     await sqlSouth.historyQuery(sqlConfig.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
 
-    expect(sqlSouth.logger.error)
-      .toBeCalledWith(new Error('test'))
+    expect(sqlSouth.logger.error).toBeCalledWith(new Error('test'))
   })
 
   it('should trigger an error and catch it', async () => {
