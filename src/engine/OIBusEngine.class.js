@@ -263,7 +263,7 @@ class OIBusEngine extends BaseEngine {
     }) => {
       if (scanMode !== 'listen') {
         const job = timexe(cronTime, () => {
-          // on each scan, activate each protocols
+          // on each scan, activate each protocol
           this.scanLists[scanMode].forEach(async (id) => {
             await this.activeProtocols[id].onScan(scanMode)
           })

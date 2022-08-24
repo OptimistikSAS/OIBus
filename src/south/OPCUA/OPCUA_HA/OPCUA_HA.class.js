@@ -1,5 +1,17 @@
-const Opcua = require('node-opcua')
+const {
+  OPCUAClient,
+  MessageSecurityMode,
+  SecurityPolicy,
+  TimestampsToReturn,
+  StatusCodes,
+  UserTokenType,
+  ReadProcessedDetails,
+  ReadRawModifiedDetails,
+  HistoryReadRequest,
+  AggregateFunction,
+} = require('node-opcua-client')
 const { OPCUACertificateManager } = require('node-opcua-certificate-manager')
+
 const ProtocolHandler = require('../../ProtocolHandler.class')
 const { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG } = require('../opcua.service')
 
@@ -68,6 +80,7 @@ class OPCUA_HA extends ProtocolHandler {
    */
   async connect() {
     await super.connect()
+    await this.session?.close() // close the session if it already exists
     await this.connectToOpcuaServer()
   }
 
@@ -75,7 +88,10 @@ class OPCUA_HA extends ProtocolHandler {
     await super.init()
     await initOpcuaCertificateFolders(this.encryptionService.certsFolder)
     if (!this.clientCertificateManager) {
-      this.clientCertificateManager = new OPCUACertificateManager({ rootFolder: `${this.encryptionService.certsFolder}/opcua` })
+      this.clientCertificateManager = new OPCUACertificateManager({
+        rootFolder: `${this.encryptionService.certsFolder}/opcua`,
+        automaticallyAcceptUnknownCertificate: true,
+      })
       // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
       // It is useful for offline instances of OIBus where downloading openssl is not possible
       this.clientCertificateManager.state = 2
@@ -149,14 +165,14 @@ class OPCUA_HA extends ProtocolHandler {
         }
         // we use the same aggregate for all nodes (OPCUA allows to have a different one for each)
         const aggregateType = Array(nodesToRead.length).fill(options.aggregateFn)
-        historyReadDetails = new Opcua.ReadProcessedDetails({
+        historyReadDetails = new ReadProcessedDetails({
           aggregateType,
           endTime,
           processingInterval: options.processingInterval,
           startTime,
         })
       } else {
-        historyReadDetails = new Opcua.ReadRawModifiedDetails({
+        historyReadDetails = new ReadRawModifiedDetails({
           endTime,
           isReadModified: false,
           numValuesPerNode,
@@ -164,16 +180,16 @@ class OPCUA_HA extends ProtocolHandler {
           startTime,
         })
       }
-      const request = new Opcua.HistoryReadRequest({
+      const request = new HistoryReadRequest({
         historyReadDetails,
         nodesToRead,
         releaseContinuationPoints: false,
-        timestampsToReturn: Opcua.TimestampsToReturn.Both,
+        timestampsToReturn: TimestampsToReturn.Both,
       })
       if (options?.timeout) request.requestHeader.timeoutHint = options.timeout
       // eslint-disable-next-line no-await-in-loop
       const response = await this.session.performMessageTransaction(request)
-      if (response?.responseHeader.serviceResult.isNot(Opcua.StatusCodes.Good)) {
+      if (response?.responseHeader.serviceResult.isNot(StatusCodes.Good)) {
         this.logger.error(new Error(response.responseHeader.serviceResult.toString()))
       }
       if (response?.results) {
@@ -213,11 +229,11 @@ class OPCUA_HA extends ProtocolHandler {
       indexRange: undefined,
       nodeId: node.nodeId,
     }))
-    const response = await this.session.performMessageTransaction(new Opcua.HistoryReadRequest({
+    const response = await this.session.performMessageTransaction(new HistoryReadRequest({
       historyReadDetails,
       nodesToRead,
       releaseContinuationPoints: true,
-      timestampsToReturn: Opcua.TimestampsToReturn.Both,
+      timestampsToReturn: TimestampsToReturn.Both,
     }))
 
     if (response.responseHeader.serviceResult._value !== 0) {
@@ -226,7 +242,7 @@ class OPCUA_HA extends ProtocolHandler {
 
     Object.keys(logs).forEach((statusCode) => {
       switch (statusCode) {
-        case Opcua.StatusCodes.BadIndexRangeNoData: // No data exists for the requested time range or event filter.
+        case StatusCodes.BadIndexRangeNoData: // No data exists for the requested time range or event filter.
         default:
           if (logs[statusCode].affectedNodes.length > MAX_NUMBER_OF_NODE_TO_LOG) {
             this.logger.debug(`${logs[statusCode].description} (${statusCode}): [${
@@ -283,16 +299,16 @@ class OPCUA_HA extends ProtocolHandler {
       }
       switch (scanGroup.aggregate) {
         case 'Average':
-          options.aggregateFn = Opcua.AggregateFunction.Average
+          options.aggregateFn = AggregateFunction.Average
           break
         case 'Minimum':
-          options.aggregateFn = Opcua.AggregateFunction.Minimum
+          options.aggregateFn = AggregateFunction.Minimum
           break
         case 'Maximum':
-          options.aggregateFn = Opcua.AggregateFunction.Maximum
+          options.aggregateFn = AggregateFunction.Maximum
           break
         case 'Count':
-          options.aggregateFn = Opcua.AggregateFunction.Count
+          options.aggregateFn = AggregateFunction.Count
           break
         case 'Raw':
           break
@@ -382,8 +398,8 @@ class OPCUA_HA extends ProtocolHandler {
     }
 
     if (this.connected) {
-      await this.session.close()
-      await this.client.disconnect()
+      await this.session?.close()
+      this.session = null
     }
     await super.disconnect()
   }
@@ -402,40 +418,38 @@ class OPCUA_HA extends ProtocolHandler {
       const options = {
         applicationName: 'OIBus',
         connectionStrategy,
-        securityMode: Opcua.MessageSecurityMode[this.securityMode],
-        securityPolicy: Opcua.SecurityPolicy[this.securityPolicy],
+        securityMode: MessageSecurityMode[this.securityMode],
+        securityPolicy: SecurityPolicy[this.securityPolicy],
         endpointMustExist: false,
         keepSessionAlive: this.keepSessionAlive,
+        keepPendingSessionsOnDisconnect: false,
         clientName: this.clientName, // the id of the connector
         clientCertificateManager: this.clientCertificateManager,
       }
 
-      this.client = Opcua.OPCUAClient.create(options)
-      await this.client.connect(this.url)
-      let userIdentity = null
+      let userIdentity
       if (this.certificate.privateKey && this.certificate.cert) {
         userIdentity = {
-          type: Opcua.UserTokenType.Certificate,
+          type: UserTokenType.Certificate,
           certificateData: this.certificate.cert,
-          privateKey: Buffer.from(this.certificate.privateKey, 'utf-8')
-            .toString(),
+          privateKey: Buffer.from(this.certificate.privateKey, 'utf-8').toString(),
         }
       } else if (this.username) {
         userIdentity = {
-          type: Opcua.UserTokenType.UserName,
+          type: UserTokenType.UserName,
           userName: this.username,
           password: this.encryptionService.decryptText(this.password),
         }
+      } else {
+        userIdentity = { type: UserTokenType.Anonymous }
       }
-      this.session = await this.client.createSession(userIdentity)
+      this.session = await OPCUAClient.createSession(this.url, userIdentity, options)
       this.connected = true
-      this.logger.info('OPCUA_HA Connected')
+      this.logger.info(`OPCUA_HA ${this.dataSource.name} connected`)
       this.updateStatusDataStream({ 'Connected at': new Date().toISOString() })
     } catch (error) {
       this.logger.error(error)
-      if (this.reconnectTimeout) {
-        clearTimeout(this.reconnectTimeout)
-      }
+      await this.disconnect()
       this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.retryInterval)
     }
   }

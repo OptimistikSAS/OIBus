@@ -1,4 +1,9 @@
-const Opcua = require('node-opcua')
+const {
+  OPCUAClient,
+  MessageSecurityMode,
+  SecurityPolicy,
+  UserTokenType,
+} = require('node-opcua-client')
 const { OPCUACertificateManager } = require('node-opcua-certificate-manager')
 const ProtocolHandler = require('../../ProtocolHandler.class')
 const { initOpcuaCertificateFolders } = require('../opcua.service')
@@ -54,6 +59,7 @@ class OPCUA_DA extends ProtocolHandler {
    */
   async connect() {
     await super.connect()
+    await this.session?.close() // close the session if it already exists
     await this.connectToOpcuaServer()
   }
 
@@ -61,7 +67,10 @@ class OPCUA_DA extends ProtocolHandler {
     await super.init()
     await initOpcuaCertificateFolders(this.encryptionService.certsFolder)
     if (!this.clientCertificateManager) {
-      this.clientCertificateManager = new OPCUACertificateManager({ rootFolder: `${this.encryptionService.certsFolder}/opcua` })
+      this.clientCertificateManager = new OPCUACertificateManager({
+        rootFolder: `${this.encryptionService.certsFolder}/opcua`,
+        automaticallyAcceptUnknownCertificate: true,
+      })
       // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
       // It is useful for offline instances of OIBus where downloading openssl is not possible
       this.clientCertificateManager.state = 2
@@ -131,8 +140,8 @@ class OPCUA_DA extends ProtocolHandler {
     }
 
     if (this.connected) {
-      await this.session.close()
-      await this.client.disconnect()
+      await this.session?.close()
+      this.session = null
     }
     await super.disconnect()
   }
@@ -147,7 +156,7 @@ class OPCUA_DA extends ProtocolHandler {
       return
     }
 
-    this.subscription = Opcua.ClientSubscription.create(this.session, {
+    this.subscription = ClientSubscription.create(this.session, {
       requestedPublishingInterval: 150,
       requestedLifetimeCount: 10 * 60 * 10,
       requestedMaxKeepAliveCount: 10,
@@ -156,18 +165,18 @@ class OPCUA_DA extends ProtocolHandler {
       priority: 6,
     })
     nodesToMonitor.forEach((nodeToMonitor) => {
-      const monitoredItem = Opcua.ClientMonitoredItem.create(
+      const monitoredItem = ClientMonitoredItem.create(
         this.subscription,
         {
           nodeId: nodeToMonitor,
-          attributeId: Opcua.AttributeIds.Value,
+          attributeId: AttributeIds.Value,
         },
         {
           samplingInterval: 2,
           discardOldest: true,
           queueSize: 1,
         },
-        Opcua.TimestampsToReturn.Neither,
+        TimestampsToReturn.Neither,
       )
 
       monitoredItem.on('changed', (dataValue) => this.manageDataValues([dataValue], nodesToMonitor))
@@ -194,38 +203,37 @@ class OPCUA_DA extends ProtocolHandler {
       const options = {
         applicationName: 'OIBus',
         connectionStrategy,
-        securityMode: Opcua.MessageSecurityMode[this.securityMode],
-        securityPolicy: Opcua.SecurityPolicy[this.securityPolicy],
+        securityMode: MessageSecurityMode[this.securityMode],
+        securityPolicy: SecurityPolicy[this.securityPolicy],
         endpointMustExist: false,
         keepSessionAlive: this.keepSessionAlive,
+        keepPendingSessionsOnDisconnect: false,
         clientName: this.clientName, // the id of the connector
         clientCertificateManager: this.clientCertificateManager,
       }
-      this.client = Opcua.OPCUAClient.create(options)
-      await this.client.connect(this.url)
-      let userIdentity = null
+      let userIdentity
       if (this.certificate.privateKey && this.certificate.cert) {
         userIdentity = {
-          type: Opcua.UserTokenType.Certificate,
+          type: UserTokenType.Certificate,
           certificateData: this.certificate.cert,
           privateKey: Buffer.from(this.certificate.privateKey, 'utf-8').toString(),
         }
       } else if (this.username) {
         userIdentity = {
-          type: Opcua.UserTokenType.UserName,
+          type: UserTokenType.UserName,
           userName: this.username,
           password: this.encryptionService.decryptText(this.password),
         }
+      } else {
+        userIdentity = { type: UserTokenType.Anonymous }
       }
-      this.session = await this.client.createSession(userIdentity)
+      this.session = await OPCUAClient.createSession(this.url, userIdentity, options)
       this.connected = true
-      this.logger.info('OPCUA_DA Connected')
+      this.logger.info(`OPCUA_DA ${this.dataSource.name} connected`)
       this.updateStatusDataStream({ 'Connected at': new Date().toISOString() })
     } catch (error) {
       this.logger.error(error)
-      if (this.reconnectTimeout) {
-        clearTimeout(this.reconnectTimeout)
-      }
+      await this.disconnect()
       this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.retryInterval)
     }
   }
