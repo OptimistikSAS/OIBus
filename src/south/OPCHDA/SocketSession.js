@@ -28,7 +28,7 @@ class SocketSession {
       if (content.includes('\n')) {
         const messageParts = content.split('\n')
 
-        messageParts.forEach(async (messagePart, index) => {
+        messageParts.forEach((messagePart, index) => {
           if (index === 0) {
             this.receivedMessage += messagePart
             responses.push(this.receivedMessage)
@@ -43,13 +43,15 @@ class SocketSession {
         this.receivedMessage += content
       }
 
-      responses.forEach(async (response) => {
+      // eslint-disable-next-line no-restricted-syntax
+      for (const response of responses) {
+        // eslint-disable-next-line no-await-in-loop
         await this.handleMessage(response.trim())
-      })
+      }
     })
 
     // Listener for the 'close' event
-    this.socket.on('close', () => {
+    this.socket.on('close', async () => {
       this.logger.info(`Connection with ${this.name} closed`)
       this.tcpServer.removeSession()
       const disconnectMessage = {
@@ -57,7 +59,7 @@ class SocketSession {
         TransactionId: '',
         Content: {},
       }
-      this.handleMessage(JSON.stringify(disconnectMessage))
+      await this.handleMessage(JSON.stringify(disconnectMessage))
     })
 
     // Listener for the 'error' event
