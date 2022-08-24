@@ -1276,4 +1276,14 @@ module.exports = {
       }
     }
   },
+  25: (config, logger) => {
+    config.south.dataSources.forEach((dataSource) => {
+      if (dataSource.protocol === 'OPCHDA') {
+        if (!Object.prototype.hasOwnProperty.call(dataSource.OPCHDA, 'readTimeout')) {
+          logger.info('Add readTimeout field to OPCHDA')
+          dataSource.OPCHDA.readTimeout = 180
+        }
+      }
+    })
+  },
 }

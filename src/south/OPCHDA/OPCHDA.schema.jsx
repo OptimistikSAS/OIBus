@@ -514,6 +514,9 @@ schema.form = {
             parameter is typically used when OIBus was stopped for a long time and that we need to recover values from
             that range on the restart.
           </li>
+          <li>
+            Read timeout is a timeout (in seconds) used in the connector to set the timeout on a per-call base.
+          </li>
         </ul>
       </>
     ),
@@ -562,6 +565,15 @@ schema.form = {
     valid: minValue(0),
     defaultValue: 0,
     help: <div>Max number of values returned for one point during a read interval</div>,
+  },
+  readTimeout: {
+    type: 'OIbInteger',
+    label: 'Read timeout (s)',
+    newRow: false,
+    md: 2,
+    valid: minValue(1),
+    defaultValue: 180,
+    help: <div>Read timeout (s)</div>,
   },
   scanGroupsSection: {
     type: 'OIbTitle',

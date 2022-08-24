@@ -1,22 +1,8 @@
-// eslint-disable-next-line max-classes-per-file
 const { spawn } = require('child_process')
 
 const ProtocolHandler = require('../ProtocolHandler.class')
 const TcpServer = require('./TcpServer')
-
-/**
- * Class used to resolve a promise from another variable
- * It is used in OPCHDA to resolve the connection and disconnection when the
- * HDA Agent sends the associated messages
- */
-class DeferredPromise {
-  constructor() {
-    this.promise = new Promise((resolve, reject) => {
-      this.reject = reject
-      this.resolve = resolve
-    })
-  }
-}
+const DeferredPromise = require('./DeferredPromise')
 
 // Time to wait before closing the connection by timeout and killing the Agent process
 const DISCONNECTION_TIMEOUT = 10000
@@ -37,24 +23,44 @@ class OPCHDA extends ProtocolHandler {
   constructor(dataSource, engine) {
     super(dataSource, engine, { supportListen: false, supportLastPoint: false, supportFile: false, supportHistory: true })
 
-    const { maxReadInterval, readIntervalDelay, maxReturnValues } = dataSource.OPCHDA
+    const {
+      agentFilename,
+      tcpPort,
+      logLevel,
+      host,
+      serverName,
+      retryInterval,
+      maxReadInterval,
+      readIntervalDelay,
+      maxReturnValues,
+      readTimeout,
+    } = dataSource.OPCHDA
+
+    this.agentFilename = agentFilename
+    this.tcpPort = tcpPort
+    this.logLevel = logLevel
+    this.host = host
+    this.serverName = serverName
+    this.retryInterval = retryInterval
+    this.maxReadInterval = maxReadInterval
+    this.readIntervalDelay = readIntervalDelay
+    this.maxReturnValues = maxReturnValues
+    this.readTimeout = readTimeout
 
     this.tcpServer = null
     this.transactionId = 0
     this.agentConnected = false
     this.receivedLog = ''
     this.reconnectTimeout = null
-    this.maxReadInterval = maxReadInterval
-    this.readIntervalDelay = readIntervalDelay
-    this.maxReturnValues = maxReturnValues
+    this.historyReadTimeout = null
+    this.disconnectionTimeout = null
 
     this.connection$ = null
+    this.historyRead$ = null
     this.disconnection$ = null
 
     this.canHandleHistory = true
     this.handlesPoints = true
-
-    this.disconnectionTimeout = null
   }
 
   /**
@@ -80,10 +86,9 @@ class OPCHDA extends ProtocolHandler {
   async runTcpServer() {
     return new Promise((resolve, reject) => {
       try {
-        const { agentFilename, tcpPort, logLevel } = this.dataSource.OPCHDA
-        this.tcpServer = new TcpServer(tcpPort, this.handleMessage.bind(this), this.logger)
+        this.tcpServer = new TcpServer(this.tcpPort, this.handleTcpHdaAgentMessages.bind(this), this.logger)
         this.tcpServer.start(() => {
-          this.launchAgent(agentFilename, tcpPort, logLevel)
+          this.launchAgent(this.agentFilename, this.tcpPort, this.logLevel)
           this.connection$ = new DeferredPromise()
           resolve()
         })
@@ -101,12 +106,15 @@ class OPCHDA extends ProtocolHandler {
    * @return {Promise<number>} - The on scan promise: -1 if an error occurred, 0 otherwise
    */
   async historyQuery(scanMode, startTime, endTime) {
+    this.historyRead$ = new DeferredPromise()
     this.sendReadMessage(scanMode, startTime, endTime)
-    // Wait until we receive the response
-    while (this.ongoingReads[scanMode]) {
-      // eslint-disable-next-line no-await-in-loop
-      await this.delay(100)
-    }
+
+    this.historyReadTimeout = setTimeout(() => {
+      this.historyRead$.reject(new Error(`History query has not succeed in the requested readTimeout: ${this.readTimeout}`))
+    }, this.readTimeout * 1000)
+    await this.historyRead$.promise
+    clearTimeout(this.historyReadTimeout)
+    this.historyReadTimeout = null
     return 0
   }
 
@@ -117,6 +125,11 @@ class OPCHDA extends ProtocolHandler {
   async disconnect() {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout)
+    }
+
+    if (this.historyReadTimeout) {
+      this.historyRead$.reject(new Error('History query cancelled because the connector is disconnecting'))
+      clearTimeout(this.historyReadTimeout)
     }
 
     if (this.agentConnected) { // TCP connection with the HDA Agent was previously established
@@ -154,7 +167,7 @@ class OPCHDA extends ProtocolHandler {
     this.child = spawn(path, ['listen', `-p ${port}`, `-l ${logLevel}`, '-x none'])
 
     this.child.stdout.on('data', (data) => {
-      this.handleAgentLog(data)
+      this.handleHDAAgentLog(data)
     })
 
     this.child.stderr.on('data', (data) => {
@@ -170,14 +183,14 @@ class OPCHDA extends ProtocolHandler {
     })
   }
 
-  handleAgentLog(data) {
+  handleHDAAgentLog(data) {
     const content = data.toString()
     const logs = []
 
     if (content.includes('\n')) {
       const messageParts = content.split('\r\n')
 
-      messageParts.forEach(async (messagePart, index) => {
+      messageParts.forEach((messagePart, index) => {
         if (index === 0) {
           this.receivedLog += messagePart
           logs.push(this.receivedLog)
@@ -192,18 +205,17 @@ class OPCHDA extends ProtocolHandler {
       this.receivedLog += content
     }
 
-    logs.forEach(async (log) => {
+    logs.forEach((log) => {
       if (log.length > 0) {
         this.logMessage(log.trim())
       }
     })
   }
 
-  /* eslint-disable-next-line class-methods-use-this */
   logMessage(log) {
     try {
       const parsedLog = JSON.parse(log)
-      const message = `Agent stdout: ${parsedLog.Message}`
+      const message = `HDA Agent stdout: ${parsedLog.Message}`
       switch (parsedLog.Level) {
         case 'error':
           this.logger.error(message)
@@ -222,8 +234,7 @@ class OPCHDA extends ProtocolHandler {
           break
       }
     } catch (error) {
-      this.logger.error(error)
-      this.logger.debug(`Agent stdout error: ${log}`)
+      this.logger.error(`The error ${error} occurred when parsing HDA Agent log ${log}`)
     }
   }
 
@@ -233,16 +244,15 @@ class OPCHDA extends ProtocolHandler {
   }
 
   sendConnectMessage() {
-    const { host, serverName } = this.dataSource.OPCHDA
     const message = {
       Request: 'Connect',
       TransactionId: this.generateTransactionId(),
       Content: {
-        host,
-        serverName,
+        host: this.host,
+        serverName: this.serverName,
       },
     }
-    this.sendMessage(message)
+    this.sendTCPMessageToHDAAgent(message)
   }
 
   sendInitializeMessage() {
@@ -262,7 +272,7 @@ class OPCHDA extends ProtocolHandler {
         ReadIntervalDelay: this.readIntervalDelay,
       },
     }
-    this.sendMessage(message)
+    this.sendTCPMessageToHDAAgent(message)
   }
 
   sendReadMessage(scanMode, startTime, endTime) {
@@ -275,7 +285,7 @@ class OPCHDA extends ProtocolHandler {
         EndTime: endTime.getTime(),
       },
     }
-    this.sendMessage(message)
+    this.sendTCPMessageToHDAAgent(message)
   }
 
   sendStopMessage() {
@@ -283,7 +293,7 @@ class OPCHDA extends ProtocolHandler {
       Request: 'Stop',
       TransactionId: this.generateTransactionId(),
     }
-    this.sendMessage(message)
+    this.sendTCPMessageToHDAAgent(message)
     this.disconnection$ = new DeferredPromise()
     this.disconnectionTimeout = setTimeout(() => {
       this.disconnection$.resolve()
@@ -295,7 +305,7 @@ class OPCHDA extends ProtocolHandler {
    * @param {object} message - the message to send
    * @return {void}
    */
-  sendMessage(message) {
+  sendTCPMessageToHDAAgent(message) {
     if (this.tcpServer && this.agentConnected) {
       if (message.Request === 'Read') {
         this.ongoingReads[message.Content.Group] = true
@@ -303,26 +313,23 @@ class OPCHDA extends ProtocolHandler {
       const messageString = JSON.stringify(message)
       this.logger.trace(`Sent at ${new Date().toISOString()}: ${messageString}`)
       this.tcpServer.sendMessage(messageString)
-      this.updateStatusDataStream({ 'Last message sent at': new Date().toISOString() })
+      this.updateStatusDataStream({ 'Last message sent to HDA Agent at': new Date().toISOString() })
     } else {
-      this.logger.debug(`sendMessage ignored, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`)
+      this.logger.debug(`sendTCPMessageToHDAAgent ignored, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`)
     }
   }
 
   /**
-   * Handle a message sent by the HDA Agent
-   * @param {string} message - the message sent by the HDA Agent
+   * Handle a message received from the HDA Agent
+   * @param {string} message - the message received from the HDA Agent
    * Message can be one of the following Alive, Connect, Initialize, Read, Disconnect, Stop
    * Others will be disregarded
    * @returns {Promise<void>} - return a promise that will resolve to void
    */
-  async handleMessage(message) {
+  async handleTcpHdaAgentMessages(message) {
     try {
-      this.logger.trace(`Received: ${message}`)
-
+      this.logger.trace(`Received message from HDA Agent: ${message}`)
       const messageObject = JSON.parse(message)
-      let dateString
-      const { host, serverName, retryInterval } = this.dataSource.OPCHDA
 
       switch (messageObject.Reply) {
         case 'Alive': // The HDA Agent is running
@@ -330,21 +337,23 @@ class OPCHDA extends ProtocolHandler {
           this.sendConnectMessage()
           break
         case 'Connect':
-          // The HDA Agent answer on connection request. The Content.Connected variable tell if the HDA Agent is connected to the HDA Server
+          // The HDA Agent answers on connection request. The Content.Connected variable tells if the HDA Agent is
+          // connected to the HDA Server
           this.logger.info(`HDA Agent connected: ${messageObject.Content.Connected}`)
           if (messageObject.Content.Connected) {
             // Now that the HDA Agent is connected, the Agent can be initialized with the scan groups
             this.sendInitializeMessage()
           } else {
-            this.logger.error(`Unable to connect to ${serverName} on ${host}: ${messageObject.Content.Error}, retrying in ${retryInterval}ms`)
+            this.logger.error(`Unable to connect to ${this.serverName} on ${this.host}: ${messageObject.Content.Error
+            }, retrying in ${this.retryInterval}ms`)
             if (this.reconnectTimeout) {
               clearTimeout(this.reconnectTimeout)
             }
-            this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), retryInterval)
+            this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), this.retryInterval)
           }
           break
         case 'Initialize': // The HDA Agent is connected and ready to read values
-          this.logger.info(`HDA Agent initialized: ${this.connected}`)
+          this.logger.info('HDA Agent initialized')
           // resolve the connection promise
           this.connection$.resolve()
           break
@@ -352,39 +361,40 @@ class OPCHDA extends ProtocolHandler {
           {
             if (messageObject.Content.Error) {
               this.ongoingReads[messageObject.Content.Group] = false
-              this.logger.error(messageObject.Content.Error)
               if (messageObject.Content.Disconnected) {
                 this.logger.error('Agent disconnected from OPC HDA server')
                 this.connected = false
                 if (this.reconnectTimeout) {
                   clearTimeout(this.reconnectTimeout)
                 }
-                this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), retryInterval)
+                this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), this.retryInterval)
               }
+              this.historyRead$.reject(new Error(messageObject.Content.Error))
               return
             }
 
             if (messageObject.Content.Points === undefined) {
               this.ongoingReads[messageObject.Content.Group] = false
-              this.logger.error(`Missing Points entry in response for ${messageObject.Content.Group}`)
+              this.historyRead$.reject(new Error(`Missing Points entry in response for ${messageObject.Content.Group}`))
               return
             }
 
             if (messageObject.Content.Points.length === 0) {
               this.ongoingReads[messageObject.Content.Group] = false
               this.logger.debug(`Empty Points response for ${messageObject.Content.Group}`)
+              this.historyRead$.resolve()
               return
             }
 
             this.logger.trace(`Received ${messageObject.Content.Points.length} values for ${messageObject.Content.Group}`)
 
             const associatedScanGroup = this.scanGroups.find((scanGroup) => scanGroup.name === messageObject.Content.Group)
-            // eslint-disable-next-line no-case-declarations
+
             const values = messageObject.Content.Points.filter((point) => {
               if (point.Timestamp != null && point.Value != null) {
                 return true
               }
-              this.logger.error(`point: ${point.ItemId} is invalid:${JSON.stringify(point)}`)
+              this.logger.error(`Point: ${point.ItemId} is invalid: ${JSON.stringify(point)}`)
               return false
             }).map((point) => {
               const associatedPointId = associatedScanGroup?.points
@@ -397,15 +407,18 @@ class OPCHDA extends ProtocolHandler {
             })
             this.addValues(values)
 
-            dateString = messageObject.Content.Points.slice(-1).pop().Timestamp
-            this.lastCompletedAt[messageObject.Content.Group] = new Date(new Date(dateString).getTime() + 1)
+            this.lastCompletedAt[messageObject.Content.Group] = new Date(
+              new Date(messageObject.Content.Points.slice(-1).pop().Timestamp).getTime() + 1,
+            )
             await this.setConfig(
               `lastCompletedAt-${messageObject.Content.Group}`,
               this.lastCompletedAt[messageObject.Content.Group].toISOString(),
             )
-            this.logger.trace(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${dateString}`)
+            this.logger.trace(`Updated lastCompletedAt for ${messageObject.Content.Group} to ${
+              this.lastCompletedAt[messageObject.Content.Group].toISOString()}`)
 
             this.ongoingReads[messageObject.Content.Group] = false
+            this.historyRead$.resolve()
           }
           break
         case 'Stop': // The HDA Agent has received the stop message and the disconnection promise can be resolved
@@ -421,10 +434,10 @@ class OPCHDA extends ProtocolHandler {
           this.disconnection$.resolve()
           break
         default:
-          this.logger.warn(`unknown messageObject.Reply ${messageObject.Reply}`)
+          this.logger.warn(`Unknown HDA Agent reply: ${messageObject.Reply}`)
       }
     } catch (error) {
-      this.logger.error(`can't handle message ${message} ${error.stack}`)
+      this.logger.error(`Can't handle message ${message}. Error: ${error.stack}`)
     }
   }
 }
