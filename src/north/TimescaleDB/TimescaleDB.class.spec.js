@@ -1,189 +1,176 @@
 const pg = require('pg')
 
-const ApiHandler = require('../ApiHandler.class')
 const TimescaleDB = require('./TimescaleDB.class')
+
 const { defaultConfig: config } = require('../../../tests/testConfig')
-const EncryptionService = require('../../services/EncryptionService.class')
-
-// Mock logger
-jest.mock('../../engine/logger/Logger.class')
-
-// Mock EncryptionService
-EncryptionService.getInstance = () => ({ decryptText: (password) => password })
-
-// Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.eventEmitters = {}
 
 jest.mock('pg', () => ({ Client: jest.fn() }))
 
-const timescaleDbConfig = {
-  id: 'north-timescaledb',
-  name: 'Timescale',
-  api: 'TimescaleDB',
-  enabled: false,
-  TimescaleDB: {
-    password: 'anypass',
-    user: 'anyuser',
-    host: 'anyhost',
-    db: 'anydb',
-    useDataKeyValue: false,
-    regExp: '(.*)',
-    table: '%1$s',
-    optFields: '',
-    keyParentValue: '',
-    timestampPathInDataValue: '',
-  },
-  caching: {
-    sendInterval: 10000,
-    retryInterval: 5000,
-    groupCount: 1000,
-    maxSendCount: 10000,
-  },
-  subscribedTo: [],
+// Mock OIBusEngine
+const engine = {
+  configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  requestService: { httpSend: jest.fn() },
+  getCacheFolder: jest.fn(),
 }
-const timestamp = new Date('2020-02-29T12:12:12Z').toISOString()
+
+// Mock services
+jest.mock('../../services/database.service')
+jest.mock('../../engine/logger/Logger.class')
+jest.mock('../../services/status.service.class')
+jest.mock('../../services/EncryptionService.class', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
+jest.mock('../../engine/cache/ValueCache.class')
+jest.mock('../../engine/cache/FileCache.class')
+
+const nowDateString = '2020-02-02T02:02:02.222Z'
 const values = [
   {
     pointId: 'ANA/BL1RCP05',
-    timestamp,
+    timestamp: nowDateString,
     data: { value: 666, quality: 'good' },
   },
 ]
-beforeEach(() => {
-  jest.resetAllMocks()
-  jest.useFakeTimers()
-  jest.restoreAllMocks()
-})
+let settings = null
+let north = null
 
-describe('TimescaleDB north', () => {
+describe('North TimescaleDB', () => {
+  beforeEach(() => {
+    jest.resetAllMocks()
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString))
+
+    settings = {
+      id: 'northId',
+      name: 'timescale',
+      api: 'TimescaleDB',
+      enabled: false,
+      TimescaleDB: {
+        password: 'anypass',
+        user: 'anyuser',
+        host: 'anyhost',
+        db: 'anydb',
+        useDataKeyValue: false,
+        regExp: '(.*)',
+        table: '%1$s',
+        optFields: '',
+        keyParentValue: '',
+        timestampPathInDataValue: '',
+      },
+      caching: {
+        sendInterval: 10000,
+        retryInterval: 5000,
+        groupCount: 1000,
+        maxSendCount: 10000,
+      },
+      subscribedTo: [],
+    }
+    north = new TimescaleDB(settings, engine)
+  })
+
   it('should properly handle values and publish them', async () => {
-    const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
-    expect(timescaleDbNorth.canHandleValues).toBeTruthy()
-    expect(timescaleDbNorth.canHandleFiles).toBeFalsy()
-
     const client = {
-      connect: jest.fn((callback) => callback()),
+      connect: jest.fn(),
       query: jest.fn(),
       end: jest.fn(),
     }
     pg.Client.mockReturnValue(client)
-    await timescaleDbNorth.init()
-    await timescaleDbNorth.connect()
+    await north.init()
+    await north.connect()
 
-    // eslint-disable-next-line max-len
-    expect(timescaleDbNorth.logger.info).toHaveBeenCalledWith('North API Timescale started with protocol TimescaleDB url: postgres://anyuser:anypass@anyhost/anydb')
-    let expectedResult = null
-    let expectedError = null
-    try {
-      expectedResult = await timescaleDbNorth.handleValues(values)
-    } catch (error) {
-      expectedError = error
-    }
-    const expectedUrl = `postgres://${timescaleDbConfig.TimescaleDB.user}:${timescaleDbConfig.TimescaleDB.password}`
-      + `@${timescaleDbConfig.TimescaleDB.host}/${timescaleDbConfig.TimescaleDB.db}`
+    expect(north.canHandleValues).toBeTruthy()
+    expect(north.canHandleFiles).toBeFalsy()
+
+    expect(north.logger.info).toHaveBeenCalledWith('North connector "timescale" of type TimescaleDB '
+        + 'started with url: postgres://anyuser:anypass@anyhost/anydb.')
+
+    await north.handleValues(values)
+
+    const expectedUrl = `postgres://${settings.TimescaleDB.user}:${settings.TimescaleDB.password}`
+      + `@${settings.TimescaleDB.host}/${settings.TimescaleDB.db}`
     const expectedQuery = 'BEGIN;'
-      + 'insert into "ANA/BL1RCP05"("value","quality","timestamp") values(\'666\',\'good\',\'2020-02-29T12:12:12.000Z\');'
+      + 'insert into "ANA/BL1RCP05"("value","quality","timestamp") values(\'666\',\'good\',\'2020-02-02T02:02:02.222Z\');'
       + 'COMMIT'
 
     expect(pg.Client).toBeCalledWith(expectedUrl)
-    expect(expectedResult).toEqual(values.length)
-    expect(expectedError).toBeNull()
     expect(client.connect).toBeCalledTimes(1)
     expect(client.query).toBeCalledWith(expectedQuery)
 
-    await timescaleDbNorth.disconnect()
+    await north.disconnect()
     expect(client.end).toBeCalledTimes(1)
   })
 
   it('should properly handle connection errors', async () => {
-    const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
-    await timescaleDbNorth.init()
-    const client = { connect: jest.fn((callback) => callback('error')), end: jest.fn() }
+    await north.init()
+    const client = {
+      connect: jest.fn(() => {
+        throw new Error('test')
+      }),
+      end: jest.fn(),
+    }
     pg.Client.mockReturnValue(client)
 
-    await timescaleDbNorth.disconnect()
+    await north.disconnect()
     expect(client.end).not.toHaveBeenCalled()
 
-    await timescaleDbNorth.connect()
-    expect(timescaleDbNorth.logger.error).toHaveBeenCalledWith('Error during connection to TimescaleDB: error')
+    await expect(north.connect()).rejects.toThrowError('test')
   })
 
   it('should properly handle values with publish error', async () => {
-    const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
-    await timescaleDbNorth.init()
-    const client = { connect: jest.fn(), query: jest.fn(() => Promise.reject()) }
+    await north.init()
+    const client = {
+      connect: jest.fn(),
+      query: jest.fn(() => {
+        throw new Error('queryError')
+      }),
+    }
     pg.Client.mockReturnValue(client)
-    await timescaleDbNorth.connect()
-    let expectedResult = null
-    let expectedError = null
-    try {
-      expectedResult = await timescaleDbNorth.handleValues(values)
-    } catch (error) {
-      expectedError = error
-    }
+    await north.connect()
 
-    expect(expectedResult).toBeNull()
-    expect(expectedError).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
+    await expect(north.handleValues(values)).rejects.toThrowError('queryError')
 
-    // test error building query
-    try {
-      await timescaleDbNorth.handleValues([{
-        pointId: 'ANA/BL1RCP05',
-        timestamp,
-        data: null,
-      }])
-    } catch (error) {
-      expectedError = error
-    }
-
-    expect(expectedError).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
-
-    // eslint-disable-next-line max-len
-    expect(timescaleDbNorth.logger.error).toHaveBeenCalledWith(expect.stringContaining('Issue to build query: BEGIN; TypeError: Cannot convert undefined or null to object'))
+    await expect(north.handleValues([{
+      pointId: 'ANA/BL1RCP05',
+      timestamp: nowDateString,
+      data: null,
+    }])).rejects.toThrowError('Cannot convert undefined or null to object')
   })
 
   it('should properly handle values with optional fields and table errors', async () => {
-    const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
-    await timescaleDbNorth.init()
+    await north.init()
     const client = { connect: jest.fn(), query: jest.fn() }
     pg.Client.mockReturnValue(client)
-    await timescaleDbNorth.connect()
+    await north.connect()
 
-    timescaleDbNorth.optFields = 'site:%2$s,unit:%3$s,sensor:%4$s'
+    north.optFields = 'site:%2$s,unit:%3$s,sensor:%4$s'
 
-    await timescaleDbNorth.handleValues(values)
+    await north.handleValues(values)
 
-    // eslint-disable-next-line max-len
-    expect(timescaleDbNorth.logger.error).toHaveBeenCalledWith('RegExp returned by (.*) for ANA/BL1RCP05 doesn\'t have enough groups for optionals fields site:%2$s,unit:%3$s,sensor:%4$s')
+    expect(north.logger.error).toHaveBeenCalledWith('RegExp returned by (.*) for ANA/BL1RCP05 doesn\'t '
+        + 'have enough groups for optionals fields site:%2$s,unit:%3$s,sensor:%4$s')
 
-    timescaleDbNorth.table = '%1$s.%2$s'
-    await timescaleDbNorth.handleValues(values)
+    north.table = '%1$s.%2$s'
+    await north.handleValues(values)
 
-    // eslint-disable-next-line max-len
-    expect(timescaleDbNorth.logger.error).toHaveBeenCalledWith('RegExp returned by (.*) for ANA/BL1RCP05 doesn\'t have enough groups for table %1$s.%2$s')
+    expect(north.logger.error).toHaveBeenCalledWith('RegExp returned by (.*) for ANA/BL1RCP05 doesn\'t '
+        + 'have enough groups for table %1$s.%2$s')
   })
 
   it('should properly handle values with optional fields', async () => {
-    const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
-    await timescaleDbNorth.init()
+    await north.init()
     const client = { connect: jest.fn(), query: jest.fn() }
     pg.Client.mockReturnValue(client)
-    await timescaleDbNorth.connect()
+    await north.connect()
 
-    timescaleDbNorth.optFields = 'site:%2$s,unit:%3$s,sensor:%4$s'
-    timescaleDbNorth.regExp = '(.*)-(.*)-(.*)-(.*)'
+    north.optFields = 'site:%2$s,unit:%3$s,sensor:%4$s'
+    north.regExp = '(.*)-(.*)-(.*)-(.*)'
 
     const expectedQuery = 'BEGIN;'
-      // eslint-disable-next-line max-len
-      + 'insert into "SENSOR_TABLE"("value","quality","site","unit","sensor","timestamp") values(\'666\',\'good\',\'SITE1\',\'UNIT1\',\'ANA/BL1RCP05\',\'2020-02-29T12:12:12.000Z\');'
-      + 'COMMIT'
+        + 'insert into "SENSOR_TABLE"("value","quality","site","unit","sensor","timestamp") '
+        + 'values(\'666\',\'good\',\'SITE1\',\'UNIT1\',\'ANA/BL1RCP05\',\'2020-02-02T02:02:02.222Z\');'
+        + 'COMMIT'
 
-    await timescaleDbNorth.handleValues([
+    await north.handleValues([
       {
         pointId: 'SENSOR_TABLE-SITE1-UNIT1-ANA/BL1RCP05',
-        timestamp,
+        timestamp: nowDateString,
         data: { value: 666, quality: 'good' },
       },
     ])
@@ -192,25 +179,24 @@ describe('TimescaleDB north', () => {
   })
 
   it('should properly handle values with only optional fields and timestamp', async () => {
-    const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
-    await timescaleDbNorth.init()
+    await north.init()
     const client = { connect: jest.fn(), query: jest.fn() }
     pg.Client.mockReturnValue(client)
-    await timescaleDbNorth.connect()
+    await north.connect()
 
-    timescaleDbNorth.optFields = 'site:%2$s,unit:%3$s,sensor:%4$s'
-    timescaleDbNorth.regExp = '(.*)-(.*)-(.*)-(.*)'
+    north.optFields = 'site:%2$s,unit:%3$s,sensor:%4$s'
+    north.regExp = '(.*)-(.*)-(.*)-(.*)'
 
     const expectedQuery = 'BEGIN;'
-      // eslint-disable-next-line max-len
-      + 'insert into "SENSOR_TABLE"("site","unit","sensor","timestamp") values(\'SITE1\',\'UNIT1\',\'ANA/BL1RCP05\',\'2020-02-29T12:12:12.000Z\');'
-      + 'COMMIT'
+        + 'insert into "SENSOR_TABLE"("site","unit","sensor","timestamp") '
+        + 'values(\'SITE1\',\'UNIT1\',\'ANA/BL1RCP05\',\'2020-02-02T02:02:02.222Z\');'
+        + 'COMMIT'
 
-    await timescaleDbNorth.handleValues([
+    await north.handleValues([
       {
         pointId: 'SENSOR_TABLE-SITE1-UNIT1-ANA/BL1RCP05',
         data: {},
-        timestamp,
+        timestamp: nowDateString,
       },
     ])
 
@@ -218,119 +204,99 @@ describe('TimescaleDB north', () => {
   })
 
   it('should properly handle values with useDataKeyValue', async () => {
-    const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
-    await timescaleDbNorth.init()
+    await north.init()
     const client = {
-      connect: jest.fn((callback) => callback()),
+      connect: jest.fn(),
       query: jest.fn(),
       end: jest.fn(),
     }
     pg.Client.mockReturnValue(client)
-    await timescaleDbNorth.connect()
-    // eslint-disable-next-line max-len
-    expect(timescaleDbNorth.logger.info).toHaveBeenCalledWith('North API Timescale started with protocol TimescaleDB url: postgres://anyuser:anypass@anyhost/anydb')
+    await north.connect()
 
-    timescaleDbNorth.useDataKeyValue = true
-    timescaleDbNorth.keyParentValue = 'level'
-    let expectedResult = null
-    let expectedError = null
-    try {
-      expectedResult = await timescaleDbNorth.handleValues([{
-        pointId: 'ANA/BL1RCP05',
-        timestamp,
-        data: {
-          value: { level: { value: 666 } },
-          quality: 'good',
-        },
-      }])
-    } catch (error) {
-      expectedError = error
-    }
-    const expectedUrl = `postgres://${timescaleDbConfig.TimescaleDB.user}:${timescaleDbConfig.TimescaleDB.password}`
-      + `@${timescaleDbConfig.TimescaleDB.host}/${timescaleDbConfig.TimescaleDB.db}`
+    north.useDataKeyValue = true
+    north.keyParentValue = 'level'
+
+    await north.handleValues([{
+      pointId: 'ANA/BL1RCP05',
+      timestamp: nowDateString,
+      data: {
+        value: { level: { value: 666 } },
+        quality: 'good',
+      },
+    }])
+
+    const expectedUrl = `postgres://${settings.TimescaleDB.user}:${settings.TimescaleDB.password}`
+      + `@${settings.TimescaleDB.host}/${settings.TimescaleDB.db}`
     const expectedQuery = 'BEGIN;'
-      + 'insert into "ANA/BL1RCP05"("value","timestamp") values(\'666\',\'2020-02-29T12:12:12.000Z\');'
+      + 'insert into "ANA/BL1RCP05"("value","timestamp") values(\'666\',\'2020-02-02T02:02:02.222Z\');'
       + 'COMMIT'
 
     expect(pg.Client).toBeCalledWith(expectedUrl)
-    expect(expectedResult).toEqual(values.length)
-    expect(expectedError).toBeNull()
     expect(client.connect).toBeCalledTimes(1)
     expect(client.query).toBeCalledWith(expectedQuery)
 
-    await timescaleDbNorth.disconnect()
+    await north.disconnect()
     expect(client.end).toBeCalledTimes(1)
   })
 
   it('should properly retrieve timestamp with timestampPathInDataValue', async () => {
-    const timescaleDbNorth = new TimescaleDB(timescaleDbConfig, engine)
-    await timescaleDbNorth.init()
+    await north.init()
     const client = {
-      connect: jest.fn((callback) => callback()),
+      connect: jest.fn(),
       query: jest.fn(),
       end: jest.fn(),
     }
     pg.Client.mockReturnValue(client)
-    await timescaleDbNorth.connect()
-    // eslint-disable-next-line max-len
-    expect(timescaleDbNorth.logger.info).toHaveBeenCalledWith('North API Timescale started with protocol TimescaleDB url: postgres://anyuser:anypass@anyhost/anydb')
+    await north.connect()
 
-    timescaleDbNorth.timestampPathInDataValue = 'associatedTimestamp.timestamp'
-    timescaleDbNorth.useDataKeyValue = true
+    north.timestampPathInDataValue = 'associatedTimestamp.timestamp'
+    north.useDataKeyValue = true
     const valuesWithTimestamp = [
       {
         pointId: 'ANA/BL1RCP05',
         data: {
-          value: { numericValue: 555, anotherNumericValue: 444, associatedTimestamp: { timestamp } },
+          value: { numericValue: 555, anotherNumericValue: 444, associatedTimestamp: { timestamp: nowDateString } },
           quality: 'good',
         },
       },
       {
         pointId: 'ANA/BL1RCP06',
         data: {
-          value: { numericValue: '666', associatedTimestamp: { timestamp } },
+          value: { numericValue: '666', associatedTimestamp: { timestamp: nowDateString } },
           quality: 'good',
         },
       },
       {
         pointId: 'ANA/BL1RCP07',
         data: {
-          value: { numericValue: '777', associatedTimestamp: { timestamp } },
+          value: { numericValue: '777', associatedTimestamp: { timestamp: nowDateString } },
           quality: 'good',
         },
       },
       {
         pointId: 'ANA/BL1RCP08',
         data: {
-          value: { numericValue: 888, associatedTimestamp: { timestamp } },
+          value: { numericValue: 888, associatedTimestamp: { timestamp: nowDateString } },
           quality: 'good',
         },
       },
     ]
 
-    let expectedResult = null
-    let expectedError = null
-    try {
-      expectedResult = await timescaleDbNorth.handleValues(valuesWithTimestamp)
-    } catch (error) {
-      expectedError = error
-    }
-    const expectedUrl = `postgres://${timescaleDbConfig.TimescaleDB.user}:${timescaleDbConfig.TimescaleDB.password}`
-      + `@${timescaleDbConfig.TimescaleDB.host}/${timescaleDbConfig.TimescaleDB.db}`
+    await north.handleValues(valuesWithTimestamp)
+    const expectedUrl = `postgres://${settings.TimescaleDB.user}:${settings.TimescaleDB.password}`
+      + `@${settings.TimescaleDB.host}/${settings.TimescaleDB.db}`
     const expectedQuery = 'BEGIN;'
-      + 'insert into "ANA/BL1RCP05"("numericValue","anotherNumericValue","timestamp") values(\'555\',\'444\',\'2020-02-29T12:12:12.000Z\');'
-      + 'insert into "ANA/BL1RCP06"("numericValue","timestamp") values(\'666\',\'2020-02-29T12:12:12.000Z\');'
-      + 'insert into "ANA/BL1RCP07"("numericValue","timestamp") values(\'777\',\'2020-02-29T12:12:12.000Z\');'
-      + 'insert into "ANA/BL1RCP08"("numericValue","timestamp") values(\'888\',\'2020-02-29T12:12:12.000Z\');'
+      + 'insert into "ANA/BL1RCP05"("numericValue","anotherNumericValue","timestamp") values(\'555\',\'444\',\'2020-02-02T02:02:02.222Z\');'
+      + 'insert into "ANA/BL1RCP06"("numericValue","timestamp") values(\'666\',\'2020-02-02T02:02:02.222Z\');'
+      + 'insert into "ANA/BL1RCP07"("numericValue","timestamp") values(\'777\',\'2020-02-02T02:02:02.222Z\');'
+      + 'insert into "ANA/BL1RCP08"("numericValue","timestamp") values(\'888\',\'2020-02-02T02:02:02.222Z\');'
       + 'COMMIT'
 
     expect(pg.Client).toBeCalledWith(expectedUrl)
-    expect(expectedResult).toEqual(valuesWithTimestamp.length)
-    expect(expectedError).toBeNull()
     expect(client.connect).toBeCalledTimes(1)
     expect(client.query).toBeCalledWith(expectedQuery)
 
-    await timescaleDbNorth.disconnect()
+    await north.disconnect()
     expect(client.end).toBeCalledTimes(1)
   })
 })

@@ -13,7 +13,7 @@ const MAX_NUMBER_OF_NODE_TO_LOG = 10
 
 /**
  * @param {string} certFolder - the cert folder path
- * @returns {Promise<void>} - The resolved promise when the files are copied
+ * @returns {Promise<void>} - The result promise
  */
 const initOpcuaCertificateFolders = async (certFolder) => {
   const rootFolder = `${certFolder}/opcua`

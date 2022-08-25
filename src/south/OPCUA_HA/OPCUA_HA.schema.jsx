@@ -1,6 +1,6 @@
 import React from 'react'
-import { notEmpty, minValue, optional } from '../../../services/validation.service'
-import validation from '../../../client/South/Form/South.validation'
+import { notEmpty, minValue, optional } from '../../services/validation.service'
+import validation from '../../client/South/Form/South.validation'
 
 const schema = { name: 'OPCUA_HA' }
 schema.form = {

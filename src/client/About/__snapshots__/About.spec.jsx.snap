@@ -45,7 +45,7 @@ exports[`About display About page based on config and status 1`] = `
           <b
             class="me-1"
           >
-            currentDirectory:
+            Current directory:
           </b>
         </li>
         <li
@@ -54,7 +54,7 @@ exports[`About display About page based on config and status 1`] = `
           <b
             class="me-1"
           >
-            nodeVersion:
+            Node version:
           </b>
         </li>
         <li
@@ -72,7 +72,7 @@ exports[`About display About page based on config and status 1`] = `
           <b
             class="me-1"
           >
-            ConfigurationFile:
+            Configuration file:
           </b>
         </li>
         <li
@@ -164,9 +164,8 @@ exports[`About display About page based on config and status 2`] = `
           <b
             class="me-1"
           >
-            currentDirectory:
+            Current directory:
           </b>
-          C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\tests
         </li>
         <li
           class="list-group-item"
@@ -174,9 +173,8 @@ exports[`About display About page based on config and status 2`] = `
           <b
             class="me-1"
           >
-            nodeVersion:
+            Node version:
           </b>
-          v12.13.1
         </li>
         <li
           class="list-group-item"
@@ -194,9 +192,8 @@ exports[`About display About page based on config and status 2`] = `
           <b
             class="me-1"
           >
-            ConfigurationFile:
+            Configuration file:
           </b>
-          C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\tests\\oibus.json
         </li>
         <li
           class="list-group-item"
@@ -289,7 +286,7 @@ exports[`About display About with config null 1`] = `
           <b
             class="me-1"
           >
-            currentDirectory:
+            Current directory:
           </b>
         </li>
         <li
@@ -298,7 +295,7 @@ exports[`About display About with config null 1`] = `
           <b
             class="me-1"
           >
-            nodeVersion:
+            Node version:
           </b>
         </li>
         <li
@@ -316,7 +313,7 @@ exports[`About display About with config null 1`] = `
           <b
             class="me-1"
           >
-            ConfigurationFile:
+            Configuration file:
           </b>
         </li>
         <li

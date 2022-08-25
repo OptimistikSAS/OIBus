@@ -16,48 +16,48 @@ apiList.CsvToHttp = require('../north/CsvToHttp/CsvToHttp.class')
 const protocolList = {}
 protocolList.SQL = require('../south/SQL/SQL.class')
 protocolList.FolderScanner = require('../south/FolderScanner/FolderScanner.class')
-protocolList.OPCUA_HA = require('../south/OPCUA/OPCUA_HA/OPCUA_HA.class')
-protocolList.OPCUA_DA = require('../south/OPCUA/OPCUA_DA/OPCUA_DA.class')
+protocolList.OPCUA_HA = require('../south/OPCUA_HA/OPCUA_HA.class')
+protocolList.OPCUA_DA = require('../south/OPCUA_DA/OPCUA_DA.class')
 protocolList.MQTT = require('../south/MQTT/MQTT.class')
 protocolList.ADS = require('../south/ADS/ADS.class')
 protocolList.Modbus = require('../south/Modbus/Modbus.class')
 protocolList.OPCHDA = require('../south/OPCHDA/OPCHDA.class')
 protocolList.RestApi = require('../south/RestApi/RestApi.class')
 
-// BaseEngine classes
 const Logger = require('./logger/Logger.class')
 const { createRequestService } = require('../services/request')
 
 /**
- *
- * at startup, handles initialization of applications, protocols and config.
+ * Abstract class used to manage North and South connectors
  * @class BaseEngine
  */
 class BaseEngine {
   /**
    * Constructor for BaseEngine
-   * Reads the config file and create the corresponding Object.
-   * Makes the necessary changes to the pointId attributes.
-   * Checks for critical entries such as scanModes and data sources.
    * @constructor
    * @param {ConfigService} configService - The config service
    * @param {EncryptionService} encryptionService - The encryption service
+   * @return {void}
    */
   constructor(configService, encryptionService) {
     this.version = VERSION
 
-    this.eventEmitters = {}
-    this.statusData = {}
+    this.installedNorthConnectors = apiList
+    this.installedSouthConnectors = protocolList
 
     this.configService = configService
     this.encryptionService = encryptionService
+
+    // Variable initialized in initEngineServices
+    this.logger = null
+    this.requestService = null
   }
 
   /**
    * Method used to init async services (like logger when loki is used with Bearer token auth)
-   * @param {object} engineConfig - the config retrieved from the file
-   * @param {string} loggerScope - the scope used in the logger (for example 'OIBusEngine')
-   * @returns {Promise<void>} - The promise returns when the services are set
+   * @param {Object} engineConfig - the config retrieved from the file
+   * @param {String} loggerScope - the scope used in the logger (for example 'OIBusEngine')
+   * @returns {Promise<void>} - The result promise
    */
   async initEngineServices(engineConfig, loggerScope) {
     // Configure the logger
@@ -65,132 +65,126 @@ class BaseEngine {
     this.logger.setEncryptionService(this.encryptionService)
     await this.logger.changeParameters(engineConfig, {})
 
+    // Buffer delay in ms: when a South connector generates a lot of values at the same time, it may be better to accumulate them
+    // in a buffer before sending them to the engine
+    // Max buffer: if the buffer reaches this length, it will be sent to the engine immediately
+    // these parameters could be settings from OIBus UI
+    this.bufferMax = engineConfig.caching.bufferMax
+    this.bufferTimeoutInterval = engineConfig.caching.bufferTimeoutInterval
+
     // Request service
     this.requestService = createRequestService(this)
   }
 
   /**
-   * Add a new Value from a data source to the BaseEngine.
-   * The BaseEngine will forward the Value to the Cache.
-   * @param {string} dataSourceId - The South generating the value
-   * @param {object} values - array of values
-   * @return {void}
+   * Add new values from a South connector to the Engine.
+   * The Engine will forward the values to the Cache.
+   * @param {String} id - The South connector id
+   * @param {Object[]} values - Array of values
+   * @returns {Promise<void>} - The result promise
    */
-  async addValues(dataSourceId, values) {
-    this.logger.warn(`addValues() should be surcharged ${dataSourceId} ${values}`)
+  async addValues(id, values) {
+    this.logger.warn(`addValues() should be surcharged. Called with South ${id} and ${values.length} values.`)
   }
 
   /**
-   * Add a new File from an data source to the BaseEngine.
-   * The BaseEngine will forward the File to the Cache.
-   * @param {string} dataSourceId - The South generating the file
-   * @param {string} filePath - The path to the File
-   * @param {boolean} preserveFiles - Whether to preserve the file at the original location
-   * @return {void}
+   * Add a new file from a South connector to the Engine.
+   * The Engine will forward the file to the Cache.
+   * @param {String} id - The South connector id
+   * @param {String} filePath - The path to the file
+   * @param {Boolean} preserveFiles - Whether to preserve the file at the original location
+   * @returns {Promise<void>} - The result promise
    */
-  addFile(dataSourceId, filePath, preserveFiles) {
-    this.logger.warn(`addFile() should be surcharged ${dataSourceId} ${filePath} ${preserveFiles}`)
+  async addFile(id, filePath, preserveFiles) {
+    this.logger.warn(`addFile() should be surcharged. Called with South ${id}, file "${filePath}" and ${preserveFiles}.`)
   }
 
   /**
-   * Creates a new instance for every application and protocol and connects them.
+   * Creates a new instance for every North and South connectors and initialize them.
    * Creates CronJobs based on the ScanModes and starts them.
-   *
-   * @param {boolean} safeMode - Whether to start in safe mode
-   * @return {void}
+   * @param {Boolean} safeMode - Whether to start in safe mode
+   * @returns {Promise<void>} - The result promise
    */
   async start(safeMode = false) {
-    this.logger.warn(`start() should be surcharged ${safeMode}`)
+    this.logger.warn(`start() should be surcharged. Called with safe mode ${safeMode}.`)
   }
 
   /**
-   * Gracefully stop every Timer, Protocol and Application
-   * @return {Promise<void>} - The stop promise
+   * Gracefully stop every timer, South and North connectors
+   * @returns {Promise<void>} - The result promise
    */
   async stop() {
-    this.logger.warn('stop() should be surcharged')
-  }
-
-  /**
-   * Restart BaseEngine.
-   * @param {number} timeout - The delay to wait before restart
-   * @returns {void}
-   */
-  async reload(timeout) {
-    this.logger.warn(`reload() should be surcharged ${timeout}`)
-  }
-
-  /**
-   * Shutdown OIbus.
-   * @param {number} timeout - The delay to wait before restart
-   * @returns {void}
-   */
-  async shutdown(timeout) {
-    this.logger.warn(`shutdown() should be surcharged ${timeout}`)
-  }
-
-  /**
-    * Get OIBus version
-    * @returns {string} - The OIBus version
-    */
-  getVersion() {
-    return this.version
+    this.logger.warn('stop() should be surcharged.')
   }
 
   /**
    * Get cache folder
-   * @return {string} - The cache folder
+   * @return {String} - The cache folder
    */
   getCacheFolder() {
-    this.logger.warn('getCacheFolder() should be surcharged')
+    this.logger.warn('getCacheFolder() should be surcharged.')
   }
 
   /**
-   * Create a new South instance
-   *
-   * @param {string} protocol - The protocol
-   * @param {object} dataSource - The data source
-   * @returns {ProtocolHandler|null} - The South
+   * Return the South connector
+   * @param {Object} southConfig - The South connector settings
+   * @returns {SouthConnector|null} - The South connector
    */
-  createSouth(protocol, dataSource) {
-    const SouthHandler = protocolList[protocol]
-    if (SouthHandler) {
-      return new SouthHandler(dataSource, this)
+  createSouth(southConfig) {
+    try {
+      const SouthConnector = this.installedSouthConnectors[southConfig.protocol]
+      if (SouthConnector) {
+        return new SouthConnector(southConfig, this)
+      }
+      this.logger.error(`South connector for "${southConfig.name}" is not found: ${southConfig.protocol}`)
+    } catch (error) {
+      this.logger.error(`Error when creating South connector "${southConfig.name}": ${error}`)
     }
     return null
   }
 
   /**
-   * Return available South protocols
-   * @return {Object} - Available South protocols
+   * Return installed South connectors with their category and name
+   * @return {Object[]} - Installed South connectors
    */
-  // eslint-disable-next-line class-methods-use-this
-  getSouthEngineList() {
-    return protocolList
+  getSouthList() {
+    this.logger.debug('Getting installed South connectors list.')
+    return Object.entries(this.installedSouthConnectors)
+      .map(([connectorName, { category }]) => ({
+        connectorName,
+        category,
+      }))
   }
 
   /**
-   * Return the South class
-   *
-   * @param {string} api - The api
-   * @param {object} application - The application
-   * @returns {ProtocolHandler|null} - The South
+   * Return the North connector
+   * @param {Object} settings - The North connector settings
+   * @returns {NorthConnector|null} - The North connector
    */
-  createNorth(api, application) {
-    const NorthHandler = apiList[api]
-    if (NorthHandler) {
-      return new NorthHandler(application, this)
+  createNorth(settings) {
+    try {
+      const NorthConnector = this.installedNorthConnectors[settings.api]
+      if (NorthConnector) {
+        return new NorthConnector(settings, this)
+      }
+      this.logger.error(`North connector for "${settings.name}" is not found: ${settings.api}`)
+    } catch (error) {
+      this.logger.error(`Error when creating North connector "${settings.name}": ${error}`)
     }
     return null
   }
 
   /**
-   * Return available North applications
-   * @return {Object} - Available North applications
+   * Return installed North connectors with their category and name
+   * @return {Object[]} - Installed North connectors
    */
-  // eslint-disable-next-line class-methods-use-this
-  getNorthEngineList() {
-    return apiList
+  getNorthList() {
+    this.logger.debug('Getting installed North connectors list.')
+    return Object.entries(this.installedNorthConnectors)
+      .map(([connectorName, { category }]) => ({
+        connectorName,
+        category,
+      }))
   }
 }
 

@@ -5,25 +5,30 @@ const {
   UserTokenType,
 } = require('node-opcua-client')
 const { OPCUACertificateManager } = require('node-opcua-certificate-manager')
-const ProtocolHandler = require('../../ProtocolHandler.class')
-const { initOpcuaCertificateFolders } = require('../opcua.service')
+const SouthConnector = require('../SouthConnector.class')
+const { initOpcuaCertificateFolders } = require('../../services/opcua.service')
 
 /**
- * @class OPCUA_DA
- * @extends {ProtocolHandler}
+ * Class OPCUA_DA - Connect to an OPCUA server in DA (Data Access) mode
  */
-class OPCUA_DA extends ProtocolHandler {
+class OPCUA_DA extends SouthConnector {
   static category = 'IoT'
 
   /**
    * Constructor for OPCUA_DA
    * @constructor
-   * @param {Object} dataSource - The data source
-   * @param {BaseEngine} engine - The engine
+   * @param {Object} settings - The South connector settings
+   * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
-  constructor(dataSource, engine) {
-    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportFile: false, supportHistory: false })
+  constructor(settings, engine) {
+    super(settings, engine, {
+      supportListen: false,
+      supportLastPoint: true,
+      supportFile: false,
+      supportHistory: false,
+    })
+    this.handlesPoints = true
 
     const {
       url,
@@ -35,7 +40,7 @@ class OPCUA_DA extends ProtocolHandler {
       keepSessionAlive,
       certFile,
       keyFile,
-    } = dataSource.OPCUA_DA
+    } = this.settings.OPCUA_DA
 
     this.url = url
     this.username = username
@@ -43,26 +48,31 @@ class OPCUA_DA extends ProtocolHandler {
     this.securityMode = securityMode
     this.securityPolicy = securityPolicy
     this.retryInterval = retryInterval
-    this.clientName = dataSource.id
+    this.clientName = settings.id
     this.keepSessionAlive = keepSessionAlive
     this.certFile = certFile
     this.keyFile = keyFile
     this.reconnectTimeout = null
 
-    this.handlesPoints = true
+    // Initialized at connection
     this.clientCertificateManager = null
+    this.reconnectTimeout = null
+    this.session = null
   }
 
   /**
-   * Connect.
-   * @return {Promise<void>} The connection promise
+   * Connect to the OPCUA server.
+   * @returns {Promise<void>} - The result promise
    */
   async connect() {
-    await super.connect()
     await this.session?.close() // close the session if it already exists
     await this.connectToOpcuaServer()
   }
 
+  /**
+   * Initialize services (logger, certificate, status data)
+   * @returns {Promise<void>} - The result promise
+   */
   async init() {
     await super.init()
     await initOpcuaCertificateFolders(this.encryptionService.certsFolder)
@@ -78,61 +88,53 @@ class OPCUA_DA extends ProtocolHandler {
   }
 
   /**
-   * manageDataValues
-   * @param {array} dataValues - the list of values
-   * @param {Array} nodesToRead - the list of nodes
-   * @return {Promise<void>} The connection promise
+   * Format values and send them to the cache
+   * @param {Object[]} dataValues - The list of values
+   * @param {Object[]} nodesToRead - The list of nodes
+   * @returns {Promise<void>} - The result promise
    */
-  manageDataValues = (dataValues, nodesToRead) => {
-    const values = []
-    dataValues.forEach((dataValue, i) => {
-      values.push({
-        pointId: nodesToRead[i].pointId,
-        timestamp: new Date().toISOString(),
-        data: {
-          value: dataValue.value.value,
-          quality: JSON.stringify(dataValue.statusCode),
-        },
-      })
-    })
-    this.addValues(values)
+  formatAndSendValues = async (dataValues, nodesToRead) => {
+    const values = dataValues.map((dataValue, i) => ({
+      pointId: nodesToRead[i].pointId,
+      timestamp: new Date().toISOString(),
+      data: {
+        value: dataValue.value.value,
+        quality: JSON.stringify(dataValue.statusCode),
+      },
+    }))
+    await this.addValues(values)
   }
 
   /**
-   * On scan.
+   * Runs right instructions based on a given scanMode
    * @param {String} scanMode - The scan mode
-   * @return {Promise<void>} - The on scan promise
+   * @returns {Promise<void>} - The result promise
    */
   async lastPointQuery(scanMode) {
-    if (!this.connected) {
-      this.logger.debug(`lastPointQuery ignored: connected: ${this.connected}`)
-      return
-    }
-
-    const nodesToRead = this.dataSource.points.filter((point) => point.scanMode === scanMode)
+    const nodesToRead = this.settings.points.filter((point) => point.scanMode === scanMode)
     if (!nodesToRead.length) {
-      this.logger.error(`lastPointQuery ignored: no points to read for scanMode: ${scanMode}`)
-      return
+      throw new Error(`No points to read for scanMode: "${scanMode}".`)
     }
 
     try {
-      this.logger.debug(`Read ${nodesToRead.length} nodes [${nodesToRead[0].nodeId}...${nodesToRead[nodesToRead.length - 1].nodeId}]`)
+      this.logger.debug(`Read ${nodesToRead.length} nodes `
+          + `[${nodesToRead[0].nodeId}...${nodesToRead[nodesToRead.length - 1].nodeId}]`)
+
       const dataValues = await this.session.readVariableValue(nodesToRead.map((node) => node.nodeId))
       if (dataValues.length !== nodesToRead.length) {
-        this.logger.error(`received ${dataValues.length}, requested ${nodesToRead.length}`)
+        this.logger.error(`Received ${dataValues.length}, requested ${nodesToRead.length}.`)
       }
-      await this.manageDataValues(dataValues, nodesToRead)
+      await this.formatAndSendValues(dataValues, nodesToRead)
     } catch (error) {
-      this.logger.error(`on Scan ${scanMode}:${error.stack}`)
       await this.disconnect()
-      this.initializeStatusData()
       await this.connect()
+      throw error
     }
   }
 
   /**
    * Close the connection
-   * @return {void}
+   * @returns {Promise<void>} - The result promise
    */
   async disconnect() {
     if (this.reconnectTimeout) {
@@ -148,7 +150,7 @@ class OPCUA_DA extends ProtocolHandler {
 
   /*
   monitorPoints() {
-    const nodesToMonitor = this.dataSource.points
+    const nodesToMonitor = this.settings.points
       .filter((point) => point.scanMode === 'listen')
       .map((point) => point.pointId)
     if (!nodesToMonitor.length) {
@@ -191,11 +193,10 @@ class OPCUA_DA extends ProtocolHandler {
 
   /**
    * Connect to OPCUA_DA server with retry.
-   * @returns {Promise<void>} - The connection promise
+   * @returns {Promise<void>} - The result promise
    */
   async connectToOpcuaServer() {
     try {
-      // define OPCUA_DA connection parameters
       const connectionStrategy = {
         initialDelay: 1000,
         maxRetry: 1,
@@ -211,6 +212,7 @@ class OPCUA_DA extends ProtocolHandler {
         clientName: this.clientName, // the id of the connector
         clientCertificateManager: this.clientCertificateManager,
       }
+
       let userIdentity
       if (this.certificate.privateKey && this.certificate.cert) {
         userIdentity = {
@@ -228,9 +230,8 @@ class OPCUA_DA extends ProtocolHandler {
         userIdentity = { type: UserTokenType.Anonymous }
       }
       this.session = await OPCUAClient.createSession(this.url, userIdentity, options)
-      this.connected = true
-      this.logger.info(`OPCUA_DA ${this.dataSource.name} connected`)
-      this.updateStatusDataStream({ 'Connected at': new Date().toISOString() })
+      this.logger.info(`OPCUA_DA ${this.settings.name} connected`)
+      await super.connect()
     } catch (error) {
       this.logger.error(error)
       await this.disconnect()

@@ -1,12 +1,12 @@
-const csv = require('papaparse')
-const path = require('path')
-const fs = require('fs/promises')
-const EventEmitter = require('events')
+const path = require('node:path')
+const fs = require('node:fs/promises')
 
 const HistoryQuery = require('./HistoryQuery.class')
 const BaseEngine = require('../engine/BaseEngine.class')
 const HistoryQueryRepository = require('./HistoryQueryRepository.class')
 const databaseService = require('../services/database.service')
+const StatusService = require('../services/status.service.class')
+const MainCache = require('../engine/cache/MainCache.class')
 
 /**
  *
@@ -29,101 +29,89 @@ class HistoryQueryEngine extends BaseEngine {
     const { engineConfig } = this.configService.getConfig()
     const { historyQuery: { folder } } = engineConfig
     this.cacheFolder = folder
-    this.historyQueryRepository = new HistoryQueryRepository(this.configService.getHistoryQueryConfigurationFileLocation())
+
+    this.statusService = new StatusService()
+    this.historyQueryRepository = null
   }
 
   /**
    * Method used to init async services (like logger when loki is used with Bearer token auth)
-   * @param {object} engineConfig - the config retrieved from the file
-   * @param {string} loggerScope - the scope used for the logger
-   * @returns {Promise<void>} - The promise returns when the services are set
+   * @param {Object} engineConfig - the config retrieved from the file
+   * @param {String} loggerScope - the scope used for the logger
+   * @returns {Promise<void>} - The result promise
    */
   async initEngineServices(engineConfig, loggerScope = 'HistoryQueryEngine') {
     await super.initEngineServices(engineConfig, loggerScope)
-    this.initializeStatusData()
+    this.statusService.updateStatusDataStream({ ongoingHistoryQueryId: null })
 
     try {
       await fs.stat(this.cacheFolder)
     } catch (e) {
-      this.logger.info(`Creating main history cache folder in ${this.cacheFolder}`)
+      this.logger.debug(`Creating history cache folder "${this.cacheFolder}".`)
       await fs.mkdir(this.cacheFolder, { recursive: true })
     }
-
-    await this.historyQueryRepository.initialize()
-
-    this.logger.info('Starting HistoryQueryEngine')
+    this.historyQueryRepository = new HistoryQueryRepository(this.configService.getHistoryQueryConfigurationFileLocation())
+    this.logger.info('Starting HistoryQuery Engine.')
   }
 
   /**
-   * Update engine status data to be displayed on the home screen
-   * @returns {void}
+   * Add new values from a South connector to the Engine.
+   * The Engine will forward the values to the Cache.
+   * @param {String} southId - The South generating the value
+   * @param {Object[]} values - Array of values
+   * @return {Promise<void>} - The result promise
    */
-  initializeStatusData() {
-    if (!this.eventEmitters['/history/engine/sse']) {
-      this.eventEmitters['/history/engine/sse'] = {}
-    } else {
-      this.eventEmitters['/history/engine/sse'].events.removeAllListeners()
+  async addValues(southId, values) {
+    if (!this.historyQuery.north.canHandleValues) {
+      this.logger.warn(`North "${this.historyQuery.north.settings.name}" used in history query ${this.historyQuery.id} `
+          + 'does not handle values. Retrieved values are discarded.')
+      return
     }
-    this.eventEmitters['/history/engine/sse'].events = new EventEmitter()
-    this.eventEmitters['/history/engine/sse'].events.on('data', this.listener)
-    this.updateStatusDataStream({ ongoingHistoryQueryId: null })
-  }
 
-  updateStatusDataStream(statusData = {}) {
-    this.statusData = { ...this.statusData, ...statusData }
-    this.eventEmitters['/history/engine/sse'].statusData = this.statusData
-    this.eventEmitters['/history/engine/sse']?.events?.emit('data', this.statusData)
-  }
-
-  /**
-   * Method used by the eventEmitter of the current protocol to write data to the socket and send them to the frontend
-   * @param {object} data - The json object of data to send
-   * @return {void}
-   */
-  listener = (data) => {
-    if (data) {
-      this.eventEmitters['/history/engine/sse']?.stream?.write(`data: ${JSON.stringify(data)}\n\n`)
+    this.logger.trace(`Add ${values.length} historian values to cache from South "${this.historyQuery.south.settings.name}".`)
+    if (values.length) {
+      this.historyQuery.north.cacheValues(southId, values)
     }
   }
 
   /**
-   * Add a new Value from a data source to the Engine.
-   * The Engine will forward the Value to the Cache.
-   * @param {string} dataSourceId - The South generating the value
-   * @param {object} values - array of values
-   * @return {void}
+   * Add a new file from a South connector to the Engine.
+   * The Engine will forward the file to the Cache.
+   * @param {String} southId - The South connector id
+   * @param {String} filePath - The path to the File
+   * @param {Boolean} _preserveFiles - Whether to preserve the file at the original location
+   * @return {Promise<void>} - The result promise
    */
-  async addValues(dataSourceId, values) {
-    const sanitizedValues = values.filter((value) => value?.data?.value !== undefined && value?.data?.value !== null)
-    this.logger.trace(`Add ${sanitizedValues?.length} values from "${this.historyQuery.dataSource.name || dataSourceId}"`)
-    if (sanitizedValues.length) {
-      const flattenedValues = sanitizedValues.map((sanitizedValue) => this.flattenObject(sanitizedValue))
-      const csvContent = csv.unparse(flattenedValues)
-      const filename = this.historyQuery.south.replaceFilenameWithVariable(this.historyQuery.south.filename)
-      const filePath = path.join(this.historyQuery.dataCacheFolder, filename)
-      await fs.writeFile(filePath, csvContent)
+  async addFile(southId, filePath, _preserveFiles) {
+    if (!this.historyQuery.north.canHandleFiles) {
+      this.logger.warn(`North "${this.historyQuery.north.settings.name}" used in history query ${this.historyQuery.id} `
+          + 'does not handle files. Retrieved files are discarded.')
+      return
     }
-  }
 
-  /**
-   * Add a new File from an data source to the Engine.
-   * The Engine will forward the File to the Cache.
-   * @param {string} dataSourceId - The South generating the file
-   * @param {string} filePath - The path to the File
-   * @param {boolean} _preserveFiles - Whether to preserve the file at the original location
-   * @return {void}
-   */
-  addFile(dataSourceId, filePath, _preserveFiles) {
-    // The south will already store the files in the cache folder, so no copy is needed
-    this.logger.trace(`Add file from "${this.historyQuery.dataSource.name || dataSourceId}" with ${filePath}`)
+    this.logger.trace(`Add file "${filePath}" to cache from South "${this.historyQuery.south.settings.name}".`)
+
+    const timestamp = new Date().getTime()
+    // When compressed file is received the name looks like filename.txt.gz
+    const filenameInfo = path.parse(filePath)
+    const cacheFilename = `${filenameInfo.name}-${timestamp}${filenameInfo.ext}`
+    const cachePath = path.join(this.getCacheFolder(), cacheFilename)
+
+    try {
+      // Move or copy the file into the cache folder
+      await MainCache.transferFile(this.logger, filePath, cachePath, false)
+      await this.historyQuery.north.cacheFile(cachePath, timestamp)
+    } catch (error) {
+      this.logger.error(error)
+    }
   }
 
   /**
    * Creates a new instance for every application and protocol and connects them.
    * Creates CronJobs based on the ScanModes and starts them.
    *
-   * @param {boolean} safeMode - Whether to start in safe mode
-   * @return {void}
+   * @param {Boolean} safeMode - Whether to start in safe mode
+   * @return {Promise<void>} - The result promise
    */
   async start(safeMode = false) {
     const { engineConfig } = this.configService.getConfig()
@@ -135,7 +123,7 @@ class HistoryQueryEngine extends BaseEngine {
       return
     }
 
-    this.runNextHistoryQuery()
+    await this.runNextHistoryQuery()
   }
 
   /**
@@ -149,47 +137,47 @@ class HistoryQueryEngine extends BaseEngine {
 
     if (this.historyQuery) {
       await this.historyQuery.stop()
-      this.updateStatusDataStream({ ongoingHistoryQueryId: null })
-      this.eventEmitters['/history/engine/sse']?.events?.removeAllListeners()
-      this.eventEmitters['/history/engine/sse']?.stream?.destroy()
       this.historyQuery = null
     }
+    this.statusService.updateStatusDataStream({ ongoingHistoryQueryId: null })
+    this.statusService.stop()
   }
 
   /**
    * Run the next history query
-   * @returns {void}
+   * @returns {Promise<void>} - The result promise
    */
   async runNextHistoryQuery() {
-    const historyQueryConfig = await this.historyQueryRepository.getNextToRun()
-    if (historyQueryConfig) {
-      this.logger.info(`Preparing to start HistoryQuery: ${historyQueryConfig.id}`)
-
-      const { southConfig, northConfig } = this.configService.getConfig()
-      const dataSourceToUse = southConfig.dataSources.find((dataSource) => dataSource.id === historyQueryConfig.southId)
-      if (!dataSourceToUse) {
-        this.logger.error(`Invalid dataSource ${historyQueryConfig.southId} for HistoryQuery ${historyQueryConfig.id}`)
-      }
-      const applicationToUse = northConfig.applications.find((application) => application.id === historyQueryConfig.northId)
-      if (!applicationToUse) {
-        this.logger.error(`Invalid application ${historyQueryConfig.southId} for HistoryQuery ${historyQueryConfig.id}`)
-      }
-
-      if (dataSourceToUse && applicationToUse) {
-        this.historyQuery = new HistoryQuery(this, this.logger, historyQueryConfig, dataSourceToUse, applicationToUse)
-        this.updateStatusDataStream({ ongoingHistoryQueryId: this.historyQuery.id })
-        this.historyQuery.start()
-      }
-    } else {
-      this.logger.info('No HistoryQuery to execute')
-      this.updateStatusDataStream({ ongoingHistoryQueryId: null })
+    const historyQuerySettings = this.historyQueryRepository.getNextToRun()
+    if (!historyQuerySettings) {
+      this.logger.info('No HistoryQuery to execute.')
+      this.statusService.updateStatusDataStream({ ongoingHistoryQueryId: null })
+      return
     }
+    this.logger.debug(`Preparing to start history query "${historyQuerySettings.id}".`)
+
+    const { southConfig, northConfig } = this.configService.getConfig()
+    const southToUse = southConfig.dataSources.find((southSettings) => southSettings.id === historyQuerySettings.southId)
+    if (!southToUse) {
+      this.logger.error(`Invalid South ID "${historyQuerySettings.southId}" for history query "${historyQuerySettings.id}".`)
+      return
+    }
+    const northToUse = northConfig.applications.find((northSettings) => northSettings.id === historyQuerySettings.northId)
+    if (!northToUse) {
+      this.logger.error(`Invalid North ID "${historyQuerySettings.northId}" for history query "${historyQuerySettings.id}".`)
+      return
+    }
+
+    this.historyQuery = new HistoryQuery(this, historyQuerySettings, southToUse, northToUse)
+    this.statusService.updateStatusDataStream({ ongoingHistoryQueryId: historyQuerySettings.id })
+    this.logger.info(`Starting history query "${historyQuerySettings.id}".`)
+    await this.historyQuery.start()
   }
 
   /**
    * Get live status for a given HistoryQuery.
-   * @param {string} id - The HistoryQuery id
-   * @returns {object} - The live status
+   * @param {String} id - The HistoryQuery id
+   * @returns {Object} - The live status
    */
   async getStatusForHistoryQuery(id) {
     const data = {
@@ -197,7 +185,7 @@ class HistoryQueryEngine extends BaseEngine {
       south: [],
     }
     const { engineConfig } = this.configService.getConfig()
-    const historyQueryConfig = await this.historyQueryRepository.get(id)
+    const historyQueryConfig = this.historyQueryRepository.get(id)
     if (historyQueryConfig) {
       const { historyQuery: { folder } } = engineConfig
       const databasePath = `${folder}/${historyQueryConfig.southId}.db`
@@ -218,32 +206,10 @@ class HistoryQueryEngine extends BaseEngine {
 
   /**
    * Get cache folder
-   * @return {string} - The cache folder
+   * @return {String} - The cache folder
    */
   getCacheFolder() {
     return this.historyQuery.cacheFolder
-  }
-
-  /**
-   * Flatten JSON object.
-   * @param {object} object - The object to flatten
-   * @return {{}} - The flattened object
-   */
-  flattenObject(object) {
-    const flatValue = {}
-
-    Object.entries(object).forEach(([topKey, topValue]) => {
-      if (typeof topValue === 'object') {
-        const flatObject = this.flattenObject(topValue)
-        Object.entries(flatObject).forEach(([subKey, subValue]) => {
-          flatValue[`${topKey}.${subKey}`] = subValue
-        })
-      } else {
-        flatValue[topKey] = topValue
-      }
-    })
-
-    return flatValue
   }
 }
 

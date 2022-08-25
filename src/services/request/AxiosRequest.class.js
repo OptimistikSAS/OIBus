@@ -3,6 +3,8 @@ const tunnel = require('tunnel')
 
 const BaseRequest = require('./BaseRequest.class')
 
+const { generateFormDataBodyFromFile } = require('../utils')
+
 class AxiosRequest extends BaseRequest {
   /**
    * Send the values using axios
@@ -14,13 +16,12 @@ class AxiosRequest extends BaseRequest {
    * @param {object} proxy - Proxy to use
    * @param {string} data - The data to send
    * @param {number} timeout - The request timeout
-   * @return {Promise} - The send status
+   * @return {Promise} - The resolved promise
    */
   async sendImplementation(requestUrl, method, headers, proxy, data, timeout) {
     this.logger.trace('sendWithAxios() called')
 
     const source = axios.CancelToken.source()
-
     let axiosInstance = axios.create({
       timeout,
       cancelToken: source.token,
@@ -28,21 +29,17 @@ class AxiosRequest extends BaseRequest {
 
     if (proxy) {
       const { protocol, host, port, username = null, password = null } = proxy
-
       const axiosProxy = {
         host,
         port,
       }
-
       if (username && password) {
         axiosProxy.proxyAuth = `${username}:${this.engine.encryptionService.decryptText(password)}`
       }
-
       let tunnelInstance = tunnel.httpsOverHttp({ axiosProxy })
       if (protocol === 'https') {
         tunnelInstance = tunnel.httpsOverHttps({ axiosProxy })
       }
-
       axiosInstance = axios.create({
         httpsAgent: tunnelInstance,
         proxy: false,
@@ -51,7 +48,7 @@ class AxiosRequest extends BaseRequest {
       })
     }
 
-    setTimeout(() => {
+    const cancelTimeout = setTimeout(() => {
       source.cancel('Request cancelled by force to prevent axios hanging')
     }, timeout)
 
@@ -59,7 +56,7 @@ class AxiosRequest extends BaseRequest {
     if (Object.prototype.hasOwnProperty.call(headers, 'Content-Type')) {
       body = data
     } else {
-      body = this.generateFormDataBody(data)
+      body = generateFormDataBodyFromFile(data)
 
       const formHeaders = body.getHeaders()
       Object.keys(formHeaders).forEach((key) => {
@@ -82,9 +79,11 @@ class AxiosRequest extends BaseRequest {
         statusCode: error.response ? error.response.status : undefined,
         error,
       }
+      clearTimeout(cancelTimeout)
       return Promise.reject(responseError)
     }
 
+    clearTimeout(cancelTimeout)
     return true
   }
 }

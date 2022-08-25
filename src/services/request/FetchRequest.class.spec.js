@@ -2,6 +2,12 @@ const fetch = require('node-fetch')
 const ProxyAgent = require('proxy-agent')
 
 const FetchRequest = require('./FetchRequest.class')
+const utils = require('../utils')
+
+const { defaultConfig: config } = require('../../../tests/testConfig')
+
+// Mock utils class
+jest.mock('../utils', () => ({ generateFormDataBodyFromFile: jest.fn() }))
 
 // Mock node-fetch
 jest.mock('node-fetch')
@@ -10,22 +16,26 @@ const { Response } = jest.requireActual('node-fetch')
 // Mock ProxyAgent
 jest.mock('proxy-agent')
 
-// Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: { httpRequest: { timeout: 10000, retryCount: 2 } } }) }
-engine.encryptionService = { decryptText: (password) => password }
-engine.logger = { trace: jest.fn(), error: jest.fn() }
+// Mock OIBusEngine
+const engine = {
+  configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  getCacheFolder: () => config.engine.caching.cacheFolder,
+  addValues: jest.fn(),
+  addFile: jest.fn(),
+  logger: { error: jest.fn(), warn: jest.fn(), info: jest.fn(), debug: jest.fn(), trace: jest.fn() },
+  encryptionService: { decryptText: (password) => password },
+}
 
-beforeEach(() => {
-  jest.resetAllMocks()
-  jest.clearAllMocks()
-})
+let fetchRequest = null
 
-describe('RequestFactory', () => {
-  const fetchRequest = new FetchRequest(engine)
+describe('FetchRequest', () => {
+  beforeEach(() => {
+    jest.resetAllMocks()
+
+    fetchRequest = new FetchRequest(engine)
+  })
 
   it('should properly call node-fetch without proxy for JSON data', async () => {
-    fetchRequest.generateFormDataBody = jest.fn()
     const requestUrl = 'https://www.example.com'
     const method = 'POST'
     const headers = {
@@ -46,7 +56,6 @@ describe('RequestFactory', () => {
       timeout,
     }
 
-    expect(fetchRequest.generateFormDataBody).not.toBeCalled()
     expect(fetch).toBeCalledWith(requestUrl, expectedFetchOptions)
     expect(result).toBeTruthy()
   })
@@ -101,7 +110,7 @@ describe('RequestFactory', () => {
 
   it('should properly call node-fetch without proxy for form-data', async () => {
     const mockedBody = { getHeaders: () => ({ formDataHeader: 'formDataHeader' }) }
-    fetchRequest.generateFormDataBody = jest.fn().mockImplementation(() => mockedBody)
+    utils.generateFormDataBodyFromFile.mockReturnValue(mockedBody)
     const requestUrl = 'https://www.example.com'
     const method = 'POST'
     const headers = { Authorization: 'Basic kdvdkfsdfdsf' }
@@ -119,7 +128,7 @@ describe('RequestFactory', () => {
       timeout,
     }
 
-    expect(fetchRequest.generateFormDataBody).toBeCalledWith(data)
+    expect(utils.generateFormDataBodyFromFile).toBeCalledWith(data)
     expect(fetch).toBeCalledWith(requestUrl, expectedFetchOptions)
     expect(result).toBeTruthy()
   })

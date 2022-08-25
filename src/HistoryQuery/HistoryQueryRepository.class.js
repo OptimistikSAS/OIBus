@@ -6,15 +6,7 @@ class HistoryQueryRepository {
 
   constructor(databasePath) {
     this.databasePath = databasePath
-    this.database = null
-  }
-
-  /**
-   * Initialize the HistoryQuery database
-   * @return {Promise<void>} - The result promise
-   */
-  async initialize() {
-    this.database = await db(this.databasePath)
+    this.database = db(this.databasePath)
     const query = `CREATE TABLE IF NOT EXISTS ${HistoryQueryRepository.TABLE} (
                    id TEXT PRIMARY KEY,
                    orderColumn INTEGER,
@@ -29,53 +21,62 @@ class HistoryQueryRepository {
                    compress INTEGER,
                    settings TEXT
                  );`
-    await this.database.prepare(query).run()
+    this.database.prepare(query).run()
   }
 
   /**
    * Create a new HistoryQuery.
-   * @param {object} historyQuery - The HistoryQuery info
-   * @return {Promise<object>} - The HistoryQuery
+   * @param {Object} historyQueryToCreate - The HistoryQuery info
+   * @return {Object} - The HistoryQuery
    */
-  async create(historyQuery) {
+  create(historyQueryToCreate) {
     let order = 1
     const orderQuery = `SELECT MAX(orderColumn) AS maxOrder FROM ${HistoryQueryRepository.TABLE}`
-    const orderResult = await this.database.prepare(orderQuery).get()
+    const orderResult = this.database.prepare(orderQuery).get()
     if (orderResult) {
       order = orderResult.maxOrder + 1
     }
 
-    const query = `INSERT INTO ${HistoryQueryRepository.TABLE} (id, orderColumn, name, status, enabled, southId, northId, startTime, endTime,
-                                                                filePattern, compress, settings)
+    const query = `INSERT INTO ${HistoryQueryRepository.TABLE} 
+                                (id,
+                                orderColumn,
+                                name,
+                                status,
+                                enabled,
+                                southId,
+                                northId,
+                                startTime,
+                                endTime,
+                                filePattern,
+                                compress,
+                                settings)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    const stmt = await this.database.prepare(query)
-    await stmt.run(
-      historyQuery.id,
+    this.database.prepare(query).run(
+      historyQueryToCreate.id,
       order ?? 1,
-      historyQuery.name,
-      historyQuery.status,
-      historyQuery.enabled,
-      historyQuery.southId,
-      historyQuery.northId,
-      historyQuery.startTime,
-      historyQuery.endTime,
-      historyQuery.filePattern,
-      historyQuery.compress,
-      JSON.stringify(historyQuery.settings),
+      historyQueryToCreate.name,
+      historyQueryToCreate.status,
+      +historyQueryToCreate.enabled,
+      historyQueryToCreate.southId,
+      historyQueryToCreate.northId,
+      historyQueryToCreate.startTime,
+      historyQueryToCreate.endTime,
+      historyQueryToCreate.filePattern,
+      +historyQueryToCreate.compress,
+      JSON.stringify(historyQueryToCreate.settings),
     )
 
-    return this.get(historyQuery.id)
+    return this.get(historyQueryToCreate.id)
   }
 
   /**
    * Get all HistoryQueries.
-   * @return {Promise<object[]>} - The HistoryQueries
+   * @return {Object[]} - The HistoryQueries
    */
-  async getAll() {
+  getAll() {
     const query = `SELECT *
                    FROM ${HistoryQueryRepository.TABLE}`
-    const stmt = await this.database.prepare(query)
-    const historyQueries = await stmt.all()
+    const historyQueries = this.database.prepare(query).all()
     return historyQueries.map((historyQuery) => {
       historyQuery.settings = JSON.parse(historyQuery.settings)
       return historyQuery
@@ -84,15 +85,14 @@ class HistoryQueryRepository {
 
   /**
    * Get a HistoryQuery.
-   * @param {string} id - The HistoryQuery id
-   * @return {Promise<object>} - The HistoryQuery
+   * @param {String} id - The HistoryQuery id
+   * @return {Object} - The HistoryQuery
    */
-  async get(id) {
+  get(id) {
     const query = `SELECT *
                    FROM ${HistoryQueryRepository.TABLE}
                    WHERE id = ?`
-    const stmt = await this.database.prepare(query)
-    const result = await stmt.get(id)
+    const result = this.database.prepare(query).get(id)
 
     if (result) {
       result.settings = JSON.parse(result.settings)
@@ -103,10 +103,10 @@ class HistoryQueryRepository {
 
   /**
    * Update a HistoryQuery.
-   * @param {object} historyQuery - The HistoryQuery info
-   * @return {Promise<object>} - The updated HistoryQuery
+   * @param {Object} historyQueryToUpdate - The HistoryQuery info
+   * @return {Object} - The updated HistoryQuery
    */
-  async update(historyQuery) {
+  update(historyQueryToUpdate) {
     const query = `UPDATE ${HistoryQueryRepository.TABLE}
                    SET orderColumn = ?,
                        name = ?,
@@ -120,39 +120,37 @@ class HistoryQueryRepository {
                        compress = ?,
                        settings = ?
                    WHERE id = ?`
-    const stmt = await this.database.prepare(query)
-    await stmt.run(
-      historyQuery.orderColumn,
-      historyQuery.name,
-      historyQuery.status,
-      historyQuery.enabled,
-      historyQuery.southId,
-      historyQuery.northId,
-      historyQuery.startTime,
-      historyQuery.endTime,
-      historyQuery.filePattern,
-      historyQuery.compress,
-      JSON.stringify(historyQuery.settings),
-      historyQuery.id,
+    this.database.prepare(query).run(
+      historyQueryToUpdate.orderColumn,
+      historyQueryToUpdate.name,
+      historyQueryToUpdate.status,
+      +historyQueryToUpdate.enabled,
+      historyQueryToUpdate.southId,
+      historyQueryToUpdate.northId,
+      historyQueryToUpdate.startTime,
+      historyQueryToUpdate.endTime,
+      historyQueryToUpdate.filePattern,
+      +historyQueryToUpdate.compress,
+      JSON.stringify(historyQueryToUpdate.settings),
+      historyQueryToUpdate.id,
     )
 
-    return this.get(historyQuery.id)
+    return this.get(historyQueryToUpdate.id)
   }
 
   /**
    * Reorder a HistoryQuery.
-   * @param {string} id - The HistoryQuery id
-   * @param {number} orderColumn - The new order
-   * @return {Promise<object>} - The re-ordered HistoryQuery
+   * @param {String} id - The HistoryQuery id
+   * @param {Number} orderColumn - The new order
+   * @return {Object} - The re-ordered HistoryQuery
    */
-  async order(id, orderColumn) {
-    const historyQuery = await this.get(id)
+  order(id, orderColumn) {
+    const historyQuery = this.get(id)
 
     const query = `UPDATE ${HistoryQueryRepository.TABLE}
                    SET orderColumn = ?
                    WHERE id = ?`
-    const stmt = await this.database.prepare(query)
-    await stmt.run(orderColumn, id)
+    this.database.prepare(query).run(orderColumn, id)
 
     historyQuery.orderColumn = orderColumn
     return this.update(historyQuery)
@@ -160,30 +158,28 @@ class HistoryQueryRepository {
 
   /**
    * Delete a HistoryQuery.
-   * @param {string} id - The HistoryQuery id
-   * @return {Promise<void>} - The result promise
+   * @param {String} id - The HistoryQuery id
+   * @return {void}
    */
-  async delete(id) {
+  delete(id) {
     const query = `DELETE
                    FROM ${HistoryQueryRepository.TABLE}
                    WHERE id = ?`
-    const stmt = await this.database.prepare(query)
-    await stmt.run(id)
+    this.database.prepare(query).run(id)
   }
 
   /**
    * Get next HistoryQuery to run.
-   * @return {Promise<object|null>} - The next HistoryQuery to run
+   * @return {Object|null} - The next HistoryQuery to run
    */
-  async getNextToRun() {
+  getNextToRun() {
     const ongoingQuery = `SELECT *
                    FROM ${HistoryQueryRepository.TABLE}
                    WHERE enabled = 1
-                     AND status IN ('${HistoryQuery.STATUS_EXPORTING}', '${HistoryQuery.STATUS_IMPORTING}')
+                     AND status IN ('${HistoryQuery.STATUS_RUNNING}')
                    ORDER BY orderColumn ASC
                    LIMIT 1`
-    const ongoingStmt = await this.database.prepare(ongoingQuery)
-    const ongoingResults = await ongoingStmt.all()
+    const ongoingResults = this.database.prepare(ongoingQuery).all()
     if (ongoingResults.length > 0) {
       const ongoingHistoryQuery = ongoingResults[0]
       ongoingHistoryQuery.settings = JSON.parse(ongoingHistoryQuery.settings)
@@ -196,8 +192,7 @@ class HistoryQueryRepository {
                      AND status = '${HistoryQuery.STATUS_PENDING}'
                    ORDER BY orderColumn ASC
                    LIMIT 1`
-    const pendingStmt = await this.database.prepare(pendingQuery)
-    const pendingResults = await pendingStmt.all()
+    const pendingResults = this.database.prepare(pendingQuery).all()
     if (pendingResults.length > 0) {
       const pendingHistoryQuery = pendingResults[0]
       pendingHistoryQuery.settings = JSON.parse(pendingHistoryQuery.settings)

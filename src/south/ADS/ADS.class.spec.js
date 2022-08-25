@@ -1,31 +1,27 @@
 const ads = require('ads-client')
+
 const ADS = require('./ADS.class')
+
 const databaseService = require('../../services/database.service')
+
 const { defaultConfig: config } = require('../../../tests/testConfig')
-const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock ads client
 jest.mock('ads-client')
 
-// Mock database service
-jest.mock('../../services/database.service', () => ({
-  createConfigDatabase: jest.fn(() => 'configDatabase'),
-  getConfig: jest.fn((_database, _key) => '1587640141001.0'),
-  upsertConfig: jest.fn(),
-}))
+// Mock OIBusEngine
+const engine = {
+  configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  getCacheFolder: () => config.engine.caching.cacheFolder,
+  addValues: jest.fn(),
+  addFile: jest.fn(),
+}
 
-// Mock EncryptionService
-EncryptionService.getInstance = () => ({ decryptText: (password) => password })
-
-// Mock logger
+// Mock services
+jest.mock('../../services/database.service')
 jest.mock('../../engine/logger/Logger.class')
-
-// Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.addValues = jest.fn()
-engine.getCacheFolder = () => config.engine.caching.cacheFolder
-engine.eventEmitters = {}
+jest.mock('../../services/status.service.class')
+jest.mock('../../services/EncryptionService.class', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 
 // Global variable used to simulate ADS library returned values
 const GVLTestByte = {
@@ -631,197 +627,193 @@ const GVLTestBadType = {
     type: 'BAD_TYPE',
   },
 }
-const nowDateString = '2020-02-02T02:02:02.222Z'
 // End of global variables
 
-const adsConfig = {
-  id: 'datasource-uuid-10',
-  name: 'ADS - Test',
-  protocol: 'ADS',
-  enabled: true,
-  ADS: {
-    port: 851,
-    netId: '10.211.55.3.1.1',
-    clientAdsPort: 32750,
-    routerTcpPort: 48898,
-    clientAmsNetId: '10.211.55.2.1.1',
-    routerAddress: '10.211.55.3',
-    retryInterval: 10000,
-    plcName: 'PLC_TEST.',
-    boolAsText: 'Integer',
-    enumAsText: 'Text',
-    structureFiltering: [
-      {
-        name: 'ST_Example',
-        fields: 'SomeReal,SomeDate',
-      },
-      {
-        name: 'Tc2_Standard.TON',
-        fields: '*',
-      },
-    ],
-  },
-  points: [
-    {
-      pointId: 'GVL_Test.TestENUM',
-      scanMode: 'every10Seconds',
-    },
-    {
-      pointId: 'GVL_Test.TestINT',
-      scanMode: 'every10Seconds',
-    },
-    {
-      pointId: 'GVL_Test.TestSTRING',
-      scanMode: 'every10Seconds',
-    },
-    {
-      pointId: 'GVL_Test.ExampleSTRUCT',
-      scanMode: 'everySecond',
-    },
-    {
-      pointId: 'GVL_Test.TestARRAY',
-      scanMode: 'every10Seconds',
-    },
-    {
-      pointId: 'GVL_Test.TestARRAY2',
-      scanMode: 'every10Seconds',
-    },
-    {
-      pointId: 'GVL_Test.TestTimer',
-      scanMode: 'every10Seconds',
-    },
-    {
-      pointId: 'GVL_Test.TestBadType',
-      scanMode: 'every1Hour',
-    },
-    {
-      pointId: 'GVL_Test.TestByte',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestWord',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestDWord',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestSINT',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestUSINT',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestUINT',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestDINT',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestUDINT',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestLINT',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestULINT',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestTIME',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestTIME_OF_DAY',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestREAL',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestLREAL',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestDATE',
-      scanMode: 'every3Hours',
-    },
-    {
-      pointId: 'GVL_Test.TestDATE_AND_TIME',
-      scanMode: 'every3Hours',
-    },
-  ],
-}
-let adsSouth = null
+const nowDateString = '2020-02-02T02:02:02.222Z'
+let settings = null
+let south = null
 
-beforeEach(async () => {
-  jest.resetAllMocks()
-  jest.useFakeTimers()
-  // Mock ads Client constructor and the used function
-  ads.Client.mockReturnValue({
-    connect: () => new Promise((resolve) => {
-      resolve({})
-    }),
-    disconnect: () => new Promise((resolve) => {
-      resolve()
-    }),
-    readSymbol: jest.fn(), // () => new Promise((resolve) => resolve()),
+describe('South ADS', () => {
+  beforeEach(async () => {
+    jest.resetAllMocks()
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString))
+
+    // Mock ADS Client constructor and the used function
+    ads.Client.mockReturnValue({
+      connect: () => new Promise((resolve) => {
+        resolve({})
+      }),
+      disconnect: () => new Promise((resolve) => {
+        resolve()
+      }),
+      readSymbol: jest.fn(),
+    })
+
+    // Mock database service getConfig returned value
+    databaseService.getConfig.mockReturnValue('1587640141001.0')
+
+    settings = {
+      id: 'southId',
+      name: 'ADS Test',
+      protocol: 'ADS',
+      enabled: true,
+      ADS: {
+        port: 851,
+        netId: '10.211.55.3.1.1',
+        clientAdsPort: 32750,
+        routerTcpPort: 48898,
+        clientAmsNetId: '10.211.55.2.1.1',
+        routerAddress: '10.211.55.3',
+        retryInterval: 10000,
+        plcName: 'PLC_TEST.',
+        boolAsText: 'Integer',
+        enumAsText: 'Text',
+        structureFiltering: [
+          {
+            name: 'ST_Example',
+            fields: 'SomeReal,SomeDate',
+          },
+          {
+            name: 'Tc2_Standard.TON',
+            fields: '*',
+          },
+        ],
+      },
+      points: [
+        {
+          pointId: 'GVL_Test.TestENUM',
+          scanMode: 'every10Seconds',
+        },
+        {
+          pointId: 'GVL_Test.TestINT',
+          scanMode: 'every10Seconds',
+        },
+        {
+          pointId: 'GVL_Test.TestSTRING',
+          scanMode: 'every10Seconds',
+        },
+        {
+          pointId: 'GVL_Test.ExampleSTRUCT',
+          scanMode: 'everySecond',
+        },
+        {
+          pointId: 'GVL_Test.TestARRAY',
+          scanMode: 'every10Seconds',
+        },
+        {
+          pointId: 'GVL_Test.TestARRAY2',
+          scanMode: 'every10Seconds',
+        },
+        {
+          pointId: 'GVL_Test.TestTimer',
+          scanMode: 'every10Seconds',
+        },
+        {
+          pointId: 'GVL_Test.TestBadType',
+          scanMode: 'every1Hour',
+        },
+        {
+          pointId: 'GVL_Test.TestByte',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestWord',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestDWord',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestSINT',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestUSINT',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestUINT',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestDINT',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestUDINT',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestLINT',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestULINT',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestTIME',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestTIME_OF_DAY',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestREAL',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestLREAL',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestDATE',
+          scanMode: 'every3Hours',
+        },
+        {
+          pointId: 'GVL_Test.TestDATE_AND_TIME',
+          scanMode: 'every3Hours',
+        },
+      ],
+    }
+    south = new ADS(settings, engine)
+    await south.init()
   })
-  databaseService.getConfig.mockReturnValue('1587640141001.0')
-  adsSouth = new ADS(adsConfig, engine)
-  await adsSouth.init()
-})
 
-describe('ADS south', () => {
   it('should be properly initialized', () => {
-    expect(adsSouth.netId)
-      .toEqual(adsConfig.ADS.netId)
-    expect(adsSouth.port)
-      .toEqual(adsConfig.ADS.port)
+    expect(south.netId).toEqual(settings.ADS.netId)
+    expect(south.port).toEqual(settings.ADS.port)
   })
 
   it('should properly connect', async () => {
-    await adsSouth.connect()
-    expect(databaseService.createConfigDatabase)
-      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${adsConfig.id}.db`)
+    await south.connect()
+    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${settings.id}.db`)
 
-    expect(adsSouth.connected)
-      .toBeTruthy()
+    expect(south.connected).toBeTruthy()
   })
 
   it('should retry to connect in case of failure', async () => {
-    adsSouth.client = {
+    ads.Client.mockReturnValue({
       connect: () => new Promise((resolve, reject) => {
         reject()
       }),
-    }
-    await adsSouth.connectToAdsServer()
 
-    expect(adsSouth.connected)
-      .toBeFalsy()
+    })
+    await south.connect()
 
-    expect(adsSouth.logger.error)
-      .toBeCalledTimes(1)
-
-    expect(adsSouth.reconnectTimeout).not.toBeUndefined()
+    expect(south.connected).toBeFalsy()
+    expect(south.logger.error).toBeCalledTimes(1)
+    expect(south.reconnectTimeout).not.toBeUndefined()
   })
 
-  it('should properly read onScan', async () => {
-    jest.useFakeTimers()
-    const RealDate = Date
-    global.Date = jest.fn(() => new RealDate(nowDateString))
+  it('should properly query last points', async () => {
+    await south.connect()
 
-    adsSouth.connected = true
-    adsSouth.client = { readSymbol: jest.fn() }
-    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
+    south.connected = true
+    south.client = { readSymbol: jest.fn() }
+    south.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
       resolve(GVLTestENUM)
     }))
       .mockReturnValueOnce(new Promise((resolve) => {
@@ -840,206 +832,22 @@ describe('ADS south', () => {
         resolve(GVLTestTimer)
       }))
 
-    await adsSouth.lastPointQuery('every10Seconds')
+    await south.lastPointQuery('every10Seconds')
     jest.runOnlyPendingTimers()
 
-    expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestENUM')
-    expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestINT')
-    expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestSTRING')
-    expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestARRAY')
-    expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestARRAY2')
-    expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.TestTimer')
+    expect(south.client.readSymbol).toBeCalledWith('GVL_Test.TestENUM')
+    expect(south.client.readSymbol).toBeCalledWith('GVL_Test.TestINT')
+    expect(south.client.readSymbol).toBeCalledWith('GVL_Test.TestSTRING')
+    expect(south.client.readSymbol).toBeCalledWith('GVL_Test.TestARRAY')
+    expect(south.client.readSymbol).toBeCalledWith('GVL_Test.TestARRAY2')
+    expect(south.client.readSymbol).toBeCalledWith('GVL_Test.TestTimer')
 
-    expect(adsSouth.client.readSymbol)
-      .toBeCalledTimes(6) // two points are set in the config with every10Seconds scan mode
-    expect(adsSouth.logger.error)
-      .toBeCalledTimes(0)
+    expect(south.client.readSymbol).toBeCalledTimes(6) // two points are set in the config with every10Seconds scan mode
+    expect(south.logger.error).toBeCalledTimes(0)
 
     // Test boolean value as integer
-    expect(engine.addValues)
-      .toHaveBeenCalledWith(
-        'datasource-uuid-10',
-        [
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestENUM',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: 'Running' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestINT',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '1234' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestSTRING',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: 'Hello this is a test string' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY.0',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '0' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY.1',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '10' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY.2',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '200' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY.3',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '3000' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY.4',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '4000' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.0.SomeReal',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '3.1415927410125732' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.0.SomeDate',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '2020-02-02T02:02:02.222Z' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.1.SomeReal',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '3.1415927410125732' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.1.SomeDate',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '2020-02-02T02:02:02.222Z' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.2.SomeReal',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '3.1415927410125732' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.2.SomeDate',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '2020-02-02T02:02:02.222Z' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.3.SomeReal',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '3.1415927410125732' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.3.SomeDate',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '2020-02-02T02:02:02.222Z' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.4.SomeReal',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '3.1415927410125732' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestARRAY2.4.SomeDate',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '2020-02-02T02:02:02.222Z' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestTimer.IN',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '0' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestTimer.PT',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '2500' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestTimer.Q',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '0' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestTimer.ET',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '0' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestTimer.M',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '1' },
-          },
-          {
-            pointId: 'PLC_TEST.GVL_Test.TestTimer.StartTime',
-            timestamp: '2020-02-02T02:02:02.222Z',
-            data: { value: '0' },
-          },
-        ],
-      )
-
-    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
-      resolve(GVLExampleSTRUCT)
-    }))
-
-    await adsSouth.lastPointQuery('everySecond')
-
-    expect(adsSouth.client.readSymbol).toBeCalledWith('GVL_Test.ExampleSTRUCT')
-    expect(adsSouth.logger.error)
-      .toBeCalledTimes(0)
-    // The SomeText field is not called because not specified in the structure filtering config
-    expect(engine.addValues)
-      .not.toHaveBeenCalledWith(
-        'datasource-uuid-10',
-        [{ pointId: 'PLC_TEST.GVL_Test.ExampleSTRUCT.SomeText', timestamp: nowDateString, data: { value: 'Hello ads-client' } }],
-      )
-
-    adsSouth.structureFiltering = [
-      {
-        name: 'Tc2_Standard.TON',
-        fields: '*',
-      },
-    ]
-
-    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
-      resolve(GVLExampleSTRUCT)
-    }))
-    await adsSouth.lastPointQuery('everySecond')
-
-    expect(adsSouth.logger.debug)
-      .toHaveBeenCalledWith('Data Structure ST_Example not parsed for data PLC_TEST.GVL_Test.ExampleSTRUCT. To parse it, please specify it in the connector settings.') // eslint-disable-line max-len
-
-    adsSouth.boolAsText = 'Text'
-    adsSouth.enumAsText = 'Integer'
-
-    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
-      resolve(GVLTestENUM)
-    }))
-      .mockReturnValueOnce(new Promise((resolve) => {
-        resolve(GVLTestINT)
-      }))
-      .mockReturnValueOnce(new Promise((resolve) => {
-        resolve(GVLTestSTRING)
-      }))
-      .mockReturnValueOnce(new Promise((resolve) => {
-        resolve(GVLTestARRAY)
-      }))
-      .mockReturnValueOnce(new Promise((resolve) => {
-        resolve(GVLTestARRAY2)
-      }))
-      .mockReturnValueOnce(new Promise((resolve) => {
-        resolve(GVLTestTimer)
-      }))
-    await adsSouth.lastPointQuery('every10Seconds')
-
-    // Test boolean value as text
     expect(engine.addValues).toHaveBeenCalledWith(
-      'datasource-uuid-10',
+      settings.id,
       [
         {
           pointId: 'PLC_TEST.GVL_Test.TestENUM',
@@ -1089,7 +897,7 @@ describe('ADS south', () => {
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.0.SomeDate',
           timestamp: '2020-02-02T02:02:02.222Z',
-          data: { value: '2020-02-02T02:02:02.222Z' },
+          data: { value: '2020-04-13T12:25:33.000Z' },
         },
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.1.SomeReal',
@@ -1099,7 +907,7 @@ describe('ADS south', () => {
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.1.SomeDate',
           timestamp: '2020-02-02T02:02:02.222Z',
-          data: { value: '2020-02-02T02:02:02.222Z' },
+          data: { value: '2020-04-13T12:25:33.000Z' },
         },
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.2.SomeReal',
@@ -1109,7 +917,7 @@ describe('ADS south', () => {
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.2.SomeDate',
           timestamp: '2020-02-02T02:02:02.222Z',
-          data: { value: '2020-02-02T02:02:02.222Z' },
+          data: { value: '2020-04-13T12:25:33.000Z' },
         },
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.3.SomeReal',
@@ -1119,7 +927,7 @@ describe('ADS south', () => {
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.3.SomeDate',
           timestamp: '2020-02-02T02:02:02.222Z',
-          data: { value: '2020-02-02T02:02:02.222Z' },
+          data: { value: '2020-04-13T12:25:33.000Z' },
         },
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.4.SomeReal',
@@ -1129,7 +937,182 @@ describe('ADS south', () => {
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.4.SomeDate',
           timestamp: '2020-02-02T02:02:02.222Z',
-          data: { value: '2020-02-02T02:02:02.222Z' },
+          data: { value: '2020-04-13T12:25:33.000Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.IN',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.PT',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2500' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.Q',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.ET',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.M',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '1' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestTimer.StartTime',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+      ],
+    )
+
+    south.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
+      resolve(GVLExampleSTRUCT)
+    }))
+
+    await south.lastPointQuery('everySecond')
+
+    expect(south.client.readSymbol).toBeCalledWith('GVL_Test.ExampleSTRUCT')
+    expect(south.logger.error).toBeCalledTimes(0)
+    // The SomeText field is not called because not specified in the structure filtering config
+    expect(engine.addValues).not.toHaveBeenCalledWith(
+      settings.id,
+      [{ pointId: 'PLC_TEST.GVL_Test.ExampleSTRUCT.SomeText', timestamp: nowDateString, data: { value: 'Hello ads-client' } }],
+    )
+
+    south.structureFiltering = [
+      {
+        name: 'Tc2_Standard.TON',
+        fields: '*',
+      },
+    ]
+
+    south.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => { resolve(GVLExampleSTRUCT) }))
+    await south.lastPointQuery('everySecond')
+
+    expect(south.logger.debug).toHaveBeenCalledWith('Data Structure ST_Example not parsed for data '
+        + 'PLC_TEST.GVL_Test.ExampleSTRUCT. To parse it, please specify it in the connector settings.')
+
+    south.boolAsText = 'Text'
+    south.enumAsText = 'Integer'
+
+    south.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => { resolve(GVLTestENUM) }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestINT)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestSTRING)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestARRAY)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestARRAY2)
+      }))
+      .mockReturnValueOnce(new Promise((resolve) => {
+        resolve(GVLTestTimer)
+      }))
+    await south.lastPointQuery('every10Seconds')
+
+    // Test boolean value as text
+    expect(engine.addValues).toHaveBeenCalledWith(
+      settings.id,
+      [
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestENUM',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: 'Running' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestINT',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '1234' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestSTRING',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: 'Hello this is a test string' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.0',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '0' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.1',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '10' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.2',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '200' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.3',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3000' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY.4',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '4000' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.0.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.0.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-04-13T12:25:33.000Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.1.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.1.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-04-13T12:25:33.000Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.2.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.2.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-04-13T12:25:33.000Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.3.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.3.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-04-13T12:25:33.000Z' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.4.SomeReal',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '3.1415927410125732' },
+        },
+        {
+          pointId: 'PLC_TEST.GVL_Test.TestARRAY2.4.SomeDate',
+          timestamp: '2020-02-02T02:02:02.222Z',
+          data: { value: '2020-04-13T12:25:33.000Z' },
         },
         {
           pointId: 'PLC_TEST.GVL_Test.TestTimer.IN',
@@ -1165,7 +1148,7 @@ describe('ADS south', () => {
     )
     // Test enum value as integer
     expect(engine.addValues).toHaveBeenCalledWith(
-      'datasource-uuid-10',
+      settings.id,
       [
         {
           pointId: 'PLC_TEST.GVL_Test.TestENUM',
@@ -1215,7 +1198,7 @@ describe('ADS south', () => {
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.0.SomeDate',
           timestamp: '2020-02-02T02:02:02.222Z',
-          data: { value: '2020-02-02T02:02:02.222Z' },
+          data: { value: '2020-04-13T12:25:33.000Z' },
         },
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.1.SomeReal',
@@ -1225,7 +1208,7 @@ describe('ADS south', () => {
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.1.SomeDate',
           timestamp: '2020-02-02T02:02:02.222Z',
-          data: { value: '2020-02-02T02:02:02.222Z' },
+          data: { value: '2020-04-13T12:25:33.000Z' },
         },
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.2.SomeReal',
@@ -1235,7 +1218,7 @@ describe('ADS south', () => {
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.2.SomeDate',
           timestamp: '2020-02-02T02:02:02.222Z',
-          data: { value: '2020-02-02T02:02:02.222Z' },
+          data: { value: '2020-04-13T12:25:33.000Z' },
         },
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.3.SomeReal',
@@ -1245,7 +1228,7 @@ describe('ADS south', () => {
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.3.SomeDate',
           timestamp: '2020-02-02T02:02:02.222Z',
-          data: { value: '2020-02-02T02:02:02.222Z' },
+          data: { value: '2020-04-13T12:25:33.000Z' },
         },
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.4.SomeReal',
@@ -1255,7 +1238,7 @@ describe('ADS south', () => {
         {
           pointId: 'PLC_TEST.GVL_Test.TestARRAY2.4.SomeDate',
           timestamp: '2020-02-02T02:02:02.222Z',
-          data: { value: '2020-02-02T02:02:02.222Z' },
+          data: { value: '2020-04-13T12:25:33.000Z' },
         },
         {
           pointId: 'PLC_TEST.GVL_Test.TestTimer.IN',
@@ -1290,15 +1273,14 @@ describe('ADS south', () => {
       ],
     )
 
-    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
+    south.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
       resolve(GVLTestBadType)
     }))
-    await adsSouth.lastPointQuery('every1Hour')
-    expect(adsSouth.logger.warn)
-      .toHaveBeenCalledWith('dataType BAD_TYPE not supported yet for point PLC_TEST.GVL_Test.TestBadType. Value was 1234')
+    await south.lastPointQuery('every1Hour')
+    expect(south.logger.warn).toHaveBeenCalledWith('dataType BAD_TYPE not supported yet for point PLC_TEST.GVL_Test.TestBadType. Value was 1234')
 
     // Tests other data types
-    adsSouth.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
+    south.client.readSymbol.mockReturnValueOnce(new Promise((resolve) => {
       resolve(GVLTestByte)
     }))
       .mockReturnValueOnce(new Promise((resolve) => {
@@ -1348,66 +1330,55 @@ describe('ADS south', () => {
       }))
 
     engine.addValues.mockClear()
-    await adsSouth.lastPointQuery('every3Hours')
+    await south.lastPointQuery('every3Hours')
     jest.runOnlyPendingTimers()
 
-    expect(engine.addValues)
-      .toHaveBeenCalledTimes(1)
-
-    global.Date = RealDate
+    expect(engine.addValues).toHaveBeenCalledTimes(1)
   })
 
-  it('should not read when no point', async () => {
-    await adsSouth.connect()
-    await adsSouth.lastPointQuery('every5Seconds')
-    // no point for every5Seconds
-    expect(adsSouth.client.readSymbol)
-      .toBeCalledTimes(0)
+  it('should not read when no point for scan mode', async () => {
+    await south.connect()
+    await expect(south.lastPointQuery('every5Seconds'))
+      .rejects.toThrowError('lastPointQuery ignored: no points to read for scanMode: "every5Seconds".')
+    expect(south.client.readSymbol).toBeCalledTimes(0)
   })
 
-  it('should catch errors on scan', async () => {
-    adsSouth.connected = true
-    adsSouth.client = { readSymbol: jest.fn() }
-    adsSouth.client.readSymbol.mockReturnValue(new Promise((resolve, reject) => {
+  it('should catch errors on last points query', async () => {
+    south.connected = true
+    south.client = { readSymbol: jest.fn() }
+    south.client.readSymbol.mockReturnValue(new Promise((resolve, reject) => {
       reject(new Error('test'))
     }))
-    await adsSouth.lastPointQuery('every10Seconds')
-
-    expect(adsSouth.logger.error)
-      .toBeCalledTimes(6)
+    await expect(south.lastPointQuery('every10Seconds')).rejects.toThrowError('test')
   })
 
   it('should properly disconnect and clearTimeout', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
-    adsSouth.connected = true
-    adsSouth.client = { readSymbol: jest.fn(), disconnect: jest.fn() }
-    adsSouth.client.disconnect.mockReturnValue(new Promise((resolve) => {
+    south.connected = true
+    south.client = { readSymbol: jest.fn(), disconnect: jest.fn() }
+    south.client.disconnect.mockReturnValue(new Promise((resolve) => {
       resolve()
     }))
 
-    adsSouth.reconnectTimeout = true
-    await adsSouth.disconnect()
+    south.reconnectTimeout = true
+    await south.disconnect()
 
-    expect(adsSouth.connected)
-      .toBeFalsy()
+    expect(south.connected).toBeFalsy()
 
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1)
   })
 
   it('disconnect should do nothing if not connected', async () => {
-    adsSouth.connected = false
+    south.connected = false
 
-    adsSouth.client = { disconnect: jest.fn() }
-    adsSouth.client.disconnect.mockReturnValue(new Promise((resolve) => {
+    const disconnect = jest.fn()
+    south.client = { disconnect }
+    south.client.disconnect.mockReturnValue(new Promise((resolve) => {
       resolve()
     }))
-    await adsSouth.disconnect()
+    await south.disconnect()
 
-    expect(adsSouth.connected)
-      .toBeFalsy()
-
-    expect(adsSouth.client.disconnect)
-      .not
-      .toBeCalled()
+    expect(south.connected).toBeFalsy()
+    expect(disconnect).not.toBeCalled()
   })
 })
