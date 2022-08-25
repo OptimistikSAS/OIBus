@@ -1,13 +1,9 @@
-/**
- * Module dependencies.
- */
 const basicAuth = require('basic-auth')
 
 const DEFAULT_PASSWORD = 'pass'
 
 /**
- * Return basic auth middleware with
- * the given options:
+ * Return basic auth middleware with the given options:
  *
  *  - `name` username
  *  - `pass` password
@@ -30,8 +26,13 @@ const auth = (opts = {}) => {
       return next()
     }
 
-    /* eslint-disable-next-line react/destructuring-assignment */
-    return ctx.throw(401, null, { headers: { 'WWW-Authenticate': `Basic realm="${opts.realm.replace(/"/g, '\\"')}"` } })
+    return ctx.throw(401, null, {
+      headers: {
+        'WWW-Authenticate': `Basic realm="${opts.realm
+          .replace(/\\/g, '\\\\') // escape \
+          .replace(/"/g, '\\"')}"`, // escape "
+      },
+    })
   }
 }
 

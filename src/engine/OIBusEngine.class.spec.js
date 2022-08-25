@@ -6,41 +6,37 @@ const ConfigService = require('../services/config.service.class')
 // Mock EncryptionService
 EncryptionService.getInstance = () => ({
   decryptText: (password) => password,
-  setKeyFolder: () => {
-  },
-  checkOrCreatePrivateKey: () => {
-  },
+  setKeyFolder: () => {},
+  checkOrCreatePrivateKey: () => {},
 })
 
-// Mock configService
+// Mock services
 jest.mock('../services/config.service.class')
+jest.mock('./logger/Logger.class')
 
 let engine = null
 
-beforeEach(async () => {
-  jest.resetAllMocks()
-  jest.useFakeTimers()
+describe('OIBusEngine', () => {
+  beforeEach(async () => {
+    jest.resetAllMocks()
+    jest.useFakeTimers()
 
-  const mockConfigService = { getConfig: jest.fn() }
-  mockConfigService.getConfig.mockReturnValue({
-    engineConfig: config.engine,
-    southConfig: config.south,
+    const mockConfigService = { getConfig: jest.fn() }
+    mockConfigService.getConfig.mockReturnValue({
+      engineConfig: config.engine,
+      southConfig: config.south,
+    })
+
+    ConfigService.mockImplementation(() => mockConfigService)
+
+    engine = new OIBusEngine(mockConfigService)
+    await engine.initEngineServices(config.engine)
   })
 
-  ConfigService.mockImplementation(() => mockConfigService)
-
-  engine = new OIBusEngine(mockConfigService)
-  await engine.initEngineServices(config.engine)
-})
-
-describe('Engine', () => {
   it('should be properly initialized', () => {
-    expect(engine.addFileCount)
-      .toEqual(0)
-    expect(engine.addValuesCount)
-      .toEqual(0)
-    expect(engine.addValuesMessages)
-      .toEqual(0)
+    expect(engine.addFileCount).toEqual(0)
+    expect(engine.addValuesCount).toEqual(0)
+    expect(engine.addValuesMessages).toEqual(0)
   })
 
   it('should add values', async () => {
@@ -85,35 +81,7 @@ describe('Engine', () => {
         data: { value: '' },
       }]
 
-    EncryptionService.getInstance = () => ({
-      decryptText: (password) => password,
-      setKeyFolder: () => {
-      },
-      checkOrCreatePrivateKey: () => {
-      },
-    })
-
-    const cacheValues = jest.fn()
-    engine.activeApis = {
-      id1: {
-        canHandleValues: true,
-        isSubscribed: () => true,
-        cacheValues,
-      },
-      id2: {
-        canHandleValues: true,
-        isSubscribed: () => false,
-        cacheValues,
-      },
-      id3: {
-        canHandleValues: false,
-        isSubscribed: () => true,
-        cacheValues,
-      },
-    }
-
-    await engine.addValues('sourceId', sampleValues)
-    expect(cacheValues)
-      .toBeCalledWith('sourceId', sampleValues)
+    engine.activeSouths = [{ settings: { id: 'southId' } }]
+    await engine.addValues('southId', sampleValues)
   })
 })
