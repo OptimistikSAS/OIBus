@@ -1,122 +1,48 @@
+const net = require('node:net')
+
 const Modbus = require('./Modbus.class')
-const { defaultConfig: config } = require('../../../tests/testConfig')
+
 const databaseService = require('../../services/database.service')
+const utils = require('./utils')
+
+const { defaultConfig: config } = require('../../../tests/testConfig')
 
 // Mock jsmobdus
 jest.mock('jsmodbus', () => ({ client: { TCP: jest.fn() } }))
 
-// Mock database service
-jest.mock('../../services/database.service', () => ({
-  createConfigDatabase: jest.fn(() => 'configDatabase'),
-  getConfig: jest.fn((_database, _key) => '1587640141001.0'),
-  upsertConfig: jest.fn(),
+// Mock net library used for Socket
+jest.mock('node:net')
+
+// Mock utils class
+jest.mock('./utils', () => ({
+  getOptimizedScanModes: jest.fn(),
+  readRegisterValue: jest.fn(),
 }))
 
-jest.mock('net', () => {
-  class Socket {
-    // eslint-disable-next-line class-methods-use-this
-    connect(_connectionObject, callback) {
-      callback()
-    }
-
-    // eslint-disable-next-line class-methods-use-this
-    on() {
-      jest.fn()
-    }
-
-    // eslint-disable-next-line class-methods-use-this
-    emit(err) {
-      jest.fn(() => err)
-    }
-  }
-
-  return { Socket }
-})
-
-// Mock logger
-jest.mock('../../engine/logger/Logger.class')
-
-// Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.getCacheFolder = () => config.engine.caching.cacheFolder
-engine.eventEmitters = {}
-
-const modbusConfig = {
-  name: 'Modbus',
-  protocol: 'Modbus',
-  enabled: true,
-  Modbus: {
-    port: 502,
-    host: '127.0.0.1',
-    slaveId: 1,
-    addressOffset: 'Modbus',
-    endianness: 'Big Endian',
-    swapBytesInWords: false,
-    swapWordsInDWords: false,
-  },
-  points: [
-    {
-      pointId: 'HoldingRegister',
-      modbusType: 'holdingRegister',
-      dataType: 'UInt16',
-      address: '0x4E80',
-      multiplierCoefficient: 1,
-      type: 'number',
-      scanMode: 'every10Seconds',
-    },
-    {
-      pointId: 'HoldingRegister2',
-      modbusType: 'holdingRegister',
-      dataType: 'UInt16',
-      address: '0x4E81',
-      multiplierCoefficient: 1,
-      type: 'number',
-      scanMode: 'every10Seconds',
-    },
-    {
-      pointId: 'InputRegister',
-      modbusType: 'inputRegister',
-      dataType: 'UInt16',
-      scanMode: 'every10Seconds',
-      address: '0x3E81',
-      multiplierCoefficient: 1,
-      type: 'number',
-    },
-    {
-      pointId: 'DiscreteInput',
-      modbusType: 'discreteInput',
-      dataType: 'UInt16',
-      scanMode: 'every10Seconds',
-      address: '0x1E82',
-      multiplierCoefficient: 1,
-      type: 'number',
-    },
-    {
-      pointId: 'Coil',
-      modbusType: 'coil',
-      dataType: 'UInt16',
-      scanMode: 'every10Seconds',
-      address: '0x0E83',
-      multiplierCoefficient: 1,
-      type: 'number',
-    },
-  ],
+// Mock OIBusEngine
+const engine = {
+  configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  getCacheFolder: () => config.engine.caching.cacheFolder,
+  addValues: jest.fn(),
+  addFile: jest.fn(),
 }
-let modbusSouth = null
 
-beforeEach(async () => {
-  jest.resetAllMocks()
-  jest.useFakeTimers()
-  modbusSouth = new Modbus(modbusConfig, engine)
-  await modbusSouth.init()
-})
+// Mock services
+jest.mock('../../services/database.service')
+jest.mock('../../engine/logger/Logger.class')
+jest.mock('../../services/status.service.class')
+jest.mock('../../services/EncryptionService.class', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 
-describe('Modbus', () => {
-  it('should be properly initialized', () => {
-    expect(modbusSouth.url)
-      .toEqual(modbusConfig.Modbus.url)
-    const optimizedScanModes = {
+let settings = null
+let south = null
+
+describe('South Modbus', () => {
+  beforeEach(async () => {
+    jest.resetAllMocks()
+    jest.useFakeTimers()
+
+    // Mock utils method getOptimizedScanModes
+    utils.getOptimizedScanModes.mockReturnValue({
       every10Seconds: {
         coil: {
           '3712-3728': [
@@ -171,122 +97,120 @@ describe('Modbus', () => {
         },
 
       },
-    }
-    expect(modbusSouth.optimizedScanModes)
-      .toEqual(optimizedScanModes)
-    expect(modbusSouth.dataSource.Modbus.slaveId)
-      .toEqual(modbusConfig.Modbus.slaveId)
-  })
+    })
 
-  it('should be properly initialized with addressOffset', () => {
-    const modbusConfigAddressOffset = {
-      name: 'Modbus',
+    // Mock node:net Socket constructor and the used function
+    net.Socket.mockReturnValue({
+      connect(_connectionObject, callback) {
+        callback()
+      },
+      on() {
+        jest.fn()
+      },
+    })
+
+    settings = {
+      id: 'southId',
+      name: 'Modbus Test',
       protocol: 'Modbus',
       enabled: true,
       Modbus: {
         port: 502,
         host: '127.0.0.1',
         slaveId: 1,
-        addressOffset: 'JBus',
+        addressOffset: 'Modbus',
         endianness: 'Big Endian',
         swapBytesInWords: false,
         swapWordsInDWords: false,
       },
       points: [
         {
-          pointId: 'EtatBB2T0',
+          pointId: 'HoldingRegister',
           modbusType: 'holdingRegister',
           dataType: 'UInt16',
-          address: '0x3E80',
+          address: '0x4E80',
           multiplierCoefficient: 1,
           type: 'number',
           scanMode: 'every10Seconds',
         },
         {
-          pointId: 'EtatBB2T1',
+          pointId: 'HoldingRegister2',
           modbusType: 'holdingRegister',
+          dataType: 'UInt16',
+          address: '0x4E81',
+          multiplierCoefficient: 1,
+          type: 'number',
+          scanMode: 'every10Seconds',
+        },
+        {
+          pointId: 'InputRegister',
+          modbusType: 'inputRegister',
           dataType: 'UInt16',
           scanMode: 'every10Seconds',
           address: '0x3E81',
           multiplierCoefficient: 1,
           type: 'number',
         },
+        {
+          pointId: 'DiscreteInput',
+          modbusType: 'discreteInput',
+          dataType: 'UInt16',
+          scanMode: 'every10Seconds',
+          address: '0x1E82',
+          multiplierCoefficient: 1,
+          type: 'number',
+        },
+        {
+          pointId: 'Coil',
+          modbusType: 'coil',
+          dataType: 'UInt16',
+          scanMode: 'every10Seconds',
+          address: '0x0E83',
+          multiplierCoefficient: 1,
+          type: 'number',
+        },
       ],
     }
-    const modbusSouthOffset = new Modbus(modbusConfigAddressOffset, engine)
-    const optimizedScanModesAddressOffset = {
-      every10Seconds: {
-        holdingRegister: {
-          '15984-16016': [
-            {
-              pointId: 'EtatBB2T0',
-              dataType: 'UInt16',
-              address: 15999,
-              multiplierCoefficient: 1,
-              type: 'number',
-            },
-            {
-              pointId: 'EtatBB2T1',
-              dataType: 'UInt16',
-              address: 16000,
-              multiplierCoefficient: 1,
-              type: 'number',
-            },
-          ],
-        },
-      },
-    }
-    expect(modbusSouthOffset.optimizedScanModes)
-      .toEqual(optimizedScanModesAddressOffset)
+    south = new Modbus(settings, engine)
+    await south.init()
+  })
+
+  it('should be properly initialized', () => {
+    expect(south.url).toEqual(settings.Modbus.url)
+    expect(south.settings.Modbus.slaveId).toEqual(settings.Modbus.slaveId)
+    expect(utils.getOptimizedScanModes).toHaveBeenCalledWith(settings.points, settings.Modbus.addressOffset, undefined)
   })
 
   it('should properly connect', async () => {
-    databaseService.getConfig.mockReturnValue('1587640141001.0')
-    await modbusSouth.connect()
-    expect(databaseService.createConfigDatabase)
-      .toBeCalledWith(`${config.engine.caching.cacheFolder}/${modbusConfig.id}.db`)
-    expect(modbusSouth.connected)
-      .toBeTruthy()
+    await south.connect()
+    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${settings.id}.db`)
+    expect(south.connected).toBeTruthy()
   })
 
-  it('should properly onScan', async () => {
-    await modbusSouth.connect()
-    modbusSouth.modbusClient = {
-      readHoldingRegisters: jest.fn(),
-      readInputRegisters: jest.fn(),
-      readDiscreteInputs: jest.fn(),
-      readCoils: jest.fn(),
+  it('should properly query last points value', async () => {
+    await south.connect()
+    south.client = {
+      readHoldingRegisters: jest.fn().mockReturnValue({ response: 'value' }),
+      readInputRegisters: jest.fn().mockReturnValue({ response: 'value' }),
+      readDiscreteInputs: jest.fn().mockReturnValue({ response: 'value' }),
+      readCoils: jest.fn().mockReturnValue({ response: 'value' }),
     }
-    modbusSouth.modbusClient.readHoldingRegisters.mockReturnValue(Promise.resolve([]))
-    modbusSouth.modbusClient.readInputRegisters.mockReturnValue(Promise.resolve([]))
-    modbusSouth.modbusClient.readDiscreteInputs.mockReturnValue(Promise.resolve([]))
-    modbusSouth.modbusClient.readCoils.mockReturnValue(Promise.resolve([]))
-    await modbusSouth.lastPointQuery('every10Seconds')
+    await south.lastPointQuery('every10Seconds')
 
-    expect(modbusSouth.modbusClient.readHoldingRegisters)
-      .toBeCalledWith(20080, 32) // see the optimizedScanModes to get the startAddress and range
-    expect(modbusSouth.modbusClient.readHoldingRegisters)
-      .toBeCalledTimes(1) // addresses are in the same group, so it makes one call
+    expect(south.client.readHoldingRegisters).toBeCalledWith(20080, 32) // see the optimizedScanModes to get the startAddress and range
+    expect(south.client.readHoldingRegisters).toBeCalledTimes(1) // addresses are in the same group, so it makes one call
   })
 
   it('should properly disconnect', async () => {
-    // activate flag connect
-    modbusSouth.connected = true
-    modbusSouth.socket = { end: jest.fn() }
-    modbusSouth.modbusFunction = jest.fn()
+    south.connected = true
+    const end = jest.fn()
+    south.socket = { end }
+    south.modbusFunction = jest.fn()
 
-    modbusSouth.reconnectTimeout = setTimeout(() => {}, 1000)
+    south.reconnectTimeout = setTimeout(() => {}, 1000)
 
-    await modbusSouth.disconnect()
-    expect(modbusSouth.socket.end)
-      .toBeCalled()
-    expect(modbusSouth.connected)
-      .toBeFalsy()
-
-    await modbusSouth.lastPointQuery()
-
-    expect(modbusSouth.modbusFunction)
-      .not
-      .toBeCalled()
+    await south.disconnect()
+    expect(end).toBeCalled()
+    expect(south.connected).toBeFalsy()
   })
 })

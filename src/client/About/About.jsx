@@ -78,20 +78,20 @@ const About = () => {
               {oibusInfo.architecture}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="me-1">currentDirectory:</b>
-              {oibusInfo.currentDirectory}
+              <b className="me-1">Current directory:</b>
+              {oibusInfo['Current directory']}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="me-1">nodeVersion:</b>
-              {oibusInfo.nodeVersion}
+              <b className="me-1">Node version:</b>
+              {oibusInfo['Node version']}
             </ListGroupItem>
             <ListGroupItem>
               <b className="me-1">Executable:</b>
               {oibusInfo.executable}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="me-1">ConfigurationFile:</b>
-              {oibusInfo.configurationFile}
+              <b className="me-1">Configuration file:</b>
+              {oibusInfo['Configuration file']}
             </ListGroupItem>
             <ListGroupItem>
               <b className="me-1">Hostname:</b>

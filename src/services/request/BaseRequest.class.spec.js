@@ -1,36 +1,27 @@
-const FormData = require('form-data')
-
 const BaseRequest = require('./BaseRequest.class')
-const ApiHandler = require('../../north/ApiHandler.class')
 
-// Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: { httpRequest: { timeout: 10000, retryCount: 2 } } }) }
-engine.encryptionService = { decryptText: (password) => password }
-engine.logger = { trace: jest.fn(), error: jest.fn() }
+const { defaultConfig: config } = require('../../../tests/testConfig')
 
-beforeEach(() => {
-  jest.resetAllMocks()
-  jest.clearAllMocks()
-})
+// Mock utils class
+jest.mock('../utils', () => ({ generateFormDataBodyFromFile: jest.fn() }))
 
-describe('RequestFactory', () => {
-  const baseRequest = new BaseRequest(engine)
+// Mock OIBusEngine
+const engine = {
+  configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  getCacheFolder: () => config.engine.caching.cacheFolder,
+  addValues: jest.fn(),
+  addFile: jest.fn(),
+  logger: { error: jest.fn(), warn: jest.fn(), info: jest.fn(), debug: jest.fn(), trace: jest.fn() },
+  encryptionService: { decryptText: (password) => password },
+}
 
-  it('should properly get filename without timestamp', () => {
-    const filepath = '/path/to/note-1610983920007.txt'
+let baseRequest = null
 
-    const filename = baseRequest.getFilenameWithoutTimestamp(filepath)
+describe('BaseRequest', () => {
+  beforeEach(() => {
+    jest.resetAllMocks()
 
-    expect(filename).toEqual('note.txt')
-  })
-
-  it('should properly generate form-data body', () => {
-    const filepath = '/path/to/note-1610983920007.txt'
-
-    const formData = baseRequest.generateFormDataBody(filepath)
-
-    expect(formData).toBeInstanceOf(FormData)
+    baseRequest = new BaseRequest(engine)
   })
 
   it('should properly generate basic authentication header', async () => {
@@ -46,13 +37,12 @@ describe('RequestFactory', () => {
     const proxy = null
     const data = ''
 
-    const result = await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
+    await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
 
     const expectedAuthorizationHeader = Buffer.from('username:password').toString('base64')
     const expectedHeader = { Authorization: `Basic ${expectedAuthorizationHeader}` }
-    expect(result).toEqual(ApiHandler.STATUS.SUCCESS)
     expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(1)
-    expect(baseRequest.sendImplementation).toHaveBeenCalledWith(requestUrl, method, expectedHeader, proxy, data, 1000 * 10000)
+    expect(baseRequest.sendImplementation).toHaveBeenCalledWith(requestUrl, method, expectedHeader, proxy, data, 30 * 1000)
   })
 
   it('should properly generate API key authentication header', async () => {
@@ -68,12 +58,11 @@ describe('RequestFactory', () => {
     const proxy = null
     const data = ''
 
-    const result = await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
+    await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
 
     const expectedHeader = { key: 'secretKey' }
-    expect(result).toEqual(ApiHandler.STATUS.SUCCESS)
     expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(1)
-    expect(baseRequest.sendImplementation).toHaveBeenCalledWith(requestUrl, method, expectedHeader, proxy, data, 1000 * 10000)
+    expect(baseRequest.sendImplementation).toHaveBeenCalledWith(requestUrl, method, expectedHeader, proxy, data, 30 * 1000)
   })
 
   it('should properly generate Bearer token authentication header', async () => {
@@ -88,12 +77,11 @@ describe('RequestFactory', () => {
     const proxy = null
     const data = ''
 
-    const result = await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
+    await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
 
     const expectedHeader = { Authorization: 'Bearer token' }
-    expect(result).toEqual(ApiHandler.STATUS.SUCCESS)
     expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(1)
-    expect(baseRequest.sendImplementation).toHaveBeenCalledWith(requestUrl, method, expectedHeader, proxy, data, 1000 * 10000)
+    expect(baseRequest.sendImplementation).toHaveBeenCalledWith(requestUrl, method, expectedHeader, proxy, data, 30 * 1000)
   })
 
   it('should throw error on invalid authentication type', async () => {
@@ -105,14 +93,14 @@ describe('RequestFactory', () => {
     const proxy = null
     const data = ''
 
-    let result
-    try {
-      result = await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
-    } catch (response) {
-      result = response
-    }
+    await expect(baseRequest.httpSend(
+      requestUrl,
+      method,
+      authentication,
+      proxy,
+      data,
+    )).rejects.toThrowError('Unrecognized authentication type: "invalid".')
 
-    expect(result).toEqual(ApiHandler.STATUS.LOGIC_ERROR)
     expect(baseRequest.sendImplementation).not.toBeCalled()
   })
 
@@ -132,21 +120,21 @@ describe('RequestFactory', () => {
     const proxy = null
     const data = ''
 
-    let result
-    try {
-      result = await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
-    } catch (response) {
-      result = response
-    }
+    await expect(baseRequest.httpSend(
+      requestUrl,
+      method,
+      authentication,
+      proxy,
+      data,
+    )).rejects.toThrowError('Fail to send HTTP request after too many attempt (3).')
 
-    expect(result).toEqual(ApiHandler.STATUS.LOGIC_ERROR)
-    expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(3)
+    // One call and 3 retry (from the config)
+    expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(4)
   })
 
   it('should properly throw communication error', async () => {
     baseRequest.sendImplementation = jest.fn().mockImplementation(() => {
-      // eslint-disable-next-line no-throw-literal
-      throw {}
+      throw new Error('http error')
     })
 
     const requestUrl = 'https://www.example.com'
@@ -159,14 +147,14 @@ describe('RequestFactory', () => {
     const proxy = null
     const data = ''
 
-    let result
-    try {
-      result = await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
-    } catch (response) {
-      result = response
-    }
+    await expect(baseRequest.httpSend(
+      requestUrl,
+      method,
+      authentication,
+      proxy,
+      data,
+    )).rejects.toThrowError('HTTP request failed: Error: http error.')
 
-    expect(result).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
     expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(1)
   })
 
@@ -183,9 +171,8 @@ describe('RequestFactory', () => {
     const proxy = null
     const data = ''
 
-    const result = await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
+    await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
 
-    expect(result).toEqual(ApiHandler.STATUS.SUCCESS)
     expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(1)
   })
 })

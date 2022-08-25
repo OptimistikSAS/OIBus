@@ -1,31 +1,12 @@
-const fs = require('fs')
+const fs = require('node:fs')
+
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3')
 const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
-
 const ProxyAgent = require('proxy-agent')
-const ApiHandler = require('../ApiHandler.class')
+
 const AmazonS3 = require('./AmazonS3.class')
+
 const { defaultConfig: config } = require('../../../tests/testConfig')
-const EncryptionService = require('../../services/EncryptionService.class')
-
-// Mock database service
-jest.mock('../../services/database.service', () => ({
-  createValueErrorsDatabase: jest.fn(),
-  getCount: jest.fn(),
-  createValuesDatabase: jest.fn(),
-  createFilesDatabase: jest.fn(),
-}))
-
-// Mock logger
-jest.mock('../../engine/logger/Logger.class')
-
-// Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.eventEmitters = {}
-
-// Mock EncryptionService
-EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 
 // Mock AWS
 jest.mock('@aws-sdk/client-s3', () => ({ S3Client: jest.fn(), PutObjectCommand: jest.fn() }))
@@ -34,61 +15,76 @@ jest.mock('@aws-sdk/node-http-handler', () => ({ NodeHttpHandler: jest.fn() }))
 // Mock ProxyAgent
 jest.mock('proxy-agent')
 
-let amazonS3 = null
-const amazonS3Config = {
-  id: 'north-aws',
-  name: 'test04',
-  api: 'AmazonS3',
-  enabled: false,
-  AmazonS3: {
-    bucket: 'aef',
-    region: 'eu-west-3',
-    folder: 'azsdfcv',
-    proxy: '',
-    authentication: {
-      key: 'myAccessKey',
-      secretKey: 'mySecretKey',
-    },
-  },
-  caching: {
-    sendInterval: 10000,
-    retryInterval: 5000,
-    groupCount: 1000,
-    maxSendCount: 10000,
-  },
-  subscribedTo: [],
+// Mock OIBusEngine
+const engine = {
+  configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  requestService: { httpSend: jest.fn() },
+  getCacheFolder: jest.fn(),
 }
 
-beforeEach(() => {
-  jest.clearAllMocks()
-  jest.resetAllMocks()
-  jest.restoreAllMocks()
-  ProxyAgent.mockClear()
-  amazonS3 = new AmazonS3(amazonS3Config, engine)
-  amazonS3.init()
-})
+// Mock services
+jest.mock('../../services/database.service')
+jest.mock('../../engine/logger/Logger.class')
+jest.mock('../../services/status.service.class')
+jest.mock('../../services/EncryptionService.class', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
+jest.mock('../../engine/cache/ValueCache.class')
+jest.mock('../../engine/cache/FileCache.class')
 
-describe('Amazone S3 north', () => {
+let settings = null
+let north = null
+
+describe('North Amazon S3', () => {
+  beforeEach(async () => {
+    jest.resetAllMocks()
+    jest.useFakeTimers()
+
+    settings = {
+      id: 'northId',
+      name: 'test04',
+      api: 'AmazonS3',
+      enabled: false,
+      AmazonS3: {
+        bucket: 'aef',
+        region: 'eu-west-3',
+        folder: 'azsdfcv',
+        proxy: '',
+        authentication: {
+          key: 'myAccessKey',
+          secretKey: 'mySecretKey',
+        },
+      },
+      caching: {
+        sendInterval: 10000,
+        retryInterval: 5000,
+        groupCount: 1000,
+        maxSendCount: 10000,
+      },
+      subscribedTo: [],
+    }
+    north = new AmazonS3(settings, engine)
+    await north.init()
+  })
+
   it('should be properly initialized', () => {
-    expect(amazonS3.bucket).toEqual(amazonS3Config.AmazonS3.bucket)
-    expect(amazonS3.folder).toEqual(amazonS3Config.AmazonS3.folder)
+    expect(north.bucket).toEqual(settings.AmazonS3.bucket)
+    expect(north.folder).toEqual(settings.AmazonS3.folder)
 
     expect(S3Client).toHaveBeenCalledWith({
       region: 'eu-west-3',
       credentials: {
-        accessKeyId: amazonS3Config.AmazonS3.authentication.key,
-        secretAccessKey: amazonS3Config.AmazonS3.authentication.secretKey,
+        accessKeyId: settings.AmazonS3.authentication.key,
+        secretAccessKey: settings.AmazonS3.authentication.secretKey,
       },
       requestHandler: null,
     })
     expect(S3Client).toHaveBeenCalledTimes(1)
-    expect(amazonS3.canHandleFiles).toBeTruthy()
+    expect(north.canHandleFiles).toBeTruthy()
   })
 
   it('should be properly initialized with a proxy', () => {
-    const amazonS3WithProxyConfig = amazonS3Config
+    const amazonS3WithProxyConfig = settings
     amazonS3WithProxyConfig.AmazonS3.proxy = 'sss'
-    amazonS3.engineConfig.proxies = [
+    north.engineConfig.proxies = [
       {
         name: 'sss',
         protocol: 'http',
@@ -137,8 +133,8 @@ describe('Amazone S3 north', () => {
     expect(S3Client).toHaveBeenCalledWith({
       region: 'eu-west-3',
       credentials: {
-        accessKeyId: amazonS3Config.AmazonS3.authentication.key,
-        secretAccessKey: amazonS3Config.AmazonS3.authentication.secretKey,
+        accessKeyId: settings.AmazonS3.authentication.key,
+        secretAccessKey: settings.AmazonS3.authentication.secretKey,
       },
       requestHandler: expectedAgent,
     })
@@ -146,7 +142,7 @@ describe('Amazone S3 north', () => {
   })
 
   it('should be properly initialized with a proxy without authentication', () => {
-    const amazonS3WithProxyConfig = amazonS3Config
+    const amazonS3WithProxyConfig = settings
     amazonS3WithProxyConfig.AmazonS3.proxy = 'no-auth'
 
     const expectedAgent = {
@@ -173,8 +169,8 @@ describe('Amazone S3 north', () => {
     expect(S3Client).toHaveBeenCalledWith({
       region: 'eu-west-3',
       credentials: {
-        accessKeyId: amazonS3Config.AmazonS3.authentication.key,
-        secretAccessKey: amazonS3Config.AmazonS3.authentication.secretKey,
+        accessKeyId: settings.AmazonS3.authentication.key,
+        secretAccessKey: settings.AmazonS3.authentication.secretKey,
       },
       requestHandler: expectedAgent,
     })
@@ -186,29 +182,26 @@ describe('Amazone S3 north', () => {
     jest.spyOn(fs, 'createReadStream').mockImplementation(() => [])
 
     const expectedParams = {
-      Bucket: amazonS3Config.AmazonS3.bucket,
+      Bucket: settings.AmazonS3.bucket,
       Body: [],
-      Key: `${amazonS3Config.AmazonS3.folder}/file.csv`,
+      Key: `${settings.AmazonS3.folder}/file.csv`,
     }
 
     PutObjectCommand.mockReturnValueOnce(expectedParams)
-    amazonS3.s3.send = jest.fn(() => ({ promise: jest.fn() }))
-    const expectedResult = await amazonS3.handleFile(filePath)
+    north.s3.send = jest.fn(() => ({ promise: jest.fn() }))
+    await north.handleFile(filePath)
 
     expect(fs.createReadStream).toHaveBeenCalledWith(filePath)
-    expect(amazonS3.s3.send).toHaveBeenCalledWith(expectedParams)
-    expect(expectedResult).toEqual(ApiHandler.STATUS.SUCCESS)
+    expect(north.s3.send).toHaveBeenCalledWith(expectedParams)
   })
 
   it('should properly catch handle file error', async () => {
     const filePath = '/csv/test/file-789.csv'
     jest.spyOn(fs, 'createReadStream').mockImplementation(() => [])
 
-    amazonS3.s3.send = jest.fn(() => {
+    north.s3.send = jest.fn(() => {
       throw new Error('test')
     })
-    const expectedResult = await amazonS3.handleFile(filePath)
-    expect(amazonS3.logger.error).toHaveBeenCalledTimes(1)
-    expect(expectedResult).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
+    await expect(north.handleFile(filePath)).rejects.toThrowError('test')
   })
 })

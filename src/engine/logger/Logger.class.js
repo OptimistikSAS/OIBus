@@ -1,26 +1,51 @@
-const path = require('path')
+const path = require('node:path')
+
 const pino = require('pino')
 
 const ENGINE_LOG_LEVEL_ENTRY = 'engine'
 
+/**
+ * Manage pino loggers
+ * Four loggers are supported:
+ *  - Console
+ *  - File
+ *  - SQLite {@SQLiteLoggerTransport}
+ *  - Loki {@LokiLoggerTransport}
+ * @class Logger
+ */
 class Logger {
+  /**
+   * Constructor for Logger
+   * @constructor
+   * @param {String} scope - Gives the scope of the logger (the engine, the connector...)
+   */
   constructor(scope = 'main') {
     this.logger = null
     this.encryptionService = null
     this.scope = scope
   }
 
+  /**
+   * Set the encryption service to use the same one as the calling object
+   * @param {EncryptionService} encryptionService - The encryption service
+   * @return {void}
+   */
   setEncryptionService(encryptionService) {
     this.encryptionService = encryptionService
   }
 
+  /**
+   * Run the appropriate pino log transports according to the configuration
+   * @param {Object} engineConfig - The engine configuration for the logs
+   * @param {Object} specificParameters - Override some log settings from a connector
+   * @returns {Promise<void>} - The result promise
+   */
   async changeParameters(engineConfig, specificParameters = {}) {
     const logParameters = JSON.parse(JSON.stringify(engineConfig.logParameters))
 
     /**
      * Replacing global log parameters by specific one if not set to engine level
      */
-
     if (specificParameters.consoleLevel && specificParameters.consoleLevel !== ENGINE_LOG_LEVEL_ENTRY) {
       logParameters.consoleLog.level = specificParameters.consoleLevel
     }
@@ -112,12 +137,11 @@ class Logger {
 
   /**
    * Use CallSite to extract filename, for more info read: https://v8.dev/docs/stack-trace-api#customizing-stack-traces
-   * @returns {string} filename
+   * @returns {String} filename
    */
   getSource() {
     const oldStackTrace = Error.prepareStackTrace
     try {
-      // eslint-disable-next-line handle-callback-err
       Error.prepareStackTrace = (err, structuredStackTrace) => structuredStackTrace
       Error.captureStackTrace(this)
       // Get the first CallSite outside the logger and outside pino library

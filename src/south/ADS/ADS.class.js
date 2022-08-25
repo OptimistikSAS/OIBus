@@ -1,22 +1,28 @@
 const ads = require('ads-client')
 
-const ProtocolHandler = require('../ProtocolHandler.class')
+const SouthConnector = require('../SouthConnector.class')
 
 /**
- * Class ADS - Provides instruction for Modbus client connection
+ * Class ADS - Provides instruction for TwinCAT ADS client connection
  */
-class ADS extends ProtocolHandler {
+class ADS extends SouthConnector {
   static category = 'IoT'
 
   /**
    * Constructor for ADS
    * @constructor
-   * @param {Object} dataSource - The data source
-   * @param {Engine} engine - The engine
+   * @param {Object} settings - The South connector settings
+   * @param {Engine} engine - The Engine
    * @return {void}
    */
-  constructor(dataSource, engine) {
-    super(dataSource, engine, { supportListen: false, supportLastPoint: true, supportFile: false, supportHistory: false })
+  constructor(settings, engine) {
+    super(settings, engine, {
+      supportListen: false,
+      supportLastPoint: true,
+      supportFile: false,
+      supportHistory: false,
+    })
+    this.handlesPoints = true
 
     const {
       netId,
@@ -30,8 +36,7 @@ class ADS extends ProtocolHandler {
       enumAsText,
       boolAsText,
       structureFiltering,
-    } = this.dataSource.ADS
-    this.connected = false
+    } = this.settings.ADS
     this.netId = netId
     this.port = port
     this.clientAmsNetId = clientAmsNetId
@@ -44,10 +49,22 @@ class ADS extends ProtocolHandler {
     this.enumAsText = enumAsText
     this.structureFiltering = structureFiltering
 
-    this.handlesPoints = true
+    // Initialized at connection
+    this.client = null
+    this.reconnectTimeout = null
   }
 
-  parseValues(nodeId, dataType, valueToParse, timestamp, subItems, enumInfo) {
+  /**
+   * Parse received values to convert them in points before sending them to the Cache
+   * @param {String} pointId - The point ID
+   * @param {String} dataType - The type of the received value
+   * @param {Object} valueToParse - The value to parse and adapt
+   * @param {String} timestamp - The ISO string date associated to the values
+   * @param {Object[]} subItems - Object keys to retrieve from ADS structure
+   * @param {String[]} enumInfo - Info to manage ADS enumeration
+   * @returns {[{pointId, data: {value: null}, timestamp}]|null|*} - The formatted point to store in the cache
+   */
+  parseValues(pointId, dataType, valueToParse, timestamp, subItems, enumInfo) {
     let valueToAdd = null
     /**
      * Source of the following data types:
@@ -90,34 +107,33 @@ class ADS extends ProtocolHandler {
         valueToAdd = new Date(valueToParse).toISOString()
         break
       case dataType.match(/^ARRAY\s\[[0-9][0-9]*\.\.[0-9][0-9]*]\sOF\s.*$/)?.input: // Example: ARRAY [0..4] OF INT
-        valueToParse.forEach((element, index) => {
-          this.parseValues(
-            `${nodeId}.${index}`,
-            dataType.split(/^ARRAY\s\[[0-9][0-9]*\.\.[0-9][0-9]*]\sOF\s/)[1],
-            element,
-            timestamp,
-            subItems,
-            enumInfo,
-          )
-        })
-        break
+      {
+        const parsedValues = valueToParse.map((element, index) => this.parseValues(
+          `${pointId}.${index}`,
+          dataType.split(/^ARRAY\s\[[0-9][0-9]*\.\.[0-9][0-9]*]\sOF\s/)[1],
+          element,
+          timestamp,
+          subItems,
+          enumInfo,
+        ))
+        return parsedValues.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], [])
+      }
       default:
         if (subItems?.length > 0) { // It is an ADS structure object (as json)
-          const structure = this.structureFiltering?.find((element) => element.name === dataType)
+          const structure = this.structureFiltering.find((element) => element.name === dataType)
           if (structure) {
-            subItems.filter((item) => structure.fields === '*' || structure.fields.split(',').includes(item.name)).forEach((subItem) => {
-              this.parseValues(
-                `${nodeId}.${subItem.name}`,
+            const parsedValues = subItems.filter((item) => structure.fields === '*' || structure.fields.split(',').includes(item.name))
+              .map((subItem) => this.parseValues(
+                `${pointId}.${subItem.name}`,
                 subItem.type,
                 valueToParse[subItem.name],
                 timestamp,
                 subItem.subItems,
                 subItem.enumInfo,
-              )
-            })
-          } else {
-            this.logger.debug(`Data Structure ${dataType} not parsed for data ${nodeId}. To parse it, please specify it in the connector settings.`)
+              ))
+            return parsedValues.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], [])
           }
+          this.logger.debug(`Data Structure ${dataType} not parsed for data ${pointId}. To parse it, please specify it in the connector settings.`)
         } else if (enumInfo?.length > 0) { // It is an ADS Enum object
           if (this.enumAsText === 'Text') {
             valueToAdd = valueToParse.name
@@ -125,74 +141,70 @@ class ADS extends ProtocolHandler {
             valueToAdd = JSON.stringify(valueToParse.value)
           }
         } else {
-          this.logger.warn(`dataType ${dataType} not supported yet for point ${nodeId}. Value was ${JSON.stringify(valueToParse)}`)
+          this.logger.warn(`dataType ${dataType} not supported yet for point ${pointId}. Value was ${JSON.stringify(valueToParse)}`)
         }
         break
     }
     if (valueToAdd !== null) {
-      this.addValues([
-        {
-          pointId: nodeId,
-          timestamp,
-          data: { value: valueToAdd },
-        },
-      ])
+      return [{
+        pointId,
+        timestamp,
+        data: { value: valueToAdd },
+      }]
     }
+    return []
   }
 
   /**
    * Query the value of the points to read
    * @param {String} scanMode - The scan mode
-   * @return {Promise<void>} - The on scan promise
+   * @returns {Promise<void>} - The result promise
    */
   async lastPointQuery(scanMode) {
-    const nodesToRead = this.dataSource.points.filter((point) => point.scanMode === scanMode)
+    const nodesToRead = this.settings.points.filter((point) => point.scanMode === scanMode)
     if (!nodesToRead.length) {
-      this.logger.error(`lastPointQuery ignored: no points to read for scanMode: ${scanMode}`)
-      return
+      throw new Error(`lastPointQuery ignored: no points to read for scanMode: "${scanMode}".`)
     }
     if (!this.connected) {
       this.logger.debug(`lastPointQuery ignored: connected: ${this.connected}`)
       return
     }
 
-    // eslint-disable-next-line guard-for-in,no-restricted-syntax
-    for (const node of nodesToRead) {
-      try {
-        // eslint-disable-next-line no-await-in-loop
-        const result = await this.readAdsSymbol(node.pointId)
-        const timestamp = new Date().toISOString()
-        this.parseValues(
-          `${this.plcName}${node.pointId}`,
-          result.symbol?.type,
-          result.value,
-          timestamp,
-          result.type?.subItems,
-          result.type?.enumInfo,
-        )
-      } catch (error) {
-        this.logger.error(`lastPointQuery ${scanMode}:${error.stack}`)
-        const message = error?.message || ''
-        if (message.startsWith('Client is not connected')) {
-          // eslint-disable-next-line no-await-in-loop
-          await this.disconnect()
-          // eslint-disable-next-line no-await-in-loop
-          await this.connect()
-          return
-        }
+    const timestamp = new Date().toISOString()
+    try {
+      const results = await Promise.all(nodesToRead.map((node) => this.readAdsSymbol(node.pointId, timestamp)))
+      await this.addValues(
+        results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], []),
+      )
+    } catch (error) {
+      if (error?.message?.startsWith('Client is not connected')) {
+        this.logger.error(`ADS client disconnected: ${error}. Reconnecting`)
+        await this.disconnect()
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.retryInterval)
+      } else {
+        throw error
       }
     }
   }
 
   /**
-   * @param {string} pointId - the point id to read
-   * @returns {Promise<object>} - the result retrieved
+   * @param {String} pointId - The point id to read
+   * @param {String} timestamp - The ISO string date associated to the results
+   * @returns {Promise<array>} - The result parsed into an array
    */
-  readAdsSymbol(pointId) {
+  readAdsSymbol(pointId, timestamp) {
     return new Promise((resolve, reject) => {
       this.client.readSymbol(pointId)
         .then((nodeResult) => {
-          resolve(nodeResult)
+          const parsedResult = this.parseValues(
+            `${this.plcName}${pointId}`,
+            nodeResult.symbol?.type,
+            nodeResult.value,
+            timestamp,
+            nodeResult.type?.subItems,
+            nodeResult.type?.enumInfo,
+          )
+          resolve(parsedResult)
         }).catch((error) => {
           reject(error)
         })
@@ -200,12 +212,10 @@ class ADS extends ProtocolHandler {
   }
 
   /**
-   * Initiates a connection for every data source to the right netId and port.
-   * @return {void}
+   * Initiates a connection to the right netId and port.
+   * @returns {Promise<void>} - The result promise
    */
   async connect() {
-    await super.connect()
-
     const options = {
       targetAmsNetId: this.netId, // example: 192.168.1.120.1.1
       targetAdsPort: this.port, // example: 851
@@ -229,25 +239,29 @@ class ADS extends ProtocolHandler {
     }
 
     this.logger.info(`Connecting to ADS Client with options ${JSON.stringify(options)}`)
-    this.client = new ads.Client(options)
-    await this.connectToAdsServer()
-  }
-
-  async connectToAdsServer() {
     try {
-      const result = await this.client.connect()
-      this.connected = true
-      this.updateStatusDataStream({ 'Connected at': new Date().toISOString() })
-      this.logger.info(`Connected to the ${result.targetAmsNetId} with local AmsNetId ${result.localAmsNetId} and local port ${result.localAdsPort}`)
+      this.client = new ads.Client(options)
+      await this.connectToAdsServer()
     } catch (error) {
       this.logger.error(`ADS connect error: ${JSON.stringify(error)}`)
-      this.reconnectTimeout = setTimeout(this.connectToAdsServer.bind(this), this.retryInterval)
+      await this.disconnect()
+      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.retryInterval)
     }
   }
 
   /**
+   * Connect the ADS client to the ADS server with the already provided connection options
+   * @returns {Promise<void>} - The result promise
+   */
+  async connectToAdsServer() {
+    const result = await this.client.connect()
+    this.logger.info(`Connected to the ${result.targetAmsNetId} with local AmsNetId ${result.localAmsNetId} and local port ${result.localAdsPort}`)
+    await super.connect()
+  }
+
+  /**
    * Disconnect the ADS Client
-   * @returns {Promise<unknown>} - The promise resolved after the disconnection
+   * @returns {Promise<void>} - The result promise
    */
   disconnectAdsClient() {
     return new Promise((resolve, reject) => {
@@ -261,7 +275,7 @@ class ADS extends ProtocolHandler {
 
   /**
    * Close the connection
-   * @return {void}
+   * @returns {Promise<void>} - The result promise
    */
   async disconnect() {
     if (this.reconnectTimeout) {
@@ -274,9 +288,8 @@ class ADS extends ProtocolHandler {
         this.logger.error(`ADS disconnect error: ${JSON.stringify(error)}`)
       }
       this.logger.info(`ADS client disconnected from ${this.netId}:${this.port}`)
-      this.connected = false
-      this.client = null
     }
+    this.client = null
     await super.disconnect()
   }
 }
