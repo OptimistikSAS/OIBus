@@ -1,40 +1,13 @@
-const fs = require('fs')
-const path = require('path')
-const FormData = require('form-data')
+// HTTP response status code which yields to retry the HTTP request
+const RETRY_STATUS_CODE = [400, 500]
 
-const ApiHandler = require('../../north/ApiHandler.class')
-
+/**
+ * Base class to manage HTTP POST method for JSON payloads and file body parts
+ */
 class BaseRequest {
   constructor(engine) {
     this.engine = engine
     this.logger = engine.logger
-
-    this.retryStatusCodes = [400, 500]
-  }
-
-  /**
-   * Get filename without timestamp from file path.
-   * @param {string} filePath - The file path
-   * @returns {string} - The filename
-   */
-  /* eslint-disable-next-line class-methods-use-this */
-  getFilenameWithoutTimestamp(filePath) {
-    const { name, ext } = path.parse(filePath)
-    const filename = name.slice(0, name.lastIndexOf('-'))
-    return `${filename}${ext}`
-  }
-
-  /**
-   * Generate body as FormData to send file.
-   * @param {string} filePath - The file path
-   * @returns {FormData} - The body
-   */
-  generateFormDataBody(filePath) {
-    const body = new FormData()
-    const readStream = fs.createReadStream(filePath)
-    const bodyOptions = { filename: this.getFilenameWithoutTimestamp(filePath) }
-    body.append('file', readStream, bodyOptions)
-    return body
   }
 
   /**
@@ -48,12 +21,12 @@ class BaseRequest {
    * @param {object} proxy - Proxy to use
    * @param {string} data - The data to send
    * @param {number} timeout - The request timeout
-   * @return {Promise} - The send status
+   * @return {void}
    */
-  // eslint-disable-next-line no-unused-vars
   async sendImplementation(requestUrl, method, headers, proxy, data, timeout) {
-    this.logger.warn('sendImplementation() should be surcharged')
-    return true
+    this.logger.warn('sendImplementation() should be surcharged'
+    + `Function called with ${method} ${requestUrl} and headers "${JSON.stringify(headers)}", `
+    + `proxy "${proxy}", data "${data}" and timeout ${timeout}.`)
   }
 
   /**
@@ -68,12 +41,12 @@ class BaseRequest {
    * @param {string} data - The body or file to send
    * @param {object} baseHeaders - Headers to send
    * @param {number} retryCount - The retry count
-   * @returns {Promise} - The send status
+   * @returns {void}
    */
   async httpSend(requestUrl, method, authentication, proxy, data, baseHeaders = {}, retryCount = 0) {
     const { engineConfig: { httpRequest } } = this.engine.configService.getConfig()
 
-    this.logger.trace(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack`)
+    this.logger.trace(`httpSend() to ${method} ${requestUrl} using ${httpRequest.stack} stack.`)
 
     // Generate authentication header
     const headers = baseHeaders
@@ -93,7 +66,8 @@ class BaseRequest {
           headers.Authorization = `Bearer ${this.engine.encryptionService.decryptText(authentication.token)}`
           break
         }
-        default: throw ApiHandler.STATUS.LOGIC_ERROR
+        default:
+          throw new Error(`Unrecognized authentication type: "${authentication.type}".`)
       }
     }
 
@@ -101,25 +75,22 @@ class BaseRequest {
       const timeout = 1000 * httpRequest.timeout
       await this.sendImplementation(requestUrl, method, headers, proxy, data, timeout)
     } catch (errorResult) {
-      this.logger.error(`sendRequest(): Error ${errorResult.error}`)
+      this.logger.error(errorResult.error)
 
       if (errorResult.responseError) {
-        if (this.retryStatusCodes.includes(errorResult.statusCode)) {
+        if (RETRY_STATUS_CODE.includes(errorResult.statusCode)) {
           if (retryCount < httpRequest.retryCount) {
             const incrementedRetryCount = retryCount + 1
             await this.httpSend(requestUrl, method, authentication, proxy, data, baseHeaders, incrementedRetryCount)
-          } else {
-            throw ApiHandler.STATUS.LOGIC_ERROR
+            return
           }
+          throw new Error(`Fail to send HTTP request after too many attempt (${retryCount}).`)
         }
       }
-
-      throw ApiHandler.STATUS.COMMUNICATION_ERROR
+      throw new Error(`HTTP request failed: ${errorResult}.`)
     }
 
-    this.logger.trace(`sendRequest() to ${method} ${requestUrl} using ${httpRequest.stack} stack Ok`)
-
-    return ApiHandler.STATUS.SUCCESS
+    this.logger.trace(`httpSend() to ${method} ${requestUrl} using ${httpRequest.stack} stack Ok`)
   }
 }
 

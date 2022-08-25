@@ -2,20 +2,22 @@ const { Client } = require('pg')
 const { vsprintf } = require('sprintf-js')
 const objectPath = require('object-path')
 
-const ApiHandler = require('../ApiHandler.class')
+const NorthConnector = require('../NorthConnector.class')
 
-class TimescaleDB extends ApiHandler {
+class TimescaleDB extends NorthConnector {
   static category = 'DatabaseIn'
 
   /**
    * Constructor for TimescaleDB
    * @constructor
-   * @param {Object} applicationParameters - The application parameters
+   * @param {Object} settings - The North connector settings
    * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
-  constructor(applicationParameters, engine) {
-    super(applicationParameters, engine)
+  constructor(settings, engine) {
+    super(settings, engine)
+    this.canHandleValues = true
+
     const {
       host,
       user,
@@ -26,7 +28,7 @@ class TimescaleDB extends ApiHandler {
       optFields,
       useDataKeyValue,
       keyParentValue,
-    } = this.application.TimescaleDB
+    } = this.settings.TimescaleDB
     this.host = host
     this.user = user
     this.password = password
@@ -37,75 +39,40 @@ class TimescaleDB extends ApiHandler {
     this.useDataKeyValue = useDataKeyValue
     this.keyParentValue = keyParentValue
 
-    this.canHandleValues = true
-  }
-
-  /**
-   * Handle values by sending them to TimescaleDB.
-   * @param {object[]} values - The values
-   * @return {Promise} - The handle status
-   */
-  async handleValues(values) {
-    this.logger.trace(`TimescaleDB handleValues() call with ${values.length} values`)
-    try {
-      await this.makeRequest(values)
-      this.updateStatusDataStream({
-        'Last handled values at': new Date().toISOString(),
-        'Number of values sent since OIBus has started': this.statusData['Number of values sent since OIBus has started'] + values.length,
-        'Last added point id (value)': `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`,
-      })
-    } catch (error) {
-      this.logger.error(error)
-      throw ApiHandler.STATUS.COMMUNICATION_ERROR
-    }
-    return values.length
+    // Initialized at connection
+    this.client = null
   }
 
   /**
    * Connection to TimescaleDB
-   * @param {string} _additionalInfo - connection information to display in the logger
-   * @return {void}
+   * @param {String} _additionalInfo - Connection information to display in the logger
+   * @returns {Promise<void>} - The result promise
    */
-  connect(_additionalInfo = '') {
-    this.logger.info(`Connecting ${this.application.name} to TimescaleDB: postgres://${this.user}:<password>@${this.host}/${this.database}`)
+  async connect(_additionalInfo = '') {
+    this.logger.info(`Connecting North "${this.settings.name}" to TimescaleDB: `
+        + `postgres://${this.user}:<password>@${this.host}/${this.database}`)
 
-    // Build the url
     const url = `postgres://${this.user}:${this.encryptionService.decryptText(this.password)}@${this.host}/${this.database}`
-    // Get client object and connect to the database
-    this.timescaleClient = new Client(url)
-    this.timescaleClient.connect((error) => {
-      if (error) {
-        this.logger.error(`Error during connection to TimescaleDB: ${error}`)
-        this.clientPG = null
-      } else {
-        super.connect(`url: ${url}`)
-      }
-    })
+
+    this.client = new Client(url)
+
+    await this.client.connect()
+    await super.connect(`url: ${url}`)
   }
 
   /**
-   * Disconnection from TimescaleDB
-   * @return {void}
+   * Handle values by sending them to TimescaleDB.
+   * @param {Object[]} values - The values to send
+   * @returns {Promise<void>} - The result promise
    */
-  async disconnect() {
-    this.logger.info('Disconnection from TimeScaleDB')
-    if (this.timescaleClient) {
-      this.timescaleClient.end()
-    }
-    await super.disconnect()
-  }
+  async handleValues(values) {
+    this.logger.trace(`Handle ${values.length} values.`)
 
-  /**
-   * Makes a TimescaleDB request with the parameters in the Object arg.
-   * @param {object[]} entries - The entry from the event
-   * @return {Promise} - The request status
-   */
-  async makeRequest(entries) {
     let query = 'BEGIN;'
     let tableValue = ''
     let optFieldsValue = ''
 
-    entries.forEach((entry) => {
+    values.forEach((entry) => {
       const { pointId, data } = entry
 
       const mainRegExp = new RegExp(this.regExp)
@@ -130,76 +97,87 @@ class TimescaleDB extends ApiHandler {
         return
       }
 
-      // Make the query by rebuilding the Nodes
+      // Make the query
       const tableName = tableValue
       let statement = `insert into "${tableName}"(`
 
-      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
-      // In fact, as some use cases can produce value structured as Json Object, code is modified to process value which could be
-      // simple value (integer, float, ...) or Json object
+      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters.
+      // In fact, as some use cases can produce value structured as JSON objects, values which could be atomic values
+      // (integer, float, ...) or JSON object must be processed
       let dataValue
       if (this.useDataKeyValue) {
-        // data to use is value key of Json object data (data.value)
-        // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)
-        // If it's a json, the function return data where path is given by keyParentValue parameter
-        // even if json object containing more than one level of object.
-        // for example : data : {value: {"level1":{"level2":{value:..., timestamp:...}}}}
-        // in this context :
-        //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue string : level1.level2
+        // The data to use is the key "value" of a JSON object data (data.value)
+        // This data.value can be a JSON object or an atomic value (i.e. integer or float or string, ...)
+        // If it's a JSON, the function return a data where the path is given by keyParentValue parameter even if the
+        // JSON object contains more than one level of object.
+        // For example: data = { value: { "level1": { "level2": { value: ..., timestamp:... } } } }
+        // In this context :
+        //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue
+        // level1.level2
         //   - To retrieve this object, we use objectPath with parameters: (data.value, 'level1.level2')
         dataValue = objectPath.get(data.value, this.keyParentValue)
       } else {
-        // data to use is Json object data
+        // Data to use is the JSON object data
         dataValue = data
       }
 
-      // Converts data into fields for CLI
-      try {
-        let values = ''
-        let fields = ''
-        let timestamp
-        if (this.timestampPathInDataValue) {
-          // case where timestamp is within the dataValue fields received.
-          timestamp = objectPath.get(dataValue, this.timestampPathInDataValue)
-          // once taken into account, remove the timestamp from the fields to not take it again in the other fields
-          objectPath.del(dataValue, this.timestampPathInDataValue)
-        } else {
-          // case where timestamp is directly at the root of the data received
-          timestamp = entry.timestamp
-        }
+      let timestamp
+      if (this.timestampPathInDataValue) {
+        // Case where the timestamp is within the dataValue fields received.
+        timestamp = objectPath.get(dataValue, this.timestampPathInDataValue)
+        // Once retrieved, remove the timestamp from the fields to not take it again in the other fields
+        objectPath.del(dataValue, this.timestampPathInDataValue)
+      } else {
+        // Case where the timestamp is directly at the root of the data received
+        timestamp = entry.timestamp
+      }
 
-        // Filter the timestamp field in the dataValue object in case we already have a timestamp from the main json object
-        Object.entries(dataValue).filter(([fieldKey]) => fieldKey !== 'timestamp').forEach(([fieldKey, fieldValue]) => {
-          // Only insert string or number values
+      let valuesToInsert = ''
+      let fields = ''
+      // Filter the timestamp field in the dataValue object in case we already have a timestamp from the main JSON object
+      Object.entries(dataValue).filter(([fieldKey]) => fieldKey !== 'timestamp')
+        .forEach(([fieldKey, fieldValue]) => {
+          // Only insert string or number
           if (typeof fieldValue === 'string' || typeof fieldValue === 'number') {
             fields = fields !== '' ? `${fields},"${fieldKey}"` : `"${fieldKey}"`
-            values = values !== '' ? `${values},'${fieldValue}'` : `'${fieldValue}'`
+            valuesToInsert = valuesToInsert !== '' ? `${valuesToInsert},'${fieldValue}'` : `'${fieldValue}'`
           }
         })
 
-        // Some of optional fields are not presents in values, because they are calculated from pointId
-        // Those fields must be added in values inserting in table
-        optFieldsValue.split(',').forEach((optValueString) => {
-          const optItems = optValueString.split(':')
-          if (!fields.includes(optItems[0])) {
-            fields = fields !== '' ? `${fields},"${optItems[0]}"` : `"${optItems[0]}"`
-            values = values !== '' ? `${values},'${optItems[1]}'` : `'${optItems[1]}'`
-          }
-        })
+      // Some of optional fields are not present in valuesToInsert, because they are calculated from pointId
+      // Those fields must be added in valuesToInsert
+      optFieldsValue.split(',').forEach((optValueString) => {
+        const optItems = optValueString.split(':')
+        if (!fields.includes(optItems[0])) {
+          fields = fields !== '' ? `${fields},"${optItems[0]}"` : `"${optItems[0]}"`
+          valuesToInsert = valuesToInsert !== '' ? `${valuesToInsert},'${optItems[1]}'` : `'${optItems[1]}'`
+        }
+      })
 
-        fields += ',"timestamp"'
-        values += `,'${timestamp}'`
+      fields += ',"timestamp"'
+      valuesToInsert += `,'${timestamp}'`
 
-        statement += `${fields.replace(/ /g, '\\ ')}) values(${values.replace(/ /g, '\\ ')});`
+      // Replace spaces by _ and append entry to body
+      statement += `${fields.replace(/ /g, '_')}) `
+          + `values(${valuesToInsert.replace(/ /g, '_')});`
 
-        query += statement
-      } catch (error) {
-        this.logger.error(`Issue to build query: ${query} ${error.stack}`)
-      }
+      query += statement
     })
 
     query += 'COMMIT'
-    await this.timescaleClient.query(query)
+    await this.client.query(query)
+  }
+
+  /**
+   * Disconnection from TimescaleDB
+   * @returns {Promise<void>} - The result promise
+   */
+  async disconnect() {
+    this.logger.info(`Disconnecting North "${this.settings.name}" from TimescaleDB`)
+    if (this.client) {
+      this.client.end()
+    }
+    await super.disconnect()
   }
 }
 

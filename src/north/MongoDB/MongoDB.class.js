@@ -2,23 +2,25 @@ const mongo = require('mongodb')
 const { vsprintf } = require('sprintf-js')
 const objectPath = require('object-path')
 
-const ApiHandler = require('../ApiHandler.class')
+const NorthConnector = require('../NorthConnector.class')
 
 /**
- * Class MongoDB - generates and sends MongoDB requests
+ * Class MongoDB - Send data to MongoDB
  */
-class MongoDB extends ApiHandler {
+class MongoDB extends NorthConnector {
   static category = 'DatabaseIn'
 
   /**
    * Constructor for MongoDB
    * @constructor
-   * @param {Object} applicationParameters - The application parameters
+   * @param {Object} settings - The North connector settings
    * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
-  constructor(applicationParameters, engine) {
-    super(applicationParameters, engine)
+  constructor(settings, engine) {
+    super(settings, engine)
+    this.canHandleValues = true
+
     const {
       host,
       user,
@@ -31,7 +33,7 @@ class MongoDB extends ApiHandler {
       timeStampKey,
       useDataKeyValue,
       keyParentValue,
-    } = this.application.MongoDB
+    } = this.settings.MongoDB
     this.host = host
     this.user = user
     this.password = password
@@ -44,91 +46,52 @@ class MongoDB extends ApiHandler {
     this.useDataKeyValue = useDataKeyValue
     this.keyParentValue = keyParentValue
 
-    this.canHandleValues = true
-  }
-
-  /**
-   * Handle values by sending them to MongoDB.
-   * @param {object[]} values - The values
-   * @return {Promise} - The handle status
-   */
-  async handleValues(values) {
-    this.logger.trace(`MongoDB handleValues() call with ${values.length} values`)
-    try {
-      await this.makeRequest(values)
-      this.updateStatusDataStream({
-        'Last handled values at': new Date().toISOString(),
-        'Number of values sent since OIBus has started': this.statusData['Number of values sent since OIBus has started'] + values.length,
-        'Last added point id (value)': `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`,
-      })
-    } catch (error) {
-      this.logger.error(error)
-      throw ApiHandler.STATUS.COMMUNICATION_ERROR
-    }
-    return values.length
+    // Initialized at connection
+    this.client = null
+    this.mongoDatabase = null
+    this.listCollections = null
+    this.collectionExists = false
   }
 
   /**
    * Connection to MongoDB
-   * @param {string} _additionalInfo - connection information to display in the logger
-   * @return {void}
+   * @param {String} _additionalInfo - Connection information to display in the logger
+   * @returns {Promise<void>} - The result promise
    */
-  connect(_additionalInfo = '') {
-    this.logger.info(`Connecting ${this.application.name} to MongoDB: ${
-      this.user === '' ? `mongodb://${this.host}` : `mongodb://${this.user}:<password>@${this.host}`}`)
+  async connect(_additionalInfo = '') {
+    this.logger.info(`Connecting North "${this.settings.name}" to MongoDB: `
+        + `${this.user === '' ? `mongodb://${this.host}` : `mongodb://${this.user}:<password>@${this.host}`}`)
+
     const url = (this.user === '') ? `mongodb://${this.host}`
       : `mongodb://${this.user}:${this.encryptionService.decryptText(this.password)}@${this.host}`
 
-    this.client = new mongo.MongoClient(url, { useUnifiedTopology: true })
-    this.client.connect((error) => {
-      if (error) {
-        this.logger.error(`Error during connection to MongoDB: ${error}`)
-      } else {
-        // open database db
-        this.mongoDatabase = this.client.db(this.database)
+    this.client = new mongo.MongoClient(url)
+    await this.client.connect()
 
-        // variables used to work with Collection and indexes creation if DB Collection doesn't exist
-        // getting database list Collections
-        this.listCollections = []
-        this.mongoDatabase.listCollections({ nameonly: true })
-          .toArray((err, collectionNames) => {
-            if (!err) {
-              this.listCollections = collectionNames.slice()
-            } else {
-              this.logger.error(err)
-            }
-          })
+    this.mongoDatabase = this.client.db(this.database)
 
-        // indication that collection existence is not checked
-        this.collectionChecked = false
-        super.connect(`url: ${url}`)
-      }
-    })
+    // Variables used to work with Collections and indexes creation if DB Collection doesn't exist
+    this.listCollections = await this.mongoDatabase.listCollections(null, { nameOnly: true }).toArray()
+
+    // Indication that collection existence is not checked
+    this.collectionExists = false
+
+    await super.connect(`url: ${url}`)
   }
 
   /**
-   * Disconnection from MongoDB
-   * @return {void}
+   * Handle values by sending them to MongoDB.
+   * @param {Object[]} values - The values to send
+   * @returns {Promise<void>} - The result promise
    */
-  async disconnect() {
-    this.logger.info(`Disconnecting ${this.application.name} from MongoDB`)
-    if (this.client) {
-      await this.client.close()
-    }
-    await super.disconnect()
-  }
+  async handleValues(values) {
+    this.logger.trace(`Handle ${values.length} values.`)
 
-  /**
-   * Makes an MongoDB request with the parameters in the Object arg.
-   * @param {Object[]} entries - The entry from the event
-   * @return {Promise} - The request status
-   */
-  async makeRequest(entries) {
     let body = ''
     let collectionValue = ''
     let indexFieldsValue = ''
 
-    entries.forEach((entry) => {
+    values.forEach((entry) => {
       const {
         pointId,
         data,
@@ -145,57 +108,57 @@ class MongoDB extends ApiHandler {
       // If there are fewer groups than placeholders, vsprintf will put undefined.
       // We look for the number of 'undefined' before and after the replacement to see if this is the case
       if ((collectionValue.match(/undefined/g) || []).length > (this.collection.match(/undefined/g) || []).length) {
-        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for collection`)
+        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for the collection.`)
         return
       }
       if ((indexFieldsValue.match(/undefined/g) || []).length > (this.indexFields.match(/undefined/g) || []).length) {
-        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for indexes`)
+        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for indexes.`)
         return
       }
 
-      // convert indexFieldsValue into mongoIndexFields for inserting by insertMany function
+      // Convert indexFieldsValue into mongoIndexFields for inserting with insertMany function
       // example : "Site:XXX,Tranche:1,Repere:XXXXXXXXX"
       const mongoIndexFields = `"${indexFieldsValue}"`.replace(/:/g, '":"')
         .replace(/,/g, '","')
 
-      // Converts data into fields for inserting by insertMany function
-      let mongoFields = null
-
-      // As some use cases can produce value structured as Json Object, code is modified to process value which could be
-      // simple value (integer, float, ...) or Json object
+      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters.
+      // In fact, as some use cases can produce value structured as JSON objects, values which could be atomic values
+      // (integer, float, ...) or JSON object must be processed
       let dataValue
-      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
       if (this.useDataKeyValue) {
-        // data to use is value key of Json object data (data.value)
-        // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)
-        // If it's a json, the function return data where path is given by keyParentValue parameter
-        // even if json object containing more than one level of object.
-        // for example : data : {value: {"level1":{"level2":{value:..., timestamp:...}}}}
-        // in this context :
-        //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue string : level1.level2
+        // The data to use is the key "value" of a JSON object data (data.value)
+        // This data.value can be a JSON object or an atomic value (i.e. integer or float or string, ...)
+        // If it's a JSON, the function return a data where the path is given by keyParentValue parameter even if the
+        // JSON object contains more than one level of object.
+        // For example: data = { value: { "level1": { "level2": { value: ..., timestamp:... } } } }
+        // In this context :
+        //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue
+        // level1.level2
         //   - To retrieve this object, we use objectPath with parameters: (data.value, 'level1.level2')
         dataValue = objectPath.get(data.value, this.keyParentValue)
       } else {
-        // data to use is Json object data
+        // Data to use is the JSON object data
         dataValue = data
       }
 
       let timestamp
       if (this.timestampPathInDataValue) {
-        // case where timestamp is within the dataValue fields received.
+        // Case where the timestamp is within the dataValue fields received.
         timestamp = objectPath.get(dataValue, this.timestampPathInDataValue)
-        // once taken into account, remove the timestamp from the fields to not take it again in the other fields
+        // Once retrieved, remove the timestamp from the fields to not take it again in the other fields
         objectPath.del(dataValue, this.timestampPathInDataValue)
       } else {
-        // case where timestamp is directly at the root of the data received
+        // Case where the timestamp is directly at the root of the data received
         timestamp = entry.timestamp
       }
 
-      mongoFields = `"${this.timestampKey}":"${timestamp}"`
-      // Filter the timestamp field in the dataValue object in case we already have a timestamp from the main json object
-      Object.entries(dataValue).filter(([fieldKey]) => fieldKey !== 'timestamp').forEach(([fieldKey, fieldValue]) => {
-        mongoFields = `${mongoFields},"${fieldKey}":"${fieldValue}"`
-      })
+      // Converts data into fields for MongoDB
+      let mongoFields = `"${this.timestampKey}":"${timestamp}"`
+      // Filter the timestamp field in the dataValue object in case we already have a timestamp from the main JSON object
+      Object.entries(dataValue).filter(([fieldKey]) => fieldKey !== 'timestamp')
+        .forEach(([fieldKey, fieldValue]) => {
+          mongoFields = `${mongoFields},"${fieldKey}":"${fieldValue}"`
+        })
 
       // Append entry to body
       if (body === '') {
@@ -205,73 +168,67 @@ class MongoDB extends ApiHandler {
       }
     })
 
-    if (!this.collectionChecked) {
-      if (this.createCollection) {
-        // before inserting data in MongoDB, ensuring, for the first time, that
-        // collection exists with indexes which are based on tags indexFields
-        await this.ensureCollectionExists(collectionValue, indexFieldsValue, this.timestampKey)
-      }
+    if (!this.collectionExists && this.createCollection) {
+      // Before inserting data in MongoDB, ensure the collection exists with indexes which are based on indexFields tags
+      await this.ensureCollectionExists(collectionValue, indexFieldsValue, this.timestampKey)
     }
-    // converting body in JSON Array
-    const bodyJson = JSON.parse(`[${body}]`)
 
     // Inserting JSON Array in MongoDB
-    await this.mongoDatabase.collection(collectionValue)
-      .insertMany(bodyJson)
-    return true
+    await this.mongoDatabase.collection(collectionValue).insertMany(JSON.parse(`[${body}]`))
   }
 
   /**
-   * Ensure Collection exists and create it with indexes if not exists
-   * @param {string} collection  - The collection name
-   * @param {string[]} indexFields - array of fields which compose the index
-   * @param {string} timeStampKey - indicate the timestamp field name to add in index
-   * @return {void}
+   * Disconnection from MongoDB
+   * @returns {Promise<void>} - The result promise
    */
-  async ensureCollectionExists(collection, indexFields, timeStampKey) {
-    const collectionIndex = this.listCollections.findIndex((file) => file.name === collection)
-
-    if (collectionIndex < 0) {
-      // the collection doesn't exist, we create it with indexes
-      await this.mongoDatabase.createCollection(collection, ((createCollectionError) => {
-        if (createCollectionError) {
-          this.logger.error(`Error during the creation of collection "${collection}": ${createCollectionError}`)
-        } else {
-          this.logger.info(`Collection "${collection}" successfully created`)
-          // the collection was created, now we will create indexes based on indexFields
-
-          // 1rst step : retrieve list of index fields
-          // Remember : indexFields is a string formatted like this : "site:%2$s,unit:%3$s,sensor:%4$s"
-          const listIndexFields = []
-          const arrayTmp = `${indexFields},${timeStampKey}:xx`.replace(/"/g, '')
-            .split(/[\s,:]+/)
-
-          for (let i = 0; i < arrayTmp.length; i += 2) {
-            listIndexFields.push(arrayTmp[i])
-          }
-
-          // 2nd step : create a Json object which contain list of index fields and order (0/1)
-          let listIndex = null
-          for (let i = 0; i < listIndexFields.length; i += 1) {
-            if (!listIndex) {
-              listIndex = `"${listIndexFields[i]}":1`
-            } else {
-              listIndex = `${listIndex},"${listIndexFields[i]}":1`
-            }
-          }
-          this.mongoDatabase.collection(collection)
-            .createIndex(JSON.parse(`{${listIndex}}`), ((createIndexError) => {
-              if (createIndexError) {
-                this.logger.error(`Error during the creation of indexes for collection "${collection}": ${createIndexError}`)
-              } else {
-                this.logger.info(`Collection indexes successfully created for collection "${collection}"`)
-              }
-            }))
-        }
-      }))
+  async disconnect() {
+    this.logger.info(`Disconnecting North "${this.settings.name}" from MongoDB`)
+    if (this.client) {
+      await this.client.close()
     }
-    // disable this part of code for the next time
-    this.collectionChecked = true
+    await super.disconnect()
+  }
+
+  /**
+   * Ensure the collection exists and create it with indexes if it does not exist
+   * @param {String} collectionName  - The collection name
+   * @param {String[]} indexFields - Array of fields which compose the index
+   * @param {String} timeStampKey - Indicate the timestamp field name to add in index
+   * @returns {Promise<void>} - The result promise
+   */
+  async ensureCollectionExists(collectionName, indexFields, timeStampKey) {
+    const existingCollection = this.listCollections.find((collection) => collection.name === collectionName)
+
+    if (!existingCollection) {
+      // The collection doesn't exist, we create it with indexes
+      await this.mongoDatabase.createCollection(collectionName)
+      this.logger.info(`Collection "${collectionName}" successfully created.`)
+
+      // 1rst step: retrieve the list of index fields
+      // indexFields is a string formatted like this: "site:%2$s,unit:%3$s,sensor:%4$s"
+      const listIndexFields = []
+      const arrayTmp = `${indexFields},${timeStampKey}:xx`.replace(/"/g, '')
+        .split(/[\s,:]+/)
+
+      for (let i = 0; i < arrayTmp.length; i += 2) {
+        listIndexFields.push(arrayTmp[i])
+      }
+
+      // 2nd step: create a JSON object which contain the list of index fields and order (0/1)
+      let listIndex = null
+      for (let i = 0; i < listIndexFields.length; i += 1) {
+        if (!listIndex) {
+          listIndex = `"${listIndexFields[i]}":1`
+        } else {
+          listIndex = `${listIndex},"${listIndexFields[i]}":1`
+        }
+      }
+      await this.mongoDatabase.collection(collectionName).createIndex(JSON.parse(`{${listIndex}}`))
+      this.logger.info(`Collection indexes successfully created for collection "${collectionName}".`)
+    }
+
+    // Do not check again for the next requests
+    this.collectionExists = true
   }
 }
 

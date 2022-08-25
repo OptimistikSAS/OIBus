@@ -1,64 +1,63 @@
+const path = require('node:path')
+const os = require('node:os')
+
 const timexe = require('timexe')
-const path = require('path')
-const os = require('os')
-const EventEmitter = require('events')
 const humanizeDuration = require('humanize-duration')
 
-// Engine classes
 const BaseEngine = require('./BaseEngine.class')
 const HealthSignal = require('./HealthSignal.class')
 const MainCache = require('./cache/MainCache.class')
-const Queue = require('../services/queue.class')
+const StatusService = require('../services/status.service.class')
 
 /**
- *
- * at startup, handles initialization of applications, protocols and config.
+ * At startup, handles initialization of configuration, North and South connectors.
  * @class OIBusEngine
  */
 class OIBusEngine extends BaseEngine {
   /**
    * Constructor for OIBusEngine
    * Reads the config file and create the corresponding Object.
-   * Makes the necessary changes to the pointId attributes.
-   * Checks for critical entries such as scanModes and data sources.
+   * Checks for critical entries such as scanModes and connectors.
    * @constructor
    * @param {ConfigService} configService - The config service
    * @param {EncryptionService} encryptionService - The encryption service
+   * @return {void}
    */
   constructor(configService, encryptionService) {
     super(configService, encryptionService)
 
-    // Will only contain protocols/application used
-    // based on the config file
-    this.activeProtocols = {}
-    this.activeApis = {}
-    this.jobs = []
+    // Will only contain South/North connectors enabled based on the config file
+    this.activeSouths = []
+    this.activeNorths = []
+    this.scanLists = {}
 
     this.memoryStats = {}
     this.addValuesMessages = 0
     this.addValuesCount = 0
     this.addFileCount = 0
-    this.forwardedHealthSignalMessages = 0
 
-    // manage a queue for concurrent request to write to SQL
-    this.queue = new Queue(this.logger)
+    // Variable initialized in initEngineServices
+    this.jobs = null
+    this.engineName = null
+    this.bufferMax = null
+    this.bufferTimeoutInterval = null
+    this.cache = null
+    this.liveStatusInterval = null
+    this.safeMode = null
+    this.healthSignal = null
+    this.statusService = null
   }
 
   /**
    * Method used to init async services (like logger when loki is used with Bearer token auth)
-   * @param {object} engineConfig - the config retrieved from the file
-   * @param {string} loggerScope - the scope used for the logger
-   * @returns {Promise<void>} - The promise returns when the services are set
+   * @param {Object} engineConfig - the config retrieved from the file
+   * @param {String} loggerScope - the scope used for the logger
+   * @returns {Promise<void>} - The result promise
    */
   async initEngineServices(engineConfig, loggerScope = 'OIBusEngine') {
     await super.initEngineServices(engineConfig, loggerScope)
 
-    // Buffer delay in ms: when a protocol generates a lot of values at the same time, it may be better to accumulate them
-    // in a buffer before sending them to the engine
-    // Max buffer: if the buffer reaches this length, it will be sent to the engine immediately
-    // these parameters could be settings from OIBus UI
-    this.bufferMax = engineConfig.caching.bufferMax
-    this.bufferTimeoutInterval = engineConfig.caching.bufferTimeoutInterval
+    this.statusService = new StatusService()
 
     this.engineName = engineConfig.engineName
 
@@ -70,35 +69,53 @@ class OIBusEngine extends BaseEngine {
     Config file: ${this.configService.configFile}
     HistoryQuery config file: ${this.configService.historyQueryConfigFile},
     Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
+
+    engineConfig.scanModes.forEach(({ scanMode }) => {
+      // Initialize the scanLists with empty arrays
+      this.scanLists[scanMode] = []
+    })
+
+    this.updateEngineStatusData()
+    if (this.liveStatusInterval) {
+      clearInterval(this.liveStatusInterval)
+    }
+
+    this.liveStatusInterval = setInterval(() => {
+      this.updateEngineStatusData()
+    }, 5000)
   }
 
   /**
-   * Add a new Value from a data source to the Engine.
-   * The Engine will forward the Value to the Cache.
-   * @param {string} id - The data source id
-   * @param {object} values - array of values
-   * @return {void}
+   * Add new values from a South connector to the Engine.
+   * The Engine will forward the values to the Cache.
+   * @param {String} id - The South connector id
+   * @param {Object[]} values - Array of values
+   * @returns {Promise<void>} - The result promise
    */
   async addValues(id, values) {
-    this.logger.trace(`Engine: Add ${values?.length} values from "${this.activeProtocols[id]?.dataSource.name || id}"`)
-    Object.values(this.activeApis)
-      .forEach((api) => {
-        if (api.canHandleValues && api.isSubscribed(id)) {
-          api.cacheValues(id, values)
-        }
-      })
+    // When coming from an external source, the south won't be found.
+    const southOrigin = this.activeSouths.find((south) => south.settings.id === id)
+    this.logger.trace(`Add ${values.length} values to cache from South "${southOrigin?.settings.name || id}".`)
+    if (values.length) {
+      this.activeNorths.filter((north) => north.canHandleValues && north.isSubscribed(id))
+        .forEach((north) => {
+          north.cacheValues(id, values)
+        })
+    }
   }
 
   /**
-   * Add a new File from an data source to the Engine.
-   * The Engine will forward the File to the Cache.
-   * @param {string} id - The data source id
-   * @param {string} filePath - The path to the File
-   * @param {boolean} preserveFiles - Whether to preserve the file at the original location
-   * @return {void}
+   * Add a new file from a South connector to the Engine.
+   * The Engine will forward the file to the Cache.
+   * @param {String} southId - The South connector id
+   * @param {String} filePath - The path to the file
+   * @param {Boolean} preserveFiles - Whether to preserve the file at the original location
+   * @returns {Promise<void>} - The result promise
    */
-  async addFile(id, filePath, preserveFiles) {
-    this.logger.debug(`Engine addFile(${filePath}) from "${this.activeProtocols[id]?.dataSource.name || id}", preserveFiles:${preserveFiles}`)
+  async addFile(southId, filePath, preserveFiles) {
+    // When coming from an external source, the south won't be found.
+    const southOrigin = this.activeSouths.find((south) => south.settings.id === southId)
+    this.logger.trace(`Add file "${filePath}" to cache from South "${southOrigin?.settings.name || southId}".`)
 
     const timestamp = new Date().getTime()
     // When compressed file is received the name looks like filename.txt.gz
@@ -110,23 +127,18 @@ class OIBusEngine extends BaseEngine {
       // Move or copy the file into the cache folder
       await MainCache.transferFile(this.logger, filePath, cachePath, preserveFiles)
 
-      Object.values(this.activeApis)
-        .forEach((api) => {
-          if (api.canHandleFiles && api.isSubscribed(id)) {
-            api.cacheFile(cachePath, timestamp)
-          }
-        })
+      await Promise.all(this.activeNorths.filter((north) => north.canHandleFiles && north.isSubscribed(southId))
+        .map((north) => north.cacheFile(cachePath, timestamp)))
     } catch (error) {
       this.logger.error(error)
     }
   }
 
   /**
-   * Creates a new instance for every application and protocol and connects them.
+   * Creates a new instance for every North and South connectors and initialize them.
    * Creates CronJobs based on the ScanModes and starts them.
-   *
-   * @param {boolean} safeMode - Whether to start in safe mode
-   * @return {void}
+   * @param {Boolean} safeMode - Whether to start in safe mode
+   * @returns {Promise<void>} - The result promise
    */
   async start(safeMode = false) {
     const {
@@ -134,8 +146,9 @@ class OIBusEngine extends BaseEngine {
       northConfig,
       engineConfig,
     } = this.configService.getConfig()
+
+    // 1. Engine
     await this.initEngineServices(engineConfig)
-    this.initializeStatusData()
 
     this.safeMode = safeMode || engineConfig.safeMode
     if (this.safeMode) {
@@ -143,123 +156,80 @@ class OIBusEngine extends BaseEngine {
       return
     }
 
-    // 2. start Protocol for each data sources
-    // eslint-disable-next-line no-restricted-syntax
-    for (const dataSource of southConfig.dataSources) {
-      const {
-        id,
-        protocol,
-        enabled,
-        name,
-      } = dataSource
-      if (enabled) {
-        try {
-          // Initiate the correct Protocol
-          const south = this.createSouth(protocol, dataSource)
-          if (south) {
-            this.activeProtocols[id] = south
-            // eslint-disable-next-line no-await-in-loop
-            await this.activeProtocols[id].init()
-            this.activeProtocols[id].connect()
-          } else {
-            this.logger.error(`Protocol for ${name} is not found: ${protocol}`)
-          }
-        } catch (error) {
-          this.logger.error(`Error when starting south connector ${name}: ${error}`)
-        }
-      }
-    }
-
-    // 3. start Applications
-    // eslint-disable-next-line no-restricted-syntax
-    for (const application of northConfig.applications) {
-      const {
-        id,
-        api,
-        enabled,
-        name,
-      } = application
-      // select the right api handler
-      if (enabled) {
-        try {
-        // Initiate the correct API
-          const north = this.createNorth(api, application)
-          if (north) {
-            this.activeApis[id] = north
-            // eslint-disable-next-line no-await-in-loop
-            await this.activeApis[id].init()
-            this.activeApis[id].connect()
-          } else {
-            this.logger.error(`API for ${name} is not found: ${api}`)
-          }
-        } catch (error) {
-          this.logger.error(`Error when starting north connector ${name}: ${error}`)
-        }
-      }
-    }
-
-    // 5. Initialize scan lists
-
-    // Associate the scanMode to all corresponding data sources
-    // so the engine will know which datasource to activate when a
-    // scanMode has a tick.
-
-    // Initialize the scanLists with empty arrays
-    this.scanLists = {}
-    engineConfig.scanModes.forEach(({ scanMode }) => {
-      this.scanLists[scanMode] = []
-    })
-
-    // Browse config file for the various dataSource and points and build the object scanLists
-    // with the list of dataSource to activate for each ScanMode.
-    southConfig.dataSources.forEach((dataSource) => {
-      if (dataSource.enabled) {
-        if (dataSource.scanMode) {
-          if (!this.scanLists[dataSource.scanMode]) {
-            this.logger.error(`dataSource: ${dataSource.name} has a unknown scan mode: ${dataSource.scanMode}`)
-          } else if (!this.scanLists[dataSource.scanMode].includes(dataSource.id)) {
-            // add the source for this scan only if not already there
-            this.scanLists[dataSource.scanMode].push(dataSource.id)
-          }
-        } else if (Array.isArray(dataSource.points) && dataSource.points.length > 0) {
-          dataSource.points.forEach((point) => {
-            if (point.scanMode !== 'listen') {
-              if (!this.scanLists[point.scanMode]) {
-                this.logger.error(`point: ${point.pointId} in dataSource: ${dataSource.name} has a unknown scan mode: ${point.scanMode}`)
-              } else if (!this.scanLists[point.scanMode].includes(dataSource.id)) {
-                // add the source for this scan only if not already there
-                this.scanLists[point.scanMode].push(dataSource.id)
-              }
+    // 2. South connectors
+    // Create South connectors
+    this.activeSouths = southConfig.dataSources
+      .filter(({ enabled }) => enabled)
+      .map((settings) => {
+        const south = this.createSouth(settings)
+        if (south) {
+          // Associate the scanMode to all corresponding South connectors so the engine will know which South to
+          // activate when a scanMode has a tick.
+          if (settings.scanMode) {
+            if (!this.scanLists[settings.scanMode]) {
+              this.logger.error(`South connector ${settings.name} has an unknown scan mode: ${settings.scanMode}`)
+            } else if (!this.scanLists[settings.scanMode].includes(settings.id)) {
+              // Add the South for this scan only if not already there
+              this.scanLists[settings.scanMode].push(settings.id)
             }
-          })
-        } else {
-          this.logger.error(` dataSource: ${dataSource.name} has no scan mode defined`)
+          } else if (Array.isArray(settings.points) && settings.points.length > 0) {
+            settings.points.forEach((point) => {
+              if (point.scanMode !== 'listen') {
+                if (!this.scanLists[point.scanMode]) {
+                  this.logger.error(`Point: ${point.pointId} in South connector ${settings.name} has an unknown scan mode: ${point.scanMode}`)
+                } else if (!this.scanLists[point.scanMode].includes(settings.id)) {
+                  // Add the South for this scan only if not already there
+                  this.scanLists[point.scanMode].push(settings.id)
+                }
+              }
+            })
+          } else {
+            this.logger.error(`South "${settings.name}" has no scan mode defined.`)
+          }
         }
-      }
-    })
+        return south
+      })
+    // Init South connectors (logger, status, locale variables...)
+    await Promise.all(this.activeSouths.map((south) => south.init()))
+    // Connect South with a non-blocking way to go on with the start operations
+    this.activeSouths.forEach((south) => south.connect())
     this.logger.debug(JSON.stringify(this.scanLists, null, ' '))
 
-    // 6. Start the timers for each scan modes
-    engineConfig.scanModes.forEach(({
-      scanMode,
-      cronTime,
-    }) => {
-      if (scanMode !== 'listen') {
+    // 3. North connectors
+    // Create North connectors
+    this.activeNorths = northConfig.applications
+      .filter(({ enabled }) => enabled)
+      .map((settings) => this.createNorth(settings))
+    // Init North connectors (logger, status, locale variables...)
+    await Promise.all(this.activeNorths.map((north) => north.init()))
+    // Connect North with a non-blocking way to go on with the start operations
+    this.activeNorths.forEach((north) => north.connect())
+
+    // 4. Start the timers for each scan modes
+    this.jobs = engineConfig.scanModes
+      .filter((scanMode) => scanMode !== 'listen')
+      .map(({
+        scanMode,
+        cronTime,
+      }) => {
         const job = timexe(cronTime, () => {
-          // on each scan, activate each protocol
+          // On each scan, activate each South connector
           this.scanLists[scanMode].forEach(async (id) => {
-            await this.activeProtocols[id].onScan(scanMode)
+            const activeSouth = this.activeSouths.find((south) => south.settings.id === id)
+            if (activeSouth) {
+              await activeSouth.onScan(scanMode)
+            } else {
+              this.logger.error(`The South connector ${id} has not been initialized`)
+            }
           })
         })
         if (job.result !== 'ok') {
-          this.logger.error(`The scan ${scanMode} could not start : ${job.error}`)
-        } else {
-          this.jobs.push(job.id)
+          this.logger.error(`The scan mode ${scanMode} could not start: ${job.error}`)
         }
-      }
-    })
+        return job
+      })
 
-    // 7. Start HealthSignal
+    // 5. Start HealthSignal
     this.healthSignal = new HealthSignal(this)
     this.healthSignal.start()
 
@@ -267,8 +237,8 @@ class OIBusEngine extends BaseEngine {
   }
 
   /**
-   * Gracefully stop every Timer, Protocol and Application
-   * @return {Promise<void>} - The stop promise
+   * Gracefully stop every timer, South and North connectors
+   * @returns {Promise<void>} - The result promise
    */
   async stop() {
     if (this.liveStatusInterval) {
@@ -285,89 +255,37 @@ class OIBusEngine extends BaseEngine {
     }
 
     // Stop timers
-    this.jobs.forEach((id) => {
-      timexe.remove(id)
+    this.jobs.forEach((job) => {
+      if (job.result === 'ok') {
+        timexe.remove(job.id)
+      }
     })
     this.jobs = []
+    this.scanLists = {}
 
-    // Stop Protocols
-    // eslint-disable-next-line no-restricted-syntax
-    for (const protocol of Object.values(this.activeProtocols)) {
-      this.logger.info(`Stopping south ${protocol.dataSource.name} (${protocol.dataSource.id})`)
-      // eslint-disable-next-line no-await-in-loop
-      await protocol.disconnect()
-    }
-    this.activeProtocols = {}
+    // Stop South connectors
+    await Promise.all(this.activeSouths.map((south) => {
+      this.logger.info(`Stopping South ${south.settings.name} (${south.settings.id})`)
+      return south.disconnect()
+    }))
+    this.activeSouths = []
 
-    // Log cache data
-    const apisCacheStats = this.getCacheStatsForApis()
-    this.logger.info(`API stats: ${JSON.stringify(apisCacheStats)}`)
+    // Stop North connectors
+    await Promise.all(this.activeNorths.map((north) => {
+      this.logger.info(`Stopping North ${north.settings.name} (${north.settings.id})`)
+      return north.disconnect()
+    }))
+    this.activeNorths = []
 
-    const protocolsCacheStats = this.getCacheStatsForProtocols()
-    this.logger.info(`Protocol stats: ${JSON.stringify(protocolsCacheStats)}`)
-
-    // Stop Applications
-    // eslint-disable-next-line no-restricted-syntax
-    for (const application of Object.values(this.activeApis)) {
-      this.logger.info(`Stopping north ${application.application.name} (${application.application.id})`)
-      // eslint-disable-next-line no-await-in-loop
-      await application.disconnect()
-    }
-    this.activeApis = {}
+    this.logger.info(JSON.stringify(this.statusService.getStatus(), null, 2))
 
     // Stop the listener
-    this.eventEmitters['/engine/sse']?.events?.removeAllListeners()
-    this.eventEmitters['/engine/sse']?.stream?.destroy()
-  }
-
-  /**
-   * Return available North applications
-   * @return {String[]} - Available North applications
-   */
-  /* eslint-disable-next-line class-methods-use-this */
-  getNorthList() {
-    this.logger.debug('Getting North applications')
-    return Object.entries(this.getNorthEngineList())
-      .map(([connectorName, { category }]) => ({
-        connectorName,
-        category,
-      }))
-  }
-
-  /**
-   * Return available South protocols
-   * @return {String[]} - Available South protocols
-   */
-
-  /* eslint-disable-next-line class-methods-use-this */
-  getSouthList() {
-    this.logger.debug('Getting South protocols')
-    return Object.entries(this.getSouthEngineList())
-      .map(([connectorName, { category }]) => ({
-        connectorName,
-        category,
-      }))
-  }
-
-  /**
-   * Get OIBus version
-   * @returns {string} - The OIBus version
-   */
-  getVersion() {
-    return this.version
-  }
-
-  /**
-   * Get active Protocols.
-   * @returns {string[]} - The active Protocols
-   */
-  getActiveProtocols() {
-    return Object.keys(this.activeProtocols)
+    this.statusService.stop()
   }
 
   /**
    * Get memory usage information.
-   * @returns {object} - The memory usage information
+   * @returns {Object} - The memory usage information
    */
   getMemoryUsage() {
     const memoryUsage = process.memoryUsage()
@@ -400,34 +318,13 @@ class OIBusEngine extends BaseEngine {
       }, {})
   }
 
-  getCacheStatsForApis() {
-    // Get points APIs stats
-    const pointApis = Object.values(this.activeApis).filter((api) => api.canHandleValues)
-    const pointApisStats = pointApis.map((api) => api.getValueCacheStats())
-
-    // Get files APIs stats
-    const fileApis = Object.values(this.activeApis).filter((api) => api.canHandleFiles)
-    const fileApisStats = fileApis.map((api) => api.getFileCacheStats())
-
-    // Merge results
-    return [...pointApisStats, ...fileApisStats]
-  }
-
-  getCacheStatsForProtocols() {
-    const pointProtocols = Object.values(this.activeProtocols).filter((protocol) => protocol.handlesPoints)
-    return pointProtocols.map((protocol) => ({
-      name: protocol.dataSource.name,
-      count: protocol.addPointsCount || 0,
-    }))
-  }
-
   /**
    * Get status information.
    * @returns {Object} - The status information
    */
   getOIBusInfo() {
     return {
-      version: this.getVersion(),
+      version: this.version,
       architecture: process.arch,
       'Current directory': process.cwd(),
       'Node version': process.version,
@@ -444,7 +341,7 @@ class OIBusEngine extends BaseEngine {
 
   /**
    * Get cache folder
-   * @return {string} - The cache folder
+   * @return {String} - The cache folder
    */
   getCacheFolder() {
     const { engineConfig } = this.configService.getConfig()
@@ -455,21 +352,6 @@ class OIBusEngine extends BaseEngine {
    * Update engine status data to be displayed on the home screen
    * @returns {void}
    */
-  initializeStatusData() {
-    if (!this.eventEmitters['/engine/sse']) {
-      this.eventEmitters['/engine/sse'] = {}
-    }
-    this.eventEmitters['/engine/sse'].events = new EventEmitter()
-    this.eventEmitters['/engine/sse'].events.on('data', this.listener)
-    this.updateEngineStatusData()
-    if (this.liveStatusInterval) {
-      clearInterval(this.liveStatusInterval)
-    }
-    this.liveStatusInterval = setInterval(() => {
-      this.updateEngineStatusData()
-    }, 5000)
-  }
-
   updateEngineStatusData() {
     const processCpuUsage = process.cpuUsage()
     const processUptime = 1000 * 1000 * process.uptime()
@@ -484,30 +366,32 @@ class OIBusEngine extends BaseEngine {
     const memoryUsage = this.getMemoryUsage()
 
     const northConnectorsStatus = {}
-    Object.values(this.activeApis).forEach((activeNorthConnector) => {
+    this.activeNorths.forEach((activeNorthConnector) => {
+      const northStatus = activeNorthConnector.statusService.getStatus()
       if (activeNorthConnector.canHandleValues) {
         northConnectorsStatus[`Number of values sent to North "${
-          activeNorthConnector.application.name}"`] = activeNorthConnector.statusData['Number of values sent since OIBus has started']
+          activeNorthConnector.settings.name}"`] = northStatus['Number of values sent since OIBus has started']
       }
       if (activeNorthConnector.canHandleFiles) {
         northConnectorsStatus[`Number of files sent to North "${
-          activeNorthConnector.application.name}"`] = activeNorthConnector.statusData['Number of files sent since OIBus has started']
+          activeNorthConnector.settings.name}"`] = northStatus['Number of files sent since OIBus has started']
       }
     })
 
     const southConnectorsStatus = {}
-    Object.values(this.activeProtocols).forEach((activeSouthConnector) => {
+    this.activeSouths.forEach((activeSouthConnector) => {
+      const southStatus = activeSouthConnector.statusService.getStatus()
       if (activeSouthConnector.handlesPoints) {
         southConnectorsStatus[`Number of values retrieved from South "${
-          activeSouthConnector.dataSource.name}"`] = activeSouthConnector.statusData['Number of values since OIBus has started']
+          activeSouthConnector.settings.name}"`] = southStatus['Number of values since OIBus has started']
       }
       if (activeSouthConnector.handlesFiles) {
         southConnectorsStatus[`Number of files retrieved from South "${
-          activeSouthConnector.dataSource.name}"`] = activeSouthConnector.statusData['Number of files since OIBus has started']
+          activeSouthConnector.settings.name}"`] = southStatus['Number of files since OIBus has started']
       }
     })
 
-    this.updateStatusDataStream({
+    this.statusService.updateStatusDataStream({
       'Up time': humanizeDuration(1000 * process.uptime(), { round: true }),
       'CPU usage': `${cpuUsagePercentage}%`,
       'OS free memory': `${freeMemory} GB / ${totalMemory} GB (${percentMemory} %)`,
@@ -519,23 +403,6 @@ class OIBusEngine extends BaseEngine {
       ...northConnectorsStatus,
       ...southConnectorsStatus,
     })
-  }
-
-  updateStatusDataStream(statusData = {}) {
-    this.statusData = { ...this.statusData, ...statusData }
-    this.eventEmitters['/engine/sse'].statusData = this.statusData
-    this.eventEmitters['/engine/sse']?.events?.emit('data', this.statusData)
-  }
-
-  /**
-   * Method used by the eventEmitter of the current protocol to write data to the socket and send them to the frontend
-   * @param {object} data - The json object of data to send
-   * @return {void}
-   */
-  listener = (data) => {
-    if (data) {
-      this.eventEmitters['/engine/sse']?.stream?.write(`data: ${JSON.stringify(data)}\n\n`)
-    }
   }
 }
 

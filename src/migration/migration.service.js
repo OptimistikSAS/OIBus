@@ -1,8 +1,9 @@
 const fs = require('fs/promises')
 
-const ConfigService = require('../services/config.service.class')
 const migrationRules = require('./migrationRules')
 const Logger = require('../engine/logger/Logger.class')
+
+const { tryReadFile, backupConfigFile, saveConfig } = require('../services/utils')
 
 const REQUIRED_SCHEMA_VERSION = 25
 const DEFAULT_VERSION = 1
@@ -63,14 +64,14 @@ const migrateImpl = async (configVersion, config, configFile, logger) => {
     logger.info(`Unable to reach version ${REQUIRED_SCHEMA_VERSION} during migration`)
   }
 
-  ConfigService.backupConfigFile(configFile)
-  ConfigService.saveConfig(configFile, config)
+  await backupConfigFile(configFile)
+  await saveConfig(configFile, config)
 }
 
 /**
  * Migrate if needed.
  * @param {string} configFile - The config file
- * @returns {Promise<void>} - Promise resolve if migration succeeds
+ * @returns {Promise<void>} - The result promise
  */
 const migrate = async (configFile) => {
   const logger = new Logger('OIBus-migration')
@@ -84,7 +85,7 @@ const migrate = async (configFile) => {
       logger.warn('No settings file found. No need to update')
     }
     if (fileStat) {
-      const config = ConfigService.tryReadFile(configFile)
+      const config = await tryReadFile(configFile)
       const configVersion = config.schemaVersion || DEFAULT_VERSION
       if (configVersion < REQUIRED_SCHEMA_VERSION) {
         logger.info(`Config file is not up-to-date. Starting migration from version ${configVersion} to ${REQUIRED_SCHEMA_VERSION}`)
