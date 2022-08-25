@@ -1,26 +1,25 @@
-const fs = require('fs/promises')
+const fs = require('node:fs/promises')
+
 const databaseService = require('../../services/database.service')
 
 class MainCache {
-  static STATUS = {
-    SUCCESS: 0,
-    LOGIC_ERROR: -1,
-    COMMUNICATION_ERROR: -2,
-  }
-
   static valuesErrorDatabase = null
 
   static filesErrorDatabase = null
 
-  constructor(api) {
-    this.api = api
-    this.logger = api.logger
-    this.apiCacheConfig = api.application.caching
+  /**
+   * @param {String} northId - The North ID connector
+   * @param {Logger} logger - The logger
+   * @param {String} cacheFolder - The Engine cache folder
+   * @return {void}
+   */
+  constructor(northId, logger, cacheFolder) {
+    this.northId = northId
+    this.logger = logger
+
+    this.cacheFolder = cacheFolder
+    this.databasePath = `${this.cacheFolder}/${this.northId}.db`
     this.database = null
-    this.timeout = null
-    this.sendInProgress = false
-    this.resendImmediately = false
-    this.cacheStat = 0
   }
 
   /**
@@ -76,12 +75,11 @@ class MainCache {
 
   /**
    * Transfer the file into the cache folder.
-   *
    * @param {Logger} logger - The logger
    * @param {string} filePath - The file path
    * @param {string} cachePath - The cache path
    * @param {boolean} preserveFiles - Whether to preserve the file
-   * @returns {Promise<*>} - The result promise
+   * @returns {Promise<void>} - The result promise
    */
   static async transferFile(logger, filePath, cachePath, preserveFiles) {
     logger.debug(`transferFile(${filePath}) - preserveFiles:${preserveFiles}, cachePath:${cachePath}`)

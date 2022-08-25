@@ -2,23 +2,24 @@ const { vsprintf } = require('sprintf-js')
 const mqtt = require('mqtt')
 const objectPath = require('object-path')
 
-const ApiHandler = require('../ApiHandler.class')
+const NorthConnector = require('../NorthConnector.class')
 
 /**
- * Class MQTT - generates and sends MQTT messages
+ * Class MQTT - Publish data to a MQTT broker
  */
-class MQTT extends ApiHandler {
+class MQTT extends NorthConnector {
   static category = 'IoT'
 
   /**
    * Constructor for MQTT
    * @constructor
-   * @param {Object} applicationParameters - The application parameters
-   * @param {BaseEngine} engine - The Engine
+   * @param {Object} settings - The North connector settings
+   * @param {BaseEngine} engine - The engine
    * @return {void}
    */
-  constructor(applicationParameters, engine) {
-    super(applicationParameters, engine)
+  constructor(settings, engine) {
+    super(settings, engine)
+    this.canHandleValues = true
 
     const {
       url,
@@ -33,13 +34,12 @@ class MQTT extends ApiHandler {
       topic,
       useDataKeyValue,
       keyParentValue,
-    } = this.application.MQTT
-
+    } = this.settings.MQTT
     this.url = url
     this.qos = qos
-    this.clientId = `${engine.engineName}-${this.application.id}`
+    this.clientId = `${engine.engineName}-${this.settings.id}`
     this.username = username
-    this.password = Buffer.from(this.encryptionService.decryptText(password))
+    this.password = password
     this.keyFile = keyFile
     this.certFile = certFile
     this.caFile = caFile
@@ -49,39 +49,21 @@ class MQTT extends ApiHandler {
     this.useDataKeyValue = useDataKeyValue
     this.keyParentValue = keyParentValue
 
-    this.canHandleValues = true
+    // Initialized at connection
+    this.client = null
   }
 
   /**
-   * Handle values by sending them to MQTT North.
-   * @param {object[]} values - The values
-   * @return {Promise} - The handle status
-   */
-  async handleValues(values) {
-    this.logger.trace(`MQTT handleValues() call with ${values.length} values`)
-    const successCount = await this.publishValues(values)
-    if (successCount === 0) {
-      throw ApiHandler.STATUS.COMMUNICATION_ERROR
-    }
-    this.updateStatusDataStream({
-      'Last handled values at': new Date().toISOString(),
-      'Number of values sent since OIBus has started': this.statusData['Number of values sent since OIBus has started'] + values.length,
-      'Last added point id (value)': `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`,
-    })
-    return successCount
-  }
-
-  /**
-   * Connection to Broker MQTT
-   * @param {string} _additionalInfo - connection information to display in the logger
-   * @return {void}
+   * Connection to a MQTT broker
+   * @param {String} _additionalInfo - Connection information to display in the logger
+   * @returns {Promise<void>} - The result promise
    */
   async connect(_additionalInfo = '') {
-    this.logger.info(`Connecting ${this.application.name} to ${this.url}...`)
+    this.logger.info(`Connecting North "${this.settings.name}" to "${this.url}".`)
 
     const options = {
       username: this.username,
-      password: this.password,
+      password: this.password ? Buffer.from(this.encryptionService.decryptText(this.password)) : '',
       clientId: this.clientId,
       key: this.certificate.privateKey,
       cert: this.certificate.cert,
@@ -90,45 +72,55 @@ class MQTT extends ApiHandler {
     }
     this.client = mqtt.connect(this.url, options)
 
-    this.client.on('connect', this.handleConnectEvent.bind(this))
-    this.client.on('error', this.handleConnectError.bind(this))
+    this.client.on('connect', this.onConnect)
+    this.client.on('error', this.onError)
   }
 
   /**
-   * Handle successful connection event.
-   * @return {void}
+   * Called on 'connect' event for MQTT client
+   * @returns {Promise<void>} - The result promise
    */
-  handleConnectEvent() {
-    super.connect(`url: ${this.url}`)
+  async onConnect() {
+    await super.connect(`url: "${this.url}"`)
   }
 
   /**
-   * Handle connection error event.
-   * @param {object} error - The error
-   * @return {void}
+   * @param {String} error - The error to log
+   * Called on 'error' event for MQTT client
+   * @returns {Promise<void>} - The result promise
    */
-  handleConnectError(error) {
+  async onError(error) {
     this.logger.error(error)
   }
 
   /**
+   * Handle values by sending them to the MQTT broker.
+   * @param {Object[]} values - The values to send
+   * @returns {Promise<void>} - The result promise
+   */
+  async handleValues(values) {
+    this.logger.trace(`Handle ${values.length} values.`)
+    await Promise.all(values.map((value) => this.publishValue(value)))
+  }
+
+  /**
    * Disconnection from MQTT Broker
-   * @return {void}
+   * @returns {Promise<void>} - The result promise
    */
   async disconnect() {
-    this.logger.info(`Disconnecting ${this.application.name} from ${this.url}`)
+    this.logger.info(`Disconnecting North "${this.settings.name}" from "${this.url}".`)
     this.client.end(true)
     await super.disconnect()
   }
 
   /**
    * Publish MQTT message.
-   * @param {object} entry - The entry to publish
-   * @returns {Promise} - The publish status
+   * @param {Object} value - The value to publish
+   * @returns {Promise<void>} - The result promise
    */
-  publishValue(entry) {
+  publishValue(value) {
     return new Promise((resolve, reject) => {
-      const { pointId, data } = entry
+      const { pointId, data } = value
 
       const mainRegExp = new RegExp(this.regExp)
       const groups = mainRegExp.exec(pointId)
@@ -137,49 +129,39 @@ class MQTT extends ApiHandler {
 
       const topicValue = vsprintf(this.topic, groups)
 
-      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
+      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters.
+      // In fact, as some use cases can produce value structured as JSON objects, values which could be atomic values
+      // (integer, float, ...) or JSON object must be processed
       let dataValue
       if (this.useDataKeyValue) {
-        // data to use is value key of Json object data (data.value)
-        // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)
-        // If it's a json the function return data where "address" is given by keyParentValue parameter
+        // The data to use is the key "value" of a JSON object data (data.value)
+        // This data.value can be a JSON object or an atomic value (i.e. integer or float or string, ...)
+        // If it's a JSON, the function return a data where the path is given by keyParentValue parameter even if the
+        // JSON object contains more than one level of object.
+        // For example: data = { value: { "level1": { "level2": { value: ..., timestamp:... } } } }
+        // In this context :
+        //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue
+        // level1.level2
+        //   - To retrieve this object, we use objectPath with parameters: (data.value, 'level1.level2')
         dataValue = objectPath.get(data.value, this.keyParentValue)
       } else {
-        // data to use is Json object data
+        // Data to use is the JSON object data
         dataValue = data
       }
 
-      this.client.publish(topicValue, JSON.stringify(dataValue), { qos: this.qos }, (error) => {
-        if (error) {
-          reject(error)
-        } else {
-          resolve()
-        }
-      })
+      this.client.publish(
+        topicValue,
+        JSON.stringify(dataValue),
+        { qos: this.qos },
+        (error) => {
+          if (error) {
+            reject(error)
+          } else {
+            resolve()
+          }
+        },
+      )
     })
-  }
-
-  /**
-   * Makes an MQTT publish message with the parameters in the Object arg.
-   * @param {Object[]} entries - The entry from the event
-   * @return {Promise} - The request status
-   */
-  async publishValues(entries) {
-    let successCount = 0
-    try {
-      // Disable ESLint check because we need for..of loop to support async calls
-      // eslint-disable-next-line no-restricted-syntax
-      for (const entry of entries) {
-        // Disable ESLint check because we want to publish values one by one
-        // eslint-disable-next-line no-await-in-loop
-        await this.publishValue(entry)
-        successCount += 1
-      }
-    } catch (error) {
-      this.logger.error(error)
-    }
-
-    return successCount
   }
 }
 

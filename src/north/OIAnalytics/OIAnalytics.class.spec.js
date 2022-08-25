@@ -1,83 +1,99 @@
-const fs = require('fs/promises')
+const fs = require('node:fs/promises')
+
 const OIAnalytics = require('./OIAnalytics.class')
+
 const { defaultConfig: config } = require('../../../tests/testConfig')
 
-// Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.requestService = { httpSend: jest.fn() }
-engine.eventEmitters = {}
-
-// Mock the logger
-jest.mock('../../engine/logger/Logger.class')
-
-let oiAnalytics = null
-const timestamp = new Date().toISOString()
-const oiAnalyticsConfig = {
-  id: 'north-oianalytics',
-  name: 'RawFileSender',
-  enabled: false,
-  api: 'OIAnalytics',
-  caching: {
-    sendInterval: 15000,
-    retryInterval: 10000,
-  },
-  OIAnalytics: {
-    host: 'https://hostname',
-    endpoint: '/api/optimistik/data/values/upload',
-    authentication: {
-      type: 'Basic',
-      username: 'anyuser',
-      password: 'anypass',
-    },
-  },
-  proxy: '',
-  subscribedTo: [],
+// Mock OIBusEngine
+const engine = {
+  configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  requestService: { httpSend: jest.fn() },
+  getCacheFolder: jest.fn(),
 }
 
-beforeEach(async () => {
-  jest.resetAllMocks()
-  jest.clearAllMocks()
-  oiAnalytics = new OIAnalytics(oiAnalyticsConfig, engine)
-  await oiAnalytics.init()
-})
+// Mock services
+jest.mock('../../services/database.service')
+jest.mock('../../engine/logger/Logger.class')
+jest.mock('../../services/status.service.class')
+jest.mock('../../services/EncryptionService.class', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
+jest.mock('../../engine/cache/ValueCache.class')
+jest.mock('../../engine/cache/FileCache.class')
 
-describe('OIAnalytics', () => {
+const nowDateString = '2020-02-02T02:02:02.222Z'
+let settings = null
+let north = null
+
+describe('North OIAnalytics', () => {
+  beforeEach(async () => {
+    jest.resetAllMocks()
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString))
+
+    settings = {
+      id: 'northId',
+      name: 'oia',
+      enabled: false,
+      api: 'OIAnalytics',
+      caching: {
+        sendInterval: 15000,
+        retryInterval: 10000,
+      },
+      OIAnalytics: {
+        host: 'https://hostname',
+        endpoint: '/api/optimistik/data/values/upload',
+        authentication: {
+          type: 'Basic',
+          username: 'anyuser',
+          password: 'anypass',
+        },
+      },
+      proxy: '',
+      subscribedTo: [],
+    }
+    north = new OIAnalytics(settings, engine)
+    await north.init()
+  })
+
   it('should be properly initialized', () => {
-    expect(oiAnalytics.canHandleValues).toBeTruthy()
-    expect(oiAnalytics.canHandleFiles).toBeTruthy()
+    expect(north.canHandleValues).toBeTruthy()
+    expect(north.canHandleFiles).toBeTruthy()
   })
 
   it('should properly handle values', async () => {
     const values = [
       {
         pointId: 'pointId',
-        timestamp,
+        timestamp: nowDateString,
         data: { value: 666, quality: 'good' },
-        name: 'South',
       },
     ]
-    await oiAnalytics.handleValues(values)
+    await north.handleValues(values)
 
-    const expectedUrl = `${oiAnalyticsConfig.OIAnalytics.host}/api/oianalytics/oibus/time-values?dataSourceId=${oiAnalyticsConfig.name}`
-    const expectedAuthentication = oiAnalyticsConfig.OIAnalytics.authentication
+    const expectedUrl = `${settings.OIAnalytics.host}/api/oianalytics/oibus/time-values?dataSourceId=${settings.name}`
+    const expectedAuthentication = settings.OIAnalytics.authentication
     const expectedBody = JSON.stringify(values.map((value) => ({
+      pointId: value.pointId,
       timestamp: value.timestamp,
       data: value.data,
-      pointId: value.pointId,
     })))
     const expectedHeaders = { 'Content-Type': 'application/json' }
-    expect(engine.requestService.httpSend).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, expectedBody, expectedHeaders)
+    expect(engine.requestService.httpSend).toHaveBeenCalledWith(
+      expectedUrl,
+      'POST',
+      expectedAuthentication,
+      null,
+      expectedBody,
+      expectedHeaders,
+    )
   })
 
   it('should properly handle files', async () => {
     const filePath = '/path/to/file/example.file'
     jest.spyOn(fs, 'stat').mockImplementation(() => ({ size: 1000 }))
 
-    await oiAnalytics.handleFile(filePath)
+    await north.handleFile(filePath)
 
-    const expectedUrl = `${oiAnalyticsConfig.OIAnalytics.host}/api/oianalytics/value-upload/file?dataSourceId=${oiAnalyticsConfig.name}`
-    const expectedAuthentication = oiAnalyticsConfig.OIAnalytics.authentication
+    const expectedUrl = `${settings.OIAnalytics.host}/api/oianalytics/value-upload/file?dataSourceId=${settings.name}`
+    const expectedAuthentication = settings.OIAnalytics.authentication
     expect(engine.requestService.httpSend).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, filePath)
   })
 })

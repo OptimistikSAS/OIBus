@@ -1,88 +1,94 @@
 const mqtt = require('mqtt')
 
-const ApiHandler = require('../ApiHandler.class')
 const MQTT = require('./MQTT.class')
-const { defaultConfig: config } = require('../../../tests/testConfig')
 
-const EncryptionService = require('../../services/EncryptionService.class')
+const { defaultConfig: config } = require('../../../tests/testConfig')
 
 // Mock mqtt
 jest.mock('mqtt', () => ({ connect: jest.fn() }))
 
-// Mock logger
-jest.mock('../../engine/logger/Logger.class')
-
-// Mock EncryptionService
-EncryptionService.getInstance = () => ({ decryptText: (password) => password })
-
-// Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.engineName = 'Test MQTT'
-engine.logger = { error: jest.fn(), info: jest.fn(), trace: jest.fn() }
-engine.eventEmitters = {}
-
-const CertificateService = jest.mock('../../services/CertificateService.class')
-CertificateService.init = jest.fn()
-CertificateService.logger = engine.logger
-
-const mqttConfig = {
-  id: 'north-mqtt',
-  name: 'mqtt',
-  api: 'MQTT',
-  enabled: true,
-  MQTT: {
-    password: 'anypass',
-    url: 'mqtt://hostname:1883',
-    username: 'anyuser',
-    qos: 1,
-    regExp: '(.*)/',
-    topic: '%1$s',
-    keyFile: '',
-    certFile: '',
-    caFile: '',
-    rejectUnauthorized: false,
-    useDataKeyValue: false,
-    keyParentValue: '',
-  },
-  caching: {
-    sendInterval: 10000,
-    retryInterval: 5000,
-    groupCount: 1000,
-    maxSendCount: 10000,
-  },
-  subscribedTo: [],
+// Mock OIBusEngine
+const engine = {
+  configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  requestService: { httpSend: jest.fn() },
+  getCacheFolder: jest.fn(),
 }
-let mqttNorth = null
 
-beforeEach(async () => {
-  jest.resetAllMocks()
-  jest.clearAllMocks()
-  mqttNorth = new MQTT(mqttConfig, engine)
-  await mqttNorth.init()
-})
+// Mock services
+jest.mock('../../services/database.service')
+jest.mock('../../engine/logger/Logger.class')
+jest.mock('../../services/status.service.class')
+jest.mock('../../services/EncryptionService.class', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
+jest.mock('../../engine/cache/ValueCache.class')
+jest.mock('../../engine/cache/FileCache.class')
 
-describe('MQTT north', () => {
-  it('should properly connect', () => {
+// Mock certificate service
+const CertificateService = jest.mock('../../services/CertificateService.class')
+
+let settings = null
+let north = null
+
+describe('North MQTT', () => {
+  beforeEach(async () => {
+    jest.resetAllMocks()
+    jest.useFakeTimers()
+
+    settings = {
+      id: 'northId',
+      name: 'mqtt',
+      api: 'MQTT',
+      enabled: true,
+      MQTT: {
+        password: 'anypass',
+        url: 'mqtt://hostname:1883',
+        username: 'anyuser',
+        qos: 1,
+        regExp: '(.*)/',
+        topic: '%1$s',
+        keyFile: '',
+        certFile: '',
+        caFile: '',
+        rejectUnauthorized: false,
+        useDataKeyValue: false,
+        keyParentValue: '',
+      },
+      caching: {
+        sendInterval: 10000,
+        retryInterval: 5000,
+        groupCount: 1000,
+        maxSendCount: 10000,
+      },
+      subscribedTo: [],
+    }
+    north = new MQTT(settings, engine)
+    await north.init()
+  })
+
+  it('should properly connect', async () => {
     mqtt.connect.mockReturnValue({ on: jest.fn() })
-    mqttNorth.connect()
+    await north.connect()
 
     const expectedOptions = {
-      clientId: `${engine.engineName}-${mqttConfig.id}`,
-      username: mqttConfig.MQTT.username,
-      password: Buffer.from(mqttConfig.MQTT.password),
+      clientId: `${engine.engineName}-${settings.id}`,
+      username: settings.MQTT.username,
+      password: Buffer.from(settings.MQTT.password),
       key: null,
       cert: null,
       ca: null,
       rejectUnauthorized: false,
     }
-    expect(mqtt.connect).toBeCalledWith(mqttConfig.MQTT.url, expectedOptions)
-    expect(mqttNorth.client.on).toHaveBeenCalledTimes(2)
-    expect(mqttNorth.client.on).toHaveBeenCalledWith('error', expect.any(Function))
-    expect(mqttNorth.client.on).toHaveBeenCalledWith('connect', expect.any(Function))
+    expect(mqtt.connect).toBeCalledWith(settings.MQTT.url, expectedOptions)
+    expect(north.client.on).toHaveBeenCalledTimes(2)
+    expect(north.client.on).toHaveBeenCalledWith('error', expect.any(Function))
+    expect(north.client.on).toHaveBeenCalledWith('connect', expect.any(Function))
 
-    mqttNorth.handleConnectEvent()
-    expect(mqttNorth.logger.info).toHaveBeenCalledWith('North API mqtt started with protocol MQTT url: mqtt://hostname:1883')
+    expect(north.logger.info).toHaveBeenCalledWith('Connecting North "mqtt" to "mqtt://hostname:1883".')
+
+    await north.onConnect()
+    expect(north.logger.info).toBeCalledWith('North connector "mqtt" of type MQTT started with url: "mqtt://hostname:1883".')
+
+    await north.onError('test')
+    expect(north.logger.error).toBeCalledWith('test')
   })
 
   it('should properly connect with cert files', async () => {
@@ -93,9 +99,10 @@ describe('MQTT north', () => {
     CertificateService.ca = 'fileContent'
 
     const testMqttConfigWithFiles = {
-      ...mqttConfig,
+      ...settings,
       MQTT: {
-        ...mqttConfig.MQTT,
+        ...settings.MQTT,
+        password: '',
         caFile: 'myCaFile',
         keyFile: 'myKeyFile',
         certFile: 'myCertFile',
@@ -109,98 +116,63 @@ describe('MQTT north', () => {
     await mqttNorthCert.connect()
 
     const expectedOptionsWithFiles = {
-      clientId: `${engine.engineName}-${mqttConfig.id}`,
-      username: mqttConfig.MQTT.username,
-      password: Buffer.from(mqttConfig.MQTT.password),
+      clientId: `${engine.engineName}-${settings.id}`,
+      username: settings.MQTT.username,
+      password: '',
       key: 'fileContent',
       cert: 'fileContent',
       ca: 'fileContent',
       rejectUnauthorized: true,
     }
-    expect(mqtt.connect)
-      .toBeCalledWith(testMqttConfigWithFiles.MQTT.url, expectedOptionsWithFiles)
-  })
-
-  it('should properly handle the connect error event', async () => {
-    const error = new Error('test')
-
-    mqttNorth.handleConnectError(error)
-
-    expect(mqttNorth.logger.error)
-      .toBeCalledWith(error)
+    expect(mqtt.connect).toBeCalledWith(testMqttConfigWithFiles.MQTT.url, expectedOptionsWithFiles)
   })
 
   it('should properly handle values and publish them', async () => {
-    mqttNorth.client = { publish: jest.fn().mockImplementation((topic, data, params, callback) => callback()) }
+    north.client = { publish: jest.fn().mockImplementation((topic, data, params, callback) => callback()) }
     const values = [{
       pointId: 'paris/sensor1',
       data: { value: 666 },
     }]
 
-    let expectedResult = null
-    let expectedError = null
-    try {
-      expectedResult = await mqttNorth.handleValues(values)
-    } catch (error) {
-      expectedError = error
-    }
+    await north.handleValues(values)
 
-    expect(mqttNorth.client.publish).toBeCalledWith('paris', JSON.stringify(values[0].data), { qos: 1 }, expect.any(Function))
-    expect(expectedResult).toEqual(values.length)
-    expect(expectedError).toBeNull()
+    expect(north.client.publish).toBeCalledWith('paris', JSON.stringify(values[0].data), { qos: 1 }, expect.any(Function))
   })
 
   it('should properly handle values with publish error', async () => {
-    mqttNorth.client = { publish: jest.fn().mockImplementation((topic, data, params, callback) => callback(true)) }
+    north.client = { publish: jest.fn().mockImplementation(async (topic, data, params, callback) => callback(new Error('publishError'))) }
     const values = [{
       pointId: 'paris/sensor1',
       data: { value: 666 },
     }]
 
-    let expectedResult = null
-    let expectedError = null
-    try {
-      expectedResult = await mqttNorth.handleValues(values)
-    } catch (error) {
-      expectedError = error
-    }
+    await expect(north.handleValues(values)).rejects.toThrowError('publishError')
 
-    expect(mqttNorth.client.publish).toBeCalledWith('paris', JSON.stringify(values[0].data), { qos: 1 }, expect.any(Function))
-    expect(expectedResult).toBeNull()
-    expect(expectedError).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
+    expect(north.client.publish).toBeCalledWith('paris', JSON.stringify(values[0].data), { qos: 1 }, expect.any(Function))
   })
 
-  it('should properly disconnect', () => {
-    mqttNorth.client = { end: jest.fn() }
+  it('should properly disconnect', async () => {
+    north.client = { end: jest.fn() }
 
-    mqttNorth.disconnect()
+    await north.disconnect()
 
-    expect(mqttNorth.client.end).toBeCalledWith(true)
+    expect(north.client.end).toBeCalledWith(true)
   })
 
   it('should properly handle values with useDataKeyValue', async () => {
     const timestamp = new Date('2020-02-29T12:12:12Z').toISOString()
     mqtt.connect.mockReturnValue({ on: jest.fn(), publish: jest.fn((topic, data, opts, callback) => callback()) })
-    mqttNorth.connect()
+    await north.connect()
 
-    mqttNorth.useDataKeyValue = true
-    mqttNorth.keyParentValue = 'level'
-    let expectedResult = null
-    let expectedError = null
-    try {
-      expectedResult = await mqttNorth.handleValues([{
-        pointId: 'ANA/BL1RCP05',
-        timestamp,
-        data: {
-          value: { level: { value: 666 } },
-          quality: 'good',
-        },
-      }])
-    } catch (error) {
-      expectedError = error
-    }
-
-    expect(expectedResult).toEqual(1)
-    expect(expectedError).toBeNull()
+    north.useDataKeyValue = true
+    north.keyParentValue = 'level'
+    await north.handleValues([{
+      pointId: 'ANA/BL1RCP05',
+      timestamp,
+      data: {
+        value: { level: { value: 666 } },
+        quality: 'good',
+      },
+    }])
   })
 })
