@@ -1,23 +1,50 @@
 const { vsprintf } = require('sprintf-js')
 const objectPath = require('object-path')
 
-const ApiHandler = require('../ApiHandler.class')
+const NorthConnector = require('../NorthConnector.class')
 
 /**
- * Class InfluxDB - generates and sends InfluxDB requests
+ * Convert timestamp to the configured precision
+ * @param {number} timestampTime - The original timestamp
+ * @param {'ns'|'u'|'ms'|'s'|'m'|'h'} precision - The timestamp precision
+ * @returns {number} - The converted timestamp
  */
-class InfluxDB extends ApiHandler {
+const getConvertedTimestamp = (timestampTime, precision) => {
+  switch (precision) {
+    case 'ns':
+      return 1000 * 1000 * timestampTime
+    case 'u':
+      return 1000 * timestampTime
+    case 'ms':
+      return timestampTime
+    case 's':
+      return Math.floor(timestampTime / 1000)
+    case 'm':
+      return Math.floor(timestampTime / 1000 / 60)
+    case 'h':
+      return Math.floor(timestampTime / 1000 / 60 / 60)
+    default:
+      return timestampTime
+  }
+}
+
+/**
+ * Class InfluxDB - Send data to InfluxDB
+ */
+class InfluxDB extends NorthConnector {
   static category = 'DatabaseIn'
 
   /**
    * Constructor for InfluxDB
    * @constructor
-   * @param {Object} applicationParameters - The application parameters
+   * @param {Object} settings - The North connector settings
    * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
-  constructor(applicationParameters, engine) {
-    super(applicationParameters, engine)
+  constructor(settings, engine) {
+    super(settings, engine)
+    this.canHandleValues = true
+
     const {
       host,
       user,
@@ -30,7 +57,7 @@ class InfluxDB extends ApiHandler {
       useDataKeyValue,
       keyParentValue,
       timestampPathInDataValue,
-    } = this.application.InfluxDB
+    } = this.settings.InfluxDB
     this.host = host
     this.user = user
     this.password = password
@@ -42,44 +69,25 @@ class InfluxDB extends ApiHandler {
     this.useDataKeyValue = useDataKeyValue
     this.keyParentValue = keyParentValue
     this.timestampPathInDataValue = timestampPathInDataValue
-
-    this.canHandleValues = true
   }
 
   /**
    * Handle values by sending them to InfluxDB.
-   * @param {object[]} values - The values
-   * @return {Promise} - The handle status
+   * @param {Object[]} values - The values to send
+   * @returns {Promise<void>} - The result promise
    */
   async handleValues(values) {
-    this.logger.trace(`InfluxDB handleValues() call with ${values.length} values`)
-    try {
-      await this.makeRequest(values)
-      this.updateStatusDataStream({
-        'Last handled values at': new Date().toISOString(),
-        'Number of values sent since OIBus has started': this.statusData['Number of values sent since OIBus has started'] + values.length,
-        'Last added point id (value)': `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`,
-      })
-    } catch (error) {
-      this.logger.error(error)
-      throw error
-    }
-    return values.length
-  }
+    this.logger.trace(`Handle ${values.length} values.`)
 
-  /**
-   * Makes an InfluxDB request with the parameters in the Object arg.
-   * @param {Object[]} entries - The entry from the event
-   * @return {Promise} - The request status
-   */
-  async makeRequest(entries) {
-    this.logger.info(`Sending values to ${this.host}/write?u=${this.user}&p=<password>&db=${this.database}&precision=${this.precision}`)
-    // eslint-disable-next-line max-len
-    const url = `${this.host}/write?u=${this.user}&p=${this.encryptionService.decryptText(this.password)}&db=${this.database}&precision=${this.precision}`
+    this.logger.info('Sending values to '
+        + `${this.host}/write?u=${this.user}&p=<password>&db=${this.database}&precision=${this.precision}`)
+
+    const url = `${this.host}/write?u=${this.user}&p=${this.encryptionService.decryptText(this.password)}`
+        + `&db=${this.database}&precision=${this.precision}`
 
     let body = ''
 
-    entries.forEach((entry) => {
+    values.forEach((entry) => {
       const {
         pointId,
         data,
@@ -96,50 +104,54 @@ class InfluxDB extends ApiHandler {
       // If there are fewer groups than placeholders, vsprintf will put undefined.
       // We look for the number of 'undefined' before and after the replacement to see if this is the case
       if ((measurementValue.match(/undefined/g) || []).length > (this.measurement.match(/undefined/g) || []).length) {
-        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for measurement`)
+        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for the measurement.`)
         return
       }
       if ((tagsValue.match(/undefined/g) || []).length > (this.tags.match(/undefined/g) || []).length) {
-        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for tags`)
+        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for tags.`)
         return
       }
 
-      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters
-      // In fact, as some use cases can produce value structured as Json Object, code is modified to process value which could be
-      // simple value (integer, float, ...) or Json object
+      // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters.
+      // In fact, as some use cases can produce value structured as JSON objects, values which could be atomic values
+      // (integer, float, ...) or JSON object must be processed
       let dataValue
       if (this.useDataKeyValue) {
-        // data to use is value key of Json object data (data.value)
-        // this data.value could be a Json object or simple value (i.e. integer or float or string, ...)
-        // If it's a json, the function return data where path is given by keyParentValue parameter
-        // even if json object containing more than one level of object.
-        // for example : data : {value: {"level1":{"level2":{value:..., timestamp:...}}}}
-        // in this context :
-        //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue string : level1.level2
-        //   - To retrieve this object, we use getJsonValueByStringPath with parameters: (data.value, 'level1.level2')
+        // The data to use is the key "value" of a JSON object data (data.value)
+        // This data.value can be a JSON object or an atomic value (i.e. integer or float or string, ...)
+        // If it's a JSON, the function return a data where the path is given by keyParentValue parameter even if the
+        // JSON object contains more than one level of object.
+        // For example: data = { value: { "level1": { "level2": { value: ..., timestamp:... } } } }
+        // In this context :
+        //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue
+        // level1.level2
+        //   - To retrieve this object, we use objectPath with parameters: (data.value, 'level1.level2')
         dataValue = objectPath.get(data.value, this.keyParentValue)
       } else {
-        // data to use is Json object data
+        // Data to use is the JSON object data
         dataValue = data
       }
 
       let timestamp
       if (this.timestampPathInDataValue) {
-        // case where timestamp is within the dataValue fields received.
-        timestamp = this.getConvertedTimestamp(new Date(objectPath.get(dataValue, this.timestampPathInDataValue)).getTime())
-        // once taken into account, remove the timestamp from the fields to not take it again in the other fields
+        // Case where the timestamp is within the dataValue fields received.
+        timestamp = getConvertedTimestamp(
+          new Date(objectPath.get(dataValue, this.timestampPathInDataValue)).getTime(),
+          this.precision,
+        )
+        // Once retrieved, remove the timestamp from the fields to not take it again in the other fields
         objectPath.del(dataValue, this.timestampPathInDataValue)
       } else {
-        // case where timestamp is directly at the root of the data received
-        timestamp = this.getConvertedTimestamp(new Date(entry.timestamp).getTime())
+        // Case where the timestamp is directly at the root of the data received
+        timestamp = getConvertedTimestamp(new Date(entry.timestamp).getTime(), this.precision)
       }
 
-      // Converts data into fields for CLI
+      // Converts data into fields for InfluxDB
       let fields = ''
       Object.entries(dataValue)
         .forEach(([fieldKey, fieldValue]) => {
           // Before inserting fieldKey in fields string, we must verify that fieldKey isn't store in tagsValue string
-          // The reason is: in InfluxDB it's not useful to store value in tags and in fields
+          // It's not useful to store a value in both tags and fields
           if (!tagsValue.includes(fieldKey)) {
             // Only insert string or number fields
             if (typeof fieldValue === 'string') {
@@ -150,36 +162,15 @@ class InfluxDB extends ApiHandler {
           }
         })
 
-      // Append entry to body
-      body += `${measurementValue.replace(/ /g, '\\ ')},${tagsValue.replace(/ /g, '\\ ')} ${fields.replace(/ /g, '\\ ')} ${timestamp}\n`
+      // Replace spaces by _ and append entry to body
+      body += `${measurementValue.replace(/ /g, '_')},`
+              + `${tagsValue.replace(/ /g, '_')} `
+              + `${fields.replace(/ /g, '_')} `
+              + `${timestamp}\n`
     })
 
     const headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
-    return this.engine.requestService.httpSend(url, 'POST', null, null, body, headers)
-  }
-
-  /**
-   * Convert timestamp to the configured precision
-   * @param {number} timestampTime - the original timestamp
-   * @returns {number} - The converted timestamp
-   */
-  getConvertedTimestamp(timestampTime) {
-    switch (this.precision) {
-      case 'ns':
-        return 1000 * 1000 * timestampTime
-      case 'u':
-        return 1000 * timestampTime
-      case 'ms':
-        return timestampTime
-      case 's':
-        return Math.floor(timestampTime / 1000)
-      case 'm':
-        return Math.floor(timestampTime / 1000 / 60)
-      case 'h':
-        return Math.floor(timestampTime / 1000 / 60 / 60)
-      default:
-        return timestampTime
-    }
+    await this.engine.requestService.httpSend(url, 'POST', null, null, body, headers)
   }
 }
 

@@ -1,62 +1,59 @@
-const fs = require('fs/promises')
+const fs = require('node:fs/promises')
 
-const ApiHandler = require('../ApiHandler.class')
+const NorthConnector = require('../NorthConnector.class')
 
-class Console extends ApiHandler {
+/**
+ * Class Console - display values and file path into the console
+ */
+class Console extends NorthConnector {
   static category = 'Debug'
 
   /**
    * Constructor for Console
    * @constructor
-   * @param {Object} applicationParameters - The application parameters
+   * @param {Object} settings - The North connector settings
    * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
-  constructor(applicationParameters, engine) {
-    super(applicationParameters, engine)
+  constructor(settings, engine) {
+    super(settings, engine)
     this.canHandleValues = true
     this.canHandleFiles = true
-    this.verbose = applicationParameters.Console.verbose ?? false
+
+    const { verbose } = settings.Console
+    this.verbose = verbose
   }
 
   /**
    * Handle values by printing them to the console.
-   * @param {object[]} values - The values
-   * @return {Promise} - The handle status
+   * @param {Object[]} values - The values
+   * @returns {Promise<void>} - The result promise
    */
   async handleValues(values) {
     if (this.verbose) {
       console.table(values, ['pointId', 'timestamp', 'data'])
     } else {
-      process.stdout.write(`(${values.length})`)
+      process.stdout.write(`North Console sent ${values.length} values.\r\n`)
     }
-    this.updateStatusDataStream({
-      'Last handled values at': new Date().toISOString(),
-      'Number of values sent since OIBus has started': this.statusData['Number of values sent since OIBus has started'] + values.length,
-      'Last added point id (value)': `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`,
-    })
-    return values.length
   }
 
   /**
-   * Handle the file.
+   * Handle the file by displaying its name in the console
    * @param {String} filePath - The path of the file
-   * @return {Promise} - The status sent
+   * @returns {Promise<void>} - The result promise
    */
   async handleFile(filePath) {
-    const stats = await fs.stat(filePath)
-    const fileSize = stats.size
-    const data = [{
-      filePath,
-      fileSize,
-    }]
-    console.table(data)
-    this.updateStatusDataStream({
-      'Last uploaded file': filePath,
-      'Number of files sent since OIBus has started': this.statusData['Number of files sent since OIBus has started'] + 1,
-      'Last upload at': new Date().toISOString(),
-    })
-    return ApiHandler.STATUS.SUCCESS
+    if (this.verbose) {
+      const stats = await fs.stat(filePath)
+      const fileSize = stats.size
+      const data = [{
+        filePath,
+        fileSize,
+      }]
+      console.table(data)
+    } else {
+      process.stdout.write('North Console sent 1 file.\r\n')
+    }
   }
 }
 
