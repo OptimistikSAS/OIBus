@@ -152,7 +152,7 @@ class ProtocolHandler {
     } = this.dataSource
 
     const databasePath = `${this.engine.getCacheFolder()}/${id}.db`
-    this.southDatabase = await databaseService.createConfigDatabase(databasePath)
+    this.southDatabase = databaseService.createConfigDatabase(databasePath)
 
     if (this.supportedModes?.supportHistory) {
       // Initialize lastCompletedAt for every scanMode

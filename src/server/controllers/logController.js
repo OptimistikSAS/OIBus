@@ -10,7 +10,7 @@ const databaseService = require('../../services/database.service')
  * @param {function} ctx.ok - The context response
  * @return {void}
  */
-const getLogs = async (ctx) => {
+const getLogs = (ctx) => {
   const { engineConfig } = ctx.app.engine.configService.getConfig()
   const databasePath = engineConfig.logParameters.sqliteLog.fileName
   const now = Date.now()
@@ -19,7 +19,7 @@ const getLogs = async (ctx) => {
   const toDate = ctx.query.toDate || new Date(now).toISOString()
   const verbosity = ctx.query.verbosity?.replace(/[[\]]/g, '').split(',') || 'info'
 
-  const logs = await databaseService.getLogs(databasePath, fromDate, toDate, verbosity)
+  const logs = databaseService.getLogs(databasePath, fromDate, toDate, verbosity)
   ctx.ok(logs)
 }
 
