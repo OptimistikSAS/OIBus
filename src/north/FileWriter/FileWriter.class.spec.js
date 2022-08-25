@@ -1,60 +1,59 @@
-const fs = require('fs/promises')
-const path = require('path')
-const ApiHandler = require('../ApiHandler.class')
+const fs = require('node:fs/promises')
+const path = require('node:path')
+
 const FileWriter = require('./FileWriter.class')
 const { defaultConfig: config } = require('../../../tests/testConfig')
 
-// Mock database service
-jest.mock('../../services/database.service', () => ({
-  createValueErrorsDatabase: jest.fn(),
-  getCount: jest.fn(),
-  createValuesDatabase: jest.fn(),
-  createFilesDatabase: jest.fn(),
-}))
-
-// Mock logger
-jest.mock('../../engine/logger/Logger.class')
-
-// Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.eventEmitters = {}
-
-let fileWriterNorth = null
-const nowDateString = '2020-02-02T02:02:02.222Z'
-const localTimezoneOffsetInMs = new Date('2020-02-02T02:02:02.222Z').getTimezoneOffset() * 60000
-const fileWriterConfig = {
-  id: 'application-uuid-8',
-  name: 'filewriter',
-  api: 'FileWriter',
-  enabled: true,
-  FileWriter: { outputFolder: './output' },
-  caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1000, maxSendCount: 10000 },
-  subscribedTo: [],
+// Mock OIBusEngine
+const engine = {
+  configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  requestService: { httpSend: jest.fn() },
+  getCacheFolder: jest.fn(),
 }
 
-beforeEach(async () => {
-  jest.resetAllMocks()
-  fileWriterNorth = new FileWriter(fileWriterConfig, engine)
-  await fileWriterNorth.init()
-})
+// Mock services
+jest.mock('../../services/database.service')
+jest.mock('../../engine/logger/Logger.class')
+jest.mock('../../services/status.service.class')
+jest.mock('../../services/EncryptionService.class', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
+jest.mock('../../engine/cache/ValueCache.class')
+jest.mock('../../engine/cache/FileCache.class')
 
-describe('FileWriter north', () => {
+const nowDateString = '2020-02-02T02:02:02.222Z'
+let settings = null
+let north = null
+
+describe('North FileWriter', () => {
+  beforeEach(async () => {
+    jest.resetAllMocks()
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString))
+
+    settings = {
+      id: 'southId',
+      name: 'filewriter',
+      api: 'FileWriter',
+      enabled: true,
+      FileWriter: {
+        outputFolder: './output',
+        prefixFileName: '',
+        suffixFileName: '',
+      },
+      caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1000, maxSendCount: 10000 },
+      subscribedTo: [],
+    }
+    north = new FileWriter(settings, engine)
+    await north.init()
+  })
+
   it('should be properly initialized', () => {
-    expect(fileWriterNorth.canHandleFiles).toBeTruthy()
-    expect(fileWriterNorth.canHandleValues).toBeTruthy()
-    expect(fileWriterNorth.prefixFileName).toBe('')
-    expect(fileWriterNorth.suffixFileName).toBe('')
-    expect(fileWriterNorth.outputFolder).toEqual(path.resolve(fileWriterConfig.FileWriter.outputFolder))
+    expect(north.canHandleFiles).toBeTruthy()
+    expect(north.canHandleValues).toBeTruthy()
+    expect(north.prefixFileName).toBe('')
+    expect(north.suffixFileName).toBe('')
+    expect(north.outputFolder).toEqual(path.resolve(settings.FileWriter.outputFolder))
   })
 
   it('should properly handle values', async () => {
-    const RealDate = Date
-    global.Date = jest.fn(() => ({
-      getTime: () => new RealDate(nowDateString).getTime() + localTimezoneOffsetInMs,
-      toISOString: () => new RealDate(nowDateString).toISOString(),
-    }))
-
     const values = [
       {
         timestamp: '2021-07-29T12:13:31.883Z',
@@ -63,14 +62,12 @@ describe('FileWriter north', () => {
       },
     ]
     jest.spyOn(fs, 'writeFile').mockImplementation(() => true)
-    const handleValueResults = await fileWriterNorth.handleValues(values)
+    await north.handleValues(values)
     const expectedData = JSON.stringify(values)
-    const expectedFileName = `${fileWriterNorth.prefixFileName}${new Date().getTime()}${fileWriterNorth.suffixFileName}.json`
-    const expectedOutputFolder = path.resolve(fileWriterNorth.outputFolder)
+    const expectedFileName = `${north.prefixFileName}${new Date().getTime()}${north.suffixFileName}.json`
+    const expectedOutputFolder = path.resolve(north.outputFolder)
     const expectedPath = path.join(expectedOutputFolder, expectedFileName)
     expect(fs.writeFile).toBeCalledWith(expectedPath, expectedData)
-    expect(handleValueResults).toEqual(values.length)
-    global.Date = RealDate
   })
 
   it('should properly catch handle values error', async () => {
@@ -84,9 +81,7 @@ describe('FileWriter north', () => {
     jest.spyOn(fs, 'writeFile').mockImplementationOnce(() => {
       throw new Error('Error handling values')
     })
-    const handleValuesResult = await fileWriterNorth.handleValues(values)
-    expect(fileWriterNorth.logger.error).toHaveBeenCalledTimes(1)
-    expect(handleValuesResult).toEqual(ApiHandler.STATUS.LOGIC_ERROR)
+    await expect(north.handleValues(values)).rejects.toThrowError('Error handling values')
   })
 
   it('should properly handle files', async () => {
@@ -95,11 +90,10 @@ describe('FileWriter north', () => {
     const filePath = '/path/to/file/example.file'
     const extension = path.extname(filePath)
     let expectedFileName = path.basename(filePath, extension)
-    expectedFileName = `${fileWriterNorth.prefixFileName}${expectedFileName}${fileWriterNorth.suffixFileName}${extension}`
-    const expectedOutputFolder = path.resolve(fileWriterNorth.outputFolder)
-    const handleFileResult = await fileWriterNorth.handleFile(filePath)
+    expectedFileName = `${north.prefixFileName}${expectedFileName}${north.suffixFileName}${extension}`
+    const expectedOutputFolder = path.resolve(north.outputFolder)
+    await north.handleFile(filePath)
     expect(fs.copyFile).toBeCalledWith(filePath, path.join(expectedOutputFolder, expectedFileName))
-    expect(handleFileResult).toEqual(ApiHandler.STATUS.SUCCESS)
   })
 
   it('should properly catch handle file error', async () => {
@@ -108,8 +102,6 @@ describe('FileWriter north', () => {
       throw new Error('Error handling files')
     })
     const filePath = '/path/to/file/example.file'
-    const handlerFileResult = await fileWriterNorth.handleFile(filePath)
-    expect(fileWriterNorth.logger.error).toHaveBeenCalledTimes(1)
-    expect(handlerFileResult).toEqual(ApiHandler.STATUS.LOGIC_ERROR)
+    await expect(north.handleFile(filePath)).rejects.toThrowError('Error handling files')
   })
 })

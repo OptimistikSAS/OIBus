@@ -3,20 +3,36 @@ const cors = require('@koa/cors')
 const bodyParser = require('koa-bodyparser')
 const helmet = require('koa-helmet')
 const respond = require('koa-respond')
-const { PassThrough } = require('stream')
+
 const authCrypto = require('./middlewares/auth')
 const ipFilter = require('./middlewares/ipFilter')
 const clientController = require('./controllers/clientController')
 const Logger = require('../engine/logger/Logger.class')
-
 const router = require('./routes')
 
 /**
- * Class Server - Provides general attributes and methods for protocols.
+ * Add a socket to the Koa ctx
+ * @param {Object} ctx - The Koa ctx
+ * @return {void}
+ */
+const createSocket = (ctx) => {
+  ctx.request.socket.setTimeout(0)
+  ctx.req.socket.setNoDelay(true)
+  ctx.req.socket.setKeepAlive(true)
+  ctx.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+  })
+  ctx.status = 200
+}
+
+/**
+ * Class Server - Provides the web client and establish socket connections.
  */
 class Server {
   /**
-   * Constructor for Protocol
+   * Constructor for Server
    * @constructor
    * @param {EncryptionService} encryptionService - The encryption service
    * @param {OIBusEngine} oibusEngine - The OIBus engine
@@ -56,37 +72,43 @@ class Server {
     this.app.engine = this.engine
     this.app.historyQueryEngine = this.historyQueryEngine
     this.app.logger = this.logger
-    // eslint-disable-next-line consistent-return
     this.app.use(async (ctx, next) => {
       // check https://medium.com/trabe/server-sent-events-sse-streams-with-node-and-koa-d9330677f0bf
       if (!ctx.path.endsWith('/sse')) {
-        // eslint-disable-next-line no-return-await
-        return await next()
-      }
-      if ((!ctx.path.startsWith('/history/') && !this.engine.eventEmitters[ctx.path])
-          || (ctx.path.startsWith('/history/') && !this.historyQueryEngine.eventEmitters[ctx.path])) {
-        // eslint-disable-next-line no-return-await
-        return await next()
+        await next()
+        return
       }
 
-      ctx.request.socket.setTimeout(0)
-      ctx.req.socket.setNoDelay(true)
-      ctx.req.socket.setKeepAlive(true)
-      ctx.set({
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        Connection: 'keep-alive',
-      })
-
-      ctx.status = 200
-      if (ctx.path.startsWith('/history/')) {
-        this.historyQueryEngine.eventEmitters[ctx.path].stream = new PassThrough()
-        ctx.body = this.historyQueryEngine.eventEmitters[ctx.path].stream
-        this.historyQueryEngine.eventEmitters[ctx.path].events.emit('data', this.historyQueryEngine.eventEmitters[ctx.path].statusData)
+      if (ctx.path.startsWith('/south/')) {
+        const splitString = ctx.path.split('/')
+        const south = this.engine.activeSouths.find((activeSouth) => activeSouth.settings.id === splitString[2])
+        if (!south) {
+          await next()
+          return
+        }
+        createSocket(ctx)
+        ctx.body = south.statusService.getDataStream()
+        south.statusService.forceDataUpdate()
+      } else if (ctx.path.startsWith('/north/')) {
+        const splitString = ctx.path.split('/')
+        const north = this.engine.activeNorths.find((activeNorth) => activeNorth.settings.id === splitString[2])
+        if (!north) {
+          await next()
+          return
+        }
+        createSocket(ctx)
+        ctx.body = north.statusService.getDataStream()
+        north.statusService.forceDataUpdate()
+      } else if (ctx.path.startsWith('/engine/')) {
+        createSocket(ctx)
+        ctx.body = this.engine.statusService.getDataStream()
+        this.engine.statusService.forceDataUpdate()
+      } else if (ctx.path.startsWith('/history/')) {
+        createSocket(ctx)
+        ctx.body = this.historyQueryEngine.statusService.getDataStream()
+        this.historyQueryEngine.statusService.forceDataUpdate()
       } else {
-        this.engine.eventEmitters[ctx.path].stream = new PassThrough()
-        ctx.body = this.engine.eventEmitters[ctx.path].stream
-        this.engine.eventEmitters[ctx.path].events.emit('data', this.engine.eventEmitters[ctx.path].statusData)
+        await next()
       }
     })
 
@@ -113,9 +135,7 @@ class Server {
     })
 
     // Add simple "blanket" basic auth with username / password.
-    // Password protect downstream middleware:
-    // @todo: we need to think about the authorization process. in the first version, the program
-    // need to be secured from the operating system and firewall should not allow to access the API.
+    // Password protect downstream middleware
     this.app.use(authCrypto({ name: this.user, pass: this.password }))
 
     // CORS middleware for Koa
@@ -141,6 +161,7 @@ class Server {
     this.app.use(router.allowedMethods())
     this.app.use(clientController.serveClient)
 
+    // Set the logger with the same settings as the engine
     this.logger.changeParameters(engineConfig).then(() => {
       this.webServer = this.app.listen(this.port, () => {
         this.logger.info(`Web server started on ${this.port}`)
@@ -148,6 +169,10 @@ class Server {
     })
   }
 
+  /**
+   * Stop the web server
+   * @returns {Promise<void>} - The result promise
+   */
   async stop() {
     await this.webServer?.close()
   }

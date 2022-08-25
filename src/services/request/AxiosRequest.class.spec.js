@@ -2,6 +2,12 @@ const axios = require('axios').default
 const tunnel = require('tunnel')
 
 const AxiosRequest = require('./AxiosRequest.class')
+const utils = require('../utils')
+
+const { defaultConfig: config } = require('../../../tests/testConfig')
+
+// Mock utils class
+jest.mock('../utils', () => ({ generateFormDataBodyFromFile: jest.fn() }))
 
 // Mock axios
 jest.mock('axios', () => ({
@@ -11,25 +17,26 @@ jest.mock('axios', () => ({
   },
 }))
 
-// Mock ProxyAgent
-jest.mock('proxy-agent')
+// Mock OIBusEngine
+const engine = {
+  configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  getCacheFolder: () => config.engine.caching.cacheFolder,
+  addValues: jest.fn(),
+  addFile: jest.fn(),
+  logger: { error: jest.fn(), warn: jest.fn(), info: jest.fn(), debug: jest.fn(), trace: jest.fn() },
+  encryptionService: { decryptText: (password) => password },
+}
 
-// Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: { httpRequest: { timeout: 10000, retryCount: 2 } } }) }
-engine.encryptionService = { decryptText: (password) => password }
-engine.logger = { trace: jest.fn(), error: jest.fn() }
+let axiosRequest = null
 
-beforeEach(() => {
-  jest.resetAllMocks()
-  jest.clearAllMocks()
-  jest.useFakeTimers()
-})
+describe('AxiosRequest', () => {
+  beforeEach(() => {
+    jest.resetAllMocks()
 
-describe('RequestFactory', () => {
+    axiosRequest = new AxiosRequest(engine)
+  })
+
   it('should properly call axios without proxy for JSON data', async () => {
-    const axiosRequest = new AxiosRequest(engine)
-    axiosRequest.generateFormDataBody = jest.fn()
     const requestUrl = 'https://www.example.com'
     const method = 'POST'
     const headers = {
@@ -56,13 +63,11 @@ describe('RequestFactory', () => {
 
     expect(axios.create).toBeCalledTimes(1)
     expect(axios.create).toBeCalledWith(expectedAxiosCreateOptions)
-    expect(axiosRequest.generateFormDataBody).not.toBeCalled()
     expect(mockAxios).toBeCalledWith(expectedAxiosOptions)
     expect(result).toBeTruthy()
   })
 
   it('should properly call axios with proxy for JSON data', async () => {
-    const axiosRequest = new AxiosRequest(engine)
     tunnel.httpsOverHttps = jest.fn().mockReturnValue({})
     const requestUrl = 'https://www.example.com'
     const method = 'POST'
@@ -81,7 +86,6 @@ describe('RequestFactory', () => {
     const timeout = 1000 * 10000
     const mockAxios = jest.fn().mockReturnValue(Promise.resolve())
     axios.create.mockReturnValue(mockAxios)
-    jest.spyOn(axiosRequest, 'generateFormDataBody').mockImplementation(() => {})
     const result = await axiosRequest.sendImplementation(requestUrl, method, headers, proxy, data, timeout)
 
     const expectedAxiosCreateOptions1 = {
@@ -112,15 +116,13 @@ describe('RequestFactory', () => {
       [expectedAxiosCreateOptions2],
     ])
     expect(tunnel.httpsOverHttps).toBeCalledWith({ axiosProxy: expectedAxiosProxy })
-    expect(axiosRequest.generateFormDataBody).not.toBeCalled()
     expect(mockAxios).toBeCalledWith(expectedAxiosOptions)
     expect(result).toBeTruthy()
   })
 
   it('should properly call axios without proxy for form-data', async () => {
-    const axiosRequest = new AxiosRequest(engine)
     const mockedBody = { getHeaders: () => ({ formDataHeader: 'formDataHeader' }) }
-    axiosRequest.generateFormDataBody = jest.fn().mockImplementation(() => mockedBody)
+    utils.generateFormDataBodyFromFile.mockReturnValue(mockedBody)
     const requestUrl = 'https://www.example.com'
     const method = 'POST'
     const headers = { Authorization: 'Basic kdvdkfsdfdsf' }
@@ -138,13 +140,12 @@ describe('RequestFactory', () => {
       data: mockedBody,
     }
 
-    expect(axiosRequest.generateFormDataBody).toBeCalledWith(data)
+    expect(utils.generateFormDataBodyFromFile).toBeCalledWith(data)
     expect(mockAxios).toBeCalledWith(expectedAxiosOptions)
     expect(result).toBeTruthy()
   })
 
   it('should properly handle axios error', async () => {
-    const axiosRequest = new AxiosRequest(engine)
     const requestUrl = 'https://www.example.com'
     const method = 'POST'
     const headers = {
@@ -153,6 +154,7 @@ describe('RequestFactory', () => {
     }
     const data = 'data'
     const timeout = 1000 * 10000
+
     // eslint-disable-next-line prefer-promise-reject-errors
     const mockAxios = jest.fn().mockReturnValue(Promise.reject({ response: { status: 400 } }))
     axios.create.mockReturnValue(mockAxios)

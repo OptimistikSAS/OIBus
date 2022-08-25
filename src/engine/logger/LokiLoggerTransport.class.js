@@ -7,7 +7,6 @@ const LEVEL_FORMAT = { 10: 'trace', 20: 'debug', 30: 'info', 40: 'warn', 50: 'er
 
 /**
  * Class to support logging to a remote loki instance as a custom Pino Transport module
- *
  * @class LokiTransport
  */
 class LokiTransport {
@@ -37,7 +36,7 @@ class LokiTransport {
 
   /**
    * Method used to send the log to the remote loki instance
-   * @returns {void}
+   * @returns {Promise<void>} - The result promise
    */
   sendLokiLogs = async () => {
     const streams = []
@@ -92,7 +91,7 @@ class LokiTransport {
       const result = await fetch(this.lokiAddress, fetchOptions)
 
       if (result.status !== 200 && result.status !== 201 && result.status !== 204) {
-        throw new Error(`Loki fetch error: ${result.status} - ${result.statusText} with payload ${dataBuffer}`)
+        console.error(`Loki fetch error: ${result.status} - ${result.statusText} with payload ${dataBuffer}`)
       }
     } catch (error) {
       console.error(error)
@@ -101,7 +100,7 @@ class LokiTransport {
 
   /**
    * Method used to update the token if needed
-   * @returns {void}
+   * @returns {Promise<void>} - The result promise
    */
   updateLokiToken = async () => {
     try {
@@ -132,8 +131,8 @@ class LokiTransport {
 
   /**
    * Store the log in the batch log array and send them immediately if the array is full
-   * @param {object} log - the log to send
-   * @returns {void}
+   * @param {Object} log - the log to send
+   * @returns {Promise<void>} - The result promise
    */
   addLokiLogs = async (log) => {
     this.batchLogs[log.level].push([(new Date(log.time).getTime() * 1000000).toString(),
@@ -151,7 +150,7 @@ class LokiTransport {
 
   /**
    * Clear timeout and interval and send last logs before closing the transport
-   * @returns {void}
+   * @returns {Promise<void>} - The result promise
    */
   end = async () => {
     if (this.sendLokiLogsInterval) {

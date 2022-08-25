@@ -5,6 +5,8 @@ const ProxyAgent = require('proxy-agent')
 
 const BaseRequest = require('./BaseRequest.class')
 
+const { generateFormDataBodyFromFile } = require('../utils')
+
 class FetchRequest extends BaseRequest {
   /**
    * Send the request using node-fetch
@@ -39,7 +41,7 @@ class FetchRequest extends BaseRequest {
     if (Object.prototype.hasOwnProperty.call(headers, 'Content-Type')) {
       body = data
     } else {
-      body = this.generateFormDataBody(data)
+      body = generateFormDataBodyFromFile(data)
 
       const formHeaders = body.getHeaders()
       Object.keys(formHeaders).forEach((key) => {
