@@ -2,9 +2,9 @@
 /* eslint-disable no-console */
 const { createValuesDatabase, saveValues, getCount, getValuesToSend, removeSentValues } = require('../../src/services/database.service')
 
-const start = async () => {
+const start = () => {
   console.time('total')
-  const db = await createValuesDatabase('./test.db', { wal: false, optimize: false })
+  const db = createValuesDatabase('./test.db', { wal: false, optimize: false })
   const timestamp = new Date('01/01/2020')
   const quality = 'OK'
   const dataSourceId = 'datasourceid'
@@ -17,17 +17,17 @@ const start = async () => {
   console.timeEnd('create.array')
   for (let i = 0; i < 10; i += 1) {
     console.time(`save${i}`)
-    await saveValues(db, 'sourceid', received)
+    saveValues(db, 'sourceid', received)
     console.timeEnd(`save${i}`)
     console.time(`-->count${i}`)
-    const count = await getCount(db)
+    const count = getCount(db)
     process.stdout.write(`${count}`)
     console.timeEnd(`-->count${i}`)
     console.time(`-> get${i}`)
     for (let get = 0; get < 10; get += 1) {
-      const values = await getValuesToSend(db, size / 10)
+      const values = getValuesToSend(db, size / 10)
       process.stdout.write('.')
-      await removeSentValues(db, values)
+      removeSentValues(db, values)
       process.stdout.write('-')
     }
     console.timeEnd(`-> get${i}`)

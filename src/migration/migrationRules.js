@@ -1108,14 +1108,14 @@ module.exports = {
           if (dataSource.protocol === 'SQL') {
             logger.info(`Update lastCompletedAt key for ${dataSource.name}`)
             const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.id}.db`
-            const database = await databaseService.createConfigDatabase(databasePath)
-            const lastCompletedAt = await databaseService.getConfig(database, 'lastCompletedAt')
-            await databaseService.upsertConfig(database, `lastCompletedAt-${dataSource.scanMode}`, lastCompletedAt)
+            const database = databaseService.createConfigDatabase(databasePath)
+            const lastCompletedAt = databaseService.getConfig(database, 'lastCompletedAt')
+            databaseService.upsertConfig(database, `lastCompletedAt-${dataSource.scanMode}`, lastCompletedAt)
           }
 
           if (['OPCUA_HA', 'OPCHDA'].includes(dataSource.protocol)) {
             const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.id}.db`
-            const database = await databaseService.createConfigDatabase(databasePath)
+            const database = databaseService.createConfigDatabase(databasePath)
             if (!dataSource[dataSource.protocol].scanGroups) {
               dataSource[dataSource.protocol].scanGroups = []
             }
@@ -1123,10 +1123,10 @@ module.exports = {
             // eslint-disable-next-line no-restricted-syntax
             for (const scanMode of scanModes) {
               logger.info(`Update lastCompletedAt-${scanMode} value for ${dataSource.name}`)
-              const lastCompletedAtString = await databaseService.getConfig(database, `lastCompletedAt-${scanMode}`)
+              const lastCompletedAtString = databaseService.getConfig(database, `lastCompletedAt-${scanMode}`)
               if (lastCompletedAtString) {
                 const lastCompletedAt = new Date(parseInt(lastCompletedAtString, 10))
-                await databaseService.upsertConfig(database, `lastCompletedAt-${scanMode}`, lastCompletedAt.toISOString())
+                databaseService.upsertConfig(database, `lastCompletedAt-${scanMode}`, lastCompletedAt.toISOString())
               }
             }
           }
@@ -1203,7 +1203,7 @@ module.exports = {
         // eslint-disable-next-line max-len
         logger.info(`Migration of values database ${cachePath}/${application.id}.db: Renaming column name "data_source_id" into "data_source" for application ${application.name}`)
         try {
-          await databaseMigrationService.changeColumnName(
+          databaseMigrationService.changeColumnName(
             newApplicationPath,
             'data_source_id',
             'data_source',
@@ -1216,7 +1216,7 @@ module.exports = {
           // eslint-disable-next-line max-len
           logger.info(`Migration of file database ${fileCacheDbPath}: Changing application value from ${application.name} to ${application.id}`)
           try {
-            await databaseMigrationService.changeColumnValue(
+            databaseMigrationService.changeColumnValue(
               fileCacheDbPath,
               'application',
               application.name,
@@ -1231,7 +1231,7 @@ module.exports = {
           // eslint-disable-next-line max-len
           logger.info(`Migration of file error database ${fileCacheErrorDbPath}: Changing application value from ${application.name} to ${application.id}`)
           try {
-            await databaseMigrationService.changeColumnValue(
+            databaseMigrationService.changeColumnValue(
               fileCacheErrorDbPath,
               'application',
               application.name,
@@ -1246,7 +1246,7 @@ module.exports = {
           // eslint-disable-next-line max-len
           logger.info(`Migration of value error database ${valueCacheErrorDbPath}: Changing application value from ${application.name} to ${application.id}`)
           try {
-            await databaseMigrationService.changeColumnValue(
+            databaseMigrationService.changeColumnValue(
               valueCacheErrorDbPath,
               'application',
               application.name,

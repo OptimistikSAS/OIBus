@@ -203,7 +203,7 @@ class HistoryQueryEngine extends BaseEngine {
       const databasePath = `${folder}/${historyQueryConfig.southId}.db`
       try {
         await fs.stat(databasePath)
-        const entries = await databaseService.getHistoryQuerySouthData(databasePath)
+        const entries = databaseService.getHistoryQuerySouthData(databasePath)
         data.south = entries.map((entry) => ({
           scanMode: entry.name.replace('lastCompletedAt-', ''),
           lastCompletedDate: entry.value,

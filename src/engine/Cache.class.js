@@ -67,8 +67,8 @@ class Cache {
     // only initialize the db if the api can handle values
     if (api.canHandleValues) {
       this.logger.debug(`use db: ${this.cacheFolder}/${api.id}.db for ${api.name}`)
-      api.database = await databaseService.createValuesDatabase(`${this.cacheFolder}/${api.id}.db`, {})
-      this.logger.debug(`db count: ${await databaseService.getCount(api.database)}`)
+      api.database = databaseService.createValuesDatabase(`${this.cacheFolder}/${api.id}.db`, {})
+      this.logger.debug(`db count: ${databaseService.getCount(api.database)}`)
     }
     this.apis[api.id] = api
     if (api.config?.sendInterval) {
@@ -130,12 +130,12 @@ class Cache {
 
     this.logger.debug(`Cache initialized with cacheFolder:${this.archiveFolder} and archiveFolder: ${this.archiveFolder}`)
     this.logger.debug(`Use file dbs: ${this.cacheFolder}/fileCache.db and ${this.filesErrorDatabasePath}`)
-    this.filesDatabase = await databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
-    this.filesErrorDatabase = await databaseService.createFilesDatabase(this.filesErrorDatabasePath)
-    this.valuesErrorDatabase = await databaseService.createValueErrorsDatabase(this.valuesErrorDatabasePath)
-    this.logger.debug(`Files db count: ${await databaseService.getCount(this.filesDatabase)}`)
-    this.logger.debug(`Files error db count: ${await databaseService.getCount(this.filesErrorDatabase)}`)
-    this.logger.debug(`Values error db count: ${await databaseService.getCount(this.valuesErrorDatabase)}`)
+    this.filesDatabase = databaseService.createFilesDatabase(`${this.cacheFolder}/fileCache.db`)
+    this.filesErrorDatabase = databaseService.createFilesDatabase(this.filesErrorDatabasePath)
+    this.valuesErrorDatabase = databaseService.createValueErrorsDatabase(this.valuesErrorDatabasePath)
+    this.logger.debug(`Files db count: ${databaseService.getCount(this.filesDatabase)}`)
+    this.logger.debug(`Files error db count: ${databaseService.getCount(this.filesErrorDatabase)}`)
+    this.logger.debug(`Values error db count: ${databaseService.getCount(this.valuesErrorDatabase)}`)
   }
 
   /**
@@ -171,7 +171,7 @@ class Cache {
 
       // if the group size is over the groupCount => we immediately send the cache
       // to the North even if the timeout is not finished.
-      const count = await databaseService.getCount(database)
+      const count = databaseService.getCount(database)
       if (count >= config.groupCount) {
         this.logger.trace(`groupCount reached: ${count}>=${config.groupCount}`)
         return api
@@ -225,7 +225,7 @@ class Cache {
 
       // Cache file
       this.logger.debug(`cacheFileForApi() ${cachePath} for api: ${applicationName}`)
-      await databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
+      databaseService.saveFile(this.filesDatabase, timestamp, applicationId, cachePath)
       return api
     }
     this.logger.trace(`datasource "${this.engine.activeProtocols[id]?.dataSource.name || id}" is not subscribed to application "${applicationName}"`)
@@ -341,7 +341,7 @@ class Cache {
     const { id, name, database, config } = application
 
     try {
-      const values = await databaseService.getValuesToSend(database, config.maxSendCount)
+      const values = databaseService.getValuesToSend(database, config.maxSendCount)
       let removed
 
       if (values.length) {
@@ -352,10 +352,10 @@ class Cache {
         if (successCountStatus === ApiHandler.STATUS.LOGIC_ERROR) {
           // Add errored values into error table
           this.logger.trace(`Cache:addErroredValues, add ${values.length} values to error database for ${name}`)
-          await databaseService.saveErroredValues(this.valuesErrorDatabase, id, values)
+          databaseService.saveErroredValues(this.valuesErrorDatabase, id, values)
 
           // Remove them from the cache table
-          removed = await databaseService.removeSentValues(database, values)
+          removed = databaseService.removeSentValues(database, values)
           this.logger.trace(`Cache:removeSentValues, removed: ${removed} AppId: ${application.name}`)
           if (removed !== values.length) {
             this.logger.debug(`Cache for ${name} can't be deleted: ${removed}/${values.length}`)
@@ -364,7 +364,7 @@ class Cache {
         // If some values were successfully sent
         if (successCountStatus > 0) {
           const valuesSent = values.slice(0, successCountStatus)
-          removed = await databaseService.removeSentValues(database, valuesSent)
+          removed = databaseService.removeSentValues(database, valuesSent)
           this.logger.trace(`Cache:removeSentValues, removed: ${removed} AppId: ${application.name}`)
           if (removed !== valuesSent.length) {
             this.logger.debug(`Cache for ${name} can't be deleted: ${removed}/${valuesSent.length}`)
@@ -390,7 +390,7 @@ class Cache {
     this.logger.trace(`sendCallbackForFiles() for ${name}`)
 
     try {
-      const fileToSend = await databaseService.getFileToSend(this.filesDatabase, id)
+      const fileToSend = databaseService.getFileToSend(this.filesDatabase, id)
 
       if (!fileToSend) {
         this.logger.trace('sendCallbackForFiles(): no file to send')
@@ -403,7 +403,7 @@ class Cache {
         await fs.stat(fileToSend.path)
       } catch (error) {
         // file in cache does not exist on filesystem
-        await databaseService.deleteSentFile(this.filesDatabase, id, fileToSend.path)
+        databaseService.deleteSentFile(this.filesDatabase, id, fileToSend.path)
         this.logger.error(new Error(`${fileToSend.path} not found! Removing it from db.`))
         return ApiHandler.STATUS.SUCCESS
       }
@@ -412,15 +412,15 @@ class Cache {
       switch (status) {
         case ApiHandler.STATUS.SUCCESS:
           this.logger.trace(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${name}`)
-          await databaseService.deleteSentFile(this.filesDatabase, id, fileToSend.path)
+          databaseService.deleteSentFile(this.filesDatabase, id, fileToSend.path)
           await this.handleSentFile(fileToSend.path)
           break
         case ApiHandler.STATUS.LOGIC_ERROR:
           this.logger.error(`sendCallbackForFiles(${fileToSend.path}) move to error database for ${name}`)
-          await databaseService.saveFile(this.filesErrorDatabase, fileToSend.timestamp, id, fileToSend.path)
+          databaseService.saveFile(this.filesErrorDatabase, fileToSend.timestamp, id, fileToSend.path)
 
           this.logger.trace(`sendCallbackForFiles(${fileToSend.path}) deleteSentFile for ${name}`)
-          await databaseService.deleteSentFile(this.filesDatabase, id, fileToSend.path)
+          databaseService.deleteSentFile(this.filesDatabase, id, fileToSend.path)
           break
         default:
           break
@@ -439,7 +439,7 @@ class Cache {
    */
   async handleSentFile(filePath) {
     this.logger.trace(`handleSentFile(${filePath})`)
-    const count = await databaseService.getFileCount(this.filesDatabase, filePath)
+    const count = databaseService.getFileCount(this.filesDatabase, filePath)
     if (count === 0) {
       if (this.archiveMode) {
         const archivedFilename = path.basename(filePath)
@@ -543,8 +543,7 @@ class Cache {
     // Get file APIs stats
     const fileApis = Object.values(this.apis).filter((api) => api.canHandleFiles)
     const filesTotalCounts = fileApis.map((api) => this.cacheStats[api.name])
-    const filesCacheSizeActions = fileApis.map((api) => databaseService.getFileCountForApi(this.filesDatabase, api.name))
-    const filesCacheSizes = await Promise.all(filesCacheSizeActions)
+    const filesCacheSizes = fileApis.map((api) => databaseService.getFileCountForNorthConnector(this.filesDatabase, api.name))
     const fileApisStats = this.generateApiCacheStat(fileApis, filesTotalCounts, filesCacheSizes, 'files')
 
     // Merge results
