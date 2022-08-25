@@ -1,264 +1,276 @@
 const mongodb = require('mongodb')
 
 const MongoDB = require('./MongoDB.class')
-const config = require('../../config/defaultConfig.json')
-const EncryptionService = require('../../services/EncryptionService.class')
-const ApiHandler = require('../ApiHandler.class')
 
-// Mock logger
-jest.mock('../../engine/logger/Logger.class')
-
-// Mock EncryptionService
-EncryptionService.getInstance = () => ({ decryptText: (password) => password })
-
-// Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.requestService = { httpSend: jest.fn() }
-engine.eventEmitters = {}
+const { defaultConfig: config } = require('../../../tests/testConfig')
 
 jest.mock('mongodb', () => ({ MongoClient: jest.fn() }))
 
-const timestamp = new Date('2020-02-29T12:12:12Z').toISOString()
-const MongoDBConfig = {
-  password: 'password',
-  createCollection: false,
-  useDataKeyValue: false,
-  user: 'user',
-  host: 'host',
-  db: 'database',
-  regExp: '(.*)-(.*)-(.*)-(.*)',
-  collection: '%1$s',
-  indexFields: 'site:%2$s,unit:%3$s,sensor:%4$s',
-  timeStampKey: 'timestamp',
-  keyParentValue: '',
+// Mock OIBusEngine
+const engine = {
+  configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  requestService: { httpSend: jest.fn() },
+  getCacheFolder: jest.fn(),
 }
+
+// Mock services
+jest.mock('../../services/database.service')
+jest.mock('../../engine/logger/Logger.class')
+jest.mock('../../services/status.service.class')
+jest.mock('../../services/EncryptionService.class', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
+jest.mock('../../engine/cache/ValueCache.class')
+jest.mock('../../engine/cache/FileCache.class')
+
+const nowDateString = '2020-02-02T02:02:02.222Z'
 const values = [
   {
     pointId: 'SENSOR_TABLE-SITE1-UNIT1-ANA/BL1RCP05',
-    timestamp,
+    timestamp: new Date(nowDateString).toISOString(),
     data: {
       value: 666,
       quality: 'good',
     },
   },
 ]
+let settings = null
+let north = null
 
-beforeEach(async () => {
-  jest.resetAllMocks()
-  jest.useFakeTimers()
-  jest.restoreAllMocks()
-})
+describe('North MongoDB', () => {
+  beforeEach(async () => {
+    jest.resetAllMocks()
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString))
 
-describe('MongoDB north', () => {
+    settings = {
+      id: 'northId',
+      name: 'mongo',
+      api: 'MongoDB',
+      MongoDB: {
+        password: 'password',
+        createCollection: false,
+        useDataKeyValue: false,
+        user: 'user',
+        host: 'host',
+        db: 'database',
+        regExp: '(.*)-(.*)-(.*)-(.*)',
+        collection: '%1$s',
+        indexFields: 'site:%2$s,unit:%3$s,sensor:%4$s',
+        timeStampKey: 'timestamp',
+        keyParentValue: '',
+      },
+      caching: { sendInterval: 1000 },
+    }
+    north = new MongoDB(settings, engine)
+  })
+
   it('should properly connect and disconnect', async () => {
-    const mongoDbNorth = new MongoDB({ MongoDB: MongoDBConfig }, engine)
-    await mongoDbNorth.init()
+    await north.init()
 
-    expect(mongoDbNorth.canHandleValues)
-      .toBeTruthy()
-    expect(mongoDbNorth.canHandleFiles)
-      .toBeFalsy()
+    expect(north.canHandleValues).toBeTruthy()
+    expect(north.canHandleFiles).toBeFalsy()
 
     const mongoDatabase = {
-      listCollections: jest.fn(() => ({ toArray: jest.fn((callback) => callback(null, [{ name: 'collection1' }, { name: 'collection2' }])) })),
-      collection: jest.fn(() => ({ insertMany: jest.fn(), createIndex: jest.fn((index, callback) => callback()) })),
-      createCollection: jest.fn((collection, callback) => callback()),
+      listCollections: jest.fn(() => ({ toArray: jest.fn(() => ([{ name: 'collection1' }, { name: 'collection2' }])) })),
+      collection: jest.fn(() => ({ insertMany: jest.fn(), createIndex: jest.fn() })),
+      createCollection: jest.fn(),
     }
-
     const client = {
-      connect: jest.fn((callback) => callback()),
+      connect: jest.fn(),
       db: jest.fn(() => mongoDatabase),
       close: jest.fn(),
     }
 
     mongodb.MongoClient.mockReturnValue(client)
-    await mongoDbNorth.connect()
-    expect(mongoDbNorth.logger.info).toHaveBeenCalledWith('Connecting undefined to MongoDB: mongodb://user:<password>@host')
-    expect(mongoDbNorth.logger.info).toHaveBeenCalledWith('North API undefined started with protocol undefined url: mongodb://user:password@host')
-    expect(mongoDbNorth.listCollections).toEqual([{ name: 'collection1' }, { name: 'collection2' }])
+    await north.connect()
+    expect(north.logger.info).toHaveBeenCalledWith('Connecting North "mongo" to MongoDB: mongodb://user:<password>@host')
+    expect(north.logger.info).toHaveBeenCalledWith('North connector "mongo" of type MongoDB started with url: '
+        + 'mongodb://user:password@host.')
+    expect(north.listCollections).toEqual([{ name: 'collection1' }, { name: 'collection2' }])
 
-    mongoDbNorth.user = ''
-    await mongoDbNorth.connect()
-    expect(mongoDbNorth.logger.info).toHaveBeenCalledWith('Connecting undefined to MongoDB: mongodb://host')
+    north.user = ''
+    await north.connect()
+    expect(north.logger.info).toHaveBeenCalledWith('Connecting North "mongo" to MongoDB: mongodb://host')
 
-    await mongoDbNorth.disconnect()
+    await north.disconnect()
 
     expect(client.close).toHaveBeenCalled()
   })
 
   it('should fail to connect', async () => {
-    const mongoDbNorth = new MongoDB({ MongoDB: MongoDBConfig }, engine)
-    await mongoDbNorth.init()
+    await north.init()
     const client = {
-      connect: jest.fn((callback) => callback('connection error')),
+      connect: jest.fn(() => {
+        throw new Error('connection error')
+      }),
       close: jest.fn(),
     }
 
     mongodb.MongoClient.mockReturnValue(client)
-    await mongoDbNorth.connect()
-    expect(mongoDbNorth.logger.error).toHaveBeenCalledWith('Error during connection to MongoDB: connection error')
+    await expect(north.connect()).rejects.toThrowError('connection error')
 
-    mongoDbNorth.client = null
-    await mongoDbNorth.disconnect()
+    north.client = null
+    await north.disconnect()
 
     expect(client.close).not.toHaveBeenCalled()
   })
 
   it('should fail to list collections', async () => {
-    const mongoDbNorth = new MongoDB({ MongoDB: MongoDBConfig }, engine)
-    await mongoDbNorth.init()
+    await north.init()
     const client = {
-      connect: jest.fn((callback) => callback()),
-      db: jest.fn(() => ({ listCollections: jest.fn(() => ({ toArray: jest.fn((callback) => callback(('list error'), null)) })) })),
+      connect: jest.fn(),
+      db: jest.fn(() => ({
+        listCollections: jest.fn(() => ({
+          toArray: jest.fn(() => {
+            throw new Error('list error')
+          }),
+        })),
+      })),
       close: jest.fn(),
     }
 
     mongodb.MongoClient.mockReturnValue(client)
-    await mongoDbNorth.connect()
-
-    expect(mongoDbNorth.listCollections).toEqual([])
-    expect(mongoDbNorth.logger.error).toHaveBeenCalledWith('list error')
+    await expect(north.connect()).rejects.toThrowError('list error')
   })
 
   it('should properly handle values', async () => {
-    const mongoDbNorth = new MongoDB({ MongoDB: MongoDBConfig }, engine)
-    await mongoDbNorth.init()
-    mongoDbNorth.createCollection = true
+    await north.init()
+    north.createCollection = true
 
-    const inserManyFunction = jest.fn()
+    const insertManyFunction = jest.fn()
     const mongoDatabase = {
-      listCollections: jest.fn(() => ({ toArray: jest.fn((callback) => callback(null, [{ name: 'collection1' }, { name: 'collection2' }])) })),
-      collection: jest.fn(() => ({ insertMany: inserManyFunction, createIndex: jest.fn((index, callback) => callback()) })),
-      createCollection: jest.fn((collection, callback) => callback()),
+      listCollections: jest.fn(() => ({ toArray: jest.fn(() => ([{ name: 'collection1' }, { name: 'collection2' }])) })),
+      collection: jest.fn(() => ({ insertMany: insertManyFunction, createIndex: jest.fn() })),
+      createCollection: jest.fn(),
     }
 
     const client = {
-      connect: jest.fn((callback) => callback()),
+      connect: jest.fn(),
       db: jest.fn(() => mongoDatabase),
       close: jest.fn(),
     }
 
     mongodb.MongoClient.mockReturnValue(client)
-    await mongoDbNorth.connect()
+    await north.connect()
 
-    await mongoDbNorth.handleValues(values)
-    expect(mongoDbNorth.logger.info).toHaveBeenCalledWith('Collection "SENSOR_TABLE" successfully created')
-    expect(mongoDbNorth.logger.info).toHaveBeenCalledWith('Collection indexes successfully created for collection "SENSOR_TABLE"')
-    expect(mongoDbNorth.collectionChecked).toBeTruthy()
-    expect(inserManyFunction).toHaveBeenCalledWith(
-      [{ quality: 'good', sensor: 'ANA/BL1RCP05', site: 'SITE1', unit: 'UNIT1', value: '666', timestamp: '2020-02-29T12:12:12.000Z' }],
+    await north.handleValues(values)
+    expect(north.logger.info).toHaveBeenCalledWith('Collection "SENSOR_TABLE" successfully created.')
+    expect(north.logger.info).toHaveBeenCalledWith('Collection indexes successfully created for collection "SENSOR_TABLE".')
+    expect(north.collectionExists).toBeTruthy()
+    expect(insertManyFunction).toHaveBeenCalledWith(
+      [{ quality: 'good', sensor: 'ANA/BL1RCP05', site: 'SITE1', unit: 'UNIT1', value: '666', timestamp: nowDateString }],
     )
 
-    mongoDbNorth.useDataKeyValue = true
-    mongoDbNorth.keyParentValue = 'level'
-    mongoDbNorth.timestampPathInDataValue = 'timestamp'
-    await mongoDbNorth.handleValues([{
+    north.useDataKeyValue = true
+    north.keyParentValue = 'level'
+    north.timestampPathInDataValue = 'timestamp'
+    await north.handleValues([{
       pointId: 'SENSOR_TABLE-SITE1-UNIT1-ANA/BL1RCP05',
       data: {
-        value: { level: { value: 666, timestamp } },
+        value: { level: { value: 666, timestamp: new Date(nowDateString).toISOString() } },
         quality: 'good',
       },
     }, {
       pointId: 'SENSOR_TABLE-SITE1-UNIT1-ANA/BL1RCP05',
       data: {
-        value: { level: { value: 777, timestamp } },
+        value: { level: { value: 777, timestamp: new Date(nowDateString).toISOString() } },
         quality: 'good',
       },
     }])
-    // eslint-disable-next-line max-len
-    expect(inserManyFunction).toHaveBeenCalledWith([{ sensor: 'ANA/BL1RCP05', site: 'SITE1', unit: 'UNIT1', value: '666', timestamp: '2020-02-29T12:12:12.000Z' }, { sensor: 'ANA/BL1RCP05', site: 'SITE1', unit: 'UNIT1', value: '777', timestamp: '2020-02-29T12:12:12.000Z' }])
+    expect(insertManyFunction).toHaveBeenCalledWith([
+      { sensor: 'ANA/BL1RCP05', site: 'SITE1', unit: 'UNIT1', value: '666', timestamp: nowDateString },
+      { sensor: 'ANA/BL1RCP05', site: 'SITE1', unit: 'UNIT1', value: '777', timestamp: nowDateString }])
   })
 
   it('should not create collection if it already exists', async () => {
-    const mongoDbNorth = new MongoDB({ MongoDB: MongoDBConfig }, engine)
-    await mongoDbNorth.init()
+    await north.init()
 
     const mongoDatabase = {
-      listCollections: jest.fn(() => ({ toArray: jest.fn((callback) => callback(null, [{ name: 'collection1' }, { name: 'collection2' }])) })),
-      createCollection: jest.fn((collection, callback) => callback()),
+      listCollections: jest.fn(() => ({ toArray: jest.fn(() => ([{ name: 'collection1' }, { name: 'collection2' }])) })),
+      collection: jest.fn(() => ({ insertMany: jest.fn(), createIndex: jest.fn() })),
+      createCollection: jest.fn(),
     }
 
     const client = {
-      connect: jest.fn((callback) => callback()),
+      connect: jest.fn(),
       db: jest.fn(() => mongoDatabase),
     }
     mongodb.MongoClient.mockReturnValue(client)
-    await mongoDbNorth.connect()
+    await north.connect()
 
-    expect(mongoDbNorth.listCollections).toEqual([{ name: 'collection1' }, { name: 'collection2' }])
-    await mongoDbNorth.ensureCollectionExists('collection1', null, null)
+    expect(north.listCollections).toEqual([{ name: 'collection1' }, { name: 'collection2' }])
+    await north.ensureCollectionExists('collection1', null, null)
 
-    expect(mongoDbNorth.mongoDatabase.createCollection).not.toHaveBeenCalled()
-    expect(mongoDbNorth.collectionChecked).toBeTruthy()
-  })
-
-  it('should properly manage handle values errors', async () => {
-    const mongoDbNorth = new MongoDB({ MongoDB: MongoDBConfig }, engine)
-    await mongoDbNorth.init()
-
-    mongoDbNorth.makeRequest = jest.fn(() => Promise.reject(new Error('request error')))
-
-    try {
-      await mongoDbNorth.handleValues(values)
-    } catch (error) {
-      expect(mongoDbNorth.logger.error).toHaveBeenCalledWith(new Error('request error'))
-      expect(error).toEqual(ApiHandler.STATUS.COMMUNICATION_ERROR)
-    }
+    expect(north.mongoDatabase.createCollection).not.toHaveBeenCalled()
+    expect(north.collectionExists).toBeTruthy()
   })
 
   it('should properly manage collection creation errors', async () => {
-    const mongoDbNorth = new MongoDB({ MongoDB: MongoDBConfig }, engine)
-    await mongoDbNorth.init()
+    await north.init()
 
-    mongoDbNorth.mongoDatabase = {
-      collection: jest.fn(() => ({ insertMany: jest.fn(), createIndex: jest.fn((index, callback) => callback('createIndexError')) })),
-      createCollection: jest.fn((collection, callback) => callback('createCollectionError')),
+    north.mongoDatabase = {
+      collection: jest.fn(() => ({
+        insertMany: jest.fn(),
+        createIndex: jest.fn(() => {
+          throw new Error('createIndexError')
+        }),
+      })),
+      createCollection: jest.fn(() => {
+        throw new Error('createCollectionError')
+      }),
     }
-    mongoDbNorth.listCollections = [{ name: 'collection1' }, { name: 'collection2' }]
-    await mongoDbNorth.ensureCollectionExists('collection3', ['index1', 'index2'], 'timestampKey')
-    expect(mongoDbNorth.logger.error).toHaveBeenCalledWith('Error during the creation of collection "collection3": createCollectionError')
+    north.listCollections = [{ name: 'collection1' }, { name: 'collection2' }]
+    await expect(north.ensureCollectionExists(
+      'collection3',
+      ['index1', 'index2'],
+      'timestampKey',
+    )).rejects.toThrowError('createCollectionError')
 
-    mongoDbNorth.mongoDatabase = {
-      collection: jest.fn(() => ({ insertMany: jest.fn(), createIndex: jest.fn((index, callback) => callback('createIndexError')) })),
-      createCollection: jest.fn((collection, callback) => callback(null)),
+    north.mongoDatabase = {
+      collection: jest.fn(() => ({
+        insertMany: jest.fn(),
+        createIndex: jest.fn(() => {
+          throw new Error('createIndexError')
+        }),
+      })),
+      createCollection: jest.fn(),
     }
-    await mongoDbNorth.ensureCollectionExists('collection3', ['index1', 'index2'], 'timestampKey')
-    expect(mongoDbNorth.logger.error).toHaveBeenCalledWith('Error during the creation of indexes for collection "collection3": createIndexError')
+    await expect(north.ensureCollectionExists(
+      'collection3',
+      ['index1', 'index2'],
+      'timestampKey',
+    )).rejects.toThrowError('createIndexError')
   })
 
   it('should properly handle values with index fields and collection values errors', async () => {
-    const mongoDbNorth = new MongoDB({ MongoDB: MongoDBConfig }, engine)
-    await mongoDbNorth.init()
+    await north.init()
 
-    const inserManyFunction = jest.fn()
+    const insertManyFunction = jest.fn()
     const mongoDatabase = {
-      listCollections: jest.fn(() => ({ toArray: jest.fn((callback) => callback(null, [{ name: 'collection1' }, { name: 'collection2' }])) })),
-      collection: jest.fn(() => ({ insertMany: inserManyFunction, createIndex: jest.fn((index, callback) => callback()) })),
-      createCollection: jest.fn((collection, callback) => callback()),
+      listCollections: jest.fn(() => ({ toArray: jest.fn(() => ([{ name: 'collection1' }, { name: 'collection2' }])) })),
+      collection: jest.fn(() => ({ insertMany: insertManyFunction, createIndex: jest.fn() })),
+      createCollection: jest.fn(),
     }
 
     const client = {
-      connect: jest.fn((callback) => callback()),
+      connect: jest.fn(),
       db: jest.fn(() => mongoDatabase),
       close: jest.fn(),
     }
 
     mongodb.MongoClient.mockReturnValue(client)
-    await mongoDbNorth.connect()
+    await north.connect()
 
-    mongoDbNorth.collection = '%9$s'
+    north.collection = '%9$s'
 
-    await mongoDbNorth.makeRequest(values)
+    await north.handleValues(values)
 
-    // eslint-disable-next-line max-len
-    expect(mongoDbNorth.logger.error).toHaveBeenCalledWith('RegExp returned by (.*)-(.*)-(.*)-(.*) for SENSOR_TABLE-SITE1-UNIT1-ANA/BL1RCP05 doesn\'t have enough groups for collection')
+    expect(north.logger.error).toHaveBeenCalledWith('RegExp returned by (.*)-(.*)-(.*)-(.*) for '
+        + 'SENSOR_TABLE-SITE1-UNIT1-ANA/BL1RCP05 doesn\'t have enough groups for the collection.')
 
-    mongoDbNorth.collection = '%1$s'
-    mongoDbNorth.indexFields = '%9$s'
-    await mongoDbNorth.makeRequest(values)
+    north.collection = '%1$s'
+    north.indexFields = '%9$s'
+    await north.handleValues(values)
 
-    // eslint-disable-next-line max-len
-    expect(mongoDbNorth.logger.error).toHaveBeenCalledWith('RegExp returned by (.*)-(.*)-(.*)-(.*) for SENSOR_TABLE-SITE1-UNIT1-ANA/BL1RCP05 doesn\'t have enough groups for indexes')
+    expect(north.logger.error).toHaveBeenCalledWith('RegExp returned by (.*)-(.*)-(.*)-(.*) for '
+        + 'SENSOR_TABLE-SITE1-UNIT1-ANA/BL1RCP05 doesn\'t have enough groups for indexes.')
   })
 })

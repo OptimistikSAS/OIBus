@@ -29,7 +29,7 @@
  *     values: [7.51604342731906,  7.5292481205665]
  *   }
  * ]
- * @param {object} resultElement - the data resulting of an OIAnalytics time series API call
+ * @param {Object} resultElement - the data resulting of an OIAnalytics time series API call
  * @return {void}
  */
 const checkDataFormat = (resultElement) => {
@@ -49,8 +49,8 @@ const checkDataFormat = (resultElement) => {
 
 /**
  * Parse data from OIAnalytics time values API
- * @param {object} httpResult - the data resulting of an OIAnalytics time series API call
- * @return {{httpResults: *[], latestDateRetrieved: Date}} - the formatted results flattened for easier access
+ * @param {Object} httpResult - the data resulting of an OIAnalytics time series API call
+ * @return {{httpResults: Object[], latestDateRetrieved: Date}} - the formatted results flattened for easier access
  * (into csv files for example) and the latestDateRetrieved in ISO String format
  */
 const format = (httpResult) => {

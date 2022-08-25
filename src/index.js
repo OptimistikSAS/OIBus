@@ -1,5 +1,5 @@
-const cluster = require('cluster')
-const path = require('path')
+const cluster = require('node:cluster')
+const path = require('node:path')
 
 const VERSION = require('../package.json').version
 
@@ -10,6 +10,8 @@ const OIBusEngine = require('./engine/OIBusEngine.class')
 const HistoryQueryEngine = require('./HistoryQuery/HistoryQueryEngine.class')
 const Logger = require('./engine/logger/Logger.class')
 const EncryptionService = require('./services/EncryptionService.class')
+
+const { getCommandLineArguments } = require('./services/utils')
 
 // In case there is an error the worker process will exit.
 // If this happens MAX_RESTART_COUNT times in less than MAX_INTERVAL_MILLISECOND interval
@@ -23,7 +25,7 @@ const logger = new Logger()
 const {
   configFile,
   check,
-} = ConfigService.getCommandLineArguments()
+} = getCommandLineArguments()
 
 logger.changeParameters({
   engineName: 'OIBus-main',
@@ -113,6 +115,7 @@ logger.changeParameters({
       // so this is here where we start the web-server, OIBusEngine and HistoryQueryEngine
 
       const configService = new ConfigService(configFile)
+      await configService.init()
 
       const encryptionService = EncryptionService.getInstance()
       encryptionService.setKeyFolder(configService.keyFolder)

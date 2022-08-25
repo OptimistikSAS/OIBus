@@ -1,17 +1,20 @@
 /**
- * Class representing a connected session.
+ * Class representing a connected socketSession.
  */
 class SocketSession {
-  constructor(socket, tcpServer, handleMessage) {
+  /**
+   * @param {Object} socket - The socket parameters
+   * @param {Object} logger - The logger
+   * @param {Function} closeCallback - The TCP netServer
+   * @param {Function} handleMessage - The method used to handle and parse messages
+   */
+  constructor(socket, logger, closeCallback, handleMessage) {
     this.socket = socket
-    this.tcpServer = tcpServer
+    this.closeCallback = closeCallback
     this.handleMessage = handleMessage
-    this.logger = tcpServer.logger
+    this.logger = logger
     this.name = `${socket.remoteAddress}:${socket.remotePort}`
     this.receivedMessage = ''
-
-    this.logger.info(`Connection accepted from ${this.name}`)
-
     this.bindSocketEvents()
   }
 
@@ -20,7 +23,6 @@ class SocketSession {
    * @return {void}
    */
   bindSocketEvents() {
-    // Listener for the 'data' event
     this.socket.on('data', async (data) => {
       const content = data.toString()
       const responses = []
@@ -43,26 +45,13 @@ class SocketSession {
         this.receivedMessage += content
       }
 
-      // eslint-disable-next-line no-restricted-syntax
-      for (const response of responses) {
-        // eslint-disable-next-line no-await-in-loop
-        await this.handleMessage(response.trim())
-      }
+      await Promise.all(responses.map((response) => this.handleMessage(response.trim())))
     })
 
-    // Listener for the 'close' event
     this.socket.on('close', async () => {
-      this.logger.info(`Connection with ${this.name} closed`)
-      this.tcpServer.removeSession()
-      const disconnectMessage = {
-        Reply: 'Disconnect',
-        TransactionId: '',
-        Content: {},
-      }
-      await this.handleMessage(JSON.stringify(disconnectMessage))
+      await this.closeCallback()
     })
 
-    // Listener for the 'error' event
     this.socket.on('error', (error) => {
       this.logger.error(error)
     })
@@ -70,7 +59,7 @@ class SocketSession {
 
   /**
    * Send message to the client.
-   * @param {string} message - The message to be sent
+   * @param {String} message - The message to be sent
    * @returns {void}
    */
   sendMessage(message) {
@@ -78,7 +67,7 @@ class SocketSession {
   }
 
   /**
-   * Close the session.
+   * Close the socketSession.
    * @returns {void}
    */
   close() {

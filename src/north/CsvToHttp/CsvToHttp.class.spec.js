@@ -1,254 +1,159 @@
-const path = require('path')
 const CsvToHttp = require('./CsvToHttp.class')
-const ApiHandler = require('../ApiHandler.class')
+
+const utils = require('./utils')
+
 const { defaultConfig: config } = require('../../../tests/testConfig')
-const EncryptionService = require('../../services/EncryptionService.class')
 
-// Mock logger
-jest.mock('../../engine/logger/Logger.class')
+// Mock utils class
+jest.mock('./utils', () => ({
+  convertCSVRowIntoHttpBody: jest.fn(),
+  isHeaderValid: jest.fn(),
+}))
 
-// Mock EncryptionService
-EncryptionService.getInstance = () => ({ decryptText: (password) => password })
-
-// Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: config.engine }) }
-engine.requestService = { httpSend: jest.fn() }
-engine.decryptPassword = (password) => password
-engine.eventEmitters = {}
-
-// Define the CsvToHttp North
-const csvToHttpConfig = {
-  id: 'north-csv-to-http',
-  name: 'CsvToHttp',
-  api: 'CsvToHttp',
-  enabled: false,
-  CsvToHttp: {
-    applicativeHostUrl: 'https://localhost.com',
-    requestMethod: 'POST',
-    proxy: '',
-    mapping: [
-      {
-        csvField: 'Id',
-        httpField: 'Identification',
-        type: 'integer',
-      },
-      {
-        csvField: 'Begin',
-        httpField: 'date',
-        type: 'short date (yyyy-mm-dd)',
-      },
-    ],
-    authentication: {
-      type: 'API Key',
-      secretKey: 'anytoken',
-      key: 'anyvalue',
-    },
-    bodyMaxLength: 100,
-    csvDelimiter: ';',
-  },
-  caching: {
-    sendInterval: 1000,
-    retryInterval: 5000,
-    groupCount: 1000,
-    maxSendCount: 10000,
-  },
-  subscribedTo: [],
+// Mock OIBusEngine
+const engine = {
+  configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  requestService: { httpSend: jest.fn() },
+  getCacheFolder: jest.fn(),
 }
-let csvToHttpNorth = null
 
-beforeEach(async () => {
-  jest.resetAllMocks()
-  jest.clearAllMocks()
-  csvToHttpNorth = new CsvToHttp(csvToHttpConfig, engine)
-  await csvToHttpNorth.init()
-})
+// Mock services
+jest.mock('../../services/database.service')
+jest.mock('../../engine/logger/Logger.class')
+jest.mock('../../services/status.service.class')
+jest.mock('../../services/EncryptionService.class', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
+jest.mock('../../engine/cache/ValueCache.class')
+jest.mock('../../engine/cache/FileCache.class')
 
-describe('CsvToHttp', () => {
-  it('should be properly initialized', () => {
-    expect(csvToHttpNorth.canHandleValues).toBeFalsy()
-    expect(csvToHttpNorth.canHandleFiles).toBeTruthy()
+let settings = null
+let north = null
+
+describe('North CsvToHttp', () => {
+  beforeEach(async () => {
+    jest.resetAllMocks()
+    jest.useFakeTimers()
+
+    utils.isHeaderValid.mockReturnValue(true)
+
+    settings = {
+      id: 'northId',
+      name: 'CsvToHttp',
+      api: 'CsvToHttp',
+      enabled: false,
+      CsvToHttp: {
+        applicativeHostUrl: 'https://localhost.com',
+        requestMethod: 'POST',
+        proxy: '',
+        mapping: [
+          {
+            csvField: 'Id',
+            httpField: 'Identification',
+            type: 'integer',
+          },
+          {
+            csvField: 'Begin',
+            httpField: 'date',
+            type: 'short date (yyyy-mm-dd)',
+          },
+        ],
+        authentication: {
+          type: 'API Key',
+          secretKey: 'anytoken',
+          key: 'anyvalue',
+        },
+        acceptUnconvertedRows: false,
+        bodyMaxLength: 100,
+        csvDelimiter: ';',
+      },
+      caching: {
+        sendInterval: 1000,
+        retryInterval: 5000,
+        groupCount: 1000,
+        maxSendCount: 10000,
+      },
+      subscribedTo: [],
+    }
+    north = new CsvToHttp(settings, engine)
+  })
+
+  it('should be properly initialized', async () => {
+    await north.init()
+    expect(north.canHandleValues).toBeFalsy()
+    expect(north.canHandleFiles).toBeTruthy()
   })
 
   it('should properly reject file if type is other than csv', async () => {
-    const response = await csvToHttpNorth.handleFile('../../../tests/csvToHttpTest')
-
-    expect(response).toEqual(ApiHandler.STATUS.LOGIC_ERROR)
+    await north.init()
+    await expect(north.handleFile('filePath')).rejects
+      .toThrowError('Invalid file format: .csv file expected. File "filePath" skipped.')
   })
 
   it('should properly handle csv files', async () => {
-    const response = await csvToHttpNorth.handleFile(path.resolve('./tests/csvToHttpTest.csv'))
+    utils.convertCSVRowIntoHttpBody.mockReturnValue({
+      value: 'value',
+      error: null,
+    })
+    north.parseCsvFile = jest.fn()
+    north.parseCsvFile.mockReturnValue([
+      ['Id', 'Begin'],
+      ['1', '2020-12-17 01:00'],
+      ['2', '2020-12-17 02:00'],
+      ['3', '2020-12-17 03:00'],
+      ['4', '2020-12-17 04:00'],
+      ['5', '2020-12-17 05:00'],
+    ])
 
-    expect(response).toEqual(ApiHandler.STATUS.SUCCESS)
+    await north.init()
+    await north.handleFile('csvToHttpTest.csv')
+
+    expect(north.engine.requestService.httpSend).toHaveBeenCalledTimes(1)
   })
 
   it('should properly test validity of header', async () => {
+    await north.init()
+
     const jsonObject = {}
 
-    csvToHttpNorth.mapping.forEach((mapping) => {
+    north.mapping.forEach((mapping) => {
       jsonObject[mapping.csvField] = 'testValue'
     })
 
-    let mappingValues = csvToHttpNorth.getOnlyValidMappingValue(jsonObject)
+    const mappingValues = north.getOnlyValidMappingValue(jsonObject)
 
-    expect(csvToHttpNorth.mapping.length).toEqual(mappingValues.length)
-
-    csvToHttpNorth.mapping.push(
-      {
-        csvField: 'unvalid header',
-        httpField: 'IdentificationBy template',
-        type: 'string',
-      },
-    )
-
-    csvToHttpNorth.mapping.push(
-      {
-        // eslint-disable-next-line no-template-curly-in-string
-        csvField: '${unvalid header}',
-        httpField: 'IdentificationBy template',
-        type: 'string',
-      },
-    )
-
-    mappingValues = csvToHttpNorth.getOnlyValidMappingValue(jsonObject)
-
-    expect(csvToHttpNorth.mapping.length).toBeGreaterThan(mappingValues.length)
-  })
-
-  it('should properly handle csv files with template string', async () => {
-    csvToHttpNorth.mapping.push({
-      // eslint-disable-next-line no-template-curly-in-string
-      csvField: '${id}',
-      httpField: 'IdentificationBy template',
-      type: 'string',
-    })
-    const response = await csvToHttpNorth.handleFile(path.resolve('./tests/csvToHttpTest.csv'))
-
-    expect(response).toEqual(ApiHandler.STATUS.SUCCESS)
-    csvToHttpNorth.mapping.pop()
-  })
-
-  it('should properly convert values', async () => {
-    let response = CsvToHttp.convertToCorrectType('test', 'string')
-    let expectedType = 'string'
-    expect(typeof response.value).toEqual(expectedType)
-
-    response = CsvToHttp.convertToCorrectType('1', 'integer')
-    expectedType = 'number'
-    expect(typeof response.value).toEqual(expectedType)
-
-    response = CsvToHttp.convertToCorrectType('1', 'float')
-    expectedType = 'number'
-    expect(typeof response.value).toEqual(expectedType)
-
-    response = CsvToHttp.convertToCorrectType('900277200000000000', 'timestamp')
-    expectedType = 'number'
-    expect(typeof response.value).toEqual(expectedType)
-
-    response = CsvToHttp.convertToCorrectType('1998-07-12', 'date (ISO)')
-    expectedType = 'object'
-    expect(typeof response.value).toEqual(expectedType)
-    expect(response.value).toEqual(new Date('1998-07-12T00:00:00.000Z'))
-
-    response = CsvToHttp.convertToCorrectType('1998-07-12T21:00:00Z', 'date (ISO)')
-    expectedType = 'object'
-    expect(typeof response.value).toEqual(expectedType)
-    expect(response.value).toEqual(new Date('1998-07-12T21:00:00.000Z'))
-
-    response = CsvToHttp.convertToCorrectType('1998-07-12T21:00:00.000Z', 'short date (yyyy-mm-dd)')
-    expectedType = 'string'
-    expect(typeof response.value).toEqual(expectedType)
-    expect(response.value).toEqual('1998-07-12')
-  })
-
-  it('should fail to convert wrong values', async () => {
-    let response = CsvToHttp.convertToCorrectType('testValue', 'integer')
-    expect(response.value).toEqual('testValue')
-    expect(response.error.length).toBeGreaterThan(0)
-
-    response = CsvToHttp.convertToCorrectType(null, 'integer')
-    expect(response.value).toEqual(null)
-    expect(response.error.length).toBeGreaterThan(0)
-
-    response = CsvToHttp.convertToCorrectType('testValue', 'float')
-    expect(response.value).toEqual('testValue')
-    expect(response.error.length).toBeGreaterThan(0)
-
-    response = CsvToHttp.convertToCorrectType(null, 'float')
-    expect(response.value).toEqual(null)
-    expect(response.error.length).toBeGreaterThan(0)
-
-    response = CsvToHttp.convertToCorrectType('testValue', 'timestamp')
-    expect(response.value).toEqual('testValue')
-    expect(response.error.length).toBeGreaterThan(0)
-
-    response = CsvToHttp.convertToCorrectType(null, 'timestamp')
-    expect(response.value).toEqual(null)
-    expect(response.error.length).toBeGreaterThan(0)
-
-    response = CsvToHttp.convertToCorrectType('testValue', 'date (ISO)')
-    expect(response.value).toEqual('testValue')
-    expect(response.error.length).toBeGreaterThan(0)
-
-    response = CsvToHttp.convertToCorrectType(null, 'date (ISO)')
-    expect(response.value).toEqual(null)
-    expect(response.error.length).toBeGreaterThan(0)
-
-    response = CsvToHttp.convertToCorrectType('testValue', 'short date (yyyy-mm-dd)')
-    expect(response.value).toEqual('testValue')
-    expect(response.error.length).toBeGreaterThan(0)
-
-    response = CsvToHttp.convertToCorrectType(null, 'short date (yyyy-mm-dd)')
-    expect(response.value).toEqual(null)
-    expect(response.error.length).toBeGreaterThan(0)
-  })
-
-  it('should properly convert one row (from a json)', async () => {
-    const jsonObject = {}
-    const mappingValues = []
-
-    csvToHttpNorth.mapping.forEach((mapping) => {
-      jsonObject[mapping.csvField] = 'testValue'
-      mappingValues.push(mapping)
-    })
-
-    const response = await CsvToHttp.convertCSVRowIntoHttpBody(jsonObject, mappingValues)
-
-    csvToHttpNorth.mapping.forEach((mapping) => {
-      expect(response.value[mapping.httpField]).toEqual('testValue')
-    })
+    expect(north.mapping.length).toEqual(mappingValues.length)
   })
 
   it('should properly send data (body.length > bodyMaxLength)', async () => {
     const httpBody = []
-    for (let i = 0; i < csvToHttpNorth.bodyMaxLength + 1; i += 1) {
+    for (let i = 0; i < north.bodyMaxLength + 1; i += 1) {
       httpBody.push({ test: 'test' })
     }
 
-    await csvToHttpNorth.sendData(httpBody)
+    await north.sendData(httpBody)
 
     expect(engine.requestService.httpSend).toHaveBeenCalledTimes(2)
   })
 
   it('should properly send data (body.length <= bodyMaxLength)', async () => {
+    await north.init()
     const httpBody = []
-    for (let i = 0; i < csvToHttpNorth.bodyMaxLength - 1; i += 1) {
+    for (let i = 0; i < north.bodyMaxLength - 1; i += 1) {
       httpBody.push({ test: 'test' })
     }
 
-    await csvToHttpNorth.sendData(httpBody)
+    await north.sendData(httpBody)
 
-    const expectedUrl = csvToHttpConfig.CsvToHttp.applicativeHostUrl
-    const expectedRequestMethod = csvToHttpConfig.CsvToHttp.requestMethod
-    const expectedbody = JSON.stringify(httpBody)
-    const expectedAuthentication = csvToHttpConfig.CsvToHttp.authentication
+    const expectedUrl = settings.CsvToHttp.applicativeHostUrl
+    const expectedRequestMethod = settings.CsvToHttp.requestMethod
+    const expectedBody = JSON.stringify(httpBody)
+    const expectedAuthentication = settings.CsvToHttp.authentication
     const expectedHeaders = { 'Content-Type': 'application/json' }
     expect(engine.requestService.httpSend).toHaveBeenCalledWith(
       expectedUrl,
       expectedRequestMethod,
       expectedAuthentication,
       null,
-      expectedbody,
+      expectedBody,
       expectedHeaders,
     )
     expect(engine.requestService.httpSend).toHaveBeenCalledTimes(1)
