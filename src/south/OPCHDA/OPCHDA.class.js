@@ -107,10 +107,10 @@ class OPCHDA extends ProtocolHandler {
    */
   async historyQuery(scanMode, startTime, endTime) {
     this.historyRead$ = new DeferredPromise()
-    this.sendReadMessage(scanMode, startTime, endTime)
+    await this.sendReadMessage(scanMode, startTime, endTime)
 
     this.historyReadTimeout = setTimeout(() => {
-      this.historyRead$.reject(new Error(`History query has not succeed in the requested readTimeout: ${this.readTimeout}`))
+      this.historyRead$.reject(new Error(`History query has not succeeded in the requested readTimeout: ${this.readTimeout}`))
     }, this.readTimeout * 1000)
     await this.historyRead$.promise
     clearTimeout(this.historyReadTimeout)
@@ -128,13 +128,12 @@ class OPCHDA extends ProtocolHandler {
     }
 
     if (this.historyReadTimeout) {
-      this.historyRead$.reject(new Error('History query cancelled because the connector is disconnecting'))
       clearTimeout(this.historyReadTimeout)
     }
 
     if (this.agentConnected) { // TCP connection with the HDA Agent was previously established
       // In this case, we ask the HDA Agent to stop and disconnect gracefully
-      this.sendStopMessage()
+      await this.sendStopMessage()
       await this.disconnection$.promise
     }
 
@@ -143,14 +142,15 @@ class OPCHDA extends ProtocolHandler {
     }
 
     // Child process HDA Agent is now ready to be killed
-    this.child.kill()
-    this.child = null
-
+    if (this.child) {
+      this.child.kill()
+      this.child = null
+    }
     if (this.tcpServer) {
       this.tcpServer.stop()
     }
-
     this.tcpServer = null
+
     this.agentConnected = false
     await super.disconnect()
   }
@@ -243,7 +243,7 @@ class OPCHDA extends ProtocolHandler {
     return `${this.transactionId}`
   }
 
-  sendConnectMessage() {
+  async sendConnectMessage() {
     const message = {
       Request: 'Connect',
       TransactionId: this.generateTransactionId(),
@@ -252,10 +252,10 @@ class OPCHDA extends ProtocolHandler {
         serverName: this.serverName,
       },
     }
-    this.sendTCPMessageToHDAAgent(message)
+    await this.sendTCPMessageToHDAAgent(message)
   }
 
-  sendInitializeMessage() {
+  async sendInitializeMessage() {
     const message = {
       Request: 'Initialize',
       TransactionId: this.generateTransactionId(),
@@ -272,10 +272,10 @@ class OPCHDA extends ProtocolHandler {
         ReadIntervalDelay: this.readIntervalDelay,
       },
     }
-    this.sendTCPMessageToHDAAgent(message)
+    await this.sendTCPMessageToHDAAgent(message)
   }
 
-  sendReadMessage(scanMode, startTime, endTime) {
+  async sendReadMessage(scanMode, startTime, endTime) {
     const message = {
       Request: 'Read',
       TransactionId: this.generateTransactionId(),
@@ -285,15 +285,15 @@ class OPCHDA extends ProtocolHandler {
         EndTime: endTime.getTime(),
       },
     }
-    this.sendTCPMessageToHDAAgent(message)
+    await this.sendTCPMessageToHDAAgent(message)
   }
 
-  sendStopMessage() {
+  async sendStopMessage() {
     const message = {
       Request: 'Stop',
       TransactionId: this.generateTransactionId(),
     }
-    this.sendTCPMessageToHDAAgent(message)
+    await this.sendTCPMessageToHDAAgent(message)
     this.disconnection$ = new DeferredPromise()
     this.disconnectionTimeout = setTimeout(() => {
       this.disconnection$.resolve()
@@ -305,7 +305,7 @@ class OPCHDA extends ProtocolHandler {
    * @param {object} message - the message to send
    * @return {void}
    */
-  sendTCPMessageToHDAAgent(message) {
+  async sendTCPMessageToHDAAgent(message) {
     if (this.tcpServer && this.agentConnected) {
       if (message.Request === 'Read') {
         this.ongoingReads[message.Content.Group] = true
@@ -316,6 +316,8 @@ class OPCHDA extends ProtocolHandler {
       this.updateStatusDataStream({ 'Last message sent to HDA Agent at': new Date().toISOString() })
     } else {
       this.logger.debug(`sendTCPMessageToHDAAgent ignored, TCP server: ${this.tcpServer}, agent connected: ${this.agentConnected}`)
+      await this.disconnect()
+      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.retryInterval)
     }
   }
 
@@ -334,7 +336,7 @@ class OPCHDA extends ProtocolHandler {
       switch (messageObject.Reply) {
         case 'Alive': // The HDA Agent is running
           this.agentConnected = true
-          this.sendConnectMessage()
+          await this.sendConnectMessage()
           break
         case 'Connect':
           // The HDA Agent answers on connection request. The Content.Connected variable tells if the HDA Agent is
@@ -342,14 +344,12 @@ class OPCHDA extends ProtocolHandler {
           this.logger.info(`HDA Agent connected: ${messageObject.Content.Connected}`)
           if (messageObject.Content.Connected) {
             // Now that the HDA Agent is connected, the Agent can be initialized with the scan groups
-            this.sendInitializeMessage()
+            await this.sendInitializeMessage()
           } else {
             this.logger.error(`Unable to connect to ${this.serverName} on ${this.host}: ${messageObject.Content.Error
             }, retrying in ${this.retryInterval}ms`)
-            if (this.reconnectTimeout) {
-              clearTimeout(this.reconnectTimeout)
-            }
-            this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), this.retryInterval)
+            await this.disconnect()
+            this.reconnectTimeout = setTimeout(this.connect.bind(this), this.retryInterval)
           }
           break
         case 'Initialize': // The HDA Agent is connected and ready to read values
@@ -363,10 +363,7 @@ class OPCHDA extends ProtocolHandler {
               this.ongoingReads[messageObject.Content.Group] = false
               if (messageObject.Content.Disconnected) {
                 this.logger.error('Agent disconnected from OPC HDA server')
-                this.connected = false
-                if (this.reconnectTimeout) {
-                  clearTimeout(this.reconnectTimeout)
-                }
+                await this.disconnect()
                 this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), this.retryInterval)
               }
               this.historyRead$.reject(new Error(messageObject.Content.Error))
