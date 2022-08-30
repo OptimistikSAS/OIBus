@@ -70,7 +70,6 @@ const Caching = ({ onChange, caching }) => (
           defaultValue
           help={<div>Move to archive folder or delete files when they are sent</div>}
           onChange={onChange}
-          switchButton
         />
       </Col>
     </Row>

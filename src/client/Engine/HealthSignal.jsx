@@ -32,7 +32,6 @@ const HealthSignal = ({ onChange, healthSignal }) => (
           value={healthSignal.logging.enabled}
           defaultValue={false}
           onChange={onChange}
-          switchButton
         />
       </Col>
     </Row>
@@ -62,7 +61,6 @@ const HealthSignal = ({ onChange, healthSignal }) => (
           value={healthSignal.http.enabled}
           defaultValue={false}
           onChange={onChange}
-          switchButton
         />
       </Col>
     </Row>

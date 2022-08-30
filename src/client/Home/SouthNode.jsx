@@ -59,7 +59,6 @@ const SouthNode = ({ dataSource, indexSouth, onChange }) => {
           defaultValue={false}
           value={dataSource.enabled}
           onChange={onChange}
-          switchButton
         />
       </div>
     </div>

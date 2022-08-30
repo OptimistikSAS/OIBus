@@ -273,7 +273,6 @@ const HistoryQueryForm = ({ query }) => {
                 value={!!queryToUpdate.enabled}
                 help={<div>Enable this history query</div>}
                 onChange={handleEnabled}
-                switchButton
               />
             </Col>
             <Col md={2}>

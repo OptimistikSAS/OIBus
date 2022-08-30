@@ -94,14 +94,17 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="enabled"
-              label="Enabled"
               name="enabled"
               type="checkbox"
             />
@@ -308,7 +311,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           class="col-md-2"
         >
           <div
-            class="mb-3 mb-3"
+            class="mb-3 form-check form-switch"
           >
             <label
               class="form-check-label"
@@ -447,14 +450,17 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="enabled"
-              label="Enabled"
               name="enabled"
               type="checkbox"
             />
@@ -661,7 +667,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           class="col-md-2"
         >
           <div
-            class="mb-3 mb-3"
+            class="mb-3 form-check form-switch"
           >
             <label
               class="form-check-label"
@@ -800,13 +806,16 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="enabled"
-              label="Enabled"
               name="enabled"
               type="checkbox"
             />
@@ -991,7 +1000,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3 mb-3"
+            class="mb-3 form-check form-switch"
           >
             <label
               class="form-check-label"

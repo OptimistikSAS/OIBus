@@ -217,7 +217,7 @@ exports[`Engine check Engine 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3 mb-3"
+            class="mb-3 form-check form-switch"
           >
             <label
               class="form-check-label"
@@ -868,7 +868,7 @@ exports[`Engine check Engine 1`] = `
               class="col-md-3"
             >
               <div
-                class="mb-3 mb-3"
+                class="mb-3 form-check form-switch"
               >
                 <label
                   class="form-check-label"
@@ -2134,14 +2134,17 @@ exports[`Engine check Engine 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Archive mode activated
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.caching.archive.enabled"
-              label="Archive mode activated"
               name="engine.caching.archive.enabled"
               type="checkbox"
             />
@@ -2905,14 +2908,17 @@ exports[`Engine check Engine 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.healthSignal.logging.enabled"
-              label="Enabled"
               name="engine.healthSignal.logging.enabled"
               type="checkbox"
             />
@@ -2969,14 +2975,17 @@ exports[`Engine check Engine 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.healthSignal.http.enabled"
-              label="Enabled"
               name="engine.healthSignal.http.enabled"
               type="checkbox"
             />
@@ -3754,7 +3763,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3 mb-3"
+            class="mb-3 form-check form-switch"
           >
             <label
               class="form-check-label"
@@ -4405,7 +4414,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               class="col-md-3"
             >
               <div
-                class="mb-3 mb-3"
+                class="mb-3 form-check form-switch"
               >
                 <label
                   class="form-check-label"
@@ -5671,14 +5680,17 @@ exports[`Engine check Engine when config has no proxies 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Archive mode activated
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.caching.archive.enabled"
-              label="Archive mode activated"
               name="engine.caching.archive.enabled"
               type="checkbox"
             />
@@ -6023,14 +6035,17 @@ exports[`Engine check Engine when config has no proxies 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.healthSignal.logging.enabled"
-              label="Enabled"
               name="engine.healthSignal.logging.enabled"
               type="checkbox"
             />
@@ -6087,14 +6102,17 @@ exports[`Engine check Engine when config has no proxies 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.healthSignal.http.enabled"
-              label="Enabled"
               name="engine.healthSignal.http.enabled"
               type="checkbox"
             />
@@ -6877,7 +6895,7 @@ exports[`Engine check change engineName 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3 mb-3"
+            class="mb-3 form-check form-switch"
           >
             <label
               class="form-check-label"
@@ -7528,7 +7546,7 @@ exports[`Engine check change engineName 1`] = `
               class="col-md-3"
             >
               <div
-                class="mb-3 mb-3"
+                class="mb-3 form-check form-switch"
               >
                 <label
                   class="form-check-label"
@@ -8794,14 +8812,17 @@ exports[`Engine check change engineName 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Archive mode activated
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.caching.archive.enabled"
-              label="Archive mode activated"
               name="engine.caching.archive.enabled"
               type="checkbox"
             />
@@ -9565,14 +9586,17 @@ exports[`Engine check change engineName 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.healthSignal.logging.enabled"
-              label="Enabled"
               name="engine.healthSignal.logging.enabled"
               type="checkbox"
             />
@@ -9629,14 +9653,17 @@ exports[`Engine check change engineName 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.healthSignal.http.enabled"
-              label="Enabled"
               name="engine.healthSignal.http.enabled"
               type="checkbox"
             />
@@ -10414,7 +10441,7 @@ exports[`Engine check change password 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3 mb-3"
+            class="mb-3 form-check form-switch"
           >
             <label
               class="form-check-label"
@@ -11065,7 +11092,7 @@ exports[`Engine check change password 1`] = `
               class="col-md-3"
             >
               <div
-                class="mb-3 mb-3"
+                class="mb-3 form-check form-switch"
               >
                 <label
                   class="form-check-label"
@@ -12331,14 +12358,17 @@ exports[`Engine check change password 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Archive mode activated
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.caching.archive.enabled"
-              label="Archive mode activated"
               name="engine.caching.archive.enabled"
               type="checkbox"
             />
@@ -13102,14 +13132,17 @@ exports[`Engine check change password 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.healthSignal.logging.enabled"
-              label="Enabled"
               name="engine.healthSignal.logging.enabled"
               type="checkbox"
             />
@@ -13166,14 +13199,17 @@ exports[`Engine check change password 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.healthSignal.http.enabled"
-              label="Enabled"
               name="engine.healthSignal.http.enabled"
               type="checkbox"
             />
@@ -13951,7 +13987,7 @@ exports[`Engine check change port 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3 mb-3"
+            class="mb-3 form-check form-switch"
           >
             <label
               class="form-check-label"
@@ -14602,7 +14638,7 @@ exports[`Engine check change port 1`] = `
               class="col-md-3"
             >
               <div
-                class="mb-3 mb-3"
+                class="mb-3 form-check form-switch"
               >
                 <label
                   class="form-check-label"
@@ -15868,14 +15904,17 @@ exports[`Engine check change port 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Archive mode activated
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.caching.archive.enabled"
-              label="Archive mode activated"
               name="engine.caching.archive.enabled"
               type="checkbox"
             />
@@ -16639,14 +16678,17 @@ exports[`Engine check change port 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.healthSignal.logging.enabled"
-              label="Enabled"
               name="engine.healthSignal.logging.enabled"
               type="checkbox"
             />
@@ -16703,14 +16745,17 @@ exports[`Engine check change port 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.healthSignal.http.enabled"
-              label="Enabled"
               name="engine.healthSignal.http.enabled"
               type="checkbox"
             />
@@ -17488,7 +17533,7 @@ exports[`Engine check change user 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3 mb-3"
+            class="mb-3 form-check form-switch"
           >
             <label
               class="form-check-label"
@@ -18139,7 +18184,7 @@ exports[`Engine check change user 1`] = `
               class="col-md-3"
             >
               <div
-                class="mb-3 mb-3"
+                class="mb-3 form-check form-switch"
               >
                 <label
                   class="form-check-label"
@@ -19405,14 +19450,17 @@ exports[`Engine check change user 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Archive mode activated
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.caching.archive.enabled"
-              label="Archive mode activated"
               name="engine.caching.archive.enabled"
               type="checkbox"
             />
@@ -20176,14 +20224,17 @@ exports[`Engine check change user 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.healthSignal.logging.enabled"
-              label="Enabled"
               name="engine.healthSignal.logging.enabled"
               type="checkbox"
             />
@@ -20240,14 +20291,17 @@ exports[`Engine check change user 1`] = `
           class="col-md-1"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Enabled
+            </label>
             <input
               checked=""
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="engine.healthSignal.http.enabled"
-              label="Enabled"
               name="engine.healthSignal.http.enabled"
               type="checkbox"
             />

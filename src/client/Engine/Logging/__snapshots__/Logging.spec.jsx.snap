@@ -381,7 +381,7 @@ exports[`Logging check Logging 1`] = `
           class="col-md-3"
         >
           <div
-            class="mb-3 mb-3"
+            class="mb-3 form-check form-switch"
           >
             <label
               class="form-check-label"

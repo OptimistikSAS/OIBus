@@ -69,14 +69,17 @@ exports[`HealthSignal check HealthSignal 1`] = `
       class="col-md-1"
     >
       <div
-        class="form-check form-switch"
+        class="mb-3 form-check form-switch"
       >
+        <label
+          class="form-check-label"
+        >
+          Enabled
+        </label>
         <input
           checked=""
-          class="mb-3 form-check-input"
-          color="secondary"
+          class="oi-form-input checkbox form-check-input"
           id="engine.healthSignal.logging.enabled"
-          label="Enabled"
           name="engine.healthSignal.logging.enabled"
           type="checkbox"
         />
@@ -133,14 +136,17 @@ exports[`HealthSignal check HealthSignal 1`] = `
       class="col-md-1"
     >
       <div
-        class="form-check form-switch"
+        class="mb-3 form-check form-switch"
       >
+        <label
+          class="form-check-label"
+        >
+          Enabled
+        </label>
         <input
           checked=""
-          class="mb-3 form-check-input"
-          color="secondary"
+          class="oi-form-input checkbox form-check-input"
           id="engine.healthSignal.http.enabled"
-          label="Enabled"
           name="engine.healthSignal.http.enabled"
           type="checkbox"
         />
@@ -465,14 +471,17 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
       class="col-md-1"
     >
       <div
-        class="form-check form-switch"
+        class="mb-3 form-check form-switch"
       >
+        <label
+          class="form-check-label"
+        >
+          Enabled
+        </label>
         <input
           checked=""
-          class="mb-3 form-check-input"
-          color="secondary"
+          class="oi-form-input checkbox form-check-input"
           id="engine.healthSignal.logging.enabled"
-          label="Enabled"
           name="engine.healthSignal.logging.enabled"
           type="checkbox"
         />
@@ -529,14 +538,17 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
       class="col-md-1"
     >
       <div
-        class="form-check form-switch"
+        class="mb-3 form-check form-switch"
       >
+        <label
+          class="form-check-label"
+        >
+          Enabled
+        </label>
         <input
           checked=""
-          class="mb-3 form-check-input"
-          color="secondary"
+          class="oi-form-input checkbox form-check-input"
           id="engine.healthSignal.http.enabled"
-          label="Enabled"
           name="engine.healthSignal.http.enabled"
           type="checkbox"
         />
@@ -861,14 +873,17 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
       class="col-md-1"
     >
       <div
-        class="form-check form-switch"
+        class="mb-3 form-check form-switch"
       >
+        <label
+          class="form-check-label"
+        >
+          Enabled
+        </label>
         <input
           checked=""
-          class="mb-3 form-check-input"
-          color="secondary"
+          class="oi-form-input checkbox form-check-input"
           id="engine.healthSignal.logging.enabled"
-          label="Enabled"
           name="engine.healthSignal.logging.enabled"
           type="checkbox"
         />
@@ -925,14 +940,17 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
       class="col-md-1"
     >
       <div
-        class="form-check form-switch"
+        class="mb-3 form-check form-switch"
       >
+        <label
+          class="form-check-label"
+        >
+          Enabled
+        </label>
         <input
           checked=""
-          class="mb-3 form-check-input"
-          color="secondary"
+          class="oi-form-input checkbox form-check-input"
           id="engine.healthSignal.http.enabled"
-          label="Enabled"
           name="engine.healthSignal.http.enabled"
           type="checkbox"
         />

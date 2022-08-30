@@ -32,11 +32,12 @@ describe('OIbCheckBox', () => {
         name="name"
         onChange={() => (1)}
         defaultValue={false}
+        checkBox
       />)
     })
     expect(container).toMatchSnapshot()
   })
-  test('check CheckBox with value(=true) and switch mode', () => {
+  test('check Switch with value(=true)', () => {
     act(() => {
       root.render(<OIbCheckBox
         label="label"
@@ -44,12 +45,24 @@ describe('OIbCheckBox', () => {
         name="name"
         onChange={() => (1)}
         defaultValue={false}
-        switchButton
       />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check CheckBox with value(=false)', () => {
+    act(() => {
+      root.render(<OIbCheckBox
+        label="label"
+        value={false}
+        name="name"
+        onChange={() => (1)}
+        defaultValue={false}
+        checkBox
+      />)
+    })
+    expect(container).toMatchSnapshot()
+  })
+  test('check Switch with value(=false)', () => {
     act(() => {
       root.render(<OIbCheckBox
         label="label"

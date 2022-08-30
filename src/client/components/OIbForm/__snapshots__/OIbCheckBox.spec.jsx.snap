@@ -41,17 +41,40 @@ exports[`OIbCheckBox check CheckBox with value(=true) 1`] = `
 </div>
 `;
 
-exports[`OIbCheckBox check CheckBox with value(=true) and switch mode 1`] = `
+exports[`OIbCheckBox check Switch with value(=false) 1`] = `
 <div>
   <div
-    class="form-check form-switch"
+    class="mb-3 form-check form-switch"
   >
+    <label
+      class="form-check-label"
+    >
+      label
+    </label>
+    <input
+      class="oi-form-input checkbox form-check-input"
+      id="name"
+      name="name"
+      type="checkbox"
+    />
+  </div>
+</div>
+`;
+
+exports[`OIbCheckBox check Switch with value(=true) 1`] = `
+<div>
+  <div
+    class="mb-3 form-check form-switch"
+  >
+    <label
+      class="form-check-label"
+    >
+      label
+    </label>
     <input
       checked=""
-      class="mb-3 form-check-input"
-      color="secondary"
+      class="oi-form-input checkbox form-check-input"
       id="name"
-      label="label"
       name="name"
       type="checkbox"
     />
