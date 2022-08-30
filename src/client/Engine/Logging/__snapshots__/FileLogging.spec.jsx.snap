@@ -174,7 +174,7 @@ exports[`FileLogging check FileLogging 1`] = `
         class="col-md-3"
       >
         <div
-          class="mb-3 mb-3"
+          class="mb-3 form-check form-switch"
         >
           <label
             class="form-check-label"
@@ -369,7 +369,7 @@ exports[`FileLogging check change file level to "warning" 1`] = `
         class="col-md-3"
       >
         <div
-          class="mb-3 mb-3"
+          class="mb-3 form-check form-switch"
         >
           <label
             class="form-check-label"
@@ -564,7 +564,7 @@ exports[`FileLogging check change file name to "new_filename" 1`] = `
         class="col-md-3"
       >
         <div
-          class="mb-3 mb-3"
+          class="mb-3 form-check form-switch"
         >
           <label
             class="form-check-label"
@@ -759,7 +759,7 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
         class="col-md-3"
       >
         <div
-          class="mb-3 mb-3"
+          class="mb-3 form-check form-switch"
         >
           <label
             class="form-check-label"
@@ -954,7 +954,7 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
         class="col-md-3"
       >
         <div
-          class="mb-3 mb-3"
+          class="mb-3 form-check form-switch"
         >
           <label
             class="form-check-label"
@@ -1149,7 +1149,7 @@ exports[`FileLogging check change fileLog tailable to false 1`] = `
         class="col-md-3"
       >
         <div
-          class="mb-3 mb-3"
+          class="mb-3 form-check form-switch"
         >
           <label
             class="form-check-label"

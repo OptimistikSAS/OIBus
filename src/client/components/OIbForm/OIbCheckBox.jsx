@@ -9,7 +9,7 @@ const OIbCheckBox = ({
   name,
   onChange,
   defaultValue,
-  switchButton,
+  checkBox,
 }) => {
   // if no value was found, load the context with the default value
   // (this will cause a rerender with the correct value)
@@ -21,35 +21,17 @@ const OIbCheckBox = ({
     onChange(name, checked, null)
   }
   if (value === null) return null
-  if (switchButton) {
-    return (
-      <FormGroup switch>
-        <Input
-          className="mb-3"
-          type="switch"
-          id={name}
-          name={name}
-          label={label}
-          onChange={handleChange}
-          checked={value}
-          color="secondary"
-        />
-        {help && <FormText>{help}</FormText>}
-      </FormGroup>
-    )
-  }
   return (
-    <FormGroup className="mb-3">
+    <FormGroup switch={!checkBox} className="mb-3">
       <Label check>{label}</Label>
       <Input
         className="oi-form-input checkbox"
-        type="checkbox"
+        type={checkBox ? 'checkbox' : 'switch'}
         id={name}
         name={name}
         onChange={handleChange}
         checked={value}
       />
-
       {help && <FormText>{help}</FormText>}
     </FormGroup>
   )
@@ -61,13 +43,13 @@ OIbCheckBox.propTypes = {
   onChange: PropTypes.func.isRequired,
   value: PropTypes.bool,
   defaultValue: PropTypes.bool.isRequired,
-  switchButton: PropTypes.bool,
+  checkBox: PropTypes.bool,
 }
 
 OIbCheckBox.defaultProps = {
   value: null,
   help: null,
-  switchButton: false,
+  checkBox: false,
   label: null,
 }
 

@@ -107,13 +107,16 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Disabled
+            </label>
             <input
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="north.applications.0.enabled"
-              label="Disabled"
               name="north.applications.0.enabled"
               type="checkbox"
             />
@@ -500,7 +503,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3 mb-3"
+            class="mb-3 form-check form-switch"
           >
             <label
               class="form-check-label"
@@ -954,13 +957,16 @@ exports[`ConfigureApi check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="form-check form-switch"
+            class="mb-3 form-check form-switch"
           >
+            <label
+              class="form-check-label"
+            >
+              Disabled
+            </label>
             <input
-              class="mb-3 form-check-input"
-              color="secondary"
+              class="oi-form-input checkbox form-check-input"
               id="north.applications.0.enabled"
-              label="Disabled"
               name="north.applications.0.enabled"
               type="checkbox"
             />
@@ -1347,7 +1353,7 @@ exports[`ConfigureApi check update 1`] = `
           class="col-md-2"
         >
           <div
-            class="mb-3 mb-3"
+            class="mb-3 form-check form-switch"
           >
             <label
               class="form-check-label"

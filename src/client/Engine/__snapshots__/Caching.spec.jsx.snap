@@ -167,14 +167,17 @@ exports[`Caching check Caching 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-check form-switch"
+        class="mb-3 form-check form-switch"
       >
+        <label
+          class="form-check-label"
+        >
+          Archive mode activated
+        </label>
         <input
           checked=""
-          class="mb-3 form-check-input"
-          color="secondary"
+          class="oi-form-input checkbox form-check-input"
           id="engine.caching.archive.enabled"
-          label="Archive mode activated"
           name="engine.caching.archive.enabled"
           type="checkbox"
         />
@@ -426,14 +429,17 @@ exports[`Caching check change archiveFolder 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-check form-switch"
+        class="mb-3 form-check form-switch"
       >
+        <label
+          class="form-check-label"
+        >
+          Archive mode activated
+        </label>
         <input
           checked=""
-          class="mb-3 form-check-input"
-          color="secondary"
+          class="oi-form-input checkbox form-check-input"
           id="engine.caching.archive.enabled"
-          label="Archive mode activated"
           name="engine.caching.archive.enabled"
           type="checkbox"
         />
@@ -685,14 +691,17 @@ exports[`Caching check change archiveMode to "archive" 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-check form-switch"
+        class="mb-3 form-check form-switch"
       >
+        <label
+          class="form-check-label"
+        >
+          Archive mode activated
+        </label>
         <input
           checked=""
-          class="mb-3 form-check-input"
-          color="secondary"
+          class="oi-form-input checkbox form-check-input"
           id="engine.caching.archive.enabled"
-          label="Archive mode activated"
           name="engine.caching.archive.enabled"
           type="checkbox"
         />
@@ -944,14 +953,17 @@ exports[`Caching check change cacheFolder 1`] = `
       class="col-md-2"
     >
       <div
-        class="form-check form-switch"
+        class="mb-3 form-check form-switch"
       >
+        <label
+          class="form-check-label"
+        >
+          Archive mode activated
+        </label>
         <input
           checked=""
-          class="mb-3 form-check-input"
-          color="secondary"
+          class="oi-form-input checkbox form-check-input"
           id="engine.caching.archive.enabled"
-          label="Archive mode activated"
           name="engine.caching.archive.enabled"
           type="checkbox"
         />
