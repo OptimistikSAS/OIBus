@@ -73,15 +73,13 @@ class ValueCache {
    * @returns {Promise<void>} - The result
    */
   async sendCallback() {
-    let status = MainCache.STATUS.SUCCESS
-
     this.logger.trace(`sendCallback ${this.api.application.name}, sendInProgress ${!!this.sendInProgress}`)
 
     if (!this.sendInProgress) {
       this.sendInProgress = true
       this.resendImmediately = false
 
-      status = await this.sendValues()
+      const status = await this.sendValues()
 
       const successTimeout = this.resendImmediately ? 0 : this.apiCacheConfig.sendInterval
       const timeout = (status === MainCache.STATUS.SUCCESS) ? successTimeout : this.apiCacheConfig.retryInterval
