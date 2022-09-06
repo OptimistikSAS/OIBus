@@ -10,11 +10,10 @@ const ARCHIVE_TIMEOUT = 3600000 // one hour
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
-class FileCache {
+class FileCache extends MainCache {
   constructor(api, engineCacheConfig) {
-    this.api = api
-    this.logger = api.logger
-    this.apiCacheConfig = api.application.caching
+    super(api)
+
     const {
       cacheFolder,
       archive,
@@ -24,11 +23,6 @@ class FileCache {
     this.archiveFolder = path.resolve(archive.archiveFolder)
     this.retentionDuration = (archive.retentionDuration) * 3600000
     this.filesErrorDatabase = null
-    this.database = null
-    this.timeout = null
-    this.sendInProgress = false
-    this.resendImmediately = false
-    this.cacheStat = 0
   }
 
   /**
@@ -36,22 +30,21 @@ class FileCache {
    * @returns {Promise<void>} - The result
    */
   async initialize() {
-    this.database = MainCache.getFilesDatabaseInstance(this.logger, this.cacheFolder)
-    this.filesErrorDatabase = MainCache.getFilesErrorDatabaseInstance(this.logger, this.cacheFolder)
-
     try {
       await fs.stat(this.cacheFolder)
     } catch (error) {
       this.logger.info(`Creating cache folder: ${this.cacheFolder}`)
       await fs.mkdir(this.cacheFolder, { recursive: true })
     }
-
     try {
       await fs.stat(this.archiveFolder)
     } catch (error) {
       this.logger.info(`Creating archive folder: ${this.archiveFolder}`)
       await fs.mkdir(this.archiveFolder, { recursive: true })
     }
+
+    this.database = MainCache.getFilesDatabaseInstance(this.logger, this.cacheFolder)
+    this.filesErrorDatabase = MainCache.getFilesErrorDatabaseInstance(this.logger, this.cacheFolder)
 
     if (this.archiveMode) {
       // refresh the archiveFolder at the beginning only if retentionDuration is different from 0
@@ -80,7 +73,7 @@ class FileCache {
     this.logger.debug(`cacheFileForApi() ${cachePath} for api: ${this.api.application.name}`)
     databaseService.saveFile(this.database, timestamp, this.api.application.id, cachePath)
 
-    this.sendCallback()
+    await this.sendCallback()
   }
 
   /**

@@ -150,14 +150,13 @@ class ApiHandler {
   }
 
   /**
-   * Method called by the Engine to cache an array of values in order to cache them
-   * and send them to a third party application.
-   * @param {String} cachePath - The path of the raw file
+   * Method called by the Engine to cache a file.
+   * @param {String} filePath - The path of the raw file
    * @param {number} timestamp - The timestamp the file was received
    * @return {Promise<void>} - The result
    */
-  async cacheFile(cachePath, timestamp) {
-    await this.fileCache.cacheFile(cachePath, timestamp)
+  async cacheFile(filePath, timestamp) {
+    await this.fileCache.cacheFile(filePath, timestamp)
   }
 
   /**

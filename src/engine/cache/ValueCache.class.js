@@ -7,21 +7,15 @@ const MainCache = require('./MainCache.class')
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
-class ValueCache {
+class ValueCache extends MainCache {
   constructor(api, queue, engineCacheConfig) {
-    this.api = api
-    this.logger = api.logger
-    this.apiCacheConfig = api.application.caching
+    super(api)
+
     this.queue = queue
     const cacheFolderPath = path.resolve(engineCacheConfig.cacheFolder)
     this.cacheFolder = cacheFolderPath
     this.databasePath = `${cacheFolderPath}/${api.application.id}.db`
     this.valuesErrorDatabase = null
-    this.database = null
-    this.timeout = null
-    this.sendInProgress = false
-    this.resendImmediately = false
-    this.cacheStat = 0
   }
 
   /**
@@ -29,13 +23,14 @@ class ValueCache {
    * @returns {Promise<void>} - The result
    */
   async initialize() {
-    this.valuesErrorDatabase = MainCache.getValuesErrorDatabaseInstance(this.logger, this.cacheFolder)
     try {
       await fs.stat(this.cacheFolder)
     } catch (error) {
       this.logger.info(`Creating cache folder: ${this.cacheFolder}`)
       await fs.mkdir(this.cacheFolder, { recursive: true })
     }
+
+    this.valuesErrorDatabase = MainCache.getValuesErrorDatabaseInstance(this.logger, this.cacheFolder)
 
     this.logger.debug(`Use db: ${this.databasePath} for ${this.api.application.name}`)
     this.database = databaseService.createValuesDatabase(this.databasePath, {})
