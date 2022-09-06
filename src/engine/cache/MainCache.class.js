@@ -12,6 +12,17 @@ class MainCache {
 
   static filesErrorDatabase = null
 
+  constructor(api) {
+    this.api = api
+    this.logger = api.logger
+    this.apiCacheConfig = api.application.caching
+    this.database = null
+    this.timeout = null
+    this.sendInProgress = false
+    this.resendImmediately = false
+    this.cacheStat = 0
+  }
+
   /**
    * Initialize and return the value error database singleton
    * @param {Logger} logger - The logger
