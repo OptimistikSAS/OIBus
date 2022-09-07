@@ -1,0 +1,15 @@
+{
+  "extends": [
+    "config:base",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "baseBranches": ["main"],
+  "labels": ["dependencies"],
+  "lockFileMaintenance": { "enabled": true },
+  "schedule": [
+    "before 3am on Monday"
+  ],
+  "npm": {
+    "stabilityDays": 3
+  }
+}
