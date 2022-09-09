@@ -22,7 +22,7 @@ runs:
       shell: bash
       run: echo $CACHE_VERSION >> cache_version
       env:
-        CACHE_VERSION: ${{inputs.cache_version}}
+        CACHE_VERSION: ${{ inputs.cache_version }}
 
     - name: Load cached venv
       id: cached-node-modules-dependencies
@@ -36,6 +36,10 @@ runs:
         # Providing a different value for the cache version enables manual
         # invalidation of the cache in case it is in some erroneous state.
         key: node_modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ steps.date.outputs.date }}-${{ hashFiles('cache_version') }}
+
+    - name: Remove cache version
+      shell: bash
+      run: rm cache_version
 
     - name: Install dependencies
       shell: bash
