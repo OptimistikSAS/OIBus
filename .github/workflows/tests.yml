@@ -27,7 +27,7 @@ jobs:
 
       - name: Prepare integration test
         if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
-        run: npm run setup-dev-env
+        run: npm run test:setup-env
 
       - name: Wait for docker containers
         if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
@@ -37,4 +37,4 @@ jobs:
 
       - name: Integration test
         if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
-        run: npm run int-test
+        run: npm run test:integration

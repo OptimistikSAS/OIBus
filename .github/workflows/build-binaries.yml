@@ -1,6 +1,12 @@
 name: Build OIBus binaries
 
-on: workflow_call
+on:
+  workflow_call:
+    inputs:
+      branch-release:
+        description: 'Branch to checkout'
+        required: true
+        type: string
 
 jobs:
   build-binaries:
@@ -16,6 +22,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.branch-release }}
 
       - name: Setup environment
         uses: ./.github/actions/setup_environment
@@ -24,7 +32,7 @@ jobs:
 
       - name: Package OIBus for ${{ matrix.config['platform'] }}
         run: |
-          npm run build-${{ matrix.config['platform'] }}
+          npm run build:${{ matrix.config['platform'] }}
           cd dist/${{ matrix.config['platform'] }}
           ./oibus --config ../../tests/oibus.json --check true
           ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }} .
@@ -36,7 +44,7 @@ jobs:
 
       - name: Package Windows installer
         if: ${{ matrix.config['platform'] == 'win' }}
-        run: npm run build-win-setup
+        run: npm run build:win-setup
         working-directory: ./dist/win
         shell: cmd
 
