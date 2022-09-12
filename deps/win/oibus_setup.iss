@@ -434,10 +434,6 @@ begin
           ExecCmd('nssm.exe', ' stop OIBus', Dir + '\..\')
           Sleep(400);
         end;
-        if not ExecCmd('nssm.exe', 'remove OIBus confirm', ExpandConstant('{app}')) then
-        begin
-          MsgBox('ERROR : Could not remove OIBus service. Remove it manually and retry installation.', mbCriticalError, MB_OK)
-        end
       end;
   end;
   if CurStep = ssPostInstall then

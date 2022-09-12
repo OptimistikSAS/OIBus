@@ -2,10 +2,6 @@ name: Release next OIBus version
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to bump to'
-        required: false
 
 jobs:
   tests:
@@ -18,9 +14,12 @@ jobs:
     outputs:
       version-tag: ${{ steps.standard-version.outputs.version-tag }}
       prerelease: ${{ steps.standard-version.outputs.prerelease }}
+      branch-release: ${{ steps.standard-version.outputs.branch-release }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Setup environment
         uses: ./.github/actions/setup_environment
@@ -32,22 +31,27 @@ jobs:
         run: |
           git config --global user.name 'optimistik-actions'
           git config --global user.email 'optimistiksas@users.noreply.github.com'
+          git fetch
           VERSION_ARGS=""
           PRERELEASE=false
           BRANCH=$(git branch --show-current| tr '\\/' - | tr -dc '[:alnum:]-+.\n\r' ) # first tr replace / and \ to -, second tr removes all non alphanums except .+-\n\r)
-          if [ "$BRANCH" == main ]; then
-            VERSION_ARGS="--prerelease alpha"
+          BRANCH_RELEASE=${BRANCH}
+          if [ "$BRANCH" != release ]; then
             PRERELEASE=true
-          elif [ "$BRANCH" != release ]; then
-            VERSION_ARGS="--prerelease ${BRANCH}"
-            PRERELEASE=true
+            VERSION_ARGS="--prerelease $(echo ${BRANCH} | tr '\\/' - | tr -dc '[:alnum:]-+.\n\r' )" # first tr replace / and \ to -, second tr removes all non alphanums except .+-\n\r
+            BRANCH_RELEASE="${BRANCH}-release"
+            git checkout "${BRANCH_RELEASE}" || git checkout -b "${BRANCH_RELEASE}" "${BRANCH}"
+            git merge origin/${BRANCH} --strategy-option=theirs -m "Merge ${BRANCH} in ${BRANCH_RELEASE}" || {
+              git diff --name-only --diff-filter=U | xargs git rm  # remove deleted files in conflict https://stackoverflow.com/a/46177025/2355219
+              git commit -m "Merge ${BRANCH} in ${BRANCH_RELEASE} with conflicts resolved"
+            }
           fi
-          if [ "${{ github.event.inputs.version }}" != "" ] && [ "$BRANCH" == release ]; then
-            VERSION_ARGS="$VERSION_ARGS --release-as ${{ github.event.inputs.version }}"
-          fi
-          npm run bump -- $VERSION_ARGS
+          npx standard-version -i ./CHANGELOG.md $VERSION_ARGS
+          git status
+          git push --follow-tags origin HEAD
           echo ::set-output name=version-tag::$(git describe --tags $(git rev-list --tags --max-count=1))
           echo ::set-output name=prerelease::$PRERELEASE
+          echo ::set-output name=branch-release::$BRANCH_RELEASE
 
       - name: Upload artifact CHANGELOG.md
         uses: actions/upload-artifact@v3
@@ -57,6 +61,8 @@ jobs:
   build-binaries:
     needs: standard-version
     uses: ./.github/workflows/build-binaries.yml
+    with:
+      branch-release: ${{ needs.standard-version.outputs.branch-release }}
 
   publish-binaries:
     needs: [build-binaries, standard-version]
