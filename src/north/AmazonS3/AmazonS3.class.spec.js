@@ -9,8 +9,12 @@ const { defaultConfig: config } = require('../../../tests/testConfig')
 const EncryptionService = require('../../services/EncryptionService.class')
 
 // Mock database service
-jest.mock('../../services/database.service', () => {
-})
+jest.mock('../../services/database.service', () => ({
+  createValueErrorsDatabase: jest.fn(),
+  getCount: jest.fn(),
+  createValuesDatabase: jest.fn(),
+  createFilesDatabase: jest.fn(),
+}))
 
 // Mock logger
 jest.mock('../../engine/logger/Logger.class')

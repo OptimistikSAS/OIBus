@@ -3,8 +3,6 @@ const EncryptionService = require('../services/EncryptionService.class')
 const config = require('../config/defaultConfig.json')
 const ConfigService = require('../services/config.service.class')
 
-jest.mock('./Cache.class')
-
 // Mock EncryptionService
 EncryptionService.getInstance = () => ({
   decryptText: (password) => password,
@@ -87,9 +85,35 @@ describe('Engine', () => {
         data: { value: '' },
       }]
 
-    engine.cache.cacheValues = jest.fn()
+    EncryptionService.getInstance = () => ({
+      decryptText: (password) => password,
+      setKeyFolder: () => {
+      },
+      checkOrCreatePrivateKey: () => {
+      },
+    })
+
+    const cacheValues = jest.fn()
+    engine.activeApis = {
+      id1: {
+        canHandleValues: true,
+        isSubscribed: () => true,
+        cacheValues,
+      },
+      id2: {
+        canHandleValues: true,
+        isSubscribed: () => false,
+        cacheValues,
+      },
+      id3: {
+        canHandleValues: false,
+        isSubscribed: () => true,
+        cacheValues,
+      },
+    }
+
     await engine.addValues('sourceId', sampleValues)
-    expect(engine.cache.cacheValues)
+    expect(cacheValues)
       .toBeCalledWith('sourceId', sampleValues)
   })
 })
