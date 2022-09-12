@@ -213,7 +213,7 @@ class FileCache extends MainCache {
     }, ARCHIVE_TIMEOUT)
   }
 
-  async getStats(apiName) {
+  getStats(apiName) {
     const cacheSize = databaseService.getFileCountForNorthConnector(this.database, apiName)
     return {
       name: `${this.api.application.name} (files)`,

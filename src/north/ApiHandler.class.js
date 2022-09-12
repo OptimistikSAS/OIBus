@@ -226,11 +226,11 @@ class ApiHandler {
     return this.application.subscribedTo.includes(id)
   }
 
-  async getValueCacheStats() {
+  getValueCacheStats() {
     return this.valueCache.getStats()
   }
 
-  async getFileCacheStats() {
+  getFileCacheStats() {
     return this.fileCache.getStats(this.application.name)
   }
 }

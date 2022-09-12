@@ -140,7 +140,7 @@ class ValueCache extends MainCache {
     }
   }
 
-  async getStats() {
+  getStats() {
     const cacheSize = databaseService.getCount(this.database)
     return {
       name: `${this.api.application.name} (points)`,

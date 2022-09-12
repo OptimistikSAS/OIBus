@@ -299,6 +299,13 @@ class OIBusEngine extends BaseEngine {
     }
     this.activeProtocols = {}
 
+    // Log cache data
+    const apisCacheStats = this.getCacheStatsForApis()
+    this.logger.info(`API stats: ${JSON.stringify(apisCacheStats)}`)
+
+    const protocolsCacheStats = this.getCacheStatsForProtocols()
+    this.logger.info(`Protocol stats: ${JSON.stringify(protocolsCacheStats)}`)
+
     // Stop Applications
     // eslint-disable-next-line no-restricted-syntax
     for (const application of Object.values(this.activeApis)) {
@@ -307,17 +314,6 @@ class OIBusEngine extends BaseEngine {
       await application.disconnect()
     }
     this.activeApis = {}
-
-    // Log cache data
-    const apisCacheStats = await this.getCacheStatsForApis()
-    this.logger.info(`API stats: ${JSON.stringify(apisCacheStats)}`)
-
-    const protocolsCacheStats = this.getCacheStatsForProtocols()
-    this.logger.info(`Protocol stats: ${JSON.stringify(protocolsCacheStats)}`)
-
-    // stop the cache timers
-    this.cache.stop()
-    this.cache = null
 
     // Stop the listener
     this.eventEmitters['/engine/sse']?.events?.removeAllListeners()
@@ -404,16 +400,14 @@ class OIBusEngine extends BaseEngine {
       }, {})
   }
 
-  async getCacheStatsForApis() {
+  getCacheStatsForApis() {
     // Get points APIs stats
     const pointApis = Object.values(this.activeApis).filter((api) => api.canHandleValues)
-    const valuesCacheActions = pointApis.map((api) => api.getValueCacheStats())
-    const pointApisStats = Promise.all(valuesCacheActions)
+    const pointApisStats = pointApis.map((api) => api.getValueCacheStats())
 
     // Get files APIs stats
     const fileApis = Object.values(this.activeApis).filter((api) => api.canHandleFiles)
-    const fileCacheActions = fileApis.map((api) => api.getFileCacheStats())
-    const fileApisStats = Promise.all(fileCacheActions)
+    const fileApisStats = fileApis.map((api) => api.getFileCacheStats())
 
     // Merge results
     return [...pointApisStats, ...fileApisStats]
