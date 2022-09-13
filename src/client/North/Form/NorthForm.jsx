@@ -58,16 +58,19 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             )}
           />
           {pencil && (
-            <Button
-              outline
-              onClick={() => {
-                setRenamingConnector(`north-${application.id}`)
-                setPencil(false)
-              }}
-              className="util-button"
-            >
-              <FaPencilAlt className="oi-icon ms-2" />
-            </Button>
+          <Button
+            color="primary"
+            outline
+            size="sm"
+            onClick={() => {
+              setRenamingConnector(`north-${application.id}`)
+              setPencil(false)
+            }}
+            className="util-button"
+          >
+            <FaPencilAlt className="oi-icon ms-2" />
+            Edit
+          </Button>
           )}
         </h6>
         <div className="pull-right me-3">
