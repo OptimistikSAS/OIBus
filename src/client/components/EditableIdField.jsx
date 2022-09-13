@@ -46,9 +46,18 @@ const EditableIdField = ({
         name={connectorName}
         inline
       />
-      <Button outline onClick={handleDoneEditName} className="util-button">
-        <FaCheck className="oi-icon ms-2" />
-      </Button>
+      <h6 className="align-items-top mb-3">
+        <Button
+          color="primary"
+          outline
+          size="sm"
+          onClick={handleDoneEditName}
+          className="util-button"
+        >
+          <FaCheck className="oi-icon ms-2" />
+          Save
+        </Button>
+      </h6>
     </>
   ) : (
     <div>{connectorName}</div>
