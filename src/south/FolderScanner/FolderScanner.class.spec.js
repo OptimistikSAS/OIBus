@@ -9,15 +9,18 @@ const { defaultConfig: config } = require('../../../tests/testConfig')
 const utils = require('../../services/utils')
 
 // Mock utils class
-jest.mock('../../services/utils', () => ({ compress: jest.fn() }))
+jest.mock('../../services/utils', () => ({ compress: jest.fn(), createFolder: jest.fn() }))
 
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  getCacheFolder: () => config.engine.caching.cacheFolder,
+  cacheFolder: './cache',
   addValues: jest.fn(),
   addFile: jest.fn(),
 }
+
+// Mock fs
+jest.mock('node:fs/promises')
 
 // Mock services
 jest.mock('../../services/database.service')
@@ -58,7 +61,7 @@ describe('South FolderScanner', () => {
 
   it('should connect properly', async () => {
     await south.connect()
-    expect(databaseService.createConfigDatabase).toHaveBeenCalledWith(`./cache/${settings.id}.db`)
+    expect(databaseService.createConfigDatabase).toHaveBeenCalledWith(path.resolve(`./cache/south-${settings.id}/cache.db`))
   })
 
   it('fileQuery should exit if the input folder does not exist', async () => {

@@ -10,7 +10,7 @@ import ConfirmationModal from '../components/ConfirmationModal.jsx'
 const NorthMenu = ({ application }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const navigate = useNavigate()
-  const applications = newConfig?.north?.applications ?? []
+  const applications = newConfig?.north ?? []
   const [modal, setModal] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
@@ -19,7 +19,7 @@ const NorthMenu = ({ application }) => {
     const countCopies = applications.filter((e) => e.name.startsWith(newName)).length
     dispatchNewConfig({
       type: 'addRow',
-      name: 'north.applications',
+      name: 'north',
       value: {
         ...application,
         id: nanoid(),
@@ -33,7 +33,7 @@ const NorthMenu = ({ application }) => {
   }
 
   const onConfirm = () => {
-    handleDeleteConnector(`north.applications.${applications.findIndex(
+    handleDeleteConnector(`north.${applications.findIndex(
       (element) => element.id === application.id,
     )}`)
   }

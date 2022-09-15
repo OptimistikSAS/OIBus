@@ -50,12 +50,12 @@ describe('ConfigureApi', () => {
       root.render(<ConfigureApi />)
     })
     act(() => {
-      Simulate.change(document.getElementById('north.applications.0.Console.verbose'), { target: { checked: true } })
+      Simulate.change(document.getElementById('north.0.Console.verbose'), { target: { checked: true } })
     })
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'north.applications.0.Console.verbose',
+      name: 'north.0.Console.verbose',
       value: true,
       validity: null,
     })
@@ -63,9 +63,9 @@ describe('ConfigureApi', () => {
   })
   test('check application not found', () => {
     const reactUseContextMock = React.useContext
-    // temporary empty applications array
+    // temporary empty north connectors array
     const config = utils.jsonCopy(testConfig)
-    config.north.applications = []
+    config.north = []
     React.useContext = jest.fn().mockReturnValue({ newConfig: config, dispatchNewConfig })
     act(() => {
       root.render(<ConfigureApi />)

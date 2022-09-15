@@ -39,7 +39,7 @@ afterEach(() => {
 })
 
 describe('SouthForm', () => {
-  testConfig.south.dataSources.forEach((dataSource) => {
+  testConfig.south.forEach((dataSource) => {
     test(`check SouthForm with dataSource: ${dataSource.name}`, () => {
       act(() => {
         root.render(

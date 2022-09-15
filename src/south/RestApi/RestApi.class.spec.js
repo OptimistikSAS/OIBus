@@ -22,6 +22,7 @@ jest.mock('./utils', () => ({
 jest.mock('../../services/utils', () => ({
   replaceFilenameWithVariable: jest.fn(),
   compress: jest.fn(),
+  createFolder: jest.fn(),
 }))
 
 // Mock node-fetch
@@ -36,7 +37,7 @@ jest.mock('https', () => ({ Agent: jest.fn() }))
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  getCacheFolder: () => config.engine.caching.cacheFolder,
+  cacheFolder: './cache',
   addValues: jest.fn(),
   addFile: jest.fn(),
 }
@@ -501,8 +502,7 @@ describe('South Rest API', () => {
     }))
     utils.generateCSV.mockReturnValue('')
     south.compression = true
-    const { engineConfig: { caching: { cacheFolder } } } = south.engine.configService.getConfig()
-    const tmpFolder = path.resolve(cacheFolder, south.settings.id)
+    const tmpFolder = path.resolve(`cache/south-${south.settings.id}/tmp`)
     const expectedPath = path.join(tmpFolder, 'myFile')
     const expectedCompressedPath = path.join(tmpFolder, 'myFile.gz')
     const startTime = new Date('2019-10-03T13:36:38.590Z')

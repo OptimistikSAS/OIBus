@@ -102,7 +102,7 @@ const createTransport = async (opts) => {
   await sqliteTransport.createLogsDatabase()
   return build(async (source) => {
     // eslint-disable-next-line no-restricted-syntax
-    for (const log of source) {
+    for await (const log of source) {
       sqliteTransport.log(log)
     }
   }, {

@@ -116,8 +116,8 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             </label>
             <input
               class="oi-form-input checkbox form-check-input"
-              id="north.applications.0.enabled"
-              name="north.applications.0.enabled"
+              id="north.0.enabled"
+              name="north.0.enabled"
               type="checkbox"
             />
             <small
@@ -268,15 +268,15 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.logParameters.consoleLevel"
+              for="north.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="north.applications.0.logParameters.consoleLevel"
-              name="north.applications.0.logParameters.consoleLevel"
+              id="north.0.logParameters.consoleLevel"
+              name="north.0.logParameters.consoleLevel"
             >
               <option
                 value="engine"
@@ -327,15 +327,15 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.logParameters.fileLevel"
+              for="north.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="north.applications.0.logParameters.fileLevel"
-              name="north.applications.0.logParameters.fileLevel"
+              id="north.0.logParameters.fileLevel"
+              name="north.0.logParameters.fileLevel"
             >
               <option
                 value="engine"
@@ -386,15 +386,15 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.logParameters.sqliteLevel"
+              for="north.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="north.applications.0.logParameters.sqliteLevel"
-              name="north.applications.0.logParameters.sqliteLevel"
+              id="north.0.logParameters.sqliteLevel"
+              name="north.0.logParameters.sqliteLevel"
             >
               <option
                 value="engine"
@@ -512,8 +512,8 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             </label>
             <input
               class="oi-form-input checkbox form-check-input"
-              id="north.applications.0.Console.verbose"
-              name="north.applications.0.Console.verbose"
+              id="north.0.Console.verbose"
+              name="north.0.Console.verbose"
               type="checkbox"
             />
           </div>
@@ -591,15 +591,15 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.caching.sendInterval"
+              for="north.0.caching.sendInterval"
             >
               Send interval (ms)
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.caching.sendInterval"
-              name="north.applications.0.caching.sendInterval"
+              id="north.0.caching.sendInterval"
+              name="north.0.caching.sendInterval"
               type="integer"
               value="10000"
             />
@@ -616,15 +616,15 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.caching.retryInterval"
+              for="north.0.caching.retryInterval"
             >
               Retry interval (ms)
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.caching.retryInterval"
-              name="north.applications.0.caching.retryInterval"
+              id="north.0.caching.retryInterval"
+              name="north.0.caching.retryInterval"
               type="integer"
               value="5000"
             />
@@ -645,15 +645,15 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.caching.groupCount"
+              for="north.0.caching.groupCount"
             >
               Group count
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.caching.groupCount"
-              name="north.applications.0.caching.groupCount"
+              id="north.0.caching.groupCount"
+              name="north.0.caching.groupCount"
               type="integer"
               value="1"
             />
@@ -670,21 +670,84 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.caching.maxSendCount"
+              for="north.0.caching.maxSendCount"
             >
               Max group count
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.caching.maxSendCount"
-              name="north.applications.0.caching.maxSendCount"
+              id="north.0.caching.maxSendCount"
+              name="north.0.caching.maxSendCount"
               type="integer"
               value="10000"
             />
             <div
               class="invalid-feedback"
             />
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3 form-check form-switch"
+          >
+            <label
+              class="form-check-label"
+            >
+              Archive mode activated
+            </label>
+            <input
+              checked=""
+              class="oi-form-input checkbox form-check-input"
+              id="north.0.caching.archive.enabled"
+              name="north.0.caching.archive.enabled"
+              type="checkbox"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Move to archive folder or delete files when they are sent
+              </div>
+            </small>
+          </div>
+        </div>
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="north.0.caching.archive.retentionDuration"
+            >
+              Retention duration
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.0.caching.archive.retentionDuration"
+              name="north.0.caching.archive.retentionDuration"
+              type="integer"
+              value="720"
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Retention period of archived files (in hours)
+              </div>
+            </small>
           </div>
         </div>
       </div>
@@ -966,8 +1029,8 @@ exports[`ConfigureApi check update 1`] = `
             </label>
             <input
               class="oi-form-input checkbox form-check-input"
-              id="north.applications.0.enabled"
-              name="north.applications.0.enabled"
+              id="north.0.enabled"
+              name="north.0.enabled"
               type="checkbox"
             />
             <small
@@ -1118,15 +1181,15 @@ exports[`ConfigureApi check update 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.logParameters.consoleLevel"
+              for="north.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="north.applications.0.logParameters.consoleLevel"
-              name="north.applications.0.logParameters.consoleLevel"
+              id="north.0.logParameters.consoleLevel"
+              name="north.0.logParameters.consoleLevel"
             >
               <option
                 value="engine"
@@ -1177,15 +1240,15 @@ exports[`ConfigureApi check update 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.logParameters.fileLevel"
+              for="north.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="north.applications.0.logParameters.fileLevel"
-              name="north.applications.0.logParameters.fileLevel"
+              id="north.0.logParameters.fileLevel"
+              name="north.0.logParameters.fileLevel"
             >
               <option
                 value="engine"
@@ -1236,15 +1299,15 @@ exports[`ConfigureApi check update 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.logParameters.sqliteLevel"
+              for="north.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="north.applications.0.logParameters.sqliteLevel"
-              name="north.applications.0.logParameters.sqliteLevel"
+              id="north.0.logParameters.sqliteLevel"
+              name="north.0.logParameters.sqliteLevel"
             >
               <option
                 value="engine"
@@ -1362,8 +1425,8 @@ exports[`ConfigureApi check update 1`] = `
             </label>
             <input
               class="oi-form-input checkbox form-check-input"
-              id="north.applications.0.Console.verbose"
-              name="north.applications.0.Console.verbose"
+              id="north.0.Console.verbose"
+              name="north.0.Console.verbose"
               type="checkbox"
             />
           </div>
@@ -1441,15 +1504,15 @@ exports[`ConfigureApi check update 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.caching.sendInterval"
+              for="north.0.caching.sendInterval"
             >
               Send interval (ms)
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.caching.sendInterval"
-              name="north.applications.0.caching.sendInterval"
+              id="north.0.caching.sendInterval"
+              name="north.0.caching.sendInterval"
               type="integer"
               value="10000"
             />
@@ -1466,15 +1529,15 @@ exports[`ConfigureApi check update 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.caching.retryInterval"
+              for="north.0.caching.retryInterval"
             >
               Retry interval (ms)
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.caching.retryInterval"
-              name="north.applications.0.caching.retryInterval"
+              id="north.0.caching.retryInterval"
+              name="north.0.caching.retryInterval"
               type="integer"
               value="5000"
             />
@@ -1495,15 +1558,15 @@ exports[`ConfigureApi check update 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.caching.groupCount"
+              for="north.0.caching.groupCount"
             >
               Group count
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.caching.groupCount"
-              name="north.applications.0.caching.groupCount"
+              id="north.0.caching.groupCount"
+              name="north.0.caching.groupCount"
               type="integer"
               value="1"
             />
@@ -1520,21 +1583,84 @@ exports[`ConfigureApi check update 1`] = `
           >
             <label
               class="form-label"
-              for="north.applications.0.caching.maxSendCount"
+              for="north.0.caching.maxSendCount"
             >
               Max group count
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="north.applications.0.caching.maxSendCount"
-              name="north.applications.0.caching.maxSendCount"
+              id="north.0.caching.maxSendCount"
+              name="north.0.caching.maxSendCount"
               type="integer"
               value="10000"
             />
             <div
               class="invalid-feedback"
             />
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3 form-check form-switch"
+          >
+            <label
+              class="form-check-label"
+            >
+              Archive mode activated
+            </label>
+            <input
+              checked=""
+              class="oi-form-input checkbox form-check-input"
+              id="north.0.caching.archive.enabled"
+              name="north.0.caching.archive.enabled"
+              type="checkbox"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Move to archive folder or delete files when they are sent
+              </div>
+            </small>
+          </div>
+        </div>
+        <div
+          class="col-md-2"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="north.0.caching.archive.retentionDuration"
+            >
+              Retention duration
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.0.caching.archive.retentionDuration"
+              name="north.0.caching.archive.retentionDuration"
+              type="integer"
+              value="720"
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Retention period of archived files (in hours)
+              </div>
+            </small>
           </div>
         </div>
       </div>
