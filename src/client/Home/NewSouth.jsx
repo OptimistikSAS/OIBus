@@ -22,7 +22,7 @@ const NewSouth = ({
   const [protocolError, setProtocolError] = React.useState(null)
   const [nameError, setNameError] = React.useState(null)
   const [protocol, setProtocol] = React.useState(null)
-  const dataSources = newConfig?.south?.dataSources ?? []
+  const dataSources = newConfig?.south ?? []
   const navigate = useNavigate()
 
   const southCategoryList = protocolList ? [...new Set(protocolList.map((e) => e.category))] : []
@@ -41,7 +41,7 @@ const NewSouth = ({
       const myNewId = nanoid()
       dispatchNewConfig({
         type: 'addRow',
-        name: 'south.dataSources',
+        name: 'south',
         value: {
           id: myNewId,
           name,

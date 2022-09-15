@@ -17,14 +17,14 @@ const {
  * @return {void}
  */
 class ConfigService {
-  constructor(configFile) {
+  constructor(configFile, cacheFolder) {
     this.encryptionService = EncryptionService.getInstance()
     this.configFile = configFile
+    this.cacheFolder = cacheFolder
   }
 
   async init() {
     const baseDir = path.extname(this.configFile) ? path.parse(this.configFile).dir : this.configFile
-    this.historyQueryConfigFile = `${baseDir}/historyQuery.db`
 
     try {
       await fs.stat(baseDir)
@@ -36,8 +36,8 @@ class ConfigService {
     await checkOrCreateConfigFile(this.configFile, defaultConfig)
 
     this.config = await tryReadFile(this.configFile)
-    this.keyFolder = path.join(this.config.engine.caching.cacheFolder, 'keys')
-    this.certFolder = path.join(this.config.engine.caching.cacheFolder, 'certs')
+    this.keyFolder = path.join(this.cacheFolder, 'keys')
+    this.certFolder = path.join(this.cacheFolder, 'certs')
     this.modifiedConfig = JSON.parse(JSON.stringify(this.config))
   }
 
@@ -68,10 +68,10 @@ class ConfigService {
    */
   updateConfig(config) {
     this.encryptionService.encryptSecrets(config.engine)
-    config.north.applications.forEach((north) => {
+    config.north.forEach((north) => {
       this.encryptionService.encryptSecrets(north)
     })
-    config.south.dataSources.forEach((south) => {
+    config.south.forEach((south) => {
       this.encryptionService.encryptSecrets(south)
     })
     this.modifiedConfig = config
@@ -93,14 +93,6 @@ class ConfigService {
    */
   getConfigurationFileLocation() {
     return this.configFile
-  }
-
-  /**
-   * Get the location of the HistoryQuery config file.
-   * @returns {String} - The location of the HistoryQuery config file
-   */
-  getHistoryQueryConfigurationFileLocation() {
-    return this.historyQueryConfigFile
   }
 }
 

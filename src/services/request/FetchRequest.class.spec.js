@@ -19,7 +19,6 @@ jest.mock('proxy-agent')
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  getCacheFolder: () => config.engine.caching.cacheFolder,
   addValues: jest.fn(),
   addFile: jest.fn(),
   logger: { error: jest.fn(), warn: jest.fn(), info: jest.fn(), debug: jest.fn(), trace: jest.fn() },

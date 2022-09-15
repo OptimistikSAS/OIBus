@@ -171,7 +171,7 @@ describe('NewSouth', () => {
     expect(container).toMatchSnapshot()
 
     React.useContext = jest.fn().mockReturnValue({
-      newConfig: { south: { dataSources: [] } },
+      newConfig: { south: [] },
       dispatchNewConfig,
       protocolList: [
         {
@@ -207,7 +207,7 @@ describe('NewSouth', () => {
 
   test('check change name with "new_application" id', () => {
     React.useContext = jest.fn().mockReturnValue({
-      newConfig: { south: { dataSources: [] } },
+      newConfig: { south: [] },
       dispatchNewConfig,
       protocolList: [
         {

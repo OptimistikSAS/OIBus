@@ -1,5 +1,6 @@
 const ads = require('ads-client')
 
+const path = require('node:path')
 const ADS = require('./ADS.class')
 
 const databaseService = require('../../services/database.service')
@@ -12,10 +13,13 @@ jest.mock('ads-client')
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  getCacheFolder: () => config.engine.caching.cacheFolder,
+  cacheFolder: './cache',
   addValues: jest.fn(),
   addFile: jest.fn(),
 }
+
+// Mock fs
+jest.mock('node:fs/promises')
 
 // Mock services
 jest.mock('../../services/database.service')
@@ -789,7 +793,7 @@ describe('South ADS', () => {
 
   it('should properly connect', async () => {
     await south.connect()
-    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${settings.id}.db`)
+    expect(databaseService.createConfigDatabase).toBeCalledWith(path.resolve(`cache/south-${south.settings.id}/cache.db`))
 
     expect(south.connected).toBeTruthy()
   })

@@ -10,7 +10,7 @@ import ConfirmationModal from '../components/ConfirmationModal.jsx'
 const SouthMenu = ({ dataSource }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const navigate = useNavigate()
-  const dataSources = newConfig?.south?.dataSources ?? []
+  const dataSources = newConfig?.south ?? []
   const [modal, setModal] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
@@ -19,7 +19,7 @@ const SouthMenu = ({ dataSource }) => {
     const countCopies = dataSources.filter((e) => e.name.startsWith(newName)).length
     dispatchNewConfig({
       type: 'addRow',
-      name: 'south.dataSources',
+      name: 'south',
       value: {
         ...dataSource,
         id: nanoid(),
@@ -34,7 +34,7 @@ const SouthMenu = ({ dataSource }) => {
   }
 
   const onConfirm = () => {
-    handleDeleteConnector(`south.dataSources.${dataSources.findIndex(
+    handleDeleteConnector(`south.${dataSources.findIndex(
       (element) => element.id === dataSource.id,
     )}`)
   }

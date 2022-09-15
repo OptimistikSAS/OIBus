@@ -20,10 +20,10 @@ const PointsSection = ({
       </div>
     )
   }
-  const dataSourceIndex = newConfig.south.dataSources.findIndex(
+  const dataSourceIndex = newConfig.south.findIndex(
     (dataSource) => dataSource.id === query.southId,
   )
-  const dataSource = newConfig.south.dataSources[dataSourceIndex]
+  const dataSource = newConfig.south[dataSourceIndex]
 
   const { protocol } = dataSource
   const { points: pointsOrdered = [] } = query.settings

@@ -16,11 +16,10 @@ EncryptionService.getInstance = () => ({ decryptText: (password) => password })
 const engine = jest.mock('../../engine/OIBusEngine.class')
 engine.configService = { getConfig: () => ({ engineConfig: testConfig.engine }) }
 engine.addFile = jest.fn()
-engine.getCacheFolder = () => testConfig.engine.caching.cacheFolder
 engine.eventEmitters = {}
 
 describe('MySQL Integration test', () => {
-  const southMysqlConfig = testConfig.south.dataSources[0]
+  const southMysqlConfig = testConfig.south[0]
   const mysqlConfig = {
     host: southMysqlConfig.SQL.host,
     user: southMysqlConfig.SQL.username,
@@ -69,7 +68,7 @@ describe('MySQL Integration test', () => {
 })
 
 describe('PostgreSQL Integration test', () => {
-  const southPostgresqlConfig = testConfig.south.dataSources[1]
+  const southPostgresqlConfig = testConfig.south[1]
   const postgresqlConfig = {
     host: southPostgresqlConfig.SQL.host,
     user: southPostgresqlConfig.SQL.username,
@@ -119,7 +118,7 @@ describe('PostgreSQL Integration test', () => {
 })
 
 describe('MSSQL Integration test', () => {
-  const southMssqlConfig = testConfig.south.dataSources[2]
+  const southMssqlConfig = testConfig.south[2]
   const mssqlConfig = {
     user: southMssqlConfig.SQL.username,
     password: southMssqlConfig.SQL.password,

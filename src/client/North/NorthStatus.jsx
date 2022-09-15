@@ -31,7 +31,7 @@ const NorthStatus = () => {
   const [application, setApplication] = React.useState(null)
 
   React.useEffect(() => {
-    const currentApplication = newConfig.north?.applications?.find(
+    const currentApplication = newConfig.north?.find(
       (element) => element.id === id,
     )
     setApplication(currentApplication)

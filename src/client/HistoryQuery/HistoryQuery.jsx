@@ -10,8 +10,8 @@ import apis from '../services/apis'
 const HistoryQuery = () => {
   const { newConfig } = React.useContext(ConfigContext)
   const [queries, setQueries] = React.useState([])
-  const applications = newConfig?.north?.applications ?? []
-  const dataSources = newConfig?.south?.dataSources ?? []
+  const applications = newConfig?.north ?? []
+  const dataSources = newConfig?.south ?? []
   const navigate = useNavigate()
 
   React.useEffect(() => {
@@ -36,7 +36,7 @@ const HistoryQuery = () => {
   /**
    * Handles the edit of history query and redirects the
    * user to the selected north history query's configuration page
-   * @param {integer} position The id to edit
+   * @param {Number} position The id to edit
    * @return {void}
    */
   const handleEdit = (position) => {
@@ -57,7 +57,7 @@ const HistoryQuery = () => {
 
   /**
    * Deletes the chosen history query
-   * @param {integer} position The index to delete
+   * @param {Number} position The index to delete
    * @returns {void}
    */
   const handleDelete = async (position) => {
@@ -71,7 +71,7 @@ const HistoryQuery = () => {
 
   /**
    * Copy the chosen history query
-   * @param {integer} position The id to copy
+   * @param {Number} position The id to copy
    * @returns {void}
    */
   const handleDuplicate = (position) => {
