@@ -19,10 +19,13 @@ jest.mock('../../services/opcua.service', () => ({ initOpcuaCertificateFolders: 
 // Mock certificate service
 jest.mock('../../services/CertificateService.class')
 
+// Mock fs
+jest.mock('node:fs/promises')
+
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  getCacheFolder: () => config.engine.caching.cacheFolder,
+  cacheFolder: './cache',
   addValues: jest.fn(),
   addFile: jest.fn(),
 }

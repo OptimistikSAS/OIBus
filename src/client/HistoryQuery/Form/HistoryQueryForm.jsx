@@ -19,10 +19,10 @@ const HistoryQueryForm = ({ query }) => {
 
   const { newConfig } = React.useContext(ConfigContext)
   const [errors, setErrors] = useState({})
-  const dataSource = newConfig?.south?.dataSources.find(
+  const dataSource = newConfig?.south?.find(
     (southHandler) => southHandler.id === queryToUpdate.southId,
   )
-  const application = newConfig?.north?.applications.find(
+  const application = newConfig?.north?.find(
     (northHandler) => northHandler.id === queryToUpdate.northId,
   )
 

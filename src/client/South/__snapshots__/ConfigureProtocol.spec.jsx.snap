@@ -117,8 +117,8 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             </label>
             <input
               class="oi-form-input checkbox form-check-input"
-              id="south.dataSources.0.enabled"
-              name="south.dataSources.0.enabled"
+              id="south.0.enabled"
+              name="south.0.enabled"
               type="checkbox"
             />
             <small
@@ -139,8 +139,8 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.0.scanMode"
-              name="south.dataSources.0.scanMode"
+              id="south.0.scanMode"
+              name="south.0.scanMode"
             >
               <option
                 value="everySecond"
@@ -307,15 +307,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.logParameters.consoleLevel"
+              for="south.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.0.logParameters.consoleLevel"
-              name="south.dataSources.0.logParameters.consoleLevel"
+              id="south.0.logParameters.consoleLevel"
+              name="south.0.logParameters.consoleLevel"
             >
               <option
                 value="engine"
@@ -366,15 +366,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.logParameters.fileLevel"
+              for="south.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.0.logParameters.fileLevel"
-              name="south.dataSources.0.logParameters.fileLevel"
+              id="south.0.logParameters.fileLevel"
+              name="south.0.logParameters.fileLevel"
             >
               <option
                 value="engine"
@@ -425,15 +425,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.logParameters.sqliteLevel"
+              for="south.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.0.logParameters.sqliteLevel"
-              name="south.dataSources.0.logParameters.sqliteLevel"
+              id="south.0.logParameters.sqliteLevel"
+              name="south.0.logParameters.sqliteLevel"
             >
               <option
                 value="engine"
@@ -569,15 +569,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.FolderScanner.inputFolder"
+              for="south.0.FolderScanner.inputFolder"
             >
               Input folder
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.FolderScanner.inputFolder"
-              name="south.dataSources.0.FolderScanner.inputFolder"
+              id="south.0.FolderScanner.inputFolder"
+              name="south.0.FolderScanner.inputFolder"
               type="text"
               value="./input/"
             />
@@ -611,8 +611,8 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             <input
               checked=""
               class="oi-form-input checkbox form-check-input"
-              id="south.dataSources.0.FolderScanner.preserveFiles"
-              name="south.dataSources.0.FolderScanner.preserveFiles"
+              id="south.0.FolderScanner.preserveFiles"
+              name="south.0.FolderScanner.preserveFiles"
               type="checkbox"
             />
           </div>
@@ -630,8 +630,8 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             </label>
             <input
               class="oi-form-input checkbox form-check-input"
-              id="south.dataSources.0.FolderScanner.ignoreModifiedDate"
-              name="south.dataSources.0.FolderScanner.ignoreModifiedDate"
+              id="south.0.FolderScanner.ignoreModifiedDate"
+              name="south.0.FolderScanner.ignoreModifiedDate"
               type="checkbox"
             />
           </div>
@@ -648,15 +648,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.FolderScanner.minAge"
+              for="south.0.FolderScanner.minAge"
             >
               Minimum Age
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.FolderScanner.minAge"
-              name="south.dataSources.0.FolderScanner.minAge"
+              id="south.0.FolderScanner.minAge"
+              name="south.0.FolderScanner.minAge"
               type="integer"
               value="0"
             />
@@ -677,15 +677,15 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.FolderScanner.regex"
+              for="south.0.FolderScanner.regex"
             >
               RegExp
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.FolderScanner.regex"
-              name="south.dataSources.0.FolderScanner.regex"
+              id="south.0.FolderScanner.regex"
+              name="south.0.FolderScanner.regex"
               type="text"
               value=".csv"
             />
@@ -718,8 +718,8 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             </label>
             <input
               class="oi-form-input checkbox form-check-input"
-              id="south.dataSources.0.FolderScanner.compression"
-              name="south.dataSources.0.FolderScanner.compression"
+              id="south.0.FolderScanner.compression"
+              name="south.0.FolderScanner.compression"
               type="checkbox"
             />
           </div>
@@ -867,8 +867,8 @@ exports[`ConfigureProtocol check update 1`] = `
             </label>
             <input
               class="oi-form-input checkbox form-check-input"
-              id="south.dataSources.0.enabled"
-              name="south.dataSources.0.enabled"
+              id="south.0.enabled"
+              name="south.0.enabled"
               type="checkbox"
             />
             <small
@@ -889,8 +889,8 @@ exports[`ConfigureProtocol check update 1`] = `
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.0.scanMode"
-              name="south.dataSources.0.scanMode"
+              id="south.0.scanMode"
+              name="south.0.scanMode"
             >
               <option
                 value="everySecond"
@@ -1057,15 +1057,15 @@ exports[`ConfigureProtocol check update 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.logParameters.consoleLevel"
+              for="south.0.logParameters.consoleLevel"
             >
               Console level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.0.logParameters.consoleLevel"
-              name="south.dataSources.0.logParameters.consoleLevel"
+              id="south.0.logParameters.consoleLevel"
+              name="south.0.logParameters.consoleLevel"
             >
               <option
                 value="engine"
@@ -1116,15 +1116,15 @@ exports[`ConfigureProtocol check update 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.logParameters.fileLevel"
+              for="south.0.logParameters.fileLevel"
             >
               File level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.0.logParameters.fileLevel"
-              name="south.dataSources.0.logParameters.fileLevel"
+              id="south.0.logParameters.fileLevel"
+              name="south.0.logParameters.fileLevel"
             >
               <option
                 value="engine"
@@ -1175,15 +1175,15 @@ exports[`ConfigureProtocol check update 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.logParameters.sqliteLevel"
+              for="south.0.logParameters.sqliteLevel"
             >
               Sqlite level
             </label>
             <select
               aria-invalid="false"
               class="oi-form-input form-select"
-              id="south.dataSources.0.logParameters.sqliteLevel"
-              name="south.dataSources.0.logParameters.sqliteLevel"
+              id="south.0.logParameters.sqliteLevel"
+              name="south.0.logParameters.sqliteLevel"
             >
               <option
                 value="engine"
@@ -1319,15 +1319,15 @@ exports[`ConfigureProtocol check update 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.FolderScanner.inputFolder"
+              for="south.0.FolderScanner.inputFolder"
             >
               Input folder
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.FolderScanner.inputFolder"
-              name="south.dataSources.0.FolderScanner.inputFolder"
+              id="south.0.FolderScanner.inputFolder"
+              name="south.0.FolderScanner.inputFolder"
               type="text"
               value="./input/"
             />
@@ -1361,8 +1361,8 @@ exports[`ConfigureProtocol check update 1`] = `
             <input
               checked=""
               class="oi-form-input checkbox form-check-input"
-              id="south.dataSources.0.FolderScanner.preserveFiles"
-              name="south.dataSources.0.FolderScanner.preserveFiles"
+              id="south.0.FolderScanner.preserveFiles"
+              name="south.0.FolderScanner.preserveFiles"
               type="checkbox"
             />
           </div>
@@ -1380,8 +1380,8 @@ exports[`ConfigureProtocol check update 1`] = `
             </label>
             <input
               class="oi-form-input checkbox form-check-input"
-              id="south.dataSources.0.FolderScanner.ignoreModifiedDate"
-              name="south.dataSources.0.FolderScanner.ignoreModifiedDate"
+              id="south.0.FolderScanner.ignoreModifiedDate"
+              name="south.0.FolderScanner.ignoreModifiedDate"
               type="checkbox"
             />
           </div>
@@ -1398,15 +1398,15 @@ exports[`ConfigureProtocol check update 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.FolderScanner.minAge"
+              for="south.0.FolderScanner.minAge"
             >
               Minimum Age
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.FolderScanner.minAge"
-              name="south.dataSources.0.FolderScanner.minAge"
+              id="south.0.FolderScanner.minAge"
+              name="south.0.FolderScanner.minAge"
               type="integer"
               value="0"
             />
@@ -1427,15 +1427,15 @@ exports[`ConfigureProtocol check update 1`] = `
           >
             <label
               class="form-label"
-              for="south.dataSources.0.FolderScanner.regex"
+              for="south.0.FolderScanner.regex"
             >
               RegExp
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="south.dataSources.0.FolderScanner.regex"
-              name="south.dataSources.0.FolderScanner.regex"
+              id="south.0.FolderScanner.regex"
+              name="south.0.FolderScanner.regex"
               type="text"
               value=".csv"
             />
@@ -1468,8 +1468,8 @@ exports[`ConfigureProtocol check update 1`] = `
             </label>
             <input
               class="oi-form-input checkbox form-check-input"
-              id="south.dataSources.0.FolderScanner.compression"
-              name="south.dataSources.0.FolderScanner.compression"
+              id="south.0.FolderScanner.compression"
+              name="south.0.FolderScanner.compression"
               type="checkbox"
             />
           </div>

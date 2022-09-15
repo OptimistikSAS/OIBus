@@ -1,10 +1,12 @@
 /* eslint-disable no-restricted-syntax, no-await-in-loop */
 
-const fs = require('fs/promises')
+const fs = require('node:fs/promises')
+const path = require('node:path')
+const db = require('better-sqlite3')
 const { nanoid } = require('nanoid')
-const path = require('path')
 const databaseMigrationService = require('./database.migration.service')
 const databaseService = require('../services/database.service')
+const { createFolder } = require('../services/utils')
 
 module.exports = {
   2: (config, logger) => {
@@ -1285,5 +1287,181 @@ module.exports = {
         }
       }
     })
+  },
+  26: async (config, logger) => {
+    logger.info('Removing cache folder from engine settings.')
+    delete config.engine.caching.cacheFolder
+
+    logger.info('Removing history query from engine settings.')
+    delete config.engine.historyQuery
+
+    const archiveSettings = config.engine.caching.archive
+    delete config.engine.caching.archive
+    delete archiveSettings.archiveFolder
+
+    await createFolder((path.resolve('./cache/data-stream')))
+    await createFolder(path.resolve('./cache/history-query'))
+    for (const north of config.north.applications) {
+      logger.info(`Add archive settings to North connector ${north.id}`)
+      north.caching.archive = archiveSettings
+
+      logger.info(`Moving cache for North connector ${north.id}.`)
+      const northCache = path.resolve('./cache/data-stream', `north-${north.id}`)
+      const northCacheFilesFolder = path.resolve(northCache, 'files')
+      await createFolder(northCache)
+      await createFolder(path.resolve(northCache, 'archive'))
+      await createFolder(northCacheFilesFolder)
+      await createFolder(path.resolve(northCache, 'errors'))
+      try {
+        await fs.rename(path.resolve('./cache', `${north.id}.db`), path.resolve(northCache, 'values.db'))
+        databaseMigrationService.changeColumnName(
+          path.resolve(northCache, 'values.db'),
+          'data_source',
+          'south',
+        )
+      } catch (err) {
+        if (err.code !== 'ENOENT') {
+          logger.error(err)
+        }
+      }
+      try {
+        await fs.rm(path.resolve('./cache', `${north.id}.db-journal`), { force: true })
+      } catch (err) {
+        if (err.code !== 'ENOENT') {
+          logger.error(err)
+        }
+      }
+      try {
+        await fs.copyFile(path.resolve('./cache', 'fileCache.db'), path.resolve(northCache, 'files.db'))
+        const database = db(path.resolve(northCache, 'files.db'))
+        const query = 'SELECT path, timestamp '
+            + 'FROM cache '
+            + 'WHERE application = ? '
+            + 'ORDER BY timestamp'
+        const results = database.prepare(query).all(north.id)
+        databaseMigrationService.removeColumn(path.resolve(northCache, 'files.db'), 'cache', 'application')
+        // Empty the database to rewrite the new file path
+        database.prepare('DELETE FROM cache;').run()
+        for (const result of results) {
+          try {
+            const newFilePath = path.resolve(northCacheFilesFolder, path.basename(result.path))
+            await fs.copyFile(path.resolve(result.path), newFilePath)
+
+            // Create new entry for this file
+            const newFileQuery = 'INSERT INTO cache (timestamp, path) VALUES (?, ?)'
+            database.prepare(newFileQuery).run(result.timestamp, newFilePath)
+          } catch (copyError) {
+            if (copyError.code !== 'ENOENT') {
+              logger.error(copyError)
+            } else {
+              logger.error(`File ${result.path} not found.`)
+            }
+          }
+        }
+      } catch (err) {
+        if (err.code !== 'ENOENT') {
+          logger.error(err)
+        }
+      }
+    }
+    try {
+      const database = db(path.resolve('./cache', 'fileCache.db'))
+      const query = 'SELECT DISTINCT path '
+          + 'FROM cache '
+          + 'ORDER BY timestamp'
+      const results = database.prepare(query).all()
+      logger.info(`Removing ${results.length} files from cache.`)
+
+      for (const result of results) {
+        try {
+          await fs.rm(path.resolve(result.path), { force: true })
+        } catch (removeError) {
+          if (removeError.code !== 'ENOENT') {
+            logger.error(removeError)
+          }
+        }
+      }
+    } catch (err) {
+      logger.error(err)
+    }
+
+    try {
+      await fs.rm(path.resolve('./cache', 'fileCache.db'), { force: true })
+    } catch (err) {
+      logger.warn(err)
+    }
+    try {
+      await fs.rm(path.resolve('./cache', 'fileCache.db-journal'), { force: true })
+    } catch (err) {
+      logger.warn(err)
+    }
+    try {
+      await fs.rm(path.resolve('./cache', 'fileCache-error.db'), { force: true })
+    } catch (err) {
+      logger.warn(err)
+    }
+    try {
+      await fs.rm(path.resolve('./cache', 'fileCache-error.db-journal'), { force: true })
+    } catch (err) {
+      logger.warn(err)
+    }
+    try {
+      await fs.rm(path.resolve('./cache', 'valueCache.db'), { force: true })
+    } catch (err) {
+      logger.warn(err)
+    }
+    try {
+      await fs.rm(path.resolve('./cache', 'valueCache-error.db'), { force: true })
+    } catch (err) {
+      logger.warn(err)
+    }
+    try {
+      await fs.rm(path.resolve('./cache', 'valueCache.db-journal'), { force: true })
+    } catch (err) {
+      logger.warn(err)
+    }
+    try {
+      await fs.rm(path.resolve('./cache', 'valueCache-error.db-journal'), { force: true })
+    } catch (err) {
+      logger.warn(err)
+    }
+
+    for (const south of config.south.dataSources) {
+      logger.info(`Moving cache for South connector ${south.id}.`)
+      const southCache = path.resolve('./cache/data-stream', `south-${south.id}`)
+      await createFolder(southCache)
+
+      try { // move cache and remove associated db-journal if it exists
+        await fs.stat(path.resolve('./cache', `${south.id}.db`))
+        await fs.rename(path.resolve('./cache', `${south.id}.db`), path.resolve(southCache, 'cache.db'))
+        await fs.rm(path.resolve('./cache', `${south.id}.db-journal`), { force: true })
+      } catch (err) {
+        if (err.code !== 'ENOENT') {
+          logger.error(err)
+        }
+      }
+      try { // Remove tmp folder if it exists
+        await fs.stat(path.resolve('./cache', south.id))
+        await fs.rmdir(path.resolve('./cache', south.id), { recursive: true })
+      } catch (err) {
+        if (err.code !== 'ENOENT') {
+          logger.error(err)
+        }
+      }
+    }
+
+    logger.info('Removing historyQuery.db and historyQuery folder')
+    try {
+      await fs.rm(path.resolve('./historyQuery.db'), { force: true })
+      await fs.rmdir(path.resolve('./historyQuery'), { recursive: true })
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        logger.error(err)
+      }
+    }
+
+    logger.info('Removing applications / dataSources from north / south settings.')
+    config.north = config.north.applications
+    config.south = config.south.dataSources
   },
 }

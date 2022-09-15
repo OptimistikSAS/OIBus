@@ -78,19 +78,7 @@ describe('NodeView', () => {
     expect(container).toMatchSnapshot()
 
     React.useContext = jest.fn().mockReturnValue({
-      newConfig: { south: {}, north: {} },
-      dispatchNewConfig,
-    })
-
-    act(() => {
-      root.render(
-        <NodeView status={status} onRestart={() => true} onShutdown={() => true} />,
-      )
-    })
-    expect(container).toMatchSnapshot()
-
-    React.useContext = jest.fn().mockReturnValue({
-      newConfig: { south: { dataSources: [] }, north: { applications: [] } },
+      newConfig: { south: [], north: [] },
       dispatchNewConfig,
     })
 

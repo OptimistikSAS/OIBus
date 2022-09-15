@@ -22,7 +22,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const [renamingConnector, setRenamingConnector] = useState(null)
   const [pencil, setPencil] = useState(true)
-  const dataSources = newConfig?.south?.dataSources ?? []
+  const dataSources = newConfig?.south ?? []
   const navigate = useNavigate()
   // Create the sections for the protocol (for example dataSource.Modbus) for dataSource not yet initialized
   if (!dataSource[protocol]) dataSource[protocol] = {}
@@ -34,7 +34,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
   const schema = protocol === 'SQL'
     ? ProtocolSchemas.SQL.withDriver(dataSource.SQL.driver)
     : ProtocolSchemas[protocol]
-  const prefix = `south.dataSources.${dataSourceIndex}`
+  const prefix = `south.${dataSourceIndex}`
 
   const handleConnectorNameChanged = (name) => (oldConnectorName, newConnectorName) => {
     setRenamingConnector(null)
@@ -56,7 +56,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
             fromList={dataSources}
             valid={validation.protocol.isValidName}
             nameChanged={handleConnectorNameChanged(
-              `south.dataSources.${dataSources.findIndex(
+              `south.${dataSources.findIndex(
                 (element) => element.id === dataSource.id,
               )}.name`,
             )}

@@ -11,7 +11,7 @@ const HistoryQueryEngine = require('./HistoryQuery/HistoryQueryEngine.class')
 const Logger = require('./engine/logger/Logger.class')
 const EncryptionService = require('./services/EncryptionService.class')
 
-const { getCommandLineArguments } = require('./services/utils')
+const { getCommandLineArguments, createFolder } = require('./services/utils')
 
 // In case there is an error the worker process will exit.
 // If this happens MAX_RESTART_COUNT times in less than MAX_INTERVAL_MILLISECOND interval
@@ -19,6 +19,7 @@ const { getCommandLineArguments } = require('./services/utils')
 // prevent restart loop and make possible changing the configuration
 const MAX_RESTART_COUNT = 3
 const MAX_INTERVAL_MILLISECOND = 30 * 1000
+const CACHE_FOLDER = './cache'
 
 const logger = new Logger()
 
@@ -114,7 +115,10 @@ logger.changeParameters({
       // this condition is reached only for a worker (i.e. not master)
       // so this is here where we start the web-server, OIBusEngine and HistoryQueryEngine
 
-      const configService = new ConfigService(configFile)
+      // Create the base cache folder
+      await createFolder(CACHE_FOLDER)
+
+      const configService = new ConfigService(configFile, CACHE_FOLDER)
       await configService.init()
 
       const encryptionService = EncryptionService.getInstance()
@@ -133,8 +137,12 @@ logger.changeParameters({
         logger.warn('OIBus is running in check mode')
         process.send({ type: 'shutdown-ready' })
       } else {
-        oibusEngine.start(safeMode)
-        historyQueryEngine.start(safeMode)
+        oibusEngine.start(safeMode).then(() => {
+          logger.info('OIBus engine fully started.')
+        })
+        historyQueryEngine.start(safeMode).then(() => {
+          logger.info('History query engine fully started.')
+        })
         server.start()
       }
 
@@ -155,13 +163,17 @@ logger.changeParameters({
             logger.info('Reloading OIBus Engine')
             await oibusEngine.stop()
             await server.stop()
-            oibusEngine.start(safeMode)
+            oibusEngine.start(safeMode).then(() => {
+              logger.info('OIBus engine fully started.')
+            })
             server.start()
             break
           case 'reload-historyquery-engine':
             logger.info('Reloading HistoryQuery Engine')
             await historyQueryEngine.stop()
-            historyQueryEngine.start(safeMode)
+            historyQueryEngine.start(safeMode).then(() => {
+              logger.info('History query engine fully started.')
+            })
             break
           case 'reload':
             logger.info('Reloading OIBus')

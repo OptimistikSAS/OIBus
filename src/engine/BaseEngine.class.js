@@ -1,3 +1,5 @@
+const path = require('node:path')
+
 const VERSION = require('../../package.json').version
 
 const apiList = {}
@@ -37,10 +39,12 @@ class BaseEngine {
    * @constructor
    * @param {ConfigService} configService - The config service
    * @param {EncryptionService} encryptionService - The encryption service
+   * @param {String} cacheFolder - The base cache folder used by the engine and its connectors
    * @return {void}
    */
-  constructor(configService, encryptionService) {
+  constructor(configService, encryptionService, cacheFolder) {
     this.version = VERSION
+    this.cacheFolder = path.resolve(cacheFolder)
 
     this.installedNorthConnectors = apiList
     this.installedSouthConnectors = protocolList
@@ -115,14 +119,6 @@ class BaseEngine {
    */
   async stop() {
     this.logger.warn('stop() should be surcharged.')
-  }
-
-  /**
-   * Get cache folder
-   * @return {String} - The cache folder
-   */
-  getCacheFolder() {
-    this.logger.warn('getCacheFolder() should be surcharged.')
   }
 
   /**

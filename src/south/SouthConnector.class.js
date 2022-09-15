@@ -1,9 +1,10 @@
+const path = require('node:path')
 const EncryptionService = require('../services/EncryptionService.class')
 const databaseService = require('../services/database.service')
 const Logger = require('../engine/logger/Logger.class')
 const CertificateService = require('../services/CertificateService.class')
 const StatusService = require('../services/status.service.class')
-const { generateIntervals, delay } = require('../services/utils')
+const { generateIntervals, delay, createFolder } = require('../services/utils')
 
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
@@ -46,6 +47,7 @@ class SouthConnector {
     this.engineConfig = engineConfig
     this.encryptionService = EncryptionService.getInstance()
     this.supportedModes = supportedModes
+    this.baseFolder = path.resolve(this.engine.cacheFolder, `south-${settings.id}`)
 
     this.statusService = null
     this.numberOfRetrievedFiles = 0
@@ -81,8 +83,8 @@ class SouthConnector {
     this.certificate = new CertificateService(this.logger)
     await this.certificate.init(this.keyFile, this.certFile, this.caFile)
 
-    const databasePath = `${this.engine.getCacheFolder()}/${id}.db`
-    this.southDatabase = databaseService.createConfigDatabase(databasePath)
+    await createFolder(this.baseFolder)
+    this.southDatabase = databaseService.createConfigDatabase(path.resolve(this.baseFolder, 'cache.db'))
 
     const {
       supportListen,

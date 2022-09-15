@@ -6,11 +6,14 @@ const { defaultConfig: config } = require('../../../tests/testConfig')
 
 jest.mock('pg', () => ({ Client: jest.fn() }))
 
+// Mock fs
+jest.mock('node:fs/promises')
+
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  cacheFolder: './cache',
   requestService: { httpSend: jest.fn() },
-  getCacheFolder: jest.fn(),
 }
 
 // Mock services
@@ -55,10 +58,14 @@ describe('North TimescaleDB', () => {
         timestampPathInDataValue: '',
       },
       caching: {
-        sendInterval: 10000,
+        sendInterval: 1000,
         retryInterval: 5000,
-        groupCount: 1000,
+        groupCount: 10000,
         maxSendCount: 10000,
+        archive: {
+          enabled: true,
+          retentionDuration: 720,
+        },
       },
       subscribedTo: [],
     }

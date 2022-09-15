@@ -55,7 +55,7 @@ const SouthNode = ({ dataSource, indexSouth, onChange }) => {
       </Link>
       <div className="oi-node-footer">
         <OIbCheckBox
-          name={`south.dataSources.${indexSouth}.enabled`}
+          name={`south.${indexSouth}.enabled`}
           defaultValue={false}
           value={dataSource.enabled}
           onChange={onChange}
