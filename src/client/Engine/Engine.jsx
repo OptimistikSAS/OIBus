@@ -7,7 +7,6 @@ import Logging from './Logging/Logging.jsx'
 import ScanModes from './ScanModes.jsx'
 import Proxies from './Proxies.jsx'
 import Caching from './Caching.jsx'
-import HistoryQuery from './HistoryQuery.jsx'
 import HealthSignal from './HealthSignal.jsx'
 import HttpRequest from './HttpRequest.jsx'
 import ExternalSources from './ExternalSources.jsx'
@@ -113,7 +112,6 @@ const Engine = () => {
         <Logging onChange={onChange} logParameters={newConfig.engine.logParameters} />
         <ScanModes onChange={onChange} scanModes={newConfig.engine.scanModes} />
         <Caching onChange={onChange} caching={newConfig.engine.caching} />
-        <HistoryQuery onChange={onChange} historyQuery={newConfig.engine.historyQuery} />
         <Proxies onChange={onChange} proxies={newConfig.engine.proxies || []} />
         <HealthSignal onChange={onChange} healthSignal={newConfig.engine.healthSignal} />
         <HttpRequest onChange={onChange} httpRequest={newConfig.engine.httpRequest} />

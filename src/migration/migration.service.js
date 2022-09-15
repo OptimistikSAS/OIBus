@@ -5,7 +5,7 @@ const Logger = require('../engine/logger/Logger.class')
 
 const { tryReadFile, backupConfigFile, saveConfig } = require('../services/utils')
 
-const REQUIRED_SCHEMA_VERSION = 25
+const REQUIRED_SCHEMA_VERSION = 26
 const DEFAULT_VERSION = 1
 
 /**

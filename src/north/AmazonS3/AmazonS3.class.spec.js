@@ -15,11 +15,14 @@ jest.mock('@aws-sdk/node-http-handler', () => ({ NodeHttpHandler: jest.fn() }))
 // Mock ProxyAgent
 jest.mock('proxy-agent')
 
+// Mock fs
+jest.mock('node:fs/promises')
+
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  cacheFolder: './cache',
   requestService: { httpSend: jest.fn() },
-  getCacheFolder: jest.fn(),
 }
 
 // Mock services
@@ -54,10 +57,14 @@ describe('North Amazon S3', () => {
         },
       },
       caching: {
-        sendInterval: 10000,
+        sendInterval: 1000,
         retryInterval: 5000,
-        groupCount: 1000,
+        groupCount: 10000,
         maxSendCount: 10000,
+        archive: {
+          enabled: true,
+          retentionDuration: 720,
+        },
       },
       subscribedTo: [],
     }

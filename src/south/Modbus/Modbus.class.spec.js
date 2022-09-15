@@ -1,5 +1,6 @@
 const net = require('node:net')
 
+const path = require('node:path')
 const Modbus = require('./Modbus.class')
 
 const databaseService = require('../../services/database.service')
@@ -13,6 +14,9 @@ jest.mock('jsmodbus', () => ({ client: { TCP: jest.fn() } }))
 // Mock net library used for Socket
 jest.mock('node:net')
 
+// Mock fs
+jest.mock('node:fs/promises')
+
 // Mock utils class
 jest.mock('./utils', () => ({
   getOptimizedScanModes: jest.fn(),
@@ -22,7 +26,7 @@ jest.mock('./utils', () => ({
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  getCacheFolder: () => config.engine.caching.cacheFolder,
+  cacheFolder: './cache',
   addValues: jest.fn(),
   addFile: jest.fn(),
 }
@@ -183,7 +187,7 @@ describe('South Modbus', () => {
 
   it('should properly connect', async () => {
     await south.connect()
-    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${settings.id}.db`)
+    expect(databaseService.createConfigDatabase).toBeCalledWith(path.resolve(`./cache/south-${settings.id}/cache.db`))
     expect(south.connected).toBeTruthy()
   })
 

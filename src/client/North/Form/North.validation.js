@@ -4,6 +4,7 @@ const validation = {
     retryInterval: (val) => (val >= 1000 ? null : 'Retry interval should be greater or equal to 1000'),
     groupCount: (val) => (val > 0 ? null : 'Group count should be greater than 0'),
     maxSendCount: (val) => (val > 0 ? null : 'Max group count should be greater than 0'),
+    retentionDuration: (val) => (val > 0 ? null : 'Retention duration should be greater than 0'),
   },
   application: {
     isValidName: (val, excludedList) => {

@@ -20,6 +20,9 @@ jest.mock('node-opcua-client', () => ({
 }))
 jest.mock('node-opcua-certificate-manager', () => ({ OPCUACertificateManager: jest.fn(() => ({})) }))
 
+// Mock fs
+jest.mock('node:fs/promises')
+
 // Mock opcua service
 jest.mock('../../services/opcua.service', () => ({ initOpcuaCertificateFolders: jest.fn() }))
 
@@ -29,7 +32,7 @@ jest.mock('../../services/CertificateService.class')
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  getCacheFolder: () => config.engine.caching.cacheFolder,
+  cacheFolder: './cache',
   addValues: jest.fn(),
   addFile: jest.fn(),
 }
@@ -207,19 +210,6 @@ describe('South OPCUA-HA', () => {
     expect(nodeOPCUAClient.OPCUAClient.createSession).toBeCalledWith(south.url, expectedUserIdentity, expectedOptions)
     expect(south.connected).toBeTruthy()
     expect(setTimeoutSpy).not.toBeCalled()
-  })
-
-  it('should properly retry connection to OPC UA server', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
-    nodeOPCUAClient.OPCUAClient.createSession.mockReturnValue(new Promise((resolve, reject) => {
-      reject(new Error('test'))
-    }))
-
-    await south.init()
-    await south.connect()
-
-    expect(south.connected).toBeFalsy()
-    expect(setTimeoutSpy).toHaveBeenLastCalledWith(expect.any(Function), settings.OPCUA_HA.retryInterval)
   })
 
   it('should properly format and sent values', async () => {

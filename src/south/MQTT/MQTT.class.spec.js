@@ -9,6 +9,9 @@ const { defaultConfig: config } = require('../../../tests/testConfig')
 // Mock mqtt
 jest.mock('mqtt', () => ({ connect: jest.fn() }))
 
+// Mock fs
+jest.mock('node:fs/promises')
+
 // Mock utils class
 jest.mock('./utils', () => ({ formatValue: jest.fn() }))
 
@@ -18,7 +21,7 @@ const CertificateService = jest.mock('../../services/CertificateService.class')
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  getCacheFolder: () => config.engine.caching.cacheFolder,
+  cacheFolder: './cache',
   addValues: jest.fn(),
   addFile: jest.fn(),
 }

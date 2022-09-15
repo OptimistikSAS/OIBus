@@ -75,7 +75,7 @@ class RestApi extends SouthConnector {
     this.payloadParser = payloadParser
     this.convertToCsv = convertToCsv
     this.variableDateFormat = variableDateFormat
-    this.tmpFolder = path.resolve(this.engineConfig.caching.cacheFolder, this.settings.id)
+    this.tmpFolder = path.resolve(this.baseFolder, 'tmp')
   }
 
   /**

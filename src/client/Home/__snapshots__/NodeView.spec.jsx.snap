@@ -55,17 +55,3 @@ exports[`NodeView display main page based on config 4`] = `
   </div>
 </div>
 `;
-
-exports[`NodeView display main page based on config 5`] = `
-<div>
-  <div
-    class="container"
-  >
-    <div
-      style="height: 710px; width: 100%; padding-top: 2rem;"
-    >
-      ReactFlow
-    </div>
-  </div>
-</div>
-`;

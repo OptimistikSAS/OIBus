@@ -22,6 +22,7 @@ jest.mock('./utils', () => ({
 jest.mock('../../services/utils', () => ({
   replaceFilenameWithVariable: jest.fn(),
   compress: jest.fn(),
+  createFolder: jest.fn(),
 }))
 
 const databaseService = require('../../services/database.service')
@@ -44,7 +45,7 @@ jest.mock('node:fs/promises')
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  getCacheFolder: () => config.engine.caching.cacheFolder,
+  cacheFolder: './cache',
   addValues: jest.fn(),
   addFile: jest.fn(),
 }
@@ -107,7 +108,7 @@ describe('South SQL', () => {
     await south.init()
     await south.connect()
 
-    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${settings.id}.db`)
+    expect(databaseService.createConfigDatabase).toBeCalledWith(path.resolve(`cache/south-${south.settings.id}/cache.db`))
     expect(databaseService.getConfig).toHaveBeenCalledTimes(2)
     expect(south.lastCompletedAt[settings.scanMode]).toEqual(new Date('2020-04-23T11:09:01.001Z'))
   })
@@ -156,7 +157,7 @@ describe('South SQL', () => {
     await south.init()
     await south.connect()
 
-    expect(databaseService.createConfigDatabase).toBeCalledWith(`${config.engine.caching.cacheFolder}/${settings.id}.db`)
+    expect(databaseService.createConfigDatabase).toBeCalledWith(path.resolve(`cache/south-${south.settings.id}/cache.db`))
     expect(databaseService.getConfig).toHaveBeenCalledTimes(2)
     expect(south.lastCompletedAt).not.toEqual(new Date(nowDateString).getTime())
   })
@@ -537,8 +538,7 @@ describe('South SQL', () => {
 
     await south.historyQuery(settings.scanMode, startTime, endTime)
 
-    const { engineConfig: { caching: { cacheFolder } } } = south.engine.configService.getConfig()
-    const tmpFolder = path.resolve(cacheFolder, south.settings.id)
+    const tmpFolder = path.resolve(`cache/south-${south.settings.id}/tmp`)
     const expectedPath = path.join(tmpFolder, 'myFile')
     expect(utils.generateCSV).toBeCalledTimes(1)
     expect(fs.writeFile).toBeCalledWith(expectedPath, csvContent)
@@ -569,8 +569,7 @@ describe('South SQL', () => {
     )
     utils.generateCSV.mockReturnValue(csvContent)
 
-    const { engineConfig: { caching: { cacheFolder } } } = south.engine.configService.getConfig()
-    const tmpFolder = path.resolve(cacheFolder, south.settings.id)
+    const tmpFolder = path.resolve(`cache/south-${south.settings.id}/tmp`)
     const expectedPath = path.join(tmpFolder, 'myFile')
     const expectedCompressedPath = path.join(tmpFolder, 'myFile.gz')
 

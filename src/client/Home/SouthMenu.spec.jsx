@@ -20,7 +20,7 @@ jest.mock('react-router-dom', () => (
   { useNavigate: () => mockNavigate }
 ))
 
-const dataSource = testConfig.south.dataSources[0]
+const dataSource = testConfig.south[0]
 
 let container
 let root
@@ -69,7 +69,7 @@ describe('SouthMenu', () => {
     })
     expect(container).toMatchSnapshot()
 
-    React.useContext = jest.fn().mockReturnValue({ newConfig: { south: { dataSources: [] } }, dispatchNewConfig })
+    React.useContext = jest.fn().mockReturnValue({ newConfig: { south: [] }, dispatchNewConfig })
 
     act(() => {
       root.render(
@@ -100,7 +100,7 @@ describe('SouthMenu', () => {
     })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
-      name: 'south.dataSources',
+      name: 'south',
       value: {
         ...dataSource,
         name: 'TestFolderScanner copy',
@@ -127,7 +127,7 @@ describe('SouthMenu', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
-      name: 'south.dataSources',
+      name: 'south',
       value: {
         ...dataSourceWithCopyInName,
         name: 'TestFolderScanner copy copy',
@@ -149,7 +149,7 @@ describe('SouthMenu', () => {
     act(() => {
       Simulate.click(document.getElementById('oi-settings'))
     })
-    expect(mockNavigate).toBeCalledWith(`/south/${testConfig.south.dataSources[0].id}`)
+    expect(mockNavigate).toBeCalledWith(`/south/${testConfig.south[0].id}`)
     expect(container).toMatchSnapshot()
   })
 
@@ -164,7 +164,7 @@ describe('SouthMenu', () => {
       Simulate.click(document.getElementById('oi-status'))
     })
 
-    expect(mockNavigate).toBeCalledWith(`/south/${testConfig.south.dataSources[0].id}/live`)
+    expect(mockNavigate).toBeCalledWith(`/south/${testConfig.south[0].id}/live`)
     expect(container).toMatchSnapshot()
   })
 
@@ -187,7 +187,7 @@ describe('SouthMenu', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
-      name: 'south.dataSources.0',
+      name: 'south.0',
     })
     expect(container).toMatchSnapshot()
   })

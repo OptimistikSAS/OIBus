@@ -31,10 +31,10 @@ const NodeView = ({ onRestart, onShutdown }) => {
 
   const engineName = newConfig?.engine?.engineName ?? ''
   const safeMode = newConfig?.engine?.safeMode ?? false
-  const applications = newConfig?.north?.applications?.filter(
+  const applications = newConfig?.north?.filter(
     (application) => application.name.toLowerCase().includes(northFilter.toLowerCase()),
   ) ?? []
-  const dataSources = newConfig?.south?.dataSources?.filter((dataSource) => dataSource.name.toLowerCase().includes(southFilter.toLowerCase())) ?? []
+  const dataSources = newConfig?.south?.filter((dataSource) => dataSource.name.toLowerCase().includes(southFilter.toLowerCase())) ?? []
   const globalZIndex = dataSources.length + applications.length + 1
   const northNodes = applications.map((application, indexNorth) => ({
     id: application.id,
