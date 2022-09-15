@@ -49,12 +49,12 @@ describe('ConfigureProtocol', () => {
       root.render(<ConfigureProtocol />)
     })
     act(() => {
-      Simulate.change(document.getElementById('south.dataSources.0.FolderScanner.inputFolder'), { target: { value: './myNewInputFolder' } })
+      Simulate.change(document.getElementById('south.0.FolderScanner.inputFolder'), { target: { value: './myNewInputFolder' } })
     })
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.0.FolderScanner.inputFolder',
+      name: 'south.0.FolderScanner.inputFolder',
       value: './myNewInputFolder',
       validity: null,
     })
@@ -65,7 +65,7 @@ describe('ConfigureProtocol', () => {
     const reactUseContextMock = React.useContext
     // temporary empty array
     const config = utils.jsonCopy(testConfig)
-    config.south.dataSources = []
+    config.south = []
     React.useContext = jest.fn().mockReturnValue({ newConfig: config, dispatchNewConfig })
     act(() => {
       root.render(<ConfigureProtocol />)

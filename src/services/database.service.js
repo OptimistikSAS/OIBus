@@ -16,7 +16,7 @@ const createValuesDatabase = (databasePath, options = {}) => {
                        + 'timestamp TEXT KEY, '
                        + 'data TEXT, '
                        + 'point_id TEXT, '
-                       + 'data_source TEXT);').run()
+                       + 'south TEXT);').run()
   database.prepare('PRAGMA secure_delete = OFF;').run()
   database.prepare('PRAGMA cache_size = 100000;').run()
   database.prepare('PRAGMA locking_mode = exclusive;').run()
@@ -38,7 +38,6 @@ const createFilesDatabase = (databasePath) => {
   const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (`
                 + 'id INTEGER PRIMARY KEY, '
                 + 'timestamp INTEGER, '
-                + 'application TEXT, '
                 + 'path TEXT);'
   database.prepare(query).run()
 
@@ -73,8 +72,7 @@ const createValueErrorsDatabase = (databasePath) => {
                    + 'id INTEGER PRIMARY KEY, '
                    + 'timestamp TEXT, '
                    + 'data TEXT, '
-                   + 'point_id TEXT, '
-                   + 'application TEXT);'
+                   + 'point_id TEXT);'
   database.prepare(query).run()
 
   return database
@@ -88,7 +86,7 @@ const createValueErrorsDatabase = (databasePath) => {
  * @return {void}
  */
 const saveValues = (database, southName, values) => {
-  const queryStart = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, data_source) VALUES `
+  const queryStart = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, south) VALUES `
   const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}','${southName}')`)
   const query = `${queryStart}${prepValues.join(',')};`
   database.prepare(query).run()
@@ -97,13 +95,12 @@ const saveValues = (database, southName, values) => {
 /**
  * Save errored values in a SQLite database.
  * @param {object} database - The database to use
- * @param {String} northId - The North connector id
  * @param {object} values - The values to save
  * @return {void}
  */
-const saveErroredValues = (database, northId, values) => {
-  const queryStart = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id, application) VALUES `
-  const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}','${northId}')`)
+const saveErroredValues = (database, values) => {
+  const queryStart = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, data, point_id) VALUES `
+  const prepValues = values.map((value) => `('${value.timestamp}','${encodeURI(JSON.stringify(value.data))}','${value.pointId}')`)
   const query = `${queryStart}${prepValues.join(',')};`
   database.prepare(query).run()
 }
@@ -126,7 +123,7 @@ const getCount = (database) => {
  * @return {array} - The values
  */
 const getValuesToSend = (database, count) => {
-  const query = 'SELECT id, timestamp, data, point_id AS pointId, data_source as dataSourceId '
+  const query = 'SELECT id, timestamp, data, point_id AS pointId, south as dataSourceId '
                 + `FROM ${CACHE_TABLE_NAME} `
                 + 'ORDER BY timestamp '
                 + `LIMIT ${count}`
@@ -156,28 +153,25 @@ const removeSentValues = (database, values) => {
  * Save file for a given North connector.
  * @param {object} database - The database to use
  * @param {number} timestamp - The timestamp
- * @param {string} northId - The North connector id
  * @param {string} filePath - The file path
  * @return {void} - Promise resolved when the transaction is done successfully
  */
-const saveFile = (database, timestamp, northId, filePath) => {
-  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, application, path) VALUES (?, ?, ?)`
-  database.prepare(query).run(timestamp, northId, filePath)
+const saveFile = (database, timestamp, filePath) => {
+  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, path) VALUES (?, ?)`
+  database.prepare(query).run(timestamp, filePath)
 }
 
 /**
  * Get file to send to a given North connector.
  * @param {object} database - The database to use
- * @param {string} northId - The North connector id
  * @return {{path: string, timestamp: number}|null} - The file path
  */
-const getFileToSend = (database, northId) => {
+const getFileToSend = (database) => {
   const query = 'SELECT path, timestamp '
                  + `FROM ${CACHE_TABLE_NAME} `
-                 + 'WHERE application = ? '
                  + 'ORDER BY timestamp '
                  + 'LIMIT 1'
-  const results = database.prepare(query).all(northId)
+  const results = database.prepare(query).all()
 
   return results.length > 0 ? results[0] : null
 }
@@ -185,13 +179,12 @@ const getFileToSend = (database, northId) => {
 /**
  * Delete sent file from the cache for a given North connector.
  * @param {object} database - The database to use
- * @param {string} northId - The North connector id
  * @param {string} filePath - The file path
  * @return {void}
  */
-const deleteSentFile = (database, northId, filePath) => {
-  const query = `DELETE FROM ${CACHE_TABLE_NAME} WHERE application = ? AND path = ?`
-  database.prepare(query).run(northId, filePath)
+const deleteSentFile = (database, filePath) => {
+  const query = `DELETE FROM ${CACHE_TABLE_NAME} WHERE path = ?`
+  database.prepare(query).run(filePath)
 }
 
 /**
@@ -210,12 +203,11 @@ const getFileCount = (database, filePath) => {
 /**
  * Get file count for a North connector.
  * @param {object} database - The database to use
- * @param {string} northId - The North connector to get file count
  * @return {number} - The file count
  */
-const getFileCountForNorthConnector = (database, northId) => {
-  const query = `SELECT COUNT(*) AS count FROM ${CACHE_TABLE_NAME} WHERE application = ?`
-  const result = database.prepare(query).get(northId)
+const getFileCountForNorthConnector = (database) => {
+  const query = `SELECT COUNT(*) AS count FROM ${CACHE_TABLE_NAME}`
+  const result = database.prepare(query).get()
 
   return result.count
 }

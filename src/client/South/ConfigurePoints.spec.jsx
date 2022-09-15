@@ -15,24 +15,22 @@ const setAlert = jest.fn()
 React.useContext = jest.fn().mockReturnValue({
   newConfig: {
     ...defaultConfig,
-    south: {
-      dataSources: [{
-        id: 'south-uuid-1',
-        name: 'TestOPCUA',
-        protocol: 'OPCUA_HA',
-        enabled: false,
-        OPCUA_HA: {
-          scanGroups: [
-            { aggregate: 'Raw', resampling: 'None', scanMode: 'everySecond' },
-            { aggregate: 'Raw', resampling: 'None', scanMode: 'every10Seconds' },
-          ],
-        },
-        points: [
-          { pointId: '111.temperature', nodeId: '111.temperature', scanMode: 'everySecond' },
-          { pointId: '222.temperature', nodeId: '222.temperature', scanMode: 'everySecond' },
+    south: [{
+      id: 'south-uuid-1',
+      name: 'TestOPCUA',
+      protocol: 'OPCUA_HA',
+      enabled: false,
+      OPCUA_HA: {
+        scanGroups: [
+          { aggregate: 'Raw', resampling: 'None', scanMode: 'everySecond' },
+          { aggregate: 'Raw', resampling: 'None', scanMode: 'every10Seconds' },
         ],
-      }],
-    },
+      },
+      points: [
+        { pointId: '111.temperature', nodeId: '111.temperature', scanMode: 'everySecond' },
+        { pointId: '222.temperature', nodeId: '222.temperature', scanMode: 'everySecond' },
+      ],
+    }],
   },
   dispatchNewConfig,
   setAlert,
@@ -136,7 +134,7 @@ describe('ConfigurePoints', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
-      name: 'south.dataSources.0.points',
+      name: 'south.0.points',
       value: {},
     })
     expect(container).toMatchSnapshot()
@@ -151,7 +149,7 @@ describe('ConfigurePoints', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.0.points.1.pointId',
+      name: 'south.0.points.1.pointId',
       value: 'new_point_id',
       validity: null,
     })
@@ -167,7 +165,7 @@ describe('ConfigurePoints', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.0.points.1.scanMode',
+      name: 'south.0.points.1.scanMode',
       value: 'everySecond',
       validity: null,
     })
@@ -183,7 +181,7 @@ describe('ConfigurePoints', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.0.points.1.pointId',
+      name: 'south.0.points.1.pointId',
       value: 'new_value',
       validity: null,
     })
@@ -199,7 +197,7 @@ describe('ConfigurePoints', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'south.dataSources.0.points.1.scanMode',
+      name: 'south.0.points.1.scanMode',
       value: 'every1Min',
       validity: null,
     })
@@ -287,7 +285,7 @@ describe('ConfigurePoints', () => {
     })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'importPoints',
-      name: 'south.dataSources.0.points',
+      name: 'south.0.points',
       value: newPoints,
     })
   })
@@ -345,7 +343,7 @@ describe('ConfigurePoints', () => {
     })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteAllRows',
-      name: 'south.dataSources.0.points',
+      name: 'south.0.points',
     })
     expect(container).toMatchSnapshot()
   })
@@ -361,7 +359,7 @@ describe('ConfigurePoints', () => {
     })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
-      name: 'south.dataSources.0.points.1',
+      name: 'south.0.points.1',
     })
     expect(container).toMatchSnapshot()
   })
@@ -375,21 +373,19 @@ describe('ConfigurePoints', () => {
   test('check no points', () => {
     const configNoPoints = {
       ...defaultConfig,
-      south: {
-        dataSources: [{
-          id: 'south-uuid-1',
-          name: 'TestOPCUA',
-          protocol: 'OPCUA_HA',
-          enabled: false,
-          OPCUA_HA: {
-            scanGroups: [
-              { Aggregate: 'Raw', resampling: 'None', scanMode: 'everySecond' },
-              { Aggregate: 'Raw', resampling: 'None', scanMode: 'everySecond' },
-            ],
-          },
-          points: undefined,
-        }],
-      },
+      south: [{
+        id: 'south-uuid-1',
+        name: 'TestOPCUA',
+        protocol: 'OPCUA_HA',
+        enabled: false,
+        OPCUA_HA: {
+          scanGroups: [
+            { Aggregate: 'Raw', resampling: 'None', scanMode: 'everySecond' },
+            { Aggregate: 'Raw', resampling: 'None', scanMode: 'everySecond' },
+          ],
+        },
+        points: undefined,
+      }],
     }
     React.useContext = jest.fn().mockReturnValue({ newConfig: configNoPoints, dispatchNewConfig, setAlert })
     act(() => {

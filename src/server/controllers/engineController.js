@@ -59,7 +59,7 @@ const addFile = async (ctx) => {
   if (name) {
     try {
       ctx.app.engine.addFileCount += 1
-      await ctx.app.engine.addFile(name, name, ctx.request.file.path, false)
+      await ctx.app.engine.addFile(name, ctx.request.file.path, false)
       ctx.ok()
     } catch (error) {
       ctx.throw(500, `Unable to add file from ${name}`)

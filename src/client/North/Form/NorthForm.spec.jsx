@@ -38,7 +38,7 @@ afterEach(() => {
 })
 
 describe('NorthForm', () => {
-  testConfig.north.applications.forEach((application) => {
+  testConfig.north.forEach((application) => {
     test(`check NorthForm with application: ${application.name}`, () => {
       act(() => {
         root.render(

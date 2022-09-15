@@ -1,13 +1,14 @@
-const path = require('node:path')
 const os = require('node:os')
 
 const timexe = require('timexe')
 const humanizeDuration = require('humanize-duration')
 
+const fs = require('node:fs/promises')
 const BaseEngine = require('./BaseEngine.class')
 const HealthSignal = require('./HealthSignal.class')
-const MainCache = require('./cache/MainCache.class')
 const StatusService = require('../services/status.service.class')
+
+const CACHE_FOLDER = './cache/data-stream'
 
 /**
  * At startup, handles initialization of configuration, North and South connectors.
@@ -24,7 +25,7 @@ class OIBusEngine extends BaseEngine {
    * @return {void}
    */
   constructor(configService, encryptionService) {
-    super(configService, encryptionService)
+    super(configService, encryptionService, CACHE_FOLDER)
 
     // Will only contain South/North connectors enabled based on the config file
     this.activeSouths = []
@@ -68,7 +69,7 @@ class OIBusEngine extends BaseEngine {
     Version Node: ${process.version}
     Config file: ${this.configService.configFile}
     HistoryQuery config file: ${this.configService.historyQueryConfigFile},
-    Cache folder: ${path.resolve(engineConfig.caching.cacheFolder)}`)
+    Cache folder: ${this.cacheFolder}`)
 
     engineConfig.scanModes.forEach(({ scanMode }) => {
       // Initialize the scanLists with empty arrays
@@ -117,18 +118,17 @@ class OIBusEngine extends BaseEngine {
     const southOrigin = this.activeSouths.find((south) => south.settings.id === southId)
     this.logger.trace(`Add file "${filePath}" to cache from South "${southOrigin?.settings.name || southId}".`)
 
-    const timestamp = new Date().getTime()
-    // When compressed file is received the name looks like filename.txt.gz
-    const filenameInfo = path.parse(filePath)
-    const cacheFilename = `${filenameInfo.name}-${timestamp}${filenameInfo.ext}`
-    const cachePath = path.join(this.getCacheFolder(), cacheFilename)
-
     try {
-      // Move or copy the file into the cache folder
-      await MainCache.transferFile(this.logger, filePath, cachePath, preserveFiles)
+      await Promise.allSettled(this.activeNorths.filter((north) => north.canHandleFiles && north.isSubscribed(southId))
+        .map((north) => north.cacheFile(filePath)))
 
-      await Promise.all(this.activeNorths.filter((north) => north.canHandleFiles && north.isSubscribed(southId))
-        .map((north) => north.cacheFile(cachePath, timestamp)))
+      if (!preserveFiles) {
+        try {
+          await fs.unlink(filePath)
+        } catch (unlinkError) {
+          this.logger.error(unlinkError)
+        }
+      }
     } catch (error) {
       this.logger.error(error)
     }
@@ -158,8 +158,7 @@ class OIBusEngine extends BaseEngine {
 
     // 2. South connectors
     // Create South connectors
-    this.activeSouths = southConfig.dataSources
-      .filter(({ enabled }) => enabled)
+    this.activeSouths = southConfig.filter(({ enabled }) => enabled)
       .map((settings) => {
         const south = this.createSouth(settings)
         if (south) {
@@ -197,8 +196,7 @@ class OIBusEngine extends BaseEngine {
 
     // 3. North connectors
     // Create North connectors
-    this.activeNorths = northConfig.applications
-      .filter(({ enabled }) => enabled)
+    this.activeNorths = northConfig.filter(({ enabled }) => enabled)
       .map((settings) => this.createNorth(settings))
     // Init North connectors (logger, status, locale variables...)
     await Promise.all(this.activeNorths.map((north) => north.init()))
@@ -264,14 +262,14 @@ class OIBusEngine extends BaseEngine {
     this.scanLists = {}
 
     // Stop South connectors
-    await Promise.all(this.activeSouths.map((south) => {
+    await Promise.allSettled(this.activeSouths.map((south) => {
       this.logger.info(`Stopping South ${south.settings.name} (${south.settings.id})`)
       return south.disconnect()
     }))
     this.activeSouths = []
 
     // Stop North connectors
-    await Promise.all(this.activeNorths.map((north) => {
+    await Promise.allSettled(this.activeNorths.map((north) => {
       this.logger.info(`Stopping North ${north.settings.name} (${north.settings.id})`)
       return north.disconnect()
     }))
@@ -330,22 +328,12 @@ class OIBusEngine extends BaseEngine {
       'Node version': process.version,
       executable: process.execPath,
       'Configuration file': this.configService.getConfigurationFileLocation(),
-      'History Query Database': this.configService.getHistoryQueryConfigurationFileLocation(),
       processId: process.pid,
       hostname: os.hostname(),
       osRelease: os.release(),
       osType: os.type(),
       copyright: '(c) Copyright 2019-2022 Optimistik, all rights reserved.',
     }
-  }
-
-  /**
-   * Get cache folder
-   * @return {String} - The cache folder
-   */
-  getCacheFolder() {
-    const { engineConfig } = this.configService.getConfig()
-    return engineConfig.caching.cacheFolder
   }
 
   /**

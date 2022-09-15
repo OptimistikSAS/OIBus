@@ -168,7 +168,7 @@ describe('NewNorth', () => {
     expect(container).toMatchSnapshot()
 
     React.useContext = jest.fn().mockReturnValue({
-      newConfig: { north: { applications: [] } },
+      newConfig: { north: [] },
       dispatchNewConfig,
       apiList: [
         {
@@ -204,7 +204,7 @@ describe('NewNorth', () => {
 
   test('check change name with "new_application" id', () => {
     React.useContext = jest.fn().mockReturnValue({
-      newConfig: { north: { applications: [] } },
+      newConfig: { north: [] },
       dispatchNewConfig,
       apiList: [
         {
