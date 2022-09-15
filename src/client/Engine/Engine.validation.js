@@ -24,15 +24,9 @@ const validation = {
       ),
     },
     caching: {
-      archive: {
-        archiveFolder: notEmpty('Archive Folder'),
-        retentionDuration: minValue(0),
-      },
-      cacheFolder: notEmpty('Cache Folder'),
       bufferMax: minValue(0),
       bufferTimeoutInterval: minValue(10),
     },
-    historyQuery: { folder: notEmpty('HistoryQuery Folder') },
     proxies: {
       name: minLength(2),
       host: isHost(),

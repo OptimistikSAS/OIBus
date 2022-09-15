@@ -6,11 +6,11 @@ const BaseEngine = require('../engine/BaseEngine.class')
 const HistoryQueryRepository = require('./HistoryQueryRepository.class')
 const databaseService = require('../services/database.service')
 const StatusService = require('../services/status.service.class')
-const MainCache = require('../engine/cache/MainCache.class')
+
+const CACHE_FOLDER = './cache/history-query'
 
 /**
- *
- * at startup, handles initialization of applications, protocols and config.
+ * Manage history queries by running {@link HistoryQuery} one after another
  * @class HistoryQueryEngine
  */
 class HistoryQueryEngine extends BaseEngine {
@@ -24,11 +24,8 @@ class HistoryQueryEngine extends BaseEngine {
    * @param {EncryptionService} encryptionService - The encryption service
    */
   constructor(configService, encryptionService) {
-    super(configService, encryptionService)
-
-    const { engineConfig } = this.configService.getConfig()
-    const { historyQuery: { folder } } = engineConfig
-    this.cacheFolder = folder
+    super(configService, encryptionService, CACHE_FOLDER)
+    this.cacheFolder = CACHE_FOLDER
 
     this.statusService = new StatusService()
     this.historyQueryRepository = null
@@ -50,7 +47,7 @@ class HistoryQueryEngine extends BaseEngine {
       this.logger.debug(`Creating history cache folder "${this.cacheFolder}".`)
       await fs.mkdir(this.cacheFolder, { recursive: true })
     }
-    this.historyQueryRepository = new HistoryQueryRepository(this.configService.getHistoryQueryConfigurationFileLocation())
+    this.historyQueryRepository = new HistoryQueryRepository(path.resolve(CACHE_FOLDER, 'history-query.db'))
     this.logger.info('Starting HistoryQuery Engine.')
   }
 
@@ -95,21 +92,22 @@ class HistoryQueryEngine extends BaseEngine {
     // When compressed file is received the name looks like filename.txt.gz
     const filenameInfo = path.parse(filePath)
     const cacheFilename = `${filenameInfo.name}-${timestamp}${filenameInfo.ext}`
-    const cachePath = path.join(this.getCacheFolder(), cacheFilename)
+    const cachePath = path.join(this.cacheFolder, cacheFilename)
 
     try {
-      // Move or copy the file into the cache folder
-      await MainCache.transferFile(this.logger, filePath, cachePath, false)
       await this.historyQuery.north.cacheFile(cachePath, timestamp)
+      try {
+        await fs.unlink(filePath)
+      } catch (unlinkError) {
+        this.logger.error(unlinkError)
+      }
     } catch (error) {
       this.logger.error(error)
     }
   }
 
   /**
-   * Creates a new instance for every application and protocol and connects them.
-   * Creates CronJobs based on the ScanModes and starts them.
-   *
+   * Creates a new instance for each {@link HistoryQuery}
    * @param {Boolean} safeMode - Whether to start in safe mode
    * @return {Promise<void>} - The result promise
    */
@@ -157,12 +155,12 @@ class HistoryQueryEngine extends BaseEngine {
     this.logger.debug(`Preparing to start history query "${historyQuerySettings.id}".`)
 
     const { southConfig, northConfig } = this.configService.getConfig()
-    const southToUse = southConfig.dataSources.find((southSettings) => southSettings.id === historyQuerySettings.southId)
+    const southToUse = southConfig.find((southSettings) => southSettings.id === historyQuerySettings.southId)
     if (!southToUse) {
       this.logger.error(`Invalid South ID "${historyQuerySettings.southId}" for history query "${historyQuerySettings.id}".`)
       return
     }
-    const northToUse = northConfig.applications.find((northSettings) => northSettings.id === historyQuerySettings.northId)
+    const northToUse = northConfig.find((northSettings) => northSettings.id === historyQuerySettings.northId)
     if (!northToUse) {
       this.logger.error(`Invalid North ID "${historyQuerySettings.northId}" for history query "${historyQuerySettings.id}".`)
       return
@@ -202,14 +200,6 @@ class HistoryQueryEngine extends BaseEngine {
     }
 
     return data
-  }
-
-  /**
-   * Get cache folder
-   * @return {String} - The cache folder
-   */
-  getCacheFolder() {
-    return this.historyQuery.cacheFolder
   }
 }
 

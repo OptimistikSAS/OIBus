@@ -1,16 +1,18 @@
 const fs = require('node:fs/promises')
+const path = require('node:path')
 const EncryptionService = require('../services/EncryptionService.class')
 const Logger = require('../engine/logger/Logger.class')
 const CertificateService = require('../services/CertificateService.class')
 const StatusService = require('../services/status.service.class')
 const ValueCache = require('../engine/cache/ValueCache.class')
 const FileCache = require('../engine/cache/FileCache.class')
+const { createFolder } = require('../services/utils')
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
  * Building a new North connector means to extend this class, and to surcharge
  * the following methods:
- * - **handleValues**: receive an array of values that need to be sent to an external applications
+ * - **handleValues**: receive an array of values that need to be sent to an external application
  * - **handleFile**: receive a file that need to be sent to an external application.
  * - **connect** (optional): to allow establishing proper connection to the external application
  * - **disconnect** (optional): to allow proper disconnection
@@ -41,6 +43,7 @@ class NorthConnector {
     const { engineConfig } = this.engine.configService.getConfig()
     this.engineConfig = engineConfig
     this.encryptionService = EncryptionService.getInstance()
+    this.baseFolder = path.resolve(this.engine.cacheFolder, `north-${settings.id}`)
 
     // Variable initialized in init()
     this.statusService = null
@@ -79,17 +82,23 @@ class NorthConnector {
     this.logger.setEncryptionService(this.encryptionService)
     await this.logger.changeParameters(this.engineConfig, logParameters)
 
+    await createFolder(this.baseFolder)
+
     this.valueCache = new ValueCache(
       this.settings.id,
       this.logger,
-      this.engine.getCacheFolder(),
+      this.baseFolder,
     )
-    await this.valueCache.initialize()
-    this.fileCache = await FileCache.getFileCacheInstance(
+    await this.valueCache.init()
+
+    this.fileCache = new FileCache(
       this.settings.id,
       this.logger,
-      this.engine.getCacheFolder(),
+      this.baseFolder,
+      this.settings.caching.archive.enabled,
+      this.settings.caching.archive.retentionDuration,
     )
+    await this.fileCache.init()
 
     this.certificate = new CertificateService(this.logger)
     await this.certificate.init(this.keyFile, this.certFile, this.caFile)
@@ -151,6 +160,8 @@ class NorthConnector {
     if (this.filesTimeout) {
       clearTimeout(this.filesTimeout)
     }
+    this.fileCache.stop()
+    this.valueCache.stop()
   }
 
   /**
@@ -234,7 +245,7 @@ class NorthConnector {
       await fs.stat(fileToSend.path)
     } catch (error) {
       // File in cache does not exist on filesystem
-      await this.fileCache.removeFileFromCache(fileToSend.path)
+      await this.fileCache.removeFileFromCache(fileToSend.path, false)
       this.logger.error(`File "${fileToSend.path}" not found! The file has been removed from the cache.`)
       return
     }
@@ -243,8 +254,8 @@ class NorthConnector {
     this.resendFilesImmediately = false
 
     try {
-      await this.handleFiles(fileToSend.path)
-      await this.fileCache.removeFileFromCache(fileToSend.path)
+      await this.handleFile(fileToSend.path)
+      await this.fileCache.removeFileFromCache(fileToSend.path, this.settings.caching.archive.enabled)
       this.numberOfSentFiles += 1
       this.statusService.updateStatusDataStream({
         'Last uploaded file': filePath,
@@ -302,11 +313,10 @@ class NorthConnector {
   /**
    * Method called by the Engine to cache a file and send them to a third party application.
    * @param {String} filePath - The path of the raw file
-   * @param {Number} timestamp - The timestamp the file was received
    * @returns {Promise<void>} - The result promise
    */
-  async cacheFile(filePath, timestamp) {
-    await this.fileCache.cacheFile(filePath, timestamp)
+  async cacheFile(filePath) {
+    await this.fileCache.cacheFile(filePath)
   }
 
   /**

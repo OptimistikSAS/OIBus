@@ -14,8 +14,8 @@ jest.mock('node:fs/promises')
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  cacheFolder: './cache',
   requestService: { httpSend: jest.fn() },
-  getCacheFolder: jest.fn(),
 }
 
 // Mock services
@@ -34,7 +34,19 @@ beforeEach(async () => {
   jest.resetAllMocks()
   jest.useFakeTimers().setSystemTime(new Date(nowDateString))
 
-  settings = { Console: { verbose: false }, caching: { sendInterval: 1000 } }
+  settings = {
+    Console: { verbose: false },
+    caching: {
+      sendInterval: 1000,
+      retryInterval: 5000,
+      groupCount: 10000,
+      maxSendCount: 10000,
+      archive: {
+        enabled: true,
+        retentionDuration: 720,
+      },
+    },
+  }
   north = new Console(settings, engine)
   await north.init()
 })
@@ -81,7 +93,7 @@ describe('North Console', () => {
 
     await north.handleFile(filePath)
 
-    expect(fs.stat).not.toHaveBeenCalled()
+    expect(fs.stat).toHaveBeenCalledTimes(1)
     expect(process.stdout.write).toHaveBeenCalledWith('North Console sent 1 file.\r\n')
     expect(console.table).not.toHaveBeenCalled()
   })

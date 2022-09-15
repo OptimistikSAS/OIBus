@@ -85,7 +85,7 @@ class SQL extends SouthConnector {
     this.maxReadInterval = maxReadInterval
     this.readIntervalDelay = readIntervalDelay
     this.timezone = timezone
-    this.tmpFolder = path.resolve(this.engine.getCacheFolder(), this.settings.id)
+    this.tmpFolder = path.resolve(this.baseFolder, 'tmp')
   }
 
   /**

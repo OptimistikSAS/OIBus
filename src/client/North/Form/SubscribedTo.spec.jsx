@@ -31,7 +31,7 @@ afterEach(() => {
   root = null
 })
 
-testConfig.north.applications.forEach((application) => {
+testConfig.north.forEach((application) => {
   describe('SubscribedTo', () => {
     test(`check SubscribedTo with application: ${application.name}`, () => {
       act(() => {
@@ -45,7 +45,7 @@ testConfig.north.applications.forEach((application) => {
   })
 })
 
-const application = testConfig.north.applications[0]
+const application = testConfig.north[0]
 describe('SubscribedTo click changes', () => {
   test('check SubscribedTo add row', () => {
     act(() => {
@@ -60,8 +60,8 @@ describe('SubscribedTo click changes', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
-      name: 'north.applications.0.subscribedTo',
-      value: testConfig.south.dataSources[0].id,
+      name: 'north.0.subscribedTo',
+      value: testConfig.south[0].id,
     })
     expect(container).toMatchSnapshot()
   })
@@ -78,7 +78,7 @@ describe('SubscribedTo click changes', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'update',
-      name: 'north.applications.0.subscribedTo.0',
+      name: 'north.0.subscribedTo.0',
       value: 'south-uuid-1',
     })
     expect(container).toMatchSnapshot()
@@ -99,7 +99,7 @@ describe('SubscribedTo click changes', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
-      name: 'north.applications.0.subscribedTo.0',
+      name: 'north.0.subscribedTo.0',
     })
     expect(container).toMatchSnapshot()
   })

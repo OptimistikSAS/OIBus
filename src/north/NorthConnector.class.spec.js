@@ -5,10 +5,12 @@ const { defaultConfig: config } = require('../../tests/testConfig')
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  cacheFolder: './cache',
   requestService: { httpSend: jest.fn() },
-  getCacheFolder: jest.fn(),
-
 }
+
+// Mock fs
+jest.mock('node:fs/promises')
 
 // Mock services
 jest.mock('../services/database.service')
@@ -16,7 +18,7 @@ jest.mock('../engine/logger/Logger.class')
 jest.mock('../services/status.service.class')
 jest.mock('../services/EncryptionService.class', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 jest.mock('../engine/cache/ValueCache.class')
-jest.mock('../engine/cache/FileCache.class', () => ({ getFileCacheInstance: () => ({ cacheFile: jest.fn() }) }))
+jest.mock('../engine/cache/FileCache.class')
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 let settings = null
@@ -27,7 +29,22 @@ describe('NorthConnector', () => {
     jest.resetAllMocks()
     jest.useFakeTimers().setSystemTime(new Date(nowDateString))
 
-    settings = { id: 'id', name: 'north', api: 'test', NorthConnector: {}, caching: { sendInterval: 1000 } }
+    settings = {
+      id: 'id',
+      name: 'north',
+      api: 'test',
+      NorthConnector: {},
+      caching: {
+        sendInterval: 1000,
+        retryInterval: 5000,
+        groupCount: 10000,
+        maxSendCount: 10000,
+        archive: {
+          enabled: true,
+          retentionDuration: 720,
+        },
+      },
+    }
     north = new NorthConnector(settings, engine)
     await north.init()
   })
@@ -72,7 +89,7 @@ describe('NorthConnector', () => {
 
   it('should properly cache file', () => {
     north.cacheFile('myFilePath', new Date().getTime())
-    expect(north.fileCache.cacheFile).toHaveBeenCalledWith('myFilePath', new Date().getTime())
+    expect(north.fileCache.cacheFile).toHaveBeenCalledWith('myFilePath')
   })
 
   it('should get proxy', () => {

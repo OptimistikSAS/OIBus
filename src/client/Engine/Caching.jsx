@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Col, Row } from 'reactstrap'
-import { OIbText, OIbTitle, OIbCheckBox, OIbInteger } from '../components/OIbForm'
+import { OIbInteger, OIbTitle } from '../components/OIbForm'
 import validation from './Engine.validation'
 
 const Caching = ({ onChange, caching }) => (
@@ -27,17 +27,6 @@ const Caching = ({ onChange, caching }) => (
       </>
     </OIbTitle>
     <Row>
-      <Col md={4}>
-        <OIbText
-          label="Cache folder"
-          name="engine.caching.cacheFolder"
-          value={caching.cacheFolder}
-          defaultValue="./cache"
-          valid={validation.engine.caching.cacheFolder}
-          help={<div>Where to store the cached data</div>}
-          onChange={onChange}
-        />
-      </Col>
       <Col md={3}>
         <OIbInteger
           name="engine.caching.bufferMax"
@@ -61,44 +50,6 @@ const Caching = ({ onChange, caching }) => (
         />
       </Col>
     </Row>
-    <Row>
-      <Col md={2}>
-        <OIbCheckBox
-          label={caching.archive.enabled ? 'Archive mode activated' : 'Archive mode deactivated'}
-          name="engine.caching.archive.enabled"
-          value={caching.archive.enabled}
-          defaultValue
-          help={<div>Move to archive folder or delete files when they are sent</div>}
-          onChange={onChange}
-        />
-      </Col>
-    </Row>
-    {caching.archive.enabled && (
-    <Row>
-      <Col md={4}>
-        <OIbText
-          name="engine.caching.archive.archiveFolder"
-          label="Archive folder"
-          value={caching.archive.archiveFolder}
-          defaultValue="./cache/archive"
-          valid={validation.engine.caching.archive.archiveFolder}
-          help={<div>Where to store the archived files</div>}
-          onChange={onChange}
-        />
-      </Col>
-      <Col md={2}>
-        <OIbInteger
-          name="engine.caching.archive.retentionDuration"
-          label="Retention duration"
-          value={caching.archive.retentionDuration}
-          defaultValue={720}
-          valid={validation.engine.caching.archive.retentionDuration}
-          help={<div>Retention period of archived files (in hours)</div>}
-          onChange={onChange}
-        />
-      </Col>
-    </Row>
-    )}
   </>
 )
 Caching.propTypes = {

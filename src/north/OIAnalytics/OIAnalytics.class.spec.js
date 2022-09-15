@@ -4,11 +4,14 @@ const OIAnalytics = require('./OIAnalytics.class')
 
 const { defaultConfig: config } = require('../../../tests/testConfig')
 
+// Mock fs
+jest.mock('node:fs/promises')
+
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  cacheFolder: './cache',
   requestService: { httpSend: jest.fn() },
-  getCacheFolder: jest.fn(),
 }
 
 // Mock services
@@ -34,8 +37,14 @@ describe('North OIAnalytics', () => {
       enabled: false,
       api: 'OIAnalytics',
       caching: {
-        sendInterval: 15000,
-        retryInterval: 10000,
+        sendInterval: 1000,
+        retryInterval: 5000,
+        groupCount: 10000,
+        maxSendCount: 10000,
+        archive: {
+          enabled: true,
+          retentionDuration: 720,
+        },
       },
       OIAnalytics: {
         host: 'https://hostname',
