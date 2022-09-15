@@ -6,18 +6,20 @@ const utils = require('../services/utils')
 
 const { defaultConfig: config } = require('../../tests/testConfig')
 
-jest.mock('node:zlib')
+// Mock fs
+jest.mock('node:fs/promises')
 
 // Mock utils class
 jest.mock('../services/utils', () => ({
   delay: jest.fn(),
   generateIntervals: jest.fn(),
+  createFolder: jest.fn(),
 }))
 
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  getCacheFolder: () => config.engine.caching.cacheFolder,
+  cacheFolder: './cache',
   addValues: jest.fn(),
   addFile: jest.fn(),
 }

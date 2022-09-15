@@ -7,18 +7,18 @@ import { ConfigContext } from '../../context/ConfigContext.jsx'
 
 const SubscribedTo = ({ subscribedTo, applicationIndex }) => {
   const { dispatchNewConfig, newConfig } = React.useContext(ConfigContext)
-  const dataSourceIds = newConfig?.south?.dataSources?.map((dataSource) => dataSource.id) ?? []
-  const dataSourceNames = newConfig?.south?.dataSources?.map((dataSource) => dataSource.name) ?? []
+  const dataSourceIds = newConfig?.south?.map((dataSource) => dataSource.id) ?? []
+  const dataSourceNames = newConfig?.south?.map((dataSource) => dataSource.name) ?? []
   const externalSources = newConfig?.engine?.externalSources ?? []
   const handleDelete = (rowIndex) => {
-    dispatchNewConfig({ type: 'deleteRow', name: `north.applications.${applicationIndex}.subscribedTo.${rowIndex}` })
+    dispatchNewConfig({ type: 'deleteRow', name: `north.${applicationIndex}.subscribedTo.${rowIndex}` })
   }
   const handleAdd = () => {
     const defaultValue = dataSourceIds[0]
-    dispatchNewConfig({ type: 'addRow', name: `north.applications.${applicationIndex}.subscribedTo`, value: defaultValue })
+    dispatchNewConfig({ type: 'addRow', name: `north.${applicationIndex}.subscribedTo`, value: defaultValue })
   }
   const onChange = (name, value) => {
-    dispatchNewConfig({ type: 'update', name: `north.applications.${applicationIndex}.${name}`, value })
+    dispatchNewConfig({ type: 'update', name: `north.${applicationIndex}.${name}`, value })
   }
   return (
     subscribedTo && (

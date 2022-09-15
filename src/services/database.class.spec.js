@@ -44,7 +44,7 @@ describe('Database services', () => {
         + 'timestamp TEXT KEY, '
         + 'data TEXT, '
         + 'point_id TEXT, '
-        + 'data_source TEXT);')
+        + 'south TEXT);')
     expect(prepare).toHaveBeenCalledWith('PRAGMA secure_delete = OFF;')
     expect(prepare).toHaveBeenCalledWith('PRAGMA cache_size = 100000;')
     expect(prepare).toHaveBeenCalledWith('PRAGMA locking_mode = exclusive;')
@@ -68,7 +68,6 @@ describe('Database services', () => {
     expect(prepare).toHaveBeenCalledWith('CREATE TABLE IF NOT EXISTS cache ('
         + 'id INTEGER PRIMARY KEY, '
         + 'timestamp INTEGER, '
-        + 'application TEXT, '
         + 'path TEXT);')
     expect(run).toHaveBeenCalledTimes(1)
     expect(expectedDatabase).toBe(mockDatabase)
@@ -88,7 +87,7 @@ describe('Database services', () => {
   it('should save values', () => {
     databaseService.saveValues(mockDatabase, 'mySouthName', values)
     expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('INSERT INTO cache (timestamp, data, point_id, data_source) VALUES '
+    expect(prepare).toHaveBeenCalledWith('INSERT INTO cache (timestamp, data, point_id, south) VALUES '
         + '(\'2022-08-25T12:58:00.000Z\',\'%7B%22value%22:1,%22quality%22:192%7D\',\'point001\',\'mySouthName\'),'
         + '(\'2022-08-25T12:59:00.000Z\',\'%7B%22value%22:2,%22quality%22:192%7D\',\'point002\',\'mySouthName\');')
     expect(run).toHaveBeenCalledTimes(1)
@@ -99,11 +98,11 @@ describe('Database services', () => {
       { timestamp: '2022-08-25T12:58:00.000Z', data: { value: 1, quality: 192 }, pointId: 'point001' },
       { timestamp: '2022-08-25T12:59:00.000Z', data: { value: 2, quality: 192 }, pointId: 'point002' },
     ]
-    databaseService.saveErroredValues(mockDatabase, 'myNorthId', valuesToInsert)
+    databaseService.saveErroredValues(mockDatabase, valuesToInsert)
     expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('INSERT INTO cache (timestamp, data, point_id, application) VALUES '
-            + '(\'2022-08-25T12:58:00.000Z\',\'%7B%22value%22:1,%22quality%22:192%7D\',\'point001\',\'myNorthId\'),'
-            + '(\'2022-08-25T12:59:00.000Z\',\'%7B%22value%22:2,%22quality%22:192%7D\',\'point002\',\'myNorthId\');')
+    expect(prepare).toHaveBeenCalledWith('INSERT INTO cache (timestamp, data, point_id) VALUES '
+            + '(\'2022-08-25T12:58:00.000Z\',\'%7B%22value%22:1,%22quality%22:192%7D\',\'point001\'),'
+            + '(\'2022-08-25T12:59:00.000Z\',\'%7B%22value%22:2,%22quality%22:192%7D\',\'point002\');')
     expect(run).toHaveBeenCalledTimes(1)
   })
 
@@ -120,7 +119,7 @@ describe('Database services', () => {
   it('should get values to send', () => {
     const valuesToSend = databaseService.getValuesToSend(mockDatabase, 50)
     expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('SELECT id, timestamp, data, point_id AS pointId, data_source as dataSourceId '
+    expect(prepare).toHaveBeenCalledWith('SELECT id, timestamp, data, point_id AS pointId, south as dataSourceId '
         + 'FROM cache '
         + 'ORDER BY timestamp '
         + 'LIMIT 50')
@@ -142,12 +141,12 @@ describe('Database services', () => {
   })
 
   it('should save file', () => {
-    databaseService.saveFile(mockDatabase, 123, 'myNorthId', 'myFilePath')
+    databaseService.saveFile(mockDatabase, 123, 'myFilePath')
     expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('INSERT INTO cache (timestamp, application, path) VALUES (?, ?, ?)')
+    expect(prepare).toHaveBeenCalledWith('INSERT INTO cache (timestamp, path) VALUES (?, ?)')
 
     expect(run).toHaveBeenCalledTimes(1)
-    expect(run).toHaveBeenCalledWith(123, 'myNorthId', 'myFilePath')
+    expect(run).toHaveBeenCalledWith(123, 'myFilePath')
   })
 
   it('should get file to send', () => {
@@ -155,22 +154,21 @@ describe('Database services', () => {
     expect(prepare).toHaveBeenCalledTimes(1)
     expect(prepare).toHaveBeenCalledWith('SELECT path, timestamp '
         + 'FROM cache '
-        + 'WHERE application = ? '
         + 'ORDER BY timestamp '
         + 'LIMIT 1')
 
     expect(all).toHaveBeenCalledTimes(1)
-    expect(all).toHaveBeenCalledWith('myNorthId')
+    expect(all).toHaveBeenCalledWith()
     expect(result).toEqual({ path: 'myFilePath', timestamp: 123 })
   })
 
   it('should delete sent file', () => {
-    databaseService.deleteSentFile(mockDatabase, 'myNorthId', 'myFilePath')
+    databaseService.deleteSentFile(mockDatabase, 'myFilePath')
     expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('DELETE FROM cache WHERE application = ? AND path = ?')
+    expect(prepare).toHaveBeenCalledWith('DELETE FROM cache WHERE path = ?')
 
     expect(run).toHaveBeenCalledTimes(1)
-    expect(run).toHaveBeenCalledWith('myNorthId', 'myFilePath')
+    expect(run).toHaveBeenCalledWith('myFilePath')
   })
 
   it('should get file count', () => {
@@ -195,10 +193,10 @@ describe('Database services', () => {
 
     const result = databaseService.getFileCountForNorthConnector(mockDatabase, 'myNorthId')
     expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('SELECT COUNT(*) AS count FROM cache WHERE application = ?')
+    expect(prepare).toHaveBeenCalledWith('SELECT COUNT(*) AS count FROM cache')
 
     expect(localGet).toHaveBeenCalledTimes(1)
-    expect(localGet).toHaveBeenCalledWith('myNorthId')
+    expect(localGet).toHaveBeenCalledWith()
 
     expect(result).toEqual(11)
   })

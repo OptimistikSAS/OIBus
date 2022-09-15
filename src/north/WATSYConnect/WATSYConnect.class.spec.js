@@ -15,11 +15,14 @@ jest.mock('./utils', () => ({
   initMQTTTopic: jest.fn(),
 }))
 
+// Mock fs
+jest.mock('node:fs/promises')
+
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  cacheFolder: './cache',
   requestService: { httpSend: jest.fn() },
-  getCacheFolder: jest.fn(),
 }
 
 // Mock services
@@ -58,6 +61,10 @@ describe('North WATSYConnect', () => {
         retryInterval: 5000,
         groupCount: 10000,
         maxSendCount: 10000,
+        archive: {
+          enabled: true,
+          retentionDuration: 720,
+        },
       },
       subscribedTo: [],
     }

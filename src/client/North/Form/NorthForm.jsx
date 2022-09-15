@@ -22,16 +22,16 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const [renamingConnector, setRenamingConnector] = useState(null)
   const [pencil, setPencil] = useState(true)
-  const applications = newConfig?.north?.applications ?? []
+  const applications = newConfig?.north ?? []
   const navigate = useNavigate()
   // Create the sections for the api (for example application.Link) for application not yet initialized
   if (!application[api]) application[api] = {}
-  if (!application.caching) application.caching = {}
+  if (!application.caching) application.caching = { archive: {} }
   if (!application.subscribedTo) application.subscribedTo = []
 
   // load the proper schema based on the api name.
   const schema = ApiSchemas[api]
-  const prefix = `north.applications.${applicationIndex}`
+  const prefix = `north.${applicationIndex}`
   const handleConnectorNameChanged = (name) => (oldConnectorName, newConnectorName) => {
     setRenamingConnector(null)
     dispatchNewConfig({
@@ -52,7 +52,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             fromList={applications}
             valid={validation.application.isValidName}
             nameChanged={handleConnectorNameChanged(
-              `north.applications.${applications.findIndex(
+              `north.${applications.findIndex(
                 (element) => element.id === application.id,
               )}.name`,
             )}
@@ -189,6 +189,31 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
                 label="Max group count"
               />
             </Col>
+          </Row>
+          <Row>
+            <Col md={2}>
+              <OIbCheckBox
+                label={application.caching.archive.enabled ? 'Archive mode activated' : 'Archive mode deactivated'}
+                name={`${prefix}.caching.archive.enabled`}
+                value={application.caching.archive.enabled}
+                defaultValue
+                help={<div>Move to archive folder or delete files when they are sent</div>}
+                onChange={onChange}
+              />
+            </Col>
+            {application.caching.archive.enabled && (
+            <Col md={2}>
+              <OIbInteger
+                label="Retention duration"
+                name={`${prefix}.caching.archive.retentionDuration`}
+                value={application.caching.archive.retentionDuration}
+                defaultValue={720}
+                valid={validation.caching.retentionDuration}
+                help={<div>Retention period of archived files (in hours)</div>}
+                onChange={onChange}
+              />
+            </Col>
+            )}
           </Row>
           <SubscribedTo
             onChange={onChange}

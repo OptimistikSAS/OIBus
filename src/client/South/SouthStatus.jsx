@@ -32,7 +32,7 @@ const SouthStatus = () => {
   const [dataSource, setDataSource] = React.useState(null)
 
   React.useEffect(() => {
-    const currentDataSource = newConfig.south?.dataSources?.find(
+    const currentDataSource = newConfig.south?.find(
       (element) => element.id === id,
     )
     setDataSource(currentDataSource)

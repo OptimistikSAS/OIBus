@@ -4,11 +4,14 @@ const OIConnect = require('./OIConnect.class')
 
 const { defaultConfig: config } = require('../../../tests/testConfig')
 
+// Mock fs
+jest.mock('node:fs/promises')
+
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  cacheFolder: './cache',
   requestService: { httpSend: jest.fn() },
-  getCacheFolder: jest.fn(),
 }
 
 // Mock services
@@ -42,7 +45,16 @@ describe('North OIConnect', () => {
         proxy: '',
         stack: 'fetch',
       },
-      caching: { sendInterval: 10000, retryInterval: 5000, groupCount: 1000, maxSendCount: 10000 },
+      caching: {
+        sendInterval: 1000,
+        retryInterval: 5000,
+        groupCount: 10000,
+        maxSendCount: 10000,
+        archive: {
+          enabled: true,
+          retentionDuration: 720,
+        },
+      },
       subscribedTo: [],
     }
     north = new OIConnect(settings, engine)
