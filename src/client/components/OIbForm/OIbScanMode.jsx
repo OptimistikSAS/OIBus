@@ -13,7 +13,7 @@ const OIbScanMode = ({ label, help, valid, value, name, onChange, southId }) => 
   } else {
     id = useParams().id
   }
-  const dataSource = newConfig?.south.dataSources.find((d) => d.id === id)
+  const dataSource = newConfig?.south.find((d) => d.id === id)
   const scanGroups = dataSource ? dataSource[dataSource.protocol]?.scanGroups : null
   // Scan Group protocols should only allow scan modes set in a scan group as option
   const isPointConfig = name.startsWith('points.')

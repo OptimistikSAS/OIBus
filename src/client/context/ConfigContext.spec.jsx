@@ -198,15 +198,15 @@ describe('ConfigProvider', () => {
       )
     })
 
-    const action = { type: 'deleteRow', name: 'north.applications.0' }
+    const action = { type: 'deleteRow', name: 'north.0' }
     const newState = dispatchNewConfig(action)
     const expectedState = utils.jsonCopy(testConfig)
-    expectedState.north.applications.shift()
+    expectedState.north.shift()
     expect(newState).toEqual(expectedState)
   })
   test('check deleteRow action with previous error', () => {
-    // add some previuous error to test error cleaning
-    testConfig.errors = { 'north.applications.0': 'some previous error' }
+    // add some previous error to test error cleaning
+    testConfig.errors = { 'north.0': 'some previous error' }
     act(() => {
       root.render(
         <ConfigProvider>
@@ -215,10 +215,10 @@ describe('ConfigProvider', () => {
       )
     })
 
-    const action = { type: 'deleteRow', name: 'north.applications.0' }
+    const action = { type: 'deleteRow', name: 'north.0' }
     const newState = dispatchNewConfig(action)
     const expectedState = utils.jsonCopy(testConfig)
-    expectedState.north.applications.shift()
+    expectedState.north.shift()
     delete expectedState.errors
     expect(newState).toEqual(expectedState)
 
@@ -226,9 +226,9 @@ describe('ConfigProvider', () => {
     delete testConfig.errors
   })
   test('check deleteRow action with multiple previous error', () => {
-    // add some previuous error to test error cleaning
+    // add some previous error to test error cleaning
     testConfig.errors = {
-      'north.applications.0': 'some previous error',
+      'north.0': 'some previous error',
       'engine.port': 'some previous error',
     }
     act(() => {
@@ -239,11 +239,11 @@ describe('ConfigProvider', () => {
       )
     })
 
-    const action = { type: 'deleteRow', name: 'north.applications.0' }
+    const action = { type: 'deleteRow', name: 'north.0' }
     const newState = dispatchNewConfig(action)
     const expectedState = utils.jsonCopy(testConfig)
-    expectedState.north.applications.shift()
-    delete expectedState.errors['north.applications.0']
+    expectedState.north.shift()
+    delete expectedState.errors['north.0']
     expect(newState).toEqual(expectedState)
 
     // remove test error
@@ -257,10 +257,10 @@ describe('ConfigProvider', () => {
         </ConfigProvider>,
       )
     })
-    const action = { type: 'deleteAllRows', name: 'south.dataSources.0.points' }
+    const action = { type: 'deleteAllRows', name: 'south.0.points' }
     const newState = dispatchNewConfig(action)
     const expectedState = utils.jsonCopy(testConfig)
-    expectedState.south.dataSources[0].points = []
+    expectedState.south[0].points = []
     expect(newState).toEqual(expectedState)
   })
   test('check addRow action', () => {
@@ -271,10 +271,10 @@ describe('ConfigProvider', () => {
         </ConfigProvider>,
       )
     })
-    const action = { type: 'addRow', name: 'south.dataSources.0.points', value: {} }
+    const action = { type: 'addRow', name: 'south.0.points', value: {} }
     const newState = dispatchNewConfig(action)
     const expectedState = utils.jsonCopy(testConfig)
-    expectedState.south.dataSources[0].points.push({})
+    expectedState.south[0].points.push({})
     expect(newState).toEqual(expectedState)
   })
   test('check importPoints action', () => {
@@ -285,10 +285,10 @@ describe('ConfigProvider', () => {
         </ConfigProvider>,
       )
     })
-    const action = { type: 'importPoints', name: 'south.dataSources.0.points', value: [{}] }
+    const action = { type: 'importPoints', name: 'south.0.points', value: [{}] }
     const newState = dispatchNewConfig(action)
     const expectedState = utils.jsonCopy(testConfig)
-    expectedState.south.dataSources[0].points = [{}]
+    expectedState.south[0].points = [{}]
     expect(newState).toEqual(expectedState)
   })
   test('check unknown action', () => {

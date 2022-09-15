@@ -1,49 +1,34 @@
-const fs = require('node:fs/promises')
-
 const databaseService = require('../../services/database.service')
-const MainCache = require('./MainCache.class')
+const BaseCache = require('./BaseCache.class')
 
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
-class ValueCache extends MainCache {
+class ValueCache extends BaseCache {
   /**
-   * @param {String} northId - The North ID connector
-   * @param {Logger} logger - The logger
-   * @param {String} cacheFolder - The Engine cache folder
-   * @return {void}
-   */
-  constructor(
-    northId,
-    logger,
-    cacheFolder,
-  ) {
-    super(
-      northId,
-      logger,
-      cacheFolder,
-    )
-
-    this.valuesErrorDatabase = null
-  }
-
-  /**
-   * Initialize the value cache services.
+   * Create databases and folders
    * @returns {Promise<void>} - The result promise
    */
-  async initialize() {
-    try {
-      await fs.stat(this.cacheFolder)
-    } catch (error) {
-      this.logger.info(`Creating cache folder: "${this.cacheFolder}".`)
-      await fs.mkdir(this.cacheFolder, { recursive: true })
+  async init() {
+    const valuesDatabasePath = `${this.baseFolder}/values.db`
+    this.logger.debug(`Use value cache database: "${valuesDatabasePath}".`)
+    this.valuesDatabase = databaseService.createValuesDatabase(valuesDatabasePath, {})
+    const valuesCount = databaseService.getCount(this.valuesDatabase)
+    if (valuesCount > 0) {
+      this.logger.debug(`${valuesCount} values in cache.`)
+    } else {
+      this.logger.debug('No values in cache.')
     }
 
-    this.valuesErrorDatabase = MainCache.getValuesErrorDatabaseInstance(this.logger, this.cacheFolder)
-
-    this.logger.debug(`Use cache database: "${this.databasePath}".`)
-    this.database = databaseService.createValuesDatabase(this.databasePath, {})
-    this.logger.debug(`Number of values in the cache: ${databaseService.getCount(this.database)}.`)
+    const valuesErrorDatabasePath = `${this.baseFolder}/values-error.db`
+    this.logger.debug(`Initialize values error db: ${valuesErrorDatabasePath}`)
+    this.valuesErrorDatabase = databaseService.createValueErrorsDatabase(valuesErrorDatabasePath)
+    const errorCount = databaseService.getCount(this.valuesErrorDatabase)
+    if (errorCount > 0) {
+      this.logger.warn(`${errorCount} values in error cache.`)
+    } else {
+      this.logger.debug('No error values in cache.')
+    }
   }
 
   /**
@@ -54,7 +39,7 @@ class ValueCache extends MainCache {
    */
   cacheValues(southId, values) {
     if (values.length > 0) {
-      databaseService.saveValues(this.database, southId, values)
+      databaseService.saveValues(this.valuesDatabase, southId, values)
     }
   }
 
@@ -65,22 +50,45 @@ class ValueCache extends MainCache {
    * @returns {Object[]} - The result promise
    */
   retrieveValuesFromCache(max) {
-    return databaseService.getValuesToSend(this.database, max)
+    return databaseService.getValuesToSend(this.valuesDatabase, max)
   }
 
+  /**
+   * Remove values from North connector cache
+   * @param {Object[]} values - The values to remove
+   * @return {void}
+   */
   removeValuesFromCache(values) {
-    const removed = databaseService.removeSentValues(this.database, values)
+    const removed = databaseService.removeSentValues(this.valuesDatabase, values)
     this.logger.debug(`${removed} values removed from cache.`)
   }
 
+  /**
+   * Remove values from North connector cache and save them to the values error cache db
+   * @param {Object[]} values - The values to remove
+   * @return {void}
+   */
   manageErroredValues(values) {
-    databaseService.saveErroredValues(this.valuesErrorDatabase, this.northId, values)
-    const removed = databaseService.removeSentValues(this.database, values)
+    databaseService.saveErroredValues(this.valuesErrorDatabase, values)
+    const removed = databaseService.removeSentValues(this.valuesDatabase, values)
     this.logger.error(`${removed} values removed from cache and saved to values error database.`)
   }
 
+  /**
+   * Check if the file cache is empty or not
+   * @returns {Boolean} - Cache empty or not
+   */
   isEmpty() {
-    return databaseService.getCount(this.database) > 0
+    return databaseService.getCount(this.valuesDatabase) > 0
+  }
+
+  /**
+   * Close the databases
+   * @return {void}
+   */
+  stop() {
+    this.valuesDatabase.close()
+    this.valuesErrorDatabase.close()
   }
 }
 

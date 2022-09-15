@@ -20,7 +20,7 @@ jest.mock('react-router-dom', () => (
   { useNavigate: () => mockNavigate }
 ))
 
-const application = testConfig.north.applications[0]
+const application = testConfig.north[0]
 
 let container
 let root
@@ -69,7 +69,7 @@ describe('NorthMenu', () => {
     })
     expect(container).toMatchSnapshot()
 
-    React.useContext = jest.fn().mockReturnValue({ newConfig: { north: { applications: [] } }, dispatchNewConfig })
+    React.useContext = jest.fn().mockReturnValue({ newConfig: { north: [] }, dispatchNewConfig })
 
     act(() => {
       root.render(
@@ -101,7 +101,7 @@ describe('NorthMenu', () => {
 
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
-      name: 'north.applications',
+      name: 'north',
       value: {
         ...application,
         name: 'TestConsole copy',
@@ -127,7 +127,7 @@ describe('NorthMenu', () => {
     })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'addRow',
-      name: 'north.applications',
+      name: 'north',
       value: {
         ...applicationWithCopyInName,
         name: 'TestConsole copy copy',
@@ -148,7 +148,7 @@ describe('NorthMenu', () => {
     act(() => {
       Simulate.click(document.getElementById('oi-settings'))
     })
-    expect(mockNavigate).toBeCalledWith(`/north/${testConfig.north.applications[0].id}`)
+    expect(mockNavigate).toBeCalledWith(`/north/${testConfig.north[0].id}`)
     expect(container).toMatchSnapshot()
   })
 
@@ -162,7 +162,7 @@ describe('NorthMenu', () => {
     act(() => {
       Simulate.click(document.getElementById('oi-status'))
     })
-    expect(mockNavigate).toBeCalledWith(`/north/${testConfig.north.applications[0].id}/live`)
+    expect(mockNavigate).toBeCalledWith(`/north/${testConfig.north[0].id}/live`)
     expect(container).toMatchSnapshot()
   })
 
@@ -181,7 +181,7 @@ describe('NorthMenu', () => {
     })
     expect(dispatchNewConfig).toBeCalledWith({
       type: 'deleteRow',
-      name: 'north.applications.0',
+      name: 'north.0',
     })
     expect(container).toMatchSnapshot()
   })

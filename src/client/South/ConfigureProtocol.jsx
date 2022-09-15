@@ -6,7 +6,7 @@ import SouthForm from './Form/SouthForm.jsx'
 
 const ConfigureProtocol = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
-  const dataSources = newConfig?.south?.dataSources // array of all defined dataSources
+  const dataSources = newConfig?.south // array of all defined dataSources
   const { id } = useParams() // the dataSource id passed in the url
   const dataSourceIndex = dataSources?.findIndex((dataSource) => dataSource.id === id)
 

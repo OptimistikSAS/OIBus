@@ -50,7 +50,7 @@ const NorthNode = ({ application, indexNorth, onChange }) => {
       </Link>
       <div className="oi-node-footer">
         <OIbCheckBox
-          name={`north.applications.${indexNorth}.enabled`}
+          name={`north.${indexNorth}.enabled`}
           defaultValue={false}
           value={application.enabled}
           onChange={onChange}

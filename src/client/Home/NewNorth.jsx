@@ -22,7 +22,7 @@ const NewNorth = ({
   const [apiError, setApiError] = React.useState(null)
   const [nameError, setNameError] = React.useState(null)
   const [api, setApi] = React.useState(null)
-  const applications = newConfig?.north?.applications ?? []
+  const applications = newConfig?.north ?? []
   const navigate = useNavigate()
 
   const northCategoryList = apiList ? [...new Set(apiList.map((e) => e.category))] : []
@@ -43,7 +43,7 @@ const NewNorth = ({
 
       dispatchNewConfig({
         type: 'addRow',
-        name: 'north.applications',
+        name: 'north',
         value: {
           id: myNewId,
           name,

@@ -5,9 +5,12 @@ const { defaultConfig: config } = require('../../../tests/testConfig')
 // Mock OIBusEngine
 const engine = {
   configService: { getConfig: () => ({ engineConfig: config.engine }) },
+  cacheFolder: './cache',
   requestService: { httpSend: jest.fn() },
-  getCacheFolder: jest.fn(),
 }
+
+// Mock fs
+jest.mock('node:fs/promises')
 
 // Mock services
 jest.mock('../../services/database.service')
@@ -52,7 +55,16 @@ describe('North InfluxDB', () => {
         keyParentValue: '',
         timestampPathInDataValue: '',
       },
-      caching: { sendInterval: 1000 },
+      caching: {
+        sendInterval: 1000,
+        retryInterval: 5000,
+        groupCount: 10000,
+        maxSendCount: 10000,
+        archive: {
+          enabled: true,
+          retentionDuration: 720,
+        },
+      },
     }
     north = new InfluxDB(settings, engine)
   })
