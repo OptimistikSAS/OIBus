@@ -3054,7 +3054,7 @@ exports[`Engine check Engine 1`] = `
               class="form-text text-muted"
             >
               <div>
-                The endpoint send the health signal
+                The endpoint send the health signal.
               </div>
             </small>
           </div>
@@ -6181,7 +6181,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               class="form-text text-muted"
             >
               <div>
-                The endpoint send the health signal
+                The endpoint send the health signal.
               </div>
             </small>
           </div>
@@ -9732,7 +9732,7 @@ exports[`Engine check change engineName 1`] = `
               class="form-text text-muted"
             >
               <div>
-                The endpoint send the health signal
+                The endpoint send the health signal.
               </div>
             </small>
           </div>
@@ -13278,7 +13278,7 @@ exports[`Engine check change password 1`] = `
               class="form-text text-muted"
             >
               <div>
-                The endpoint send the health signal
+                The endpoint send the health signal.
               </div>
             </small>
           </div>
@@ -16824,7 +16824,7 @@ exports[`Engine check change port 1`] = `
               class="form-text text-muted"
             >
               <div>
-                The endpoint send the health signal
+                The endpoint send the health signal.
               </div>
             </small>
           </div>
@@ -20370,7 +20370,7 @@ exports[`Engine check change user 1`] = `
               class="form-text text-muted"
             >
               <div>
-                The endpoint send the health signal
+                The endpoint send the health signal.
               </div>
             </small>
           </div>

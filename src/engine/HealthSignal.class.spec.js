@@ -1,102 +1,108 @@
 const HealthSignal = require('./HealthSignal.class')
 
 // Mock engine
-const engine = jest.mock('./OIBusEngine.class')
-engine.logger = { error: jest.fn(), debug: jest.fn(), info: jest.fn(), trace: jest.fn() }
+const engine = {
+  logger: { error: jest.fn(), warn: jest.fn(), debug: jest.fn(), info: jest.fn(), trace: jest.fn() },
+  configService: { getConfig: jest.fn() },
+  getOIBusInfo: jest.fn(),
+  requestService: { httpSend: jest.fn() },
+}
 
-beforeEach(() => {
-  jest.resetAllMocks()
-  jest.useFakeTimers()
-})
+const proxy = {
+  name: 'proxy_name',
+  protocol: 'http',
+  host: 'proxy.host',
+  port: 666,
+  username: 'proxy_user',
+  password: 'proxy_pass',
+}
+let healthSignalSettings = null
+let healthSignal = null
 
 describe('HealthSignal', () => {
-  const proxy = {
-    name: 'proxy_name',
-    protocol: 'http',
-    host: 'proxy.host',
-    port: 666,
-    username: 'proxy_user',
-    password: 'proxy_pass',
-  }
+  beforeEach(() => {
+    jest.resetAllMocks()
+    jest.useFakeTimers()
 
-  const healthSignalConfig = {
-    logging: {
-      enabled: true,
-      frequency: 3600,
-      id: 'OIBus',
-    },
-    http: {
-      enabled: true,
-      host: 'https://example.com',
-      endpoint: '/endpoint/info',
-      authentication: {
-        type: 'Basic',
-        username: 'username',
-        password: 'password',
+    healthSignalSettings = {
+      logging: {
+        enabled: true,
+        frequency: 3600,
+        id: 'OIBus',
       },
-      frequency: 300,
-      proxy: 'proxy_name',
-    },
-  }
-  const engineConfig = {
-    healthSignal: healthSignalConfig,
-    proxies: [proxy],
-  }
-  engine.configService = { getConfig: () => ({ engineConfig }) }
-  engine.getOIBusInfo = jest.fn()
-  engine.requestService = { httpSend: jest.fn() }
+      http: {
+        enabled: true,
+        host: 'https://example.com',
+        endpoint: '/endpoint/info',
+        authentication: {
+          type: 'Basic',
+          username: 'username',
+          password: 'password',
+        },
+        frequency: 300,
+        proxy: 'proxy_name',
+      },
+    }
+    const engineConfig = {
+      engineName: 'OIBus',
+      healthSignal: healthSignalSettings,
+      proxies: [proxy],
+    }
+    engine.configService.getConfig.mockReturnValue({ engineConfig })
+    healthSignal = new HealthSignal(engine)
+  })
 
   it('should be properly initialized', () => {
-    const healthSignal = new HealthSignal(engine)
-
-    expect(healthSignal.http.enabled).toBe(healthSignalConfig.http.enabled)
-    expect(healthSignal.http.host).toBe(healthSignalConfig.http.host)
-    expect(healthSignal.http.endpoint).toBe(healthSignalConfig.http.endpoint)
-    expect(healthSignal.http.authentication).toBe(healthSignalConfig.http.authentication)
-    expect(healthSignal.http.id).toBe(healthSignalConfig.http.id)
-    expect(healthSignal.http.frequency).toBe(healthSignalConfig.http.frequency)
+    expect(healthSignal.http.enabled).toBe(healthSignalSettings.http.enabled)
+    expect(healthSignal.http.host).toBe(healthSignalSettings.http.host)
+    expect(healthSignal.http.endpoint).toBe(healthSignalSettings.http.endpoint)
+    expect(healthSignal.http.authentication).toBe(healthSignalSettings.http.authentication)
+    expect(healthSignal.http.id).toBe(healthSignalSettings.http.id)
+    expect(healthSignal.http.frequency).toBe(healthSignalSettings.http.frequency)
     expect(healthSignal.http.proxy).toBe(proxy)
     expect(healthSignal.httpTimer).toBeNull()
   })
 
   it('should also initialize if proxy is not configured', () => {
-    delete engineConfig.proxies
-    const healthSignal = new HealthSignal(engine)
-    expect(healthSignal.http.enabled).toBe(healthSignalConfig.http.enabled)
-    expect(healthSignal.http.host).toBe(healthSignalConfig.http.host)
-    expect(healthSignal.http.endpoint).toBe(healthSignalConfig.http.endpoint)
-    expect(healthSignal.http.authentication).toBe(healthSignalConfig.http.authentication)
-    expect(healthSignal.http.id).toBe(healthSignalConfig.http.id)
-    expect(healthSignal.http.frequency).toBe(healthSignalConfig.http.frequency)
-    expect(healthSignal.http.proxy).toBe(false)
-    expect(healthSignal.httpTimer).toBeNull()
-    // restore
-    engineConfig.proxies = [proxy]
+    engine.configService.getConfig.mockReturnValue({
+      engineConfig:
+          {
+            engineName: 'OIBus',
+            healthSignal: healthSignalSettings,
+          },
+    })
+
+    const healthSignalWithoutProxy = new HealthSignal(engine)
+    expect(healthSignalWithoutProxy.http.enabled).toBe(healthSignalSettings.http.enabled)
+    expect(healthSignalWithoutProxy.http.host).toBe(healthSignalSettings.http.host)
+    expect(healthSignalWithoutProxy.http.endpoint).toBe(healthSignalSettings.http.endpoint)
+    expect(healthSignalWithoutProxy.http.authentication).toBe(healthSignalSettings.http.authentication)
+    expect(healthSignalWithoutProxy.http.id).toBe(healthSignalSettings.http.id)
+    expect(healthSignalWithoutProxy.http.frequency).toBe(healthSignalSettings.http.frequency)
+    expect(healthSignalWithoutProxy.http.proxy).toBe(null)
+    expect(healthSignalWithoutProxy.httpTimer).toBeNull()
   })
 
   it('should properly start when http enabled and call callback function', () => {
-    const healthSignal = new HealthSignal(engine)
     const callback = jest.spyOn(healthSignal, 'sendHttpSignal').mockImplementation(() => ({ }))
     healthSignal.http.enabled = true
     healthSignal.logging.enabled = true
     healthSignal.start()
 
-    jest.advanceTimersByTime(1000 * healthSignalConfig.http.frequency)
+    jest.advanceTimersByTime(1000 * healthSignalSettings.http.frequency)
     expect(callback).toHaveBeenCalledTimes(1)
   })
 
   it('should properly start when disabled', () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
-    const healthSignal = new HealthSignal(engine)
     healthSignal.http.enabled = false
     healthSignal.logging.enabled = false
     healthSignal.start()
 
-    expect(setTimeoutSpy).not.toBeCalled()
+    expect(setTimeoutSpy).not.toHaveBeenCalled()
   })
 
   it('should prepare simple status info when verbose is not enabled', async () => {
-    const healthSignal = new HealthSignal(engine)
     engine.getOIBusInfo.mockReturnValue({ version: 'version' })
     engine.statusData = { randomStatusData: 'test' }
 
@@ -107,7 +113,6 @@ describe('HealthSignal', () => {
   })
 
   it('should prepare full status info when verbose is enabled', async () => {
-    const healthSignal = new HealthSignal(engine)
     engine.getOIBusInfo.mockReturnValue({ status: 'status', version: 'version' })
     engine.statusData = { randomStatusData: 'test' }
 
@@ -117,17 +122,14 @@ describe('HealthSignal', () => {
     expect(status).toEqual({ status: 'status', version: 'version', randomStatusData: 'test' })
   })
 
-  it('should call RequestService httpSend()', async () => {
+  it('should call send http signal', async () => {
     const status = { status: 'status' }
-
-    const healthSignal = new HealthSignal(engine)
 
     healthSignal.prepareStatus = jest.fn()
     healthSignal.prepareStatus.mockReturnValue(status)
 
     await healthSignal.sendHttpSignal()
 
-    expect(healthSignal.logger.trace).toBeCalledWith('sendHttpSignal')
     expect(healthSignal.prepareStatus).toBeCalled()
     const calledStatus = JSON.stringify({ ...status })
     const headers = { 'Content-Type': 'application/json' }
@@ -135,31 +137,68 @@ describe('HealthSignal', () => {
       `${healthSignal.http.host}${healthSignal.http.endpoint}`,
       'POST',
       healthSignal.http.authentication,
-      healthSignal.http.proxy,
+      proxy,
       calledStatus,
       headers,
     )
-    expect(healthSignal.logger.debug).toBeCalledWith('Health signal successful')
+    expect(healthSignal.logger.debug).toBeCalledWith('HTTP health signal sent successfully.')
   })
 
-  it('should properly stop when enabled', () => {
+  it('should log error if http signal fails', async () => {
+    const status = { status: 'status' }
+
+    healthSignal.prepareStatus = jest.fn()
+    healthSignal.prepareStatus.mockReturnValue(status)
+
+    engine.requestService.httpSend.mockImplementation(() => {
+      throw new Error('http error')
+    })
+    await healthSignal.sendHttpSignal()
+
+    expect(healthSignal.logger.error).toBeCalledWith(new Error('http error'))
+  })
+
+  it('should properly stop health signal', () => {
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval')
-    const healthSignal = new HealthSignal(engine)
-    healthSignal.http.enabled = true
-    healthSignal.start()
+
+    healthSignal.stop()
+    expect(clearIntervalSpy).not.toHaveBeenCalled()
+
     healthSignal.httpTimer = () => {}
+    healthSignal.loggingTimer = () => {}
     healthSignal.stop()
 
-    expect(clearIntervalSpy).toHaveBeenCalledTimes(1)
+    expect(clearIntervalSpy).toHaveBeenCalledTimes(2)
   })
 
-  it('should properly stop when disabled', () => {
-    const clearIntervalSpy = jest.spyOn(global, 'clearInterval')
-    const healthSignal = new HealthSignal(engine)
-    healthSignal.http.enabled = false
-    healthSignal.start()
-    healthSignal.stop()
+  it('should log health signal', () => {
+    healthSignal.prepareStatus = jest.fn(() => ({ status: 'status' }))
+    healthSignal.sendLoggingSignal()
+    expect(healthSignal.logger.info).toHaveBeenCalledWith(JSON.stringify({ status: 'status' }))
+    expect(healthSignal.prepareStatus).toHaveBeenCalledTimes(1)
+  })
 
-    expect(clearIntervalSpy).not.toBeCalled()
+  it('should not forward health signal', async () => {
+    const data = { status: 'status' }
+    healthSignal.http.enabled = false
+    await healthSignal.forwardRequest(data)
+    expect(healthSignal.logger.warn).toHaveBeenCalledWith('HTTP health signal is disabled. Cannot forward payload.')
+    expect(healthSignal.logger.info).toHaveBeenCalledWith(JSON.stringify(data))
+  })
+
+  it('should forward health signal', async () => {
+    const data = { status: 'status' }
+    healthSignal.http.enabled = true
+    await healthSignal.forwardRequest(data)
+    expect(healthSignal.logger.trace).toHaveBeenCalledWith(`Forwarding health signal to "${healthSignalSettings.http.host}".`)
+    expect(healthSignal.logger.trace).toHaveBeenCalledWith(`Health signal successfully forwarded to "${healthSignalSettings.http.host}".`)
+    expect(engine.requestService.httpSend).toHaveBeenCalledWith(
+      `${healthSignalSettings.http.host}${healthSignalSettings.http.endpoint}`,
+      'POST',
+      healthSignalSettings.http.authentication,
+      proxy,
+      JSON.stringify(data),
+      { 'Content-Type': 'application/json' },
+    )
   })
 })

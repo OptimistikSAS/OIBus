@@ -423,9 +423,9 @@ class OIBusEngine extends BaseEngine {
 
   /**
    * Get status information.
-   * @returns {object} - The status information
+   * @returns {Object} - The status information
    */
-  async getOIBusInfo() {
+  getOIBusInfo() {
     return {
       version: this.getVersion(),
       architecture: process.arch,
