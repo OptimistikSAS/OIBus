@@ -82,9 +82,9 @@ const HealthSignal = ({ onChange, healthSignal }) => (
             label="Endpoint"
             name="engine.healthSignal.http.endpoint"
             value={healthSignal.http.endpoint}
-            defaultValue=""
+            defaultValue="/engine/aliveSignal"
             valid={validation.engine.healthSignal.http.endpoint}
-            help={<div>The endpoint send the health signal</div>}
+            help={<div>The endpoint send the health signal.</div>}
             onChange={onChange}
           />
         </Col>
