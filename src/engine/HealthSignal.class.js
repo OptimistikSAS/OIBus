@@ -1,5 +1,5 @@
 /**
- * Class HealthSignal - sends health signal to a remote host
+ * Class HealthSignal - sends health signal to a remote host or into the logs
  */
 class HealthSignal {
   /**
@@ -18,7 +18,7 @@ class HealthSignal {
     this.logging = logging
 
     this.http = http
-    this.http.proxy = Array.isArray(engineConfig.proxies) && engineConfig.proxies.find(({ name }) => name === this.http.proxy)
+    this.http.proxy = Array.isArray(engineConfig.proxies) ? engineConfig.proxies.find(({ name }) => name === this.http.proxy) : null
     this.httpTimer = null
     this.loggingTimer = null
     this.engineName = engineConfig.engineName
@@ -30,11 +30,11 @@ class HealthSignal {
    */
   start() {
     if (this.http.enabled) {
-      this.logger.info('Initializing http health signal')
+      this.logger.debug('Initializing HTTP health signal.')
       this.httpTimer = setInterval(this.sendHttpSignal.bind(this), this.http.frequency * 1000)
     }
     if (this.logging.enabled) {
-      this.logger.info('Initializing logging health signal')
+      this.logger.debug('Initializing logging health signal.')
       this.loggingTimer = setInterval(this.sendLoggingSignal.bind(this), this.logging.frequency * 1000)
     }
   }
@@ -57,9 +57,7 @@ class HealthSignal {
    * @return {Promise<void>} - The response
    */
   async sendHttpSignal() {
-    this.logger.trace('sendHttpSignal')
-
-    const healthStatus = await this.prepareStatus(this.http.verbose)
+    const healthStatus = this.prepareStatus(this.http.verbose)
     healthStatus.id = this.engineName
     try {
       const data = JSON.stringify(healthStatus)
@@ -72,9 +70,9 @@ class HealthSignal {
         data,
         headers,
       )
-      this.logger.debug('Health signal successful')
+      this.logger.debug('HTTP health signal sent successfully.')
     } catch (error) {
-      this.logger.error(`sendRequest error status: ${error}`)
+      this.logger.error(error)
     }
   }
 
@@ -82,20 +80,18 @@ class HealthSignal {
    * Callback to send the health signal with logger.
    * @returns {void}
    */
-  async sendLoggingSignal() {
-    this.logger.trace('sendHttpSignal')
-
-    const healthStatus = await this.prepareStatus(true)
+  sendLoggingSignal() {
+    const healthStatus = this.prepareStatus(true)
     this.logger.info(JSON.stringify(healthStatus))
   }
 
   /**
    * Retrieve status information from the engine
-   * @param {boolean} verbose - return only the id when false, return full status when true
-   * @returns {object} - the status of OIBus
+   * @param {Boolean} verbose - Return only the static OIBus info when false, return full status when true
+   * @returns {Object} - The status of OIBus
    */
-  async prepareStatus(verbose) {
-    let status = await this.engine.getOIBusInfo()
+  prepareStatus(verbose) {
+    let status = this.engine.getOIBusInfo()
     if (verbose) {
       status = { ...status, ...this.engine.statusData }
     }
@@ -103,17 +99,28 @@ class HealthSignal {
   }
 
   /**
-   * Forward an healthSignal request.
-   * @param {object} data - The content to forward
+   * Log and forward an healthSignal request.
+   * @param {Object} data - The content to forward
    * @return {Promise<void>} - The response
    */
   async forwardRequest(data) {
+    const stringData = JSON.stringify(data)
     if (this.http.enabled) {
-      this.logger.debug('Forwarding healthSignal request')
-      const stringData = JSON.stringify(data)
+      this.logger.trace(`Forwarding health signal to "${this.http.host}".`)
       const headers = { 'Content-Type': 'application/json' }
-      await this.engine.requestService.httpSend(this.http.host, 'POST', this.http.authentication, this.http.proxy, stringData, headers)
-      this.logger.debug('Forwarding healthSignal was successful')
+      this.logger.info(stringData)
+      await this.engine.requestService.httpSend(
+        `${this.http.host}${this.http.endpoint}`,
+        'POST',
+        this.http.authentication,
+        this.http.proxy,
+        stringData,
+        headers,
+      )
+      this.logger.trace(`Health signal successfully forwarded to "${this.http.host}".`)
+    } else {
+      this.logger.warn('HTTP health signal is disabled. Cannot forward payload.')
+      this.logger.info(stringData)
     }
   }
 }

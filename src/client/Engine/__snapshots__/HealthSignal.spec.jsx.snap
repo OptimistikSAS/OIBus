@@ -215,7 +215,7 @@ exports[`HealthSignal check HealthSignal 1`] = `
           class="form-text text-muted"
         >
           <div>
-            The endpoint send the health signal
+            The endpoint send the health signal.
           </div>
         </small>
       </div>
@@ -617,7 +617,7 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
           class="form-text text-muted"
         >
           <div>
-            The endpoint send the health signal
+            The endpoint send the health signal.
           </div>
         </small>
       </div>
@@ -1019,7 +1019,7 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
           class="form-text text-muted"
         >
           <div>
-            The endpoint send the health signal
+            The endpoint send the health signal.
           </div>
         </small>
       </div>
