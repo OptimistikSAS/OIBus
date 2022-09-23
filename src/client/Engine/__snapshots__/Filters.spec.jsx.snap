@@ -64,7 +64,7 @@ exports[`Filters check Filters 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -112,7 +112,7 @@ exports[`Filters check Filters 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -152,7 +152,7 @@ exports[`Filters check Filters 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -192,7 +192,7 @@ exports[`Filters check Filters 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -232,7 +232,7 @@ exports[`Filters check Filters 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -318,7 +318,7 @@ exports[`Filters check add line 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -366,7 +366,7 @@ exports[`Filters check add line 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -406,7 +406,7 @@ exports[`Filters check add line 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -446,7 +446,7 @@ exports[`Filters check add line 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -486,7 +486,7 @@ exports[`Filters check add line 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -572,7 +572,7 @@ exports[`Filters check change line 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -620,7 +620,7 @@ exports[`Filters check change line 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -660,7 +660,7 @@ exports[`Filters check change line 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -700,7 +700,7 @@ exports[`Filters check change line 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -740,7 +740,7 @@ exports[`Filters check change line 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -826,7 +826,7 @@ exports[`Filters check delete Filter 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -874,7 +874,7 @@ exports[`Filters check delete Filter 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -914,7 +914,7 @@ exports[`Filters check delete Filter 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -954,7 +954,7 @@ exports[`Filters check delete Filter 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -994,7 +994,7 @@ exports[`Filters check delete Filter 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"

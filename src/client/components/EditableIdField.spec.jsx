@@ -88,7 +88,7 @@ describe('EditableIdField', () => {
         nameChanged={idChanged}
       />)
     })
-    Simulate.click(document.querySelector('button svg path'))
+    Simulate.click(document.querySelector('#save-icon'))
     expect(idChanged).toBeCalled()
     expect(container).toMatchSnapshot()
   })
@@ -106,7 +106,7 @@ describe('EditableIdField', () => {
         nameChanged={idChanged}
       />)
     })
-    Simulate.click(document.querySelector('button svg path'))
+    Simulate.click(document.querySelector('#save-icon'))
     expect(idChanged).not.toBeCalled()
     expect(container).toMatchSnapshot()
   })

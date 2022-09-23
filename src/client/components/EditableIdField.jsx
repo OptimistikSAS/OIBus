@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
-import { Button } from 'reactstrap'
 import { FaCheck } from 'react-icons/fa'
 import { OIbText } from './OIbForm'
 
@@ -38,7 +37,7 @@ const EditableIdField = ({
   }
 
   return editing ? (
-    <>
+    <div>
       <OIbText
         onChange={onChange}
         value={editingConnectorName}
@@ -46,19 +45,8 @@ const EditableIdField = ({
         name={connectorName}
         inline
       />
-      <h6 className="align-items-top mb-3">
-        <Button
-          color="primary"
-          outline
-          size="sm"
-          onClick={handleDoneEditName}
-          className="util-button"
-        >
-          <FaCheck className="oi-icon ms-2" />
-          Save
-        </Button>
-      </h6>
-    </>
+      <FaCheck id="save-icon" className="oi-icon mx-2" onClick={handleDoneEditName} />
+    </div>
   ) : (
     <div>{connectorName}</div>
   )

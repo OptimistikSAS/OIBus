@@ -11,7 +11,7 @@ exports[`OIbTable check Table with help 1`] = `
           scope="col"
         >
           <svg
-            class="oi-icon"
+            class="oi-icon me-2"
             fill="currentColor"
             height="1em"
             stroke="currentColor"
@@ -49,7 +49,7 @@ exports[`OIbTable check Table with name, label and rows 1`] = `
           scope="col"
         >
           <svg
-            class="oi-icon"
+            class="oi-icon me-2"
             fill="currentColor"
             height="1em"
             stroke="currentColor"
@@ -87,7 +87,7 @@ exports[`OIbTable check add to table 1`] = `
           scope="col"
         >
           <svg
-            class="oi-icon"
+            class="oi-icon me-2"
             fill="currentColor"
             height="1em"
             stroke="currentColor"
@@ -125,7 +125,7 @@ exports[`OIbTable check delete from table 1`] = `
           scope="col"
         >
           <svg
-            class="oi-icon"
+            class="oi-icon me-2"
             fill="currentColor"
             height="1em"
             stroke="currentColor"
@@ -174,7 +174,7 @@ exports[`OIbTable check delete from table 1`] = `
           class="align-center"
         >
           <svg
-            class="oi-icon"
+            class="oi-icon mx-2"
             fill="currentColor"
             height="1em"
             stroke="currentColor"

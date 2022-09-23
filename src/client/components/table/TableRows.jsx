@@ -76,7 +76,7 @@ const TableRows = ({
         <td className="align-center">
           {handleEdit && (
             <FaCog
-              className="oi-icon"
+              className="oi-icon mx-2"
               onClick={(e) => {
                 e.preventDefault()
                 handleEdit(index)
@@ -88,7 +88,7 @@ const TableRows = ({
           )}
           {handleDuplicate && (
             <FaCopy
-              className="oi-icon"
+              className="oi-icon mx-2"
               onClick={(e) => {
                 e.preventDefault()
                 handleDuplicate(index)
@@ -103,7 +103,7 @@ const TableRows = ({
             >
               {(confirm) => (
                 <FaTrashAlt
-                  className="oi-icon"
+                  className="oi-icon mx-2"
                   onClick={confirm(() => {
                     handleDelete(index)
                   })}
