@@ -131,12 +131,12 @@ class HistoryQuery {
     const extractionDone = Object.values(this.south.queryParts).every((queryPart) => queryPart === this.south.maxQueryPart)
 
     if (!extractionDone) {
-      this.logger.trace(`History query "${this.historySettings.id}" not done: Data extraction still ongoing for "${this.southSettings.name}".`)
+      this.logger.trace(`History query "${this.historySettings.id}" not over yet: Data extraction still ongoing for "${this.southSettings.name}".`)
       return
     }
 
     if (!this.north.isCacheEmpty()) {
-      this.logger.trace(`History query "${this.historySettings.id}" not done: Data cache not empty for "${this.northSettings.name}".`)
+      this.logger.trace(`History query "${this.historySettings.id}" not over yet: Data cache not empty for "${this.northSettings.name}".`)
       return
     }
 

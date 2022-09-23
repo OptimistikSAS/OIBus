@@ -1,5 +1,6 @@
 const fs = require('node:fs/promises')
 const path = require('node:path')
+
 const EncryptionService = require('../services/EncryptionService.class')
 const Logger = require('../engine/logger/Logger.class')
 const CertificateService = require('../services/CertificateService.class')
@@ -195,19 +196,18 @@ class NorthConnector {
         'Last added point id (value)': `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`,
       })
       this.valuesRetryCount = 0
-      this.sendingValuesInProgress = false
     } catch (error) {
       if (this.valuesRetryCount < this.settings.caching.retryCount || this.shouldRetry(error)) {
         this.valuesRetryCount += 1
       } else {
         this.valueCache.manageErroredValues(values)
         this.valuesRetryCount = 0
-        this.sendingValuesInProgress = false
       }
     }
+    this.sendingValuesInProgress = false
 
     let timeout = this.resendValuesImmediately ? 0 : this.settings.caching.sendInterval
-    timeout = this.valuesRetryCount > 0 ? timeout : this.settings.caching.retryInterval
+    timeout = this.valuesRetryCount > 0 ? this.settings.caching.retryInterval : timeout
     this.resetValuesTimeout(timeout)
   }
 
@@ -225,11 +225,11 @@ class NorthConnector {
 
   /**
    * Method called by the Engine to handle a raw file.
-   * @param {String} filePath - The path of the raw file
    * @returns {Promise<void>} - The result promise
    */
-  async retrieveFromCacheAndSendFile(filePath) {
+  async retrieveFromCacheAndSendFile() {
     if (this.sendingFilesInProgress) {
+      this.logger.trace('Already sending files...')
       this.resendFilesImmediately = true
       return
     }
@@ -258,24 +258,23 @@ class NorthConnector {
       await this.fileCache.removeFileFromCache(fileToSend.path, this.settings.caching.archive.enabled)
       this.numberOfSentFiles += 1
       this.statusService.updateStatusDataStream({
-        'Last uploaded file': filePath,
+        'Last uploaded file': fileToSend.path,
         'Number of files sent since OIBus has started': this.numberOfSentFiles,
         'Last upload at': new Date().toISOString(),
       })
       this.filesRetryCount = 0
-      this.sendingFilesInProgress = false
     } catch (error) {
       if (this.filesRetryCount < this.settings.caching.retryCount || this.shouldRetry(error)) {
         this.filesRetryCount += 1
       } else {
         await this.fileCache.manageErroredFiles(fileToSend.path)
         this.filesRetryCount = 0
-        this.sendingFilesInProgress = false
       }
     }
+    this.sendingFilesInProgress = false
 
     let timeout = this.resendFilesImmediately ? 0 : this.settings.caching.sendInterval
-    timeout = this.filesRetryCount > 0 ? timeout : this.settings.caching.retryInterval
+    timeout = this.filesRetryCount > 0 ? this.settings.caching.retryInterval : timeout
     this.resetFilesTimeout(timeout)
   }
 
@@ -299,15 +298,17 @@ class NorthConnector {
    * @returns {void} - The result promise
    */
   cacheValues(southId, values) {
-    this.valueCache.cacheValues(southId, values)
+    if (values.length > 0) {
+      this.valueCache.cacheValues(southId, values)
 
-    // If the group size is over the groupCount => we immediately send the cache
-    // to the North even if the timeout is not finished.
-    // const count = databaseService.getCount(this.database)
-    // if (count >= this.cacheSettings.groupCount) {
-    //   this.logger.trace(`group count reached: ${count} >= ${this.cacheSettings.groupCount}`)
-    //   await this.retrieveValuesFromCache()
-    // }
+      // If the group size is over the groupCount => we immediately send the cache
+      // to the North even if the timeout is not finished.
+      const count = this.valueCache.getNumberOfValues()
+      if (count >= this.settings.caching.groupCount) {
+        this.logger.trace(`Group count reached: ${count} >= ${this.settings.caching.groupCount}`)
+        this.resetValuesTimeout(0)
+      }
+    }
   }
 
   /**
@@ -339,11 +340,20 @@ class NorthConnector {
     return this.settings.subscribedTo.includes(southId)
   }
 
+  /**
+   * Default should retry method, to override for specific North implementation
+   * @param {Object} _error - The error caught in the handleFile and handleValues methods
+   * @returns {Boolean} - If the file or values must be sent again or not
+   */
   shouldRetry(_error) {
     this.logger.trace('Default retry test always return false.')
     return false
   }
 
+  /**
+   * Check appropriate caches emptiness
+   * @returns {Boolean} - True if North cache is empty, false otherwise
+   */
   isCacheEmpty() {
     return this.valueCache.isEmpty() && this.fileCache.isEmpty()
   }
