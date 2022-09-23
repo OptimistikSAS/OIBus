@@ -13,14 +13,12 @@ const defaultConfig = {
       consoleLog: { level: 'debug' },
       fileLog: {
         level: 'debug',
-        fileName: './logs/journal.log',
         maxSize: 1000000,
         numberOfFiles: 5,
         tailable: true,
       },
       sqliteLog: {
         level: 'debug',
-        fileName: './logs/journal.db',
         maxNumberOfLogs: 1000000,
       },
       lokiLog: {
@@ -93,14 +91,12 @@ const testConfig = {
       consoleLog: { level: 'debug' },
       fileLog: {
         level: 'error',
-        fileName: './logs/journal.log',
         maxSize: 1000000,
         numberOfFiles: 5,
         tailable: true,
       },
       sqliteLog: {
         level: 'error',
-        fileName: './logs/journal.db',
         maxSize: 50000000,
       },
       lokiLog: {
@@ -224,14 +220,12 @@ const integrationTestConfig = {
       consoleLog: { level: 'debug' },
       fileLog: {
         level: 'error',
-        fileName: './logs/journal.log',
         maxSize: 1000000,
         numberOfFiles: 5,
         tailable: true,
       },
       sqliteLog: {
         level: 'error',
-        fileName: './logs/journal.db',
         maxSize: 50000000,
       },
       lokiLog: {

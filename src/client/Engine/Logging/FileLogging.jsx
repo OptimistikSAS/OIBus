@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
-import { notEmpty, minValue, inRange } from '../../../services/validation.service'
+import { minValue, inRange } from '../../../services/validation.service'
 
 const schema = { name: 'FileLogging' }
 schema.form = {
@@ -11,14 +11,6 @@ schema.form = {
     md: 3,
     defaultValue: 'info',
     help: <div>The level for the File log</div>,
-  },
-  fileName: {
-    type: 'OIbText',
-    label: 'File name for the log file',
-    valid: notEmpty(),
-    defaultValue: '',
-    md: 4,
-    help: <div>The file name of the log file</div>,
   },
   maxSize: {
     type: 'OIbInteger',
