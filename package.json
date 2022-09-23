@@ -67,7 +67,7 @@
     "mssql": "9.0.1",
     "mysql2": "2.3.3",
     "nanoid": "3.3.4",
-    "node-fetch": "2.6.7",
+    "node-fetch": "3.2.10",
     "node-opcua-certificate-manager": "2.74.0",
     "node-opcua-client": "2.74.0",
     "object-path": "0.11.8",
