@@ -12,14 +12,12 @@
       },
       "fileLog": {
         "level": "debug",
-        "fileName": "./logs/journal.log",
         "maxSize": 1000000,
         "numberOfFiles": 5,
         "tailable": true
       },
       "sqliteLog": {
         "level": "debug",
-        "fileName": "./logs/journal.db",
         "maxNumberOfLogs": 1000000
       },
       "lokiLog": {

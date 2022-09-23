@@ -51,17 +51,6 @@ describe('FileLogging', () => {
     expect(onChange).toBeCalledWith('engine.logParameters.fileLog.level', 'error', null, null)
     expect(container).toMatchSnapshot()
   })
-  test('check change file name to "new_filename"', () => {
-    act(() => {
-      root.render(<FileLogging
-        logParameters={testConfig.engine.logParameters.fileLog}
-        onChange={onChange}
-      />)
-    })
-    Simulate.change(document.getElementById('engine.logParameters.fileLog.fileName'), { target: { value: 'new_filename' } })
-    expect(onChange).toBeCalledWith('engine.logParameters.fileLog.fileName', 'new_filename', null)
-    expect(container).toMatchSnapshot()
-  })
   test('check change fileLog maxSize 1000', () => {
     act(() => {
       root.render(<FileLogging
