@@ -9,26 +9,6 @@ const REQUIRED_SCHEMA_VERSION = 26
 const DEFAULT_VERSION = 1
 
 /**
- * Default parameters for migration service logger
- * Dedicated migrations settings to avoid migration errors when migrating logger
- */
-const engineConfigLogParameters = {
-  engineName: 'OIBus-migration',
-  logParameters: {
-    consoleLog: { level: 'debug' },
-    fileLog: {
-      level: 'debug',
-      fileName: './migration-journal.log',
-      maxSize: 1000000,
-      numberOfFiles: 5,
-      tailable: true,
-    },
-    sqliteLog: { level: 'none' },
-    lokiLog: { level: 'none' },
-  },
-}
-
-/**
  * Migration implementation.
  * Iterate through versions and migrate until we reach actual OIBus version.
  * @param {number} configVersion - The config file version
@@ -70,13 +50,14 @@ const migrateImpl = async (configVersion, config, configFile, logger) => {
 
 /**
  * Migrate if needed.
- * @param {string} configFile - The config file
+ * @param {String} configFile - The config file
+ * @param {Object }logParameters - The log parameters to use (given by index.js)
  * @returns {Promise<void>} - The result promise
  */
-const migrate = async (configFile) => {
-  const logger = new Logger('OIBus-migration')
+const migrate = async (configFile, logParameters) => {
+  const logger = new Logger('migration')
   try {
-    await logger.changeParameters(engineConfigLogParameters)
+    await logger.changeParameters(logParameters)
 
     let fileStat
     try {

@@ -28,13 +28,13 @@ const {
   check,
 } = getCommandLineArguments()
 
-logger.changeParameters({
+const logParameters = {
   engineName: 'OIBus-main',
   logParameters: {
     consoleLog: { level: 'debug' },
     fileLog: {
       level: 'debug',
-      fileName: `${path.parse(configFile).dir}/OIBus-main-journal.log`,
+      fileName: path.resolve(path.parse(configFile).dir, 'logs', 'main-journal.log'),
       maxSize: 1000000,
       numberOfFiles: 5,
       tailable: true,
@@ -42,7 +42,9 @@ logger.changeParameters({
     sqliteLog: { level: 'none' },
     lokiLog: { level: 'none' },
   },
-}).then(() => {
+}
+
+logger.changeParameters(logParameters).then(() => {
   if (cluster.isMaster) {
     // Master role is nothing except launching a worker and relaunching another
     // one if exit is detected (typically to load a new configuration)
@@ -111,7 +113,7 @@ logger.changeParameters({
     process.chdir(path.parse(configFile).dir)
 
     // Migrate config file, if needed
-    migrationService.migrate(configFile).then(async () => {
+    migrationService.migrate(configFile, logParameters).then(async () => {
       // this condition is reached only for a worker (i.e. not master)
       // so this is here where we start the web-server, OIBusEngine and HistoryQueryEngine
 

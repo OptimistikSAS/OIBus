@@ -51,17 +51,6 @@ describe('SqliteLogging', () => {
     expect(onChange).toBeCalledWith('engine.logParameters.sqliteLog.level', 'error', null, null)
     expect(container).toMatchSnapshot()
   })
-  test('check change sqliteLog fileName to "new_sqliteFilename"', () => {
-    act(() => {
-      root.render(<SqliteLogging
-        logParameters={testConfig.engine.logParameters.sqliteLog}
-        onChange={onChange}
-      />)
-    })
-    Simulate.change(document.getElementById('engine.logParameters.sqliteLog.fileName'), { target: { value: 'new_sqliteFilename' } })
-    expect(onChange).toBeCalledWith('engine.logParameters.sqliteLog.fileName', 'new_sqliteFilename', null)
-    expect(container).toMatchSnapshot()
-  })
   test('check change sqliteLog maxNumberOfLogs to 10000000', () => {
     act(() => {
       root.render(<SqliteLogging

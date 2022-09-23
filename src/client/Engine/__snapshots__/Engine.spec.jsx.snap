@@ -769,38 +769,6 @@ exports[`Engine check Engine 1`] = `
             class="row"
           >
             <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="engine.logParameters.fileLog.fileName"
-                >
-                  File name for the log file
-                </label>
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="engine.logParameters.fileLog.fileName"
-                  name="engine.logParameters.fileLog.fileName"
-                  type="text"
-                  value="./logs/journal.log"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-                <small
-                  class="form-text text-muted"
-                >
-                  <div>
-                    The file name of the log file
-                  </div>
-                </small>
-              </div>
-            </div>
-            <div
               class="col-md-2"
             >
               <div
@@ -958,38 +926,6 @@ exports[`Engine check Engine 1`] = `
           <div
             class="row"
           >
-            <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="engine.logParameters.sqliteLog.fileName"
-                >
-                  File name of sqlite db
-                </label>
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="engine.logParameters.sqliteLog.fileName"
-                  name="engine.logParameters.sqliteLog.fileName"
-                  type="text"
-                  value="./logs/journal.db"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-                <small
-                  class="form-text text-muted"
-                >
-                  <div>
-                    The file name of the database file
-                  </div>
-                </small>
-              </div>
-            </div>
             <div
               class="col-md-2"
             >
@@ -4099,38 +4035,6 @@ exports[`Engine check Engine when config has no proxies 1`] = `
             class="row"
           >
             <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="engine.logParameters.fileLog.fileName"
-                >
-                  File name for the log file
-                </label>
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="engine.logParameters.fileLog.fileName"
-                  name="engine.logParameters.fileLog.fileName"
-                  type="text"
-                  value="./logs/journal.log"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-                <small
-                  class="form-text text-muted"
-                >
-                  <div>
-                    The file name of the log file
-                  </div>
-                </small>
-              </div>
-            </div>
-            <div
               class="col-md-2"
             >
               <div
@@ -4288,38 +4192,6 @@ exports[`Engine check Engine when config has no proxies 1`] = `
           <div
             class="row"
           >
-            <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="engine.logParameters.sqliteLog.fileName"
-                >
-                  File name of sqlite db
-                </label>
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="engine.logParameters.sqliteLog.fileName"
-                  name="engine.logParameters.sqliteLog.fileName"
-                  type="text"
-                  value="./logs/journal.db"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-                <small
-                  class="form-text text-muted"
-                >
-                  <div>
-                    The file name of the database file
-                  </div>
-                </small>
-              </div>
-            </div>
             <div
               class="col-md-2"
             >
@@ -7015,38 +6887,6 @@ exports[`Engine check change engineName 1`] = `
             class="row"
           >
             <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="engine.logParameters.fileLog.fileName"
-                >
-                  File name for the log file
-                </label>
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="engine.logParameters.fileLog.fileName"
-                  name="engine.logParameters.fileLog.fileName"
-                  type="text"
-                  value="./logs/journal.log"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-                <small
-                  class="form-text text-muted"
-                >
-                  <div>
-                    The file name of the log file
-                  </div>
-                </small>
-              </div>
-            </div>
-            <div
               class="col-md-2"
             >
               <div
@@ -7204,38 +7044,6 @@ exports[`Engine check change engineName 1`] = `
           <div
             class="row"
           >
-            <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="engine.logParameters.sqliteLog.fileName"
-                >
-                  File name of sqlite db
-                </label>
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="engine.logParameters.sqliteLog.fileName"
-                  name="engine.logParameters.sqliteLog.fileName"
-                  type="text"
-                  value="./logs/journal.db"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-                <small
-                  class="form-text text-muted"
-                >
-                  <div>
-                    The file name of the database file
-                  </div>
-                </small>
-              </div>
-            </div>
             <div
               class="col-md-2"
             >
@@ -10345,38 +10153,6 @@ exports[`Engine check change password 1`] = `
             class="row"
           >
             <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="engine.logParameters.fileLog.fileName"
-                >
-                  File name for the log file
-                </label>
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="engine.logParameters.fileLog.fileName"
-                  name="engine.logParameters.fileLog.fileName"
-                  type="text"
-                  value="./logs/journal.log"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-                <small
-                  class="form-text text-muted"
-                >
-                  <div>
-                    The file name of the log file
-                  </div>
-                </small>
-              </div>
-            </div>
-            <div
               class="col-md-2"
             >
               <div
@@ -10534,38 +10310,6 @@ exports[`Engine check change password 1`] = `
           <div
             class="row"
           >
-            <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="engine.logParameters.sqliteLog.fileName"
-                >
-                  File name of sqlite db
-                </label>
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="engine.logParameters.sqliteLog.fileName"
-                  name="engine.logParameters.sqliteLog.fileName"
-                  type="text"
-                  value="./logs/journal.db"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-                <small
-                  class="form-text text-muted"
-                >
-                  <div>
-                    The file name of the database file
-                  </div>
-                </small>
-              </div>
-            </div>
             <div
               class="col-md-2"
             >
@@ -13675,38 +13419,6 @@ exports[`Engine check change port 1`] = `
             class="row"
           >
             <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="engine.logParameters.fileLog.fileName"
-                >
-                  File name for the log file
-                </label>
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="engine.logParameters.fileLog.fileName"
-                  name="engine.logParameters.fileLog.fileName"
-                  type="text"
-                  value="./logs/journal.log"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-                <small
-                  class="form-text text-muted"
-                >
-                  <div>
-                    The file name of the log file
-                  </div>
-                </small>
-              </div>
-            </div>
-            <div
               class="col-md-2"
             >
               <div
@@ -13864,38 +13576,6 @@ exports[`Engine check change port 1`] = `
           <div
             class="row"
           >
-            <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="engine.logParameters.sqliteLog.fileName"
-                >
-                  File name of sqlite db
-                </label>
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="engine.logParameters.sqliteLog.fileName"
-                  name="engine.logParameters.sqliteLog.fileName"
-                  type="text"
-                  value="./logs/journal.db"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-                <small
-                  class="form-text text-muted"
-                >
-                  <div>
-                    The file name of the database file
-                  </div>
-                </small>
-              </div>
-            </div>
             <div
               class="col-md-2"
             >
@@ -17005,38 +16685,6 @@ exports[`Engine check change user 1`] = `
             class="row"
           >
             <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="engine.logParameters.fileLog.fileName"
-                >
-                  File name for the log file
-                </label>
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="engine.logParameters.fileLog.fileName"
-                  name="engine.logParameters.fileLog.fileName"
-                  type="text"
-                  value="./logs/journal.log"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-                <small
-                  class="form-text text-muted"
-                >
-                  <div>
-                    The file name of the log file
-                  </div>
-                </small>
-              </div>
-            </div>
-            <div
               class="col-md-2"
             >
               <div
@@ -17194,38 +16842,6 @@ exports[`Engine check change user 1`] = `
           <div
             class="row"
           >
-            <div
-              class="col-md-4"
-            >
-              <div
-                class="mb-3"
-              >
-                <label
-                  class="form-label"
-                  for="engine.logParameters.sqliteLog.fileName"
-                >
-                  File name of sqlite db
-                </label>
-                <input
-                  aria-invalid="false"
-                  class="oi-form-input form-control"
-                  id="engine.logParameters.sqliteLog.fileName"
-                  name="engine.logParameters.sqliteLog.fileName"
-                  type="text"
-                  value="./logs/journal.db"
-                />
-                <div
-                  class="invalid-feedback"
-                />
-                <small
-                  class="form-text text-muted"
-                >
-                  <div>
-                    The file name of the database file
-                  </div>
-                </small>
-              </div>
-            </div>
             <div
               class="col-md-2"
             >
