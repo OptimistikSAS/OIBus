@@ -1463,5 +1463,44 @@ module.exports = {
     logger.info('Removing applications / dataSources from north / south settings.')
     config.north = config.north.applications
     config.south = config.south.dataSources
+
+    await createFolder('./logs')
+    logger.info('Removing file logs file name from config. Default will be "logs/journal.log".')
+    const oldLogFileName = path.basename(config.engine.logParameters.fileLog.fileName)
+    const newFileLogFilePath = path.resolve('./logs', 'journal.log')
+    try {
+      await fs.rename(oldLogFileName, newFileLogFilePath)
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        logger.error(err)
+      }
+    }
+    delete config.engine.logParameters.fileLog.fileName
+
+    const oldLogSqlFileName = path.basename(config.engine.logParameters.sqliteLog.fileName)
+    const newFileLogSqlPath = path.resolve('./logs', 'journal.db')
+    try {
+      await fs.rename(oldLogSqlFileName, newFileLogSqlPath)
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        logger.error(err)
+      }
+    }
+    delete config.engine.logParameters.sqliteLog.fileName
+
+    try {
+      await fs.rm(path.resolve('./migration-journal.log'), { force: true })
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        logger.error(err)
+      }
+    }
+    try {
+      await fs.rm(path.resolve('./OIBus-main-journal.log'), { force: true })
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        logger.error(err)
+      }
+    }
   },
 }

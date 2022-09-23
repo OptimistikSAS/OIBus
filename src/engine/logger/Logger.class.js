@@ -9,8 +9,8 @@ const ENGINE_LOG_LEVEL_ENTRY = 'engine'
  * Four loggers are supported:
  *  - Console
  *  - File
- *  - SQLite {@SQLiteLoggerTransport}
- *  - Loki {@LokiLoggerTransport}
+ *  - SQLite
+ *  - Loki
  * @class Logger
  */
 class Logger {
@@ -66,14 +66,18 @@ class Logger {
     }
 
     if (fileLog.level !== 'none') {
-      targets.push({ target: 'pino/file', options: { destination: fileLog.fileName, mkdir: true }, level: fileLog.level })
+      const fileName = fileLog.fileName ? fileLog.fileName : path.resolve('./logs', 'journal.log')
+
+      targets.push({ target: 'pino/file', options: { destination: fileName, mkdir: true }, level: fileLog.level })
     }
 
     if (sqliteLog.level !== 'none') {
+      const fileName = sqliteLog.fileName ? sqliteLog.fileName : path.resolve('./logs', 'journal.db')
+
       targets.push({
         target: path.join(__dirname, 'SqliteLoggerTransport.class.js'),
         options: {
-          fileName: sqliteLog.fileName,
+          fileName,
           maxFileSize: sqliteLog.maxSize,
         },
         level: sqliteLog.level,
@@ -103,10 +107,7 @@ class Logger {
 
     if (targets.length > 0) {
       this.logger = await pino({
-        mixin: () => ({
-          source: this.getSource(),
-          scope: this.scope,
-        }),
+        mixin: this.pinoMixin.bind(this),
         base: undefined,
         level: 'trace', // default to trace since each transport has its defined level
         timestamp: pino.stdTimeFunctions.isoTime,
@@ -115,16 +116,27 @@ class Logger {
     }
   }
 
-  info(message) {
-    this.logger?.info(message)
+  /**
+   * Mixin method to add parameters to the logs for Pino logger
+   * @returns {{scope: String, source: String}} - Add scope and source to the log
+   */
+  pinoMixin() {
+    return {
+      source: this.getSource(),
+      scope: this.scope,
+    }
+  }
+
+  error(message) {
+    this.logger?.error(message.stack || message)
   }
 
   warn(message) {
     this.logger?.warn(message)
   }
 
-  error(message) {
-    this.logger?.error(message.stack || message)
+  info(message) {
+    this.logger?.info(message)
   }
 
   debug(message) {
