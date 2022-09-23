@@ -382,7 +382,6 @@ label {
 .oi-icon {
   width: 12px;
   color: #627187;
-  margin-right: 10px;
 }
 
 .oi-back-icon {
@@ -537,7 +536,6 @@ h3 {
   outline: none;
   box-shadow: none;
   border-width: 0;
-  margin-top: 3px;
 }
 
 .table > :not(:first-child) {

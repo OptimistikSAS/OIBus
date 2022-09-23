@@ -64,7 +64,7 @@ exports[`SubscribedTo check SubscribedTo with application: TestConsole 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -120,7 +120,7 @@ exports[`SubscribedTo check SubscribedTo with application: TestConsole 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -206,7 +206,7 @@ exports[`SubscribedTo click changes check SubscribedTo add row 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -262,7 +262,7 @@ exports[`SubscribedTo click changes check SubscribedTo add row 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -348,7 +348,7 @@ exports[`SubscribedTo click changes check SubscribedTo delete first row 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -404,7 +404,7 @@ exports[`SubscribedTo click changes check SubscribedTo delete first row 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -490,7 +490,7 @@ exports[`SubscribedTo click changes check SubscribedTo update row 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -546,7 +546,7 @@ exports[`SubscribedTo click changes check SubscribedTo update row 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -632,7 +632,7 @@ exports[`SubscribedTo no dataSources check SubscribedTo with no dataSources 1`] 
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -677,7 +677,7 @@ exports[`SubscribedTo no dataSources check SubscribedTo with no dataSources 1`] 
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"

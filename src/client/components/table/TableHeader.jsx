@@ -7,7 +7,7 @@ const TableHeader = ({ headers, sortableProperties, sortBy, isAscending, handleA
   if (handleAdd) {
     decoratedHeaders[0] = ( // add Icon in the header
       <>
-        <FaPlusCircle className="oi-icon" onClick={handleAdd} />
+        <FaPlusCircle className="oi-icon me-2" onClick={handleAdd} />
         <span>{headers[0]}</span>
       </>
     )

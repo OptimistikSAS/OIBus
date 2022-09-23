@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import PropTypes from 'prop-types'
 import { useNavigate } from 'react-router-dom'
-import { Form, Row, Col, Button, Container } from 'reactstrap'
+import { Form, Row, Col, Container } from 'reactstrap'
 import { FaPencilAlt } from 'react-icons/fa'
 import {
   OIbTitle,
@@ -62,16 +62,13 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
             )}
           />
           {pencil && (
-            <Button
-              outline
-              onClick={() => {
-                setRenamingConnector(`south-${dataSource.id}`)
-                setPencil(false)
-              }}
-              className="util-button"
-            >
-              <FaPencilAlt className="oi-icon ms-2" />
-            </Button>
+          <FaPencilAlt
+            className="oi-icon mx-2"
+            onClick={() => {
+              setRenamingConnector(`south-${dataSource.id}`)
+              setPencil(false)
+            }}
+          />
           )}
         </h6>
         <div className="pull-right me-3">

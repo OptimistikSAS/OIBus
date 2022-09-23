@@ -139,7 +139,7 @@ exports[`ScanModes check ScanModes 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -300,7 +300,7 @@ exports[`ScanModes check ScanModes 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -448,7 +448,7 @@ exports[`ScanModes check ScanModes 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -596,7 +596,7 @@ exports[`ScanModes check ScanModes 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -692,7 +692,7 @@ exports[`ScanModes check ScanModes 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -853,7 +853,7 @@ exports[`ScanModes check add line to scan modes 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1014,7 +1014,7 @@ exports[`ScanModes check add line to scan modes 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1162,7 +1162,7 @@ exports[`ScanModes check add line to scan modes 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1310,7 +1310,7 @@ exports[`ScanModes check add line to scan modes 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1406,7 +1406,7 @@ exports[`ScanModes check add line to scan modes 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1567,7 +1567,7 @@ exports[`ScanModes check change first cron 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1728,7 +1728,7 @@ exports[`ScanModes check change first cron 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1876,7 +1876,7 @@ exports[`ScanModes check change first cron 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2024,7 +2024,7 @@ exports[`ScanModes check change first cron 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2120,7 +2120,7 @@ exports[`ScanModes check change first cron 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2281,7 +2281,7 @@ exports[`ScanModes check change first scan mode 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2442,7 +2442,7 @@ exports[`ScanModes check change first scan mode 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2590,7 +2590,7 @@ exports[`ScanModes check change first scan mode 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2738,7 +2738,7 @@ exports[`ScanModes check change first scan mode 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2834,7 +2834,7 @@ exports[`ScanModes check change first scan mode 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2995,7 +2995,7 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3156,7 +3156,7 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3304,7 +3304,7 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3452,7 +3452,7 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3548,7 +3548,7 @@ exports[`ScanModes check change first scan mode to invalide: already existing 1`
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3709,7 +3709,7 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3870,7 +3870,7 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4018,7 +4018,7 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4166,7 +4166,7 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4262,7 +4262,7 @@ exports[`ScanModes check change first scan mode to invalide: empty 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4423,7 +4423,7 @@ exports[`ScanModes check delete first scan mode 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4584,7 +4584,7 @@ exports[`ScanModes check delete first scan mode 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4732,7 +4732,7 @@ exports[`ScanModes check delete first scan mode 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4880,7 +4880,7 @@ exports[`ScanModes check delete first scan mode 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4976,7 +4976,7 @@ exports[`ScanModes check delete first scan mode 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"

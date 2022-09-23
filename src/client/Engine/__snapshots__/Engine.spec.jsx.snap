@@ -302,7 +302,7 @@ exports[`Engine check Engine 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -350,7 +350,7 @@ exports[`Engine check Engine 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -390,7 +390,7 @@ exports[`Engine check Engine 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -430,7 +430,7 @@ exports[`Engine check Engine 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -470,7 +470,7 @@ exports[`Engine check Engine 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -1397,7 +1397,7 @@ exports[`Engine check Engine 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -1558,7 +1558,7 @@ exports[`Engine check Engine 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -1706,7 +1706,7 @@ exports[`Engine check Engine 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -1854,7 +1854,7 @@ exports[`Engine check Engine 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -1950,7 +1950,7 @@ exports[`Engine check Engine 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -2371,7 +2371,7 @@ exports[`Engine check Engine 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -2556,7 +2556,7 @@ exports[`Engine check Engine 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -2708,7 +2708,7 @@ exports[`Engine check Engine 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -2822,7 +2822,7 @@ exports[`Engine check Engine 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -3474,7 +3474,7 @@ exports[`Engine check Engine 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -3522,7 +3522,7 @@ exports[`Engine check Engine 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -3848,7 +3848,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -3896,7 +3896,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -3936,7 +3936,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -3976,7 +3976,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -4016,7 +4016,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -4943,7 +4943,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -5104,7 +5104,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -5252,7 +5252,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -5400,7 +5400,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -5496,7 +5496,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -5917,7 +5917,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -6586,7 +6586,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -6634,7 +6634,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -6980,7 +6980,7 @@ exports[`Engine check change engineName 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -7028,7 +7028,7 @@ exports[`Engine check change engineName 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -7068,7 +7068,7 @@ exports[`Engine check change engineName 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -7108,7 +7108,7 @@ exports[`Engine check change engineName 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -7148,7 +7148,7 @@ exports[`Engine check change engineName 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -8075,7 +8075,7 @@ exports[`Engine check change engineName 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -8236,7 +8236,7 @@ exports[`Engine check change engineName 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -8384,7 +8384,7 @@ exports[`Engine check change engineName 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -8532,7 +8532,7 @@ exports[`Engine check change engineName 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -8628,7 +8628,7 @@ exports[`Engine check change engineName 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -9049,7 +9049,7 @@ exports[`Engine check change engineName 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -9234,7 +9234,7 @@ exports[`Engine check change engineName 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -9386,7 +9386,7 @@ exports[`Engine check change engineName 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -9500,7 +9500,7 @@ exports[`Engine check change engineName 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -10152,7 +10152,7 @@ exports[`Engine check change engineName 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -10200,7 +10200,7 @@ exports[`Engine check change engineName 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -10526,7 +10526,7 @@ exports[`Engine check change password 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -10574,7 +10574,7 @@ exports[`Engine check change password 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -10614,7 +10614,7 @@ exports[`Engine check change password 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -10654,7 +10654,7 @@ exports[`Engine check change password 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -10694,7 +10694,7 @@ exports[`Engine check change password 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -11621,7 +11621,7 @@ exports[`Engine check change password 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -11782,7 +11782,7 @@ exports[`Engine check change password 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -11930,7 +11930,7 @@ exports[`Engine check change password 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -12078,7 +12078,7 @@ exports[`Engine check change password 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -12174,7 +12174,7 @@ exports[`Engine check change password 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -12595,7 +12595,7 @@ exports[`Engine check change password 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -12780,7 +12780,7 @@ exports[`Engine check change password 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -12932,7 +12932,7 @@ exports[`Engine check change password 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -13046,7 +13046,7 @@ exports[`Engine check change password 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -13698,7 +13698,7 @@ exports[`Engine check change password 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -13746,7 +13746,7 @@ exports[`Engine check change password 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -14072,7 +14072,7 @@ exports[`Engine check change port 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -14120,7 +14120,7 @@ exports[`Engine check change port 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -14160,7 +14160,7 @@ exports[`Engine check change port 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -14200,7 +14200,7 @@ exports[`Engine check change port 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -14240,7 +14240,7 @@ exports[`Engine check change port 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -15167,7 +15167,7 @@ exports[`Engine check change port 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -15328,7 +15328,7 @@ exports[`Engine check change port 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -15476,7 +15476,7 @@ exports[`Engine check change port 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -15624,7 +15624,7 @@ exports[`Engine check change port 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -15720,7 +15720,7 @@ exports[`Engine check change port 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -16141,7 +16141,7 @@ exports[`Engine check change port 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -16326,7 +16326,7 @@ exports[`Engine check change port 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -16478,7 +16478,7 @@ exports[`Engine check change port 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -16592,7 +16592,7 @@ exports[`Engine check change port 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -17244,7 +17244,7 @@ exports[`Engine check change port 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -17292,7 +17292,7 @@ exports[`Engine check change port 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -17618,7 +17618,7 @@ exports[`Engine check change user 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -17666,7 +17666,7 @@ exports[`Engine check change user 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -17706,7 +17706,7 @@ exports[`Engine check change user 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -17746,7 +17746,7 @@ exports[`Engine check change user 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -17786,7 +17786,7 @@ exports[`Engine check change user 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -18713,7 +18713,7 @@ exports[`Engine check change user 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -18874,7 +18874,7 @@ exports[`Engine check change user 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -19022,7 +19022,7 @@ exports[`Engine check change user 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -19170,7 +19170,7 @@ exports[`Engine check change user 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -19266,7 +19266,7 @@ exports[`Engine check change user 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -19687,7 +19687,7 @@ exports[`Engine check change user 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -19872,7 +19872,7 @@ exports[`Engine check change user 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -20024,7 +20024,7 @@ exports[`Engine check change user 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -20138,7 +20138,7 @@ exports[`Engine check change user 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -20790,7 +20790,7 @@ exports[`Engine check change user 1`] = `
                   scope="col"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon me-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"
@@ -20838,7 +20838,7 @@ exports[`Engine check change user 1`] = `
                   class="align-center"
                 >
                   <svg
-                    class="oi-icon"
+                    class="oi-icon mx-2"
                     fill="currentColor"
                     height="1em"
                     stroke="currentColor"

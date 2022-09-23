@@ -176,7 +176,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -282,7 +282,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -370,7 +370,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -693,7 +693,7 @@ exports[`ConfigurePoints check add new point 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -799,7 +799,7 @@ exports[`ConfigurePoints check add new point 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -887,7 +887,7 @@ exports[`ConfigurePoints check add new point 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1210,7 +1210,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1316,7 +1316,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1404,7 +1404,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1727,7 +1727,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1833,7 +1833,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1921,7 +1921,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2244,7 +2244,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2350,7 +2350,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2438,7 +2438,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2761,7 +2761,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2867,7 +2867,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2955,7 +2955,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3278,7 +3278,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3384,7 +3384,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3472,7 +3472,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3795,7 +3795,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3901,7 +3901,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3989,7 +3989,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4312,7 +4312,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4418,7 +4418,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4506,7 +4506,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4829,7 +4829,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4935,7 +4935,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -5023,7 +5023,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -5346,7 +5346,7 @@ exports[`ConfigurePoints check export points 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -5452,7 +5452,7 @@ exports[`ConfigurePoints check export points 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -5540,7 +5540,7 @@ exports[`ConfigurePoints check export points 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -5863,7 +5863,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -5969,7 +5969,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -6057,7 +6057,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -6380,7 +6380,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -6486,7 +6486,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -6574,7 +6574,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -6897,7 +6897,7 @@ exports[`ConfigurePoints check import points press 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -7003,7 +7003,7 @@ exports[`ConfigurePoints check import points press 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -7091,7 +7091,7 @@ exports[`ConfigurePoints check import points press 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -7414,7 +7414,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -7520,7 +7520,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -7608,7 +7608,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -7931,7 +7931,7 @@ exports[`ConfigurePoints check import points success 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -8037,7 +8037,7 @@ exports[`ConfigurePoints check import points success 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -8125,7 +8125,7 @@ exports[`ConfigurePoints check import points success 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -8468,7 +8468,7 @@ exports[`ConfigurePoints check no points 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -8715,7 +8715,7 @@ exports[`ConfigurePoints check pagination 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -8821,7 +8821,7 @@ exports[`ConfigurePoints check pagination 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -8909,7 +8909,7 @@ exports[`ConfigurePoints check pagination 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -9232,7 +9232,7 @@ exports[`ConfigurePoints check render with filterText 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"

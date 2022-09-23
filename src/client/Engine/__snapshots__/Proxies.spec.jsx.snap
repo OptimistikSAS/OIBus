@@ -64,7 +64,7 @@ exports[`Proxies check Proxies 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -249,7 +249,7 @@ exports[`Proxies check Proxies 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -401,7 +401,7 @@ exports[`Proxies check Proxies 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -515,7 +515,7 @@ exports[`Proxies check Proxies 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -601,7 +601,7 @@ exports[`Proxies check add line to proxies 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -786,7 +786,7 @@ exports[`Proxies check add line to proxies 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -938,7 +938,7 @@ exports[`Proxies check add line to proxies 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1052,7 +1052,7 @@ exports[`Proxies check add line to proxies 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1138,7 +1138,7 @@ exports[`Proxies check change first host 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1323,7 +1323,7 @@ exports[`Proxies check change first host 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1475,7 +1475,7 @@ exports[`Proxies check change first host 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1589,7 +1589,7 @@ exports[`Proxies check change first host 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1675,7 +1675,7 @@ exports[`Proxies check change first name 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -1860,7 +1860,7 @@ exports[`Proxies check change first name 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2012,7 +2012,7 @@ exports[`Proxies check change first name 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2126,7 +2126,7 @@ exports[`Proxies check change first name 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2212,7 +2212,7 @@ exports[`Proxies check change first password 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2397,7 +2397,7 @@ exports[`Proxies check change first password 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2549,7 +2549,7 @@ exports[`Proxies check change first password 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2663,7 +2663,7 @@ exports[`Proxies check change first password 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2749,7 +2749,7 @@ exports[`Proxies check change first port 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -2934,7 +2934,7 @@ exports[`Proxies check change first port 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3086,7 +3086,7 @@ exports[`Proxies check change first port 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3200,7 +3200,7 @@ exports[`Proxies check change first port 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3286,7 +3286,7 @@ exports[`Proxies check change first protocol 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3471,7 +3471,7 @@ exports[`Proxies check change first protocol 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3623,7 +3623,7 @@ exports[`Proxies check change first protocol 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3737,7 +3737,7 @@ exports[`Proxies check change first protocol 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -3823,7 +3823,7 @@ exports[`Proxies check change first username 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4008,7 +4008,7 @@ exports[`Proxies check change first username 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4160,7 +4160,7 @@ exports[`Proxies check change first username 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4274,7 +4274,7 @@ exports[`Proxies check change first username 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4360,7 +4360,7 @@ exports[`Proxies check delete first proxie 1`] = `
               scope="col"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon me-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4545,7 +4545,7 @@ exports[`Proxies check delete first proxie 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4697,7 +4697,7 @@ exports[`Proxies check delete first proxie 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
@@ -4811,7 +4811,7 @@ exports[`Proxies check delete first proxie 1`] = `
               class="align-center"
             >
               <svg
-                class="oi-icon"
+                class="oi-icon mx-2"
                 fill="currentColor"
                 height="1em"
                 stroke="currentColor"
