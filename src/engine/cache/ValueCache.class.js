@@ -32,22 +32,20 @@ class ValueCache extends BaseCache {
   }
 
   /**
-   * Save values  from a South connector to the North cache database
-   * @param {string} southId - The South connector id
-   * @param {object} values - values
-   * @returns {void} - The result promise
+   * Save values from a South connector to the North cache database
+   * @param {String} southId - The South connector id
+   * @param {Object} values - The values to cache
+   * @returns {void}
    */
   cacheValues(southId, values) {
-    if (values.length > 0) {
-      databaseService.saveValues(this.valuesDatabase, southId, values)
-    }
+    databaseService.saveValues(this.valuesDatabase, southId, values)
   }
 
   /**
    * Retrieve values from the Cache database and send them to the associated northHandleValuesFunction function
    * This method is called when the group count is reached or when the Cache timeout is reached
    * @param {Number} max - Maximum number of values to retrieve
-   * @returns {Object[]} - The result promise
+   * @returns {Object[]} - The values to send
    */
   retrieveValuesFromCache(max) {
     return databaseService.getValuesToSend(this.valuesDatabase, max)
@@ -72,6 +70,14 @@ class ValueCache extends BaseCache {
     databaseService.saveErroredValues(this.valuesErrorDatabase, values)
     const removed = databaseService.removeSentValues(this.valuesDatabase, values)
     this.logger.error(`${removed} values removed from cache and saved to values error database.`)
+  }
+
+  /**
+   * Retrieve the number of values stored in the cache
+   * @returns {Number} - The number of values
+   */
+  getNumberOfValues() {
+    return databaseService.getCount(this.valuesDatabase)
   }
 
   /**
