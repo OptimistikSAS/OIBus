@@ -207,7 +207,7 @@ class SQL extends SouthConnector {
 
     const config = {
       user: this.username,
-      password: this.password ? this.encryptionService.decryptText(this.password) : '',
+      password: this.password ? await this.encryptionService.decryptText(this.password) : '',
       server: this.host,
       port: this.port,
       database: this.database,
@@ -256,7 +256,7 @@ class SQL extends SouthConnector {
       host: this.host,
       port: this.port,
       user: this.username,
-      password: this.encryptionService.decryptText(this.password),
+      password: await this.encryptionService.decryptText(this.password),
       database: this.database,
       connectTimeout: this.connectionTimeout,
       timezone: 'Z',
@@ -302,7 +302,7 @@ class SQL extends SouthConnector {
       host: this.host,
       port: this.port,
       user: this.username,
-      password: this.encryptionService.decryptText(this.password),
+      password: await this.encryptionService.decryptText(this.password),
       database: this.database,
       query_timeout: this.requestTimeout,
     }
@@ -341,7 +341,7 @@ class SQL extends SouthConnector {
 
     const config = {
       user: this.username,
-      password: this.encryptionService.decryptText(this.password),
+      password: await this.encryptionService.decryptText(this.password),
       connectString: `${this.host}:${this.port}/${this.database}`,
     }
 

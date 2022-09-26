@@ -63,7 +63,7 @@ class MQTT extends NorthConnector {
 
     const options = {
       username: this.username,
-      password: this.password ? Buffer.from(this.encryptionService.decryptText(this.password)) : '',
+      password: this.password ? Buffer.from(await this.encryptionService.decryptText(this.password)) : '',
       clientId: this.clientId,
       key: this.certificate.privateKey,
       cert: this.certificate.cert,
