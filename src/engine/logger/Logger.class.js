@@ -90,7 +90,7 @@ class Logger {
           target: path.join(__dirname, 'LokiLoggerTransport.class.js'),
           options: {
             username: lokiLog.username,
-            password: this.encryptionService.decryptText(lokiLog.password),
+            password: await this.encryptionService.decryptText(lokiLog.password),
             tokenAddress: lokiLog.tokenAddress,
             lokiAddress: lokiLog.lokiAddress,
             engineName: engineConfig.engineName,

@@ -62,6 +62,18 @@ describe('Database services', () => {
     expect(expectedDatabase).toBe(mockDatabase)
   })
 
+  it('should create value errors database', () => {
+    const expectedDatabase = databaseService.createValueErrorsDatabase('myDb.db')
+    expect(prepare).toHaveBeenCalledTimes(1)
+    expect(prepare).toHaveBeenCalledWith('CREATE TABLE IF NOT EXISTS cache ('
+        + 'id INTEGER PRIMARY KEY, '
+        + 'timestamp TEXT, '
+        + 'data TEXT, '
+        + 'point_id TEXT);')
+    expect(run).toHaveBeenCalledTimes(1)
+    expect(expectedDatabase).toBe(mockDatabase)
+  })
+
   it('should create file database', () => {
     const expectedDatabase = databaseService.createFilesDatabase('myDb.db')
     expect(prepare).toHaveBeenCalledTimes(1)
@@ -150,7 +162,7 @@ describe('Database services', () => {
   })
 
   it('should get file to send', () => {
-    const result = databaseService.getFileToSend(mockDatabase, 'myNorthId')
+    const result = databaseService.getFileToSend(mockDatabase)
     expect(prepare).toHaveBeenCalledTimes(1)
     expect(prepare).toHaveBeenCalledWith('SELECT path, timestamp '
         + 'FROM cache '
@@ -160,6 +172,14 @@ describe('Database services', () => {
     expect(all).toHaveBeenCalledTimes(1)
     expect(all).toHaveBeenCalledWith()
     expect(result).toEqual({ path: 'myFilePath', timestamp: 123 })
+  })
+
+  it('should return null if no file to send', () => {
+    mockDatabase.prepare.mockReturnValue({ all: jest.fn(() => []) })
+
+    const result = databaseService.getFileToSend(mockDatabase)
+
+    expect(result).toEqual(null)
   })
 
   it('should delete sent file', () => {
@@ -191,7 +211,7 @@ describe('Database services', () => {
     localGet.mockReturnValue({ count: 11 })
     mockDatabase.prepare.mockReturnValue({ get: localGet })
 
-    const result = databaseService.getFileCountForNorthConnector(mockDatabase, 'myNorthId')
+    const result = databaseService.getFileCountForNorthConnector(mockDatabase)
     expect(prepare).toHaveBeenCalledTimes(1)
     expect(prepare).toHaveBeenCalledWith('SELECT COUNT(*) AS count FROM cache')
 

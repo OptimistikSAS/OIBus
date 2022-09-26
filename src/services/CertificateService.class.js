@@ -1,4 +1,5 @@
-const fs = require('fs/promises')
+const fs = require('node:fs/promises')
+const path = require('node:path')
 
 /**
  * Class used to manage certificate files and their content
@@ -11,42 +12,26 @@ class CertificateService {
     this.ca = null
   }
 
-  async init(keyFile, certFile, caFile) {
-    if (keyFile) {
+  async init(privateKeyFilePath, certFilePath, caFilePath) {
+    if (privateKeyFilePath) {
       try {
-        const stat = await fs.stat(keyFile)
-        if (stat) {
-          this.privateKey = await fs.readFile(keyFile)
-        } else {
-          this.logger.error(`Key file ${keyFile} does not exist`)
-        }
+        this.privateKey = await fs.readFile(path.resolve(privateKeyFilePath))
       } catch (error) {
-        this.logger.error(`Error reading key file ${keyFile}: ${error}`)
-        return
+        this.logger.error(`Key file "${privateKeyFilePath}" does not exist: ${error}`)
       }
     }
-    if (certFile) {
+    if (certFilePath) {
       try {
-        const stat = await fs.stat(certFile)
-        if (stat) {
-          this.cert = await fs.readFile(certFile)
-        } else {
-          this.logger.error(`Cert file ${certFile} does not exist`)
-        }
+        this.cert = await fs.readFile(path.resolve(certFilePath))
       } catch (error) {
-        this.logger.error(`Error reading cert file ${certFile}: ${error}`)
+        this.logger.error(`Cert file "${certFilePath}" does not exist: ${error}`)
       }
     }
-    if (caFile) {
+    if (caFilePath) {
       try {
-        const stat = await fs.stat(caFile)
-        if (stat) {
-          this.ca = await fs.readFile(caFile)
-        } else {
-          this.logger.error(`CA file ${caFile} does not exist`)
-        }
+        this.ca = await fs.readFile(path.resolve(caFilePath))
       } catch (error) {
-        this.logger.error(`Error reading ca file ${caFile}: ${error}`)
+        this.logger.error(`CA file "${caFilePath}" does not exist: ${error}`)
       }
     }
   }

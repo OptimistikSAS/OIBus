@@ -227,7 +227,7 @@ class OPCUA_HA extends SouthConnector {
     do {
       if (options.aggregateFn) {
         if (!options.processingInterval) {
-          this.logger.error(`Option aggregateFn ${options.aggregateFn} without processingInterval.`)
+          this.logger.error(`Option aggregateFn "${options.aggregateFn}" without processingInterval.`)
         }
         // We use the same aggregate for all nodes (OPCUA allows to have a different one for each)
         const aggregateType = Array(nodesToRead.length).fill(options.aggregateFn)
@@ -265,10 +265,12 @@ class OPCUA_HA extends SouthConnector {
         nodesToRead = nodesToRead.map((node, i) => {
           if (!dataValues[i]) dataValues.push([])
           const result = response.results[i]
-          this.logger.trace(`Result for node "${node.nodeId}" (number ${i}) contains `
-              + `${result.historyData?.dataValues.length} values and has status code `
+          if (result.historyData?.dataValues) {
+            this.logger.trace(`Result for node "${node.nodeId}" (number ${i}) contains `
+              + `${result.historyData.dataValues.length} values and has status code `
               + `${JSON.stringify(result.statusCode.value)}, continuation point is ${result.continuationPoint}.`)
-          dataValues[i].push(...result.historyData?.dataValues ?? [])
+            dataValues[i].push(...result.historyData.dataValues)
+          }
 
           // Reason of statusCode not equal to zero could be there is no data for the requested data and interval
           if (result.statusCode.value !== StatusCodes.Good) {
@@ -313,10 +315,9 @@ class OPCUA_HA extends SouthConnector {
 
     Object.keys(logs).forEach((statusCode) => {
       switch (statusCode) {
-        case StatusCodes.BadIndexRangeNoData: // No data exists for the requested time range or event filter.
         default:
           if (logs[statusCode].affectedNodes.length > MAX_NUMBER_OF_NODE_TO_LOG) {
-            this.logger.debug(`${logs[statusCode].description} (${statusCode}): [${
+            this.logger.debug(`${logs[statusCode].description} with status code ${statusCode}: [${
               logs[statusCode].affectedNodes[0]}..${logs[statusCode].affectedNodes[logs[statusCode].affectedNodes.length - 1]}]`)
           } else {
             this.logger.debug(`${logs[statusCode].description} with status code ${statusCode}: [${logs[statusCode].affectedNodes.toString()}]`)
@@ -343,7 +344,7 @@ class OPCUA_HA extends SouthConnector {
               + `[${nodesToRead[0].nodeId}...${nodesToRead[nodesToRead.length - 1].nodeId}]`)
       const options = {
         timeout: this.readTimeout,
-        numValuesPerNode: this.maxReturnValues ?? 0,
+        numValuesPerNode: this.maxReturnValues,
       }
       switch (scanGroup.resampling) {
         case 'Second':
@@ -367,7 +368,7 @@ class OPCUA_HA extends SouthConnector {
         case 'None':
           break
         default:
-          this.logger.error(`Unsupported resampling: ${scanGroup.resampling}`)
+          this.logger.error(`Unsupported resampling: "${scanGroup.resampling}".`)
       }
       switch (scanGroup.aggregate) {
         case 'Average':
@@ -385,7 +386,7 @@ class OPCUA_HA extends SouthConnector {
         case 'Raw':
           break
         default:
-          this.logger.error(`Unsupported aggregate: ${scanGroup.aggregate}`)
+          this.logger.error(`Unsupported aggregate: "${scanGroup.aggregate}".`)
       }
 
       const dataValues = await this.readHistoryValue(nodesToRead, startTime, endTime, options)
@@ -451,7 +452,7 @@ class OPCUA_HA extends SouthConnector {
         userIdentity = {
           type: UserTokenType.UserName,
           userName: this.username,
-          password: this.encryptionService.decryptText(this.password),
+          password: await this.encryptionService.decryptText(this.password),
         }
       } else {
         userIdentity = { type: UserTokenType.Anonymous }

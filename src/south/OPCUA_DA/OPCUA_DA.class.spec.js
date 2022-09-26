@@ -135,6 +135,42 @@ describe('South OPCUA-DA', () => {
     expect(setTimeoutSpy).not.toBeCalled()
   })
 
+  it('should properly connect to OPCUA server with certificate', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
+    await south.init()
+    const expectedOptions = {
+      applicationName: 'OIBus',
+      clientName: 'southId',
+      connectionStrategy: {
+        initialDelay: 1000,
+        maxRetry: 1,
+      },
+      securityMode: nodeOPCUAClient.MessageSecurityMode.None,
+      securityPolicy: nodeOPCUAClient.SecurityPolicy.None,
+      endpointMustExist: false,
+      keepSessionAlive: false,
+      keepPendingSessionsOnDisconnect: false,
+      clientCertificateManager: { state: 2 },
+    }
+    south.certificate = {
+      privateKey: 'myPrivateKey',
+      cert: 'myCert',
+    }
+
+    await south.connect()
+
+    delete settings.OPCUA_DA.username
+    delete settings.OPCUA_DA.password
+    const expectedUserIdentity = {
+      type: 2,
+      certificateData: 'myCert',
+      privateKey: Buffer.from('myPrivateKey', 'utf-8').toString(),
+    }
+    expect(nodeOPCUAClient.OPCUAClient.createSession).toBeCalledWith(south.url, expectedUserIdentity, expectedOptions)
+    expect(south.connected).toBeTruthy()
+    expect(setTimeoutSpy).not.toBeCalled()
+  })
+
   it('should properly retry connection to OPCUA server', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
 
@@ -172,11 +208,10 @@ describe('South OPCUA-DA', () => {
   it('should properly call readVariableValue() and addValues()', async () => {
     south.connected = true
     south.session = {
-      readVariableValue: jest.fn()
-        .mockReturnValue([{
-          value: { value: 666 },
-          statusCode: { value: 0 },
-        }]),
+      readVariableValue: jest.fn().mockReturnValue([{
+        value: { value: 666 },
+        statusCode: { value: 0 },
+      }]),
     }
     south.addValues = jest.fn()
     await south.lastPointQuery(settings.points[0].scanMode)
@@ -192,6 +227,37 @@ describe('South OPCUA-DA', () => {
         timestamp: new Date(nowDateString).toISOString(),
       },
     ])
+  })
+
+  it('should properly manage read error', async () => {
+    south.connected = true
+    south.session = {
+      readVariableValue: jest.fn(() => {
+        throw new Error('read error')
+      }),
+      close: jest.fn(),
+    }
+    south.formatAndSendValues = jest.fn()
+    await expect(south.lastPointQuery(settings.points[0].scanMode)).rejects.toThrowError('read error')
+  })
+
+  it('should log a message if different number of values and requested nodes', async () => {
+    south.connected = true
+    south.formatAndSendValues = jest.fn()
+    south.session = {
+      readVariableValue: jest.fn().mockReturnValue([{
+        value: { value: 666 },
+        statusCode: { value: 0 },
+      },
+      {
+        value: { value: 666 },
+        statusCode: { value: 0 },
+      }]),
+    }
+    await south.lastPointQuery(settings.points[0].scanMode)
+
+    expect(south.session.readVariableValue).toBeCalledWith(['ns=3;s=Random'])
+    expect(south.logger.error).toHaveBeenCalledWith('Received 2 data values, requested 1 nodes.')
   })
 
   it('should properly disconnect when trying to connect', async () => {

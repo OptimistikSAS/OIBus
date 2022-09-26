@@ -1,9 +1,16 @@
-const os = require('os')
-const crypto = require('crypto')
-const fs = require('fs')
-const path = require('path')
+const os = require('node:os')
+const crypto = require('node:crypto')
+const fs = require('node:fs/promises')
+const path = require('node:path')
+
 const selfSigned = require('selfsigned')
 
+const { createFolder, filesExists } = require('./utils')
+
+/**
+ * Service used to manage encryption and decryption of secrets in the config file
+ * Also responsible to create private and public key used for encrypting the secrets
+ */
 class EncryptionService {
   static getInstance() {
     if (!EncryptionService.instance) {
@@ -18,8 +25,8 @@ class EncryptionService {
   }
 
   /**
-   * Set the key folder.
-   * @param {string} keyFolder - The folder to store the keys
+   * Set the key folder path.
+   * @param {String} keyFolder - The folder path to store the keys
    * @returns {void}
    */
   setKeyFolder(keyFolder) {
@@ -27,8 +34,8 @@ class EncryptionService {
   }
 
   /**
-   * Set the cert folder.
-   * @param {string} certsFolder - The folder to store the keys
+   * Set the cert folder path.
+   * @param {String} certsFolder - The folder path to store the keys
    * @returns {void}
    */
   setCertsFolder(certsFolder) {
@@ -37,20 +44,15 @@ class EncryptionService {
 
   /**
    * Check if local certificates exist and create them if not.
-   * @returns {void}
+   * @returns {Promise<void>} - The result promise
    */
-  checkOrCreateCertFiles() {
-    const privateKeyPath = path.join(this.certsFolder, 'privateKey.pem')
-    const publicKeyPath = path.join(this.certsFolder, 'publicKey.pem')
-    const certPath = path.join(this.certsFolder, 'cert.pem')
-    if (!fs.existsSync(this.certsFolder)) {
-      fs.mkdirSync(this.certsFolder, { recursive: true })
-    }
-    if (
-      !fs.existsSync(privateKeyPath)
-        || !fs.existsSync(publicKeyPath)
-        || !fs.existsSync(certPath)
-    ) {
+  async checkOrCreateCertFiles() {
+    const privateKeyPath = path.resolve(this.certsFolder, 'privateKey.pem')
+    const publicKeyPath = path.resolve(this.certsFolder, 'publicKey.pem')
+    const certPath = path.resolve(this.certsFolder, 'cert.pem')
+    await createFolder(this.certsFolder)
+
+    if (!await filesExists(privateKeyPath) || !await filesExists(publicKeyPath) || !await filesExists(certPath)) {
       const certificate = selfSigned.generate([
         { name: 'commonName', value: 'OIBus' },
         { name: 'countryName', value: 'FR' },
@@ -97,25 +99,23 @@ class EncryptionService {
         ],
       })
 
-      fs.writeFileSync(privateKeyPath, certificate.private)
-      fs.writeFileSync(publicKeyPath, certificate.public)
-      fs.writeFileSync(certPath, certificate.cert)
+      await fs.writeFile(privateKeyPath, certificate.private)
+      await fs.writeFile(publicKeyPath, certificate.public)
+      await fs.writeFile(certPath, certificate.cert)
     }
   }
 
   /**
    * Check if private/public keys exist and create them if not.
-   * @returns {void}
+   * @returns {Promise<void>} - The result promise
    */
-  checkOrCreatePrivateKey() {
-    const privateKeyPath = path.join(this.keyFolder, 'private.pem')
-    const publicKeyPath = path.join(this.keyFolder, 'public.pem')
+  async checkOrCreatePrivateKey() {
+    const privateKeyPath = path.resolve(this.keyFolder, 'private.pem')
+    const publicKeyPath = path.resolve(this.keyFolder, 'public.pem')
 
-    if (!fs.existsSync(this.keyFolder)) {
-      fs.mkdirSync(this.keyFolder, { recursive: true })
-    }
+    await createFolder(this.keyFolder)
 
-    if (!fs.existsSync(privateKeyPath) || !fs.existsSync(publicKeyPath)) {
+    if (!await filesExists(privateKeyPath) || !await filesExists(publicKeyPath)) {
       const {
         privateKey,
         publicKey,
@@ -133,68 +133,52 @@ class EncryptionService {
         },
       })
 
-      fs.writeFileSync(privateKeyPath, privateKey)
-      fs.writeFileSync(publicKeyPath, publicKey)
+      await fs.writeFile(privateKeyPath, privateKey)
+      await fs.writeFile(publicKeyPath, publicKey)
     }
   }
 
   /**
    * Recursively iterate through an object tree and encrypt sensitive fields.
    * @param {object} configEntry - The object to iterate through
-   * @returns {void}
+   * @returns {Promise<void>} - The result promise
    */
-  encryptSecrets(configEntry) {
+  async encryptSecrets(configEntry) {
     if (configEntry) {
-      Object.entries(configEntry).forEach(([key, value]) => {
-        if (typeof value === 'object') {
-          this.encryptSecrets(value)
-        } else if (['password', 'secretKey', 'token'].includes(key) && value.startsWith('{{notEncrypted}}')) {
-          configEntry[key] = this.encryptText(value.replace('{{notEncrypted}}', ''))
-        }
-      })
+      await Object.entries(configEntry).reduce((promise, [key, value]) => promise.then(
+        async () => {
+          if (typeof value === 'object') {
+            await this.encryptSecrets(value)
+          } else if (['password', 'secretKey', 'token'].includes(key) && value.startsWith('{{notEncrypted}}')) {
+            configEntry[key] = await this.encryptText(value.replace('{{notEncrypted}}', ''))
+          }
+        },
+      ), Promise.resolve())
     }
   }
 
   /**
-   * Encrypt text.
-   * @param {string} text - The text to encrypt
-   * @return {string} - The encrypted text
+   * Return the encrypted text
+   * @param {String} plainText - The text to encrypt
+   * @return {Promise<String>} - The encrypted text
    */
-  encryptText(text) {
-    const absolutePath = path.resolve(path.join(this.keyFolder, 'public.pem'))
-    const publicKey = fs.readFileSync(absolutePath, 'utf8')
-    const buffer = Buffer.from(text, 'utf8')
+  async encryptText(plainText) {
+    const absolutePath = path.resolve(this.keyFolder, 'public.pem')
+    const publicKey = await fs.readFile(absolutePath, 'utf8')
+    const buffer = Buffer.from(plainText, 'utf8')
     const encrypted = crypto.publicEncrypt(publicKey, buffer)
     return encrypted.toString('base64')
   }
 
   /**
-   * Recursively iterate through an object tree and decrypt sensitive fields.
-   * @param {object} configEntry - The object to iterate through
-   * @returns {void}
+   * Return the decrypted text
+   * @param {String} encryptedText - The text to decrypt
+   * @return {Promise<String>} - The decrypted text
    */
-  decryptSecrets(configEntry) {
-    if (configEntry) {
-      Object.entries(configEntry)
-        .forEach(([key, value]) => {
-          if (typeof value === 'object') {
-            this.decryptSecrets(value)
-          } else if (['password', 'secretKey'].includes(key)) {
-            configEntry[key] = this.decryptText(value)
-          }
-        })
-    }
-  }
-
-  /**
-   * Decrypt text.
-   * @param {string} text - The text to decrypt
-   * @return {string|null} - The decrypted text
-   */
-  decryptText(text) {
-    const absolutePath = path.resolve(path.join(this.keyFolder, 'private.pem'))
-    const privateKey = fs.readFileSync(absolutePath, 'utf8')
-    const buffer = Buffer.from(text, 'base64')
+  async decryptText(encryptedText) {
+    const absolutePath = path.resolve(this.keyFolder, 'private.pem')
+    const privateKey = await fs.readFile(absolutePath, 'utf8')
+    const buffer = Buffer.from(encryptedText, 'base64')
     const decrypted = crypto.privateDecrypt(
       {
         key: privateKey.toString(),

@@ -82,7 +82,7 @@ class InfluxDB extends NorthConnector {
     this.logger.info('Sending values to '
         + `${this.host}/write?u=${this.user}&p=<password>&db=${this.database}&precision=${this.precision}`)
 
-    const url = `${this.host}/write?u=${this.user}&p=${this.encryptionService.decryptText(this.password)}`
+    const url = `${this.host}/write?u=${this.user}&p=${await this.encryptionService.decryptText(this.password)}`
         + `&db=${this.database}&precision=${this.precision}`
 
     let body = ''

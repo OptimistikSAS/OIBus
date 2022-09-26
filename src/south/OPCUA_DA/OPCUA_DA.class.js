@@ -122,7 +122,7 @@ class OPCUA_DA extends SouthConnector {
 
       const dataValues = await this.session.readVariableValue(nodesToRead.map((node) => node.nodeId))
       if (dataValues.length !== nodesToRead.length) {
-        this.logger.error(`Received ${dataValues.length}, requested ${nodesToRead.length}.`)
+        this.logger.error(`Received ${dataValues.length} data values, requested ${nodesToRead.length} nodes.`)
       }
       await this.formatAndSendValues(dataValues, nodesToRead)
     } catch (error) {
@@ -224,7 +224,7 @@ class OPCUA_DA extends SouthConnector {
         userIdentity = {
           type: UserTokenType.UserName,
           userName: this.username,
-          password: this.encryptionService.decryptText(this.password),
+          password: await this.encryptionService.decryptText(this.password),
         }
       } else {
         userIdentity = { type: UserTokenType.Anonymous }

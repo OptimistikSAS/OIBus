@@ -100,7 +100,7 @@ class MQTT extends SouthConnector {
 
     const options = {
       username: this.username,
-      password: this.password ? Buffer.from(this.encryptionService.decryptText(this.password)) : '',
+      password: this.password ? Buffer.from(await this.encryptionService.decryptText(this.password)) : '',
       key: this.certificate.privateKey,
       cert: this.certificate.cert,
       ca: this.certificate.ca,

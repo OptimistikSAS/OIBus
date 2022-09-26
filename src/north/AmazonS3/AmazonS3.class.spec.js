@@ -88,7 +88,7 @@ describe('North Amazon S3', () => {
     expect(north.canHandleFiles).toBeTruthy()
   })
 
-  it('should be properly initialized with a proxy', () => {
+  it('should be properly initialized with a proxy', async () => {
     const amazonS3WithProxyConfig = settings
     amazonS3WithProxyConfig.AmazonS3.proxy = 'sss'
     north.engineConfig.proxies = [
@@ -133,6 +133,8 @@ describe('North Amazon S3', () => {
     NodeHttpHandler.mockReturnValueOnce(expectedAgent)
 
     const amazonS3WithProxy = new AmazonS3(amazonS3WithProxyConfig, engine)
+    await amazonS3WithProxy.init()
+
     expect(amazonS3WithProxy.bucket).toEqual(amazonS3WithProxyConfig.AmazonS3.bucket)
     expect(amazonS3WithProxy.folder).toEqual(amazonS3WithProxyConfig.AmazonS3.folder)
 
@@ -148,7 +150,7 @@ describe('North Amazon S3', () => {
     expect(amazonS3WithProxy.canHandleFiles).toBeTruthy()
   })
 
-  it('should be properly initialized with a proxy without authentication', () => {
+  it('should be properly initialized with a proxy without authentication', async () => {
     const amazonS3WithProxyConfig = settings
     amazonS3WithProxyConfig.AmazonS3.proxy = 'no-auth'
 
@@ -169,6 +171,8 @@ describe('North Amazon S3', () => {
     NodeHttpHandler.mockReturnValueOnce(expectedAgent)
 
     const amazonS3WithProxy = new AmazonS3(amazonS3WithProxyConfig, engine)
+    await amazonS3WithProxy.init()
+
     expect(amazonS3WithProxy.bucket).toEqual(amazonS3WithProxyConfig.AmazonS3.bucket)
     expect(amazonS3WithProxy.folder).toEqual(amazonS3WithProxyConfig.AmazonS3.folder)
 
