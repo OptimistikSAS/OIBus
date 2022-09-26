@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.1.1](https://github.com/OptimistikSAS/OIBus/compare/v2.1.0...v2.1.1) (2022-09-26)
+
+
+### Bug Fixes
+
+* **health-signal:** log signal when forwarding with disabled http ([c92bdfd](https://github.com/OptimistikSAS/OIBus/commit/c92bdfdf4bf039d7d79ef0c9fdba392d4be8b99f))
+
 ## [2.1.0](https://github.com/OptimistikSAS/OIBus/compare/v2.0.6...v2.1.0) (2022-09-09)
 
 
