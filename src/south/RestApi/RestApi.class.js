@@ -185,17 +185,17 @@ class RestApi extends SouthConnector {
     const headers = {}
     switch (this.authentication.type) {
       case 'Basic': {
-        const decryptedPassword = this.encryptionService.decryptText(this.authentication.password)
+        const decryptedPassword = await this.encryptionService.decryptText(this.authentication.password)
         const basic = Buffer.from(`${this.authentication.username}:${decryptedPassword}`).toString('base64')
         headers.Authorization = `Basic ${basic}`
         break
       }
       case 'API Key': {
-        headers[this.authentication.key] = this.encryptionService.decryptText(this.authentication.secretKey)
+        headers[this.authentication.key] = await this.encryptionService.decryptText(this.authentication.secretKey)
         break
       }
       case 'Bearer': {
-        headers.Authorization = `Bearer ${this.encryptionService.decryptText(this.authentication.token)}`
+        headers.Authorization = `Bearer ${await this.encryptionService.decryptText(this.authentication.token)}`
         break
       }
       default:

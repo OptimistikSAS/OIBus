@@ -41,8 +41,12 @@ class AmazonS3 extends NorthConnector {
     this.bucket = bucket
     this.folder = folder
     this.region = region
+    this.authentication = authentication
+    this.proxy = proxy
+  }
 
-    const configuredProxy = this.getProxy(proxy)
+  async init() {
+    const configuredProxy = this.getProxy(this.proxy)
     let httpAgent
     if (configuredProxy) {
       const { protocol, host, port, username, password } = configuredProxy
@@ -50,7 +54,7 @@ class AmazonS3 extends NorthConnector {
       const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
 
       if (username && password) {
-        proxyOptions.auth = `${username}:${this.encryptionService.decryptText(password)}`
+        proxyOptions.auth = `${username}:${await this.encryptionService.decryptText(password)}`
       }
 
       httpAgent = new ProxyAgent(proxyOptions)
@@ -59,8 +63,8 @@ class AmazonS3 extends NorthConnector {
     this.s3 = new S3Client({
       region: this.region,
       credentials: {
-        accessKeyId: authentication.key,
-        secretAccessKey: this.encryptionService.decryptText(authentication.secretKey),
+        accessKeyId: this.authentication.key,
+        secretAccessKey: await this.encryptionService.decryptText(this.authentication.secretKey),
       },
       requestHandler: httpAgent ? new NodeHttpHandler({ httpAgent }) : null,
     })

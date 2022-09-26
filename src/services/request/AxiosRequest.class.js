@@ -34,7 +34,7 @@ class AxiosRequest extends BaseRequest {
         port,
       }
       if (username && password) {
-        axiosProxy.proxyAuth = `${username}:${this.engine.encryptionService.decryptText(password)}`
+        axiosProxy.proxyAuth = `${username}:${await this.engine.encryptionService.decryptText(password)}`
       }
       let tunnelInstance = tunnel.httpsOverHttp({ axiosProxy })
       if (protocol === 'https') {

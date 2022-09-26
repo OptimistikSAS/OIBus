@@ -51,7 +51,7 @@ class WATSYConnect extends NorthConnector {
     this.password = password
     this.qos = 1
     this.host = applicativeHostUrl
-    this.token = this.encryptionService.decryptText(secretKey)
+    this.secretKey = secretKey
 
     this.splitMessageTimeout = this.settings.caching.sendInterval // in ms
     this.mqttTopic = initMQTTTopic(engine.engineName, this.host)
@@ -65,12 +65,12 @@ class WATSYConnect extends NorthConnector {
    * @param {String} _additionalInfo - Connection information to display in the logger
    * @returns {Promise<void>} - The result promise
    */
-  connect(_additionalInfo = '') {
+  async connect(_additionalInfo = '') {
     this.logger.info(`Connecting North "${this.settings.name}" to "${this.url}".`)
 
     const options = {
       username: this.username,
-      password: this.password ? Buffer.from(this.encryptionService.decryptText(this.password)) : '',
+      password: this.password ? Buffer.from(await this.encryptionService.decryptText(this.password)) : '',
       port: this.port,
     }
     this.client = mqtt.connect(this.url, options)
@@ -103,7 +103,13 @@ class WATSYConnect extends NorthConnector {
     this.logger.trace(`Handle ${values.length} values.`)
 
     if (values.length > 0) {
-      const watsyMessages = recursiveSplitMessages([], values, this.host, this.token, this.splitMessageTimeout)
+      const watsyMessages = recursiveSplitMessages(
+        [],
+        values,
+        this.host,
+        await this.encryptionService.decryptText(this.secretKey),
+        this.splitMessageTimeout,
+      )
       await Promise.all(watsyMessages.map((message) => this.publishValue(message)))
     }
   }

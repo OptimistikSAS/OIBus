@@ -49,7 +49,7 @@ class Server {
     this.logger.setEncryptionService(this.encryptionService)
   }
 
-  start() {
+  async start() {
     // Get the config entries
     const { engineConfig } = this.engine.configService.getConfig()
     const { user, password, port, filter = ['127.0.0.1', '::1'] } = engineConfig
@@ -59,7 +59,7 @@ class Server {
 
     if (password) {
       try {
-        this.password = this.encryptionService.decryptText(password)
+        this.password = await this.encryptionService.decryptText(password)
       } catch (error) {
         console.error(error)
         this.password = null

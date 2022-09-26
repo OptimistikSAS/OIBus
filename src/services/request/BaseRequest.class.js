@@ -53,17 +53,17 @@ class BaseRequest {
     if (authentication) {
       switch (authentication.type) {
         case 'Basic': {
-          const decryptedPassword = this.engine.encryptionService.decryptText(authentication.password)
+          const decryptedPassword = await this.engine.encryptionService.decryptText(authentication.password)
           const basic = Buffer.from(`${authentication.username}:${decryptedPassword}`).toString('base64')
           headers.Authorization = `Basic ${basic}`
           break
         }
         case 'API Key': {
-          headers[authentication.key] = this.engine.encryptionService.decryptText(authentication.secretKey)
+          headers[authentication.key] = await this.engine.encryptionService.decryptText(authentication.secretKey)
           break
         }
         case 'Bearer': {
-          headers.Authorization = `Bearer ${this.engine.encryptionService.decryptText(authentication.token)}`
+          headers.Authorization = `Bearer ${await this.engine.encryptionService.decryptText(authentication.token)}`
           break
         }
         default:

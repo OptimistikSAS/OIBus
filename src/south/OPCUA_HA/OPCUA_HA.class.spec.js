@@ -1,5 +1,6 @@
 const nodeOPCUAClient = require('node-opcua-client')
 
+const { HistoryReadRequest, TimestampsToReturn, ReadProcessedDetails, AggregateFunction, StatusCodes } = require('node-opcua-client')
 const OPCUA_HA = require('./OPCUA_HA.class')
 
 const databaseService = require('../../services/database.service')
@@ -10,12 +11,13 @@ const { defaultConfig: config } = require('../../../tests/testConfig')
 jest.mock('node-opcua-client', () => ({
   OPCUAClient: { createSession: jest.fn() },
   MessageSecurityMode: { None: 1 },
-  StatusCodes: { Good: 0 },
-  SecurityPolicy: { None: 'http://opcfoundation.org/UA/SecurityPolicy#None' },
-  UserTokenType: { Anonymous: 0, UserName: 1, Certificate: 2 },
-  TimestampsToReturn: { Both: 2 },
+  StatusCodes: jest.requireActual('node-opcua-client').StatusCodes,
+  SecurityPolicy: jest.requireActual('node-opcua-client').SecurityPolicy,
+  UserTokenType: jest.requireActual('node-opcua-client').UserTokenType,
+  TimestampsToReturn: jest.requireActual('node-opcua-client').TimestampsToReturn,
+  AggregateFunction: jest.requireActual('node-opcua-client').AggregateFunction,
   ReadRawModifiedDetails: jest.fn(() => ({})),
-  HistoryReadRequest: jest.fn(() => ({ requestHeader: {} })),
+  HistoryReadRequest: jest.requireActual('node-opcua-client').HistoryReadRequest,
   ReadProcessedDetails: jest.fn(() => ({})),
 }))
 jest.mock('node-opcua-certificate-manager', () => ({ OPCUACertificateManager: jest.fn(() => ({})) }))
@@ -24,7 +26,7 @@ jest.mock('node-opcua-certificate-manager', () => ({ OPCUACertificateManager: je
 jest.mock('node:fs/promises')
 
 // Mock opcua service
-jest.mock('../../services/opcua.service', () => ({ initOpcuaCertificateFolders: jest.fn() }))
+jest.mock('../../services/opcua.service')
 
 // Mock certificate service
 jest.mock('../../services/CertificateService.class')
@@ -116,7 +118,7 @@ describe('South OPCUA-HA', () => {
     expect(close).toHaveBeenCalledTimes(0)
   })
 
-  it('should properly connect to OPC UA server without password', async () => {
+  it('should properly connect to OPCUA server without password', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
       applicationName: 'OIBus',
@@ -142,7 +144,7 @@ describe('South OPCUA-HA', () => {
     expect(setTimeoutSpy).not.toBeCalled()
   })
 
-  it('should properly connect to OPC UA server with password', async () => {
+  it('should properly connect to OPCUA server with password', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     const expectedOptions = {
       applicationName: 'OIBus',
@@ -176,7 +178,7 @@ describe('South OPCUA-HA', () => {
     expect(setTimeoutSpy).not.toBeCalled()
   })
 
-  it('should properly connect to OPC UA server with certificate', async () => {
+  it('should properly connect to OPCUA server with certificate', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
     await south.init()
     const expectedOptions = {
@@ -210,6 +212,20 @@ describe('South OPCUA-HA', () => {
     expect(nodeOPCUAClient.OPCUAClient.createSession).toBeCalledWith(south.url, expectedUserIdentity, expectedOptions)
     expect(south.connected).toBeTruthy()
     expect(setTimeoutSpy).not.toBeCalled()
+  })
+
+  it('should properly manage connection error', async () => {
+    const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
+    nodeOPCUAClient.OPCUAClient.createSession.mockImplementation(() => {
+      throw new Error('connection error')
+    })
+
+    await south.init()
+    await south.connectToOpcuaServer()
+
+    expect(south.connected).toBeFalsy()
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), settings.OPCUA_HA.retryInterval)
+    expect(south.logger.error).toHaveBeenCalledWith(new Error('connection error'))
   })
 
   it('should properly format and sent values', async () => {
@@ -318,6 +334,19 @@ describe('South OPCUA-HA', () => {
     expect(south.logger.debug).toHaveBeenCalledWith('Updated lastCompletedAt for "myScanMode" to 2022-01-01T00:00:00.001Z.')
   })
 
+  it('should log a message when zero value is received', async () => {
+    await south.init()
+
+    const nodesToRead = [
+      { pointId: 'point1' },
+      { pointId: 'point2' },
+    ]
+
+    await south.formatAndSendValues([], nodesToRead, new Date(), 'myScanMode')
+
+    expect(south.logger.debug).toHaveBeenCalledWith('No value retrieved for "myScanMode".')
+  })
+
   it('should properly read history value with response error', async () => {
     await south.init()
     const isNot = jest.fn(() => true)
@@ -343,9 +372,70 @@ describe('South OPCUA-HA', () => {
     expect(south.logger.error).toHaveBeenCalledWith('Error while releasing continuation points: message transaction error')
   })
 
-  it('should properly read history value with response success', async () => {
+  it('should properly read history value with aggregateFn option', async () => {
     await south.init()
     const isNot = jest.fn(() => true)
+    south.session = {
+      performMessageTransaction: jest.fn(() => ({
+        responseHeader: { serviceResult: { isNot, description: 'my description' } },
+        results: [{
+          historyData: { dataValues: [] },
+          statusCode: { value: StatusCodes.Good, description: 'Good' },
+          continuationPoint: undefined,
+        },
+        {
+          historyData: { dataValues: [] },
+          statusCode: { value: StatusCodes.Good, description: 'Good' },
+          continuationPoint: undefined,
+        },
+        {
+          historyData: { dataValues: [] },
+          statusCode: { value: StatusCodes.Bad, description: 'Bad' },
+          continuationPoint: undefined,
+        },
+        {
+          historyData: { dataValues: [] },
+          statusCode: { value: StatusCodes.Bad, description: 'Bad' },
+          continuationPoint: undefined,
+        },
+        ],
+      })),
+    }
+    const nodesToRead = [
+      { nodeId: 'ns=1;s=point1' },
+      { nodeId: 'ns=1;s=point2' },
+      { nodeId: 'ns=1;s=point3' },
+      { nodeId: 'ns=1;s=point4' },
+    ]
+    const startTime = new Date('2020-01-01T00:00:00.000Z')
+    const endTime = new Date('2021-01-01T00:00:00.000Z')
+    const options = { aggregateFn: 'myAggregate', processingInterval: 'myProcessingInterval', timeout: 1000 }
+    await south.readHistoryValue(nodesToRead, startTime, endTime, options)
+    expect(south.session.performMessageTransaction).toHaveBeenCalledTimes(2)
+    const historyReadDetails = new ReadProcessedDetails({
+      startTime,
+      endTime,
+      aggregateType: [options.aggregateFn, options.aggregateFn, options.aggregateFn],
+      processingInterval: options.processingInterval,
+    })
+    const expectedHistoryReadRequest = new HistoryReadRequest({
+      historyReadDetails,
+      nodesToRead,
+      releaseContinuationPoints: false,
+      timestampsToReturn: TimestampsToReturn.Both,
+    })
+    expectedHistoryReadRequest.requestHeader.timeoutHint = 1000
+    expect(south.session.performMessageTransaction).toHaveBeenCalledWith(expectedHistoryReadRequest)
+    expect(south.logger.error).toHaveBeenCalledWith('Error while reading history: my description')
+    expect(south.logger.error).toHaveBeenCalledWith('Error while releasing continuation points: my description')
+    options.processingInterval = undefined
+    await south.readHistoryValue(nodesToRead, startTime, endTime, options)
+    expect(south.logger.error).toHaveBeenCalledWith('Option aggregateFn "myAggregate" without processingInterval.')
+  })
+
+  it('should properly read history value with response success', async () => {
+    await south.init()
+    const isNot = jest.fn(() => false)
     south.session = {
       performMessageTransaction: jest.fn(() => ({
         responseHeader: { serviceResult: { isNot } },
@@ -360,7 +450,7 @@ describe('South OPCUA-HA', () => {
           continuationPoint: undefined,
         },
         {
-          historyData: { dataValues: [] },
+          historyData: { },
           statusCode: { value: 1, description: 'Bad' },
           continuationPoint: undefined,
         },
@@ -368,9 +458,9 @@ describe('South OPCUA-HA', () => {
       })),
     }
     const nodesToRead = [
-      { nodeId: 'point1' },
-      { nodeId: 'point2' },
-      { nodeId: 'point3' },
+      { nodeId: 'ns=1;s=point1' },
+      { nodeId: 'ns=1;s=point2' },
+      { nodeId: 'ns=1;s=point3' },
     ]
     const startTime = new Date('2020-01-01T00:00:00.000Z')
     const endTime = new Date('2021-01-01T00:00:00.000Z')
@@ -379,7 +469,62 @@ describe('South OPCUA-HA', () => {
     expect(south.session.performMessageTransaction).toHaveBeenCalledTimes(2)
     expect(isNot).toHaveBeenCalledTimes(2)
     expect(south.logger.debug).toHaveBeenCalledWith('Received a response of 3 nodes.')
-    expect(south.logger.debug).toHaveBeenCalledWith('Bad with status code 1: [point2,point3]')
+    expect(south.logger.debug).toHaveBeenCalledWith('Bad with status code 1: [ns=1;s=point2,ns=1;s=point3]')
+  })
+
+  it('should properly read history value of many points with response success', async () => {
+    await south.init()
+    const isNot = jest.fn(() => true)
+    const badHistoryResult = {
+      historyData: { dataValues: [] },
+      statusCode: { value: 1, description: 'Bad' },
+      continuationPoint: undefined,
+    }
+    south.session = {
+      performMessageTransaction: jest.fn(() => ({
+        responseHeader: { serviceResult: { isNot } },
+        results: [{
+          historyData: { dataValues: [] },
+          statusCode: { value: 0, description: 'Good' },
+          continuationPoint: undefined,
+        },
+        badHistoryResult,
+        badHistoryResult,
+        badHistoryResult,
+        badHistoryResult,
+        badHistoryResult,
+        badHistoryResult,
+        badHistoryResult,
+        badHistoryResult,
+        badHistoryResult,
+        badHistoryResult,
+        badHistoryResult,
+        ],
+      })),
+    }
+    const nodesToRead = [
+      { nodeId: 'ns=1;s=point1' },
+      { nodeId: 'ns=1;s=point2' },
+      { nodeId: 'ns=1;s=point3' },
+      { nodeId: 'ns=1;s=point4' },
+      { nodeId: 'ns=1;s=point5' },
+      { nodeId: 'ns=1;s=point6' },
+      { nodeId: 'ns=1;s=point7' },
+      { nodeId: 'ns=1;s=point8' },
+      { nodeId: 'ns=1;s=point9' },
+      { nodeId: 'ns=1;s=point10' },
+      { nodeId: 'ns=1;s=point11' },
+      { nodeId: 'ns=1;s=point12' },
+    ]
+    const startTime = new Date('2020-01-01T00:00:00.000Z')
+    const endTime = new Date('2021-01-01T00:00:00.000Z')
+
+    await south.readHistoryValue(nodesToRead, startTime, endTime, {})
+    expect(south.session.performMessageTransaction).toHaveBeenCalledTimes(2)
+    expect(isNot).toHaveBeenCalledTimes(2)
+    expect(south.logger.debug).toHaveBeenCalledWith('Received a response of 12 nodes.')
+    expect(south.logger.debug).toHaveBeenCalledWith('Good with status code 0: [ns=1;s=point1]')
+    expect(south.logger.debug).toHaveBeenCalledWith('Bad with status code 1: [ns=1;s=point2..ns=1;s=point12]')
   })
 
   it('should returns the requested number of node IDs after historyQuery', async () => {
@@ -394,11 +539,71 @@ describe('South OPCUA-HA', () => {
     south.readHistoryValue = jest.fn()
     south.readHistoryValue.mockReturnValue(Promise.resolve([]))
     south.addValues = jest.fn()
+    south.formatAndSendValues = jest.fn()
 
     await south.historyQuery(settings.OPCUA_HA.scanGroups[0].scanMode, new Date(), new Date())
 
+    const expectedOptions = {
+      timeout: settings.OPCUA_HA.readTimeout,
+      numValuesPerNode: settings.OPCUA_HA.maxReturnValues,
+    }
+    const expectedNodes = [{ nodeId: 'ns=3;s=Random', pointId: 'Random', scanMode: 'every10Second' }]
+
     expect(south.readHistoryValue).toBeCalledTimes(1)
+    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions)
     expect(south.logger.error).toHaveBeenCalledWith('Received 0 data values, requested 1 nodes.')
+
+    south.readHistoryValue.mockReturnValue(Promise.resolve([{}]))
+    south.scanGroups[0].resampling = 'Second'
+    south.scanGroups[0].aggregate = 'Average'
+    expectedOptions.aggregateFn = AggregateFunction.Average
+    expectedOptions.processingInterval = 1000
+    await south.historyQuery(settings.OPCUA_HA.scanGroups[0].scanMode, new Date(), new Date())
+    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions)
+
+    south.scanGroups[0].resampling = '10 Seconds'
+    south.scanGroups[0].aggregate = 'Minimum'
+    expectedOptions.aggregateFn = AggregateFunction.Minimum
+    expectedOptions.processingInterval = 1000 * 10
+    await south.historyQuery(settings.OPCUA_HA.scanGroups[0].scanMode, new Date(), new Date())
+    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions)
+
+    south.scanGroups[0].resampling = '30 Seconds'
+    south.scanGroups[0].aggregate = 'Maximum'
+    expectedOptions.aggregateFn = AggregateFunction.Maximum
+    expectedOptions.processingInterval = 1000 * 30
+    await south.historyQuery(settings.OPCUA_HA.scanGroups[0].scanMode, new Date(), new Date())
+    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions)
+
+    south.scanGroups[0].resampling = 'Minute'
+    south.scanGroups[0].aggregate = 'Count'
+    expectedOptions.aggregateFn = AggregateFunction.Count
+    expectedOptions.processingInterval = 1000 * 60
+    await south.historyQuery(settings.OPCUA_HA.scanGroups[0].scanMode, new Date(), new Date())
+    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions)
+
+    south.scanGroups[0].resampling = 'Hour'
+    south.scanGroups[0].aggregate = 'Count'
+    expectedOptions.aggregateFn = AggregateFunction.Count
+    expectedOptions.processingInterval = 1000 * 3600
+    await south.historyQuery(settings.OPCUA_HA.scanGroups[0].scanMode, new Date(), new Date())
+    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions)
+
+    south.scanGroups[0].resampling = 'Day'
+    south.scanGroups[0].aggregate = 'Count'
+    expectedOptions.aggregateFn = AggregateFunction.Count
+    expectedOptions.processingInterval = 1000 * 3600 * 24
+    await south.historyQuery(settings.OPCUA_HA.scanGroups[0].scanMode, new Date(), new Date())
+    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions)
+
+    south.scanGroups[0].resampling = 'Bad resampling'
+    south.scanGroups[0].aggregate = 'Bad aggregate'
+    expectedOptions.aggregateFn = undefined
+    expectedOptions.processingInterval = undefined
+    await south.historyQuery(settings.OPCUA_HA.scanGroups[0].scanMode, new Date(), new Date())
+    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions)
+    expect(south.logger.error).toHaveBeenCalledWith('Unsupported resampling: "Bad resampling".')
+    expect(south.logger.error).toHaveBeenCalledWith('Unsupported aggregate: "Bad aggregate".')
   })
 
   it('should catch historyQuery errors', async () => {
