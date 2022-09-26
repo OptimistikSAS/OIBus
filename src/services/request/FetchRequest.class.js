@@ -31,7 +31,7 @@ class FetchRequest extends BaseRequest {
       const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
 
       if (username && password) {
-        proxyOptions.auth = `${username}:${this.engine.encryptionService.decryptText(password)}`
+        proxyOptions.auth = `${username}:${await this.engine.encryptionService.decryptText(password)}`
       }
 
       agent = new ProxyAgent(proxyOptions)

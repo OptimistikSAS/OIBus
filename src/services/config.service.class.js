@@ -63,17 +63,18 @@ class ConfigService {
 
   /**
    * Update configuration
-   * @param {object} config - The updated configuration
-   * @returns {void}
+   * @param {Object} config - The updated configuration
+   * @returns {Promise<void>} - The result promise
    */
-  updateConfig(config) {
-    this.encryptionService.encryptSecrets(config.engine)
-    config.north.forEach((north) => {
-      this.encryptionService.encryptSecrets(north)
-    })
-    config.south.forEach((south) => {
-      this.encryptionService.encryptSecrets(south)
-    })
+  async updateConfig(config) {
+    await this.encryptionService.encryptSecrets(config.engine)
+
+    await config.north.reduce((promise, north) => promise.then(
+      async () => this.encryptionService.encryptSecrets(north),
+    ), Promise.resolve())
+    await config.south.reduce((promise, south) => promise.then(
+      async () => this.encryptionService.encryptSecrets(south),
+    ), Promise.resolve())
     this.modifiedConfig = config
   }
 

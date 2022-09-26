@@ -52,7 +52,7 @@ class TimescaleDB extends NorthConnector {
     this.logger.info(`Connecting North "${this.settings.name}" to TimescaleDB: `
         + `postgres://${this.user}:<password>@${this.host}/${this.database}`)
 
-    const url = `postgres://${this.user}:${this.encryptionService.decryptText(this.password)}@${this.host}/${this.database}`
+    const url = `postgres://${this.user}:${await this.encryptionService.decryptText(this.password)}@${this.host}/${this.database}`
 
     this.client = new Client(url)
 

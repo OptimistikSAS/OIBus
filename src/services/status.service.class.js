@@ -1,5 +1,5 @@
 const EventEmitter = require('node:events')
-const { PassThrough } = require('stream')
+const { PassThrough } = require('node:stream')
 
 /**
  * Class used to manage certificate files and their content
@@ -8,11 +8,18 @@ class StatusService {
   constructor(initialStatusData = {}) {
     this.statusData = initialStatusData
     this.eventEmitter = new EventEmitter()
-    this.eventEmitter.on('data', (data) => {
-      if (data && this.stream) {
-        this.stream.write(`data: ${JSON.stringify(data)}\n\n`)
-      }
-    })
+    this.eventEmitter.on('data', this.listener.bind(this))
+  }
+
+  /**
+   * Listener attached to the event emitter 'data' event
+   * @param {Object} data - The object to send to the stream
+   * @return {void}
+   */
+  listener(data) {
+    if (data && this.stream) {
+      this.stream.write(`data: ${JSON.stringify(data)}\n\n`)
+    }
   }
 
   /**
@@ -20,7 +27,7 @@ class StatusService {
      * @param {object} statusData - The North connector status to send
      * @returns {void}
      */
-  updateStatusDataStream(statusData = {}) {
+  updateStatusDataStream(statusData) {
     this.statusData = { ...this.statusData, ...statusData }
     this.eventEmitter.emit('data', this.statusData)
   }
@@ -53,6 +60,10 @@ class StatusService {
     return this.statusData
   }
 
+  /**
+   * Stop the stream and remove all listeners
+   * @return {void}
+   */
   stop() {
     this.eventEmitter.removeAllListeners()
     this.stream?.destroy()

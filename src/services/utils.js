@@ -55,26 +55,26 @@ const tryReadFile = async (filePath) => {
 }
 
 /**
- * Backup the configuration file.
- * @param {String} configFile - The config file
+ * Back up a file by adding a timestamp to its name before the extension
+ * @param {String} filePath - The file path to back up
  * @returns {Promise<Void>} - The result promise
  */
-const backupConfigFile = async (configFile) => {
+const backupConfigFile = async (filePath) => {
   const timestamp = new Date().getTime()
-  const backupFilename = `${path.parse(configFile).name}-${timestamp}${path.parse(configFile).ext}`
-  const backupPath = path.join(path.parse(configFile).dir, backupFilename)
+  const backupFilename = `${path.parse(filePath).name}-${timestamp}${path.parse(filePath).ext}`
+  const backupPath = path.join(path.parse(filePath).dir, backupFilename)
 
-  await fs.copyFile(configFile, backupPath)
+  await fs.copyFile(filePath, backupPath)
 }
 
 /**
- * Save the configuration.
- * @param {String} configFile - The file path where to save the configuration
- * @param {Object} config - The configuration
+ * Save a file with JSON formatting
+ * @param {String} filePath - The file path where to save the JSON
+ * @param {Object} jsonObject - The JSON object to save
  * @returns {Promise<void>} - The result promise
  */
-const saveConfig = async (configFile, config) => {
-  await fs.writeFile(configFile, JSON.stringify(config, null, 4), 'utf8')
+const saveConfig = async (filePath, jsonObject) => {
+  await fs.writeFile(filePath, JSON.stringify(jsonObject, null, 4), 'utf8')
 }
 
 /**
@@ -186,6 +186,20 @@ const compress = async (input, output) => new Promise((resolve, reject) => {
     })
 })
 
+/**
+ * Check if a file exists in async way
+ * @param {String} filePath - The file path to test
+ * @returns {Promise<boolean>} - If the file exists or not
+ */
+const filesExists = async (filePath) => {
+  try {
+    await fs.stat(filePath)
+  } catch {
+    return false
+  }
+  return true
+}
+
 module.exports = {
   generateFormDataBodyFromFile,
   checkOrCreateConfigFile,
@@ -199,4 +213,5 @@ module.exports = {
   replaceFilenameWithVariable,
   generateDateWithTimezone,
   compress,
+  filesExists,
 }
