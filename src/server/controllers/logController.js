@@ -69,6 +69,7 @@ const addLogs = async (ctx) => {
       })
     })
   }
+  ctx.ok()
 }
 
 module.exports = { getLogs, addLogs }
