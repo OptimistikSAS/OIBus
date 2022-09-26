@@ -63,7 +63,7 @@ class MongoDB extends NorthConnector {
         + `${this.user === '' ? `mongodb://${this.host}` : `mongodb://${this.user}:<password>@${this.host}`}`)
 
     const url = (this.user === '') ? `mongodb://${this.host}`
-      : `mongodb://${this.user}:${this.encryptionService.decryptText(this.password)}@${this.host}`
+      : `mongodb://${this.user}:${await this.encryptionService.decryptText(this.password)}@${this.host}`
 
     this.client = new mongo.MongoClient(url)
     await this.client.connect()

@@ -164,7 +164,7 @@ describe('Logger', () => {
   })
 
   it('should be properly initialized with loki error and standard file names', async () => {
-    jest.spyOn(console, 'error')
+    jest.spyOn(console, 'error').mockImplementationOnce(() => {})
     logger = new Logger('specific-logger')
     const badEncryptionService = { decryptText: jest.fn(() => { throw new Error('decrypt-error') }) }
     logger.setEncryptionService(badEncryptionService)

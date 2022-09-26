@@ -126,8 +126,8 @@ logger.changeParameters(logParameters).then(() => {
       const encryptionService = EncryptionService.getInstance()
       encryptionService.setKeyFolder(configService.keyFolder)
       encryptionService.setCertsFolder(configService.certFolder)
-      encryptionService.checkOrCreatePrivateKey()
-      encryptionService.checkOrCreateCertFiles()
+      await encryptionService.checkOrCreatePrivateKey()
+      await encryptionService.checkOrCreateCertFiles()
 
       const safeMode = process.env.SAFE_MODE === 'true'
 

@@ -1,5 +1,7 @@
 const path = require('node:path')
 const fs = require('node:fs/promises')
+const fsSync = require('node:fs')
+const zlib = require('node:zlib')
 
 const minimist = require('minimist')
 const FormData = require('form-data')
@@ -7,7 +9,9 @@ const FormData = require('form-data')
 const { DateTime } = require('luxon')
 const utils = require('./utils')
 
+jest.mock('node:zlib')
 jest.mock('node:fs/promises')
+jest.mock('node:fs')
 jest.mock('minimist')
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
@@ -20,6 +24,15 @@ describe('Service utils', () => {
 
   it('should properly generate form-data body', () => {
     const filepath = '/path/to/note-1610983920007.txt'
+    const myReadStream = {
+      pipe: jest.fn().mockReturnThis(),
+      on: jest.fn().mockImplementation((event, handler) => {
+        handler()
+        return this
+      }),
+      pause: jest.fn(),
+    }
+    fsSync.createReadStream.mockReturnValueOnce(myReadStream)
 
     const formData = utils.generateFormDataBodyFromFile(filepath)
 
@@ -128,14 +141,6 @@ describe('Service utils', () => {
     expect(test2).toBe(expectedResult2)
   })
 
-  it('should properly compress', async () => {
-    // await compress('myInputFile', 'myOutputFile')
-    // jest.spyOn(fs, 'createReadStream').mockImplementation(() => [])
-    // jest.spyOn(fs, 'createWriteStream').mockImplementation(() => [])
-    //
-    // expect(zlib.createGzip).toHaveBeenCalledWith({ level: 9 })
-  })
-
   it('should properly name file with variables in the name', () => {
     expect(utils.replaceFilenameWithVariable(
       'myFileName.csv',
@@ -162,5 +167,67 @@ describe('Service utils', () => {
       17,
       'south',
     )).toEqual(`myFileName-south-17-${DateTime.local().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`)
+  })
+
+  it('should properly check if a file exists or not', async () => {
+    fs.stat = jest.fn(() => {
+      throw new Error('File does not exist')
+    })
+    expect(await utils.filesExists('myConfigFile.json')).toEqual(false)
+
+    fs.stat = jest.fn(() => null)
+    expect(await utils.filesExists('myConfigFile.json')).toEqual(true)
+  })
+
+  it('should properly check if a file exists or not', async () => {
+    const folderToCreate = 'myFolder'
+    fs.mkdir = jest.fn()
+    fs.stat = jest.fn(() => null)
+
+    await utils.createFolder(folderToCreate)
+    expect(fs.mkdir).not.toHaveBeenCalled()
+
+    fs.stat = jest.fn(() => {
+      throw new Error('File does not exist')
+    })
+
+    await utils.createFolder(folderToCreate)
+
+    expect(fs.mkdir).toHaveBeenCalledTimes(1)
+    expect(fs.mkdir).toHaveBeenCalledWith(path.resolve(folderToCreate), { recursive: true })
+  })
+
+  it('should properly compress file', async () => {
+    const myReadStream = {
+      pipe: jest.fn().mockReturnThis(),
+      on: jest.fn().mockImplementation((event, handler) => {
+        handler('compression error')
+        return this
+      }),
+    }
+    fsSync.createReadStream.mockReturnValueOnce(myReadStream)
+
+    const myWriteStream = {
+      pipe: jest.fn().mockReturnThis(),
+      on: jest.fn().mockImplementation((event, handler) => {
+        handler()
+        return this
+      }),
+    }
+    fsSync.createWriteStream.mockReturnValueOnce(myWriteStream)
+
+    zlib.createGzip.mockReturnValue({})
+    let expectedError = null
+    try {
+      await utils.compress('myInputFile', 'myOutputFile')
+    } catch (error) {
+      expectedError = error
+    }
+    expect(expectedError).toEqual('compression error')
+    expect(fsSync.createReadStream).toBeCalledTimes(1)
+    expect(fsSync.createReadStream).toHaveBeenCalledWith('myInputFile')
+    expect(myReadStream.pipe).toBeCalledTimes(2)
+    expect(fsSync.createWriteStream).toBeCalledTimes(1)
+    expect(fsSync.createWriteStream).toHaveBeenCalledWith('myOutputFile')
   })
 })
