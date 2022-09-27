@@ -10,6 +10,9 @@ const {
   saveConfig,
 } = require('./utils')
 
+const KEYS_FOLDER = './keys'
+const CERTS_FOLDER = './certs'
+
 /**
  * Class responsible for managing the configuration.
  * @class ConfigService
@@ -36,8 +39,8 @@ class ConfigService {
     await checkOrCreateConfigFile(this.configFile, defaultConfig)
 
     this.config = await tryReadFile(this.configFile)
-    this.keyFolder = path.join(this.cacheFolder, 'keys')
-    this.certFolder = path.join(this.cacheFolder, 'certs')
+    this.keyFolder = path.resolve(KEYS_FOLDER)
+    this.certFolder = path.resolve(CERTS_FOLDER)
     this.modifiedConfig = JSON.parse(JSON.stringify(this.config))
   }
 
