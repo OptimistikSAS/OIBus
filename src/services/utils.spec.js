@@ -39,45 +39,6 @@ describe('Service utils', () => {
     expect(formData).toBeInstanceOf(FormData)
   })
 
-  it('should check if config file exists', () => {
-    utils.checkOrCreateConfigFile('myConfigFile.json', {})
-    expect(fs.stat).toHaveBeenCalledWith('myConfigFile.json')
-    expect(fs.writeFile).not.toHaveBeenCalled()
-  })
-
-  it('should create config file if it does not exist', () => {
-    fs.stat = jest.fn(() => {
-      throw new Error('file doest not exist')
-    })
-    utils.checkOrCreateConfigFile('myConfigFile.json', {})
-    expect(fs.stat).toHaveBeenCalledWith('myConfigFile.json')
-    expect(fs.writeFile).toHaveBeenCalledWith('myConfigFile.json', '{}', 'utf8')
-  })
-
-  it('should not read a non JSON file', async () => {
-    try {
-      await utils.tryReadFile('myConfigFile')
-    } catch (err) {
-      expect(err).toEqual(new Error('You must provide a JSON file for the configuration!'))
-    }
-  })
-
-  it('should not read a non JSON file', async () => {
-    fs.readFile = jest.fn(() => '{ "config": {} }')
-    const result = await utils.tryReadFile('myConfigFile.json')
-    expect(result).toEqual({ config: {} })
-  })
-
-  it('should backup config file', async () => {
-    await utils.backupConfigFile('./myConfigFile.json')
-    expect(fs.copyFile).toHaveBeenCalledWith('./myConfigFile.json', 'myConfigFile-1580608922222.json')
-  })
-
-  it('should save config file', async () => {
-    await utils.saveConfig('./myConfigFile.json', {})
-    expect(fs.writeFile).toHaveBeenCalledWith('./myConfigFile.json', '{}', 'utf8')
-  })
-
   it('should parse command line arguments without args', () => {
     minimist.mockReturnValue({})
     const result = utils.getCommandLineArguments()
