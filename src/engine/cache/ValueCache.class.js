@@ -1,5 +1,10 @@
+const path = require('node:path')
+
 const databaseService = require('../../services/database.service')
 const BaseCache = require('./BaseCache.class')
+
+const VALUES_DB_FILE_NAME = 'values.db'
+const VALUES_ERROR_DB_FILE_NAME = 'values-error.db'
 
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
@@ -10,7 +15,7 @@ class ValueCache extends BaseCache {
    * @returns {Promise<void>} - The result promise
    */
   async init() {
-    const valuesDatabasePath = `${this.baseFolder}/values.db`
+    const valuesDatabasePath = path.resolve(this.baseFolder, VALUES_DB_FILE_NAME)
     this.logger.debug(`Use value cache database: "${valuesDatabasePath}".`)
     this.valuesDatabase = databaseService.createValuesDatabase(valuesDatabasePath, {})
     const valuesCount = databaseService.getCount(this.valuesDatabase)
@@ -20,7 +25,7 @@ class ValueCache extends BaseCache {
       this.logger.debug('No values in cache.')
     }
 
-    const valuesErrorDatabasePath = `${this.baseFolder}/values-error.db`
+    const valuesErrorDatabasePath = path.resolve(this.baseFolder, VALUES_ERROR_DB_FILE_NAME)
     this.logger.debug(`Initialize values error db: ${valuesErrorDatabasePath}`)
     this.valuesErrorDatabase = databaseService.createValueErrorsDatabase(valuesErrorDatabasePath)
     const errorCount = databaseService.getCount(this.valuesErrorDatabase)

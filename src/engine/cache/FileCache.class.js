@@ -12,6 +12,9 @@ const ERROR_FOLDER = 'errors'
 const ARCHIVE_FOLDER = 'archive'
 const FILE_FOLDER = 'files'
 
+const FILE_DB_FILE_NAME = 'files.db'
+const FILE_ERROR_DB_FILE_NAME = 'files-error.db'
+
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
@@ -54,7 +57,7 @@ class FileCache extends BaseCache {
    * @returns {Promise<void>} - The result promise
    */
   async init() {
-    const filesDatabasePath = `${this.baseFolder}/files.db`
+    const filesDatabasePath = path.resolve(this.baseFolder, FILE_DB_FILE_NAME)
     this.logger.debug(`Use file cache database: "${filesDatabasePath}".`)
     this.filesDatabase = databaseService.createFilesDatabase(filesDatabasePath)
     const filesCount = databaseService.getCount(this.filesDatabase)
@@ -64,7 +67,8 @@ class FileCache extends BaseCache {
       this.logger.debug('No files in cache.')
     }
 
-    const filesErrorDatabasePath = `${this.baseFolder}/files-error.db`
+    const filesErrorDatabasePath = path.resolve(this.baseFolder, FILE_ERROR_DB_FILE_NAME)
+
     this.logger.debug(`Initialize files error db: ${filesErrorDatabasePath}`)
     this.filesErrorDatabase = databaseService.createValueErrorsDatabase(filesErrorDatabasePath)
     const errorCount = databaseService.getCount(this.filesErrorDatabase)
