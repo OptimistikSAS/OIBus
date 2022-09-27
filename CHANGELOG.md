@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.1.2](https://github.com/OptimistikSAS/OIBus/compare/v2.1.1...v2.1.2) (2022-09-27)
+
+
+### Bug Fixes
+
+* **logs:** fix loki addLogs engine method with koa ctx ([94ac8c3](https://github.com/OptimistikSAS/OIBus/commit/94ac8c34e74f6b8b4c5f866f5d1110eb1a5ffd4d))
+
 ### [2.1.1](https://github.com/OptimistikSAS/OIBus/compare/v2.1.0...v2.1.1) (2022-09-26)
 
 
