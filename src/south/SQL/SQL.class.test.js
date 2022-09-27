@@ -4,29 +4,33 @@ const mssql = require('mssql')
 
 const SQL = require('./SQL.class')
 const { integrationTestConfig: testConfig } = require('../../../tests/testConfig')
-const EncryptionService = require('../../services/EncryptionService.class')
 
-// Mock logger
+// Mock fs
+jest.mock('node:fs/promises')
+
+// Mock services
+jest.mock('../../services/database.service')
 jest.mock('../../engine/logger/Logger.class')
+jest.mock('../../services/status.service.class')
+jest.mock('../../services/EncryptionService.class', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 
-// Mock EncryptionService
-EncryptionService.getInstance = () => ({ decryptText: (password) => password })
-
-// Mock engine
-const engine = jest.mock('../../engine/OIBusEngine.class')
-engine.configService = { getConfig: () => ({ engineConfig: testConfig.engine }) }
-engine.addFile = jest.fn()
-engine.eventEmitters = {}
+// Mock OIBusEngine
+const engine = {
+  configService: { getConfig: () => ({ engineConfig: testConfig.engine }) },
+  cacheFolder: './cache',
+  addValues: jest.fn(),
+  addFile: jest.fn(),
+}
 
 describe('MySQL Integration test', () => {
-  const southMysqlConfig = testConfig.south[0]
+  const settings = testConfig.south[0]
   const mysqlConfig = {
-    host: southMysqlConfig.SQL.host,
-    user: southMysqlConfig.SQL.username,
-    password: southMysqlConfig.SQL.password,
-    database: southMysqlConfig.SQL.database,
-    port: southMysqlConfig.SQL.port,
-    connectTimeout: southMysqlConfig.SQL.connectionTimeout,
+    host: settings.SQL.host,
+    user: settings.SQL.username,
+    password: settings.SQL.password,
+    database: settings.SQL.database,
+    port: settings.SQL.port,
+    connectTimeout: settings.SQL.connectionTimeout,
   }
 
   beforeAll(async () => {
@@ -37,7 +41,7 @@ describe('MySQL Integration test', () => {
         + 'VALUES (18, \'2018-10-03T13:40:40\'), (19, \'2019-10-03T13:40:40\'), (20, \'2020-10-03T13:40:40\'), (21, \'2021-10-03T13:40:40\')')
     await connection.end()
 
-    southMysqlConfig.SQL.query = 'SELECT temperature, created_at as timestamp FROM history WHERE created_at > @StartTime AND created_at < @EndTime'
+    settings.SQL.query = 'SELECT temperature, created_at as timestamp FROM history WHERE created_at > @StartTime AND created_at < @EndTime'
   })
 
   afterAll(async () => {
@@ -47,16 +51,16 @@ describe('MySQL Integration test', () => {
   })
 
   it('should retrieve some values in the MySQL database', async () => {
-    const sqlSouth = new SQL(southMysqlConfig, engine)
+    const south = new SQL(settings, engine)
 
-    await sqlSouth.init()
-    await sqlSouth.connect()
+    await south.init()
+    await south.connect()
 
-    expect(sqlSouth.connected).toEqual(true)
+    expect(south.connected).toEqual(true)
 
-    const result = await sqlSouth.getDataFromMySQL(
-      '2018-10-03T13:36:36',
-      '2021-10-03T13:40:40',
+    const result = await south.getDataFromMySQL(
+      new Date('2018-10-03T13:36:36'),
+      new Date('2021-10-03T13:40:40'),
     )
 
     expect(result).toEqual([
@@ -68,13 +72,13 @@ describe('MySQL Integration test', () => {
 })
 
 describe('PostgreSQL Integration test', () => {
-  const southPostgresqlConfig = testConfig.south[1]
+  const settings = testConfig.south[1]
   const postgresqlConfig = {
-    host: southPostgresqlConfig.SQL.host,
-    user: southPostgresqlConfig.SQL.username,
-    password: southPostgresqlConfig.SQL.password,
-    database: southPostgresqlConfig.SQL.database,
-    port: southPostgresqlConfig.SQL.port,
+    host: settings.SQL.host,
+    user: settings.SQL.username,
+    password: settings.SQL.password,
+    database: settings.SQL.database,
+    port: settings.SQL.port,
   }
 
   beforeAll(async () => {
@@ -85,7 +89,7 @@ describe('PostgreSQL Integration test', () => {
         + 'VALUES (18, \'2018-10-03T13:40:40\'), (19, \'2019-10-03T13:40:40\'), (20, \'2020-10-03T13:40:40\'), (21, \'2021-10-03T13:40:40\')')
     await connection.end()
 
-    southPostgresqlConfig.SQL.query = 'SELECT temperature, created_at as timestamp FROM history '
+    settings.SQL.query = 'SELECT temperature, created_at as timestamp FROM history '
         + 'WHERE created_at > @StartTime AND created_at < @EndTime'
   })
 
@@ -97,16 +101,16 @@ describe('PostgreSQL Integration test', () => {
   })
 
   it('should retrieve some values in the PostgreSQL database', async () => {
-    const sqlSouth = new SQL(southPostgresqlConfig, engine)
+    const south = new SQL(settings, engine)
 
-    await sqlSouth.init()
-    await sqlSouth.connect()
+    await south.init()
+    await south.connect()
 
-    expect(sqlSouth.connected).toEqual(true)
+    expect(south.connected).toEqual(true)
 
-    const result = await sqlSouth.getDataFromPostgreSQL(
-      '2018-10-03T13:36:36',
-      '2021-10-03T13:40:40',
+    const result = await south.getDataFromPostgreSQL(
+      new Date('2018-10-03T13:36:36'),
+      new Date('2021-10-03T13:40:40'),
     )
 
     expect(result).toEqual([
@@ -118,16 +122,16 @@ describe('PostgreSQL Integration test', () => {
 })
 
 describe('MSSQL Integration test', () => {
-  const southMssqlConfig = testConfig.south[2]
+  const settings = testConfig.south[2]
   const mssqlConfig = {
-    user: southMssqlConfig.SQL.username,
-    password: southMssqlConfig.SQL.password,
-    server: southMssqlConfig.SQL.host,
-    port: southMssqlConfig.SQL.port,
-    connectionTimeout: southMssqlConfig.SQL.connectionTimeout,
-    requestTimeout: southMssqlConfig.SQL.requestTimeout,
+    user: settings.SQL.username,
+    password: settings.SQL.password,
+    server: settings.SQL.host,
+    port: settings.SQL.port,
+    connectionTimeout: settings.SQL.connectionTimeout,
+    requestTimeout: settings.SQL.requestTimeout,
     options: {
-      encrypt: southMssqlConfig.SQL.encryption,
+      encrypt: settings.SQL.encryption,
       trustServerCertificate: true,
     },
   }
@@ -142,7 +146,7 @@ describe('MSSQL Integration test', () => {
         VALUES (18, '2018-10-03T13:40:40'), (19, '2019-10-03T13:40:40'), (20, '2020-10-03T13:40:40'), (21, '2021-10-03T13:40:40');`)
     await mssql.close()
 
-    southMssqlConfig.SQL.query = `USE ${process.env.MSSQL_DATABASE}; SELECT temperature, created_at as timestamp FROM history
+    settings.SQL.query = `USE ${process.env.MSSQL_DATABASE}; SELECT temperature, created_at as timestamp FROM history
         WHERE created_at > @StartTime AND created_at < @EndTime`
   })
 
@@ -153,14 +157,14 @@ describe('MSSQL Integration test', () => {
   })
 
   it('should retrieve some values in the MSSQL database', async () => {
-    const sqlSouth = new SQL(southMssqlConfig, engine)
+    const south = new SQL(settings, engine)
 
-    await sqlSouth.init()
-    await sqlSouth.connect()
+    await south.init()
+    await south.connect()
 
-    expect(sqlSouth.connected).toEqual(true)
+    expect(south.connected).toEqual(true)
 
-    const result = await sqlSouth.getDataFromMSSQL(
+    const result = await south.getDataFromMSSQL(
       '2018-10-03T13:36:36',
       '2021-10-03T13:40:40',
     )
