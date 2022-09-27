@@ -7,6 +7,13 @@ const selfSigned = require('selfsigned')
 
 const { createFolder, filesExists } = require('./utils')
 
+const CERT_PRIVATE_KEY_FILE_NAME = 'privateKey.pem'
+const CERT_PUBLIC_KEY_FILE_NAME = 'publicKey.pem'
+const CERT_FILE_NAME = 'cert.pem'
+
+const OIBUS_PRIVATE_KEY_FILE_NAME = 'private.pem'
+const OIBUS_PUBLIC_KEY_FILE_NAME = 'public.pem'
+
 /**
  * Service used to manage encryption and decryption of secrets in the config file
  * Also responsible to create private and public key used for encrypting the secrets
@@ -47,9 +54,9 @@ class EncryptionService {
    * @returns {Promise<void>} - The result promise
    */
   async checkOrCreateCertFiles() {
-    const privateKeyPath = path.resolve(this.certsFolder, 'privateKey.pem')
-    const publicKeyPath = path.resolve(this.certsFolder, 'publicKey.pem')
-    const certPath = path.resolve(this.certsFolder, 'cert.pem')
+    const privateKeyPath = path.resolve(this.certsFolder, CERT_PRIVATE_KEY_FILE_NAME)
+    const publicKeyPath = path.resolve(this.certsFolder, CERT_PUBLIC_KEY_FILE_NAME)
+    const certPath = path.resolve(this.certsFolder, CERT_FILE_NAME)
     await createFolder(this.certsFolder)
 
     if (!await filesExists(privateKeyPath) || !await filesExists(publicKeyPath) || !await filesExists(certPath)) {
@@ -110,8 +117,8 @@ class EncryptionService {
    * @returns {Promise<void>} - The result promise
    */
   async checkOrCreatePrivateKey() {
-    const privateKeyPath = path.resolve(this.keyFolder, 'private.pem')
-    const publicKeyPath = path.resolve(this.keyFolder, 'public.pem')
+    const privateKeyPath = path.resolve(this.keyFolder, OIBUS_PRIVATE_KEY_FILE_NAME)
+    const publicKeyPath = path.resolve(this.keyFolder, OIBUS_PUBLIC_KEY_FILE_NAME)
 
     await createFolder(this.keyFolder)
 
@@ -163,7 +170,7 @@ class EncryptionService {
    * @return {Promise<String>} - The encrypted text
    */
   async encryptText(plainText) {
-    const absolutePath = path.resolve(this.keyFolder, 'public.pem')
+    const absolutePath = path.resolve(this.keyFolder, OIBUS_PUBLIC_KEY_FILE_NAME)
     const publicKey = await fs.readFile(absolutePath, 'utf8')
     const buffer = Buffer.from(plainText, 'utf8')
     const encrypted = crypto.publicEncrypt(publicKey, buffer)
@@ -176,7 +183,7 @@ class EncryptionService {
    * @return {Promise<String>} - The decrypted text
    */
   async decryptText(encryptedText) {
-    const absolutePath = path.resolve(this.keyFolder, 'private.pem')
+    const absolutePath = path.resolve(this.keyFolder, OIBUS_PRIVATE_KEY_FILE_NAME)
     const privateKey = await fs.readFile(absolutePath, 'utf8')
     const buffer = Buffer.from(encryptedText, 'base64')
     const decrypted = crypto.privateDecrypt(

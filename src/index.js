@@ -20,6 +20,8 @@ const { getCommandLineArguments, createFolder } = require('./services/utils')
 const MAX_RESTART_COUNT = 3
 const MAX_INTERVAL_MILLISECOND = 30 * 1000
 const CACHE_FOLDER = './cache'
+const LOG_FOLDER_NAME = 'logs'
+const MAIN_LOG_FILE_NAME = 'main-journal.log'
 
 const logger = new Logger()
 
@@ -34,7 +36,7 @@ const logParameters = {
     consoleLog: { level: 'debug' },
     fileLog: {
       level: 'debug',
-      fileName: path.resolve(path.parse(configFile).dir, 'logs', 'main-journal.log'),
+      fileName: path.resolve(path.parse(configFile).dir, LOG_FOLDER_NAME, MAIN_LOG_FILE_NAME),
       maxSize: 1000000,
       numberOfFiles: 5,
       tailable: true,
