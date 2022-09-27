@@ -1,4 +1,8 @@
+const path = require('node:path')
 const databaseService = require('../../services/database.service')
+
+const LOG_FOLDER = './logs'
+const LOG_DB_NAME = 'journal.db'
 
 /**
  * Get logs.
@@ -11,8 +15,7 @@ const databaseService = require('../../services/database.service')
  * @return {void}
  */
 const getLogs = (ctx) => {
-  const { engineConfig } = ctx.app.engine.configService.getConfig()
-  const databasePath = engineConfig.logParameters.sqliteLog.fileName
+  const databasePath = path.resolve(LOG_FOLDER, LOG_DB_NAME)
   const now = Date.now()
   const dayAgo = new Date(now - 86400000)
   const fromDate = ctx.query.fromDate || new Date(dayAgo).toISOString()

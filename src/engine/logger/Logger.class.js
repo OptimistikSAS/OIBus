@@ -2,7 +2,10 @@ const path = require('node:path')
 
 const pino = require('pino')
 
+const LOG_FOLDER_NAME = 'logs'
 const ENGINE_LOG_LEVEL_ENTRY = 'engine'
+const LOG_FILE_NAME = 'journal.log'
+const LOG_DB_NAME = 'journal.db'
 
 /**
  * Manage pino loggers
@@ -66,13 +69,13 @@ class Logger {
     }
 
     if (fileLog.level !== 'none') {
-      const fileName = fileLog.fileName ? fileLog.fileName : path.resolve('./logs', 'journal.log')
+      const fileName = fileLog.fileName ? fileLog.fileName : path.resolve(LOG_FOLDER_NAME, LOG_FILE_NAME)
 
       targets.push({ target: 'pino/file', options: { destination: fileName, mkdir: true }, level: fileLog.level })
     }
 
     if (sqliteLog.level !== 'none') {
-      const fileName = sqliteLog.fileName ? sqliteLog.fileName : path.resolve('./logs', 'journal.db')
+      const fileName = sqliteLog.fileName ? sqliteLog.fileName : path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME)
 
       targets.push({
         target: path.join(__dirname, 'SqliteLoggerTransport.class.js'),
