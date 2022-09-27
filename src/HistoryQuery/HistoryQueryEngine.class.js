@@ -8,6 +8,7 @@ const databaseService = require('../services/database.service')
 const StatusService = require('../services/status.service.class')
 
 const CACHE_FOLDER = './cache/history-query'
+const HISTORY_QUERIES_DB = './history-query.db'
 
 /**
  * Manage history queries by running {@link HistoryQuery} one after another
@@ -25,7 +26,7 @@ class HistoryQueryEngine extends BaseEngine {
    */
   constructor(configService, encryptionService) {
     super(configService, encryptionService, CACHE_FOLDER)
-    this.cacheFolder = CACHE_FOLDER
+    this.cacheFolder = path.resolve(CACHE_FOLDER)
 
     this.statusService = new StatusService()
     this.historyQueryRepository = null
@@ -47,7 +48,7 @@ class HistoryQueryEngine extends BaseEngine {
       this.logger.debug(`Creating history cache folder "${this.cacheFolder}".`)
       await fs.mkdir(this.cacheFolder, { recursive: true })
     }
-    this.historyQueryRepository = new HistoryQueryRepository(path.resolve(CACHE_FOLDER, 'history-query.db'))
+    this.historyQueryRepository = new HistoryQueryRepository(path.resolve(HISTORY_QUERIES_DB))
     this.logger.info('Starting HistoryQuery Engine.')
   }
 

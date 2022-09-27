@@ -1301,6 +1301,17 @@ module.exports = {
 
     await createFolder((path.resolve('./cache/data-stream')))
     await createFolder(path.resolve('./cache/history-query'))
+
+    // Move keys and certs outside cache folder
+    try {
+      await fs.rename(path.resolve('./cache', 'certs'), path.resolve('./certs'))
+      await fs.rename(path.resolve('./cache', 'keys'), path.resolve('./keys'))
+    } catch (err) {
+      if (err.code !== 'ENOENT') {
+        logger.error(err)
+      }
+    }
+
     for (const north of config.north.applications) {
       logger.info(`Add archive settings to North connector ${north.id}`)
       north.caching.archive = archiveSettings
