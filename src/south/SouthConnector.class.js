@@ -6,6 +6,8 @@ const CertificateService = require('../services/CertificateService.class')
 const StatusService = require('../services/status.service.class')
 const { generateIntervals, delay, createFolder } = require('../services/utils')
 
+const CACHE_DB_FILE_NAME = 'cache.db'
+
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
  * Building a new South connector means to extend this class, and to surcharge the following methods:
@@ -84,7 +86,7 @@ class SouthConnector {
     await this.certificate.init(this.keyFile, this.certFile, this.caFile)
 
     await createFolder(this.baseFolder)
-    this.southDatabase = databaseService.createConfigDatabase(path.resolve(this.baseFolder, 'cache.db'))
+    this.southDatabase = databaseService.createConfigDatabase(path.resolve(this.baseFolder, CACHE_DB_FILE_NAME))
 
     const {
       supportListen,
