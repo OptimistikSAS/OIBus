@@ -28,56 +28,6 @@ const generateFormDataBodyFromFile = (filePath) => {
 }
 
 /**
- * Check if config file exists and create it if not
- * @param {String} filePath - The location of the config file
- * @param {Object} defaultConfig - A default config object
- * @return {Promise<Boolean>} - Whether it was successful or not
- */
-const checkOrCreateConfigFile = async (filePath, defaultConfig) => {
-  try {
-    await fs.stat(filePath)
-  } catch (err) {
-    await fs.writeFile(filePath, JSON.stringify(defaultConfig, null, 4), 'utf8')
-  }
-}
-
-/**
- * Tries to read a JSON file at a given path
- * @param {String} filePath - The location of the config file
- * @return {Promise<Object>} - Content of the file
- */
-const tryReadFile = async (filePath) => {
-  if (!filePath.endsWith('.json')) {
-    throw new Error('You must provide a JSON file for the configuration!')
-  }
-  const fileContent = await fs.readFile(filePath, 'utf8')
-  return JSON.parse(fileContent)
-}
-
-/**
- * Back up a file by adding a timestamp to its name before the extension
- * @param {String} filePath - The file path to back up
- * @returns {Promise<Void>} - The result promise
- */
-const backupConfigFile = async (filePath) => {
-  const timestamp = new Date().getTime()
-  const backupFilename = `${path.parse(filePath).name}-${timestamp}${path.parse(filePath).ext}`
-  const backupPath = path.join(path.parse(filePath).dir, backupFilename)
-
-  await fs.copyFile(filePath, backupPath)
-}
-
-/**
- * Save a file with JSON formatting
- * @param {String} filePath - The file path where to save the JSON
- * @param {Object} jsonObject - The JSON object to save
- * @returns {Promise<void>} - The result promise
- */
-const saveConfig = async (filePath, jsonObject) => {
-  await fs.writeFile(filePath, JSON.stringify(jsonObject, null, 4), 'utf8')
-}
-
-/**
  * Get config file from console arguments
  * @returns {Object} - the config file and check argument
  */
@@ -202,11 +152,7 @@ const filesExists = async (filePath) => {
 
 module.exports = {
   generateFormDataBodyFromFile,
-  checkOrCreateConfigFile,
-  tryReadFile,
   getCommandLineArguments,
-  backupConfigFile,
-  saveConfig,
   delay,
   generateIntervals,
   createFolder,

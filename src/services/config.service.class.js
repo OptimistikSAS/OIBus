@@ -3,50 +3,60 @@ const fs = require('node:fs/promises')
 
 const EncryptionService = require('./EncryptionService.class')
 
-const {
-  tryReadFile,
-  checkOrCreateConfigFile,
-  backupConfigFile,
-  saveConfig,
-} = require('./utils')
-
 const KEYS_FOLDER = './keys'
 const CERTS_FOLDER = './certs'
 
 /**
  * Class responsible for managing the configuration.
  * @class ConfigService
- * @param {String} configFile - The config file
- * @return {void}
  */
 class ConfigService {
-  constructor(configFile, cacheFolder) {
+  /**
+   * Constructor for ConfigService
+   * @constructor
+   * @param {String} configFilePath - The config file
+   * @param {String} cacheFolder - The cache folder to use
+   * @return {void}
+   */
+  constructor(configFilePath, cacheFolder) {
     this.encryptionService = EncryptionService.getInstance()
-    this.configFile = configFile
-    this.cacheFolder = cacheFolder
-  }
+    this.configFilePath = path.resolve(configFilePath)
+    this.cacheFolder = path.resolve(cacheFolder)
 
-  async init() {
-    const baseDir = path.extname(this.configFile) ? path.parse(this.configFile).dir : this.configFile
-
-    try {
-      await fs.stat(baseDir)
-    } catch (err) {
-      await fs.mkdir(baseDir, { recursive: true })
-    }
-
-    const defaultConfig = JSON.parse(await fs.readFile(`${__dirname}/../config/defaultConfig.json`, 'utf8'))
-    await checkOrCreateConfigFile(this.configFile, defaultConfig)
-
-    this.config = await tryReadFile(this.configFile)
     this.keyFolder = path.resolve(KEYS_FOLDER)
     this.certFolder = path.resolve(CERTS_FOLDER)
-    this.modifiedConfig = JSON.parse(JSON.stringify(this.config))
+
+    this.config = null
+    this.modifiedConfig = null
   }
 
   /**
-   * Get config.
-   * @returns {object} - The config
+   * Init the config service by creating folders and initiating default config if necessary
+   * @returns {Promise<void>} - The result promise
+   */
+  async init() {
+    let tempConfig
+    try {
+      tempConfig = await fs.readFile(this.configFilePath, 'utf8')
+    } catch (err) {
+      tempConfig = await fs.readFile(`${__dirname}/../config/defaultConfig.json`, 'utf8')
+    }
+
+    // When a specific config is used with unencrypted secrets, it allows to encrypt credentials and update the config.
+    // In this case, no backup is used to avoid plain text secrets
+    // This can happen after a fresh installation with a config file edited by the user or an installation script
+    await this.updateConfig(JSON.parse(tempConfig))
+
+    if (JSON.stringify(this.modifiedConfig) !== tempConfig) {
+      await this.activateConfiguration(false)
+    } else {
+      this.config = this.modifiedConfig
+    }
+  }
+
+  /**
+   * Return the engine, south and north config
+   * @returns {Object} - The configs
    */
   getConfig() {
     return {
@@ -58,14 +68,14 @@ class ConfigService {
 
   /**
    * Get active configuration.
-   * @returns {object} - The active configuration
+   * @returns {Object} - The active configuration
    */
   getActiveConfiguration() {
     return this.config
   }
 
   /**
-   * Update configuration
+   * Update configuration and encrypt password and secrets
    * @param {Object} config - The updated configuration
    * @returns {Promise<void>} - The result promise
    */
@@ -82,21 +92,20 @@ class ConfigService {
   }
 
   /**
-   * Activate the configuration
+   * Activate the configuration, i.e. saving a new config file
+   * @param {Boolean} backup - Should save a backup file or not
    * @returns {void}
    */
-  async activateConfiguration() {
-    await backupConfigFile(this.configFile)
-    await saveConfig(this.configFile, this.modifiedConfig)
-    this.config = JSON.parse(JSON.stringify(this.modifiedConfig))
-  }
+  async activateConfiguration(backup = true) {
+    if (backup) {
+      const timestamp = new Date().getTime()
+      const backupFilename = `${path.parse(this.configFilePath).name}-${timestamp}${path.parse(this.configFilePath).ext}`
+      const backupPath = path.resolve(path.parse(this.configFilePath).dir, backupFilename)
 
-  /**
-   * Get the location of the config file.
-   * @returns {String} - The location of the config file
-   */
-  getConfigurationFileLocation() {
-    return this.configFile
+      await fs.copyFile(this.configFilePath, backupPath)
+    }
+    await fs.writeFile(this.configFilePath, JSON.stringify(this.modifiedConfig, null, 4), 'utf8')
+    this.config = JSON.parse(JSON.stringify(this.modifiedConfig))
   }
 }
 

@@ -46,7 +46,10 @@ const logParameters = {
   },
 }
 
-logger.changeParameters(logParameters).then(() => {
+logger.changeParameters(logParameters).then(async () => {
+  const baseDir = path.extname(configFile) ? path.parse(configFile).dir : configFile
+  await createFolder(baseDir)
+
   if (cluster.isMaster) {
     // Master role is nothing except launching a worker and relaunching another
     // one if exit is detected (typically to load a new configuration)
@@ -112,7 +115,7 @@ logger.changeParameters(logParameters).then(() => {
       }
     })
   } else {
-    process.chdir(path.parse(configFile).dir)
+    process.chdir(baseDir)
 
     // Migrate config file, if needed
     migrationService.migrate(configFile, logParameters).then(async () => {
