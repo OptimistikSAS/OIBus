@@ -62,14 +62,7 @@ class OIBusEngine extends BaseEngine {
 
     this.engineName = engineConfig.engineName
 
-    this.logger.info(`Starting Engine ${this.version}
-    architecture: ${process.arch}
-    This platform is ${process.platform}
-    Current directory: ${process.cwd()}
-    Version Node: ${process.version}
-    Config file: ${this.configService.configFile}
-    HistoryQuery config file: ${this.configService.historyQueryConfigFile},
-    Cache folder: ${this.cacheFolder}`)
+    this.logger.info(`Starting OIBusEngine: ${JSON.stringify(this.getOIBusInfo(), null, 4)}`)
 
     engineConfig.scanModes.forEach(({ scanMode }) => {
       // Initialize the scanLists with empty arrays
@@ -327,12 +320,11 @@ class OIBusEngine extends BaseEngine {
       'Current directory': process.cwd(),
       'Node version': process.version,
       executable: process.execPath,
-      'Configuration file': this.configService.getConfigurationFileLocation(),
       processId: process.pid,
       hostname: os.hostname(),
       osRelease: os.release(),
       osType: os.type(),
-      copyright: '(c) Copyright 2019-2022 Optimistik, all rights reserved.',
+      copyright: `(c) Copyright 2019-${new Date().getFullYear()} Optimistik, all rights reserved.`,
     }
   }
 

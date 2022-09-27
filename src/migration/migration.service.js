@@ -1,9 +1,8 @@
-const fs = require('fs/promises')
+const fs = require('node:fs/promises')
+const path = require('node:path')
 
 const migrationRules = require('./migrationRules')
 const Logger = require('../engine/logger/Logger.class')
-
-const { tryReadFile, backupConfigFile, saveConfig } = require('../services/utils')
 
 const REQUIRED_SCHEMA_VERSION = 26
 const DEFAULT_VERSION = 1
@@ -13,11 +12,11 @@ const DEFAULT_VERSION = 1
  * Iterate through versions and migrate until we reach actual OIBus version.
  * @param {number} configVersion - The config file version
  * @param {object} config - The configuration
- * @param {string} configFile - The config file
+ * @param {string} configFilePath - The config file
  * @param {object} logger - The logger
  * @returns {void}
  */
-const migrateImpl = async (configVersion, config, configFile, logger) => {
+const migrateImpl = async (configVersion, config, configFilePath, logger) => {
   let iterateVersion = configVersion
   try {
     // eslint-disable-next-line no-restricted-syntax
@@ -44,33 +43,36 @@ const migrateImpl = async (configVersion, config, configFile, logger) => {
     logger.info(`Unable to reach version ${REQUIRED_SCHEMA_VERSION} during migration`)
   }
 
-  await backupConfigFile(configFile)
-  await saveConfig(configFile, config)
+  const timestamp = new Date().getTime()
+  const backupFilename = `${path.parse(configFilePath).name}-${timestamp}${path.parse(configFilePath).ext}`
+  const backupPath = path.resolve(path.parse(configFilePath).dir, backupFilename)
+  await fs.copyFile(configFilePath, backupPath)
+  await fs.writeFile(configFilePath, JSON.stringify(config, null, 4), 'utf8')
 }
 
 /**
  * Migrate if needed.
- * @param {String} configFile - The config file
+ * @param {String} configFilePath - The config file path
  * @param {Object }logParameters - The log parameters to use (given by index.js)
  * @returns {Promise<void>} - The result promise
  */
-const migrate = async (configFile, logParameters) => {
+const migrate = async (configFilePath, logParameters) => {
   const logger = new Logger('migration')
   try {
     await logger.changeParameters(logParameters)
 
     let fileStat
     try {
-      fileStat = await fs.stat(configFile)
+      fileStat = await fs.stat(configFilePath)
     } catch (fileNotFound) {
       logger.warn('No settings file found. No need to update')
     }
     if (fileStat) {
-      const config = await tryReadFile(configFile)
+      const config = JSON.parse(await fs.readFile(configFilePath, 'utf8'))
       const configVersion = config.schemaVersion || DEFAULT_VERSION
       if (configVersion < REQUIRED_SCHEMA_VERSION) {
         logger.info(`Config file is not up-to-date. Starting migration from version ${configVersion} to ${REQUIRED_SCHEMA_VERSION}`)
-        await migrateImpl(configVersion, config, configFile, logger)
+        await migrateImpl(configVersion, config, configFilePath, logger)
       }
     }
   } catch (migrationError) {
