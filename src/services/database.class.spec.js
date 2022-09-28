@@ -258,6 +258,90 @@ describe('Database services', () => {
     expect(result).toEqual(retrievedLogs)
   })
 
+  it('should get paginated logs', () => {
+    const retrievedLogs = [
+      { timestamp: 123, message: 'myLogMessage1' },
+      { timestamp: 124, message: 'myLogMessage2' },
+    ]
+    const localAll = jest.fn()
+    localAll.mockReturnValue(retrievedLogs)
+    const localGet = jest.fn()
+    localGet.mockReturnValue({ count: 2 })
+    mockDatabase.prepare.mockReturnValue({ all: localAll, get: localGet })
+
+    const verbosity = ['error', 'warn']
+    const result = databaseService.getPaginatedLogs(
+      'myDb.db',
+      '2022-07-25T12:58:00.000Z',
+      '2022-08-25T12:58:00.000Z',
+      'myScope',
+      'myTextContent',
+      verbosity,
+      'ASC',
+    )
+    expect(prepare).toHaveBeenCalledTimes(2)
+    expect(prepare).toHaveBeenCalledWith('SELECT timestamp, level, scope, source, message FROM logs WHERE '
+        + 'timestamp BETWEEN \'2022-07-25T12:58:00.000Z\' AND \'2022-08-25T12:58:00.000Z\' AND level IN (\'error\',\'warn\') '
+        + 'AND scope = \'myScope\' AND message like \'%myTextContent%\' ORDER BY timestamp ASC LIMIT 50 OFFSET 0')
+    expect(prepare).toHaveBeenCalledWith('SELECT COUNT(*) as count FROM logs WHERE timestamp BETWEEN '
+        + '\'2022-07-25T12:58:00.000Z\' AND \'2022-08-25T12:58:00.000Z\' AND level IN (\'error\',\'warn\') '
+        + 'AND scope = \'myScope\' AND message like \'%myTextContent%\'')
+
+    expect(localAll).toHaveBeenCalledTimes(1)
+    expect(localGet).toHaveBeenCalledTimes(1)
+
+    const expectedResult = {
+      content: [{ message: 'myLogMessage1', timestamp: 123 }, { message: 'myLogMessage2', timestamp: 124 }],
+      pageNumber: 0,
+      pageSize: 2,
+      totalNumberOfElements: 2,
+      totalNumberOfPages: 1,
+    }
+    expect(result).toEqual(expectedResult)
+  })
+
+  it('should get paginated logs with page, without scope and text content', () => {
+    const retrievedLogs = [
+      { timestamp: 123, message: 'myLogMessage1' },
+      { timestamp: 124, message: 'myLogMessage2' },
+    ]
+    const localAll = jest.fn()
+    localAll.mockReturnValue(retrievedLogs)
+    const localGet = jest.fn()
+    localGet.mockReturnValue({ count: 2 })
+    mockDatabase.prepare.mockReturnValue({ all: localAll, get: localGet })
+
+    const verbosity = ['error', 'warn']
+    const result = databaseService.getPaginatedLogs(
+      'myDb.db',
+      '2022-07-25T12:58:00.000Z',
+      '2022-08-25T12:58:00.000Z',
+      null,
+      null,
+      verbosity,
+      'DESC',
+      1,
+    )
+    expect(prepare).toHaveBeenCalledTimes(2)
+    expect(prepare).toHaveBeenCalledWith('SELECT timestamp, level, scope, source, message FROM logs WHERE '
+        + 'timestamp BETWEEN \'2022-07-25T12:58:00.000Z\' AND \'2022-08-25T12:58:00.000Z\' AND level IN (\'error\',\'warn\') '
+        + 'ORDER BY timestamp DESC LIMIT 50 OFFSET 50')
+    expect(prepare).toHaveBeenCalledWith('SELECT COUNT(*) as count FROM logs WHERE timestamp BETWEEN '
+        + '\'2022-07-25T12:58:00.000Z\' AND \'2022-08-25T12:58:00.000Z\' AND level IN (\'error\',\'warn\')')
+
+    expect(localAll).toHaveBeenCalledTimes(1)
+    expect(localGet).toHaveBeenCalledTimes(1)
+
+    const expectedResult = {
+      content: [{ message: 'myLogMessage1', timestamp: 123 }, { message: 'myLogMessage2', timestamp: 124 }],
+      pageNumber: 1,
+      pageSize: 2,
+      totalNumberOfElements: 2,
+      totalNumberOfPages: 1,
+    }
+    expect(result).toEqual(expectedResult)
+  })
+
   it('should get history query south data', () => {
     const retrievedData = { dataEntry: 123 }
     const localAll = jest.fn()

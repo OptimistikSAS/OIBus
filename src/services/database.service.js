@@ -1,6 +1,7 @@
 const db = require('better-sqlite3')
 
 const CACHE_TABLE_NAME = 'cache'
+const PAGE_SIZE = 50
 
 /**
  * Initiate SQLite database and create the cache table.
@@ -265,6 +266,60 @@ const getLogs = (databasePath, fromDate, toDate, verbosity) => {
 }
 
 /**
+ * Get paginated logs
+ * @param {string} databasePath - The database path
+ * @param {string} fromDate - Start date
+ * @param {string} toDate - End date
+ * @param {string} scope - The scope of the log
+ * @param {string} textMessage - Text the message must contain
+ * @param {string[]} verbosity - Verbosity levels
+ * @param {'ASC' | 'DESC'} sorting - The sorting to use
+ * @param {number} pageNumber - The page number to request
+ * @return {
+ * {
+ *  content: {timestamp: String, level: String, scope: String, source: String}[],
+ *  pageSize: Number,
+ *  pageNumber: Number,
+ *  totalNumberOfElements: Number,
+ *  totalNumberOfPages: Number
+ * }} - The paginated logs
+ */
+const getPaginatedLogs = (
+  databasePath,
+  fromDate,
+  toDate,
+  scope,
+  textMessage,
+  verbosity,
+  sorting,
+  pageNumber = 0,
+) => {
+  const database = db(databasePath)
+  let whereClause = `WHERE timestamp BETWEEN '${fromDate}' AND '${toDate}' `
+  + `AND level IN (${verbosity.map((verb) => `'${verb}'`)})`
+  if (scope) {
+    whereClause += ` AND scope = '${scope}'`
+  }
+  if (textMessage) {
+    whereClause += ` AND message like '%${textMessage}%'`
+  }
+
+  const query = `SELECT timestamp, level, scope, source, message FROM logs ${whereClause}`
+      + ` ORDER BY timestamp ${sorting} LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * pageNumber}`
+  const results = database.prepare(query).all()
+  const totalNumberOfElements = database.prepare(`SELECT COUNT(*) as count FROM logs ${whereClause}`).get().count
+  const totalNumberOfPages = Math.ceil(totalNumberOfElements / PAGE_SIZE)
+
+  return {
+    content: results,
+    pageSize: results.length,
+    pageNumber,
+    totalNumberOfElements,
+    totalNumberOfPages,
+  }
+}
+
+/**
  * Get South connector related data for HistoryQuery.
  * @param {string} databasePath - The database path
  * @returns {object} - The data
@@ -293,5 +348,6 @@ module.exports = {
   upsertConfig,
   getConfig,
   getLogs,
+  getPaginatedLogs,
   getHistoryQuerySouthData,
 }
