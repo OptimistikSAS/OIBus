@@ -84,7 +84,7 @@ exports[`SqliteLogging check SqliteLogging 1`] = `
             class="form-label"
             for="engine.logParameters.sqliteLog.maxNumberOfLogs"
           >
-            Database max size
+            Max number of logs
           </label>
           <input
             aria-invalid="true"
@@ -97,13 +97,13 @@ exports[`SqliteLogging check SqliteLogging 1`] = `
           <div
             class="invalid-feedback"
           >
-            Value must be greater than 10000
+            Value must be greater than 100000
           </div>
           <small
             class="form-text text-muted"
           >
             <div>
-              Max size of the sqlite database (Byte)
+              Maximum number of logs in the SQLite database
             </div>
           </small>
         </div>
@@ -197,7 +197,7 @@ exports[`SqliteLogging check change sqliteLevel to "warning" 1`] = `
             class="form-label"
             for="engine.logParameters.sqliteLog.maxNumberOfLogs"
           >
-            Database max size
+            Max number of logs
           </label>
           <input
             aria-invalid="true"
@@ -210,13 +210,13 @@ exports[`SqliteLogging check change sqliteLevel to "warning" 1`] = `
           <div
             class="invalid-feedback"
           >
-            Value must be greater than 10000
+            Value must be greater than 100000
           </div>
           <small
             class="form-text text-muted"
           >
             <div>
-              Max size of the sqlite database (Byte)
+              Maximum number of logs in the SQLite database
             </div>
           </small>
         </div>
@@ -310,7 +310,7 @@ exports[`SqliteLogging check change sqliteLog maxNumberOfLogs to 10000000 1`] = 
             class="form-label"
             for="engine.logParameters.sqliteLog.maxNumberOfLogs"
           >
-            Database max size
+            Max number of logs
           </label>
           <input
             aria-invalid="true"
@@ -323,13 +323,13 @@ exports[`SqliteLogging check change sqliteLog maxNumberOfLogs to 10000000 1`] = 
           <div
             class="invalid-feedback"
           >
-            Value must be greater than 10000
+            Value must be greater than 100000
           </div>
           <small
             class="form-text text-muted"
           >
             <div>
-              Max size of the sqlite database (Byte)
+              Maximum number of logs in the SQLite database
             </div>
           </small>
         </div>

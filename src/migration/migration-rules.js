@@ -1718,5 +1718,20 @@ module.exports = {
     logger.info('Renaming engineName into name.')
     config.engine.name = config.engine.engineName
     delete config.engine.engineName
+
+    logger.info('Removing tailable field in file log')
+    delete config.engine.logParameters.fileLog.tailable
+
+    logger.info('Changing file size limit unit from Byte to MByte')
+    if (config.engine.logParameters.fileLog.maxSize <= 1000000) {
+      config.engine.logParameters.fileLog.maxSize = 1
+    } else {
+      config.engine.logParameters.fileLog.maxSize = Math.round(config.engine.logParameters.fileLog.maxSize / 1000000)
+    }
+
+    if (config.engine.logParameters.sqliteLog.maxNumberOfLogs <= 100000) {
+      logger.info('Changing minimum number of logs in SQLite database')
+      config.engine.logParameters.sqliteLog.maxNumberOfLogs = 100000
+    }
   },
 }

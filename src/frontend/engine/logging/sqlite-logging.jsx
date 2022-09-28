@@ -16,10 +16,10 @@ schema.form = {
     type: 'OibInteger',
     newRow: false,
     md: 2,
-    label: 'Database max size',
-    valid: minValue(10000),
+    label: 'Max number of logs',
+    valid: minValue(100000),
     defaultValue: 1000000,
-    help: <div>Max size of the sqlite database (Byte)</div>,
+    help: <div>Maximum number of logs in the SQLite database</div>,
   },
 }
 

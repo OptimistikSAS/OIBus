@@ -291,7 +291,7 @@ exports[`Logging check Logging 1`] = `
               class="form-label"
               for="engine.logParameters.fileLog.maxSize"
             >
-              File max size
+              Max file size
             </label>
             <input
               aria-invalid="false"
@@ -308,7 +308,7 @@ exports[`Logging check Logging 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Maximum size of the log files (Bytes)
+                Maximum size of the log files (MB)
               </div>
             </small>
           </div>
@@ -343,26 +343,6 @@ exports[`Logging check Logging 1`] = `
                 The number of log files (rotating)
               </div>
             </small>
-          </div>
-        </div>
-        <div
-          class="col-md-3"
-        >
-          <div
-            class="mb-3 form-check form-switch"
-          >
-            <label
-              class="form-check-label"
-            >
-              Tailable
-            </label>
-            <input
-              checked=""
-              class="oi-form-input checkbox form-check-input"
-              id="engine.logParameters.fileLog.tailable"
-              name="engine.logParameters.fileLog.tailable"
-              type="checkbox"
-            />
           </div>
         </div>
       </div>
@@ -449,7 +429,7 @@ exports[`Logging check Logging 1`] = `
               class="form-label"
               for="engine.logParameters.sqliteLog.maxNumberOfLogs"
             >
-              Database max size
+              Max number of logs
             </label>
             <input
               aria-invalid="true"
@@ -462,13 +442,13 @@ exports[`Logging check Logging 1`] = `
             <div
               class="invalid-feedback"
             >
-              Value must be greater than 10000
+              Value must be greater than 100000
             </div>
             <small
               class="form-text text-muted"
             >
               <div>
-                Max size of the sqlite database (Byte)
+                Maximum number of logs in the SQLite database
               </div>
             </small>
           </div>
