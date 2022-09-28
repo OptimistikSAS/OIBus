@@ -50,10 +50,11 @@ describe('Logger', () => {
     const expectedTargets = [
       { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: settings.logParameters.consoleLog.level },
       {
-        target: 'pino/file',
+        target: 'pino-roll',
         options: {
-          destination: settings.logParameters.fileLog.fileName,
-          mkdir: true,
+          file: settings.logParameters.fileLog.fileName,
+          frequency: 'daily',
+          size: 1000000,
         },
         level: settings.logParameters.fileLog.level,
       },
@@ -119,10 +120,11 @@ describe('Logger', () => {
     const expectedTargets = [
       { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: specificParameters.consoleLevel },
       {
-        target: 'pino/file',
+        target: 'pino-roll',
         options: {
-          destination: settings.logParameters.fileLog.fileName,
-          mkdir: true,
+          file: settings.logParameters.fileLog.fileName,
+          frequency: 'daily',
+          size: 1000000,
         },
         level: specificParameters.fileLevel,
       },

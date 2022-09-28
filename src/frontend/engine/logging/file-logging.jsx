@@ -15,11 +15,11 @@ schema.form = {
   maxSize: {
     type: 'OibInteger',
     newRow: false,
-    label: 'File max size',
+    label: 'Max file size',
     md: 2,
-    valid: minValue(10000),
-    defaultValue: 100000,
-    help: <div>Maximum size of the log files (Bytes)</div>,
+    valid: minValue(1),
+    defaultValue: 1,
+    help: <div>Maximum size of the log files (MB)</div>,
   },
   numberOfFiles: {
     type: 'OibInteger',
@@ -29,13 +29,6 @@ schema.form = {
     valid: inRange(1, 10),
     defaultValue: 5,
     help: <div>The number of log files (rotating)</div>,
-  },
-  tailable: {
-    type: 'OibCheckbox',
-    newRow: false,
-    md: 3,
-    label: 'Tailable',
-    defaultValue: true,
   },
 }
 

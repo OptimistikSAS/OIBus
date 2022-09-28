@@ -73,15 +73,4 @@ describe('FileLogging', () => {
     expect(onChange).toBeCalledWith('engine.logParameters.fileLog.numberOfFiles', 1, null)
     expect(container).toMatchSnapshot()
   })
-  test('check change fileLog tailable to false', () => {
-    act(() => {
-      root.render(<FileLogging
-        logParameters={testConfig.engine.logParameters.fileLog}
-        onChange={onChange}
-      />)
-    })
-    Simulate.change(document.getElementById('engine.logParameters.fileLog.tailable'), { target: { checked: false } })
-    expect(onChange).toBeCalledWith('engine.logParameters.fileLog.tailable', false, null)
-    expect(container).toMatchSnapshot()
-  })
 })

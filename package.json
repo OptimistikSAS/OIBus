@@ -74,6 +74,7 @@
     "pino": "8.7.0",
     "pino-abstract-transport": "1.0.0",
     "pino-pretty": "9.1.1",
+    "pino-roll": "1.0.0-rc.1",
     "proxy-agent": "5.0.0",
     "selfsigned": "2.1.1",
     "sprintf-js": "1.1.2",

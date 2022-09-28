@@ -71,8 +71,16 @@ class LoggerService {
 
     if (fileLog.level !== 'none') {
       const fileName = fileLog.fileName ? fileLog.fileName : path.resolve(LOG_FOLDER_NAME, LOG_FILE_NAME)
-
-      targets.push({ target: 'pino/file', options: { destination: fileName, mkdir: true }, level: fileLog.level })
+      // TODO: add number of files in pino-roll
+      targets.push({
+        target: 'pino-roll',
+        options: {
+          file: fileName,
+          size: fileLog.maxSize,
+          frequency: 'daily',
+        },
+        level: fileLog.level,
+      })
     }
 
     if (sqliteLog.level !== 'none') {

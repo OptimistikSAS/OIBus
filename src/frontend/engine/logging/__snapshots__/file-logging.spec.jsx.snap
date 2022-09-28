@@ -84,7 +84,7 @@ exports[`FileLogging check FileLogging 1`] = `
             class="form-label"
             for="engine.logParameters.fileLog.maxSize"
           >
-            File max size
+            Max file size
           </label>
           <input
             aria-invalid="false"
@@ -101,7 +101,7 @@ exports[`FileLogging check FileLogging 1`] = `
             class="form-text text-muted"
           >
             <div>
-              Maximum size of the log files (Bytes)
+              Maximum size of the log files (MB)
             </div>
           </small>
         </div>
@@ -136,26 +136,6 @@ exports[`FileLogging check FileLogging 1`] = `
               The number of log files (rotating)
             </div>
           </small>
-        </div>
-      </div>
-      <div
-        class="col-md-3"
-      >
-        <div
-          class="mb-3 form-check form-switch"
-        >
-          <label
-            class="form-check-label"
-          >
-            Tailable
-          </label>
-          <input
-            checked=""
-            class="oi-form-input checkbox form-check-input"
-            id="engine.logParameters.fileLog.tailable"
-            name="engine.logParameters.fileLog.tailable"
-            type="checkbox"
-          />
         </div>
       </div>
     </div>
@@ -247,7 +227,7 @@ exports[`FileLogging check change file level to "warning" 1`] = `
             class="form-label"
             for="engine.logParameters.fileLog.maxSize"
           >
-            File max size
+            Max file size
           </label>
           <input
             aria-invalid="false"
@@ -264,7 +244,7 @@ exports[`FileLogging check change file level to "warning" 1`] = `
             class="form-text text-muted"
           >
             <div>
-              Maximum size of the log files (Bytes)
+              Maximum size of the log files (MB)
             </div>
           </small>
         </div>
@@ -299,26 +279,6 @@ exports[`FileLogging check change file level to "warning" 1`] = `
               The number of log files (rotating)
             </div>
           </small>
-        </div>
-      </div>
-      <div
-        class="col-md-3"
-      >
-        <div
-          class="mb-3 form-check form-switch"
-        >
-          <label
-            class="form-check-label"
-          >
-            Tailable
-          </label>
-          <input
-            checked=""
-            class="oi-form-input checkbox form-check-input"
-            id="engine.logParameters.fileLog.tailable"
-            name="engine.logParameters.fileLog.tailable"
-            type="checkbox"
-          />
         </div>
       </div>
     </div>
@@ -410,7 +370,7 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
             class="form-label"
             for="engine.logParameters.fileLog.maxSize"
           >
-            File max size
+            Max file size
           </label>
           <input
             aria-invalid="false"
@@ -427,7 +387,7 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
             class="form-text text-muted"
           >
             <div>
-              Maximum size of the log files (Bytes)
+              Maximum size of the log files (MB)
             </div>
           </small>
         </div>
@@ -462,26 +422,6 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
               The number of log files (rotating)
             </div>
           </small>
-        </div>
-      </div>
-      <div
-        class="col-md-3"
-      >
-        <div
-          class="mb-3 form-check form-switch"
-        >
-          <label
-            class="form-check-label"
-          >
-            Tailable
-          </label>
-          <input
-            checked=""
-            class="oi-form-input checkbox form-check-input"
-            id="engine.logParameters.fileLog.tailable"
-            name="engine.logParameters.fileLog.tailable"
-            type="checkbox"
-          />
         </div>
       </div>
     </div>
@@ -573,7 +513,7 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
             class="form-label"
             for="engine.logParameters.fileLog.maxSize"
           >
-            File max size
+            Max file size
           </label>
           <input
             aria-invalid="false"
@@ -590,7 +530,7 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
             class="form-text text-muted"
           >
             <div>
-              Maximum size of the log files (Bytes)
+              Maximum size of the log files (MB)
             </div>
           </small>
         </div>
@@ -625,189 +565,6 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
               The number of log files (rotating)
             </div>
           </small>
-        </div>
-      </div>
-      <div
-        class="col-md-3"
-      >
-        <div
-          class="mb-3 form-check form-switch"
-        >
-          <label
-            class="form-check-label"
-          >
-            Tailable
-          </label>
-          <input
-            checked=""
-            class="oi-form-input checkbox form-check-input"
-            id="engine.logParameters.fileLog.tailable"
-            name="engine.logParameters.fileLog.tailable"
-            type="checkbox"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-`;
-
-exports[`FileLogging check change fileLog tailable to false 1`] = `
-<div>
-  <div>
-    <h6>
-      File
-    </h6>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-3"
-      >
-        <div
-          class="mb-3"
-        >
-          <label
-            class="form-label"
-            for="engine.logParameters.fileLog.level"
-          >
-            Level
-          </label>
-          <select
-            aria-invalid="false"
-            class="oi-form-input form-select"
-            id="engine.logParameters.fileLog.level"
-            name="engine.logParameters.fileLog.level"
-          >
-            <option
-              value="trace"
-            >
-              trace
-            </option>
-            <option
-              value="debug"
-            >
-              debug
-            </option>
-            <option
-              value="info"
-            >
-              info
-            </option>
-            <option
-              value="warning"
-            >
-              warning
-            </option>
-            <option
-              value="error"
-            >
-              error
-            </option>
-            <option
-              value="none"
-            >
-              none
-            </option>
-          </select>
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              The level for the File log
-            </div>
-          </small>
-        </div>
-      </div>
-    </div>
-    <div
-      class="row"
-    >
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="mb-3"
-        >
-          <label
-            class="form-label"
-            for="engine.logParameters.fileLog.maxSize"
-          >
-            File max size
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="engine.logParameters.fileLog.maxSize"
-            name="engine.logParameters.fileLog.maxSize"
-            type="integer"
-            value="1000000"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              Maximum size of the log files (Bytes)
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-2"
-      >
-        <div
-          class="mb-3"
-        >
-          <label
-            class="form-label"
-            for="engine.logParameters.fileLog.numberOfFiles"
-          >
-            Number of files
-          </label>
-          <input
-            aria-invalid="false"
-            class="oi-form-input form-control"
-            id="engine.logParameters.fileLog.numberOfFiles"
-            name="engine.logParameters.fileLog.numberOfFiles"
-            type="integer"
-            value="5"
-          />
-          <div
-            class="invalid-feedback"
-          />
-          <small
-            class="form-text text-muted"
-          >
-            <div>
-              The number of log files (rotating)
-            </div>
-          </small>
-        </div>
-      </div>
-      <div
-        class="col-md-3"
-      >
-        <div
-          class="mb-3 form-check form-switch"
-        >
-          <label
-            class="form-check-label"
-          >
-            Tailable
-          </label>
-          <input
-            checked=""
-            class="oi-form-input checkbox form-check-input"
-            id="engine.logParameters.fileLog.tailable"
-            name="engine.logParameters.fileLog.tailable"
-            type="checkbox"
-          />
         </div>
       </div>
     </div>
