@@ -28,6 +28,7 @@ protocolList.RestApi = require('../south/RestApi/RestApi.class')
 
 const Logger = require('./logger/Logger.class')
 const { createRequestService } = require('../services/request')
+const StatusService = require('../services/status.service.class')
 
 /**
  * Abstract class used to manage North and South connectors
@@ -53,6 +54,7 @@ class BaseEngine {
     this.encryptionService = encryptionService
 
     // Variable initialized in initEngineServices
+    this.statusService = null
     this.logger = null
     this.requestService = null
   }
@@ -64,6 +66,7 @@ class BaseEngine {
    * @returns {Promise<void>} - The result promise
    */
   async initEngineServices(engineConfig, loggerScope) {
+    this.statusService = new StatusService()
     // Configure the logger
     this.logger = new Logger(loggerScope)
     this.logger.setEncryptionService(this.encryptionService)

@@ -152,9 +152,11 @@ describe('NorthConnector', () => {
 
   it('should not send values if no values to send', async () => {
     north.valueCache.retrieveValuesFromCache = jest.fn(() => [])
+    north.resetValuesTimeout = jest.fn()
     await north.retrieveFromCacheAndSendValues()
 
     expect(north.logger.trace).toHaveBeenCalledWith('No values to send in the cache database.')
+    expect(north.resetValuesTimeout).toHaveBeenCalledWith(settings.caching.sendInterval)
   })
 
   it('should successfully send values', async () => {
@@ -230,9 +232,11 @@ describe('NorthConnector', () => {
 
   it('should not send files if no file to send', async () => {
     north.fileCache.retrieveFileFromCache = jest.fn(() => null)
+    north.resetFilesTimeout = jest.fn()
     await north.retrieveFromCacheAndSendFile()
 
     expect(north.logger.trace).toHaveBeenCalledWith('No file to send in the cache database.')
+    expect(north.resetFilesTimeout).toHaveBeenCalledWith(settings.caching.sendInterval)
   })
 
   it('should not send files if it does not exist', async () => {

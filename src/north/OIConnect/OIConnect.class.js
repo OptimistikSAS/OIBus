@@ -69,6 +69,12 @@ class OIConnect extends NorthConnector {
    * @returns {Boolean} - If the values/files must be sent again or not
    */
   shouldRetry(error) {
+    if (!error.responseError) {
+      // Error from the library, because the endpoint is not reachable for example. In this case we must retry indefinitely
+      this.logger.trace('Should retry because of connection error.')
+      return true
+    }
+    // Otherwise, check the HTTP status code
     const retry = [400, 500].includes(error.statusCode)
     this.logger.trace(`Should retry ${retry} because of error status code: ${error.statusCode}.`)
     return retry
