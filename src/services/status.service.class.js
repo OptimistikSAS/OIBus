@@ -5,8 +5,8 @@ const { PassThrough } = require('node:stream')
  * Class used to manage certificate files and their content
  */
 class StatusService {
-  constructor(initialStatusData = {}) {
-    this.statusData = initialStatusData
+  constructor() {
+    this.statusData = {}
     this.eventEmitter = new EventEmitter()
     this.eventEmitter.on('data', this.listener.bind(this))
   }

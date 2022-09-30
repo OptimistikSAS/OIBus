@@ -103,34 +103,6 @@ describe('BaseRequest', () => {
     expect(baseRequest.sendImplementation).not.toBeCalled()
   })
 
-  it('should properly retry sending', async () => {
-    baseRequest.sendImplementation = jest.fn().mockImplementation(() => {
-      // eslint-disable-next-line no-throw-literal
-      throw { responseError: 'error', statusCode: 400 }
-    })
-
-    const requestUrl = 'https://www.example.com'
-    const method = 'POST'
-    const authentication = {
-      type: 'Basic',
-      username: 'username',
-      password: 'password',
-    }
-    const proxy = null
-    const data = ''
-
-    await expect(baseRequest.httpSend(
-      requestUrl,
-      method,
-      authentication,
-      proxy,
-      data,
-    )).rejects.toThrowError('Fail to send HTTP request after too many attempt (3).')
-
-    // One call and 3 retry (from the config)
-    expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(4)
-  })
-
   it('should properly throw communication error', async () => {
     baseRequest.sendImplementation = jest.fn().mockImplementation(() => {
       throw new Error('http error')
@@ -152,7 +124,7 @@ describe('BaseRequest', () => {
       authentication,
       proxy,
       data,
-    )).rejects.toThrowError('HTTP request failed: Error: http error.')
+    )).rejects.toThrowError('http error')
 
     expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(1)
   })

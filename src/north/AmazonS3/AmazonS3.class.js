@@ -46,6 +46,7 @@ class AmazonS3 extends NorthConnector {
   }
 
   async init() {
+    await super.init()
     const configuredProxy = this.getProxy(this.proxy)
     let httpAgent
     if (configuredProxy) {

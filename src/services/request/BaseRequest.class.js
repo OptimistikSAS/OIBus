@@ -1,6 +1,3 @@
-// HTTP response status code which yields to retry the HTTP request
-const RETRY_STATUS_CODE = [400, 500]
-
 /**
  * Base class to manage HTTP POST method for JSON payloads and file body parts
  */
@@ -40,10 +37,9 @@ class BaseRequest {
    * @param {object} proxy - Proxy to use
    * @param {string} data - The body or file to send
    * @param {object} baseHeaders - Headers to send
-   * @param {number} retryCount - The retry count
    * @returns {void}
    */
-  async httpSend(requestUrl, method, authentication, proxy, data, baseHeaders = {}, retryCount = 0) {
+  async httpSend(requestUrl, method, authentication, proxy, data, baseHeaders = {}) {
     const { engineConfig: { httpRequest } } = this.engine.configService.getConfig()
 
     this.logger.trace(`httpSend() to ${method} ${requestUrl} using ${httpRequest.stack} stack.`)
@@ -71,24 +67,8 @@ class BaseRequest {
       }
     }
 
-    try {
-      const timeout = 1000 * httpRequest.timeout
-      await this.sendImplementation(requestUrl, method, headers, proxy, data, timeout)
-    } catch (errorResult) {
-      this.logger.error(errorResult.error)
-
-      if (errorResult.responseError) {
-        if (RETRY_STATUS_CODE.includes(errorResult.statusCode)) {
-          if (retryCount < httpRequest.retryCount) {
-            const incrementedRetryCount = retryCount + 1
-            await this.httpSend(requestUrl, method, authentication, proxy, data, baseHeaders, incrementedRetryCount)
-            return
-          }
-          throw new Error(`Fail to send HTTP request after too many attempt (${retryCount}).`)
-        }
-      }
-      throw new Error(`HTTP request failed: ${errorResult}.`)
-    }
+    const timeout = 1000 * httpRequest.timeout
+    await this.sendImplementation(requestUrl, method, headers, proxy, data, timeout)
 
     this.logger.trace(`httpSend() to ${method} ${requestUrl} using ${httpRequest.stack} stack Ok`)
   }

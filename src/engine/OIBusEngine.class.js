@@ -6,7 +6,6 @@ const humanizeDuration = require('humanize-duration')
 const fs = require('node:fs/promises')
 const BaseEngine = require('./BaseEngine.class')
 const HealthSignal = require('./HealthSignal.class')
-const StatusService = require('../services/status.service.class')
 
 const CACHE_FOLDER = './cache/data-stream'
 
@@ -46,7 +45,6 @@ class OIBusEngine extends BaseEngine {
     this.liveStatusInterval = null
     this.safeMode = null
     this.healthSignal = null
-    this.statusService = null
   }
 
   /**
@@ -57,8 +55,6 @@ class OIBusEngine extends BaseEngine {
    */
   async initEngineServices(engineConfig, loggerScope = 'OIBusEngine') {
     await super.initEngineServices(engineConfig, loggerScope)
-
-    this.statusService = new StatusService()
 
     this.engineName = engineConfig.engineName
 
@@ -112,7 +108,9 @@ class OIBusEngine extends BaseEngine {
     this.logger.trace(`Add file "${filePath}" to cache from South "${southOrigin?.settings.name || southId}".`)
 
     try {
-      await Promise.allSettled(this.activeNorths.filter((north) => north.canHandleFiles && north.isSubscribed(southId))
+      // Do not resolve promise if one of the connector fails. Otherwise, if a file is removed after a North fails,
+      // the file can be lost.
+      await Promise.all(this.activeNorths.filter((north) => north.canHandleFiles && north.isSubscribed(southId))
         .map((north) => north.cacheFile(filePath)))
 
       if (!preserveFiles) {
@@ -150,7 +148,6 @@ class OIBusEngine extends BaseEngine {
     }
 
     // 2. South connectors
-    // Create South connectors
     this.activeSouths = southConfig.filter(({ enabled }) => enabled)
       .map((settings) => {
         const south = this.createSouth(settings)
@@ -181,20 +178,35 @@ class OIBusEngine extends BaseEngine {
         }
         return south
       })
-    // Init South connectors (logger, status, locale variables...)
-    await Promise.all(this.activeSouths.map((south) => south.init()))
-    // Connect South with a non-blocking way to go on with the start operations
-    this.activeSouths.forEach((south) => south.connect())
     this.logger.debug(JSON.stringify(this.scanLists, null, ' '))
+    // Allows init/connect failure of a connector to not block other connectors
+    await Promise.allSettled(this.activeSouths.map((south) => {
+      const initAndConnect = async () => {
+        try {
+          await south.init()
+          await south.connect()
+        } catch (error) {
+          this.logger.error(error)
+        }
+      }
+      return initAndConnect()
+    }))
 
     // 3. North connectors
-    // Create North connectors
     this.activeNorths = northConfig.filter(({ enabled }) => enabled)
       .map((settings) => this.createNorth(settings))
-    // Init North connectors (logger, status, locale variables...)
-    await Promise.all(this.activeNorths.map((north) => north.init()))
-    // Connect North with a non-blocking way to go on with the start operations
-    this.activeNorths.forEach((north) => north.connect())
+    // Allows init/connect failure of a connector to not block other connectors
+    await Promise.allSettled(this.activeNorths.map((north) => {
+      const initAndConnect = async () => {
+        try {
+          await north.init()
+          await north.connect()
+        } catch (error) {
+          this.logger.error(error)
+        }
+      }
+      return initAndConnect()
+    }))
 
     // 4. Start the timers for each scan modes
     this.jobs = engineConfig.scanModes

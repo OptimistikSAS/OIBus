@@ -5,7 +5,6 @@ const HistoryQuery = require('./HistoryQuery.class')
 const BaseEngine = require('../engine/BaseEngine.class')
 const HistoryQueryRepository = require('./HistoryQueryRepository.class')
 const databaseService = require('../services/database.service')
-const StatusService = require('../services/status.service.class')
 
 const CACHE_FOLDER = './cache/history-query'
 const HISTORY_QUERIES_DB = './history-query.db'
@@ -28,7 +27,6 @@ class HistoryQueryEngine extends BaseEngine {
     super(configService, encryptionService, CACHE_FOLDER)
     this.cacheFolder = path.resolve(CACHE_FOLDER)
 
-    this.statusService = new StatusService()
     this.historyQueryRepository = null
   }
 

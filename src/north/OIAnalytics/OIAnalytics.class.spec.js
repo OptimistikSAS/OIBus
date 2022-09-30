@@ -105,4 +105,25 @@ describe('North OIAnalytics', () => {
     const expectedAuthentication = settings.OIAnalytics.authentication
     expect(engine.requestService.httpSend).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, filePath)
   })
+
+  it('should not retry', () => {
+    const error = { responseError: true, statusCode: 201 }
+    const result = north.shouldRetry(error)
+
+    expect(result).toBeFalsy()
+  })
+
+  it('should retry because of status code', () => {
+    const error = { responseError: true, statusCode: 400 }
+    const result = north.shouldRetry(error)
+
+    expect(result).toBeTruthy()
+  })
+
+  it('should retry because of response error', () => {
+    const error = { responseError: false }
+    const result = north.shouldRetry(error)
+
+    expect(result).toBeTruthy()
+  })
 })
