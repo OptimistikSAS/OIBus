@@ -1315,6 +1315,8 @@ module.exports = {
     for (const north of config.north.applications) {
       logger.info(`Add archive settings to North connector ${north.id}`)
       north.caching.archive = archiveSettings
+      logger.info(`Add retry count to North connector ${north.id}`)
+      north.caching.retryCount = config.engine.httpRequest.retryCount
 
       logger.info(`Moving cache for North connector ${north.id}.`)
       const northCache = path.resolve('./cache/data-stream', `north-${north.id}`)
@@ -1436,6 +1438,9 @@ module.exports = {
     } catch (err) {
       logger.warn(err)
     }
+
+    this.logger.info('Removing retry count from http request config.')
+    delete config.engine.httpRequest.retryCount
 
     for (const south of config.south.dataSources) {
       logger.info(`Moving cache for South connector ${south.id}.`)

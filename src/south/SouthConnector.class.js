@@ -51,17 +51,17 @@ class SouthConnector {
     this.supportedModes = supportedModes
     this.baseFolder = path.resolve(this.engine.cacheFolder, `south-${settings.id}`)
 
-    this.statusService = null
     this.numberOfRetrievedFiles = 0
     this.numberOfRetrievedValues = 0
-
     this.currentlyOnScan = {}
+
     this.ignoredReadsCounters = {}
     this.queryParts = {}
     this.buffer = []
     this.bufferTimeout = null
 
     // Variable initialized in init()
+    this.statusService = null
     this.keyFile = null
     this.certFile = null
     this.caFile = null
