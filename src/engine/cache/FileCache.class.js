@@ -70,7 +70,7 @@ class FileCache extends BaseCache {
     const filesErrorDatabasePath = path.resolve(this.baseFolder, FILE_ERROR_DB_FILE_NAME)
 
     this.logger.debug(`Initialize files error db: ${filesErrorDatabasePath}`)
-    this.filesErrorDatabase = databaseService.createValueErrorsDatabase(filesErrorDatabasePath)
+    this.filesErrorDatabase = databaseService.createFilesDatabase(filesErrorDatabasePath)
     const errorCount = databaseService.getCount(this.filesErrorDatabase)
     if (errorCount > 0) {
       this.logger.warn(`${errorCount} files in error cache.`)

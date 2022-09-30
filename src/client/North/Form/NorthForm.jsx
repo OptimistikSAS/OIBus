@@ -167,6 +167,16 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
                 label="Retry interval (ms)"
               />
             </Col>
+            <Col md="4">
+              <OIbInteger
+                onChange={onChange}
+                value={application.caching.retryCount}
+                defaultValue={3}
+                valid={validation.caching.retryCount}
+                name={`${prefix}.caching.retryCount`}
+                label="Retry count"
+              />
+            </Col>
           </Row>
           <Row>
             <Col md="4">

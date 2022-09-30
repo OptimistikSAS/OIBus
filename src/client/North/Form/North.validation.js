@@ -2,6 +2,7 @@ const validation = {
   caching: {
     sendInterval: (val) => (val >= 1000 ? null : 'Send interval should be greater or equal to 1000'),
     retryInterval: (val) => (val >= 1000 ? null : 'Retry interval should be greater or equal to 1000'),
+    retryCount: (val) => (val >= 0 ? null : 'Retry count should be greater or equal to 0'),
     groupCount: (val) => (val > 0 ? null : 'Group count should be greater than 0'),
     maxSendCount: (val) => (val > 0 ? null : 'Max group count should be greater than 0'),
     retentionDuration: (val) => (val > 0 ? null : 'Retention duration should be greater than 0'),
