@@ -36,8 +36,7 @@ class HistoryQuery {
     this.cacheFolder = `${this.engine.cacheFolder}/${historySettings.id}`
     this.dataCacheFolder = `${this.engine.cacheFolder}/${historySettings.id}/${HistoryQuery.DATA_FOLDER}`
 
-    this.statusService = new StatusService()
-    this.statusService.updateStatusDataStream({ status: historySettings.status })
+    this.statusService = null
     this.finishInterval = null
   }
 
@@ -46,6 +45,8 @@ class HistoryQuery {
    * @returns {Promise<void>} - The result promise
    */
   async start() {
+    this.statusService = new StatusService()
+    this.statusService.updateStatusDataStream({ status: this.historySettings.status })
     await createFolder(this.cacheFolder)
     await createFolder(this.dataCacheFolder)
     this.south = this.engine.createSouth(this.southSettings)

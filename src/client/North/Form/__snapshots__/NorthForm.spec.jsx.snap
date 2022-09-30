@@ -628,6 +628,31 @@ exports[`NorthForm check NorthForm with application: TestConsole 1`] = `
             />
           </div>
         </div>
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="north.0.caching.retryCount"
+            >
+              Retry count
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.0.caching.retryCount"
+              name="north.0.caching.retryCount"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
       </div>
       <div
         class="row"
@@ -1479,6 +1504,31 @@ exports[`NorthForm check NorthForm with empty application 1`] = `
             >
               Retry interval should be greater or equal to 1000
             </div>
+          </div>
+        </div>
+        <div
+          class="col-md-4"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="north.0.caching.retryCount"
+            >
+              Retry count
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.0.caching.retryCount"
+              name="north.0.caching.retryCount"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
           </div>
         </div>
       </div>

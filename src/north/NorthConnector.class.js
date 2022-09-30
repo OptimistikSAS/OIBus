@@ -180,6 +180,7 @@ class NorthConnector {
     const values = this.valueCache.retrieveValuesFromCache(this.settings.caching.maxSendCount)
     if (values.length === 0) {
       this.logger.trace('No values to send in the cache database.')
+      this.resetValuesTimeout(this.settings.caching.sendInterval)
       return
     }
 
@@ -187,6 +188,7 @@ class NorthConnector {
     this.resendValuesImmediately = false
 
     try {
+      this.logger.debug(`Handling ${values.length} values.`)
       await this.handleValues(values)
       this.valueCache.removeValuesFromCache(values)
       this.numberOfSentValues += values.length
@@ -197,9 +199,13 @@ class NorthConnector {
       })
       this.valuesRetryCount = 0
     } catch (error) {
+      this.logger.error(error)
+
       if (this.valuesRetryCount < this.settings.caching.retryCount || this.shouldRetry(error)) {
         this.valuesRetryCount += 1
+        this.logger.debug(`Retrying in ${this.settings.caching.retryInterval}. Retry count: ${this.valuesRetryCount}`)
       } else {
+        this.logger.debug('Too many retries. Moving values to error cache...')
         this.valueCache.manageErroredValues(values)
         this.valuesRetryCount = 0
       }
@@ -237,6 +243,7 @@ class NorthConnector {
     const fileToSend = this.fileCache.retrieveFileFromCache()
     if (!fileToSend) {
       this.logger.trace('No file to send in the cache database.')
+      this.resetFilesTimeout(this.settings.caching.sendInterval)
       return
     }
     this.logger.trace(`File to send: "${fileToSend.path}".`)
@@ -247,6 +254,7 @@ class NorthConnector {
       // File in cache does not exist on filesystem
       await this.fileCache.removeFileFromCache(fileToSend.path, false)
       this.logger.error(`File "${fileToSend.path}" not found! The file has been removed from the cache.`)
+      this.resetFilesTimeout(this.settings.caching.sendInterval)
       return
     }
 
@@ -254,6 +262,7 @@ class NorthConnector {
     this.resendFilesImmediately = false
 
     try {
+      this.logger.debug(`Handling file "${fileToSend.path}".`)
       await this.handleFile(fileToSend.path)
       await this.fileCache.removeFileFromCache(fileToSend.path, this.settings.caching.archive.enabled)
       this.numberOfSentFiles += 1
@@ -264,9 +273,12 @@ class NorthConnector {
       })
       this.filesRetryCount = 0
     } catch (error) {
+      this.logger.error(error)
       if (this.filesRetryCount < this.settings.caching.retryCount || this.shouldRetry(error)) {
         this.filesRetryCount += 1
+        this.logger.debug(`Retrying in ${this.settings.caching.retryInterval}. Retry count: ${this.filesRetryCount}`)
       } else {
+        this.logger.debug('Too many retries. Moving file to error cache...')
         await this.fileCache.manageErroredFiles(fileToSend.path)
         this.filesRetryCount = 0
       }
