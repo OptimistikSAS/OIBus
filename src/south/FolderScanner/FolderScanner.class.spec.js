@@ -9,7 +9,7 @@ const { defaultConfig: config } = require('../../../tests/testConfig')
 const utils = require('../../services/utils')
 
 // Mock utils class
-jest.mock('../../services/utils', () => ({ compress: jest.fn(), createFolder: jest.fn() }))
+jest.mock('../../services/utils')
 
 // Mock OIBusEngine
 const engine = {
@@ -67,7 +67,7 @@ describe('South FolderScanner', () => {
   it('fileQuery should exit if the input folder does not exist', async () => {
     south.inputFolder = 'badfolder'
 
-    jest.spyOn(fs, 'readdir').mockImplementationOnce(() => {
+    fs.readdir.mockImplementationOnce(() => {
       throw new Error('test')
     })
     await expect(south.fileQuery('xxx')).rejects.toThrowError('test')
@@ -78,7 +78,7 @@ describe('South FolderScanner', () => {
   })
 
   it('fileQuery should exit if the input folder is empty', async () => {
-    jest.spyOn(fs, 'readdir').mockImplementation(() => Promise.resolve([]))
+    fs.readdir.mockImplementation(() => Promise.resolve([]))
     await south.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
     expect(south.engine.addFile).toHaveBeenCalledTimes(0)
@@ -87,7 +87,7 @@ describe('South FolderScanner', () => {
   })
 
   it('fileQuery should exit if the file does not match the regex', async () => {
-    jest.spyOn(fs, 'readdir').mockImplementation(() => Promise.resolve(['badfile']))
+    fs.readdir.mockImplementation(() => Promise.resolve(['badfile']))
     await south.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
     expect(south.engine.addFile).toHaveBeenCalledTimes(0)
@@ -95,8 +95,8 @@ describe('South FolderScanner', () => {
   })
 
   it('fileQuery should exit if the file is not old enough', async () => {
-    jest.spyOn(fs, 'readdir').mockImplementation(() => Promise.resolve(['test.csv']))
-    jest.spyOn(fs, 'stat').mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() + 666 }))
+    fs.readdir.mockImplementation(() => Promise.resolve(['test.csv']))
+    fs.stat.mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() + 666 }))
     await south.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
     expect(south.engine.addFile).toHaveBeenCalledTimes(0)
@@ -105,8 +105,8 @@ describe('South FolderScanner', () => {
 
   it('fileQuery should not add the file to cache it matches conditions with preserveFiles true and has already been sent', async () => {
     south.preserveFiles = true
-    jest.spyOn(fs, 'readdir').mockImplementation(() => Promise.resolve(['test.csv']))
-    jest.spyOn(fs, 'stat').mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
+    fs.readdir.mockImplementation(() => Promise.resolve(['test.csv']))
+    fs.stat.mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
     databaseService.getConfig.mockImplementation(() => new Date().getTime())
     await south.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
@@ -115,8 +115,8 @@ describe('South FolderScanner', () => {
   })
 
   it('fileQuery should add the file to cache if it matches conditions with preserveFiles false and compression false', async () => {
-    jest.spyOn(fs, 'readdir').mockImplementation(() => Promise.resolve(['test.csv']))
-    jest.spyOn(fs, 'stat').mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
+    fs.readdir.mockImplementation(() => Promise.resolve(['test.csv']))
+    fs.stat.mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
     south.preserveFiles = false
     await south.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
@@ -130,8 +130,8 @@ describe('South FolderScanner', () => {
 
   it('fileQuery should add the file to cache if it matches conditions with preserveFiles true and compression false', async () => {
     south.preserveFiles = true
-    jest.spyOn(fs, 'readdir').mockImplementation(() => Promise.resolve(['test.csv']))
-    jest.spyOn(fs, 'stat').mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
+    fs.readdir.mockImplementation(() => Promise.resolve(['test.csv']))
+    fs.stat.mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
     databaseService.getConfig.mockImplementation(() => new Date().getTime() - 25 * 3600 * 1000)
     await south.fileQuery('xxx')
 
@@ -147,8 +147,8 @@ describe('South FolderScanner', () => {
   it('fileQuery should add the file to cache if it matches conditions with preserveFiles true and ignoreModifiedDate true', async () => {
     south.preserveFiles = true
     south.ignoreModifiedDate = true
-    jest.spyOn(fs, 'readdir').mockImplementation(() => Promise.resolve(['test.csv']))
-    jest.spyOn(fs, 'stat').mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
+    fs.readdir.mockImplementation(() => Promise.resolve(['test.csv']))
+    fs.stat.mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
     databaseService.getConfig.mockImplementation(() => new Date().getTime() - 25 * 3600 * 1000)
     await south.fileQuery('xxx')
 
@@ -163,11 +163,10 @@ describe('South FolderScanner', () => {
   })
 
   it('fileQuery should add the file to cache if it matches conditions with preserveFiles false and compression true', async () => {
-    jest.spyOn(fs, 'stat').mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
-    jest.spyOn(fs, 'readdir').mockImplementation(() => Promise.resolve([
+    fs.stat.mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
+    fs.readdir.mockImplementation(() => Promise.resolve([
       'myFirstFile.csv',
     ]))
-
     south.preserveFiles = false
     south.compression = true
 
@@ -182,9 +181,57 @@ describe('South FolderScanner', () => {
     expect(databaseService.upsertConfig).toHaveBeenCalledTimes(0)
   })
 
+  it('fileQuery should add the raw file if compression fails', async () => {
+    fs.stat.mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
+    fs.readdir.mockImplementation(() => Promise.resolve([
+      'myFirstFile.csv',
+    ]))
+    utils.compress.mockImplementation(() => {
+      throw new Error('compression error')
+    })
+    south.preserveFiles = false
+    south.compression = true
+
+    await south.fileQuery('xxx')
+
+    expect(utils.compress).toHaveBeenCalledTimes(1)
+    expect(south.logger.error).toHaveBeenCalledWith('Error compressing file "myFirstFile.csv". Sending it raw instead.')
+
+    expect(engine.addFile).toHaveBeenCalledWith(
+      south.settings.id,
+      path.resolve(south.inputFolder, 'myFirstFile.csv'),
+      false,
+    )
+    expect(databaseService.upsertConfig).toHaveBeenCalledTimes(0)
+  })
+
+  it('fileQuery should properly send file if unlink fails after compression', async () => {
+    fs.stat.mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
+    fs.readdir.mockImplementation(() => Promise.resolve([
+      'myFirstFile.csv',
+    ]))
+    fs.unlink.mockImplementation(() => {
+      throw new Error('unlink error')
+    })
+    south.preserveFiles = false
+    south.compression = true
+
+    await south.fileQuery('xxx')
+
+    expect(utils.compress).toHaveBeenCalledTimes(1)
+    expect(south.logger.error).toHaveBeenCalledWith(new Error('unlink error'))
+
+    expect(engine.addFile).toHaveBeenCalledWith(
+      south.settings.id,
+      path.resolve(south.inputFolder, 'myFirstFile.csv.gz'),
+      false,
+    )
+    expect(databaseService.upsertConfig).toHaveBeenCalledTimes(0)
+  })
+
   it('fileQuery should add the file to cache if it matches conditions with preserveFiles true and compression true', async () => {
-    jest.spyOn(fs, 'stat').mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
-    jest.spyOn(fs, 'readdir').mockImplementation(() => Promise.resolve([
+    fs.stat.mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() - 24 * 3600 * 1000 }))
+    fs.readdir.mockImplementation(() => Promise.resolve([
       'myFirstFile.csv',
     ]))
     databaseService.getConfig.mockImplementation(() => new Date().getTime() - 25 * 3600 * 1000)

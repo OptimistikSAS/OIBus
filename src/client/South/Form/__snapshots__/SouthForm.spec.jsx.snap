@@ -1572,13 +1572,13 @@ exports[`SouthForm check SouthForm with empty dataSource 1`] = `
                       </li>
                       <li>
                         <b>
-                          TimeStamp Path:
+                          Timestamp Path:
                         </b>
                         The string indicates which key in the payload contains the timestamp value. If the payload is an array of data, it indicates the key that contains the timestamp value in the elements of this array
                       </li>
                       <li>
                         <b>
-                          TimeStamp Format:
+                          Timestamp Format:
                         </b>
                         The string indicates which format to use to parse the timestamp. For example, the timestamp '2020-09-16 07:00:00.000' is in the format YYYY-MM-DD HH:mm:ss.SSS. Another example : if the timestamp is '2020-09-16T07:00:00Z' so the format would be YYYY-MM-DDTHH:mm:ssZ.
                       </li>

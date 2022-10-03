@@ -1,6 +1,7 @@
 const net = require('node:net')
-
 const path = require('node:path')
+const Stream = require('node:stream')
+
 const Modbus = require('./Modbus.class')
 
 const databaseService = require('../../services/database.service')
@@ -37,6 +38,8 @@ jest.mock('../../engine/logger/Logger.class')
 jest.mock('../../services/status.service.class')
 jest.mock('../../services/EncryptionService.class', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 
+// Method used to flush promises called in setTimeout
+const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate)
 let settings = null
 let south = null
 
@@ -126,6 +129,7 @@ describe('South Modbus', () => {
         endianness: 'Big Endian',
         swapBytesInWords: false,
         swapWordsInDWords: false,
+        retryInterval: 10000,
       },
       points: [
         {
@@ -191,6 +195,26 @@ describe('South Modbus', () => {
     expect(south.connected).toBeTruthy()
   })
 
+  it('should fail to connect and try again', async () => {
+    const mockedEmitter = new Stream()
+
+    mockedEmitter.connect = (_connectionObject, callback) => {
+      callback()
+    }
+    // Mock node:net Socket constructor and the used function
+    net.Socket.mockImplementation(() => mockedEmitter)
+    south.disconnect = jest.fn()
+    await south.connect()
+    expect(net.Socket).toHaveBeenCalledTimes(1)
+    mockedEmitter.emit('error', 'connect error')
+    await flushPromises()
+    expect(south.disconnect).toHaveBeenCalledTimes(1)
+    expect(south.logger.error).toHaveBeenCalledWith('connect error')
+    jest.advanceTimersByTime(settings.Modbus.retryInterval)
+
+    expect(net.Socket).toHaveBeenCalledTimes(2)
+  })
+
   it('should properly query last points value', async () => {
     await south.connect()
     south.client = {
@@ -206,15 +230,68 @@ describe('South Modbus', () => {
   })
 
   it('should properly disconnect', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
     south.connected = true
     const end = jest.fn()
     south.socket = { end }
-    south.modbusFunction = jest.fn()
-
-    south.reconnectTimeout = setTimeout(() => {}, 1000)
+    south.reconnectTimeout = 1
 
     await south.disconnect()
-    expect(end).toBeCalled()
+    expect(end).toHaveBeenCalled()
     expect(south.connected).toBeFalsy()
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1)
+
+    jest.clearAllMocks()
+    south.connected = false
+    south.reconnectTimeout = null
+    south.socket = { end }
+    await south.disconnect()
+
+    expect(clearTimeoutSpy).not.toHaveBeenCalled()
+    expect(end).not.toHaveBeenCalled()
+  })
+
+  it('should throw error if modbus function is not defined', async () => {
+    await south.connect()
+    let modbusError
+    try {
+      await south.modbusFunction('badFunction', {}, [])
+    } catch (error) {
+      modbusError = error
+    }
+    expect(modbusError).toEqual(new Error('Modbus function name "badFunction" not recognized.'))
+  })
+
+  it('should throw error if modbus function throws an error', async () => {
+    await south.connect()
+    south.client.mockedFunction = jest.fn().mockImplementation(() => {
+      throw new Error('modbus error')
+    })
+    let modbusError
+    try {
+      await south.modbusFunction('mockedFunction', {}, [])
+    } catch (error) {
+      modbusError = error
+    }
+    expect(modbusError).toEqual(new Error('modbus error'))
+  })
+
+  it('should reconnect if modbus function throws a connection error', async () => {
+    south.disconnect = jest.fn()
+    south.createModbusClient = jest.fn()
+    await south.connect()
+    south.client = {
+      mockedFunction: jest.fn().mockImplementation(() => {
+        const error = new Error()
+        error.err = 'Offline'
+        throw error
+      }),
+    }
+
+    await south.modbusFunction('mockedFunction', {}, [])
+    expect(south.logger.error).toHaveBeenCalledWith('Modbus server offline.')
+    expect(net.Socket).toHaveBeenCalledTimes(1)
+    jest.advanceTimersByTime(settings.Modbus.retryInterval)
+    expect(net.Socket).toHaveBeenCalledTimes(2)
   })
 })

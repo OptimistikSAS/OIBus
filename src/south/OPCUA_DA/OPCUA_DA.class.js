@@ -94,9 +94,10 @@ class OPCUA_DA extends SouthConnector {
    * @returns {Promise<void>} - The result promise
    */
   formatAndSendValues = async (dataValues, nodesToRead) => {
+    const timestamp = new Date().toISOString()
     const values = dataValues.map((dataValue, i) => ({
       pointId: nodesToRead[i].pointId,
-      timestamp: new Date().toISOString(),
+      timestamp,
       data: {
         value: dataValue.value.value,
         quality: JSON.stringify(dataValue.statusCode),
