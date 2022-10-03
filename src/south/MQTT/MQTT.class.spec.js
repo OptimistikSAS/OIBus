@@ -1,3 +1,5 @@
+const Stream = require('node:stream')
+
 const mqtt = require('mqtt')
 
 const MQTT = require('./MQTT.class')
@@ -7,7 +9,7 @@ const utils = require('./utils')
 const { defaultConfig: config } = require('../../../tests/testConfig')
 
 // Mock mqtt
-jest.mock('mqtt', () => ({ connect: jest.fn() }))
+jest.mock('mqtt')
 
 // Mock fs
 jest.mock('node:fs/promises')
@@ -32,6 +34,8 @@ jest.mock('../../engine/logger/Logger.class')
 jest.mock('../../services/status.service.class')
 jest.mock('../../services/EncryptionService.class', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 
+const mqttStream = new Stream()
+mqttStream.subscribe = jest.fn()
 let settings = null
 let south = null
 
@@ -40,7 +44,7 @@ describe('South MQTT', () => {
     jest.resetAllMocks()
     jest.useFakeTimers()
 
-    mqtt.connect.mockReturnValue({ on: jest.fn(), subscribe: jest.fn() })
+    mqtt.connect.mockImplementation(() => mqttStream)
 
     settings = {
       id: 'southId',
@@ -127,6 +131,8 @@ describe('South MQTT', () => {
   })
 
   it('should properly connect', async () => {
+    south.listen = jest.fn()
+    south.handleMessage = jest.fn()
     await south.connect()
     const expectedOptions = {
       clean: !settings.MQTT.persistent,
@@ -141,11 +147,36 @@ describe('South MQTT', () => {
       cert: null,
       key: null,
     }
-    expect(mqtt.connect).toBeCalledWith(settings.MQTT.url, expectedOptions)
-    expect(south.client.on).toHaveBeenCalledTimes(3)
-    expect(south.client.on).toHaveBeenCalledWith('error', expect.any(Function))
-    expect(south.client.on).toHaveBeenCalledWith('connect', expect.any(Function))
-    expect(south.client.on).toHaveBeenCalledWith('message', expect.any(Function))
+    expect(mqtt.connect).toHaveBeenCalledWith(settings.MQTT.url, expectedOptions)
+    mqttStream.emit('connect')
+    expect(south.listen).toHaveBeenCalledTimes(1)
+    mqttStream.emit('error', 'error')
+    expect(south.logger.error).toHaveBeenCalledWith('error')
+    mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false })
+    expect(south.logger.trace).toHaveBeenCalledWith('mqtt myTopic:myMessage, dup:false')
+    expect(south.handleMessage).toHaveBeenCalledTimes(1)
+    expect(south.handleMessage).toHaveBeenCalledWith('myTopic', 'myMessage')
+  })
+
+  it('should properly connect without password', async () => {
+    south.password = ''
+    south.listen = jest.fn()
+    south.handleMessage = jest.fn()
+    await south.connect()
+    const expectedOptions = {
+      clean: !settings.MQTT.persistent,
+      clientId: `${engine.engineName}-${settings.id}`,
+      username: settings.MQTT.username,
+      password: '',
+      rejectUnauthorized: false,
+      connectTimeout: 1000,
+      keepalive: true,
+      reconnectPeriod: 1000,
+      ca: null,
+      cert: null,
+      key: null,
+    }
+    expect(mqtt.connect).toHaveBeenCalledWith(settings.MQTT.url, expectedOptions)
   })
 
   it('should properly connect with cert files', async () => {
@@ -201,6 +232,16 @@ describe('South MQTT', () => {
       { qos: settings.MQTT.qos },
       expect.any(Function),
     )
+
+    south.client.subscribe = jest.fn((_topic, _option, callback) => { callback('error') })
+    await south.listen()
+    expect(south.logger.error).toHaveBeenCalledWith(`Error in subscription for topic ${settings.points[0].topic}: `
+        + 'error')
+
+    south.client.subscribe = jest.fn((_topic, _option, callback) => { callback() })
+    south.logger.error.mockClear()
+    await south.listen()
+    expect(south.logger.error).not.toHaveBeenCalled()
   })
 
   it('should properly handle message and call addValues if point ID was found', async () => {
@@ -227,6 +268,38 @@ describe('South MQTT', () => {
     }])
   })
 
+  it('should properly handle message and call addValues with dataArrayPath', async () => {
+    south.dataArrayPath = 'myArray'
+    const pointId = 'pointId'
+    const timestamp = 'timestamp'
+    const topic = 'topic'
+    const data = {
+      value: 666.666,
+      quality: true,
+    }
+
+    utils.formatValue.mockReturnValue({
+      pointId,
+      timestamp,
+      data,
+    })
+
+    await south.handleMessage(topic, Buffer.from(JSON.stringify({
+      myArray: [{
+        pointId,
+        timestamp,
+        data,
+      }],
+    })))
+    jest.runOnlyPendingTimers()
+
+    expect(south.engine.addValues).toBeCalledWith(settings.id, [{
+      pointId,
+      timestamp,
+      data,
+    }])
+  })
+
   it('should properly handle message parsing error', async () => {
     utils.formatValue.mockImplementationOnce(() => {
       throw new Error('test')
@@ -241,6 +314,44 @@ describe('South MQTT', () => {
 
     expect(south.logger.error).toBeCalledWith(new Error('test'))
     expect(south.engine.addValues).not.toBeCalled()
+  })
+
+  it('should properly handle message parsing error with dataArrayPath', async () => {
+    south.dataArrayPath = 'myArray'
+    const pointId = 'pointId'
+    const timestamp = 'timestamp'
+    const topic = 'topic'
+    const data = {
+      value: 666.666,
+      quality: true,
+    }
+
+    const mqttMessage = {
+      myOtherArray: [{
+        pointId,
+        timestamp,
+        data,
+      }],
+    }
+    await south.handleMessage(topic, Buffer.from(JSON.stringify(mqttMessage)))
+
+    expect(south.logger.error).toHaveBeenCalledWith('Could not find the dataArrayPath "myArray" '
+        + `in message "${JSON.stringify(mqttMessage)}".`)
+    expect(south.engine.addValues).not.toHaveBeenCalled()
+
+    south.dataArrayPath = 'myOtherArray'
+    utils.formatValue.mockImplementationOnce(() => {
+      throw new Error('test')
+    })
+
+    await south.handleMessage(topic, Buffer.from(JSON.stringify(mqttMessage)))
+    expect(south.logger.error).toHaveBeenCalledWith(new Error('test'))
+  })
+
+  it('should catch error when message is not a json', async () => {
+    await south.handleMessage('myTopic', 'myMessage')
+    expect(south.logger.error).toHaveBeenCalledWith('Could not parse message "myMessage" for topic "myTopic". '
+        + 'SyntaxError: Unexpected token m in JSON at position 0')
   })
 
   it('should properly disconnect', () => {

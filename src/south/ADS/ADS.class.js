@@ -12,7 +12,7 @@ class ADS extends SouthConnector {
    * Constructor for ADS
    * @constructor
    * @param {Object} settings - The South connector settings
-   * @param {Engine} engine - The Engine
+   * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
   constructor(settings, engine) {
@@ -165,10 +165,6 @@ class ADS extends SouthConnector {
     if (!nodesToRead.length) {
       throw new Error(`lastPointQuery ignored: no points to read for scanMode: "${scanMode}".`)
     }
-    if (!this.connected) {
-      this.logger.debug(`lastPointQuery ignored: connected: ${this.connected}`)
-      return
-    }
 
     const timestamp = new Date().toISOString()
     try {
@@ -178,7 +174,7 @@ class ADS extends SouthConnector {
       )
     } catch (error) {
       if (error?.message?.startsWith('Client is not connected')) {
-        this.logger.error(`ADS client disconnected: ${error}. Reconnecting`)
+        this.logger.error('ADS client disconnected. Reconnecting')
         await this.disconnect()
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.retryInterval)
       } else {
@@ -285,7 +281,7 @@ class ADS extends SouthConnector {
       try {
         await this.disconnectAdsClient()
       } catch (error) {
-        this.logger.error(`ADS disconnect error: ${JSON.stringify(error)}`)
+        this.logger.error('ADS disconnect error')
       }
       this.logger.info(`ADS client disconnected from ${this.netId}:${this.port}`)
     }

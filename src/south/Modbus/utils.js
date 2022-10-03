@@ -76,7 +76,7 @@ const modbusTypes = {
 /**
  * Gets the configuration file
  * @param {Object[]} points - The list of points to request with ModBus
- * @param {Object[]} addressOffset - The address offset to be applied during requests for each points
+ * @param {'Modbus' | 'JBus'} addressOffset - The address offset to be applied during requests for each point
  * @param {Object} logger - The logger to display errors
  * @return {Object} The scan modes
  */

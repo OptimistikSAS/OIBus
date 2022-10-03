@@ -14,7 +14,7 @@ class MQTT extends SouthConnector {
    * Constructor for MQTT
    * @constructor
    * @param {Object} settings - The South connector settings
-   * @param {Engine} engine - The Engine
+   * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
   constructor(settings, engine) {
@@ -113,7 +113,7 @@ class MQTT extends SouthConnector {
     }
     this.client = mqtt.connect(this.url, options)
     this.client.on('connect', async () => {
-      this.listen()
+      await this.listen()
       this.logger.info(`Connected to ${this.url}`)
       await super.connect()
     })
@@ -122,7 +122,6 @@ class MQTT extends SouthConnector {
     })
     this.client.on('message', async (topic, message, packet) => {
       this.logger.trace(`mqtt ${topic}:${message}, dup:${packet.dup}`)
-
       await this.handleMessage(topic, message)
     })
   }
@@ -161,7 +160,7 @@ class MQTT extends SouthConnector {
             await this.addValues(dataArray)
           }
         } else {
-          this.logger.error(`Could not find the dataArrayPath ${JSON.stringify(this.dataArrayPath)} in message ${JSON.stringify(parsedMessage)}`)
+          this.logger.error(`Could not find the dataArrayPath "${this.dataArrayPath}" in message "${JSON.stringify(parsedMessage)}".`)
         }
       } else { // if the message contains only one value as a json
         try {
@@ -172,7 +171,7 @@ class MQTT extends SouthConnector {
         }
       }
     } catch (error) {
-      this.logger.error(`Could not parse message ${message} for topic ${topic} ${error.stack}`)
+      this.logger.error(`Could not parse message "${message}" for topic "${topic}". ${error}`)
     }
   }
 

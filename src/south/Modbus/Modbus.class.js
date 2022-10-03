@@ -82,7 +82,7 @@ class Modbus extends SouthConnector {
    */
   async modbusFunction(funcName, { startAddress, rangeSize }, points) {
     if (!this.client[funcName]) {
-      throw new Error(`Modbus function name ${funcName} not recognized.`)
+      throw new Error(`Modbus function name "${funcName}" not recognized.`)
     }
     const modbusOptions = {
       endianness: this.endianness,
@@ -103,12 +103,12 @@ class Modbus extends SouthConnector {
       })
       await this.addValues(valuesToSend)
     } catch (error) {
-      if (error && error.err === 'Offline') {
-        this.logger.error(`Modbus server offline: ${JSON.stringify(error)}.`)
+      if (error?.err === 'Offline') {
+        this.logger.error('Modbus server offline.')
         await this.disconnect()
-        this.reconnectTimeout = setTimeout(this.createModbusClient.bind(this), this.retryInterval)
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.retryInterval)
       } else {
-        throw new Error(error)
+        throw error
       }
     }
   }
@@ -118,7 +118,25 @@ class Modbus extends SouthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async connect() {
-    await this.createModbusClient()
+    return new Promise((resolve) => {
+      if (this.reconnectTimeout) {
+        clearTimeout(this.reconnectTimeout)
+      }
+      this.socket = new net.Socket()
+      this.client = new jsmodbus.client.TCP(this.socket, this.slaveId)
+      this.socket.connect(
+        { host: this.host, port: this.port },
+        async () => {
+          await super.connect()
+          resolve()
+        },
+      )
+      this.socket.on('error', async (error) => {
+        this.logger.error(error)
+        await this.disconnect()
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.retryInterval)
+      })
+    })
   }
 
   /**
@@ -136,32 +154,6 @@ class Modbus extends SouthConnector {
       this.client = null
     }
     await super.disconnect()
-  }
-
-  /**
-   * Create a modbus client and connect to the Modbus server
-   * @returns {Promise<void>} - The result promise
-   */
-  async createModbusClient() {
-    return new Promise((resolve) => {
-      if (this.reconnectTimeout) {
-        clearTimeout(this.reconnectTimeout)
-      }
-      this.socket = new net.Socket()
-      this.client = new jsmodbus.client.TCP(this.socket, this.slaveId)
-      this.socket.connect(
-        { host: this.host, port: this.port },
-        async () => {
-          await super.connect()
-          resolve()
-        },
-      )
-      this.socket.on('error', async (error) => {
-        this.logger.error(`Modbus connect error: ${JSON.stringify(error)}`)
-        await this.disconnect()
-        this.reconnectTimeout = setTimeout(this.createModbusClient.bind(this), this.retryInterval)
-      })
-    })
   }
 }
 

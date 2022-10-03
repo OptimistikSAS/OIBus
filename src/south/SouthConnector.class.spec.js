@@ -181,7 +181,7 @@ describe('SouthConnector', () => {
     expect(utils.delay).toHaveBeenCalledTimes(0)
   })
 
-  it('should properly manage history query', async () => {
+  it('should properly manage history query with 3 intervals', async () => {
     south.settings.scanMode = 'scanModeTest'
     south.historyQuery = jest.fn()
     south.querySpecificInterval = jest.fn()
@@ -202,6 +202,13 @@ describe('SouthConnector', () => {
     await south.init()
 
     await south.historyQueryHandler('scanModeTest', new Date('2019-01-01T00:00:00.000Z'), new Date())
+    expect(south.logger.trace).toHaveBeenCalledWith('Take back to interval number 0: \r\n'
+        + `${JSON.stringify(mockedIntervals[0], null, 2)}\r\n`)
+    expect(south.logger.trace).toHaveBeenCalledWith('Interval split in 3 sub-intervals: \r\n'
+        + `[${JSON.stringify(mockedIntervals[0], null, 2)}\r\n`
+        + `${JSON.stringify(mockedIntervals[1], null, 2)}\r\n`
+        + '...\r\n'
+        + `${JSON.stringify(mockedIntervals[mockedIntervals.length - 1], null, 2)}]`)
     expect(south.querySpecificInterval).toHaveBeenCalledTimes(3)
     expect(south.querySpecificInterval).toHaveBeenCalledWith(
       'scanModeTest',
@@ -220,6 +227,66 @@ describe('SouthConnector', () => {
       new Date('2021-01-01T00:00:00.000Z'),
       new Date(),
       true,
+    )
+  })
+
+  it('should properly manage history query with 2 intervals', async () => {
+    south.settings.scanMode = 'scanModeTest'
+    south.historyQuery = jest.fn()
+    south.querySpecificInterval = jest.fn()
+    south.southDatabase = {}
+    const mockedIntervals = [{
+      startTime: new Date('2019-01-01T00:00:00.000Z'),
+      endTime: new Date('2020-01-01T00:00:00.000Z'),
+    },
+    {
+      startTime: new Date('2020-01-01T00:00:00.000Z'),
+      endTime: new Date('2021-01-01T00:00:00.000Z'),
+    }]
+    utils.generateIntervals.mockReturnValue(mockedIntervals)
+    await south.init()
+
+    await south.historyQueryHandler('scanModeTest', new Date('2019-01-01T00:00:00.000Z'), new Date())
+    expect(south.querySpecificInterval).toHaveBeenCalledTimes(2)
+    expect(south.logger.trace).toHaveBeenCalledWith('Take back to interval number 0: \r\n'
+        + `${JSON.stringify(mockedIntervals[0], null, 2)}\r\n`)
+    expect(south.logger.trace).toHaveBeenCalledWith('Interval split in 2 sub-intervals: \r\n'
+        + `[${JSON.stringify(mockedIntervals[0], null, 2)}\r\n`
+        + `${JSON.stringify(mockedIntervals[1], null, 2)}]`)
+    expect(south.querySpecificInterval).toHaveBeenCalledWith(
+      'scanModeTest',
+      new Date('2019-01-01T00:00:00.000Z'),
+      new Date('2020-01-01T00:00:00.000Z'),
+      false,
+    )
+    expect(south.querySpecificInterval).toHaveBeenCalledWith(
+      'scanModeTest',
+      new Date('2020-01-01T00:00:00.000Z'),
+      new Date('2021-01-01T00:00:00.000Z'),
+      false,
+    )
+  })
+
+  it('should properly manage history query with 1 intervals', async () => {
+    south.settings.scanMode = 'scanModeTest'
+    south.historyQuery = jest.fn()
+    south.querySpecificInterval = jest.fn()
+    south.southDatabase = {}
+    const mockedIntervals = [{
+      startTime: new Date('2019-01-01T00:00:00.000Z'),
+      endTime: new Date('2020-01-01T00:00:00.000Z'),
+    }]
+    utils.generateIntervals.mockReturnValue(mockedIntervals)
+    await south.init()
+
+    await south.historyQueryHandler('scanModeTest', new Date('2019-01-01T00:00:00.000Z'), new Date())
+    expect(south.querySpecificInterval).toHaveBeenCalledTimes(1)
+    expect(south.logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(mockedIntervals[0], null, 2)}`)
+    expect(south.querySpecificInterval).toHaveBeenCalledWith(
+      'scanModeTest',
+      new Date('2019-01-01T00:00:00.000Z'),
+      new Date('2020-01-01T00:00:00.000Z'),
+      false,
     )
   })
 

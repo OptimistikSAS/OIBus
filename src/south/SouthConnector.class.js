@@ -208,17 +208,25 @@ class SouthConnector {
     const intervals = generateIntervals(historyStartTime, historyEndTime, this.maxReadInterval)
     this.maxQueryPart = intervals.length
 
-    this.logger.trace(`Interval split in ${intervals.length} sub-intervals: \r\n`
-            + `[${JSON.stringify(intervals[0], null, 2)}\r\n`
-            + `${JSON.stringify(intervals[1], null, 2)}\r\n`
-            + '...\r\n'
-            + `${JSON.stringify(intervals[intervals.length - 1], null, 2)}]`
-            + ']')
-
     const intervalToKeep = this.maxQueryPart - this.queryParts[scanMode]
     const intervalsToQuery = intervals.slice(-intervalToKeep)
-    this.logger.trace(`Take back to interval number ${this.queryParts[scanMode]}: \r\n`
-        + `${JSON.stringify(intervalsToQuery[0], null, 2)}\r\n`)
+    if (intervals.length > 2) {
+      this.logger.trace(`Interval split in ${intervals.length} sub-intervals: \r\n`
+          + `[${JSON.stringify(intervals[0], null, 2)}\r\n`
+          + `${JSON.stringify(intervals[1], null, 2)}\r\n`
+          + '...\r\n'
+          + `${JSON.stringify(intervals[intervals.length - 1], null, 2)}]`)
+      this.logger.trace(`Take back to interval number ${this.queryParts[scanMode]}: \r\n`
+          + `${JSON.stringify(intervalsToQuery[0], null, 2)}\r\n`)
+    } else if (intervals.length === 2) {
+      this.logger.trace(`Interval split in ${intervals.length} sub-intervals: \r\n`
+          + `[${JSON.stringify(intervals[0], null, 2)}\r\n`
+          + `${JSON.stringify(intervals[1], null, 2)}]`)
+      this.logger.trace(`Take back to interval number ${this.queryParts[scanMode]}: \r\n`
+          + `${JSON.stringify(intervalsToQuery[0], null, 2)}\r\n`)
+    } else {
+      this.logger.trace(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`)
+    }
 
     // Map each interval to a history query and run each query sequentially
     await intervalsToQuery.reduce((promise, { startTime, endTime }) => promise.then(
@@ -360,9 +368,7 @@ class SouthConnector {
     if (this.buffer.length > this.engine.bufferMax) {
       await this.flush('max-flush')
     } else if (this.bufferTimeout === null) {
-      this.bufferTimeout = setTimeout(async () => {
-        await this.flush()
-      }, this.engine.bufferTimeoutInterval)
+      this.bufferTimeout = setTimeout(this.flush.bind(this), this.engine.bufferTimeoutInterval)
     }
   }
 
