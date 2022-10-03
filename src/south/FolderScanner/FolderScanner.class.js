@@ -14,7 +14,7 @@ class FolderScanner extends SouthConnector {
    * Constructor for FolderScanner
    * @constructor
    * @param {Object} settings - The South connector settings
-   * @param {Engine} engine - The Engine
+   * @param {BaseEngine} engine - The Engine
    * @return {void}
    */
   constructor(settings, engine) {
@@ -122,7 +122,11 @@ class FolderScanner extends SouthConnector {
 
         // Delete original file if preserveFile is not set
         if (!this.preserveFiles) {
-          await fs.unlink(filePath)
+          try {
+            await fs.unlink(filePath)
+          } catch (unlinkError) {
+            this.logger.error(unlinkError)
+          }
         }
       } catch (compressionError) {
         this.logger.error(`Error compressing file "${filename}". Sending it raw instead.`)
