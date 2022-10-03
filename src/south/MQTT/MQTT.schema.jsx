@@ -220,13 +220,13 @@ schema.form = {
             the key specified below.
           </li>
           <li>
-            <b>TimeStamp Path:</b>
+            <b>Timestamp Path:</b>
             The string indicates which key in the payload contains the timestamp value. If the payload is an
             array of data, it indicates the key that
             contains the timestamp value in the elements of this array
           </li>
           <li>
-            <b>TimeStamp Format:</b>
+            <b>Timestamp Format:</b>
             The string indicates which format to use to parse the timestamp. For example, the
             timestamp &apos;2020-09-16 07:00:00.000&apos; is in the
             format YYYY-MM-DD HH:mm:ss.SSS.

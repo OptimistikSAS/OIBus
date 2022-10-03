@@ -791,11 +791,35 @@ describe('South ADS', () => {
     expect(south.port).toEqual(settings.ADS.port)
   })
 
-  it('should properly connect', async () => {
+  it('should properly connect to a remote instance', async () => {
     await south.connect()
     expect(databaseService.createConfigDatabase).toBeCalledWith(path.resolve(`cache/south-${south.settings.id}/cache.db`))
-
     expect(south.connected).toBeTruthy()
+    expect(ads.Client).toHaveBeenCalledWith({
+      autoReconnect: false,
+      localAdsPort: 32750,
+      localAmsNetId: '10.211.55.2.1.1',
+      routerAddress: '10.211.55.3',
+      routerTcpPort: 48898,
+      targetAdsPort: 851,
+      targetAmsNetId: '10.211.55.3.1.1',
+    })
+  })
+
+  it('should properly connect to a locale instance', async () => {
+    south.netId = '127.0.0.1.1.1'
+    south.clientAmsNetId = null
+    south.clientAdsPort = null
+    south.routerAddress = null
+    south.routerTcpPort = null
+    await south.connect()
+    expect(databaseService.createConfigDatabase).toBeCalledWith(path.resolve(`cache/south-${south.settings.id}/cache.db`))
+    expect(south.connected).toBeTruthy()
+    expect(ads.Client).toHaveBeenCalledWith({
+      autoReconnect: false,
+      targetAdsPort: 851,
+      targetAmsNetId: '127.0.0.1.1.1',
+    })
   })
 
   it('should retry to connect in case of failure', async () => {
@@ -1350,26 +1374,65 @@ describe('South ADS', () => {
   it('should catch errors on last points query', async () => {
     south.connected = true
     south.client = { readSymbol: jest.fn() }
-    south.client.readSymbol.mockReturnValue(new Promise((resolve, reject) => {
-      reject(new Error('test'))
+    south.client.readSymbol.mockReturnValueOnce(new Promise((resolve, reject) => {
+      reject(new Error('readError'))
+    })).mockReturnValue(new Promise((resolve, reject) => {
+      const error = new Error('connectionError')
+      error.message = 'Client is not connected'
+      reject(error)
     }))
-    await expect(south.lastPointQuery('every10Seconds')).rejects.toThrowError('test')
+    let readError
+    try {
+      await south.lastPointQuery('every10Seconds')
+    } catch (error) {
+      readError = error
+    }
+
+    expect(readError).toEqual(new Error('readError'))
+
+    south.disconnect = jest.fn()
+    south.connect = jest.fn()
+    await south.lastPointQuery('every10Seconds')
+    expect(south.disconnect).toHaveBeenCalledTimes(1)
+    expect(south.logger.error).toHaveBeenCalledWith('ADS client disconnected. Reconnecting')
+    expect(south.connect).not.toHaveBeenCalled()
+    jest.advanceTimersByTime(settings.ADS.retryInterval)
+    expect(south.connect).toHaveBeenCalledTimes(1)
   })
 
   it('should properly disconnect and clearTimeout', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
     south.connected = true
-    south.client = { readSymbol: jest.fn(), disconnect: jest.fn() }
+    south.client = { readSymbol: jest.fn(), disconnect: jest.fn(), connection: { connected: true } }
     south.client.disconnect.mockReturnValue(new Promise((resolve) => {
       resolve()
     }))
 
     south.reconnectTimeout = true
     await south.disconnect()
-
     expect(south.connected).toBeFalsy()
-
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('should properly disconnect when client does not exists', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
+    south.connected = true
+    south.client = { readSymbol: jest.fn(), disconnect: jest.fn(), connection: { connected: true } }
+    south.client.disconnect.mockReturnValue(new Promise((resolve, reject) => {
+      reject(new Error('disconnection error'))
+    }))
+    await south.disconnect()
+    expect(south.connected).toBeFalsy()
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(0)
+    expect(south.logger.error).toHaveBeenCalledWith('ADS disconnect error')
+  })
+
+  it('should properly disconnect when client throw an error', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
+    south.connected = true
+    await south.disconnect()
+    expect(south.connected).toBeFalsy()
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(0)
   })
 
   it('disconnect should do nothing if not connected', async () => {
