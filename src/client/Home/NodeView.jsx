@@ -63,7 +63,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
     animated: true,
     type: 'default',
     arrowHeadType: 'arrow',
-    isHidden: !application.enabled,
+    hidden: !application.enabled,
   }))
   const southNodes = dataSources.map((dataSource, indexSouth) => ({
     id: dataSource.id,
@@ -96,7 +96,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
     animated: true,
     type: 'default',
     arrowHeadType: 'arrow',
-    isHidden: !dataSource.enabled,
+    hidden: !dataSource.enabled,
   }))
 
   const nodes = [
