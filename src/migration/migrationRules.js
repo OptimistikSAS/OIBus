@@ -1464,6 +1464,22 @@ module.exports = {
           logger.error(err)
         }
       }
+
+      if (south.protocol === 'Modbus') {
+        if (Object.prototype.hasOwnProperty.call(south, 'points')) {
+          logger.info('Update Modbus point data types')
+          south.points = south.points.map((point) => {
+            if (point.type === 'Uint16') {
+              point.type = 'UInt16'
+            } else if (point.type === 'UInt64') {
+              point.type = 'BigUInt64'
+            } else if (point.type === 'Int64') {
+              point.type = 'BigInt64'
+            }
+            return point
+          })
+        }
+      }
     }
 
     logger.info('Removing historyQuery.db and historyQuery folder')

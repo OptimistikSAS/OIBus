@@ -91,7 +91,7 @@ class BaseEngine {
    * @returns {Promise<void>} - The result promise
    */
   async addValues(id, values) {
-    this.logger.warn(`addValues() should be surcharged. Called with South ${id} and ${values.length} values.`)
+    this.logger.warn(`addValues() should be surcharged. Called with South "${id}" and ${values.length} values.`)
   }
 
   /**
@@ -103,7 +103,7 @@ class BaseEngine {
    * @returns {Promise<void>} - The result promise
    */
   async addFile(id, filePath, preserveFiles) {
-    this.logger.warn(`addFile() should be surcharged. Called with South ${id}, file "${filePath}" and ${preserveFiles}.`)
+    this.logger.warn(`addFile() should be surcharged. Called with South "${id}", file "${filePath}" and ${preserveFiles}.`)
   }
 
   /**
@@ -148,11 +148,10 @@ class BaseEngine {
    */
   getSouthList() {
     this.logger.debug('Getting installed South connectors list.')
-    return Object.entries(this.installedSouthConnectors)
-      .map(([connectorName, { category }]) => ({
-        connectorName,
-        category,
-      }))
+    return Object.entries(this.installedSouthConnectors).map(([connectorName, { category }]) => ({
+      connectorName,
+      category,
+    }))
   }
 
   /**
@@ -179,11 +178,10 @@ class BaseEngine {
    */
   getNorthList() {
     this.logger.debug('Getting installed North connectors list.')
-    return Object.entries(this.installedNorthConnectors)
-      .map(([connectorName, { category }]) => ({
-        connectorName,
-        category,
-      }))
+    return Object.entries(this.installedNorthConnectors).map(([connectorName, { category }]) => ({
+      connectorName,
+      category,
+    }))
   }
 }
 
