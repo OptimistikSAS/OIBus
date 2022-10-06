@@ -161,17 +161,21 @@ class OIBusEngine extends BaseEngine {
               // Add the South for this scan only if not already there
               this.scanLists[settings.scanMode].push(settings.id)
             }
-          } else if (Array.isArray(settings.points) && settings.points.length > 0) {
-            settings.points.forEach((point) => {
-              if (point.scanMode !== 'listen') {
-                if (!this.scanLists[point.scanMode]) {
-                  this.logger.error(`Point: ${point.pointId} in South connector ${settings.name} has an unknown scan mode: ${point.scanMode}`)
-                } else if (!this.scanLists[point.scanMode].includes(settings.id)) {
-                  // Add the South for this scan only if not already there
-                  this.scanLists[point.scanMode].push(settings.id)
+          } else if (Array.isArray(settings.points)) {
+            if (settings.points.length > 0) {
+              settings.points.forEach((point) => {
+                if (point.scanMode !== 'listen') {
+                  if (!this.scanLists[point.scanMode]) {
+                    this.logger.error(`Point: ${point.pointId} in South connector ${settings.name} has an unknown scan mode: ${point.scanMode}`)
+                  } else if (!this.scanLists[point.scanMode].includes(settings.id)) {
+                    // Add the South for this scan only if not already there
+                    this.scanLists[point.scanMode].push(settings.id)
+                  }
                 }
-              }
-            })
+              })
+            } else {
+              this.logger.warn(`South "${settings.name}" has no point.`)
+            }
           } else {
             this.logger.error(`South "${settings.name}" has no scan mode defined.`)
           }

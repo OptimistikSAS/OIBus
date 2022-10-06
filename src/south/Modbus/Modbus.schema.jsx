@@ -100,7 +100,7 @@ schema.form = {
   },
   swapBytesInWords: {
     type: 'OIbCheckBox',
-    md: 1,
+    md: 3,
     newRow: true,
     label: 'Swap Bytes ?',
     defaultValue: false,
@@ -108,11 +108,11 @@ schema.form = {
   },
   swapWordsInDWords: {
     type: 'OIbCheckBox',
-    md: 1,
+    md: 3,
     newRow: false,
-    label: 'Swap Bytes ?',
+    label: 'Swap Words ?',
     defaultValue: false,
-    help: <div>Swap Bytes (16 bits) in groups of 32 bits?</div>,
+    help: <div>Swap Words (16 bits) in groups of 32 bits?</div>,
   },
 }
 
@@ -143,9 +143,9 @@ schema.points = {
   },
   dataType: {
     type: 'OIbSelect',
-    options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'UInt64', 'Int64', 'Float', 'Double'],
+    options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'BigUInt64', 'BigInt64', 'Float', 'Double'],
     label: 'Data type',
-    defaultValue: 'Uint16',
+    defaultValue: 'UInt16',
     help: (
       <div>
         HoldingRegisters and inputRegisters can have one of the above types. Default type is UInt16.
