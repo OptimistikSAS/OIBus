@@ -41,8 +41,8 @@ const getPointId = (topic, currentData, pointIdPath, pointsList) => {
   })
 
   if (matchedPoints.length > 1) {
-    throw new Error(`${topic} should be subscribed only once but it has the
-     following subscriptions: ${JSON.stringify(matchedPoints)}`)
+    throw new Error(`Topic "${topic}" should be subscribed only once but it has the `
+     + `following subscriptions: ${JSON.stringify(matchedPoints)}`)
   } else if (!pointId) {
     throw new Error(`PointId can't be determined. The following value ${JSON.stringify(currentData)} is not saved.`)
   }
@@ -72,7 +72,7 @@ const getTimestamp = (elementTimestamp, timestampOrigin, timestampFormat, timezo
 /**
  *
  * @param {Object} data - The data to format
- * @param {String} topic - The mqtt topic
+ * @param {String} topic - The mqtt topic received. It can differ from the pointsList topic which can have a wildcard
  * @param {Object} formatOptions - The formatting options
  * @param {Object[]} pointsList - The list of all topics
  * @returns {{pointId: String, data: {value: any, quality: any}, timestamp: String}|null} - the formatted data

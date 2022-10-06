@@ -1,9 +1,9 @@
 const net = require('node:net')
 
-const jsmodbus = require('jsmodbus')
+const modbus = require('jsmodbus')
 
-const { getOptimizedScanModes, readRegisterValue } = require('./utils')
 const SouthConnector = require('../SouthConnector.class')
+const { getNumberOfWords } = require('./utils')
 
 /**
  * Class Modbus - Provides instruction for Modbus client connection
@@ -45,7 +45,7 @@ class Modbus extends SouthConnector {
     this.endianness = endianness
     this.swapWordsInDWords = swapWordsInDWords
     this.swapBytesInWords = swapBytesInWords
-    this.optimizedScanModes = getOptimizedScanModes(this.settings.points, addressOffset, this.logger)
+    this.addressOffset = addressOffset
 
     // Initialized at connection
     this.reconnectTimeout = null
@@ -59,49 +59,12 @@ class Modbus extends SouthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async lastPointQuery(scanMode) {
-    const scanGroup = this.optimizedScanModes[scanMode]
+    const pointsToRead = this.settings.points.filter((point) => point.scanMode === scanMode)
 
-    await Promise.all(Object.keys(scanGroup).map((modbusType) => {
-      const funcName = `read${`${modbusType.charAt(0).toUpperCase()}${modbusType.slice(1)}`}s`
-      return Promise.all(Object.entries(scanGroup[modbusType]).map(([range, points]) => {
-        const rangeAddresses = range.split('-')
-        const startAddress = parseInt(rangeAddresses[0], 10) // First address of the group
-        const endAddress = parseInt(rangeAddresses[1], 10) // Last address of the group
-        const rangeSize = endAddress - startAddress // Size of the addresses group
-        return this.modbusFunction(funcName, { startAddress, rangeSize }, points)
-      }))
-    }))
-  }
-
-  /**
-   * Dynamically call the right function based on the given name
-   * @param {String} funcName - Name of the function to run
-   * @param {Object} infos - Information about the group of addresses (first address of the group, size)
-   * @param {Object} points - the points to read
-   * @returns {Promise<void>} - The result promise
-   */
-  async modbusFunction(funcName, { startAddress, rangeSize }, points) {
-    if (!this.client[funcName]) {
-      throw new Error(`Modbus function name "${funcName}" not recognized.`)
-    }
-    const modbusOptions = {
-      endianness: this.endianness,
-      swapWordsInDWords: this.swapWordsInDWords,
-      swapBytesInWords: this.swapBytesInWords,
-    }
     try {
-      const { response } = await this.client[funcName](startAddress, rangeSize)
-      const timestamp = new Date().toISOString()
-      const valuesToSend = points.map((point) => {
-        const position = point.address - startAddress - 1
-        const data = readRegisterValue(response, point, position, modbusOptions)
-        return {
-          pointId: point.pointId,
-          timestamp,
-          data: { value: JSON.stringify(parseFloat((data * point.multiplierCoefficient).toFixed(5))) },
-        }
-      })
-      await this.addValues(valuesToSend)
+      await pointsToRead.reduce((promise, point) => promise.then(
+        async () => this.modbusFunction(point),
+      ), Promise.resolve())
     } catch (error) {
       if (error?.err === 'Offline') {
         this.logger.error('Modbus server offline.')
@@ -114,6 +77,118 @@ class Modbus extends SouthConnector {
   }
 
   /**
+   * Dynamically call the right function based on the given point settings
+   * @param {Object} point - the point to read
+   * @returns {Promise<void>} - The result promise
+   */
+  async modbusFunction(point) {
+    const offset = this.addressOffset === 'Modbus' ? 0 : -1
+    const address = (point.address.match(/^0x[0-9a-f]+$/i) ? parseInt(point.address, 16)
+      : parseInt(point.address, 10)) + offset
+
+    let value
+    switch (point.modbusType) {
+      case 'coil':
+        value = await this.readCoil(address, point.multiplierCoefficient)
+        break
+      case 'discreteInput':
+        value = await this.readDiscreteInputRegister(address, point.multiplierCoefficient)
+        break
+      case 'inputRegister':
+        value = await this.readInputRegister(address, point.multiplierCoefficient, point.dataType)
+        break
+      case 'holdingRegister':
+        value = await this.readHoldingRegister(address, point.multiplierCoefficient, point.dataType)
+        break
+      default:
+        throw new Error(`Wrong Modbus type "${point.modbusType}" for point ${JSON.stringify(point)}`)
+    }
+    const formattedData = {
+      pointId: point.pointId,
+      timestamp: new Date().toISOString(),
+      data: { value: JSON.stringify(value) },
+    }
+    await this.addValues([formattedData])
+  }
+
+  /**
+   * Read a Modbus coil
+   * @param {Number} address - The address to query
+   * @returns {Promise<Number>} - The coil value
+   */
+  async readCoil(address) {
+    const { response } = await this.client.readCoils(address, 1)
+    return response.body.valuesAsArray[0]
+  }
+
+  /**
+   * Read a Modbus discrete input register
+   * @param {Number} address - The address to query
+   * @returns {Promise<Number>} - The discrete input register value
+   */
+  async readDiscreteInputRegister(address) {
+    const { response } = await this.client.readDiscreteInputs(address, 1)
+    return response.body.valuesAsArray[0]
+  }
+
+  /**
+   * Read a Modbus input register
+   * @param {Number} address - The address to query
+   * @param {Number} multiplier - The multiplier (usually 1, 0.1, 10...)
+   * @param {String} dataType - The address to query
+   * @returns {Promise<Number>} - The input register value
+   */
+  async readInputRegister(address, multiplier, dataType) {
+    const numberOfWords = getNumberOfWords(dataType)
+    const { response } = await this.client.readInputRegisters(address, numberOfWords)
+    return this.getValueFromBuffer(response.body.valuesAsBuffer, multiplier, dataType)
+  }
+
+  /**
+   * Read a Modbus holding register
+   * @param {Number} address - The address to query
+   * @param {Number} multiplier - The multiplier (usually 1, 0.1, 10...)
+   * @param {String} dataType - The address to query
+   * @returns {Promise<Number>} - The input register value
+   */
+  async readHoldingRegister(address, multiplier, dataType) {
+    const numberOfWords = getNumberOfWords(dataType)
+    const { response } = await this.client.readHoldingRegisters(address, numberOfWords)
+    return this.getValueFromBuffer(response.body.valuesAsBuffer, multiplier, dataType)
+  }
+
+  /**
+   * Retrieve a value from buffer with appropriate conversion according to the modbus settings
+   * @param {Buffer} buffer - The buffer to parse
+   * @param {Number} multiplier - The multiplier of the retrieve value (usually 0.1, 0.001, 10...
+   * @param {'UInt16' | 'Int16' | 'UInt32' | 'Int32' | 'BigUInt64' | 'BigInt64' | 'Float' | 'Double'} dataType - The
+   * data type to convert
+   * @returns {Number} - The retrieved and parsed value
+   */
+  getValueFromBuffer(buffer, multiplier, dataType) {
+    const endianness = this.endianness === 'Big Endian' ? 'BE' : 'LE'
+    const bufferFunctionName = `read${dataType}${endianness}`
+    if (!['Int16', 'UInt16'].includes(dataType)) {
+      buffer.swap32().swap16()
+      if (this.swapWordsInDWords) {
+        buffer.swap16().swap32()
+      }
+      if (this.swapBytesInWords) {
+        buffer.swap16()
+      }
+      const bufferValue = buffer[bufferFunctionName]()
+      return parseFloat((bufferValue * multiplier).toFixed(5))
+    }
+
+    if (this.swapBytesInWords) {
+      buffer.swap16()
+    }
+
+    const bufferValue = buffer[bufferFunctionName]()
+    return parseFloat((bufferValue * multiplier).toFixed(5))
+  }
+
+  /**
    * Initiates a connection to the right host and port.
    * @returns {Promise<void>} - The result promise
    */
@@ -123,7 +198,7 @@ class Modbus extends SouthConnector {
         clearTimeout(this.reconnectTimeout)
       }
       this.socket = new net.Socket()
-      this.client = new jsmodbus.client.TCP(this.socket, this.slaveId)
+      this.client = new modbus.client.TCP(this.socket, this.slaveId)
       this.socket.connect(
         { host: this.host, port: this.port },
         async () => {

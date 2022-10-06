@@ -1,5 +1,3 @@
-jest.mock('sprintf-js', () => ({ vsprintf: jest.fn() }))
-
 const utils = require('./utils')
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
@@ -17,7 +15,7 @@ describe('South connector MQTT utils', () => {
       myValuePath: 123,
       myQualityPath: 192,
     }
-    const topic = '/myTopic'
+    const topic = 'myTopic'
     const formatOptions = {
       timestampPath: 'myTimestampPath',
       timestampOrigin: 'payload',
@@ -41,7 +39,7 @@ describe('South connector MQTT utils', () => {
       myQualityPath: 192,
       myPointIdPath: 'myPointId',
     }
-    const topic = '/myTopic'
+    const topic = 'myTopic'
     const formatOptions = {
       timestampPath: 'myTimestampPath',
       timestampOrigin: 'payload',
@@ -70,7 +68,7 @@ describe('South connector MQTT utils', () => {
       pointIdPath: 'myPointIdPath',
       qualityPath: 'myQualityPath',
     }
-    const pointsList = [{ myOtherPointIdPath: 'wrong pointId' }]
+    const pointsList = []
     let formatError
     try {
       utils.formatValue(data, topic, formatOptions, pointsList)
@@ -78,5 +76,93 @@ describe('South connector MQTT utils', () => {
       formatError = error
     }
     expect(formatError).toEqual(new Error(`Could node find pointId in path "myPointIdPath" for data: ${JSON.stringify(data)}`))
+  })
+
+  it('should format with point ID from points list', () => {
+    const data = { myValuePath: 123, myQualityPath: 192 }
+    const topic = 'France/Paris/temperatureTank1'
+    const formatOptions = {
+      timestampOrigin: 'oibus',
+      valuePath: 'myValuePath',
+      qualityPath: 'myQualityPath',
+    }
+    const pointsList = [{ topic: 'France/#', pointId: 'France/#' }]
+    const formattedValue = utils.formatValue(data, topic, formatOptions, pointsList)
+
+    const expectedValue = { data: { quality: 192, value: 123 }, pointId: 'France/Paris/temperatureTank1', timestamp: '2020-02-02T02:02:02.222Z' }
+    expect(formattedValue).toEqual(expectedValue)
+  })
+
+  it('should fail to format with topic associated to several points', () => {
+    const data = { myValuePath: 123, myQualityPath: 192 }
+    const topic = 'France/Paris/temperatureTank1'
+    const formatOptions = {
+      timestampOrigin: 'oibus',
+      valuePath: 'myValuePath',
+      qualityPath: 'myQualityPath',
+    }
+    const pointsList = [{ topic: 'France/#', pointId: 'France/#' }, { topic: 'France/Paris/#', pointId: 'France/Paris/#' }]
+
+    let formatError
+    try {
+      utils.formatValue(data, topic, formatOptions, pointsList)
+    } catch (error) {
+      formatError = error
+    }
+    expect(formatError).toEqual(new Error(`Topic "${topic}" should be subscribed only once but it has the `
+     + `following subscriptions: ${JSON.stringify(pointsList)}`))
+  })
+
+  it('should fail to format with topic not found in points list', () => {
+    const data = { myValuePath: 123, myQualityPath: 192 }
+    const topic = 'France/Paris/temperatureTank1'
+    const formatOptions = {
+      timestampOrigin: 'oibus',
+      valuePath: 'myValuePath',
+      qualityPath: 'myQualityPath',
+    }
+    const pointsList = [{ topic: 'Germany/#', pointId: 'Germany/#' }]
+
+    let formatError
+    try {
+      utils.formatValue(data, topic, formatOptions, pointsList)
+    } catch (error) {
+      formatError = error
+    }
+    expect(formatError).toEqual(new Error(`PointId can't be determined. The following value ${JSON.stringify(data)} is not saved.`))
+  })
+
+  it('should fail to format with bad point configuration', () => {
+    const data = { myValuePath: 123, myQualityPath: 192 }
+    const topic = 'France/Paris/temperatureTank1'
+    const formatOptions = {
+      timestampOrigin: 'oibus',
+      valuePath: 'myValuePath',
+      qualityPath: 'myQualityPath',
+    }
+    const pointsList = [{ topic: 'France/#', pointId: 'France/+/+/+' }]
+
+    let formatError
+    try {
+      utils.formatValue(data, topic, formatOptions, pointsList)
+    } catch (error) {
+      formatError = error
+    }
+    expect(formatError).toEqual(new Error(`Invalid point configuration: ${JSON.stringify(pointsList[0])}`))
+  })
+
+  it('should format with exact topic match', () => {
+    const data = { myValuePath: 123, myQualityPath: 192 }
+    const topic = 'France/Paris/temperatureTank1'
+    const formatOptions = {
+      timestampOrigin: 'oibus',
+      valuePath: 'myValuePath',
+      qualityPath: 'myQualityPath',
+    }
+    const pointsList = [{ topic: 'France/Paris/temperatureTank1', pointId: 'France/Paris/temperatureTank1' }]
+    const formattedValue = utils.formatValue(data, topic, formatOptions, pointsList)
+
+    const expectedValue = { data: { quality: 192, value: 123 }, pointId: 'France/Paris/temperatureTank1', timestamp: '2020-02-02T02:02:02.222Z' }
+    expect(formattedValue).toEqual(expectedValue)
   })
 })
