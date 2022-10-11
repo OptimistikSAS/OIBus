@@ -237,8 +237,6 @@ class SouthConnector {
         endTime.getTime() === historyEndTime.getTime(),
       ),
     ), Promise.resolve())
-
-    this.setConfig(`queryPart-${scanMode}`, this.queryParts[scanMode])
   }
 
   /**

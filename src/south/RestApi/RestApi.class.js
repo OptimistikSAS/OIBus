@@ -75,7 +75,6 @@ class RestApi extends SouthConnector {
     this.payloadParser = payloadParser
     this.convertToCsv = convertToCsv
     this.variableDateFormat = variableDateFormat
-    this.tmpFolder = path.resolve(this.baseFolder, 'tmp')
   }
 
   /**
@@ -85,6 +84,7 @@ class RestApi extends SouthConnector {
   async init() {
     await super.init()
 
+    this.tmpFolder = path.resolve(this.baseFolder, 'tmp')
     // Create tmp folder to write files locally before sending them to the cache
     try {
       await fs.mkdir(this.tmpFolder, { recursive: true })

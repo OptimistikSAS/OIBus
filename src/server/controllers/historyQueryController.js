@@ -7,7 +7,6 @@ const { nanoid } = require('nanoid')
 const createHistoryQuery = (ctx) => {
   const id = nanoid()
   const historyQuery = ctx.app.historyQueryEngine.historyQueryRepository.create({ ...ctx.request.body, id })
-  process.send({ type: 'reload-historyquery-engine' })
   ctx.ok(historyQuery)
 }
 
@@ -36,9 +35,11 @@ const getHistoryQueryById = (ctx) => {
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const updateHistoryQuery = (ctx) => {
+const updateHistoryQuery = async (ctx) => {
   const updatedHistoryQuery = ctx.app.historyQueryEngine.historyQueryRepository.update(ctx.request.body)
-  process.send({ type: 'reload-historyquery-engine' })
+  if (ctx.request.body.id === ctx.app.historyQueryEngine.historyQuery?.historySettings.id) {
+    await ctx.app.historyQueryEngine.historyQuery.stop()
+  }
   ctx.ok(updatedHistoryQuery)
 }
 
@@ -47,11 +48,13 @@ const updateHistoryQuery = (ctx) => {
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const enableHistoryQuery = (ctx) => {
+const enableHistoryQuery = async (ctx) => {
   const historyQuery = ctx.app.historyQueryEngine.historyQueryRepository.get(ctx.params.id)
   historyQuery.enabled = ctx.request.body.enabled
   const updatedHistoryQuery = ctx.app.historyQueryEngine.historyQueryRepository.update(historyQuery)
-  process.send({ type: 'reload-historyquery-engine' })
+  if (ctx.params.id === ctx.app.historyQueryEngine.historyQuery?.historySettings.id) {
+    await ctx.app.historyQueryEngine.historyQuery.stop()
+  }
   ctx.ok(updatedHistoryQuery)
 }
 
@@ -62,7 +65,6 @@ const enableHistoryQuery = (ctx) => {
  */
 const orderHistoryQuery = (ctx) => {
   const updatedHistoryQuery = ctx.app.historyQueryEngine.historyQueryRepository.order(ctx.params.id, ctx.request.body.orderColumn)
-  process.send({ type: 'reload-historyquery-engine' })
   ctx.ok(updatedHistoryQuery)
 }
 
@@ -71,14 +73,16 @@ const orderHistoryQuery = (ctx) => {
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const deleteHistoryQuery = (ctx) => {
+const deleteHistoryQuery = async (ctx) => {
   const { position } = ctx.query
   ctx.app.historyQueryEngine.historyQueryRepository.delete(ctx.params.id)
+  if (ctx.params.id === ctx.app.historyQueryEngine.historyQuery?.historySettings.id) {
+    await ctx.app.historyQueryEngine.historyQuery.stop()
+  }
 
   const queries = ctx.app.historyQueryEngine.historyQueryRepository.getAll()
   queries.filter((query) => query.orderColumn > position + 1)
     .map((query) => ctx.app.historyQueryEngine.historyQueryRepository.order(query.id, query.orderColumn - 1))
-  process.send({ type: 'reload-historyquery-engine' })
   ctx.ok()
 }
 

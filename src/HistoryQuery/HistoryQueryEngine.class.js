@@ -1,6 +1,8 @@
 const path = require('node:path')
 const fs = require('node:fs/promises')
 
+const humanizeDuration = require('humanize-duration')
+
 const HistoryQuery = require('./HistoryQuery.class')
 const BaseEngine = require('../engine/BaseEngine.class')
 const HistoryQueryRepository = require('./HistoryQueryRepository.class')
@@ -8,6 +10,7 @@ const databaseService = require('../services/database.service')
 
 const CACHE_FOLDER = './cache/history-query'
 const HISTORY_QUERIES_DB = './history-query.db'
+const HISTORY_TIMER_INTERVAL = 10000
 
 /**
  * Manage history queries by running {@link HistoryQuery} one after another
@@ -28,6 +31,8 @@ class HistoryQueryEngine extends BaseEngine {
     this.cacheFolder = path.resolve(CACHE_FOLDER)
 
     this.historyQueryRepository = null
+    this.nextHistoryInterval = null
+    this.historyOnGoing = false
   }
 
   /**
@@ -120,7 +125,7 @@ class HistoryQueryEngine extends BaseEngine {
       return
     }
 
-    await this.runNextHistoryQuery()
+    this.nextHistoryInterval = setInterval(this.runNextHistoryQuery.bind(this), HISTORY_TIMER_INTERVAL)
   }
 
   /**
@@ -130,6 +135,10 @@ class HistoryQueryEngine extends BaseEngine {
   async stop() {
     if (this.safeMode) {
       return
+    }
+
+    if (this.nextHistoryInterval) {
+      clearInterval(this.nextHistoryInterval)
     }
 
     if (this.historyQuery) {
@@ -145,30 +154,53 @@ class HistoryQueryEngine extends BaseEngine {
    * @returns {Promise<void>} - The result promise
    */
   async runNextHistoryQuery() {
+    if (this.historyQuery?.historySettings.status === HistoryQuery.STATUS_FINISHED) {
+      this.logger.info(`History query done in ${humanizeDuration(this.historyQueryStartTime - new Date().getTime())}.`)
+      this.historyOnGoing = false
+      this.historyQuery = null
+    }
+    if (this.historyQuery && this.historyOnGoing) {
+      this.logger.trace(`History query "${this.historyQuery.historySettings.id}" already ongoing.`)
+      return
+    }
+
     const historyQuerySettings = this.historyQueryRepository.getNextToRun()
     if (!historyQuerySettings) {
-      this.logger.info('No HistoryQuery to execute.')
+      this.logger.debug('No HistoryQuery to execute.')
       this.statusService.updateStatusDataStream({ ongoingHistoryQueryId: null })
       return
     }
-    this.logger.debug(`Preparing to start history query "${historyQuerySettings.id}".`)
+    this.logger.info(`Preparing to start history query "${historyQuerySettings.id}".`)
 
     const { southConfig, northConfig } = this.configService.getConfig()
     const southToUse = southConfig.find((southSettings) => southSettings.id === historyQuerySettings.southId)
     if (!southToUse) {
       this.logger.error(`Invalid South ID "${historyQuerySettings.southId}" for history query "${historyQuerySettings.id}".`)
+      historyQuerySettings.enabled = false
+      this.historyQueryRepository.update(historyQuerySettings)
       return
     }
     const northToUse = northConfig.find((northSettings) => northSettings.id === historyQuerySettings.northId)
     if (!northToUse) {
       this.logger.error(`Invalid North ID "${historyQuerySettings.northId}" for history query "${historyQuerySettings.id}".`)
+      historyQuerySettings.enabled = false
+      this.historyQueryRepository.update(historyQuerySettings)
       return
     }
 
     this.historyQuery = new HistoryQuery(this, historyQuerySettings, southToUse, northToUse)
     this.statusService.updateStatusDataStream({ ongoingHistoryQueryId: historyQuerySettings.id })
     this.logger.info(`Starting history query "${historyQuerySettings.id}".`)
-    await this.historyQuery.start()
+    this.historyOnGoing = true
+    this.historyQueryStartTime = new Date().getTime()
+    try {
+      await this.historyQuery.start()
+    } catch (err) {
+      this.logger.error(err)
+      await this.historyQuery?.stop()
+      this.historyQuery = null
+      this.historyOnGoing = false
+    }
   }
 
   /**

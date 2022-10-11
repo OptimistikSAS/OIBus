@@ -89,12 +89,6 @@ logger.changeParameters(logParameters).then(async () => {
               cluster.workers[id].send({ type: 'reload-oibus-engine' })
             })
           break
-        case 'reload-historyquery-engine':
-          Object.keys(cluster.workers)
-            .forEach((id) => {
-              cluster.workers[id].send({ type: 'reload-historyquery-engine' })
-            })
-          break
         case 'reload':
           Object.keys(cluster.workers)
             .forEach((id) => {
@@ -150,7 +144,9 @@ logger.changeParameters(logParameters).then(async () => {
         historyQueryEngine.start(safeMode).then(() => {
           logger.info('History query engine fully started.')
         })
-        server.start()
+        server.start().then(() => {
+          logger.info('OIBus web server fully started.')
+        })
       }
 
       // Catch Ctrl+C and properly stop the Engine
@@ -169,17 +165,16 @@ logger.changeParameters(logParameters).then(async () => {
           case 'reload-oibus-engine':
             logger.info('Reloading OIBus Engine')
             await oibusEngine.stop()
+            await historyQueryEngine.stop()
             await server.stop()
             oibusEngine.start(safeMode).then(() => {
               logger.info('OIBus engine fully started.')
             })
-            server.start()
-            break
-          case 'reload-historyquery-engine':
-            logger.info('Reloading HistoryQuery Engine')
-            await historyQueryEngine.stop()
-            historyQueryEngine.start(safeMode).then(() => {
-              logger.info('History query engine fully started.')
+            historyQueryEngine.start().then(() => {
+              logger.info('History engine fully started.')
+            })
+            server.start().then(() => {
+              logger.info('OIBus web server fully started.')
             })
             break
           case 'reload':

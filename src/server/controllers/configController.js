@@ -31,7 +31,6 @@ const activateConfiguration = async (ctx) => {
     await ctx.app.engine.configService.activateConfiguration()
     // Ask the Master Cluster to reload OIBus Engine
     process.send({ type: 'reload-oibus-engine' })
-    process.send({ type: 'reload-historyquery-engine' })
     ctx.ok('Reloading...')
   } catch (error) {
     ctx.throw(500, 'Unable to activate configuration')

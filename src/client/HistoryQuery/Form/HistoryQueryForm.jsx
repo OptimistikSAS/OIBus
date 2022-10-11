@@ -31,7 +31,7 @@ const HistoryQueryForm = ({ query }) => {
 
   React.useEffect(() => {
     // Monitor which history query is running
-    const source = new EventSource('/history/engine/sse')
+    const source = new EventSource('/history-engine/sse')
     source.onmessage = (event) => {
       if (event && event.data) {
         const myData = JSON.parse(event.data)
@@ -58,7 +58,7 @@ const HistoryQueryForm = ({ query }) => {
     if (queryToUpdate.enabled
         && queryToUpdate.status !== 'pending'
         && queryToUpdate.status !== 'finished') {
-      source = new EventSource(`/history/${queryToUpdate.id}/sse`)
+      source = new EventSource(`/history-query/${queryToUpdate.id}/sse`)
       source.onmessage = (event) => {
         if (event && event.data) {
           const myData = JSON.parse(event.data)
