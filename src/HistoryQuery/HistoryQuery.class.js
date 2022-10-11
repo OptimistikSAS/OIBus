@@ -1,3 +1,5 @@
+const path = require('node:path')
+
 const StatusService = require('../services/status.service.class')
 const { createFolder } = require('../services/utils')
 
@@ -13,15 +15,6 @@ class HistoryQuery {
   // History query finished
   static STATUS_FINISHED = 'finished'
 
-  // The folder to store the files during the export
-  static DATA_FOLDER = 'data'
-
-  // The folder to store the imported files
-  static IMPORTED_FOLDER = 'imported'
-
-  // The folder to store files not able to import
-  static ERROR_FOLDER = 'error'
-
   constructor(engine, historySettings, southSettings, northSettings) {
     this.engine = engine
     this.logger = engine.logger
@@ -33,8 +26,8 @@ class HistoryQuery {
     this.startTime = new Date(historySettings.startTime)
     this.endTime = new Date(historySettings.endTime)
     this.filePattern = historySettings.filePattern
-    this.cacheFolder = `${this.engine.cacheFolder}/${historySettings.id}`
-    this.dataCacheFolder = `${this.engine.cacheFolder}/${historySettings.id}/${HistoryQuery.DATA_FOLDER}`
+
+    this.cacheFolder = path.resolve(this.engine.cacheFolder, historySettings.id)
 
     this.statusService = null
     this.finishInterval = null
@@ -48,7 +41,6 @@ class HistoryQuery {
     this.statusService = new StatusService()
     this.statusService.updateStatusDataStream({ status: this.historySettings.status })
     await createFolder(this.cacheFolder)
-    await createFolder(this.dataCacheFolder)
     this.south = this.engine.createSouth(this.southSettings)
     if (!this.south) {
       this.logger.error(`South connector "${this.southSettings.name}" is not found. `
@@ -78,19 +70,20 @@ class HistoryQuery {
     await this.south.init()
     await this.south.connect()
 
+    if (!this.south.connected || !this.north.connected) {
+      throw new Error('Connection failed.')
+    }
     this.finishInterval = setInterval(this.finish.bind(this), FINISH_INTERVAL)
+
+    this.setStatus(HistoryQuery.STATUS_RUNNING)
+    this.statusService.updateStatusDataStream({ status: HistoryQuery.STATUS_RUNNING })
 
     // In the south.init method, queryParts is set for each scanMode to 0
     // Because of scan groups, associated to aggregates, each scan mode must be queried independently
     // Map each scanMode to a history query and run each query sequentially
-    try {
-      await Object.keys(this.south.queryParts).reduce((promise, scanMode) => promise.then(
-        async () => this.south.historyQueryHandler(scanMode, this.startTime, this.endTime),
-      ), Promise.resolve())
-    } catch (err) {
-      this.logger.error(err)
-      await this.stop()
-    }
+    await Object.keys(this.south.queryParts).reduce((promise, scanMode) => promise.then(
+      async () => this.south.historyQueryHandler(scanMode, this.startTime, this.endTime),
+    ), Promise.resolve())
   }
 
   /**
@@ -112,10 +105,15 @@ class HistoryQuery {
     this.statusService.stop()
   }
 
+  /**
+   * Overwrite connector settings with history specific settings
+   * @return {void}
+   */
   overwriteConnectorsSettings() {
     // Overwrite some parameters for history query
+    this.north.baseFolder = path.resolve(this.cacheFolder, `north-${this.north.settings.id}`)
+    this.south.baseFolder = path.resolve(this.cacheFolder, `south-${this.south.settings.id}`)
     this.south.filename = this.filePattern
-    this.south.tmpFolder = this.dataCacheFolder
     this.south.settings.startTime = this.historySettings.startTime
     this.south.points = this.historySettings.settings.points
     this.south.query = this.historySettings.settings.query
@@ -129,7 +127,7 @@ class HistoryQuery {
    * @return {Promise<void>} - The result promise
    */
   async finish() {
-    const extractionDone = Object.values(this.south.queryParts).every((queryPart) => queryPart === this.south.maxQueryPart)
+    const extractionDone = Object.values(this.south.queryParts).every((queryPart) => queryPart >= this.south.maxQueryPart)
 
     if (!extractionDone) {
       this.logger.trace(`History query "${this.historySettings.id}" not over yet: Data extraction still ongoing for "${this.southSettings.name}".`)
@@ -142,9 +140,9 @@ class HistoryQuery {
     }
 
     this.logger.info(`Finish "${this.southSettings.name}" -> "${this.northSettings.name}" (${this.historySettings.id})`)
-    await this.setStatus(HistoryQuery.STATUS_FINISHED)
+    this.statusService.updateStatusDataStream({ status: HistoryQuery.STATUS_FINISHED })
     await this.stop()
-    await this.engine.runNextHistoryQuery()
+    await this.setStatus(HistoryQuery.STATUS_FINISHED)
   }
 
   /**
@@ -155,7 +153,6 @@ class HistoryQuery {
   async setStatus(status) {
     this.historySettings.status = status
     this.engine.historyQueryRepository.update(this.historySettings)
-    this.statusService.updateStatusDataStream({ status })
   }
 
   /**
