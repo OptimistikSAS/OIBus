@@ -187,7 +187,7 @@ class FileCache extends BaseCache {
    * @returns {Boolean} - Cache empty or not
    */
   isEmpty() {
-    return databaseService.getFileCountForNorthConnector(this.filesDatabase) > 0
+    return databaseService.getFileCountForNorthConnector(this.filesDatabase) === 0
   }
 
   /**

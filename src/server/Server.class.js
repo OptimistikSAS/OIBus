@@ -103,10 +103,14 @@ class Server {
         createSocket(ctx)
         ctx.body = this.engine.statusService.getDataStream()
         this.engine.statusService.forceDataUpdate()
-      } else if (ctx.path.startsWith('/history/')) {
+      } else if (ctx.path.startsWith('/history-engine/')) {
         createSocket(ctx)
         ctx.body = this.historyQueryEngine.statusService.getDataStream()
         this.historyQueryEngine.statusService.forceDataUpdate()
+      } else if (ctx.path.startsWith('/history-query/') && this.historyQueryEngine.historyQuery) {
+        createSocket(ctx)
+        ctx.body = this.historyQueryEngine.historyQuery.statusService.getDataStream()
+        this.historyQueryEngine.historyQuery.statusService.forceDataUpdate()
       } else {
         await next()
       }

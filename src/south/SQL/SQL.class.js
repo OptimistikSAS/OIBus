@@ -85,7 +85,6 @@ class SQL extends SouthConnector {
     this.maxReadInterval = maxReadInterval
     this.readIntervalDelay = readIntervalDelay
     this.timezone = timezone
-    this.tmpFolder = path.resolve(this.baseFolder, 'tmp')
   }
 
   /**
@@ -101,6 +100,7 @@ class SQL extends SouthConnector {
       this.logger.warn('Could not load node oracledb')
     }
 
+    this.tmpFolder = path.resolve(this.baseFolder, 'tmp')
     // Create tmp folder to write files locally before sending them to the cache
     try {
       await fs.mkdir(this.tmpFolder, { recursive: true })

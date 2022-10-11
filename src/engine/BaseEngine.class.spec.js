@@ -4,16 +4,10 @@ const ConfigService = require('../services/config.service.class')
 
 const { testConfig: config } = require('../../tests/testConfig')
 
-// Mock EncryptionService
-EncryptionService.getInstance = () => ({
-  decryptText: (password) => password,
-  setKeyFolder: () => {},
-  checkOrCreatePrivateKey: () => {},
-})
-
 // Mock services
 jest.mock('../services/config.service.class')
 jest.mock('./logger/Logger.class')
+jest.mock('../services/EncryptionService.class', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 
 let engine = null
 

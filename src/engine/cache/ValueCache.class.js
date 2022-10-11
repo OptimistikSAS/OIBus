@@ -90,7 +90,7 @@ class ValueCache extends BaseCache {
    * @returns {Boolean} - Cache empty or not
    */
   isEmpty() {
-    return databaseService.getCount(this.valuesDatabase) > 0
+    return databaseService.getCount(this.valuesDatabase) === 0
   }
 
   /**
