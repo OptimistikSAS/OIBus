@@ -332,12 +332,12 @@ class OIBusEngine extends BaseEngine {
   getOIBusInfo() {
     return {
       version: this.version,
-      architecture: process.arch,
-      'Current directory': process.cwd(),
-      'Node version': process.version,
+      currentDirectory: process.cwd(),
       executable: process.execPath,
+      nodeVersion: process.version,
       processId: process.pid,
       hostname: os.hostname(),
+      architecture: process.arch,
       osRelease: os.release(),
       osType: os.type(),
       copyright: `(c) Copyright 2019-${new Date().getFullYear()} Optimistik, all rights reserved.`,

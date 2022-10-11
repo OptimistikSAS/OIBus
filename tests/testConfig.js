@@ -172,7 +172,7 @@ const testConfig = {
     {
       id: 'south-uuid-1',
       name: 'TestFolderScanner',
-      protocol: 'FolderScanner',
+      type: 'FolderScanner',
       enabled: false,
       FolderScanner: {
         preserveFiles: true,
@@ -191,7 +191,7 @@ const testConfig = {
     {
       id: 'north-uuid-1',
       name: 'TestConsole',
-      api: 'Console',
+      type: 'Console',
       enabled: false,
       Console: { verbose: false },
       caching: {
@@ -279,7 +279,7 @@ const integrationTestConfig = {
     {
       id: 'mysql',
       name: 'SQL',
-      protocol: 'SQL',
+      type: 'SQL',
       enabled: true,
       SQL: {
         connectionTimeout: 1000,
@@ -309,7 +309,7 @@ const integrationTestConfig = {
     {
       id: 'postgresql',
       name: 'SQL',
-      protocol: 'SQL',
+      type: 'SQL',
       enabled: true,
       SQL: {
         connectionTimeout: 1000,
@@ -339,7 +339,7 @@ const integrationTestConfig = {
     {
       id: 'mssql',
       name: 'SQL',
-      protocol: 'SQL',
+      type: 'SQL',
       enabled: true,
       SQL: {
         connectionTimeout: 1000,

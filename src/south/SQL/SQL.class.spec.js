@@ -72,7 +72,7 @@ describe('South SQL', () => {
     settings = {
       id: 'southId',
       name: 'SQL',
-      protocol: 'SQL',
+      type: 'SQL',
       enabled: false,
       SQL: {
         port: 1433,

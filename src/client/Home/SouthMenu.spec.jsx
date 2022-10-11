@@ -20,7 +20,7 @@ jest.mock('react-router-dom', () => (
   { useNavigate: () => mockNavigate }
 ))
 
-const dataSource = testConfig.south[0]
+const south = testConfig.south[0]
 
 let container
 let root
@@ -46,7 +46,7 @@ describe('SouthMenu', () => {
 
     act(() => {
       root.render(
-        <SouthMenu dataSource={dataSource} />,
+        <SouthMenu south={south} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -55,7 +55,7 @@ describe('SouthMenu', () => {
 
     act(() => {
       root.render(
-        <SouthMenu dataSource={dataSource} />,
+        <SouthMenu south={south} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -64,7 +64,7 @@ describe('SouthMenu', () => {
 
     act(() => {
       root.render(
-        <SouthMenu dataSource={dataSource} />,
+        <SouthMenu south={south} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -73,7 +73,7 @@ describe('SouthMenu', () => {
 
     act(() => {
       root.render(
-        <SouthMenu dataSource={dataSource} />,
+        <SouthMenu south={south} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -82,15 +82,15 @@ describe('SouthMenu', () => {
   test('display SouthMenu page based on config', async () => {
     act(() => {
       root.render(
-        <SouthMenu dataSource={dataSource} />,
+        <SouthMenu south={south} />,
       )
     })
     expect(container).toMatchSnapshot()
   })
 
-  test('check duplicate dataSource', async () => {
+  test('check duplicate south', async () => {
     act(() => {
-      root.render(<SouthMenu dataSource={dataSource} />)
+      root.render(<SouthMenu south={south} />)
     })
     act(() => {
       Simulate.click(document.getElementById('dropdown-toggle'))
@@ -102,7 +102,7 @@ describe('SouthMenu', () => {
       type: 'addRow',
       name: 'south',
       value: {
-        ...dataSource,
+        ...south,
         name: 'TestFolderScanner copy',
         enabled: false,
         id: 'generated-uuid',
@@ -111,12 +111,12 @@ describe('SouthMenu', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check duplicate dataSource already copied', async () => {
-    const dataSourceWithCopyInName = dataSource
-    dataSourceWithCopyInName.name = 'TestFolderScanner copy'
+  test('check duplicate south already copied', async () => {
+    const southWithCopyInName = south
+    southWithCopyInName.name = 'TestFolderScanner copy'
 
     act(() => {
-      root.render(<SouthMenu dataSource={dataSourceWithCopyInName} />)
+      root.render(<SouthMenu south={southWithCopyInName} />)
     })
     act(() => {
       Simulate.click(document.getElementById('dropdown-toggle'))
@@ -129,7 +129,7 @@ describe('SouthMenu', () => {
       type: 'addRow',
       name: 'south',
       value: {
-        ...dataSourceWithCopyInName,
+        ...southWithCopyInName,
         name: 'TestFolderScanner copy copy',
         enabled: false,
         id: 'generated-uuid',
@@ -138,9 +138,9 @@ describe('SouthMenu', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check edit first dataSource', () => {
+  test('check edit first south', () => {
     act(() => {
-      root.render(<SouthMenu dataSource={dataSource} />)
+      root.render(<SouthMenu south={south} />)
     })
     act(() => {
       Simulate.click(document.getElementById('dropdown-toggle'))
@@ -153,9 +153,9 @@ describe('SouthMenu', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check status first dataSource', () => {
+  test('check status first south', () => {
     act(() => {
-      root.render(<SouthMenu dataSource={dataSource} />)
+      root.render(<SouthMenu south={south} />)
     })
     act(() => {
       Simulate.click(document.getElementById('dropdown-toggle'))
@@ -168,9 +168,9 @@ describe('SouthMenu', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check delete first dataSource', () => {
+  test('check delete first south', () => {
     act(() => {
-      root.render(<SouthMenu dataSource={dataSource} />)
+      root.render(<SouthMenu south={south} />)
     })
 
     act(() => {
@@ -192,9 +192,9 @@ describe('SouthMenu', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check cancel delete first dataSource', () => {
+  test('check cancel delete first south', () => {
     act(() => {
-      root.render(<SouthMenu dataSource={dataSource} />)
+      root.render(<SouthMenu south={south} />)
     })
     act(() => {
       Simulate.click(document.getElementById('dropdown-toggle'))

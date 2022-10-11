@@ -18,7 +18,7 @@ React.useContext = jest.fn().mockReturnValue({
     south: [{
       id: 'south-uuid-1',
       name: 'TestOPCUA',
-      protocol: 'OPCUA_HA',
+      type: 'OPCUA_HA',
       enabled: false,
       OPCUA_HA: {
         scanGroups: [
@@ -376,7 +376,7 @@ describe('ConfigurePoints', () => {
       south: [{
         id: 'south-uuid-1',
         name: 'TestOPCUA',
-        protocol: 'OPCUA_HA',
+        type: 'OPCUA_HA',
         enabled: false,
         OPCUA_HA: {
           scanGroups: [

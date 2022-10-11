@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`ConfigureApi check ConfigureApi 1`] = `
+exports[`ConfigureNorth check ConfigureNorth 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
@@ -85,10 +85,10 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
             >
               <ul>
                 <li>
-                  This form allows to configure north-specific parameters.
+                  This form allows to configure North-specific parameters.
                 </li>
                 <li>
-                  You need to activate the application with the enabled checkbox.
+                  You need to activate the North connector with the enabled checkbox.
                 </li>
               </ul>
             </div>
@@ -119,7 +119,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Enable this application
+                Enable this North connector
               </div>
             </small>
           </div>
@@ -555,7 +555,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
               class="col"
             >
               <p>
-                The cache is a local file storage to allow OIBus to store values or files when the communication with the north application is interrupted. The more space is allocated to the cache, the longer the interruption can be. The parameters below are important to understand.
+                The cache is a local file storage to allow OIBus to store values or files when the communication with the north connector is interrupted. The more space is allocated to the cache, the longer the interruption can be. The parameters below are important to understand.
               </p>
               <ul>
                 <li>
@@ -812,7 +812,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
               class="col"
             >
               <p>
-                Allow to select what South equipment are connected to this North application. The default is to receive from all enabled south equipments of the current OIBus.
+                Allow to select what South equipment are connected to this North connector. The default is to receive from all enabled south equipments of the current OIBus.
               </p>
             </div>
           </div>
@@ -913,7 +913,7 @@ exports[`ConfigureApi check ConfigureApi 1`] = `
 </div>
 `;
 
-exports[`ConfigureApi check application not found 1`] = `
+exports[`ConfigureNorth check north not found 1`] = `
 <div>
   <div
     class="spinner-container"
@@ -933,7 +933,7 @@ exports[`ConfigureApi check application not found 1`] = `
 </div>
 `;
 
-exports[`ConfigureApi check update 1`] = `
+exports[`ConfigureNorth check update 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
@@ -1018,10 +1018,10 @@ exports[`ConfigureApi check update 1`] = `
             >
               <ul>
                 <li>
-                  This form allows to configure north-specific parameters.
+                  This form allows to configure North-specific parameters.
                 </li>
                 <li>
-                  You need to activate the application with the enabled checkbox.
+                  You need to activate the North connector with the enabled checkbox.
                 </li>
               </ul>
             </div>
@@ -1052,7 +1052,7 @@ exports[`ConfigureApi check update 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Enable this application
+                Enable this North connector
               </div>
             </small>
           </div>
@@ -1488,7 +1488,7 @@ exports[`ConfigureApi check update 1`] = `
               class="col"
             >
               <p>
-                The cache is a local file storage to allow OIBus to store values or files when the communication with the north application is interrupted. The more space is allocated to the cache, the longer the interruption can be. The parameters below are important to understand.
+                The cache is a local file storage to allow OIBus to store values or files when the communication with the north connector is interrupted. The more space is allocated to the cache, the longer the interruption can be. The parameters below are important to understand.
               </p>
               <ul>
                 <li>
@@ -1745,7 +1745,7 @@ exports[`ConfigureApi check update 1`] = `
               class="col"
             >
               <p>
-                Allow to select what South equipment are connected to this North application. The default is to receive from all enabled south equipments of the current OIBus.
+                Allow to select what South equipment are connected to this North connector. The default is to receive from all enabled south equipments of the current OIBus.
               </p>
             </div>
           </div>

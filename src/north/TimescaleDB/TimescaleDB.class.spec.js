@@ -43,7 +43,7 @@ describe('North TimescaleDB', () => {
     settings = {
       id: 'northId',
       name: 'timescale',
-      api: 'TimescaleDB',
+      type: 'TimescaleDB',
       enabled: false,
       TimescaleDB: {
         password: 'anypass',

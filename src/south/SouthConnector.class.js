@@ -77,7 +77,7 @@ class SouthConnector {
   async init() {
     this.statusService = new StatusService()
 
-    const { logParameters, id, name, protocol } = this.settings
+    const { logParameters, id, name, type } = this.settings
     this.logger = new Logger(`South:${this.settings.name}`)
     this.logger.setEncryptionService(this.encryptionService)
     await this.logger.changeParameters(this.engineConfig, logParameters)
@@ -180,7 +180,7 @@ class SouthConnector {
       'Number of values since OIBus has started': this.handlesPoints ? 0 : undefined,
       'Number of files since OIBus has started': this.handlesFiles ? 0 : undefined,
     })
-    this.logger.info(`South connector "${name}" (${id}) of type ${protocol} started.`)
+    this.logger.info(`South connector "${name}" (${id}) of type ${type} started.`)
   }
 
   /**

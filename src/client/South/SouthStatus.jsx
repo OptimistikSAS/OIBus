@@ -28,40 +28,42 @@ const SouthStatus = () => {
   const [connectorData, setConnectorData] = React.useState(null)
   const { newConfig } = React.useContext(ConfigContext)
   const navigate = useNavigate()
-  const { id } = useParams() // the dataSource id passed in the url
-  const [dataSource, setDataSource] = React.useState(null)
+  const { id } = useParams() // the south id passed in the url
+  const [south, setSouth] = React.useState(null)
+
+  const onEventSourceError = (error) => {
+    console.error(error)
+  }
+
+  const onEventSourceMessage = (event) => {
+    if (event && event.data) {
+      const myData = JSON.parse(event.data)
+      const tableRows = []
+      Object.keys(myData).forEach((key) => {
+        tableRows.push(generateRowEntry(key, myData[key]))
+      })
+      setConnectorData(tableRows)
+    }
+  }
 
   React.useEffect(() => {
-    const currentDataSource = newConfig.south?.find(
+    const currentSouth = newConfig.south?.find(
       (element) => element.id === id,
     )
-    setDataSource(currentDataSource)
+    setSouth(currentSouth)
   }, [newConfig, id])
 
   React.useEffect(() => {
     let source
-    if (dataSource && dataSource.enabled) {
-      source = new EventSource(`/south/${dataSource.id}/sse`)
-      source.onerror = (error) => {
-        console.error(error)
-      }
-      source.onmessage = (event) => {
-        if (event && event.data) {
-          const myData = JSON.parse(event.data)
-          const tableRows = []
-          Object.keys(myData).forEach((key) => {
-            tableRows.push(generateRowEntry(key, myData[key]))
-          })
-          setConnectorData(tableRows)
-        }
-      }
+    if (south && south.enabled) {
+      source = utils.createEventSource(`/south/${south.id}/sse`, onEventSourceMessage, onEventSourceError)
     }
     return () => {
       source?.close()
     }
-  }, [dataSource])
+  }, [south])
 
-  return dataSource ? (
+  return south ? (
     <>
       <div
         id="oi-sub-nav"
@@ -79,10 +81,10 @@ const SouthStatus = () => {
             <FaArrowLeft className="oi-back-icon" />
           </Button>
           <span className="mx-2">|</span>
-          <span>{dataSource.name}</span>
+          <span>{south.name}</span>
         </h6>
         <div className="pull-right me-3">
-          <PointsButton dataSource={dataSource} />
+          <PointsButton south={south} />
         </div>
       </div>
 

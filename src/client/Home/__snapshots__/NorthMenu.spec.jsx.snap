@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`NorthMenu check cancel delete first application 1`] = `
+exports[`NorthMenu check cancel delete first north 1`] = `
 <div>
   <div
     class="dropdown"
@@ -75,7 +75,7 @@ exports[`NorthMenu check cancel delete first application 1`] = `
 </div>
 `;
 
-exports[`NorthMenu check delete first application 1`] = `
+exports[`NorthMenu check delete first north 1`] = `
 <div>
   <div
     class="dropdown"
@@ -150,7 +150,7 @@ exports[`NorthMenu check delete first application 1`] = `
 </div>
 `;
 
-exports[`NorthMenu check duplicate application 1`] = `
+exports[`NorthMenu check duplicate north 1`] = `
 <div>
   <div
     class="dropdown"
@@ -225,7 +225,7 @@ exports[`NorthMenu check duplicate application 1`] = `
 </div>
 `;
 
-exports[`NorthMenu check duplicate application already copied 1`] = `
+exports[`NorthMenu check duplicate north already copied 1`] = `
 <div>
   <div
     class="dropdown"
@@ -300,7 +300,7 @@ exports[`NorthMenu check duplicate application already copied 1`] = `
 </div>
 `;
 
-exports[`NorthMenu check edit first application 1`] = `
+exports[`NorthMenu check edit first north 1`] = `
 <div>
   <div
     class="dropdown"
@@ -375,7 +375,7 @@ exports[`NorthMenu check edit first application 1`] = `
 </div>
 `;
 
-exports[`NorthMenu check status first application 1`] = `
+exports[`NorthMenu check status first north 1`] = `
 <div>
   <div
     class="dropdown"

@@ -2,22 +2,21 @@ import React from 'react'
 import { useParams } from 'react-router-dom'
 import { Spinner } from 'reactstrap'
 import { ConfigContext } from '../context/ConfigContext.jsx'
-import SouthForm from './Form/SouthForm.jsx'
+import NorthForm from './Form/NorthForm.jsx'
 
-const ConfigureProtocol = () => {
+const ConfigureNorth = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
-  const dataSources = newConfig?.south // array of all defined dataSources
-  const { id } = useParams() // the dataSource id passed in the url
-  const dataSourceIndex = dataSources?.findIndex((dataSource) => dataSource.id === id)
+  const northConnectors = newConfig?.north ?? []// array of all defined North connectors
+  const { id } = useParams()
+  const northIndex = northConnectors.findIndex((north) => north.id === id)
 
   const onChange = (name, value, validity) => {
     dispatchNewConfig({ type: 'update', name, value, validity })
   }
-
-  return dataSourceIndex >= 0 ? (
-    <SouthForm
-      dataSource={dataSources[dataSourceIndex]}
-      dataSourceIndex={dataSourceIndex}
+  return northIndex >= 0 ? (
+    <NorthForm
+      north={northConnectors[northIndex]}
+      northIndex={northIndex}
       onChange={onChange}
     />
   ) : (
@@ -28,4 +27,4 @@ const ConfigureProtocol = () => {
   )
 }
 
-export default ConfigureProtocol
+export default ConfigureNorth

@@ -65,7 +65,7 @@ describe('South OPCHDA', () => {
     settings = {
       id: 'southId',
       name: 'OPCHDA',
-      protocol: 'OPCHDA',
+      type: 'OPCHDA',
       enabled: true,
       OPCHDA: {
         tcpPort: '2224',

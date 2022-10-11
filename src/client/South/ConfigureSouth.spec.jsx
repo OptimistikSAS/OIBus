@@ -5,7 +5,7 @@ import React from 'react'
 import { act, Simulate } from 'react-dom/test-utils'
 import * as ReactDOMClient from 'react-dom/client'
 import { testConfig } from '../../../tests/testConfig'
-import ConfigureProtocol from './ConfigureProtocol.jsx'
+import ConfigureSouth from './ConfigureSouth.jsx'
 import utils from '../helpers/utils'
 
 const dispatchNewConfig = jest.fn()
@@ -37,16 +37,16 @@ afterEach(() => {
   root = null
 })
 
-describe('ConfigureProtocol', () => {
-  test('check ConfigureProtocol', () => {
+describe('ConfigureSouth', () => {
+  test('check ConfigureSouth', () => {
     act(() => {
-      root.render(<ConfigureProtocol />)
+      root.render(<ConfigureSouth />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check update', () => {
     act(() => {
-      root.render(<ConfigureProtocol />)
+      root.render(<ConfigureSouth />)
     })
     act(() => {
       Simulate.change(document.getElementById('south.0.FolderScanner.inputFolder'), { target: { value: './myNewInputFolder' } })
@@ -68,7 +68,7 @@ describe('ConfigureProtocol', () => {
     config.south = []
     React.useContext = jest.fn().mockReturnValue({ newConfig: config, dispatchNewConfig })
     act(() => {
-      root.render(<ConfigureProtocol />)
+      root.render(<ConfigureSouth />)
     })
     expect(container).toMatchSnapshot()
     React.useContext = reactUseContextMock

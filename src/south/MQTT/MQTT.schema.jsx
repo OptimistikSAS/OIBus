@@ -7,7 +7,6 @@ schema.form = {
     type: 'OIbTitle',
     children: (
       <div>
-        <p>This protocol is in restricted release. Please contact Optimistik</p>
         <ul>
           <li>
             <b>Url:</b>

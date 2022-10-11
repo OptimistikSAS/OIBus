@@ -10,11 +10,6 @@ import NorthStatus from './NorthStatus.jsx'
 const dispatchNewConfig = jest.fn()
 const mockNavigate = jest.fn()
 const setAlert = jest.fn()
-global.EventSource = class {
-  constructor() {
-    this.close = () => {}
-  }
-}
 React.useContext = jest.fn().mockReturnValue({ newConfig: testConfig, dispatchNewConfig, setAlert })
 jest.mock('react-router-dom', () => (
   {

@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`SouthMenu check cancel delete first dataSource 1`] = `
+exports[`SouthMenu check cancel delete first south 1`] = `
 <div>
   <div
     class="dropdown"
@@ -73,7 +73,7 @@ exports[`SouthMenu check cancel delete first dataSource 1`] = `
 </div>
 `;
 
-exports[`SouthMenu check delete first dataSource 1`] = `
+exports[`SouthMenu check delete first south 1`] = `
 <div>
   <div
     class="dropdown"
@@ -146,7 +146,7 @@ exports[`SouthMenu check delete first dataSource 1`] = `
 </div>
 `;
 
-exports[`SouthMenu check duplicate dataSource 1`] = `
+exports[`SouthMenu check duplicate south 1`] = `
 <div>
   <div
     class="dropdown"
@@ -219,7 +219,7 @@ exports[`SouthMenu check duplicate dataSource 1`] = `
 </div>
 `;
 
-exports[`SouthMenu check duplicate dataSource already copied 1`] = `
+exports[`SouthMenu check duplicate south already copied 1`] = `
 <div>
   <div
     class="dropdown"
@@ -292,7 +292,7 @@ exports[`SouthMenu check duplicate dataSource already copied 1`] = `
 </div>
 `;
 
-exports[`SouthMenu check edit first dataSource 1`] = `
+exports[`SouthMenu check edit first south 1`] = `
 <div>
   <div
     class="dropdown"
@@ -365,7 +365,7 @@ exports[`SouthMenu check edit first dataSource 1`] = `
 </div>
 `;
 
-exports[`SouthMenu check status first dataSource 1`] = `
+exports[`SouthMenu check status first south 1`] = `
 <div>
   <div
     class="dropdown"

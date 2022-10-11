@@ -20,18 +20,17 @@ const PointsSection = ({
       </div>
     )
   }
-  const dataSourceIndex = newConfig.south.findIndex(
-    (dataSource) => dataSource.id === query.southId,
+  const southIndex = newConfig.south.findIndex(
+    (south) => south.id === query.southId,
   )
-  const dataSource = newConfig.south[dataSourceIndex]
+  const south = newConfig.south[southIndex]
 
-  const { protocol } = dataSource
   const { points: pointsOrdered = [] } = query.settings
 
   return (
     <PointsComponent
       southId={query.southId}
-      protocol={protocol}
+      southType={south.type}
       points={pointsOrdered}
       handleAdd={handleAddPoint}
       handleDelete={handleDeletePoint}

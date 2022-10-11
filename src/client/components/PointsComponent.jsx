@@ -6,7 +6,7 @@ import PropTypes from 'prop-types'
 import Table from './table/Table.jsx'
 import TablePagination from './table/TablePagination.jsx'
 import Modal from './Modal.jsx'
-import ProtocolSchemas from '../South/Protocols.jsx'
+import SouthSchemas from '../South/SouthTypes.jsx'
 import * as Controls from './OIbForm'
 import utils from '../helpers/utils'
 import validation from '../South/Form/South.validation'
@@ -14,7 +14,7 @@ import validation from '../South/Form/South.validation'
 const PointsComponent = ({
   southId,
   points: pointsOrdered,
-  protocol,
+  southType,
   handleDeleteAllPoint,
   handleAdd,
   handleDelete,
@@ -72,7 +72,7 @@ const PointsComponent = ({
    */
   const handleAddPoint = () => {
     setSelectedPage(1) // jump to first page, to see new row
-    handleAdd(Object.entries(ProtocolSchemas[protocol].points).map(([name]) => name))
+    handleAdd(Object.entries(SouthSchemas[southType].points).map(([name]) => name))
   }
 
   /**
@@ -107,9 +107,9 @@ const PointsComponent = ({
     document.body.removeChild(element)
   }
 
-  const ProtocolSchema = ProtocolSchemas[protocol]
+  const southSchema = SouthSchemas[southType]
   // configure help if exists
-  const pointsWithHelp = Object.entries(ProtocolSchema.points).filter(([name, value]) => name && value.help)
+  const pointsWithHelp = Object.entries(southSchema.points).filter(([name, value]) => name && value.help)
   const tableHelps = pointsWithHelp.length > 0 && pointsWithHelp.map(([name, value]) => (
     <div key={name}>
       <b>{`${value.label || humanizeString(name)}: `}</b>
@@ -117,18 +117,18 @@ const PointsComponent = ({
     </div>
   ))
   // configure table header and rows
-  const tableHeaders = Object.entries(ProtocolSchema.points).map(([name, value]) => value.label || humanizeString(name))
+  const tableHeaders = Object.entries(southSchema.points).map(([name, value]) => value.label || humanizeString(name))
 
   // paging
   const pagedPoints = filteredPoints.filter((_, index) => index >= pageOffset && index < selectedPage * MAX_ON_PAGE)
-  const tableRows = pagedPoints.map((point, index) => Object.entries(ProtocolSchema.points).map(([key, value]) => {
+  const tableRows = pagedPoints.map((point, index) => Object.entries(southSchema.points).map(([key, value]) => {
     const { type, ...rest } = value
     const Control = Controls[type]
     rest.value = point[key]
     rest.label = null // remove field title in table rows
     rest.help = null // remove help in table rows
-    // check if must be unique and extend already existing validation with isUnique check
-    if (ProtocolSchema.points[key].unique) {
+    // check if the key must be unique and extend already existing validation with isUnique check
+    if (southSchema.points[key].unique) {
       const indexOffset = (selectedPage - 1) * MAX_ON_PAGE
       const pointIds = points.filter((_point) => _point.virtualIndex !== filteredPoints[indexOffset + index].virtualIndex).map((p) => p[key])
       const oldValid = rest.valid.bind({})
@@ -196,7 +196,7 @@ const PointsComponent = ({
 PointsComponent.propTypes = {
   southId: PropTypes.string.isRequired,
   points: PropTypes.arrayOf(PropTypes.object).isRequired,
-  protocol: PropTypes.string.isRequired,
+  southType: PropTypes.string.isRequired,
   handleDeleteAllPoint: PropTypes.func.isRequired,
   handleAdd: PropTypes.func.isRequired,
   handleDelete: PropTypes.func.isRequired,
