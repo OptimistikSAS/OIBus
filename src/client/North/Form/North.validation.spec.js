@@ -33,17 +33,17 @@ describe('North.validation', () => {
     const error = validation.caching.maxSendCount(0)
     expect(error).toBeTruthy()
   })
-  it('check application.isValidName no error', () => {
-    const error = validation.application.isValidName('new_name', ['name1', 'name2'])
+  it('check north.isValidName no error', () => {
+    const error = validation.north.isValidName('new_name', ['name1', 'name2'])
     expect(error).toEqual(null)
   })
-  it('check application.isValidName name already exists', () => {
-    const error = validation.application.isValidName('name1', ['name1', 'name2'])
+  it('check north.isValidName name already exists', () => {
+    const error = validation.north.isValidName('name1', ['name1', 'name2'])
     expect(error).toEqual('Name already exists')
   })
 
-  it('check application.isValidName name int', () => {
-    const error = validation.application.isValidName(1, ['name1', 'name2'])
+  it('check north.isValidName name int', () => {
+    const error = validation.north.isValidName(1, ['name1', 'name2'])
     expect(error).toBeTruthy()
   })
 })

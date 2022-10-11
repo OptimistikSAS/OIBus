@@ -43,7 +43,7 @@ exports[`ExternalSources check ExternalSources 1`] = `
           class="col"
         >
           <p>
-            This is a list of dataSources from another OIBus. The name should respect the following convention: OIBusId:DataSourceName
+            This is a list of south connectors from another OIBus. The name should respect the following convention: OIBusId:SouthName
           </p>
         </div>
       </div>
@@ -177,7 +177,7 @@ exports[`ExternalSources check add line 1`] = `
           class="col"
         >
           <p>
-            This is a list of dataSources from another OIBus. The name should respect the following convention: OIBusId:DataSourceName
+            This is a list of south connectors from another OIBus. The name should respect the following convention: OIBusId:SouthName
           </p>
         </div>
       </div>
@@ -311,7 +311,7 @@ exports[`ExternalSources check change line 1`] = `
           class="col"
         >
           <p>
-            This is a list of dataSources from another OIBus. The name should respect the following convention: OIBusId:DataSourceName
+            This is a list of south connectors from another OIBus. The name should respect the following convention: OIBusId:SouthName
           </p>
         </div>
       </div>
@@ -445,7 +445,7 @@ exports[`ExternalSources check delete ExternalSources 1`] = `
           class="col"
         >
           <p>
-            This is a list of dataSources from another OIBus. The name should respect the following convention: OIBusId:DataSourceName
+            This is a list of south connectors from another OIBus. The name should respect the following convention: OIBusId:SouthName
           </p>
         </div>
       </div>

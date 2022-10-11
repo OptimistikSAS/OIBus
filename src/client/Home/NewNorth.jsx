@@ -15,30 +15,30 @@ const NewNorth = ({
   const {
     newConfig,
     dispatchNewConfig,
-    apiList,
+    northTypes,
   } = React.useContext(ConfigContext)
   const [name, setName] = React.useState('')
   const [active, setActive] = useState(false)
-  const [apiError, setApiError] = React.useState(null)
+  const [northTypeError, setNorthTypeError] = React.useState(null)
   const [nameError, setNameError] = React.useState(null)
-  const [api, setApi] = React.useState(null)
-  const applications = newConfig?.north ?? []
+  const [northType, setNorthType] = React.useState(null)
+  const northConnectors = newConfig?.north ?? []
   const navigate = useNavigate()
 
-  const northCategoryList = apiList ? [...new Set(apiList.map((e) => e.category))] : []
+  const northCategoryList = northTypes ? [...new Set(northTypes.map((e) => e.category))] : []
 
-  const addApplication = () => {
-    if (api === null && name !== '') {
-      setApiError('An application must be selected')
+  const addNorth = () => {
+    if (northType === null && name !== '') {
+      setNorthTypeError('A North type must be selected')
     }
-    if (name === '' && api !== null) {
+    if (name === '' && northType !== null) {
       setNameError('A name must be specified')
     }
-    if (name === '' && api === null) {
-      setApiError('A name must be specified and an application must be selected')
+    if (name === '' && northType === null) {
+      setNorthTypeError('A name must be specified and a North type must be selected')
     }
 
-    if (!validationNorth.application.isValidName(name, applications.map((application) => application.name)) && name !== '' && api !== null) {
+    if (!validationNorth.north.isValidName(name, northConnectors.map((north) => north.name)) && name !== '' && northType !== null) {
       const myNewId = nanoid()
 
       dispatchNewConfig({
@@ -47,15 +47,15 @@ const NewNorth = ({
         value: {
           id: myNewId,
           name,
-          api,
+          type: northType,
           enabled: false,
         },
       })
 
       toggle()
-      setApi(null)
+      setNorthType(null)
       setName('')
-      setApiError(null)
+      setNorthTypeError(null)
       setNameError(null)
       navigate(`/north/${myNewId}`)
     }
@@ -70,7 +70,7 @@ const NewNorth = ({
       size="lg"
     >
       <ModalHeader className="oi-modal-header">
-        Select an application
+        Select a a North type
       </ModalHeader>
 
       <ModalBody>
@@ -94,16 +94,16 @@ const NewNorth = ({
                 </div>
               </div>
               <div>
-                {apiList.filter((e) => e.category === category)
+                {northTypes.filter((e) => e.category === category)
                   .map(({ connectorName }) => (
                     <button
                       id="icon-connector"
                       key={`${category}-${connectorName}-north-icon-connector`}
-                      className={`${(api === connectorName && active) ? 'connector me-2 my-2 connector-focus' : 'connector me-2 my-2'}`}
+                      className={`${(northType === connectorName && active) ? 'connector me-2 my-2 connector-focus' : 'connector me-2 my-2'}`}
                       type="button"
                       onClick={() => {
                         setActive(true)
-                        setApi(connectorName)
+                        setNorthType(connectorName)
                       }}
                     >
                       {connectorName}
@@ -119,15 +119,15 @@ const NewNorth = ({
           name="name"
           onChange={(fieldName, newName) => setName(newName)}
           defaultValue=""
-          valid={() => validationNorth.application.isValidName(name, applications.map((application) => application.name))}
+          valid={() => validationNorth.north.isValidName(name, northConnectors.map((north) => north.name))}
         />
       </ModalBody>
 
       <ModalFooter className="d-flex justify-content-end align-items-center">
         <div>
-          {apiError && !api ? (
+          {northTypeError && !northType ? (
             <span className="oi-error">
-              {apiError}
+              {northTypeError}
             </span>
           ) : null}
           {nameError && name === '' ? (
@@ -142,7 +142,7 @@ const NewNorth = ({
             className="mx-1 my-0"
             variant="secondary"
             onClick={() => {
-              addApplication()
+              addNorth()
             }}
           >
             Add

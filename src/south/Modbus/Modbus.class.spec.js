@@ -60,7 +60,7 @@ describe('South Modbus', () => {
     settings = {
       id: 'southId',
       name: 'Modbus Test',
-      protocol: 'Modbus',
+      type: 'Modbus',
       enabled: true,
       Modbus: {
         port: 502,

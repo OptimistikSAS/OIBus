@@ -41,7 +41,7 @@ describe('North CsvToHttp', () => {
     settings = {
       id: 'northId',
       name: 'CsvToHttp',
-      api: 'CsvToHttp',
+      type: 'CsvToHttp',
       enabled: false,
       CsvToHttp: {
         applicativeHostUrl: 'https://localhost.com',

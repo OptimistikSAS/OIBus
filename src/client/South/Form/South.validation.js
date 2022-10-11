@@ -1,7 +1,7 @@
 import objectPath from 'object-path'
 
 const validation = {
-  protocol: {
+  south: {
     isValidName: (val, excludedList) => {
       let error = null
       if (excludedList.includes(val)) {

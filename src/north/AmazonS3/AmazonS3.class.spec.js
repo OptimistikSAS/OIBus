@@ -44,7 +44,7 @@ describe('North Amazon S3', () => {
     settings = {
       id: 'northId',
       name: 'test04',
-      api: 'AmazonS3',
+      type: 'AmazonS3',
       enabled: false,
       AmazonS3: {
         bucket: 'aef',

@@ -10,6 +10,6 @@ import WATSYConnect from '../../north/WATSYConnect/WATSYConnect.schema.jsx'
 import CsvToHttp from '../../north/CsvToHttp/CsvToHttp.schema.jsx'
 import FileWriter from '../../north/FileWriter/FileWriter.schema.jsx'
 
-const ApiSchemas = { OIConnect, AmazonS3, Console, InfluxDB, OIAnalytics, TimescaleDB, MongoDB, MQTT, WATSYConnect, CsvToHttp, FileWriter }
+const NorthSchemas = { OIConnect, AmazonS3, Console, InfluxDB, OIAnalytics, TimescaleDB, MongoDB, MQTT, WATSYConnect, CsvToHttp, FileWriter }
 
-export default ApiSchemas
+export default NorthSchemas

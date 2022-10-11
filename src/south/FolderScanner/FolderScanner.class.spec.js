@@ -40,7 +40,7 @@ describe('South FolderScanner', () => {
     settings = {
       id: 'southId',
       name: 'FolderScanner',
-      protocol: 'FolderScanner',
+      type: 'FolderScanner',
       enabled: true,
       FolderScanner: {
         preserveFiles: true,

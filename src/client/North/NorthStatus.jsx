@@ -27,40 +27,42 @@ const NorthStatus = () => {
   const [connectorData, setConnectorData] = React.useState(null)
   const { newConfig } = React.useContext(ConfigContext)
   const navigate = useNavigate()
-  const { id } = useParams() // the application id passed in the url
-  const [application, setApplication] = React.useState(null)
+  const { id } = useParams() // the North id passed in the url
+  const [north, setNorth] = React.useState(null)
+
+  const onEventSourceError = (error) => {
+    console.error(error)
+  }
+
+  const onEventSourceMessage = (event) => {
+    if (event && event.data) {
+      const myData = JSON.parse(event.data)
+      const tableRows = []
+      Object.keys(myData).forEach((key) => {
+        tableRows.push(generateRowEntry(key, myData[key]))
+      })
+      setConnectorData(tableRows)
+    }
+  }
 
   React.useEffect(() => {
-    const currentApplication = newConfig.north?.find(
+    const currentNorth = newConfig.north?.find(
       (element) => element.id === id,
     )
-    setApplication(currentApplication)
+    setNorth(currentNorth)
   }, [newConfig, id])
 
   React.useEffect(() => {
     let source
-    if (application && application.enabled) {
-      source = new EventSource(`/north/${application.id}/sse`)
-      source.onerror = (error) => {
-        console.error(error)
-      }
-      source.onmessage = (event) => {
-        if (event && event.data) {
-          const myData = JSON.parse(event.data)
-          const tableRows = []
-          Object.keys(myData).forEach((key) => {
-            tableRows.push(generateRowEntry(key, myData[key]))
-          })
-          setConnectorData(tableRows)
-        }
-      }
+    if (north && north.enabled) {
+      source = utils.createEventSource(`/north/${north.id}/sse`, onEventSourceMessage, onEventSourceError)
     }
     return () => {
       source?.close()
     }
-  }, [application])
+  }, [north])
 
-  return application ? (
+  return north ? (
     <>
       <div
         id="oi-sub-nav"
@@ -78,7 +80,7 @@ const NorthStatus = () => {
             <FaArrowLeft className="oi-back-icon" />
           </Button>
           <span className="mx-2">|</span>
-          <span>{application.name}</span>
+          <span>{north.name}</span>
         </h6>
       </div>
       <Container>

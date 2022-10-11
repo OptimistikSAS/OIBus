@@ -6,79 +6,24 @@ import { act } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
 import apis from '../services/apis'
+import utils from '../helpers/utils'
 import About from './About.jsx'
 
 import activeConfig from '../../../tests/testConfig'
 
-global.EventSource = class {
-  constructor() {
-    this.close = () => {}
-  }
-}
-
-let container
-let root
-// eslint-disable-next-line no-undef
-globalThis.IS_REACT_ACT_ENVIRONMENT = true
-beforeEach(() => {
-  container = document.createElement('div')
-  root = ReactDOMClient.createRoot(container)
-  document.body.appendChild(container)
-})
-
-afterEach(() => {
-  document.body.removeChild(container)
-  container = null
-  root = null
-})
-
-// sample status (object returned by Server to give various informations on the behavior)
+// sample status (object returned by Server to give various information about OIBus)
 const status = {
-  version: '0.5.7-dev',
-  architecture: 'x64',
-  currentDirectory: 'C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\tests',
-  nodeVersion: 'v12.13.1',
-  executable: 'C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\dist\\win\\oibus.exe',
-  configurationFile: 'C:\\Users\\jfh\\Documents\\GitHub\\OIBus\\tests\\oibus.json',
-  memory: '564.89/2047.61/27.59 MB/%',
-  rss: '127.80/128.79/354.32 MB',
-  heapTotal: '79.55/81.54/281.62 MB',
-  heapUsed: '60.54/60.54/261.28 MB',
-  external: '1.99/2.16/3.16 MB',
+  version: '2.2.2',
+  currentDirectory: 'C:\\path\\to\\data\\directory',
+  executable: 'C:\\path\\to\\oibus.exe',
+  nodeVersion: 'v18.0.0',
   processId: 4916,
-  uptime: '3 minutes',
   hostname: 'EC2AMAZ-OBJ8M6C',
   osRelease: '10.0.14393',
+  architecture: 'x64',
   osType: 'Windows_NT',
-  apisCacheStats: [
-    {
-      name: 'Console (points)',
-      count: 195410,
-      cache: 614,
-    },
-    {
-      name: 'Console (files)',
-      count: 195410,
-      cache: 0,
-    },
-  ],
-  protocolsCacheStats: [
-    {
-      name: 'MQTTServer',
-      count: 62,
-    },
-    {
-      name: 'SimulationServer',
-      count: 422,
-    },
-    {
-      name: 'OPC-HDA',
-      count: 194926,
-    },
-  ],
-  copyright: '(c) Copyright 2019 Optimistik, all rights reserved.',
+  copyright: '(c) Copyright 2019-2022 Optimistik, all rights reserved.',
 }
-// mock get Status
 let resolve
 let reject
 const setAlert = jest.fn()
@@ -86,36 +31,55 @@ apis.getOIBusInfo = () => new Promise((_resolve, _reject) => {
   resolve = _resolve
   reject = _reject
 })
+utils.createEventSource = jest.fn().mockImplementation(() => ({ close: jest.fn() }))
 React.useContext = jest.fn().mockReturnValue({ activeConfig, setAlert })
+
+let container
+let root
 describe('About', () => {
-  test('display About page based on config and status', async () => {
-    act(() => {
+  beforeEach(() => {
+    container = document.createElement('div')
+    root = ReactDOMClient.createRoot(container)
+    document.body.appendChild(container)
+  })
+
+  afterEach(() => {
+    jest.clearAllMocks()
+    document.body.removeChild(container)
+    container = null
+    root = null
+  })
+
+  test('display page based on config and status', async () => {
+    await act(() => {
       root.render(
         <About />,
       )
     })
     expect(container).toMatchSnapshot()
-    // resolve the call requested by useffect
+    // resolve the call requested by useEffect
     await act(async () => {
       resolve(status)
     })
     expect(container).toMatchSnapshot()
   })
+
   test('About: manage error in status call', async () => {
     const originalError = console.error
     console.error = jest.fn()
-    act(() => {
+    await act(() => {
       root.render(
         <About />,
       )
     })
-    // resolve the call requested by useffect with a reject
+    // resolve the call requested by useEffect with a reject
     await act(async () => {
       reject('error')
     })
     expect(setAlert).toHaveBeenCalled()
     console.error = originalError
   })
+
   test('display About with config null', () => {
     React.useContext = jest.fn().mockReturnValue({ activeConfig: null, setAlert })
     act(() => {

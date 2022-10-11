@@ -34,7 +34,7 @@ describe('North FileWriter', () => {
     settings = {
       id: 'northId',
       name: 'filewriter',
-      api: 'FileWriter',
+      type: 'FileWriter',
       enabled: true,
       FileWriter: {
         outputFolder: './output',

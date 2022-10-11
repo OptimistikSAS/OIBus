@@ -3,24 +3,26 @@ import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import { Badge } from 'reactstrap'
 import EngineMenu from './EngineMenu.jsx'
+import utils from '../helpers/utils'
 
 const EngineNode = ({ engineName, safeMode, onRestart, onShutdown }) => {
   const [oibusEngineData, setOibusEngineData] = React.useState({})
 
-  React.useEffect(() => {
-    const source = new EventSource('/engine/sse')
-    source.onerror = (error) => {
-      console.error(error)
-    }
-    source.onmessage = (event) => {
-      if (event && event.data) {
-        const myData = JSON.parse(event.data)
-        setOibusEngineData(myData)
-      }
-    }
+  const onEventSourceError = (error) => {
+    console.error(error)
+  }
 
+  const onEventSourceMessage = (event) => {
+    if (event && event.data) {
+      const myData = JSON.parse(event.data)
+      setOibusEngineData(myData)
+    }
+  }
+
+  React.useEffect(() => {
+    const source = utils.createEventSource('/engine/sse', onEventSourceMessage, onEventSourceError)
     return () => {
-      source?.close()
+      source.close()
     }
   }, [])
 

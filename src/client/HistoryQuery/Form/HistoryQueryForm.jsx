@@ -19,62 +19,44 @@ const HistoryQueryForm = ({ query }) => {
 
   const { newConfig } = React.useContext(ConfigContext)
   const [errors, setErrors] = useState({})
-  const dataSource = newConfig?.south?.find(
+  const south = newConfig?.south?.find(
     (southHandler) => southHandler.id === queryToUpdate.southId,
   )
-  const application = newConfig?.north?.find(
+  const north = newConfig?.north?.find(
     (northHandler) => northHandler.id === queryToUpdate.northId,
   )
 
   const { setAlert } = React.useContext(AlertContext)
   const navigate = useNavigate()
 
+  const onEventSourceError = (error) => {
+    console.error(error)
+  }
+
+  const onEventSourceMessage = (event) => {
+    if (event && event.data) {
+      const myData = JSON.parse(event.data)
+      setProgressStatus({
+        currentTime: myData.currentTime,
+        progress: myData.progress,
+        scanGroup: myData.scanGroup,
+        status: myData.status,
+      })
+    }
+  }
+
   React.useEffect(() => {
-    // Monitor which history query is running
-    const source = new EventSource('/history-engine/sse')
-    source.onmessage = (event) => {
-      if (event && event.data) {
-        const myData = JSON.parse(event.data)
-        // If the displayed query is running, we refresh it to update its status and subscribe to its sse
-        if (myData.ongoingHistoryQueryId === queryToUpdate.id) {
-          apis.getHistoryQueryById(queryToUpdate.id).then((updatedQuery) => (
-            setQueryToUpdate(updatedQuery)
-          ))
-        }
-      }
-    }
-
-    source.onerror = (error) => {
-      console.error(error)
-    }
-
+    const source = utils.createEventSource('/history-engine/sse', onEventSourceMessage, onEventSourceError)
     return () => {
-      source?.close()
+      source.close()
     }
   }, [])
 
   React.useEffect(() => {
     let source
-    if (queryToUpdate.enabled
-        && queryToUpdate.status !== 'pending'
-        && queryToUpdate.status !== 'finished') {
-      source = new EventSource(`/history-query/${queryToUpdate.id}/sse`)
-      source.onmessage = (event) => {
-        if (event && event.data) {
-          const myData = JSON.parse(event.data)
-          setProgressStatus({
-            currentTime: myData.currentTime,
-            progress: myData.progress,
-            scanGroup: myData.scanGroup,
-            status: myData.status,
-          })
-        }
-      }
-      source.onerror = (error) => {
-        console.error(error)
-      }
+    if (queryToUpdate.enabled && queryToUpdate.status !== 'pending' && queryToUpdate.status !== 'finished') {
+      source = utils.createEventSource(`/history-query/${queryToUpdate.id}/sse`, onEventSourceMessage, onEventSourceError)
     }
-
     return () => {
       source?.close()
     }
@@ -253,12 +235,12 @@ const HistoryQueryForm = ({ query }) => {
           <Row className="mb-2">
             <Col md={2}>
               <ConnectorButton
-                connectorName={dataSource?.name ?? ''}
+                connectorName={south?.name ?? ''}
                 connectorUrl={`/south/${queryToUpdate.southId}`}
               />
               <FaArrowRight className="me-2" />
               <ConnectorButton
-                connectorName={application?.name ?? ''}
+                connectorName={north?.name ?? ''}
                 connectorUrl={`/north/${queryToUpdate.northId}`}
               />
             </Col>

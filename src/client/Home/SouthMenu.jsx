@@ -7,21 +7,21 @@ import { useNavigate } from 'react-router-dom'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 
-const SouthMenu = ({ dataSource }) => {
+const SouthMenu = ({ south }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const navigate = useNavigate()
-  const dataSources = newConfig?.south ?? []
+  const southConnectors = newConfig?.south ?? []
   const [modal, setModal] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
   const handleDuplicateSouth = () => {
-    const newName = `${dataSource.name} copy`
-    const countCopies = dataSources.filter((e) => e.name.startsWith(newName)).length
+    const newName = `${south.name} copy`
+    const countCopies = southConnectors.filter((e) => e.name.startsWith(newName)).length
     dispatchNewConfig({
       type: 'addRow',
       name: 'south',
       value: {
-        ...dataSource,
+        ...south,
         id: nanoid(),
         name: `${newName}${countCopies > 0 ? countCopies + 1 : ''}`,
         enabled: false,
@@ -34,8 +34,8 @@ const SouthMenu = ({ dataSource }) => {
   }
 
   const onConfirm = () => {
-    handleDeleteConnector(`south.${dataSources.findIndex(
-      (element) => element.id === dataSource.id,
+    handleDeleteConnector(`south.${southConnectors.findIndex(
+      (element) => element.id === south.id,
     )}`)
   }
 
@@ -52,7 +52,7 @@ const SouthMenu = ({ dataSource }) => {
         <DropdownItem
           id="oi-settings"
           onClick={() => {
-            navigate(`/south/${dataSource.id}`)
+            navigate(`/south/${south.id}`)
           }}
         >
           Settings
@@ -60,7 +60,7 @@ const SouthMenu = ({ dataSource }) => {
         <DropdownItem
           id="oi-status"
           onClick={() => {
-            navigate(`/south/${dataSource.id}/live`)
+            navigate(`/south/${south.id}/live`)
           }}
         >
           Status
@@ -78,7 +78,7 @@ const SouthMenu = ({ dataSource }) => {
         </DropdownItem>
         <ConfirmationModal
           title="Delete"
-          body={`Are you sure you want to delete ${dataSource.name}?`}
+          body={`Are you sure you want to delete ${south.name}?`}
           onConfirm={onConfirm}
           isOpen={modal}
           toggle={() => setModal(false)}
@@ -88,6 +88,6 @@ const SouthMenu = ({ dataSource }) => {
   )
 }
 
-SouthMenu.propTypes = { dataSource: PropTypes.object.isRequired }
+SouthMenu.propTypes = { south: PropTypes.object.isRequired }
 
 export default SouthMenu

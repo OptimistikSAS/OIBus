@@ -38,21 +38,21 @@ afterEach(() => {
 })
 
 describe('NorthForm', () => {
-  testConfig.north.forEach((application) => {
-    test(`check NorthForm with application: ${application.name}`, () => {
+  testConfig.north.forEach((north) => {
+    test(`check NorthForm with North connector: ${north.name}`, () => {
       act(() => {
         root.render(
-          <NorthForm application={application} applicationIndex={0} onChange={() => 1} />,
+          <NorthForm north={north} northIndex={0} onChange={() => 1} />,
         )
       })
       expect(container).toMatchSnapshot()
     })
   })
 
-  test('check NorthForm with empty application', () => {
+  test('check NorthForm with empty North connector', () => {
     act(() => {
       root.render(
-        <NorthForm application={{ api: 'Console', name: 'emptyApplication' }} applicationIndex={0} onChange={() => 1} />,
+        <NorthForm north={{ type: 'Console', name: 'emptyNorth' }} northIndex={0} onChange={() => 1} />,
       )
     })
     expect(container).toMatchSnapshot()

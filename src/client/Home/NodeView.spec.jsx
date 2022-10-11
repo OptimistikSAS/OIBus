@@ -40,7 +40,7 @@ afterEach(() => {
   root = null
 })
 
-// sample status (object returned by Server to give various informations on the behavior)
+// sample status (object returned by Server to give various information on the behavior)
 const status = { version: 'x.x.x' }
 
 React.useContext = jest.fn().mockReturnValue({ newConfig })

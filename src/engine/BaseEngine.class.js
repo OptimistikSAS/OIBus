@@ -131,11 +131,11 @@ class BaseEngine {
    */
   createSouth(southConfig) {
     try {
-      const SouthConnector = this.installedSouthConnectors[southConfig.protocol]
+      const SouthConnector = this.installedSouthConnectors[southConfig.type]
       if (SouthConnector) {
         return new SouthConnector(southConfig, this)
       }
-      this.logger.error(`South connector for "${southConfig.name}" is not found: ${southConfig.protocol}`)
+      this.logger.error(`South connector for "${southConfig.name}" is not found: ${southConfig.type}`)
     } catch (error) {
       this.logger.error(`Error when creating South connector "${southConfig.name}": ${error}`)
     }
@@ -161,11 +161,11 @@ class BaseEngine {
    */
   createNorth(settings) {
     try {
-      const NorthConnector = this.installedNorthConnectors[settings.api]
+      const NorthConnector = this.installedNorthConnectors[settings.type]
       if (NorthConnector) {
         return new NorthConnector(settings, this)
       }
-      this.logger.error(`North connector for "${settings.name}" is not found: ${settings.api}`)
+      this.logger.error(`North connector for "${settings.name}" is not found: ${settings.type}`)
     } catch (error) {
       this.logger.error(`Error when creating North connector "${settings.name}": ${error}`)
     }

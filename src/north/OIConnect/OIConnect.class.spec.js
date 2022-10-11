@@ -34,7 +34,7 @@ describe('North OIConnect', () => {
     settings = {
       id: 'northId',
       name: 'oic',
-      api: 'OIConnect',
+      type: 'OIConnect',
       enabled: false,
       OIConnect: {
         authentication: { password: '', type: 'Basic', username: '' },

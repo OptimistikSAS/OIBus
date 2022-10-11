@@ -1535,4 +1535,17 @@ module.exports = {
       }
     }
   },
+  27: async (config, logger) => {
+    for (const north of config.north) {
+      logger.info(`Change api field to type for North "${north.id}".`)
+      north.type = north.api
+      delete north.api
+    }
+
+    for (const south of config.south) {
+      logger.info(`Change protocol field to type for South "${south.id}".`)
+      south.type = south.protocol
+      delete south.protocol
+    }
+  },
 }

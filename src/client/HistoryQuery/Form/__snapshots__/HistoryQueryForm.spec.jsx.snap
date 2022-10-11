@@ -712,7 +712,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
 </div>
 `;
 
-exports[`HistoryQueryForm check HistoryQueryForm with empty application 1`] = `
+exports[`HistoryQueryForm check HistoryQueryForm with empty North 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav mb-2"

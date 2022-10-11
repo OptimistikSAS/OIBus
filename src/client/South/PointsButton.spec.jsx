@@ -28,7 +28,7 @@ afterEach(() => {
   root = null
 })
 
-const dataSource = {
+const south = {
   id: 'south-uuid-1',
   points: [
     { pointId: 'A13518/AI1/PV.CV', scanMode: 'everySecond' },
@@ -36,24 +36,24 @@ const dataSource = {
     { pointId: '_FC42404/PID1/PV.CV', scanMode: 'every10Second' },
   ],
 }
-const emptyPointsDataSource = { id: 'south-uuid-1', points: [] }
-const nullPointsDataSource = { id: 'south-uuid-1', points: null }
+const emptyPointsSouth = { id: 'south-uuid-1', points: [] }
+const nullPointsSouth = { id: 'south-uuid-1', points: null }
 
 describe('PointsButton', () => {
   test('check PointsButton disabled', () => {
-    dataSource.enabled = false
+    south.enabled = false
     act(() => {
       root.render(<PointsButton
-        dataSource={dataSource}
+        south={south}
       />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check PointsButton enabled', () => {
-    dataSource.enabled = true
+    south.enabled = true
     act(() => {
       root.render(<PointsButton
-        dataSource={dataSource}
+        south={south}
       />)
     })
     expect(container).toMatchSnapshot()
@@ -61,17 +61,17 @@ describe('PointsButton', () => {
   test('check points button click', () => {
     act(() => {
       root.render(<PointsButton
-        dataSource={dataSource}
+        south={south}
       />)
     })
     Simulate.click(document.querySelector('button.oi-points-button'))
-    expect(mockNavigate).toBeCalledWith(`/south/${dataSource.id}/points`)
+    expect(mockNavigate).toBeCalledWith(`/south/${south.id}/points`)
     expect(container).toMatchSnapshot()
   })
   test('check if points array is empty', () => {
     act(() => {
       root.render(<PointsButton
-        dataSource={emptyPointsDataSource}
+        south={emptyPointsSouth}
       />)
     })
     expect(container).toMatchSnapshot()
@@ -79,16 +79,16 @@ describe('PointsButton', () => {
   test('check no points', () => {
     act(() => {
       root.render(<PointsButton
-        dataSource={nullPointsDataSource}
+        south={nullPointsSouth}
       />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check if enabled with no points', () => {
-    nullPointsDataSource.enabled = true
+    nullPointsSouth.enabled = true
     act(() => {
       root.render(<PointsButton
-        dataSource={nullPointsDataSource}
+        south={nullPointsSouth}
       />)
     })
     expect(container).toMatchSnapshot()

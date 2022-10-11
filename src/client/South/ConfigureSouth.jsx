@@ -2,21 +2,22 @@ import React from 'react'
 import { useParams } from 'react-router-dom'
 import { Spinner } from 'reactstrap'
 import { ConfigContext } from '../context/ConfigContext.jsx'
-import NorthForm from './Form/NorthForm.jsx'
+import SouthForm from './Form/SouthForm.jsx'
 
-const ConfigureApi = () => {
+const ConfigureSouth = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
-  const applications = newConfig?.north ?? []// array of all defined applications
-  const { id } = useParams()
-  const applicationIndex = applications.findIndex((application) => application.id === id)
+  const southConnectors = newConfig?.south // array of all defined south connectors
+  const { id } = useParams() // the south id passed in the url
+  const southIndex = southConnectors?.findIndex((south) => south.id === id)
 
   const onChange = (name, value, validity) => {
     dispatchNewConfig({ type: 'update', name, value, validity })
   }
-  return applicationIndex >= 0 ? (
-    <NorthForm
-      application={applications[applicationIndex]}
-      applicationIndex={applicationIndex}
+
+  return southIndex >= 0 ? (
+    <SouthForm
+      south={southConnectors[southIndex]}
+      southIndex={southIndex}
       onChange={onChange}
     />
   ) : (
@@ -27,4 +28,4 @@ const ConfigureApi = () => {
   )
 }
 
-export default ConfigureApi
+export default ConfigureSouth

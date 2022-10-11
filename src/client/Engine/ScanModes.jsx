@@ -25,9 +25,9 @@ const ScanModes = ({ scanModes }) => {
         <OIbTitle label="Scan Modes">
           <>
             <p>
-              South protocols scan the dataSources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in
-              this section before they can be used on the various protocols. The syntax is derived from the unix cron syntax with a precision to the
-              millisecond.
+              South connectors scan the data sources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in
+              this section before they can be used on the various south connectors. The syntax is derived from the unix cron syntax with a
+              precision to the millisecond.
             </p>
             <p>
               <code>
@@ -35,7 +35,7 @@ const ScanModes = ({ scanModes }) => {
               </code>
             </p>
             <p>The table below gives several examples.</p>
-            <p>(A special scanMode - listen - needs to be defined for protocols if you have protocols reacting to events mode such as MQTT)</p>
+            <p>(A special scanMode - listen - needs to be defined for south connectors if you have protocols reacting to events mode such as MQTT)</p>
             <div>
               <table>
                 <thead>

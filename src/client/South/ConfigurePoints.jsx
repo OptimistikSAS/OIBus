@@ -6,7 +6,7 @@ import { AlertContext } from '../context/AlertContext.jsx'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import utils from '../helpers/utils'
 import PointsComponent from '../components/PointsComponent.jsx'
-import StatusButton from '../StatusButton.jsx'
+import StatusButton from '../components/StatusButton.jsx'
 
 const ConfigurePoints = () => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
@@ -23,19 +23,19 @@ const ConfigurePoints = () => {
       </div>
     )
   }
-  const dataSourceIndex = newConfig.south.findIndex(
-    (dataSource) => dataSource.id === id,
+  const southIndex = newConfig.south.findIndex(
+    (south) => south.id === id,
   )
-  const dataSource = newConfig.south[dataSourceIndex]
+  const south = newConfig.south[southIndex]
 
-  const { points: pointsOrdered = [], protocol } = dataSource
+  const { points: pointsOrdered = [], type } = south
 
   /**
    * add point
    * @returns {void}
    */
   const handleAdd = () => {
-    dispatchNewConfig({ type: 'addRow', name: `south.${dataSourceIndex}.points`, value: {} })
+    dispatchNewConfig({ type: 'addRow', name: `south.${southIndex}.points`, value: {} })
   }
 
   /**
@@ -44,7 +44,7 @@ const ConfigurePoints = () => {
    * @returns {void}
    */
   const handleDelete = (index) => {
-    dispatchNewConfig({ type: 'deleteRow', name: `south.${dataSourceIndex}.points.${index}` })
+    dispatchNewConfig({ type: 'deleteRow', name: `south.${southIndex}.points.${index}` })
   }
 
   /**
@@ -52,7 +52,7 @@ const ConfigurePoints = () => {
    * @returns {void}
    */
   const handleDeleteAllPoint = () => {
-    dispatchNewConfig({ type: 'deleteAllRows', name: `south.${dataSourceIndex}.points` })
+    dispatchNewConfig({ type: 'deleteAllRows', name: `south.${southIndex}.points` })
   }
 
   /**
@@ -68,7 +68,7 @@ const ConfigurePoints = () => {
         .then((newPoints) => {
           dispatchNewConfig({
             type: 'importPoints',
-            name: `south.${dataSourceIndex}.points`,
+            name: `south.${southIndex}.points`,
             value: newPoints,
           })
         })
@@ -85,7 +85,7 @@ const ConfigurePoints = () => {
   const onChange = (name, value, validity) => {
     dispatchNewConfig({
       type: 'update',
-      name: `south.${dataSourceIndex}.${name}`,
+      name: `south.${southIndex}.${name}`,
       value,
       validity,
     })
@@ -106,21 +106,21 @@ const ConfigurePoints = () => {
             <FaArrowLeft className="oi-back-icon" />
           </Button>
           <span className="mx-2">|</span>
-          <span>{dataSource.name}</span>
+          <span>{south.name}</span>
         </h6>
         <div className="pull-right me-3">
           <StatusButton
             handler={() => {
               navigate(`/south/${id}/live`)
             }}
-            enabled={dataSource.enabled}
+            enabled={south.enabled}
           />
         </div>
       </div>
       <Container fluid>
         <PointsComponent
           southId={id}
-          protocol={protocol}
+          southType={type}
           points={pointsOrdered}
           handleAdd={handleAdd}
           handleDelete={handleDelete}

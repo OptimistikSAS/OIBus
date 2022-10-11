@@ -14,24 +14,23 @@ import validation from './North.validation'
 import EditableIdField from '../../components/EditableIdField.jsx'
 import { ConfigContext } from '../../context/ConfigContext.jsx'
 import OIbForm from '../../components/OIbForm/OIbForm.jsx'
-import ApiSchemas from '../Apis.jsx'
-import StatusButton from '../../StatusButton.jsx'
+import NorthSchemas from '../NorthTypes.jsx'
+import StatusButton from '../../components/StatusButton.jsx'
 
-const NorthForm = ({ application, applicationIndex, onChange }) => {
-  const { id, api } = application
+const NorthForm = ({ north, northIndex, onChange }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const [renamingConnector, setRenamingConnector] = useState(null)
   const [pencil, setPencil] = useState(true)
-  const applications = newConfig?.north ?? []
+  const northConnectors = newConfig?.north ?? []
   const navigate = useNavigate()
-  // Create the sections for the api (for example application.Link) for application not yet initialized
-  if (!application[api]) application[api] = {}
-  if (!application.caching) application.caching = { archive: {} }
-  if (!application.subscribedTo) application.subscribedTo = []
+  // Create the sections for the North connector (for example north.OIConnect) for North not yet initialized
+  if (!north[north.type]) north[north.type] = {}
+  if (!north.caching) north.caching = { archive: {} }
+  if (!north.subscribedTo) north.subscribedTo = []
 
-  // load the proper schema based on the api name.
-  const schema = ApiSchemas[api]
-  const prefix = `north.${applicationIndex}`
+  // load the proper schema based on the North type
+  const northSchema = NorthSchemas[north.type]
+  const prefix = `north.${northIndex}`
   const handleConnectorNameChanged = (name) => (oldConnectorName, newConnectorName) => {
     setRenamingConnector(null)
     dispatchNewConfig({
@@ -47,13 +46,13 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
       <div className="d-flex align-items-center w-100 oi-sub-nav">
         <h6 className="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0">
           <EditableIdField
-            connectorName={application.name}
-            editing={renamingConnector === `north-${application.id}`}
-            fromList={applications}
-            valid={validation.application.isValidName}
+            connectorName={north.name}
+            editing={renamingConnector === `north-${north.id}`}
+            fromList={northConnectors}
+            valid={validation.north.isValidName}
             nameChanged={handleConnectorNameChanged(
-              `north.${applications.findIndex(
-                (element) => element.id === application.id,
+              `north.${northConnectors.findIndex(
+                (element) => element.id === north.id,
               )}.name`,
             )}
           />
@@ -61,7 +60,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             <FaPencilAlt
               className="oi-icon mx-2"
               onClick={() => {
-                setRenamingConnector(`north-${application.id}`)
+                setRenamingConnector(`north-${north.id}`)
                 setPencil(false)
               }}
             />
@@ -70,9 +69,9 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
         <div className="pull-right me-3">
           <StatusButton
             handler={() => {
-              navigate(`/north/${id}/live`)
+              navigate(`/north/${north.id}/live`)
             }}
-            enabled={application.enabled}
+            enabled={north.enabled}
           />
         </div>
       </div>
@@ -80,9 +79,9 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
         <Form className="m-2">
           <OIbTitle label="General settings">
             <ul>
-              <li>This form allows to configure north-specific parameters.</li>
+              <li>This form allows to configure North-specific parameters.</li>
               <li>
-                You need to activate the application with the enabled checkbox.
+                You need to activate the North connector with the enabled checkbox.
               </li>
             </ul>
           </OIbTitle>
@@ -90,30 +89,30 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             <Col md={2}>
               <OIbCheckBox
                 name={`${prefix}.enabled`}
-                label={application.enabled ? 'Enabled' : 'Disabled'}
+                label={north.enabled ? 'Enabled' : 'Disabled'}
                 defaultValue={false}
-                value={application.enabled}
-                help={<div>Enable this application</div>}
+                value={north.enabled}
+                help={<div>Enable this North connector</div>}
                 onChange={onChange}
               />
             </Col>
           </Row>
           <OIbLogLevel
             name={`${prefix}.logParameters`}
-            value={application.logParameters}
+            value={north.logParameters}
             onChange={onChange}
           />
           <OIbForm
             onChange={onChange}
-            schema={schema}
-            name={`${prefix}.${api}`}
-            values={application[api]}
+            schema={northSchema}
+            name={`${prefix}.${north.type}`}
+            values={north[north.type]}
           />
           <OIbTitle label="Caching">
             <>
               <p>
                 The cache is a local file storage to allow OIBus to store values
-                or files when the communication with the north application is
+                or files when the communication with the north connector is
                 interrupted. The more space is allocated to the cache, the
                 longer the interruption can be. The parameters below are
                 important to understand.
@@ -150,7 +149,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             <Col md="4">
               <OIbInteger
                 onChange={onChange}
-                value={application.caching.sendInterval}
+                value={north.caching.sendInterval}
                 defaultValue={10000}
                 valid={validation.caching.sendInterval}
                 name={`${prefix}.caching.sendInterval`}
@@ -160,7 +159,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             <Col md="4">
               <OIbInteger
                 onChange={onChange}
-                value={application.caching.retryInterval}
+                value={north.caching.retryInterval}
                 defaultValue={5000}
                 valid={validation.caching.retryInterval}
                 name={`${prefix}.caching.retryInterval`}
@@ -170,7 +169,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             <Col md="4">
               <OIbInteger
                 onChange={onChange}
-                value={application.caching.retryCount}
+                value={north.caching.retryCount}
                 defaultValue={3}
                 valid={validation.caching.retryCount}
                 name={`${prefix}.caching.retryCount`}
@@ -182,7 +181,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             <Col md="4">
               <OIbInteger
                 onChange={onChange}
-                value={application.caching.groupCount}
+                value={north.caching.groupCount}
                 name={`${prefix}.caching.groupCount`}
                 defaultValue={1000}
                 valid={validation.caching.groupCount}
@@ -192,7 +191,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
             <Col md="4">
               <OIbInteger
                 onChange={onChange}
-                value={application.caching.maxSendCount}
+                value={north.caching.maxSendCount}
                 name={`${prefix}.caching.maxSendCount`}
                 defaultValue={10000}
                 valid={validation.caching.maxSendCount}
@@ -203,20 +202,20 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
           <Row>
             <Col md={2}>
               <OIbCheckBox
-                label={application.caching.archive.enabled ? 'Archive mode activated' : 'Archive mode deactivated'}
+                label={north.caching.archive.enabled ? 'Archive mode activated' : 'Archive mode deactivated'}
                 name={`${prefix}.caching.archive.enabled`}
-                value={application.caching.archive.enabled}
+                value={north.caching.archive.enabled}
                 defaultValue={false}
                 help={<div>Move to archive folder or delete files when they are sent</div>}
                 onChange={onChange}
               />
             </Col>
-            {application.caching.archive.enabled && (
+            {north.caching.archive.enabled && (
             <Col md={2}>
               <OIbInteger
                 label="Retention duration"
                 name={`${prefix}.caching.archive.retentionDuration`}
-                value={application.caching.archive.retentionDuration}
+                value={north.caching.archive.retentionDuration}
                 defaultValue={720}
                 valid={validation.caching.retentionDuration}
                 help={<div>Retention period of archived files (in hours)</div>}
@@ -227,8 +226,8 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
           </Row>
           <SubscribedTo
             onChange={onChange}
-            subscribedTo={application.subscribedTo}
-            applicationIndex={applicationIndex}
+            subscribedTo={north.subscribedTo}
+            northIndex={northIndex}
           />
         </Form>
       </Container>
@@ -237,8 +236,8 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
 }
 
 NorthForm.propTypes = {
-  application: PropTypes.object.isRequired,
-  applicationIndex: PropTypes.number.isRequired,
+  north: PropTypes.object.isRequired,
+  northIndex: PropTypes.number.isRequired,
   onChange: PropTypes.func.isRequired,
 }
 

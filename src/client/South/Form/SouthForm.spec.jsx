@@ -12,7 +12,7 @@ const mockNavigate = jest.fn()
 
 jest.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
-  useParams: jest.fn().mockReturnValue({ id: 'datasource-uuid-1' }),
+  useParams: jest.fn().mockReturnValue({ id: 'south-uuid-1' }),
 }))
 
 const dispatchNewConfig = jest.fn()
@@ -39,20 +39,20 @@ afterEach(() => {
 })
 
 describe('SouthForm', () => {
-  testConfig.south.forEach((dataSource) => {
-    test(`check SouthForm with dataSource: ${dataSource.name}`, () => {
+  testConfig.south.forEach((south) => {
+    test(`check SouthForm with south: ${south.name}`, () => {
       act(() => {
         root.render(
-          <SouthForm dataSource={dataSource} dataSourceIndex={0} onChange={() => 1} />,
+          <SouthForm south={south} southIndex={0} onChange={() => 1} />,
         )
       })
       expect(container).toMatchSnapshot()
     })
   })
-  test('check SouthForm with empty dataSource', () => {
+  test('check SouthForm with empty south', () => {
     act(() => {
       root.render(
-        <SouthForm dataSource={{ protocol: 'MQTT', name: 'emptyDataSource' }} dataSourceIndex={0} onChange={() => 1} />,
+        <SouthForm south={{ type: 'MQTT', name: 'emptySouth' }} southIndex={0} onChange={() => 1} />,
       )
     })
     expect(container).toMatchSnapshot()

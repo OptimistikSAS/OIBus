@@ -7,7 +7,7 @@ import {
   FaLongArrowAltDown,
   FaLongArrowAltUp,
 } from 'react-icons/fa'
-import StatusButton from '../../StatusButton.jsx'
+import StatusButton from '../StatusButton.jsx'
 import Modal from '../Modal.jsx'
 
 const UpIcon = ({ handleOrder, index }) => (

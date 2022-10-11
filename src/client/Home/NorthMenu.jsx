@@ -7,21 +7,21 @@ import { useNavigate } from 'react-router-dom'
 import { ConfigContext } from '../context/ConfigContext.jsx'
 import ConfirmationModal from '../components/ConfirmationModal.jsx'
 
-const NorthMenu = ({ application }) => {
+const NorthMenu = ({ north }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const navigate = useNavigate()
-  const applications = newConfig?.north ?? []
+  const northConnectors = newConfig?.north ?? []
   const [modal, setModal] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
 
   const handleDuplicateNorth = () => {
-    const newName = `${application.name} copy`
-    const countCopies = applications.filter((e) => e.name.startsWith(newName)).length
+    const newName = `${north.name} copy`
+    const countCopies = northConnectors.filter((e) => e.name.startsWith(newName)).length
     dispatchNewConfig({
       type: 'addRow',
       name: 'north',
       value: {
-        ...application,
+        ...north,
         id: nanoid(),
         name: `${newName}${countCopies > 0 ? countCopies + 1 : ''}`,
         enabled: false,
@@ -33,8 +33,8 @@ const NorthMenu = ({ application }) => {
   }
 
   const onConfirm = () => {
-    handleDeleteConnector(`north.${applications.findIndex(
-      (element) => element.id === application.id,
+    handleDeleteConnector(`north.${northConnectors.findIndex(
+      (element) => element.id === north.id,
     )}`)
   }
 
@@ -51,7 +51,7 @@ const NorthMenu = ({ application }) => {
         <DropdownItem
           id="oi-settings"
           onClick={() => {
-            navigate(`/north/${application.id}`)
+            navigate(`/north/${north.id}`)
           }}
         >
           Settings
@@ -59,7 +59,7 @@ const NorthMenu = ({ application }) => {
         <DropdownItem
           id="oi-status"
           onClick={() => {
-            navigate(`/north/${application.id}/live`)
+            navigate(`/north/${north.id}/live`)
           }}
         >
           Status
@@ -78,7 +78,7 @@ const NorthMenu = ({ application }) => {
         </DropdownItem>
         <ConfirmationModal
           title="Delete"
-          body={`Are you sure you want to delete ${application.name}?`}
+          body={`Are you sure you want to delete ${north.name}?`}
           onConfirm={onConfirm}
           isOpen={modal}
           toggle={() => setModal(false)}
@@ -88,6 +88,6 @@ const NorthMenu = ({ application }) => {
   )
 }
 
-NorthMenu.propTypes = { application: PropTypes.object.isRequired }
+NorthMenu.propTypes = { north: PropTypes.object.isRequired }
 
 export default NorthMenu

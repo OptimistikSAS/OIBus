@@ -97,8 +97,8 @@ const reload = () => getRequest('/reload')
 const shutdown = () => getRequest('/shutdown')
 
 export default {
-  getSouthProtocols,
-  getNorthApis,
+  getSouthTypes: getSouthProtocols,
+  getNorthTypes: getNorthApis,
   getConfig,
   activateConfig,
   updateConfig,

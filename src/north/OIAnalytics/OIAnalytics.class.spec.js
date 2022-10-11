@@ -35,7 +35,7 @@ describe('North OIAnalytics', () => {
       id: 'northId',
       name: 'oia',
       enabled: false,
-      api: 'OIAnalytics',
+      type: 'OIAnalytics',
       caching: {
         sendInterval: 1000,
         retryInterval: 5000,

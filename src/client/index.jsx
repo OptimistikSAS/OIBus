@@ -10,8 +10,8 @@ import Activation from './Activation/Activation.jsx'
 import NotFound from './NotFound.jsx'
 import HistoryQuery from './HistoryQuery/HistoryQuery.jsx'
 import Engine from './Engine/Engine.jsx'
-import ConfigureApi from './North/ConfigureApi.jsx'
-import ConfigureProtocol from './South/ConfigureProtocol.jsx'
+import ConfigureNorth from './North/ConfigureNorth.jsx'
+import ConfigureSouth from './South/ConfigureSouth.jsx'
 import SouthStatus from './South/SouthStatus.jsx'
 import NorthStatus from './North/NorthStatus.jsx'
 import ConfigurePoints from './South/ConfigurePoints.jsx'
@@ -35,10 +35,10 @@ const Main = () => (
             <Route exact path="/engine" element={<Engine />} />
             <Route exact path="/history-query" element={<HistoryQuery />} />
             <Route exact path="/history-query/:id" element={<ConfigureHistoryQuery />} />
-            <Route exact path="/south/:id" element={<ConfigureProtocol />} />
+            <Route exact path="/south/:id" element={<ConfigureSouth />} />
             <Route exact path="/south/:id/live" element={<SouthStatus />} />
             <Route exact path="/south/:id/points" element={<ConfigurePoints />} />
-            <Route exact path="/north/:id" element={<ConfigureApi />} />
+            <Route exact path="/north/:id" element={<ConfigureNorth />} />
             <Route exact path="/north/:id/live" element={<NorthStatus />} />
             <Route exact path="/log" element={<Logs />} />
             <Route exact path="/about" element={<About />} />
