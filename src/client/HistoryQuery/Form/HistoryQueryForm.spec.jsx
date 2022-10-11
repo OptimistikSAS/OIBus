@@ -51,7 +51,7 @@ describe('HistoryQueryForm', () => {
     })
   })
 
-  test('check HistoryQueryForm with empty application', () => {
+  test('check HistoryQueryForm with empty North', () => {
     act(() => {
       root.render(
         <HistoryQueryForm

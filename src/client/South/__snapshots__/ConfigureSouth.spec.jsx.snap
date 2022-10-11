@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
+exports[`ConfigureSouth check ConfigureSouth 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
@@ -91,10 +91,10 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
             >
               <ul>
                 <li>
-                  This form allows to configure protocol-specific parameters.
+                  This form allows to configure South-specific parameters.
                 </li>
                 <li>
-                  You need to activate the protocol with the enabled checkbox.
+                  You need to activate the South connector with the enabled checkbox.
                 </li>
               </ul>
             </div>
@@ -125,7 +125,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Enable this application
+                Enable this South connector
               </div>
             </small>
           </div>
@@ -730,7 +730,7 @@ exports[`ConfigureProtocol check ConfigureProtocol 1`] = `
 </div>
 `;
 
-exports[`ConfigureProtocol check south not found 1`] = `
+exports[`ConfigureSouth check south not found 1`] = `
 <div>
   <div
     class="spinner-container"
@@ -750,7 +750,7 @@ exports[`ConfigureProtocol check south not found 1`] = `
 </div>
 `;
 
-exports[`ConfigureProtocol check update 1`] = `
+exports[`ConfigureSouth check update 1`] = `
 <div>
   <div
     class="d-flex align-items-center w-100 oi-sub-nav"
@@ -841,10 +841,10 @@ exports[`ConfigureProtocol check update 1`] = `
             >
               <ul>
                 <li>
-                  This form allows to configure protocol-specific parameters.
+                  This form allows to configure South-specific parameters.
                 </li>
                 <li>
-                  You need to activate the protocol with the enabled checkbox.
+                  You need to activate the South connector with the enabled checkbox.
                 </li>
               </ul>
             </div>
@@ -875,7 +875,7 @@ exports[`ConfigureProtocol check update 1`] = `
               class="form-text text-muted"
             >
               <div>
-                Enable this application
+                Enable this South connector
               </div>
             </small>
           </div>

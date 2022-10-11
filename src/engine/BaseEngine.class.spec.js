@@ -73,12 +73,12 @@ describe('BaseEngine', () => {
   })
 
   it('should not create south if it does not exist', () => {
-    engine.createSouth({ protocol: 'badProtocol', name: 'bad' })
-    expect(engine.logger.error).toHaveBeenCalledWith('South connector for "bad" is not found: badProtocol')
+    engine.createSouth({ type: 'badType', name: 'bad' })
+    expect(engine.logger.error).toHaveBeenCalledWith('South connector for "bad" is not found: badType')
   })
 
   it('should not create south if settings are wrong', () => {
-    engine.createSouth({ protocol: 'FolderScanner', name: 'bad', FolderScanner: null })
+    engine.createSouth({ type: 'FolderScanner', name: 'bad', FolderScanner: null })
     expect(engine.logger.error).toHaveBeenCalledWith(expect.stringContaining('Error when creating South connector "bad": TypeError: '
         + 'Cannot destructure property \'inputFolder\' of'))
   })
@@ -128,12 +128,12 @@ describe('BaseEngine', () => {
   })
 
   it('should not create north if it does not exist', () => {
-    engine.createNorth({ api: 'badApplication', name: 'bad' })
-    expect(engine.logger.error).toHaveBeenCalledWith('North connector for "bad" is not found: badApplication')
+    engine.createNorth({ type: 'badType', name: 'bad' })
+    expect(engine.logger.error).toHaveBeenCalledWith('North connector for "bad" is not found: badType')
   })
 
   it('should not create north if settings are wrong', () => {
-    engine.createNorth({ api: 'Console', name: 'bad', Console: null })
+    engine.createNorth({ type: 'Console', name: 'bad', Console: null })
     expect(engine.logger.error).toHaveBeenCalledWith(expect.stringContaining('Error when creating North connector "bad": TypeError: '
         + 'Cannot destructure property \'verbose\' of'))
   })

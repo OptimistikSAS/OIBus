@@ -39,7 +39,7 @@ describe('SouthConnector', () => {
     jest.resetAllMocks()
     jest.useFakeTimers().setSystemTime(new Date(nowDateString))
 
-    settings = { id: 'id', name: 'south', protocol: 'test', SouthConnector: {} }
+    settings = { id: 'id', name: 'south', type: 'test', SouthConnector: {} }
     south = new SouthConnector(settings, engine)
     await south.init()
   })

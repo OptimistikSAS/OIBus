@@ -659,7 +659,7 @@ describe('South ADS', () => {
     settings = {
       id: 'southId',
       name: 'ADS Test',
-      protocol: 'ADS',
+      type: 'ADS',
       enabled: true,
       ADS: {
         port: 851,

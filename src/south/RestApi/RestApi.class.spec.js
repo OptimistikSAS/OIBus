@@ -65,7 +65,7 @@ describe('South Rest API', () => {
       id: 'southId',
       name: 'RestAPI',
       enabled: true,
-      protocol: 'RestAPI',
+      type: 'RestAPI',
       RestApi: {
         port: 4200,
         connectionTimeout: 1000,

@@ -46,7 +46,7 @@ describe('North MongoDB', () => {
     settings = {
       id: 'northId',
       name: 'mongo',
-      api: 'MongoDB',
+      type: 'MongoDB',
       MongoDB: {
         password: 'password',
         createCollection: false,

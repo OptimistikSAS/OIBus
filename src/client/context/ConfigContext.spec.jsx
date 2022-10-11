@@ -34,21 +34,21 @@ global.fetch = jest.fn().mockImplementation((uri) => {
 // mock states
 let initState = 'activeConfig'
 const setActiveConfig = jest.fn()
-const setApiList = jest.fn()
-const setProtocolList = jest.fn()
+const setNorthTypes = jest.fn()
+const setSouthTypes = jest.fn()
 const setState = jest.fn()
 React.useState = jest.fn().mockImplementation((init) => {
   if (init === null && initState === 'activeConfig') {
-    initState = 'apiList'
+    initState = 'northTypes'
     return [init, setActiveConfig]
   }
-  if (init === undefined && initState === 'apiList') {
-    initState = 'protocolList'
-    return [init, setApiList]
+  if (init === undefined && initState === 'northTypes') {
+    initState = 'southTypes'
+    return [init, setNorthTypes]
   }
-  if (init === undefined && initState === 'protocolList') {
+  if (init === undefined && initState === 'southTypes') {
     initState = 'activeConfig'
-    return [init, setProtocolList]
+    return [init, setSouthTypes]
   }
   return [init, setState]
 })
@@ -92,8 +92,8 @@ describe('ConfigProvider', () => {
       )
     })
     expect(setActiveConfig).toBeCalledWith(testConfig)
-    expect(setApiList).toBeCalledWith(['a', 'b', 'c'])
-    expect(setProtocolList).toBeCalledWith(['d', 'e', 'f'])
+    expect(setNorthTypes).toBeCalledWith(['a', 'b', 'c'])
+    expect(setSouthTypes).toBeCalledWith(['d', 'e', 'f'])
     expect(container).toMatchSnapshot()
   })
   test('check initial data fail', async () => {

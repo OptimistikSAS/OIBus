@@ -20,7 +20,7 @@ jest.mock('react-router-dom', () => (
   { useNavigate: () => mockNavigate }
 ))
 
-const application = testConfig.north[0]
+const north = testConfig.north[0]
 
 let container
 let root
@@ -46,7 +46,7 @@ describe('NorthMenu', () => {
 
     act(() => {
       root.render(
-        <NorthMenu application={application} />,
+        <NorthMenu north={north} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -55,7 +55,7 @@ describe('NorthMenu', () => {
 
     act(() => {
       root.render(
-        <NorthMenu application={application} />,
+        <NorthMenu north={north} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -64,7 +64,7 @@ describe('NorthMenu', () => {
 
     act(() => {
       root.render(
-        <NorthMenu application={application} />,
+        <NorthMenu north={north} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -73,7 +73,7 @@ describe('NorthMenu', () => {
 
     act(() => {
       root.render(
-        <NorthMenu application={application} />,
+        <NorthMenu north={north} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -82,15 +82,15 @@ describe('NorthMenu', () => {
   test('display NorthMenu page based on config', async () => {
     act(() => {
       root.render(
-        <NorthMenu application={application} />,
+        <NorthMenu north={north} />,
       )
     })
     expect(container).toMatchSnapshot()
   })
 
-  test('check duplicate application', () => {
+  test('check duplicate north', () => {
     act(() => {
-      root.render(<NorthMenu application={application} />)
+      root.render(<NorthMenu north={north} />)
     })
     act(() => {
       Simulate.click(document.getElementById('dropdown-toggle'))
@@ -103,7 +103,7 @@ describe('NorthMenu', () => {
       type: 'addRow',
       name: 'north',
       value: {
-        ...application,
+        ...north,
         name: 'TestConsole copy',
         enabled: false,
         id: 'generated-uuid',
@@ -112,12 +112,12 @@ describe('NorthMenu', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check duplicate application already copied', () => {
-    const applicationWithCopyInName = application
-    applicationWithCopyInName.name = 'TestConsole copy'
+  test('check duplicate north already copied', () => {
+    const northWithCopyInName = north
+    northWithCopyInName.name = 'TestConsole copy'
 
     act(() => {
-      root.render(<NorthMenu application={applicationWithCopyInName} />)
+      root.render(<NorthMenu north={northWithCopyInName} />)
     })
     act(() => {
       Simulate.click(document.getElementById('dropdown-toggle'))
@@ -129,7 +129,7 @@ describe('NorthMenu', () => {
       type: 'addRow',
       name: 'north',
       value: {
-        ...applicationWithCopyInName,
+        ...northWithCopyInName,
         name: 'TestConsole copy copy',
         enabled: false,
         id: 'generated-uuid',
@@ -138,9 +138,9 @@ describe('NorthMenu', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check edit first application', () => {
+  test('check edit first north', () => {
     act(() => {
-      root.render(<NorthMenu application={application} />)
+      root.render(<NorthMenu north={north} />)
     })
     act(() => {
       Simulate.click(document.getElementById('dropdown-toggle'))
@@ -152,9 +152,9 @@ describe('NorthMenu', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check status first application', () => {
+  test('check status first north', () => {
     act(() => {
-      root.render(<NorthMenu application={application} />)
+      root.render(<NorthMenu north={north} />)
     })
     act(() => {
       Simulate.click(document.getElementById('dropdown-toggle'))
@@ -166,9 +166,9 @@ describe('NorthMenu', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check delete first application', () => {
+  test('check delete first north', () => {
     act(() => {
-      root.render(<NorthMenu application={application} />)
+      root.render(<NorthMenu north={north} />)
     })
     act(() => {
       Simulate.click(document.getElementById('dropdown-toggle'))
@@ -186,9 +186,9 @@ describe('NorthMenu', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check cancel delete first application', () => {
+  test('check cancel delete first north', () => {
     act(() => {
-      root.render(<NorthMenu application={application} />)
+      root.render(<NorthMenu north={north} />)
     })
     act(() => {
       Simulate.click(document.getElementById('dropdown-toggle'))

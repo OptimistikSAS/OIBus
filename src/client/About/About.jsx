@@ -1,23 +1,36 @@
 import React from 'react'
 import { Container, ListGroup, ListGroupItem } from 'reactstrap'
 import apis from '../services/apis'
+import utils from '../helpers/utils'
 import { AlertContext } from '../context/AlertContext.jsx'
-import { ConfigContext } from '../context/ConfigContext.jsx'
 import logo from '../OIBus.png'
 
-const About = () => {
+/**
+ * Display information about OIBus and live metrics about Engine, process,...
+ * @constructor
+ */
+export default () => {
   const [oibusInfo, setOibusInfo] = React.useState({})
   const [oibusStatus, setOibusStatus] = React.useState({})
   const { setAlert } = React.useContext(AlertContext)
-  const { activeConfig } = React.useContext(ConfigContext)
+
+  const onEventSourceError = (error) => {
+    console.error(error)
+  }
+
+  const onEventSourceMessage = (event) => {
+    if (event && event.data) {
+      const myData = JSON.parse(event.data)
+      setOibusStatus(myData)
+    }
+  }
 
   /**
-   * Retrieve OIBus info
+   * Fetch static status after render
    * @returns {void}
    */
-  const fetchOIBusInfo = () => {
-    apis
-      .getOIBusInfo()
+  React.useEffect(() => {
+    apis.getOIBusInfo()
       .then((response) => {
         setOibusInfo(response)
       })
@@ -28,14 +41,6 @@ const About = () => {
           type: 'danger',
         })
       })
-  }
-
-  /**
-   * Fetch static status after render
-   * @returns {void}
-   */
-  React.useEffect(() => {
-    fetchOIBusInfo()
   }, [])
 
   /**
@@ -43,23 +48,11 @@ const About = () => {
    * @returns {void}
    */
   React.useEffect(() => {
-    const source = new EventSource('/engine/sse')
-    source.onerror = (error) => {
-      setAlert({
-        text: error.message,
-        type: 'danger',
-      })
-    }
-    source.onmessage = (event) => {
-      if (event && event.data) {
-        const myData = JSON.parse(event.data)
-        setOibusStatus(myData)
-      }
-    }
+    const source = utils.createEventSource('/engine/sse', onEventSourceMessage, onEventSourceError)
     return () => {
       source.close()
     }
-  }, [activeConfig])
+  }, [])
 
   return (
     <div className="p-3">
@@ -74,24 +67,20 @@ const About = () => {
               {oibusInfo.version}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="me-1">Architecture:</b>
-              {oibusInfo.architecture}
-            </ListGroupItem>
-            <ListGroupItem>
               <b className="me-1">Current directory:</b>
-              {oibusInfo['Current directory']}
-            </ListGroupItem>
-            <ListGroupItem>
-              <b className="me-1">Node version:</b>
-              {oibusInfo['Node version']}
+              {oibusInfo.currentDirectory}
             </ListGroupItem>
             <ListGroupItem>
               <b className="me-1">Executable:</b>
               {oibusInfo.executable}
             </ListGroupItem>
             <ListGroupItem>
-              <b className="me-1">Configuration file:</b>
-              {oibusInfo['Configuration file']}
+              <b className="me-1">Process ID:</b>
+              {oibusInfo.processId}
+            </ListGroupItem>
+            <ListGroupItem>
+              <b className="me-1">Node version:</b>
+              {oibusInfo.nodeVersion}
             </ListGroupItem>
             <ListGroupItem>
               <b className="me-1">Hostname:</b>
@@ -103,11 +92,15 @@ const About = () => {
               {' '}
               {oibusInfo.osRelease}
             </ListGroupItem>
+            <ListGroupItem>
+              <b className="me-1">Architecture:</b>
+              {oibusInfo.architecture}
+            </ListGroupItem>
             <ListGroupItem tag="a" href="https://optimistik.io/oibus">
               Official site
             </ListGroupItem>
             <ListGroupItem>
-              Copyright:
+              <b className="me-1">Copyright:</b>
               {oibusInfo.copyright}
             </ListGroupItem>
             <ListGroupItem tag="a" href="https://joinup.ec.europa.eu/sites/default/files/custom-page/attachment/2020-03/EUPL-1.2%20EN.txt">
@@ -131,4 +124,3 @@ const About = () => {
     </div>
   )
 }
-export default About

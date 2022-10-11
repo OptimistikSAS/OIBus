@@ -54,8 +54,8 @@ const ConfigContext = React.createContext(configInitialState)
 const ConfigProvider = ({ children }) => {
   const [newConfig, dispatchNewConfig] = React.useReducer(reducer, configInitialState)
   const [activeConfig, setActiveConfig] = React.useState(null)
-  const [apiList, setApiList] = React.useState()
-  const [protocolList, setProtocolList] = React.useState()
+  const [northTypes, setNorthTypes] = React.useState()
+  const [southTypes, setSouthTypes] = React.useState()
   // context for sorting south/north list
   const [sortNorthBy, setSortNorthBy] = React.useState()
   const [isNorthAscending, setIsNorthAscending] = React.useState()
@@ -73,13 +73,13 @@ const ConfigProvider = ({ children }) => {
   }
 
   /**
-   * Acquire the list of API
+   * Acquire the list of North Types
    * @returns {void}
    */
   React.useEffect(() => {
     const call = async () => {
       try {
-        setApiList(await apis.getNorthApis())
+        setNorthTypes(await apis.getNorthTypes())
       } catch (error) {
         console.error(error)
       }
@@ -88,13 +88,13 @@ const ConfigProvider = ({ children }) => {
   }, [])
 
   /**
-   * Acquire the list of Protocols
+   * Acquire the list of South Types
    * @returns {void}
    */
   React.useEffect(() => {
     const call = async () => {
       try {
-        setProtocolList(await apis.getSouthProtocols())
+        setSouthTypes(await apis.getSouthTypes())
       } catch (error) {
         console.error(error)
       }
@@ -124,13 +124,13 @@ const ConfigProvider = ({ children }) => {
   }, [])
 
   const configValueProvided = React.useMemo(
-    () => ({ newConfig, dispatchNewConfig, activeConfig, setActiveConfig, apiList, protocolList, sort }),
-    [newConfig, dispatchNewConfig, activeConfig, setActiveConfig, apiList, protocolList, sort],
+    () => ({ newConfig, dispatchNewConfig, activeConfig, setActiveConfig, northTypes, southTypes, sort }),
+    [newConfig, dispatchNewConfig, activeConfig, setActiveConfig, northTypes, southTypes, sort],
   )
   // the provider return the new and active config and their respective setters
   /**
    * @todo: component using this context (.i.e the whole application) will rerender
-   * 4 times (when apiList, protocolList, activeConfig and newConfig are updated).
+   * 4 times (when northTypes, southTypes, activeConfig and newConfig are updated).
    * we could make a single call to the server to avoid this effect.
    */
   return (

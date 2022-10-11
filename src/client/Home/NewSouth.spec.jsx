@@ -24,7 +24,7 @@ beforeEach(() => {
   React.useContext = jest.fn().mockReturnValue({
     newConfig,
     dispatchNewConfig,
-    protocolList: [
+    southTypes: [
       {
         connectorName: 'OPCUA_HA',
         category: 'IoT',
@@ -71,7 +71,7 @@ describe('NewSouth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: null,
       dispatchNewConfig,
-      protocolList: [
+      southTypes: [
         {
           connectorName: 'OPCUA_HA',
           category: 'IoT',
@@ -105,7 +105,7 @@ describe('NewSouth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: {},
       dispatchNewConfig,
-      protocolList: [
+      southTypes: [
         {
           connectorName: 'OPCUA_HA',
           category: 'IoT',
@@ -139,7 +139,7 @@ describe('NewSouth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: { south: {} },
       dispatchNewConfig,
-      protocolList: [
+      southTypes: [
         {
           connectorName: 'OPCUA_HA',
           category: 'IoT',
@@ -173,7 +173,7 @@ describe('NewSouth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: { south: [] },
       dispatchNewConfig,
-      protocolList: [
+      southTypes: [
         {
           connectorName: 'OPCUA_HA',
           category: 'IoT',
@@ -205,11 +205,11 @@ describe('NewSouth', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check change name with "new_application" id', () => {
+  test('check change name with "new_south" id', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: { south: [] },
       dispatchNewConfig,
-      protocolList: [
+      southTypes: [
         {
           connectorName: 'OPCUA_HA',
           category: 'IoT',
@@ -247,7 +247,7 @@ describe('NewSouth', () => {
 
     expect(document.getElementById('icon-connector').classList).toContain('connector-focus')
     act(() => {
-      Simulate.change(document.getElementById('name'), { target: { value: 'new_application' } })
+      Simulate.change(document.getElementById('name'), { target: { value: 'new_south' } })
     })
     act(() => {
       Simulate.click(document.getElementById('confirm'))
@@ -255,7 +255,7 @@ describe('NewSouth', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check add connector without "protocol" & without new name', () => {
+  test('check add connector without "south type" & without new name', () => {
     act(() => {
       root.render(<EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />)
     })
@@ -272,7 +272,7 @@ describe('NewSouth', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check add connector without "protocol" & with new name', () => {
+  test('check add connector without "south type" & with new name', () => {
     act(() => {
       root.render(<EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />)
     })
@@ -284,7 +284,7 @@ describe('NewSouth', () => {
       Simulate.click(document.getElementById('add-south'))
     })
     act(() => {
-      Simulate.change(document.getElementById('name'), { target: { value: 'new_application' } })
+      Simulate.change(document.getElementById('name'), { target: { value: 'new_south' } })
     })
     act(() => {
       Simulate.click(document.getElementById('confirm'))
@@ -292,7 +292,7 @@ describe('NewSouth', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check add connector without "name" & with protocol', () => {
+  test('check add connector without "name" & with south type', () => {
     act(() => {
       root.render(<EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />)
     })
@@ -306,7 +306,7 @@ describe('NewSouth', () => {
       Simulate.click(document.getElementById('icon-connector'))
     })
     act(() => {
-      Simulate.change(document.getElementById('name'), { target: { value: 'new_application' } })
+      Simulate.change(document.getElementById('name'), { target: { value: 'new_south' } })
     })
     act(() => {
       Simulate.click(document.getElementById('confirm'))

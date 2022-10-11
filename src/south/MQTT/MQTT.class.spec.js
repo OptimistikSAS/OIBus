@@ -50,7 +50,7 @@ describe('South MQTT', () => {
       id: 'southId',
       name: 'MQTTServer',
       enabled: true,
-      protocol: 'MQTT',
+      type: 'MQTT',
       MQTT: {
         url: 'mqtt://localhost:1883',
         qos: 1,

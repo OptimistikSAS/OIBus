@@ -43,7 +43,7 @@ exports[`Proxies check Proxies 1`] = `
           class="col"
         >
           <p>
-            Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+            Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
           </p>
         </div>
       </div>
@@ -580,7 +580,7 @@ exports[`Proxies check add line to proxies 1`] = `
           class="col"
         >
           <p>
-            Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+            Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
           </p>
         </div>
       </div>
@@ -1117,7 +1117,7 @@ exports[`Proxies check change first host 1`] = `
           class="col"
         >
           <p>
-            Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+            Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
           </p>
         </div>
       </div>
@@ -1654,7 +1654,7 @@ exports[`Proxies check change first name 1`] = `
           class="col"
         >
           <p>
-            Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+            Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
           </p>
         </div>
       </div>
@@ -2191,7 +2191,7 @@ exports[`Proxies check change first password 1`] = `
           class="col"
         >
           <p>
-            Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+            Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
           </p>
         </div>
       </div>
@@ -2728,7 +2728,7 @@ exports[`Proxies check change first port 1`] = `
           class="col"
         >
           <p>
-            Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+            Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
           </p>
         </div>
       </div>
@@ -3265,7 +3265,7 @@ exports[`Proxies check change first protocol 1`] = `
           class="col"
         >
           <p>
-            Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+            Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
           </p>
         </div>
       </div>
@@ -3802,7 +3802,7 @@ exports[`Proxies check change first username 1`] = `
           class="col"
         >
           <p>
-            Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+            Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
           </p>
         </div>
       </div>
@@ -4339,7 +4339,7 @@ exports[`Proxies check delete first proxie 1`] = `
           class="col"
         >
           <p>
-            Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+            Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
           </p>
         </div>
       </div>

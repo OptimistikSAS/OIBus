@@ -10,8 +10,8 @@ import apis from '../services/apis'
 const HistoryQuery = () => {
   const { newConfig } = React.useContext(ConfigContext)
   const [queries, setQueries] = React.useState([])
-  const applications = newConfig?.north ?? []
-  const dataSources = newConfig?.south ?? []
+  const northConnectors = newConfig?.north ?? []
+  const southConnectors = newConfig?.south ?? []
   const navigate = useNavigate()
 
   React.useEffect(() => {
@@ -199,11 +199,11 @@ const HistoryQuery = () => {
             There is no history query yet, create one by using the form below.
           </h6>
         )}
-      {applications.length > 0 && dataSources.length > 0
+      {northConnectors.length > 0 && southConnectors.length > 0
       && (
       <NewHistoryQueryRow
-        northHandlers={applications}
-        southHandlers={dataSources}
+        northHandlers={northConnectors}
+        southHandlers={southConnectors}
         addQuery={addHistoryQuery}
         queriesNumber={historyQueries.length}
       />

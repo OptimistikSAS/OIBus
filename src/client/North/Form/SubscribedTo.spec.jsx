@@ -31,13 +31,13 @@ afterEach(() => {
   root = null
 })
 
-testConfig.north.forEach((application) => {
+testConfig.north.forEach((north) => {
   describe('SubscribedTo', () => {
-    test(`check SubscribedTo with application: ${application.name}`, () => {
+    test(`check SubscribedTo with North: ${north.name}`, () => {
       act(() => {
         root.render(<SubscribedTo
-          subscribedTo={application.subscribedTo}
-          applicationIndex={0}
+          subscribedTo={north.subscribedTo}
+          northIndex={0}
         />)
       })
       expect(container).toMatchSnapshot()
@@ -45,13 +45,13 @@ testConfig.north.forEach((application) => {
   })
 })
 
-const application = testConfig.north[0]
+const north = testConfig.north[0]
 describe('SubscribedTo click changes', () => {
   test('check SubscribedTo add row', () => {
     act(() => {
       root.render(<SubscribedTo
-        subscribedTo={application.subscribedTo}
-        applicationIndex={0}
+        subscribedTo={north.subscribedTo}
+        northIndex={0}
       />)
     })
     act(() => {
@@ -68,8 +68,8 @@ describe('SubscribedTo click changes', () => {
   test('check SubscribedTo update row', () => {
     act(() => {
       root.render(<SubscribedTo
-        subscribedTo={application.subscribedTo}
-        applicationIndex={0}
+        subscribedTo={north.subscribedTo}
+        northIndex={0}
       />)
     })
     act(() => (
@@ -86,8 +86,8 @@ describe('SubscribedTo click changes', () => {
   test('check SubscribedTo delete first row', () => {
     act(() => {
       root.render(<SubscribedTo
-        subscribedTo={application.subscribedTo}
-        applicationIndex={0}
+        subscribedTo={north.subscribedTo}
+        northIndex={0}
       />)
     })
     act(() => {
@@ -105,13 +105,13 @@ describe('SubscribedTo click changes', () => {
   })
 })
 
-describe('SubscribedTo no dataSources', () => {
-  test('check SubscribedTo with no dataSources', () => {
+describe('SubscribedTo no south', () => {
+  test('check SubscribedTo with no south', () => {
     React.useContext = jest.fn().mockReturnValue({ dispatchNewConfig })
     act(() => {
       root.render(<SubscribedTo
-        subscribedTo={application.subscribedTo}
-        applicationIndex={0}
+        subscribedTo={north.subscribedTo}
+        northIndex={0}
       />)
     })
     expect(container).toMatchSnapshot()

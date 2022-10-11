@@ -15,29 +15,29 @@ const NewSouth = ({
   const {
     newConfig,
     dispatchNewConfig,
-    protocolList,
+    southTypes,
   } = React.useContext(ConfigContext)
   const [name, setName] = React.useState('')
   const [active, setActive] = useState(false)
-  const [protocolError, setProtocolError] = React.useState(null)
+  const [southTypeError, setSouthTypeError] = React.useState(null)
   const [nameError, setNameError] = React.useState(null)
-  const [protocol, setProtocol] = React.useState(null)
-  const dataSources = newConfig?.south ?? []
+  const [southType, setSouthType] = React.useState(null)
+  const southConnectors = newConfig?.south ?? []
   const navigate = useNavigate()
 
-  const southCategoryList = protocolList ? [...new Set(protocolList.map((e) => e.category))] : []
+  const southCategoryList = southTypes ? [...new Set(southTypes.map((e) => e.category))] : []
 
-  const addDataSource = () => {
-    if (protocol === null && name !== '') {
-      setProtocolError('A protocol must be selected')
+  const addSouth = () => {
+    if (southType === null && name !== '') {
+      setSouthTypeError('A South type must be selected')
     }
-    if (name === '' && protocol !== null) {
+    if (name === '' && southType !== null) {
       setNameError('A name must be specified')
     }
-    if (name === '' && protocol === null) {
-      setProtocolError('A name must be specified and a protocol must be selected')
+    if (name === '' && southType === null) {
+      setSouthTypeError('A name must be specified and a South type must be selected')
     }
-    if (!validationSouth.protocol.isValidName(name, dataSources.map((dataSource) => dataSource.name)) && name !== '' && protocol !== null) {
+    if (!validationSouth.south.isValidName(name, southConnectors.map((south) => south.name)) && name !== '' && southType !== null) {
       const myNewId = nanoid()
       dispatchNewConfig({
         type: 'addRow',
@@ -45,14 +45,14 @@ const NewSouth = ({
         value: {
           id: myNewId,
           name,
-          protocol,
+          type: southType,
           enabled: false,
         },
       })
       toggle()
-      setProtocol(null)
+      setSouthType(null)
       setName('')
-      setProtocolError(null)
+      setSouthTypeError(null)
       setNameError(null)
       navigate(`/south/${myNewId}`)
     }
@@ -67,7 +67,7 @@ const NewSouth = ({
       size="lg"
     >
       <ModalHeader className="oi-modal-header">
-        Select a protocol
+        Select a South type
       </ModalHeader>
 
       <ModalBody>
@@ -91,16 +91,16 @@ const NewSouth = ({
                 </div>
               </div>
               <div>
-                {protocolList.filter((e) => e.category === category)
+                {southTypes.filter((e) => e.category === category)
                   .map(({ connectorName }) => (
                     <button
                       id="icon-connector"
                       key={`${category}-${connectorName}-south-icon-connector`}
-                      className={`${(protocol === connectorName && active) ? 'connector connector-focus me-2 my-2' : 'connector me-2 my-2'}`}
+                      className={`${(southType === connectorName && active) ? 'connector connector-focus me-2 my-2' : 'connector me-2 my-2'}`}
                       type="button"
                       onClick={() => {
                         setActive(true)
-                        setProtocol(connectorName)
+                        setSouthType(connectorName)
                       }}
                     >
                       {connectorName}
@@ -116,15 +116,15 @@ const NewSouth = ({
           name="name"
           onChange={(fieldName, newName) => setName(newName)}
           defaultValue=""
-          valid={() => validationSouth.protocol.isValidName(name, dataSources.map((dataSource) => dataSource.name))}
+          valid={() => validationSouth.south.isValidName(name, southConnectors.map((south) => south.name))}
         />
       </ModalBody>
 
       <ModalFooter className="d-flex d-flex justify-content-end align-items-center">
         <div>
-          {protocolError && !protocol ? (
+          {southTypeError && !southType ? (
             <span className="oi-error">
-              {protocolError}
+              {southTypeError}
             </span>
           ) : null}
           {nameError && name === '' ? (
@@ -139,7 +139,7 @@ const NewSouth = ({
             className="mx-1 my-0"
             variant="secondary"
             onClick={() => {
-              addDataSource()
+              addSouth()
             }}
           >
             Add

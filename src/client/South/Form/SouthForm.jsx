@@ -13,28 +13,27 @@ import OIbForm from '../../components/OIbForm/OIbForm.jsx'
 import validation from './South.validation'
 import EditableIdField from '../../components/EditableIdField.jsx'
 import { ConfigContext } from '../../context/ConfigContext.jsx'
-import ProtocolSchemas from '../Protocols.jsx'
+import SouthSchemas from '../SouthTypes.jsx'
 import PointsButton from '../PointsButton.jsx'
-import StatusButton from '../../StatusButton.jsx'
+import StatusButton from '../../components/StatusButton.jsx'
 
-const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
-  const { id, protocol } = dataSource
+const SouthForm = ({ south, southIndex, onChange }) => {
   const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
   const [renamingConnector, setRenamingConnector] = useState(null)
   const [pencil, setPencil] = useState(true)
-  const dataSources = newConfig?.south ?? []
+  const southConnectors = newConfig?.south ?? []
   const navigate = useNavigate()
-  // Create the sections for the protocol (for example dataSource.Modbus) for dataSource not yet initialized
-  if (!dataSource[protocol]) dataSource[protocol] = {}
-  if (!dataSource.points) {
-    dataSource.points = []
+  // Create the sections for the South connector (for example south.Modbus) for south not yet initialized
+  if (!south[south.type]) south[south.type] = {}
+  if (!south.points) {
+    south.points = []
   }
-  // load the proper schema based on the protocol name.
-  // in case of SQL protocol load schema based on selected driver
-  const schema = protocol === 'SQL'
-    ? ProtocolSchemas.SQL.withDriver(dataSource.SQL.driver)
-    : ProtocolSchemas[protocol]
-  const prefix = `south.${dataSourceIndex}`
+  // load the proper schema based on the south name.
+  // in case of SQL South, load schema based on selected driver
+  const schema = south.type === 'SQL'
+    ? SouthSchemas.SQL.withDriver(south.SQL.driver)
+    : SouthSchemas[south.type]
+  const prefix = `south.${southIndex}`
 
   const handleConnectorNameChanged = (name) => (oldConnectorName, newConnectorName) => {
     setRenamingConnector(null)
@@ -51,13 +50,13 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
       <div className="d-flex align-items-center w-100 oi-sub-nav">
         <h6 className="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0">
           <EditableIdField
-            connectorName={dataSource.name}
-            editing={renamingConnector === `south-${dataSource.id}`}
-            fromList={dataSources}
-            valid={validation.protocol.isValidName}
+            connectorName={south.name}
+            editing={renamingConnector === `south-${south.id}`}
+            fromList={southConnectors}
+            valid={validation.south.isValidName}
             nameChanged={handleConnectorNameChanged(
-              `south.${dataSources.findIndex(
-                (element) => element.id === dataSource.id,
+              `south.${southConnectors.findIndex(
+                (element) => element.id === south.id,
               )}.name`,
             )}
           />
@@ -65,7 +64,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
           <FaPencilAlt
             className="oi-icon mx-2"
             onClick={() => {
-              setRenamingConnector(`south-${dataSource.id}`)
+              setRenamingConnector(`south-${south.id}`)
               setPencil(false)
             }}
           />
@@ -74,11 +73,11 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
         <div className="pull-right me-3">
           <StatusButton
             handler={() => {
-              navigate(`/south/${id}/live`)
+              navigate(`/south/${south.id}/live`)
             }}
-            enabled={dataSource.enabled}
+            enabled={south.enabled}
           />
-          <PointsButton dataSource={dataSource} />
+          <PointsButton south={south} />
         </div>
       </div>
       <Container fluid>
@@ -86,10 +85,10 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
           <OIbTitle label="General settings">
             <ul>
               <li>
-                This form allows to configure protocol-specific parameters.
+                This form allows to configure South-specific parameters.
               </li>
               <li>
-                You need to activate the protocol with the enabled checkbox.
+                You need to activate the South connector with the enabled checkbox.
               </li>
             </ul>
           </OIbTitle>
@@ -97,10 +96,10 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
             <Col md={4}>
               <OIbCheckBox
                 name={`${prefix}.enabled`}
-                label={dataSource.enabled ? 'Enabled' : 'Disabled'}
+                label={south.enabled ? 'Enabled' : 'Disabled'}
                 defaultValue={false}
-                value={dataSource.enabled}
-                help={<div>Enable this application</div>}
+                value={south.enabled}
+                help={<div>Enable this South connector</div>}
                 onChange={onChange}
               />
             </Col>
@@ -108,7 +107,7 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
               <Col md={4}>
                 <OIbScanMode
                   name={`${prefix}.scanMode`}
-                  value={dataSource.scanMode}
+                  value={south.scanMode}
                   onChange={onChange}
                 />
               </Col>
@@ -116,14 +115,14 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
           </Row>
           <OIbLogLevel
             name={`${prefix}.logParameters`}
-            value={dataSource.logParameters}
+            value={south.logParameters}
             onChange={onChange}
           />
           <OIbForm
             onChange={onChange}
             schema={schema}
-            name={`${prefix}.${protocol}`}
-            values={dataSource[protocol]}
+            name={`${prefix}.${south.type}`}
+            values={south[south.type]}
           />
         </Form>
       </Container>
@@ -132,8 +131,8 @@ const SouthForm = ({ dataSource, dataSourceIndex, onChange }) => {
 }
 
 SouthForm.propTypes = {
-  dataSource: PropTypes.object.isRequired,
-  dataSourceIndex: PropTypes.number.isRequired,
+  south: PropTypes.object.isRequired,
+  southIndex: PropTypes.number.isRequired,
   onChange: PropTypes.func.isRequired,
 }
 

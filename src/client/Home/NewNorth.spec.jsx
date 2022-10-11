@@ -24,7 +24,7 @@ beforeEach(() => {
   React.useContext = jest.fn().mockReturnValue({
     newConfig,
     dispatchNewConfig,
-    apiList: [
+    northTypes: [
       {
         connectorName: 'Console',
         category: 'Debug',
@@ -70,7 +70,7 @@ describe('NewNorth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: null,
       dispatchNewConfig,
-      apiList: [
+      northTypes: [
         {
           connectorName: 'Console',
           category: 'Debug',
@@ -104,7 +104,7 @@ describe('NewNorth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: {},
       dispatchNewConfig,
-      apiList: [
+      northTypes: [
         {
           connectorName: 'Console',
           category: 'Debug',
@@ -138,7 +138,7 @@ describe('NewNorth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: { north: {} },
       dispatchNewConfig,
-      apiList: [
+      northTypes: [
         {
           connectorName: 'Console',
           category: 'Debug',
@@ -170,7 +170,7 @@ describe('NewNorth', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: { north: [] },
       dispatchNewConfig,
-      apiList: [
+      northTypes: [
         {
           connectorName: 'Console',
           category: 'Debug',
@@ -202,11 +202,11 @@ describe('NewNorth', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check change name with "new_application" id', () => {
+  test('check change name with "new_north" id', () => {
     React.useContext = jest.fn().mockReturnValue({
       newConfig: { north: [] },
       dispatchNewConfig,
-      apiList: [
+      northTypes: [
         {
           connectorName: 'Console',
           category: 'Debug',
@@ -244,7 +244,7 @@ describe('NewNorth', () => {
     })
     expect(document.getElementById('icon-connector').classList).toContain('connector-focus')
     act(() => {
-      Simulate.change(document.getElementById('name'), { target: { value: 'new_application' } })
+      Simulate.change(document.getElementById('name'), { target: { value: 'new_north' } })
     })
     act(() => {
       Simulate.click(document.getElementById('confirm'))
@@ -252,7 +252,7 @@ describe('NewNorth', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check add connector without protocol & without new name', () => {
+  test('check add connector without north type & without new name', () => {
     act(() => {
       root.render(<EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />)
     })
@@ -268,7 +268,7 @@ describe('NewNorth', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check add connector without protocol & with new name', () => {
+  test('check add connector without north type & with new name', () => {
     act(() => {
       root.render(<EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />)
     })
@@ -280,7 +280,7 @@ describe('NewNorth', () => {
       Simulate.click(document.getElementById('add-north'))
     })
     act(() => {
-      Simulate.change(document.getElementById('name'), { target: { value: 'new_application' } })
+      Simulate.change(document.getElementById('name'), { target: { value: 'new_north' } })
     })
     act(() => {
       Simulate.click(document.getElementById('confirm'))
@@ -288,7 +288,7 @@ describe('NewNorth', () => {
     expect(container).toMatchSnapshot()
   })
 
-  test('check add connector without name & with protocol', () => {
+  test('check add connector without name & with north type', () => {
     act(() => {
       root.render(<EngineMenu onRestart={restartFunction} onShutdown={shutdownFunction} />)
     })

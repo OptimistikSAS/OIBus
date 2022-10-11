@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`SubscribedTo check SubscribedTo with application: TestConsole 1`] = `
+exports[`SubscribedTo check SubscribedTo with North: TestConsole 1`] = `
 <div>
   <div
     class="row"
@@ -43,7 +43,7 @@ exports[`SubscribedTo check SubscribedTo with application: TestConsole 1`] = `
           class="col"
         >
           <p>
-            Allow to select what South equipment are connected to this North application. The default is to receive from all enabled south equipments of the current OIBus.
+            Allow to select what South equipment are connected to this North connector. The default is to receive from all enabled south equipments of the current OIBus.
           </p>
         </div>
       </div>
@@ -185,7 +185,7 @@ exports[`SubscribedTo click changes check SubscribedTo add row 1`] = `
           class="col"
         >
           <p>
-            Allow to select what South equipment are connected to this North application. The default is to receive from all enabled south equipments of the current OIBus.
+            Allow to select what South equipment are connected to this North connector. The default is to receive from all enabled south equipments of the current OIBus.
           </p>
         </div>
       </div>
@@ -327,7 +327,7 @@ exports[`SubscribedTo click changes check SubscribedTo delete first row 1`] = `
           class="col"
         >
           <p>
-            Allow to select what South equipment are connected to this North application. The default is to receive from all enabled south equipments of the current OIBus.
+            Allow to select what South equipment are connected to this North connector. The default is to receive from all enabled south equipments of the current OIBus.
           </p>
         </div>
       </div>
@@ -469,7 +469,7 @@ exports[`SubscribedTo click changes check SubscribedTo update row 1`] = `
           class="col"
         >
           <p>
-            Allow to select what South equipment are connected to this North application. The default is to receive from all enabled south equipments of the current OIBus.
+            Allow to select what South equipment are connected to this North connector. The default is to receive from all enabled south equipments of the current OIBus.
           </p>
         </div>
       </div>
@@ -568,7 +568,7 @@ exports[`SubscribedTo click changes check SubscribedTo update row 1`] = `
 </div>
 `;
 
-exports[`SubscribedTo no dataSources check SubscribedTo with no dataSources 1`] = `
+exports[`SubscribedTo no south check SubscribedTo with no south 1`] = `
 <div>
   <div
     class="row"
@@ -611,7 +611,7 @@ exports[`SubscribedTo no dataSources check SubscribedTo with no dataSources 1`] 
           class="col"
         >
           <p>
-            Allow to select what South equipment are connected to this North application. The default is to receive from all enabled south equipments of the current OIBus.
+            Allow to select what South equipment are connected to this North connector. The default is to receive from all enabled south equipments of the current OIBus.
           </p>
         </div>
       </div>

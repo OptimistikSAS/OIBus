@@ -56,7 +56,7 @@ describe('South OPCUA-HA', () => {
     settings = {
       id: 'southId',
       name: 'OPCUA-HA',
-      protocol: 'OPCUA_HA',
+      type: 'OPCUA_HA',
       enabled: true,
       startTime: '2020-02-02 02:02:02',
       OPCUA_HA: {

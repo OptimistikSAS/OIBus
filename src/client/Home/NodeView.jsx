@@ -31,13 +31,11 @@ const NodeView = ({ onRestart, onShutdown }) => {
 
   const engineName = newConfig?.engine?.engineName ?? ''
   const safeMode = newConfig?.engine?.safeMode ?? false
-  const applications = newConfig?.north?.filter(
-    (application) => application.name.toLowerCase().includes(northFilter.toLowerCase()),
-  ) ?? []
-  const dataSources = newConfig?.south?.filter((dataSource) => dataSource.name.toLowerCase().includes(southFilter.toLowerCase())) ?? []
-  const globalZIndex = dataSources.length + applications.length + 1
-  const northNodes = applications.map((application, indexNorth) => ({
-    id: application.id,
+  const northConnectors = newConfig?.north?.filter((north) => north.name.toLowerCase().includes(northFilter.toLowerCase())) ?? []
+  const southConnectors = newConfig?.south?.filter((south) => south.name.toLowerCase().includes(southFilter.toLowerCase())) ?? []
+  const globalZIndex = southConnectors.length + northConnectors.length + 1
+  const northNodes = northConnectors.map((north, indexNorth) => ({
+    id: north.id,
     type: 'output',
     targetPosition: 'bottom',
     style: {
@@ -49,24 +47,24 @@ const NodeView = ({ onRestart, onShutdown }) => {
       borderRadius: 5,
       zIndex: globalZIndex - indexNorth,
     },
-    data: { label: (<NorthNode application={application} indexNorth={indexNorth} onChange={onChange} />) },
+    data: { label: (<NorthNode north={north} northIndex={indexNorth} onChange={onChange} />) },
     // position the node with an offset to center and then an offset for each node
     position: {
-      x: 620 - 100 * Math.min(applications.length, 5) + (indexNorth % 5) * 200,
+      x: 620 - 100 * Math.min(northConnectors.length, 5) + (indexNorth % 5) * 200,
       y: 150 * Math.trunc(indexNorth / 5),
     },
   }))
-  const northLinks = applications.map((application) => ({
-    id: `${application.id}-engine`,
+  const northLinks = northConnectors.map((north) => ({
+    id: `${north.id}-engine`,
     source: 'engine',
-    target: application.id,
+    target: north.id,
     animated: true,
     type: 'default',
     arrowHeadType: 'arrow',
-    hidden: !application.enabled,
+    hidden: !north.enabled,
   }))
-  const southNodes = dataSources.map((dataSource, indexSouth) => ({
-    id: dataSource.id,
+  const southNodes = southConnectors.map((south, indexSouth) => ({
+    id: south.id,
     type: 'input',
     sourcePosition: 'top',
     style: {
@@ -76,27 +74,27 @@ const NodeView = ({ onRestart, onShutdown }) => {
       height: 130,
       padding: 0,
       borderRadius: 5,
-      zIndex: globalZIndex - applications.length - indexSouth - 1,
+      zIndex: globalZIndex - northConnectors.length - indexSouth - 1,
     },
-    data: { label: (<SouthNode dataSource={dataSource} onChange={onChange} indexSouth={indexSouth} />) },
+    data: { label: (<SouthNode south={south} onChange={onChange} southIndex={indexSouth} />) },
     // position the node with an offset to center and then an offset for each node
     // 5 per line max => potentially render on several lines with y
     position: {
-      x: 620 - 100 * Math.min(dataSources.length, 5) + (indexSouth % 5) * 200,
+      x: 620 - 100 * Math.min(southConnectors.length, 5) + (indexSouth % 5) * 200,
       y:
         190
         + 150 * Math.trunc(indexSouth / 5)
-        + 150 * (Math.trunc((applications.length - 1) / 5) + 1),
+        + 150 * (Math.trunc((northConnectors.length - 1) / 5) + 1),
     },
   }))
-  const southLinks = dataSources.map((dataSource) => ({
-    id: `${dataSource.id}-engine`,
+  const southLinks = southConnectors.map((south) => ({
+    id: `${south.id}-engine`,
     target: 'engine',
-    source: dataSource.id,
+    source: south.id,
     animated: true,
     type: 'default',
     arrowHeadType: 'arrow',
-    hidden: !dataSource.enabled,
+    hidden: !south.enabled,
   }))
 
   const nodes = [
@@ -115,7 +113,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
       },
       position: {
         x: 100,
-        y: 20 + 150 * (Math.trunc((applications.length - 1) / 5) + 1),
+        y: 20 + 150 * (Math.trunc((northConnectors.length - 1) / 5) + 1),
       },
       targetPosition: 'bottom',
       sourcePosition: 'top',
@@ -126,7 +124,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
         height: 130,
         padding: 0,
         borderRadius: 5,
-        zIndex: globalZIndex - applications.length,
+        zIndex: globalZIndex - northConnectors.length,
       },
     },
     ...southNodes,
@@ -140,7 +138,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
 
   return (
     <Container>
-      {(dataSources.length > 5 || applications.length > 5 || northFilter || southFilter)
+      {(southConnectors.length > 5 || northConnectors.length > 5 || northFilter || southFilter)
       && (
       <>
         <Row>
@@ -155,7 +153,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
         </Row>
         <UncontrolledCollapse toggler={id}>
           <Row style={{ marginBottom: '15px' }}>
-            {(dataSources.length > 5 || southFilter !== '')
+            {(southConnectors.length > 5 || southFilter !== '')
             && (
             <Col md={3}>
               <Label for="southFilter">Filter south by name:</Label>
@@ -169,7 +167,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
               />
             </Col>
             )}
-            {(applications.length > 5 || northFilter !== '')
+            {(northConnectors.length > 5 || northFilter !== '')
             && (
             <Col md={3}>
               <Label for="northFilter">Filter north by name:</Label>

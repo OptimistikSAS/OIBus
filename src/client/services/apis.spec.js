@@ -38,7 +38,7 @@ global.fetch = jest.fn().mockImplementation((uri) => {
 
 describe('apis', () => {
   it('check getSouthProtocols', async () => {
-    const result = await apis.getSouthProtocols()
+    const result = await apis.getSouthTypes()
     expect(result).toEqual(['d', 'e', 'f'])
   })
 
@@ -48,7 +48,7 @@ describe('apis', () => {
     const originalGlobalFetchMock = global.fetch
     global.fetch = jest.fn().mockImplementation(() => ({ status: 500 }))
 
-    const request = apis.getSouthProtocols()
+    const request = apis.getSouthTypes()
     await expect(request).rejects.toThrow()
     expect(console.error).toBeCalled()
 
@@ -65,7 +65,7 @@ describe('apis', () => {
       throw error
     })
 
-    const request = apis.getSouthProtocols()
+    const request = apis.getSouthTypes()
     await expect(request).rejects.toThrowError('test error')
     expect(console.error).toBeCalled()
 
@@ -74,7 +74,7 @@ describe('apis', () => {
   })
 
   it('check getNorthApis', async () => {
-    const result = await apis.getNorthApis()
+    const result = await apis.getNorthTypes()
     expect(result).toEqual(['a', 'b', 'c'])
   })
 

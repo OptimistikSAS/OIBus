@@ -129,4 +129,11 @@ const nextTime = (value) => {
   return ''
 }
 
-export default { readFileContent, jsonCopy, parseCSV, createCSV, replaceValues, nextTime, formatValue }
+const createEventSource = (url, onMessage, onError) => {
+  const source = new EventSource(url)
+  source.onmessage = onMessage
+  source.onerror = onError
+  return source
+}
+
+export default { readFileContent, jsonCopy, parseCSV, createCSV, replaceValues, nextTime, formatValue, createEventSource }

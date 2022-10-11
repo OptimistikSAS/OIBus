@@ -1237,7 +1237,7 @@ exports[`Engine check Engine 1`] = `
               class="col"
             >
               <p>
-                South protocols scan the dataSources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in this section before they can be used on the various protocols. The syntax is derived from the unix cron syntax with a precision to the millisecond.
+                South connectors scan the data sources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in this section before they can be used on the various south connectors. The syntax is derived from the unix cron syntax with a precision to the millisecond.
               </p>
               <p>
                 <code>
@@ -1248,7 +1248,7 @@ exports[`Engine check Engine 1`] = `
                 The table below gives several examples.
               </p>
               <p>
-                (A special scanMode - listen - needs to be defined for protocols if you have protocols reacting to events mode such as MQTT)
+                (A special scanMode - listen - needs to be defined for south connectors if you have protocols reacting to events mode such as MQTT)
               </p>
               <div>
                 <table>
@@ -1946,13 +1946,13 @@ exports[`Engine check Engine 1`] = `
               class="col"
             >
               <p>
-                In case communication errors prevent OIBus to send information to a North application, the values will be stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
+                In case communication errors prevent OIBus to send information to a North connector, the values will be stored in a local cache (one cache is needed for each North connector) and they will be retried regularly.
               </p>
               <p>
-                When the communication is restored, all values in the cache will be forwarded to the North application. The location of these caches on the OIBus server is indicated in the cache folder parameters.
+                When the communication is restored, all values in the cache will be forwarded to the North connector. The location of these caches on the OIBus server is indicated in the cache folder parameters.
               </p>
               <p>
-                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North application or to archive them in the archive folder.
+                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North connector or to archive them in the archive folder.
               </p>
               <p>
                 When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
@@ -2070,7 +2070,7 @@ exports[`Engine check Engine 1`] = `
               class="col"
             >
               <p>
-                Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+                Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
               </p>
             </div>
           </div>
@@ -3173,7 +3173,7 @@ exports[`Engine check Engine 1`] = `
               class="col"
             >
               <p>
-                This is a list of dataSources from another OIBus. The name should respect the following convention: OIBusId:DataSourceName
+                This is a list of south connectors from another OIBus. The name should respect the following convention: OIBusId:SouthName
               </p>
             </div>
           </div>
@@ -4503,7 +4503,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               class="col"
             >
               <p>
-                South protocols scan the dataSources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in this section before they can be used on the various protocols. The syntax is derived from the unix cron syntax with a precision to the millisecond.
+                South connectors scan the data sources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in this section before they can be used on the various south connectors. The syntax is derived from the unix cron syntax with a precision to the millisecond.
               </p>
               <p>
                 <code>
@@ -4514,7 +4514,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                 The table below gives several examples.
               </p>
               <p>
-                (A special scanMode - listen - needs to be defined for protocols if you have protocols reacting to events mode such as MQTT)
+                (A special scanMode - listen - needs to be defined for south connectors if you have protocols reacting to events mode such as MQTT)
               </p>
               <div>
                 <table>
@@ -5212,13 +5212,13 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               class="col"
             >
               <p>
-                In case communication errors prevent OIBus to send information to a North application, the values will be stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
+                In case communication errors prevent OIBus to send information to a North connector, the values will be stored in a local cache (one cache is needed for each North connector) and they will be retried regularly.
               </p>
               <p>
-                When the communication is restored, all values in the cache will be forwarded to the North application. The location of these caches on the OIBus server is indicated in the cache folder parameters.
+                When the communication is restored, all values in the cache will be forwarded to the North connector. The location of these caches on the OIBus server is indicated in the cache folder parameters.
               </p>
               <p>
-                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North application or to archive them in the archive folder.
+                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North connector or to archive them in the archive folder.
               </p>
               <p>
                 When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
@@ -5336,7 +5336,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               class="col"
             >
               <p>
-                Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+                Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
               </p>
             </div>
           </div>
@@ -6005,7 +6005,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               class="col"
             >
               <p>
-                This is a list of dataSources from another OIBus. The name should respect the following convention: OIBusId:DataSourceName
+                This is a list of south connectors from another OIBus. The name should respect the following convention: OIBusId:SouthName
               </p>
             </div>
           </div>
@@ -7355,7 +7355,7 @@ exports[`Engine check change engineName 1`] = `
               class="col"
             >
               <p>
-                South protocols scan the dataSources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in this section before they can be used on the various protocols. The syntax is derived from the unix cron syntax with a precision to the millisecond.
+                South connectors scan the data sources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in this section before they can be used on the various south connectors. The syntax is derived from the unix cron syntax with a precision to the millisecond.
               </p>
               <p>
                 <code>
@@ -7366,7 +7366,7 @@ exports[`Engine check change engineName 1`] = `
                 The table below gives several examples.
               </p>
               <p>
-                (A special scanMode - listen - needs to be defined for protocols if you have protocols reacting to events mode such as MQTT)
+                (A special scanMode - listen - needs to be defined for south connectors if you have protocols reacting to events mode such as MQTT)
               </p>
               <div>
                 <table>
@@ -8064,13 +8064,13 @@ exports[`Engine check change engineName 1`] = `
               class="col"
             >
               <p>
-                In case communication errors prevent OIBus to send information to a North application, the values will be stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
+                In case communication errors prevent OIBus to send information to a North connector, the values will be stored in a local cache (one cache is needed for each North connector) and they will be retried regularly.
               </p>
               <p>
-                When the communication is restored, all values in the cache will be forwarded to the North application. The location of these caches on the OIBus server is indicated in the cache folder parameters.
+                When the communication is restored, all values in the cache will be forwarded to the North connector. The location of these caches on the OIBus server is indicated in the cache folder parameters.
               </p>
               <p>
-                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North application or to archive them in the archive folder.
+                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North connector or to archive them in the archive folder.
               </p>
               <p>
                 When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
@@ -8188,7 +8188,7 @@ exports[`Engine check change engineName 1`] = `
               class="col"
             >
               <p>
-                Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+                Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
               </p>
             </div>
           </div>
@@ -9291,7 +9291,7 @@ exports[`Engine check change engineName 1`] = `
               class="col"
             >
               <p>
-                This is a list of dataSources from another OIBus. The name should respect the following convention: OIBusId:DataSourceName
+                This is a list of south connectors from another OIBus. The name should respect the following convention: OIBusId:SouthName
               </p>
             </div>
           </div>
@@ -10621,7 +10621,7 @@ exports[`Engine check change password 1`] = `
               class="col"
             >
               <p>
-                South protocols scan the dataSources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in this section before they can be used on the various protocols. The syntax is derived from the unix cron syntax with a precision to the millisecond.
+                South connectors scan the data sources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in this section before they can be used on the various south connectors. The syntax is derived from the unix cron syntax with a precision to the millisecond.
               </p>
               <p>
                 <code>
@@ -10632,7 +10632,7 @@ exports[`Engine check change password 1`] = `
                 The table below gives several examples.
               </p>
               <p>
-                (A special scanMode - listen - needs to be defined for protocols if you have protocols reacting to events mode such as MQTT)
+                (A special scanMode - listen - needs to be defined for south connectors if you have protocols reacting to events mode such as MQTT)
               </p>
               <div>
                 <table>
@@ -11330,13 +11330,13 @@ exports[`Engine check change password 1`] = `
               class="col"
             >
               <p>
-                In case communication errors prevent OIBus to send information to a North application, the values will be stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
+                In case communication errors prevent OIBus to send information to a North connector, the values will be stored in a local cache (one cache is needed for each North connector) and they will be retried regularly.
               </p>
               <p>
-                When the communication is restored, all values in the cache will be forwarded to the North application. The location of these caches on the OIBus server is indicated in the cache folder parameters.
+                When the communication is restored, all values in the cache will be forwarded to the North connector. The location of these caches on the OIBus server is indicated in the cache folder parameters.
               </p>
               <p>
-                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North application or to archive them in the archive folder.
+                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North connector or to archive them in the archive folder.
               </p>
               <p>
                 When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
@@ -11454,7 +11454,7 @@ exports[`Engine check change password 1`] = `
               class="col"
             >
               <p>
-                Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+                Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
               </p>
             </div>
           </div>
@@ -12557,7 +12557,7 @@ exports[`Engine check change password 1`] = `
               class="col"
             >
               <p>
-                This is a list of dataSources from another OIBus. The name should respect the following convention: OIBusId:DataSourceName
+                This is a list of south connectors from another OIBus. The name should respect the following convention: OIBusId:SouthName
               </p>
             </div>
           </div>
@@ -13887,7 +13887,7 @@ exports[`Engine check change port 1`] = `
               class="col"
             >
               <p>
-                South protocols scan the dataSources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in this section before they can be used on the various protocols. The syntax is derived from the unix cron syntax with a precision to the millisecond.
+                South connectors scan the data sources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in this section before they can be used on the various south connectors. The syntax is derived from the unix cron syntax with a precision to the millisecond.
               </p>
               <p>
                 <code>
@@ -13898,7 +13898,7 @@ exports[`Engine check change port 1`] = `
                 The table below gives several examples.
               </p>
               <p>
-                (A special scanMode - listen - needs to be defined for protocols if you have protocols reacting to events mode such as MQTT)
+                (A special scanMode - listen - needs to be defined for south connectors if you have protocols reacting to events mode such as MQTT)
               </p>
               <div>
                 <table>
@@ -14596,13 +14596,13 @@ exports[`Engine check change port 1`] = `
               class="col"
             >
               <p>
-                In case communication errors prevent OIBus to send information to a North application, the values will be stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
+                In case communication errors prevent OIBus to send information to a North connector, the values will be stored in a local cache (one cache is needed for each North connector) and they will be retried regularly.
               </p>
               <p>
-                When the communication is restored, all values in the cache will be forwarded to the North application. The location of these caches on the OIBus server is indicated in the cache folder parameters.
+                When the communication is restored, all values in the cache will be forwarded to the North connector. The location of these caches on the OIBus server is indicated in the cache folder parameters.
               </p>
               <p>
-                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North application or to archive them in the archive folder.
+                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North connector or to archive them in the archive folder.
               </p>
               <p>
                 When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
@@ -14720,7 +14720,7 @@ exports[`Engine check change port 1`] = `
               class="col"
             >
               <p>
-                Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+                Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
               </p>
             </div>
           </div>
@@ -15823,7 +15823,7 @@ exports[`Engine check change port 1`] = `
               class="col"
             >
               <p>
-                This is a list of dataSources from another OIBus. The name should respect the following convention: OIBusId:DataSourceName
+                This is a list of south connectors from another OIBus. The name should respect the following convention: OIBusId:SouthName
               </p>
             </div>
           </div>
@@ -17153,7 +17153,7 @@ exports[`Engine check change user 1`] = `
               class="col"
             >
               <p>
-                South protocols scan the dataSources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in this section before they can be used on the various protocols. The syntax is derived from the unix cron syntax with a precision to the millisecond.
+                South connectors scan the data sources on a regular basis (every minute, every hour, ...). These scan modes needs to be defined in this section before they can be used on the various south connectors. The syntax is derived from the unix cron syntax with a precision to the millisecond.
               </p>
               <p>
                 <code>
@@ -17164,7 +17164,7 @@ exports[`Engine check change user 1`] = `
                 The table below gives several examples.
               </p>
               <p>
-                (A special scanMode - listen - needs to be defined for protocols if you have protocols reacting to events mode such as MQTT)
+                (A special scanMode - listen - needs to be defined for south connectors if you have protocols reacting to events mode such as MQTT)
               </p>
               <div>
                 <table>
@@ -17862,13 +17862,13 @@ exports[`Engine check change user 1`] = `
               class="col"
             >
               <p>
-                In case communication errors prevent OIBus to send information to a North application, the values will be stored in a local cache (one cache is needed for each North application) and they will be retried regularly.
+                In case communication errors prevent OIBus to send information to a North connector, the values will be stored in a local cache (one cache is needed for each North connector) and they will be retried regularly.
               </p>
               <p>
-                When the communication is restored, all values in the cache will be forwarded to the North application. The location of these caches on the OIBus server is indicated in the cache folder parameters.
+                When the communication is restored, all values in the cache will be forwarded to the North connector. The location of these caches on the OIBus server is indicated in the cache folder parameters.
               </p>
               <p>
-                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North application or to archive them in the archive folder.
+                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North connector or to archive them in the archive folder.
               </p>
               <p>
                 When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
@@ -17986,7 +17986,7 @@ exports[`Engine check change user 1`] = `
               class="col"
             >
               <p>
-                Some north applications require to send informations through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
+                Some North connectors require to send information through a proxy. Each proxy needs to be defined in this section and can be reused by other OIBus section. This section can be empty if you dont use proxies on your network.
               </p>
             </div>
           </div>
@@ -19089,7 +19089,7 @@ exports[`Engine check change user 1`] = `
               class="col"
             >
               <p>
-                This is a list of dataSources from another OIBus. The name should respect the following convention: OIBusId:DataSourceName
+                This is a list of south connectors from another OIBus. The name should respect the following convention: OIBusId:SouthName
               </p>
             </div>
           </div>

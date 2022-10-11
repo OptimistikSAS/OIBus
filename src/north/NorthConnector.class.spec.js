@@ -37,7 +37,7 @@ describe('NorthConnector', () => {
     settings = {
       id: 'id',
       name: 'north',
-      api: 'test',
+      type: 'test',
       NorthConnector: {},
       caching: {
         sendInterval: 1000,

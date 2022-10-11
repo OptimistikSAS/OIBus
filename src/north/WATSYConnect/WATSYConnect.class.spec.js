@@ -46,7 +46,7 @@ describe('North WATSYConnect', () => {
     settings = {
       id: 'northId',
       name: 'watsy',
-      api: 'WATSYConnect',
+      type: 'WATSYConnect',
       enabled: false,
       WATSYConnect: {
         MQTTUrl: 'mqtt://hostname',

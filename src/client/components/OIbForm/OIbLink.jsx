@@ -7,14 +7,14 @@ const OIbLink = ({ label, help, value, protocols, name, onChange, defaultValue, 
   React.useEffect(() => {
     if (value === null) onChange(name, defaultValue)
   }, [value])
-  // valid if starts with any of provided protocol and not endsWith '/'
+  // valid if starts with any of provided south and not endsWith '/'
   const valid = combinedValidations([startsWithAnyOf(protocols, '://'), notEndsWith('/')])
   const handleChange = (event) => {
     const { target } = event
     const { value: newVal } = target
     onChange(name, newVal, valid(newVal))
   }
-  // if no label, we are in a table so we need to minimize the row height
+  // if no label, we are in a table, so we need to minimize the row height
   const style = label ? null : { marginBottom: 0 }
   if (inline && style) {
     style.display = 'inline-block'

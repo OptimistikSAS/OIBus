@@ -2,18 +2,18 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Button } from 'reactstrap'
 import { useNavigate } from 'react-router-dom'
-import ProtocolSchemas from './Protocols.jsx'
+import SouthSchemas from './SouthTypes.jsx'
 
-const PointsButton = ({ dataSource }) => {
+const PointsButton = ({ south }) => {
   const navigate = useNavigate()
-  const { points, protocol, enabled } = dataSource
-  const hasPoints = ProtocolSchemas[protocol]?.points !== null
+  const { points, type, enabled } = south
+  const hasPoints = SouthSchemas[type]?.points !== null
   return hasPoints ? (
     <Button
       className="inline-button autosize oi-points-button"
       // eslint-disable-next-line no-nested-ternary
       color={enabled ? (points?.length ? 'success' : 'warning') : 'secondary'}
-      onClick={() => navigate(`/south/${dataSource.id}/points`)}
+      onClick={() => navigate(`/south/${south.id}/points`)}
       size="sm"
       outline
     >
@@ -31,6 +31,6 @@ const PointsButton = ({ dataSource }) => {
   )
 }
 
-PointsButton.propTypes = { dataSource: PropTypes.object.isRequired }
+PointsButton.propTypes = { south: PropTypes.object.isRequired }
 
 export default PointsButton

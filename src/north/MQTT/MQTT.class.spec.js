@@ -38,7 +38,7 @@ describe('North MQTT', () => {
     settings = {
       id: 'northId',
       name: 'mqtt',
-      api: 'MQTT',
+      type: 'MQTT',
       enabled: true,
       MQTT: {
         password: 'anypass',

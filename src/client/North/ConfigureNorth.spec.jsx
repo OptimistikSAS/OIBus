@@ -6,7 +6,7 @@ import { act, Simulate } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
 import { testConfig } from '../../../tests/testConfig'
-import ConfigureApi from './ConfigureApi.jsx'
+import ConfigureNorth from './ConfigureNorth.jsx'
 import utils from '../helpers/utils'
 
 const dispatchNewConfig = jest.fn()
@@ -38,16 +38,16 @@ afterEach(() => {
   root = null
 })
 
-describe('ConfigureApi', () => {
-  test('check ConfigureApi', () => {
+describe('ConfigureNorth', () => {
+  test('check ConfigureNorth', () => {
     act(() => {
-      root.render(<ConfigureApi />)
+      root.render(<ConfigureNorth />)
     })
     expect(container).toMatchSnapshot()
   })
   test('check update', () => {
     act(() => {
-      root.render(<ConfigureApi />)
+      root.render(<ConfigureNorth />)
     })
     act(() => {
       Simulate.change(document.getElementById('north.0.Console.verbose'), { target: { checked: true } })
@@ -61,14 +61,14 @@ describe('ConfigureApi', () => {
     })
     expect(container).toMatchSnapshot()
   })
-  test('check application not found', () => {
+  test('check north not found', () => {
     const reactUseContextMock = React.useContext
     // temporary empty north connectors array
     const config = utils.jsonCopy(testConfig)
     config.north = []
     React.useContext = jest.fn().mockReturnValue({ newConfig: config, dispatchNewConfig })
     act(() => {
-      root.render(<ConfigureApi />)
+      root.render(<ConfigureNorth />)
     })
     expect(container).toMatchSnapshot()
     React.useContext = reactUseContextMock

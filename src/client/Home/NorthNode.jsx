@@ -3,18 +3,18 @@ import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import { Tooltip } from 'reactstrap'
 import NorthMenu from './NorthMenu.jsx'
-import ApiSchemas from '../North/Apis.jsx'
+import NorthSchemas from '../North/NorthTypes.jsx'
 import imageCategories from './imageCategories'
 import OIbCheckBox from '../components/OIbForm/OIbCheckBox.jsx'
 
-const NorthNode = ({ application, indexNorth, onChange }) => {
+const NorthNode = ({ north, northIndex, onChange }) => {
   const [tooltipOpenedId, setTooltipOpenedId] = React.useState()
   return (
     <div className="d-flex flex-column h-100 w-100">
       <div className="w-100 d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
         <img
           src={
-            `${imageCategories[ApiSchemas[application.api].category].image}`
+            `${imageCategories[NorthSchemas[north.type].category].image}`
             ?? imageCategories.Default.image
           }
           alt="logo"
@@ -22,37 +22,37 @@ const NorthNode = ({ application, indexNorth, onChange }) => {
         />
         <div
           className="oi-node-title"
-          id={`north-connector-title-${application.id}`}
+          id={`north-connector-title-${north.id}`}
         >
-          {`${application.name}`}
+          {`${north.name}`}
         </div>
         <Tooltip
-          isOpen={application.id === tooltipOpenedId}
+          isOpen={north.id === tooltipOpenedId}
           placement="top"
-          target={`north-connector-title-${application.id}`}
+          target={`north-connector-title-${north.id}`}
           toggle={() => {
-            setTooltipOpenedId((oldValue) => (oldValue === application.id ? null : application.id))
+            setTooltipOpenedId((oldValue) => (oldValue === north.id ? null : north.id))
           }}
         >
-          {`${application.name}`}
+          {`${north.name}`}
         </Tooltip>
         <div className="oi-node-click-item">
-          <NorthMenu application={application} />
+          <NorthMenu north={north} />
         </div>
       </div>
       <Link
-        to={`/north/${application.id}`}
+        to={`/north/${north.id}`}
         className="w-100 text-decoration-none text-muted flex-grow-1"
       >
         <div className="d-flex flex-column h-100 justify-content-center py-2 oi-node-click-item">
-          <div>{application.api}</div>
+          <div>{north.type}</div>
         </div>
       </Link>
       <div className="oi-node-footer">
         <OIbCheckBox
-          name={`north.${indexNorth}.enabled`}
+          name={`north.${northIndex}.enabled`}
           defaultValue={false}
-          value={application.enabled}
+          value={north.enabled}
           onChange={onChange}
         />
       </div>
@@ -61,8 +61,8 @@ const NorthNode = ({ application, indexNorth, onChange }) => {
 }
 
 NorthNode.propTypes = {
-  application: PropTypes.object.isRequired,
-  indexNorth: PropTypes.number.isRequired,
+  north: PropTypes.object.isRequired,
+  northIndex: PropTypes.number.isRequired,
   onChange: PropTypes.func.isRequired,
 }
 

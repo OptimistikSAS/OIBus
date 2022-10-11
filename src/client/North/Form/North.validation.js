@@ -7,7 +7,7 @@ const validation = {
     maxSendCount: (val) => (val > 0 ? null : 'Max group count should be greater than 0'),
     retentionDuration: (val) => (val > 0 ? null : 'Retention duration should be greater than 0'),
   },
-  application: {
+  north: {
     isValidName: (val, excludedList) => {
       let error = null
       if (excludedList.includes(val)) {

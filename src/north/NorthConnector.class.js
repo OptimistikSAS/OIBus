@@ -124,13 +124,13 @@ class NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async connect(additionalInfo) {
-    const { name, api } = this.settings
+    const { name, type } = this.settings
     this.connected = true
     this.statusService.updateStatusDataStream({ 'Connected at': new Date().toISOString() })
     if (additionalInfo) {
-      this.logger.info(`North connector "${name}" of type ${api} started with ${additionalInfo}.`)
+      this.logger.info(`North connector "${name}" of type ${type} started with ${additionalInfo}.`)
     } else {
-      this.logger.info(`North connector "${name}" of type ${api} started.`)
+      this.logger.info(`North connector "${name}" of type ${type} started.`)
     }
   }
 
