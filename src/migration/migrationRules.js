@@ -1439,7 +1439,7 @@ module.exports = {
       logger.warn(err)
     }
 
-    this.logger.info('Removing retry count from http request config.')
+    logger.info('Removing retry count from http request config.')
     delete config.engine.httpRequest.retryCount
 
     for (const south of config.south.dataSources) {
