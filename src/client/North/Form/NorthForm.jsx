@@ -206,7 +206,7 @@ const NorthForm = ({ application, applicationIndex, onChange }) => {
                 label={application.caching.archive.enabled ? 'Archive mode activated' : 'Archive mode deactivated'}
                 name={`${prefix}.caching.archive.enabled`}
                 value={application.caching.archive.enabled}
-                defaultValue
+                defaultValue={false}
                 help={<div>Move to archive folder or delete files when they are sent</div>}
                 onChange={onChange}
               />
