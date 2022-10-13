@@ -331,7 +331,7 @@ describe('SouthConnector', () => {
 
     await south.onScan('scanModeTest')
     expect(south.logger.warn).toHaveBeenCalledWith('South "south" already scanning for scan mode "scanModeTest" '
-        + 'since = 2 scans.')
+        + 'since 2 scans.')
     expect(south.currentlyOnScan.scanModeTest).toEqual(2)
     expect(south.historyQueryHandler).not.toHaveBeenCalled()
   })

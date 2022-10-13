@@ -275,7 +275,7 @@ class SouthConnector {
     }
     if (this.currentlyOnScan[scanMode] !== 0) {
       this.currentlyOnScan[scanMode] += 1
-      this.logger.warn(`South "${this.settings.name}" already scanning for scan mode "${scanMode}" since = `
+      this.logger.warn(`South "${this.settings.name}" already scanning for scan mode "${scanMode}" since `
           + `${this.currentlyOnScan[scanMode]} scans.`)
       return
     }

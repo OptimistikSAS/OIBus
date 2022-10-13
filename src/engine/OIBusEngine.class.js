@@ -143,7 +143,7 @@ class OIBusEngine extends BaseEngine {
 
     this.safeMode = safeMode || engineConfig.safeMode
     if (this.safeMode) {
-      this.logger.warn('OIBus Engine is running in safe mode')
+      this.logger.warn('OIBus Engine is running in safe mode.')
       return
     }
 
@@ -226,12 +226,12 @@ class OIBusEngine extends BaseEngine {
             if (activeSouth) {
               await activeSouth.onScan(scanMode)
             } else {
-              this.logger.error(`The South connector ${id} has not been initialized`)
+              this.logger.error(`The South connector ${id} has not been initialized.`)
             }
           })
         })
         if (job.result !== 'ok') {
-          this.logger.error(`The scan mode ${scanMode} could not start: ${job.error}`)
+          this.logger.error(`The scan mode "${scanMode}" could not start: ${job.error}`)
         }
         return job
       })
@@ -240,7 +240,7 @@ class OIBusEngine extends BaseEngine {
     this.healthSignal = new HealthSignal(this)
     this.healthSignal.start()
 
-    this.logger.info('OIBus started')
+    this.logger.info('OIBus started.')
   }
 
   /**
@@ -272,14 +272,14 @@ class OIBusEngine extends BaseEngine {
 
     // Stop South connectors
     await Promise.allSettled(this.activeSouths.map((south) => {
-      this.logger.info(`Stopping South ${south.settings.name} (${south.settings.id})`)
+      this.logger.info(`Stopping South "${south.settings.name}" (${south.settings.id}).`)
       return south.disconnect()
     }))
     this.activeSouths = []
 
     // Stop North connectors
     await Promise.allSettled(this.activeNorths.map((north) => {
-      this.logger.info(`Stopping North ${north.settings.name} (${north.settings.id})`)
+      this.logger.info(`Stopping North "${north.settings.name}" (${north.settings.id}).`)
       return north.disconnect()
     }))
     this.activeNorths = []

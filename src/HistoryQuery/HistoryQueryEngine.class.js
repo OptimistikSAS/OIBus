@@ -121,7 +121,7 @@ class HistoryQueryEngine extends BaseEngine {
 
     this.safeMode = safeMode || engineConfig.safeMode
     if (this.safeMode) {
-      this.logger.warn('HistoryQuery Engine is running in safe mode')
+      this.logger.warn('HistoryQuery Engine is running in safe mode.')
       return
     }
 
@@ -166,7 +166,7 @@ class HistoryQueryEngine extends BaseEngine {
 
     const historyQuerySettings = this.historyQueryRepository.getNextToRun()
     if (!historyQuerySettings) {
-      this.logger.debug('No HistoryQuery to execute.')
+      this.logger.trace('No History query to execute.')
       this.statusService.updateStatusDataStream({ ongoingHistoryQueryId: null })
       return
     }
@@ -226,7 +226,7 @@ class HistoryQueryEngine extends BaseEngine {
           lastCompletedDate: entry.value,
         }))
       } catch (e) {
-        this.logger.info(`The South database (${databasePath}) for HistoryQuery ${historyQueryConfig.name} doesn't exists`)
+        this.logger.info(`The South database (${databasePath}) for HistoryQuery ${historyQueryConfig.name} doesn't exist.`)
       }
     }
 

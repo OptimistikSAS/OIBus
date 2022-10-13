@@ -53,7 +53,7 @@ logger.changeParameters(logParameters).then(async () => {
   if (cluster.isMaster) {
     // Master role is nothing except launching a worker and relaunching another
     // one if exit is detected (typically to load a new configuration)
-    logger.info(`Starting OIBus version: ${VERSION}`)
+    logger.info(`Starting OIBus version ${VERSION}.`)
 
     let restartCount = 0
     let startTime = (new Date()).getTime()
@@ -135,7 +135,7 @@ logger.changeParameters(logParameters).then(async () => {
       const server = new Server(encryptionService, oibusEngine, historyQueryEngine)
 
       if (check) {
-        logger.warn('OIBus is running in check mode')
+        logger.warn('OIBus is running in check mode.')
         process.send({ type: 'shutdown-ready' })
       } else {
         oibusEngine.start(safeMode).then(() => {
