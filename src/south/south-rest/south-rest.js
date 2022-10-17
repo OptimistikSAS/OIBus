@@ -217,7 +217,7 @@ class SouthRest extends SouthConnector {
       headers['Content-Length'] = bodyToSend.length
       const requestOptions = {
         method: this.requestMethod,
-        agent: this.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null, // lgtm [js/disabling-certificate-validation]
+        agent: this.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
         timeout: this.connectionTimeout,
         host: this.host,
         port: this.port,
@@ -235,7 +235,7 @@ class SouthRest extends SouthConnector {
     const fetchOptions = {
       method: this.requestMethod,
       headers,
-      agent: this.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null, // lgtm [js/disabling-certificate-validation]
+      agent: this.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
       timeout: this.connectionTimeout,
     }
     const requestUrl = `${this.protocol}://${this.host}:${this.port}${this.endpoint}${
