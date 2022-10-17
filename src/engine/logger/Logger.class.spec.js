@@ -225,6 +225,6 @@ describe('Logger', () => {
     logger = new Logger()
     const result = logger.getSource()
 
-    expect(result).toEqual('Logger.class.spec(244)')
+    expect(result).toEqual(expect.stringContaining('Logger.class.spec'))
   })
 })
