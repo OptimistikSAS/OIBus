@@ -8,8 +8,5 @@
   "lockFileMaintenance": { "enabled": true },
   "schedule": [
     "before 3am on Monday"
-  ],
-  "npm": {
-    "stabilityDays": 3
-  }
+  ]
 }
