@@ -4,14 +4,14 @@ const path = require('node:path')
 const VERSION = require('../package.json').version
 
 const migrationService = require('./migration/migration.service')
-const ConfigService = require('./services/config.service.class')
-const Server = require('./server/Server.class')
-const OIBusEngine = require('./engine/OIBusEngine.class')
-const HistoryQueryEngine = require('./HistoryQuery/HistoryQueryEngine.class')
-const Logger = require('./engine/logger/Logger.class')
-const EncryptionService = require('./services/EncryptionService.class')
+const ConfigurationService = require('./service/configuration.service')
+const Server = require('./web-server/web-server')
+const OIBusEngine = require('./engine/oibus-engine')
+const HistoryQueryEngine = require('./engine/history-query-engine')
+const LoggerService = require('./service/logger/logger.service')
+const EncryptionService = require('./service/encryption.service')
 
-const { getCommandLineArguments, createFolder } = require('./services/utils')
+const { getCommandLineArguments, createFolder } = require('./service/utils')
 
 // In case there is an error the worker process will exit.
 // If this happens MAX_RESTART_COUNT times in less than MAX_INTERVAL_MILLISECOND interval
@@ -23,7 +23,7 @@ const CACHE_FOLDER = './cache'
 const LOG_FOLDER_NAME = 'logs'
 const MAIN_LOG_FILE_NAME = 'main-journal.log'
 
-const logger = new Logger()
+const logger = new LoggerService()
 
 const {
   configFile,
@@ -119,7 +119,7 @@ logger.changeParameters(logParameters).then(async () => {
       // Create the base cache folder
       await createFolder(CACHE_FOLDER)
 
-      const configService = new ConfigService(configFile, CACHE_FOLDER)
+      const configService = new ConfigurationService(configFile, CACHE_FOLDER)
       await configService.init()
 
       const encryptionService = EncryptionService.getInstance()

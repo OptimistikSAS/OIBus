@@ -4,9 +4,9 @@ const ESLintPlugin = require('eslint-webpack-plugin')
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
 
 module.exports = {
-  entry: ['./src/client/index.jsx'],
+  entry: ['./src/frontend/index.jsx'],
   output: {
-    path: path.resolve(__dirname, 'build'),
+    path: path.resolve(__dirname, 'build', 'web-client'),
     publicPath: '/',
     filename: 'bundle.js',
   },
@@ -47,8 +47,8 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.resolve('./src/client/index.html'),
-      favicon: path.resolve('./src/client/favicon.ico'),
+      template: path.resolve('./src/frontend/index.html'),
+      favicon: path.resolve('./src/frontend/favicon.ico'),
     }),
     new ESLintPlugin(),
     new MonacoWebpackPlugin({ languages: ['json', 'sql'] }),
