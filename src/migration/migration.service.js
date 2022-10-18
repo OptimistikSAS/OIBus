@@ -1,8 +1,8 @@
 const fs = require('node:fs/promises')
 const path = require('node:path')
 
-const migrationRules = require('./migrationRules')
-const Logger = require('../engine/logger/Logger.class')
+const migrationRules = require('./migration-rules')
+const LoggerService = require('../service/logger/logger.service')
 
 const REQUIRED_SCHEMA_VERSION = 28
 const DEFAULT_VERSION = 1
@@ -57,7 +57,7 @@ const migrateImpl = async (configVersion, config, configFilePath, logger) => {
  * @returns {Promise<void>} - The result promise
  */
 const migrate = async (configFilePath, logParameters) => {
-  const logger = new Logger('migration')
+  const logger = new LoggerService('migration')
   try {
     await logger.changeParameters(logParameters)
 

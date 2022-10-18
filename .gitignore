@@ -3,15 +3,10 @@
 .vscode/
 .env
 
-dist/
-build/
-coverage/
+build/bin/
+build/web-client/
 node_modules/
 
-tests/cache/
-tests/logs/
-tests/keys/
-tests/certs/
-tests/db/test.db
-tests/history-query.db
-tests/oibus*.json
+tests/coverage/
+
+data-folder/

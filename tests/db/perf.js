@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 /* eslint-disable no-console */
-const { createValuesDatabase, saveValues, getCount, getValuesToSend, removeSentValues } = require('../../src/services/database.service')
+const { createValuesDatabase, saveValues, getCount, getValuesToSend, removeSentValues } = require('../../src/service/database.service')
 
 const start = () => {
   console.time('total')
