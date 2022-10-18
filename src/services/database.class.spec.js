@@ -74,17 +74,6 @@ describe('Database services', () => {
     expect(expectedDatabase).toBe(mockDatabase)
   })
 
-  it('should create file database', () => {
-    const expectedDatabase = databaseService.createFilesDatabase('myDb.db')
-    expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('CREATE TABLE IF NOT EXISTS cache ('
-        + 'id INTEGER PRIMARY KEY, '
-        + 'timestamp INTEGER, '
-        + 'path TEXT);')
-    expect(run).toHaveBeenCalledTimes(1)
-    expect(expectedDatabase).toBe(mockDatabase)
-  })
-
   it('should create config database', () => {
     const expectedDatabase = databaseService.createConfigDatabase('myDb.db')
     expect(prepare).toHaveBeenCalledTimes(1)
@@ -150,75 +139,6 @@ describe('Database services', () => {
 
     expect(localRun).toHaveBeenCalledTimes(1)
     expect(result).toEqual(2)
-  })
-
-  it('should save file', () => {
-    databaseService.saveFile(mockDatabase, 123, 'myFilePath')
-    expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('INSERT INTO cache (timestamp, path) VALUES (?, ?)')
-
-    expect(run).toHaveBeenCalledTimes(1)
-    expect(run).toHaveBeenCalledWith(123, 'myFilePath')
-  })
-
-  it('should get file to send', () => {
-    const result = databaseService.getFileToSend(mockDatabase)
-    expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('SELECT path, timestamp '
-        + 'FROM cache '
-        + 'ORDER BY timestamp '
-        + 'LIMIT 1')
-
-    expect(all).toHaveBeenCalledTimes(1)
-    expect(all).toHaveBeenCalledWith()
-    expect(result).toEqual({ path: 'myFilePath', timestamp: 123 })
-  })
-
-  it('should return null if no file to send', () => {
-    mockDatabase.prepare.mockReturnValue({ all: jest.fn(() => []) })
-
-    const result = databaseService.getFileToSend(mockDatabase)
-
-    expect(result).toEqual(null)
-  })
-
-  it('should delete sent file', () => {
-    databaseService.deleteSentFile(mockDatabase, 'myFilePath')
-    expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('DELETE FROM cache WHERE path = ?')
-
-    expect(run).toHaveBeenCalledTimes(1)
-    expect(run).toHaveBeenCalledWith('myFilePath')
-  })
-
-  it('should get file count', () => {
-    const localGet = jest.fn()
-    localGet.mockReturnValue({ count: 1 })
-    mockDatabase.prepare.mockReturnValue({ get: localGet })
-
-    const result = databaseService.getFileCount(mockDatabase, 'myFilePath')
-    expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('SELECT COUNT(*) AS count FROM cache WHERE path = ?')
-
-    expect(localGet).toHaveBeenCalledTimes(1)
-    expect(localGet).toHaveBeenCalledWith('myFilePath')
-
-    expect(result).toEqual(1)
-  })
-
-  it('should get file count for a North connector', () => {
-    const localGet = jest.fn()
-    localGet.mockReturnValue({ count: 11 })
-    mockDatabase.prepare.mockReturnValue({ get: localGet })
-
-    const result = databaseService.getFileCountForNorthConnector(mockDatabase)
-    expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('SELECT COUNT(*) AS count FROM cache')
-
-    expect(localGet).toHaveBeenCalledTimes(1)
-    expect(localGet).toHaveBeenCalledWith()
-
-    expect(result).toEqual(11)
   })
 
   it('should upsert config', () => {

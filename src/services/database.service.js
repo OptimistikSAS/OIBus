@@ -32,23 +32,6 @@ const createValuesDatabase = (databasePath, options = {}) => {
  * @param {string} databasePath - The database file path
  * @return {object} - The SQLite database
  */
-const createFilesDatabase = (databasePath) => {
-  const database = db(databasePath)
-
-  const query = `CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (`
-                + 'id INTEGER PRIMARY KEY, '
-                + 'timestamp INTEGER, '
-                + 'path TEXT);'
-  database.prepare(query).run()
-
-  return database
-}
-
-/**
- * Initiate SQLite database and create the cache table.
- * @param {string} databasePath - The database file path
- * @return {object} - The SQLite database
- */
 const createConfigDatabase = (databasePath) => {
   const database = db(databasePath)
 
@@ -147,69 +130,6 @@ const removeSentValues = (database, values) => {
   const query = `DELETE FROM ${CACHE_TABLE_NAME} WHERE id IN (${ids})`
   const result = database.prepare(query).run()
   return result.changes
-}
-
-/**
- * Save file for a given North connector.
- * @param {object} database - The database to use
- * @param {number} timestamp - The timestamp
- * @param {string} filePath - The file path
- * @return {void} - Promise resolved when the transaction is done successfully
- */
-const saveFile = (database, timestamp, filePath) => {
-  const query = `INSERT INTO ${CACHE_TABLE_NAME} (timestamp, path) VALUES (?, ?)`
-  database.prepare(query).run(timestamp, filePath)
-}
-
-/**
- * Get file to send to a given North connector.
- * @param {object} database - The database to use
- * @return {{path: string, timestamp: number}|null} - The file path
- */
-const getFileToSend = (database) => {
-  const query = 'SELECT path, timestamp '
-                 + `FROM ${CACHE_TABLE_NAME} `
-                 + 'ORDER BY timestamp '
-                 + 'LIMIT 1'
-  const results = database.prepare(query).all()
-
-  return results.length > 0 ? results[0] : null
-}
-
-/**
- * Delete sent file from the cache for a given North connector.
- * @param {object} database - The database to use
- * @param {string} filePath - The file path
- * @return {void}
- */
-const deleteSentFile = (database, filePath) => {
-  const query = `DELETE FROM ${CACHE_TABLE_NAME} WHERE path = ?`
-  database.prepare(query).run(filePath)
-}
-
-/**
- * Get file count.
- * @param {object} database - The database to use
- * @param {string} filePath - The file path
- * @return {number} - The file count
- */
-const getFileCount = (database, filePath) => {
-  const query = `SELECT COUNT(*) AS count FROM ${CACHE_TABLE_NAME} WHERE path = ?`
-  const result = database.prepare(query).get(filePath)
-
-  return result.count
-}
-
-/**
- * Get file count for a North connector.
- * @param {object} database - The database to use
- * @return {number} - The file count
- */
-const getFileCountForNorthConnector = (database) => {
-  const query = `SELECT COUNT(*) AS count FROM ${CACHE_TABLE_NAME}`
-  const result = database.prepare(query).get()
-
-  return result.count
 }
 
 /**
@@ -324,7 +244,6 @@ const getHistoryQuerySouthData = (databasePath) => {
 
 module.exports = {
   createValuesDatabase,
-  createFilesDatabase,
   createConfigDatabase,
   createValueErrorsDatabase,
   saveValues,
@@ -332,11 +251,6 @@ module.exports = {
   getCount,
   getValuesToSend,
   removeSentValues,
-  saveFile,
-  getFileToSend,
-  deleteSentFile,
-  getFileCount,
-  getFileCountForNorthConnector,
   upsertConfig,
   getConfig,
   getLogs,

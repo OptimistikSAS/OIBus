@@ -240,7 +240,7 @@ class NorthConnector {
       return
     }
 
-    const fileToSend = this.fileCache.retrieveFileFromCache()
+    const fileToSend = await this.fileCache.retrieveFileFromCache()
     if (!fileToSend) {
       this.logger.trace('No file to send in the cache database.')
       this.resetFilesTimeout(this.settings.caching.sendInterval)
@@ -364,10 +364,12 @@ class NorthConnector {
 
   /**
    * Check appropriate caches emptiness
-   * @returns {Boolean} - True if North cache is empty, false otherwise
+   * @returns {Promise<Boolean>} - True if North cache is empty, false otherwise
    */
-  isCacheEmpty() {
-    return this.valueCache.isEmpty() && this.fileCache.isEmpty()
+  async isCacheEmpty() {
+    const isValueCacheEmpty = this.valueCache.isEmpty()
+    const isFileCacheEmpty = await this.fileCache.isEmpty()
+    return isValueCacheEmpty && isFileCacheEmpty
   }
 }
 
