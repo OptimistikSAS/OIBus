@@ -324,6 +324,10 @@ class SouthConnector {
   async disconnect() {
     this.connected = false
     const { name, id } = this.settings
+    Object.keys(this.currentlyOnScan).forEach((scanMode) => {
+      this.currentlyOnScan[scanMode] = 0
+      this.queryParts[scanMode] = 0
+    })
     this.statusService.updateStatusDataStream({ 'Connected at': 'Not connected' })
     this.logger.info(`South connector "${name}" (${id}) disconnected.`)
   }

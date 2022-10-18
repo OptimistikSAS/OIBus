@@ -226,7 +226,9 @@ describe('South Modbus', () => {
   it('should throw error if modbus function throws an error', async () => {
     await south.connect()
     south.client.readHoldingRegisters = jest.fn().mockImplementation(() => {
-      throw new Error('modbus error')
+      const rejectError = new Error()
+      rejectError.err = 'modbus error'
+      throw rejectError
     })
     let modbusError
     try {

@@ -66,12 +66,12 @@ class Modbus extends SouthConnector {
         async () => this.modbusFunction(point),
       ), Promise.resolve())
     } catch (error) {
-      if (error?.err === 'Offline') {
+      if (error.err === 'Offline') {
         this.logger.error('Modbus server offline.')
         await this.disconnect()
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.retryInterval)
       } else {
-        throw error
+        throw new Error(error.err)
       }
     }
   }
