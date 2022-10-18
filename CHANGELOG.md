@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.2.1](https://github.com/OptimistikSAS/OIBus/compare/v2.2.0...v2.2.1) (2022-10-18)
+
+
+### Bug Fixes
+
+* **front:** refactor datasource/protocol into south/southType and application/api into north/northType ([74e789f](https://github.com/OptimistikSAS/OIBus/commit/74e789f1eccb5fb334fe918ff20c910cfe035aaf))
+
 ## [2.2.0](https://github.com/OptimistikSAS/OIBus/compare/v2.1.2...v2.2.0) (2022-10-18)
 
 
