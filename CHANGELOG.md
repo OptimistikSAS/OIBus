@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.2.0](https://github.com/OptimistikSAS/OIBus/compare/v2.1.2...v2.2.0) (2022-10-18)
+
+
+### Features
+
+* **cache:** refactor the cache ([fca1ae4](https://github.com/OptimistikSAS/OIBus/commit/fca1ae488a6b59885b3f728ebc0392baf31daedd))
+* **installer:** sign Windows installer with sign tool ([481b619](https://github.com/OptimistikSAS/OIBus/commit/481b6199d3e62ad4888611ff43a4a0cfba989525))
+* **logs:** create paginated logs database query ([52e46be](https://github.com/OptimistikSAS/OIBus/commit/52e46be2f3a26d60ae0f871a7a8277753d2cb284))
+* **logs:** standard log path in oibus folder ([4e24752](https://github.com/OptimistikSAS/OIBus/commit/4e2475242e5ce85a3aa88c999fa9ee8cb026bd41))
+* **north:** specific cache folders for each connector ([fb91f83](https://github.com/OptimistikSAS/OIBus/commit/fb91f8355ba8b9e154ff49f32522c88701262c1d))
+
+
+### Bug Fixes
+
+* **cache:** add group count for values caching ([64deb5f](https://github.com/OptimistikSAS/OIBus/commit/64deb5fb578f386c27e209ab11a5f4f047e35b5c))
+* **cache:** clean up and move cache files ([531e752](https://github.com/OptimistikSAS/OIBus/commit/531e75276f06696d05b8928c2754585548c38291))
+* **config:** refactor config service ([7233dc4](https://github.com/OptimistikSAS/OIBus/commit/7233dc4735ce95ff6f052b5cbba56a53a0cf1814))
+* **encryption:** refactor encryption with fs/promises and improve testing ([940aa39](https://github.com/OptimistikSAS/OIBus/commit/940aa3925ee4867d6a6c00c4b64013515bb12d4b))
+* **history:** add an interval to retrieve history queries to run and fix history query initialisation ([fde01d8](https://github.com/OptimistikSAS/OIBus/commit/fde01d85e0b84e9f49bbc938ac033d98c329cf67))
+* **logger:** fix logger type and level ([4e6ce76](https://github.com/OptimistikSAS/OIBus/commit/4e6ce76eb42c9bdda0dc0bbf77ca40150d88082c))
+* **migration:** fix logger in migration ([edb5b10](https://github.com/OptimistikSAS/OIBus/commit/edb5b106a419f47c278906112286cf863e6b1d9b))
+* **north:** archive disabled by default ([5062806](https://github.com/OptimistikSAS/OIBus/commit/5062806e999a736ed245fc432061fa3c91f3f37b))
+* **north:** fix North retry error and catch init/connect error ([a8dca57](https://github.com/OptimistikSAS/OIBus/commit/a8dca57e93cb9daa3524c915f0925276331e7677))
+* **oibus:** refactor code to harmonize connectors and live status ([2bde86f](https://github.com/OptimistikSAS/OIBus/commit/2bde86f59398a1333b5acf584a5f1c1aa392e063))
+* **south:** fix South doc and tests ([b0fe496](https://github.com/OptimistikSAS/OIBus/commit/b0fe496883d25f7f080a034309b367aadde70dae))
+* **sql:** fix sql integration test ([d587023](https://github.com/OptimistikSAS/OIBus/commit/d58702319cb1f800757488a12d1bcf2abc0182ea))
+* **tests:** improve tests coverage and fix Modbus utils tools ([0580bbe](https://github.com/OptimistikSAS/OIBus/commit/0580bbe2fc4cecd9337a1bfd3c3c730d868f6c64))
+* **ui:** 1807 solved button display problem when renaming connector ([369f913](https://github.com/OptimistikSAS/OIBus/commit/369f91338d7c1e3fbd0fe0cbe99c06e54bebed13))
+* **ui:** align save button with edit field ([c6ef14b](https://github.com/OptimistikSAS/OIBus/commit/c6ef14b7834a2408e108dc8e434c82e0ab414d9f))
+* **ui:** Disable ui connection to disabled north and south nodes ([b396b32](https://github.com/OptimistikSAS/OIBus/commit/b396b32bf66e5e095104789d366c936c608db769))
+
 ### [2.1.2](https://github.com/OptimistikSAS/OIBus/compare/v2.1.1...v2.1.2) (2022-09-27)
 
 
