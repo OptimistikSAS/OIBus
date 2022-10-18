@@ -339,22 +339,21 @@ describe('NorthConnector', () => {
     expect(north.isSubscribed('southId')).toBeTruthy()
   })
 
-  it('should check if North caches are empty', () => {
+  it('should check if North caches are empty', async () => {
     north.valueCache.isEmpty.mockReturnValue(true)
-    north.fileCache.isEmpty.mockReturnValue(true)
-
-    expect(north.isCacheEmpty()).toBeTruthy()
+    north.fileCache.isEmpty.mockReturnValue(Promise.resolve(true))
+    expect(await north.isCacheEmpty()).toBeTruthy()
 
     north.valueCache.isEmpty.mockReturnValue(true)
-    north.fileCache.isEmpty.mockReturnValue(false)
-    expect(north.isCacheEmpty()).toBeFalsy()
+    north.fileCache.isEmpty.mockReturnValue(Promise.resolve(false))
+    expect(await north.isCacheEmpty()).toBeFalsy()
 
     north.valueCache.isEmpty.mockReturnValue(false)
-    north.fileCache.isEmpty.mockReturnValue(true)
-    expect(north.isCacheEmpty()).toBeFalsy()
+    north.fileCache.isEmpty.mockReturnValue(Promise.resolve(true))
+    expect(await north.isCacheEmpty()).toBeFalsy()
 
     north.valueCache.isEmpty.mockReturnValue(false)
-    north.fileCache.isEmpty.mockReturnValue(false)
-    expect(north.isCacheEmpty()).toBeFalsy()
+    north.fileCache.isEmpty.mockReturnValue(Promise.resolve(false))
+    expect(await north.isCacheEmpty()).toBeFalsy()
   })
 })

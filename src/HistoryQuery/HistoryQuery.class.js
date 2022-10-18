@@ -134,7 +134,8 @@ class HistoryQuery {
       return
     }
 
-    if (!this.north.isCacheEmpty()) {
+    const isCacheEmpty = await this.north.isCacheEmpty()
+    if (!isCacheEmpty) {
       this.logger.trace(`History query "${this.historySettings.id}" not over yet: Data cache not empty for "${this.northSettings.name}".`)
       return
     }

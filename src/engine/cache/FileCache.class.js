@@ -1,7 +1,6 @@
 const fs = require('node:fs/promises')
 const path = require('node:path')
 
-const databaseService = require('../../services/database.service')
 const BaseCache = require('./BaseCache.class')
 const { createFolder } = require('../../services/utils')
 
@@ -11,9 +10,6 @@ const ARCHIVE_TIMEOUT = 3600000 // one hour
 const ERROR_FOLDER = 'errors'
 const ARCHIVE_FOLDER = 'archive'
 const FILE_FOLDER = 'files'
-
-const FILE_DB_FILE_NAME = 'files.db'
-const FILE_ERROR_DB_FILE_NAME = 'files-error.db'
 
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
@@ -47,8 +43,6 @@ class FileCache extends BaseCache {
     this.fileFolder = path.resolve(this.baseFolder, FILE_FOLDER)
     this.errorFolder = path.resolve(this.baseFolder, ERROR_FOLDER)
 
-    this.filesDatabase = null
-    this.filesErrorDatabase = null
     this.archiveTimeout = null
   }
 
@@ -57,29 +51,22 @@ class FileCache extends BaseCache {
    * @returns {Promise<void>} - The result promise
    */
   async init() {
-    const filesDatabasePath = path.resolve(this.baseFolder, FILE_DB_FILE_NAME)
-    this.logger.debug(`Use file cache database: "${filesDatabasePath}".`)
-    this.filesDatabase = databaseService.createFilesDatabase(filesDatabasePath)
-    const filesCount = databaseService.getCount(this.filesDatabase)
-    if (filesCount > 0) {
-      this.logger.debug(`${filesCount} files in cache.`)
+    await createFolder(this.fileFolder)
+    await createFolder(this.errorFolder)
+
+    const files = await fs.readdir(this.fileFolder)
+    if (files.length > 0) {
+      this.logger.debug(`${files.length} files in cache.`)
     } else {
       this.logger.debug('No files in cache.')
     }
 
-    const filesErrorDatabasePath = path.resolve(this.baseFolder, FILE_ERROR_DB_FILE_NAME)
-
-    this.logger.debug(`Initialize files error db: ${filesErrorDatabasePath}`)
-    this.filesErrorDatabase = databaseService.createFilesDatabase(filesErrorDatabasePath)
-    const errorCount = databaseService.getCount(this.filesErrorDatabase)
-    if (errorCount > 0) {
-      this.logger.warn(`${errorCount} files in error cache.`)
+    const errorFiles = await fs.readdir(this.errorFolder)
+    if (errorFiles.length > 0) {
+      this.logger.warn(`${errorFiles.length} files in error cache.`)
     } else {
       this.logger.debug('No error files in cache.')
     }
-
-    await createFolder(this.fileFolder)
-    await createFolder(this.errorFolder)
 
     if (this.archiveFiles) {
       await createFolder(this.archiveFolder)
@@ -98,8 +85,6 @@ class FileCache extends BaseCache {
     if (this.archiveTimeout) {
       clearTimeout(this.archiveTimeout)
     }
-    this.filesDatabase.close()
-    this.filesErrorDatabase.close()
   }
 
   /**
@@ -117,18 +102,29 @@ class FileCache extends BaseCache {
     const cachePath = path.join(this.fileFolder, cacheFilename)
 
     await fs.copyFile(filePath, cachePath)
-
-    databaseService.saveFile(this.filesDatabase, timestamp, cachePath)
     this.logger.debug(`File "${filePath}" cached in "${cachePath}".`)
   }
 
   /**
    * Retrieve files from the Cache database and send them to the associated northHandleFileFunction function
    * This method is called when the group count is reached or when the Cache timeout is reached
-   * @returns {{path: string, timestamp: number}|null} - The file to send
+   * @returns {Promise<{path: string, timestamp: number}|null>} - The file to send
    */
-  retrieveFileFromCache() {
-    return databaseService.getFileToSend(this.filesDatabase)
+  async retrieveFileFromCache() {
+    const fileNames = await fs.readdir(this.fileFolder)
+
+    if (fileNames.length === 0) {
+      return null
+    }
+
+    const sortedFiles = fileNames
+      .map(async (fileName) => ({
+        path: `${this.fileFolder}/${fileName}`,
+        timestamp: (await fs.stat(`${this.fileFolder}/${fileName}`)).mtime.getTime(),
+      }))
+      .sort((a, b) => a.time - b.time)
+
+    return sortedFiles[0]
   }
 
   /**
@@ -138,9 +134,6 @@ class FileCache extends BaseCache {
    * @returns {Promise<void>} - The result promise
    */
   async manageErroredFiles(filePathInCache) {
-    databaseService.saveFile(this.filesErrorDatabase, new Date().getTime(), filePathInCache)
-    databaseService.deleteSentFile(this.filesDatabase, filePathInCache)
-
     const filenameInfo = path.parse(filePathInCache)
     const errorPath = path.join(this.errorFolder, filenameInfo.base)
     // Move cache file into the archive folder
@@ -159,8 +152,6 @@ class FileCache extends BaseCache {
    * @return {Promise<void>} - The result promise
    */
   async removeFileFromCache(filePathInCache, archiveFile) {
-    databaseService.deleteSentFile(this.filesDatabase, filePathInCache)
-
     if (archiveFile) {
       const filenameInfo = path.parse(filePathInCache)
       const archivePath = path.join(this.archiveFolder, filenameInfo.base)
@@ -186,8 +177,9 @@ class FileCache extends BaseCache {
    * Check if the file cache is empty or not
    * @returns {Boolean} - Cache empty or not
    */
-  isEmpty() {
-    return databaseService.getFileCountForNorthConnector(this.filesDatabase) === 0
+  async isEmpty() {
+    const files = await fs.readdir(this.fileFolder)
+    return files.length === 0
   }
 
   /**
