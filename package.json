@@ -9,10 +9,10 @@
     "npm": ">=8.15.0"
   },
   "scripts": {
-    "start": "node src/index.js --config ./tests/oibus.json",
-    "start:macos": "./dist/macos/oibus --config ./tests/oibus.json",
-    "start:win": ".\\dist\\win\\oibus.exe --config .\\tests\\oibus.json",
-    "start:linux": "./dist/linux/oibus --config ./tests/oibus.json",
+    "start": "node src/index.js --config ./data-folder/oibus.json",
+    "start:macos": "./build/bin/macos/oibus --config ./data-folder/oibus.json",
+    "start:win": ".\\build\\bin\\win\\oibus.exe --config .\\data-folder\\oibus.json",
+    "start:linux": "./build/bin/linux/oibus --config ./data-folder/oibus.json",
     "watch:web-client": "webpack --mode development --watch",
     "test": "jest --coverage --modulePathIgnorePatterns='.*\\.test\\.js$'",
     "test:setup-env": "docker-compose --env-file ./tests/.env.test up -d",
@@ -21,10 +21,10 @@
     "lint:fix": "eslint src --ext .jsx --ext .js --fix",
     "build:all": "npm ci && npm run build:win && npm run build:macos && npm run build:linux",
     "build:web-client": "webpack --mode production",
-    "build:win": "npm run build:web-client && npm run internal:build:lib-win && rimraf ./dist/win && pkg ./src/index.js --public --compress GZip --config package.json --output ./dist/win/oibus --target node16-win-x64 && ncp ./deps/win ./dist/win",
-    "build:macos": "npm run build:web-client && npm run internal:build:lib-macos && rimraf ./dist/macos && pkg ./src/index.js --public --compress GZip --config package.json --output ./dist/macos/oibus --target node16-macos-x64",
-    "build:linux": "npm run build:web-client && npm run internal:build:lib-linux && rimraf ./dist/linux && pkg ./src/index.js --public --compress GZip --config package.json --output ./dist/linux/oibus --target node16-linux-x64 && ncp ./deps/linux ./dist/linux && ncp ./src/config/defaultConfig.json ./dist/linux/defaultConfig.json",
-    "build:win-setup": "rimraf ./dist/win/win-setup-release && C:\\\"Program Files (x86)\"\\\"Inno Setup 6\"\\iscc.exe \"./deps/win/oibus_setup.iss\" \"/DMyAppVersion=\"%npm_package_version% \"/DMyCertFile=\"%PFX_PATH% \"/DMyCertPassword=\"%PFX_PASSWORD% \"/ssigntool=./deps/signtool/signtool.exe sign /debug $p\"",
+    "build:win": "npm run build:web-client && npm run internal:build:lib-win && rimraf ./build/bin/win && pkg ./src/index.js --public --compress GZip --config package.json --output ./build/bin/win/oibus --target node16-win-x64 && ncp ./build/deps/win ./build/bin/win",
+    "build:macos": "npm run build:web-client && npm run internal:build:lib-macos && rimraf ./build/bin/macos && pkg ./src/index.js --public --compress GZip --config package.json --output ./build/bin/macos/oibus --target node16-macos-x64",
+    "build:linux": "npm run build:web-client && npm run internal:build:lib-linux && rimraf ./build/bin/linux && pkg ./src/index.js --public --compress GZip --config package.json --output ./build/bin/linux/oibus --target node16-linux-x64 && ncp ./build/deps/linux ./build/bin/linux && ncp ./src/config/defaultConfig.json ./build/bin/linux/defaultConfig.json",
+    "build:win-setup": "rimraf ./build/bin/win/win-setup-release && C:\\\\\\\"Program Files (x86)\\\"\\\\\\\"Inno Setup 6\\\"\\\\iscc.exe \\\"./build/deps/win/oibus_setup.iss\\\" \\\"/DMyAppVersion=\\\"%npm_package_version% \\\"/DMyCertFile=\\\"%PFX_PATH% \\\"/DMyCertPassword=\\\"%PFX_PASSWORD% \\\"/ssigntool=./build/deps/signtool/signtool.exe sign /debug $p\\\"",
     "internal:build:lib-win": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.16.0 --arch=x64",
     "internal:build:lib-macos": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.16.0 --arch=x64",
     "internal:build:lib-linux": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.16.0 --arch=x64"
@@ -131,11 +131,12 @@
     "oracledb": "5.5.0"
   },
   "jest": {
-    "globalSetup": "./jest-config.js",
+    "globalSetup": "./tests/jest-config.js",
+    "coverageDirectory": "./tests/coverage",
     "moduleNameMapper": {
-      "\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js",
-      "monaco-editor": "<rootDir>/__mocks__/monacoEditorMock.js",
-      "nanoid": "<rootDir>/__mocks__/nanoidMock.js"
+      "\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/tests/__mocks__/fileMock.js",
+      "monaco-editor": "<rootDir>/tests/__mocks__/monacoEditorMock.js",
+      "nanoid": "<rootDir>/tests/__mocks__/nanoidMock.js"
     }
   },
   "pkg": {
@@ -145,7 +146,7 @@
       "node_modules/pino/lib/worker.js"
     ],
     "assets": [
-      "build/**/*",
+      "build/web-client/**/*",
       "node_modules/sqlite3/**/*.node",
       "node_modules/oracledb/**/*.node",
       "node_modules/better-sqlite3/build/Release/better_sqlite3.node",

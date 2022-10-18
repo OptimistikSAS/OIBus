@@ -23,7 +23,7 @@ DisableWelcomePage=no
 DisableDirPage=no
 DisableProgramGroupPage=yes
 LicenseFile=..\..\LICENSE
-OutputDir=..\..\dist\win-setup-release
+OutputDir=..\..\bin\win-setup-release
 OutputBaseFilename=oibus_setup
 PrivilegesRequired=admin
 SolidCompression=yes
@@ -42,7 +42,7 @@ Name: "en"; MessagesFile: "compiler:Default.isl"
 
 
 [Files]
-Source: "..\..\dist\win\oibus.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\bin\win\oibus.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "HdaAgent\*"; DestDir: "{app}\HdaAgent"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "OPC REDISTRIBUTABLES Agreement of Use.md"; DestDir: "{app}"; Flags: ignoreversion

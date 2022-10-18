@@ -6,7 +6,7 @@ const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
 module.exports = {
   entry: ['./src/client/index.jsx'],
   output: {
-    path: path.resolve(__dirname, 'build'),
+    path: path.resolve(__dirname, 'build', 'web-client'),
     publicPath: '/',
     filename: 'bundle.js',
   },

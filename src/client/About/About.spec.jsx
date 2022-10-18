@@ -11,6 +11,9 @@ import About from './About.jsx'
 
 import activeConfig from '../../../tests/testConfig'
 
+// eslint-disable-next-line no-undef
+globalThis.IS_REACT_ACT_ENVIRONMENT = true
+
 // sample status (object returned by Server to give various information about OIBus)
 const status = {
   version: '2.2.2',
