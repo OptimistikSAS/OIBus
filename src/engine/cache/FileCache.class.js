@@ -120,7 +120,7 @@ class FileCache extends BaseCache {
     const sortedFiles = fileNames
       .map(async (fileName) => ({
         path: path.resolve(this.fileFolder, fileName),
-        timestamp: (await fs.stat(`${this.fileFolder}/${fileName}`)).mtime.getTime(),
+        timestamp: (await fs.stat(path.resolve(this.fileFolder, fileName))).mtime.getTime(),
       }))
       .sort((a, b) => a.timestamp - b.timestamp)
 
@@ -158,7 +158,7 @@ class FileCache extends BaseCache {
       // Move cache file into the archive folder
       try {
         await fs.rename(filePathInCache, archivePath)
-        this.logger.info(`File "${filePathInCache}" moved to "${archivePath}".`)
+        this.logger.debug(`File "${filePathInCache}" moved to "${archivePath}".`)
       } catch (renameError) {
         this.logger.error(renameError)
       }
@@ -166,7 +166,7 @@ class FileCache extends BaseCache {
       // Delete original file
       try {
         await fs.unlink(filePathInCache)
-        this.logger.info(`File ${filePathInCache} removed from disk.`)
+        this.logger.debug(`File "${filePathInCache}" removed from disk.`)
       } catch (unlinkError) {
         this.logger.error(unlinkError)
       }
@@ -201,11 +201,9 @@ class FileCache extends BaseCache {
         async () => this.removeFileIfTooOld(file, referenceDate, this.archiveFolder),
       ), Promise.resolve())
     } else {
-      this.logger.debug(`The archive folder ${this.archiveFolder} is empty. Nothing to delete`)
+      this.logger.debug(`The archive folder "${this.archiveFolder}" is empty. Nothing to delete.`)
     }
-    this.archiveTimeout = setTimeout(() => {
-      this.refreshArchiveFolder()
-    }, ARCHIVE_TIMEOUT)
+    this.archiveTimeout = setTimeout(this.refreshArchiveFolder.bind(this), ARCHIVE_TIMEOUT)
   }
 
   /**
@@ -220,7 +218,7 @@ class FileCache extends BaseCache {
     if (stats.mtimeMs + this.retentionDuration < referenceDate) {
       try {
         await fs.unlink(path.join(archiveFolder, filePath))
-        this.logger.debug(`File ${path.join(archiveFolder, filePath)} removed from archive`)
+        this.logger.debug(`File "${path.join(archiveFolder, filePath)}" removed from archive.`)
       } catch (unlinkError) {
         this.logger.error(unlinkError)
       }
