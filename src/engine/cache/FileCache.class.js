@@ -119,10 +119,10 @@ class FileCache extends BaseCache {
 
     const sortedFiles = fileNames
       .map(async (fileName) => ({
-        path: `${this.fileFolder}/${fileName}`,
+        path: path.resolve(this.fileFolder, fileName),
         timestamp: (await fs.stat(`${this.fileFolder}/${fileName}`)).mtime.getTime(),
       }))
-      .sort((a, b) => a.time - b.time)
+      .sort((a, b) => a.timestamp - b.timestamp)
 
     return sortedFiles[0]
   }
