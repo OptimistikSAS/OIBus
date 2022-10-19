@@ -57,25 +57,20 @@ class FetchRequest extends BaseRequest {
       timeout,
     }
 
+    let response
     try {
-      const response = await fetch(requestUrl, fetchOptions)
-      if (!response.ok) {
-        const responseError = {
-          responseError: true,
-          statusCode: response.status,
-          error: new Error(response.statusText),
-        }
-        return Promise.reject(responseError)
-      }
+      response = await fetch(requestUrl, fetchOptions)
     } catch (error) {
-      const connectError = {
-        responseError: false,
-        error,
-      }
-      return Promise.reject(connectError)
+      const requestError = error
+      requestError.responseError = false
+      throw requestError
     }
-
-    return true
+    if (!response.ok) {
+      const responseError = new Error(response.statusText)
+      responseError.responseError = true
+      responseError.statusCode = response.status
+      throw responseError
+    }
   }
 }
 

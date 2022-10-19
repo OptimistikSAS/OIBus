@@ -74,17 +74,30 @@ class AxiosRequest extends BaseRequest {
     try {
       await axiosInstance(axiosOptions)
     } catch (error) {
-      const responseError = {
-        responseError: !!error.response,
-        statusCode: error.response ? error.response.status : undefined,
-        error,
-      }
       clearTimeout(cancelTimeout)
-      return Promise.reject(responseError)
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        const responseError = new Error(`Axios response error: ${error.response.status}`)
+        responseError.responseError = true
+        responseError.statusCode = error.response.status
+        throw responseError
+      } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        const requestError = new Error(error.message)
+        requestError.responseError = false
+        throw requestError
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        const otherError = new Error(error.message)
+        otherError.responseError = false
+        throw otherError
+      }
     }
 
     clearTimeout(cancelTimeout)
-    return true
   }
 }
 
