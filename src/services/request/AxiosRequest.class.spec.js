@@ -47,7 +47,7 @@ describe('AxiosRequest', () => {
     const mockAxios = jest.fn().mockReturnValue(Promise.resolve())
     axios.create.mockReturnValue(mockAxios)
 
-    const result = await axiosRequest.sendImplementation(requestUrl, method, headers, null, data, timeout)
+    await axiosRequest.sendImplementation(requestUrl, method, headers, null, data, timeout)
 
     const expectedAxiosCreateOptions = {
       cancelToken: 'token',
@@ -63,7 +63,6 @@ describe('AxiosRequest', () => {
     expect(axios.create).toBeCalledTimes(1)
     expect(axios.create).toBeCalledWith(expectedAxiosCreateOptions)
     expect(mockAxios).toBeCalledWith(expectedAxiosOptions)
-    expect(result).toBeTruthy()
   })
 
   it('should properly call axios with proxy for JSON data', async () => {
@@ -85,7 +84,7 @@ describe('AxiosRequest', () => {
     const timeout = 1000 * 10000
     const mockAxios = jest.fn().mockReturnValue(Promise.resolve())
     axios.create.mockReturnValue(mockAxios)
-    const result = await axiosRequest.sendImplementation(requestUrl, method, headers, proxy, data, timeout)
+    await axiosRequest.sendImplementation(requestUrl, method, headers, proxy, data, timeout)
 
     const expectedAxiosCreateOptions1 = {
       cancelToken: 'token',
@@ -116,7 +115,6 @@ describe('AxiosRequest', () => {
     ])
     expect(tunnel.httpsOverHttps).toBeCalledWith({ axiosProxy: expectedAxiosProxy })
     expect(mockAxios).toBeCalledWith(expectedAxiosOptions)
-    expect(result).toBeTruthy()
   })
 
   it('should properly call axios without proxy for form-data', async () => {
@@ -130,7 +128,7 @@ describe('AxiosRequest', () => {
     const mockAxios = jest.fn().mockReturnValue(Promise.resolve())
     axios.create.mockReturnValue(mockAxios)
 
-    const result = await axiosRequest.sendImplementation(requestUrl, method, headers, null, data, timeout)
+    await axiosRequest.sendImplementation(requestUrl, method, headers, null, data, timeout)
 
     const expectedAxiosOptions = {
       method,
@@ -141,7 +139,6 @@ describe('AxiosRequest', () => {
 
     expect(utils.generateFormDataBodyFromFile).toBeCalledWith(data)
     expect(mockAxios).toBeCalledWith(expectedAxiosOptions)
-    expect(result).toBeTruthy()
   })
 
   it('should properly handle axios error', async () => {
@@ -165,11 +162,10 @@ describe('AxiosRequest', () => {
       result = response
     }
 
-    const expectedResult = {
-      error: { response: { status: 400 } },
-      responseError: true,
-      statusCode: 400,
-    }
+    const expectedResult = new Error('Axios response error: 400')
+    expectedResult.responseError = true
+    expectedResult.statusCode = 400
+
     expect(result).toEqual(expectedResult)
   })
 })

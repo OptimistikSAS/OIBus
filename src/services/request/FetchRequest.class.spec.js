@@ -45,7 +45,7 @@ describe('FetchRequest', () => {
     const timeout = 1000 * 10000
     fetch.mockReturnValue(Promise.resolve(new Response('Ok')))
 
-    const result = await fetchRequest.sendImplementation(requestUrl, method, headers, null, data, timeout)
+    await fetchRequest.sendImplementation(requestUrl, method, headers, null, data, timeout)
 
     const expectedFetchOptions = {
       method,
@@ -56,7 +56,6 @@ describe('FetchRequest', () => {
     }
 
     expect(fetch).toBeCalledWith(requestUrl, expectedFetchOptions)
-    expect(result).toBeTruthy()
   })
 
   it('should properly call node-fetch with proxy for JSON data', async () => {
@@ -78,7 +77,7 @@ describe('FetchRequest', () => {
     const timeout = 1000 * 10000
     fetch.mockReturnValue(Promise.resolve(new Response('Ok')))
 
-    const result = await fetchRequest.sendImplementation(requestUrl, method, headers, proxy, data, timeout)
+    await fetchRequest.sendImplementation(requestUrl, method, headers, proxy, data, timeout)
 
     const expectedProxyOptions = {
       auth: 'username:password',
@@ -104,7 +103,6 @@ describe('FetchRequest', () => {
 
     expect(ProxyAgent).toBeCalledWith(expectedProxyOptions)
     expect(fetch).toBeCalledWith(requestUrl, expectedFetchOptions)
-    expect(result).toBeTruthy()
   })
 
   it('should properly call node-fetch without proxy for form-data', async () => {
@@ -117,7 +115,7 @@ describe('FetchRequest', () => {
     const timeout = 1000 * 10000
     fetch.mockReturnValue(Promise.resolve(new Response('Ok')))
 
-    const result = await fetchRequest.sendImplementation(requestUrl, method, headers, null, data, timeout)
+    await fetchRequest.sendImplementation(requestUrl, method, headers, null, data, timeout)
 
     const expectedFetchOptions = {
       method,
@@ -129,7 +127,6 @@ describe('FetchRequest', () => {
 
     expect(utils.generateFormDataBodyFromFile).toBeCalledWith(data)
     expect(fetch).toBeCalledWith(requestUrl, expectedFetchOptions)
-    expect(result).toBeTruthy()
   })
 
   it('should properly handle fetch response error', async () => {
@@ -145,16 +142,14 @@ describe('FetchRequest', () => {
 
     let result
     try {
-      result = await fetchRequest.sendImplementation(requestUrl, method, headers, null, data, timeout)
+      await fetchRequest.sendImplementation(requestUrl, method, headers, null, data, timeout)
     } catch (response) {
       result = response
     }
 
-    const expectedResult = {
-      error: new Error('statusText'),
-      responseError: true,
-      statusCode: 400,
-    }
+    const expectedResult = new Error('statusText')
+    expectedResult.responseError = true
+    expectedResult.statusCode = 400
     expect(result).toEqual(expectedResult)
   })
 
@@ -171,15 +166,13 @@ describe('FetchRequest', () => {
 
     let result
     try {
-      result = await fetchRequest.sendImplementation(requestUrl, method, headers, null, data, timeout)
+      await fetchRequest.sendImplementation(requestUrl, method, headers, null, data, timeout)
     } catch (response) {
       result = response
     }
 
-    const expectedResult = {
-      error: new Error('error'),
-      responseError: false,
-    }
+    const expectedResult = new Error('error')
+    expectedResult.responseError = false
     expect(result).toEqual(expectedResult)
   })
 })
