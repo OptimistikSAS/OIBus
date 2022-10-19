@@ -1548,4 +1548,19 @@ module.exports = {
       delete south.protocol
     }
   },
+  28: async (config, logger) => {
+    for (const north of config.north) {
+      logger.info(`Delete file cache DBs for North "${north.id}".`)
+      try {
+        await fs.rm(path.resolve(`./cache/data-stream/north-${north.id}/files.db`), { force: true })
+        await fs.rm(path.resolve(`./cache/data-stream/north-${north.id}/files-error.db`), { force: true })
+        await fs.rm(path.resolve(`./cache/history-query/north-${north.id}/files.db`), { force: true })
+        await fs.rm(path.resolve(`./cache/history-query/north-${north.id}/files-error.db`), { force: true })
+      } catch (err) {
+        if (err.code !== 'ENOENT') {
+          logger.error(err)
+        }
+      }
+    }
+  },
 }
