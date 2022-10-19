@@ -1,3 +1,6 @@
+/**
+ * Parent class used for values and files cache
+ */
 class BaseCache {
   /**
    * @param {String} northId - The North ID connector
