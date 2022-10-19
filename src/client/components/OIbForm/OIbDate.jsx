@@ -1,5 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import { DateTime } from 'luxon'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
 const OIbDate = ({ label, help, valid, value, name, onChange, inline, hidden, maxDateString }) => {
@@ -15,8 +16,7 @@ const OIbDate = ({ label, help, valid, value, name, onChange, inline, hidden, ma
   }
   if (hidden) return null
   const validCheck = valid(value)
-  const formattedDate = new Date(value).toISOString().substring(0, 16)
-
+  const formattedDate = DateTime.fromISO(new Date(value).toISOString()).toFormat('yyyy-MM-dd HH:mm')
   return (
     <FormGroup style={style}>
       {label && <Label for={name}>{label}</Label>}
