@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.2.2](https://github.com/OptimistikSAS/OIBus/compare/v2.2.1...v2.2.2) (2022-10-19)
+
+
+### Bug Fixes
+
+* **north:** switch HTTP request error from Promise reject to Error thrown ([baf9c1a](https://github.com/OptimistikSAS/OIBus/commit/baf9c1a3a689393e1a9aca1b817eac492a8473c3))
+* **south:** reinitialize properly south currently on scan after error ([637dcc5](https://github.com/OptimistikSAS/OIBus/commit/637dcc544f9e6f1e7f20f34094211028955827c6))
+
 ### [2.2.1](https://github.com/OptimistikSAS/OIBus/compare/v2.2.0...v2.2.1) (2022-10-18)
 
 
