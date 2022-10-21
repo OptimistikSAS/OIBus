@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.3.0](https://github.com/OptimistikSAS/OIBus/compare/v2.2.2...v2.3.0) (2022-10-21)
+
+
+### Features
+
+* **cache:** File cache uses folder scan to get file list instead of DB ([62f3d0b](https://github.com/OptimistikSAS/OIBus/commit/62f3d0bf064fffafcdb215c87d76e008fa29a504))
+* **cache:** Remove old file cache DBs ([7fec671](https://github.com/OptimistikSAS/OIBus/commit/7fec671085fb8c2b2b5190f248a808b234b62e14))
+
+
+### Bug Fixes
+
+* **cache:** Add tests for file and value caches ([5858f26](https://github.com/OptimistikSAS/OIBus/commit/5858f269c6d9ecab52415e99ea6ca20e5a80c56f))
+* **cache:** Fix retrieving file from cache ([eb6e3fd](https://github.com/OptimistikSAS/OIBus/commit/eb6e3fd0f7f450237e5db32296eec55e2a3f974a))
+* **ui:** History date time input fix ([49320a8](https://github.com/OptimistikSAS/OIBus/commit/49320a80cb5bc119bd0a844f29ce486f38db6d49))
+
 ### [2.2.2](https://github.com/OptimistikSAS/OIBus/compare/v2.2.1...v2.2.2) (2022-10-19)
 
 
