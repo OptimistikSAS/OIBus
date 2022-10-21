@@ -111,17 +111,34 @@ class FileCache extends BaseCache {
    * @returns {Promise<{path: string, timestamp: number}|null>} - The file to send
    */
   async retrieveFileFromCache() {
-    const fileNames = await fs.readdir(this.fileFolder)
+    let fileNames = []
+    try {
+      fileNames = await fs.readdir(this.fileFolder)
+    } catch (error) {
+      this.logger.error(error)
+    }
 
     if (fileNames.length === 0) {
       return null
     }
 
     const sortedFiles = fileNames
-      .map(async (fileName) => ({
-        path: path.resolve(this.fileFolder, fileName),
-        timestamp: (await fs.stat(path.resolve(this.fileFolder, fileName))).mtime.getTime(),
-      }))
+      .map(async (fileName) => {
+        // Retrieve file state to retrieve the oldest one from the cache
+        let fileState = null
+        try {
+          // Error triggered when a file is being written (from a South)
+          fileState = await fs.stat(path.resolve(this.fileFolder, fileName))
+        } catch (error) {
+          this.logger.error(error)
+        }
+        return {
+          path: path.resolve(this.fileFolder, fileName),
+          timestamp: fileState ? fileState.mtime.getTime() : null,
+        }
+      })
+    // filter out files that are not completely written
+      .filter((file) => file.timestamp !== null)
       .sort((a, b) => a.timestamp - b.timestamp)
 
     return sortedFiles[0]

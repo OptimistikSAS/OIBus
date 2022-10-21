@@ -1,4 +1,3 @@
-const fs = require('node:fs/promises')
 const NorthConnector = require('./north-connector')
 
 const { defaultConfig: config } = require('../../tests/test-config')
@@ -234,22 +233,8 @@ describe('NorthConnector', () => {
     north.resetFilesTimeout = jest.fn()
     await north.retrieveFromCacheAndSendFile()
 
-    expect(north.logger.trace).toHaveBeenCalledWith('No file to send in the cache database.')
+    expect(north.logger.trace).toHaveBeenCalledWith('No file to send in the cache folder.')
     expect(north.resetFilesTimeout).toHaveBeenCalledWith(settings.caching.sendInterval)
-  })
-
-  it('should not send files if it does not exist', async () => {
-    const fileToSend = { path: 'myFile' }
-    north.fileCache.retrieveFileFromCache = jest.fn(() => fileToSend)
-    north.fileCache.removeFileFromCache = jest.fn()
-    fs.stat = jest.fn().mockImplementationOnce(() => {
-      throw new Error('file does not exist')
-    })
-
-    await north.retrieveFromCacheAndSendFile()
-
-    expect(north.logger.error).toHaveBeenCalledWith(`File "${fileToSend.path}" not found! The file has been removed from the cache.`)
-    expect(north.fileCache.removeFileFromCache).toHaveBeenCalledWith(fileToSend.path, false)
   })
 
   it('should retry to send files if it fails', async () => {
