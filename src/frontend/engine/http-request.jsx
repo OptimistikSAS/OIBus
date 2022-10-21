@@ -43,17 +43,6 @@ const HttpRequest = ({
           onChange={onChange}
         />
       </Col>
-      <Col md={2}>
-        <OibInteger
-          label="Retry count"
-          name="engine.httpRequest.retryCount"
-          value={httpRequest.retryCount}
-          defaultValue={3}
-          valid={validation.engine.httpRequest.retryCount}
-          help={<div>How many times to retry sending if server responds with status code 400, 500</div>}
-          onChange={onChange}
-        />
-      </Col>
     </Row>
   </>
 )

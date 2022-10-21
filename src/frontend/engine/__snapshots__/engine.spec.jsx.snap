@@ -3099,38 +3099,6 @@ exports[`Engine check Engine 1`] = `
             </small>
           </div>
         </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.retryCount"
-            >
-              Retry count
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.httpRequest.retryCount"
-              name="engine.httpRequest.retryCount"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                How many times to retry sending if server responds with status code 400, 500
-              </div>
-            </small>
-          </div>
-        </div>
       </div>
       <div
         class="row"
@@ -5927,38 +5895,6 @@ exports[`Engine check Engine when config has no proxies 1`] = `
             >
               <div>
                 How long to wait for the request to finish (in seconds)
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.retryCount"
-            >
-              Retry count
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.httpRequest.retryCount"
-              name="engine.httpRequest.retryCount"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                How many times to retry sending if server responds with status code 400, 500
               </div>
             </small>
           </div>
@@ -9217,38 +9153,6 @@ exports[`Engine check change engineName 1`] = `
             </small>
           </div>
         </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.retryCount"
-            >
-              Retry count
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.httpRequest.retryCount"
-              name="engine.httpRequest.retryCount"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                How many times to retry sending if server responds with status code 400, 500
-              </div>
-            </small>
-          </div>
-        </div>
       </div>
       <div
         class="row"
@@ -12479,38 +12383,6 @@ exports[`Engine check change password 1`] = `
             >
               <div>
                 How long to wait for the request to finish (in seconds)
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.retryCount"
-            >
-              Retry count
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.httpRequest.retryCount"
-              name="engine.httpRequest.retryCount"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                How many times to retry sending if server responds with status code 400, 500
               </div>
             </small>
           </div>
@@ -15749,38 +15621,6 @@ exports[`Engine check change port 1`] = `
             </small>
           </div>
         </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.retryCount"
-            >
-              Retry count
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.httpRequest.retryCount"
-              name="engine.httpRequest.retryCount"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                How many times to retry sending if server responds with status code 400, 500
-              </div>
-            </small>
-          </div>
-        </div>
       </div>
       <div
         class="row"
@@ -19011,38 +18851,6 @@ exports[`Engine check change user 1`] = `
             >
               <div>
                 How long to wait for the request to finish (in seconds)
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.retryCount"
-            >
-              Retry count
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.httpRequest.retryCount"
-              name="engine.httpRequest.retryCount"
-              type="integer"
-              value=""
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                How many times to retry sending if server responds with status code 400, 500
               </div>
             </small>
           </div>
