@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.3.2](https://github.com/OptimistikSAS/OIBus/compare/v2.3.1...v2.3.2) (2022-10-21)
+
+
+### Bug Fixes
+
+* **north:** fix north retrieve file when file being written ([f0c8117](https://github.com/OptimistikSAS/OIBus/commit/f0c81172b627eb7f14f6b46cbe2436c1291b0017))
+
 ### [2.3.1](https://github.com/OptimistikSAS/OIBus/compare/v2.3.0...v2.3.1) (2022-10-21)
 
 
