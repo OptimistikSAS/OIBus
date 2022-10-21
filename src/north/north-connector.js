@@ -1,4 +1,3 @@
-const fs = require('node:fs/promises')
 const path = require('node:path')
 
 const EncryptionService = require('../service/encryption.service')
@@ -245,21 +244,11 @@ class NorthConnector {
 
     const fileToSend = await this.fileCache.retrieveFileFromCache()
     if (!fileToSend) {
-      this.logger.trace('No file to send in the cache database.')
+      this.logger.trace('No file to send in the cache folder.')
       this.resetFilesTimeout(this.caching.sendInterval)
       return
     }
     this.logger.trace(`File to send: "${fileToSend.path}".`)
-
-    try {
-      await fs.stat(fileToSend.path)
-    } catch (error) {
-      // File in cache does not exist on filesystem
-      await this.fileCache.removeFileFromCache(fileToSend.path, false)
-      this.logger.error(`File "${fileToSend.path}" not found! The file has been removed from the cache.`)
-      this.resetFilesTimeout(this.caching.sendInterval)
-      return
-    }
 
     this.sendingFilesInProgress = true
     this.resendFilesImmediately = false
