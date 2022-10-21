@@ -1,33 +1,33 @@
-| develop             | ![master](https://github.com/OptimistikSAS/OIBus/workflows/Node%20CI/badge.svg?branch=develop) |
-|---------------------|------------------------------------------------------------------------------------------------|
-| **release (master)** | ![](https://github.com/OptimistikSAS/OIBus/workflows/Node%20CI/badge.svg?branch=master)        |
+![OIBus](src/frontend/oibus.png)
 
-![](https://github.com/OptimistikSAS/OIBus/blob/master/src/client/OIBus.png)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/OptimistikSAS/OIBus.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OptimistikSAS/OIBus/alerts/)
-[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/OptimistikSAS/OIBus.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OptimistikSAS/OIBus/context:javascript)
+## OIBus
+OIBus is an executable (Windows, Linux and Mac) able to query data from your industrial sources using various protocols 
+(including OPCUA-HA, OPCHDA, Modbus, MQTT) or simply by scanning folders and will send them to your enterprise 
+applications.
 
-## What OIBus does
-OIBus is an executable (Windows, Linux and MacOS) able to query data from your industrial sources using various protocols (including OPCUA-HA, OPCHDA, Modbus, MQTT) or simply by scanning folders and will send them to your enterprise applications.
-
-**Optimistik** is using **OIBus** on many industrial sites to send data to our **OIAnalytics** solution to query from 10 to over 10.000 points with sampling rate at the second level.
+**Optimistik** is using **OIBus** on many industrial sites to send data to its **OIAnalytics** solution to query from 10
+to over 10.000 points with sampling rate at the second level.
 
 OIBus can be installed and configured in minutes and does not need development skills.
 
 More information on [OIBus homepage](https://optimistik.io/oibus)
 
 ## Introduction
-* OIBus is intended to simplify the data collection. We felt we had a missing piece between NodeRed and proprietary products for a tool able to solve most of the common requirements for industrial communications and very fast to setup.
+OIBus is intended to simplify the data collection. We, at Optimistik, felt we had a missing piece between NodeRed and 
+proprietary products for a tool able to solve most of the common requirements for industrial communications and very 
+fast to set up.
  
-* OIBus is composed of 3 layers. 
+OIBus is composed of 3 layers. 
 - The **Engine** that orchestrates everything and is configured through an admin interface
-- Several **South** handlers that will manage a given protocol (OPCUA, MQTT, Modbus, ...)
-- Several **North** handlers that will be able to transfer the information to application such as OIAnalytics, Rest API, Timeseries databases, etc.. 
-
-More information on [OIBus homepage](https://optimistik.io/oibus)
+- Several **South** connectors that will retrieve data from a given technology (SQL, OPCUA, MQTT, Modbus...)
+- Several **North** connectors that will be able to transfer the data to application such as OIAnalytics, Rest API,
+Timeseries databases, MQTT broker... 
 
 ## Build and deploy step
-* Fork the OIBus repository
-* To buid the client and the executable for each distribution run `npm run build`
-* To start the client, run 'npm run start' (or directly one of the distribution with 'npm run start-win', 'npm run start-linux' or 'npm run start-macos'
-
-More information on [OIBus Get Started page](https://optimistik.io/start-with-oibus/)
+* **Fork** the OIBus repository and clone it. Be sure to have NodeJS and npm installed (LTS versions).
+* **Install** the node dependencies : `npm install`
+* **Build** the web client used to display the OIBus interface in a web browser : `npm run build:web-client`. If you want to 
+modify the web client, you must rebuild it. Alternatively, you can build it on changes with `npm run watch:web-client`.
+* **Start** OIBus from source with `npm start`
+* You can compile OIBus on your appropriate distribution with `npm run build:win`, `npm run build:linux` or `npm run build:macos`.
+* You can start OIBus from its binaries with `npm run start:win`, `npm run start:linux` or `npm run start:macos`.
