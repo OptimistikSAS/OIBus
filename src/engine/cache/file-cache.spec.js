@@ -61,6 +61,20 @@ describe('FileCache', () => {
     expect(cache.refreshArchiveFolder).not.toHaveBeenCalled()
   })
 
+  it('should be properly initialized with a readdir error', async () => {
+    cache.refreshArchiveFolder = jest.fn()
+    fs.readdir.mockImplementation(() => {
+      throw new Error('readdir error')
+    })
+    cache.retentionDuration = 0
+    await cache.init()
+
+    expect(logger.error).toHaveBeenCalledWith(new Error('readdir error'))
+    expect(logger.error).toHaveBeenCalledTimes(2)
+
+    expect(cache.refreshArchiveFolder).not.toHaveBeenCalled()
+  })
+
   it('should be properly initialized without archive files', async () => {
     cache.archiveFiles = false
     cache.refreshArchiveFolder = jest.fn()
@@ -93,6 +107,21 @@ describe('FileCache', () => {
     expect(logger.debug).toHaveBeenCalledWith(`File "myFile.csv" cached in "${path.resolve('myCacheFolder', 'files', 'myFile-1580608922222.csv')}".`)
   })
 
+  it('should properly managed cache file error', async () => {
+    fs.copyFile.mockImplementation(() => {
+      throw new Error('copy file')
+    })
+
+    let error
+    try {
+      await cache.cacheFile('myFile.csv')
+    } catch (copyError) {
+      error = copyError
+    }
+
+    expect(error).toEqual(new Error('copy file'))
+  })
+
   it('should properly retrieve file from cache', async () => {
     fs.readdir.mockImplementationOnce(() => []).mockImplementation(() => ['myFile1', 'myFile2'])
     fs.stat.mockImplementation(() => ({ mtime: new Date() }))
@@ -105,6 +134,33 @@ describe('FileCache', () => {
       path: path.resolve(cache.fileFolder, 'myFile1'),
       timestamp: 1580608922222,
     })
+  })
+
+  it('should properly manage error when retrieving file from cache', async () => {
+    fs.readdir.mockImplementation(() => {
+      throw new Error('readdir error')
+    })
+
+    const noFile = await cache.retrieveFileFromCache()
+    expect(noFile).toEqual(null)
+    expect(logger.error).toHaveBeenCalledWith(new Error('readdir error'))
+  })
+
+  it('should properly retrieve file from cache and manage file error', async () => {
+    fs.readdir.mockImplementation(() => ['myFile1', 'myFile2', 'myFile3'])
+    fs.stat.mockImplementationOnce(() => ({ mtime: new Date() }))
+      .mockImplementationOnce(() => {
+        throw new Error('stat error')
+      })
+      .mockImplementationOnce(() => ({ mtime: new Date('2010-02-01T02:02:02.222Z') }))
+
+    const oneFile = await cache.retrieveFileFromCache()
+    expect(oneFile).toEqual({
+      path: path.resolve(cache.fileFolder, 'myFile3'),
+      timestamp: 1264989722222,
+    })
+    expect(logger.error).toHaveBeenCalledTimes(1)
+    expect(logger.error).toHaveBeenCalledWith(new Error('stat error'))
   })
 
   it('should properly manage error files', async () => {
@@ -144,11 +200,20 @@ describe('FileCache', () => {
   })
 
   it('should check if cache is empty', async () => {
-    fs.readdir.mockImplementationOnce(() => []).mockImplementation(() => ['myFile1', 'myFile2'])
+    fs.readdir.mockImplementationOnce(() => [])
+      .mockImplementationOnce(() => ['myFile1', 'myFile2'])
+      .mockImplementationOnce(() => {
+        throw new Error('readdir error')
+      })
     const empty = await cache.isEmpty()
     expect(empty).toBeTruthy()
     const notEmpty = await cache.isEmpty()
     expect(notEmpty).toBeFalsy()
+
+    const emptyBecauseOfError = await cache.isEmpty()
+    expect(emptyBecauseOfError).toBeTruthy()
+    expect(logger.error).toHaveBeenCalledTimes(1)
+    expect(logger.error).toHaveBeenCalledWith(new Error('readdir error'))
   })
 
   it('should refresh archive folder', async () => {
@@ -166,6 +231,17 @@ describe('FileCache', () => {
     await flushPromises()
 
     expect(cache.removeFileIfTooOld).toHaveBeenCalledTimes(2)
+  })
+
+  it('should manage archive folder readdir error', async () => {
+    fs.readdir.mockImplementationOnce(() => {
+      throw new Error('readdir error')
+    })
+    cache.removeFileIfTooOld = jest.fn()
+
+    await cache.refreshArchiveFolder()
+    expect(cache.removeFileIfTooOld).not.toHaveBeenCalled()
+    expect(logger.error).toHaveBeenCalledWith(new Error('readdir error'))
   })
 
   it('should remove file if too old', async () => {
@@ -188,5 +264,16 @@ describe('FileCache', () => {
 
     await cache.removeFileIfTooOld('myOldFile.csv', new Date(), 'archiveFolder')
     expect(logger.error).toHaveBeenCalledWith(new Error('unlink error'))
+  })
+
+  it('should log an error if a problem occur accessing the file', async () => {
+    fs.stat.mockImplementationOnce(() => {
+      throw new Error('stat error')
+    })
+
+    await cache.removeFileIfTooOld('myOldFile.csv', new Date(), 'archiveFolder')
+    expect(fs.unlink).not.toHaveBeenCalled()
+    expect(logger.error).toHaveBeenCalledWith(new Error('stat error'))
+    expect(logger.error).toHaveBeenCalledTimes(1)
   })
 })
