@@ -54,18 +54,28 @@ class FileCache extends BaseCache {
     await createFolder(this.fileFolder)
     await createFolder(this.errorFolder)
 
-    const files = await fs.readdir(this.fileFolder)
-    if (files.length > 0) {
-      this.logger.debug(`${files.length} files in cache.`)
-    } else {
-      this.logger.debug('No files in cache.')
+    try {
+      const files = await fs.readdir(this.fileFolder)
+      if (files.length > 0) {
+        this.logger.debug(`${files.length} files in cache.`)
+      } else {
+        this.logger.debug('No files in cache.')
+      }
+    } catch (error) {
+      // If the folder does not exist, an error is logged but OIBus keep going to check errors and archive folders
+      this.logger.error(error)
     }
 
-    const errorFiles = await fs.readdir(this.errorFolder)
-    if (errorFiles.length > 0) {
-      this.logger.warn(`${errorFiles.length} files in error cache.`)
-    } else {
-      this.logger.debug('No error files in cache.')
+    try {
+      const errorFiles = await fs.readdir(this.errorFolder)
+      if (errorFiles.length > 0) {
+        this.logger.warn(`${errorFiles.length} files in error cache.`)
+      } else {
+        this.logger.debug('No error files in cache.')
+      }
+    } catch (error) {
+      // If the folder does not exist, an error is logged but not thrown if the file cache folder is accessible
+      this.logger.error(error)
     }
 
     if (this.archiveFiles) {
@@ -122,24 +132,25 @@ class FileCache extends BaseCache {
       return null
     }
 
-    const sortedFiles = fileNames
-      .map(async (fileName) => {
-        // Retrieve file state to retrieve the oldest one from the cache
-        let fileState = null
+    const fileStats = []
+    // Get file stats one after the other
+    await fileNames.reduce((promise, fileName) => promise.then(
+      async () => {
         try {
-          // Error triggered when a file is being written (from a South)
-          fileState = await fs.stat(path.resolve(this.fileFolder, fileName))
+          const stat = await fs.stat(path.resolve(this.fileFolder, fileName))
+          fileStats.push({
+            path: path.resolve(this.fileFolder, fileName),
+            timestamp: stat.mtime.getTime(),
+          })
         } catch (error) {
+          // If a file is being written or corrupted, the stat method can fail
+          // An error is logged and the cache goes through the other files
           this.logger.error(error)
         }
-        return {
-          path: path.resolve(this.fileFolder, fileName),
-          timestamp: fileState ? fileState.mtime.getTime() : null,
-        }
-      })
-    // filter out files that are not completely written
-      .filter((file) => file.timestamp !== null)
-      .sort((a, b) => a.timestamp - b.timestamp)
+      },
+    ), Promise.resolve())
+
+    const sortedFiles = fileStats.sort((a, b) => a.timestamp - b.timestamp)
 
     return sortedFiles[0]
   }
@@ -195,7 +206,13 @@ class FileCache extends BaseCache {
    * @returns {Boolean} - Cache empty or not
    */
   async isEmpty() {
-    const files = await fs.readdir(this.fileFolder)
+    let files = []
+    try {
+      files = await fs.readdir(this.fileFolder)
+    } catch (error) {
+      // Log an error if the folder does not exist (removed by the user while OIBus is running for example)
+      this.logger.error(error)
+    }
     return files.length === 0
   }
 
@@ -210,9 +227,16 @@ class FileCache extends BaseCache {
       clearTimeout(this.archiveTimeout)
     }
 
-    const files = await fs.readdir(this.archiveFolder)
-    const referenceDate = new Date().getTime()
+    let files = []
+    try {
+      files = await fs.readdir(this.archiveFolder)
+    } catch (error) {
+      // If the archive folder doest not exist (removed by the user for example), an error is logged
+      this.logger.error(error)
+    }
     if (files.length > 0) {
+      const referenceDate = new Date().getTime()
+
       // Map each file to a promise and remove files sequentially
       await files.reduce((promise, file) => promise.then(
         async () => this.removeFileIfTooOld(file, referenceDate, this.archiveFolder),
@@ -231,8 +255,14 @@ class FileCache extends BaseCache {
    * @returns {Promise<void>} - The result promise
    */
   async removeFileIfTooOld(filePath, referenceDate, archiveFolder) {
-    const stats = await fs.stat(path.join(archiveFolder, filePath))
-    if (stats.mtimeMs + this.retentionDuration < referenceDate) {
+    let stats
+    try {
+      // If a file is being written or corrupted, the stat method can fail an error is logged
+      stats = await fs.stat(path.join(archiveFolder, filePath))
+    } catch (error) {
+      this.logger.error(error)
+    }
+    if (stats && stats.mtimeMs + this.retentionDuration < referenceDate) {
       try {
         await fs.unlink(path.join(archiveFolder, filePath))
         this.logger.debug(`File "${path.join(archiveFolder, filePath)}" removed from archive.`)

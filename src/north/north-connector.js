@@ -205,7 +205,7 @@ class NorthConnector {
 
       if (this.valuesRetryCount < this.caching.retryCount || this.shouldRetry(error)) {
         this.valuesRetryCount += 1
-        this.logger.debug(`Retrying in ${this.caching.retryInterval}. Retry count: ${this.valuesRetryCount}`)
+        this.logger.debug(`Retrying in ${this.caching.retryInterval} ms. Retry count: ${this.valuesRetryCount}`)
       } else {
         this.logger.debug('Too many retries. Moving values to error cache...')
         this.valueCache.manageErroredValues(values)
@@ -268,7 +268,7 @@ class NorthConnector {
       this.logger.error(error)
       if (this.filesRetryCount < this.caching.retryCount || this.shouldRetry(error)) {
         this.filesRetryCount += 1
-        this.logger.debug(`Retrying in ${this.caching.retryInterval}. Retry count: ${this.filesRetryCount}`)
+        this.logger.debug(`Retrying in ${this.caching.retryInterval} ms. Retry count: ${this.filesRetryCount}`)
       } else {
         this.logger.debug('Too many retries. Moving file to error cache...')
         await this.fileCache.manageErroredFiles(fileToSend.path)
