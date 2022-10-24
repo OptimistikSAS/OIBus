@@ -11,12 +11,12 @@ runs:
     - name: Use Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: 18.12
 
     - name: Get current date
       shell: bash
       id: date
-      run: echo "::set-output name=date::$(date +'calendar-week-%W')"
+      run: echo "date=$(date +'calendar-week-%W')" >> $GITHUB_OUTPUT
 
     - name: Write cache version
       shell: bash
