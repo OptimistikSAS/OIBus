@@ -32,9 +32,8 @@ describe('Service utils', () => {
       }),
       pause: jest.fn(),
     }
-    fsSync.createReadStream.mockReturnValueOnce(myReadStream)
 
-    const formData = utils.generateFormDataBodyFromFile(filepath)
+    const formData = utils.generateFormDataBodyFromFile(path.parse(filepath), myReadStream)
 
     expect(formData).toBeInstanceOf(FormData)
   })

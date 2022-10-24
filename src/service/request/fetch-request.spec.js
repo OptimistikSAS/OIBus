@@ -1,3 +1,6 @@
+const path = require('path')
+const fsSync = require('node:fs')
+
 const fetch = require('node-fetch')
 const ProxyAgent = require('proxy-agent')
 
@@ -5,6 +8,8 @@ const FetchRequest = require('./fetch-request')
 const utils = require('../utils')
 
 const { defaultConfig: config } = require('../../../tests/test-config')
+
+jest.mock('node:fs')
 
 // Mock utils class
 jest.mock('../utils', () => ({ generateFormDataBodyFromFile: jest.fn() }))
@@ -105,6 +110,51 @@ describe('FetchRequest', () => {
     expect(fetch).toBeCalledWith(requestUrl, expectedFetchOptions)
   })
 
+  it('should properly call node-fetch with proxy without auth for JSON data', async () => {
+    ProxyAgent.mockReturnValue({})
+    const requestUrl = 'https://www.example.com'
+    const method = 'POST'
+    const headers = {
+      Authorization: 'Basic kdvdkfsdfdsf',
+      'Content-Type': 'application/json',
+    }
+    const proxy = {
+      protocol: 'https',
+      host: 'www.example.com',
+      port: 80,
+    }
+    const data = 'data'
+    const timeout = 1000 * 10000
+    fetch.mockReturnValue(Promise.resolve(new Response('Ok')))
+
+    await fetchRequest.sendImplementation(requestUrl, method, headers, proxy, data, timeout)
+
+    const expectedProxyOptions = {
+      auth: null,
+      hash: null,
+      host: 'www.example.com:80',
+      hostname: 'www.example.com',
+      href: 'https://www.example.com:80/',
+      path: '/',
+      pathname: '/',
+      port: '80',
+      protocol: 'https:',
+      query: null,
+      search: null,
+      slashes: true,
+    }
+    const expectedFetchOptions = {
+      method,
+      headers,
+      body: data,
+      agent: {},
+      timeout,
+    }
+
+    expect(ProxyAgent).toBeCalledWith(expectedProxyOptions)
+    expect(fetch).toBeCalledWith(requestUrl, expectedFetchOptions)
+  })
+
   it('should properly call node-fetch without proxy for form-data', async () => {
     const mockedBody = { getHeaders: () => ({ formDataHeader: 'formDataHeader' }) }
     utils.generateFormDataBodyFromFile.mockReturnValue(mockedBody)
@@ -114,6 +164,17 @@ describe('FetchRequest', () => {
     const data = 'data'
     const timeout = 1000 * 10000
     fetch.mockReturnValue(Promise.resolve(new Response('Ok')))
+
+    const myReadStream = {
+      pipe: jest.fn().mockReturnThis(),
+      on: jest.fn().mockImplementation((event, handler) => {
+        handler()
+        return this
+      }),
+      pause: jest.fn(),
+      close: jest.fn(),
+    }
+    fsSync.createReadStream.mockReturnValueOnce(myReadStream)
 
     await fetchRequest.sendImplementation(requestUrl, method, headers, null, data, timeout)
 
@@ -125,7 +186,8 @@ describe('FetchRequest', () => {
       timeout,
     }
 
-    expect(utils.generateFormDataBodyFromFile).toBeCalledWith(data)
+    expect(utils.generateFormDataBodyFromFile).toBeCalledWith(path.parse(data), myReadStream)
+    expect(myReadStream.close).toHaveBeenCalledTimes(1)
     expect(fetch).toBeCalledWith(requestUrl, expectedFetchOptions)
   })
 
