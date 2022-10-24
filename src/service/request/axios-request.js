@@ -1,4 +1,4 @@
-const axios = require('axios').default
+const axios = require('axios')
 const tunnel = require('tunnel')
 
 const BaseRequest = require('./base-request')

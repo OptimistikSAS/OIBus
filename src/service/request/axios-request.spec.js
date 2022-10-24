@@ -1,4 +1,4 @@
-const axios = require('axios').default
+const axios = require('axios')
 const tunnel = require('tunnel')
 
 const AxiosRequest = require('./axios-request')
@@ -11,10 +11,8 @@ jest.mock('../utils', () => ({ generateFormDataBodyFromFile: jest.fn() }))
 
 // Mock axios
 jest.mock('axios', () => ({
-  default: {
-    CancelToken: { source: () => ({ token: 'token' }) },
-    create: jest.fn(),
-  },
+  CancelToken: { source: () => ({ token: 'token' }) },
+  create: jest.fn(),
 }))
 
 // Mock OIBusEngine
