@@ -1,3 +1,6 @@
+const { createReadStream } = require('node:fs')
+const path = require('node:path')
+
 const axios = require('axios')
 const tunnel = require('tunnel')
 
@@ -10,13 +13,13 @@ class AxiosRequest extends BaseRequest {
    * Send the values using axios
    * If "headers" contains Content-Type "data" is sent as string in the body.
    * If "headers" doesn't contain Content-Type "data" is interpreted as a path and sent as a file.
-   * @param {string} requestUrl - The URL to send the request to
-   * @param {string} method - The request type
-   * @param {object} headers - The headers
-   * @param {object} proxy - Proxy to use
-   * @param {string} data - The data to send
-   * @param {number} timeout - The request timeout
-   * @return {Promise} - The resolved promise
+   * @param {String} requestUrl - The URL to send the request to
+   * @param {String} method - The request type
+   * @param {Object} headers - The headers
+   * @param {Object} proxy - Proxy to use
+   * @param {String} data - The data to send
+   * @param {Number} timeout - The request timeout
+   * @return {Promise<void>} - The result promise
    */
   async sendImplementation(requestUrl, method, headers, proxy, data, timeout) {
     this.logger.trace('sendWithAxios() called')
@@ -28,7 +31,7 @@ class AxiosRequest extends BaseRequest {
     })
 
     if (proxy) {
-      const { protocol, host, port, username = null, password = null } = proxy
+      const { protocol, host, port, username, password } = proxy
       const axiosProxy = {
         host,
         port,
@@ -36,9 +39,11 @@ class AxiosRequest extends BaseRequest {
       if (username && password) {
         axiosProxy.proxyAuth = `${username}:${await this.engine.encryptionService.decryptText(password)}`
       }
-      let tunnelInstance = tunnel.httpsOverHttp({ axiosProxy })
+      let tunnelInstance
       if (protocol === 'https') {
         tunnelInstance = tunnel.httpsOverHttps({ axiosProxy })
+      } else {
+        tunnelInstance = tunnel.httpsOverHttp({ axiosProxy })
       }
       axiosInstance = axios.create({
         httpsAgent: tunnelInstance,
@@ -49,14 +54,16 @@ class AxiosRequest extends BaseRequest {
     }
 
     const cancelTimeout = setTimeout(() => {
-      source.cancel('Request cancelled by force to prevent axios hanging')
+      source.cancel('Request cancelled by force to prevent axios hanging.')
     }, timeout)
 
     let body
+    let readStream
     if (Object.prototype.hasOwnProperty.call(headers, 'Content-Type')) {
       body = data
     } else {
-      body = generateFormDataBodyFromFile(data)
+      readStream = createReadStream(data)
+      body = generateFormDataBodyFromFile(path.parse(data), readStream)
 
       const formHeaders = body.getHeaders()
       Object.keys(formHeaders).forEach((key) => {
@@ -74,6 +81,7 @@ class AxiosRequest extends BaseRequest {
     try {
       await axiosInstance(axiosOptions)
     } catch (error) {
+      readStream?.close()
       clearTimeout(cancelTimeout)
       if (error.response) {
         // The request was made and the server responded with a status code
@@ -97,6 +105,7 @@ class AxiosRequest extends BaseRequest {
       }
     }
 
+    readStream?.close()
     clearTimeout(cancelTimeout)
   }
 }

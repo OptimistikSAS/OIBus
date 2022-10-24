@@ -144,6 +144,39 @@ describe('BaseRequest', () => {
 
     await baseRequest.httpSend(requestUrl, method, authentication, proxy, data)
 
-    expect(baseRequest.sendImplementation).toHaveBeenCalledTimes(1)
+    expect(baseRequest.sendImplementation).toHaveBeenCalledWith(
+      'https://www.example.com',
+      'POST',
+      { Authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+      null,
+      '',
+      30000,
+    )
+  })
+
+  it('should properly return success without auth', async () => {
+    baseRequest.sendImplementation = jest.fn()
+
+    const requestUrl = 'https://www.example.com'
+    const method = 'POST'
+    const proxy = null
+    const data = ''
+
+    await baseRequest.httpSend(requestUrl, method, null, proxy, data)
+
+    expect(baseRequest.sendImplementation).toHaveBeenCalledWith(
+      'https://www.example.com',
+      'POST',
+      {},
+      null,
+      '',
+      30000,
+    )
+  })
+
+  it('should log a warning if sendImplementation is not implemented', async () => {
+    await baseRequest.sendImplementation('requestUrl', 'GET', {}, null, 'data', 1000)
+    expect(engine.logger.warn).toHaveBeenCalledWith('sendImplementation() should be surchargedFunction called '
+        + 'with GET requestUrl and headers "{}", proxy "null", data "data" and timeout 1000.')
   })
 })

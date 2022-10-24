@@ -11,15 +11,15 @@ const COMPRESSION_LEVEL = 9
 
 /**
  * Generate body as FormData to send file.
- * @param {String} filePath - The file path
+ * @param {ParsedPath} filePath - The file path
+ * @param {ReadStream} readStream - The file stream to read the data from
  * @returns {FormData} - The body
  */
-const generateFormDataBodyFromFile = (filePath) => {
+const generateFormDataBodyFromFile = (filePath, readStream) => {
   const body = new FormData()
-  const readStream = createReadStream(filePath)
 
   // Remove timestamp from the file path
-  const { name, ext } = path.parse(filePath)
+  const { name, ext } = filePath
   const filename = name.slice(0, name.lastIndexOf('-'))
 
   const bodyOptions = { filename: `${filename}${ext}` }

@@ -12,13 +12,13 @@ class BaseRequest {
    *
    * If "headers" contains Content-Type "data" is sent as string in the body.
    * If "headers" doesn't contain Content-Type "data" is interpreted as a path and sent as a file.
-   * @param {string} requestUrl - The URL to send the request to
-   * @param {string} method - The request type
-   * @param {object} headers - The headers
-   * @param {object} proxy - Proxy to use
-   * @param {string} data - The data to send
-   * @param {number} timeout - The request timeout
-   * @return {void}
+   * @param {String} requestUrl - The URL to send the request to
+   * @param {String} method - The request type
+   * @param {Object} headers - The headers
+   * @param {Object} proxy - Proxy to use
+   * @param {String} data - The data to send
+   * @param {Number} timeout - The request timeout
+   * @return {Promise<void>} - The result promise
    */
   async sendImplementation(requestUrl, method, headers, proxy, data, timeout) {
     this.logger.warn('sendImplementation() should be surcharged'
@@ -31,12 +31,12 @@ class BaseRequest {
    *
    * If "baseHeader" contains Content-Type "data" is sent as string in the body.
    * If "baseHeader" doesn't contain Content-Type "data" is interpreted as a path and sent as a file.
-   * @param {string} requestUrl - The URL to send the request to
-   * @param {string} method - The request type
-   * @param {object} authentication - Authentication info
-   * @param {object} proxy - Proxy to use
-   * @param {string} data - The body or file to send
-   * @param {object} baseHeaders - Headers to send
+   * @param {String} requestUrl - The URL to send the request to
+   * @param {String} method - The request type
+   * @param {Object} authentication - Authentication info
+   * @param {Object} proxy - Proxy to use
+   * @param {String} data - The body or file to send
+   * @param {Object} baseHeaders - Headers to send
    * @returns {void}
    */
   async httpSend(requestUrl, method, authentication, proxy, data, baseHeaders = {}) {
