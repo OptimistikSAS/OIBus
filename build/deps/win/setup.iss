@@ -24,7 +24,7 @@ DisableDirPage=no
 DisableProgramGroupPage=yes
 LicenseFile=..\..\..\LICENSE
 OutputDir=..\..\bin\win-setup-release
-OutputBaseFilename=oibus_setup
+OutputBaseFilename=setup
 PrivilegesRequired=admin
 SolidCompression=yes
 UsePreviousAppDir=no
@@ -307,7 +307,7 @@ begin
       ConfExists := True;
       if MsgBox('An oibus.json file was found at ' + OIBus_DataDirPage.Values[0] + '. Do you want to use it for this OIBus?', mbInformation, MB_YESNO) = IDNO then
       begin
-        if MsgBox('WARNING : Overwriting the current setup will delete all logins, passwords and data you saved so far.' + #13#10 + 'Are you sure you want to proceed?', mbInformation, MB_YESNO) = IDNO then
+        if MsgBox('WARNING: Overwriting the current setup will delete all logins, passwords and data you saved so far.' + #13#10 + 'Are you sure you want to proceed?', mbInformation, MB_YESNO) = IDNO then
           OverwriteConfig := False
         else
           OverwriteConfig := True
@@ -549,7 +549,7 @@ begin
       MsgBox('ERROR : OIBus could not be stop', mbCriticalError, MB_OK)
     else
     begin
-      if MsgBox('Do you wish to remove all OIBus data (cache, logs...) ? All data, credentials and logs about your current OIBus will be permanently erased.', mbInformation, MB_YESNO) = IDYES then
+      if MsgBox('Do you wish to remove all OIBus data (cache, logs...)? All data, credentials and logs about your current OIBus will be permanently erased.', mbInformation, MB_YESNO) = IDYES then
       begin
         if RegQueryStringValue(HKEY_LOCAL_MACHINE, 'SYSTEM\CurrentControlSet\Services\OIBus', 'DataDir', DirToDelete) then
         begin

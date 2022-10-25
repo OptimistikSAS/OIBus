@@ -66,9 +66,9 @@ jobs:
     strategy:
       matrix:
         config:
-          - { os: 'macos-latest',   platform: 'macos', archiveName: 'OIBus-macos.zip', zip: 'zip -r' }
-          - { os: 'windows-latest', platform: 'win',   archiveName: 'OIBus-win32x64.zip', zip: '7z a -tzip' }
-          - { os: 'ubuntu-latest',  platform: 'linux', archiveName: 'OIBus-linux.zip', zip: 'zip -r' }
+          - { os: 'macos-latest',   platform: 'macos', archiveName: 'oibus-macos.zip', zip: 'zip -r' }
+          - { os: 'windows-latest', platform: 'win',   archiveName: 'oibus-win32x64.zip', zip: '7z a -tzip' }
+          - { os: 'ubuntu-latest',  platform: 'linux', archiveName: 'oibus-linux.tar.gz', zip: 'tar -czvf' }
     timeout-minutes: 20
 
     steps:
@@ -110,13 +110,13 @@ jobs:
 
       - name: Rename windows installer
         if: ${{ matrix.config['platform'] == 'win' }}
-        run: mv ./build/bin/win-setup-release/oibus_setup.exe ./build/bin/win-setup-release/OIBus-setup-win32x64.exe
+        run: mv ./build/bin/win-setup-release/setup.exe ./build/bin/win-setup-release/oibus-setup-win32x64.exe
 
       - name: Upload Windows installer
         if: ${{ matrix.config['platform'] == 'win' }}
         uses: actions/upload-artifact@v3
         with:
-          path: ./build/bin/win-setup-release/OIBus-setup-win32x64.exe
+          path: ./build/bin/win-setup-release/oibus-setup-win32x64.exe
 
   publish-binaries:
     needs: [build-binaries, standard-version]
@@ -138,10 +138,10 @@ jobs:
           body_path: ./artifact/CHANGELOG.md
           prerelease: ${{ needs.standard-version.outputs.prerelease }}
           files: |
-            ./artifact/OIBus-setup-win32x64.exe
-            ./artifact/OIBus-linux.zip
-            ./artifact/OIBus-macos.zip
-            ./artifact/OIBus-win32x64.zip
+            ./artifact/oibus-setup-win32x64.exe
+            ./artifact/oibus-linux.tar.gz
+            ./artifact/oibus-macos.zip
+            ./artifact/oibus-win32x64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }} # Need REPO_ACCESS_TOKEN to propagate 'release published' event
 
