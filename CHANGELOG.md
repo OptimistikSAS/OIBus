@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.3.3](https://github.com/OptimistikSAS/OIBus/compare/v2.3.2...v2.3.3) (2022-10-25)
+
+
+### Bug Fixes
+
+* **http-request:** fix readStream close on http error ([821f951](https://github.com/OptimistikSAS/OIBus/commit/821f9518e7dc1d6bbe44617afa22a726c1a3b629))
+* **north:** fix file cache stat eperm error ([91ac4fc](https://github.com/OptimistikSAS/OIBus/commit/91ac4fc86ef2934ce1527aa3542301ef3050a004))
+
 ### [2.3.2](https://github.com/OptimistikSAS/OIBus/compare/v2.3.1...v2.3.2) (2022-10-21)
 
 
