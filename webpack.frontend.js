@@ -1,4 +1,4 @@
-const path = require('path')
+const path = require('node:path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const ESLintPlugin = require('eslint-webpack-plugin')
 const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
@@ -18,10 +18,6 @@ module.exports = {
     fallback: { path: require.resolve('path-browserify') },
   },
   devtool: 'source-map',
-  performance: {
-    maxEntrypointSize: 3200000,
-    maxAssetSize: 3200000,
-  },
   module: {
     rules: [
       {
