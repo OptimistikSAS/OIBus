@@ -1,7 +1,7 @@
 const { createReadStream } = require('node:fs')
 const path = require('node:path')
 
-const axios = require('axios')
+const axios = require('axios').default
 const tunnel = require('tunnel')
 
 const BaseRequest = require('./base-request')
