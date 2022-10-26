@@ -57,7 +57,7 @@ describe('Database service', () => {
     expect(prepare).toHaveBeenCalledTimes(7)
     expect(prepare).toHaveBeenCalledWith('PRAGMA journal_mode = WAL;')
     expect(prepare).toHaveBeenCalledWith('PRAGMA optimize;')
-    expect(prepare).toHaveBeenCalledWith('PRAGMA vacuum;')
+    expect(prepare).toHaveBeenCalledWith('PRAGMA auto_vacuum = FULL;')
     expect(run).toHaveBeenCalledTimes(7)
     expect(expectedDatabase).toBe(mockDatabase)
   })

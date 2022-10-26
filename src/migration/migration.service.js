@@ -4,7 +4,7 @@ const path = require('node:path')
 const migrationRules = require('./migration-rules')
 const LoggerService = require('../service/logger/logger.service')
 
-const REQUIRED_SCHEMA_VERSION = 28
+const REQUIRED_SCHEMA_VERSION = 29
 const DEFAULT_VERSION = 1
 
 /**

@@ -1573,4 +1573,56 @@ module.exports = {
       }
     }
   },
+  29: async (config, logger) => {
+    for (const north of config.north) {
+      try {
+        const actualPath = path.resolve(`./cache/data-stream/north-${north.id}/values.db`)
+        const tmpPath = path.resolve(`./cache/data-stream/north-${north.id}/values-tmp.db`)
+
+        await fs.access(actualPath)
+        logger.info(`Enable auto_vacuum for North "${north.id}".`)
+
+        logger.info('Rename values.db to values-tmp.db')
+        await fs.rename(actualPath, tmpPath)
+
+        logger.info('Recreate values.db with auto_vacuum')
+        const newDatabase = databaseService.createValuesDatabase(actualPath, { vacuum: true })
+
+        logger.info('Copy values from values-tmp.db into values.db')
+        const tmpDatabase = databaseService.createValuesDatabase(tmpPath)
+        const stepSize = 10000
+        let hasMoreValues
+        do {
+          // Get values from values-tmp.db
+          const valuesToCopy = databaseService.getValuesToSend(tmpDatabase, stepSize)
+
+          // Since every point can have a different dataSourceId, we have to group them by dataSourceId
+          const groupedValues = {}
+          for (const { timestamp, data, pointId, dataSourceId } of valuesToCopy) {
+            if (!groupedValues[dataSourceId]) {
+              groupedValues[dataSourceId] = []
+            }
+            groupedValues[dataSourceId].push({ timestamp, data, pointId })
+          }
+
+          // Call saveValues for each dataSourceId
+          for (const [dataSourceId, values] of Object.entries(groupedValues)) {
+            databaseService.saveValues(newDatabase, dataSourceId, values)
+          }
+
+          // Remove values from values-tmp.db
+          databaseService.removeSentValues(tmpDatabase, valuesToCopy)
+
+          hasMoreValues = valuesToCopy.length >= stepSize
+        } while (hasMoreValues)
+
+        logger.info('Delete values-tmp.db')
+        await fs.rm(tmpPath, { force: true })
+      } catch (err) {
+        if (err.code !== 'ENOENT') {
+          logger.error(err)
+        }
+      }
+    }
+  },
 }

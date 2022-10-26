@@ -11,6 +11,7 @@ const PAGE_SIZE = 50
  */
 const createValuesDatabase = (databasePath, options = {}) => {
   const database = db(databasePath)
+  if (options.vacuum) database.prepare('PRAGMA auto_vacuum = FULL;').run()
   database.prepare(`CREATE TABLE IF NOT EXISTS ${CACHE_TABLE_NAME} (`
                        + 'id INTEGER PRIMARY KEY, '
                        + 'timestamp TEXT KEY, '
@@ -22,7 +23,6 @@ const createValuesDatabase = (databasePath, options = {}) => {
   database.prepare('PRAGMA locking_mode = exclusive;').run()
   if (options.wal) database.prepare('PRAGMA journal_mode = WAL;').run()
   if (options.optimize) database.prepare('PRAGMA optimize;').run()
-  if (options.vacuum) database.prepare('PRAGMA vacuum;').run()
 
   return database
 }

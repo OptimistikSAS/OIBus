@@ -17,7 +17,7 @@ class ValueCache extends BaseCache {
   async init() {
     const valuesDatabasePath = path.resolve(this.baseFolder, VALUES_DB_FILE_NAME)
     this.logger.debug(`Use value cache database: "${valuesDatabasePath}".`)
-    this.valuesDatabase = databaseService.createValuesDatabase(valuesDatabasePath, {})
+    this.valuesDatabase = databaseService.createValuesDatabase(valuesDatabasePath, { vacuum: true })
     const valuesCount = databaseService.getCount(this.valuesDatabase)
     if (valuesCount > 0) {
       this.logger.debug(`${valuesCount} values in cache.`)
