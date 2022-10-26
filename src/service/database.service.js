@@ -108,15 +108,14 @@ const getCount = (database) => {
 const getValuesToSend = (database, count) => {
   const query = 'SELECT id, timestamp, data, point_id AS pointId, south as dataSourceId '
                 + `FROM ${CACHE_TABLE_NAME} `
-                + 'ORDER BY timestamp '
                 + `LIMIT ${count}`
-  const values = []
-  const stmt = database.prepare(query)
-  // eslint-disable-next-line no-restricted-syntax
-  for (const value of stmt.iterate()) {
-    values.push({ ...value, data: JSON.parse(decodeURI(value.data)) })
-  }
-  return values
+
+  return database.prepare(query).all().map((value) => ({
+    id: value.id,
+    timestamp: value.timestamp,
+    pointId: value.pointId,
+    data: JSON.parse(decodeURI(value.data)),
+  }))
 }
 
 /**
