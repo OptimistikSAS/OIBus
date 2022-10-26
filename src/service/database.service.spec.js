@@ -1,8 +1,8 @@
 const databaseService = require('./database.service')
 
 const values = [
-  { timestamp: '2022-08-25T12:58:00.000Z', data: { value: 1, quality: 192 }, pointId: 'point001' },
-  { timestamp: '2022-08-25T12:59:00.000Z', data: { value: 2, quality: 192 }, pointId: 'point002' },
+  { id: 1, timestamp: '2022-08-25T12:58:00.000Z', data: { value: 1, quality: 192 }, pointId: 'point001' },
+  { id: 2, timestamp: '2022-08-25T12:59:00.000Z', data: { value: 2, quality: 192 }, pointId: 'point002' },
 ]
 
 let all
@@ -18,13 +18,14 @@ beforeEach(() => {
   jest.useFakeTimers()
 
   const retrievedValues = values.map((value) => ({
-    ...value,
+    id: value.id,
+    timestamp: value.timestamp,
+    pointId: value.pointId,
     data: encodeURI(JSON.stringify(value.data)),
   }))
-  all = jest.fn().mockReturnValue([{ path: 'myFilePath', timestamp: 123 }])
+  all = jest.fn().mockReturnValue(retrievedValues)
   get = jest.fn().mockReturnValue(retrievedValues)
   run = jest.fn()
-  iterate = jest.fn().mockReturnValue(retrievedValues)
   prepare = jest.fn()
   prepare.mockReturnValue({
     all,
@@ -122,7 +123,6 @@ describe('Database service', () => {
     expect(prepare).toHaveBeenCalledTimes(1)
     expect(prepare).toHaveBeenCalledWith('SELECT id, timestamp, data, point_id AS pointId, south as dataSourceId '
         + 'FROM cache '
-        + 'ORDER BY timestamp '
         + 'LIMIT 50')
 
     expect(valuesToSend).toEqual(values)
