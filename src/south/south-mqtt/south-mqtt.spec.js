@@ -6,8 +6,6 @@ const MQTT = require('./south-mqtt')
 
 const utils = require('./utils')
 
-const { defaultConfig: config } = require('../../../tests/test-config')
-
 // Mock mqtt
 jest.mock('mqtt')
 
@@ -20,13 +18,8 @@ jest.mock('./utils', () => ({ formatValue: jest.fn() }))
 // Mock certificate service
 const CertificateService = jest.mock('../../service/certificate.service')
 
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  addValues: jest.fn(),
-  addFile: jest.fn(),
-}
+const addValues = jest.fn()
+const addFiles = jest.fn()
 
 // Mock services
 jest.mock('../../service/database.service')
@@ -87,15 +80,15 @@ describe('SouthMQTT', () => {
         },
       ],
     }
-    south = new MQTT(configuration, engine)
-    await south.init()
+    south = new MQTT(configuration, addValues, addFiles)
+    await south.init('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized with correct timezone', () => {
     expect(south.url).toEqual(configuration.settings.url)
     expect(south.qos).toEqual(configuration.settings.qos)
     expect(south.persistent).toEqual(configuration.settings.persistent)
-    expect(south.clientId).toEqual(`${engine.engineName}-${configuration.id}`)
+    expect(south.clientId).toEqual(`oibusName-${configuration.id}`)
     expect(south.username).toEqual(configuration.settings.username)
     expect(south.password).toEqual(configuration.settings.password)
     expect(south.timestampOrigin).toEqual(configuration.settings.timestampOrigin)
@@ -113,13 +106,13 @@ describe('SouthMQTT', () => {
         timestampTimezone: 'invalid',
       },
     }
-    const mqttInvalidSouth = new MQTT(testMqttConfig, engine)
-    await mqttInvalidSouth.init()
+    const mqttInvalidSouth = new MQTT(testMqttConfig, addValues, addFiles)
+    await mqttInvalidSouth.init('baseFolder', 'oibusName', {})
 
     expect(mqttInvalidSouth.url).toEqual(testMqttConfig.settings.url)
     expect(mqttInvalidSouth.qos).toEqual(testMqttConfig.settings.qos)
     expect(mqttInvalidSouth.persistent).toEqual(configuration.settings.persistent)
-    expect(mqttInvalidSouth.clientId).toEqual(`${engine.engineName}-${configuration.id}`)
+    expect(mqttInvalidSouth.clientId).toEqual(`oibusName-${configuration.id}`)
     expect(mqttInvalidSouth.username).toEqual(testMqttConfig.settings.username)
     expect(mqttInvalidSouth.password).toEqual(testMqttConfig.settings.password)
     expect(mqttInvalidSouth.timestampOrigin).toEqual(testMqttConfig.settings.timestampOrigin)
@@ -136,7 +129,7 @@ describe('SouthMQTT', () => {
     await south.connect()
     const expectedOptions = {
       clean: !configuration.settings.persistent,
-      clientId: `${engine.engineName}-${configuration.id}`,
+      clientId: `oibusName-${configuration.id}`,
       username: configuration.settings.username,
       password: Buffer.from(configuration.settings.password),
       rejectUnauthorized: false,
@@ -165,7 +158,7 @@ describe('SouthMQTT', () => {
     await south.connect()
     const expectedOptions = {
       clean: !configuration.settings.persistent,
-      clientId: `${engine.engineName}-${configuration.id}`,
+      clientId: `oibusName-${configuration.id}`,
       username: configuration.settings.username,
       password: '',
       rejectUnauthorized: false,
@@ -196,14 +189,14 @@ describe('SouthMQTT', () => {
       },
     }
 
-    const mqttSouthWithFiles = new MQTT(testMqttConfigWithFiles, engine)
-    await mqttSouthWithFiles.init()
+    const mqttSouthWithFiles = new MQTT(testMqttConfigWithFiles, addValues, addFiles)
+    await mqttSouthWithFiles.init('baseFolder', 'oibusName', {})
     mqttSouthWithFiles.certificate = CertificateService
     await mqttSouthWithFiles.connect()
 
     const expectedOptionsWithFiles = {
       clean: !configuration.settings.persistent,
-      clientId: `${engine.engineName}-${configuration.id}`,
+      clientId: `oibusName-${configuration.id}`,
       username: configuration.settings.username,
       password: Buffer.from(configuration.settings.password),
       key: 'fileContent',
@@ -261,7 +254,7 @@ describe('SouthMQTT', () => {
     await south.handleMessage(topic, Buffer.from(JSON.stringify(data)))
     jest.runOnlyPendingTimers()
 
-    expect(south.engine.addValues).toBeCalledWith(configuration.id, [{
+    expect(addValues).toBeCalledWith(configuration.id, [{
       pointId,
       timestamp,
       data,
@@ -293,7 +286,7 @@ describe('SouthMQTT', () => {
     })))
     jest.runOnlyPendingTimers()
 
-    expect(south.engine.addValues).toBeCalledWith(configuration.id, [{
+    expect(addValues).toBeCalledWith(configuration.id, [{
       pointId,
       timestamp,
       data,
@@ -313,7 +306,7 @@ describe('SouthMQTT', () => {
     await south.handleMessage(topic, Buffer.from(JSON.stringify(data)))
 
     expect(south.logger.error).toBeCalledWith(new Error('test'))
-    expect(south.engine.addValues).not.toBeCalled()
+    expect(addValues).not.toBeCalled()
   })
 
   it('should properly handle message parsing error with dataArrayPath', async () => {
@@ -337,7 +330,7 @@ describe('SouthMQTT', () => {
 
     expect(south.logger.error).toHaveBeenCalledWith('Could not find the dataArrayPath "myArray" '
         + `in message "${JSON.stringify(mqttMessage)}".`)
-    expect(south.engine.addValues).not.toHaveBeenCalled()
+    expect(addValues).not.toHaveBeenCalled()
 
     south.dataArrayPath = 'myOtherArray'
     utils.formatValue.mockImplementationOnce(() => {

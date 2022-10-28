@@ -5,18 +5,11 @@ const ADS = require('./south-ads')
 
 const databaseService = require('../../service/database.service')
 
-const { defaultConfig: config } = require('../../../tests/test-config')
-
 // Mock ads client
 jest.mock('ads-client')
 
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  addValues: jest.fn(),
-  addFile: jest.fn(),
-}
+const addValues = jest.fn()
+const addFiles = jest.fn()
 
 // Mock fs
 jest.mock('node:fs/promises')
@@ -782,8 +775,8 @@ describe('South ADS', () => {
         },
       ],
     }
-    south = new ADS(configuration, engine)
-    await south.init()
+    south = new ADS(configuration, addValues, addFiles)
+    await south.init('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized', () => {
@@ -793,7 +786,7 @@ describe('South ADS', () => {
 
   it('should properly connect to a remote instance', async () => {
     await south.connect()
-    expect(databaseService.createConfigDatabase).toBeCalledWith(path.resolve(`cache/south-${south.id}/cache.db`))
+    expect(databaseService.createConfigDatabase).toBeCalledWith(path.resolve(`baseFolder/south-${south.id}/cache.db`))
     expect(south.connected).toBeTruthy()
     expect(ads.Client).toHaveBeenCalledWith({
       autoReconnect: false,
@@ -813,7 +806,7 @@ describe('South ADS', () => {
     south.routerAddress = null
     south.routerTcpPort = null
     await south.connect()
-    expect(databaseService.createConfigDatabase).toBeCalledWith(path.resolve(`cache/south-${south.id}/cache.db`))
+    expect(databaseService.createConfigDatabase).toBeCalledWith(path.resolve(`baseFolder/south-${south.id}/cache.db`))
     expect(south.connected).toBeTruthy()
     expect(ads.Client).toHaveBeenCalledWith({
       autoReconnect: false,
@@ -874,7 +867,7 @@ describe('South ADS', () => {
     expect(south.logger.error).toBeCalledTimes(0)
 
     // Test boolean value as integer
-    expect(engine.addValues).toHaveBeenCalledWith(
+    expect(addValues).toHaveBeenCalledWith(
       configuration.id,
       [
         {
@@ -1009,7 +1002,7 @@ describe('South ADS', () => {
     expect(south.client.readSymbol).toBeCalledWith('GVL_Test.ExampleSTRUCT')
     expect(south.logger.error).toBeCalledTimes(0)
     // The SomeText field is not called because not specified in the structure filtering config
-    expect(engine.addValues).not.toHaveBeenCalledWith(
+    expect(addValues).not.toHaveBeenCalledWith(
       configuration.id,
       [{ pointId: 'PLC_TEST.GVL_Test.ExampleSTRUCT.SomeText', timestamp: nowDateString, data: { value: 'Hello ads-client' } }],
     )
@@ -1049,7 +1042,7 @@ describe('South ADS', () => {
     await south.lastPointQuery('every10Seconds')
 
     // Test boolean value as text
-    expect(engine.addValues).toHaveBeenCalledWith(
+    expect(addValues).toHaveBeenCalledWith(
       configuration.id,
       [
         {
@@ -1175,7 +1168,7 @@ describe('South ADS', () => {
       ],
     )
     // Test enum value as integer
-    expect(engine.addValues).toHaveBeenCalledWith(
+    expect(addValues).toHaveBeenCalledWith(
       configuration.id,
       [
         {
@@ -1357,11 +1350,11 @@ describe('South ADS', () => {
         resolve(GVLTestDateAndTime)
       }))
 
-    engine.addValues.mockClear()
+    addValues.mockClear()
     await south.lastPointQuery('every3Hours')
     jest.runOnlyPendingTimers()
 
-    expect(engine.addValues).toHaveBeenCalledTimes(1)
+    expect(addValues).toHaveBeenCalledTimes(1)
   })
 
   it('should not read when no point for scan mode', async () => {

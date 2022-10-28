@@ -5,8 +5,6 @@ const OPCUA_HA = require('./south-opcua-ha')
 
 const databaseService = require('../../service/database.service')
 
-const { defaultConfig: config } = require('../../../tests/test-config')
-
 // Mock node-opcua-client
 jest.mock('node-opcua-client', () => ({
   OPCUAClient: { createSession: jest.fn() },
@@ -31,13 +29,8 @@ jest.mock('../../service/opcua.service')
 // Mock certificate service
 jest.mock('../../service/certificate.service')
 
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  addValues: jest.fn(),
-  addFile: jest.fn(),
-}
+const addValues = jest.fn()
+const addFiles = jest.fn()
 
 // Mock services
 jest.mock('../../service/database.service')
@@ -85,11 +78,11 @@ describe('SouthOPCUAHA', () => {
         scanMode: 'every10Second',
       }],
     }
-    south = new OPCUA_HA(configuration, engine)
+    south = new OPCUA_HA(configuration, addValues, addFiles)
   })
 
   it('should be properly initialized', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     expect(south.url).toEqual(configuration.settings.url)
     expect(south.retryInterval).toEqual(configuration.settings.retryInterval)
     expect(south.maxReadInterval).toEqual(configuration.settings.maxReadInterval)
@@ -98,7 +91,7 @@ describe('SouthOPCUAHA', () => {
 
     // Test no new certificate manager creation
     south.clientCertificateManager.state = -1
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     expect(south.clientCertificateManager.state).toEqual(-1)
   })
 
@@ -136,7 +129,7 @@ describe('SouthOPCUAHA', () => {
     }
     const expectedUserIdentity = { type: 0 }
 
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connectToOpcuaServer()
 
     expect(south.connected).toBeTruthy()
@@ -163,7 +156,7 @@ describe('SouthOPCUAHA', () => {
     south.username = 'username'
     south.password = 'password'
 
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
 
     delete configuration.settings.username
@@ -180,7 +173,7 @@ describe('SouthOPCUAHA', () => {
 
   it('should properly connect to OPCUA server with certificate', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     const expectedOptions = {
       applicationName: 'OIBus',
       clientName: 'southId',
@@ -220,7 +213,7 @@ describe('SouthOPCUAHA', () => {
       throw new Error('connection error')
     })
 
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connectToOpcuaServer()
 
     expect(south.connected).toBeFalsy()
@@ -229,7 +222,7 @@ describe('SouthOPCUAHA', () => {
   })
 
   it('should properly format and sent values', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     south.addValues = jest.fn()
     const startTime = new Date('2020-01-01T00:00:00.000Z')
 
@@ -335,7 +328,7 @@ describe('SouthOPCUAHA', () => {
   })
 
   it('should log a message when zero value is received', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
 
     const nodesToRead = [
       { pointId: 'point1' },
@@ -348,7 +341,7 @@ describe('SouthOPCUAHA', () => {
   })
 
   it('should properly read history value with response error', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     const isNot = jest.fn(() => true)
     south.session = {
       performMessageTransaction: jest.fn(() => ({
@@ -373,7 +366,7 @@ describe('SouthOPCUAHA', () => {
   })
 
   it('should properly read history value with aggregateFn option', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     const isNot = jest.fn(() => true)
     south.session = {
       performMessageTransaction: jest.fn(() => ({
@@ -434,7 +427,7 @@ describe('SouthOPCUAHA', () => {
   })
 
   it('should properly read history value with response success', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     const isNot = jest.fn(() => false)
     south.session = {
       performMessageTransaction: jest.fn(() => ({
@@ -473,7 +466,7 @@ describe('SouthOPCUAHA', () => {
   })
 
   it('should properly read history value of many points with response success', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     const isNot = jest.fn(() => true)
     const badHistoryResult = {
       historyData: { dataValues: [] },
@@ -530,7 +523,7 @@ describe('SouthOPCUAHA', () => {
   it('should returns the requested number of node IDs after historyQuery', async () => {
     databaseService.getConfig.mockReturnValue('2020-02-02T02:02:02.222Z')
     databaseService.createConfigDatabase.mockReturnValue('configDatabase')
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
 
     south.maxReadInterval = 24 * 60 * 60 * 1000
@@ -607,7 +600,7 @@ describe('SouthOPCUAHA', () => {
   })
 
   it('should catch historyQuery errors', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
     south.connected = true
     south.currentlyOnScan[configuration.settings.scanGroups[0].scanMode] = 0
@@ -647,7 +640,7 @@ describe('SouthOPCUAHA', () => {
   it('should properly disconnect when trying to connect', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
 
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
     south.reconnectTimeout = true
     south.connected = false
@@ -663,7 +656,7 @@ describe('SouthOPCUAHA', () => {
   it('should properly disconnect when connected', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
 
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
     south.reconnectTimeout = false
     south.connected = true

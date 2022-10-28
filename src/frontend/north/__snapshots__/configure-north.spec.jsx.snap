@@ -579,7 +579,7 @@ exports[`ConfigureNorth check ConfigureNorth 1`] = `
         class="row"
       >
         <div
-          class="col-md-4"
+          class="col-md-3"
         >
           <div
             class="mb-3"
@@ -604,7 +604,7 @@ exports[`ConfigureNorth check ConfigureNorth 1`] = `
           </div>
         </div>
         <div
-          class="col-md-4"
+          class="col-md-3"
         >
           <div
             class="mb-3"
@@ -629,7 +629,32 @@ exports[`ConfigureNorth check ConfigureNorth 1`] = `
           </div>
         </div>
         <div
-          class="col-md-4"
+          class="col-md-3"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="north.0.caching.timeout"
+            >
+              Timeout (in s)
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.0.caching.timeout"
+              name="north.0.caching.timeout"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
+        <div
+          class="col-md-3"
         >
           <div
             class="mb-3"
@@ -658,7 +683,7 @@ exports[`ConfigureNorth check ConfigureNorth 1`] = `
         class="row"
       >
         <div
-          class="col-md-4"
+          class="col-md-3"
         >
           <div
             class="mb-3"
@@ -683,7 +708,7 @@ exports[`ConfigureNorth check ConfigureNorth 1`] = `
           </div>
         </div>
         <div
-          class="col-md-4"
+          class="col-md-3"
         >
           <div
             class="mb-3"
@@ -1512,7 +1537,7 @@ exports[`ConfigureNorth check update 1`] = `
         class="row"
       >
         <div
-          class="col-md-4"
+          class="col-md-3"
         >
           <div
             class="mb-3"
@@ -1537,7 +1562,7 @@ exports[`ConfigureNorth check update 1`] = `
           </div>
         </div>
         <div
-          class="col-md-4"
+          class="col-md-3"
         >
           <div
             class="mb-3"
@@ -1562,7 +1587,32 @@ exports[`ConfigureNorth check update 1`] = `
           </div>
         </div>
         <div
-          class="col-md-4"
+          class="col-md-3"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="north.0.caching.timeout"
+            >
+              Timeout (in s)
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.0.caching.timeout"
+              name="north.0.caching.timeout"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
+        <div
+          class="col-md-3"
         >
           <div
             class="mb-3"
@@ -1591,7 +1641,7 @@ exports[`ConfigureNorth check update 1`] = `
         class="row"
       >
         <div
-          class="col-md-4"
+          class="col-md-3"
         >
           <div
             class="mb-3"
@@ -1616,7 +1666,7 @@ exports[`ConfigureNorth check update 1`] = `
           </div>
         </div>
         <div
-          class="col-md-4"
+          class="col-md-3"
         >
           <div
             class="mb-3"

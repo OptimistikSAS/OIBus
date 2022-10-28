@@ -2,21 +2,12 @@ const fs = require('node:fs/promises')
 
 const Console = require('./north-console')
 
-const { defaultConfig: config } = require('../../../tests/test-config')
-
 // Spy on console table and info
 jest.spyOn(global.console, 'table').mockImplementation(() => {})
 jest.spyOn(process.stdout, 'write').mockImplementation(() => {})
 
 // Mock fs
 jest.mock('node:fs/promises')
-
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  requestService: { httpSend: jest.fn() },
-}
 
 // Mock services
 jest.mock('../../service/database.service')
@@ -48,8 +39,8 @@ beforeEach(async () => {
       },
     },
   }
-  north = new Console(configuration, engine)
-  await north.init()
+  north = new Console(configuration, [])
+  await north.init('baseFolder', 'oibusName', {})
 })
 
 describe('North Console', () => {
@@ -60,7 +51,7 @@ describe('North Console', () => {
   })
 
   it('should properly handle values in non verbose mode', async () => {
-    await north.init()
+    await north.init('baseFolder', 'oibusName', {})
     const values = [
       {
         pointId: 'pointId',

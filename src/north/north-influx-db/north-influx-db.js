@@ -2,6 +2,7 @@ const { vsprintf } = require('sprintf-js')
 const objectPath = require('object-path')
 
 const NorthConnector = require('../north-connector')
+const { httpSend } = require('../../service/utils')
 
 /**
  * Convert timestamp to the configured precision
@@ -38,11 +39,17 @@ class NorthInfluxDB extends NorthConnector {
    * Constructor for NorthInfluxDB
    * @constructor
    * @param {Object} configuration - The North connector configuration
-   * @param {BaseEngine} engine - The Engine
+   * @param {Object[]} proxies - The list of available proxies
    * @return {void}
    */
-  constructor(configuration, engine) {
-    super(configuration, engine)
+  constructor(
+    configuration,
+    proxies,
+  ) {
+    super(
+      configuration,
+      proxies,
+    )
     this.canHandleValues = true
 
     const {
@@ -170,7 +177,14 @@ class NorthInfluxDB extends NorthConnector {
     })
 
     const headers = { 'Content-Type': 'application/x-www-form-urlencoded' }
-    await this.engine.requestService.httpSend(url, 'POST', null, null, body, headers)
+    await httpSend(
+      url,
+      'POST',
+      headers,
+      body,
+      this.caching.timeout,
+      null,
+    )
   }
 }
 

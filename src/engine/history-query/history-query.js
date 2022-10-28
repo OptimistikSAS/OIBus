@@ -64,10 +64,18 @@ class HistoryQuery {
 
     this.overwriteConnectorsSettings()
 
-    await this.north.init()
+    await this.north.init(
+      path.resolve(this.cacheFolder, `north-${this.north.id}`),
+      this.engine.oibusName,
+      this.engine.defaultLogParameters,
+    )
     await this.north.connect()
 
-    await this.south.init()
+    await this.south.init(
+      path.resolve(this.cacheFolder, `south-${this.south.id}`),
+      this.engine.oibusName,
+      this.engine.defaultLogParameters,
+    )
     await this.south.connect()
 
     if (!this.south.connected || !this.north.connected) {
@@ -111,8 +119,6 @@ class HistoryQuery {
    */
   overwriteConnectorsSettings() {
     // Overwrite some parameters for history query
-    this.north.baseFolder = path.resolve(this.cacheFolder, `north-${this.north.id}`)
-    this.south.baseFolder = path.resolve(this.cacheFolder, `south-${this.south.id}`)
     this.south.filename = this.filePattern
     this.south.startTime = this.historyConfiguration.startTime
     this.south.points = this.historyConfiguration.settings.points

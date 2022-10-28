@@ -31,22 +31,19 @@ const {
 } = getCommandLineArguments()
 
 const logParameters = {
-  engineName: 'OIBus-main',
-  logParameters: {
-    consoleLog: { level: 'debug' },
-    fileLog: {
-      level: 'debug',
-      fileName: path.resolve(path.parse(configFile).dir, LOG_FOLDER_NAME, MAIN_LOG_FILE_NAME),
-      maxSize: 1000000,
-      numberOfFiles: 5,
-      tailable: true,
-    },
-    sqliteLog: { level: 'none' },
-    lokiLog: { level: 'none' },
+  consoleLog: { level: 'debug' },
+  fileLog: {
+    level: 'debug',
+    fileName: path.resolve(path.parse(configFile).dir, LOG_FOLDER_NAME, MAIN_LOG_FILE_NAME),
+    maxSize: 1000000,
+    numberOfFiles: 5,
+    tailable: true,
   },
+  sqliteLog: { level: 'none' },
+  lokiLog: { level: 'none' },
 }
 
-logger.changeParameters(logParameters).then(async () => {
+logger.changeParameters('OIBus-main', logParameters).then(async () => {
   const baseDir = path.extname(configFile) ? path.parse(configFile).dir : configFile
   await createFolder(baseDir)
 
@@ -112,7 +109,7 @@ logger.changeParameters(logParameters).then(async () => {
     process.chdir(baseDir)
 
     // Migrate config file, if needed
-    migrationService.migrate(configFile, logParameters).then(async () => {
+    migrationService.migrate(configFile, 'OIBus-main', logParameters).then(async () => {
       // this condition is reached only for a worker (i.e. not master)
       // so this is here where we start the web-server, OIBusEngine and HistoryQueryEngine
 
@@ -120,13 +117,12 @@ logger.changeParameters(logParameters).then(async () => {
       await createFolder(CACHE_FOLDER)
 
       const configService = new ConfigurationService(configFile, CACHE_FOLDER)
-      await configService.init()
-
       const encryptionService = EncryptionService.getInstance()
       encryptionService.setKeyFolder(configService.keyFolder)
       encryptionService.setCertsFolder(configService.certFolder)
       await encryptionService.checkOrCreatePrivateKey()
       await encryptionService.checkOrCreateCertFiles()
+      await configService.init()
 
       const safeMode = process.env.SAFE_MODE === 'true'
 

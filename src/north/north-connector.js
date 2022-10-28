@@ -6,7 +6,7 @@ const CertificateService = require('../service/certificate.service')
 const StatusService = require('../service/status.service')
 const ValueCache = require('../engine/cache/value-cache')
 const FileCache = require('../engine/cache/file-cache')
-const { createFolder } = require('../service/utils')
+const { createFolder, createProxyAgent } = require('../service/utils')
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -30,10 +30,13 @@ class NorthConnector {
    * Constructor for NorthConnector
    * @constructor
    * @param {Object} configuration - The North connector settings
-   * @param {BaseEngine} engine - The Engine
+   * @param {Object[]} proxies - The list of available proxies
    * @return {void}
    */
-  constructor(configuration, engine) {
+  constructor(
+    configuration,
+    proxies,
+  ) {
     this.canHandleValues = false
     this.canHandleFiles = false
     this.connected = false
@@ -44,14 +47,12 @@ class NorthConnector {
     this.logParameters = configuration.logParameters
     this.caching = configuration.caching
     this.subscribedTo = configuration.subscribedTo
+    this.proxies = proxies
 
-    this.engine = engine
-    const { engineConfig } = this.engine.configService.getConfig()
-    this.engineConfig = engineConfig
     this.encryptionService = EncryptionService.getInstance()
-    this.baseFolder = path.resolve(this.engine.cacheFolder, `north-${configuration.id}`)
 
     // Variable initialized in init()
+    this.baseFolder = null
     this.statusService = null
     this.valueCache = null
     this.fileCache = null
@@ -60,8 +61,9 @@ class NorthConnector {
     this.keyFile = null
     this.certFile = null
     this.caFile = null
-    this.proxy = null
     this.authentication = null
+    this.proxySettings = null
+    this.proxyAgent = null
 
     this.numberOfSentValues = 0
     this.valuesTimeout = null
@@ -78,14 +80,18 @@ class NorthConnector {
 
   /**
    * Initialize services (logger, certificate, status data)
+   * @param {String} baseFolder - The base cache folder
+   * @param {String} oibusName - The OIBus name
+   * @param {Object} defaultLogParameters - The default logs parameters
    * @returns {Promise<void>} - The result promise
    */
-  async init() {
-    this.statusService = new StatusService()
+  async init(baseFolder, oibusName, defaultLogParameters) {
+    this.baseFolder = path.resolve(baseFolder, `north-${this.id}`)
 
+    this.statusService = new StatusService()
     this.logger = new LoggerService(`North:${this.name}`)
     this.logger.setEncryptionService(this.encryptionService)
-    await this.logger.changeParameters(this.engineConfig, this.logParameters)
+    await this.logger.changeParameters(oibusName, defaultLogParameters, this.logParameters)
 
     await createFolder(this.baseFolder)
 
@@ -119,6 +125,8 @@ class NorthConnector {
     } else {
       this.logger.warn('No send interval. No values or files will be sent.')
     }
+
+    this.proxyAgent = await this.getProxy(this.proxySettings)
   }
 
   /**
@@ -327,10 +335,21 @@ class NorthConnector {
   /**
    * Get proxy by name
    * @param {String} proxyName - The name of the proxy
-   * @return {Object} - The proxy
+   * @return {Promise<Object>} - The proxy
    */
-  getProxy(proxyName) {
-    return proxyName ? this.engineConfig.proxies.find(({ name }) => name === proxyName) : null
+  async getProxy(proxyName) {
+    if (!proxyName) return null
+    const foundProxy = this.proxies.find(({ name }) => name === proxyName)
+    if (foundProxy) {
+      return createProxyAgent(
+        foundProxy.protocol,
+        foundProxy.host,
+        foundProxy.port,
+        foundProxy.username,
+        await this.encryptionService.decryptText(foundProxy.password || ''),
+      )
+    }
+    return null
   }
 
   /**

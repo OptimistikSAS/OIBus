@@ -1,7 +1,6 @@
 const path = require('node:path')
 
 const databaseService = require('../../service/database.service')
-const BaseCache = require('./base-cache')
 
 const VALUES_DB_FILE_NAME = 'values.db'
 const VALUES_ERROR_DB_FILE_NAME = 'values-error.db'
@@ -9,7 +8,23 @@ const VALUES_ERROR_DB_FILE_NAME = 'values-error.db'
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
-class ValueCache extends BaseCache {
+class ValueCache {
+  /**
+   * @param {String} northId - The North ID connector
+   * @param {Logger} logger - The logger
+   * @param {String} baseFolder - The North cache folder
+   * @return {void}
+   */
+  constructor(
+    northId,
+    logger,
+    baseFolder,
+  ) {
+    this.northId = northId
+    this.logger = logger
+    this.baseFolder = baseFolder
+  }
+
   /**
    * Create databases and folders
    * @returns {Promise<void>} - The result promise

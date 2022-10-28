@@ -14,11 +14,17 @@ class NorthTimescaleDB extends NorthConnector {
    * Constructor for NorthTimescaleDB
    * @constructor
    * @param {Object} configuration - The North connector configuration
-   * @param {BaseEngine} engine - The Engine
+   * @param {Object[]} proxies - The list of available proxies
    * @return {void}
    */
-  constructor(configuration, engine) {
-    super(configuration, engine)
+  constructor(
+    configuration,
+    proxies,
+  ) {
+    super(
+      configuration,
+      proxies,
+    )
     this.canHandleValues = true
 
     const {
@@ -42,7 +48,7 @@ class NorthTimescaleDB extends NorthConnector {
     this.useDataKeyValue = useDataKeyValue
     this.keyParentValue = keyParentValue
 
-    // Initialized at connection
+    // Initialized at connection or init
     this.client = null
   }
 

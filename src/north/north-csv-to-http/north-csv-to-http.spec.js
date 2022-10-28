@@ -1,21 +1,13 @@
 const CsvToHttp = require('./north-csv-to-http')
 
 const utils = require('./utils')
-
-const { defaultConfig: config } = require('../../../tests/test-config')
+const serviceUtils = require('../../service/utils')
 
 // Mock utils class
 jest.mock('./utils', () => ({
   convertCSVRowIntoHttpBody: jest.fn(),
   isHeaderValid: jest.fn(),
 }))
-
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  requestService: { httpSend: jest.fn() },
-}
 
 // Mock fs
 jest.mock('node:fs/promises')
@@ -28,6 +20,7 @@ jest.mock('../../service/certificate.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 jest.mock('../../engine/cache/value-cache')
 jest.mock('../../engine/cache/file-cache')
+jest.mock('../../service/utils')
 
 let configuration = null
 let north = null
@@ -74,6 +67,7 @@ describe('NorthCsvToHttp', () => {
         retryInterval: 5000,
         groupCount: 10000,
         maxSendCount: 10000,
+        timeout: 10,
         archive: {
           enabled: true,
           retentionDuration: 720,
@@ -81,17 +75,19 @@ describe('NorthCsvToHttp', () => {
       },
       subscribedTo: [],
     }
-    north = new CsvToHttp(configuration, engine)
+    north = new CsvToHttp(configuration, [])
   })
 
   it('should be properly initialized', async () => {
-    await north.init()
+    await north.init('baseFolder', 'oibusName', {})
+
     expect(north.canHandleValues).toBeFalsy()
     expect(north.canHandleFiles).toBeTruthy()
   })
 
   it('should properly reject file if type is other than csv', async () => {
-    await north.init()
+    await north.init('baseFolder', 'oibusName', {})
+
     await expect(north.handleFile('filePath')).rejects
       .toThrowError('Invalid file format: .csv file expected. File "filePath" skipped.')
   })
@@ -111,14 +107,15 @@ describe('NorthCsvToHttp', () => {
       ['5', '2020-12-17 05:00'],
     ])
 
-    await north.init()
+    await north.init('baseFolder', 'oibusName', {})
+
     await north.handleFile('csvToHttpTest.csv')
 
-    expect(north.engine.requestService.httpSend).toHaveBeenCalledTimes(1)
+    expect(serviceUtils.httpSend).toHaveBeenCalledTimes(1)
   })
 
   it('should properly test validity of header', async () => {
-    await north.init()
+    await north.init('baseFolder', 'oibusName', {})
 
     const jsonObject = {}
 
@@ -139,11 +136,12 @@ describe('NorthCsvToHttp', () => {
 
     await north.sendData(httpBody)
 
-    expect(engine.requestService.httpSend).toHaveBeenCalledTimes(2)
+    expect(serviceUtils.httpSend).toHaveBeenCalledTimes(2)
   })
 
   it('should properly send data (body.length <= bodyMaxLength)', async () => {
-    await north.init()
+    await north.init('baseFolder', 'oibusName', {})
+
     const httpBody = []
     for (let i = 0; i < north.bodyMaxLength - 1; i += 1) {
       httpBody.push({ test: 'test' })
@@ -154,16 +152,15 @@ describe('NorthCsvToHttp', () => {
     const expectedUrl = configuration.settings.applicativeHostUrl
     const expectedRequestMethod = configuration.settings.requestMethod
     const expectedBody = JSON.stringify(httpBody)
-    const expectedAuthentication = configuration.settings.authentication
     const expectedHeaders = { 'Content-Type': 'application/json' }
-    expect(engine.requestService.httpSend).toHaveBeenCalledWith(
+    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
       expectedUrl,
       expectedRequestMethod,
-      expectedAuthentication,
-      null,
-      expectedBody,
       expectedHeaders,
+      expectedBody,
+      configuration.caching.timeout,
+      null,
     )
-    expect(engine.requestService.httpSend).toHaveBeenCalledTimes(1)
+    expect(serviceUtils.httpSend).toHaveBeenCalledTimes(1)
   })
 })

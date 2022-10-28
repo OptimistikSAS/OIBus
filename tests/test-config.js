@@ -30,10 +30,6 @@ const defaultConfig = {
         tokenAddress: '',
       },
     },
-    caching: {
-      bufferMax: 250,
-      bufferTimeoutInterval: 300,
-    },
     scanModes: [
       {
         scanMode: 'everySecond',
@@ -64,16 +60,11 @@ const defaultConfig = {
         endpoint: '/api/optimistik/oibus/info',
         authentication: {
           type: 'Basic',
-          username: '',
-          password: '',
+          key: '',
+          secret: '',
         },
         frequency: 300,
       },
-    },
-    httpRequest: {
-      stack: 'fetch',
-      timeout: 30,
-      retryCount: 3,
     },
   },
   south: [],
@@ -107,10 +98,6 @@ const testConfig = {
         username: '',
         tokenAddress: '',
       },
-    },
-    caching: {
-      bufferMax: 250,
-      bufferTimeoutInterval: 300,
     },
     scanModes: [
       { scanMode: 'everySecond', cronTime: '* * * * * *' },
@@ -154,17 +141,13 @@ const testConfig = {
         endpoint: '/api/optimistik/oibus/info',
         authentication: {
           type: 'Basic',
-          username: 'username',
-          password: 'password',
+          key: 'username',
+          secret: 'password',
         },
         id: 'OIBus-test',
         frequency: 300,
         proxy: '',
       },
-    },
-    httpRequest: {
-      stack: 'fetch',
-      timeout: 30,
     },
     externalSources: ['any'],
   },
@@ -237,10 +220,6 @@ const integrationTestConfig = {
         tokenAddress: '',
       },
     },
-    caching: {
-      bufferMax: 250,
-      bufferTimeoutInterval: 300,
-    },
     historyQuery: { folder: './historyQuery' },
     scanModes: [
       { scanMode: 'everySecond', cronTime: '* * * * * *' },
@@ -261,17 +240,13 @@ const integrationTestConfig = {
         endpoint: '/api/optimistik/oibus/info',
         authentication: {
           type: 'Basic',
-          username: 'username',
-          password: 'password',
+          key: 'username',
+          secret: 'password',
         },
         id: 'OIBus-test',
         frequency: 300,
         proxy: '',
       },
-    },
-    httpRequest: {
-      stack: 'fetch',
-      timeout: 30,
     },
     externalSources: ['any'],
   },

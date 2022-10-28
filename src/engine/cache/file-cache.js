@@ -1,7 +1,6 @@
 const fs = require('node:fs/promises')
 const path = require('node:path')
 
-const BaseCache = require('./base-cache')
 const { createFolder } = require('../../service/utils')
 
 // Time between two checks of the Archive Folder
@@ -14,7 +13,7 @@ const FILE_FOLDER = 'files'
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
-class FileCache extends BaseCache {
+class FileCache {
   /**
    * @param {String} northId - The North ID connector
    * @param {Logger} logger - The logger
@@ -30,12 +29,9 @@ class FileCache extends BaseCache {
     archiveFiles,
     retentionDuration,
   ) {
-    super(
-      northId,
-      logger,
-      baseFolder,
-    )
-
+    this.northId = northId
+    this.logger = logger
+    this.baseFolder = baseFolder
     this.archiveFiles = archiveFiles
     // Convert from hours to ms to compare with mtimeMs (file modified time in ms)
     this.retentionDuration = retentionDuration * 3600000
@@ -203,7 +199,7 @@ class FileCache extends BaseCache {
 
   /**
    * Check if the file cache is empty or not
-   * @returns {Boolean} - Cache empty or not
+   * @returns {Promise<Boolean>} - Cache empty or not
    */
   async isEmpty() {
     let files = []

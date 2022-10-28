@@ -2,17 +2,9 @@ const fs = require('node:fs/promises')
 const path = require('node:path')
 
 const FileWriter = require('./north-file-writer')
-const { defaultConfig: config } = require('../../../tests/test-config')
 
 // Mock fs
 jest.mock('node:fs/promises')
-
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  requestService: { httpSend: jest.fn() },
-}
 
 // Mock services
 jest.mock('../../service/database.service')
@@ -54,8 +46,8 @@ describe('NorthFileWriter', () => {
       },
       subscribedTo: [],
     }
-    north = new FileWriter(configuration, engine)
-    await north.init()
+    north = new FileWriter(configuration, [])
+    await north.init('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized', () => {

@@ -6,9 +6,7 @@ import Filters from './filters.jsx'
 import Logging from './logging/logging.jsx'
 import ScanModes from './scan-modes.jsx'
 import Proxies from './proxies.jsx'
-import Caching from './caching.jsx'
 import HealthSignal from './health-signal.jsx'
-import HttpRequest from './http-request.jsx'
 import ExternalSources from './external-sources.jsx'
 import validation from './engine.validation'
 
@@ -111,10 +109,8 @@ const Engine = () => {
         <Filters onChange={onChange} filters={newConfig.engine.filter} />
         <Logging onChange={onChange} logParameters={newConfig.engine.logParameters} />
         <ScanModes onChange={onChange} scanModes={newConfig.engine.scanModes} />
-        <Caching onChange={onChange} caching={newConfig.engine.caching} />
         <Proxies onChange={onChange} proxies={newConfig.engine.proxies || []} />
         <HealthSignal onChange={onChange} healthSignal={newConfig.engine.healthSignal} />
-        <HttpRequest onChange={onChange} httpRequest={newConfig.engine.httpRequest} />
         <ExternalSources onChange={onChange} externalSources={newConfig.engine.externalSources} />
       </Form>
     </Container>

@@ -1,4 +1,4 @@
-import { isIp, notEmpty, inRange, minLength, isHost, minValue, hasLengthBetween } from '../../service/validation.service'
+import { isIp, notEmpty, inRange, minLength, isHost, hasLengthBetween } from '../../service/validation.service'
 import utils from '../helpers/utils'
 
 const validation = {
@@ -23,10 +23,6 @@ const validation = {
         utils.nextTime(val).length > 0 ? null : 'Cron value should be valid'
       ),
     },
-    caching: {
-      bufferMax: minValue(0),
-      bufferTimeoutInterval: minValue(10),
-    },
     proxies: {
       name: minLength(2),
       host: isHost(),
@@ -41,10 +37,6 @@ const validation = {
         frequency: inRange(60, 3600),
       },
       logging: { frequency: inRange(60, 3600) },
-    },
-    httpRequest: {
-      timeout: minValue(1),
-      retryCount: minValue(0),
     },
     externalSources: { id: notEmpty('External source') },
   },

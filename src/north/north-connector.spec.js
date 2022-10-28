@@ -1,14 +1,6 @@
 const NorthConnector = require('./north-connector')
 
-const { defaultConfig: config } = require('../../tests/test-config')
-
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  requestService: { httpSend: jest.fn() },
-}
-
+const utils = require('../service/utils')
 // Mock fs
 jest.mock('node:fs/promises')
 
@@ -25,7 +17,7 @@ jest.mock('../engine/cache/file-cache')
 // Method used to flush promises called in setTimeout
 const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate)
 const nowDateString = '2020-02-02T02:02:02.222Z'
-let settings = null
+let configuration = null
 let north = null
 
 describe('NorthConnector', () => {
@@ -33,11 +25,11 @@ describe('NorthConnector', () => {
     jest.resetAllMocks()
     jest.useFakeTimers().setSystemTime(new Date(nowDateString))
 
-    settings = {
+    configuration = {
       id: 'id',
       name: 'north',
       type: 'test',
-      NorthConnector: {},
+      settings: {},
       caching: {
         sendInterval: 1000,
         retryInterval: 5000,
@@ -50,8 +42,8 @@ describe('NorthConnector', () => {
         },
       },
     }
-    north = new NorthConnector(settings, engine)
-    await north.init()
+    north = new NorthConnector(configuration, [{ name: 'proxyTest' }])
+    await north.init('baseFolder', 'oibusName', {})
   })
 
   afterEach(() => {
@@ -66,7 +58,7 @@ describe('NorthConnector', () => {
 
     north.canHandleFiles = true
     north.canHandleValues = true
-    await north.init()
+    await north.init('baseFolder', 'oibusName', {})
     expect(north.statusService.updateStatusDataStream).toHaveBeenCalledWith({
       'Number of values sent since OIBus has started': 0,
       'Number of files sent since OIBus has started': 0,
@@ -86,7 +78,7 @@ describe('NorthConnector', () => {
     north.resetFilesTimeout = jest.fn()
     north.caching.sendInterval = 0
 
-    await north.init()
+    await north.init('baseFolder', 'oibusName', {})
     expect(north.resetValuesTimeout).not.toHaveBeenCalled()
     expect(north.resetFilesTimeout).not.toHaveBeenCalled()
     expect(north.logger.warn).toHaveBeenCalledWith('No send interval. No values or files will be sent.')
@@ -121,11 +113,11 @@ describe('NorthConnector', () => {
   })
 
   it('should properly cache values and immediately send them if max group count is reached', () => {
-    north.valueCache.getNumberOfValues.mockReturnValue(settings.caching.groupCount)
+    north.valueCache.getNumberOfValues.mockReturnValue(configuration.caching.groupCount)
     north.cacheValues('southId', [{}])
     expect(north.valueCache.cacheValues).toHaveBeenCalledWith('southId', [{}])
-    expect(north.logger.trace).toHaveBeenCalledWith(`Group count reached: ${settings.caching.groupCount} `
-        + `>= ${settings.caching.groupCount}`)
+    expect(north.logger.trace).toHaveBeenCalledWith(`Group count reached: ${configuration.caching.groupCount} `
+        + `>= ${configuration.caching.groupCount}`)
   })
 
   it('should properly cache file', () => {
@@ -133,11 +125,11 @@ describe('NorthConnector', () => {
     expect(north.fileCache.cacheFile).toHaveBeenCalledWith('myFilePath')
   })
 
-  it('should get proxy', () => {
-    expect(north.getProxy()).toBeNull()
+  it('should get proxy', async () => {
+    utils.createProxyAgent.mockImplementation(() => ({ proxyAgent: 'a field' }))
+    expect(await north.getProxy()).toBeNull()
 
-    north.engineConfig.proxies = [{ name: 'proxyTest' }]
-    expect(north.getProxy('proxyTest')).toEqual(north.engineConfig.proxies[0])
+    expect(await north.getProxy('proxyTest')).toEqual({ proxyAgent: 'a field' })
   })
 
   it('should not retrieve values if already sending it', async () => {
@@ -154,7 +146,7 @@ describe('NorthConnector', () => {
     await north.retrieveFromCacheAndSendValues()
 
     expect(north.logger.trace).toHaveBeenCalledWith('No values to send in the cache database.')
-    expect(north.resetValuesTimeout).toHaveBeenCalledWith(settings.caching.sendInterval)
+    expect(north.resetValuesTimeout).toHaveBeenCalledWith(configuration.caching.sendInterval)
   })
 
   it('should successfully send values', async () => {
@@ -162,7 +154,7 @@ describe('NorthConnector', () => {
     north.valueCache.retrieveValuesFromCache = jest.fn(() => valuesToSend)
     north.handleValues = jest.fn()
     await north.retrieveFromCacheAndSendValues()
-    jest.advanceTimersByTime(settings.caching.sendInterval)
+    jest.advanceTimersByTime(configuration.caching.sendInterval)
     await flushPromises()
 
     expect(north.handleValues).toHaveBeenCalledWith(valuesToSend)
@@ -177,18 +169,18 @@ describe('NorthConnector', () => {
     north.resetValuesTimeout = jest.fn()
     // handle values takes twice the sending interval time
     const promiseToResolve = new Promise((resolve) => {
-      setTimeout(() => resolve(), settings.caching.sendInterval * 2)
+      setTimeout(() => resolve(), configuration.caching.sendInterval * 2)
     })
     north.handleValues = jest.fn(() => promiseToResolve)
 
     north.retrieveFromCacheAndSendValues()
-    jest.advanceTimersByTime(settings.caching.sendInterval)
+    jest.advanceTimersByTime(configuration.caching.sendInterval)
 
     // Provoke an immediate sending request for next tick
     north.retrieveFromCacheAndSendValues()
     expect(north.logger.trace).toHaveBeenCalledWith('Already sending values...')
 
-    jest.advanceTimersByTime(settings.caching.sendInterval)
+    jest.advanceTimersByTime(configuration.caching.sendInterval)
     await flushPromises()
 
     expect(north.handleValues).toHaveBeenCalledTimes(1)
@@ -211,8 +203,8 @@ describe('NorthConnector', () => {
       throw new Error('handleValues error 3')
     })
     await north.retrieveFromCacheAndSendValues()
-    jest.advanceTimersByTime(settings.caching.retryInterval)
-    jest.advanceTimersByTime(settings.caching.retryInterval)
+    jest.advanceTimersByTime(configuration.caching.retryInterval)
+    jest.advanceTimersByTime(configuration.caching.retryInterval)
 
     expect(north.handleValues).toHaveBeenCalledWith(valuesToSend)
     expect(north.handleValues).toHaveBeenCalledTimes(3)
@@ -234,7 +226,7 @@ describe('NorthConnector', () => {
     await north.retrieveFromCacheAndSendFile()
 
     expect(north.logger.trace).toHaveBeenCalledWith('No file to send in the cache folder.')
-    expect(north.resetFilesTimeout).toHaveBeenCalledWith(settings.caching.sendInterval)
+    expect(north.resetFilesTimeout).toHaveBeenCalledWith(configuration.caching.sendInterval)
   })
 
   it('should retry to send files if it fails', async () => {
@@ -252,9 +244,9 @@ describe('NorthConnector', () => {
     })
 
     await north.retrieveFromCacheAndSendFile()
-    jest.advanceTimersByTime(settings.caching.retryInterval)
+    jest.advanceTimersByTime(configuration.caching.retryInterval)
     await flushPromises()
-    jest.advanceTimersByTime(settings.caching.retryInterval)
+    jest.advanceTimersByTime(configuration.caching.retryInterval)
     await flushPromises()
 
     expect(north.handleFile).toHaveBeenCalledWith(fileToSend.path)
@@ -273,12 +265,12 @@ describe('NorthConnector', () => {
     north.handleFile = jest.fn()
 
     await north.retrieveFromCacheAndSendFile()
-    jest.advanceTimersByTime(settings.caching.sendInterval)
+    jest.advanceTimersByTime(configuration.caching.sendInterval)
     await flushPromises()
     expect(north.handleFile).toHaveBeenCalledWith(fileToSend.path)
     expect(north.handleFile).toHaveBeenCalledTimes(2)
     expect(north.fileCache.removeFileFromCache).toHaveBeenCalledTimes(2)
-    expect(north.fileCache.removeFileFromCache).toHaveBeenCalledWith(fileToSend.path, settings.caching.archive.enabled)
+    expect(north.fileCache.removeFileFromCache).toHaveBeenCalledWith(fileToSend.path, configuration.caching.archive.enabled)
     expect(north.fileCache.manageErroredFiles).toHaveBeenCalledTimes(0)
   })
 
@@ -291,19 +283,19 @@ describe('NorthConnector', () => {
     north.resetFilesTimeout = jest.fn()
     // handle file takes twice the sending interval time
     const promiseToResolve = new Promise((resolve) => {
-      setTimeout(() => resolve(), settings.caching.sendInterval * 2)
+      setTimeout(() => resolve(), configuration.caching.sendInterval * 2)
     })
     north.handleFile = jest.fn(() => promiseToResolve)
 
     north.retrieveFromCacheAndSendFile()
-    jest.advanceTimersByTime(settings.caching.sendInterval)
+    jest.advanceTimersByTime(configuration.caching.sendInterval)
     await flushPromises()
 
     // Provoke an immediate sending request for next tick
     north.retrieveFromCacheAndSendFile()
     expect(north.logger.trace).toHaveBeenCalledWith('Already sending files...')
 
-    jest.advanceTimersByTime(settings.caching.sendInterval)
+    jest.advanceTimersByTime(configuration.caching.sendInterval)
     await flushPromises()
 
     expect(north.handleFile).toHaveBeenCalledTimes(1)

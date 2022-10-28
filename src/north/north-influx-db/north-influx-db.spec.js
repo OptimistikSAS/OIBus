@@ -1,14 +1,6 @@
 const InfluxDB = require('./north-influx-db')
 
-const { defaultConfig: config } = require('../../../tests/test-config')
-
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  requestService: { httpSend: jest.fn() },
-}
-
+const serviceUtils = require('../../service/utils')
 // Mock fs
 jest.mock('node:fs/promises')
 
@@ -20,6 +12,7 @@ jest.mock('../../service/certificate.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 jest.mock('../../engine/cache/value-cache')
 jest.mock('../../engine/cache/file-cache')
+jest.mock('../../service/utils')
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 const values = [
@@ -61,25 +54,35 @@ describe('North InfluxDB', () => {
         retryInterval: 5000,
         groupCount: 10000,
         maxSendCount: 10000,
+        timeout: 10,
         archive: {
           enabled: true,
           retentionDuration: 720,
         },
       },
     }
-    north = new InfluxDB(configuration, engine)
+    north = new InfluxDB(configuration, [])
   })
 
   it('should call makeRequest and manage error', async () => {
-    await north.init()
+    await north.init('baseFolder', 'oibusName', {})
 
-    engine.requestService.httpSend = jest.fn(() => Promise.reject(new Error('http error')))
+    serviceUtils.httpSend.mockImplementation(() => {
+      throw new Error('http error')
+    })
 
-    await expect(north.handleValues(values)).rejects.toThrowError('http error')
+    let error
+    try {
+      await north.handleValues(values)
+    } catch (err) {
+      error = err
+    }
+    expect(error).toEqual(new Error('http error'))
   })
 
   it('should log error when there are not enough groups for placeholders in measurement', async () => {
-    await north.init()
+    await north.init('baseFolder', 'oibusName', {})
+
     north.measurement = '%5$s'
 
     await north.handleValues(values)
@@ -88,7 +91,8 @@ describe('North InfluxDB', () => {
   })
 
   it('should log error when there are not enough groups for placeholders in tags', async () => {
-    await north.init()
+    await north.init('baseFolder', 'oibusName', {})
+
     north.tags = 'site=%2$s,unit=%3$s,sensor=%5$s'
     await north.handleValues(values)
     const expectedErrorMessage = 'RegExp returned by (.*)/(.{2})(.)(.*) for ANA/BL1RCP05 doesn\'t have enough groups for tags.'
@@ -96,7 +100,7 @@ describe('North InfluxDB', () => {
   })
 
   it('should properly handle values with useDataKeyValue', async () => {
-    await north.init()
+    await north.init('baseFolder', 'oibusName', {})
 
     const valueWithDataLevel = [{
       pointId: 'ANA/BL1RCP05',
@@ -110,68 +114,68 @@ describe('North InfluxDB', () => {
     north.useDataKeyValue = true
     north.keyParentValue = 'level'
     await north.handleValues(valueWithDataLevel)
-    expect(north.engine.requestService.httpSend).toHaveBeenCalledWith(
+    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=s',
       'POST',
-      null,
-      null,
-      'ANA,site=BL,unit=1,sensor=RCP05 value=666 1580608922\n',
       { 'Content-Type': 'application/x-www-form-urlencoded' },
+      'ANA,site=BL,unit=1,sensor=RCP05 value=666 1580608922\n',
+      10,
+      null,
     )
 
     north.precision = 'ns'
     await north.handleValues(valueWithDataLevel)
-    expect(north.engine.requestService.httpSend).toHaveBeenCalledWith(
+    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=ns',
       'POST',
-      null,
-      null,
-      'ANA,site=BL,unit=1,sensor=RCP05 value=666 1580608922222000000\n',
       { 'Content-Type': 'application/x-www-form-urlencoded' },
+      'ANA,site=BL,unit=1,sensor=RCP05 value=666 1580608922222000000\n',
+      10,
+      null,
     )
 
     north.precision = 'u'
     await north.handleValues(valueWithDataLevel)
-    expect(north.engine.requestService.httpSend).toHaveBeenCalledWith(
+    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=u',
       'POST',
-      null,
-      null,
-      'ANA,site=BL,unit=1,sensor=RCP05 value=666 1580608922222000\n',
       { 'Content-Type': 'application/x-www-form-urlencoded' },
+      'ANA,site=BL,unit=1,sensor=RCP05 value=666 1580608922222000\n',
+      10,
+      null,
     )
 
     north.precision = 'ms'
     await north.handleValues(valueWithDataLevel)
-    expect(north.engine.requestService.httpSend).toHaveBeenCalledWith(
+    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=ms',
       'POST',
-      null,
-      null,
-      'ANA,site=BL,unit=1,sensor=RCP05 value=666 1580608922222\n',
       { 'Content-Type': 'application/x-www-form-urlencoded' },
+      'ANA,site=BL,unit=1,sensor=RCP05 value=666 1580608922222\n',
+      10,
+      null,
     )
 
     north.precision = 'm'
     await north.handleValues(valueWithDataLevel)
-    expect(north.engine.requestService.httpSend).toHaveBeenCalledWith(
+    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=m',
       'POST',
-      null,
-      null,
-      'ANA,site=BL,unit=1,sensor=RCP05 value=666 26343482\n',
       { 'Content-Type': 'application/x-www-form-urlencoded' },
+      'ANA,site=BL,unit=1,sensor=RCP05 value=666 26343482\n',
+      10,
+      null,
     )
 
     north.precision = 'h'
     await north.handleValues(valueWithDataLevel)
-    expect(north.engine.requestService.httpSend).toHaveBeenCalledWith(
+    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=h',
       'POST',
-      null,
-      null,
-      'ANA,site=BL,unit=1,sensor=RCP05 value=666 439058\n',
       { 'Content-Type': 'application/x-www-form-urlencoded' },
+      'ANA,site=BL,unit=1,sensor=RCP05 value=666 439058\n',
+      10,
+      null,
     )
 
     north.precision = 'bad'
@@ -179,7 +183,7 @@ describe('North InfluxDB', () => {
   })
 
   it('should properly retrieve timestamp with timestampPathInDataValue', async () => {
-    await north.init()
+    await north.init('baseFolder', 'oibusName', {})
 
     north.timestampPathInDataValue = 'associatedTimestamp.timestamp'
     north.useDataKeyValue = true
@@ -217,16 +221,16 @@ describe('North InfluxDB', () => {
 
     await north.handleValues(valuesWithTimestamp)
 
-    expect(engine.requestService.httpSend).toHaveBeenCalledWith(
+    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=s',
       'POST',
-      null,
-      null,
+      { 'Content-Type': 'application/x-www-form-urlencoded' },
       'ANA,site=BL,unit=1,sensor=RCP05 numericValue=555,anotherNumericValue=444 1580608922\n'
         + 'ANA,site=BL,unit=1,sensor=RCP06 numericValue="666" 1580608922\n'
         + 'ANA,site=BL,unit=1,sensor=RCP07 numericValue="777" 1580608922\n'
         + 'ANA,site=BL,unit=1,sensor=RCP08 numericValue=888 1580608922\n',
-      { 'Content-Type': 'application/x-www-form-urlencoded' },
+      10,
+      null,
     )
 
     const valuesWithTimestamp2 = [
@@ -263,16 +267,16 @@ describe('North InfluxDB', () => {
     // unit should be ignored
     await north.handleValues(valuesWithTimestamp2)
 
-    expect(engine.requestService.httpSend).toHaveBeenCalledWith(
+    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=s',
       'POST',
-      null,
-      null,
+      { 'Content-Type': 'application/x-www-form-urlencoded' },
       'ANA,site=BL,unit=1,sensor=RCP06 numericValue="666" 1580608922\n'
         + 'ANA,site=BL,unit=1,sensor=RCP05 numericValue=555 1580608922\n'
         + 'ANA,site=BL,unit=1,sensor=RCP07 numericValue="777" 1580608922\n'
         + 'ANA,site=BL,unit=1,sensor=RCP08 numericValue=888 1580608922\n',
-      { 'Content-Type': 'application/x-www-form-urlencoded' },
+      10,
+      null,
     )
   })
 })

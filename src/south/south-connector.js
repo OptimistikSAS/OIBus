@@ -8,6 +8,9 @@ const { generateIntervals, delay, createFolder } = require('../service/utils')
 
 const CACHE_DB_FILE_NAME = 'cache.db'
 
+const BUFFER_MAX = 250
+const BUFFER_TIMEOUT = 300
+
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
  * Building a new South connector means to extend this class, and to surcharge the following methods:
@@ -34,13 +37,21 @@ class SouthConnector {
    * Constructor for SouthConnector
    * @constructor
    * @param {Object} configuration - The South connector configuration
-   * @param {BaseEngine} engine - The Engine
+   * @param {Function} engineAddValues - The Engine add values method
+   * @param {Function} engineAddFiles - The Engine add file method
    * @param {Object} supportedModes - The supported modes
    * @return {void}
    */
-  constructor(configuration, engine, supportedModes = {}) {
+  constructor(
+    configuration,
+    engineAddValues,
+    engineAddFiles,
+    supportedModes = {},
+  ) {
     this.handlesPoints = false
     this.handlesFiles = false
+    this.engineAddValues = engineAddValues
+    this.engineAddFiles = engineAddFiles
     this.connected = false
 
     this.id = configuration.id
@@ -52,12 +63,8 @@ class SouthConnector {
     this.points = configuration.points
     this.scanGroups = configuration.settings.scanGroups
 
-    this.engine = engine
-    const { engineConfig } = this.engine.configService.getConfig()
-    this.engineConfig = engineConfig
     this.encryptionService = EncryptionService.getInstance()
     this.supportedModes = supportedModes
-    this.baseFolder = path.resolve(this.engine.cacheFolder, `south-${configuration.id}`)
 
     this.numberOfRetrievedFiles = 0
     this.numberOfRetrievedValues = 0
@@ -69,6 +76,7 @@ class SouthConnector {
     this.bufferTimeout = null
 
     // Variable initialized in init()
+    this.baseFolder = null
     this.statusService = null
     this.keyFile = null
     this.certFile = null
@@ -80,14 +88,19 @@ class SouthConnector {
 
   /**
    * Initialize services (logger, certificate, status data)
+   * @param {String} baseFolder - The base cache folder
+   * @param {String} oibusName - The OIBus name
+   * @param {Object} defaultLogParameters - The default logs parameters
    * @returns {Promise<void>} - The result promise
    */
-  async init() {
+  async init(baseFolder, oibusName, defaultLogParameters) {
+    this.baseFolder = path.resolve(baseFolder, `south-${this.id}`)
+
     this.statusService = new StatusService()
 
     this.logger = new LoggerService(`South:${this.name}`)
     this.logger.setEncryptionService(this.encryptionService)
-    await this.logger.changeParameters(this.engineConfig, this.logParameters)
+    await this.logger.changeParameters(oibusName, defaultLogParameters, this.logParameters)
 
     this.certificate = new CertificateService(this.logger)
     await this.certificate.init(this.keyFile, this.certFile, this.caFile)
@@ -354,7 +367,7 @@ class SouthConnector {
     const bufferSave = [...this.buffer]
     this.buffer = []
     if (bufferSave.length > 0) {
-      await this.engine.addValues(this.id, bufferSave)
+      await this.engineAddValues(this.id, bufferSave)
       this.numberOfRetrievedValues += bufferSave.length
       this.statusService.updateStatusDataStream({
         'Number of values since OIBus has started': this.numberOfRetrievedValues,
@@ -371,12 +384,12 @@ class SouthConnector {
    */
   async addValues(values) {
     this.buffer.push(...values)
-    // If the South connector buffer is larger than this.engine.bufferMax flush the buffer
+    // If the South connector buffer is larger than bufferMax flush the buffer
     // Otherwise, start a timer before sending it
-    if (this.buffer.length > this.engine.bufferMax) {
+    if (this.buffer.length > BUFFER_MAX) {
       await this.flush('max-flush')
     } else if (this.bufferTimeout === null) {
-      this.bufferTimeout = setTimeout(this.flush.bind(this), this.engine.bufferTimeoutInterval)
+      this.bufferTimeout = setTimeout(this.flush.bind(this), BUFFER_TIMEOUT)
     }
   }
 
@@ -387,7 +400,7 @@ class SouthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async addFile(filePath, preserveFiles) {
-    await this.engine.addFile(this.id, filePath, preserveFiles)
+    await this.engineAddFiles(this.id, filePath, preserveFiles)
     this.numberOfRetrievedFiles += 1
     this.statusService.updateStatusDataStream({
       'Number of files since OIBus has started': this.numberOfRetrievedFiles,

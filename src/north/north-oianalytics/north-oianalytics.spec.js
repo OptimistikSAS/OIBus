@@ -2,17 +2,10 @@ const fs = require('node:fs/promises')
 
 const OIAnalytics = require('./north-oianalytics')
 
-const { defaultConfig: config } = require('../../../tests/test-config')
+const serviceUtils = require('../../service/utils')
 
 // Mock fs
 jest.mock('node:fs/promises')
-
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  requestService: { httpSend: jest.fn() },
-}
 
 // Mock services
 jest.mock('../../service/database.service')
@@ -22,6 +15,7 @@ jest.mock('../../service/certificate.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 jest.mock('../../engine/cache/value-cache')
 jest.mock('../../engine/cache/file-cache')
+jest.mock('../../service/utils')
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 let configuration = null
@@ -42,6 +36,7 @@ describe('NorthOIAnalytics', () => {
         retryInterval: 5000,
         groupCount: 10000,
         maxSendCount: 10000,
+        timeout: 10,
         archive: {
           enabled: true,
           retentionDuration: 720,
@@ -59,8 +54,8 @@ describe('NorthOIAnalytics', () => {
       proxy: '',
       subscribedTo: [],
     }
-    north = new OIAnalytics(configuration, engine)
-    await north.init()
+    north = new OIAnalytics(configuration, [])
+    await north.init('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized', () => {
@@ -79,20 +74,19 @@ describe('NorthOIAnalytics', () => {
     await north.handleValues(values)
 
     const expectedUrl = `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`
-    const expectedAuthentication = configuration.settings.authentication
     const expectedBody = JSON.stringify(values.map((value) => ({
-      pointId: value.pointId,
       timestamp: value.timestamp,
       data: value.data,
+      pointId: value.pointId,
     })))
     const expectedHeaders = { 'Content-Type': 'application/json' }
-    expect(engine.requestService.httpSend).toHaveBeenCalledWith(
+    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
       expectedUrl,
       'POST',
-      expectedAuthentication,
-      null,
-      expectedBody,
       expectedHeaders,
+      expectedBody,
+      configuration.caching.timeout,
+      null,
     )
   })
 
@@ -103,8 +97,14 @@ describe('NorthOIAnalytics', () => {
     await north.handleFile(filePath)
 
     const expectedUrl = `${configuration.settings.host}/api/oianalytics/value-upload/file?dataSourceId=${configuration.name}`
-    const expectedAuthentication = configuration.settings.authentication
-    expect(engine.requestService.httpSend).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, filePath)
+    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+      expectedUrl,
+      'POST',
+      {},
+      filePath,
+      configuration.caching.timeout,
+      null,
+    )
   })
 
   it('should not retry', () => {

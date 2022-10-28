@@ -28,11 +28,6 @@ describe('BaseEngine', () => {
     await engine.initEngineServices(config.engine, 'base')
   })
 
-  it('should be properly initialized', () => {
-    expect(engine.bufferMax).toEqual(config.engine.caching.bufferMax)
-    expect(engine.bufferTimeoutInterval).toEqual(config.engine.caching.bufferTimeoutInterval)
-  })
-
   it('should warn when calling add values', async () => {
     const sampleValues = [{
       timestamp: 'today',

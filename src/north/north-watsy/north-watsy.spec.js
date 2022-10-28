@@ -4,8 +4,6 @@ const WATSYConnect = require('./north-watsy')
 
 const utils = require('./utils')
 
-const { defaultConfig: config } = require('../../../tests/test-config')
-
 // Mock mqtt
 jest.mock('mqtt', () => ({ connect: jest.fn() }))
 
@@ -17,13 +15,6 @@ jest.mock('./utils', () => ({
 
 // Mock fs
 jest.mock('node:fs/promises')
-
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  requestService: { httpSend: jest.fn() },
-}
 
 // Mock services
 jest.mock('../../service/database.service')
@@ -69,8 +60,8 @@ describe('NorthWATSY', () => {
       },
       subscribedTo: [],
     }
-    north = new WATSYConnect(configuration, engine)
-    await north.init()
+    north = new WATSYConnect(configuration, [])
+    await north.init('baseFolder', 'oibusName', {})
   })
 
   it('should properly connect', async () => {

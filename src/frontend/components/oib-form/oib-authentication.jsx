@@ -40,18 +40,18 @@ const OibAuthentication = ({ value, name, onChange, mode, label }) => {
               <OibText
                 label="User name"
                 onChange={handleChange}
-                value={value.username}
+                value={value.key}
                 valid={validation.username}
-                name="username"
+                name="key"
               />
             </Col>
             <Col md="4">
               <OibPassword
                 label="Password"
                 onChange={handleChange}
-                value={value.password}
+                value={value.secret}
                 valid={validation.password}
-                name="password"
+                name="secret"
               />
             </Col>
           </Row>
@@ -72,9 +72,9 @@ const OibAuthentication = ({ value, name, onChange, mode, label }) => {
               <OibPassword
                 label="Secret"
                 onChange={handleChange}
-                value={value.secretKey}
+                value={value.secret}
                 valid={validation.secretKey}
-                name="secretKey"
+                name="secret"
               />
             </Col>
           </Row>
@@ -86,9 +86,9 @@ const OibAuthentication = ({ value, name, onChange, mode, label }) => {
               <OibPassword
                 label="Token"
                 onChange={handleChange}
-                value={value.token}
+                value={value.secret}
                 valid={validation.token}
-                name="token"
+                name="secret"
               />
             </Col>
           </Row>
@@ -131,7 +131,7 @@ OibAuthentication.propTypes = {
 }
 
 OibAuthentication.defaultProps = {
-  value: { type: 'Basic', username: '', password: '', key: '', secretKey: '' },
+  value: { type: 'Basic', key: '', secret: '' },
   mode: null,
   label: 'Authentication',
 }

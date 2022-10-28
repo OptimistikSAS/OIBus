@@ -79,7 +79,7 @@ describe('Logger', () => {
       },
     ]
 
-    await logger.changeParameters(settings)
+    await logger.changeParameters(settings.engineName, settings.logParameters)
     expect(logger.scope).toEqual('main')
 
     expect(pino).toHaveBeenCalledTimes(1)
@@ -96,13 +96,11 @@ describe('Logger', () => {
     logger = new LoggerService()
     logger.setEncryptionService(encryptionService)
 
-    await logger.changeParameters({
-      logParameters: {
-        consoleLog: { level: 'none' },
-        fileLog: { level: 'none' },
-        sqliteLog: { level: 'none' },
-        lokiLog: { level: 'none' },
-      },
+    await logger.changeParameters(settings.engineName, {
+      consoleLog: { level: 'none' },
+      fileLog: { level: 'none' },
+      sqliteLog: { level: 'none' },
+      lokiLog: { level: 'none' },
     })
 
     expect(pino).not.toHaveBeenCalled()
@@ -150,7 +148,7 @@ describe('Logger', () => {
       },
     ]
 
-    await logger.changeParameters(settings, specificParameters)
+    await logger.changeParameters(settings.engineName, settings.logParameters, specificParameters)
     expect(logger.scope).toEqual('specific-logger')
 
     expect(pino).toHaveBeenCalledTimes(1)
@@ -171,7 +169,7 @@ describe('Logger', () => {
 
     settings.logParameters.fileLog.fileName = undefined
     settings.logParameters.sqliteLog.fileName = undefined
-    await logger.changeParameters(settings)
+    await logger.changeParameters(settings.engineName, settings.logParameters)
 
     expect(console.error).toHaveBeenCalledTimes(1)
     expect(console.error).toHaveBeenCalledWith(new Error('decrypt-error'))

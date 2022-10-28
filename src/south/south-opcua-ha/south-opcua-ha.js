@@ -25,16 +25,26 @@ class SouthOPCUAHA extends SouthConnector {
    * Constructor for SouthOPCUAHA
    * @constructor
    * @param {Object} configuration - The South connector configuration
-   * @param {BaseEngine} engine - The Engine
+   * @param {Function} engineAddValues - The Engine add values method
+   * @param {Function} engineAddFiles - The Engine add file method
    * @return {void}
    */
-  constructor(configuration, engine) {
-    super(configuration, engine, {
-      supportListen: false,
-      supportLastPoint: false,
-      supportFile: false,
-      supportHistory: true,
-    })
+  constructor(
+    configuration,
+    engineAddValues,
+    engineAddFiles,
+  ) {
+    super(
+      configuration,
+      engineAddValues,
+      engineAddFiles,
+      {
+        supportListen: false,
+        supportLastPoint: false,
+        supportFile: false,
+        supportHistory: true,
+      },
+    )
     this.canHandleHistory = true
     this.handlesPoints = true
 
@@ -64,7 +74,6 @@ class SouthOPCUAHA extends SouthConnector {
     this.readTimeout = readTimeout
     this.securityMode = securityMode
     this.securityPolicy = securityPolicy
-    this.clientName = configuration.id
     this.keepSessionAlive = keepSessionAlive
     this.certFile = certFile
     this.keyFile = keyFile
@@ -73,6 +82,7 @@ class SouthOPCUAHA extends SouthConnector {
     this.clientCertificateManager = null
     this.reconnectTimeout = null
     this.session = null
+    this.clientName = null
     this.disconnecting = false
   }
 
@@ -87,10 +97,14 @@ class SouthOPCUAHA extends SouthConnector {
 
   /**
    * Initialize services (logger, certificate, status data)
+   * @param {String} baseFolder - The base cache folder
+   * @param {String} oibusName - The OIBus name
+   * @param {Object} defaultLogParameters - The default logs parameters
    * @returns {Promise<void>} - The result promise
    */
-  async init() {
-    await super.init()
+  async init(baseFolder, oibusName, defaultLogParameters) {
+    await super.init(baseFolder, oibusName, defaultLogParameters)
+    this.clientName = this.id
     await initOpcuaCertificateFolders(this.encryptionService.certsFolder)
     if (!this.clientCertificateManager) {
       this.clientCertificateManager = new OPCUACertificateManager({

@@ -14,16 +14,26 @@ class SouthFolderScanner extends SouthConnector {
    * Constructor for SouthFolderScanner
    * @constructor
    * @param {Object} configuration - The South connector configuration
-   * @param {BaseEngine} engine - The Engine
+   * @param {Function} engineAddValues - The Engine add values method
+   * @param {Function} engineAddFiles - The Engine add file method
    * @return {void}
    */
-  constructor(configuration, engine) {
-    super(configuration, engine, {
-      supportListen: false,
-      supportLastPoint: false,
-      supportFile: true,
-      supportHistory: false,
-    })
+  constructor(
+    configuration,
+    engineAddValues,
+    engineAddFiles,
+  ) {
+    super(
+      configuration,
+      engineAddValues,
+      engineAddFiles,
+      {
+        supportListen: false,
+        supportLastPoint: false,
+        supportFile: true,
+        supportHistory: false,
+      },
+    )
     this.handlesFiles = true
 
     const {

@@ -7,8 +7,6 @@ const Modbus = require('./south-modbus')
 const databaseService = require('../../service/database.service')
 const utils = require('./utils')
 
-const { defaultConfig: config } = require('../../../tests/test-config')
-
 // Mock jsmobdus
 jest.mock('jsmodbus', () => ({ client: { TCP: jest.fn() } }))
 
@@ -21,13 +19,8 @@ jest.mock('node:fs/promises')
 // Mock utils class
 jest.mock('./utils')
 
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  addValues: jest.fn(),
-  addFile: jest.fn(),
-}
+const addValues = jest.fn()
+const addFiles = jest.fn()
 
 // Mock services
 jest.mock('../../service/database.service')
@@ -115,8 +108,8 @@ describe('SouthModbus', () => {
         },
       ],
     }
-    south = new Modbus(configuration, engine)
-    await south.init()
+    south = new Modbus(configuration, addValues, addFiles)
+    await south.init('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized', () => {
@@ -126,7 +119,7 @@ describe('SouthModbus', () => {
 
   it('should properly connect', async () => {
     await south.connect()
-    expect(databaseService.createConfigDatabase).toBeCalledWith(path.resolve(`./cache/south-${configuration.id}/cache.db`))
+    expect(databaseService.createConfigDatabase).toBeCalledWith(path.resolve(`baseFolder/south-${configuration.id}/cache.db`))
     expect(south.connected).toBeTruthy()
   })
 

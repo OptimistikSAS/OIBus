@@ -4,6 +4,7 @@ const csv = require('papaparse')
 
 const NorthConnector = require('../north-connector')
 const { convertCSVRowIntoHttpBody, isHeaderValid } = require('./utils')
+const { httpSend, addAuthenticationToHeaders } = require('../../service/utils')
 
 const ERROR_PRINT_SIZE = 5
 
@@ -17,11 +18,17 @@ class NorthCsvToHttp extends NorthConnector {
    * Constructor for NorthCsvToHttp
    * @constructor
    * @param {Object} configuration - The North connector configuration
-   * @param {BaseEngine} engine - The Engine
+   * @param {Object[]} proxies - The list of available proxies
    * @return {void}
    */
-  constructor(configuration, engine) {
-    super(configuration, engine)
+  constructor(
+    configuration,
+    proxies,
+  ) {
+    super(
+      configuration,
+      proxies,
+    )
     this.canHandleFiles = true
 
     const {
@@ -46,7 +53,7 @@ class NorthCsvToHttp extends NorthConnector {
     this.acceptUnconvertedRows = acceptUnconvertedRows
     this.mapping = mapping || {}
     this.csvDelimiter = csvDelimiter
-    this.proxy = this.getProxy(proxy)
+    this.proxySettings = proxy
   }
 
   /**
@@ -182,31 +189,41 @@ class NorthCsvToHttp extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async sendData(httpBody) {
+    const headers = { 'Content-Type': 'application/json' }
+    if (this.request.authenticationField) {
+      addAuthenticationToHeaders(
+        headers,
+        this.request.authenticationField.type,
+        this.request.authenticationField.key,
+        await this.encryptionService.decryptText(this.request.authenticationField.secret),
+      )
+    }
+
     if (httpBody.length > this.bodyMaxLength) {
       // Divide the current body in array of maximum maxLength elements
       let i = 0
       const requests = []
       for (i; i < httpBody.length; i += this.bodyMaxLength) {
         requests.push(
-          this.engine.requestService.httpSend(
+          httpSend(
             this.request.host,
             this.request.method,
-            this.request.authenticationField,
-            this.proxy,
+            headers,
             JSON.stringify(httpBody.slice(i, i + this.bodyMaxLength - 1)),
-            { 'Content-Type': 'application/json' },
+            this.caching.timeout,
+            this.proxyAgent,
           ),
         )
       }
       await Promise.all(requests)
     } else {
-      await this.engine.requestService.httpSend(
+      await httpSend(
         this.request.host,
         this.request.method,
-        this.request.authenticationField,
-        this.proxy,
+        headers,
         JSON.stringify(httpBody),
-        { 'Content-Type': 'application/json' },
+        this.caching.timeout,
+        this.proxyAgent,
       )
     }
   }

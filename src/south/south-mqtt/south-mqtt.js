@@ -14,16 +14,26 @@ class SouthMQTT extends SouthConnector {
    * Constructor for SouthMQTT
    * @constructor
    * @param {Object} configuration - The South connector configuration
-   * @param {BaseEngine} engine - The Engine
+   * @param {Function} engineAddValues - The Engine add values method
+   * @param {Function} engineAddFiles - The Engine add file method
    * @return {void}
    */
-  constructor(configuration, engine) {
-    super(configuration, engine, {
-      supportListen: true,
-      supportLastPoint: false,
-      supportFile: false,
-      supportHistory: false,
-    })
+  constructor(
+    configuration,
+    engineAddValues,
+    engineAddFiles,
+  ) {
+    super(
+      configuration,
+      engineAddValues,
+      engineAddFiles,
+      {
+        supportListen: true,
+        supportLastPoint: false,
+        supportFile: false,
+        supportHistory: false,
+      },
+    )
 
     const {
       url,
@@ -60,7 +70,6 @@ class SouthMQTT extends SouthConnector {
     this.connectTimeout = connectTimeout
     this.qos = qos
     this.persistent = persistent
-    this.clientId = `${engine.engineName}-${configuration.id}`
     this.dataArrayPath = dataArrayPath
     this.valuePath = valuePath
     this.pointIdPath = pointIdPath
@@ -76,10 +85,15 @@ class SouthMQTT extends SouthConnector {
 
   /**
    * Initialize services (logger, certificate, status data)
+   * @param {String} baseFolder - The base cache folder
+   * @param {String} oibusName - The OIBus name
+   * @param {Object} defaultLogParameters - The default logs parameters
    * @returns {Promise<void>} - The result promise
    */
-  async init() {
-    await super.init()
+  async init(baseFolder, oibusName, defaultLogParameters) {
+    await super.init(baseFolder, oibusName, defaultLogParameters)
+    this.clientId = `${oibusName}-${this.id}`
+
     if (!this.timezone || !DateTime.local().setZone(this.timezone).isValid) {
       this.logger.error(`Invalid timezone supplied: ${this.timezone}`)
       this.timezone = null

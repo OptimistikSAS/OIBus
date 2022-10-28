@@ -1573,4 +1573,69 @@ module.exports = {
       }
     }
   },
+  29: async (config, logger) => {
+    const { httpRequest } = config.engine
+
+    for (const north of config.north) {
+      logger.info(`Add timeout field for North "${north.id}".`)
+      north.caching.timeout = httpRequest.timeout
+
+      logger.info(`Updating authentication fields for North "${north.id}".`)
+      if (north.authentication) {
+        switch (north.authentication.type) {
+          case 'Basic':
+            north.authentication.key = north.authentication.username
+            north.authentication.secret = north.authentication.password
+            break
+
+          case 'API Key':
+            north.authentication.secret = north.authentication.secretKey
+            break
+
+          case 'Bearer':
+            north.authentication.secret = north.authentication.token
+            north.authentication.key = ''
+            break
+
+          default:
+            logger.warn(`Unrecognized authentication type for North "${north.id}".`)
+        }
+        delete north.authentication.secretKey
+        delete north.authentication.username
+        delete north.authentication.password
+        delete north.authentication.token
+      }
+    }
+
+    logger.info('Removing httpRequest and caching fields from engine config.')
+    delete config.engine.httpRequest
+    delete config.engine.caching
+
+    if (config.engine.healthSignal.http.authentication) {
+      logger.info('Updating authentication fields for HealthSignal.')
+
+      switch (config.engine.healthSignal.http.authentication.type) {
+        case 'Basic':
+          config.engine.healthSignal.http.authentication.key = config.engine.healthSignal.http.authentication.username
+          config.engine.healthSignal.http.authentication.secret = config.engine.healthSignal.http.authentication.password
+          break
+
+        case 'API Key':
+          config.engine.healthSignal.http.authentication.secret = config.engine.healthSignal.http.authentication.secretKey
+          break
+
+        case 'Bearer':
+          config.engine.healthSignal.http.authentication.secret = config.engine.healthSignal.http.authentication.token
+          config.engine.healthSignal.http.authentication.key = ''
+          break
+
+        default:
+          logger.warn('Unrecognized authentication type for HealthSignal.')
+      }
+      delete config.engine.healthSignal.http.authentication.secretKey
+      delete config.engine.healthSignal.http.authentication.username
+      delete config.engine.healthSignal.http.authentication.password
+      delete config.engine.healthSignal.http.authentication.token
+    }
+  },
 }

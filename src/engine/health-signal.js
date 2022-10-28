@@ -1,3 +1,5 @@
+const { httpSend, createProxyAgent, addAuthenticationToHeaders } = require('../service/utils')
+
 /**
  * Class HealthSignal - sends health signal to a remote host or into the logs
  */
@@ -21,7 +23,7 @@ class HealthSignal {
     this.http.proxy = Array.isArray(engineConfig.proxies) ? engineConfig.proxies.find(({ name }) => name === this.http.proxy) : null
     this.httpTimer = null
     this.loggingTimer = null
-    this.engineName = engineConfig.engineName
+    this.oibusName = engineConfig.engineName
   }
 
   /**
@@ -58,17 +60,35 @@ class HealthSignal {
    */
   async sendHttpSignal() {
     const healthStatus = this.prepareStatus(this.http.verbose)
-    healthStatus.id = this.engineName
+    healthStatus.id = this.oibusName
     try {
       const data = JSON.stringify(healthStatus)
       const headers = { 'Content-Type': 'application/json' }
-      await this.engine.requestService.httpSend(
+      let proxyAgent
+      if (this.http.proxy) {
+        proxyAgent = createProxyAgent(
+          this.http.proxy.protocol,
+          this.http.proxy.host,
+          this.http.proxy.port,
+          this.http.proxy.username,
+          await this.engine.encryptionService.decryptText(this.http.proxy.password),
+        )
+      }
+      if (this.http.authentication) {
+        addAuthenticationToHeaders(
+          headers,
+          this.http.authentication.type,
+          this.http.authentication.key,
+          await this.engine.encryptionService.decryptText(this.http.authentication.secret),
+        )
+      }
+      await httpSend(
         `${this.http.host}${this.http.endpoint}`,
         'POST',
-        this.http.authentication,
-        this.http.proxy,
-        data,
         headers,
+        data,
+        10,
+        proxyAgent,
       )
       this.logger.debug('HTTP health signal sent successfully.')
     } catch (error) {
@@ -107,15 +127,33 @@ class HealthSignal {
     const stringData = JSON.stringify(data)
     if (this.http.enabled) {
       this.logger.trace(`Forwarding health signal to "${this.http.host}".`)
-      const headers = { 'Content-Type': 'application/json' }
       this.logger.info(stringData)
-      await this.engine.requestService.httpSend(
+      const headers = { 'Content-Type': 'application/json' }
+      let proxyAgent
+      if (this.http.proxy) {
+        proxyAgent = createProxyAgent(
+          this.http.proxy.protocol,
+          this.http.proxy.host,
+          this.http.proxy.port,
+          this.http.proxy.username,
+          await this.engine.encryptionService.decryptText(this.http.proxy.password),
+        )
+      }
+      if (this.http.authentication) {
+        addAuthenticationToHeaders(
+          headers,
+          this.http.authentication.type,
+          this.http.authentication.key,
+          await this.engine.encryptionService.decryptText(this.http.authentication.secret),
+        )
+      }
+      await httpSend(
         `${this.http.host}${this.http.endpoint}`,
         'POST',
-        this.http.authentication,
-        this.http.proxy,
-        stringData,
         headers,
+        stringData,
+        10,
+        proxyAgent,
       )
       this.logger.trace(`Health signal successfully forwarded to "${this.http.host}".`)
     } else {

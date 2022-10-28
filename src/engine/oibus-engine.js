@@ -38,7 +38,7 @@ class OIBusEngine extends BaseEngine {
 
     // Variable initialized in initEngineServices
     this.jobs = null
-    this.engineName = null
+    this.oibusName = null
     this.bufferMax = null
     this.bufferTimeoutInterval = null
     this.cache = null
@@ -55,9 +55,6 @@ class OIBusEngine extends BaseEngine {
    */
   async initEngineServices(engineConfig, loggerScope = 'OIBusEngine') {
     await super.initEngineServices(engineConfig, loggerScope)
-
-    this.engineName = engineConfig.engineName
-
     this.logger.info(`Starting OIBusEngine: ${JSON.stringify(this.getOIBusInfo(), null, 4)}`)
 
     engineConfig.scanModes.forEach(({ scanMode }) => {
@@ -78,19 +75,19 @@ class OIBusEngine extends BaseEngine {
   /**
    * Add new values from a South connector to the Engine.
    * The Engine will forward the values to the Cache.
-   * @param {String} id - The South connector id
+   * @param {String} southId - The South connector id
    * @param {Object[]} values - Array of values
    * @returns {Promise<void>} - The result promise
    */
-  async addValues(id, values) {
+  async addValues(southId, values) {
     // When coming from an external source, the south won't be found.
-    const southOrigin = this.activeSouths.find((south) => south.id === id)
-    this.logger.trace(`Add ${values.length} values to cache from South "${southOrigin?.name || id}".`)
+    const southOrigin = this.activeSouths.find((south) => south.id === southId)
+    this.logger.trace(`Add ${values.length} values to cache from South "${southOrigin?.name || southId}".`)
     if (values.length) {
-      this.activeNorths.filter((north) => north.canHandleValues && north.isSubscribed(id))
-        .forEach((north) => {
-          north.cacheValues(id, values)
-        })
+      // Do not resolve promise if one of the connector fails. Otherwise, if a file is removed after a North fails,
+      // the file can be lost.
+      await Promise.all(this.activeNorths.filter((north) => north.canHandleValues && north.isSubscribed(southId))
+        .map((north) => north.cacheValues(southId, values)))
     }
   }
 
@@ -188,7 +185,7 @@ class OIBusEngine extends BaseEngine {
     await Promise.allSettled(this.activeSouths.map((south) => {
       const initAndConnect = async () => {
         try {
-          await south.init()
+          await south.init(this.cacheFolder, this.oibusName, this.defaultLogParameters)
           await south.connect()
         } catch (error) {
           this.logger.error(error)
@@ -204,7 +201,7 @@ class OIBusEngine extends BaseEngine {
     await Promise.allSettled(this.activeNorths.map((north) => {
       const initAndConnect = async () => {
         try {
-          await north.init()
+          await north.init(this.cacheFolder, this.oibusName, this.defaultLogParameters)
           await north.connect()
         } catch (error) {
           this.logger.error(error)
