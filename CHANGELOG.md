@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.3.4](https://github.com/OptimistikSAS/OIBus/compare/v2.3.3...v2.3.4) (2022-10-28)
+
+
+### Bug Fixes
+
+* **cache:** improve perf on values query in sqlite cache ([51e8f9a](https://github.com/OptimistikSAS/OIBus/commit/51e8f9aa0f2aa344fcf5202f5b68ecbf3d7fcb5c))
+* **setup:** improve setup ([9ad71fe](https://github.com/OptimistikSAS/OIBus/commit/9ad71febb62b726b57411d245faa8d46eac4584d))
+
 ### [2.3.3](https://github.com/OptimistikSAS/OIBus/compare/v2.3.2...v2.3.3) (2022-10-25)
 
 
