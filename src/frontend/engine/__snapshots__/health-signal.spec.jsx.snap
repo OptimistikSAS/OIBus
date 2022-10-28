@@ -349,15 +349,15 @@ exports[`HealthSignal check HealthSignal 1`] = `
           >
             <label
               class="form-label"
-              for="username"
+              for="key"
             >
               User name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="username"
-              name="username"
+              id="key"
+              name="key"
               type="text"
               value="username"
             />
@@ -374,7 +374,7 @@ exports[`HealthSignal check HealthSignal 1`] = `
           >
             <label
               class="form-label"
-              for="password"
+              for="secret"
             >
               Password
             </label>
@@ -384,8 +384,8 @@ exports[`HealthSignal check HealthSignal 1`] = `
               <input
                 aria-invalid="false"
                 class="oi-form-input form-control"
-                id="password"
-                name="password"
+                id="secret"
+                name="secret"
                 type="password"
                 value="password"
               />
@@ -751,15 +751,15 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
           >
             <label
               class="form-label"
-              for="username"
+              for="key"
             >
               User name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="username"
-              name="username"
+              id="key"
+              name="key"
               type="text"
               value="username"
             />
@@ -776,7 +776,7 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
           >
             <label
               class="form-label"
-              for="password"
+              for="secret"
             >
               Password
             </label>
@@ -786,8 +786,8 @@ exports[`HealthSignal check change healthSignal http to false 1`] = `
               <input
                 aria-invalid="false"
                 class="oi-form-input form-control"
-                id="password"
-                name="password"
+                id="secret"
+                name="secret"
                 type="password"
                 value="password"
               />
@@ -1153,15 +1153,15 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
           >
             <label
               class="form-label"
-              for="username"
+              for="key"
             >
               User name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="username"
-              name="username"
+              id="key"
+              name="key"
               type="text"
               value="username"
             />
@@ -1178,7 +1178,7 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
           >
             <label
               class="form-label"
-              for="password"
+              for="secret"
             >
               Password
             </label>
@@ -1188,8 +1188,8 @@ exports[`HealthSignal check change healthSignal log to false 1`] = `
               <input
                 aria-invalid="false"
                 class="oi-form-input form-control"
-                id="password"
-                name="password"
+                id="secret"
+                name="secret"
                 type="password"
                 value="password"
               />

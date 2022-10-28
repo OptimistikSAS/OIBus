@@ -4,7 +4,6 @@ const fsSync = require('node:fs')
 const zlib = require('node:zlib')
 
 const minimist = require('minimist')
-const FormData = require('form-data')
 
 const { DateTime } = require('luxon')
 const utils = require('./utils')
@@ -20,22 +19,6 @@ describe('Service utils', () => {
   beforeEach(() => {
     jest.resetAllMocks()
     jest.useFakeTimers().setSystemTime(new Date(nowDateString))
-  })
-
-  it('should properly generate form-data body', () => {
-    const filepath = '/path/to/note-1610983920007.txt'
-    const myReadStream = {
-      pipe: jest.fn().mockReturnThis(),
-      on: jest.fn().mockImplementation((event, handler) => {
-        handler()
-        return this
-      }),
-      pause: jest.fn(),
-    }
-
-    const formData = utils.generateFormDataBodyFromFile(path.parse(filepath), myReadStream)
-
-    expect(formData).toBeInstanceOf(FormData)
   })
 
   it('should parse command line arguments without args', () => {

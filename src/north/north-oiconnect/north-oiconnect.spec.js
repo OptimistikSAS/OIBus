@@ -2,17 +2,9 @@ const fs = require('node:fs/promises')
 
 const OIConnect = require('./north-oiconnect')
 
-const { defaultConfig: config } = require('../../../tests/test-config')
-
+const serviceUtils = require('../../service/utils')
 // Mock fs
 jest.mock('node:fs/promises')
-
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  requestService: { httpSend: jest.fn() },
-}
 
 // Mock services
 jest.mock('../../service/database.service')
@@ -22,6 +14,7 @@ jest.mock('../../service/certificate.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 jest.mock('../../engine/cache/value-cache')
 jest.mock('../../engine/cache/file-cache')
+jest.mock('../../service/utils')
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 let configuration = null
@@ -38,7 +31,7 @@ describe('NorthOIConnect', () => {
       type: 'OIConnect',
       enabled: false,
       settings: {
-        authentication: { password: '', type: 'Basic', username: '' },
+        authentication: { secret: '', type: 'Basic', key: '' },
         timeout: 180000,
         host: 'http://hostname:2223',
         valuesEndpoint: '/addValues',
@@ -51,6 +44,7 @@ describe('NorthOIConnect', () => {
         retryInterval: 5000,
         groupCount: 10000,
         maxSendCount: 10000,
+        timeout: 10,
         archive: {
           enabled: true,
           retentionDuration: 720,
@@ -58,8 +52,8 @@ describe('NorthOIConnect', () => {
       },
       subscribedTo: [],
     }
-    north = new OIConnect(configuration, engine)
-    await north.init()
+    north = new OIConnect(configuration, [])
+    await north.init('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized', () => {
@@ -67,7 +61,7 @@ describe('NorthOIConnect', () => {
     expect(north.canHandleFiles).toBeTruthy()
   })
 
-  it('should properly handle values in non verbose mode', async () => {
+  it('should properly handle values', async () => {
     const values = [
       {
         pointId: 'pointId',
@@ -77,12 +71,18 @@ describe('NorthOIConnect', () => {
     ]
     await north.handleValues(values)
 
-    const expectedUrl = 'http://hostname:2223/addValues?name=OIBus:oic'
-    const expectedAuthentication = configuration.settings.authentication
+    const expectedUrl = 'http://hostname:2223/addValues?name=oibusName:oic'
     const expectedBody = JSON.stringify(values)
     const expectedHeaders = { 'Content-Type': 'application/json' }
 
-    expect(engine.requestService.httpSend).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, expectedBody, expectedHeaders)
+    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+      expectedUrl,
+      'POST',
+      expectedHeaders,
+      expectedBody,
+      configuration.caching.timeout,
+      null,
+    )
   })
 
   it('should properly handle file', async () => {
@@ -91,9 +91,15 @@ describe('NorthOIConnect', () => {
 
     await north.handleFile(filePath)
 
-    const expectedUrl = 'http://hostname:2223/addFile?name=OIBus:oic'
-    const expectedAuthentication = configuration.settings.authentication
-    expect(engine.requestService.httpSend).toHaveBeenCalledWith(expectedUrl, 'POST', expectedAuthentication, null, filePath)
+    const expectedUrl = 'http://hostname:2223/addFile?name=oibusName:oic'
+    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+      expectedUrl,
+      'POST',
+      {},
+      filePath,
+      configuration.caching.timeout,
+      null,
+    )
   })
 
   it('should not retry', () => {

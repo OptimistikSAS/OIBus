@@ -1909,130 +1909,6 @@ exports[`Engine check Engine 1`] = `
         class="row"
       >
         <h5>
-          Cache parameters
-          <button
-            class="util-button mt-1 btn btn-link"
-            id="id"
-          >
-            <svg
-              class="oi-help"
-              fill="currentColor"
-              height="12"
-              stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 512 512"
-              width="12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-              />
-            </svg>
-          </button>
-        </h5>
-      </div>
-      <div
-        class="container-fluid"
-      >
-        <div
-          class="collapse"
-          toggler="id"
-        >
-          <div
-            class="row"
-            style="margin-bottom: 15px;"
-          >
-            <div
-              class="col"
-            >
-              <p>
-                In case communication errors prevent OIBus to send information to a North connector, the values will be stored in a local cache (one cache is needed for each North connector) and they will be retried regularly.
-              </p>
-              <p>
-                When the communication is restored, all values in the cache will be forwarded to the North connector. The location of these caches on the OIBus server is indicated in the cache folder parameters.
-              </p>
-              <p>
-                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North connector or to archive them in the archive folder.
-              </p>
-              <p>
-                When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-3"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.caching.bufferMax"
-            >
-              Max buffer size
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.caching.bufferMax"
-              name="engine.caching.bufferMax"
-              type="integer"
-              value="250"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The number of values the buffer must reach before caching values
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-3"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.caching.bufferTimeoutInterval"
-            >
-              Buffer flush interval (in ms)
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.caching.bufferTimeoutInterval"
-              name="engine.caching.bufferTimeoutInterval"
-              type="integer"
-              value="300"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The number of ms before flushing the buffer to cache its values
-              </div>
-            </small>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <h5>
           Proxies
           <button
             class="util-button mt-1 btn btn-link"
@@ -2923,15 +2799,15 @@ exports[`Engine check Engine 1`] = `
               >
                 <label
                   class="form-label"
-                  for="username"
+                  for="key"
                 >
                   User name
                 </label>
                 <input
                   aria-invalid="false"
                   class="oi-form-input form-control"
-                  id="username"
-                  name="username"
+                  id="key"
+                  name="key"
                   type="text"
                   value="username"
                 />
@@ -2948,7 +2824,7 @@ exports[`Engine check Engine 1`] = `
               >
                 <label
                   class="form-label"
-                  for="password"
+                  for="secret"
                 >
                   Password
                 </label>
@@ -2958,8 +2834,8 @@ exports[`Engine check Engine 1`] = `
                   <input
                     aria-invalid="false"
                     class="oi-form-input form-control"
-                    id="password"
-                    name="password"
+                    id="secret"
+                    name="secret"
                     type="password"
                     value="password"
                   />
@@ -2970,133 +2846,6 @@ exports[`Engine check Engine 1`] = `
                 />
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <h5>
-          Http request parameters
-          <button
-            class="util-button mt-1 btn btn-link"
-            id="id"
-          >
-            <svg
-              class="oi-help"
-              fill="currentColor"
-              height="12"
-              stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 512 512"
-              width="12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-              />
-            </svg>
-          </button>
-        </h5>
-      </div>
-      <div
-        class="container-fluid"
-      >
-        <div
-          class="collapse"
-          toggler="id"
-        >
-          <div
-            class="row"
-            style="margin-bottom: 15px;"
-          >
-            <div
-              class="col"
-            >
-              <p>
-                Centralized configuration for applications communication via HTTP requests.
-                <li>
-                  Stack: OIBus can use several IP stacks to communicate with the host. In certain network configuration (firewall settings for example), it might be useful to try a different stack. We generally advise to leave 'fetch' as it is the native nodej stack but we also use axios as it reports good messages to diagnostic network errors.
-                </li>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.stack"
-            >
-              Stack
-            </label>
-            <select
-              aria-invalid="false"
-              class="oi-form-input form-select"
-              id="engine.httpRequest.stack"
-              name="engine.httpRequest.stack"
-            >
-              <option
-                value="axios"
-              >
-                axios
-              </option>
-              <option
-                value="fetch"
-              >
-                fetch
-              </option>
-            </select>
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The stack used to send the request
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.timeout"
-            >
-              Timeout
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.httpRequest.timeout"
-              name="engine.httpRequest.timeout"
-              type="integer"
-              value="30"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                How long to wait for the request to finish (in seconds)
-              </div>
-            </small>
           </div>
         </div>
       </div>
@@ -5143,130 +4892,6 @@ exports[`Engine check Engine when config has no proxies 1`] = `
         class="row"
       >
         <h5>
-          Cache parameters
-          <button
-            class="util-button mt-1 btn btn-link"
-            id="id"
-          >
-            <svg
-              class="oi-help"
-              fill="currentColor"
-              height="12"
-              stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 512 512"
-              width="12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-              />
-            </svg>
-          </button>
-        </h5>
-      </div>
-      <div
-        class="container-fluid"
-      >
-        <div
-          class="collapse"
-          toggler="id"
-        >
-          <div
-            class="row"
-            style="margin-bottom: 15px;"
-          >
-            <div
-              class="col"
-            >
-              <p>
-                In case communication errors prevent OIBus to send information to a North connector, the values will be stored in a local cache (one cache is needed for each North connector) and they will be retried regularly.
-              </p>
-              <p>
-                When the communication is restored, all values in the cache will be forwarded to the North connector. The location of these caches on the OIBus server is indicated in the cache folder parameters.
-              </p>
-              <p>
-                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North connector or to archive them in the archive folder.
-              </p>
-              <p>
-                When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-3"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.caching.bufferMax"
-            >
-              Max buffer size
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.caching.bufferMax"
-              name="engine.caching.bufferMax"
-              type="integer"
-              value="250"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The number of values the buffer must reach before caching values
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-3"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.caching.bufferTimeoutInterval"
-            >
-              Buffer flush interval (in ms)
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.caching.bufferTimeoutInterval"
-              name="engine.caching.bufferTimeoutInterval"
-              type="integer"
-              value="300"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The number of ms before flushing the buffer to cache its values
-              </div>
-            </small>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <h5>
           Proxies
           <button
             class="util-button mt-1 btn btn-link"
@@ -5723,15 +5348,15 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               >
                 <label
                   class="form-label"
-                  for="username"
+                  for="key"
                 >
                   User name
                 </label>
                 <input
                   aria-invalid="false"
                   class="oi-form-input form-control"
-                  id="username"
-                  name="username"
+                  id="key"
+                  name="key"
                   type="text"
                   value="username"
                 />
@@ -5748,7 +5373,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               >
                 <label
                   class="form-label"
-                  for="password"
+                  for="secret"
                 >
                   Password
                 </label>
@@ -5758,8 +5383,8 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   <input
                     aria-invalid="false"
                     class="oi-form-input form-control"
-                    id="password"
-                    name="password"
+                    id="secret"
+                    name="secret"
                     type="password"
                     value="password"
                   />
@@ -5770,133 +5395,6 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                 />
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <h5>
-          Http request parameters
-          <button
-            class="util-button mt-1 btn btn-link"
-            id="id"
-          >
-            <svg
-              class="oi-help"
-              fill="currentColor"
-              height="12"
-              stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 512 512"
-              width="12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-              />
-            </svg>
-          </button>
-        </h5>
-      </div>
-      <div
-        class="container-fluid"
-      >
-        <div
-          class="collapse"
-          toggler="id"
-        >
-          <div
-            class="row"
-            style="margin-bottom: 15px;"
-          >
-            <div
-              class="col"
-            >
-              <p>
-                Centralized configuration for applications communication via HTTP requests.
-                <li>
-                  Stack: OIBus can use several IP stacks to communicate with the host. In certain network configuration (firewall settings for example), it might be useful to try a different stack. We generally advise to leave 'fetch' as it is the native nodej stack but we also use axios as it reports good messages to diagnostic network errors.
-                </li>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.stack"
-            >
-              Stack
-            </label>
-            <select
-              aria-invalid="false"
-              class="oi-form-input form-select"
-              id="engine.httpRequest.stack"
-              name="engine.httpRequest.stack"
-            >
-              <option
-                value="axios"
-              >
-                axios
-              </option>
-              <option
-                value="fetch"
-              >
-                fetch
-              </option>
-            </select>
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The stack used to send the request
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.timeout"
-            >
-              Timeout
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.httpRequest.timeout"
-              name="engine.httpRequest.timeout"
-              type="integer"
-              value="30"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                How long to wait for the request to finish (in seconds)
-              </div>
-            </small>
           </div>
         </div>
       </div>
@@ -7963,130 +7461,6 @@ exports[`Engine check change engineName 1`] = `
         class="row"
       >
         <h5>
-          Cache parameters
-          <button
-            class="util-button mt-1 btn btn-link"
-            id="id"
-          >
-            <svg
-              class="oi-help"
-              fill="currentColor"
-              height="12"
-              stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 512 512"
-              width="12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-              />
-            </svg>
-          </button>
-        </h5>
-      </div>
-      <div
-        class="container-fluid"
-      >
-        <div
-          class="collapse"
-          toggler="id"
-        >
-          <div
-            class="row"
-            style="margin-bottom: 15px;"
-          >
-            <div
-              class="col"
-            >
-              <p>
-                In case communication errors prevent OIBus to send information to a North connector, the values will be stored in a local cache (one cache is needed for each North connector) and they will be retried regularly.
-              </p>
-              <p>
-                When the communication is restored, all values in the cache will be forwarded to the North connector. The location of these caches on the OIBus server is indicated in the cache folder parameters.
-              </p>
-              <p>
-                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North connector or to archive them in the archive folder.
-              </p>
-              <p>
-                When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-3"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.caching.bufferMax"
-            >
-              Max buffer size
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.caching.bufferMax"
-              name="engine.caching.bufferMax"
-              type="integer"
-              value="250"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The number of values the buffer must reach before caching values
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-3"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.caching.bufferTimeoutInterval"
-            >
-              Buffer flush interval (in ms)
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.caching.bufferTimeoutInterval"
-              name="engine.caching.bufferTimeoutInterval"
-              type="integer"
-              value="300"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The number of ms before flushing the buffer to cache its values
-              </div>
-            </small>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <h5>
           Proxies
           <button
             class="util-button mt-1 btn btn-link"
@@ -8977,15 +8351,15 @@ exports[`Engine check change engineName 1`] = `
               >
                 <label
                   class="form-label"
-                  for="username"
+                  for="key"
                 >
                   User name
                 </label>
                 <input
                   aria-invalid="false"
                   class="oi-form-input form-control"
-                  id="username"
-                  name="username"
+                  id="key"
+                  name="key"
                   type="text"
                   value="username"
                 />
@@ -9002,7 +8376,7 @@ exports[`Engine check change engineName 1`] = `
               >
                 <label
                   class="form-label"
-                  for="password"
+                  for="secret"
                 >
                   Password
                 </label>
@@ -9012,8 +8386,8 @@ exports[`Engine check change engineName 1`] = `
                   <input
                     aria-invalid="false"
                     class="oi-form-input form-control"
-                    id="password"
-                    name="password"
+                    id="secret"
+                    name="secret"
                     type="password"
                     value="password"
                   />
@@ -9024,133 +8398,6 @@ exports[`Engine check change engineName 1`] = `
                 />
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <h5>
-          Http request parameters
-          <button
-            class="util-button mt-1 btn btn-link"
-            id="id"
-          >
-            <svg
-              class="oi-help"
-              fill="currentColor"
-              height="12"
-              stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 512 512"
-              width="12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-              />
-            </svg>
-          </button>
-        </h5>
-      </div>
-      <div
-        class="container-fluid"
-      >
-        <div
-          class="collapse"
-          toggler="id"
-        >
-          <div
-            class="row"
-            style="margin-bottom: 15px;"
-          >
-            <div
-              class="col"
-            >
-              <p>
-                Centralized configuration for applications communication via HTTP requests.
-                <li>
-                  Stack: OIBus can use several IP stacks to communicate with the host. In certain network configuration (firewall settings for example), it might be useful to try a different stack. We generally advise to leave 'fetch' as it is the native nodej stack but we also use axios as it reports good messages to diagnostic network errors.
-                </li>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.stack"
-            >
-              Stack
-            </label>
-            <select
-              aria-invalid="false"
-              class="oi-form-input form-select"
-              id="engine.httpRequest.stack"
-              name="engine.httpRequest.stack"
-            >
-              <option
-                value="axios"
-              >
-                axios
-              </option>
-              <option
-                value="fetch"
-              >
-                fetch
-              </option>
-            </select>
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The stack used to send the request
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.timeout"
-            >
-              Timeout
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.httpRequest.timeout"
-              name="engine.httpRequest.timeout"
-              type="integer"
-              value="30"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                How long to wait for the request to finish (in seconds)
-              </div>
-            </small>
           </div>
         </div>
       </div>
@@ -11197,130 +10444,6 @@ exports[`Engine check change password 1`] = `
         class="row"
       >
         <h5>
-          Cache parameters
-          <button
-            class="util-button mt-1 btn btn-link"
-            id="id"
-          >
-            <svg
-              class="oi-help"
-              fill="currentColor"
-              height="12"
-              stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 512 512"
-              width="12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-              />
-            </svg>
-          </button>
-        </h5>
-      </div>
-      <div
-        class="container-fluid"
-      >
-        <div
-          class="collapse"
-          toggler="id"
-        >
-          <div
-            class="row"
-            style="margin-bottom: 15px;"
-          >
-            <div
-              class="col"
-            >
-              <p>
-                In case communication errors prevent OIBus to send information to a North connector, the values will be stored in a local cache (one cache is needed for each North connector) and they will be retried regularly.
-              </p>
-              <p>
-                When the communication is restored, all values in the cache will be forwarded to the North connector. The location of these caches on the OIBus server is indicated in the cache folder parameters.
-              </p>
-              <p>
-                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North connector or to archive them in the archive folder.
-              </p>
-              <p>
-                When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-3"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.caching.bufferMax"
-            >
-              Max buffer size
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.caching.bufferMax"
-              name="engine.caching.bufferMax"
-              type="integer"
-              value="250"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The number of values the buffer must reach before caching values
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-3"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.caching.bufferTimeoutInterval"
-            >
-              Buffer flush interval (in ms)
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.caching.bufferTimeoutInterval"
-              name="engine.caching.bufferTimeoutInterval"
-              type="integer"
-              value="300"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The number of ms before flushing the buffer to cache its values
-              </div>
-            </small>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <h5>
           Proxies
           <button
             class="util-button mt-1 btn btn-link"
@@ -12211,15 +11334,15 @@ exports[`Engine check change password 1`] = `
               >
                 <label
                   class="form-label"
-                  for="username"
+                  for="key"
                 >
                   User name
                 </label>
                 <input
                   aria-invalid="false"
                   class="oi-form-input form-control"
-                  id="username"
-                  name="username"
+                  id="key"
+                  name="key"
                   type="text"
                   value="username"
                 />
@@ -12236,7 +11359,7 @@ exports[`Engine check change password 1`] = `
               >
                 <label
                   class="form-label"
-                  for="password"
+                  for="secret"
                 >
                   Password
                 </label>
@@ -12246,8 +11369,8 @@ exports[`Engine check change password 1`] = `
                   <input
                     aria-invalid="false"
                     class="oi-form-input form-control"
-                    id="password"
-                    name="password"
+                    id="secret"
+                    name="secret"
                     type="password"
                     value="password"
                   />
@@ -12258,133 +11381,6 @@ exports[`Engine check change password 1`] = `
                 />
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <h5>
-          Http request parameters
-          <button
-            class="util-button mt-1 btn btn-link"
-            id="id"
-          >
-            <svg
-              class="oi-help"
-              fill="currentColor"
-              height="12"
-              stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 512 512"
-              width="12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-              />
-            </svg>
-          </button>
-        </h5>
-      </div>
-      <div
-        class="container-fluid"
-      >
-        <div
-          class="collapse"
-          toggler="id"
-        >
-          <div
-            class="row"
-            style="margin-bottom: 15px;"
-          >
-            <div
-              class="col"
-            >
-              <p>
-                Centralized configuration for applications communication via HTTP requests.
-                <li>
-                  Stack: OIBus can use several IP stacks to communicate with the host. In certain network configuration (firewall settings for example), it might be useful to try a different stack. We generally advise to leave 'fetch' as it is the native nodej stack but we also use axios as it reports good messages to diagnostic network errors.
-                </li>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.stack"
-            >
-              Stack
-            </label>
-            <select
-              aria-invalid="false"
-              class="oi-form-input form-select"
-              id="engine.httpRequest.stack"
-              name="engine.httpRequest.stack"
-            >
-              <option
-                value="axios"
-              >
-                axios
-              </option>
-              <option
-                value="fetch"
-              >
-                fetch
-              </option>
-            </select>
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The stack used to send the request
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.timeout"
-            >
-              Timeout
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.httpRequest.timeout"
-              name="engine.httpRequest.timeout"
-              type="integer"
-              value="30"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                How long to wait for the request to finish (in seconds)
-              </div>
-            </small>
           </div>
         </div>
       </div>
@@ -14431,130 +13427,6 @@ exports[`Engine check change port 1`] = `
         class="row"
       >
         <h5>
-          Cache parameters
-          <button
-            class="util-button mt-1 btn btn-link"
-            id="id"
-          >
-            <svg
-              class="oi-help"
-              fill="currentColor"
-              height="12"
-              stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 512 512"
-              width="12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-              />
-            </svg>
-          </button>
-        </h5>
-      </div>
-      <div
-        class="container-fluid"
-      >
-        <div
-          class="collapse"
-          toggler="id"
-        >
-          <div
-            class="row"
-            style="margin-bottom: 15px;"
-          >
-            <div
-              class="col"
-            >
-              <p>
-                In case communication errors prevent OIBus to send information to a North connector, the values will be stored in a local cache (one cache is needed for each North connector) and they will be retried regularly.
-              </p>
-              <p>
-                When the communication is restored, all values in the cache will be forwarded to the North connector. The location of these caches on the OIBus server is indicated in the cache folder parameters.
-              </p>
-              <p>
-                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North connector or to archive them in the archive folder.
-              </p>
-              <p>
-                When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-3"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.caching.bufferMax"
-            >
-              Max buffer size
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.caching.bufferMax"
-              name="engine.caching.bufferMax"
-              type="integer"
-              value="250"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The number of values the buffer must reach before caching values
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-3"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.caching.bufferTimeoutInterval"
-            >
-              Buffer flush interval (in ms)
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.caching.bufferTimeoutInterval"
-              name="engine.caching.bufferTimeoutInterval"
-              type="integer"
-              value="300"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The number of ms before flushing the buffer to cache its values
-              </div>
-            </small>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <h5>
           Proxies
           <button
             class="util-button mt-1 btn btn-link"
@@ -15445,15 +14317,15 @@ exports[`Engine check change port 1`] = `
               >
                 <label
                   class="form-label"
-                  for="username"
+                  for="key"
                 >
                   User name
                 </label>
                 <input
                   aria-invalid="false"
                   class="oi-form-input form-control"
-                  id="username"
-                  name="username"
+                  id="key"
+                  name="key"
                   type="text"
                   value="username"
                 />
@@ -15470,7 +14342,7 @@ exports[`Engine check change port 1`] = `
               >
                 <label
                   class="form-label"
-                  for="password"
+                  for="secret"
                 >
                   Password
                 </label>
@@ -15480,8 +14352,8 @@ exports[`Engine check change port 1`] = `
                   <input
                     aria-invalid="false"
                     class="oi-form-input form-control"
-                    id="password"
-                    name="password"
+                    id="secret"
+                    name="secret"
                     type="password"
                     value="password"
                   />
@@ -15492,133 +14364,6 @@ exports[`Engine check change port 1`] = `
                 />
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <h5>
-          Http request parameters
-          <button
-            class="util-button mt-1 btn btn-link"
-            id="id"
-          >
-            <svg
-              class="oi-help"
-              fill="currentColor"
-              height="12"
-              stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 512 512"
-              width="12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-              />
-            </svg>
-          </button>
-        </h5>
-      </div>
-      <div
-        class="container-fluid"
-      >
-        <div
-          class="collapse"
-          toggler="id"
-        >
-          <div
-            class="row"
-            style="margin-bottom: 15px;"
-          >
-            <div
-              class="col"
-            >
-              <p>
-                Centralized configuration for applications communication via HTTP requests.
-                <li>
-                  Stack: OIBus can use several IP stacks to communicate with the host. In certain network configuration (firewall settings for example), it might be useful to try a different stack. We generally advise to leave 'fetch' as it is the native nodej stack but we also use axios as it reports good messages to diagnostic network errors.
-                </li>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.stack"
-            >
-              Stack
-            </label>
-            <select
-              aria-invalid="false"
-              class="oi-form-input form-select"
-              id="engine.httpRequest.stack"
-              name="engine.httpRequest.stack"
-            >
-              <option
-                value="axios"
-              >
-                axios
-              </option>
-              <option
-                value="fetch"
-              >
-                fetch
-              </option>
-            </select>
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The stack used to send the request
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.timeout"
-            >
-              Timeout
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.httpRequest.timeout"
-              name="engine.httpRequest.timeout"
-              type="integer"
-              value="30"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                How long to wait for the request to finish (in seconds)
-              </div>
-            </small>
           </div>
         </div>
       </div>
@@ -17665,130 +16410,6 @@ exports[`Engine check change user 1`] = `
         class="row"
       >
         <h5>
-          Cache parameters
-          <button
-            class="util-button mt-1 btn btn-link"
-            id="id"
-          >
-            <svg
-              class="oi-help"
-              fill="currentColor"
-              height="12"
-              stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 512 512"
-              width="12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-              />
-            </svg>
-          </button>
-        </h5>
-      </div>
-      <div
-        class="container-fluid"
-      >
-        <div
-          class="collapse"
-          toggler="id"
-        >
-          <div
-            class="row"
-            style="margin-bottom: 15px;"
-          >
-            <div
-              class="col"
-            >
-              <p>
-                In case communication errors prevent OIBus to send information to a North connector, the values will be stored in a local cache (one cache is needed for each North connector) and they will be retried regularly.
-              </p>
-              <p>
-                When the communication is restored, all values in the cache will be forwarded to the North connector. The location of these caches on the OIBus server is indicated in the cache folder parameters.
-              </p>
-              <p>
-                When OIBus manage files, it is possible to set the Archive mode to ask to the cache to delete files once they have been sent to the North connector or to archive them in the archive folder.
-              </p>
-              <p>
-                When the archive mode is activated, it is possible to set a retention Duration to define how long the files will remain in the archive folder. Moreover, the minimum value of 0 indicates that the files will be kept forever.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-3"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.caching.bufferMax"
-            >
-              Max buffer size
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.caching.bufferMax"
-              name="engine.caching.bufferMax"
-              type="integer"
-              value="250"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The number of values the buffer must reach before caching values
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-3"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.caching.bufferTimeoutInterval"
-            >
-              Buffer flush interval (in ms)
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.caching.bufferTimeoutInterval"
-              name="engine.caching.bufferTimeoutInterval"
-              type="integer"
-              value="300"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The number of ms before flushing the buffer to cache its values
-              </div>
-            </small>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <h5>
           Proxies
           <button
             class="util-button mt-1 btn btn-link"
@@ -18679,15 +17300,15 @@ exports[`Engine check change user 1`] = `
               >
                 <label
                   class="form-label"
-                  for="username"
+                  for="key"
                 >
                   User name
                 </label>
                 <input
                   aria-invalid="false"
                   class="oi-form-input form-control"
-                  id="username"
-                  name="username"
+                  id="key"
+                  name="key"
                   type="text"
                   value="username"
                 />
@@ -18704,7 +17325,7 @@ exports[`Engine check change user 1`] = `
               >
                 <label
                   class="form-label"
-                  for="password"
+                  for="secret"
                 >
                   Password
                 </label>
@@ -18714,8 +17335,8 @@ exports[`Engine check change user 1`] = `
                   <input
                     aria-invalid="false"
                     class="oi-form-input form-control"
-                    id="password"
-                    name="password"
+                    id="secret"
+                    name="secret"
                     type="password"
                     value="password"
                   />
@@ -18726,133 +17347,6 @@ exports[`Engine check change user 1`] = `
                 />
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <h5>
-          Http request parameters
-          <button
-            class="util-button mt-1 btn btn-link"
-            id="id"
-          >
-            <svg
-              class="oi-help"
-              fill="currentColor"
-              height="12"
-              stroke="currentColor"
-              stroke-width="0"
-              viewBox="0 0 512 512"
-              width="12"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M256 8C119.043 8 8 119.083 8 256c0 136.997 111.043 248 248 248s248-111.003 248-248C504 119.083 392.957 8 256 8zm0 448c-110.532 0-200-89.431-200-200 0-110.495 89.472-200 200-200 110.491 0 200 89.471 200 200 0 110.53-89.431 200-200 200zm107.244-255.2c0 67.052-72.421 68.084-72.421 92.863V300c0 6.627-5.373 12-12 12h-45.647c-6.627 0-12-5.373-12-12v-8.659c0-35.745 27.1-50.034 47.579-61.516 17.561-9.845 28.324-16.541 28.324-29.579 0-17.246-21.999-28.693-39.784-28.693-23.189 0-33.894 10.977-48.942 29.969-4.057 5.12-11.46 6.071-16.666 2.124l-27.824-21.098c-5.107-3.872-6.251-11.066-2.644-16.363C184.846 131.491 214.94 112 261.794 112c49.071 0 101.45 38.304 101.45 88.8zM298 368c0 23.159-18.841 42-42 42s-42-18.841-42-42 18.841-42 42-42 42 18.841 42 42z"
-              />
-            </svg>
-          </button>
-        </h5>
-      </div>
-      <div
-        class="container-fluid"
-      >
-        <div
-          class="collapse"
-          toggler="id"
-        >
-          <div
-            class="row"
-            style="margin-bottom: 15px;"
-          >
-            <div
-              class="col"
-            >
-              <p>
-                Centralized configuration for applications communication via HTTP requests.
-                <li>
-                  Stack: OIBus can use several IP stacks to communicate with the host. In certain network configuration (firewall settings for example), it might be useful to try a different stack. We generally advise to leave 'fetch' as it is the native nodej stack but we also use axios as it reports good messages to diagnostic network errors.
-                </li>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="row"
-      >
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.stack"
-            >
-              Stack
-            </label>
-            <select
-              aria-invalid="false"
-              class="oi-form-input form-select"
-              id="engine.httpRequest.stack"
-              name="engine.httpRequest.stack"
-            >
-              <option
-                value="axios"
-              >
-                axios
-              </option>
-              <option
-                value="fetch"
-              >
-                fetch
-              </option>
-            </select>
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                The stack used to send the request
-              </div>
-            </small>
-          </div>
-        </div>
-        <div
-          class="col-md-2"
-        >
-          <div
-            class="mb-3"
-          >
-            <label
-              class="form-label"
-              for="engine.httpRequest.timeout"
-            >
-              Timeout
-            </label>
-            <input
-              aria-invalid="false"
-              class="oi-form-input form-control"
-              id="engine.httpRequest.timeout"
-              name="engine.httpRequest.timeout"
-              type="integer"
-              value="30"
-            />
-            <div
-              class="invalid-feedback"
-            />
-            <small
-              class="form-text text-muted"
-            >
-              <div>
-                How long to wait for the request to finish (in seconds)
-              </div>
-            </small>
           </div>
         </div>
       </div>

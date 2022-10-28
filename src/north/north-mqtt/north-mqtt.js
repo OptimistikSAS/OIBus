@@ -14,11 +14,17 @@ class NorthMQTT extends NorthConnector {
    * Constructor for NorthMQTT
    * @constructor
    * @param {Object} configuration - The North connector configuration
-   * @param {BaseEngine} engine - The engine
+   * @param {Object[]} proxies - The list of available proxies
    * @return {void}
    */
-  constructor(configuration, engine) {
-    super(configuration, engine)
+  constructor(
+    configuration,
+    proxies,
+  ) {
+    super(
+      configuration,
+      proxies,
+    )
     this.canHandleValues = true
 
     const {
@@ -37,7 +43,6 @@ class NorthMQTT extends NorthConnector {
     } = configuration.settings
     this.url = url
     this.qos = qos
-    this.clientId = `${engine.engineName}-${configuration.id}`
     this.username = username
     this.password = password
     this.keyFile = keyFile
@@ -51,6 +56,19 @@ class NorthMQTT extends NorthConnector {
 
     // Initialized at connection
     this.client = null
+    this.clientId = null
+  }
+
+  /**
+   * Initialize services (logger, certificate, status data)
+   * @param {String} baseFolder - The base cache folder
+   * @param {String} oibusName - The OIBus name
+   * @param {Object} defaultLogParameters - The default logs parameters
+   * @returns {Promise<void>} - The result promise
+   */
+  async init(baseFolder, oibusName, defaultLogParameters) {
+    await super.init(baseFolder, oibusName, defaultLogParameters)
+    this.clientId = `${oibusName}-${this.id}`
   }
 
   /**

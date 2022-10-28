@@ -4,8 +4,6 @@ const databaseService = require('../service/database.service')
 
 const utils = require('../service/utils')
 
-const { defaultConfig: config } = require('../../tests/test-config')
-
 // Mock fs
 jest.mock('node:fs/promises')
 
@@ -16,13 +14,8 @@ jest.mock('../service/utils', () => ({
   createFolder: jest.fn(),
 }))
 
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  addValues: jest.fn(),
-  addFile: jest.fn(),
-}
+const addValues = jest.fn()
+const addFiles = jest.fn()
 
 // Mock services
 jest.mock('../service/database.service')
@@ -40,8 +33,8 @@ describe('SouthConnector', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString))
 
     configuration = { id: 'id', name: 'south', type: 'test', settings: {} }
-    south = new SouthConnector(configuration, engine)
-    await south.init()
+    south = new SouthConnector(configuration, addValues, addFiles)
+    await south.init('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized without support, without scan mode', async () => {
@@ -58,7 +51,6 @@ describe('SouthConnector', () => {
   })
 
   it('should be properly initialized with support, without handlers and with scan mode', async () => {
-    jest.clearAllMocks()
     south.handlesPoints = true
     south.handlesFiles = true
     south.supportedModes = {
@@ -69,7 +61,7 @@ describe('SouthConnector', () => {
     }
     south.scanMode = 'scanModeTest'
 
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
 
     expect(south.lastCompletedAt[south.scanMode]).toEqual(new Date())
     expect(south.queryParts[south.scanMode]).toEqual(0)
@@ -86,14 +78,13 @@ describe('SouthConnector', () => {
   })
 
   it('should be properly initialized with scan groups', async () => {
-    jest.clearAllMocks()
     south.points = [
       { pointId: 'myPointId1', scanMode: 'scanGroupTest' },
       { pointId: 'myPointId2', scanMode: 'anotherScanGroupTest' },
     ]
     south.scanGroups = [{ scanMode: 'scanGroupTest' }]
 
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     expect(south.lastCompletedAt.scanGroupTest).toEqual(new Date())
     expect(south.queryParts.scanGroupTest).toEqual(0)
     expect(south.ignoredReadsCounters.scanGroupTest).toEqual(0)
@@ -111,7 +102,7 @@ describe('SouthConnector', () => {
       { pointId: 'myPointId3', scanMode: 'listen' },
     ]
 
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     expect(south.lastCompletedAt.scanGroupTest).toEqual(new Date())
     expect(south.queryParts.scanGroupTest).toEqual(0)
     expect(south.ignoredReadsCounters.scanGroupTest).toEqual(0)
@@ -130,7 +121,7 @@ describe('SouthConnector', () => {
       { pointId: 'myPointId3', scanMode: 'listen' },
     ]
 
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     expect(south.lastCompletedAt.scanGroupTest).toEqual(new Date(south.startTime))
     expect(south.queryParts.scanGroupTest).toEqual(0)
     expect(south.ignoredReadsCounters.scanGroupTest).toEqual(0)
@@ -162,7 +153,7 @@ describe('SouthConnector', () => {
     south.scanMode = 'scanModeTest'
     south.historyQuery = jest.fn()
     south.southDatabase = {}
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
 
     const startTime = new Date('2021-01-01T00:00:00.000Z')
     const endTime = new Date('2022-01-01T00:00:00.000Z')
@@ -198,7 +189,7 @@ describe('SouthConnector', () => {
       endTime: new Date(),
     }]
     utils.generateIntervals.mockReturnValue(mockedIntervals)
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
 
     await south.historyQueryHandler('scanModeTest', new Date('2019-01-01T00:00:00.000Z'), new Date())
     expect(south.logger.trace).toHaveBeenCalledWith('Take back to interval number 0: \r\n'
@@ -243,7 +234,7 @@ describe('SouthConnector', () => {
       endTime: new Date('2021-01-01T00:00:00.000Z'),
     }]
     utils.generateIntervals.mockReturnValue(mockedIntervals)
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
 
     await south.historyQueryHandler('scanModeTest', new Date('2019-01-01T00:00:00.000Z'), new Date())
     expect(south.querySpecificInterval).toHaveBeenCalledTimes(2)
@@ -276,7 +267,7 @@ describe('SouthConnector', () => {
       endTime: new Date('2020-01-01T00:00:00.000Z'),
     }]
     utils.generateIntervals.mockReturnValue(mockedIntervals)
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
 
     await south.historyQueryHandler('scanModeTest', new Date('2019-01-01T00:00:00.000Z'), new Date())
     expect(south.querySpecificInterval).toHaveBeenCalledTimes(1)
@@ -376,15 +367,16 @@ describe('SouthConnector', () => {
     south.flush = jest.fn()
 
     // Timeout flush
-    south.engine.bufferMax = 100
-    south.engine.bufferTimeoutInterval = 1000
     await south.addValues([])
     jest.advanceTimersByTime(1000)
     expect(south.flush).toHaveBeenCalledWith()
 
+    const fullBuffer = []
+    for (let i = 0; i < 600; i += 1) {
+      fullBuffer.push({})
+    }
     // Max flush
-    south.engine.bufferMax = 1
-    await south.addValues([{}, {}])
+    await south.addValues(fullBuffer)
     expect(south.flush).toHaveBeenCalledWith('max-flush')
   })
 
@@ -392,15 +384,13 @@ describe('SouthConnector', () => {
     south.flush = jest.fn()
 
     // Nothing to do
-    south.engine.bufferMax = 10
-    south.engine.bufferTimeout = setTimeout(south.flush, 1000)
     await south.addValues([{}])
-    jest.advanceTimersByTime(500)
+    jest.advanceTimersByTime(150)
 
     await south.addValues([{}])
     expect(south.flush).not.toHaveBeenCalled()
 
-    jest.advanceTimersByTime(500)
+    jest.advanceTimersByTime(150)
     expect(south.flush).toHaveBeenCalled()
   })
 
@@ -424,7 +414,7 @@ describe('SouthConnector', () => {
     south.buffer = values
 
     await south.flush()
-    expect(engine.addValues).toBeCalledWith('id', values)
+    expect(addValues).toBeCalledWith('id', values)
     expect(south.statusService.updateStatusDataStream).toHaveBeenCalledWith({
       'Number of values since OIBus has started': south.numberOfRetrievedValues,
       'Last added points at': new Date().toISOString(),
@@ -438,17 +428,17 @@ describe('SouthConnector', () => {
     south.buffer = []
     await south.flush()
     expect(south.bufferTimeout).toBeNull()
-    expect(south.engine.addValues).not.toHaveBeenCalled()
+    expect(addValues).not.toHaveBeenCalled()
     expect(south.statusService.updateStatusDataStream).not.toHaveBeenCalled()
   })
 
   it('should properly add file', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
 
     const filePath = 'path'
     const preserveFiles = true
     await south.addFile(filePath, preserveFiles)
 
-    expect(engine.addFile).toBeCalledWith('id', filePath, preserveFiles)
+    expect(addFiles).toBeCalledWith('id', filePath, preserveFiles)
   })
 })

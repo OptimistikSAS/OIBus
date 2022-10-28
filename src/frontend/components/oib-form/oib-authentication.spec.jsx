@@ -27,7 +27,7 @@ describe('OIbAuthentication', () => {
   test('check Authentication with mode null', () => {
     act(() => {
       root.render(<OibAuthentication
-        value={{ type: 'Basic', username: 'user', password: 'pass' }}
+        value={{ type: 'Basic', key: 'user', secret: 'pass' }}
         name="name"
         onChange={() => (1)}
       />)
@@ -37,7 +37,7 @@ describe('OIbAuthentication', () => {
   test('check Authentication with mode API Key', () => {
     act(() => {
       root.render(<OibAuthentication
-        value={{ type: 'API Key', key: 'aaaaaa', secretKey: 'sssss' }}
+        value={{ type: 'API Key', key: 'aaaaaa', secret: 'sssss' }}
         name="name"
         onChange={() => (1)}
         mode="API Key"
@@ -48,7 +48,7 @@ describe('OIbAuthentication', () => {
   test('check Authentication with mode Bearer', () => {
     act(() => {
       root.render(<OibAuthentication
-        value={{ type: 'Bearer', token: 'sssss' }}
+        value={{ type: 'Bearer', secret: 'sssss' }}
         name="name"
         onChange={() => (1)}
         mode="Bearer"
@@ -59,7 +59,7 @@ describe('OIbAuthentication', () => {
   test('check Authentication with mode Basic', () => {
     act(() => {
       root.render(<OibAuthentication
-        value={{ type: 'Basic', username: 'user', password: 'pass' }}
+        value={{ type: 'Basic', key: 'user', secret: 'pass' }}
         name="name"
         onChange={() => (1)}
         mode="Basic"
@@ -71,35 +71,35 @@ describe('OIbAuthentication', () => {
     const onChangeMock = jest.fn()
     act(() => {
       root.render(<OibAuthentication
-        value={{ type: 'Basic', username: 'anyUser', password: 'anyPass' }}
+        value={{ type: 'Basic', key: 'anyUser', secret: 'anyPass' }}
         name="anyname"
         onChange={onChangeMock}
       />)
     })
 
-    const userField = container.querySelector('#username')
-    const passwordField = container.querySelector('#password')
+    const userField = container.querySelector('#key')
+    const passwordField = container.querySelector('#secret')
     Simulate.change(userField, { target: { value: 'toto' } })
-    expect(onChangeMock).toBeCalledWith('anyname.username', 'toto', null)
+    expect(onChangeMock).toBeCalledWith('anyname.key', 'toto', null)
     Simulate.change(passwordField, { target: { value: 'passpass' } })
-    expect(onChangeMock).toBeCalledWith('anyname.password', '{{notEncrypted}}passpass', null)
+    expect(onChangeMock).toBeCalledWith('anyname.secret', '{{notEncrypted}}passpass', null)
     // Test second render and componentDidUpdate
   })
   test('check the returned value (custom authentication)', () => {
     const onChangeMock = jest.fn()
     act(() => {
       root.render(<OibAuthentication
-        value={{ type: 'API Key', key: 'anyHeader', secretKey: 'anySecretKey' }}
+        value={{ type: 'API Key', key: 'anyHeader', secret: 'anySecretKey' }}
         name="anyname"
         onChange={onChangeMock}
       />)
     })
 
     const keyField = container.querySelector('#key')
-    const secretField = container.querySelector('#secretKey')
+    const secretField = container.querySelector('#secret')
     Simulate.change(keyField, { target: { value: 'toto' } })
     expect(onChangeMock).toBeCalledWith('anyname.key', 'toto', null)
     Simulate.change(secretField, { target: { value: 'passpass' } })
-    expect(onChangeMock).toBeCalledWith('anyname.secretKey', '{{notEncrypted}}passpass', null)
+    expect(onChangeMock).toBeCalledWith('anyname.secret', '{{notEncrypted}}passpass', null)
   })
 })

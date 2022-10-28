@@ -1,6 +1,5 @@
-const fs = require('node:fs/promises')
-
 const NorthConnector = require('../north-connector')
+const { httpSend, addAuthenticationToHeaders } = require('../../service/utils')
 
 /**
  * Class NorthOIConnect - Send files through a POST Multipart HTTP request and values as JSON payload
@@ -16,11 +15,17 @@ class NorthOIConnect extends NorthConnector {
    * Constructor for NorthOIConnect
    * @constructor
    * @param {Object} configuration - The North connector configuration
-   * @param {BaseEngine} engine - The Engine
+   * @param {Object[]} proxies - The list of available proxies
    * @return {void}
    */
-  constructor(configuration, engine) {
-    super(configuration, engine)
+  constructor(
+    configuration,
+    proxies,
+  ) {
+    super(
+      configuration,
+      proxies,
+    )
     this.canHandleValues = true
     this.canHandleFiles = true
 
@@ -31,11 +36,29 @@ class NorthOIConnect extends NorthConnector {
       authentication,
       proxy,
     } = configuration.settings
-    const name = `${this.engineConfig.engineName}:${this.name}`
-    this.valuesUrl = `${host}${valuesEndpoint}?name=${name}`
-    this.fileUrl = `${host}${fileEndpoint}?name=${name}`
+    this.host = host
+    this.valuesEndpoint = valuesEndpoint
+    this.fileEndpoint = fileEndpoint
     this.authentication = authentication
-    this.proxy = this.getProxy(proxy)
+    this.proxySettings = proxy
+
+    // Initialized at connection or init
+    this.valuesUrl = null
+    this.fileUrl = null
+  }
+
+  /**
+   * Initialize services (logger, certificate, status data)
+   * @param {String} baseFolder - The base cache folder
+   * @param {String} oibusName - The OIBus name
+   * @param {Object} defaultLogParameters - The default logs parameters
+   * @returns {Promise<void>} - The result promise
+   */
+  async init(baseFolder, oibusName, defaultLogParameters) {
+    await super.init(baseFolder, oibusName, defaultLogParameters)
+    const name = `${oibusName}:${this.name}`
+    this.valuesUrl = `${this.host}${this.valuesEndpoint}?name=${name}`
+    this.fileUrl = `${this.host}${this.fileEndpoint}?name=${name}`
   }
 
   /**
@@ -44,11 +67,25 @@ class NorthOIConnect extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async handleValues(values) {
-    this.logger.trace(`Handle ${values.length} values.`)
     const data = JSON.stringify(values)
     const headers = { 'Content-Type': 'application/json' }
-    await this.engine.requestService.httpSend(this.valuesUrl, 'POST', this.authentication, this.proxy, data, headers)
-    this.logger.debug(`OIConnect ${this.name} has posted ${values.length} values.`)
+    if (this.authentication) {
+      addAuthenticationToHeaders(
+        headers,
+        this.authentication.type,
+        this.authentication.key,
+        await this.encryptionService.decryptText(this.authentication.secret),
+      )
+    }
+
+    await httpSend(
+      this.valuesUrl,
+      'POST',
+      headers,
+      data,
+      this.caching.timeout,
+      this.proxyAgent,
+    )
   }
 
   /**
@@ -57,10 +94,23 @@ class NorthOIConnect extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async handleFile(filePath) {
-    const stats = await fs.stat(filePath)
-    this.logger.debug(`Handle file "${filePath}" (${stats.size} bytes).`)
-
-    await this.engine.requestService.httpSend(this.fileUrl, 'POST', this.authentication, this.proxy, filePath)
+    const headers = {}
+    if (this.authentication) {
+      addAuthenticationToHeaders(
+        headers,
+        this.authentication.type,
+        this.authentication.key,
+        await this.encryptionService.decryptText(this.authentication.secret),
+      )
+    }
+    await httpSend(
+      this.fileUrl,
+      'POST',
+      headers,
+      filePath,
+      this.caching.timeout,
+      this.proxyAgent,
+    )
   }
 
   /**

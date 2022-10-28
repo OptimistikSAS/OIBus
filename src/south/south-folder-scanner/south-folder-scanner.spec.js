@@ -5,19 +5,13 @@ const FolderScanner = require('./south-folder-scanner')
 
 const databaseService = require('../../service/database.service')
 
-const { defaultConfig: config } = require('../../../tests/test-config')
 const utils = require('../../service/utils')
 
 // Mock utils class
 jest.mock('../../service/utils')
 
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  addValues: jest.fn(),
-  addFile: jest.fn(),
-}
+const addValues = jest.fn()
+const addFiles = jest.fn()
 
 // Mock fs
 jest.mock('node:fs/promises')
@@ -54,14 +48,14 @@ describe('SouthFolderScanner', () => {
       points: [],
       scanMode: 'every10Second',
     }
-    south = new FolderScanner(configuration, engine)
-    await south.init()
+    south = new FolderScanner(configuration, addValues, addFiles)
+    await south.init('baseFolder', 'oibusName', {})
     databaseService.getConfig.mockClear()
   })
 
   it('should connect properly', async () => {
     await south.connect()
-    expect(databaseService.createConfigDatabase).toHaveBeenCalledWith(path.resolve(`./cache/south-${configuration.id}/cache.db`))
+    expect(databaseService.createConfigDatabase).toHaveBeenCalledWith(path.resolve(`baseFolder/south-${configuration.id}/cache.db`))
   })
 
   it('fileQuery should exit if the input folder does not exist', async () => {
@@ -73,7 +67,7 @@ describe('SouthFolderScanner', () => {
     await expect(south.fileQuery('xxx')).rejects.toThrowError('test')
 
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
-    expect(south.engine.addFile).toHaveBeenCalledTimes(0)
+    expect(addFiles).toHaveBeenCalledTimes(0)
     expect(databaseService.upsertConfig).toHaveBeenCalledTimes(0)
   })
 
@@ -81,7 +75,7 @@ describe('SouthFolderScanner', () => {
     fs.readdir.mockImplementation(() => Promise.resolve([]))
     await south.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
-    expect(south.engine.addFile).toHaveBeenCalledTimes(0)
+    expect(addFiles).toHaveBeenCalledTimes(0)
     expect(databaseService.upsertConfig).toHaveBeenCalledTimes(0)
     expect(south.logger.debug).toHaveBeenCalledTimes(1)
   })
@@ -90,7 +84,7 @@ describe('SouthFolderScanner', () => {
     fs.readdir.mockImplementation(() => Promise.resolve(['badfile']))
     await south.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
-    expect(south.engine.addFile).toHaveBeenCalledTimes(0)
+    expect(addFiles).toHaveBeenCalledTimes(0)
     expect(databaseService.upsertConfig).toHaveBeenCalledTimes(0)
   })
 
@@ -99,7 +93,7 @@ describe('SouthFolderScanner', () => {
     fs.stat.mockImplementation(() => Promise.resolve({ mtimeMs: new Date().getTime() + 666 }))
     await south.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
-    expect(south.engine.addFile).toHaveBeenCalledTimes(0)
+    expect(addFiles).toHaveBeenCalledTimes(0)
     expect(databaseService.upsertConfig).toHaveBeenCalledTimes(0)
   })
 
@@ -110,7 +104,7 @@ describe('SouthFolderScanner', () => {
     databaseService.getConfig.mockImplementation(() => new Date().getTime())
     await south.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
-    expect(south.engine.addFile).toHaveBeenCalledTimes(0)
+    expect(addFiles).toHaveBeenCalledTimes(0)
     expect(databaseService.upsertConfig).toHaveBeenCalledTimes(0)
   })
 
@@ -120,7 +114,7 @@ describe('SouthFolderScanner', () => {
     south.preserveFiles = false
     await south.fileQuery('xxx')
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
-    expect(engine.addFile).toHaveBeenCalledWith(
+    expect(addFiles).toHaveBeenCalledWith(
       south.id,
       path.join(south.inputFolder, 'test.csv'),
       false,
@@ -136,7 +130,7 @@ describe('SouthFolderScanner', () => {
     await south.fileQuery('xxx')
 
     expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
-    expect(south.engine.addFile).toHaveBeenCalledWith(
+    expect(addFiles).toHaveBeenCalledWith(
       south.id,
       path.join(south.inputFolder, 'test.csv'),
       true,
@@ -153,7 +147,7 @@ describe('SouthFolderScanner', () => {
     await south.fileQuery('xxx')
 
     expect(databaseService.getConfig).toHaveBeenCalledTimes(0)
-    expect(engine.addFile).toHaveBeenCalledWith(
+    expect(addFiles).toHaveBeenCalledWith(
       south.id,
       path.join(south.inputFolder, 'test.csv'),
       true,
@@ -173,7 +167,7 @@ describe('SouthFolderScanner', () => {
     await south.fileQuery('xxx')
 
     expect(utils.compress).toHaveBeenCalledTimes(1)
-    expect(engine.addFile).toHaveBeenCalledWith(
+    expect(addFiles).toHaveBeenCalledWith(
       south.id,
       path.resolve(south.inputFolder, 'myFirstFile.csv.gz'),
       false,
@@ -197,7 +191,7 @@ describe('SouthFolderScanner', () => {
     expect(utils.compress).toHaveBeenCalledTimes(1)
     expect(south.logger.error).toHaveBeenCalledWith('Error compressing file "myFirstFile.csv". Sending it raw instead.')
 
-    expect(engine.addFile).toHaveBeenCalledWith(
+    expect(addFiles).toHaveBeenCalledWith(
       south.id,
       path.resolve(south.inputFolder, 'myFirstFile.csv'),
       false,
@@ -221,7 +215,7 @@ describe('SouthFolderScanner', () => {
     expect(utils.compress).toHaveBeenCalledTimes(1)
     expect(south.logger.error).toHaveBeenCalledWith(new Error('unlink error'))
 
-    expect(engine.addFile).toHaveBeenCalledWith(
+    expect(addFiles).toHaveBeenCalledWith(
       south.id,
       path.resolve(south.inputFolder, 'myFirstFile.csv.gz'),
       false,
@@ -243,7 +237,7 @@ describe('SouthFolderScanner', () => {
 
     expect(utils.compress).toHaveBeenCalledTimes(1)
     expect(databaseService.getConfig).toHaveBeenCalledTimes(1)
-    expect(engine.addFile).toHaveBeenCalledWith(
+    expect(addFiles).toHaveBeenCalledWith(
       south.id,
       path.join(south.inputFolder, 'myFirstFile.csv.gz'),
       false,

@@ -2,28 +2,15 @@ const fs = require('node:fs')
 
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3')
 const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
-const ProxyAgent = require('proxy-agent')
 
 const AmazonS3 = require('./north-amazon-s3')
-
-const { defaultConfig: config } = require('../../../tests/test-config')
 
 // Mock AWS
 jest.mock('@aws-sdk/client-s3', () => ({ S3Client: jest.fn(), PutObjectCommand: jest.fn() }))
 jest.mock('@aws-sdk/node-http-handler', () => ({ NodeHttpHandler: jest.fn() }))
 
-// Mock ProxyAgent
-jest.mock('proxy-agent')
-
 // Mock fs
 jest.mock('node:fs/promises')
-
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  requestService: { httpSend: jest.fn() },
-}
 
 // Mock services
 jest.mock('../../service/database.service')
@@ -33,6 +20,31 @@ jest.mock('../../service/certificate.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 jest.mock('../../engine/cache/value-cache')
 jest.mock('../../engine/cache/file-cache')
+
+const proxies = [
+  {
+    name: 'sss',
+    protocol: 'http',
+    host: 'hhh',
+    port: 123,
+    username: 'uuu',
+    password: 'pppppppppp',
+  },
+  {
+    name: 'ff',
+    protocol: 'http',
+    host: 'tt',
+    port: 1,
+    username: 'uii',
+    password: 'ppppppppppppp',
+  },
+  {
+    name: 'no-auth',
+    protocol: 'http',
+    host: 'tt',
+    port: 1,
+  },
+]
 
 let configuration = null
 let north = null
@@ -54,7 +66,7 @@ describe('NorthAmazonS3', () => {
         proxy: '',
         authentication: {
           key: 'myAccessKey',
-          secretKey: 'mySecretKey',
+          secret: 'mySecretKey',
         },
       },
       caching: {
@@ -69,8 +81,8 @@ describe('NorthAmazonS3', () => {
       },
       subscribedTo: [],
     }
-    north = new AmazonS3(configuration, engine)
-    await north.init()
+    north = new AmazonS3(configuration, [])
+    await north.init('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized', () => {
@@ -81,7 +93,7 @@ describe('NorthAmazonS3', () => {
       region: 'eu-west-3',
       credentials: {
         accessKeyId: configuration.settings.authentication.key,
-        secretAccessKey: configuration.settings.authentication.secretKey,
+        secretAccessKey: configuration.settings.authentication.secret,
       },
       requestHandler: null,
     })
@@ -92,30 +104,6 @@ describe('NorthAmazonS3', () => {
   it('should be properly initialized with a proxy', async () => {
     const amazonS3WithProxyConfig = configuration
     amazonS3WithProxyConfig.settings.proxy = 'sss'
-    north.engineConfig.proxies = [
-      {
-        name: 'sss',
-        protocol: 'http',
-        host: 'hhh',
-        port: 123,
-        username: 'uuu',
-        password: 'pppppppppp',
-      },
-      {
-        name: 'ff',
-        protocol: 'http',
-        host: 'tt',
-        port: 1,
-        username: 'uii',
-        password: 'ppppppppppppp',
-      },
-      {
-        name: 'no-auth',
-        protocol: 'http',
-        host: 'tt',
-        port: 1,
-      },
-    ]
 
     const expectedAgent = {
       auth: 'uuu:pppppppppp',
@@ -133,18 +121,17 @@ describe('NorthAmazonS3', () => {
     }
     NodeHttpHandler.mockReturnValueOnce(expectedAgent)
 
-    const amazonS3WithProxy = new AmazonS3(amazonS3WithProxyConfig, engine)
-    await amazonS3WithProxy.init()
+    const amazonS3WithProxy = new AmazonS3(amazonS3WithProxyConfig, proxies)
+    await amazonS3WithProxy.init('baseFolder', 'oibusName', {})
 
     expect(amazonS3WithProxy.bucket).toEqual(amazonS3WithProxyConfig.settings.bucket)
     expect(amazonS3WithProxy.folder).toEqual(amazonS3WithProxyConfig.settings.folder)
 
-    expect(ProxyAgent).toHaveBeenCalledWith(expectedAgent)
     expect(S3Client).toHaveBeenCalledWith({
       region: 'eu-west-3',
       credentials: {
         accessKeyId: configuration.settings.authentication.key,
-        secretAccessKey: configuration.settings.authentication.secretKey,
+        secretAccessKey: configuration.settings.authentication.secret,
       },
       requestHandler: expectedAgent,
     })
@@ -171,18 +158,17 @@ describe('NorthAmazonS3', () => {
     }
     NodeHttpHandler.mockReturnValueOnce(expectedAgent)
 
-    const amazonS3WithProxy = new AmazonS3(amazonS3WithProxyConfig, engine)
-    await amazonS3WithProxy.init()
+    const amazonS3WithProxy = new AmazonS3(amazonS3WithProxyConfig, proxies)
+    await amazonS3WithProxy.init('baseFolder', 'oibusName', {})
 
     expect(amazonS3WithProxy.bucket).toEqual(amazonS3WithProxyConfig.settings.bucket)
     expect(amazonS3WithProxy.folder).toEqual(amazonS3WithProxyConfig.settings.folder)
 
-    expect(ProxyAgent).toHaveBeenCalledWith(expectedAgent)
     expect(S3Client).toHaveBeenCalledWith({
       region: 'eu-west-3',
       credentials: {
         accessKeyId: configuration.settings.authentication.key,
-        secretAccessKey: configuration.settings.authentication.secretKey,
+        secretAccessKey: configuration.settings.authentication.secret,
       },
       requestHandler: expectedAgent,
     })

@@ -8,8 +8,6 @@ const mainUtils = require('../../service/utils')
 
 const databaseService = require('../../service/database.service')
 
-const { defaultConfig: config } = require('../../../tests/test-config')
-
 // Mock utils class
 jest.mock('./utils', () => ({
   generateCSV: jest.fn(),
@@ -34,13 +32,8 @@ jest.mock('node:fs/promises')
 // Mock https
 jest.mock('https', () => ({ Agent: jest.fn() }))
 
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  addValues: jest.fn(),
-  addFile: jest.fn(),
-}
+const addValues = jest.fn()
+const addFiles = jest.fn()
 
 // Mock services
 jest.mock('../../service/database.service')
@@ -110,12 +103,12 @@ describe('SouthRest', () => {
       },
       scanMode: 'every10Seconds',
     }
-    south = new RestApi(configuration, engine)
+    south = new RestApi(configuration, addValues, addFiles)
   })
 
   it('should create RestApi connector and connect', async () => {
     databaseService.getConfig.mockReturnValue(null)
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
 
     expect(south.requestMethod).toEqual(configuration.settings.requestMethod)
     expect(south.host).toEqual(configuration.settings.host)
@@ -145,14 +138,14 @@ describe('SouthRest', () => {
       throw new Error('mkdir error test')
     })
 
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
 
     expect(south.logger.error).toHaveBeenCalledWith(new Error('mkdir error test'))
   })
 
   it('should fail to scan', async () => {
     fetch.mockReturnValue(Promise.resolve({ ok: false, status: 400, statusText: 'statusText' }))
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
 
     await expect(south.historyQuery(
@@ -249,7 +242,7 @@ describe('SouthRest', () => {
         resolve(endpointResult)
       }),
     }))
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
 
     await south.historyQuery(configuration.scanMode, new Date('2020-01-01T00:00:00.000Z'), new Date('2021-01-01T00:00:00.000Z'))
@@ -283,7 +276,7 @@ describe('SouthRest', () => {
         resolve(endpointResult)
       }),
     }))
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
 
     await south.historyQuery(configuration.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
@@ -292,7 +285,7 @@ describe('SouthRest', () => {
   })
 
   it('should use http get with body function with self signed certificates accepted and without authentication', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
 
     south.body = '{ startTime: @StartTime, endTime: @EndTime }'
@@ -321,7 +314,7 @@ describe('SouthRest', () => {
   })
 
   it('should use http get with body function with ISO dates', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
 
     south.body = '{ startTime: @StartTime, endTime: @EndTime }'
@@ -349,7 +342,7 @@ describe('SouthRest', () => {
   })
 
   it('should use http get with body function with numerical dates', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
 
     south.body = '{ startTime: @StartTime, endTime: @EndTime }'
@@ -389,7 +382,7 @@ describe('SouthRest', () => {
       }),
     }))
 
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
 
     south.requestMethod = 'PUT'
@@ -427,7 +420,7 @@ describe('SouthRest', () => {
       }),
     }))
 
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
     south.variableDateFormat = 'number'
 
@@ -466,7 +459,7 @@ describe('SouthRest', () => {
         resolve([])
       }),
     }))
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
 
     await expect(south.historyQuery(
@@ -502,12 +495,12 @@ describe('SouthRest', () => {
     }))
     utils.generateCSV.mockReturnValue('')
     south.compression = true
-    const tmpFolder = path.resolve(`cache/south-${south.id}/tmp`)
+    const tmpFolder = path.resolve(`baseFolder/south-${south.id}/tmp`)
     const expectedPath = path.join(tmpFolder, 'myFile')
     const expectedCompressedPath = path.join(tmpFolder, 'myFile.gz')
     const startTime = new Date('2019-10-03T13:36:38.590Z')
     const endTime = new Date('2019-10-03T15:36:38.590Z')
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.connect()
 
     await south.historyQuery(configuration.scanMode, startTime, endTime)
@@ -516,7 +509,7 @@ describe('SouthRest', () => {
     expect(mainUtils.compress).toHaveBeenCalledWith(expectedPath, expectedCompressedPath)
     expect(fs.writeFile).toHaveBeenCalledWith(expectedPath, '')
     expect(fs.unlink).toHaveBeenCalledWith(expectedPath)
-    expect(south.engine.addFile).toHaveBeenCalledWith('southId', expectedCompressedPath, false)
+    expect(addFiles).toHaveBeenCalledWith('southId', expectedCompressedPath, false)
 
     // try again with unlink error
     jest.clearAllMocks()
@@ -530,6 +523,6 @@ describe('SouthRest', () => {
     expect(fs.unlink).toBeCalledWith(expectedPath)
     expect(south.logger.error).toBeCalledWith(new Error('unlink error'))
     expect(mainUtils.compress).toBeCalledWith(expectedPath, expectedCompressedPath)
-    expect(engine.addFile).toBeCalledWith('southId', expectedCompressedPath, false)
+    expect(addFiles).toBeCalledWith('southId', expectedCompressedPath, false)
   })
 })

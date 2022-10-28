@@ -27,7 +27,6 @@ southList.OPCHDA = require('../south/south-opchda/south-opchda')
 southList.RestApi = require('../south/south-rest/south-rest')
 
 const LoggerService = require('../service/logger/logger.service')
-const { createRequestService } = require('../service/request')
 const StatusService = require('../service/status.service')
 
 /**
@@ -56,7 +55,6 @@ class BaseEngine {
     // Variable initialized in initEngineServices
     this.statusService = null
     this.logger = null
-    this.requestService = null
   }
 
   /**
@@ -66,32 +64,25 @@ class BaseEngine {
    * @returns {Promise<void>} - The result promise
    */
   async initEngineServices(engineConfig, loggerScope) {
+    this.oibusName = engineConfig.engineName
+    this.defaultLogParameters = engineConfig.logParameters
+    this.proxies = engineConfig.proxies
     this.statusService = new StatusService()
     // Configure the logger
     this.logger = new LoggerService(loggerScope)
     this.logger.setEncryptionService(this.encryptionService)
-    await this.logger.changeParameters(engineConfig, {})
-
-    // Buffer delay in ms: when a South connector generates a lot of values at the same time, it may be better to accumulate them
-    // in a buffer before sending them to the engine
-    // Max buffer: if the buffer reaches this length, it will be sent to the engine immediately
-    // these parameters could be settings from OIBus UI
-    this.bufferMax = engineConfig.caching.bufferMax
-    this.bufferTimeoutInterval = engineConfig.caching.bufferTimeoutInterval
-
-    // Request service
-    this.requestService = createRequestService(this)
+    await this.logger.changeParameters(this.oibusName, this.defaultLogParameters)
   }
 
   /**
    * Add new values from a South connector to the Engine.
    * The Engine will forward the values to the Cache.
-   * @param {String} id - The South connector id
+   * @param {String} southId - The South connector id
    * @param {Object[]} values - Array of values
    * @returns {Promise<void>} - The result promise
    */
-  async addValues(id, values) {
-    this.logger.warn(`addValues() should be surcharged. Called with South "${id}" and ${values.length} values.`)
+  async addValues(southId, values) {
+    this.logger.warn(`addValues() should be surcharged. Called with South "${southId}" and ${values.length} values.`)
   }
 
   /**
@@ -133,7 +124,7 @@ class BaseEngine {
     try {
       const SouthConnector = this.installedSouthConnectors[configuration.type]
       if (SouthConnector) {
-        return new SouthConnector(configuration, this)
+        return new SouthConnector(configuration, this.addValues.bind(this), this.addFile.bind(this))
       }
       this.logger.error(`South connector for "${configuration.name}" is not found: ${configuration.type}`)
     } catch (error) {
@@ -163,7 +154,7 @@ class BaseEngine {
     try {
       const NorthConnector = this.installedNorthConnectors[configuration.type]
       if (NorthConnector) {
-        return new NorthConnector(configuration, this)
+        return new NorthConnector(configuration, this.proxies)
       }
       this.logger.error(`North connector for "${configuration.name}" is not found: ${configuration.type}`)
     } catch (error) {

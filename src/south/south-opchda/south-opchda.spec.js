@@ -4,8 +4,6 @@ const OPCHDA = require('./south-opchda')
 const tcpServer = require('./tcp-server')
 const deferredPromise = require('./deferred-promise')
 
-const { defaultConfig: config } = require('../../../tests/test-config')
-
 const mockSpawnChild = new Stream()
 mockSpawnChild.stdout = new Stream()
 mockSpawnChild.stderr = new Stream()
@@ -18,13 +16,8 @@ jest.mock('./deferred-promise')
 // Mock fs
 jest.mock('node:fs/promises')
 
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  addValues: jest.fn(),
-  addFile: jest.fn(),
-}
+const addValues = jest.fn()
+const addFiles = jest.fn()
 
 // Mock services
 jest.mock('../../service/database.service')
@@ -90,8 +83,8 @@ describe('South OPCHDA', () => {
         scanMode: 'every10Second',
       }],
     }
-    south = new OPCHDA(configuration, engine)
-    await south.init()
+    south = new OPCHDA(configuration, addValues, addFiles)
+    await south.init('baseFolder', 'oibusName', {})
   })
 
   afterAll(() => {
@@ -253,7 +246,7 @@ describe('South OPCHDA', () => {
   })
 
   it('should properly disconnect when connected', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     await south.runTcpServer()
     south.agentConnected = true
 
@@ -271,7 +264,7 @@ describe('South OPCHDA', () => {
   })
 
   it('should send init message', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     south.sendTCPMessageToHdaAgent = jest.fn()
     south.generateTransactionId = jest.fn(() => 1234)
 
@@ -296,7 +289,7 @@ describe('South OPCHDA', () => {
   })
 
   it('should send read message', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     south.sendTCPMessageToHdaAgent = jest.fn()
     south.generateTransactionId = jest.fn(() => 1234)
 
@@ -317,7 +310,7 @@ describe('South OPCHDA', () => {
   })
 
   it('should send stop message', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     south.sendTCPMessageToHdaAgent = jest.fn()
     south.generateTransactionId = jest.fn(() => 1234)
 
@@ -336,7 +329,7 @@ describe('South OPCHDA', () => {
   })
 
   it('should send TCP message', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
 
     south.agentConnected = true
     south.tcpServer = { sendMessage: jest.fn() }
@@ -348,7 +341,7 @@ describe('South OPCHDA', () => {
 
   it('should not send TCP message and try to reconnect', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
 
     south.disconnect = jest.fn()
     south.connect = jest.fn()
@@ -460,7 +453,7 @@ describe('South OPCHDA', () => {
   })
 
   it('should handle Read message when the scan group is not found', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     const receivedMessage = { Reply: 'Read', Content: { Group: 'myScanMode', Points: [{}] } }
     south.historyRead$ = { reject: jest.fn() }
 
@@ -469,7 +462,7 @@ describe('South OPCHDA', () => {
   })
 
   it('should handle Read message and cache values', async () => {
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     const receivedMessage = {
       Reply: 'Read',
       Content: {

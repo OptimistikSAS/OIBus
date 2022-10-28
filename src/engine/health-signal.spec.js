@@ -1,12 +1,15 @@
 const HealthSignal = require('./health-signal')
+const utils = require('../service/utils')
 
 // Mock engine
 const engine = {
   logger: { error: jest.fn(), warn: jest.fn(), debug: jest.fn(), info: jest.fn(), trace: jest.fn() },
   configService: { getConfig: jest.fn() },
   getOIBusInfo: jest.fn(),
-  requestService: { httpSend: jest.fn() },
+  encryptionService: { decryptText: (textToDecipher) => textToDecipher },
 }
+
+jest.mock('../service/utils')
 
 const proxy = {
   name: 'proxy_name',
@@ -36,8 +39,8 @@ describe('HealthSignal', () => {
         endpoint: '/endpoint/info',
         authentication: {
           type: 'Basic',
-          username: 'username',
-          password: 'password',
+          key: 'username',
+          secret: 'password',
         },
         frequency: 300,
         proxy: 'proxy_name',
@@ -125,6 +128,7 @@ describe('HealthSignal', () => {
   it('should call send http signal', async () => {
     const status = { status: 'status' }
 
+    utils.createProxyAgent.mockImplementation(() => ({ proxyAgent: 'an agent' }))
     healthSignal.prepareStatus = jest.fn()
     healthSignal.prepareStatus.mockReturnValue(status)
 
@@ -133,14 +137,15 @@ describe('HealthSignal', () => {
     expect(healthSignal.prepareStatus).toBeCalled()
     const calledStatus = JSON.stringify({ ...status })
     const headers = { 'Content-Type': 'application/json' }
-    expect(engine.requestService.httpSend).toHaveBeenCalledWith(
+    expect(utils.httpSend).toHaveBeenCalledWith(
       `${healthSignal.http.host}${healthSignal.http.endpoint}`,
       'POST',
-      healthSignal.http.authentication,
-      proxy,
-      calledStatus,
       headers,
+      calledStatus,
+      10,
+      { proxyAgent: 'an agent' },
     )
+    expect(utils.createProxyAgent).toHaveBeenCalledWith('http', 'proxy.host', 666, 'proxy_user', 'proxy_pass')
     expect(healthSignal.logger.debug).toBeCalledWith('HTTP health signal sent successfully.')
   })
 
@@ -150,7 +155,7 @@ describe('HealthSignal', () => {
     healthSignal.prepareStatus = jest.fn()
     healthSignal.prepareStatus.mockReturnValue(status)
 
-    engine.requestService.httpSend.mockImplementation(() => {
+    utils.httpSend.mockImplementation(() => {
       throw new Error('http error')
     })
     await healthSignal.sendHttpSignal()
@@ -192,13 +197,13 @@ describe('HealthSignal', () => {
     await healthSignal.forwardRequest(data)
     expect(healthSignal.logger.trace).toHaveBeenCalledWith(`Forwarding health signal to "${healthSignalSettings.http.host}".`)
     expect(healthSignal.logger.trace).toHaveBeenCalledWith(`Health signal successfully forwarded to "${healthSignalSettings.http.host}".`)
-    expect(engine.requestService.httpSend).toHaveBeenCalledWith(
+    expect(utils.httpSend).toHaveBeenCalledWith(
       `${healthSignalSettings.http.host}${healthSignalSettings.http.endpoint}`,
       'POST',
-      healthSignalSettings.http.authentication,
-      proxy,
-      JSON.stringify(data),
       { 'Content-Type': 'application/json' },
+      JSON.stringify(data),
+      10,
+      null,
     )
   })
 })

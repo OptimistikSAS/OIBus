@@ -145,7 +145,7 @@ const NorthForm = ({ north, northIndex, onChange }) => {
             </>
           </OibTitle>
           <Row>
-            <Col md="4">
+            <Col md="3">
               <OibInteger
                 onChange={onChange}
                 value={north.caching.sendInterval}
@@ -155,7 +155,7 @@ const NorthForm = ({ north, northIndex, onChange }) => {
                 label="Send interval (ms)"
               />
             </Col>
-            <Col md="4">
+            <Col md="3">
               <OibInteger
                 onChange={onChange}
                 value={north.caching.retryInterval}
@@ -165,7 +165,17 @@ const NorthForm = ({ north, northIndex, onChange }) => {
                 label="Retry interval (ms)"
               />
             </Col>
-            <Col md="4">
+            <Col md="3">
+              <OibInteger
+                onChange={onChange}
+                value={north.caching.timeout}
+                defaultValue={30}
+                valid={validation.caching.timeout}
+                name={`${prefix}.caching.timeout`}
+                label="Timeout (in s)"
+              />
+            </Col>
+            <Col md="3">
               <OibInteger
                 onChange={onChange}
                 value={north.caching.retryCount}
@@ -177,7 +187,7 @@ const NorthForm = ({ north, northIndex, onChange }) => {
             </Col>
           </Row>
           <Row>
-            <Col md="4">
+            <Col md="3">
               <OibInteger
                 onChange={onChange}
                 value={north.caching.groupCount}
@@ -187,7 +197,7 @@ const NorthForm = ({ north, northIndex, onChange }) => {
                 label="Group count"
               />
             </Col>
-            <Col md="4">
+            <Col md="3">
               <OibInteger
                 onChange={onChange}
                 value={north.caching.maxSendCount}

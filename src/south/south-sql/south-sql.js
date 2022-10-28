@@ -29,16 +29,26 @@ class SouthSQL extends SouthConnector {
    * Constructor for SouthSQL
    * @constructor
    * @param {Object} configuration - The South connector configuration
-   * @param {BaseEngine} engine - The Engine
+   * @param {Function} engineAddValues - The Engine add values method
+   * @param {Function} engineAddFiles - The Engine add file method
    * @return {void}
    */
-  constructor(configuration, engine) {
-    super(configuration, engine, {
-      supportListen: false,
-      supportLastPoint: false,
-      supportFile: false,
-      supportHistory: true,
-    })
+  constructor(
+    configuration,
+    engineAddValues,
+    engineAddFiles,
+  ) {
+    super(
+      configuration,
+      engineAddValues,
+      engineAddFiles,
+      {
+        supportListen: false,
+        supportLastPoint: false,
+        supportFile: false,
+        supportHistory: true,
+      },
+    )
     this.canHandleHistory = true
     this.handlesFiles = true
 
@@ -89,10 +99,13 @@ class SouthSQL extends SouthConnector {
 
   /**
    * Initialize services (logger, certificate, status data)
+   * @param {String} baseFolder - The base cache folder
+   * @param {String} oibusName - The OIBus name
+   * @param {Object} defaultLogParameters - The default logs parameters
    * @returns {Promise<void>} - The result promise
    */
-  async init() {
-    await super.init()
+  async init(baseFolder, oibusName, defaultLogParameters) {
+    await super.init(baseFolder, oibusName, defaultLogParameters)
     try {
       // eslint-disable-next-line global-require,import/no-unresolved,import/no-extraneous-dependencies
       oracledb = require('oracledb')

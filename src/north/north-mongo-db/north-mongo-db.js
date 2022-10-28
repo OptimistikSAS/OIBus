@@ -14,11 +14,17 @@ class NorthMongoDB extends NorthConnector {
    * Constructor for NorthMongoDB
    * @constructor
    * @param {Object} configuration - The North connector configuration
-   * @param {BaseEngine} engine - The Engine
+   * @param {Object[]} proxies - The list of available proxies
    * @return {void}
    */
-  constructor(configuration, engine) {
-    super(configuration, engine)
+  constructor(
+    configuration,
+    proxies,
+  ) {
+    super(
+      configuration,
+      proxies,
+    )
     this.canHandleValues = true
 
     const {

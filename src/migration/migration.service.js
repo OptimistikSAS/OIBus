@@ -4,7 +4,7 @@ const path = require('node:path')
 const migrationRules = require('./migration-rules')
 const LoggerService = require('../service/logger/logger.service')
 
-const REQUIRED_SCHEMA_VERSION = 28
+const REQUIRED_SCHEMA_VERSION = 29
 const DEFAULT_VERSION = 1
 
 /**
@@ -53,13 +53,14 @@ const migrateImpl = async (configVersion, config, configFilePath, logger) => {
 /**
  * Migrate if needed.
  * @param {String} configFilePath - The config file path
- * @param {Object }logParameters - The log parameters to use (given by index.js)
+ * @param {String} oibusName - The name of this oibus
+ * @param {Object} logParameters - The log parameters to use (given by index.js)
  * @returns {Promise<void>} - The result promise
  */
-const migrate = async (configFilePath, logParameters) => {
+const migrate = async (configFilePath, oibusName, logParameters) => {
   const logger = new LoggerService('migration')
   try {
-    await logger.changeParameters(logParameters)
+    await logger.changeParameters(oibusName, logParameters)
 
     let fileStat
     try {

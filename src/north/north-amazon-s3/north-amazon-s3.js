@@ -1,10 +1,8 @@
 const fs = require('node:fs')
-const url = require('node:url')
 const path = require('node:path')
 
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3')
 const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
-const ProxyAgent = require('proxy-agent')
 
 const NorthConnector = require('../north-connector')
 
@@ -29,11 +27,17 @@ class NorthAmazonS3 extends NorthConnector {
    * Constructor for NorthAmazonS3
    * @constructor
    * @param {Object} configuration - The North connector configuration
-   * @param {BaseEngine} engine - The Engine
+   * @param {Object[]} proxies - The list of available proxies
    * @return {void}
    */
-  constructor(configuration, engine) {
-    super(configuration, engine)
+  constructor(
+    configuration,
+    proxies,
+  ) {
+    super(
+      configuration,
+      proxies,
+    )
     this.canHandleFiles = true
 
     const { bucket, folder, region, authentication, proxy } = configuration.settings
@@ -42,32 +46,26 @@ class NorthAmazonS3 extends NorthConnector {
     this.folder = folder
     this.region = region
     this.authentication = authentication
-    this.proxy = proxy
+    this.proxySettings = proxy
   }
 
-  async init() {
-    await super.init()
-    const configuredProxy = this.getProxy(this.proxy)
-    let httpAgent
-    if (configuredProxy) {
-      const { protocol, host, port, username, password } = configuredProxy
-
-      const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
-
-      if (username && password) {
-        proxyOptions.auth = `${username}:${await this.encryptionService.decryptText(password)}`
-      }
-
-      httpAgent = new ProxyAgent(proxyOptions)
-    }
+  /**
+   * Initialize services (logger, certificate, status data)
+   * @param {String} baseFolder - The base cache folder
+   * @param {String} oibusName - The OIBus name
+   * @param {Object} defaultLogParameters - The default logs parameters
+   * @returns {Promise<void>} - The result promise
+   */
+  async init(baseFolder, oibusName, defaultLogParameters) {
+    await super.init(baseFolder, oibusName, defaultLogParameters)
 
     this.s3 = new S3Client({
       region: this.region,
       credentials: {
         accessKeyId: this.authentication.key,
-        secretAccessKey: await this.encryptionService.decryptText(this.authentication.secretKey),
+        secretAccessKey: await this.encryptionService.decryptText(this.authentication.secret),
       },
-      requestHandler: httpAgent ? new NodeHttpHandler({ httpAgent }) : null,
+      requestHandler: this.proxyAgent ? new NodeHttpHandler({ httpAgent: this.proxyAgent }) : null,
     })
   }
 

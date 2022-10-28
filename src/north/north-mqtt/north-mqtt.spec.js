@@ -2,17 +2,9 @@ const mqtt = require('mqtt')
 
 const MQTT = require('./north-mqtt')
 
-const { defaultConfig: config } = require('../../../tests/test-config')
-
 // Mock mqtt
 jest.mock('mqtt', () => ({ connect: jest.fn() }))
 
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  requestService: { httpSend: jest.fn() },
-}
 // Mock fs
 jest.mock('node:fs/promises')
 
@@ -66,8 +58,8 @@ describe('NorthMQTT', () => {
       },
       subscribedTo: [],
     }
-    north = new MQTT(configuration, engine)
-    await north.init()
+    north = new MQTT(configuration, [])
+    await north.init('baseFolder', 'oibusName', {})
   })
 
   it('should properly connect', async () => {
@@ -75,7 +67,7 @@ describe('NorthMQTT', () => {
     await north.connect()
 
     const expectedOptions = {
-      clientId: `${engine.engineName}-${configuration.id}`,
+      clientId: `oibusName-${configuration.id}`,
       username: configuration.settings.username,
       password: Buffer.from(configuration.settings.password),
       key: null,
@@ -116,13 +108,13 @@ describe('NorthMQTT', () => {
       },
     }
 
-    const mqttNorthCert = new MQTT(testMqttConfigWithFiles, engine)
-    await mqttNorthCert.init()
+    const mqttNorthCert = new MQTT(testMqttConfigWithFiles, [])
+    await mqttNorthCert.init('baseFolder', 'oibusName', {})
     mqttNorthCert.certificate = CertificateService
     await mqttNorthCert.connect()
 
     const expectedOptionsWithFiles = {
-      clientId: `${engine.engineName}-${configuration.id}`,
+      clientId: `oibusName-${configuration.id}`,
       username: configuration.settings.username,
       password: '',
       key: 'fileContent',

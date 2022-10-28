@@ -49,6 +49,10 @@ class Server {
     this.logger.setEncryptionService(this.encryptionService)
   }
 
+  /**
+   * Start the web server
+   * @returns {Promise<void>} - The result promise
+   */
   async start() {
     // Get the config entries
     const { engineConfig } = this.engine.configService.getConfig()
@@ -166,7 +170,7 @@ class Server {
     this.app.use(clientController.serveClient)
 
     // Set the logger with the same settings as the engine
-    this.logger.changeParameters(engineConfig).then(() => {
+    this.logger.changeParameters(engineConfig.engineName, engineConfig.logParameters).then(() => {
       this.webServer = this.app.listen(this.port, () => {
         this.logger.info(`Web server started on ${this.port}`)
       })

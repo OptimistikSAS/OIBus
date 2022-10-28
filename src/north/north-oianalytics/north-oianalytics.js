@@ -1,6 +1,5 @@
-const fs = require('node:fs/promises')
-
 const NorthConnector = require('../north-connector')
+const { httpSend, addAuthenticationToHeaders } = require('../../service/utils')
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -13,11 +12,17 @@ class NorthOIAnalytics extends NorthConnector {
    * Constructor for NorthOIAnalytics
    * @constructor
    * @param {Object} configuration - The North connector configuration
-   * @param {BaseEngine} engine - The engine
+   * @param {Object[]} proxies - The list of available proxies
    * @return {void}
    */
-  constructor(configuration, engine) {
-    super(configuration, engine)
+  constructor(
+    configuration,
+    proxies,
+  ) {
+    super(
+      configuration,
+      proxies,
+    )
     this.canHandleValues = true
     this.canHandleFiles = true
 
@@ -30,7 +35,7 @@ class NorthOIAnalytics extends NorthConnector {
     this.valuesUrl = `${host}/api/oianalytics/oibus/time-values${queryParam}`
     this.fileUrl = `${host}/api/oianalytics/value-upload/file${queryParam}`
     this.authentication = authentication
-    this.proxy = this.getProxy(proxy)
+    this.proxySettings = proxy
   }
 
   /**
@@ -39,7 +44,6 @@ class NorthOIAnalytics extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async handleValues(values) {
-    this.logger.trace(`Handle ${values.length} values.`)
     // Remove empty values
     const cleanedValues = values.filter((value) => value?.data?.value !== undefined
       && value?.data?.value !== null
@@ -50,10 +54,24 @@ class NorthOIAnalytics extends NorthConnector {
         data: value.data,
         pointId: value.pointId,
       }))
-    const data = JSON.stringify(values)
+    const data = JSON.stringify(cleanedValues)
     const headers = { 'Content-Type': 'application/json' }
-    await this.engine.requestService.httpSend(this.valuesUrl, 'POST', this.authentication, this.proxy, data, headers)
-    this.logger.debug(`North "${this.name}" has posted ${cleanedValues.length} values.`)
+    if (this.authentication) {
+      addAuthenticationToHeaders(
+        headers,
+        this.authentication.type,
+        this.authentication.key,
+        await this.encryptionService.decryptText(this.authentication.secret),
+      )
+    }
+    await httpSend(
+      this.valuesUrl,
+      'POST',
+      headers,
+      data,
+      this.caching.timeout,
+      this.proxyAgent,
+    )
   }
 
   /**
@@ -62,10 +80,23 @@ class NorthOIAnalytics extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async handleFile(filePath) {
-    const stats = await fs.stat(filePath)
-    this.logger.debug(`Handle file "${filePath}" (${stats.size} bytes).`)
-
-    await this.engine.requestService.httpSend(this.fileUrl, 'POST', this.authentication, this.proxy, filePath)
+    const headers = {}
+    if (this.authentication) {
+      addAuthenticationToHeaders(
+        headers,
+        this.authentication.type,
+        this.authentication.key,
+        await this.encryptionService.decryptText(this.authentication.secret),
+      )
+    }
+    await httpSend(
+      this.fileUrl,
+      'POST',
+      headers,
+      filePath,
+      this.caching.timeout,
+      this.proxyAgent,
+    )
   }
 
   /**

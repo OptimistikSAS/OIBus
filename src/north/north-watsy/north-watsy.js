@@ -30,11 +30,17 @@ class NorthWATSY extends NorthConnector {
    * Constructor for NorthWATSY
    * @constructor
    * @param {Object} configuration - The North connector configuration
-   * @param {BaseEngine} engine - The Engine
+   * @param {Object[]} proxies - The list of available proxies
    * @return {void}
    */
-  constructor(configuration, engine) {
-    super(configuration, engine)
+  constructor(
+    configuration,
+    proxies,
+  ) {
+    super(
+      configuration,
+      proxies,
+    )
     this.canHandleValues = true
 
     const {
@@ -54,10 +60,22 @@ class NorthWATSY extends NorthConnector {
     this.secretKey = secretKey
 
     this.splitMessageTimeout = configuration.caching.sendInterval // in ms
-    this.mqttTopic = initMQTTTopic(engine.engineName, this.host)
 
-    // Initialized at connection
+    // Initialized at connection or init
     this.client = null
+    this.mqttTopic = null
+  }
+
+  /**
+   * Initialize services (logger, certificate, status data)
+   * @param {String} baseFolder - The base cache folder
+   * @param {String} oibusName - The OIBus name
+   * @param {Object} defaultLogParameters - The default logs parameters
+   * @returns {Promise<void>} - The result promise
+   */
+  async init(baseFolder, oibusName, defaultLogParameters) {
+    await super.init(baseFolder, oibusName, defaultLogParameters)
+    this.mqttTopic = initMQTTTopic(oibusName, this.host)
   }
 
   /**

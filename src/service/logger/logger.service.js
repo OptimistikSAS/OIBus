@@ -39,12 +39,13 @@ class LoggerService {
 
   /**
    * Run the appropriate pino log transports according to the configuration
-   * @param {Object} engineConfig - The engine configuration for the logs
+   * @param {String} oibusName - The OIBus name
+   * @param {Object} defaultLogParameters - The default logs parameters
    * @param {Object} specificParameters - Override some log settings from a connector
    * @returns {Promise<void>} - The result promise
    */
-  async changeParameters(engineConfig, specificParameters = {}) {
-    const logParameters = JSON.parse(JSON.stringify(engineConfig.logParameters))
+  async changeParameters(oibusName, defaultLogParameters, specificParameters = {}) {
+    const logParameters = JSON.parse(JSON.stringify(defaultLogParameters))
 
     /**
      * Replacing global log parameters by specific one if not set to engine level
@@ -96,7 +97,7 @@ class LoggerService {
             password: await this.encryptionService.decryptText(lokiLog.password),
             tokenAddress: lokiLog.tokenAddress,
             lokiAddress: lokiLog.lokiAddress,
-            engineName: engineConfig.engineName,
+            engineName: oibusName,
             interval: lokiLog.interval,
           },
           level: lokiLog.level,

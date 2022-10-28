@@ -2,8 +2,6 @@ const nodeOPCUAClient = require('node-opcua-client')
 
 const OPCUA_DA = require('./south-opcua-da')
 
-const { defaultConfig: config } = require('../../../tests/test-config')
-
 // Mock node-opcua-client
 jest.mock('node-opcua-client', () => ({
   OPCUAClient: { createSession: jest.fn() },
@@ -22,13 +20,8 @@ jest.mock('../../service/certificate.service')
 // Mock fs
 jest.mock('node:fs/promises')
 
-// Mock OIBusEngine
-const engine = {
-  configService: { getConfig: () => ({ engineConfig: config.engine }) },
-  cacheFolder: './cache',
-  addValues: jest.fn(),
-  addFile: jest.fn(),
-}
+const addValues = jest.fn()
+const addFiles = jest.fn()
 
 // Mock services
 jest.mock('../../service/database.service')
@@ -68,8 +61,8 @@ describe('SouthOPCUADA', () => {
         scanMode: 'every10Second',
       }],
     }
-    south = new OPCUA_DA(configuration, engine)
-    await south.init()
+    south = new OPCUA_DA(configuration, addValues, addFiles)
+    await south.init('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized', () => {
@@ -137,7 +130,7 @@ describe('SouthOPCUADA', () => {
 
   it('should properly connect to OPCUA server with certificate', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
-    await south.init()
+    await south.init('baseFolder', 'oibusName', {})
     const expectedOptions = {
       applicationName: 'OIBus',
       clientName: 'southId',
@@ -193,8 +186,8 @@ describe('SouthOPCUADA', () => {
       }],
     }
 
-    const opcuaSouthTest = new OPCUA_DA(testOpcuaConfig, engine)
-    await opcuaSouthTest.init()
+    const opcuaSouthTest = new OPCUA_DA(testOpcuaConfig, addValues, addFiles)
+    await opcuaSouthTest.init('baseFolder', 'oibusName', {})
     await opcuaSouthTest.connect()
     opcuaSouthTest.connected = true
     opcuaSouthTest.session = { readVariableValue: jest.fn(), close: jest.fn() }

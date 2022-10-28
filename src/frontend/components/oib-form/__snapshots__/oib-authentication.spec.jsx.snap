@@ -41,7 +41,7 @@ exports[`OIbAuthentication check Authentication with mode API Key 1`] = `
       >
         <label
           class="form-label"
-          for="secretKey"
+          for="secret"
         >
           Secret
         </label>
@@ -51,8 +51,8 @@ exports[`OIbAuthentication check Authentication with mode API Key 1`] = `
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="secretKey"
-            name="secretKey"
+            id="secret"
+            name="secret"
             type="password"
             value="sssss"
           />
@@ -83,15 +83,15 @@ exports[`OIbAuthentication check Authentication with mode Basic 1`] = `
       >
         <label
           class="form-label"
-          for="username"
+          for="key"
         >
           User name
         </label>
         <input
           aria-invalid="false"
           class="oi-form-input form-control"
-          id="username"
-          name="username"
+          id="key"
+          name="key"
           type="text"
           value="user"
         />
@@ -108,7 +108,7 @@ exports[`OIbAuthentication check Authentication with mode Basic 1`] = `
       >
         <label
           class="form-label"
-          for="password"
+          for="secret"
         >
           Password
         </label>
@@ -118,8 +118,8 @@ exports[`OIbAuthentication check Authentication with mode Basic 1`] = `
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="password"
-            name="password"
+            id="secret"
+            name="secret"
             type="password"
             value="pass"
           />
@@ -150,7 +150,7 @@ exports[`OIbAuthentication check Authentication with mode Bearer 1`] = `
       >
         <label
           class="form-label"
-          for="token"
+          for="secret"
         >
           Token
         </label>
@@ -160,8 +160,8 @@ exports[`OIbAuthentication check Authentication with mode Bearer 1`] = `
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="token"
-            name="token"
+            id="secret"
+            name="secret"
             type="password"
             value="sssss"
           />
@@ -235,15 +235,15 @@ exports[`OIbAuthentication check Authentication with mode null 1`] = `
       >
         <label
           class="form-label"
-          for="username"
+          for="key"
         >
           User name
         </label>
         <input
           aria-invalid="false"
           class="oi-form-input form-control"
-          id="username"
-          name="username"
+          id="key"
+          name="key"
           type="text"
           value="user"
         />
@@ -260,7 +260,7 @@ exports[`OIbAuthentication check Authentication with mode null 1`] = `
       >
         <label
           class="form-label"
-          for="password"
+          for="secret"
         >
           Password
         </label>
@@ -270,8 +270,8 @@ exports[`OIbAuthentication check Authentication with mode null 1`] = `
           <input
             aria-invalid="false"
             class="oi-form-input form-control"
-            id="password"
-            name="password"
+            id="secret"
+            name="secret"
             type="password"
             value="pass"
           />
