@@ -52,12 +52,12 @@ class SouthOPCUADA extends SouthConnector {
     this.keepSessionAlive = keepSessionAlive
     this.certFile = certFile
     this.keyFile = keyFile
-    this.reconnectTimeout = null
 
     // Initialized at connection
     this.clientCertificateManager = null
     this.reconnectTimeout = null
     this.session = null
+    this.disconnecting = false
   }
 
   /**
@@ -127,8 +127,10 @@ class SouthOPCUADA extends SouthConnector {
       }
       await this.formatAndSendValues(dataValues, nodesToRead)
     } catch (error) {
-      await this.disconnect()
-      await this.connect()
+      if (!this.disconnecting) {
+        await this.internalDisconnect()
+        await this.connect()
+      }
       throw error
     }
   }
@@ -138,6 +140,15 @@ class SouthOPCUADA extends SouthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async disconnect() {
+    this.disconnecting = true
+    await this.internalDisconnect()
+  }
+
+  /**
+   * Close the connection
+   * @returns {Promise<void>} - The result promise
+   */
+  async internalDisconnect() {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout)
     }
@@ -235,7 +246,7 @@ class SouthOPCUADA extends SouthConnector {
       await super.connect()
     } catch (error) {
       this.logger.error(error)
-      await this.disconnect()
+      await this.internalDisconnect()
       this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.retryInterval)
     }
   }
