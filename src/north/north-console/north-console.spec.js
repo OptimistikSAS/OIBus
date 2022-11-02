@@ -40,7 +40,7 @@ beforeEach(async () => {
     },
   }
   north = new Console(configuration, [])
-  await north.init('baseFolder', 'oibusName', {})
+  await north.start('baseFolder', 'oibusName', {})
 })
 
 describe('North Console', () => {
@@ -51,7 +51,7 @@ describe('North Console', () => {
   })
 
   it('should properly handle values in non verbose mode', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
     const values = [
       {
         pointId: 'pointId',

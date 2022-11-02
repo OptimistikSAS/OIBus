@@ -34,7 +34,7 @@ describe('SouthConnector', () => {
 
     configuration = { id: 'id', name: 'south', type: 'test', settings: {} }
     south = new SouthConnector(configuration, addValues, addFiles)
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized without support, without scan mode', async () => {
@@ -61,7 +61,7 @@ describe('SouthConnector', () => {
     }
     south.scanMode = 'scanModeTest'
 
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
 
     expect(south.lastCompletedAt[south.scanMode]).toEqual(new Date())
     expect(south.queryParts[south.scanMode]).toEqual(0)
@@ -84,7 +84,7 @@ describe('SouthConnector', () => {
     ]
     south.scanGroups = [{ scanMode: 'scanGroupTest' }]
 
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
     expect(south.lastCompletedAt.scanGroupTest).toEqual(new Date())
     expect(south.queryParts.scanGroupTest).toEqual(0)
     expect(south.ignoredReadsCounters.scanGroupTest).toEqual(0)
@@ -102,7 +102,7 @@ describe('SouthConnector', () => {
       { pointId: 'myPointId3', scanMode: 'listen' },
     ]
 
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
     expect(south.lastCompletedAt.scanGroupTest).toEqual(new Date())
     expect(south.queryParts.scanGroupTest).toEqual(0)
     expect(south.ignoredReadsCounters.scanGroupTest).toEqual(0)
@@ -121,7 +121,7 @@ describe('SouthConnector', () => {
       { pointId: 'myPointId3', scanMode: 'listen' },
     ]
 
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
     expect(south.lastCompletedAt.scanGroupTest).toEqual(new Date(south.startTime))
     expect(south.queryParts.scanGroupTest).toEqual(0)
     expect(south.ignoredReadsCounters.scanGroupTest).toEqual(0)
@@ -149,11 +149,18 @@ describe('SouthConnector', () => {
     expect(south.statusService.updateStatusDataStream).toHaveBeenCalledWith({ 'Connected at': 'Not connected' })
   })
 
+  it('should properly stop', async () => {
+    south.disconnect = jest.fn()
+    await south.stop()
+    expect(south.disconnect).toHaveBeenCalledTimes(1)
+    expect(south.logger.info).toHaveBeenCalledWith('Stopping South "south" (id).')
+  })
+
   it('should query a specific interval', async () => {
     south.scanMode = 'scanModeTest'
     south.historyQuery = jest.fn()
     south.southDatabase = {}
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
 
     const startTime = new Date('2021-01-01T00:00:00.000Z')
     const endTime = new Date('2022-01-01T00:00:00.000Z')
@@ -189,7 +196,7 @@ describe('SouthConnector', () => {
       endTime: new Date(),
     }]
     utils.generateIntervals.mockReturnValue(mockedIntervals)
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
 
     await south.historyQueryHandler('scanModeTest', new Date('2019-01-01T00:00:00.000Z'), new Date())
     expect(south.logger.trace).toHaveBeenCalledWith('Take back to interval number 0: \r\n'
@@ -234,7 +241,7 @@ describe('SouthConnector', () => {
       endTime: new Date('2021-01-01T00:00:00.000Z'),
     }]
     utils.generateIntervals.mockReturnValue(mockedIntervals)
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
 
     await south.historyQueryHandler('scanModeTest', new Date('2019-01-01T00:00:00.000Z'), new Date())
     expect(south.querySpecificInterval).toHaveBeenCalledTimes(2)
@@ -267,7 +274,7 @@ describe('SouthConnector', () => {
       endTime: new Date('2020-01-01T00:00:00.000Z'),
     }]
     utils.generateIntervals.mockReturnValue(mockedIntervals)
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
 
     await south.historyQueryHandler('scanModeTest', new Date('2019-01-01T00:00:00.000Z'), new Date())
     expect(south.querySpecificInterval).toHaveBeenCalledTimes(1)
@@ -433,7 +440,7 @@ describe('SouthConnector', () => {
   })
 
   it('should properly add file', async () => {
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
 
     const filePath = 'path'
     const preserveFiles = true

@@ -109,7 +109,7 @@ describe('SouthModbus', () => {
       ],
     }
     south = new Modbus(configuration, addValues, addFiles)
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized', () => {

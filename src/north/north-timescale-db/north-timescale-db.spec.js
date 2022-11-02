@@ -71,7 +71,7 @@ describe('North TimescaleDB', () => {
       end: jest.fn(),
     }
     pg.Client.mockReturnValue(client)
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
     await north.connect()
 
     expect(north.canHandleValues).toBeTruthy()
@@ -97,7 +97,7 @@ describe('North TimescaleDB', () => {
   })
 
   it('should properly handle connection errors', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
     const client = {
       connect: jest.fn(() => {
         throw new Error('test')
@@ -113,7 +113,7 @@ describe('North TimescaleDB', () => {
   })
 
   it('should properly handle values with publish error', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     const client = {
       connect: jest.fn(),
@@ -134,7 +134,7 @@ describe('North TimescaleDB', () => {
   })
 
   it('should properly handle values with optional fields and table errors', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     const client = { connect: jest.fn(), query: jest.fn() }
     pg.Client.mockReturnValue(client)
@@ -155,7 +155,7 @@ describe('North TimescaleDB', () => {
   })
 
   it('should properly handle values with optional fields', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     const client = { connect: jest.fn(), query: jest.fn() }
     pg.Client.mockReturnValue(client)
@@ -181,7 +181,7 @@ describe('North TimescaleDB', () => {
   })
 
   it('should properly handle values with only optional fields and timestamp', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     const client = { connect: jest.fn(), query: jest.fn() }
     pg.Client.mockReturnValue(client)
@@ -207,7 +207,7 @@ describe('North TimescaleDB', () => {
   })
 
   it('should properly handle values with useDataKeyValue', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     const client = {
       connect: jest.fn(),
@@ -244,7 +244,7 @@ describe('North TimescaleDB', () => {
   })
 
   it('should properly retrieve timestamp with timestampPathInDataValue', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     const client = {
       connect: jest.fn(),

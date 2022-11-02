@@ -185,7 +185,7 @@ class OIBusEngine extends BaseEngine {
     await Promise.allSettled(this.activeSouths.map((south) => {
       const initAndConnect = async () => {
         try {
-          await south.init(this.cacheFolder, this.oibusName, this.defaultLogParameters)
+          await south.start(this.cacheFolder, this.oibusName, this.defaultLogParameters)
           await south.connect()
         } catch (error) {
           this.logger.error(error)
@@ -201,7 +201,7 @@ class OIBusEngine extends BaseEngine {
     await Promise.allSettled(this.activeNorths.map((north) => {
       const initAndConnect = async () => {
         try {
-          await north.init(this.cacheFolder, this.oibusName, this.defaultLogParameters)
+          await north.start(this.cacheFolder, this.oibusName, this.defaultLogParameters)
           await north.connect()
         } catch (error) {
           this.logger.error(error)
@@ -269,16 +269,13 @@ class OIBusEngine extends BaseEngine {
     this.scanLists = {}
 
     // Stop South connectors
-    await Promise.allSettled(this.activeSouths.map((south) => {
-      this.logger.info(`Stopping South "${south.name}" (${south.id}).`)
-      return south.disconnect()
-    }))
+    await Promise.allSettled(this.activeSouths.map((south) => south.stop()))
     this.activeSouths = []
 
     // Stop North connectors
     await Promise.allSettled(this.activeNorths.map((north) => {
       this.logger.info(`Stopping North "${north.name}" (${north.id}).`)
-      return north.disconnect()
+      return north.stop()
     }))
     this.activeNorths = []
 

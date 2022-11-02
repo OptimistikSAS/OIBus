@@ -54,7 +54,7 @@ describe('MySQL Integration test', () => {
   it('should retrieve some values in the MySQL database', async () => {
     const south = new SQL(configuration, engine)
 
-    await south.init()
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
 
     expect(south.connected).toEqual(true)
@@ -104,7 +104,7 @@ describe('PostgreSQL Integration test', () => {
   it('should retrieve some values in the PostgreSQL database', async () => {
     const south = new SQL(configuration, engine)
 
-    await south.init()
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
 
     expect(south.connected).toEqual(true)
@@ -160,7 +160,7 @@ describe('MSSQL Integration test', () => {
   it('should retrieve some values in the MSSQL database', async () => {
     const south = new SQL(configuration, engine)
 
-    await south.init()
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
 
     expect(south.connected).toEqual(true)

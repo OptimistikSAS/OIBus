@@ -64,14 +64,14 @@ class HistoryQuery {
 
     this.overwriteConnectorsSettings()
 
-    await this.north.init(
+    await this.north.start(
       path.resolve(this.cacheFolder, `north-${this.north.id}`),
       this.engine.oibusName,
       this.engine.defaultLogParameters,
     )
     await this.north.connect()
 
-    await this.south.init(
+    await this.south.start(
       path.resolve(this.cacheFolder, `south-${this.south.id}`),
       this.engine.oibusName,
       this.engine.defaultLogParameters,
@@ -86,7 +86,7 @@ class HistoryQuery {
     this.setStatus(HistoryQuery.STATUS_RUNNING)
     this.statusService.updateStatusDataStream({ status: HistoryQuery.STATUS_RUNNING })
 
-    // In the south.init method, queryParts is set for each scanMode to 0
+    // In the south.start method, queryParts is set for each scanMode to 0
     // Because of scan groups, associated to aggregates, each scan mode must be queried independently
     // Map each scanMode to a history query and run each query sequentially
     await Object.keys(this.south.queryParts).reduce((promise, scanMode) => promise.then(
@@ -104,11 +104,11 @@ class HistoryQuery {
     }
     if (this.south) {
       this.logger.info(`Stopping South connector "${this.southConfiguration.name}".`)
-      await this.south.disconnect()
+      await this.south.stop()
     }
     if (this.north) {
       this.logger.info(`Stopping North connector "${this.northConfiguration.name}".`)
-      await this.north.disconnect()
+      await this.north.stop()
     }
     this.statusService.stop()
   }

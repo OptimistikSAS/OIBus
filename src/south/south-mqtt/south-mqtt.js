@@ -84,14 +84,14 @@ class SouthMQTT extends SouthConnector {
   }
 
   /**
-   * Initialize services (logger, certificate, status data)
+   * Initialize services (logger, certificate, status data) at startup
    * @param {String} baseFolder - The base cache folder
    * @param {String} oibusName - The OIBus name
    * @param {Object} defaultLogParameters - The default logs parameters
    * @returns {Promise<void>} - The result promise
    */
-  async init(baseFolder, oibusName, defaultLogParameters) {
-    await super.init(baseFolder, oibusName, defaultLogParameters)
+  async start(baseFolder, oibusName, defaultLogParameters) {
+    await super.start(baseFolder, oibusName, defaultLogParameters)
     this.clientId = `${oibusName}-${this.id}`
 
     if (!this.timezone || !DateTime.local().setZone(this.timezone).isValid) {

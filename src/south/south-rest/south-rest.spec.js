@@ -108,7 +108,7 @@ describe('SouthRest', () => {
 
   it('should create RestApi connector and connect', async () => {
     databaseService.getConfig.mockReturnValue(null)
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
 
     expect(south.requestMethod).toEqual(configuration.settings.requestMethod)
     expect(south.host).toEqual(configuration.settings.host)
@@ -138,14 +138,14 @@ describe('SouthRest', () => {
       throw new Error('mkdir error test')
     })
 
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
 
     expect(south.logger.error).toHaveBeenCalledWith(new Error('mkdir error test'))
   })
 
   it('should fail to scan', async () => {
     fetch.mockReturnValue(Promise.resolve({ ok: false, status: 400, statusText: 'statusText' }))
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
 
     await expect(south.historyQuery(
@@ -242,7 +242,7 @@ describe('SouthRest', () => {
         resolve(endpointResult)
       }),
     }))
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
 
     await south.historyQuery(configuration.scanMode, new Date('2020-01-01T00:00:00.000Z'), new Date('2021-01-01T00:00:00.000Z'))
@@ -276,7 +276,7 @@ describe('SouthRest', () => {
         resolve(endpointResult)
       }),
     }))
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
 
     await south.historyQuery(configuration.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
@@ -285,7 +285,7 @@ describe('SouthRest', () => {
   })
 
   it('should use http get with body function with self signed certificates accepted and without authentication', async () => {
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
 
     south.body = '{ startTime: @StartTime, endTime: @EndTime }'
@@ -314,7 +314,7 @@ describe('SouthRest', () => {
   })
 
   it('should use http get with body function with ISO dates', async () => {
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
 
     south.body = '{ startTime: @StartTime, endTime: @EndTime }'
@@ -342,7 +342,7 @@ describe('SouthRest', () => {
   })
 
   it('should use http get with body function with numerical dates', async () => {
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
 
     south.body = '{ startTime: @StartTime, endTime: @EndTime }'
@@ -382,7 +382,7 @@ describe('SouthRest', () => {
       }),
     }))
 
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
 
     south.requestMethod = 'PUT'
@@ -420,7 +420,7 @@ describe('SouthRest', () => {
       }),
     }))
 
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
     south.variableDateFormat = 'number'
 
@@ -459,7 +459,7 @@ describe('SouthRest', () => {
         resolve([])
       }),
     }))
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
 
     await expect(south.historyQuery(
@@ -500,7 +500,7 @@ describe('SouthRest', () => {
     const expectedCompressedPath = path.join(tmpFolder, 'myFile.gz')
     const startTime = new Date('2019-10-03T13:36:38.590Z')
     const endTime = new Date('2019-10-03T15:36:38.590Z')
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
 
     await south.historyQuery(configuration.scanMode, startTime, endTime)

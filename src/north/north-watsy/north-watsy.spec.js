@@ -61,7 +61,7 @@ describe('NorthWATSY', () => {
       subscribedTo: [],
     }
     north = new WATSYConnect(configuration, [])
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
   })
 
   it('should properly connect', async () => {

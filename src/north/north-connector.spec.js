@@ -43,7 +43,7 @@ describe('NorthConnector', () => {
       },
     }
     north = new NorthConnector(configuration, [{ name: 'proxyTest' }])
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
   })
 
   afterEach(() => {
@@ -58,7 +58,7 @@ describe('NorthConnector', () => {
 
     north.canHandleFiles = true
     north.canHandleValues = true
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
     expect(north.statusService.updateStatusDataStream).toHaveBeenCalledWith({
       'Number of values sent since OIBus has started': 0,
       'Number of files sent since OIBus has started': 0,
@@ -78,27 +78,35 @@ describe('NorthConnector', () => {
     north.resetFilesTimeout = jest.fn()
     north.caching.sendInterval = 0
 
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
     expect(north.resetValuesTimeout).not.toHaveBeenCalled()
     expect(north.resetFilesTimeout).not.toHaveBeenCalled()
     expect(north.logger.warn).toHaveBeenCalledWith('No send interval. No values or files will be sent.')
   })
 
   it('should properly disconnect', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
     await north.connect()
     expect(north.connected).toBeTruthy()
 
     await north.disconnect()
     expect(north.connected).toBeFalsy()
     expect(north.logger.info).toHaveBeenCalledWith('North connector "north" (id) disconnected.')
+  })
+
+  it('should properly stop', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
+    north.disconnect = jest.fn()
+
+    await north.stop()
+
+    expect(north.logger.info).toHaveBeenCalledWith('Stopping North "north" (id).')
+    expect(north.disconnect).toHaveBeenCalledTimes(1)
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(2)
 
     clearTimeoutSpy.mockClear()
-
     north.valuesTimeout = null
     north.filesTimeout = null
-    await north.disconnect()
+    await north.stop()
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(0)
   })
 
@@ -128,8 +136,8 @@ describe('NorthConnector', () => {
   it('should get proxy', async () => {
     utils.createProxyAgent.mockImplementation(() => ({ proxyAgent: 'a field' }))
     expect(await north.getProxy()).toBeNull()
-
     expect(await north.getProxy('proxyTest')).toEqual({ proxyAgent: 'a field' })
+    expect(await north.getProxy('anotherProxy')).toBeNull()
   })
 
   it('should not retrieve values if already sending it', async () => {

@@ -65,7 +65,7 @@ describe('North InfluxDB', () => {
   })
 
   it('should call makeRequest and manage error', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     serviceUtils.httpSend.mockImplementation(() => {
       throw new Error('http error')
@@ -81,7 +81,7 @@ describe('North InfluxDB', () => {
   })
 
   it('should log error when there are not enough groups for placeholders in measurement', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     north.measurement = '%5$s'
 
@@ -91,7 +91,7 @@ describe('North InfluxDB', () => {
   })
 
   it('should log error when there are not enough groups for placeholders in tags', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     north.tags = 'site=%2$s,unit=%3$s,sensor=%5$s'
     await north.handleValues(values)
@@ -100,7 +100,7 @@ describe('North InfluxDB', () => {
   })
 
   it('should properly handle values with useDataKeyValue', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     const valueWithDataLevel = [{
       pointId: 'ANA/BL1RCP05',
@@ -183,7 +183,7 @@ describe('North InfluxDB', () => {
   })
 
   it('should properly retrieve timestamp with timestampPathInDataValue', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     north.timestampPathInDataValue = 'associatedTimestamp.timestamp'
     north.useDataKeyValue = true
