@@ -192,6 +192,7 @@ describe('HealthSignal', () => {
   })
 
   it('should forward health signal', async () => {
+    utils.createProxyAgent.mockImplementation(() => null)
     const data = { status: 'status' }
     healthSignal.http.enabled = true
     await healthSignal.forwardRequest(data)

@@ -62,7 +62,7 @@ describe('SouthOPCUADA', () => {
       }],
     }
     south = new OPCUA_DA(configuration, addValues, addFiles)
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized', () => {
@@ -130,7 +130,7 @@ describe('SouthOPCUADA', () => {
 
   it('should properly connect to OPCUA server with certificate', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
     const expectedOptions = {
       applicationName: 'OIBus',
       clientName: 'southId',
@@ -187,7 +187,7 @@ describe('SouthOPCUADA', () => {
     }
 
     const opcuaSouthTest = new OPCUA_DA(testOpcuaConfig, addValues, addFiles)
-    await opcuaSouthTest.init('baseFolder', 'oibusName', {})
+    await opcuaSouthTest.start('baseFolder', 'oibusName', {})
     await opcuaSouthTest.connect()
     opcuaSouthTest.connected = true
     opcuaSouthTest.session = { readVariableValue: jest.fn(), close: jest.fn() }

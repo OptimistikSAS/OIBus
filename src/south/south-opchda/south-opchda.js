@@ -2,7 +2,7 @@ const { spawn } = require('node:child_process')
 
 const SouthConnector = require('../south-connector')
 const TcpServer = require('./tcp-server')
-const DeferredPromise = require('./deferred-promise')
+const DeferredPromise = require('../../service/deferred-promise')
 
 // Time to wait before closing the connection by timeout and killing the HDA Agent process
 const DISCONNECTION_TIMEOUT = 10000

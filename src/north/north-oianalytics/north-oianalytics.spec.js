@@ -55,7 +55,7 @@ describe('NorthOIAnalytics', () => {
       subscribedTo: [],
     }
     north = new OIAnalytics(configuration, [])
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized', () => {

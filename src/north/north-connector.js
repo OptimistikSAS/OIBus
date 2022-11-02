@@ -79,13 +79,13 @@ class NorthConnector {
   }
 
   /**
-   * Initialize services (logger, certificate, status data)
+   * Initialize services (logger, certificate, status data) at startup
    * @param {String} baseFolder - The base cache folder
    * @param {String} oibusName - The OIBus name
    * @param {Object} defaultLogParameters - The default logs parameters
    * @returns {Promise<void>} - The result promise
    */
-  async init(baseFolder, oibusName, defaultLogParameters) {
+  async start(baseFolder, oibusName, defaultLogParameters) {
     this.baseFolder = path.resolve(baseFolder, `north-${this.id}`)
 
     this.statusService = new StatusService()
@@ -130,6 +130,34 @@ class NorthConnector {
   }
 
   /**
+   * Stop services and timer
+   * @returns {Promise<void>} - The result promise
+   */
+  async stop() {
+    this.logger.info(`Stopping North "${this.name}" (${this.id}).`)
+    await this.disconnect()
+
+    this.numberOfSentValues = 0
+    this.valuesRetryCount = 0
+    this.sendingValuesInProgress = false
+    this.resendValuesImmediately = false
+
+    this.numberOfSentFiles = 0
+    this.filesRetryCount = 0
+    this.sendingFilesInProgress = false
+    this.resendFilesImmediately = false
+
+    if (this.valuesTimeout) {
+      clearTimeout(this.valuesTimeout)
+    }
+    if (this.filesTimeout) {
+      clearTimeout(this.filesTimeout)
+    }
+    this.fileCache.stop()
+    this.valueCache.stop()
+  }
+
+  /**
    * Method called by Engine to initialize a North connector. This method can be surcharged in the
    * North connector implementation to allow connection to a third party application for example.
    * @param {String} additionalInfo - Connection information to display in the logger
@@ -154,25 +182,6 @@ class NorthConnector {
     this.connected = false
     this.statusService.updateStatusDataStream({ 'Connected at': 'Not connected' })
     this.logger.info(`North connector "${this.name}" (${this.id}) disconnected.`)
-
-    this.numberOfSentValues = 0
-    this.valuesRetryCount = 0
-    this.sendingValuesInProgress = false
-    this.resendValuesImmediately = false
-
-    this.numberOfSentFiles = 0
-    this.filesRetryCount = 0
-    this.sendingFilesInProgress = false
-    this.resendFilesImmediately = false
-
-    if (this.valuesTimeout) {
-      clearTimeout(this.valuesTimeout)
-    }
-    if (this.filesTimeout) {
-      clearTimeout(this.filesTimeout)
-    }
-    this.fileCache.stop()
-    this.valueCache.stop()
   }
 
   /**

@@ -87,13 +87,13 @@ class SouthConnector {
   }
 
   /**
-   * Initialize services (logger, certificate, status data)
+   * Initialize services (logger, certificate, status data) at startup
    * @param {String} baseFolder - The base cache folder
    * @param {String} oibusName - The OIBus name
    * @param {Object} defaultLogParameters - The default logs parameters
    * @returns {Promise<void>} - The result promise
    */
-  async init(baseFolder, oibusName, defaultLogParameters) {
+  async start(baseFolder, oibusName, defaultLogParameters) {
     this.baseFolder = path.resolve(baseFolder, `south-${this.id}`)
 
     this.statusService = new StatusService()
@@ -201,6 +201,15 @@ class SouthConnector {
       'Number of files since OIBus has started': this.handlesFiles ? 0 : undefined,
     })
     this.logger.info(`South connector "${this.name}" (${this.id}) of type ${this.type} started.`)
+  }
+
+  /**
+   * Stop services and timer
+   * @returns {Promise<void>} - The result promise
+   */
+  async stop() {
+    this.logger.info(`Stopping South "${this.name}" (${this.id}).`)
+    await this.disconnect()
   }
 
   /**

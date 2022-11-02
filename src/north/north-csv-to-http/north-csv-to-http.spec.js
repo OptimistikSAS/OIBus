@@ -79,14 +79,14 @@ describe('NorthCsvToHttp', () => {
   })
 
   it('should be properly initialized', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     expect(north.canHandleValues).toBeFalsy()
     expect(north.canHandleFiles).toBeTruthy()
   })
 
   it('should properly reject file if type is other than csv', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     await expect(north.handleFile('filePath')).rejects
       .toThrowError('Invalid file format: .csv file expected. File "filePath" skipped.')
@@ -107,7 +107,7 @@ describe('NorthCsvToHttp', () => {
       ['5', '2020-12-17 05:00'],
     ])
 
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     await north.handleFile('csvToHttpTest.csv')
 
@@ -115,7 +115,7 @@ describe('NorthCsvToHttp', () => {
   })
 
   it('should properly test validity of header', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     const jsonObject = {}
 
@@ -140,7 +140,7 @@ describe('NorthCsvToHttp', () => {
   })
 
   it('should properly send data (body.length <= bodyMaxLength)', async () => {
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
 
     const httpBody = []
     for (let i = 0; i < north.bodyMaxLength - 1; i += 1) {

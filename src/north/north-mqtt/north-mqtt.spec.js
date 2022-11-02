@@ -59,7 +59,7 @@ describe('NorthMQTT', () => {
       subscribedTo: [],
     }
     north = new MQTT(configuration, [])
-    await north.init('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName', {})
   })
 
   it('should properly connect', async () => {
@@ -109,7 +109,7 @@ describe('NorthMQTT', () => {
     }
 
     const mqttNorthCert = new MQTT(testMqttConfigWithFiles, [])
-    await mqttNorthCert.init('baseFolder', 'oibusName', {})
+    await mqttNorthCert.start('baseFolder', 'oibusName', {})
     mqttNorthCert.certificate = CertificateService
     await mqttNorthCert.connect()
 

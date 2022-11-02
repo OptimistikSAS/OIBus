@@ -81,7 +81,7 @@ describe('SouthMQTT', () => {
       ],
     }
     south = new MQTT(configuration, addValues, addFiles)
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized with correct timezone', () => {
@@ -107,7 +107,7 @@ describe('SouthMQTT', () => {
       },
     }
     const mqttInvalidSouth = new MQTT(testMqttConfig, addValues, addFiles)
-    await mqttInvalidSouth.init('baseFolder', 'oibusName', {})
+    await mqttInvalidSouth.start('baseFolder', 'oibusName', {})
 
     expect(mqttInvalidSouth.url).toEqual(testMqttConfig.settings.url)
     expect(mqttInvalidSouth.qos).toEqual(testMqttConfig.settings.qos)
@@ -190,7 +190,7 @@ describe('SouthMQTT', () => {
     }
 
     const mqttSouthWithFiles = new MQTT(testMqttConfigWithFiles, addValues, addFiles)
-    await mqttSouthWithFiles.init('baseFolder', 'oibusName', {})
+    await mqttSouthWithFiles.start('baseFolder', 'oibusName', {})
     mqttSouthWithFiles.certificate = CertificateService
     await mqttSouthWithFiles.connect()
 

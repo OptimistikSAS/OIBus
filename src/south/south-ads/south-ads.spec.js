@@ -776,7 +776,7 @@ describe('South ADS', () => {
       ],
     }
     south = new ADS(configuration, addValues, addFiles)
-    await south.init('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName', {})
   })
 
   it('should be properly initialized', () => {
