@@ -4,8 +4,8 @@ const EncryptionService = require('../service/encryption.service')
 const LoggerService = require('../service/logger/logger.service')
 const CertificateService = require('../service/certificate.service')
 const StatusService = require('../service/status.service')
-const ValueCache = require('../engine/cache/value-cache')
-const FileCache = require('../engine/cache/file-cache')
+const ValueCache = require('../service/cache/value-cache.service')
+const FileCache = require('../service/cache/file-cache.service')
 const { createFolder } = require('../service/utils')
 const { createProxyAgent } = require('../service/http-request-static-functions')
 
@@ -46,7 +46,7 @@ class NorthConnector {
     this.type = configuration.type
     this.name = configuration.name
     this.logParameters = configuration.logParameters
-    this.caching = configuration.caching
+    this.cacheSettings = configuration.caching
     this.subscribedTo = configuration.subscribedTo
     this.proxies = proxies
 
@@ -67,10 +67,6 @@ class NorthConnector {
     this.proxyAgent = null
 
     this.numberOfSentValues = 0
-    this.valuesTimeout = null
-    this.valuesRetryCount = 0
-    this.sendingValuesInProgress = false
-    this.resendValuesImmediately = false
 
     this.numberOfSentFiles = 0
     this.filesTimeout = null
@@ -100,17 +96,20 @@ class NorthConnector {
       this.id,
       this.logger,
       this.baseFolder,
+      this.handleValuesWrapper.bind(this),
+      this.shouldRetry.bind(this),
+      this.cacheSettings,
     )
-    await this.valueCache.init()
+    await this.valueCache.start()
 
     this.fileCache = new FileCache(
       this.id,
       this.logger,
       this.baseFolder,
-      this.caching.archive.enabled,
-      this.caching.archive.retentionDuration,
+      this.cacheSettings.archive.enabled,
+      this.cacheSettings.archive.retentionDuration,
     )
-    await this.fileCache.init()
+    await this.fileCache.start()
 
     this.certificate = new CertificateService(this.logger)
     await this.certificate.init(this.keyFile, this.certFile, this.caFile)
@@ -120,9 +119,8 @@ class NorthConnector {
       'Number of files sent since OIBus has started': this.canHandleFiles ? 0 : undefined,
     })
 
-    if (this.caching.sendInterval) {
-      this.resetValuesTimeout(this.caching.sendInterval)
-      this.resetFilesTimeout(this.caching.sendInterval)
+    if (this.cacheSettings.sendInterval) {
+      this.resetFilesTimeout(this.cacheSettings.sendInterval)
     } else {
       this.logger.warn('No send interval. No values or files will be sent.')
     }
@@ -139,23 +137,18 @@ class NorthConnector {
     await this.disconnect()
 
     this.numberOfSentValues = 0
-    this.valuesRetryCount = 0
-    this.sendingValuesInProgress = false
-    this.resendValuesImmediately = false
 
     this.numberOfSentFiles = 0
     this.filesRetryCount = 0
     this.sendingFilesInProgress = false
     this.resendFilesImmediately = false
 
-    if (this.valuesTimeout) {
-      clearTimeout(this.valuesTimeout)
-    }
     if (this.filesTimeout) {
       clearTimeout(this.filesTimeout)
     }
-    this.fileCache.stop()
-    this.valueCache.stop()
+    await this.fileCache.stop()
+    await this.valueCache.stop()
+    this.logger.debug(`North connector ${this.id} stopped.`)
   }
 
   /**
@@ -188,65 +181,17 @@ class NorthConnector {
   /**
    * Method called by the Engine to handle an array of values in order for example
    * to send them to a third party application.
+   * @param {Object[]} values - Values to send
    * @returns {Promise<void>} - The result promise
    */
-  async retrieveFromCacheAndSendValues() {
-    if (this.sendingValuesInProgress) {
-      this.logger.trace('Already sending values...')
-      this.resendValuesImmediately = true
-      return
-    }
-
-    const values = this.valueCache.retrieveValuesFromCache(this.caching.maxSendCount)
-    if (values.length === 0) {
-      this.logger.trace('No values to send in the cache database.')
-      this.resetValuesTimeout(this.caching.sendInterval)
-      return
-    }
-
-    this.sendingValuesInProgress = true
-    this.resendValuesImmediately = false
-
-    try {
-      this.logger.debug(`Handling ${values.length} values.`)
-      await this.handleValues(values)
-      this.valueCache.removeValuesFromCache(values)
-      this.numberOfSentValues += values.length
-      this.statusService.updateStatusDataStream({
-        'Last handled values at': new Date().toISOString(),
-        'Number of values sent since OIBus has started': this.numberOfSentValues,
-        'Last added point id (value)': `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`,
-      })
-      this.valuesRetryCount = 0
-    } catch (error) {
-      this.logger.error(error)
-
-      if (this.valuesRetryCount < this.caching.retryCount || this.shouldRetry(error)) {
-        this.valuesRetryCount += 1
-        this.logger.debug(`Retrying in ${this.caching.retryInterval} ms. Retry count: ${this.valuesRetryCount}`)
-      } else {
-        this.logger.debug('Too many retries. Moving values to error cache...')
-        this.valueCache.manageErroredValues(values)
-        this.valuesRetryCount = 0
-      }
-    }
-    this.sendingValuesInProgress = false
-
-    let timeout = this.resendValuesImmediately ? 0 : this.caching.sendInterval
-    timeout = this.valuesRetryCount > 0 ? this.caching.retryInterval : timeout
-    this.resetValuesTimeout(timeout)
-  }
-
-  /**
-   * Reset timer.
-   * @param {number} timeout - The timeout to wait
-   * @return {void}
-   */
-  resetValuesTimeout(timeout) {
-    if (this.valuesTimeout) {
-      clearTimeout(this.valuesTimeout)
-    }
-    this.valuesTimeout = setTimeout(this.retrieveFromCacheAndSendValues.bind(this), timeout)
+  async handleValuesWrapper(values) {
+    await this.handleValues(values)
+    this.numberOfSentValues += values.length
+    this.statusService.updateStatusDataStream({
+      'Last handled values at': new Date().toISOString(),
+      'Number of values sent since OIBus has started': this.numberOfSentValues,
+      'Last added point id (value)': `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`,
+    })
   }
 
   /**
@@ -263,7 +208,7 @@ class NorthConnector {
     const fileToSend = await this.fileCache.retrieveFileFromCache()
     if (!fileToSend) {
       this.logger.trace('No file to send in the cache folder.')
-      this.resetFilesTimeout(this.caching.sendInterval)
+      this.resetFilesTimeout(this.cacheSettings.sendInterval)
       return
     }
     this.logger.trace(`File to send: "${fileToSend.path}".`)
@@ -274,7 +219,7 @@ class NorthConnector {
     try {
       this.logger.debug(`Handling file "${fileToSend.path}".`)
       await this.handleFile(fileToSend.path)
-      await this.fileCache.removeFileFromCache(fileToSend.path, this.caching.archive.enabled)
+      await this.fileCache.removeFileFromCache(fileToSend.path, this.cacheSettings.archive.enabled)
       this.numberOfSentFiles += 1
       this.statusService.updateStatusDataStream({
         'Last uploaded file': fileToSend.path,
@@ -284,9 +229,9 @@ class NorthConnector {
       this.filesRetryCount = 0
     } catch (error) {
       this.logger.error(error)
-      if (this.filesRetryCount < this.caching.retryCount || this.shouldRetry(error)) {
+      if (this.filesRetryCount < this.cacheSettings.retryCount || this.shouldRetry(error)) {
         this.filesRetryCount += 1
-        this.logger.debug(`Retrying in ${this.caching.retryInterval} ms. Retry count: ${this.filesRetryCount}`)
+        this.logger.debug(`Retrying in ${this.cacheSettings.retryInterval} ms. Retry count: ${this.filesRetryCount}`)
       } else {
         this.logger.debug('Too many retries. Moving file to error cache...')
         await this.fileCache.manageErroredFiles(fileToSend.path)
@@ -295,8 +240,8 @@ class NorthConnector {
     }
     this.sendingFilesInProgress = false
 
-    let timeout = this.resendFilesImmediately ? 0 : this.caching.sendInterval
-    timeout = this.filesRetryCount > 0 ? this.caching.retryInterval : timeout
+    let timeout = this.resendFilesImmediately ? 0 : this.cacheSettings.sendInterval
+    timeout = this.filesRetryCount > 0 ? this.cacheSettings.retryInterval : timeout
     this.resetFilesTimeout(timeout)
   }
 
@@ -315,22 +260,11 @@ class NorthConnector {
   /**
    * Method called by the Engine to cache an array of values in order to cache them
    * and send them to a third party application.
-   * @param {String} southId - The South connector id
    * @param {Object[]} values - The values to handle
-   * @returns {void} - The result promise
+   * @returns {Promise<void>} - The result promise
    */
-  cacheValues(southId, values) {
-    if (values.length > 0) {
-      this.valueCache.cacheValues(southId, values)
-
-      // If the group size is over the groupCount => we immediately send the cache
-      // to the North even if the timeout is not finished.
-      const count = this.valueCache.getNumberOfValues()
-      if (count >= this.caching.groupCount) {
-        this.logger.trace(`Group count reached: ${count} >= ${this.caching.groupCount}`)
-        this.resetValuesTimeout(0)
-      }
-    }
+  async cacheValues(values) {
+    await this.valueCache.cacheValues(values)
   }
 
   /**

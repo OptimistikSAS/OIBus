@@ -13,8 +13,8 @@ jest.mock('../../service/database.service')
 jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
-jest.mock('../../engine/cache/value-cache')
-jest.mock('../../engine/cache/file-cache')
+jest.mock('../../service/cache/value-cache.service')
+jest.mock('../../service/cache/file-cache.service')
 
 // Mock certificate service
 const CertificateService = jest.mock('../../service/certificate.service')

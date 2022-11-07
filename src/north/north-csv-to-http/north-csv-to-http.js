@@ -210,7 +210,7 @@ class NorthCsvToHttp extends NorthConnector {
             this.request.method,
             headers,
             JSON.stringify(httpBody.slice(i, i + this.bodyMaxLength - 1)),
-            this.caching.timeout,
+            this.cacheSettings.timeout,
             this.proxyAgent,
           ),
         )
@@ -222,7 +222,7 @@ class NorthCsvToHttp extends NorthConnector {
         this.request.method,
         headers,
         JSON.stringify(httpBody),
-        this.caching.timeout,
+        this.cacheSettings.timeout,
         this.proxyAgent,
       )
     }

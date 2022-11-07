@@ -87,7 +87,7 @@ class OIBusEngine extends BaseEngine {
       // Do not resolve promise if one of the connector fails. Otherwise, if a file is removed after a North fails,
       // the file can be lost.
       await Promise.all(this.activeNorths.filter((north) => north.canHandleValues && north.isSubscribed(southId))
-        .map((north) => north.cacheValues(southId, values)))
+        .map((north) => north.cacheValues(values)))
     }
   }
 
@@ -144,7 +144,23 @@ class OIBusEngine extends BaseEngine {
       return
     }
 
-    // 2. South connectors
+    // 2. North connectors
+    this.activeNorths = northConfig.filter(({ enabled }) => enabled)
+      .map((northConfiguration) => this.createNorth(northConfiguration))
+    // Allows init/connect failure of a connector to not block other connectors
+    await Promise.allSettled(this.activeNorths.map((north) => {
+      const initAndConnect = async () => {
+        try {
+          await north.start(this.cacheFolder, this.oibusName, this.defaultLogParameters)
+          await north.connect()
+        } catch (error) {
+          this.logger.error(error)
+        }
+      }
+      return initAndConnect()
+    }))
+
+    // 3. South connectors
     this.activeSouths = southConfig.filter(({ enabled }) => enabled)
       .map((southConfiguration) => {
         const south = this.createSouth(southConfiguration)
@@ -187,22 +203,6 @@ class OIBusEngine extends BaseEngine {
         try {
           await south.start(this.cacheFolder, this.oibusName, this.defaultLogParameters)
           await south.connect()
-        } catch (error) {
-          this.logger.error(error)
-        }
-      }
-      return initAndConnect()
-    }))
-
-    // 3. North connectors
-    this.activeNorths = northConfig.filter(({ enabled }) => enabled)
-      .map((northConfiguration) => this.createNorth(northConfiguration))
-    // Allows init/connect failure of a connector to not block other connectors
-    await Promise.allSettled(this.activeNorths.map((north) => {
-      const initAndConnect = async () => {
-        try {
-          await north.start(this.cacheFolder, this.oibusName, this.defaultLogParameters)
-          await north.connect()
         } catch (error) {
           this.logger.error(error)
         }
@@ -269,7 +269,10 @@ class OIBusEngine extends BaseEngine {
     this.scanLists = {}
 
     // Stop South connectors
-    await Promise.allSettled(this.activeSouths.map((south) => south.stop()))
+    await Promise.allSettled(this.activeSouths.map((south) => {
+      this.logger.info(`Stopping South "${south.name}" (${south.id}).`)
+      return south.stop()
+    }))
     this.activeSouths = []
 
     // Stop North connectors

@@ -13,8 +13,8 @@ jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/certificate.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
-jest.mock('../../engine/cache/value-cache')
-jest.mock('../../engine/cache/file-cache')
+jest.mock('../../service/cache/value-cache.service')
+jest.mock('../../service/cache/file-cache.service')
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 const values = [

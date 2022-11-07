@@ -182,7 +182,7 @@ class NorthInfluxDB extends NorthConnector {
       'POST',
       headers,
       body,
-      this.caching.timeout,
+      this.cacheSettings.timeout,
       null,
     )
   }

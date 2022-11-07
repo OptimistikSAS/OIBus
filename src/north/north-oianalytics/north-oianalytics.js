@@ -69,7 +69,7 @@ class NorthOIAnalytics extends NorthConnector {
       'POST',
       headers,
       data,
-      this.caching.timeout,
+      this.cacheSettings.timeout,
       this.proxyAgent,
     )
   }
@@ -94,7 +94,7 @@ class NorthOIAnalytics extends NorthConnector {
       'POST',
       headers,
       filePath,
-      this.caching.timeout,
+      this.cacheSettings.timeout,
       this.proxyAgent,
     )
   }

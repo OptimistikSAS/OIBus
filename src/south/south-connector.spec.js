@@ -371,72 +371,19 @@ describe('SouthConnector', () => {
   })
 
   it('should properly add values', async () => {
-    south.flush = jest.fn()
+    south.engineAddValuesCallback = jest.fn()
 
     // Timeout flush
     await south.addValues([])
     jest.advanceTimersByTime(1000)
-    expect(south.flush).toHaveBeenCalledWith()
+    expect(south.engineAddValuesCallback).not.toHaveBeenCalled()
 
     const fullBuffer = []
     for (let i = 0; i < 600; i += 1) {
       fullBuffer.push({})
     }
-    // Max flush
     await south.addValues(fullBuffer)
-    expect(south.flush).toHaveBeenCalledWith('max-flush')
-  })
-
-  it('should not flush if timeout does not expire', async () => {
-    south.flush = jest.fn()
-
-    // Nothing to do
-    await south.addValues([{}])
-    jest.advanceTimersByTime(150)
-
-    await south.addValues([{}])
-    expect(south.flush).not.toHaveBeenCalled()
-
-    jest.advanceTimersByTime(150)
-    expect(south.flush).toHaveBeenCalled()
-  })
-
-  it('should properly flush the data', async () => {
-    const values = [{
-      timestamp: '2020-02-02T01:02:02.000Z',
-      pointId: 'point1',
-      data: {
-        value: 666.666,
-        quality: true,
-      },
-    },
-    {
-      timestamp: '2021-02-02T01:02:02.000Z',
-      pointId: 'point1',
-      data: {
-        value: 777.777,
-        quality: true,
-      },
-    }]
-    south.buffer = values
-
-    await south.flush()
-    expect(addValues).toBeCalledWith('id', values)
-    expect(south.statusService.updateStatusDataStream).toHaveBeenCalledWith({
-      'Number of values since OIBus has started': south.numberOfRetrievedValues,
-      'Last added points at': new Date().toISOString(),
-      'Last added point id (value)': `point1 (${JSON.stringify(values[1].data)})`,
-    })
-  })
-
-  it('it should manage timer in flush method', async () => {
-    jest.clearAllMocks()
-    south.bufferTimeout = setTimeout(() => null, 1000)
-    south.buffer = []
-    await south.flush()
-    expect(south.bufferTimeout).toBeNull()
-    expect(addValues).not.toHaveBeenCalled()
-    expect(south.statusService.updateStatusDataStream).not.toHaveBeenCalled()
+    expect(south.engineAddValuesCallback).toHaveBeenCalledWith(south.id, fullBuffer)
   })
 
   it('should properly add file', async () => {
