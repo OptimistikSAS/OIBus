@@ -105,7 +105,26 @@ class ConfigurationService {
       await fs.copyFile(this.configFilePath, backupPath)
     }
     await fs.writeFile(this.configFilePath, JSON.stringify(this.modifiedConfig, null, 4), 'utf8')
+    await this.removeOrphanCacheFolders(this.modifiedConfig)
     this.config = JSON.parse(JSON.stringify(this.modifiedConfig))
+  }
+
+  async removeOrphanCacheFolders(config) {
+    const northIdList = config.north.map((north) => north.id)
+    const southIdList = config.south.map((south) => south.id)
+    const idList = [...northIdList, ...southIdList]
+
+    const dataStreamFolderPath = path.resolve(this.cacheFolder, 'data-stream')
+    const folders = await fs.readdir(dataStreamFolderPath)
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const folder of folders) {
+      const uid = folder.replace('north-', '').replace('south-', '')
+      if (!idList.includes(uid)) {
+        // eslint-disable-next-line no-await-in-loop
+        await fs.rmdir(path.resolve(dataStreamFolderPath, folder), { recursive: true })
+      }
+    }
   }
 }
 
