@@ -617,6 +617,33 @@ describe('SouthOPCUAHA', () => {
     await expect(south.historyQueryHandler(configuration.settings.scanGroups[0].scanMode, new Date(), new Date())).rejects.toThrowError('fail')
   })
 
+  it('should call internalDisconnect on historyQuery errors', async () => {
+    await south.init()
+    await south.connect()
+    south.connected = true
+    south.currentlyOnScan[configuration.settings.scanGroups[0].scanMode] = 0
+    south.readHistoryValue = jest.fn()
+    south.readHistoryValue.mockReturnValue(Promise.reject(new Error('fail')))
+    south.session = { close: jest.fn() }
+    south.internalDisconnect = jest.fn()
+    await expect(south.historyQueryHandler(configuration.settings.scanGroups[0].scanMode, new Date(), new Date())).rejects.toThrowError('fail')
+    expect(south.internalDisconnect).toHaveBeenCalled()
+  })
+
+  it('should nat call internalDisconnect on historyQuery errors when disconnecting', async () => {
+    await south.init()
+    await south.connect()
+    south.connected = true
+    south.currentlyOnScan[configuration.settings.scanGroups[0].scanMode] = 0
+    south.readHistoryValue = jest.fn()
+    south.readHistoryValue.mockReturnValue(Promise.reject(new Error('fail')))
+    south.session = { close: jest.fn() }
+    south.internalDisconnect = jest.fn()
+    south.disconnecting = true
+    await expect(south.historyQueryHandler(configuration.settings.scanGroups[0].scanMode, new Date(), new Date())).rejects.toThrowError('fail')
+    expect(south.internalDisconnect).not.toHaveBeenCalled()
+  })
+
   it('should properly disconnect when trying to connect', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
 
@@ -630,6 +657,7 @@ describe('SouthOPCUAHA', () => {
 
     expect(clearTimeoutSpy).toBeCalled()
     expect(close).not.toBeCalled()
+    expect(south.disconnecting).toBeTruthy()
   })
 
   it('should properly disconnect when connected', async () => {
@@ -645,5 +673,6 @@ describe('SouthOPCUAHA', () => {
 
     expect(clearTimeoutSpy).not.toBeCalled()
     expect(close).toBeCalled()
+    expect(south.disconnecting).toBeTruthy()
   })
 })
