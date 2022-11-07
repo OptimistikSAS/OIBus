@@ -13,8 +13,8 @@ jest.mock('../service/certificate.service')
 jest.mock('../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 jest.mock('../service/utils')
 jest.mock('../service/http-request-static-functions')
-jest.mock('../engine/cache/value-cache')
-jest.mock('../engine/cache/file-cache')
+jest.mock('../service/cache/value-cache.service')
+jest.mock('../service/cache/file-cache.service')
 
 // Method used to flush promises called in setTimeout
 const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate)
@@ -78,7 +78,7 @@ describe('NorthConnector', () => {
   it('should be properly initialized with sendInterval set to 0', async () => {
     north.resetValuesTimeout = jest.fn()
     north.resetFilesTimeout = jest.fn()
-    north.caching.sendInterval = 0
+    north.cacheSettings.sendInterval = 0
 
     await north.start('baseFolder', 'oibusName', {})
     expect(north.resetValuesTimeout).not.toHaveBeenCalled()
@@ -103,7 +103,9 @@ describe('NorthConnector', () => {
 
     expect(north.logger.info).toHaveBeenCalledWith('Stopping North "north" (id).')
     expect(north.disconnect).toHaveBeenCalledTimes(1)
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(2)
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1)
+    expect(north.fileCache.stop).toHaveBeenCalledTimes(1)
+    expect(north.valueCache.stop).toHaveBeenCalledTimes(1)
 
     clearTimeoutSpy.mockClear()
     north.valuesTimeout = null
@@ -112,22 +114,9 @@ describe('NorthConnector', () => {
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(0)
   })
 
-  it('should not cache values if no values are sent', () => {
-    north.cacheValues('southId', [])
-    expect(north.valueCache.cacheValues).not.toHaveBeenCalled()
-  })
-
   it('should properly cache values', () => {
-    north.cacheValues('southId', [{}])
-    expect(north.valueCache.cacheValues).toHaveBeenCalledWith('southId', [{}])
-  })
-
-  it('should properly cache values and immediately send them if max group count is reached', () => {
-    north.valueCache.getNumberOfValues.mockReturnValue(configuration.caching.groupCount)
-    north.cacheValues('southId', [{}])
-    expect(north.valueCache.cacheValues).toHaveBeenCalledWith('southId', [{}])
-    expect(north.logger.trace).toHaveBeenCalledWith(`Group count reached: ${configuration.caching.groupCount} `
-        + `>= ${configuration.caching.groupCount}`)
+    north.cacheValues([{}])
+    expect(north.valueCache.cacheValues).toHaveBeenCalledWith([{}])
   })
 
   it('should properly cache file', () => {
@@ -140,86 +129,6 @@ describe('NorthConnector', () => {
     expect(await north.getProxy()).toBeNull()
     expect(await north.getProxy('proxyTest')).toEqual({ proxyAgent: 'a field' })
     expect(await north.getProxy('anotherProxy')).toBeNull()
-  })
-
-  it('should not retrieve values if already sending it', async () => {
-    north.sendingValuesInProgress = true
-    await north.retrieveFromCacheAndSendValues()
-
-    expect(north.logger.trace).toHaveBeenCalledWith('Already sending values...')
-    expect(north.resendValuesImmediately).toBeTruthy()
-  })
-
-  it('should not send values if no values to send', async () => {
-    north.valueCache.retrieveValuesFromCache = jest.fn(() => [])
-    north.resetValuesTimeout = jest.fn()
-    await north.retrieveFromCacheAndSendValues()
-
-    expect(north.logger.trace).toHaveBeenCalledWith('No values to send in the cache database.')
-    expect(north.resetValuesTimeout).toHaveBeenCalledWith(configuration.caching.sendInterval)
-  })
-
-  it('should successfully send values', async () => {
-    const valuesToSend = [{ value: 'myValue' }]
-    north.valueCache.retrieveValuesFromCache = jest.fn(() => valuesToSend)
-    north.handleValues = jest.fn()
-    await north.retrieveFromCacheAndSendValues()
-    jest.advanceTimersByTime(configuration.caching.sendInterval)
-    await flushPromises()
-
-    expect(north.handleValues).toHaveBeenCalledWith(valuesToSend)
-    expect(north.handleValues).toHaveBeenCalledTimes(2)
-  })
-
-  it('should send values immediately', async () => {
-    clearTimeout(north.valuesTimeout)
-    clearTimeout(north.filesTimeout)
-    const valuesToSend = [{ value: 'myValue' }]
-    north.valueCache.retrieveValuesFromCache = jest.fn(() => valuesToSend)
-    north.resetValuesTimeout = jest.fn()
-    // handle values takes twice the sending interval time
-    const promiseToResolve = new Promise((resolve) => {
-      setTimeout(() => resolve(), configuration.caching.sendInterval * 2)
-    })
-    north.handleValues = jest.fn(() => promiseToResolve)
-
-    north.retrieveFromCacheAndSendValues()
-    jest.advanceTimersByTime(configuration.caching.sendInterval)
-
-    // Provoke an immediate sending request for next tick
-    north.retrieveFromCacheAndSendValues()
-    expect(north.logger.trace).toHaveBeenCalledWith('Already sending values...')
-
-    jest.advanceTimersByTime(configuration.caching.sendInterval)
-    await flushPromises()
-
-    expect(north.handleValues).toHaveBeenCalledTimes(1)
-    expect(north.handleValues).toHaveBeenCalledWith(valuesToSend)
-    expect(north.resetValuesTimeout).toHaveBeenCalledWith(0)
-
-    await flushPromises()
-  })
-
-  it('should retry to send values if it fails', async () => {
-    clearTimeout(north.valuesTimeout)
-    clearTimeout(north.filesTimeout)
-    const valuesToSend = [{ value: 'myValue' }]
-    north.valueCache.retrieveValuesFromCache = jest.fn(() => valuesToSend)
-    north.handleValues = jest.fn().mockImplementationOnce(() => {
-      throw new Error('handleValues error 1')
-    }).mockImplementationOnce(() => {
-      throw new Error('handleValues error 2')
-    }).mockImplementationOnce(() => {
-      throw new Error('handleValues error 3')
-    })
-    await north.retrieveFromCacheAndSendValues()
-    jest.advanceTimersByTime(configuration.caching.retryInterval)
-    jest.advanceTimersByTime(configuration.caching.retryInterval)
-
-    expect(north.handleValues).toHaveBeenCalledWith(valuesToSend)
-    expect(north.handleValues).toHaveBeenCalledTimes(3)
-    expect(north.valueCache.manageErroredValues).toHaveBeenCalledTimes(1)
-    expect(north.valueCache.manageErroredValues).toHaveBeenCalledWith(valuesToSend)
   })
 
   it('should not retrieve files if already sending it', async () => {

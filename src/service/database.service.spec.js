@@ -37,44 +37,6 @@ beforeEach(() => {
 })
 
 describe('Database service', () => {
-  it('should create values database', () => {
-    const expectedDatabase = databaseService.createValuesDatabase('myDb.db')
-    expect(prepare).toHaveBeenCalledTimes(4)
-    expect(prepare).toHaveBeenCalledWith('CREATE TABLE IF NOT EXISTS cache ('
-        + 'id INTEGER PRIMARY KEY, '
-        + 'timestamp TEXT KEY, '
-        + 'data TEXT, '
-        + 'point_id TEXT, '
-        + 'south TEXT);')
-    expect(prepare).toHaveBeenCalledWith('PRAGMA secure_delete = OFF;')
-    expect(prepare).toHaveBeenCalledWith('PRAGMA cache_size = 100000;')
-    expect(prepare).toHaveBeenCalledWith('PRAGMA locking_mode = exclusive;')
-    expect(run).toHaveBeenCalledTimes(4)
-    expect(expectedDatabase).toBe(mockDatabase)
-  })
-
-  it('should create values database with options', () => {
-    const expectedDatabase = databaseService.createValuesDatabase('myDb.db', { wal: true, optimize: true, vacuum: true })
-    expect(prepare).toHaveBeenCalledTimes(7)
-    expect(prepare).toHaveBeenCalledWith('PRAGMA journal_mode = WAL;')
-    expect(prepare).toHaveBeenCalledWith('PRAGMA optimize;')
-    expect(prepare).toHaveBeenCalledWith('PRAGMA vacuum;')
-    expect(run).toHaveBeenCalledTimes(7)
-    expect(expectedDatabase).toBe(mockDatabase)
-  })
-
-  it('should create value errors database', () => {
-    const expectedDatabase = databaseService.createValueErrorsDatabase('myDb.db')
-    expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('CREATE TABLE IF NOT EXISTS cache ('
-        + 'id INTEGER PRIMARY KEY, '
-        + 'timestamp TEXT, '
-        + 'data TEXT, '
-        + 'point_id TEXT);')
-    expect(run).toHaveBeenCalledTimes(1)
-    expect(expectedDatabase).toBe(mockDatabase)
-  })
-
   it('should create config database', () => {
     const expectedDatabase = databaseService.createConfigDatabase('myDb.db')
     expect(prepare).toHaveBeenCalledTimes(1)
@@ -84,61 +46,6 @@ describe('Database service', () => {
         + 'value TEXT);')
     expect(run).toHaveBeenCalledTimes(1)
     expect(expectedDatabase).toBe(mockDatabase)
-  })
-
-  it('should save values', () => {
-    databaseService.saveValues(mockDatabase, 'mySouthName', values)
-    expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('INSERT INTO cache (timestamp, data, point_id, south) VALUES '
-        + '(\'2022-08-25T12:58:00.000Z\',\'%7B%22value%22:1,%22quality%22:192%7D\',\'point001\',\'mySouthName\'),'
-        + '(\'2022-08-25T12:59:00.000Z\',\'%7B%22value%22:2,%22quality%22:192%7D\',\'point002\',\'mySouthName\');')
-    expect(run).toHaveBeenCalledTimes(1)
-  })
-
-  it('should save error values', () => {
-    const valuesToInsert = [
-      { timestamp: '2022-08-25T12:58:00.000Z', data: { value: 1, quality: 192 }, pointId: 'point001' },
-      { timestamp: '2022-08-25T12:59:00.000Z', data: { value: 2, quality: 192 }, pointId: 'point002' },
-    ]
-    databaseService.saveErroredValues(mockDatabase, valuesToInsert)
-    expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('INSERT INTO cache (timestamp, data, point_id) VALUES '
-            + '(\'2022-08-25T12:58:00.000Z\',\'%7B%22value%22:1,%22quality%22:192%7D\',\'point001\'),'
-            + '(\'2022-08-25T12:59:00.000Z\',\'%7B%22value%22:2,%22quality%22:192%7D\',\'point002\');')
-    expect(run).toHaveBeenCalledTimes(1)
-  })
-
-  it('should get count', () => {
-    const localGet = jest.fn()
-    localGet.mockReturnValue({ count: 50 })
-    mockDatabase.prepare.mockReturnValue({ get: localGet })
-    databaseService.getCount(mockDatabase)
-    expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('SELECT COUNT(*) AS count FROM cache')
-    expect(localGet).toHaveBeenCalledTimes(1)
-  })
-
-  it('should get values to send', () => {
-    const valuesToSend = databaseService.getValuesToSend(mockDatabase, 50)
-    expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('SELECT id, timestamp, data, point_id AS pointId, south as dataSourceId '
-        + 'FROM cache '
-        + 'LIMIT 50')
-
-    expect(valuesToSend).toEqual(values)
-  })
-
-  it('should remove sent values', () => {
-    const localRun = jest.fn()
-    localRun.mockReturnValue({ changes: 2 })
-    mockDatabase.prepare.mockReturnValue({ run: localRun })
-
-    const result = databaseService.removeSentValues(mockDatabase, [{ id: 1 }, { id: 2 }])
-    expect(prepare).toHaveBeenCalledTimes(1)
-    expect(prepare).toHaveBeenCalledWith('DELETE FROM cache WHERE id IN (1,2)')
-
-    expect(localRun).toHaveBeenCalledTimes(1)
-    expect(result).toEqual(2)
   })
 
   it('should upsert config', () => {
