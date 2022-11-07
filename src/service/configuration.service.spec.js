@@ -107,6 +107,7 @@ describe('Configuration service', () => {
       south: [{ id: 'mySouthConfig' }],
     }
     service.modifiedConfig = mockConf
+    service.removeOrphanCacheFolders = jest.fn()
 
     await service.activateConfiguration()
     expect(fs.copyFile).toHaveBeenCalledWith(
@@ -118,6 +119,7 @@ describe('Configuration service', () => {
       JSON.stringify(mockConf, null, 4),
       'utf8',
     )
+    expect(service.removeOrphanCacheFolders).toHaveBeenCalledWith(mockConf)
   })
 
   it('should activate modified config without backup', async () => {
@@ -127,6 +129,7 @@ describe('Configuration service', () => {
       south: [{ id: 'mySouthConfig' }],
     }
     service.modifiedConfig = mockConf
+    service.removeOrphanCacheFolders = jest.fn()
 
     await service.activateConfiguration(false)
     expect(fs.copyFile).not.toHaveBeenCalled()
@@ -135,5 +138,20 @@ describe('Configuration service', () => {
       JSON.stringify(mockConf, null, 4),
       'utf8',
     )
+    expect(service.removeOrphanCacheFolders).toHaveBeenCalledWith(mockConf)
+  })
+
+  it('should remove orphan cache folders', async () => {
+    service.modifiedConfig = {
+      engine: { engineName: 'myEngineConfig' },
+      north: [{ id: 'myNorthConfig' }],
+      south: [{ id: 'mySouthConfig' }],
+    }
+    fs.readdir.mockImplementationOnce(() => (['south-toDelete', 'south-mySouthConfig', 'north-toDelete', 'north-myNorthConfig']))
+
+    await service.removeOrphanCacheFolders(service.modifiedConfig)
+    const dataStreamFolderPath = path.resolve(service.cacheFolder, 'data-stream')
+    expect(fs.rmdir).toHaveBeenNthCalledWith(1, path.resolve(dataStreamFolderPath, 'south-toDelete'), { recursive: true })
+    expect(fs.rmdir).toHaveBeenNthCalledWith(2, path.resolve(dataStreamFolderPath, 'north-toDelete'), { recursive: true })
   })
 })
