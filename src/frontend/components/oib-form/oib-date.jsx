@@ -4,10 +4,23 @@ import { DateTime } from 'luxon'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
 const OibDate = ({ label, help, valid, value, name, onChange, inline, hidden, maxDateString }) => {
-  const handleChange = (event) => {
+  let dateTime = value ? DateTime.fromISO(new Date(value).toISOString()) : DateTime.now().set({second: 0, millisecond: 0})
+  
+  const handleTimeChange = (event) => {
     const { target } = event
     const { value: newVal } = target
-    onChange(name, newVal, valid(newVal))
+    const inputDate = newVal.split(":")
+    dateTime = dateTime.set({ hour: parseInt(inputDate[0]), minute: parseInt(inputDate[1]) })
+    onChange(name, dateTime.toISO(), valid(newVal))
+  }
+
+  const handleDateChange = (event) => {
+    const { target } = event
+    const { value: newVal } = target
+
+    const inputDate = newVal.split("-")
+    dateTime = dateTime.set({ year: parseInt(inputDate[0]), month: parseInt(inputDate[1]), day: parseInt(inputDate[2]) })
+    onChange(name, dateTime.toISO(), valid(newVal))
   }
 
   const style = label ? null : { marginBottom: 0 }
@@ -16,19 +29,35 @@ const OibDate = ({ label, help, valid, value, name, onChange, inline, hidden, ma
   }
   if (hidden) return null
   const validCheck = valid(value)
-  const formattedDate = DateTime.fromISO(new Date(value).toISOString()).toFormat('yyyy-MM-dd HH:mm')
+  
+  const formattedDate = value ? DateTime.fromISO(new Date(value).toISOString()).toFormat('yyyy-MM-dd') : ""
+  const formattedTime = value ? DateTime.fromISO(new Date(value).toISOString()).toFormat('HH:mm') : ""
+  const dateId = name+ "date"
+  const timeId = name+ "time"
+
   return (
     <FormGroup style={style}>
-      {label && <Label for={name}>{label}</Label>}
+      {label && <Label for={dateId}>{label}</Label>}
       <Input
         className="oi-form-input"
-        type="datetime-local"
-        id={name}
+        type="date"
+        id={dateId}
         max={maxDateString}
         value={formattedDate}
         placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
         required
-        onChange={handleChange}
+        onChange={handleDateChange}
+      />
+
+      <Input
+        className="oi-form-input"
+        type="time"
+        id={timeId}
+        max={maxDateString}
+        value={formattedTime}
+        placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+        required
+        onChange={handleTimeChange}
       />
       <FormFeedback>{validCheck}</FormFeedback>
       {help && <FormText>{help}</FormText>}
