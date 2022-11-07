@@ -1,9 +1,9 @@
 const path = require('node:path')
 const fs = require('node:fs/promises')
 
-const FileCache = require('./file-cache')
+const FileCache = require('./file-cache.service')
 
-const { createFolder } = require('../../service/utils')
+const { createFolder } = require('../utils')
 
 jest.mock('node:fs/promises')
 
@@ -31,7 +31,7 @@ describe('FileCache', () => {
   it('should be properly initialized with files in cache', async () => {
     cache.refreshArchiveFolder = jest.fn()
     fs.readdir.mockImplementation(() => ['file1'])
-    await cache.init()
+    await cache.start()
     expect(cache.northId).toEqual('northId')
     expect(cache.baseFolder).toEqual('myCacheFolder')
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files'))
@@ -48,7 +48,7 @@ describe('FileCache', () => {
     cache.refreshArchiveFolder = jest.fn()
     fs.readdir.mockImplementation(() => [])
     cache.retentionDuration = 0
-    await cache.init()
+    await cache.start()
     expect(cache.northId).toEqual('northId')
     expect(cache.baseFolder).toEqual('myCacheFolder')
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files'))
@@ -67,7 +67,7 @@ describe('FileCache', () => {
       throw new Error('readdir error')
     })
     cache.retentionDuration = 0
-    await cache.init()
+    await cache.start()
 
     expect(logger.error).toHaveBeenCalledWith(new Error('readdir error'))
     expect(logger.error).toHaveBeenCalledTimes(2)
@@ -80,7 +80,7 @@ describe('FileCache', () => {
     cache.refreshArchiveFolder = jest.fn()
     fs.readdir.mockImplementation(() => [])
     cache.retentionDuration = 0
-    await cache.init()
+    await cache.start()
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files'))
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'errors'))
     expect(createFolder).toHaveBeenCalledTimes(2)

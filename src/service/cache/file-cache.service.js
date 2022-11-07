@@ -1,7 +1,7 @@
 const fs = require('node:fs/promises')
 const path = require('node:path')
 
-const { createFolder } = require('../../service/utils')
+const { createFolder } = require('../utils')
 
 // Time between two checks of the Archive Folder
 const ARCHIVE_TIMEOUT = 3600000 // one hour
@@ -13,7 +13,7 @@ const FILE_FOLDER = 'files'
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
-class FileCache {
+class FileCacheService {
   /**
    * @param {String} northId - The North ID connector
    * @param {Logger} logger - The logger
@@ -47,7 +47,7 @@ class FileCache {
    * Create databases, folders and activate archive cleanup if needed
    * @returns {Promise<void>} - The result promise
    */
-  async init() {
+  async start() {
     await createFolder(this.fileFolder)
     await createFolder(this.errorFolder)
 
@@ -270,4 +270,4 @@ class FileCache {
   }
 }
 
-module.exports = FileCache
+module.exports = FileCacheService

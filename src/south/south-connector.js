@@ -8,9 +8,6 @@ const { generateIntervals, delay, createFolder } = require('../service/utils')
 
 const CACHE_DB_FILE_NAME = 'cache.db'
 
-const BUFFER_MAX = 250
-const BUFFER_TIMEOUT = 300
-
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
  * Building a new South connector means to extend this class, and to surcharge the following methods:
@@ -72,8 +69,6 @@ class SouthConnector {
 
     this.ignoredReadsCounters = {}
     this.queryParts = {}
-    this.buffer = []
-    this.bufferTimeout = null
 
     // Variable initialized in init()
     this.baseFolder = null
@@ -361,44 +356,19 @@ class SouthConnector {
   }
 
   /**
-   * Method used to flush the buffer from a time trigger or a max trigger
-   * @param {'time-flush' | 'max-flush'} flag - The trigger
-   * @returns {Promise<void>} - The result promise
-   */
-  async flush(flag = 'time-flush') {
-    if (this.bufferTimeout) {
-      clearTimeout(this.bufferTimeout)
-      this.bufferTimeout = null
-    }
-
-    this.logger.trace(`Flush ${this.buffer.length} values (${flag}) for South "${this.name}".`)
-    // Save the buffer to be sent and immediately clear it
-    const bufferSave = [...this.buffer]
-    this.buffer = []
-    if (bufferSave.length > 0) {
-      await this.engineAddValuesCallback(this.id, bufferSave)
-      this.numberOfRetrievedValues += bufferSave.length
-      this.statusService.updateStatusDataStream({
-        'Number of values since OIBus has started': this.numberOfRetrievedValues,
-        'Last added points at': new Date().toISOString(),
-        'Last added point id (value)': `${bufferSave[bufferSave.length - 1].pointId} (${JSON.stringify(bufferSave[bufferSave.length - 1].data)})`,
-      })
-    }
-  }
-
-  /**
    * Add new values to the South connector buffer.
    * @param {Object[]} values - The new values
    * @returns {Promise<void>} - The result promise
    */
   async addValues(values) {
-    this.buffer.push(...values)
-    // If the South connector buffer is larger than bufferMax flush the buffer
-    // Otherwise, start a timer before sending it
-    if (this.buffer.length > BUFFER_MAX) {
-      await this.flush('max-flush')
-    } else if (this.bufferTimeout === null) {
-      this.bufferTimeout = setTimeout(this.flush.bind(this), BUFFER_TIMEOUT)
+    if (values.length > 0) {
+      await this.engineAddValuesCallback(this.id, values)
+      this.numberOfRetrievedValues += values.length
+      this.statusService.updateStatusDataStream({
+        'Number of values since OIBus has started': this.numberOfRetrievedValues,
+        'Last added points at': new Date().toISOString(),
+        'Last added point id (value)': `${values[values.length - 1].pointId} (${JSON.stringify(values[values.length - 1].data)})`,
+      })
     }
   }
 
