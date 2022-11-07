@@ -13,6 +13,7 @@ import {
 } from 'reactstrap'
 import apis from '../service/apis'
 import { AlertContext } from '../context/alert-context.jsx'
+import OibDate from '../components/oib-form/oib-date.jsx'
 
 const selectStyle = (level) => {
   switch (level) {
@@ -32,8 +33,12 @@ const selectStyle = (level) => {
 const Log = () => {
   const verbosityOptions = ['error', 'warn', 'info', 'debug', 'trace']
   const defaultMaxLog = 300
-  const [fromDate, setFromDate] = React.useState()
-  const [toDate, setToDate] = React.useState()
+
+  const auxDate = new Date(); // Today
+  const [toDate, setToDate] = React.useState(auxDate.toISOString())
+  auxDate.setDate(auxDate.getDate() - 1); // Yesterday
+  const [fromDate, setFromDate] = React.useState(auxDate.toISOString())
+
   const [verbosity, setVerbosity] = React.useState(verbosityOptions)
   const [logs, setLogs] = React.useState([])
   const [filterText, setFilterText] = React.useState('')
@@ -165,37 +170,29 @@ const Log = () => {
             <Label className="label-card-title">Filters</Label>
             <CardBody className="card-body">
               <FormGroup>
-                <Label for="fromDate">From date</Label>
-                <Input
-                  className="oi-form-input"
-                  type="datetime-local"
-                  id="fromDate"
-                  max={maxDateString}
-                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-                  required
-                  onChange={(event) => {
-                    const date = new Date(event.target.value).toISOString()
+                <OibDate
+                  name="fromDate"
+                  label="From"
+                  value={fromDate}
+                  onChange={(_name, newVal, _valid) => {
+                    const date = new Date(newVal).toISOString()
                     setFromDate(date)
                   }}
+                  help="default: Current datetime - 24 hours (now - 24 hours)"
                 />
-                <FormText color="muted">default: Current datetime - 24 hours (now - 24 hours)</FormText>
               </FormGroup>
 
               <FormGroup>
-                <Label for="toDate">To date</Label>
-                <Input
-                  className="oi-form-input"
-                  type="datetime-local"
-                  id="toDate"
-                  max={maxDateString}
-                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-                  required
-                  onChange={(event) => {
-                    const date = new Date(event.target.value).toISOString()
+                <OibDate
+                  name="toDate"
+                  label="To"
+                  value={toDate}
+                  onChange={(_name, newVal, _valid) => {
+                    const date = new Date(newVal).toISOString()
                     setToDate(date)
                   }}
+                  help="default: Current datetime (now)"
                 />
-                <FormText color="muted">default: Current datetime (now)</FormText>
               </FormGroup>
 
               <FormGroup>

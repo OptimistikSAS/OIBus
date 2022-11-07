@@ -179,17 +179,25 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           >
             <label
               class="form-label"
-              for="startTime"
+              for="startTimedate"
             >
               From date
             </label>
             <input
               class="oi-form-input form-control"
-              id="startTime"
+              id="startTimedate"
               placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
               required=""
-              type="datetime-local"
-              value="2021-10-15 14:18"
+              type="date"
+              value="2021-10-15"
+            />
+            <input
+              class="oi-form-input form-control"
+              id="startTimetime"
+              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+              required=""
+              type="time"
+              value="14:18"
             />
             <div
               class="invalid-feedback"
@@ -204,17 +212,25 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           >
             <label
               class="form-label"
-              for="endTime"
+              for="endTimedate"
             >
               To date
             </label>
             <input
               class="oi-form-input form-control"
-              id="endTime"
+              id="endTimedate"
               placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
               required=""
-              type="datetime-local"
-              value="2021-10-16 14:18"
+              type="date"
+              value="2021-10-16"
+            />
+            <input
+              class="oi-form-input form-control"
+              id="endTimetime"
+              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+              required=""
+              type="time"
+              value="14:18"
             />
             <div
               class="invalid-feedback"
@@ -535,17 +551,25 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           >
             <label
               class="form-label"
-              for="startTime"
+              for="startTimedate"
             >
               From date
             </label>
             <input
               class="oi-form-input form-control"
-              id="startTime"
+              id="startTimedate"
               placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
               required=""
-              type="datetime-local"
-              value="2021-10-15 14:18"
+              type="date"
+              value="2021-10-15"
+            />
+            <input
+              class="oi-form-input form-control"
+              id="startTimetime"
+              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+              required=""
+              type="time"
+              value="14:18"
             />
             <div
               class="invalid-feedback"
@@ -560,17 +584,25 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           >
             <label
               class="form-label"
-              for="endTime"
+              for="endTimedate"
             >
               To date
             </label>
             <input
               class="oi-form-input form-control"
-              id="endTime"
+              id="endTimedate"
               placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
               required=""
-              type="datetime-local"
-              value="2021-10-16 14:18"
+              type="date"
+              value="2021-10-16"
+            />
+            <input
+              class="oi-form-input form-control"
+              id="endTimetime"
+              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+              required=""
+              type="time"
+              value="14:18"
             />
             <div
               class="invalid-feedback"
@@ -890,17 +922,25 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty North 1`] = `
           >
             <label
               class="form-label"
-              for="startTime"
+              for="startTimedate"
             >
               From date
             </label>
             <input
               class="oi-form-input form-control"
-              id="startTime"
+              id="startTimedate"
               placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
               required=""
-              type="datetime-local"
-              value="1970-01-01 00:00"
+              type="date"
+              value=""
+            />
+            <input
+              class="oi-form-input form-control"
+              id="startTimetime"
+              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+              required=""
+              type="time"
+              value=""
             />
             <div
               class="invalid-feedback"
@@ -915,17 +955,25 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty North 1`] = `
           >
             <label
               class="form-label"
-              for="endTime"
+              for="endTimedate"
             >
               To date
             </label>
             <input
               class="oi-form-input form-control"
-              id="endTime"
+              id="endTimedate"
               placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
               required=""
-              type="datetime-local"
-              value="1970-01-01 00:00"
+              type="date"
+              value=""
+            />
+            <input
+              class="oi-form-input form-control"
+              id="endTimetime"
+              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+              required=""
+              type="time"
+              value=""
             />
             <div
               class="invalid-feedback"
