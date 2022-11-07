@@ -260,6 +260,29 @@ describe('SouthOPCUADA', () => {
     expect(south.logger.error).toHaveBeenCalledWith('Received 2 data values, requested 1 nodes.')
   })
 
+  it('should call internalDisconnect on readVariableValue errors', async () => {
+    south.connected = true
+    south.session = {
+      close: jest.fn(),
+      readVariableValue: jest.fn().mockReturnValue(Promise.reject(new Error('fail'))),
+    }
+    south.internalDisconnect = jest.fn()
+    await expect(south.lastPointQuery(configuration.points[0].scanMode)).rejects.toThrowError('fail')
+    expect(south.internalDisconnect).toHaveBeenCalled()
+  })
+
+  it('should not call internalDisconnect on readVariableValue errors when disconnecting', async () => {
+    south.connected = true
+    south.session = {
+      close: jest.fn(),
+      readVariableValue: jest.fn().mockReturnValue(Promise.reject(new Error('fail'))),
+    }
+    south.internalDisconnect = jest.fn()
+    south.disconnecting = true
+    await expect(south.lastPointQuery(configuration.points[0].scanMode)).rejects.toThrowError('fail')
+    expect(south.internalDisconnect).not.toHaveBeenCalled()
+  })
+
   it('should properly disconnect when trying to connect', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
 
@@ -272,6 +295,7 @@ describe('SouthOPCUADA', () => {
 
     expect(clearTimeoutSpy).toBeCalled()
     expect(close).not.toBeCalled()
+    expect(south.disconnecting).toBeTruthy()
   })
 
   it('should properly disconnect when connected', async () => {
@@ -286,5 +310,6 @@ describe('SouthOPCUADA', () => {
 
     expect(clearTimeoutSpy).not.toBeCalled()
     expect(close).toBeCalled()
+    expect(south.disconnecting).toBeTruthy()
   })
 })
