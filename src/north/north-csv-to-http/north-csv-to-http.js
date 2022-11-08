@@ -4,7 +4,7 @@ const csv = require('papaparse')
 
 const NorthConnector = require('../north-connector')
 const { convertCSVRowIntoHttpBody, isHeaderValid } = require('./utils')
-const { httpSend, addAuthenticationToHeaders } = require('../../service/utils')
+const { httpSend, addAuthenticationToHeaders } = require('../../service/http-request-static-functions')
 
 const ERROR_PRINT_SIZE = 5
 

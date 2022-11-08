@@ -29,19 +29,19 @@ class SouthSQL extends SouthConnector {
    * Constructor for SouthSQL
    * @constructor
    * @param {Object} configuration - The South connector configuration
-   * @param {Function} engineAddValues - The Engine add values method
-   * @param {Function} engineAddFiles - The Engine add file method
+   * @param {Function} engineAddValuesCallback - The Engine add values callback
+   * @param {Function} engineAddFilesCallback - The Engine add file callback
    * @return {void}
    */
   constructor(
     configuration,
-    engineAddValues,
-    engineAddFiles,
+    engineAddValuesCallback,
+    engineAddFilesCallback,
   ) {
     super(
       configuration,
-      engineAddValues,
-      engineAddFiles,
+      engineAddValuesCallback,
+      engineAddFilesCallback,
       {
         supportListen: false,
         supportLastPoint: false,

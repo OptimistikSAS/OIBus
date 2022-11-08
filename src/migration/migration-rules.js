@@ -1637,5 +1637,9 @@ module.exports = {
       delete config.engine.healthSignal.http.authentication.password
       delete config.engine.healthSignal.http.authentication.token
     }
+
+    logger.info('Renaming engineName into name.')
+    config.engine.name = config.engine.engineName
+    delete config.engine.engineName
   },
 }

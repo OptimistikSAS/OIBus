@@ -1,7 +1,7 @@
 const CsvToHttp = require('./north-csv-to-http')
 
 const utils = require('./utils')
-const serviceUtils = require('../../service/utils')
+const httpRequestStaticFunctions = require('../../service/http-request-static-functions')
 
 // Mock utils class
 jest.mock('./utils', () => ({
@@ -21,6 +21,7 @@ jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ dec
 jest.mock('../../engine/cache/value-cache')
 jest.mock('../../engine/cache/file-cache')
 jest.mock('../../service/utils')
+jest.mock('../../service/http-request-static-functions')
 
 let configuration = null
 let north = null
@@ -111,7 +112,7 @@ describe('NorthCsvToHttp', () => {
 
     await north.handleFile('csvToHttpTest.csv')
 
-    expect(serviceUtils.httpSend).toHaveBeenCalledTimes(1)
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledTimes(1)
   })
 
   it('should properly test validity of header', async () => {
@@ -136,7 +137,7 @@ describe('NorthCsvToHttp', () => {
 
     await north.sendData(httpBody)
 
-    expect(serviceUtils.httpSend).toHaveBeenCalledTimes(2)
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledTimes(2)
   })
 
   it('should properly send data (body.length <= bodyMaxLength)', async () => {
@@ -153,7 +154,7 @@ describe('NorthCsvToHttp', () => {
     const expectedRequestMethod = configuration.settings.requestMethod
     const expectedBody = JSON.stringify(httpBody)
     const expectedHeaders = { 'Content-Type': 'application/json' }
-    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       expectedUrl,
       expectedRequestMethod,
       expectedHeaders,
@@ -161,6 +162,6 @@ describe('NorthCsvToHttp', () => {
       configuration.caching.timeout,
       null,
     )
-    expect(serviceUtils.httpSend).toHaveBeenCalledTimes(1)
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledTimes(1)
   })
 })

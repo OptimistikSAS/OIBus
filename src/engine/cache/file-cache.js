@@ -17,7 +17,8 @@ class FileCache {
   /**
    * @param {String} northId - The North ID connector
    * @param {Logger} logger - The logger
-   * @param {String} baseFolder - The North cache folder
+   * @param {String} baseFolder - The North cache folder generated as north-connectorId. This base folder can
+   * be in data-stream or history-query folder depending on the connector use case
    * @param {Boolean} archiveFiles - If the archive mode for this North connector is enabled
    * @param {Number} retentionDuration - File retention duration in archive folder (in hours)
    * @return {void}

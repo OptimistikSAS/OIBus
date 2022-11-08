@@ -1,6 +1,7 @@
 const NorthConnector = require('./north-connector')
 
-const utils = require('../service/utils')
+const httpRequestStaticFunctions = require('../service/http-request-static-functions')
+
 // Mock fs
 jest.mock('node:fs/promises')
 
@@ -11,6 +12,7 @@ jest.mock('../service/status.service')
 jest.mock('../service/certificate.service')
 jest.mock('../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 jest.mock('../service/utils')
+jest.mock('../service/http-request-static-functions')
 jest.mock('../engine/cache/value-cache')
 jest.mock('../engine/cache/file-cache')
 
@@ -134,7 +136,7 @@ describe('NorthConnector', () => {
   })
 
   it('should get proxy', async () => {
-    utils.createProxyAgent.mockImplementation(() => ({ proxyAgent: 'a field' }))
+    httpRequestStaticFunctions.createProxyAgent.mockImplementation(() => ({ proxyAgent: 'a field' }))
     expect(await north.getProxy()).toBeNull()
     expect(await north.getProxy('proxyTest')).toEqual({ proxyAgent: 'a field' })
     expect(await north.getProxy('anotherProxy')).toBeNull()

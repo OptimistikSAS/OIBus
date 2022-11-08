@@ -1,6 +1,6 @@
 const InfluxDB = require('./north-influx-db')
 
-const serviceUtils = require('../../service/utils')
+const httpRequestStaticFunctions = require('../../service/http-request-static-functions')
 // Mock fs
 jest.mock('node:fs/promises')
 
@@ -13,6 +13,7 @@ jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ dec
 jest.mock('../../engine/cache/value-cache')
 jest.mock('../../engine/cache/file-cache')
 jest.mock('../../service/utils')
+jest.mock('../../service/http-request-static-functions')
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 const values = [
@@ -67,7 +68,7 @@ describe('North InfluxDB', () => {
   it('should call makeRequest and manage error', async () => {
     await north.start('baseFolder', 'oibusName', {})
 
-    serviceUtils.httpSend.mockImplementation(() => {
+    httpRequestStaticFunctions.httpSend.mockImplementation(() => {
       throw new Error('http error')
     })
 
@@ -114,7 +115,7 @@ describe('North InfluxDB', () => {
     north.useDataKeyValue = true
     north.keyParentValue = 'level'
     await north.handleValues(valueWithDataLevel)
-    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=s',
       'POST',
       { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -125,7 +126,7 @@ describe('North InfluxDB', () => {
 
     north.precision = 'ns'
     await north.handleValues(valueWithDataLevel)
-    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=ns',
       'POST',
       { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -136,7 +137,7 @@ describe('North InfluxDB', () => {
 
     north.precision = 'u'
     await north.handleValues(valueWithDataLevel)
-    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=u',
       'POST',
       { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -147,7 +148,7 @@ describe('North InfluxDB', () => {
 
     north.precision = 'ms'
     await north.handleValues(valueWithDataLevel)
-    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=ms',
       'POST',
       { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -158,7 +159,7 @@ describe('North InfluxDB', () => {
 
     north.precision = 'm'
     await north.handleValues(valueWithDataLevel)
-    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=m',
       'POST',
       { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -169,7 +170,7 @@ describe('North InfluxDB', () => {
 
     north.precision = 'h'
     await north.handleValues(valueWithDataLevel)
-    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=h',
       'POST',
       { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -221,7 +222,7 @@ describe('North InfluxDB', () => {
 
     await north.handleValues(valuesWithTimestamp)
 
-    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=s',
       'POST',
       { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -267,7 +268,7 @@ describe('North InfluxDB', () => {
     // unit should be ignored
     await north.handleValues(valuesWithTimestamp2)
 
-    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       'http://localhost:8086/write?u=user&p=password&db=database&precision=s',
       'POST',
       { 'Content-Type': 'application/x-www-form-urlencoded' },

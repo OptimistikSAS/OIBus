@@ -2,7 +2,7 @@ const fs = require('node:fs/promises')
 
 const OIConnect = require('./north-oiconnect')
 
-const serviceUtils = require('../../service/utils')
+const httpRequestStaticFunctions = require('../../service/http-request-static-functions')
 // Mock fs
 jest.mock('node:fs/promises')
 
@@ -15,6 +15,7 @@ jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ dec
 jest.mock('../../engine/cache/value-cache')
 jest.mock('../../engine/cache/file-cache')
 jest.mock('../../service/utils')
+jest.mock('../../service/http-request-static-functions')
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 let configuration = null
@@ -75,7 +76,7 @@ describe('NorthOIConnect', () => {
     const expectedBody = JSON.stringify(values)
     const expectedHeaders = { 'Content-Type': 'application/json' }
 
-    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       expectedUrl,
       'POST',
       expectedHeaders,
@@ -92,7 +93,7 @@ describe('NorthOIConnect', () => {
     await north.handleFile(filePath)
 
     const expectedUrl = 'http://hostname:2223/addFile?name=oibusName:oic'
-    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       expectedUrl,
       'POST',
       {},

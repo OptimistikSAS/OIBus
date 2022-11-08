@@ -29,7 +29,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
     setSouthFilter('')
   }
 
-  const engineName = newConfig?.engine?.engineName ?? ''
+  const oibusName = newConfig?.engine?.name ?? ''
   const safeMode = newConfig?.engine?.safeMode ?? false
   const northConnectors = newConfig?.north?.filter((north) => north.name.toLowerCase().includes(northFilter.toLowerCase())) ?? []
   const southConnectors = newConfig?.south?.filter((south) => south.name.toLowerCase().includes(southFilter.toLowerCase())) ?? []
@@ -104,7 +104,7 @@ const NodeView = ({ onRestart, onShutdown }) => {
       data: {
         label: (
           <EngineNode
-            engineName={engineName}
+            name={oibusName}
             safeMode={safeMode}
             onRestart={onRestart}
             onShutdown={onShutdown}

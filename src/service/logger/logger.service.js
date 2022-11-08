@@ -97,7 +97,7 @@ class LoggerService {
             password: await this.encryptionService.decryptText(lokiLog.password),
             tokenAddress: lokiLog.tokenAddress,
             lokiAddress: lokiLog.lokiAddress,
-            engineName: oibusName,
+            oibusName,
             interval: lokiLog.interval,
           },
           level: lokiLog.level,

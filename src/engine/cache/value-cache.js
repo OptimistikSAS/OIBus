@@ -12,7 +12,8 @@ class ValueCache {
   /**
    * @param {String} northId - The North ID connector
    * @param {Logger} logger - The logger
-   * @param {String} baseFolder - The North cache folder
+   * @param {String} baseFolder - The North cache folder generated as north-connectorId. This base folder can
+   * be in data-stream or history-query folder depending on the connector use case
    * @return {void}
    */
   constructor(
