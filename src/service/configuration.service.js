@@ -117,14 +117,12 @@ class ConfigurationService {
     const dataStreamFolderPath = path.resolve(this.cacheFolder, 'data-stream')
     const folders = await fs.readdir(dataStreamFolderPath)
 
-    // eslint-disable-next-line no-restricted-syntax
-    for (const folder of folders) {
+    await Promise.allSettled(folders.map(async (folder) => {
       const uid = folder.replace('north-', '').replace('south-', '')
       if (!idList.includes(uid)) {
-        // eslint-disable-next-line no-await-in-loop
-        await fs.rmdir(path.resolve(dataStreamFolderPath, folder), { recursive: true })
+        await fs.rm(path.resolve(dataStreamFolderPath, folder), { recursive: true })
       }
-    }
+    }))
   }
 }
 
