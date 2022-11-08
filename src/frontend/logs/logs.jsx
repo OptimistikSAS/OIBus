@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import {
   FormGroup,
-  FormText,
   Label,
   Button,
   Input,
@@ -34,9 +33,9 @@ const Log = () => {
   const verbosityOptions = ['error', 'warn', 'info', 'debug', 'trace']
   const defaultMaxLog = 300
 
-  const auxDate = new Date(); // Today
+  const auxDate = new Date() // Today
   const [toDate, setToDate] = React.useState(auxDate.toISOString())
-  auxDate.setDate(auxDate.getDate() - 1); // Yesterday
+  auxDate.setDate(auxDate.getDate() - 1) // Yesterday
   const [fromDate, setFromDate] = React.useState(auxDate.toISOString())
 
   const [verbosity, setVerbosity] = React.useState(verbosityOptions)
@@ -161,7 +160,6 @@ const Log = () => {
     </Col>
   )
 
-  const maxDateString = new Date().toISOString().substr(0, 16)
   return (
     <Container fluid>
       <Row className="p-3">
@@ -171,7 +169,7 @@ const Log = () => {
             <CardBody className="card-body">
               <FormGroup>
                 <OibDate
-                  name="fromDate"
+                  name="start"
                   label="From"
                   value={fromDate}
                   onChange={(_name, newVal, _valid) => {
@@ -184,7 +182,7 @@ const Log = () => {
 
               <FormGroup>
                 <OibDate
-                  name="toDate"
+                  name="end"
                   label="To"
                   value={toDate}
                   onChange={(_name, newVal, _valid) => {

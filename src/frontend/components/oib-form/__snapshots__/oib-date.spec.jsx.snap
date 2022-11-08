@@ -7,13 +7,13 @@ exports[`OIbDate check date with value="2021-11-20" 1`] = `
   >
     <label
       class="form-label"
-      for="endTimedate"
+      for="endDate"
     >
       To date
     </label>
     <input
       class="oi-form-input form-control"
-      id="endTimedate"
+      id="endDate"
       placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
       required=""
       type="date"
@@ -21,7 +21,7 @@ exports[`OIbDate check date with value="2021-11-20" 1`] = `
     />
     <input
       class="oi-form-input form-control"
-      id="endTimetime"
+      id="endTime"
       placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
       required=""
       type="time"
