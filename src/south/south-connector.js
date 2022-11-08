@@ -37,21 +37,21 @@ class SouthConnector {
    * Constructor for SouthConnector
    * @constructor
    * @param {Object} configuration - The South connector configuration
-   * @param {Function} engineAddValues - The Engine add values method
-   * @param {Function} engineAddFiles - The Engine add file method
+   * @param {Function} engineAddValuesCallback - The Engine add values callback
+   * @param {Function} engineAddFilesCallback - The Engine add file callback
    * @param {Object} supportedModes - The supported modes
    * @return {void}
    */
   constructor(
     configuration,
-    engineAddValues,
-    engineAddFiles,
+    engineAddValuesCallback,
+    engineAddFilesCallback,
     supportedModes = {},
   ) {
     this.handlesPoints = false
     this.handlesFiles = false
-    this.engineAddValues = engineAddValues
-    this.engineAddFiles = engineAddFiles
+    this.engineAddValuesCallback = engineAddValuesCallback
+    this.engineAddFilesCallback = engineAddFilesCallback
     this.connected = false
 
     this.id = configuration.id
@@ -376,7 +376,7 @@ class SouthConnector {
     const bufferSave = [...this.buffer]
     this.buffer = []
     if (bufferSave.length > 0) {
-      await this.engineAddValues(this.id, bufferSave)
+      await this.engineAddValuesCallback(this.id, bufferSave)
       this.numberOfRetrievedValues += bufferSave.length
       this.statusService.updateStatusDataStream({
         'Number of values since OIBus has started': this.numberOfRetrievedValues,
@@ -409,7 +409,7 @@ class SouthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async addFile(filePath, preserveFiles) {
-    await this.engineAddFiles(this.id, filePath, preserveFiles)
+    await this.engineAddFilesCallback(this.id, filePath, preserveFiles)
     this.numberOfRetrievedFiles += 1
     this.statusService.updateStatusDataStream({
       'Number of files since OIBus has started': this.numberOfRetrievedFiles,

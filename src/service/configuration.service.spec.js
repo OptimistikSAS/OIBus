@@ -47,7 +47,7 @@ describe('Configuration service', () => {
 
   it('should properly initialized service with config file', async () => {
     const mockConf = {
-      engine: { engineName: 'myEngineConfig' },
+      engine: { name: 'myEngineConfig' },
       north: [{ id: 'myNorthConfig' }],
       south: [{ id: 'mySouthConfig' }],
     }
@@ -64,7 +64,7 @@ describe('Configuration service', () => {
     expect(fs.copyFile).not.toHaveBeenCalled()
     expect(service.activateConfiguration).toHaveBeenCalledTimes(1)
     expect(service.modifiedConfig).toEqual({
-      engine: { engineName: 'myEngineConfig', encryptedPassword: 'encryptedPassword' },
+      engine: { name: 'myEngineConfig', encryptedPassword: 'encryptedPassword' },
       north: [{ id: 'myNorthConfig', encryptedPassword: 'encryptedPassword' }],
       south: [{ id: 'mySouthConfig', encryptedPassword: 'encryptedPassword' }],
     })
@@ -72,7 +72,7 @@ describe('Configuration service', () => {
 
   it('should get engine, south and north config', () => {
     const mockConf = {
-      engine: { engineName: 'myEngineConfig' },
+      engine: { name: 'myEngineConfig' },
       north: [{ id: 'myNorthConfig' }],
       south: [{ id: 'mySouthConfig' }],
     }
@@ -89,7 +89,7 @@ describe('Configuration service', () => {
 
   it('should get active config', () => {
     const mockConf = {
-      engine: { engineName: 'myEngineConfig' },
+      engine: { name: 'myEngineConfig' },
       north: [{ id: 'myNorthConfig' }],
       south: [{ id: 'mySouthConfig' }],
     }
@@ -102,7 +102,7 @@ describe('Configuration service', () => {
 
   it('should activate modified config with backup', async () => {
     const mockConf = {
-      engine: { engineName: 'myEngineConfig' },
+      engine: { name: 'myEngineConfig' },
       north: [{ id: 'myNorthConfig' }],
       south: [{ id: 'mySouthConfig' }],
     }
@@ -124,7 +124,7 @@ describe('Configuration service', () => {
 
   it('should activate modified config without backup', async () => {
     const mockConf = {
-      engine: { engineName: 'myEngineConfig' },
+      engine: { name: 'myEngineConfig' },
       north: [{ id: 'myNorthConfig' }],
       south: [{ id: 'mySouthConfig' }],
     }

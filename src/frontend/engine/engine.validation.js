@@ -3,7 +3,7 @@ import utils from '../helpers/utils'
 
 const validation = {
   engine: {
-    engineName: notEmpty(),
+    name: notEmpty(),
     port: inRange(1, 65535),
     user: notEmpty('User'),
     password: hasLengthBetween(4, 256),

@@ -2,7 +2,7 @@ const { vsprintf } = require('sprintf-js')
 const objectPath = require('object-path')
 
 const NorthConnector = require('../north-connector')
-const { httpSend } = require('../../service/utils')
+const { httpSend } = require('../../service/http-request-static-functions')
 
 /**
  * Convert timestamp to the configured precision

@@ -1,5 +1,5 @@
 const NorthConnector = require('../north-connector')
-const { httpSend, addAuthenticationToHeaders } = require('../../service/utils')
+const { httpSend, addAuthenticationToHeaders } = require('../../service/http-request-static-functions')
 
 /**
  * Class NorthOIConnect - Send files through a POST Multipart HTTP request and values as JSON payload

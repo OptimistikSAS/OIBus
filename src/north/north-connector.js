@@ -6,7 +6,8 @@ const CertificateService = require('../service/certificate.service')
 const StatusService = require('../service/status.service')
 const ValueCache = require('../engine/cache/value-cache')
 const FileCache = require('../engine/cache/file-cache')
-const { createFolder, createProxyAgent } = require('../service/utils')
+const { createFolder } = require('../service/utils')
+const { createProxyAgent } = require('../service/http-request-static-functions')
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.

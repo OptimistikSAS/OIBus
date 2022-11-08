@@ -3,7 +3,7 @@ require('dotenv').config({ path: './tests/.env.test' })
 
 const defaultConfig = {
   engine: {
-    engineName: 'OIBus',
+    name: 'OIBus',
     port: 2223,
     user: 'admin',
     password: '',
@@ -129,7 +129,7 @@ const testConfig = {
         port: 1,
       },
     ],
-    engineName: 'OIBus',
+    name: 'OIBus',
     healthSignal: {
       logging: {
         enabled: true,
@@ -228,7 +228,7 @@ const integrationTestConfig = {
       { scanMode: 'listen', cronTime: 'listen' },
     ],
     proxies: [],
-    engineName: 'OIBus',
+    name: 'OIBus',
     healthSignal: {
       logging: {
         enabled: true,

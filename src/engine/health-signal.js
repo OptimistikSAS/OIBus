@@ -1,4 +1,4 @@
-const { httpSend, createProxyAgent, addAuthenticationToHeaders } = require('../service/utils')
+const { httpSend, createProxyAgent, addAuthenticationToHeaders } = require('../service/http-request-static-functions')
 
 /**
  * Class HealthSignal - sends health signal to a remote host or into the logs
@@ -23,7 +23,7 @@ class HealthSignal {
     this.http.proxy = Array.isArray(engineConfig.proxies) ? engineConfig.proxies.find(({ name }) => name === this.http.proxy) : null
     this.httpTimer = null
     this.loggingTimer = null
-    this.oibusName = engineConfig.engineName
+    this.oibusName = engineConfig.name
   }
 
   /**

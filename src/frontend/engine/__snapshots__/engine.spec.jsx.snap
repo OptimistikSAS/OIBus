@@ -80,15 +80,15 @@ exports[`Engine check Engine 1`] = `
           >
             <label
               class="form-label"
-              for="engine.engineName"
+              for="engine.name"
             >
               Engine name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="engine.engineName"
-              name="engine.engineName"
+              id="engine.name"
+              name="engine.name"
               type="text"
               value="OIBus"
             />
@@ -3063,15 +3063,15 @@ exports[`Engine check Engine when config has no proxies 1`] = `
           >
             <label
               class="form-label"
-              for="engine.engineName"
+              for="engine.name"
             >
               Engine name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="engine.engineName"
-              name="engine.engineName"
+              id="engine.name"
+              name="engine.name"
               type="text"
               value="OIBus"
             />
@@ -5552,7 +5552,7 @@ exports[`Engine check Engine when no engine 1`] = `
 </div>
 `;
 
-exports[`Engine check change engineName 1`] = `
+exports[`Engine check change OIBus name 1`] = `
 <div>
   <div
     class="container-fluid"
@@ -5632,15 +5632,15 @@ exports[`Engine check change engineName 1`] = `
           >
             <label
               class="form-label"
-              for="engine.engineName"
+              for="engine.name"
             >
               Engine name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="engine.engineName"
-              name="engine.engineName"
+              id="engine.name"
+              name="engine.name"
               type="text"
               value="OIBus"
             />
@@ -8615,15 +8615,15 @@ exports[`Engine check change password 1`] = `
           >
             <label
               class="form-label"
-              for="engine.engineName"
+              for="engine.name"
             >
               Engine name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="engine.engineName"
-              name="engine.engineName"
+              id="engine.name"
+              name="engine.name"
               type="text"
               value="OIBus"
             />
@@ -11598,15 +11598,15 @@ exports[`Engine check change port 1`] = `
           >
             <label
               class="form-label"
-              for="engine.engineName"
+              for="engine.name"
             >
               Engine name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="engine.engineName"
-              name="engine.engineName"
+              id="engine.name"
+              name="engine.name"
               type="text"
               value="OIBus"
             />
@@ -14581,15 +14581,15 @@ exports[`Engine check change user 1`] = `
           >
             <label
               class="form-label"
-              for="engine.engineName"
+              for="engine.name"
             >
               Engine name
             </label>
             <input
               aria-invalid="false"
               class="oi-form-input form-control"
-              id="engine.engineName"
-              name="engine.engineName"
+              id="engine.name"
+              name="engine.name"
               type="text"
               value="OIBus"
             />

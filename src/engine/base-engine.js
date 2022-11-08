@@ -64,7 +64,7 @@ class BaseEngine {
    * @returns {Promise<void>} - The result promise
    */
   async initEngineServices(engineConfig, loggerScope) {
-    this.oibusName = engineConfig.engineName
+    this.oibusName = engineConfig.name
     this.defaultLogParameters = engineConfig.logParameters
     this.proxies = engineConfig.proxies
     this.statusService = new StatusService()

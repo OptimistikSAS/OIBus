@@ -1,5 +1,5 @@
 const HealthSignal = require('./health-signal')
-const utils = require('../service/utils')
+const httpRequestStaticFunctions = require('../service/http-request-static-functions')
 
 // Mock engine
 const engine = {
@@ -9,7 +9,7 @@ const engine = {
   encryptionService: { decryptText: (textToDecipher) => textToDecipher },
 }
 
-jest.mock('../service/utils')
+jest.mock('../service/http-request-static-functions')
 
 const proxy = {
   name: 'proxy_name',
@@ -47,7 +47,7 @@ describe('HealthSignal', () => {
       },
     }
     const engineConfig = {
-      engineName: 'OIBus',
+      name: 'OIBus',
       healthSignal: healthSignalSettings,
       proxies: [proxy],
     }
@@ -70,7 +70,7 @@ describe('HealthSignal', () => {
     engine.configService.getConfig.mockReturnValue({
       engineConfig:
           {
-            engineName: 'OIBus',
+            name: 'OIBus',
             healthSignal: healthSignalSettings,
           },
     })
@@ -128,7 +128,7 @@ describe('HealthSignal', () => {
   it('should call send http signal', async () => {
     const status = { status: 'status' }
 
-    utils.createProxyAgent.mockImplementation(() => ({ proxyAgent: 'an agent' }))
+    httpRequestStaticFunctions.createProxyAgent.mockImplementation(() => ({ proxyAgent: 'an agent' }))
     healthSignal.prepareStatus = jest.fn()
     healthSignal.prepareStatus.mockReturnValue(status)
 
@@ -137,7 +137,7 @@ describe('HealthSignal', () => {
     expect(healthSignal.prepareStatus).toBeCalled()
     const calledStatus = JSON.stringify({ ...status })
     const headers = { 'Content-Type': 'application/json' }
-    expect(utils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       `${healthSignal.http.host}${healthSignal.http.endpoint}`,
       'POST',
       headers,
@@ -145,7 +145,7 @@ describe('HealthSignal', () => {
       10,
       { proxyAgent: 'an agent' },
     )
-    expect(utils.createProxyAgent).toHaveBeenCalledWith('http', 'proxy.host', 666, 'proxy_user', 'proxy_pass')
+    expect(httpRequestStaticFunctions.createProxyAgent).toHaveBeenCalledWith('http', 'proxy.host', 666, 'proxy_user', 'proxy_pass')
     expect(healthSignal.logger.debug).toBeCalledWith('HTTP health signal sent successfully.')
   })
 
@@ -155,7 +155,7 @@ describe('HealthSignal', () => {
     healthSignal.prepareStatus = jest.fn()
     healthSignal.prepareStatus.mockReturnValue(status)
 
-    utils.httpSend.mockImplementation(() => {
+    httpRequestStaticFunctions.httpSend.mockImplementation(() => {
       throw new Error('http error')
     })
     await healthSignal.sendHttpSignal()
@@ -192,13 +192,13 @@ describe('HealthSignal', () => {
   })
 
   it('should forward health signal', async () => {
-    utils.createProxyAgent.mockImplementation(() => null)
+    httpRequestStaticFunctions.createProxyAgent.mockImplementation(() => null)
     const data = { status: 'status' }
     healthSignal.http.enabled = true
     await healthSignal.forwardRequest(data)
     expect(healthSignal.logger.trace).toHaveBeenCalledWith(`Forwarding health signal to "${healthSignalSettings.http.host}".`)
     expect(healthSignal.logger.trace).toHaveBeenCalledWith(`Health signal successfully forwarded to "${healthSignalSettings.http.host}".`)
-    expect(utils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       `${healthSignalSettings.http.host}${healthSignalSettings.http.endpoint}`,
       'POST',
       { 'Content-Type': 'application/json' },

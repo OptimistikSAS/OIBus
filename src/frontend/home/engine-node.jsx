@@ -5,7 +5,7 @@ import { Badge } from 'reactstrap'
 import EngineMenu from './engine-menu.jsx'
 import utils from '../helpers/utils'
 
-const EngineNode = ({ engineName, safeMode, onRestart, onShutdown }) => {
+const EngineNode = ({ name, safeMode, onRestart, onShutdown }) => {
   const [oibusEngineData, setOibusEngineData] = React.useState({})
 
   const onEventSourceError = (error) => {
@@ -31,7 +31,7 @@ const EngineNode = ({ engineName, safeMode, onRestart, onShutdown }) => {
       <div className="w-100 d-flex flex-row justify-content-between align-items-center p-1 oi-node-header">
         <div />
         <div className="oi-node-title">
-          <span className="me-2">{`Engine ${engineName}`}</span>
+          <span className="me-2">{`Engine ${name}`}</span>
           {safeMode ? <span><Badge color="warning" pill>safe mode</Badge></span> : null}
         </div>
         <div className="oi-node-click-item">
@@ -67,7 +67,7 @@ const EngineNode = ({ engineName, safeMode, onRestart, onShutdown }) => {
 EngineNode.propTypes = {
   onRestart: PropTypes.func.isRequired,
   onShutdown: PropTypes.func.isRequired,
-  engineName: PropTypes.string.isRequired,
+  name: PropTypes.string.isRequired,
   safeMode: PropTypes.bool.isRequired,
 }
 

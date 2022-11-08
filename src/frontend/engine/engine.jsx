@@ -50,10 +50,10 @@ const Engine = () => {
         <Row>
           <Col md={2}>
             <OibText
-              name="engine.engineName"
+              name="engine.name"
               label="Engine name"
-              value={newConfig.engine.engineName}
-              valid={validation.engine.engineName}
+              value={newConfig.engine.name}
+              valid={validation.engine.name}
               defaultValue="OIBus"
               onChange={onChange}
               help={<div>The name to this OIBus used for identification. It must be as much explicit as possible</div>}

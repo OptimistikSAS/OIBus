@@ -2,7 +2,7 @@ const fs = require('node:fs/promises')
 
 const OIAnalytics = require('./north-oianalytics')
 
-const serviceUtils = require('../../service/utils')
+const httpRequestStaticFunctions = require('../../service/http-request-static-functions')
 
 // Mock fs
 jest.mock('node:fs/promises')
@@ -16,6 +16,7 @@ jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ dec
 jest.mock('../../engine/cache/value-cache')
 jest.mock('../../engine/cache/file-cache')
 jest.mock('../../service/utils')
+jest.mock('../../service/http-request-static-functions')
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 let configuration = null
@@ -80,7 +81,7 @@ describe('NorthOIAnalytics', () => {
       pointId: value.pointId,
     })))
     const expectedHeaders = { 'Content-Type': 'application/json' }
-    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       expectedUrl,
       'POST',
       expectedHeaders,
@@ -97,7 +98,7 @@ describe('NorthOIAnalytics', () => {
     await north.handleFile(filePath)
 
     const expectedUrl = `${configuration.settings.host}/api/oianalytics/value-upload/file?dataSourceId=${configuration.name}`
-    expect(serviceUtils.httpSend).toHaveBeenCalledWith(
+    expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledWith(
       expectedUrl,
       'POST',
       {},

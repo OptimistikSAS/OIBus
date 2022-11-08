@@ -170,7 +170,7 @@ class Server {
     this.app.use(clientController.serveClient)
 
     // Set the logger with the same settings as the engine
-    this.logger.changeParameters(engineConfig.engineName, engineConfig.logParameters).then(() => {
+    this.logger.changeParameters(engineConfig.name, engineConfig.logParameters).then(() => {
       this.webServer = this.app.listen(this.port, () => {
         this.logger.info(`Web server started on ${this.port}`)
       })

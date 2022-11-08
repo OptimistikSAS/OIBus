@@ -55,15 +55,15 @@ describe('Engine', () => {
     })
     expect(container).toMatchSnapshot()
   })
-  test('check change engineName', () => {
+  test('check change OIBus name', () => {
     act(() => {
       root.render(<Engine />)
     })
     act(() => {
-      Simulate.change(document.getElementById('engine.engineName'), { target: { value: 'OIBus test' } })
+      Simulate.change(document.getElementById('engine.name'), { target: { value: 'OIBus test' } })
     })
 
-    expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.engineName', value: 'OIBus test', validity: null })
+    expect(dispatchNewConfig).toBeCalledWith({ type: 'update', name: 'engine.name', value: 'OIBus test', validity: null })
     expect(container).toMatchSnapshot()
   })
   test('check change port', () => {

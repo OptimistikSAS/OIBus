@@ -14,7 +14,7 @@ describe('Logger', () => {
     jest.resetAllMocks()
     jest.useFakeTimers()
     settings = {
-      engineName: 'OIBus-test',
+      name: 'OIBus-test',
       logParameters: {
         consoleLog: { level: 'error' },
         fileLog: {
@@ -72,14 +72,14 @@ describe('Logger', () => {
           password: settings.logParameters.lokiLog.password,
           tokenAddress: settings.logParameters.lokiLog.tokenAddress,
           lokiAddress: settings.logParameters.lokiLog.lokiAddress,
-          engineName: settings.engineName,
+          oibusName: settings.name,
           interval: settings.logParameters.lokiLog.interval,
         },
         level: settings.logParameters.lokiLog.level,
       },
     ]
 
-    await logger.changeParameters(settings.engineName, settings.logParameters)
+    await logger.changeParameters(settings.name, settings.logParameters)
     expect(logger.scope).toEqual('main')
 
     expect(pino).toHaveBeenCalledTimes(1)
@@ -96,7 +96,7 @@ describe('Logger', () => {
     logger = new LoggerService()
     logger.setEncryptionService(encryptionService)
 
-    await logger.changeParameters(settings.engineName, {
+    await logger.changeParameters(settings.name, {
       consoleLog: { level: 'none' },
       fileLog: { level: 'none' },
       sqliteLog: { level: 'none' },
@@ -141,14 +141,14 @@ describe('Logger', () => {
           password: settings.logParameters.lokiLog.password,
           tokenAddress: settings.logParameters.lokiLog.tokenAddress,
           lokiAddress: settings.logParameters.lokiLog.lokiAddress,
-          engineName: settings.engineName,
+          oibusName: settings.name,
           interval: settings.logParameters.lokiLog.interval,
         },
         level: specificParameters.lokiLevel,
       },
     ]
 
-    await logger.changeParameters(settings.engineName, settings.logParameters, specificParameters)
+    await logger.changeParameters(settings.name, settings.logParameters, specificParameters)
     expect(logger.scope).toEqual('specific-logger')
 
     expect(pino).toHaveBeenCalledTimes(1)
@@ -169,7 +169,7 @@ describe('Logger', () => {
 
     settings.logParameters.fileLog.fileName = undefined
     settings.logParameters.sqliteLog.fileName = undefined
-    await logger.changeParameters(settings.engineName, settings.logParameters)
+    await logger.changeParameters(settings.name, settings.logParameters)
 
     expect(console.error).toHaveBeenCalledTimes(1)
     expect(console.error).toHaveBeenCalledWith(new Error('decrypt-error'))

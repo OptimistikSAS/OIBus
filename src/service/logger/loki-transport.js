@@ -18,7 +18,7 @@ class LokiTransport {
     this.password = options.password
     this.tokenAddress = options.tokenAddress
     this.lokiAddress = options.lokiAddress
-    this.engineName = options.engineName
+    this.oibusName = options.oibusName
     this.interval = options.interval || MAX_BATCH_INTERVAL_S
     this.batchLimit = options.batchLimit || MAX_BATCH_LOG
     this.batchLogs = {
@@ -46,7 +46,7 @@ class LokiTransport {
           const jsonMessage = JSON.parse(logMessage[1])
           streams.push({
             stream: {
-              oibus: this.engineName,
+              oibus: this.oibusName,
               level: LEVEL_FORMAT[logLevel],
               scope: jsonMessage.scope,
               source: jsonMessage.source,

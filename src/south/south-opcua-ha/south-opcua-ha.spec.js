@@ -611,7 +611,7 @@ describe('SouthOPCUAHA', () => {
   })
 
   it('should call internalDisconnect on historyQuery errors', async () => {
-    await south.init()
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
     south.connected = true
     south.currentlyOnScan[configuration.settings.scanGroups[0].scanMode] = 0
@@ -624,7 +624,7 @@ describe('SouthOPCUAHA', () => {
   })
 
   it('should nat call internalDisconnect on historyQuery errors when disconnecting', async () => {
-    await south.init()
+    await south.start('baseFolder', 'oibusName', {})
     await south.connect()
     south.connected = true
     south.currentlyOnScan[configuration.settings.scanGroups[0].scanMode] = 0

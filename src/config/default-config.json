@@ -1,6 +1,6 @@
 {
   "engine": {
-    "engineName": "OIBus",
+    "name": "OIBus",
     "port": 2223,
     "user": "admin",
     "password": "",
