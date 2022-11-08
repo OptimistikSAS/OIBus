@@ -151,7 +151,7 @@ describe('Configuration service', () => {
 
     await service.removeOrphanCacheFolders(service.modifiedConfig)
     const dataStreamFolderPath = path.resolve(service.cacheFolder, 'data-stream')
-    expect(fs.rmdir).toHaveBeenNthCalledWith(1, path.resolve(dataStreamFolderPath, 'south-toDelete'), { recursive: true })
-    expect(fs.rmdir).toHaveBeenNthCalledWith(2, path.resolve(dataStreamFolderPath, 'north-toDelete'), { recursive: true })
+    expect(fs.rm).toHaveBeenNthCalledWith(1, path.resolve(dataStreamFolderPath, 'south-toDelete'), { recursive: true })
+    expect(fs.rm).toHaveBeenNthCalledWith(2, path.resolve(dataStreamFolderPath, 'north-toDelete'), { recursive: true })
   })
 })
