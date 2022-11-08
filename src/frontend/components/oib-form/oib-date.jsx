@@ -4,13 +4,13 @@ import { DateTime } from 'luxon'
 import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
 
 const OibDate = ({ label, help, valid, value, name, onChange, inline, hidden, maxDateString }) => {
-  let dateTime = value ? DateTime.fromISO(new Date(value).toISOString()) : DateTime.now().set({second: 0, millisecond: 0})
-  
+  let dateTime = value ? DateTime.fromISO(new Date(value).toISOString()) : DateTime.now().set({ second: 0, millisecond: 0 })
+
   const handleTimeChange = (event) => {
     const { target } = event
     const { value: newVal } = target
-    const inputDate = newVal.split(":")
-    dateTime = dateTime.set({ hour: parseInt(inputDate[0]), minute: parseInt(inputDate[1]) })
+    const inputDate = newVal.split(':')
+    dateTime = dateTime.set({ hour: parseInt(inputDate[0], 10), minute: parseInt(inputDate[1], 10) })
     onChange(name, dateTime.toISO(), valid(newVal))
   }
 
@@ -18,8 +18,8 @@ const OibDate = ({ label, help, valid, value, name, onChange, inline, hidden, ma
     const { target } = event
     const { value: newVal } = target
 
-    const inputDate = newVal.split("-")
-    dateTime = dateTime.set({ year: parseInt(inputDate[0]), month: parseInt(inputDate[1]), day: parseInt(inputDate[2]) })
+    const inputDate = newVal.split('-')
+    dateTime = dateTime.set({ year: parseInt(inputDate[0], 10), month: parseInt(inputDate[1], 10), day: parseInt(inputDate[2], 10) })
     onChange(name, dateTime.toISO(), valid(newVal))
   }
 
@@ -29,11 +29,11 @@ const OibDate = ({ label, help, valid, value, name, onChange, inline, hidden, ma
   }
   if (hidden) return null
   const validCheck = valid(value)
-  
-  const formattedDate = value ? DateTime.fromISO(new Date(value).toISOString()).toFormat('yyyy-MM-dd') : ""
-  const formattedTime = value ? DateTime.fromISO(new Date(value).toISOString()).toFormat('HH:mm') : ""
-  const dateId = name+ "date"
-  const timeId = name+ "time"
+
+  const formattedDate = value ? DateTime.fromISO(new Date(value).toISOString()).toFormat('yyyy-MM-dd') : ''
+  const formattedTime = value ? DateTime.fromISO(new Date(value).toISOString()).toFormat('HH:mm') : ''
+  const dateId = `${name}Date`
+  const timeId = `${name}Time`
 
   return (
     <FormGroup style={style}>

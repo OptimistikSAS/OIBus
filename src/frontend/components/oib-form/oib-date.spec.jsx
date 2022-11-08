@@ -27,7 +27,7 @@ describe('OIbDate', () => {
   test('check date with value="2021-11-20"', () => {
     act(() => {
       root.render(<OibDate
-        name="endTime"
+        name="end"
         value="2021-11-20"
         label="To date"
         onChange={() => {}}

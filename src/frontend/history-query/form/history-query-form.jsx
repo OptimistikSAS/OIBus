@@ -307,7 +307,7 @@ const HistoryQueryForm = ({ query }) => {
           <Row>
             <Col md={2}>
               <OibDate
-                name="startTime"
+                name="start"
                 value={queryToUpdate.startTime}
                 label="From date"
                 onChange={onChange}
@@ -315,7 +315,7 @@ const HistoryQueryForm = ({ query }) => {
             </Col>
             <Col md={2}>
               <OibDate
-                name="endTime"
+                name="end"
                 value={queryToUpdate.endTime}
                 label="To date"
                 onChange={onChange}
