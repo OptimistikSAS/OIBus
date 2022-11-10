@@ -6,9 +6,10 @@ const { createFolder } = require('../utils')
 // Time between two checks of the Archive Folder
 const ARCHIVE_TIMEOUT = 3600000 // one hour
 
-const ERROR_FOLDER = 'errors'
 const ARCHIVE_FOLDER = 'archive'
+
 const FILE_FOLDER = 'files'
+const ERROR_FOLDER = 'files-errors'
 
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.

@@ -35,7 +35,7 @@ describe('FileCache', () => {
     expect(cache.northId).toEqual('northId')
     expect(cache.baseFolder).toEqual('myCacheFolder')
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files'))
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'errors'))
+    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files-errors'))
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'archive'))
 
     expect(logger.debug).toHaveBeenCalledWith('1 files in cache.')
@@ -52,7 +52,7 @@ describe('FileCache', () => {
     expect(cache.northId).toEqual('northId')
     expect(cache.baseFolder).toEqual('myCacheFolder')
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files'))
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'errors'))
+    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files-errors'))
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'archive'))
 
     expect(logger.debug).toHaveBeenCalledWith('No files in cache.')
@@ -82,7 +82,7 @@ describe('FileCache', () => {
     cache.retentionDuration = 0
     await cache.start()
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files'))
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'errors'))
+    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'files-errors'))
     expect(createFolder).toHaveBeenCalledTimes(2)
 
     expect(cache.refreshArchiveFolder).not.toHaveBeenCalled()

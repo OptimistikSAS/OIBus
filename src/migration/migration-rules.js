@@ -6,7 +6,7 @@ const db = require('better-sqlite3')
 const { nanoid } = require('nanoid')
 const databaseMigrationService = require('./database-migration.service')
 const databaseService = require('../service/database.service')
-const { createFolder } = require('../service/utils')
+const { createFolder, filesExists } = require('../service/utils')
 
 module.exports = {
   2: (config, logger) => {
@@ -1604,6 +1604,83 @@ module.exports = {
         delete north.authentication.username
         delete north.authentication.password
         delete north.authentication.token
+      }
+
+      const northCache = path.resolve('./cache/data-stream', `north-${north.id}`)
+      if (await filesExists(path.resolve(northCache, 'errors'))) {
+        logger.info('Rename north cache errors to files-errors')
+        try {
+          await fs.rename(path.resolve(northCache, 'errors'), path.resolve(northCache, 'files-errors'))
+        } catch (error) {
+          logger.error(error)
+        }
+      }
+
+      try {
+        await createFolder(path.resolve(northCache, 'values'))
+        await fs.writeFile(
+          path.resolve(northCache, 'values', 'buffer.tmp'),
+          '[]',
+          { encoding: 'utf8', flag: 'w' },
+        )
+      } catch (writeBufferError) {
+        logger.error(writeBufferError)
+      }
+
+      if (await filesExists(path.resolve(northCache, 'values.db'))) {
+        logger.info(`Migrating values.db for North connector ${north.id}`)
+        const database = db(path.resolve(northCache, 'values.db'))
+        const query = 'SELECT * '
+            + 'FROM cache '
+            + 'LIMIT ?'
+        let results = []
+        do {
+          try {
+            results = database.prepare(query).all(north.caching.maxSendCount)
+          } catch (error) {
+            logger.error(error)
+          }
+
+          if (results.length > 0) {
+            try {
+              const compactFileName = `${nanoid()}.compact.tmp`
+              await fs.writeFile(
+                path.resolve(northCache, 'values', compactFileName),
+                JSON.stringify(results.map((value) => ({
+                  timestamp: value.timestamp,
+                  pointId: value.pointId,
+                  data: JSON.parse(decodeURI(value.data)),
+                }))),
+                { encoding: 'utf8', flag: 'w' },
+              )
+            } catch (writeError) {
+              if (writeError.code !== 'ENOENT') {
+                logger.error(writeError)
+              }
+            }
+
+            try {
+              const ids = results.map((value) => value.id).join()
+              const removeQuery = `DELETE FROM cache WHERE id IN (${ids})`
+              const result = database.prepare(removeQuery).run()
+              logger.info(`${result.changes} values migrated for North connector ${north.name} (${north.id}).`)
+            } catch (error) {
+              logger.error(error)
+            }
+          }
+        } while (results.length > 0)
+
+        try {
+          // Once the migration is done for this database, it can be removed. In case of error, it is caught locally
+          // so the migration can keep going on with other connectors
+          await fs.rm(path.resolve(`./cache/data-stream/north-${north.id}/values.db`), { force: true })
+          await fs.rm(path.resolve(`./cache/data-stream/north-${north.id}/values-error.db`), { force: true })
+        } catch (err) {
+          // If the error code indicates that the file does not exist, it can be discarded since the removal is not useful
+          if (err.code !== 'ENOENT') {
+            logger.error(err)
+          }
+        }
       }
     }
 
