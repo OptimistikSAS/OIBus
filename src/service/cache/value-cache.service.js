@@ -141,9 +141,9 @@ class ValueCacheService {
   async flush(flag = 'time-flush') {
     if (flag === 'max-flush') {
       clearTimeout(this.bufferTimeout)
-      // Reset timeout to null to set the buffer timeout again on the next send values
-      this.bufferTimeout = null
     }
+    // Reset timeout to null to set the buffer timeout again on the next send values
+    this.bufferTimeout = null
 
     // Save the buffer to be sent and immediately clear it
     if (this.flushBuffer.length === 0) {
@@ -255,6 +255,7 @@ class ValueCacheService {
       this.valuesBeingSent = null
       this.sendingValuesInProgress = false
       this.sendingValues$.resolve()
+      this.resetValuesTimeout(this.settings.sendInterval)
       return
     }
 

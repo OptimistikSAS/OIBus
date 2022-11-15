@@ -119,6 +119,7 @@ describe('ValueCache', () => {
         quality: true,
       },
     }]
+    cache.bufferTimeout = 1
 
     cache.compactQueueCache = jest.fn()
     cache.sendValuesWrapper = jest.fn()
@@ -132,10 +133,12 @@ describe('ValueCache', () => {
     )
     expect(cache.compactQueueCache).not.toHaveBeenCalled()
     expect(cache.sendValuesWrapper).not.toHaveBeenCalled()
+    expect(cache.bufferTimeout).toBeNull()
   })
 
   it('should properly flush with no data to flush', async () => {
     cache.flushBuffer = []
+    cache.bufferTimeout = 1
 
     cache.compactQueueCache = jest.fn()
     cache.sendValuesWrapper = jest.fn()
@@ -146,6 +149,7 @@ describe('ValueCache', () => {
     expect(fs.rename).not.toHaveBeenCalled()
     expect(cache.compactQueueCache).not.toHaveBeenCalled()
     expect(cache.sendValuesWrapper).not.toHaveBeenCalled()
+    expect(cache.bufferTimeout).toBeNull()
   })
 
   it('should properly flush the data with max-flush and group count', async () => {
@@ -166,6 +170,7 @@ describe('ValueCache', () => {
       },
     }]
     cache.settings.groupCount = 2
+    cache.bufferTimeout = 1
 
     cache.compactQueueCache = jest.fn()
     cache.sendValuesWrapper = jest.fn()
@@ -181,6 +186,7 @@ describe('ValueCache', () => {
     )
     expect(cache.compactQueueCache).not.toHaveBeenCalled()
     expect(cache.sendValuesWrapper).toHaveBeenCalledWith('group-count')
+    expect(cache.bufferTimeout).toBeNull()
   })
 
   it('should properly flush the data with max-flush and max group count', async () => {
@@ -202,7 +208,7 @@ describe('ValueCache', () => {
     }]
     cache.flushBuffer = values
     cache.settings.maxSendCount = 2
-
+    cache.bufferTimeout = 1
     cache.compactQueueCache = jest.fn()
     cache.sendValuesWrapper = jest.fn()
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
@@ -219,6 +225,7 @@ describe('ValueCache', () => {
     expectedQueue.set('generated-uuid.queue.tmp', values)
     expect(cache.compactQueueCache).toHaveBeenCalledWith(expectedQueue)
     expect(cache.sendValuesWrapper).not.toHaveBeenCalled()
+    expect(cache.bufferTimeout).toBeNull()
   })
 
   it('should properly reset values timeout', () => {
@@ -383,11 +390,12 @@ describe('ValueCache', () => {
 
   it('should not send values if no values to send', async () => {
     cache.getValuesToSend = jest.fn(() => [])
+    cache.resetValuesTimeout = jest.fn()
     await cache.sendValues()
     expect(cache.getValuesToSend).toHaveBeenCalledTimes(1)
-
     expect(logger.trace).toHaveBeenCalledWith('No value to send...')
     expect(cache.valuesBeingSent).toBeNull()
+    expect(cache.resetValuesTimeout).toHaveBeenCalledTimes(1)
   })
 
   it('should successfully send values', async () => {
