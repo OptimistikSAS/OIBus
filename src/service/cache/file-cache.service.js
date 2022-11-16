@@ -3,11 +3,6 @@ const path = require('node:path')
 
 const { createFolder } = require('../utils')
 
-// Time between two checks of the Archive Folder
-const ARCHIVE_TIMEOUT = 3600000 // one hour
-
-const ARCHIVE_FOLDER = 'archive'
-
 const FILE_FOLDER = 'files'
 const ERROR_FOLDER = 'files-errors'
 
@@ -20,32 +15,22 @@ class FileCacheService {
    * @param {Logger} logger - The logger
    * @param {String} baseFolder - The North cache folder generated as north-connectorId. This base folder can
    * be in data-stream or history-query folder depending on the connector use case
-   * @param {Boolean} archiveFiles - If the archive mode for this North connector is enabled
-   * @param {Number} retentionDuration - File retention duration in archive folder (in hours)
    * @return {void}
    */
   constructor(
     northId,
     logger,
     baseFolder,
-    archiveFiles,
-    retentionDuration,
   ) {
     this.northId = northId
     this.logger = logger
     this.baseFolder = baseFolder
-    this.archiveFiles = archiveFiles
-    // Convert from hours to ms to compare with mtimeMs (file modified time in ms)
-    this.retentionDuration = retentionDuration * 3600000
-    this.archiveFolder = path.resolve(this.baseFolder, ARCHIVE_FOLDER)
     this.fileFolder = path.resolve(this.baseFolder, FILE_FOLDER)
     this.errorFolder = path.resolve(this.baseFolder, ERROR_FOLDER)
-
-    this.archiveTimeout = null
   }
 
   /**
-   * Create databases, folders and activate archive cleanup if needed
+   * Create folders and check errors files
    * @returns {Promise<void>} - The result promise
    */
   async start() {
@@ -75,14 +60,6 @@ class FileCacheService {
       // If the folder does not exist, an error is logged but not thrown if the file cache folder is accessible
       this.logger.error(error)
     }
-
-    if (this.archiveFiles) {
-      await createFolder(this.archiveFolder)
-      // refresh the archiveFolder at the beginning only if retentionDuration is different from 0
-      if (this.retentionDuration > 0) {
-        this.refreshArchiveFolder()
-      }
-    }
   }
 
   /**
@@ -90,9 +67,7 @@ class FileCacheService {
    * @return {void}
    */
   stop() {
-    if (this.archiveTimeout) {
-      clearTimeout(this.archiveTimeout)
-    }
+    this.logger.info('stopping file cache')
   }
 
   /**
@@ -172,34 +147,6 @@ class FileCacheService {
   }
 
   /**
-   * Remove file from North connector cache and place it to archive folder if required.
-   * @param {String} filePathInCache - The file to remove
-   * @param {Boolean} archiveFile - If the file must be archived or not
-   * @return {Promise<void>} - The result promise
-   */
-  async removeFileFromCache(filePathInCache, archiveFile) {
-    if (archiveFile) {
-      const filenameInfo = path.parse(filePathInCache)
-      const archivePath = path.join(this.archiveFolder, filenameInfo.base)
-      // Move cache file into the archive folder
-      try {
-        await fs.rename(filePathInCache, archivePath)
-        this.logger.debug(`File "${filePathInCache}" moved to "${archivePath}".`)
-      } catch (renameError) {
-        this.logger.error(renameError)
-      }
-    } else {
-      // Delete original file
-      try {
-        await fs.unlink(filePathInCache)
-        this.logger.debug(`File "${filePathInCache}" removed from disk.`)
-      } catch (unlinkError) {
-        this.logger.error(unlinkError)
-      }
-    }
-  }
-
-  /**
    * Check if the file cache is empty or not
    * @returns {Promise<Boolean>} - Cache empty or not
    */
@@ -212,62 +159,6 @@ class FileCacheService {
       this.logger.error(error)
     }
     return files.length === 0
-  }
-
-  /**
-   * Delete files in archiveFolder if they are older thant the retention time.
-   * @return {void}
-   */
-  async refreshArchiveFolder() {
-    this.logger.debug('Parse archive folder to remove old files.')
-    // If a timeout already runs, clear it
-    if (this.archiveTimeout) {
-      clearTimeout(this.archiveTimeout)
-    }
-
-    let files = []
-    try {
-      files = await fs.readdir(this.archiveFolder)
-    } catch (error) {
-      // If the archive folder doest not exist (removed by the user for example), an error is logged
-      this.logger.error(error)
-    }
-    if (files.length > 0) {
-      const referenceDate = new Date().getTime()
-
-      // Map each file to a promise and remove files sequentially
-      await files.reduce((promise, file) => promise.then(
-        async () => this.removeFileIfTooOld(file, referenceDate, this.archiveFolder),
-      ), Promise.resolve())
-    } else {
-      this.logger.debug(`The archive folder "${this.archiveFolder}" is empty. Nothing to delete.`)
-    }
-    this.archiveTimeout = setTimeout(this.refreshArchiveFolder.bind(this), ARCHIVE_TIMEOUT)
-  }
-
-  /**
-   * Check the modified time of a file and remove it if older than the retention duration
-   * @param {String} filePath - The path of the file to remove
-   * @param {Number} referenceDate - The reference date (in ms)
-   * @param {String} archiveFolder - The archive folder
-   * @returns {Promise<void>} - The result promise
-   */
-  async removeFileIfTooOld(filePath, referenceDate, archiveFolder) {
-    let stats
-    try {
-      // If a file is being written or corrupted, the stat method can fail an error is logged
-      stats = await fs.stat(path.join(archiveFolder, filePath))
-    } catch (error) {
-      this.logger.error(error)
-    }
-    if (stats && stats.mtimeMs + this.retentionDuration < referenceDate) {
-      try {
-        await fs.unlink(path.join(archiveFolder, filePath))
-        this.logger.debug(`File "${path.join(archiveFolder, filePath)}" removed from archive.`)
-      } catch (unlinkError) {
-        this.logger.error(unlinkError)
-      }
-    }
   }
 }
 

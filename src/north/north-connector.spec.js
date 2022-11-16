@@ -15,6 +15,7 @@ jest.mock('../service/utils')
 jest.mock('../service/http-request-static-functions')
 jest.mock('../service/cache/value-cache.service')
 jest.mock('../service/cache/file-cache.service')
+jest.mock('../service/cache/archive.service')
 
 // Method used to flush promises called in setTimeout
 const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate)
@@ -106,9 +107,9 @@ describe('NorthConnector', () => {
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1)
     expect(north.fileCache.stop).toHaveBeenCalledTimes(1)
     expect(north.valueCache.stop).toHaveBeenCalledTimes(1)
+    expect(north.archiveService.stop).toHaveBeenCalledTimes(1)
 
     clearTimeoutSpy.mockClear()
-    north.valuesTimeout = null
     north.filesTimeout = null
     await north.stop()
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(0)
@@ -149,11 +150,10 @@ describe('NorthConnector', () => {
   })
 
   it('should retry to send files if it fails', async () => {
-    clearTimeout(north.valuesTimeout)
     clearTimeout(north.filesTimeout)
     const fileToSend = { path: 'myFile' }
     north.fileCache.retrieveFileFromCache = jest.fn(() => fileToSend)
-    north.fileCache.removeFileFromCache = jest.fn()
+    north.archiveService.archiveOrRemoveFile = jest.fn()
     north.handleFile = jest.fn().mockImplementationOnce(() => {
       throw new Error('handleFile error 1')
     }).mockImplementationOnce(() => {
@@ -170,17 +170,16 @@ describe('NorthConnector', () => {
 
     expect(north.handleFile).toHaveBeenCalledWith(fileToSend.path)
     expect(north.handleFile).toHaveBeenCalledTimes(3)
-    expect(north.fileCache.removeFileFromCache).toHaveBeenCalledTimes(0)
+    expect(north.archiveService.archiveOrRemoveFile).toHaveBeenCalledTimes(0)
     expect(north.fileCache.manageErroredFiles).toHaveBeenCalledTimes(1)
     expect(north.fileCache.manageErroredFiles).toHaveBeenCalledWith(fileToSend.path)
   })
 
   it('should successfully send files', async () => {
-    clearTimeout(north.valuesTimeout)
     clearTimeout(north.filesTimeout)
     const fileToSend = { path: 'myFile' }
     north.fileCache.retrieveFileFromCache = jest.fn(() => fileToSend)
-    north.fileCache.removeFileFromCache = jest.fn()
+    north.archiveService.archiveOrRemoveFile = jest.fn()
     north.handleFile = jest.fn()
 
     await north.retrieveFromCacheAndSendFile()
@@ -188,17 +187,16 @@ describe('NorthConnector', () => {
     await flushPromises()
     expect(north.handleFile).toHaveBeenCalledWith(fileToSend.path)
     expect(north.handleFile).toHaveBeenCalledTimes(2)
-    expect(north.fileCache.removeFileFromCache).toHaveBeenCalledTimes(2)
-    expect(north.fileCache.removeFileFromCache).toHaveBeenCalledWith(fileToSend.path, configuration.caching.archive.enabled)
+    expect(north.archiveService.archiveOrRemoveFile).toHaveBeenCalledTimes(2)
+    expect(north.archiveService.archiveOrRemoveFile).toHaveBeenCalledWith(fileToSend.path)
     expect(north.fileCache.manageErroredFiles).toHaveBeenCalledTimes(0)
   })
 
   it('should send file immediately', async () => {
-    clearTimeout(north.valuesTimeout)
     clearTimeout(north.filesTimeout)
     const fileToSend = { path: 'myFile' }
     north.fileCache.retrieveFileFromCache = jest.fn(() => fileToSend)
-    north.fileCache.removeFileFromCache = jest.fn()
+    north.archiveService.archiveOrRemoveFile = jest.fn()
     north.resetFilesTimeout = jest.fn()
     // handle file takes twice the sending interval time
     const promiseToResolve = new Promise((resolve) => {
