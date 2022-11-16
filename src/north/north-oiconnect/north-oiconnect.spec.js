@@ -14,6 +14,7 @@ jest.mock('../../service/certificate.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 jest.mock('../../service/cache/value-cache.service')
 jest.mock('../../service/cache/file-cache.service')
+jest.mock('../../service/cache/archive.service')
 jest.mock('../../service/utils')
 jest.mock('../../service/http-request-static-functions')
 
