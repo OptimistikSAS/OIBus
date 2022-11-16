@@ -8,6 +8,7 @@ const ValueCache = require('../service/cache/value-cache.service')
 const FileCache = require('../service/cache/file-cache.service')
 const { createFolder } = require('../service/utils')
 const { createProxyAgent } = require('../service/http-request-static-functions')
+const ArchiveService = require('../service/cache/archive.service')
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -106,10 +107,17 @@ class NorthConnector {
       this.id,
       this.logger,
       this.baseFolder,
+    )
+    await this.fileCache.start()
+
+    this.archiveService = new ArchiveService(
+      this.id,
+      this.logger,
+      this.baseFolder,
       this.cacheSettings.archive.enabled,
       this.cacheSettings.archive.retentionDuration,
     )
-    await this.fileCache.start()
+    await this.archiveService.start()
 
     this.certificate = new CertificateService(this.logger)
     await this.certificate.init(this.keyFile, this.certFile, this.caFile)
@@ -148,6 +156,7 @@ class NorthConnector {
     }
     await this.fileCache.stop()
     await this.valueCache.stop()
+    await this.archiveService.stop()
     this.logger.debug(`North connector ${this.id} stopped.`)
   }
 
@@ -219,7 +228,7 @@ class NorthConnector {
     try {
       this.logger.debug(`Handling file "${fileToSend.path}".`)
       await this.handleFile(fileToSend.path)
-      await this.fileCache.removeFileFromCache(fileToSend.path, this.cacheSettings.archive.enabled)
+      await this.archiveService.archiveOrRemoveFile(fileToSend.path)
       this.numberOfSentFiles += 1
       this.statusService.updateStatusDataStream({
         'Last uploaded file': fileToSend.path,
