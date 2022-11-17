@@ -275,6 +275,52 @@ class NorthConnector {
     const isFileCacheEmpty = await this.fileCache.isEmpty()
     return isValueCacheEmpty && isFileCacheEmpty
   }
+
+  /**
+   * Get list of error files from file cache.
+   * @param {String} fromDate - Start date (ISO format)
+   * @param {String} toDate - End date (ISO format)
+   * @param {String} fileNameContains - Filename filter
+   * @param {Number} pageNumber - The page number to request
+   * @returns {Promise<void>} - The list of error files
+   */
+  async getErrorFiles(fromDate, toDate, fileNameContains, pageNumber) {
+    return this.fileCache.getErrorFiles(fromDate, toDate, fileNameContains, pageNumber)
+  }
+
+  /**
+   * Remove error files from file cache.
+   * @param {String[]} filenames - The filenames to remove
+   * @returns {Promise<void>} - The result
+   */
+  async removeErrorFiles(filenames) {
+    return this.fileCache.removeErrorFiles(filenames)
+  }
+
+  /**
+   * Retry error files from file cache.
+   * @param {String[]} filenames - The filenames to retry
+   * @returns {Promise<void>} - The result
+   */
+  async retryErrorFiles(filenames) {
+    return this.fileCache.retryErrorFiles(filenames)
+  }
+
+  /**
+   * Remove all error files from file cache.
+   * @returns {Promise<void>} - The response
+   */
+  async removeAllErrorFiles() {
+    return this.fileCache.removeAllErrorFiles()
+  }
+
+  /**
+   * Retry all error files from file cache.
+   * @returns {Promise<void>} - The response
+   */
+  async retryAllErrorFiles() {
+    return this.fileCache.retryAllErrorFiles()
+  }
 }
 
 module.exports = NorthConnector

@@ -131,6 +131,17 @@ const filesExists = async (filePath) => {
   return true
 }
 
+/**
+ * Async filter implementation
+ * @param {array} array - The array to be filtered
+ * @param {function} predicate - The async filter function
+ * @returns {Promise<array>} - The filtered result
+ */
+const asyncFilter = async (array, predicate) => {
+  const results = await Promise.all(array.map(predicate))
+  return array.filter((filename, index) => results[index])
+}
+
 module.exports = {
   getCommandLineArguments,
   delay,
@@ -140,4 +151,5 @@ module.exports = {
   generateDateWithTimezone,
   compress,
   filesExists,
+  asyncFilter,
 }

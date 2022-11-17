@@ -1,10 +1,12 @@
 const fs = require('node:fs/promises')
 const path = require('node:path')
 
-const { createFolder } = require('../utils')
+const { createFolder, asyncFilter } = require('../utils')
 const DeferredPromise = require('../deferred-promise')
 
 const RESEND_IMMEDIATELY_TIMEOUT = 100
+
+const PAGE_SIZE = 50
 
 const FILE_FOLDER = 'files'
 const ERROR_FOLDER = 'files-errors'
@@ -234,25 +236,25 @@ class FileCacheService {
    * @returns {Promise<{path: string, timestamp: number}|null>} - The file to send
    */
   async retrieveFileFromCache() {
-    let fileNames = []
+    let filenames = []
     try {
-      fileNames = await fs.readdir(this.fileFolder)
+      filenames = await fs.readdir(this.fileFolder)
     } catch (error) {
       this.logger.error(error)
     }
 
-    if (fileNames.length === 0) {
+    if (filenames.length === 0) {
       return null
     }
 
     const fileStats = []
     // Get file stats one after the other
-    await fileNames.reduce((promise, fileName) => promise.then(
+    await filenames.reduce((promise, filename) => promise.then(
       async () => {
         try {
-          const stat = await fs.stat(path.resolve(this.fileFolder, fileName))
+          const stat = await fs.stat(path.resolve(this.fileFolder, filename))
           fileStats.push({
-            path: path.resolve(this.fileFolder, fileName),
+            path: path.resolve(this.fileFolder, filename),
             timestamp: stat.mtime.getTime(),
           })
         } catch (error) {
@@ -299,6 +301,122 @@ class FileCacheService {
       this.logger.error(error)
     }
     return files.length === 0
+  }
+
+  /**
+   * Get list of error files.
+   * @param {string} fromDate - Start date (ISO format)
+   * @param {string} toDate - End date (ISO format)
+   * @param {string} nameFilter - Filename filter
+   * @param {number} pageNumber - The page number to request
+   * @returns {Promise<string[]>} - The list of error files
+   */
+  async getErrorFiles(fromDate, toDate, nameFilter, pageNumber) {
+    const filenames = await this.getFiles(this.errorFolder)
+    if (filenames.length === 0) {
+      return filenames
+    }
+
+    const filteredFilenames = await asyncFilter(
+      filenames,
+      async (filename) => this.matchFile(this.errorFolder, filename, fromDate, toDate, nameFilter),
+    )
+
+    return filteredFilenames.slice((pageNumber - 1) * PAGE_SIZE, pageNumber * PAGE_SIZE)
+  }
+
+  /**
+   * Remove error files.
+   * @param {string[]} filenames - The filenames to remove
+   * @returns {Promise<void>} - The result
+   */
+  async removeErrorFiles(filenames) {
+    await Promise.allSettled(filenames.map(async (filename) => {
+      const errorFilePath = path.join(this.errorFolder, filename)
+      this.logger.debug(`Removing error file "${errorFilePath}`)
+      await fs.unlink(errorFilePath)
+    }))
+  }
+
+  /**
+   * Retry error files.
+   * @param {string[]} filenames - The filenames to retry
+   * @returns {Promise<void>} - The result
+   */
+  async retryErrorFiles(filenames) {
+    await Promise.allSettled(filenames.map(async (filename) => {
+      const errorFilePath = path.join(this.errorFolder, filename)
+      const cacheFilePath = path.join(this.fileFolder, filename)
+      this.logger.debug(`Moving error file "${errorFilePath}" back to cache "${cacheFilePath}".`)
+      await fs.rename(errorFilePath, cacheFilePath)
+    }))
+  }
+
+  /**
+   * Remove all error files.
+   * @returns {Promise<void>} - The result
+   */
+  async removeAllErrorFiles() {
+    const filenames = await this.getFiles(this.errorFolder)
+    if (filenames.length > 0) {
+      await this.removeErrorFiles(filenames)
+    } else {
+      this.logger.debug(`The archive folder "${this.archiveFolder}" is empty. Nothing to delete.`)
+    }
+  }
+
+  /**
+   * Retry all error files.
+   * @returns {Promise<void>} - The result
+   */
+  async retryAllErrorFiles() {
+    const filenames = await this.getFiles(this.errorFolder)
+    if (filenames.length > 0) {
+      await this.retryErrorFiles(filenames)
+    } else {
+      this.logger.debug(`The archive folder "${this.archiveFolder}" is empty. Nothing to delete.`)
+    }
+  }
+
+  /**
+   * Get files in a folder.
+   * @param {string} folder - The folder to list the files in
+   * @returns {Promise<string[]>} - The files
+   */
+  async getFiles(folder) {
+    let filenames = []
+    try {
+      filenames = await fs.readdir(folder)
+    } catch (error) {
+      // If the archive folder doest not exist (removed by the user for example), an error is logged
+      this.logger.error(error)
+    }
+    return filenames
+  }
+
+  /**
+   * Get list of error files.
+   * @param {string} folder - The folder the file is located in
+   * @param {string} filename - The file name
+   * @param {string} fromDate - Start date (ISO format)
+   * @param {string} toDate - End date (ISO format)
+   * @param {string} nameFilter - Filename filter
+   * @returns {Promise<boolean>} - Whether the file matches the given criteria
+   */
+  async matchFile(folder, filename, fromDate, toDate, nameFilter) {
+    let stats
+    try {
+      // If a file is being written or corrupted, the stat method can fail an error is logged
+      stats = await fs.stat(path.join(folder, filename))
+    } catch (error) {
+      this.logger.error(error)
+    }
+    const fromDateInMillis = new Date(fromDate).getTime()
+    const toDateInMillis = new Date(toDate).getTime()
+    const dateIsBetween = stats && (stats.mtimeMs >= fromDateInMillis) && (stats.mtimeMs <= toDateInMillis)
+    const filenameContains = filename.toUpperCase().includes(nameFilter.toUpperCase())
+
+    return dateIsBetween && filenameContains
   }
 }
 

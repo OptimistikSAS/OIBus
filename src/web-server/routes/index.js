@@ -6,6 +6,7 @@ const logController = require('../controllers/log.controller')
 const engineController = require('../controllers/engine.controller')
 const historyQueryController = require('../controllers/history-query.controller')
 const oibusController = require('../controllers/oibus.controller')
+const fileCacheController = require('../controllers/file-cache.controller')
 
 const router = new Router()
 
@@ -38,5 +39,11 @@ router.put('/history-queries/:id/enable', historyQueryController.enableHistoryQu
 router.put('/history-queries/:id/order', historyQueryController.orderHistoryQuery)
 router.delete('/history-queries/:id', historyQueryController.deleteHistoryQuery)
 router.get('/history-queries/:id/status', historyQueryController.getStatus)
+
+router.get('/north/:id/cache/file-errors', fileCacheController.getFileErrors)
+router.delete('/north/:id/cache/file-errors', fileCacheController.removeFileErrors)
+router.post('/north/:id/cache/file-errors/retry', fileCacheController.retryFileErrors)
+router.delete('/north/:id/cache/file-errors/remove-all', fileCacheController.removeAllFileErrors)
+router.post('/north/:id/cache/file-errors/retry-all', fileCacheController.retryAllFileErrors)
 
 module.exports = router
