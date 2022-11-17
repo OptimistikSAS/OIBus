@@ -53,11 +53,12 @@ class NorthConnector {
 
     this.encryptionService = EncryptionService.getInstance()
 
-    // Variable initialized in init()
+    // Variable initialized in start()
     this.baseFolder = null
     this.statusService = null
     this.valueCache = null
     this.fileCache = null
+    this.archiveService = null
     this.logger = null
     this.certificate = null
     this.keyFile = null
@@ -68,12 +69,7 @@ class NorthConnector {
     this.proxyAgent = null
 
     this.numberOfSentValues = 0
-
     this.numberOfSentFiles = 0
-    this.filesTimeout = null
-    this.filesRetryCount = 0
-    this.sendingFilesInProgress = false
-    this.resendFilesImmediately = false
   }
 
   /**
@@ -107,6 +103,9 @@ class NorthConnector {
       this.id,
       this.logger,
       this.baseFolder,
+      this.handleFilesWrapper.bind(this),
+      this.shouldRetry.bind(this),
+      this.cacheSettings,
     )
     await this.fileCache.start()
 
@@ -127,12 +126,6 @@ class NorthConnector {
       'Number of files sent since OIBus has started': this.canHandleFiles ? 0 : undefined,
     })
 
-    if (this.cacheSettings.sendInterval) {
-      this.resetFilesTimeout(this.cacheSettings.sendInterval)
-    } else {
-      this.logger.warn('No send interval. No values or files will be sent.')
-    }
-
     this.proxyAgent = await this.getProxy(this.proxySettings)
   }
 
@@ -145,15 +138,8 @@ class NorthConnector {
     await this.disconnect()
 
     this.numberOfSentValues = 0
-
     this.numberOfSentFiles = 0
-    this.filesRetryCount = 0
-    this.sendingFilesInProgress = false
-    this.resendFilesImmediately = false
 
-    if (this.filesTimeout) {
-      clearTimeout(this.filesTimeout)
-    }
     await this.fileCache.stop()
     await this.valueCache.stop()
     await this.archiveService.stop()
@@ -204,66 +190,20 @@ class NorthConnector {
   }
 
   /**
-   * Method called by the Engine to handle a raw file.
+   * Method called by the Engine to handle an array of values in order for example
+   * to send them to a third party application.
+   * @param {String} filePath - Path of the file to send
    * @returns {Promise<void>} - The result promise
    */
-  async retrieveFromCacheAndSendFile() {
-    if (this.sendingFilesInProgress) {
-      this.logger.trace('Already sending files...')
-      this.resendFilesImmediately = true
-      return
-    }
-
-    const fileToSend = await this.fileCache.retrieveFileFromCache()
-    if (!fileToSend) {
-      this.logger.trace('No file to send in the cache folder.')
-      this.resetFilesTimeout(this.cacheSettings.sendInterval)
-      return
-    }
-    this.logger.trace(`File to send: "${fileToSend.path}".`)
-
-    this.sendingFilesInProgress = true
-    this.resendFilesImmediately = false
-
-    try {
-      this.logger.debug(`Handling file "${fileToSend.path}".`)
-      await this.handleFile(fileToSend.path)
-      await this.archiveService.archiveOrRemoveFile(fileToSend.path)
-      this.numberOfSentFiles += 1
-      this.statusService.updateStatusDataStream({
-        'Last uploaded file': fileToSend.path,
-        'Number of files sent since OIBus has started': this.numberOfSentFiles,
-        'Last upload at': new Date().toISOString(),
-      })
-      this.filesRetryCount = 0
-    } catch (error) {
-      this.logger.error(error)
-      if (this.filesRetryCount < this.cacheSettings.retryCount || this.shouldRetry(error)) {
-        this.filesRetryCount += 1
-        this.logger.debug(`Retrying in ${this.cacheSettings.retryInterval} ms. Retry count: ${this.filesRetryCount}`)
-      } else {
-        this.logger.debug('Too many retries. Moving file to error cache...')
-        await this.fileCache.manageErroredFiles(fileToSend.path)
-        this.filesRetryCount = 0
-      }
-    }
-    this.sendingFilesInProgress = false
-
-    let timeout = this.resendFilesImmediately ? 0 : this.cacheSettings.sendInterval
-    timeout = this.filesRetryCount > 0 ? this.cacheSettings.retryInterval : timeout
-    this.resetFilesTimeout(timeout)
-  }
-
-  /**
-   * Reset timer.
-   * @param {number} timeout - The timeout to wait
-   * @return {void}
-   */
-  resetFilesTimeout(timeout) {
-    if (this.filesTimeout) {
-      clearTimeout(this.filesTimeout)
-    }
-    this.filesTimeout = setTimeout(this.retrieveFromCacheAndSendFile.bind(this), timeout)
+  async handleFilesWrapper(filePath) {
+    await this.handleFile(filePath)
+    await this.archiveService.archiveOrRemoveFile(filePath)
+    this.numberOfSentFiles += 1
+    this.statusService.updateStatusDataStream({
+      'Last upload at': new Date().toISOString(),
+      'Number of files sent since OIBus has started': this.numberOfSentFiles,
+      'Last uploaded file': filePath,
+    })
   }
 
   /**
