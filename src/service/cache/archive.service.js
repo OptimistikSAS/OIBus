@@ -120,23 +120,23 @@ class ArchiveService {
 
   /**
    * Check the modified time of a file and remove it if older than the retention duration
-   * @param {String} filePath - The path of the file to remove
+   * @param {String} filename - The name of the file to remove
    * @param {Number} referenceDate - The reference date (in ms)
    * @param {String} archiveFolder - The archive folder
    * @returns {Promise<void>} - The result promise
    */
-  async removeFileIfTooOld(filePath, referenceDate, archiveFolder) {
+  async removeFileIfTooOld(filename, referenceDate, archiveFolder) {
     let stats
     try {
       // If a file is being written or corrupted, the stat method can fail an error is logged
-      stats = await fs.stat(path.join(archiveFolder, filePath))
+      stats = await fs.stat(path.join(archiveFolder, filename))
     } catch (error) {
       this.logger.error(error)
     }
     if (stats && stats.mtimeMs + this.retentionDuration < referenceDate) {
       try {
-        await fs.unlink(path.join(archiveFolder, filePath))
-        this.logger.debug(`File "${path.join(archiveFolder, filePath)}" removed from archive.`)
+        await fs.unlink(path.join(archiveFolder, filename))
+        this.logger.debug(`File "${path.join(archiveFolder, filename)}" removed from archive.`)
       } catch (unlinkError) {
         this.logger.error(unlinkError)
       }
