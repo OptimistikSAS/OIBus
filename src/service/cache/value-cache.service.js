@@ -53,6 +53,7 @@ class ValueCacheService {
     this.sendNextImmediately = false
     this.valuesRetryCount = 0
     this.sendingValues$ = null
+    this.valuesBeingSent = null
 
     this.valueFolder = path.resolve(this.baseFolder, VALUE_FOLDER)
     this.errorFolder = path.resolve(this.baseFolder, ERROR_FOLDER)
@@ -123,8 +124,6 @@ class ValueCacheService {
       this.logger.info('No value in cache.')
     }
 
-    // Take *queue.tmp files data into this.queue
-    // Take *compact.tmp files data into this.compactedQueue
     if (this.settings.sendInterval) {
       this.resetValuesTimeout(this.settings.sendInterval)
     } else {
@@ -278,7 +277,7 @@ class ValueCacheService {
       this.logger.error(`Error when sending values (retry ${this.valuesRetryCount}): ${error}`)
       if (this.valuesRetryCount < this.settings.retryCount || this.northShouldRetryCallback(error)) {
         this.valuesRetryCount += 1
-        this.logger.debug(`Retrying in ${this.settings.retryInterval} ms. Retry count: ${this.valuesRetryCount}`)
+        this.logger.debug(`Retrying values in ${this.settings.retryInterval} ms. Retry count: ${this.valuesRetryCount}`)
       } else {
         this.logger.debug('Too many retries. The values won\'t be sent again.')
 

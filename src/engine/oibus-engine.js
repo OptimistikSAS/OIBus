@@ -269,17 +269,11 @@ class OIBusEngine extends BaseEngine {
     this.scanLists = {}
 
     // Stop South connectors
-    await Promise.allSettled(this.activeSouths.map((south) => {
-      this.logger.info(`Stopping South "${south.name}" (${south.id}).`)
-      return south.stop()
-    }))
+    await Promise.allSettled(this.activeSouths.map((south) => south.stop()))
     this.activeSouths = []
 
     // Stop North connectors
-    await Promise.allSettled(this.activeNorths.map((north) => {
-      this.logger.info(`Stopping North "${north.name}" (${north.id}).`)
-      return north.stop()
-    }))
+    await Promise.allSettled(this.activeNorths.map((north) => north.stop()))
     this.activeNorths = []
 
     this.logger.info(JSON.stringify(this.statusService.getStatus(), null, 2))
