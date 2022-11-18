@@ -8,5 +8,3 @@ build/web-client/
 node_modules/
 
 tests/coverage/
-
-data-folder/
