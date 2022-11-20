@@ -1,6 +1,8 @@
 const fs = require('node:fs/promises')
 const path = require('node:path')
 
+const utils = require('./utils')
+
 const ConfigurationService = require('./configuration.service')
 
 jest.mock('node:fs/promises')
@@ -141,7 +143,8 @@ describe('Configuration service', () => {
     expect(service.removeOrphanCacheFolders).toHaveBeenCalledWith(mockConf)
   })
 
-  it('should remove orphan cache folders', async () => {
+  it('should remove orphan cache folders if data-stream folder exists', async () => {
+    utils.filesExists.mockImplementation(() => true)
     service.modifiedConfig = {
       engine: { engineName: 'myEngineConfig' },
       north: [{ id: 'myNorthConfig' }],
@@ -151,7 +154,22 @@ describe('Configuration service', () => {
 
     await service.removeOrphanCacheFolders(service.modifiedConfig)
     const dataStreamFolderPath = path.resolve(service.cacheFolder, 'data-stream')
+    expect(utils.filesExists).toHaveBeenCalledWith(dataStreamFolderPath)
     expect(fs.rm).toHaveBeenNthCalledWith(1, path.resolve(dataStreamFolderPath, 'south-toDelete'), { recursive: true })
     expect(fs.rm).toHaveBeenNthCalledWith(2, path.resolve(dataStreamFolderPath, 'north-toDelete'), { recursive: true })
+  })
+
+  it('should do nothing when removing orphan cache folders if data-stream folder does not exist', async () => {
+    utils.filesExists.mockImplementation(() => false)
+    service.modifiedConfig = {
+      engine: { engineName: 'myEngineConfig' },
+      north: [{ id: 'myNorthConfig' }],
+      south: [{ id: 'mySouthConfig' }],
+    }
+    await service.removeOrphanCacheFolders(service.modifiedConfig)
+    const dataStreamFolderPath = path.resolve(service.cacheFolder, 'data-stream')
+    expect(utils.filesExists).toHaveBeenCalledWith(dataStreamFolderPath)
+    expect(fs.readdir).not.toHaveBeenCalled()
+    expect(fs.rm).not.toHaveBeenCalled()
   })
 })
