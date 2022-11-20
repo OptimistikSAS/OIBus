@@ -60,12 +60,12 @@ class FileCacheService {
 
     const files = await fs.readdir(this.fileFolder)
 
-    this.filesQueue = []
+    const filesWithCreationDate = []
     await files.reduce((promise, fileName) => promise.then(
       async () => {
         try {
           const fileStat = await fs.stat(path.resolve(this.fileFolder, fileName))
-          this.filesQueue.push({ fileName: path.resolve(this.fileFolder, fileName), createdAt: fileStat.ctimeMs })
+          filesWithCreationDate.push({ fileName: path.resolve(this.fileFolder, fileName), createdAt: fileStat.ctimeMs })
         } catch (error) {
           // If a file is being written or corrupted, the stat method can fail
           // An error is logged and the cache goes through the other files
@@ -74,7 +74,7 @@ class FileCacheService {
       },
     ), Promise.resolve())
     // Sort the compact queue to have the oldest file first
-    this.filesQueue.sort((a, b) => a.createdAt - b.createdAt)
+    this.filesQueue = filesWithCreationDate.sort((a, b) => a.createdAt - b.createdAt).map((file) => file.fileName)
     if (this.filesQueue.length > 0) {
       this.logger.debug(`${this.filesQueue.length} files in cache.`)
     } else {
