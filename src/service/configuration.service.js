@@ -2,6 +2,7 @@ const path = require('node:path')
 const fs = require('node:fs/promises')
 
 const EncryptionService = require('./encryption.service')
+const { filesExists } = require('./utils')
 
 const KEYS_FOLDER = './keys'
 const CERTS_FOLDER = './certs'
@@ -115,14 +116,16 @@ class ConfigurationService {
     const idList = [...northIdList, ...southIdList]
 
     const dataStreamFolderPath = path.resolve(this.cacheFolder, 'data-stream')
-    const folders = await fs.readdir(dataStreamFolderPath)
-
-    await Promise.allSettled(folders.map(async (folder) => {
-      const uid = folder.replace('north-', '').replace('south-', '')
-      if (!idList.includes(uid)) {
-        await fs.rm(path.resolve(dataStreamFolderPath, folder), { recursive: true })
-      }
-    }))
+    const pathExists = await filesExists(dataStreamFolderPath)
+    if (pathExists) {
+      const folders = await fs.readdir(dataStreamFolderPath)
+      await Promise.allSettled(folders.map(async (folder) => {
+        const uid = folder.replace('north-', '').replace('south-', '')
+        if (!idList.includes(uid)) {
+          await fs.rm(path.resolve(dataStreamFolderPath, folder), { recursive: true })
+        }
+      }))
+    }
   }
 }
 
