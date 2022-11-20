@@ -110,7 +110,7 @@ jobs:
 
       - name: Rename windows installer
         if: ${{ matrix.config['platform'] == 'win' }}
-        run: mv ./build/bin/win-setup-release/setup.exe ./build/bin/win-setup-release/oibus-setup-win32x64.exe
+        run: mv ./build/bin/win-setup-release/oibus-setup.exe ./build/bin/win-setup-release/oibus-setup-win32x64.exe
 
       - name: Upload Windows installer
         if: ${{ matrix.config['platform'] == 'win' }}
