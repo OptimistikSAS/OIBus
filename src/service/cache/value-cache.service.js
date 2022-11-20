@@ -3,7 +3,7 @@ const path = require('node:path')
 
 const { nanoid } = require('nanoid')
 
-const { createFolder } = require('../utils')
+const { createFolder, filesExists } = require('../utils')
 const DeferredPromise = require('../deferred-promise')
 
 const BUFFER_MAX = 250
@@ -73,11 +73,14 @@ class ValueCacheService {
 
     // Take buffer.tmp file data into this.flushBuffer
     this.flushBuffer = []
-    try {
-      const bufferFileContent = await fs.readFile(path.resolve(this.valueFolder, BUFFER_FILE_NAME), { encoding: 'utf8' })
-      this.flushBuffer = JSON.parse(bufferFileContent)
-    } catch (error) {
-      this.logger.error(error)
+
+    if (await filesExists(path.resolve(this.valueFolder, BUFFER_FILE_NAME))) {
+      try {
+        const bufferFileContent = await fs.readFile(path.resolve(this.valueFolder, BUFFER_FILE_NAME), { encoding: 'utf8' })
+        this.flushBuffer = JSON.parse(bufferFileContent)
+      } catch (error) {
+        this.logger.error(error)
+      }
     }
 
     let numberOfValuesInCache = 0
