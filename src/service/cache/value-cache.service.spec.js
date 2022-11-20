@@ -2,9 +2,10 @@ const path = require('node:path')
 const fs = require('node:fs/promises')
 
 const nanoid = require('nanoid')
+
 const ValueCache = require('./value-cache.service')
 
-const { createFolder } = require('../utils')
+const { createFolder, filesExists } = require('../utils')
 
 jest.mock('node:fs/promises')
 jest.mock('../utils')
@@ -46,6 +47,7 @@ describe('ValueCache', () => {
   })
 
   it('should be properly initialized with values in cache', async () => {
+    filesExists.mockImplementation(() => true)
     cache.resetValuesTimeout = jest.fn()
     fs.readdir.mockImplementation(() => ([
       'buffer.tmp',
@@ -73,7 +75,36 @@ describe('ValueCache', () => {
     expect(cache.resetValuesTimeout).toHaveBeenCalledTimes(1)
   })
 
+  it('should be properly initialized with values in cache and no buffer file', async () => {
+    filesExists.mockImplementation(() => false)
+    cache.resetValuesTimeout = jest.fn()
+    fs.readdir.mockImplementation(() => ([
+      'buffer.tmp',
+      '1.queue.tmp',
+      '2.queue.tmp',
+      '1.compact.tmp',
+      '2.compact.tmp',
+    ]))
+
+    fs.readFile.mockImplementationOnce(() => JSON.stringify([{ data: 'myFirstQueueValue1' }, { data: 'myFirstQueueValue2' }]))
+      .mockImplementationOnce(() => JSON.stringify([{ data: 'mySecondQueueValue1' }, { data: 'mySecondQueueValue2' }]))
+      .mockImplementationOnce(() => JSON.stringify([{ data: 'myFirstCompactValue1' }, { data: 'myFirstCompactValue2' }]))
+      .mockImplementationOnce(() => JSON.stringify([{ data: 'mySecondCompactValue1' }, { data: 'mySecondCompactValue2' }]))
+    fs.stat.mockImplementationOnce(() => ({ ctimeMs: 2 })).mockImplementationOnce(() => ({ ctimeMs: 1 }))
+    await cache.start()
+    expect(cache.northId).toEqual('northId')
+    expect(cache.baseFolder).toEqual('myCacheFolder')
+
+    expect(createFolder).toHaveBeenCalledTimes(2)
+    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values'))
+    expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors'))
+
+    expect(logger.info).toHaveBeenCalledWith('8 values in cache.')
+    expect(cache.resetValuesTimeout).toHaveBeenCalledTimes(1)
+  })
+
   it('should be properly initialized with no value in cache', async () => {
+    filesExists.mockImplementation(() => true)
     fs.readdir.mockImplementation(() => ([
       'buffer.tmp',
       '0.queue.tmp',
