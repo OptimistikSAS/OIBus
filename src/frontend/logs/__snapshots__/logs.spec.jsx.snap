@@ -78,7 +78,7 @@ exports[`Logs check Logs 1`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="date"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <input
                   class="oi-form-input form-control"
@@ -86,7 +86,7 @@ exports[`Logs check Logs 1`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="time"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <div
                   class="invalid-feedback"
@@ -457,7 +457,7 @@ exports[`Logs check change filterText 1`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="date"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <input
                   class="oi-form-input form-control"
@@ -465,7 +465,7 @@ exports[`Logs check change filterText 1`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="time"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <div
                   class="invalid-feedback"
@@ -721,7 +721,7 @@ exports[`Logs check change fromDate 1`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="date"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <input
                   class="oi-form-input form-control"
@@ -729,7 +729,7 @@ exports[`Logs check change fromDate 1`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="time"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <div
                   class="invalid-feedback"
@@ -1479,7 +1479,7 @@ exports[`Logs check change verbosity, check trace 1`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="date"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <input
                   class="oi-form-input form-control"
@@ -1487,7 +1487,7 @@ exports[`Logs check change verbosity, check trace 1`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="time"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <div
                   class="invalid-feedback"
@@ -1743,7 +1743,7 @@ exports[`Logs check change verbosity, uncheck error 1`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="date"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <input
                   class="oi-form-input form-control"
@@ -1751,7 +1751,7 @@ exports[`Logs check change verbosity, uncheck error 1`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="time"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <div
                   class="invalid-feedback"
@@ -2007,7 +2007,7 @@ exports[`Logs check press Show Logs, error in logs call 1`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="date"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <input
                   class="oi-form-input form-control"
@@ -2015,7 +2015,7 @@ exports[`Logs check press Show Logs, error in logs call 1`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="time"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <div
                   class="invalid-feedback"
@@ -2271,7 +2271,7 @@ exports[`Logs check press showMore 1`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="date"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <input
                   class="oi-form-input form-control"
@@ -2279,7 +2279,7 @@ exports[`Logs check press showMore 1`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="time"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <div
                   class="invalid-feedback"
@@ -8243,7 +8243,7 @@ exports[`Logs check press showMore 2`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="date"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <input
                   class="oi-form-input form-control"
@@ -8251,7 +8251,7 @@ exports[`Logs check press showMore 2`] = `
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="time"
-                  value="Invalid DateTime"
+                  value=""
                 />
                 <div
                   class="invalid-feedback"
