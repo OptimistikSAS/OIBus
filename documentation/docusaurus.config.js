@@ -7,7 +7,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula')
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'OIBus - Data collection solution',
-  url: 'https://burgerni10.github.io/',
+  url: 'https://OptimistikSAS.github.io/',
   baseUrl: '/OIBus/',
   favicon: 'img/favicon.ico',
   tagline: 'Start collecting your data now',
@@ -16,7 +16,7 @@ const config = {
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'burgerni10', // Usually your GitHub org/user name.
+  organizationName: 'OptimistikSAS', // Usually your GitHub org/user name.
   projectName: 'OIBus', // Usually your repo name.
 
   // Even if you don't use internalization, you can use this field to set useful
