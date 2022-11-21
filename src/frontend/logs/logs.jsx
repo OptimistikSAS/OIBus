@@ -34,7 +34,7 @@ const Log = () => {
   const defaultMaxLog = 300
 
   const auxDate = new Date() // Today
-  const [toDate, setToDate] = React.useState(auxDate.toISOString())
+  const [toDate, setToDate] = React.useState()
   auxDate.setDate(auxDate.getDate() - 1) // Yesterday
   const [fromDate, setFromDate] = React.useState(auxDate.toISOString())
 
