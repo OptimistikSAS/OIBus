@@ -7,8 +7,8 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula')
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'OIBus - Data collection solution',
-  url: 'https://OptimistikSAS.github.io/',
-  baseUrl: '/OIBus/',
+  url: 'https://oibus.optimistik.com/',
+  baseUrl: '/',
   favicon: 'img/favicon.ico',
   tagline: 'Start collecting your data now',
   onBrokenLinks: 'throw',
