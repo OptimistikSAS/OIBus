@@ -5,12 +5,11 @@ OIBus is an executable (Windows, Linux and Mac) able to query data from your ind
 (including OPCUA-HA, OPCHDA, Modbus, MQTT) or simply by scanning folders and will send them to your enterprise 
 applications.
 
-**Optimistik** is using **OIBus** on many industrial sites to send data to its **OIAnalytics** solution to query from 10
-to over 10.000 points with sampling rate at the second level.
+[**Optimistik**](https://optimistik.io) is using **OIBus** on many industrial sites to send data to its **OIAnalytics** 
+solution to query from 10 to over 10.000 points with sampling rate at the second level.
 
-OIBus can be installed and configured in minutes and does not need development skills.
-
-More information on [OIBus homepage](https://optimistik.io/oibus)
+OIBus [can be installed](https://oibus.optimistik.com/docs/guide/installation) and configured in minutes and does not 
+need development skills.
 
 ## Introduction
 OIBus is intended to simplify the data collection. We, at Optimistik, felt we had a missing piece between NodeRed and 
@@ -23,6 +22,8 @@ OIBus is composed of 3 layers.
 - Several **North** connectors that will be able to transfer the data to application such as OIAnalytics, Rest API,
 Timeseries databases, MQTT broker... 
 
+You can know more about OIBus by reading [our documentation](https://oibus.optimistik.com/).
+
 ## Build and deploy step
 * **Fork** the OIBus repository and clone it. Be sure to have NodeJS and npm installed (LTS versions).
 * **Install** the node dependencies : `npm install`
@@ -31,3 +32,5 @@ modify the web client, you must rebuild it. Alternatively, you can build it on c
 * **Start** OIBus from source with `npm start`
 * You can compile OIBus on your appropriate distribution with `npm run build:win`, `npm run build:linux` or `npm run build:macos`.
 * You can start OIBus from its binaries with `npm run start:win`, `npm run start:linux` or `npm run start:macos`.
+
+A more complete developer guide is accessible on [our developer documentation](https://oibus.optimistik.com/docs/developer/).
