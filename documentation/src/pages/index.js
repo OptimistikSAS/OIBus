@@ -12,29 +12,42 @@ const HomepageHeader = () => {
   return (
     <header className={clsx('hero hero--primary', styles.heroBanner)}>
       <div className="container">
-        <h1 className="hero__title">{siteConfig.title}</h1>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
-        <div className={styles.buttons}>
-          <Link
-            className="button button--secondary button--lg"
-            to="/docs/guide"
-          >
-            Get familiar with OIBus
-          </Link>
-          <Link
-            className="button button--secondary button--lg"
-            style={{ marginLeft: '2em' }}
-            to="/docs/guide/installation"
-          >
-            Install OIBus
-          </Link>
-          <Link
-            className="button button--secondary button--lg"
-            style={{ marginLeft: '2em' }}
-            to="/docs/developer"
-          >
-            Develop OIBus
-          </Link>
+        <h1 className={clsx('hero__title', styles.welcomeTitle)}>{siteConfig.title}</h1>
+        <p className={clsx('hero__subtitle', styles.welcomeTitle)}>{siteConfig.tagline}</p>
+        <div className="row">
+          <div className={clsx('col col--4')}>
+            <div className="text--center">
+              <Link
+                className={clsx('button button--secondary button--md', styles.welcomeButtons)}
+                style={{ marginTop: '1em', marginBottom: '1em', color: '#f5f5f5' }}
+                to="/docs/guide"
+              >
+                Get familiar with OIBus
+              </Link>
+            </div>
+          </div>
+          <div className={clsx('col col--4')}>
+            <div className="text--center">
+              <Link
+                className={clsx('button button--secondary button--md', styles.welcomeButtons)}
+                style={{ marginLeft: '2em', marginRight: '2em', marginTop: '1em', marginBottom: '1em', color: '#f5f5f5' }}
+                to="/docs/guide/installation"
+              >
+                Install OIBus
+              </Link>
+            </div>
+          </div>
+          <div className={clsx('col col--4')}>
+            <div className="text--center">
+              <Link
+                className={clsx('button button--secondary button--md', styles.welcomeButtons)}
+                style={{ marginTop: '1em', marginBottom: '1em', color: '#f5f5f5' }}
+                to="/docs/developer"
+              >
+                Develop OIBus
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </header>
