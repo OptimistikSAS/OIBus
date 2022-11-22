@@ -13,7 +13,7 @@ const DownloadButton = ({ children, link, color }) => (
       style={{
         backgroundColor: color,
         borderRadius: '10px',
-        color: '#fff',
+        color: '#f5f5f5',
         padding: '10px',
         cursor: 'pointer',
         minWidth: '10rem',
@@ -31,6 +31,6 @@ DownloadButton.propTypes = {
   children: PropTypes.object.isRequired,
 }
 
-DownloadButton.defaultProps = { color: '#fabb00' }
+DownloadButton.defaultProps = { color: '#009ee0' }
 
 export default DownloadButton

@@ -16,8 +16,12 @@
   }
 }
 
-.buttons {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.welcomeTitle {
+  color: #2c3c45;
+}
+
+.welcomeButtons {
+  background-color: #009ee0;
+  border: none;
+  color: whitesmoke;
 }
