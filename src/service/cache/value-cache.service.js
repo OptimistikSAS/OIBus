@@ -3,7 +3,7 @@ const path = require('node:path')
 
 const { nanoid } = require('nanoid')
 
-const { createFolder, filesExists } = require('../utils')
+const { createFolder } = require('../utils')
 const DeferredPromise = require('../deferred-promise')
 
 const BUFFER_MAX = 250
@@ -12,8 +12,6 @@ const RESEND_IMMEDIATELY_TIMEOUT = 100
 
 const VALUE_FOLDER = 'values'
 const ERROR_FOLDER = 'values-errors'
-
-const BUFFER_FILE_NAME = 'buffer.tmp'
 
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
@@ -44,10 +42,10 @@ class ValueCacheService {
     this.northShouldRetryCallback = northShouldRetryCallback
     this.settings = settings
 
-    this.flushBuffer = []
     this.bufferTimeout = null
     this.valuesTimeout = null
-    this.queue = new Map() // key: queue filename (randomId.queue.tmp, value: the values in the queue file
+    this.bufferFiles = new Map() // key: buffer filename (randomId.buffer.tmp, value: the values in the queue file)
+    this.queue = new Map() // key: queue filename (randomId.queue.tmp, value: the values in the queue file)
     this.compactedQueue = [] // List of object {fileName, creationAt, numberOfValues} fileName: compact filename (randomId.compact.tmp)
     this.sendingValuesInProgress = false
     this.sendNextImmediately = false
@@ -60,7 +58,7 @@ class ValueCacheService {
   }
 
   /**
-   * Create folders, read the cache folders to initialize the flushBuffer, queue and compactQueue
+   * Create folders, read the cache folders to initialize the bufferFiles, queue and compactQueue
    * It also counts the values stored in the cache and log it.
    * If a file is corrupted or malformed, an error is logged and the file is ignored
    * @returns {Promise<void>} - The result promise
@@ -71,17 +69,23 @@ class ValueCacheService {
 
     const files = await fs.readdir(this.valueFolder)
 
-    // Take buffer.tmp file data into this.flushBuffer
-    this.flushBuffer = []
+    // Take buffer.tmp file data into this.bufferFiles
+    this.bufferFiles = new Map()
 
-    if (await filesExists(path.resolve(this.valueFolder, BUFFER_FILE_NAME))) {
-      try {
-        const bufferFileContent = await fs.readFile(path.resolve(this.valueFolder, BUFFER_FILE_NAME), { encoding: 'utf8' })
-        this.flushBuffer = JSON.parse(bufferFileContent)
-      } catch (error) {
-        this.logger.error(error)
-      }
-    }
+    const bufferFiles = files.filter((file) => file.match(/.*.buffer.tmp/))
+    await bufferFiles.reduce((promise, fileName) => promise.then(
+      async () => {
+        try {
+          const fileContent = await fs.readFile(path.resolve(this.valueFolder, fileName), { encoding: 'utf8' })
+          const values = JSON.parse(fileContent)
+          this.bufferFiles.set(fileName, values)
+        } catch (error) {
+          // If a file is being written or corrupted, the readFile method can fail
+          // An error is logged and the cache goes through the other files
+          this.logger.error(`Error while reading buffer file "${path.resolve(this.valueFolder, fileName)}": ${error}`)
+        }
+      },
+    ), Promise.resolve())
 
     let numberOfValuesInCache = 0
     // Filters file that don't match the regex (keep queue.tmp files only)
@@ -147,18 +151,43 @@ class ValueCacheService {
     // Reset timeout to null to set the buffer timeout again on the next send values
     this.bufferTimeout = null
 
-    // Save the buffer to be sent and immediately clear it
-    if (this.flushBuffer.length === 0) {
-      this.logger.trace(`Nothing to flush (${flag}).`)
-      return
-    }
+    const copiedBufferFiles = this.bufferFiles
+    const valuesInBufferFiles = []
 
-    this.logger.trace(`Flush ${this.flushBuffer.length} values (${flag}).`)
-    const bufferSave = [...this.flushBuffer]
-    this.flushBuffer = []
+    copiedBufferFiles.forEach((values, key) => {
+      valuesInBufferFiles.push({ key, values })
+    })
     const tmpFileName = `${nanoid()}.queue.tmp`
-    await fs.rename(path.resolve(this.valueFolder, BUFFER_FILE_NAME), path.resolve(this.valueFolder, tmpFileName))
-    this.queue.set(tmpFileName, bufferSave)
+
+    try {
+      const valuesToFlush = valuesInBufferFiles.reduce((prev, { values }) => {
+        prev.push(...values)
+        return prev
+      }, [])
+      // Save the buffer to be sent and immediately clear it
+      if (valuesToFlush.length === 0) {
+        this.logger.trace(`Nothing to flush (${flag}).`)
+        return
+      }
+      // Store the values in a tmp file
+      await fs.writeFile(
+        path.resolve(this.valueFolder, tmpFileName),
+        JSON.stringify(valuesToFlush),
+        { encoding: 'utf8', flag: 'w' },
+      )
+      this.queue.set(tmpFileName, valuesToFlush)
+      this.logger.trace(`Flush ${valuesToFlush.length} values (${flag}) into "${path.resolve(this.valueFolder, tmpFileName)}".`)
+
+      // Once compacted, remove values from queue.
+      await valuesInBufferFiles.reduce((promise, { key }) => promise.then(
+        async () => {
+          this.bufferFiles.delete(key)
+          await fs.unlink(path.resolve(this.valueFolder, key))
+        },
+      ), Promise.resolve())
+    } catch (error) {
+      this.logger.error(error)
+    }
 
     let groupCount = 0
     this.queue.forEach((values) => {
@@ -397,14 +426,20 @@ class ValueCacheService {
    * @returns {Promise<void>} - The result promise
    */
   async cacheValues(values) {
-    this.flushBuffer.push(...values)
+    const tmpFileName = `${nanoid()}.buffer.tmp`
+
     // Immediately write the values into the buffer.tmp file to persist them on disk
     await fs.writeFile(
-      path.resolve(this.valueFolder, BUFFER_FILE_NAME),
-      JSON.stringify(this.flushBuffer),
+      path.resolve(this.valueFolder, tmpFileName),
+      JSON.stringify(values),
       { encoding: 'utf8' },
     )
-    if (this.flushBuffer.length > BUFFER_MAX) {
+    this.bufferFiles.set(tmpFileName, values)
+    let numberOfValuesInBufferFiles = 0
+    this.bufferFiles.forEach((valuesInFile) => {
+      numberOfValuesInBufferFiles += valuesInFile.length
+    })
+    if (numberOfValuesInBufferFiles > BUFFER_MAX) {
       await this.flush('max-flush')
     } else if (this.bufferTimeout === null) {
       this.bufferTimeout = setTimeout(this.flush.bind(this), BUFFER_TIMEOUT)

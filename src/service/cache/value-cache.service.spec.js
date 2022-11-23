@@ -5,7 +5,7 @@ const nanoid = require('nanoid')
 
 const ValueCache = require('./value-cache.service')
 
-const { createFolder, filesExists } = require('../utils')
+const { createFolder } = require('../utils')
 
 jest.mock('node:fs/promises')
 jest.mock('../utils')
@@ -47,10 +47,9 @@ describe('ValueCache', () => {
   })
 
   it('should be properly initialized with values in cache', async () => {
-    filesExists.mockImplementation(() => true)
     cache.resetValuesTimeout = jest.fn()
     fs.readdir.mockImplementation(() => ([
-      'buffer.tmp',
+      '1.buffer.tmp',
       '1.queue.tmp',
       '2.queue.tmp',
       '1.compact.tmp',
@@ -76,10 +75,8 @@ describe('ValueCache', () => {
   })
 
   it('should be properly initialized with values in cache and no buffer file', async () => {
-    filesExists.mockImplementation(() => false)
     cache.resetValuesTimeout = jest.fn()
     fs.readdir.mockImplementation(() => ([
-      'buffer.tmp',
       '1.queue.tmp',
       '2.queue.tmp',
       '1.compact.tmp',
@@ -104,9 +101,8 @@ describe('ValueCache', () => {
   })
 
   it('should be properly initialized with no value in cache', async () => {
-    filesExists.mockImplementation(() => true)
     fs.readdir.mockImplementation(() => ([
-      'buffer.tmp',
+      '0.buffer.tmp',
       '0.queue.tmp',
       '0.compact.tmp',
     ]))
@@ -124,7 +120,8 @@ describe('ValueCache', () => {
     cache.settings.sendInterval = 0
     await cache.start()
 
-    expect(logger.error).toHaveBeenCalledWith(new Error('buffer read file error'))
+    expect(logger.error).toHaveBeenCalledWith(`Error while reading buffer file "${path.resolve(cache.valueFolder, '0.buffer.tmp')}"`
+        + `: ${new Error('buffer read file error')}`)
     expect(logger.error).toHaveBeenCalledWith(`Error while reading queue file "${path.resolve(cache.valueFolder, '0.queue.tmp')}"`
         + `: ${new Error('queue read file error')}`)
     expect(logger.error).toHaveBeenCalledWith(`Error while reading queue file "${path.resolve(cache.valueFolder, '0.compact.tmp')}"`
@@ -134,7 +131,7 @@ describe('ValueCache', () => {
   })
 
   it('should properly flush the data with time-flush', async () => {
-    cache.flushBuffer = [{
+    const values = [{
       timestamp: '2020-02-02T01:02:02.000Z',
       pointId: 'point1',
       data: {
@@ -150,25 +147,39 @@ describe('ValueCache', () => {
         quality: true,
       },
     }]
+    cache.bufferFiles = new Map()
+    cache.bufferFiles.set('buffer-file1.buffer.tmp', values)
+    cache.bufferFiles.set('buffer-file2.buffer.tmp', values)
     cache.bufferTimeout = 1
 
     cache.compactQueueCache = jest.fn()
     cache.sendValuesWrapper = jest.fn()
     nanoid.nanoid.mockReturnValue('generated-uuid')
+    fs.unlink.mockImplementationOnce(() => true).mockImplementationOnce(() => {
+      throw new Error('unlink error')
+    })
 
     await cache.flush()
-    expect(logger.trace).toHaveBeenCalledWith('Flush 2 values (time-flush).')
-    expect(fs.rename).toHaveBeenCalledWith(
-      path.resolve(cache.valueFolder, 'buffer.tmp'),
+    expect(logger.trace).toHaveBeenCalledWith(`Flush 4 values (time-flush) into "${path.resolve(cache.valueFolder, 'generated-uuid.queue.tmp')}".`)
+    expect(fs.writeFile).toHaveBeenCalledWith(
       path.resolve(cache.valueFolder, 'generated-uuid.queue.tmp'),
+      JSON.stringify([...values, ...values]),
+      { encoding: 'utf8', flag: 'w' },
     )
+    expect(fs.unlink).toHaveBeenCalledWith(
+      path.resolve(cache.valueFolder, 'buffer-file1.buffer.tmp'),
+    )
+    expect(fs.unlink).toHaveBeenCalledWith(
+      path.resolve(cache.valueFolder, 'buffer-file2.buffer.tmp'),
+    )
+    expect(logger.error).toHaveBeenCalledWith(new Error('unlink error'))
     expect(cache.compactQueueCache).not.toHaveBeenCalled()
     expect(cache.sendValuesWrapper).not.toHaveBeenCalled()
     expect(cache.bufferTimeout).toBeNull()
   })
 
   it('should properly flush with no data to flush', async () => {
-    cache.flushBuffer = []
+    cache.bufferFiles = new Map()
     cache.bufferTimeout = 1
 
     cache.compactQueueCache = jest.fn()
@@ -184,7 +195,7 @@ describe('ValueCache', () => {
   })
 
   it('should properly flush the data with max-flush and group count', async () => {
-    cache.flushBuffer = [{
+    const values = [{
       timestamp: '2020-02-02T01:02:02.000Z',
       pointId: 'point1',
       data: {
@@ -200,6 +211,8 @@ describe('ValueCache', () => {
         quality: true,
       },
     }]
+    cache.bufferFiles = new Map()
+    cache.bufferFiles.set('buffer-file1.buffer.tmp', values)
     cache.settings.groupCount = 2
     cache.bufferTimeout = 1
 
@@ -210,10 +223,14 @@ describe('ValueCache', () => {
 
     await cache.flush('max-flush')
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1)
-    expect(logger.trace).toHaveBeenCalledWith('Flush 2 values (max-flush).')
-    expect(fs.rename).toHaveBeenCalledWith(
-      path.resolve(cache.valueFolder, 'buffer.tmp'),
+    expect(logger.trace).toHaveBeenCalledWith(`Flush 2 values (max-flush) into "${path.resolve(cache.valueFolder, 'generated-uuid.queue.tmp')}".`)
+    expect(fs.writeFile).toHaveBeenCalledWith(
       path.resolve(cache.valueFolder, 'generated-uuid.queue.tmp'),
+      JSON.stringify(values),
+      { encoding: 'utf8', flag: 'w' },
+    )
+    expect(fs.unlink).toHaveBeenCalledWith(
+      path.resolve(cache.valueFolder, 'buffer-file1.buffer.tmp'),
     )
     expect(cache.compactQueueCache).not.toHaveBeenCalled()
     expect(cache.sendValuesWrapper).toHaveBeenCalledWith('group-count')
@@ -237,7 +254,8 @@ describe('ValueCache', () => {
         quality: true,
       },
     }]
-    cache.flushBuffer = values
+    cache.bufferFiles = new Map()
+    cache.bufferFiles.set('buffer-file1.buffer.tmp', values)
     cache.settings.maxSendCount = 2
     cache.bufferTimeout = 1
     cache.compactQueueCache = jest.fn()
@@ -247,10 +265,14 @@ describe('ValueCache', () => {
 
     await cache.flush('max-flush')
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1)
-    expect(logger.trace).toHaveBeenCalledWith('Flush 2 values (max-flush).')
-    expect(fs.rename).toHaveBeenCalledWith(
-      path.resolve(cache.valueFolder, 'buffer.tmp'),
+    expect(logger.trace).toHaveBeenCalledWith(`Flush 2 values (max-flush) into "${path.resolve(cache.valueFolder, 'generated-uuid.queue.tmp')}".`)
+    expect(fs.writeFile).toHaveBeenCalledWith(
       path.resolve(cache.valueFolder, 'generated-uuid.queue.tmp'),
+      JSON.stringify(values),
+      { encoding: 'utf8', flag: 'w' },
+    )
+    expect(fs.unlink).toHaveBeenCalledWith(
+      path.resolve(cache.valueFolder, 'buffer-file1.buffer.tmp'),
     )
     const expectedQueue = new Map()
     expectedQueue.set('generated-uuid.queue.tmp', values)
@@ -519,25 +541,29 @@ describe('ValueCache', () => {
   })
 
   it('should cache values and flush because of timer', async () => {
+    nanoid.nanoid.mockReturnValueOnce('generated-uuid1').mockReturnValueOnce('generated-uuid2')
+
     const valuesToCache = [{ data: 'myFirstValue' }, { data: 'mySecondValue' }]
     cache.flush = jest.fn()
     await cache.cacheValues(valuesToCache)
     expect(fs.writeFile).toHaveBeenCalledWith(
-      path.resolve(cache.valueFolder, 'buffer.tmp'),
+      path.resolve(cache.valueFolder, 'generated-uuid1.buffer.tmp'),
       JSON.stringify(valuesToCache),
       { encoding: 'utf8' },
     )
-    expect(cache.flushBuffer).toEqual(valuesToCache)
+    expect(cache.bufferFiles.get('generated-uuid1.buffer.tmp')).toEqual(valuesToCache)
     jest.advanceTimersByTime(150)
     await cache.cacheValues(valuesToCache)
     expect(cache.flush).not.toHaveBeenCalled()
-    expect(cache.flushBuffer).toEqual([...valuesToCache, ...valuesToCache])
+    expect(cache.bufferFiles.get('generated-uuid2.buffer.tmp')).toEqual(valuesToCache)
 
     jest.advanceTimersByTime(150)
     expect(cache.flush).toHaveBeenCalledWith()
   })
 
   it('should cache values and flush because of buffer max', async () => {
+    nanoid.nanoid.mockReturnValue('generated-uuid')
+
     const valuesToCache = []
     for (let i = 0; i < 251; i += 1) {
       valuesToCache.push({})
@@ -545,7 +571,7 @@ describe('ValueCache', () => {
     cache.flush = jest.fn()
     await cache.cacheValues(valuesToCache)
     expect(fs.writeFile).toHaveBeenCalledWith(
-      path.resolve(cache.valueFolder, 'buffer.tmp'),
+      path.resolve(cache.valueFolder, 'generated-uuid.buffer.tmp'),
       JSON.stringify(valuesToCache),
       { encoding: 'utf8' },
     )
