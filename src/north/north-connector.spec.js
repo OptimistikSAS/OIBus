@@ -176,4 +176,41 @@ describe('NorthConnector', () => {
     expect(north.logger.trace).toHaveBeenCalledWith('Default retry test always return false.')
     expect(retry).toEqual(false)
   })
+
+  it('should get error files', async () => {
+    const fromDate = '2022-11-11T11:11:11.111'
+    const toDate = '2022-11-12T11:11:11.111'
+    const nameFilter = 'ile'
+    const pageNumber = 1
+    const files = ['file1.name', 'file2.name', 'file3.name']
+    north.fileCache.getErrorFiles.mockReturnValue(Promise.resolve(files))
+
+    const result = await north.getErrorFiles(fromDate, toDate, nameFilter, pageNumber)
+    expect(north.fileCache.getErrorFiles).toBeCalledWith(fromDate, toDate, nameFilter, pageNumber)
+    expect(result).toEqual(files)
+  })
+
+  it('should remove error files', async () => {
+    const files = ['file1.name', 'file2.name', 'file3.name']
+
+    await north.removeErrorFiles(files)
+    expect(north.fileCache.removeErrorFiles).toBeCalledWith(files)
+  })
+
+  it('should retry error files', async () => {
+    const files = ['file1.name', 'file2.name', 'file3.name']
+
+    await north.retryErrorFiles(files)
+    expect(north.fileCache.retryErrorFiles).toBeCalledWith(files)
+  })
+
+  it('should remove all error files', async () => {
+    await north.removeAllErrorFiles()
+    expect(north.fileCache.removeAllErrorFiles).toBeCalled()
+  })
+
+  it('should retry all error files', async () => {
+    await north.retryAllErrorFiles()
+    expect(north.fileCache.retryAllErrorFiles).toBeCalled()
+  })
 })

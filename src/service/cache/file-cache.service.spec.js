@@ -3,7 +3,7 @@ const fs = require('node:fs/promises')
 
 const FileCache = require('./file-cache.service')
 
-const { createFolder } = require('../utils')
+const { createFolder, asyncFilter } = require('../utils')
 
 jest.mock('node:fs/promises')
 
@@ -311,5 +311,130 @@ describe('FileCache', () => {
     await cache.stop()
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1)
     expect(logger.debug).toHaveBeenCalledWith('Waiting for connector to finish sending file...')
+  })
+
+  it('should return empty file list when the error folder is empty', async () => {
+    const fromDate = '2022-11-11T11:11:11.111'
+    const toDate = '2022-11-12T11:11:11.111'
+    const nameFilter = 'ile'
+    const pageNumber = 1
+    cache.getFiles = jest.fn().mockReturnValue([])
+
+    const result = await cache.getErrorFiles(fromDate, toDate, nameFilter, pageNumber)
+    expect(cache.getFiles).toBeCalledWith(cache.errorFolder)
+    expect(result).toEqual([])
+  })
+
+  it('should return filtered file list when the error folder is not empty', async () => {
+    const nameFilter = 'ile'
+    const fromDate = '2022-11-11T11:11:11.111'
+    const toDate = '2022-11-12T11:11:11.111'
+    const pageNumber = 1
+    const filenames = ['file1.name', 'file2.name', 'file3.name']
+    cache.getFiles = jest.fn().mockReturnValue(Promise.resolve(filenames))
+    asyncFilter.mockReturnValue(['file1.name', 'file2.name'])
+
+    const result = await cache.getErrorFiles(fromDate, toDate, nameFilter, pageNumber)
+    expect(cache.getFiles).toBeCalledWith(cache.errorFolder)
+    expect(asyncFilter).toHaveBeenCalled()
+    expect(result).toEqual(['file1.name', 'file2.name'])
+  })
+
+  it('should remove error files', async () => {
+    const filenames = ['file1.name', 'file2.name', 'file3.name']
+
+    await cache.removeErrorFiles(filenames)
+    expect(fs.unlink).toHaveBeenNthCalledWith(1, path.join(cache.errorFolder, filenames[0]))
+    expect(fs.unlink).toHaveBeenNthCalledWith(2, path.join(cache.errorFolder, filenames[1]))
+    expect(fs.unlink).toHaveBeenNthCalledWith(3, path.join(cache.errorFolder, filenames[2]))
+  })
+
+  it('should retry error files', async () => {
+    const filenames = ['file1.name', 'file2.name', 'file3.name']
+
+    await cache.retryErrorFiles(filenames)
+    expect(fs.rename).toHaveBeenNthCalledWith(1, path.join(cache.errorFolder, filenames[0]), path.join(cache.fileFolder, filenames[0]))
+    expect(fs.rename).toHaveBeenNthCalledWith(2, path.join(cache.errorFolder, filenames[1]), path.join(cache.fileFolder, filenames[1]))
+    expect(fs.rename).toHaveBeenNthCalledWith(3, path.join(cache.errorFolder, filenames[2]), path.join(cache.fileFolder, filenames[2]))
+  })
+
+  it('should remove all error files when the error folder is not empty', async () => {
+    const filenames = ['file1.name', 'file2.name', 'file3.name']
+    cache.getFiles = jest.fn().mockReturnValue(Promise.resolve(filenames))
+    cache.removeErrorFiles = jest.fn()
+
+    await cache.removeAllErrorFiles()
+    expect(cache.removeErrorFiles).toHaveBeenCalledWith(filenames)
+  })
+
+  it('should not remove any error file when the error folder is empty', async () => {
+    cache.getFiles = jest.fn().mockReturnValue(Promise.resolve([]))
+    cache.removeErrorFiles = jest.fn()
+
+    await cache.removeAllErrorFiles()
+    expect(cache.removeErrorFiles).not.toHaveBeenCalled()
+  })
+
+  it('should retry all error files when the error folder is not empty', async () => {
+    const filenames = ['file1.name', 'file2.name', 'file3.name']
+    cache.getFiles = jest.fn().mockReturnValue(Promise.resolve(filenames))
+    cache.retryErrorFiles = jest.fn()
+
+    await cache.retryAllErrorFiles()
+    expect(cache.retryErrorFiles).toHaveBeenCalledWith(filenames)
+  })
+
+  it('should not remove any error file when the error folder is empty', async () => {
+    cache.getFiles = jest.fn().mockReturnValue(Promise.resolve([]))
+    cache.retryErrorFiles = jest.fn()
+
+    await cache.retryAllErrorFiles()
+    expect(cache.retryErrorFiles).not.toHaveBeenCalled()
+  })
+
+  it('should get files from a folder', async () => {
+    const folder = 'folder'
+    const filenames = ['file1.name', 'file2.name']
+    fs.readdir = jest.fn().mockReturnValue(filenames)
+
+    const result = await cache.getFiles(folder)
+    expect(fs.readdir).toHaveBeenCalledWith(folder)
+    expect(result).toEqual(filenames)
+  })
+
+  it('should match file with date and name', async () => {
+    const folder = 'folder'
+    const filename = 'file.name'
+    const fromDate = '2022-11-11T11:11:11.111'
+    const toDate = '2022-11-12T11:11:11.111'
+    fs.stat = jest.fn().mockReturnValue({ mtimeMs: new Date('2022-11-12T00:00:00.000').getTime() })
+
+    const match = await cache.matchFile(folder, filename, fromDate, toDate, 'ile')
+    expect(fs.stat).toBeCalledWith(path.join(folder, filename))
+    expect(match).toBeTruthy()
+  })
+
+  it('should not match file without date match', async () => {
+    const folder = 'folder'
+    const filename = 'file.name'
+    const fromDate = '2022-11-11T11:11:11.111'
+    const toDate = '2022-11-12T11:11:11.111'
+    fs.stat = jest.fn().mockReturnValue({ mtimeMs: new Date('2022-11-13T00:00:00.000').getTime() })
+
+    const match = await cache.matchFile(folder, filename, fromDate, toDate, 'ile')
+    expect(fs.stat).toBeCalledWith(path.join(folder, filename))
+    expect(match).toBeFalsy()
+  })
+
+  it('should not match file without name match', async () => {
+    const folder = 'folder'
+    const filename = 'file.name'
+    const fromDate = '2022-11-11T11:11:11.111'
+    const toDate = '2022-11-12T11:11:11.111'
+    fs.stat = jest.fn().mockReturnValue({ mtimeMs: new Date('2022-11-13T00:00:00.000').getTime() })
+
+    const match = await cache.matchFile(folder, filename, fromDate, toDate, 'noMatch')
+    expect(fs.stat).toBeCalledWith(path.join(folder, filename))
+    expect(match).toBeFalsy()
   })
 })

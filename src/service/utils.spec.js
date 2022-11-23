@@ -173,4 +173,13 @@ describe('Service utils', () => {
     expect(fsSync.createWriteStream).toBeCalledTimes(1)
     expect(fsSync.createWriteStream).toHaveBeenCalledWith('myOutputFile')
   })
+
+  it('should properly filter asynchronously', async () => {
+    const array = ['ok', 'ok', 'notOk', 'ok']
+    const predicate = async (item) => item === 'ok'
+
+    const result = await utils.asyncFilter(array, predicate)
+
+    expect(result).toEqual(['ok', 'ok', 'ok'])
+  })
 })
