@@ -139,7 +139,7 @@ const filesExists = async (filePath) => {
  */
 const asyncFilter = async (array, predicate) => {
   const results = await Promise.all(array.map(predicate))
-  return array.filter((filename, index) => results[index])
+  return array.filter((item, index) => results[index])
 }
 
 module.exports = {
