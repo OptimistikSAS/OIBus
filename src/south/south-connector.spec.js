@@ -17,9 +17,17 @@ jest.mock('../service/utils', () => ({
 const addValues = jest.fn()
 const addFiles = jest.fn()
 
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
+
 // Mock services
 jest.mock('../service/database.service')
-jest.mock('../service/logger/logger.service')
 jest.mock('../service/status.service')
 jest.mock('../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 
@@ -33,8 +41,8 @@ describe('SouthConnector', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString))
 
     configuration = { id: 'id', name: 'south', type: 'test', settings: {} }
-    south = new SouthConnector(configuration, addValues, addFiles)
-    await south.start('baseFolder', 'oibusName', {})
+    south = new SouthConnector(configuration, addValues, addFiles, logger)
+    await south.start('baseFolder', 'oibusName')
   })
 
   it('should be properly initialized without support, without scan mode', async () => {

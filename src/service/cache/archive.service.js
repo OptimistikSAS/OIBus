@@ -14,7 +14,7 @@ const ARCHIVE_FOLDER = 'archive'
 class ArchiveService {
   /**
    * @param {String} northId - The North ID connector
-   * @param {Logger} logger - The logger
+   * @param {LoggerService} loggerService - The logger
    * @param {String} baseFolder - The North cache folder generated as north-connectorId. This base folder can
    * be in data-stream or history-query folder depending on the connector use case
    * @param {Boolean} enabled - If the archive mode for this North connector is enabled
@@ -23,13 +23,13 @@ class ArchiveService {
    */
   constructor(
     northId,
-    logger,
+    loggerService,
     baseFolder,
     enabled,
     retentionDuration,
   ) {
     this.northId = northId
-    this.logger = logger
+    this.loggerService = loggerService
     this.baseFolder = baseFolder
     this.enabled = enabled
     // Convert from hours to ms to compare with mtimeMs (file modified time in ms)
@@ -72,17 +72,17 @@ class ArchiveService {
       // Move cache file into the archive folder
       try {
         await fs.rename(filePathInCache, archivePath)
-        this.logger.debug(`File "${filePathInCache}" moved to "${archivePath}".`)
+        this.loggerService.debug(`File "${filePathInCache}" moved to "${archivePath}".`)
       } catch (renameError) {
-        this.logger.error(renameError)
+        this.loggerService.error(renameError)
       }
     } else {
       // Delete original file
       try {
         await fs.unlink(filePathInCache)
-        this.logger.debug(`File "${filePathInCache}" removed from disk.`)
+        this.loggerService.debug(`File "${filePathInCache}" removed from disk.`)
       } catch (unlinkError) {
-        this.logger.error(unlinkError)
+        this.loggerService.error(unlinkError)
       }
     }
   }
@@ -92,7 +92,7 @@ class ArchiveService {
    * @return {void}
    */
   async refreshArchiveFolder() {
-    this.logger.debug('Parse archive folder to remove old files.')
+    this.loggerService.debug('Parse archive folder to remove old files.')
     // If a timeout already runs, clear it
     if (this.archiveTimeout) {
       clearTimeout(this.archiveTimeout)
@@ -103,7 +103,7 @@ class ArchiveService {
       files = await fs.readdir(this.archiveFolder)
     } catch (error) {
       // If the archive folder doest not exist (removed by the user for example), an error is logged
-      this.logger.error(error)
+      this.loggerService.error(error)
     }
     if (files.length > 0) {
       const referenceDate = new Date().getTime()
@@ -113,7 +113,7 @@ class ArchiveService {
         async () => this.removeFileIfTooOld(file, referenceDate, this.archiveFolder),
       ), Promise.resolve())
     } else {
-      this.logger.debug(`The archive folder "${this.archiveFolder}" is empty. Nothing to delete.`)
+      this.loggerService.debug(`The archive folder "${this.archiveFolder}" is empty. Nothing to delete.`)
     }
     this.archiveTimeout = setTimeout(this.refreshArchiveFolder.bind(this), ARCHIVE_TIMEOUT)
   }
@@ -131,14 +131,14 @@ class ArchiveService {
       // If a file is being written or corrupted, the stat method can fail an error is logged
       stats = await fs.stat(path.join(archiveFolder, filename))
     } catch (error) {
-      this.logger.error(error)
+      this.loggerService.error(error)
     }
     if (stats && stats.mtimeMs + this.retentionDuration < referenceDate) {
       try {
         await fs.unlink(path.join(archiveFolder, filename))
-        this.logger.debug(`File "${path.join(archiveFolder, filename)}" removed from archive.`)
+        this.loggerService.debug(`File "${path.join(archiveFolder, filename)}" removed from archive.`)
       } catch (unlinkError) {
-        this.logger.error(unlinkError)
+        this.loggerService.error(unlinkError)
       }
     }
   }

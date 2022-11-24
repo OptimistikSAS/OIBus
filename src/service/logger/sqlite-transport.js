@@ -2,8 +2,9 @@ const build = require('pino-abstract-transport')
 const db = require('better-sqlite3')
 
 const LOGS_TABLE_NAME = 'logs'
-const NUMBER_OF_RECORDS_TO_DELETE = 10000
 const DEFAULT_MAX_NUMBER_OF_LOGS = 2000000
+const CLEAN_UP_INTERVAL = 24 * 3600 * 1000 // One day
+
 const LEVEL_FORMAT = { 10: 'trace', 20: 'debug', 30: 'info', 40: 'warn', 50: 'error', 60: 'fatal' }
 
 /**
@@ -16,6 +17,7 @@ class SqliteTransport {
     this.fileName = options.fileName || ':memory:'
     this.tableName = options.tableName || LOGS_TABLE_NAME
     this.maxNumberOfLogs = options.maxNumberOfLogs || DEFAULT_MAX_NUMBER_OF_LOGS
+    this.removeOldLogsTimeout = null
   }
 
   /**
@@ -25,10 +27,6 @@ class SqliteTransport {
    */
   log = (payload) => {
     this.addLog(payload.time, payload.level, payload.scope, payload.source, payload.msg)
-    const numberOfLogs = this.countLogs()
-    if (numberOfLogs > this.maxNumberOfLogs) {
-      this.deleteOldLogs()
-    }
   }
 
   /**
@@ -59,15 +57,20 @@ class SqliteTransport {
    * Delete old logs.
    * @return {void}
    */
-  deleteOldLogs = () => {
-    const query = `DELETE
+  deleteOldLogsIfDatabaseTooLarge = () => {
+    const numberOfLogs = this.countLogs()
+    if (numberOfLogs > this.maxNumberOfLogs) {
+      const query = `DELETE
                    FROM ${this.tableName}
                    WHERE id IN (
                        SELECT id
                        FROM ${this.tableName}
                        ORDER BY id
                        LIMIT ?);`
-    this.database.prepare(query).run(NUMBER_OF_RECORDS_TO_DELETE)
+      // Remove the excess of logs and one tenth of the max allowed size
+      const numberOfRecordToDelete = (numberOfLogs - this.maxNumberOfLogs) + this.maxNumberOfLogs / 10
+      this.database.prepare(query).run(numberOfRecordToDelete)
+    }
   }
 
   /**
@@ -84,6 +87,8 @@ class SqliteTransport {
                     source TEXT,
                     message TEXT);`
     this.database.prepare(query).run()
+    this.deleteOldLogsIfDatabaseTooLarge()
+    this.removeOldLogsTimeout = setInterval(this.deleteOldLogsIfDatabaseTooLarge.bind(this), CLEAN_UP_INTERVAL)
   }
 
   /**
@@ -91,6 +96,7 @@ class SqliteTransport {
    * @returns {void}
    */
   end = () => {
+    clearInterval(this.removeOldLogsTimeout)
     if (this.database) {
       this.database.close()
     }

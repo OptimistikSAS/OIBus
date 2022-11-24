@@ -15,15 +15,18 @@ class NorthMQTT extends NorthConnector {
    * @constructor
    * @param {Object} configuration - The North connector configuration
    * @param {Object[]} proxies - The list of available proxies
+   * @param {Object} logger - The Pino child logger to use
    * @return {void}
    */
   constructor(
     configuration,
     proxies,
+    logger,
   ) {
     super(
       configuration,
       proxies,
+      logger,
     )
     this.canHandleValues = true
 
@@ -63,11 +66,10 @@ class NorthMQTT extends NorthConnector {
    * Initialize services (logger, certificate, status data) at startup
    * @param {String} baseFolder - The base cache folder
    * @param {String} oibusName - The OIBus name
-   * @param {Object} defaultLogParameters - The default logs parameters
    * @returns {Promise<void>} - The result promise
    */
-  async start(baseFolder, oibusName, defaultLogParameters) {
-    await super.start(baseFolder, oibusName, defaultLogParameters)
+  async start(baseFolder, oibusName) {
+    await super.start(baseFolder, oibusName)
     this.clientId = `${oibusName}-${this.id}`
   }
 

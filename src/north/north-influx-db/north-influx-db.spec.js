@@ -6,7 +6,6 @@ jest.mock('node:fs/promises')
 
 // Mock services
 jest.mock('../../service/database.service')
-jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/certificate.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
@@ -15,6 +14,15 @@ jest.mock('../../service/cache/file-cache.service')
 jest.mock('../../service/cache/archive.service')
 jest.mock('../../service/utils')
 jest.mock('../../service/http-request-static-functions')
+
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 const values = [
@@ -63,11 +71,11 @@ describe('North InfluxDB', () => {
         },
       },
     }
-    north = new InfluxDB(configuration, [])
+    north = new InfluxDB(configuration, [], logger)
   })
 
   it('should call makeRequest and manage error', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     httpRequestStaticFunctions.httpSend.mockImplementation(() => {
       throw new Error('http error')
@@ -83,7 +91,7 @@ describe('North InfluxDB', () => {
   })
 
   it('should log error when there are not enough groups for placeholders in measurement', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     north.measurement = '%5$s'
 
@@ -93,7 +101,7 @@ describe('North InfluxDB', () => {
   })
 
   it('should log error when there are not enough groups for placeholders in tags', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     north.tags = 'site=%2$s,unit=%3$s,sensor=%5$s'
     await north.handleValues(values)
@@ -102,7 +110,7 @@ describe('North InfluxDB', () => {
   })
 
   it('should properly handle values with useDataKeyValue', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     const valueWithDataLevel = [{
       pointId: 'ANA/BL1RCP05',
@@ -185,7 +193,7 @@ describe('North InfluxDB', () => {
   })
 
   it('should properly retrieve timestamp with timestampPathInDataValue', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     north.timestampPathInDataValue = 'associatedTimestamp.timestamp'
     north.useDataKeyValue = true

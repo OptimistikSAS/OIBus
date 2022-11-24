@@ -53,9 +53,9 @@ exports[`FileLogging check FileLogging 1`] = `
               error
             </option>
             <option
-              value="none"
+              value="silent"
             >
-              none
+              silent
             </option>
           </select>
           <div
@@ -196,9 +196,9 @@ exports[`FileLogging check change file level to "warning" 1`] = `
               error
             </option>
             <option
-              value="none"
+              value="silent"
             >
-              none
+              silent
             </option>
           </select>
           <div
@@ -339,9 +339,9 @@ exports[`FileLogging check change fileLog maxSize 1000 1`] = `
               error
             </option>
             <option
-              value="none"
+              value="silent"
             >
-              none
+              silent
             </option>
           </select>
           <div
@@ -482,9 +482,9 @@ exports[`FileLogging check change fileLog numberOfFiles to 1 1`] = `
               error
             </option>
             <option
-              value="none"
+              value="silent"
             >
-              none
+              silent
             </option>
           </select>
           <div

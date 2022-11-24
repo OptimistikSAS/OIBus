@@ -14,6 +14,15 @@ EncryptionService.getInstance = () => ({
 jest.mock('../service/configuration.service')
 jest.mock('../service/logger/logger.service')
 
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
+
 let engine = null
 
 describe('OIBusEngine', () => {
@@ -29,7 +38,8 @@ describe('OIBusEngine', () => {
 
     ConfigurationService.mockImplementation(() => mockConfigService)
 
-    engine = new OIBusEngine(mockConfigService)
+    const mockLoggerService = { createChildLogger: jest.fn(() => logger) }
+    engine = new OIBusEngine(mockConfigService, {}, mockLoggerService)
     await engine.initEngineServices(config.engine)
   })
 

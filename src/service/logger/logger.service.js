@@ -3,7 +3,6 @@ const path = require('node:path')
 const pino = require('pino')
 
 const LOG_FOLDER_NAME = 'logs'
-const ENGINE_LOG_LEVEL_ENTRY = 'engine'
 const LOG_FILE_NAME = 'journal.log'
 const LOG_DB_NAME = 'journal.db'
 
@@ -41,68 +40,44 @@ class LoggerService {
    * Run the appropriate pino log transports according to the configuration
    * @param {String} oibusName - The OIBus name
    * @param {Object} defaultLogParameters - The default logs parameters
-   * @param {Object} specificParameters - Override some log settings from a connector
    * @returns {Promise<void>} - The result promise
    */
-  async changeParameters(oibusName, defaultLogParameters, specificParameters = {}) {
+  async start(oibusName, defaultLogParameters) {
     const logParameters = JSON.parse(JSON.stringify(defaultLogParameters))
-
-    /**
-     * Replacing global log parameters by specific one if not set to engine level
-     */
-    if (specificParameters.consoleLevel && specificParameters.consoleLevel !== ENGINE_LOG_LEVEL_ENTRY) {
-      logParameters.consoleLog.level = specificParameters.consoleLevel
-    }
-    if (specificParameters.fileLevel && specificParameters.fileLevel !== ENGINE_LOG_LEVEL_ENTRY) {
-      logParameters.fileLog.level = specificParameters.fileLevel
-    }
-    if (specificParameters.sqliteLevel && specificParameters.sqliteLevel !== ENGINE_LOG_LEVEL_ENTRY) {
-      logParameters.sqliteLog.level = specificParameters.sqliteLevel
-    }
-    if (specificParameters.lokiLevel && specificParameters.lokiLevel !== ENGINE_LOG_LEVEL_ENTRY) {
-      logParameters.lokiLog.level = specificParameters.lokiLevel
-    }
-
     const targets = []
     const { consoleLog, fileLog, sqliteLog, lokiLog } = logParameters
-    if (consoleLog.level !== 'none') {
-      targets.push({ target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: consoleLog.level })
-    }
+    targets.push({ target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: consoleLog.level })
 
-    if (fileLog.level !== 'none') {
-      const fileName = fileLog.fileName ? fileLog.fileName : path.resolve(LOG_FOLDER_NAME, LOG_FILE_NAME)
-      // TODO: add number of files in pino-roll
-      targets.push({
-        target: 'pino-roll',
-        options: {
-          file: fileName,
-          size: fileLog.maxSize,
-          frequency: 'daily',
-        },
-        level: fileLog.level,
-      })
-    }
+    const filename = fileLog.fileName ? fileLog.fileName : path.resolve(LOG_FOLDER_NAME, LOG_FILE_NAME)
+    targets.push({
+      target: 'pino-roll',
+      options: {
+        file: filename,
+        size: fileLog.maxSize,
+      },
+      level: fileLog.level,
+    })
 
-    if (sqliteLog.level !== 'none') {
-      const fileName = sqliteLog.fileName ? sqliteLog.fileName : path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME)
+    if (sqliteLog) {
+      const sqlDatabaseName = sqliteLog.fileName ? sqliteLog.fileName : path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME)
 
       targets.push({
         target: path.join(__dirname, 'sqlite-transport.js'),
         options: {
-          fileName,
-          maxFileSize: sqliteLog.maxSize,
+          fileName: sqlDatabaseName,
+          maxNumberOfLogs: sqliteLog.maxNumberOfLogs,
         },
         level: sqliteLog.level,
       })
     }
 
-    if (lokiLog.level !== 'none') {
+    if (lokiLog?.lokiAddress) {
       try {
         targets.push({
           target: path.join(__dirname, 'loki-transport.js'),
           options: {
             username: lokiLog.username,
-            password: await this.encryptionService.decryptText(lokiLog.password),
+            password: lokiLog.password ? await this.encryptionService.decryptText(lokiLog.password) : null,
             tokenAddress: lokiLog.tokenAddress,
             lokiAddress: lokiLog.lokiAddress,
             oibusName,
@@ -117,46 +92,25 @@ class LoggerService {
       }
     }
 
-    if (targets.length > 0) {
-      this.logger = await pino({
-        mixin: this.pinoMixin.bind(this),
-        base: undefined,
-        level: 'trace', // default to trace since each transport has its defined level
-        timestamp: pino.stdTimeFunctions.isoTime,
-        transport: { targets },
-      })
-    }
+    this.logger = await pino({
+      mixin: this.pinoMixin.bind(this),
+      base: undefined,
+      level: 'trace', // default to trace since each transport has its defined level
+      timestamp: pino.stdTimeFunctions.isoTime,
+      transport: { targets },
+    })
+  }
+
+  createChildLogger(scope) {
+    return this.logger.child({ scope })
   }
 
   /**
    * Mixin method to add parameters to the logs for Pino logger
-   * @returns {{scope: String, source: String}} - Add scope and source to the log
+   * @returns {{ source: String}} - Add scope and source to the log
    */
   pinoMixin() {
-    return {
-      source: this.getSource(),
-      scope: this.scope,
-    }
-  }
-
-  error(message) {
-    this.logger?.error(message.stack || message)
-  }
-
-  warn(message) {
-    this.logger?.warn(message)
-  }
-
-  info(message) {
-    this.logger?.info(message)
-  }
-
-  debug(message) {
-    this.logger?.debug(message)
-  }
-
-  trace(message) {
-    this.logger?.trace(message)
+    return { source: this.getSource() }
   }
 
   /**

@@ -23,11 +23,6 @@ const Logging = ({ logParameters, onChange }) => (
               will be added as a suffix of the logfile name.
             </li>
             <li>Max files: Limit the number of files created by the logger.</li>
-            <li>
-              Tailable: If true, log files will be rolled based on max size and max files, but in ascending order. The
-              filename will always have the most recent log lines. The larger the appended number, the older the log
-              file. This option requires max files to be set, or it will be ignored.
-            </li>
           </ul>
           <li>
             The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs
@@ -50,7 +45,7 @@ const Logging = ({ logParameters, onChange }) => (
           </thead>
           <tbody>
             <tr>
-              <td>None</td>
+              <td>Silent</td>
               <td>This logging is not activated</td>
             </tr>
             <tr>

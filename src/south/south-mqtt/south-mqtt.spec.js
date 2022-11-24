@@ -23,9 +23,17 @@ const addFiles = jest.fn()
 
 // Mock services
 jest.mock('../../service/database.service')
-jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
+
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
 
 const mqttStream = new Stream()
 mqttStream.subscribe = jest.fn()
@@ -80,8 +88,8 @@ describe('SouthMQTT', () => {
         },
       ],
     }
-    south = new MQTT(configuration, addValues, addFiles)
-    await south.start('baseFolder', 'oibusName', {})
+    south = new MQTT(configuration, addValues, addFiles, logger)
+    await south.start('baseFolder', 'oibusName')
   })
 
   it('should be properly initialized with correct timezone', () => {
@@ -106,8 +114,8 @@ describe('SouthMQTT', () => {
         timestampTimezone: 'invalid',
       },
     }
-    const mqttInvalidSouth = new MQTT(testMqttConfig, addValues, addFiles)
-    await mqttInvalidSouth.start('baseFolder', 'oibusName', {})
+    const mqttInvalidSouth = new MQTT(testMqttConfig, addValues, addFiles, logger)
+    await mqttInvalidSouth.start('baseFolder', 'oibusName')
 
     expect(mqttInvalidSouth.url).toEqual(testMqttConfig.settings.url)
     expect(mqttInvalidSouth.qos).toEqual(testMqttConfig.settings.qos)
@@ -189,8 +197,8 @@ describe('SouthMQTT', () => {
       },
     }
 
-    const mqttSouthWithFiles = new MQTT(testMqttConfigWithFiles, addValues, addFiles)
-    await mqttSouthWithFiles.start('baseFolder', 'oibusName', {})
+    const mqttSouthWithFiles = new MQTT(testMqttConfigWithFiles, addValues, addFiles, logger)
+    await mqttSouthWithFiles.start('baseFolder', 'oibusName')
     mqttSouthWithFiles.certificate = CertificateService
     await mqttSouthWithFiles.connect()
 

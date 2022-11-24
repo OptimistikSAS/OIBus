@@ -14,7 +14,6 @@ jest.mock('node:fs/promises')
 
 // Mock services
 jest.mock('../../service/database.service')
-jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/certificate.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
@@ -23,6 +22,15 @@ jest.mock('../../service/cache/file-cache.service')
 jest.mock('../../service/cache/archive.service')
 jest.mock('../../service/utils')
 jest.mock('../../service/http-request-static-functions')
+
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
 
 let configuration = null
 let north = null
@@ -77,18 +85,18 @@ describe('NorthCsvToHttp', () => {
       },
       subscribedTo: [],
     }
-    north = new CsvToHttp(configuration, [])
+    north = new CsvToHttp(configuration, [], logger)
   })
 
   it('should be properly initialized', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     expect(north.canHandleValues).toBeFalsy()
     expect(north.canHandleFiles).toBeTruthy()
   })
 
   it('should properly reject file if type is other than csv', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     await expect(north.handleFile('filePath')).rejects
       .toThrowError('Invalid file format: .csv file expected. File "filePath" skipped.')
@@ -109,7 +117,7 @@ describe('NorthCsvToHttp', () => {
       ['5', '2020-12-17 05:00'],
     ])
 
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     await north.handleFile('csvToHttpTest.csv')
 
@@ -117,7 +125,7 @@ describe('NorthCsvToHttp', () => {
   })
 
   it('should properly test validity of header', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     const jsonObject = {}
 
@@ -142,7 +150,7 @@ describe('NorthCsvToHttp', () => {
   })
 
   it('should properly send data (body.length <= bodyMaxLength)', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     const httpBody = []
     for (let i = 0; i < north.bodyMaxLength - 1; i += 1) {

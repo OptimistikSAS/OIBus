@@ -7,7 +7,6 @@ import {
   OibTitle,
   OibCheckbox,
   OibScanMode,
-  OibLogLevel,
 } from '../../components/oib-form'
 import OibForm from '../../components/oib-form/oib-form.jsx'
 import validation from './south.validation'
@@ -112,11 +111,6 @@ const SouthForm = ({ south, southIndex, onChange }) => {
               </Col>
             )}
           </Row>
-          <OibLogLevel
-            name={`${prefix}.logParameters`}
-            value={south.logParameters}
-            onChange={onChange}
-          />
           <OibForm
             onChange={onChange}
             schema={schema}

@@ -26,7 +26,6 @@ southList.Modbus = require('../south/south-modbus/south-modbus')
 southList.OPCHDA = require('../south/south-opchda/south-opchda')
 southList.RestApi = require('../south/south-rest/south-rest')
 
-const LoggerService = require('../service/logger/logger.service')
 const StatusService = require('../service/status.service')
 
 /**
@@ -39,10 +38,16 @@ class BaseEngine {
    * @constructor
    * @param {ConfigurationService} configService - The config service
    * @param {EncryptionService} encryptionService - The encryption service
+   * @param {LoggerService} loggerService - The logger service
    * @param {String} cacheFolder - The base cache folder used by the engine and its connectors
    * @return {void}
    */
-  constructor(configService, encryptionService, cacheFolder) {
+  constructor(
+    configService,
+    encryptionService,
+    loggerService,
+    cacheFolder,
+  ) {
     this.version = VERSION
     this.cacheFolder = path.resolve(cacheFolder)
 
@@ -51,6 +56,7 @@ class BaseEngine {
 
     this.configService = configService
     this.encryptionService = encryptionService
+    this.loggerService = loggerService
 
     // Variable initialized in initEngineServices
     this.statusService = null
@@ -60,18 +66,13 @@ class BaseEngine {
   /**
    * Method used to init async services (like logger when loki is used with Bearer token auth)
    * @param {Object} engineConfig - the config retrieved from the file
-   * @param {String} loggerScope - the scope used in the logger (for example 'OIBusEngine')
    * @returns {Promise<void>} - The result promise
    */
-  async initEngineServices(engineConfig, loggerScope) {
+  async initEngineServices(engineConfig) {
     this.oibusName = engineConfig.name
     this.defaultLogParameters = engineConfig.logParameters
     this.proxies = engineConfig.proxies
     this.statusService = new StatusService()
-    // Configure the logger
-    this.logger = new LoggerService(loggerScope)
-    this.logger.setEncryptionService(this.encryptionService)
-    await this.logger.changeParameters(this.oibusName, this.defaultLogParameters)
   }
 
   /**
@@ -118,13 +119,14 @@ class BaseEngine {
   /**
    * Return the South connector
    * @param {Object} configuration - The South connector configuration
+   * @param {Object} logger - The logger to use
    * @returns {SouthConnector|null} - The South connector
    */
-  createSouth(configuration) {
+  createSouth(configuration, logger) {
     try {
       const SouthConnector = this.installedSouthConnectors[configuration.type]
       if (SouthConnector) {
-        return new SouthConnector(configuration, this.addValues.bind(this), this.addFile.bind(this))
+        return new SouthConnector(configuration, this.addValues.bind(this), this.addFile.bind(this), logger)
       }
       this.logger.error(`South connector for "${configuration.name}" is not found: ${configuration.type}`)
     } catch (error) {
@@ -148,13 +150,14 @@ class BaseEngine {
   /**
    * Return the North connector
    * @param {Object} configuration - The North connector configuration
+   * @param {Object} logger - The logger to use
    * @returns {NorthConnector|null} - The North connector
    */
-  createNorth(configuration) {
+  createNorth(configuration, logger) {
     try {
       const NorthConnector = this.installedNorthConnectors[configuration.type]
       if (NorthConnector) {
-        return new NorthConnector(configuration, this.proxies)
+        return new NorthConnector(configuration, this.proxies, logger)
       }
       this.logger.error(`North connector for "${configuration.name}" is not found: ${configuration.type}`)
     } catch (error) {

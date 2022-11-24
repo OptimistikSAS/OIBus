@@ -19,7 +19,7 @@ const ERROR_FOLDER = 'values-errors'
 class ValueCacheService {
   /**
    * @param {String} northId - The North ID connector
-   * @param {Logger} logger - The logger
+   * @param {LoggerService} logger - The logger
    * @param {String} baseFolder - The North cache folder generated as north-connectorId. This base folder can
    * be in data-stream or history-query folder depending on the connector use case
    * @param {Function} northSendValuesCallback - Method used by the North to handle values

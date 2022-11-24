@@ -1,7 +1,6 @@
 const path = require('node:path')
 
 const EncryptionService = require('../service/encryption.service')
-const LoggerService = require('../service/logger/logger.service')
 const CertificateService = require('../service/certificate.service')
 const StatusService = require('../service/status.service')
 const ValueCache = require('../service/cache/value-cache.service')
@@ -33,11 +32,13 @@ class NorthConnector {
    * @constructor
    * @param {Object} configuration - The North connector settings
    * @param {Object[]} proxies - The list of available proxies
+   * @param {Object} logger - The Pino child logger to use
    * @return {void}
    */
   constructor(
     configuration,
     proxies,
+    logger,
   ) {
     this.canHandleValues = false
     this.canHandleFiles = false
@@ -52,6 +53,7 @@ class NorthConnector {
     this.proxies = proxies
 
     this.encryptionService = EncryptionService.getInstance()
+    this.logger = logger
 
     // Variable initialized in start()
     this.baseFolder = null
@@ -59,7 +61,6 @@ class NorthConnector {
     this.valueCache = null
     this.fileCache = null
     this.archiveService = null
-    this.logger = null
     this.certificate = null
     this.keyFile = null
     this.certFile = null
@@ -75,17 +76,13 @@ class NorthConnector {
   /**
    * Initialize services (logger, certificate, status data) at startup
    * @param {String} baseFolder - The base cache folder
-   * @param {String} oibusName - The OIBus name
-   * @param {Object} defaultLogParameters - The default logs parameters
+   * @param {String} _oibusName - The OIBus name
    * @returns {Promise<void>} - The result promise
    */
-  async start(baseFolder, oibusName, defaultLogParameters) {
+  async start(baseFolder, _oibusName) {
     this.baseFolder = path.resolve(baseFolder, `north-${this.id}`)
 
     this.statusService = new StatusService()
-    this.logger = new LoggerService(`North:${this.name}`)
-    this.logger.setEncryptionService(this.encryptionService)
-    await this.logger.changeParameters(oibusName, defaultLogParameters, this.logParameters)
 
     await createFolder(this.baseFolder)
 

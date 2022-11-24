@@ -18,9 +18,17 @@ jest.mock('node:fs/promises')
 
 // Mock services
 jest.mock('../../service/database.service')
-jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
+
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 let configuration = null
@@ -48,8 +56,8 @@ describe('SouthFolderScanner', () => {
       points: [],
       scanMode: 'every10Second',
     }
-    south = new FolderScanner(configuration, addValues, addFiles)
-    await south.start('baseFolder', 'oibusName', {})
+    south = new FolderScanner(configuration, addValues, addFiles, logger)
+    await south.start('baseFolder', 'oibusName')
     databaseService.getConfig.mockClear()
   })
 

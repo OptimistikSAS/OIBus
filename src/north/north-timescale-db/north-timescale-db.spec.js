@@ -9,13 +9,21 @@ jest.mock('node:fs/promises')
 
 // Mock services
 jest.mock('../../service/database.service')
-jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/certificate.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 jest.mock('../../service/cache/value-cache.service')
 jest.mock('../../service/cache/file-cache.service')
 jest.mock('../../service/cache/archive.service')
+
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 const values = [
@@ -62,7 +70,7 @@ describe('North TimescaleDB', () => {
       },
       subscribedTo: [],
     }
-    north = new TimescaleDB(configuration, [])
+    north = new TimescaleDB(configuration, [], logger)
   })
 
   it('should properly handle values and publish them', async () => {
@@ -72,7 +80,7 @@ describe('North TimescaleDB', () => {
       end: jest.fn(),
     }
     pg.Client.mockReturnValue(client)
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
     await north.connect()
 
     expect(north.canHandleValues).toBeTruthy()
@@ -98,7 +106,7 @@ describe('North TimescaleDB', () => {
   })
 
   it('should properly handle connection errors', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
     const client = {
       connect: jest.fn(() => {
         throw new Error('test')
@@ -114,7 +122,7 @@ describe('North TimescaleDB', () => {
   })
 
   it('should properly handle values with publish error', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     const client = {
       connect: jest.fn(),
@@ -135,7 +143,7 @@ describe('North TimescaleDB', () => {
   })
 
   it('should properly handle values with optional fields and table errors', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     const client = { connect: jest.fn(), query: jest.fn() }
     pg.Client.mockReturnValue(client)
@@ -156,7 +164,7 @@ describe('North TimescaleDB', () => {
   })
 
   it('should properly handle values with optional fields', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     const client = { connect: jest.fn(), query: jest.fn() }
     pg.Client.mockReturnValue(client)
@@ -182,7 +190,7 @@ describe('North TimescaleDB', () => {
   })
 
   it('should properly handle values with only optional fields and timestamp', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     const client = { connect: jest.fn(), query: jest.fn() }
     pg.Client.mockReturnValue(client)
@@ -208,7 +216,7 @@ describe('North TimescaleDB', () => {
   })
 
   it('should properly handle values with useDataKeyValue', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     const client = {
       connect: jest.fn(),
@@ -245,7 +253,7 @@ describe('North TimescaleDB', () => {
   })
 
   it('should properly retrieve timestamp with timestampPathInDataValue', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     const client = {
       connect: jest.fn(),

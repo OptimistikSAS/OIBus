@@ -25,9 +25,17 @@ const addFiles = jest.fn()
 
 // Mock services
 jest.mock('../../service/database.service')
-jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
+
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 let configuration = null
@@ -61,8 +69,8 @@ describe('SouthOPCUADA', () => {
         scanMode: 'every10Second',
       }],
     }
-    south = new OPCUA_DA(configuration, addValues, addFiles)
-    await south.start('baseFolder', 'oibusName', {})
+    south = new OPCUA_DA(configuration, addValues, addFiles, logger)
+    await south.start('baseFolder', 'oibusName')
   })
 
   it('should be properly initialized', () => {
@@ -186,8 +194,8 @@ describe('SouthOPCUADA', () => {
       }],
     }
 
-    const opcuaSouthTest = new OPCUA_DA(testOpcuaConfig, addValues, addFiles)
-    await opcuaSouthTest.start('baseFolder', 'oibusName', {})
+    const opcuaSouthTest = new OPCUA_DA(testOpcuaConfig, addValues, addFiles, logger)
+    await opcuaSouthTest.start('baseFolder', 'oibusName')
     await opcuaSouthTest.connect()
     opcuaSouthTest.connected = true
     opcuaSouthTest.session = { readVariableValue: jest.fn(), close: jest.fn() }

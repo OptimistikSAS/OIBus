@@ -5,12 +5,20 @@ const ConfigurationService = require('../service/configuration.service')
 // Mock fs
 jest.mock('node:fs/promises')
 
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
+
 // Mock services
 jest.mock('./history-query/history-query-repository')
 jest.mock('../service/database.service')
 jest.mock('../service/configuration.service')
 jest.mock('../service/logger/logger.service')
-jest.mock('../service/encryption.service')
 jest.mock('../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 
 let engine = null
@@ -27,8 +35,9 @@ describe('HistoryQueryEngine', () => {
     })
 
     ConfigurationService.mockImplementation(() => mockConfigService)
+    const mockLoggerService = { createChildLogger: jest.fn(() => logger) }
 
-    engine = new HistoryQueryEngine(mockConfigService)
+    engine = new HistoryQueryEngine(mockConfigService, {}, mockLoggerService)
   })
 
   it('should be properly initialized', async () => {
