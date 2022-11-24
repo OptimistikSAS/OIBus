@@ -20,10 +20,18 @@ const addFiles = jest.fn()
 
 // Mock services
 jest.mock('../../service/database.service')
-jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/deferred-promise')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
+
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
 
 let configuration = null
 let south = null
@@ -83,8 +91,8 @@ describe('South OPCHDA', () => {
         scanMode: 'every10Second',
       }],
     }
-    south = new OPCHDA(configuration, addValues, addFiles)
-    await south.start('baseFolder', 'oibusName', {})
+    south = new OPCHDA(configuration, addValues, addFiles, logger)
+    await south.start('baseFolder', 'oibusName')
   })
 
   afterAll(() => {

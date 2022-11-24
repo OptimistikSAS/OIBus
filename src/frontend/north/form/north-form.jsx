@@ -7,7 +7,6 @@ import {
   OibTitle,
   OibCheckbox,
   OibInteger,
-  OibLogLevel,
 } from '../../components/oib-form'
 import SubscribedTo from './subscribed-to.jsx'
 import validation from './north.validation'
@@ -96,11 +95,6 @@ const NorthForm = ({ north, northIndex, onChange }) => {
               />
             </Col>
           </Row>
-          <OibLogLevel
-            name={`${prefix}.logParameters`}
-            value={north.logParameters}
-            onChange={onChange}
-          />
           <OibForm
             onChange={onChange}
             schema={northSchema}

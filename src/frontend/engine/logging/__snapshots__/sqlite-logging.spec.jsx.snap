@@ -53,9 +53,9 @@ exports[`SqliteLogging check SqliteLogging 1`] = `
               error
             </option>
             <option
-              value="none"
+              value="silent"
             >
-              none
+              silent
             </option>
           </select>
           <div
@@ -166,9 +166,9 @@ exports[`SqliteLogging check change sqliteLevel to "warning" 1`] = `
               error
             </option>
             <option
-              value="none"
+              value="silent"
             >
-              none
+              silent
             </option>
           </select>
           <div
@@ -279,9 +279,9 @@ exports[`SqliteLogging check change sqliteLog maxNumberOfLogs to 10000000 1`] = 
               error
             </option>
             <option
-              value="none"
+              value="silent"
             >
-              none
+              silent
             </option>
           </select>
           <div

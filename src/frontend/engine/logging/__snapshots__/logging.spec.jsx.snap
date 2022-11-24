@@ -63,9 +63,6 @@ exports[`Logging check Logging 1`] = `
                 <li>
                   Max files: Limit the number of files created by the logger.
                 </li>
-                <li>
-                  Tailable: If true, log files will be rolled based on max size and max files, but in ascending order. The filename will always have the most recent log lines. The larger the appended number, the older the log file. This option requires max files to be set, or it will be ignored.
-                </li>
               </ul>
               <li>
                 The sqlite logs will be used to store logs on the chosen database of the OIBus machine. This allows to see logs using the Logs menu. The maximum size can be defined so older message will be deleted automatically.
@@ -88,7 +85,7 @@ exports[`Logging check Logging 1`] = `
               <tbody>
                 <tr>
                   <td>
-                    None
+                    Silent
                   </td>
                   <td>
                     This logging is not activated
@@ -194,6 +191,11 @@ exports[`Logging check Logging 1`] = `
               >
                 error
               </option>
+              <option
+                value="silent"
+              >
+                silent
+              </option>
             </select>
             <div
               class="invalid-feedback"
@@ -260,9 +262,9 @@ exports[`Logging check Logging 1`] = `
                 error
               </option>
               <option
-                value="none"
+                value="silent"
               >
-                none
+                silent
               </option>
             </select>
             <div
@@ -398,9 +400,9 @@ exports[`Logging check Logging 1`] = `
                 error
               </option>
               <option
-                value="none"
+                value="silent"
               >
-                none
+                silent
               </option>
             </select>
             <div
@@ -506,9 +508,9 @@ exports[`Logging check Logging 1`] = `
                 error
               </option>
               <option
-                value="none"
+                value="silent"
               >
-                none
+                silent
               </option>
             </select>
             <div

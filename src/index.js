@@ -23,7 +23,7 @@ const CACHE_FOLDER = './cache'
 const LOG_FOLDER_NAME = 'logs'
 const MAIN_LOG_FILE_NAME = 'main-journal.log'
 
-const logger = new LoggerService()
+const loggerService = new LoggerService()
 
 const {
   configFile,
@@ -35,22 +35,20 @@ const logParameters = {
   fileLog: {
     level: 'debug',
     fileName: path.resolve(path.parse(configFile).dir, LOG_FOLDER_NAME, MAIN_LOG_FILE_NAME),
-    maxSize: 1000000,
+    maxSize: 10,
     numberOfFiles: 5,
-    tailable: true,
   },
-  sqliteLog: { level: 'none' },
-  lokiLog: { level: 'none' },
 }
 
-logger.changeParameters('OIBus-main', logParameters).then(async () => {
-  const baseDir = path.extname(configFile) ? path.parse(configFile).dir : configFile
-  await createFolder(baseDir)
+const baseDir = path.extname(configFile) ? path.parse(configFile).dir : configFile
 
-  if (cluster.isMaster) {
+if (cluster.isMaster) {
+  loggerService.start('OIBus-main', logParameters).then(async () => {
+    const mainLogger = loggerService.createChildLogger('main-thread')
+    await createFolder(baseDir)
     // Master role is nothing except launching a worker and relaunching another
     // one if exit is detected (typically to load a new configuration)
-    logger.info(`Starting OIBus version ${VERSION}.`)
+    mainLogger.info(`Starting OIBus version ${VERSION}.`)
 
     let restartCount = 0
     let startTime = (new Date()).getTime()
@@ -59,14 +57,14 @@ logger.changeParameters('OIBus-main', logParameters).then(async () => {
 
     cluster.on('exit', (sourceWorker, code, signal) => {
       if (signal) {
-        logger.info(`Worker ${sourceWorker.process.pid} was killed by signal: ${signal}`)
+        mainLogger.info(`Worker ${sourceWorker.process.pid} was killed by signal: ${signal}`)
       } else {
-        logger.error(`Worker ${sourceWorker.process.pid} exited with error code: ${code}`)
+        mainLogger.error(`Worker ${sourceWorker.process.pid} exited with error code: ${code}`)
       }
 
       // Check if we got a restart loop and go in safe mode
       restartCount += code > 0 ? 1 : 0
-      logger.info(`Restart count: ${restartCount}`)
+      mainLogger.info(`Restart count: ${restartCount}`)
       const safeMode = restartCount >= MAX_RESTART_COUNT
 
       const endTime = (new Date()).getTime()
@@ -81,35 +79,35 @@ logger.changeParameters('OIBus-main', logParameters).then(async () => {
     cluster.on('message', (_worker, msg) => {
       switch (msg.type) {
         case 'reload-oibus-engine':
-          Object.keys(cluster.workers)
-            .forEach((id) => {
-              cluster.workers[id].send({ type: 'reload-oibus-engine' })
-            })
+          Object.keys(cluster.workers).forEach((id) => {
+            cluster.workers[id].send({ type: 'reload-oibus-engine' })
+          })
           break
         case 'reload':
-          Object.keys(cluster.workers)
-            .forEach((id) => {
-              cluster.workers[id].send({ type: 'reload' })
-            })
+          Object.keys(cluster.workers).forEach((id) => {
+            cluster.workers[id].send({ type: 'reload' })
+          })
           break
         case 'shutdown':
-          Object.keys(cluster.workers)
-            .forEach((id) => {
-              cluster.workers[id].send({ type: 'shutdown' })
-            })
+          Object.keys(cluster.workers).forEach((id) => {
+            cluster.workers[id].send({ type: 'shutdown' })
+          })
           break
         case 'shutdown-ready':
           process.exit()
           break
         default:
-          logger.warn(`Unknown message type received from Worker: ${msg.type}`)
+          mainLogger.warn(`Unknown message type received from Worker: ${msg.type}`)
       }
     })
-  } else {
-    process.chdir(baseDir)
+  })
+} else {
+  loggerService.start('OIBus-main', logParameters).then(async () => {
+    const forkLogger = loggerService.createChildLogger('forked-thread')
 
+    process.chdir(baseDir)
     // Migrate config file, if needed
-    migrationService.migrate(configFile, 'OIBus-main', logParameters).then(async () => {
+    migrationService.migrate(configFile, loggerService.createChildLogger('migration')).then(async () => {
       // this condition is reached only for a worker (i.e. not master)
       // so this is here where we start the web-server, OIBusEngine and HistoryQueryEngine
 
@@ -126,71 +124,82 @@ logger.changeParameters('OIBus-main', logParameters).then(async () => {
 
       const safeMode = process.env.SAFE_MODE === 'true'
 
-      const oibusEngine = new OIBusEngine(configService, encryptionService)
-      const historyQueryEngine = new HistoryQueryEngine(configService, encryptionService)
-      const server = new Server(encryptionService, oibusEngine, historyQueryEngine)
+      const { engineConfig } = configService.getConfig()
+      const oibusLoggerService = new LoggerService('oibusLogger')
+      oibusLoggerService.setEncryptionService(encryptionService)
+      await oibusLoggerService.start(engineConfig.name, engineConfig.logParameters)
+      const oibusEngine = new OIBusEngine(configService, encryptionService, oibusLoggerService)
+      const historyQueryEngine = new HistoryQueryEngine(configService, encryptionService, oibusLoggerService)
+      const server = new Server(
+        encryptionService,
+        oibusEngine,
+        historyQueryEngine,
+        oibusLoggerService.createChildLogger('web-server'),
+      )
 
       if (check) {
-        logger.warn('OIBus is running in check mode.')
+        forkLogger.warn('OIBus is running in check mode.')
         process.send({ type: 'shutdown-ready' })
       } else {
         oibusEngine.start(safeMode).then(() => {
-          logger.info('OIBus engine fully started.')
+          forkLogger.info('OIBus engine fully started.')
         })
         historyQueryEngine.start(safeMode).then(() => {
-          logger.info('History query engine fully started.')
+          forkLogger.info('History query engine fully started.')
         })
         server.start().then(() => {
-          logger.info('OIBus web server fully started.')
+          forkLogger.info('OIBus web server fully started.')
         })
       }
 
       // Catch Ctrl+C and properly stop the Engine
       process.on('SIGINT', () => {
-        logger.info('SIGINT (Ctrl+C) received. Stopping everything.')
+        forkLogger.info('SIGINT (Ctrl+C) received. Stopping everything.')
         const stopAll = [oibusEngine.stop(), historyQueryEngine.stop(), server.stop()]
-        Promise.allSettled(stopAll)
-          .then(() => {
-            process.exit()
-          })
+        Promise.allSettled(stopAll).then(() => {
+          process.exit()
+        })
       })
 
       // Receive messages from the master process.
       process.on('message', async (msg) => {
         switch (msg.type) {
           case 'reload-oibus-engine':
-            logger.info('Reloading OIBus Engine')
-            await oibusEngine.stop()
-            await historyQueryEngine.stop()
-            await server.stop()
-            oibusEngine.start(safeMode).then(() => {
-              logger.info('OIBus engine fully started.')
-            })
-            historyQueryEngine.start().then(() => {
-              logger.info('History engine fully started.')
-            })
-            server.start().then(() => {
-              logger.info('OIBus web server fully started.')
-            })
+            {
+              forkLogger.info('Reloading OIBus Engine')
+              await oibusEngine.stop()
+              await historyQueryEngine.stop()
+              await server.stop()
+              const { engineConfig: newEngineConfig } = configService.getConfig()
+              await oibusLoggerService.start(newEngineConfig.name, newEngineConfig.logParameters)
+
+              oibusEngine.start(safeMode).then(() => {
+                forkLogger.info('OIBus engine fully started.')
+              })
+              historyQueryEngine.start(safeMode).then(() => {
+                forkLogger.info('History engine fully started.')
+              })
+              server.start().then(() => {
+                forkLogger.info('OIBus web server fully started.')
+              })
+            }
             break
           case 'reload':
-            logger.info('Reloading OIBus')
-            Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop(), server.stop()])
-              .then(() => {
-                process.exit()
-              })
+            forkLogger.info('Reloading OIBus')
+            Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop(), server.stop()]).then(() => {
+              process.exit()
+            })
             break
           case 'shutdown':
-            logger.info('Shutting down OIBus')
-            Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop(), server?.stop()])
-              .then(() => {
-                process.send({ type: 'shutdown-ready' })
-              })
+            forkLogger.info('Shutting down OIBus')
+            Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop(), server?.stop()]).then(() => {
+              process.send({ type: 'shutdown-ready' })
+            })
             break
           default:
-            logger.warn(`Unknown message type received from Master: ${msg.type}`)
+            forkLogger.warn(`Unknown message type received from Master: ${msg.type}`)
         }
       })
     })
-  }
-})
+  })
+}

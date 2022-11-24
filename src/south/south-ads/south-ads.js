@@ -14,17 +14,20 @@ class SouthADS extends SouthConnector {
    * @param {Object} configuration - The South connector configuration
    * @param {Function} engineAddValuesCallback - The Engine add values callback
    * @param {Function} engineAddFilesCallback - The Engine add file callback
+   * @param {Object} logger - The Pino child logger to use
    * @return {void}
    */
   constructor(
     configuration,
     engineAddValuesCallback,
     engineAddFilesCallback,
+    logger,
   ) {
     super(
       configuration,
       engineAddValuesCallback,
       engineAddFilesCallback,
+      logger,
       {
         supportListen: false,
         supportLastPoint: true,

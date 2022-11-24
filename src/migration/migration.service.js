@@ -2,7 +2,6 @@ const fs = require('node:fs/promises')
 const path = require('node:path')
 
 const migrationRules = require('./migration-rules')
-const LoggerService = require('../service/logger/logger.service')
 
 const REQUIRED_SCHEMA_VERSION = 29
 const DEFAULT_VERSION = 1
@@ -53,15 +52,11 @@ const migrateImpl = async (configVersion, config, configFilePath, logger) => {
 /**
  * Migrate if needed.
  * @param {String} configFilePath - The config file path
- * @param {String} oibusName - The name of this oibus
- * @param {Object} logParameters - The log parameters to use (given by index.js)
+ * @param {Logger} logger -
  * @returns {Promise<void>} - The result promise
  */
-const migrate = async (configFilePath, oibusName, logParameters) => {
-  const logger = new LoggerService('migration')
+const migrate = async (configFilePath, logger) => {
   try {
-    await logger.changeParameters(oibusName, logParameters)
-
     let fileStat
     try {
       fileStat = await fs.stat(configFilePath)
@@ -74,6 +69,8 @@ const migrate = async (configFilePath, oibusName, logParameters) => {
       if (configVersion < REQUIRED_SCHEMA_VERSION) {
         logger.info(`Config file is not up-to-date. Starting migration from version ${configVersion} to ${REQUIRED_SCHEMA_VERSION}`)
         await migrateImpl(configVersion, config, configFilePath, logger)
+      } else {
+        logger.info('Config file is up-to-date.')
       }
     }
   } catch (migrationError) {

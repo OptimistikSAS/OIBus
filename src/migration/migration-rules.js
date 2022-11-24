@@ -1576,7 +1576,14 @@ module.exports = {
   29: async (config, logger) => {
     const { httpRequest } = config.engine
 
+    for (const south of config.south) {
+      logger.info(`Deleting log parameters options for South "${south.id}".`)
+      delete south.logParameters
+    }
     for (const north of config.north) {
+      logger.info(`Deleting log parameters options for North "${north.id}".`)
+      delete north.logParameters
+
       logger.info(`Add timeout field for North "${north.id}".`)
       north.caching.timeout = httpRequest.timeout
 
@@ -1727,6 +1734,20 @@ module.exports = {
       config.engine.logParameters.fileLog.maxSize = 1
     } else {
       config.engine.logParameters.fileLog.maxSize = Math.round(config.engine.logParameters.fileLog.maxSize / 1000000)
+    }
+
+    logger.info('Changing engine log options "none" into "silent".')
+    if (config.engine.logParameters.consoleLog.level === 'none') {
+      config.engine.logParameters.consoleLog.level = 'silent'
+    }
+    if (config.engine.logParameters.fileLog.level === 'none') {
+      config.engine.logParameters.fileLog.level = 'silent'
+    }
+    if (config.engine.logParameters.sqliteLog.level === 'none') {
+      config.engine.logParameters.sqliteLog.level = 'silent'
+    }
+    if (config.engine.logParameters.lokiLog.level === 'none') {
+      config.engine.logParameters.lokiLog.level = 'silent'
     }
 
     if (config.engine.logParameters.sqliteLog.maxNumberOfLogs <= 100000) {

@@ -9,13 +9,21 @@ jest.mock('node:fs/promises')
 
 // Mock services
 jest.mock('../../service/database.service')
-jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/certificate.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 jest.mock('../../service/cache/value-cache.service')
 jest.mock('../../service/cache/file-cache.service')
 jest.mock('../../service/cache/archive.service')
+
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 const values = [
@@ -64,11 +72,11 @@ describe('NorthMongoDB', () => {
         },
       },
     }
-    north = new MongoDB(configuration, [])
+    north = new MongoDB(configuration, [], logger)
   })
 
   it('should properly connect and disconnect', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     expect(north.canHandleValues).toBeTruthy()
     expect(north.canHandleFiles).toBeFalsy()
@@ -101,7 +109,7 @@ describe('NorthMongoDB', () => {
   })
 
   it('should fail to connect', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     const client = {
       connect: jest.fn(() => {
@@ -120,7 +128,7 @@ describe('NorthMongoDB', () => {
   })
 
   it('should fail to list collections', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     const client = {
       connect: jest.fn(),
@@ -139,7 +147,7 @@ describe('NorthMongoDB', () => {
   })
 
   it('should properly handle values', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     north.createCollection = true
 
@@ -189,7 +197,7 @@ describe('NorthMongoDB', () => {
   })
 
   it('should not create collection if it already exists', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     const mongoDatabase = {
       listCollections: jest.fn(() => ({ toArray: jest.fn(() => ([{ name: 'collection1' }, { name: 'collection2' }])) })),
@@ -212,7 +220,7 @@ describe('NorthMongoDB', () => {
   })
 
   it('should properly manage collection creation errors', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     north.mongoDatabase = {
       collection: jest.fn(() => ({
@@ -249,7 +257,7 @@ describe('NorthMongoDB', () => {
   })
 
   it('should properly handle values with index fields and collection values errors', async () => {
-    await north.start('baseFolder', 'oibusName', {})
+    await north.start('baseFolder', 'oibusName')
 
     const insertManyFunction = jest.fn()
     const mongoDatabase = {

@@ -625,7 +625,14 @@ const GVLTestBadType = {
   },
 }
 // End of global variables
-
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
 const nowDateString = '2020-02-02T02:02:02.222Z'
 let configuration = null
 let south = null
@@ -775,8 +782,8 @@ describe('South ADS', () => {
         },
       ],
     }
-    south = new ADS(configuration, addValues, addFiles)
-    await south.start('baseFolder', 'oibusName', {})
+    south = new ADS(configuration, addValues, addFiles, logger)
+    await south.start('baseFolder', 'oibusName')
   })
 
   it('should be properly initialized', () => {

@@ -7,7 +7,6 @@ const respond = require('koa-respond')
 const authCrypto = require('./middlewares/auth')
 const ipFilter = require('./middlewares/ip-filter')
 const clientController = require('./controllers/web-client.controller')
-const LoggerService = require('../service/logger/logger.service')
 const router = require('./routes')
 
 /**
@@ -37,16 +36,16 @@ class Server {
    * @param {EncryptionService} encryptionService - The encryption service
    * @param {OIBusEngine} oibusEngine - The OIBus engine
    * @param {HistoryQueryEngine} historyQueryEngine - The HistoryQuery engine
+   * @param {Object} logger - Logger to use
    * @return {void}
    */
-  constructor(encryptionService, oibusEngine, historyQueryEngine) {
+  constructor(encryptionService, oibusEngine, historyQueryEngine, logger) {
     this.encryptionService = encryptionService
     // capture the engine and logger under app for reuse in routes.
     this.engine = oibusEngine
     this.historyQueryEngine = historyQueryEngine
-    this.logger = new LoggerService('web-server')
+    this.logger = logger
     this.webServer = null // store the listening web server
-    this.logger.setEncryptionService(this.encryptionService)
   }
 
   /**
@@ -169,11 +168,8 @@ class Server {
     this.app.use(router.allowedMethods())
     this.app.use(clientController.serveClient)
 
-    // Set the logger with the same settings as the engine
-    this.logger.changeParameters(engineConfig.name, engineConfig.logParameters).then(() => {
-      this.webServer = this.app.listen(this.port, () => {
-        this.logger.info(`Web server started on ${this.port}`)
-      })
+    this.webServer = this.app.listen(this.port, () => {
+      this.logger.info(`Web server started on ${this.port}`)
     })
   }
 

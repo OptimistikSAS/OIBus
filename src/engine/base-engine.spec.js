@@ -4,6 +4,15 @@ const ConfigurationService = require('../service/configuration.service')
 
 const { testConfig: config } = require('../../tests/test-config')
 
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
+
 // Mock services
 jest.mock('../service/configuration.service')
 jest.mock('../service/logger/logger.service')
@@ -21,11 +30,12 @@ describe('BaseEngine', () => {
       engineConfig: config.engine,
       southConfig: config.south,
     })
-
     ConfigurationService.mockImplementation(() => mockConfigService)
 
-    engine = new BaseEngine(mockConfigService, EncryptionService.getInstance(), 'myCacheFolder')
-    await engine.initEngineServices(config.engine, 'base')
+    engine = new BaseEngine(mockConfigService, EncryptionService.getInstance(), {}, 'myCacheFolder')
+    engine.logger = logger
+
+    await engine.initEngineServices(config.engine)
   })
 
   it('should warn when calling add values', async () => {

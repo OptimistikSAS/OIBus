@@ -1,7 +1,6 @@
 const path = require('node:path')
 const EncryptionService = require('../service/encryption.service')
 const databaseService = require('../service/database.service')
-const LoggerService = require('../service/logger/logger.service')
 const CertificateService = require('../service/certificate.service')
 const StatusService = require('../service/status.service')
 const { generateIntervals, delay, createFolder } = require('../service/utils')
@@ -36,6 +35,7 @@ class SouthConnector {
    * @param {Object} configuration - The South connector configuration
    * @param {Function} engineAddValuesCallback - The Engine add values callback
    * @param {Function} engineAddFilesCallback - The Engine add file callback
+   * @param {Object} logger - The Pino child logger to use
    * @param {Object} supportedModes - The supported modes
    * @return {void}
    */
@@ -43,6 +43,7 @@ class SouthConnector {
     configuration,
     engineAddValuesCallback,
     engineAddFilesCallback,
+    logger,
     supportedModes = {},
   ) {
     this.handlesPoints = false
@@ -61,6 +62,7 @@ class SouthConnector {
     this.scanGroups = configuration.settings.scanGroups
 
     this.encryptionService = EncryptionService.getInstance()
+    this.logger = logger
     this.supportedModes = supportedModes
 
     this.numberOfRetrievedFiles = 0
@@ -84,18 +86,13 @@ class SouthConnector {
   /**
    * Initialize services (logger, certificate, status data) at startup
    * @param {String} baseFolder - The base cache folder
-   * @param {String} oibusName - The OIBus name
-   * @param {Object} defaultLogParameters - The default logs parameters
+   * @param {String} _oibusName - The OIBus name
    * @returns {Promise<void>} - The result promise
    */
-  async start(baseFolder, oibusName, defaultLogParameters) {
+  async start(baseFolder, _oibusName) {
     this.baseFolder = path.resolve(baseFolder, `south-${this.id}`)
 
     this.statusService = new StatusService()
-
-    this.logger = new LoggerService(`South:${this.name}`)
-    this.logger.setEncryptionService(this.encryptionService)
-    await this.logger.changeParameters(oibusName, defaultLogParameters, this.logParameters)
 
     this.certificate = new CertificateService(this.logger)
     await this.certificate.init(this.keyFile, this.certFile, this.caFile)
@@ -362,6 +359,8 @@ class SouthConnector {
    */
   async addValues(values) {
     if (values.length > 0) {
+      // When coming from an external source, the south won't be found.
+      this.logger.trace(`Add ${values.length} values to cache from South "${this.name}".`)
       await this.engineAddValuesCallback(this.id, values)
       this.numberOfRetrievedValues += values.length
       this.statusService.updateStatusDataStream({
@@ -379,6 +378,8 @@ class SouthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async addFile(filePath, preserveFiles) {
+    this.logger.trace(`Add file "${filePath}" to cache from South "${this.name}".`)
+
     await this.engineAddFilesCallback(this.id, filePath, preserveFiles)
     this.numberOfRetrievedFiles += 1
     this.statusService.updateStatusDataStream({

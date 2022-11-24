@@ -43,9 +43,17 @@ jest.mock('node:fs/promises')
 const addValues = jest.fn()
 const addFiles = jest.fn()
 
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
+
 // Mock services
 jest.mock('../../service/database.service')
-jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 
@@ -92,7 +100,7 @@ describe('SouthSQL', () => {
       scanMode: 'every10Second',
       points: [],
     }
-    south = new SQL(settings, addValues, addFiles)
+    south = new SQL(settings, addValues, addFiles, logger)
   })
 
   it('should properly connect and set lastCompletedAt from database', async () => {
@@ -121,8 +129,8 @@ describe('SouthSQL', () => {
 
     const tempConfig = { ...settings }
     tempConfig.startTime = '2020-02-02 02:02:02'
-    const tempSqlSouth = new SQL(tempConfig, addValues, addFiles)
-    await tempSqlSouth.start('baseFolder', 'oibusName', {})
+    const tempSqlSouth = new SQL(tempConfig, addValues, addFiles, logger)
+    await tempSqlSouth.start('baseFolder', 'oibusName')
     await tempSqlSouth.connect()
 
     expect(tempSqlSouth.lastCompletedAt[settings.scanMode]).toEqual(new Date('2020-02-02 02:02:02'))
@@ -137,8 +145,8 @@ describe('SouthSQL', () => {
         databasePath: undefined,
       },
     }
-    const badSqlSouth = new SQL(badConfig, addValues, addFiles)
-    await badSqlSouth.start('baseFolder', 'oibusName', {})
+    const badSqlSouth = new SQL(badConfig, addValues, addFiles, logger)
+    await badSqlSouth.start('baseFolder', 'oibusName')
 
     expect(badSqlSouth.logger.error).toHaveBeenCalledWith('Invalid timezone supplied: "undefined".')
 
@@ -147,7 +155,7 @@ describe('SouthSQL', () => {
 
   it('should properly connect and set lastCompletedAt to now', async () => {
     databaseService.getConfig.mockReturnValue(null)
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     expect(databaseService.createConfigDatabase).toBeCalledWith(path.resolve(`baseFolder/south-${south.id}/cache.db`))
@@ -156,7 +164,7 @@ describe('SouthSQL', () => {
   })
 
   it('should quit historyQuery if timezone is invalid', async () => {
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
     south.timezone = undefined
 
@@ -168,7 +176,7 @@ describe('SouthSQL', () => {
   })
 
   it('should interact with MSSQL server if driver is mssql', async () => {
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     south.driver = 'mssql'
@@ -201,7 +209,7 @@ describe('SouthSQL', () => {
   })
 
   it('should interact with MSSQL server and catch request error', async () => {
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     south.driver = 'mssql'
@@ -228,7 +236,7 @@ describe('SouthSQL', () => {
     const endTime = new Date('2019-10-03T13:40:40.400Z')
     utils.generateReplacementParameters.mockReturnValue([startTime, endTime])
 
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     south.driver = 'mysql'
@@ -284,7 +292,7 @@ describe('SouthSQL', () => {
   })
 
   it('should interact with MySQL server and catch request error', async () => {
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     south.driver = 'mysql'
@@ -316,7 +324,7 @@ describe('SouthSQL', () => {
     const endTime = new Date('2019-10-03T13:40:40.400Z')
     utils.generateReplacementParameters.mockReturnValue([startTime, endTime])
 
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     south.driver = 'postgresql'
@@ -359,7 +367,7 @@ describe('SouthSQL', () => {
   })
 
   it('should interact with PostgreSQL server and catch request error', async () => {
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     south.driver = 'postgresql'
@@ -382,7 +390,7 @@ describe('SouthSQL', () => {
   })
 
   it('should interact with Oracle server if driver is oracle', async () => {
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     south.driver = 'oracle'
@@ -425,7 +433,7 @@ describe('SouthSQL', () => {
   })
 
   it('should interact with Oracle server and catch request error', async () => {
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     south.driver = 'oracle'
@@ -449,7 +457,7 @@ describe('SouthSQL', () => {
   it('should interact with SQLite database server if driver is sqlite', async () => {
     const all = jest.fn(() => ([]))
     mockDatabase.prepare.mockReturnValue({ all })
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     south.driver = 'sqlite'
@@ -466,7 +474,7 @@ describe('SouthSQL', () => {
     mockDatabase.prepare = () => {
       throw new Error('test')
     }
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     south.driver = 'sqlite'
@@ -479,7 +487,7 @@ describe('SouthSQL', () => {
   })
 
   it('should log an error if an invalid driver is specified', async () => {
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     south.driver = 'invalid'
@@ -492,7 +500,7 @@ describe('SouthSQL', () => {
   })
 
   it('should not send file on emtpy result', async () => {
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     south.driver = 'mysql'
@@ -505,7 +513,7 @@ describe('SouthSQL', () => {
   })
 
   it('should send an uncompressed file when the result is not empty and compression is false', async () => {
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     south.driver = 'mysql'
@@ -539,7 +547,7 @@ describe('SouthSQL', () => {
   })
 
   it('should send a compressed file when the result is not empty and compression is true', async () => {
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     south.driver = 'mysql'

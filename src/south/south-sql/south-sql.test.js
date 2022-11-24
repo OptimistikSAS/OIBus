@@ -10,7 +10,6 @@ jest.mock('node:fs/promises')
 
 // Mock services
 jest.mock('../../service/database.service')
-jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 
@@ -20,6 +19,14 @@ const engine = {
   cacheFolder: './cache',
   addValues: jest.fn(),
   addFile: jest.fn(),
+}
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
 }
 
 describe('MySQL Integration test', () => {
@@ -52,9 +59,9 @@ describe('MySQL Integration test', () => {
   })
 
   it('should retrieve some values in the MySQL database', async () => {
-    const south = new SQL(configuration, engine)
+    const south = new SQL(configuration, engine, logger)
 
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     expect(south.connected).toEqual(true)
@@ -102,9 +109,9 @@ describe('PostgreSQL Integration test', () => {
   })
 
   it('should retrieve some values in the PostgreSQL database', async () => {
-    const south = new SQL(configuration, engine)
+    const south = new SQL(configuration, engine, logger)
 
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     expect(south.connected).toEqual(true)
@@ -158,9 +165,9 @@ describe('MSSQL Integration test', () => {
   })
 
   it('should retrieve some values in the MSSQL database', async () => {
-    const south = new SQL(configuration, engine)
+    const south = new SQL(configuration, engine, logger)
 
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start('baseFolder', 'oibusName')
     await south.connect()
 
     expect(south.connected).toEqual(true)

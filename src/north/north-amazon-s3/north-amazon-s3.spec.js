@@ -47,6 +47,15 @@ const proxies = [
   },
 ]
 
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
+
 let configuration = null
 let north = null
 
@@ -82,8 +91,8 @@ describe('NorthAmazonS3', () => {
       },
       subscribedTo: [],
     }
-    north = new AmazonS3(configuration, [])
-    await north.start('baseFolder', 'oibusName', {})
+    north = new AmazonS3(configuration, [], logger)
+    await north.start('baseFolder', 'oibusName')
   })
 
   it('should be properly initialized', () => {

@@ -6,7 +6,7 @@ const schema = { name: 'ConsoleLogging' }
 schema.form = {
   level: {
     type: 'OibSelect',
-    options: ['trace', 'debug', 'info', 'warning', 'error'],
+    options: ['trace', 'debug', 'info', 'warning', 'error', 'silent'],
     md: 3,
     defaultValue: 'info',
     help: <div>The level for the Console log</div>,

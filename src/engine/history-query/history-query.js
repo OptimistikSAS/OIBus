@@ -15,9 +15,9 @@ class HistoryQuery {
   // History query finished
   static STATUS_FINISHED = 'finished'
 
-  constructor(engine, historyConfiguration, southConfiguration, northConfiguration) {
+  constructor(engine, historyConfiguration, southConfiguration, northConfiguration, logger) {
     this.engine = engine
-    this.logger = engine.logger
+    this.logger = logger
     this.historyConfiguration = historyConfiguration
     this.southConfiguration = southConfiguration
     this.south = null
@@ -41,7 +41,7 @@ class HistoryQuery {
     this.statusService = new StatusService()
     this.statusService.updateStatusDataStream({ status: this.historyConfiguration.status })
     await createFolder(this.cacheFolder)
-    this.south = this.engine.createSouth(this.southConfiguration)
+    this.south = this.engine.createSouth(this.southConfiguration, this.logger)
     if (!this.south) {
       this.logger.error(`South connector "${this.southConfiguration.name}" is not found. `
           + `Disabling history query "${this.historyConfiguration.id}".`)
@@ -54,7 +54,7 @@ class HistoryQuery {
       await this.disable()
       return
     }
-    this.north = this.engine.createNorth(this.northConfiguration)
+    this.north = this.engine.createNorth(this.northConfiguration, this.logger)
     if (!this.north) {
       this.logger.error(`North connector "${this.northConfiguration.name}" is not found. `
           + `Disabling history query "${this.historyConfiguration.id}".`)

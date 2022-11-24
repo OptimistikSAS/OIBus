@@ -13,15 +13,18 @@ class NorthOIAnalytics extends NorthConnector {
    * @constructor
    * @param {Object} configuration - The North connector configuration
    * @param {Object[]} proxies - The list of available proxies
+   * @param {Object} logger - The Pino child logger to use
    * @return {void}
    */
   constructor(
     configuration,
     proxies,
+    logger,
   ) {
     super(
       configuration,
       proxies,
+      logger,
     )
     this.canHandleValues = true
     this.canHandleFiles = true

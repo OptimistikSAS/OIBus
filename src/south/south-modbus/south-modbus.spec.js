@@ -24,9 +24,17 @@ const addFiles = jest.fn()
 
 // Mock services
 jest.mock('../../service/database.service')
-jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
+
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
 
 // Method used to flush promises called in setTimeout
 const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate)
@@ -108,8 +116,8 @@ describe('SouthModbus', () => {
         },
       ],
     }
-    south = new Modbus(configuration, addValues, addFiles)
-    await south.start('baseFolder', 'oibusName', {})
+    south = new Modbus(configuration, addValues, addFiles, logger)
+    await south.start('baseFolder', 'oibusName')
   })
 
   it('should be properly initialized', () => {

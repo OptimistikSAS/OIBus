@@ -8,7 +8,7 @@ schema.form = {
   level: {
     type: 'OibSelect',
     md: 3,
-    options: ['trace', 'debug', 'info', 'warning', 'error', 'none'],
+    options: ['trace', 'debug', 'info', 'warning', 'error', 'silent'],
     defaultValue: 'info',
     help: <div>The level for the Loki log</div>,
   },

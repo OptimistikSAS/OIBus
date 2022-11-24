@@ -53,9 +53,9 @@ exports[`LokiLogging check LokiLogging 1`] = `
               error
             </option>
             <option
-              value="none"
+              value="silent"
             >
-              none
+              silent
             </option>
           </select>
           <div
@@ -291,9 +291,9 @@ exports[`LokiLogging check change lokiLog address name to "http://test.loki.fr" 
               error
             </option>
             <option
-              value="none"
+              value="silent"
             >
-              none
+              silent
             </option>
           </select>
           <div
@@ -529,9 +529,9 @@ exports[`LokiLogging check change lokiLog interval to 10 1`] = `
               error
             </option>
             <option
-              value="none"
+              value="silent"
             >
-              none
+              silent
             </option>
           </select>
           <div
@@ -767,9 +767,9 @@ exports[`LokiLogging check change lokiLog level to "warning" 1`] = `
               error
             </option>
             <option
-              value="none"
+              value="silent"
             >
-              none
+              silent
             </option>
           </select>
           <div

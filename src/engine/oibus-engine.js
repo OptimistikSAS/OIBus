@@ -21,10 +21,16 @@ class OIBusEngine extends BaseEngine {
    * @constructor
    * @param {ConfigurationService} configService - The config service
    * @param {EncryptionService} encryptionService - The encryption service
+   * @param {LoggerService} loggerService - The logger service
    * @return {void}
    */
-  constructor(configService, encryptionService) {
-    super(configService, encryptionService, CACHE_FOLDER)
+  constructor(configService, encryptionService, loggerService) {
+    super(
+      configService,
+      encryptionService,
+      loggerService,
+      CACHE_FOLDER,
+    )
 
     // Will only contain South/North connectors enabled based on the config file
     this.activeSouths = []
@@ -50,11 +56,11 @@ class OIBusEngine extends BaseEngine {
   /**
    * Method used to init async services (like logger when loki is used with Bearer token auth)
    * @param {Object} engineConfig - the config retrieved from the file
-   * @param {String} loggerScope - the scope used for the logger
    * @returns {Promise<void>} - The result promise
    */
-  async initEngineServices(engineConfig, loggerScope = 'OIBusEngine') {
-    await super.initEngineServices(engineConfig, loggerScope)
+  async initEngineServices(engineConfig) {
+    await super.initEngineServices(engineConfig)
+    this.logger = this.loggerService.createChildLogger('OIBusEngine')
     this.logger.info(`Starting OIBusEngine: ${JSON.stringify(this.getOIBusInfo(), null, 4)}`)
 
     engineConfig.scanModes.forEach(({ scanMode }) => {
@@ -80,15 +86,10 @@ class OIBusEngine extends BaseEngine {
    * @returns {Promise<void>} - The result promise
    */
   async addValues(southId, values) {
-    // When coming from an external source, the south won't be found.
-    const southOrigin = this.activeSouths.find((south) => south.id === southId)
-    this.logger.trace(`Add ${values.length} values to cache from South "${southOrigin?.name || southId}".`)
-    if (values.length) {
-      // Do not resolve promise if one of the connector fails. Otherwise, if a file is removed after a North fails,
-      // the file can be lost.
-      await Promise.all(this.activeNorths.filter((north) => north.canHandleValues && north.isSubscribed(southId))
-        .map((north) => north.cacheValues(values)))
-    }
+    // Do not resolve promise if one of the connector fails. Otherwise, if a file is removed after a North fails,
+    // the file can be lost.
+    await Promise.all(this.activeNorths.filter((north) => north.canHandleValues && north.isSubscribed(southId))
+      .map((north) => north.cacheValues(values)))
   }
 
   /**
@@ -100,10 +101,6 @@ class OIBusEngine extends BaseEngine {
    * @returns {Promise<void>} - The result promise
    */
   async addFile(southId, filePath, preserveFiles) {
-    // When coming from an external source, the south won't be found.
-    const southOrigin = this.activeSouths.find((south) => south.id === southId)
-    this.logger.trace(`Add file "${filePath}" to cache from South "${southOrigin?.name || southId}".`)
-
     try {
       // Do not resolve promise if one of the connector fails. Otherwise, if a file is removed after a North fails,
       // the file can be lost.
@@ -145,8 +142,10 @@ class OIBusEngine extends BaseEngine {
     }
 
     // 2. North connectors
-    this.activeNorths = northConfig.filter(({ enabled }) => enabled)
-      .map((northConfiguration) => this.createNorth(northConfiguration))
+    this.activeNorths = northConfig.filter(({ enabled }) => enabled).map((northConfiguration) => {
+      const northLogger = this.loggerService.createChildLogger(`North:${northConfiguration.name}`)
+      return this.createNorth(northConfiguration, northLogger)
+    })
     // Allows init/connect failure of a connector to not block other connectors
     await Promise.allSettled(this.activeNorths.map((north) => {
       const initAndConnect = async () => {
@@ -161,41 +160,41 @@ class OIBusEngine extends BaseEngine {
     }))
 
     // 3. South connectors
-    this.activeSouths = southConfig.filter(({ enabled }) => enabled)
-      .map((southConfiguration) => {
-        const south = this.createSouth(southConfiguration)
-        if (south) {
-          // Associate the scanMode to all corresponding South connectors so the engine will know which South to
-          // activate when a scanMode has a tick.
-          if (southConfiguration.scanMode) {
-            if (!this.scanLists[southConfiguration.scanMode]) {
-              this.logger.error(`South connector ${southConfiguration.name} has an unknown scan mode: ${southConfiguration.scanMode}`)
-            } else if (!this.scanLists[southConfiguration.scanMode].includes(southConfiguration.id)) {
-              // Add the South for this scan only if not already there
-              this.scanLists[southConfiguration.scanMode].push(southConfiguration.id)
-            }
-          } else if (Array.isArray(southConfiguration.points)) {
-            if (southConfiguration.points.length > 0) {
-              southConfiguration.points.forEach((point) => {
-                if (point.scanMode !== 'listen') {
-                  if (!this.scanLists[point.scanMode]) {
-                    this.logger.error(`Point: ${point.pointId} in South connector `
-                        + `${southConfiguration.name} has an unknown scan mode: ${point.scanMode}`)
-                  } else if (!this.scanLists[point.scanMode].includes(southConfiguration.id)) {
-                    // Add the South for this scan only if not already there
-                    this.scanLists[point.scanMode].push(southConfiguration.id)
-                  }
-                }
-              })
-            } else {
-              this.logger.warn(`South "${southConfiguration.name}" has no point.`)
-            }
-          } else {
-            this.logger.error(`South "${southConfiguration.name}" has no scan mode defined.`)
+    this.activeSouths = southConfig.filter(({ enabled }) => enabled).map((southConfiguration) => {
+      const southLogger = this.loggerService.createChildLogger(`South:${southConfiguration.name}`)
+      const south = this.createSouth(southConfiguration, southLogger)
+      if (south) {
+        // Associate the scanMode to all corresponding South connectors so the engine will know which South to
+        // activate when a scanMode has a tick.
+        if (southConfiguration.scanMode) {
+          if (!this.scanLists[southConfiguration.scanMode]) {
+            this.logger.error(`South connector ${southConfiguration.name} has an unknown scan mode: ${southConfiguration.scanMode}`)
+          } else if (!this.scanLists[southConfiguration.scanMode].includes(southConfiguration.id)) {
+            // Add the South for this scan only if not already there
+            this.scanLists[southConfiguration.scanMode].push(southConfiguration.id)
           }
+        } else if (Array.isArray(southConfiguration.points)) {
+          if (southConfiguration.points.length > 0) {
+            southConfiguration.points.forEach((point) => {
+              if (point.scanMode !== 'listen') {
+                if (!this.scanLists[point.scanMode]) {
+                  this.logger.error(`Point: ${point.pointId} in South connector `
+                        + `${southConfiguration.name} has an unknown scan mode: ${point.scanMode}`)
+                } else if (!this.scanLists[point.scanMode].includes(southConfiguration.id)) {
+                  // Add the South for this scan only if not already there
+                  this.scanLists[point.scanMode].push(southConfiguration.id)
+                }
+              }
+            })
+          } else {
+            this.logger.warn(`South "${southConfiguration.name}" has no point.`)
+          }
+        } else {
+          this.logger.error(`South "${southConfiguration.name}" has no scan mode defined.`)
         }
-        return south
-      })
+      }
+      return south
+    })
     this.logger.debug(JSON.stringify(this.scanLists, null, ' '))
     // Allows init/connect failure of a connector to not block other connectors
     await Promise.allSettled(this.activeSouths.map((south) => {

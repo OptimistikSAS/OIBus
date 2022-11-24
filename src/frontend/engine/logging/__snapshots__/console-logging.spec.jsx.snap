@@ -52,6 +52,11 @@ exports[`ConsoleLogging check ConsoleLogging 1`] = `
             >
               error
             </option>
+            <option
+              value="silent"
+            >
+              silent
+            </option>
           </select>
           <div
             class="invalid-feedback"
@@ -121,6 +126,11 @@ exports[`ConsoleLogging check change console level to "warning" 1`] = `
               value="error"
             >
               error
+            </option>
+            <option
+              value="silent"
+            >
+              silent
             </option>
           </select>
           <div

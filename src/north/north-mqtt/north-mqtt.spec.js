@@ -10,12 +10,20 @@ jest.mock('node:fs/promises')
 
 // Mock services
 jest.mock('../../service/database.service')
-jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 jest.mock('../../service/cache/value-cache.service')
 jest.mock('../../service/cache/file-cache.service')
 jest.mock('../../service/cache/archive.service')
+
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
 
 // Mock certificate service
 const CertificateService = jest.mock('../../service/certificate.service')
@@ -59,8 +67,8 @@ describe('NorthMQTT', () => {
       },
       subscribedTo: [],
     }
-    north = new MQTT(configuration, [])
-    await north.start('baseFolder', 'oibusName', {})
+    north = new MQTT(configuration, [], logger)
+    await north.start('baseFolder', 'oibusName')
   })
 
   it('should properly connect', async () => {
@@ -109,8 +117,8 @@ describe('NorthMQTT', () => {
       },
     }
 
-    const mqttNorthCert = new MQTT(testMqttConfigWithFiles, [])
-    await mqttNorthCert.start('baseFolder', 'oibusName', {})
+    const mqttNorthCert = new MQTT(testMqttConfigWithFiles, [], logger)
+    await mqttNorthCert.start('baseFolder', 'oibusName')
     mqttNorthCert.certificate = CertificateService
     await mqttNorthCert.connect()
 

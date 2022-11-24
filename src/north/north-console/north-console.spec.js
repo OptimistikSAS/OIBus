@@ -11,7 +11,6 @@ jest.mock('node:fs/promises')
 
 // Mock services
 jest.mock('../../service/database.service')
-jest.mock('../../service/logger/logger.service')
 jest.mock('../../service/status.service')
 jest.mock('../../service/certificate.service')
 jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
@@ -19,32 +18,41 @@ jest.mock('../../service/cache/value-cache.service')
 jest.mock('../../service/cache/file-cache.service')
 jest.mock('../../service/cache/archive.service')
 
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
+
 const nowDateString = '2020-02-02T02:02:02.222Z'
 let configuration = null
 let north = null
 
-beforeEach(async () => {
-  jest.resetAllMocks()
-  jest.useFakeTimers().setSystemTime(new Date(nowDateString))
-
-  configuration = {
-    settings: { verbose: false },
-    caching: {
-      sendInterval: 1000,
-      retryInterval: 5000,
-      groupCount: 10000,
-      maxSendCount: 10000,
-      archive: {
-        enabled: true,
-        retentionDuration: 720,
-      },
-    },
-  }
-  north = new Console(configuration, [])
-  await north.start('baseFolder', 'oibusName', {})
-})
-
 describe('North Console', () => {
+  beforeEach(async () => {
+    jest.resetAllMocks()
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString))
+
+    configuration = {
+      settings: { verbose: false },
+      caching: {
+        sendInterval: 1000,
+        retryInterval: 5000,
+        groupCount: 10000,
+        maxSendCount: 10000,
+        archive: {
+          enabled: true,
+          retentionDuration: 720,
+        },
+      },
+    }
+    north = new Console(configuration, [], logger)
+    await north.start('baseFolder', 'oibusName')
+  })
+
   it('should be properly initialized', () => {
     expect(north.canHandleFiles).toBeTruthy()
     expect(north.canHandleValues).toBeTruthy()

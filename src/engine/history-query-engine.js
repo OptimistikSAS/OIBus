@@ -25,9 +25,15 @@ class HistoryQueryEngine extends BaseEngine {
    * @constructor
    * @param {ConfigurationService} configService - The config service
    * @param {EncryptionService} encryptionService - The encryption service
+   * @param {LoggerService} loggerService - The logger service
    */
-  constructor(configService, encryptionService) {
-    super(configService, encryptionService, CACHE_FOLDER)
+  constructor(configService, encryptionService, loggerService) {
+    super(
+      configService,
+      encryptionService,
+      loggerService,
+      CACHE_FOLDER,
+    )
     this.cacheFolder = path.resolve(CACHE_FOLDER)
 
     this.historyQueryRepository = null
@@ -38,11 +44,12 @@ class HistoryQueryEngine extends BaseEngine {
   /**
    * Method used to init async services (like logger when loki is used with Bearer token auth)
    * @param {Object} engineConfig - the config retrieved from the file
-   * @param {String} loggerScope - the scope used for the logger
    * @returns {Promise<void>} - The result promise
    */
-  async initEngineServices(engineConfig, loggerScope = 'HistoryQueryEngine') {
-    await super.initEngineServices(engineConfig, loggerScope)
+  async initEngineServices(engineConfig) {
+    await super.initEngineServices(engineConfig)
+    this.logger = this.loggerService.createChildLogger('HistoryQueryEngine')
+
     this.statusService.updateStatusDataStream({ ongoingHistoryQueryId: null })
 
     try {
@@ -71,7 +78,7 @@ class HistoryQueryEngine extends BaseEngine {
 
     this.logger.trace(`Add ${values.length} historian values to cache from South "${this.historyQuery.south.name}".`)
     if (values.length) {
-      this.historyQuery.north.cacheValues(southId, values)
+      await this.historyQuery.north.cacheValues(southId, values)
     }
   }
 
@@ -188,7 +195,9 @@ class HistoryQueryEngine extends BaseEngine {
       return
     }
 
-    this.historyQuery = new HistoryQuery(this, historyConfiguration, southToUse, northToUse)
+    const historyLogger = this.loggerService.createChildLogger(`History: ${historyConfiguration.id}`)
+
+    this.historyQuery = new HistoryQuery(this, historyConfiguration, southToUse, northToUse, historyLogger)
     this.statusService.updateStatusDataStream({ ongoingHistoryQueryId: historyConfiguration.id })
     this.logger.info(`Starting history query "${historyConfiguration.id}".`)
     this.historyOnGoing = true

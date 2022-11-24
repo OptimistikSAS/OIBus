@@ -7,7 +7,6 @@ jest.mock('node:fs/promises')
 
 // Mock services
 jest.mock('../service/database.service')
-jest.mock('../service/logger/logger.service')
 jest.mock('../service/status.service')
 jest.mock('../service/certificate.service')
 jest.mock('../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
@@ -16,6 +15,15 @@ jest.mock('../service/http-request-static-functions')
 jest.mock('../service/cache/value-cache.service')
 jest.mock('../service/cache/file-cache.service')
 jest.mock('../service/cache/archive.service')
+
+// Mock logger
+const logger = {
+  error: jest.fn(),
+  warn: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  trace: jest.fn(),
+}
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 let configuration = null
@@ -43,8 +51,8 @@ describe('NorthConnector', () => {
         },
       },
     }
-    north = new NorthConnector(configuration, [{ name: 'proxyTest' }])
-    await north.start('baseFolder', 'oibusName', {})
+    north = new NorthConnector(configuration, [{ name: 'proxyTest' }], logger)
+    await north.start('baseFolder', 'oibusName')
   })
 
   afterEach(() => {
