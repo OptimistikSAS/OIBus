@@ -3,6 +3,7 @@ const path = require('node:path')
 const LoggerService = require('./logger.service')
 
 jest.mock('pino')
+jest.mock('./file-cleanup.service')
 
 // mock EncryptionService
 const encryptionService = { decryptText: (textToDecipher) => textToDecipher }

@@ -31,9 +31,9 @@ const {
 } = getCommandLineArguments()
 
 const logParameters = {
-  consoleLog: { level: 'debug' },
+  consoleLog: { level: 'trace' },
   fileLog: {
-    level: 'debug',
+    level: 'trace',
     fileName: path.resolve(path.parse(configFile).dir, LOG_FOLDER_NAME, MAIN_LOG_FILE_NAME),
     maxSize: 10,
     numberOfFiles: 5,
@@ -94,6 +94,7 @@ if (cluster.isMaster) {
           })
           break
         case 'shutdown-ready':
+          loggerService.stop()
           process.exit()
           break
         default:
@@ -159,6 +160,8 @@ if (cluster.isMaster) {
         Promise.allSettled(stopAll).then(() => {
           process.exit()
         })
+        loggerService.stop()
+        oibusLoggerService.stop()
       })
 
       // Receive messages from the master process.
@@ -170,6 +173,9 @@ if (cluster.isMaster) {
               await oibusEngine.stop()
               await historyQueryEngine.stop()
               await server.stop()
+
+              // Restart the logger to update its settings
+              oibusLoggerService.stop()
               const { engineConfig: newEngineConfig } = configService.getConfig()
               await oibusLoggerService.start(newEngineConfig.name, newEngineConfig.logParameters)
 
@@ -186,6 +192,7 @@ if (cluster.isMaster) {
             break
           case 'reload':
             forkLogger.info('Reloading OIBus')
+            oibusLoggerService.stop()
             Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop(), server.stop()]).then(() => {
               process.exit()
             })
