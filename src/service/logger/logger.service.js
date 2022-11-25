@@ -1,6 +1,7 @@
 const path = require('node:path')
 
 const pino = require('pino')
+const FileCleanupService = require('./file-cleanup.service')
 
 const LOG_FOLDER_NAME = 'logs'
 const LOG_FILE_NAME = 'journal.log'
@@ -22,9 +23,10 @@ class LoggerService {
    * @param {String} scope - Gives the scope of the logger (the engine, the connector...)
    */
   constructor(scope = 'main') {
+    this.scope = scope
     this.logger = null
     this.encryptionService = null
-    this.scope = scope
+    this.fileCleanUpService = null
   }
 
   /**
@@ -48,11 +50,11 @@ class LoggerService {
     const { consoleLog, fileLog, sqliteLog, lokiLog } = logParameters
     targets.push({ target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: consoleLog.level })
 
-    const filename = fileLog.fileName ? fileLog.fileName : path.resolve(LOG_FOLDER_NAME, LOG_FILE_NAME)
+    const filePath = fileLog.fileName ? fileLog.fileName : path.resolve(LOG_FOLDER_NAME, LOG_FILE_NAME)
     targets.push({
       target: 'pino-roll',
       options: {
-        file: filename,
+        file: filePath,
         size: fileLog.maxSize,
       },
       level: fileLog.level,
@@ -99,6 +101,9 @@ class LoggerService {
       timestamp: pino.stdTimeFunctions.isoTime,
       transport: { targets },
     })
+
+    this.fileCleanUpService = new FileCleanupService(path.parse(filePath).dir, this.logger, path.parse(filePath).base, fileLog.numberOfFiles)
+    await this.fileCleanUpService.start()
   }
 
   createChildLogger(scope) {
@@ -129,6 +134,14 @@ class LoggerService {
     } finally {
       Error.prepareStackTrace = oldStackTrace
     }
+  }
+
+  /**
+   * Stop the logger and associated services
+   * @return {void}
+   */
+  stop() {
+    this.fileCleanUpService.stop()
   }
 }
 
