@@ -2,6 +2,7 @@ const path = require('node:path')
 
 const pino = require('pino')
 const FileCleanupService = require('./file-cleanup.service')
+const { createFolder } = require('../utils')
 
 const LOG_FOLDER_NAME = 'logs'
 const LOG_FILE_NAME = 'journal.log'
@@ -20,10 +21,8 @@ class LoggerService {
   /**
    * Constructor for Logger
    * @constructor
-   * @param {String} scope - Gives the scope of the logger (the engine, the connector...)
    */
-  constructor(scope = 'main') {
-    this.scope = scope
+  constructor() {
     this.logger = null
     this.encryptionService = null
     this.fileCleanUpService = null
@@ -45,12 +44,13 @@ class LoggerService {
    * @returns {Promise<void>} - The result promise
    */
   async start(oibusName, defaultLogParameters) {
+    await createFolder(LOG_FOLDER_NAME)
     const logParameters = JSON.parse(JSON.stringify(defaultLogParameters))
     const targets = []
     const { consoleLog, fileLog, sqliteLog, lokiLog } = logParameters
     targets.push({ target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: consoleLog.level })
 
-    const filePath = fileLog.fileName ? fileLog.fileName : path.resolve(LOG_FOLDER_NAME, LOG_FILE_NAME)
+    const filePath = fileLog.fileName ? path.resolve(LOG_FOLDER_NAME, fileLog.fileName) : path.resolve(LOG_FOLDER_NAME, LOG_FILE_NAME)
     targets.push({
       target: 'pino-roll',
       options: {
@@ -61,7 +61,7 @@ class LoggerService {
     })
 
     if (sqliteLog) {
-      const sqlDatabaseName = sqliteLog.fileName ? sqliteLog.fileName : path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME)
+      const sqlDatabaseName = sqliteLog.fileName ? path.resolve(LOG_FOLDER_NAME, sqliteLog.fileName) : path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME)
 
       targets.push({
         target: path.join(__dirname, 'sqlite-transport.js'),
@@ -79,7 +79,7 @@ class LoggerService {
           target: path.join(__dirname, 'loki-transport.js'),
           options: {
             username: lokiLog.username,
-            password: lokiLog.password ? await this.encryptionService.decryptText(lokiLog.password) : null,
+            password: lokiLog.password ? await this.encryptionService.decryptText(lokiLog.password) : '',
             tokenAddress: lokiLog.tokenAddress,
             lokiAddress: lokiLog.lokiAddress,
             oibusName,
@@ -106,6 +106,11 @@ class LoggerService {
     await this.fileCleanUpService.start()
   }
 
+  /**
+   * Create a child logger from the main logger already set up
+   * @param {String} scope - The scope of the logger (Engine, South, North...)
+   * @returns {Object} - The child logger
+   */
   createChildLogger(scope) {
     return this.logger.child({ scope })
   }

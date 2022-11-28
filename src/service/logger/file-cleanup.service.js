@@ -1,5 +1,6 @@
 const path = require('node:path')
 const fs = require('node:fs/promises')
+const { filesExists } = require('../utils')
 
 const CLEAN_UP_INTERVAL = 24 * 3600 * 1000 // One day
 
@@ -51,6 +52,9 @@ class FileCleanupService {
    */
   async cleanUpLogFiles() {
     try {
+      if (!await filesExists(this.logFolder)) {
+        return
+      }
       const filenames = await fs.readdir(this.logFolder)
 
       const regexp = new RegExp(`^${this.filename}\\.[0-9]*$`)

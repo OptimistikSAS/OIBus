@@ -4,10 +4,11 @@ const LoggerService = require('./logger.service')
 
 jest.mock('pino')
 jest.mock('./file-cleanup.service')
+jest.mock('../utils')
 
 // mock EncryptionService
 const encryptionService = { decryptText: (textToDecipher) => textToDecipher }
-let logger = null
+let service = null
 let settings = null
 
 describe('Logger', () => {
@@ -44,15 +45,15 @@ describe('Logger', () => {
   })
 
   it('should be properly initialized', async () => {
-    logger = new LoggerService()
-    logger.setEncryptionService(encryptionService)
+    service = new LoggerService()
+    service.setEncryptionService(encryptionService)
 
     const expectedTargets = [
       { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: settings.logParameters.consoleLog.level },
       {
         target: 'pino-roll',
         options: {
-          file: settings.logParameters.fileLog.fileName,
+          file: path.resolve('logs', settings.logParameters.fileLog.fileName),
           size: 10,
         },
         level: settings.logParameters.fileLog.level,
@@ -60,7 +61,7 @@ describe('Logger', () => {
       {
         target: path.join(__dirname, 'sqlite-transport.js'),
         options: {
-          fileName: settings.logParameters.sqliteLog.fileName,
+          fileName: path.resolve('logs', settings.logParameters.sqliteLog.fileName),
           maxNumberOfLogs: settings.logParameters.sqliteLog.maxNumberOfLogs,
         },
         level: settings.logParameters.sqliteLog.level,
@@ -79,8 +80,64 @@ describe('Logger', () => {
       },
     ]
 
-    await logger.start(settings.name, settings.logParameters)
-    expect(logger.scope).toEqual('main')
+    await service.start(settings.name, settings.logParameters)
+
+    expect(pino).toHaveBeenCalledTimes(1)
+    expect(pino).toHaveBeenCalledWith({
+      mixin: expect.any(Function),
+      base: undefined,
+      level: 'trace',
+      timestamp: pino.stdTimeFunctions.isoTime,
+      transport: { targets: expectedTargets },
+    })
+    expect(service.fileCleanUpService.start).toHaveBeenCalledTimes(1)
+  })
+
+  it('should be properly initialized with loki error and standard file names', async () => {
+    jest.spyOn(console, 'error').mockImplementationOnce(() => {})
+    service = new LoggerService()
+    const badEncryptionService = { decryptText: jest.fn(() => { throw new Error('decrypt-error') }) }
+    service.setEncryptionService(badEncryptionService)
+
+    settings.logParameters.fileLog.fileName = undefined
+    settings.logParameters.sqliteLog.fileName = undefined
+    await service.start(settings.name, settings.logParameters)
+
+    expect(console.error).toHaveBeenCalledTimes(1)
+    expect(console.error).toHaveBeenCalledWith(new Error('decrypt-error'))
+  })
+
+  it('should be properly initialized without loki password and without sqliteLog', async () => {
+    jest.spyOn(console, 'error').mockImplementationOnce(() => {})
+    service = new LoggerService()
+
+    settings.logParameters.sqliteLog = null
+    settings.logParameters.lokiLog.password = ''
+    const expectedTargets = [
+      { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: settings.logParameters.consoleLog.level },
+      {
+        target: 'pino-roll',
+        options: {
+          file: path.resolve('logs', settings.logParameters.fileLog.fileName),
+          size: 10,
+        },
+        level: settings.logParameters.fileLog.level,
+      },
+      {
+        target: path.join(__dirname, 'loki-transport.js'),
+        options: {
+          username: settings.logParameters.lokiLog.username,
+          password: settings.logParameters.lokiLog.password,
+          tokenAddress: settings.logParameters.lokiLog.tokenAddress,
+          lokiAddress: settings.logParameters.lokiLog.lokiAddress,
+          oibusName: settings.name,
+          interval: settings.logParameters.lokiLog.interval,
+        },
+        level: settings.logParameters.lokiLog.level,
+      },
+    ]
+
+    await service.start(settings.name, settings.logParameters)
 
     expect(pino).toHaveBeenCalledTimes(1)
     expect(pino).toHaveBeenCalledWith({
@@ -92,33 +149,66 @@ describe('Logger', () => {
     })
   })
 
-  it('should be properly initialized with loki error and standard file names', async () => {
+  it('should be properly initialized without lokiLog nor sqliteLog', async () => {
     jest.spyOn(console, 'error').mockImplementationOnce(() => {})
-    logger = new LoggerService('specific-logger')
-    const badEncryptionService = { decryptText: jest.fn(() => { throw new Error('decrypt-error') }) }
-    logger.setEncryptionService(badEncryptionService)
+    service = new LoggerService()
 
-    settings.logParameters.fileLog.fileName = undefined
-    settings.logParameters.sqliteLog.fileName = undefined
-    await logger.start(settings.name, settings.logParameters)
+    settings.logParameters.sqliteLog = null
+    settings.logParameters.lokiLog = null
+    const expectedTargets = [
+      { target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: settings.logParameters.consoleLog.level },
+      {
+        target: 'pino-roll',
+        options: {
+          file: path.resolve('logs', settings.logParameters.fileLog.fileName),
+          size: 10,
+        },
+        level: settings.logParameters.fileLog.level,
+      },
+    ]
 
-    expect(console.error).toHaveBeenCalledTimes(1)
-    expect(console.error).toHaveBeenCalledWith(new Error('decrypt-error'))
+    await service.start(settings.name, settings.logParameters)
+
+    expect(pino).toHaveBeenCalledTimes(1)
+    expect(pino).toHaveBeenCalledWith({
+      mixin: expect.any(Function),
+      base: undefined,
+      level: 'trace',
+      timestamp: pino.stdTimeFunctions.isoTime,
+      transport: { targets: expectedTargets },
+    })
   })
 
   it('should properly get additional parameter from mixin', () => {
-    logger = new LoggerService('specific-logger')
-    logger.getSource = jest.fn(() => 'my file source')
+    service = new LoggerService()
+    service.getSource = jest.fn(() => 'my file source')
 
-    const mixinResults = logger.pinoMixin()
+    const mixinResults = service.pinoMixin()
 
     expect(mixinResults).toEqual({ source: 'my file source' })
   })
 
   it('should properly get source', () => {
-    logger = new LoggerService()
-    const result = logger.getSource()
+    service = new LoggerService()
+    const result = service.getSource()
 
     expect(result).toEqual(expect.stringContaining('logger.service.spec'))
+  })
+
+  it('should properly create child logger', () => {
+    service = new LoggerService()
+    const childFunction = jest.fn()
+    service.logger = { child: childFunction }
+    service.createChildLogger('myScope')
+    expect(childFunction).toHaveBeenCalledWith({ scope: 'myScope' })
+  })
+
+  it('should properly stop logger', () => {
+    service = new LoggerService()
+    const fileCleanUpStopFunction = jest.fn()
+
+    service.fileCleanUpService = { stop: fileCleanUpStopFunction }
+    service.stop()
+    expect(fileCleanUpStopFunction).toHaveBeenCalledTimes(1)
   })
 })

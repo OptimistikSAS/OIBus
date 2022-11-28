@@ -20,8 +20,8 @@ const { getCommandLineArguments, createFolder } = require('./service/utils')
 const MAX_RESTART_COUNT = 3
 const MAX_INTERVAL_MILLISECOND = 30 * 1000
 const CACHE_FOLDER = './cache'
-const LOG_FOLDER_NAME = 'logs'
 const MAIN_LOG_FILE_NAME = 'main-journal.log'
+const CONFIG_FILE_NAME = 'oibus.json'
 
 const loggerService = new LoggerService()
 
@@ -34,18 +34,21 @@ const logParameters = {
   consoleLog: { level: 'trace' },
   fileLog: {
     level: 'trace',
-    fileName: path.resolve(path.parse(configFile).dir, LOG_FOLDER_NAME, MAIN_LOG_FILE_NAME),
+    fileName: MAIN_LOG_FILE_NAME,
     maxSize: 10,
     numberOfFiles: 5,
   },
 }
 
-const baseDir = path.extname(configFile) ? path.parse(configFile).dir : configFile
-
 if (cluster.isMaster) {
-  loggerService.start('OIBus-main', logParameters).then(async () => {
+  const baseDir = path.resolve(path.extname(configFile) ? path.parse(configFile).dir : configFile)
+  process.chdir(baseDir)
+  createFolder(baseDir).then(async () => {
+    // Create the base cache folder
+    await createFolder(CACHE_FOLDER)
+
+    await loggerService.start('OIBus-main', logParameters)
     const mainLogger = loggerService.createChildLogger('main-thread')
-    await createFolder(baseDir)
     // Master role is nothing except launching a worker and relaunching another
     // one if exit is detected (typically to load a new configuration)
     mainLogger.info(`Starting OIBus version ${VERSION}.`)
@@ -103,19 +106,18 @@ if (cluster.isMaster) {
     })
   })
 } else {
+  // The base directory has changed in the main thread into the config file directory, so we need to create the path from
+  // the basename of the configFile path
+  const configFilePath = path.resolve(CONFIG_FILE_NAME)
   loggerService.start('OIBus-main', logParameters).then(async () => {
     const forkLogger = loggerService.createChildLogger('forked-thread')
 
-    process.chdir(baseDir)
     // Migrate config file, if needed
-    migrationService.migrate(configFile, loggerService.createChildLogger('migration')).then(async () => {
+    migrationService.migrate(configFilePath, loggerService.createChildLogger('migration')).then(async () => {
       // this condition is reached only for a worker (i.e. not master)
       // so this is here where we start the web-server, OIBusEngine and HistoryQueryEngine
 
-      // Create the base cache folder
-      await createFolder(CACHE_FOLDER)
-
-      const configService = new ConfigurationService(configFile, CACHE_FOLDER)
+      const configService = new ConfigurationService(configFilePath, CACHE_FOLDER)
       const encryptionService = EncryptionService.getInstance()
       encryptionService.setKeyFolder(configService.keyFolder)
       encryptionService.setCertsFolder(configService.certFolder)
@@ -126,7 +128,7 @@ if (cluster.isMaster) {
       const safeMode = process.env.SAFE_MODE === 'true'
 
       const { engineConfig } = configService.getConfig()
-      const oibusLoggerService = new LoggerService('oibusLogger')
+      const oibusLoggerService = new LoggerService()
       oibusLoggerService.setEncryptionService(encryptionService)
       await oibusLoggerService.start(engineConfig.name, engineConfig.logParameters)
       const oibusEngine = new OIBusEngine(configService, encryptionService, oibusLoggerService)
