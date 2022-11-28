@@ -40,7 +40,7 @@
     "firefox esr"
   ],
   "dependencies": {
-    "@aws-sdk/client-s3": "3.215.0",
+    "@aws-sdk/client-s3": "3.218.0",
     "@aws-sdk/node-http-handler": "3.215.0",
     "@koa/cors": "4.0.0",
     "@koa/multer": "3.0.0",
