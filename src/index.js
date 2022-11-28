@@ -106,6 +106,8 @@ if (cluster.isMaster) {
     })
   })
 } else {
+  // This condition is reached only for a worker (i.e. not main thread)
+  // so this is here where we start the web-server, OIBusEngine and HistoryQueryEngine
   // The base directory has changed in the main thread into the config file directory, so we need to create the path from
   // the basename of the configFile path
   const configFilePath = path.resolve(CONFIG_FILE_NAME)
@@ -113,102 +115,100 @@ if (cluster.isMaster) {
     const forkLogger = loggerService.createChildLogger('forked-thread')
 
     // Migrate config file, if needed
-    migrationService.migrate(configFilePath, loggerService.createChildLogger('migration')).then(async () => {
-      // this condition is reached only for a worker (i.e. not master)
-      // so this is here where we start the web-server, OIBusEngine and HistoryQueryEngine
+    await migrationService.migrate(configFilePath, loggerService.createChildLogger('migration'))
 
-      const configService = new ConfigurationService(configFilePath, CACHE_FOLDER)
-      const encryptionService = EncryptionService.getInstance()
-      encryptionService.setKeyFolder(configService.keyFolder)
-      encryptionService.setCertsFolder(configService.certFolder)
-      await encryptionService.checkOrCreatePrivateKey()
-      await encryptionService.checkOrCreateCertFiles()
-      await configService.init()
+    const configService = new ConfigurationService(configFilePath, CACHE_FOLDER)
+    const encryptionService = EncryptionService.getInstance()
+    encryptionService.setKeyFolder(configService.keyFolder)
+    encryptionService.setCertsFolder(configService.certFolder)
+    await encryptionService.checkOrCreatePrivateKey()
+    await encryptionService.checkOrCreateCertFiles()
+    await configService.init()
 
-      const safeMode = process.env.SAFE_MODE === 'true'
+    const safeMode = process.env.SAFE_MODE === 'true'
 
-      const { engineConfig } = configService.getConfig()
-      const oibusLoggerService = new LoggerService()
-      oibusLoggerService.setEncryptionService(encryptionService)
-      await oibusLoggerService.start(engineConfig.name, engineConfig.logParameters)
-      const oibusEngine = new OIBusEngine(configService, encryptionService, oibusLoggerService)
-      const historyQueryEngine = new HistoryQueryEngine(configService, encryptionService, oibusLoggerService)
-      const server = new Server(
-        encryptionService,
-        oibusEngine,
-        historyQueryEngine,
-        oibusLoggerService.createChildLogger('web-server'),
-      )
+    const { engineConfig } = configService.getConfig()
+    const oibusLoggerService = new LoggerService()
+    oibusLoggerService.setEncryptionService(encryptionService)
+    await oibusLoggerService.start(engineConfig.name, engineConfig.logParameters)
 
-      if (check) {
-        forkLogger.warn('OIBus is running in check mode.')
-        process.send({ type: 'shutdown-ready' })
-      } else {
-        oibusEngine.start(safeMode).then(() => {
-          forkLogger.info('OIBus engine fully started.')
-        })
-        historyQueryEngine.start(safeMode).then(() => {
-          forkLogger.info('History query engine fully started.')
-        })
-        server.start().then(() => {
-          forkLogger.info('OIBus web server fully started.')
-        })
-      }
+    const oibusEngine = new OIBusEngine(configService, encryptionService, oibusLoggerService)
+    const historyQueryEngine = new HistoryQueryEngine(configService, encryptionService, oibusLoggerService)
+    const server = new Server(
+      encryptionService,
+      oibusEngine,
+      historyQueryEngine,
+      oibusLoggerService,
+    )
 
-      // Catch Ctrl+C and properly stop the Engine
-      process.on('SIGINT', () => {
-        forkLogger.info('SIGINT (Ctrl+C) received. Stopping everything.')
-        const stopAll = [oibusEngine.stop(), historyQueryEngine.stop(), server.stop()]
-        Promise.allSettled(stopAll).then(() => {
-          process.exit()
-        })
-        loggerService.stop()
-        oibusLoggerService.stop()
+    if (check) {
+      forkLogger.warn('OIBus is running in check mode.')
+      process.send({ type: 'shutdown-ready' })
+    } else {
+      oibusEngine.start(safeMode).then(() => {
+        forkLogger.info('OIBus engine fully started.')
       })
+      historyQueryEngine.start(safeMode).then(() => {
+        forkLogger.info('History query engine fully started.')
+      })
+      server.start().then(() => {
+        forkLogger.info('OIBus web server fully started.')
+      })
+    }
 
-      // Receive messages from the master process.
-      process.on('message', async (msg) => {
-        switch (msg.type) {
-          case 'reload-oibus-engine':
-            {
-              forkLogger.info('Reloading OIBus Engine')
-              await oibusEngine.stop()
-              await historyQueryEngine.stop()
-              await server.stop()
+    // Catch Ctrl+C and properly stop the Engine
+    process.on('SIGINT', () => {
+      forkLogger.info('SIGINT (Ctrl+C) received. Stopping everything.')
+      const stopAll = [oibusEngine.stop(), historyQueryEngine.stop(), server.stop()]
+      Promise.allSettled(stopAll).then(() => {
+        process.exit()
+      })
+      loggerService.stop()
+      oibusLoggerService.stop()
+    })
 
-              // Restart the logger to update its settings
-              oibusLoggerService.stop()
-              const { engineConfig: newEngineConfig } = configService.getConfig()
-              await oibusLoggerService.start(newEngineConfig.name, newEngineConfig.logParameters)
+    // Receive messages from the master process.
+    process.on('message', async (msg) => {
+      switch (msg.type) {
+        case 'reload-oibus-engine':
+          {
+            forkLogger.info('Reloading OIBus Engine')
+            await oibusEngine.stop()
+            await historyQueryEngine.stop()
+            await server.stop()
 
-              oibusEngine.start(safeMode).then(() => {
-                forkLogger.info('OIBus engine fully started.')
-              })
-              historyQueryEngine.start(safeMode).then(() => {
-                forkLogger.info('History engine fully started.')
-              })
-              server.start().then(() => {
-                forkLogger.info('OIBus web server fully started.')
-              })
-            }
-            break
-          case 'reload':
-            forkLogger.info('Reloading OIBus')
+            // Restart the logger to update its settings
             oibusLoggerService.stop()
-            Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop(), server.stop()]).then(() => {
-              process.exit()
+            const { engineConfig: newEngineConfig } = configService.getConfig()
+            await oibusLoggerService.start(newEngineConfig.name, newEngineConfig.logParameters)
+
+            oibusEngine.start(safeMode).then(() => {
+              forkLogger.info('OIBus engine fully started.')
             })
-            break
-          case 'shutdown':
-            forkLogger.info('Shutting down OIBus')
-            Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop(), server?.stop()]).then(() => {
-              process.send({ type: 'shutdown-ready' })
+            historyQueryEngine.start(safeMode).then(() => {
+              forkLogger.info('History engine fully started.')
             })
-            break
-          default:
-            forkLogger.warn(`Unknown message type received from Master: ${msg.type}`)
-        }
-      })
+            server.start().then(() => {
+              forkLogger.info('OIBus web server fully started.')
+            })
+          }
+          break
+        case 'reload':
+          forkLogger.info('Reloading OIBus')
+          oibusLoggerService.stop()
+          Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop(), server.stop()]).then(() => {
+            process.exit()
+          })
+          break
+        case 'shutdown':
+          forkLogger.info('Shutting down OIBus')
+          Promise.allSettled([oibusEngine.stop(), historyQueryEngine.stop(), server?.stop()]).then(() => {
+            process.send({ type: 'shutdown-ready' })
+          })
+          break
+        default:
+          forkLogger.warn(`Unknown message type received from Master: ${msg.type}`)
+      }
     })
   })
 }
