@@ -2,6 +2,49 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.4.0](https://github.com/OptimistikSAS/OIBus/compare/v2.3.4...v2.4.0) (2022-11-28)
+
+
+### Features
+
+* **cache:** create specific archive service for north connectors ([069e0f1](https://github.com/OptimistikSAS/OIBus/commit/069e0f1550cdb71977d63f747185e52bea13875f))
+* **cache:** improve file cache service ([0618d65](https://github.com/OptimistikSAS/OIBus/commit/0618d656bccdf386e5369de3747f7cc3b2a2995f))
+* **file-cache:** Add tests ([8a18c20](https://github.com/OptimistikSAS/OIBus/commit/8a18c20963d2365c5ae67910c05937846e09039b))
+* **file-cache:** Endpoints to remove/retry file cache errors ([f023a7e](https://github.com/OptimistikSAS/OIBus/commit/f023a7ec09f1b6075ee028ffa9d78e83d7f440ab))
+* **logs:** rotate log file ([f865dec](https://github.com/OptimistikSAS/OIBus/commit/f865dec411c5995864c41995dbce17c8620de3fa))
+
+
+### Bug Fixes
+
+* **cache:** do not log error when buffer file does not exist ([0542c54](https://github.com/OptimistikSAS/OIBus/commit/0542c5477183a79c7e9a42ecb1c9f0d336f777f9))
+* **cache:** file cache fix queue ([e3eec3c](https://github.com/OptimistikSAS/OIBus/commit/e3eec3c850b772a488aac38beecdc0125f910baf))
+* **cache:** Fix tests ([e76df96](https://github.com/OptimistikSAS/OIBus/commit/e76df96ca214d1424ed68c33f0ccfef646ada749))
+* **cache:** fix time flush reload ([e10a8e2](https://github.com/OptimistikSAS/OIBus/commit/e10a8e2dcd66d0992c71de9101dbc3c0cb5cfd5e))
+* **cache:** fix value cache when concurrent access to the buffer file ([0fb6799](https://github.com/OptimistikSAS/OIBus/commit/0fb6799546e95a2dba67530cfe88aad4b1d118d7))
+* **cache:** migrate values cache and file errors folder ([99b1792](https://github.com/OptimistikSAS/OIBus/commit/99b17925289b355e2a85a01c73dc018e63ecd752))
+* **cache:** refactor values cache ([b5fb0e6](https://github.com/OptimistikSAS/OIBus/commit/b5fb0e6989c5e6574aa4f9c35603475b19aef1bf))
+* **cache:** Remove cache folder when removing connector ([9b55546](https://github.com/OptimistikSAS/OIBus/commit/9b555464980c93d99d27822df3422b383d8adbc0))
+* **cache:** Use promise syntax instead of for in ([1e8f1b2](https://github.com/OptimistikSAS/OIBus/commit/1e8f1b22a5b52772c473a202d5bd0f16cbb9e4c2))
+* **config:** do not throw error when removing orphan cache if data stream folder does not exist ([70e32c5](https://github.com/OptimistikSAS/OIBus/commit/70e32c530fbe68fede8e2f0f8f6fdef7d1194fba))
+* **engine:** remove engine circular dependencies in connectors ([57f6389](https://github.com/OptimistikSAS/OIBus/commit/57f6389944ba8167d2508ef9a785dc601cd4135c))
+* **http-request:** fix naming issue and create a http request static functions file ([11ad229](https://github.com/OptimistikSAS/OIBus/commit/11ad22922a22272c222609ec5b18b74aa188f8a4))
+* **logs:** do not set toDate in log screen ([e5151aa](https://github.com/OptimistikSAS/OIBus/commit/e5151aa7406303afeb8b90749679d1e40feea9b5))
+* **logs:** fix log reload when calling logger from log endpoint ([7521e53](https://github.com/OptimistikSAS/OIBus/commit/7521e5368646037b7a551bb626019999671835eb))
+* **logs:** fix logs ui test ([b4a84c3](https://github.com/OptimistikSAS/OIBus/commit/b4a84c39ca1d362dc8d2c306f240e26b595b2be6))
+* **logs:** fix oibus initialisation with common logger ([d7dd830](https://github.com/OptimistikSAS/OIBus/commit/d7dd83033fa64224660c79dbdd6c4929a0cbb355))
+* **logs:** roll files and remove the oldest file periodically ([a0b47d0](https://github.com/OptimistikSAS/OIBus/commit/a0b47d020172479b2e8149bbfadb424b828238ee))
+* **logs:** use one global logger for settings and children logger for connectors ([cc720c5](https://github.com/OptimistikSAS/OIBus/commit/cc720c585c85e46914923d388a3b74adfd6c575a))
+* **migration:** migrate north settings authentication properly ([584c291](https://github.com/OptimistikSAS/OIBus/commit/584c29107d655b6539298cbf5d90fff754f6b3c6))
+* **opcua:** Add tests for internalDisconnect ([2e1fa48](https://github.com/OptimistikSAS/OIBus/commit/2e1fa483074c428d92310ab8f4c81ca94f246665))
+* **opcua:** Prevent duplicate session creation ([bd3f140](https://github.com/OptimistikSAS/OIBus/commit/bd3f1408f765d0596c5769c050ecc757e49dcea7))
+* **release:** fix release oibus running test path ([be4b3bf](https://github.com/OptimistikSAS/OIBus/commit/be4b3bfea9147d1789776f06cda364d99d5c7070))
+* **setup:** change favicon and setup file name ([0ad1a99](https://github.com/OptimistikSAS/OIBus/commit/0ad1a99dc0bbb5d4361c5052cb229bf75a34a99f))
+* **south/north:** rename init into start and create stop method ([753cd6b](https://github.com/OptimistikSAS/OIBus/commit/753cd6b3fb9867a77e095ea772df6962526aac56))
+* **tests:** add data-folder in repo for tests and oibus start ([0252635](https://github.com/OptimistikSAS/OIBus/commit/02526358e58c16cd2dafc38199f86f7f363c44d2))
+* **tests:** fix integration test for sql south connector ([654cc62](https://github.com/OptimistikSAS/OIBus/commit/654cc6258c2bb49ab48850960035d7fda41d1776))
+* **ui:** Rework OiDate Picker ([53102ce](https://github.com/OptimistikSAS/OIBus/commit/53102ce897bea3f573f845d743484fac4e96acdf))
+* **win-setup:** update setup images ([9a33a9e](https://github.com/OptimistikSAS/OIBus/commit/9a33a9ec1fe248c31ea388d6cd0666e24072fcc1))
+
 ### [2.3.4](https://github.com/OptimistikSAS/OIBus/compare/v2.3.3...v2.3.4) (2022-10-28)
 
 
