@@ -36,15 +36,16 @@ class Server {
    * @param {EncryptionService} encryptionService - The encryption service
    * @param {OIBusEngine} oibusEngine - The OIBus engine
    * @param {HistoryQueryEngine} historyQueryEngine - The HistoryQuery engine
-   * @param {Object} logger - Logger to use
+   * @param {LoggerService} loggerService - LoggerService to use to create a child logger dedicated to the web server
    * @return {void}
    */
-  constructor(encryptionService, oibusEngine, historyQueryEngine, logger) {
+  constructor(encryptionService, oibusEngine, historyQueryEngine, loggerService) {
     this.encryptionService = encryptionService
     // capture the engine and logger under app for reuse in routes.
     this.engine = oibusEngine
     this.historyQueryEngine = historyQueryEngine
-    this.logger = logger
+    this.loggerService = loggerService
+    this.logger = null
     this.webServer = null // store the listening web server
   }
 
@@ -53,22 +54,23 @@ class Server {
    * @returns {Promise<void>} - The result promise
    */
   async start() {
+    this.logger = this.loggerService.createChildLogger('web-server')
     // Get the config entries
     const { engineConfig } = this.engine.configService.getConfig()
     const { user, password, port, filter = ['127.0.0.1', '::1'] } = engineConfig
 
     this.port = port
     this.user = user
+    this.user = user
+    this.password = null
 
     if (password) {
       try {
         this.password = await this.encryptionService.decryptText(password)
       } catch (error) {
-        console.error(error)
+        this.logger.error(error)
         this.password = null
       }
-    } else {
-      this.password = null
     }
 
     this.app = new Koa()
