@@ -1588,29 +1588,29 @@ module.exports = {
       north.caching.timeout = httpRequest.timeout
 
       logger.info(`Updating authentication fields for North "${north.id}".`)
-      if (north.authentication) {
-        switch (north.authentication.type) {
+      if (north.settings.authentication) {
+        switch (north.settings.authentication.type) {
           case 'Basic':
-            north.authentication.key = north.authentication.username
-            north.authentication.secret = north.authentication.password
+            north.settings.authentication.key = north.settings.authentication.username
+            north.settings.authentication.secret = north.settings.authentication.password
             break
 
           case 'API Key':
-            north.authentication.secret = north.authentication.secretKey
+            north.settings.authentication.secret = north.settings.authentication.secretKey
             break
 
           case 'Bearer':
-            north.authentication.secret = north.authentication.token
-            north.authentication.key = ''
+            north.settings.authentication.secret = north.settings.authentication.token
+            north.settings.authentication.key = ''
             break
 
           default:
             logger.warn(`Unrecognized authentication type for North "${north.id}".`)
         }
-        delete north.authentication.secretKey
-        delete north.authentication.username
-        delete north.authentication.password
-        delete north.authentication.token
+        delete north.settings.authentication.secretKey
+        delete north.settings.authentication.username
+        delete north.settings.authentication.password
+        delete north.settings.authentication.token
       }
 
       const northCache = path.resolve('./cache/data-stream', `north-${north.id}`)
