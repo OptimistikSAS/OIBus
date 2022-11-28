@@ -46,6 +46,8 @@ describe('Logger', () => {
 
   it('should be properly initialized', async () => {
     service = new LoggerService()
+    service.createChildLogger = jest.fn()
+
     service.setEncryptionService(encryptionService)
 
     const expectedTargets = [
@@ -91,11 +93,15 @@ describe('Logger', () => {
       transport: { targets: expectedTargets },
     })
     expect(service.fileCleanUpService.start).toHaveBeenCalledTimes(1)
+    expect(service.createChildLogger).toHaveBeenCalledWith('logger-service')
   })
 
   it('should be properly initialized with loki error and standard file names', async () => {
     jest.spyOn(console, 'error').mockImplementationOnce(() => {})
     service = new LoggerService()
+
+    service.createChildLogger = jest.fn()
+
     const badEncryptionService = { decryptText: jest.fn(() => { throw new Error('decrypt-error') }) }
     service.setEncryptionService(badEncryptionService)
 
@@ -110,6 +116,8 @@ describe('Logger', () => {
   it('should be properly initialized without loki password and without sqliteLog', async () => {
     jest.spyOn(console, 'error').mockImplementationOnce(() => {})
     service = new LoggerService()
+
+    service.createChildLogger = jest.fn()
 
     settings.logParameters.sqliteLog = null
     settings.logParameters.lokiLog.password = ''
@@ -147,11 +155,14 @@ describe('Logger', () => {
       timestamp: pino.stdTimeFunctions.isoTime,
       transport: { targets: expectedTargets },
     })
+    expect(service.createChildLogger).toHaveBeenCalledWith('logger-service')
   })
 
   it('should be properly initialized without lokiLog nor sqliteLog', async () => {
     jest.spyOn(console, 'error').mockImplementationOnce(() => {})
     service = new LoggerService()
+
+    service.createChildLogger = jest.fn()
 
     settings.logParameters.sqliteLog = null
     settings.logParameters.lokiLog = null
@@ -177,6 +188,7 @@ describe('Logger', () => {
       timestamp: pino.stdTimeFunctions.isoTime,
       transport: { targets: expectedTargets },
     })
+    expect(service.createChildLogger).toHaveBeenCalledWith('logger-service')
   })
 
   it('should properly get additional parameter from mixin', () => {

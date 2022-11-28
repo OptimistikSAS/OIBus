@@ -102,7 +102,12 @@ class LoggerService {
       transport: { targets },
     })
 
-    this.fileCleanUpService = new FileCleanupService(path.parse(filePath).dir, this.logger, path.parse(filePath).base, fileLog.numberOfFiles)
+    this.fileCleanUpService = new FileCleanupService(
+      path.parse(filePath).dir,
+      this.createChildLogger('logger-service'),
+      path.parse(filePath).base,
+      fileLog.numberOfFiles,
+    )
     await this.fileCleanUpService.start()
   }
 
