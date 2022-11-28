@@ -1,8 +1,10 @@
 const fs = require('node:fs/promises')
 const path = require('node:path')
 const FileCleanupService = require('./file-cleanup.service')
+const { filesExists } = require('../utils')
 
 jest.mock('node:fs/promises')
+jest.mock('../utils')
 
 // mock EncryptionService
 let fileCleanupService = null
@@ -42,7 +44,8 @@ describe('FileCleanupService', () => {
     expect(clearIntervalSpy).toHaveBeenCalledTimes(1)
   })
 
-  it('should properly clear up folder', async () => {
+  it('should properly clean up folder', async () => {
+    filesExists.mockReturnValue(true)
     fs.readdir.mockImplementation(() => [
       'journal.log.1',
       'journal.log.2',
@@ -64,7 +67,23 @@ describe('FileCleanupService', () => {
     expect(fs.unlink).toHaveBeenCalledWith(path.resolve('logFolder', 'journal.log.2'))
   })
 
+  it('should not clean up folder if not enough files', async () => {
+    filesExists.mockReturnValue(true)
+    fs.readdir.mockImplementation(() => [
+      'journal.log.1',
+      'journal.log.2',
+    ])
+
+    await fileCleanupService.cleanUpLogFiles()
+    expect(fs.readdir).toHaveBeenCalledWith(path.resolve('logFolder'))
+    expect(logger.trace).toHaveBeenCalledWith('Found 2 log files with RegExp /^journal.log\\.[0-9]*$/ '
+        + `in folder "${path.resolve('logFolder')}".`)
+    expect(fs.stat).not.toHaveBeenCalled()
+    expect(fs.unlink).not.toHaveBeenCalled()
+  })
+
   it('should properly manage file access errors', async () => {
+    filesExists.mockReturnValue(true)
     fs.readdir.mockImplementation(() => [
       'journal.log.1',
       'journal.log.2',
@@ -99,5 +118,23 @@ describe('FileCleanupService', () => {
     expect(fs.unlink).toHaveBeenCalledWith(path.resolve('logFolder', 'journal.log.2'))
     expect(logger.error).toHaveBeenCalledWith('Error while removing log file '
         + `"${path.resolve('logFolder', 'journal.log.1')}": ${new Error('unlink error')}`)
+  })
+
+  it('should properly return if folder does not exist', async () => {
+    filesExists.mockReturnValue(false)
+    await fileCleanupService.cleanUpLogFiles()
+    expect(filesExists).toHaveBeenCalledWith(path.resolve('logFolder'))
+    expect(logger.trace).not.toHaveBeenCalled()
+  })
+
+  it('should properly catch readdir error', async () => {
+    filesExists.mockReturnValue(true)
+    fs.readdir.mockImplementation(() => {
+      throw new Error('readdir error')
+    })
+    await fileCleanupService.cleanUpLogFiles()
+    expect(filesExists).toHaveBeenCalledWith(path.resolve('logFolder'))
+    expect(logger.trace).not.toHaveBeenCalled()
+    expect(logger.error).toHaveBeenCalledWith(new Error('readdir error'))
   })
 })

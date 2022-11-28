@@ -9,10 +9,10 @@
     "npm": ">=8.15.0"
   },
   "scripts": {
-    "start": "node src/index.js --config ./data-folder/oibus.json",
-    "start:macos": "./build/bin/macos/oibus --config ./data-folder/oibus.json",
-    "start:win": ".\\build\\bin\\win\\oibus.exe --config .\\data-folder\\oibus.json",
-    "start:linux": "./build/bin/linux/oibus --config ./data-folder/oibus.json",
+    "start": "node src/index.js --config ./data-folder",
+    "start:macos": "./build/bin/macos/oibus --config ./data-folder",
+    "start:win": ".\\build\\bin\\win\\oibus.exe --config .\\data-folder",
+    "start:linux": "./build/bin/linux/oibus --config ./data-folder",
     "watch:web-client": "webpack --mode development --watch",
     "test": "jest --coverage --modulePathIgnorePatterns='.*\\.test\\.js$'",
     "test:setup-env": "docker-compose --file ./tests/docker-compose.yml --env-file ./tests/.env.test up -d",
