@@ -25,7 +25,7 @@ describe('Service utils', () => {
     minimist.mockReturnValue({})
     const result = utils.getCommandLineArguments()
 
-    expect(result).toEqual({ check: false, configFile: path.resolve('oibus.json') })
+    expect(result).toEqual({ check: false, configFile: path.resolve('./') })
   })
 
   it('should parse command line arguments with args', () => {

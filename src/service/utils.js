@@ -14,7 +14,7 @@ const COMPRESSION_LEVEL = 9
  */
 const getCommandLineArguments = () => {
   const args = minimist(process.argv.slice(2))
-  const { config = './oibus.json', check = false } = args
+  const { config = './', check = false } = args
   return { configFile: path.resolve(config), check }
 }
 
