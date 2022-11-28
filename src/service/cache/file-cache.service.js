@@ -17,7 +17,7 @@ const ERROR_FOLDER = 'files-errors'
 class FileCacheService {
   /**
    * @param {String} northId - The North ID connector
-   * @param {Logger} logger - The logger
+   * @param {Object} logger - The logger
    * @param {String} baseFolder - The North cache folder generated as north-connectorId. This base folder can
    * be in data-stream or history-query folder depending on the connector use case
    @param {Function} northSendFilesCallback - Method used by the North to handle values
@@ -361,7 +361,7 @@ class FileCacheService {
     if (filenames.length > 0) {
       await this.removeErrorFiles(filenames)
     } else {
-      this.logger.debug(`The archive folder "${this.archiveFolder}" is empty. Nothing to delete.`)
+      this.logger.debug(`The error folder "${this.errorFolder}" is empty. Nothing to delete.`)
     }
   }
 
@@ -374,7 +374,7 @@ class FileCacheService {
     if (filenames.length > 0) {
       await this.retryErrorFiles(filenames)
     } else {
-      this.logger.debug(`The archive folder "${this.archiveFolder}" is empty. Nothing to delete.`)
+      this.logger.debug(`The error folder "${this.errorFolder}" is empty. Nothing to delete.`)
     }
   }
 
