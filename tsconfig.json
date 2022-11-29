@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "Node",
+    "module": "CommonJS",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "target": "es5",
+    "outDir": "./build/backend"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "src/frontend", "**/*.spec.js", "**/*.test.js", "**/*.d.ts"]
+}

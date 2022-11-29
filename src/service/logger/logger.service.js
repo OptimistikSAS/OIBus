@@ -1,5 +1,4 @@
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 import pino from 'pino'
 
@@ -52,9 +51,6 @@ class LoggerService {
     const { consoleLog, fileLog, sqliteLog, lokiLog } = logParameters
     targets.push({ target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: consoleLog.level })
 
-    // Get current directory
-    const dirName = path.dirname(fileURLToPath(import.meta.url))
-
     const filePath = fileLog.fileName ? path.resolve(LOG_FOLDER_NAME, fileLog.fileName) : path.resolve(LOG_FOLDER_NAME, LOG_FILE_NAME)
     targets.push({
       target: 'pino-roll',
@@ -69,7 +65,7 @@ class LoggerService {
       const sqlDatabaseName = sqliteLog.fileName ? path.resolve(LOG_FOLDER_NAME, sqliteLog.fileName) : path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME)
 
       targets.push({
-        target: path.join(dirName, 'sqlite-transport.js'),
+        target: path.join(__dirname, 'sqlite-transport.js'),
         options: {
           fileName: sqlDatabaseName,
           maxNumberOfLogs: sqliteLog.maxNumberOfLogs,
@@ -81,7 +77,7 @@ class LoggerService {
     if (lokiLog?.lokiAddress) {
       try {
         targets.push({
-          target: path.join(dirName, 'loki-transport.js'),
+          target: path.join(__dirname, './loki-transport.js'),
           options: {
             username: lokiLog.username,
             password: lokiLog.password ? await this.encryptionService.decryptText(lokiLog.password) : '',
