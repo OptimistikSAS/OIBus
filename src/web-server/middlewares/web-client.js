@@ -1,11 +1,7 @@
 import koaSend from 'koa-send'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 
 const serveClient = async (ctx) => {
-  const dirName = path.dirname(fileURLToPath(import.meta.url))
-
-  const root = `${dirName}/../../../build/web-client`
+  const root = `${__dirname}/../../../web-client`
   if (ctx.path?.match(/\.(js|js\.map|ico|ttf)$/)) {
     await koaSend(ctx, ctx.path, { root, index: '/index.html' })
   } else {
