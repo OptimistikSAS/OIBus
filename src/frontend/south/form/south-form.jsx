@@ -7,9 +7,9 @@ import {
   OibTitle,
   OibCheckbox,
   OibScanMode,
-} from '../../components/oib-form'
+} from '../../components/oib-form/index.js'
 import OibForm from '../../components/oib-form/oib-form.jsx'
-import validation from './south.validation'
+import validation from './south.validation.js'
 import EditableIdField from '../../components/editable-id-field.jsx'
 import { ConfigContext } from '../../context/config-context.jsx'
 import SouthSchemas from '../south-types.jsx'

@@ -1,12 +1,12 @@
-const path = require('node:path')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const ESLintPlugin = require('eslint-webpack-plugin')
-const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin')
+import path from 'node:path'
+import HtmlWebpackPlugin from 'html-webpack-plugin'
+import ESLintPlugin from 'eslint-webpack-plugin'
+import MonacoWebpackPlugin from 'monaco-editor-webpack-plugin'
 
-module.exports = {
+const config = {
   entry: ['./src/frontend/index.jsx'],
   output: {
-    path: path.resolve(__dirname, 'build', 'web-client'),
+    path: path.resolve('./build/web-client'),
     publicPath: '/',
     filename: 'bundle.js',
   },
@@ -15,7 +15,7 @@ module.exports = {
       'react-dom$': 'react-dom/profiling',
       'scheduler/tracing': 'scheduler/tracing-profiling',
     },
-    fallback: { path: require.resolve('path-browserify') },
+    fallback: { path: 'path-browserify' },
   },
   devtool: 'source-map',
   module: {
@@ -50,3 +50,5 @@ module.exports = {
     new MonacoWebpackPlugin({ languages: ['json', 'sql'] }),
   ],
 }
+
+export default config

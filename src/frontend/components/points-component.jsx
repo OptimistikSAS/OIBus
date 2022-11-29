@@ -7,9 +7,9 @@ import Table from './table/table.jsx'
 import TablePagination from './table/table-pagination.jsx'
 import Modal from './modal.jsx'
 import SouthSchemas from '../south/south-types.jsx'
-import * as Controls from './oib-form'
-import utils from '../helpers/utils'
-import validation from '../south/form/south.validation'
+import * as Controls from './oib-form/index.js'
+import utils from '../helpers/utils.js'
+import validation from '../south/form/south.validation.js'
 
 const PointsComponent = ({
   southId,

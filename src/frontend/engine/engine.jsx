@@ -1,14 +1,14 @@
 import React from 'react'
 import { Col, Row, Form, Spinner, Container } from 'reactstrap'
 import { ConfigContext } from '../context/config-context.jsx'
-import { OibInteger, OibText, OibPassword, OibTitle, OibCheckbox } from '../components/oib-form'
+import { OibInteger, OibText, OibPassword, OibTitle, OibCheckbox } from '../components/oib-form/index.js'
 import Filters from './filters.jsx'
 import Logging from './logging/logging.jsx'
 import ScanModes from './scan-modes.jsx'
 import Proxies from './proxies.jsx'
 import HealthSignal from './health-signal.jsx'
 import ExternalSources from './external-sources.jsx'
-import validation from './engine.validation'
+import validation from './engine.validation.js'
 
 const Engine = () => {
   const {

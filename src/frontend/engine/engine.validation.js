@@ -1,5 +1,5 @@
-import { isIp, notEmpty, inRange, minLength, isHost, hasLengthBetween } from '../../service/validation.service'
-import utils from '../helpers/utils'
+import { isIp, notEmpty, inRange, minLength, isHost, hasLengthBetween } from '../../service/validation.service.js'
+import utils from '../helpers/utils.js'
 
 const validation = {
   engine: {

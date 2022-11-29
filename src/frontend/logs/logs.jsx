@@ -10,7 +10,7 @@ import {
   Row,
   Col, Container,
 } from 'reactstrap'
-import apis from '../service/apis'
+import apis from '../service/apis.js'
 import { AlertContext } from '../context/alert-context.jsx'
 import OibDate from '../components/oib-form/oib-date.jsx'
 

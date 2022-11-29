@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import { Badge } from 'reactstrap'
 import EngineMenu from './engine-menu.jsx'
-import utils from '../helpers/utils'
+import utils from '../helpers/utils.js'
 
 const EngineNode = ({ name, safeMode, onRestart, onShutdown }) => {
   const [oibusEngineData, setOibusEngineData] = React.useState({})

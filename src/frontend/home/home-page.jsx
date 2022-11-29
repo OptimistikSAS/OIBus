@@ -1,10 +1,10 @@
 import React from 'react'
 import { Spinner } from 'reactstrap'
-import apis from '../service/apis'
+import apis from '../service/apis.js'
 import { AlertContext } from '../context/alert-context.jsx'
 import { ConfigContext } from '../context/config-context.jsx'
 import NodeView from './node-view.jsx'
-import utils from '../helpers/utils'
+import utils from '../helpers/utils.js'
 
 const HomePage = () => {
   const [loading, setLoading] = React.useState(false)

@@ -4,8 +4,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import objectPath from 'object-path'
-import apis from '../service/apis'
-import utils from '../helpers/utils'
+import apis from '../service/apis.js'
+import utils from '../helpers/utils.js'
 
 const reducer = (state, action) => {
   const { name, value, config, type, validity } = action

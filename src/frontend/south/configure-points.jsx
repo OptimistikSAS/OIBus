@@ -4,7 +4,7 @@ import { Button, Container, Spinner } from 'reactstrap'
 import { FaArrowLeft } from 'react-icons/fa'
 import { AlertContext } from '../context/alert-context.jsx'
 import { ConfigContext } from '../context/config-context.jsx'
-import utils from '../helpers/utils'
+import utils from '../helpers/utils.js'
 import PointsComponent from '../components/points-component.jsx'
 import StatusButton from '../components/status-button.jsx'
 
