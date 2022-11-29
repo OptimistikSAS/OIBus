@@ -14,4 +14,4 @@ const getNumberOfWords = (dataType) => {
   return 1
 }
 
-module.exports = { getNumberOfWords }
+export default getNumberOfWords

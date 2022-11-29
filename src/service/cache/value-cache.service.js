@@ -1,10 +1,10 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const { nanoid } = require('nanoid')
+import { nanoid } from 'nanoid'
 
-const { createFolder } = require('../utils')
-const DeferredPromise = require('../deferred-promise')
+import { createFolder } from '../utils.js'
+import DeferredPromise from '../deferred-promise.js'
 
 const BUFFER_MAX = 250
 const BUFFER_TIMEOUT = 300
@@ -16,7 +16,7 @@ const ERROR_FOLDER = 'values-errors'
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
-class ValueCacheService {
+export default class ValueCacheService {
   /**
    * @param {String} northId - The North ID connector
    * @param {Object} logger - The logger
@@ -484,5 +484,3 @@ class ValueCacheService {
     clearTimeout(this.valuesTimeout)
   }
 }
-
-module.exports = ValueCacheService

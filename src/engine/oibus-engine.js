@@ -1,11 +1,11 @@
-const os = require('node:os')
+import fs from 'node:fs/promises'
+import os from 'node:os'
 
-const timexe = require('timexe')
-const humanizeDuration = require('humanize-duration')
+import timexe from 'timexe'
+import humanizeDuration from 'humanize-duration'
 
-const fs = require('node:fs/promises')
-const BaseEngine = require('./base-engine')
-const HealthSignal = require('./health-signal')
+import BaseEngine from './base-engine.js'
+import HealthSignal from './health-signal.js'
 
 const CACHE_FOLDER = './cache/data-stream'
 
@@ -13,7 +13,7 @@ const CACHE_FOLDER = './cache/data-stream'
  * At startup, handles initialization of configuration, North and South connectors.
  * @class OIBusEngine
  */
-class OIBusEngine extends BaseEngine {
+export default class OIBusEngine extends BaseEngine {
   /**
    * Constructor for OIBusEngine
    * Reads the config file and create the corresponding Object.
@@ -392,5 +392,3 @@ class OIBusEngine extends BaseEngine {
     })
   }
 }
-
-module.exports = OIBusEngine

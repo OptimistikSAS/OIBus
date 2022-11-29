@@ -1,19 +1,19 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const fetch = require('node-fetch')
-const https = require('https')
+import fetch from 'node-fetch'
+import https from 'https'
 
-const humanizeDuration = require('humanize-duration')
-const SouthConnector = require('../south-connector')
-const { parsers, httpGetWithBody, formatQueryParams, generateCSV } = require('./utils')
-const { replaceFilenameWithVariable, compress } = require('../../service/utils')
+import humanizeDuration from 'humanize-duration'
+import SouthConnector from '../south-connector.js'
+import { parsers, httpGetWithBody, formatQueryParams, generateCSV } from './utils.js'
+import { replaceFilenameWithVariable, compress } from '../../service/utils.js'
 
 /**
  * Class SouthRest - Retrieve data from REST API
  * The results are parsed through the available parsers
  */
-class SouthRest extends SouthConnector {
+export default class SouthRest extends SouthConnector {
   static category = 'API'
 
   /**
@@ -281,5 +281,3 @@ class SouthRest extends SouthConnector {
     return response.json()
   }
 }
-
-module.exports = SouthRest

@@ -1,4 +1,4 @@
-const db = require('better-sqlite3')
+import db from 'better-sqlite3'
 
 const CACHE_TABLE_NAME = 'cache'
 const PAGE_SIZE = 50
@@ -129,7 +129,7 @@ const getHistoryQuerySouthData = (databasePath) => {
   return database.prepare(query).all()
 }
 
-module.exports = {
+export {
   createConfigDatabase,
   upsertConfig,
   getConfig,

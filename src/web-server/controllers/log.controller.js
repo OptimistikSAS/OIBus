@@ -1,5 +1,6 @@
-const path = require('node:path')
-const databaseService = require('../../service/database.service')
+import path from 'node:path'
+
+import { getLogs } from '../../service/database.service.js'
 
 const LOG_FOLDER = './logs'
 const LOG_DB_NAME = 'journal.db'
@@ -14,7 +15,7 @@ const LOG_DB_NAME = 'journal.db'
  * @param {function} ctx.ok - The context response
  * @return {void}
  */
-const getLogs = (ctx) => {
+const getLogsEndpoint = (ctx) => {
   const databasePath = path.resolve(LOG_FOLDER, LOG_DB_NAME)
   const now = Date.now()
   const dayAgo = new Date(now - 86400000)
@@ -22,7 +23,7 @@ const getLogs = (ctx) => {
   const toDate = ctx.query.toDate || new Date(now).toISOString()
   const verbosity = ctx.query.verbosity?.replace(/[[\]]/g, '').split(',') || 'info'
 
-  const logs = databaseService.getLogs(databasePath, fromDate, toDate, verbosity)
+  const logs = getLogs(databasePath, fromDate, toDate, verbosity)
   ctx.ok(logs)
 }
 
@@ -75,4 +76,4 @@ const addLogs = async (ctx) => {
   ctx.ok()
 }
 
-module.exports = { getLogs, addLogs }
+export default { getLogsEndpoint, addLogs }

@@ -1,13 +1,13 @@
-const { Client } = require('pg')
-const { vsprintf } = require('sprintf-js')
-const objectPath = require('object-path')
+import * as pg from 'pg'
+import { vsprintf } from 'sprintf-js'
+import objectPath from 'object-path'
 
-const NorthConnector = require('../north-connector')
+import NorthConnector from '../north-connector.js'
 
 /**
  * Class NorthTimescaleDB - Send Data to Timescale DB
  */
-class NorthTimescaleDB extends NorthConnector {
+export default class NorthTimescaleDB extends NorthConnector {
   static category = 'DatabaseIn'
 
   /**
@@ -66,7 +66,7 @@ class NorthTimescaleDB extends NorthConnector {
 
     const url = `postgres://${this.user}:${await this.encryptionService.decryptText(this.password)}@${this.host}/${this.database}`
 
-    this.client = new Client(url)
+    this.client = new pg.Client(url)
 
     await this.client.connect()
     await super.connect(`url: ${url}`)
@@ -192,5 +192,3 @@ class NorthTimescaleDB extends NorthConnector {
     await super.disconnect()
   }
 }
-
-module.exports = NorthTimescaleDB

@@ -1,8 +1,7 @@
-const mqtt = require('mqtt')
+import mqtt from 'mqtt'
 
-const NorthConnector = require('../north-connector')
-
-const { initMQTTTopic, recursiveSplitMessages } = require('./utils')
+import NorthConnector from '../north-connector.js'
+import { initMQTTTopic, recursiveSplitMessages } from './utils.js'
 
 /**
  * Class NorthWATSY - Send MQTT messages for WATSY application
@@ -23,7 +22,7 @@ const { initMQTTTopic, recursiveSplitMessages } = require('./utils')
       'token'     : $token (can't be null)
   }
  */
-class NorthWATSY extends NorthConnector {
+export default class NorthWATSY extends NorthConnector {
   static category = 'API'
 
   /**
@@ -156,5 +155,3 @@ class NorthWATSY extends NorthConnector {
     })
   }
 }
-
-module.exports = NorthWATSY

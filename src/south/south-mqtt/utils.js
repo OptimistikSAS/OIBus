@@ -1,6 +1,6 @@
-const mqttWildcard = require('mqtt-wildcard')
-const { vsprintf } = require('sprintf-js')
-const { generateDateWithTimezone } = require('../../service/utils')
+import mqttWildcard from 'mqtt-wildcard'
+import { vsprintf } from 'sprintf-js'
+import { generateDateWithTimezone } from '../../service/utils.js'
 
 /**
  * Get pointId.
@@ -113,4 +113,4 @@ const formatValue = (data, topic, formatOptions, pointsList) => {
   }
 }
 
-module.exports = { formatValue }
+export default formatValue

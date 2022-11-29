@@ -1,13 +1,13 @@
-const path = require('node:path')
+import path from 'node:path'
 
-const EncryptionService = require('../service/encryption.service')
-const CertificateService = require('../service/certificate.service')
-const StatusService = require('../service/status.service')
-const ValueCache = require('../service/cache/value-cache.service')
-const FileCache = require('../service/cache/file-cache.service')
-const { createFolder } = require('../service/utils')
-const { createProxyAgent } = require('../service/http-request-static-functions')
-const ArchiveService = require('../service/cache/archive.service')
+import EncryptionService from '../service/encryption.service.js'
+import CertificateService from '../service/certificate.service.js'
+import StatusService from '../service/status.service.js'
+import ValueCache from '../service/cache/value-cache.service.js'
+import FileCache from '../service/cache/file-cache.service.js'
+import { createFolder } from '../service/utils.js'
+import { createProxyAgent } from '../service/http-request-static-functions.js'
+import ArchiveService from '../service/cache/archive.service.js'
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -26,7 +26,7 @@ const ArchiveService = require('../service/cache/archive.service')
  * - **getProxy**: get the proxy handler
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
-class NorthConnector {
+export default class NorthConnector {
   /**
    * Constructor for NorthConnector
    * @constructor
@@ -319,5 +319,3 @@ class NorthConnector {
     return this.fileCache.retryAllErrorFiles()
   }
 }
-
-module.exports = NorthConnector

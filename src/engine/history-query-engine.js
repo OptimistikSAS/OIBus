@@ -1,12 +1,12 @@
-const path = require('node:path')
-const fs = require('node:fs/promises')
+import path from 'node:path'
+import fs from 'node:fs/promises'
 
-const humanizeDuration = require('humanize-duration')
+import humanizeDuration from 'humanize-duration'
 
-const HistoryQuery = require('./history-query/history-query')
-const BaseEngine = require('./base-engine')
-const HistoryQueryRepository = require('./history-query/history-query-repository')
-const databaseService = require('../service/database.service')
+import HistoryQuery from './history-query/history-query.js'
+import BaseEngine from './base-engine.js'
+import HistoryQueryRepository from './history-query/history-query-repository.js'
+import { getHistoryQuerySouthData } from '../service/database.service.js'
 
 const CACHE_FOLDER = './cache/history-query'
 const HISTORY_QUERIES_DB = './history-query.db'
@@ -16,7 +16,7 @@ const HISTORY_TIMER_INTERVAL = 10000
  * Manage history queries by running {@link HistoryQuery} one after another
  * @class HistoryQueryEngine
  */
-class HistoryQueryEngine extends BaseEngine {
+export default class HistoryQueryEngine extends BaseEngine {
   /**
    * Constructor for Engine
    * Reads the config file and create the corresponding Object.
@@ -229,7 +229,7 @@ class HistoryQueryEngine extends BaseEngine {
       const databasePath = `${folder}/${historyQueryConfig.southId}.db`
       try {
         await fs.stat(databasePath)
-        const entries = databaseService.getHistoryQuerySouthData(databasePath)
+        const entries = getHistoryQuerySouthData(databasePath)
         data.south = entries.map((entry) => ({
           scanMode: entry.name.replace('lastCompletedAt-', ''),
           lastCompletedDate: entry.value,
@@ -242,5 +242,3 @@ class HistoryQueryEngine extends BaseEngine {
     return data
   }
 }
-
-module.exports = HistoryQueryEngine

@@ -1,13 +1,13 @@
-const mqtt = require('mqtt')
-const { DateTime } = require('luxon')
+import mqtt from 'mqtt'
+import { DateTime } from 'luxon'
 
-const SouthConnector = require('../south-connector')
-const { formatValue } = require('./utils')
+import SouthConnector from '../south-connector.js'
+import formatValue from './utils.js'
 
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
  */
-class SouthMQTT extends SouthConnector {
+export default class SouthMQTT extends SouthConnector {
   static category = 'IoT'
 
   /**
@@ -218,5 +218,3 @@ class SouthMQTT extends SouthConnector {
     await super.disconnect()
   }
 }
-
-module.exports = SouthMQTT

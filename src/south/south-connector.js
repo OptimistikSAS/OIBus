@@ -1,9 +1,10 @@
-const path = require('node:path')
-const EncryptionService = require('../service/encryption.service')
-const databaseService = require('../service/database.service')
-const CertificateService = require('../service/certificate.service')
-const StatusService = require('../service/status.service')
-const { generateIntervals, delay, createFolder } = require('../service/utils')
+import path from 'node:path'
+
+import EncryptionService from '../service/encryption.service.js'
+import { createConfigDatabase, getConfig, upsertConfig } from '../service/database.service.js'
+import CertificateService from '../service/certificate.service.js'
+import StatusService from '../service/status.service.js'
+import { generateIntervals, delay, createFolder } from '../service/utils.js'
 
 const CACHE_DB_FILE_NAME = 'cache.db'
 
@@ -28,7 +29,7 @@ const CACHE_DB_FILE_NAME = 'cache.db'
  * All other operations (cache, store&forward, communication to North connectors) will be handled by the OIBus engine
  * and should not be taken care at the South level.
  */
-class SouthConnector {
+export default class SouthConnector {
   /**
    * Constructor for SouthConnector
    * @constructor
@@ -98,7 +99,7 @@ class SouthConnector {
     await this.certificate.init(this.keyFile, this.certFile, this.caFile)
 
     await createFolder(this.baseFolder)
-    this.southDatabase = databaseService.createConfigDatabase(path.resolve(this.baseFolder, CACHE_DB_FILE_NAME))
+    this.southDatabase = createConfigDatabase(path.resolve(this.baseFolder, CACHE_DB_FILE_NAME))
 
     const {
       supportListen,
@@ -395,7 +396,7 @@ class SouthConnector {
    * @returns {String} - The value of the key
    */
   getConfig(configKey) {
-    return databaseService.getConfig(this.southDatabase, configKey)
+    return getConfig(this.southDatabase, configKey)
   }
 
   /**
@@ -405,8 +406,6 @@ class SouthConnector {
    * @returns {void}
    */
   setConfig(configKey, value) {
-    databaseService.upsertConfig(this.southDatabase, configKey, value)
+    upsertConfig(this.southDatabase, configKey, value)
   }
 }
-
-module.exports = SouthConnector

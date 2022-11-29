@@ -1,13 +1,13 @@
-const mongo = require('mongodb')
-const { vsprintf } = require('sprintf-js')
-const objectPath = require('object-path')
+import mongo from 'mongodb'
+import { vsprintf } from 'sprintf-js'
+import objectPath from 'object-path'
 
-const NorthConnector = require('../north-connector')
+import NorthConnector from '../north-connector.js'
 
 /**
  * Class NorthMongoDB - Send data to MongoDB
  */
-class NorthMongoDB extends NorthConnector {
+export default class NorthMongoDB extends NorthConnector {
   static category = 'DatabaseIn'
 
   /**
@@ -240,5 +240,3 @@ class NorthMongoDB extends NorthConnector {
     this.collectionExists = true
   }
 }
-
-module.exports = NorthMongoDB

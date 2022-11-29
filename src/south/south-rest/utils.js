@@ -1,10 +1,10 @@
-const https = require('node:https')
-const http = require('node:http')
+import https from 'node:https'
+import http from 'node:http'
 
-const csv = require('papaparse')
+import csv from 'papaparse'
 
-const oiaTimeValues = require('./formatters/oia-time-values')
-const slims = require('./formatters/slims')
+import oiaTimeValues from './formatters/oia-time-values.js'
+import slims from './formatters/slims.js'
 
 const parsers = {
   Raw: (httpResults) => ({ httpResults, latestDateRetrieved: new Date().toISOString() }),
@@ -90,4 +90,4 @@ const generateCSV = (results, delimiter) => {
   return csv.unparse(results, options)
 }
 
-module.exports = { parsers, httpGetWithBody, formatQueryParams, generateCSV }
+export { parsers, httpGetWithBody, formatQueryParams, generateCSV }

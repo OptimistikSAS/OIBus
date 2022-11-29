@@ -1,8 +1,8 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const { createFolder, asyncFilter } = require('../utils')
-const DeferredPromise = require('../deferred-promise')
+import { createFolder, asyncFilter } from '../utils.js'
+import DeferredPromise from '../deferred-promise.js'
 
 const RESEND_IMMEDIATELY_TIMEOUT = 100
 
@@ -14,7 +14,7 @@ const ERROR_FOLDER = 'files-errors'
 /**
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
-class FileCacheService {
+export default class FileCacheService {
   /**
    * @param {String} northId - The North ID connector
    * @param {Object} logger - The logger
@@ -419,5 +419,3 @@ class FileCacheService {
     return dateIsBetween && filenameContains
   }
 }
-
-module.exports = FileCacheService

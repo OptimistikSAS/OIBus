@@ -1,38 +1,62 @@
-const path = require('node:path')
+import path from 'node:path'
 
-const VERSION = require('../../package.json').version
+// North imports
+import OIAnalytics from '../north/north-oianalytics/north-oianalytics.js'
+import OIConnect from '../north/north-oiconnect/north-oiconnect.js'
+import FileWriter from '../north/north-file-writer/north-file-writer.js'
+import AmazonS3 from '../north/north-amazon-s3/north-amazon-s3.js'
+import InfluxDB from '../north/north-influx-db/north-influx-db.js'
+import TimescaleDB from '../north/north-timescale-db/north-timescale-db.js'
+import MongoDB from '../north/north-mongo-db/north-mongo-db.js'
+import MQTTNorth from '../north/north-mqtt/north-mqtt.js'
+import Console from '../north/north-console/north-console.js'
+import WATSYConnect from '../north/north-watsy/north-watsy.js'
+import CsvToHttp from '../north/north-csv-to-http/north-csv-to-http.js'
 
-const northList = {}
-northList.OIAnalytics = require('../north/north-oianalytics/north-oianalytics')
-northList.OIConnect = require('../north/north-oiconnect/north-oiconnect')
-northList.FileWriter = require('../north/north-file-writer/north-file-writer')
-northList.AmazonS3 = require('../north/north-amazon-s3/north-amazon-s3')
-northList.InfluxDB = require('../north/north-influx-db/north-influx-db')
-northList.TimescaleDB = require('../north/north-timescale-db/north-timescale-db')
-northList.MongoDB = require('../north/north-mongo-db/north-mongo-db')
-northList.MQTT = require('../north/north-mqtt/north-mqtt')
-northList.Console = require('../north/north-console/north-console')
-northList.WATSYConnect = require('../north/north-watsy/north-watsy')
-northList.CsvToHttp = require('../north/north-csv-to-http/north-csv-to-http')
+// South imports
+import SQL from '../south/south-sql/south-sql.js'
+import FolderScanner from '../south/south-folder-scanner/south-folder-scanner.js'
+import OPCUA_HA from '../south/south-opcua-ha/south-opcua-ha.js'
+import OPCUA_DA from '../south/south-opcua-da/south-opcua-da.js'
+import MQTTSouth from '../south/south-mqtt/south-mqtt.js'
+import ADS from '../south/south-ads/south-ads.js'
+import Modbus from '../south/south-modbus/south-modbus.js'
+import OPCHDA from '../south/south-opchda/south-opchda.js'
+import RestApi from '../south/south-rest/south-rest.js'
 
-const southList = {}
-southList.SQL = require('../south/south-sql/south-sql')
-southList.FolderScanner = require('../south/south-folder-scanner/south-folder-scanner')
-southList.OPCUA_HA = require('../south/south-opcua-ha/south-opcua-ha')
-southList.OPCUA_DA = require('../south/south-opcua-da/south-opcua-da')
-southList.MQTT = require('../south/south-mqtt/south-mqtt')
-southList.ADS = require('../south/south-ads/south-ads')
-southList.Modbus = require('../south/south-modbus/south-modbus')
-southList.OPCHDA = require('../south/south-opchda/south-opchda')
-southList.RestApi = require('../south/south-rest/south-rest')
+import StatusService from '../service/status.service.js'
 
-const StatusService = require('../service/status.service')
+const northList = {
+  OIAnalytics,
+  OIConnect,
+  FileWriter,
+  AmazonS3,
+  InfluxDB,
+  TimescaleDB,
+  MongoDB,
+  MQTT: MQTTNorth,
+  Console,
+  WATSYConnect,
+  CsvToHttp,
+}
+
+const southList = {
+  SQL,
+  FolderScanner,
+  OPCUA_HA,
+  OPCUA_DA,
+  MQTT: MQTTSouth,
+  ADS,
+  Modbus,
+  OPCHDA,
+  RestApi,
+}
 
 /**
  * Abstract class used to manage North and South connectors
  * @class BaseEngine
  */
-class BaseEngine {
+export default class BaseEngine {
   /**
    * Constructor for BaseEngine
    * @constructor
@@ -48,7 +72,7 @@ class BaseEngine {
     loggerService,
     cacheFolder,
   ) {
-    this.version = VERSION
+    this.version = null
     this.cacheFolder = path.resolve(cacheFolder)
 
     this.installedNorthConnectors = northList
@@ -69,6 +93,10 @@ class BaseEngine {
    * @returns {Promise<void>} - The result promise
    */
   async initEngineServices(engineConfig) {
+    // const packageJson = JSON.parse(await fs.readFile('package.json'))
+    // this.version = packageJson.version
+    // TODO
+    this.version = '2.4.0'
     this.oibusName = engineConfig.name
     this.defaultLogParameters = engineConfig.logParameters
     this.proxies = engineConfig.proxies
@@ -178,5 +206,3 @@ class BaseEngine {
     }))
   }
 }
-
-module.exports = BaseEngine

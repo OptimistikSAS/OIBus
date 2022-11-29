@@ -1,4 +1,4 @@
-const db = require('better-sqlite3')
+import db from 'better-sqlite3'
 
 const CACHE_TABLE_NAME = 'cache'
 
@@ -31,7 +31,7 @@ const changeColumnValue = (databasePath, columnName, oldValue, newValue) => {
   return true
 }
 
-module.exports = {
+export {
   changeColumnName,
   addColumn,
   removeColumn,

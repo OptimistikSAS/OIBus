@@ -1,14 +1,14 @@
-const net = require('node:net')
+import net from 'node:net'
 
-const modbus = require('jsmodbus')
+import modbus from 'jsmodbus'
 
-const SouthConnector = require('../south-connector')
-const { getNumberOfWords } = require('./utils')
+import SouthConnector from '../south-connector.js'
+import getNumberOfWords from './utils.js'
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
  */
-class SouthModbus extends SouthConnector {
+export default class SouthModbus extends SouthConnector {
   static category = 'IoT'
 
   /**
@@ -244,5 +244,3 @@ class SouthModbus extends SouthConnector {
     await super.disconnect()
   }
 }
-
-module.exports = SouthModbus

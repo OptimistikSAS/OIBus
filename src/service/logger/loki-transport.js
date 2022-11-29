@@ -1,5 +1,5 @@
-const fetch = require('node-fetch')
-const build = require('pino-abstract-transport')
+import fetch from 'node-fetch'
+import build from 'pino-abstract-transport'
 
 const MAX_BATCH_LOG = 500
 const MAX_BATCH_INTERVAL_S = 60
@@ -177,4 +177,4 @@ const createTransport = async (opts) => {
   })
 }
 
-module.exports = createTransport
+export default createTransport

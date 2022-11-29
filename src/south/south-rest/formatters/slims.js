@@ -41,4 +41,4 @@ const format = (httpResult) => {
   return { httpResults: formattedData, latestDateRetrieved: new Date(latestDateRetrieved.getTime() + 1) }
 }
 
-module.exports = format
+export default format

@@ -1,12 +1,12 @@
-const Router = require('@koa/router')
-const multer = require('@koa/multer')
+import Router from '@koa/router'
+import multer from '@koa/multer'
 
-const configController = require('../controllers/config.controller')
-const logController = require('../controllers/log.controller')
-const engineController = require('../controllers/engine.controller')
-const historyQueryController = require('../controllers/history-query.controller')
-const oibusController = require('../controllers/oibus.controller')
-const fileCacheController = require('../controllers/file-cache.controller')
+import configController from '../controllers/config.controller.js'
+import logController from '../controllers/log.controller.js'
+import engineController from '../controllers/engine.controller.js'
+import historyQueryController from '../controllers/history-query.controller.js'
+import oibusController from '../controllers/oibus.controller.js'
+import fileCacheController from '../controllers/file-cache.controller.js'
 
 const router = new Router()
 
@@ -28,7 +28,7 @@ router.post('/engine/aliveSignal', engineController.aliveSignal)
 router.get('/info', engineController.getOIBusInfo)
 router.get('/reload', oibusController.reload)
 router.get('/shutdown', oibusController.shutdown)
-router.get('/logs', logController.getLogs)
+router.get('/logs', logController.getLogsEndpoint)
 router.post('/logs', logController.addLogs)
 
 router.post('/history-queries', historyQueryController.createHistoryQuery)
@@ -46,4 +46,4 @@ router.post('/north/:id/cache/file-errors/retry', fileCacheController.retryFileE
 router.delete('/north/:id/cache/file-errors/remove-all', fileCacheController.removeAllFileErrors)
 router.post('/north/:id/cache/file-errors/retry-all', fileCacheController.retryAllFileErrors)
 
-module.exports = router
+export default router

@@ -1,13 +1,13 @@
-const { vsprintf } = require('sprintf-js')
-const mqtt = require('mqtt')
-const objectPath = require('object-path')
+import { vsprintf } from 'sprintf-js'
+import mqtt from 'mqtt'
+import objectPath from 'object-path'
 
-const NorthConnector = require('../north-connector')
+import NorthConnector from '../north-connector.js'
 
 /**
  * Class NorthMQTT - Publish data to a MQTT broker
  */
-class NorthMQTT extends NorthConnector {
+export default class NorthMQTT extends NorthConnector {
   static category = 'IoT'
 
   /**
@@ -184,5 +184,3 @@ class NorthMQTT extends NorthConnector {
     })
   }
 }
-
-module.exports = NorthMQTT

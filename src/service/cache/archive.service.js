@@ -1,7 +1,7 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const { createFolder } = require('../utils')
+import { createFolder } from '../utils.js'
 
 // Time between two checks of the Archive Folder
 const ARCHIVE_TIMEOUT = 3600000 // one hour
@@ -11,7 +11,7 @@ const ARCHIVE_FOLDER = 'archive'
  * Archive service used to archive sent file and check periodically the archive folder to remove old files
  * Once a file is sent by a North connector, the archiveOrRemoveFile is called by the connector to manage the file
  */
-class ArchiveService {
+export default class ArchiveService {
   /**
    * @param {String} northId - The North ID connector
    * @param {Object} logger - The logger
@@ -143,5 +143,3 @@ class ArchiveService {
     }
   }
 }
-
-module.exports = ArchiveService

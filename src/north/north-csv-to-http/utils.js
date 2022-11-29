@@ -142,4 +142,4 @@ const convertCSVRowIntoHttpBody = (csvRowInJson, mappingValues) => {
   return object
 }
 
-module.exports = { convertCSVRowIntoHttpBody, isHeaderValid }
+export { convertCSVRowIntoHttpBody, isHeaderValid }

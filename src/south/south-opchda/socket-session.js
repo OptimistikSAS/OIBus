@@ -1,7 +1,7 @@
 /**
  * Class representing a connected socketSession.
  */
-class SocketSession {
+export default class SocketSession {
   /**
    * @param {Object} socket - The socket parameters
    * @param {Object} logger - The logger
@@ -76,5 +76,3 @@ class SocketSession {
     }
   }
 }
-
-module.exports = SocketSession
