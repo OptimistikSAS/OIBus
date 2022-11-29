@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 import PropTypes from 'prop-types'
 import { FaCheck } from 'react-icons/fa'
-import { OibText } from './oib-form'
+import { OibText } from './oib-form/index.js'
 
 const EditableIdField = ({
   connectorName,

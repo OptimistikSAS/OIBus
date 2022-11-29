@@ -46,7 +46,12 @@
       "error",
       "ignorePackages"
     ],
-    "import/no-extraneous-dependencies": ["error", {"devDependencies": ["src/frontend/**/*.jsx", "src/south/**/*.jsx", "src/north/**/*.jsx"]}],
+    "import/no-extraneous-dependencies": ["error", {"devDependencies": [
+      "src/frontend/**/*.jsx",
+      "src/south/**/*.jsx",
+      "src/north/**/*.jsx",
+      "webpack.*.js"
+    ]}],
     "arrow-parens": ["error", "always"],
     "react/forbid-prop-types": [
       "error",

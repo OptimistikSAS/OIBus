@@ -24,14 +24,14 @@
     "lint:fix": "eslint src --ext .jsx --ext .js --fix",
     "build:all": "npm ci && npm run build:win && npm run build:macos && npm run build:linux",
     "build:web-client": "webpack --mode production --config webpack.frontend.js",
-    "build:backend": "webpack --mode production --config webpack.backend.js",
     "build:win": "npm run build:web-client && npm run internal:build:lib-win && rimraf ./build/bin/win && pkg ./src/index.js --public --compress GZip --config package.json --output ./build/bin/win/oibus --target node16-win-x64 && ncp ./build/deps/win ./build/bin/win",
     "build:macos": "npm run build:web-client && npm run internal:build:lib-macos && rimraf ./build/bin/macos && pkg ./src/index.js --public --compress GZip --config package.json --output ./build/bin/macos/oibus --target node16-macos-x64",
     "build:linux": "npm run build:web-client && npm run internal:build:lib-linux && rimraf ./build/bin/linux && pkg ./src/index.js --public --compress GZip --config package.json --output ./build/bin/linux/oibus --target node16-linux-x64 && ncp ./build/deps/linux ./build/bin/linux && ncp ./src/config/default-config.json ./build/bin/linux/default-config.json",
     "build:win-setup": "rimraf ./build/bin/win/win-setup-release && C:\\\"Program Files (x86)\"\\\"Inno Setup 6\"\\iscc.exe \"./build/deps/win/setup.iss\" \"/DMyAppVersion=\"%npm_package_version% \"/DMyCertFile=\"%PFX_PATH% \"/DMyCertPassword=\"%PFX_PASSWORD% \"/ssigntool=./build/deps/signtool/signtool.exe sign /debug $p\"",
     "internal:build:lib-win": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.16.0 --arch=x64",
     "internal:build:lib-macos": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.16.0 --arch=x64",
-    "internal:build:lib-linux": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.16.0 --arch=x64"
+    "internal:build:lib-linux": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.16.0 --arch=x64",
+    "internal:build:backend": "webpack --mode production --config webpack.backend.js"
   },
   "keywords": [
     "Optimistik"

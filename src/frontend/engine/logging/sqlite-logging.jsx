@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import OibForm from '../../components/oib-form/oib-form.jsx'
-import { minValue } from '../../../service/validation.service'
+import { minValue } from '../../../service/validation.service.js'
 
 const schema = { name: 'SQLiteLogging' }
 schema.form = {

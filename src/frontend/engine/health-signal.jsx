@@ -1,8 +1,8 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Col, Row } from 'reactstrap'
-import { OibText, OibTitle, OibCheckbox, OibInteger, OibProxy, OibAuthentication } from '../components/oib-form'
-import validation from './engine.validation'
+import { OibText, OibTitle, OibCheckbox, OibInteger, OibProxy, OibAuthentication } from '../components/oib-form/index.js'
+import validation from './engine.validation.js'
 
 const HealthSignal = ({ onChange, healthSignal }) => (
   <>

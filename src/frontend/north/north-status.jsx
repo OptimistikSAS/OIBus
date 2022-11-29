@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { FaArrowLeft } from 'react-icons/fa'
 import { ConfigContext } from '../context/config-context.jsx'
 import Table from '../components/table/table.jsx'
-import utils from '../helpers/utils'
+import utils from '../helpers/utils.js'
 
 /**
  * Generate row entry for the status table.

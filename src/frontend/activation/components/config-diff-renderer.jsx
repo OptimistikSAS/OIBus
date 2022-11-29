@@ -1,7 +1,7 @@
 import React from 'react'
 import { Label } from 'reactstrap'
 import { PropTypes } from 'prop-types'
-import Constants from '../../helpers/constants'
+import Constants from '../../helpers/constants.js'
 
 const ConfigDiffRenderer = ({ deltaHTML, diffError }) => (
   <div>

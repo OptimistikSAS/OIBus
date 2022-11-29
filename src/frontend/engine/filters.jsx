@@ -2,9 +2,9 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import Table from '../components/table/table.jsx'
-import { OibText, OibTitle } from '../components/oib-form'
+import { OibText, OibTitle } from '../components/oib-form/index.js'
 import { ConfigContext } from '../context/config-context.jsx'
-import validation from './engine.validation'
+import validation from './engine.validation.js'
 
 const Filters = ({ filters }) => {
   const { dispatchNewConfig } = React.useContext(ConfigContext)

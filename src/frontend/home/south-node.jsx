@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import { Tooltip } from 'reactstrap'
 import SouthMenu from './south-menu.jsx'
-import imageCategories from './image-categories'
+import imageCategories from './image-categories.js'
 import OibCheckbox from '../components/oib-form/oib-checkbox.jsx'
 import SouthSchemas from '../south/south-types.jsx'
 

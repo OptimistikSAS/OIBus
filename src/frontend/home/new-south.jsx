@@ -4,9 +4,9 @@ import PropTypes from 'prop-types'
 import { Row, Container, Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
 import { useNavigate } from 'react-router-dom'
 import { ConfigContext } from '../context/config-context.jsx'
-import validationSouth from '../south/form/south.validation'
-import { OibText } from '../components/oib-form'
-import imageCategories from './image-categories'
+import validationSouth from '../south/form/south.validation.js'
+import { OibText } from '../components/oib-form/index.js'
+import imageCategories from './image-categories.js'
 
 const NewSouth = ({
   modal,

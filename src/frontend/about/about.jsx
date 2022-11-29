@@ -1,7 +1,7 @@
 import React from 'react'
 import { Container, ListGroup, ListGroupItem } from 'reactstrap'
-import apis from '../service/apis'
-import utils from '../helpers/utils'
+import apis from '../service/apis.js'
+import utils from '../helpers/utils.js'
 import { AlertContext } from '../context/alert-context.jsx'
 import logo from '../oibus.png'
 

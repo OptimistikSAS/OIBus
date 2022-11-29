@@ -7,9 +7,9 @@ import {
   OibTitle,
   OibCheckbox,
   OibInteger,
-} from '../../components/oib-form'
+} from '../../components/oib-form/index.js'
 import SubscribedTo from './subscribed-to.jsx'
-import validation from './north.validation'
+import validation from './north.validation.js'
 import EditableIdField from '../../components/editable-id-field.jsx'
 import { ConfigContext } from '../../context/config-context.jsx'
 import OibForm from '../../components/oib-form/oib-form.jsx'

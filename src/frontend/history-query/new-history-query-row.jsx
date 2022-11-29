@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button, Form, Col, Row } from 'reactstrap'
 import PropTypes from 'prop-types'
-import { OibSelect } from '../components/oib-form/index'
+import { OibSelect } from '../components/oib-form/index.js'
 import SouthSchemas from '../south/south-types.jsx'
 
 const HISTORY_QUERY_CAPABLE_SOUTH_CONNECTORS = [

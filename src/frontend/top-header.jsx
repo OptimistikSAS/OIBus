@@ -2,7 +2,7 @@ import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 
 import { Badge, Collapse, Nav, Navbar, NavbarBrand, NavbarToggler, NavItem } from 'reactstrap'
-import apis from './service/apis'
+import apis from './service/apis.js'
 import { ConfigContext } from './context/config-context.jsx'
 import { AlertContext } from './context/alert-context.jsx'
 import logo from './logo-oibus.png'

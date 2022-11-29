@@ -2,7 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import Table from '../../components/table/table.jsx'
-import { OibSelect, OibTitle } from '../../components/oib-form'
+import { OibSelect, OibTitle } from '../../components/oib-form/index.js'
 import { ConfigContext } from '../../context/config-context.jsx'
 
 const SubscribedTo = ({ subscribedTo, northIndex }) => {
