@@ -1,4 +1,4 @@
-const { nanoid } = require('nanoid')
+import { nanoid } from 'nanoid'
 /**
  * Create a new HistoryQuery entry.
  * @param {Object} ctx - The KOA context
@@ -96,7 +96,7 @@ const getStatus = async (ctx) => {
   ctx.ok(status)
 }
 
-module.exports = {
+export default {
   createHistoryQuery,
   getHistoryQueries,
   getHistoryQueryById,

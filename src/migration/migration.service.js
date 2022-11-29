@@ -1,7 +1,7 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const migrationRules = require('./migration-rules')
+import migrationRules from './migration-rules.js'
 
 const REQUIRED_SCHEMA_VERSION = 29
 const DEFAULT_VERSION = 1
@@ -78,4 +78,4 @@ const migrate = async (configFilePath, logger) => {
   }
 }
 
-module.exports = { migrate }
+export default migrate

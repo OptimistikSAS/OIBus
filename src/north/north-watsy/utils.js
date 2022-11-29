@@ -95,4 +95,4 @@ const recursiveSplitMessages = (allWATSYMessages, messages, host, token, splitMe
   return allWATSYMessages
 }
 
-module.exports = { initMQTTTopic, recursiveSplitMessages }
+export { initMQTTTopic, recursiveSplitMessages }

@@ -1,6 +1,7 @@
-const path = require('node:path')
-const fs = require('node:fs/promises')
-const { filesExists } = require('../utils')
+import path from 'node:path'
+import fs from 'node:fs/promises'
+
+import { filesExists } from '../utils.js'
 
 const CLEAN_UP_INTERVAL = 24 * 3600 * 1000 // One day
 
@@ -8,7 +9,7 @@ const CLEAN_UP_INTERVAL = 24 * 3600 * 1000 // One day
  * Service used to clean up log files rolled by the pino-roll library
  * This service should be removed if pino-roll implements this feature one day
  */
-class FileCleanupService {
+export default class FileCleanupService {
   /**
    * @param {String} logFolder - The path of the log folder
    * @param {Logger} logger - The logger
@@ -98,5 +99,3 @@ class FileCleanupService {
     }
   }
 }
-
-module.exports = FileCleanupService

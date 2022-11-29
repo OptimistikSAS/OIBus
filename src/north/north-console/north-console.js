@@ -1,11 +1,11 @@
-const fs = require('node:fs/promises')
+import fs from 'node:fs/promises'
 
-const NorthConnector = require('../north-connector')
+import NorthConnector from '../north-connector.js'
 
 /**
  * Class Console - display values and file path into the console
  */
-class Console extends NorthConnector {
+export default class Console extends NorthConnector {
   static category = 'Debug'
 
   /**
@@ -65,5 +65,3 @@ class Console extends NorthConnector {
     }
   }
 }
-
-module.exports = Console

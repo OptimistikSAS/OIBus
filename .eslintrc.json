@@ -4,7 +4,8 @@
     "ecmaVersion": 2018,
     "sourceType": "module",
     "ecmaFeatures": {
-      "jsx": true
+      "jsx": true,
+      "js": true
     }
   },
   "plugins": ["react-hooks"],
@@ -29,12 +30,6 @@
         "argsIgnorePattern": "^_"
       }
     ],
-    "new-cap": [
-      "error",
-      {
-        "capIsNewExceptions": ["OneOf"]
-      }
-    ],
     "no-console": [
       "warn",
       {
@@ -49,10 +44,7 @@
     "jsx-a11y/anchor-is-valid": 1,
     "import/extensions": [
       "error",
-      "ignorePackages",
-      {
-        "js": "never"
-      }
+      "ignorePackages"
     ],
     "import/no-extraneous-dependencies": ["error", {"devDependencies": ["src/frontend/**/*.jsx", "src/south/**/*.jsx", "src/north/**/*.jsx"]}],
     "arrow-parens": ["error", "always"],

@@ -1,13 +1,13 @@
-const Koa = require('koa')
-const cors = require('@koa/cors')
-const bodyParser = require('koa-bodyparser')
-const helmet = require('koa-helmet')
-const respond = require('koa-respond')
+import Koa from 'koa'
+import cors from '@koa/cors'
+import bodyParser from 'koa-bodyparser'
+import helmet from 'koa-helmet'
+import respond from 'koa-respond'
 
-const authCrypto = require('./middlewares/auth')
-const ipFilter = require('./middlewares/ip-filter')
-const clientController = require('./controllers/web-client.controller')
-const router = require('./routes')
+import router from './routes/index.js'
+import authCrypto from './middlewares/auth.js'
+import ipFilter from './middlewares/ip-filter.js'
+import webClient from './middlewares/web-client.js'
 
 /**
  * Add a socket to the Koa ctx
@@ -29,7 +29,7 @@ const createSocket = (ctx) => {
 /**
  * Class Server - Provides the web client and establish socket connections.
  */
-class Server {
+export default class Server {
   /**
    * Constructor for Server
    * @constructor
@@ -168,7 +168,7 @@ class Server {
     // Define routes
     this.app.use(router.routes())
     this.app.use(router.allowedMethods())
-    this.app.use(clientController.serveClient)
+    this.app.use(webClient)
 
     this.webServer = this.app.listen(this.port, () => {
       this.logger.info(`Web server started on ${this.port}`)
@@ -183,5 +183,3 @@ class Server {
     await this.webServer?.close()
   }
 }
-
-module.exports = Server

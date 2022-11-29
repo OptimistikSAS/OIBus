@@ -1,11 +1,11 @@
-const os = require('node:os')
-const crypto = require('node:crypto')
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import os from 'node:os'
+import crypto from 'node:crypto'
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const selfSigned = require('selfsigned')
+import selfSigned from 'selfsigned'
 
-const { createFolder, filesExists } = require('./utils')
+import { createFolder, filesExists } from './utils.js'
 
 const CERT_PRIVATE_KEY_FILE_NAME = 'privateKey.pem'
 const CERT_PUBLIC_KEY_FILE_NAME = 'publicKey.pem'
@@ -18,7 +18,7 @@ const OIBUS_PUBLIC_KEY_FILE_NAME = 'public.pem'
  * Service used to manage encryption and decryption of secrets in the config file
  * Also responsible to create private and public key used for encrypting the secrets
  */
-class EncryptionService {
+export default class EncryptionService {
   static getInstance() {
     if (!EncryptionService.instance) {
       EncryptionService.instance = new EncryptionService()
@@ -197,5 +197,3 @@ class EncryptionService {
     return decrypted.toString('utf8')
   }
 }
-
-module.exports = EncryptionService

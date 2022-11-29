@@ -1,13 +1,13 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const SouthConnector = require('../south-connector')
-const { compress } = require('../../service/utils')
+import SouthConnector from '../south-connector.js'
+import { compress } from '../../service/utils.js'
 
 /**
  * Class SouthFolderScanner - Retrieve file from a local or remote folder
  */
-class SouthFolderScanner extends SouthConnector {
+export default class SouthFolderScanner extends SouthConnector {
   static category = 'FileOut'
 
   /**
@@ -156,5 +156,3 @@ class SouthFolderScanner extends SouthConnector {
     }
   }
 }
-
-module.exports = SouthFolderScanner

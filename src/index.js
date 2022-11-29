@@ -1,17 +1,15 @@
-const cluster = require('node:cluster')
-const path = require('node:path')
+import cluster from 'node:cluster'
+import path from 'node:path'
 
-const VERSION = require('../package.json').version
+import migrationService from './migration/migration.service.js'
+import ConfigurationService from './service/configuration.service.js'
+import Server from './web-server/web-server.js'
+import OIBusEngine from './engine/oibus-engine.js'
+import HistoryQueryEngine from './engine/history-query-engine.js'
+import LoggerService from './service/logger/logger.service.js'
+import EncryptionService from './service/encryption.service.js'
 
-const migrationService = require('./migration/migration.service')
-const ConfigurationService = require('./service/configuration.service')
-const Server = require('./web-server/web-server')
-const OIBusEngine = require('./engine/oibus-engine')
-const HistoryQueryEngine = require('./engine/history-query-engine')
-const LoggerService = require('./service/logger/logger.service')
-const EncryptionService = require('./service/encryption.service')
-
-const { getCommandLineArguments, createFolder } = require('./service/utils')
+import { getCommandLineArguments, createFolder } from './service/utils.js'
 
 // In case there is an error the worker process will exit.
 // If this happens MAX_RESTART_COUNT times in less than MAX_INTERVAL_MILLISECOND interval
@@ -44,6 +42,9 @@ if (cluster.isMaster) {
   const baseDir = path.resolve(path.extname(configFile) ? path.parse(configFile).dir : configFile)
   process.chdir(baseDir)
   createFolder(baseDir).then(async () => {
+    // TODO
+    const packageJson = '2.4.0' // JSON.parse(await fs.readFile('package.json'))
+
     // Create the base cache folder
     await createFolder(CACHE_FOLDER)
 
@@ -51,7 +52,7 @@ if (cluster.isMaster) {
     const mainLogger = loggerService.createChildLogger('main-thread')
     // Master role is nothing except launching a worker and relaunching another
     // one if exit is detected (typically to load a new configuration)
-    mainLogger.info(`Starting OIBus version ${VERSION}.`)
+    mainLogger.info(`Starting OIBus version ${packageJson}.`)
 
     let restartCount = 0
     let startTime = (new Date()).getTime()
@@ -115,7 +116,7 @@ if (cluster.isMaster) {
     const forkLogger = loggerService.createChildLogger('forked-thread')
 
     // Migrate config file, if needed
-    await migrationService.migrate(configFilePath, loggerService.createChildLogger('migration'))
+    await migrationService(configFilePath, loggerService.createChildLogger('migration'))
 
     const configService = new ConfigurationService(configFilePath, CACHE_FOLDER)
     const encryptionService = EncryptionService.getInstance()

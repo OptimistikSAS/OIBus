@@ -1,12 +1,12 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const NorthConnector = require('../north-connector')
+import NorthConnector from '../north-connector.js'
 
 /**
  * Class NorthFileWriter - Write file in an output folder. Values are stored in JSON files
  */
-class NorthFileWriter extends NorthConnector {
+export default class NorthFileWriter extends NorthConnector {
   static category = 'FileIn'
 
   /**
@@ -70,5 +70,3 @@ class NorthFileWriter extends NorthConnector {
     this.logger.debug(`File "${filePath}" copied into "${fileName}".`)
   }
 }
-
-module.exports = NorthFileWriter

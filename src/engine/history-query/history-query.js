@@ -1,11 +1,11 @@
-const path = require('node:path')
+import path from 'node:path'
 
-const StatusService = require('../../service/status.service')
-const { createFolder } = require('../../service/utils')
+import StatusService from '../../service/status.service.js'
+import { createFolder } from '../../service/utils.js'
 
 const FINISH_INTERVAL = 5000
 
-class HistoryQuery {
+export default class HistoryQuery {
   // Waiting to be started
   static STATUS_PENDING = 'pending'
 
@@ -172,5 +172,3 @@ class HistoryQuery {
     this.engine.historyQueryRepository.update(this.historyConfiguration)
   }
 }
-
-module.exports = HistoryQuery

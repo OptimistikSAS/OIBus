@@ -1,10 +1,10 @@
-const EventEmitter = require('node:events')
-const { PassThrough } = require('node:stream')
+import EventEmitter from 'node:events'
+import { PassThrough } from 'node:stream'
 
 /**
  * Class used to manage certificate files and their content
  */
-class StatusService {
+export default class StatusService {
   constructor() {
     this.statusData = {}
     this.eventEmitter = new EventEmitter()
@@ -69,5 +69,3 @@ class StatusService {
     this.stream?.destroy()
   }
 }
-
-module.exports = StatusService

@@ -1,14 +1,21 @@
 /* eslint-disable no-restricted-syntax, no-await-in-loop */
 
-const fs = require('node:fs/promises')
-const path = require('node:path')
-const db = require('better-sqlite3')
-const { nanoid } = require('nanoid')
-const databaseMigrationService = require('./database-migration.service')
-const databaseService = require('../service/database.service')
-const { createFolder, filesExists } = require('../service/utils')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-module.exports = {
+import db from 'better-sqlite3'
+import { nanoid } from 'nanoid'
+
+import {
+  changeColumnName,
+  addColumn,
+  removeColumn,
+  changeColumnValue,
+} from './database-migration.service.js'
+import { createConfigDatabase, getConfig, upsertConfig } from '../service/database.service.js'
+import { createFolder, filesExists } from '../service/utils.js'
+
+export default {
   2: (config, logger) => {
     config.south.dataSources.forEach((dataSource) => {
       if (dataSource.protocol === 'RawFile') {
@@ -452,7 +459,7 @@ module.exports = {
     const logDatabase = config.engine.logParameters.sqliteLog.fileName
     try {
       await fs.access(logDatabase)
-      await databaseMigrationService.addColumn(logDatabase, 'logs', 'scope')
+      await addColumn(logDatabase, 'logs', 'scope')
     } catch {
       logger.info(`No log db file to migrate (file name: ${logDatabase})`)
     }
@@ -1110,14 +1117,14 @@ module.exports = {
           if (dataSource.protocol === 'SQL') {
             logger.info(`Update lastCompletedAt key for ${dataSource.name}`)
             const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.id}.db`
-            const database = databaseService.createConfigDatabase(databasePath)
-            const lastCompletedAt = databaseService.getConfig(database, 'lastCompletedAt')
-            databaseService.upsertConfig(database, `lastCompletedAt-${dataSource.scanMode}`, lastCompletedAt)
+            const database = createConfigDatabase(databasePath)
+            const lastCompletedAt = getConfig(database, 'lastCompletedAt')
+            upsertConfig(database, `lastCompletedAt-${dataSource.scanMode}`, lastCompletedAt)
           }
 
           if (['OPCUA_HA', 'OPCHDA'].includes(dataSource.protocol)) {
             const databasePath = `${config.engine.caching.cacheFolder}/${dataSource.id}.db`
-            const database = databaseService.createConfigDatabase(databasePath)
+            const database = createConfigDatabase(databasePath)
             if (!dataSource[dataSource.protocol].scanGroups) {
               dataSource[dataSource.protocol].scanGroups = []
             }
@@ -1125,10 +1132,10 @@ module.exports = {
             // eslint-disable-next-line no-restricted-syntax
             for (const scanMode of scanModes) {
               logger.info(`Update lastCompletedAt-${scanMode} value for ${dataSource.name}`)
-              const lastCompletedAtString = databaseService.getConfig(database, `lastCompletedAt-${scanMode}`)
+              const lastCompletedAtString = getConfig(database, `lastCompletedAt-${scanMode}`)
               if (lastCompletedAtString) {
                 const lastCompletedAt = new Date(parseInt(lastCompletedAtString, 10))
-                databaseService.upsertConfig(database, `lastCompletedAt-${scanMode}`, lastCompletedAt.toISOString())
+                upsertConfig(database, `lastCompletedAt-${scanMode}`, lastCompletedAt.toISOString())
               }
             }
           }
@@ -1153,7 +1160,7 @@ module.exports = {
       // eslint-disable-next-line max-len
       logger.info(`Migration of value error database ${valueCacheErrorDbPath}: Renaming column name "application_id" into "application"`)
       try {
-        await databaseMigrationService.changeColumnName(
+        changeColumnName(
           valueCacheErrorDbPath,
           'application_id',
           'application',
@@ -1205,7 +1212,7 @@ module.exports = {
         // eslint-disable-next-line max-len
         logger.info(`Migration of values database ${cachePath}/${application.id}.db: Renaming column name "data_source_id" into "data_source" for application ${application.name}`)
         try {
-          databaseMigrationService.changeColumnName(
+          changeColumnName(
             newApplicationPath,
             'data_source_id',
             'data_source',
@@ -1218,7 +1225,7 @@ module.exports = {
           // eslint-disable-next-line max-len
           logger.info(`Migration of file database ${fileCacheDbPath}: Changing application value from ${application.name} to ${application.id}`)
           try {
-            databaseMigrationService.changeColumnValue(
+            changeColumnValue(
               fileCacheDbPath,
               'application',
               application.name,
@@ -1233,7 +1240,7 @@ module.exports = {
           // eslint-disable-next-line max-len
           logger.info(`Migration of file error database ${fileCacheErrorDbPath}: Changing application value from ${application.name} to ${application.id}`)
           try {
-            databaseMigrationService.changeColumnValue(
+            changeColumnValue(
               fileCacheErrorDbPath,
               'application',
               application.name,
@@ -1248,7 +1255,7 @@ module.exports = {
           // eslint-disable-next-line max-len
           logger.info(`Migration of value error database ${valueCacheErrorDbPath}: Changing application value from ${application.name} to ${application.id}`)
           try {
-            databaseMigrationService.changeColumnValue(
+            changeColumnValue(
               valueCacheErrorDbPath,
               'application',
               application.name,
@@ -1327,7 +1334,7 @@ module.exports = {
       await createFolder(path.resolve(northCache, 'errors'))
       try {
         await fs.rename(path.resolve('./cache', `${north.id}.db`), path.resolve(northCache, 'values.db'))
-        databaseMigrationService.changeColumnName(
+        changeColumnName(
           path.resolve(northCache, 'values.db'),
           'data_source',
           'south',
@@ -1352,7 +1359,7 @@ module.exports = {
             + 'WHERE application = ? '
             + 'ORDER BY timestamp'
         const results = database.prepare(query).all(north.id)
-        databaseMigrationService.removeColumn(path.resolve(northCache, 'files.db'), 'cache', 'application')
+        removeColumn(path.resolve(northCache, 'files.db'), 'cache', 'application')
         // Empty the database to rewrite the new file path
         database.prepare('DELETE FROM cache;').run()
         for (const result of results) {

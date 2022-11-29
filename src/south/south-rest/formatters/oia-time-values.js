@@ -1,5 +1,3 @@
-// eslint-disable-next-line max-len
-// http://localhost:4200/api/oianalytics/data/values?data-reference=DCS_CONC_O2_MCT&from=2022-01-01T00%3A00%3A00Z&aggregation=RAW_VALUES&to=2022-02-01T00%3A00%3A00Z&data-reference=DCS_PH_MCT
 /**
  * check data from OIAnalytics API for result of
  * For now, only 'time-values' type is accepted
@@ -76,4 +74,4 @@ const format = (httpResult) => {
   return { httpResults: formattedData, latestDateRetrieved }
 }
 
-module.exports = format
+export default format

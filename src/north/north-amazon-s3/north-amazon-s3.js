@@ -1,10 +1,10 @@
-const fs = require('node:fs')
-const path = require('node:path')
+import fs from 'node:fs'
+import path from 'node:path'
 
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3')
-const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { NodeHttpHandler } from '@aws-sdk/node-http-handler'
 
-const NorthConnector = require('../north-connector')
+import NorthConnector from '../north-connector.js'
 
 /**
  * Get filename without timestamp from file path.
@@ -20,7 +20,7 @@ const getFilenameWithoutTimestamp = (filePath) => {
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
  */
-class NorthAmazonS3 extends NorthConnector {
+export default class NorthAmazonS3 extends NorthConnector {
   static category = 'FileIn'
 
   /**
@@ -87,5 +87,3 @@ class NorthAmazonS3 extends NorthConnector {
     await this.s3.send(new PutObjectCommand(params))
   }
 }
-
-module.exports = NorthAmazonS3

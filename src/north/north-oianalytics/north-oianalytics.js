@@ -1,11 +1,11 @@
-const NorthConnector = require('../north-connector')
-const { httpSend, addAuthenticationToHeaders } = require('../../service/http-request-static-functions')
+import NorthConnector from '../north-connector.js'
+import { httpSend, addAuthenticationToHeaders } from '../../service/http-request-static-functions.js'
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
  * OIAnalytics endpoints are set in this connector
  */
-class NorthOIAnalytics extends NorthConnector {
+export default class NorthOIAnalytics extends NorthConnector {
   static category = 'Optimistik'
 
   /**
@@ -119,5 +119,3 @@ class NorthOIAnalytics extends NorthConnector {
     return retry
   }
 }
-
-module.exports = NorthOIAnalytics

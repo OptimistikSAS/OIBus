@@ -1,10 +1,10 @@
-const url = require('node:url')
-const { createReadStream } = require('node:fs')
-const path = require('node:path')
+import url from 'node:url'
+import { createReadStream } from 'node:fs'
+import path from 'node:path'
 
-const FormData = require('form-data')
-const ProxyAgent = require('proxy-agent')
-const fetch = require('node-fetch')
+import FormData from 'form-data'
+import ProxyAgent from 'proxy-agent'
+import fetch from 'node-fetch'
 
 /**
  * Create a proxy agent to use wih HTTP requests
@@ -121,7 +121,7 @@ const httpSend = async (
   }
 }
 
-module.exports = {
+export {
   createProxyAgent,
   addAuthenticationToHeaders,
   httpSend,

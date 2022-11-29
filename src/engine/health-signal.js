@@ -1,9 +1,9 @@
-const { httpSend, createProxyAgent, addAuthenticationToHeaders } = require('../service/http-request-static-functions')
+import { httpSend, createProxyAgent, addAuthenticationToHeaders } from '../service/http-request-static-functions.js'
 
 /**
  * Class HealthSignal - sends health signal to a remote host or into the logs
  */
-class HealthSignal {
+export default class HealthSignal {
   /**
    * Constructor for HealthSignal
    * @constructor
@@ -162,5 +162,3 @@ class HealthSignal {
     }
   }
 }
-
-module.exports = HealthSignal

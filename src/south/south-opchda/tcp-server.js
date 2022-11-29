@@ -1,11 +1,11 @@
-const net = require('node:net')
+import net from 'node:net'
 
-const SocketSession = require('./socket-session')
+import SocketSession from './socket-session.js'
 
 /**
  * Class TcpServer - Create a TCP netServer to communicate with the HDA agent
  */
-class TcpServer {
+export default class TcpServer {
   /**
    * Create a TCP Server
    * @param {Number} port - The port to listen to
@@ -110,5 +110,3 @@ class TcpServer {
     }
   }
 }
-
-module.exports = TcpServer

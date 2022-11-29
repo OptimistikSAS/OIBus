@@ -1,5 +1,5 @@
-const build = require('pino-abstract-transport')
-const db = require('better-sqlite3')
+import build from 'pino-abstract-transport'
+import db from 'better-sqlite3'
 
 const LOGS_TABLE_NAME = 'logs'
 const DEFAULT_MAX_NUMBER_OF_LOGS = 2000000
@@ -118,4 +118,4 @@ const createTransport = async (opts) => {
   })
 }
 
-module.exports = createTransport
+export default createTransport

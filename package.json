@@ -4,6 +4,7 @@
   "main": "index.js",
   "author": "Optimistik SAS",
   "license": "EUPL",
+  "type": "module",
   "engines": {
     "node": ">=v16.17.0",
     "npm": ">=8.15.0"

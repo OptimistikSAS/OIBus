@@ -1,17 +1,18 @@
-const {
+import {
   OPCUAClient,
   MessageSecurityMode,
   SecurityPolicy,
   UserTokenType,
-} = require('node-opcua-client')
-const { OPCUACertificateManager } = require('node-opcua-certificate-manager')
-const SouthConnector = require('../south-connector')
-const { initOpcuaCertificateFolders } = require('../../service/opcua.service')
+} from 'node-opcua-client'
+import { OPCUACertificateManager } from 'node-opcua-certificate-manager'
+
+import SouthConnector from '../south-connector.js'
+import { initOpcuaCertificateFolders } from '../../service/opcua.service.js'
 
 /**
  * Class SouthOPCUADA - Connect to an OPCUA server in DA (Data Access) mode
  */
-class SouthOPCUADA extends SouthConnector {
+export default class SouthOPCUADA extends SouthConnector {
   static category = 'IoT'
 
   /**
@@ -269,5 +270,3 @@ class SouthOPCUADA extends SouthConnector {
     }
   }
 }
-
-module.exports = SouthOPCUADA

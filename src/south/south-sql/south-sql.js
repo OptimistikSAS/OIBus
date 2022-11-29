@@ -1,16 +1,16 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const db = require('better-sqlite3')
-const mssql = require('mssql')
-const mysql = require('mysql2/promise')
-const { Client, types } = require('pg')
-const { DateTime } = require('luxon')
-const humanizeDuration = require('humanize-duration')
+import db from 'better-sqlite3'
+import mssql from 'mssql'
+import mysql from 'mysql2/promise'
+import * as pg from 'pg'
+import { DateTime } from 'luxon'
+import humanizeDuration from 'humanize-duration'
 
-const SouthConnector = require('../south-connector')
-const { generateCSV, getMostRecentDate, generateReplacementParameters } = require('./utils')
-const { replaceFilenameWithVariable, compress } = require('../../service/utils')
+import SouthConnector from '../south-connector.js'
+import { generateCSV, getMostRecentDate, generateReplacementParameters } from './utils.js'
+import { replaceFilenameWithVariable, compress } from '../../service/utils.js'
 
 let oracledb
 /**
@@ -22,7 +22,7 @@ let oracledb
  * - PostgreSQL
  * - SQLite
  */
-class SouthSQL extends SouthConnector {
+export default class SouthSQL extends SouthConnector {
   static category = 'DatabaseOut'
 
   /**
@@ -323,8 +323,8 @@ class SouthSQL extends SouthConnector {
       query_timeout: this.requestTimeout,
     }
 
-    types.setTypeParser(1114, (str) => new Date(`${str}Z`))
-    const connection = new Client(config)
+    pg.types.setTypeParser(1114, (str) => new Date(`${str}Z`))
+    const connection = new pg.Client(config)
     let data = []
     try {
       await connection.connect()
@@ -433,5 +433,3 @@ class SouthSQL extends SouthConnector {
     this.statusService.updateStatusDataStream({ 'Last SQL request': `"${query}" with ${startTimeLog} ${endTimeLog}` })
   }
 }
-
-module.exports = SouthSQL

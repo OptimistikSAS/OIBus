@@ -1,8 +1,8 @@
-const path = require('node:path')
-const fs = require('node:fs/promises')
+import path from 'node:path'
+import fs from 'node:fs/promises'
 
-const EncryptionService = require('./encryption.service')
-const { filesExists } = require('./utils')
+import EncryptionService from './encryption.service.js'
+import { filesExists } from './utils.js'
 
 const KEYS_FOLDER = './keys'
 const CERTS_FOLDER = './certs'
@@ -11,7 +11,7 @@ const CERTS_FOLDER = './certs'
  * Class responsible for managing the configuration.
  * @class ConfigurationService
  */
-class ConfigurationService {
+export default class ConfigurationService {
   /**
    * Constructor for ConfigService
    * @constructor
@@ -128,5 +128,3 @@ class ConfigurationService {
     }
   }
 }
-
-module.exports = ConfigurationService

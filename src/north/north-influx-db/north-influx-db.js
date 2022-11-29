@@ -1,8 +1,8 @@
-const { vsprintf } = require('sprintf-js')
-const objectPath = require('object-path')
+import { vsprintf } from 'sprintf-js'
+import objectPath from 'object-path'
 
-const NorthConnector = require('../north-connector')
-const { httpSend } = require('../../service/http-request-static-functions')
+import NorthConnector from '../north-connector.js'
+import { httpSend } from '../../service/http-request-static-functions.js'
 
 /**
  * Convert timestamp to the configured precision
@@ -32,7 +32,7 @@ const getConvertedTimestamp = (timestampTime, precision) => {
 /**
  * Class NorthInfluxDB - Send data to InfluxDB
  */
-class NorthInfluxDB extends NorthConnector {
+export default class NorthInfluxDB extends NorthConnector {
   static category = 'DatabaseIn'
 
   /**
@@ -190,5 +190,3 @@ class NorthInfluxDB extends NorthConnector {
     )
   }
 }
-
-module.exports = NorthInfluxDB

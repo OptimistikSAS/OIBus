@@ -1,8 +1,8 @@
-const { spawn } = require('node:child_process')
+import { spawn } from 'node:child_process'
 
-const SouthConnector = require('../south-connector')
-const TcpServer = require('./tcp-server')
-const DeferredPromise = require('../../service/deferred-promise')
+import SouthConnector from '../south-connector.js'
+import TcpServer from './tcp-server.js'
+import DeferredPromise from '../../service/deferred-promise.js'
 
 // Time to wait before closing the connection by timeout and killing the HDA Agent process
 const DISCONNECTION_TIMEOUT = 10000
@@ -12,7 +12,7 @@ const DISCONNECTION_TIMEOUT = 10000
  * This connector communicates with the Agent through a TCP connection thanks to the TCP server created on OIBus
  * and associated to this connector
  */
-class SouthOPCHDA extends SouthConnector {
+export default class SouthOPCHDA extends SouthConnector {
   static category = 'IoT'
 
   /**
@@ -494,5 +494,3 @@ class SouthOPCHDA extends SouthConnector {
     }
   }
 }
-
-module.exports = SouthOPCHDA

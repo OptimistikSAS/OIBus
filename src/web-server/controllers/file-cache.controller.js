@@ -93,7 +93,7 @@ const retryAllFileErrors = async (ctx) => {
   ctx.ok('All error files retried')
 }
 
-module.exports = {
+export default {
   getFileErrors,
   removeFileErrors,
   retryFileErrors,

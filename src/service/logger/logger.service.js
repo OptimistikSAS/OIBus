@@ -1,8 +1,10 @@
-const path = require('node:path')
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const pino = require('pino')
-const FileCleanupService = require('./file-cleanup.service')
-const { createFolder } = require('../utils')
+import pino from 'pino'
+
+import FileCleanupService from './file-cleanup.service.js'
+import { createFolder } from '../utils.js'
 
 const LOG_FOLDER_NAME = 'logs'
 const LOG_FILE_NAME = 'journal.log'
@@ -50,6 +52,9 @@ class LoggerService {
     const { consoleLog, fileLog, sqliteLog, lokiLog } = logParameters
     targets.push({ target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: consoleLog.level })
 
+    // Get current directory
+    const dirName = path.dirname(fileURLToPath(import.meta.url))
+
     const filePath = fileLog.fileName ? path.resolve(LOG_FOLDER_NAME, fileLog.fileName) : path.resolve(LOG_FOLDER_NAME, LOG_FILE_NAME)
     targets.push({
       target: 'pino-roll',
@@ -64,7 +69,7 @@ class LoggerService {
       const sqlDatabaseName = sqliteLog.fileName ? path.resolve(LOG_FOLDER_NAME, sqliteLog.fileName) : path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME)
 
       targets.push({
-        target: path.join(__dirname, 'sqlite-transport.js'),
+        target: path.join(dirName, 'sqlite-transport.js'),
         options: {
           fileName: sqlDatabaseName,
           maxNumberOfLogs: sqliteLog.maxNumberOfLogs,
@@ -76,7 +81,7 @@ class LoggerService {
     if (lokiLog?.lokiAddress) {
       try {
         targets.push({
-          target: path.join(__dirname, 'loki-transport.js'),
+          target: path.join(dirName, 'loki-transport.js'),
           options: {
             username: lokiLog.username,
             password: lokiLog.password ? await this.encryptionService.decryptText(lokiLog.password) : '',
@@ -138,7 +143,7 @@ class LoggerService {
       Error.prepareStackTrace = (err, structuredStackTrace) => structuredStackTrace
       Error.captureStackTrace(this)
       // Get the first CallSite outside the logger and outside pino library
-      const callSite = this.stack.find((line) => line.getFileName().indexOf(path.basename(__filename)) === -1
+      const callSite = this.stack.find((line) => line.getFileName().indexOf('logger.service.js') === -1
         && line.getFileName().indexOf('pino') === -1)
       return `${path.parse(callSite.getFileName()).name}(${callSite.getLineNumber()})`
     } finally {
@@ -155,4 +160,4 @@ class LoggerService {
   }
 }
 
-module.exports = LoggerService
+export default LoggerService

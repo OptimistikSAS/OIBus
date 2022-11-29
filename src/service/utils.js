@@ -1,10 +1,10 @@
-const fs = require('node:fs/promises')
-const { createReadStream, createWriteStream } = require('node:fs')
-const zlib = require('node:zlib')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import { createReadStream, createWriteStream } from 'node:fs'
+import zlib from 'node:zlib'
+import path from 'node:path'
 
-const minimist = require('minimist')
-const { DateTime } = require('luxon')
+import minimist from 'minimist'
+import { DateTime } from 'luxon'
 
 const COMPRESSION_LEVEL = 9
 
@@ -142,7 +142,7 @@ const asyncFilter = async (array, predicate) => {
   return array.filter((item, index) => results[index])
 }
 
-module.exports = {
+export {
   getCommandLineArguments,
   delay,
   generateIntervals,

@@ -1,11 +1,11 @@
-const ads = require('ads-client')
+import ads from 'ads-client'
 
-const SouthConnector = require('../south-connector')
+import SouthConnector from '../south-connector.js'
 
 /**
  * Class SouthADS - Provides instruction for TwinCAT ADS client connection
  */
-class SouthADS extends SouthConnector {
+export default class SouthADS extends SouthConnector {
   static category = 'IoT'
 
   /**
@@ -302,5 +302,3 @@ class SouthADS extends SouthConnector {
     await super.disconnect()
   }
 }
-
-module.exports = SouthADS

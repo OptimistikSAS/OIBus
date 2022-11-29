@@ -1,7 +1,8 @@
-const db = require('better-sqlite3')
-const HistoryQuery = require('./history-query')
+import db from 'better-sqlite3'
 
-class HistoryQueryRepository {
+import HistoryQuery from './history-query.js'
+
+export default class HistoryQueryRepository {
   static TABLE = 'history_queries'
 
   constructor(databasePath) {
@@ -202,5 +203,3 @@ class HistoryQueryRepository {
     return null
   }
 }
-
-module.exports = HistoryQueryRepository

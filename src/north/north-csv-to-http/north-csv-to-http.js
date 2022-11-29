@@ -1,17 +1,17 @@
-const { createReadStream } = require('node:fs')
+import { createReadStream } from 'node:fs'
 
-const csv = require('papaparse')
+import csv from 'papaparse'
 
-const NorthConnector = require('../north-connector')
-const { convertCSVRowIntoHttpBody, isHeaderValid } = require('./utils')
-const { httpSend, addAuthenticationToHeaders } = require('../../service/http-request-static-functions')
+import NorthConnector from '../north-connector.js'
+import { convertCSVRowIntoHttpBody, isHeaderValid } from './utils.js'
+import { httpSend, addAuthenticationToHeaders } from '../../service/http-request-static-functions.js'
 
 const ERROR_PRINT_SIZE = 5
 
 /**
  * Class NorthCsvToHttp - convert a CSV file into JSON payload for HTTP requests (POST/PUT/PATCH)
  */
-class NorthCsvToHttp extends NorthConnector {
+export default class NorthCsvToHttp extends NorthConnector {
   static category = 'API'
 
   /**
@@ -231,5 +231,3 @@ class NorthCsvToHttp extends NorthConnector {
     }
   }
 }
-
-module.exports = NorthCsvToHttp

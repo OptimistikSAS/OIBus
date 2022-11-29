@@ -1,5 +1,5 @@
-const path = require('node:path')
-const fs = require('node:fs/promises')
+import path from 'node:path'
+import fs from 'node:fs/promises'
 
 const mkdir = async (folderPath) => {
   try {
@@ -34,4 +34,4 @@ const initOpcuaCertificateFolders = async (certFolder) => {
   await fs.copyFile(`${certFolder}/cert.pem`, `${rootFolder}/trusted/certs/oibus_client.pem`)
 }
 
-module.exports = { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG }
+export { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG }

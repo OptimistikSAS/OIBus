@@ -1,5 +1,5 @@
-const csv = require('papaparse')
-const { DateTime } = require('luxon')
+import csv from 'papaparse'
+import { DateTime } from 'luxon'
 
 /**
  * Format date taking into account the timezone configuration.
@@ -111,4 +111,4 @@ const generateReplacementParameters = (query, startTime, endTime) => {
   return occurrences.map((occurrence) => occurrence.value)
 }
 
-module.exports = { generateCSV, getMostRecentDate, generateReplacementParameters }
+export { generateCSV, getMostRecentDate, generateReplacementParameters }

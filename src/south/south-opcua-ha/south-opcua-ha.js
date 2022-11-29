@@ -1,4 +1,4 @@
-const {
+import {
   OPCUAClient,
   MessageSecurityMode,
   SecurityPolicy,
@@ -9,16 +9,16 @@ const {
   ReadRawModifiedDetails,
   HistoryReadRequest,
   AggregateFunction,
-} = require('node-opcua-client')
-const { OPCUACertificateManager } = require('node-opcua-certificate-manager')
+} from 'node-opcua-client'
+import { OPCUACertificateManager } from 'node-opcua-certificate-manager'
 
-const SouthConnector = require('../south-connector')
-const { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG } = require('../../service/opcua.service')
+import SouthConnector from '../south-connector.js'
+import { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG } from '../../service/opcua.service.js'
 
 /**
  * Class SouthOPCUAHA - Connect to an OPCUA server in HA (Historian Access) mode
  */
-class SouthOPCUAHA extends SouthConnector {
+export default class SouthOPCUAHA extends SouthConnector {
   static category = 'IoT'
 
   /**
@@ -496,5 +496,3 @@ class SouthOPCUAHA extends SouthConnector {
     }
   }
 }
-
-module.exports = SouthOPCUAHA
