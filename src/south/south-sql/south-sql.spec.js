@@ -100,7 +100,7 @@ describe('SouthSQL', () => {
       scanMode: 'every10Second',
       points: [],
     }
-    south = new SQL(settings, addValues, addFiles, logger)
+    south = new SQL(settings, {}, addValues, addFiles, logger)
   })
 
   it('should properly connect and set lastCompletedAt from database', async () => {
@@ -129,7 +129,7 @@ describe('SouthSQL', () => {
 
     const tempConfig = { ...settings }
     tempConfig.startTime = '2020-02-02 02:02:02'
-    const tempSqlSouth = new SQL(tempConfig, addValues, addFiles, logger)
+    const tempSqlSouth = new SQL(tempConfig, {}, addValues, addFiles, logger)
     await tempSqlSouth.start('baseFolder', 'oibusName')
     await tempSqlSouth.connect()
 
@@ -145,7 +145,7 @@ describe('SouthSQL', () => {
         databasePath: undefined,
       },
     }
-    const badSqlSouth = new SQL(badConfig, addValues, addFiles, logger)
+    const badSqlSouth = new SQL(badConfig, {}, addValues, addFiles, logger)
     await badSqlSouth.start('baseFolder', 'oibusName')
 
     expect(badSqlSouth.logger.error).toHaveBeenCalledWith('Invalid timezone supplied: "undefined".')

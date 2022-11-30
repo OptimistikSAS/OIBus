@@ -67,7 +67,7 @@ describe('NorthMQTT', () => {
       },
       subscribedTo: [],
     }
-    north = new MQTT(configuration, [], logger)
+    north = new MQTT(configuration, {}, logger)
     await north.start('baseFolder', 'oibusName')
   })
 

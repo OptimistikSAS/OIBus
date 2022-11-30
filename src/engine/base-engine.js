@@ -25,6 +25,7 @@ import OPCHDA from '../south/south-opchda/south-opchda.js'
 import RestApi from '../south/south-rest/south-rest.js'
 
 import StatusService from '../service/status.service.js'
+import ProxyService from '../service/proxy.service.js'
 
 const northList = {
   OIAnalytics,
@@ -86,6 +87,7 @@ export default class BaseEngine {
 
     // Variable initialized in initEngineServices
     this.statusService = null
+    this.proxyService = null
     this.logger = null
   }
 
@@ -97,7 +99,7 @@ export default class BaseEngine {
   async initEngineServices(engineConfig) {
     this.oibusName = engineConfig.name
     this.defaultLogParameters = engineConfig.logParameters
-    this.proxies = engineConfig.proxies
+    this.proxyService = new ProxyService(engineConfig.proxies, this.encryptionService)
     this.statusService = new StatusService()
   }
 
@@ -152,7 +154,7 @@ export default class BaseEngine {
     try {
       const SouthConnector = this.installedSouthConnectors[configuration.type]
       if (SouthConnector) {
-        return new SouthConnector(configuration, this.addValues.bind(this), this.addFile.bind(this), logger)
+        return new SouthConnector(configuration, this.proxyService, this.addValues.bind(this), this.addFile.bind(this), logger)
       }
       this.logger.error(`South connector for "${configuration.name}" is not found: ${configuration.type}`)
     } catch (error) {
@@ -183,7 +185,7 @@ export default class BaseEngine {
     try {
       const NorthConnector = this.installedNorthConnectors[configuration.type]
       if (NorthConnector) {
-        return new NorthConnector(configuration, this.proxies, logger)
+        return new NorthConnector(configuration, this.proxyService, logger)
       }
       this.logger.error(`North connector for "${configuration.name}" is not found: ${configuration.type}`)
     } catch (error) {

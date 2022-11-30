@@ -19,18 +19,18 @@ export default class NorthCsvToHttp extends NorthConnector {
    * Constructor for NorthCsvToHttp
    * @constructor
    * @param {Object} configuration - The North connector configuration
-   * @param {Object[]} proxies - The list of available proxies
+   * @param {ProxyService} proxyService - The proxy service
    * @param {Object} logger - The Pino child logger to use
    * @return {void}
    */
   constructor(
     configuration,
-    proxies,
+    proxyService,
     logger,
   ) {
     super(
       configuration,
-      proxies,
+      proxyService,
       logger,
       manifest,
     )
@@ -57,7 +57,18 @@ export default class NorthCsvToHttp extends NorthConnector {
     this.acceptUnconvertedRows = acceptUnconvertedRows
     this.mapping = mapping || {}
     this.csvDelimiter = csvDelimiter
-    this.proxySettings = proxy
+    this.proxyName = proxy
+  }
+
+  /**
+   * Initialize services (logger, certificate, status data) at startup
+   * @param {String} baseFolder - The base cache folder
+   * @param {String} _oibusName - The OIBus name
+   * @returns {Promise<void>} - The result promise
+   */
+  async start(baseFolder, _oibusName) {
+    await super.start(baseFolder, _oibusName)
+    this.proxyAgent = await this.proxyService.getProxy(this.proxyName)
   }
 
   /**

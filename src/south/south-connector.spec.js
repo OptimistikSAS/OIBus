@@ -51,7 +51,7 @@ describe('SouthConnector', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString))
 
     configuration = { id: 'id', name: 'south', type: 'test', settings: {} }
-    south = new SouthConnector(configuration, addValues, addFiles, logger, manifest)
+    south = new SouthConnector(configuration, {}, addValues, addFiles, logger, manifest)
     await south.start('baseFolder', 'oibusName')
   })
 

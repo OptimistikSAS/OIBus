@@ -1,13 +1,6 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
-
-const mkdir = async (folderPath) => {
-  try {
-    await fs.stat(folderPath)
-  } catch (error) {
-    await fs.mkdir(folderPath, { recursive: true })
-  }
-}
+import { createFolder } from './utils.js'
 
 const MAX_NUMBER_OF_NODE_TO_LOG = 10
 
@@ -17,17 +10,17 @@ const MAX_NUMBER_OF_NODE_TO_LOG = 10
  */
 const initOpcuaCertificateFolders = async (certFolder) => {
   const rootFolder = `${certFolder}/opcua`
-  await mkdir(path.join(rootFolder, 'own'))
-  await mkdir(path.join(rootFolder, 'own/certs'))
-  await mkdir(path.join(rootFolder, 'own/private'))
-  await mkdir(path.join(rootFolder, 'rejected'))
-  await mkdir(path.join(rootFolder, 'trusted'))
-  await mkdir(path.join(rootFolder, 'trusted/certs'))
-  await mkdir(path.join(rootFolder, 'trusted/crl'))
+  await createFolder(path.join(rootFolder, 'own'))
+  await createFolder(path.join(rootFolder, 'own/certs'))
+  await createFolder(path.join(rootFolder, 'own/private'))
+  await createFolder(path.join(rootFolder, 'rejected'))
+  await createFolder(path.join(rootFolder, 'trusted'))
+  await createFolder(path.join(rootFolder, 'trusted/certs'))
+  await createFolder(path.join(rootFolder, 'trusted/crl'))
 
-  await mkdir(path.join(rootFolder, 'issuers'))
-  await mkdir(path.join(rootFolder, 'issuers/certs')) // contains Trusted CA certificates
-  await mkdir(path.join(rootFolder, 'issuers/crl')) // contains CRL of revoked CA certificates
+  await createFolder(path.join(rootFolder, 'issuers'))
+  await createFolder(path.join(rootFolder, 'issuers/certs')) // contains Trusted CA certificates
+  await createFolder(path.join(rootFolder, 'issuers/crl')) // contains CRL of revoked CA certificates
 
   await fs.copyFile(`${certFolder}/privateKey.pem`, `${rootFolder}/own/private/private_key.pem`)
   await fs.copyFile(`${certFolder}/cert.pem`, `${rootFolder}/own/certs/client_certificate.pem`)

@@ -69,7 +69,7 @@ describe('NorthWATSY', () => {
       },
       subscribedTo: [],
     }
-    north = new WATSYConnect(configuration, [], logger)
+    north = new WATSYConnect(configuration, {}, logger)
     await north.start('baseFolder', 'oibusName')
   })
 

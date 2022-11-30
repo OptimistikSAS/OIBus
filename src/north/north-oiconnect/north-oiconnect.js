@@ -16,18 +16,18 @@ export default class NorthOIConnect extends NorthConnector {
    * Constructor for NorthOIConnect
    * @constructor
    * @param {Object} configuration - The North connector configuration
-   * @param {Object[]} proxies - The list of available proxies
+   * @param {ProxyService} proxyService - The proxy service
    * @param {Object} logger - The Pino child logger to use
    * @return {void}
    */
   constructor(
     configuration,
-    proxies,
+    proxyService,
     logger,
   ) {
     super(
       configuration,
-      proxies,
+      proxyService,
       logger,
       manifest,
     )
@@ -43,7 +43,7 @@ export default class NorthOIConnect extends NorthConnector {
     this.valuesEndpoint = valuesEndpoint
     this.fileEndpoint = fileEndpoint
     this.authentication = authentication
-    this.proxySettings = proxy
+    this.proxyName = proxy
 
     // Initialized at connection or init
     this.valuesUrl = null
@@ -61,6 +61,7 @@ export default class NorthOIConnect extends NorthConnector {
     const name = `${oibusName}:${this.name}`
     this.valuesUrl = `${this.host}${this.valuesEndpoint}?name=${name}`
     this.fileUrl = `${this.host}${this.fileEndpoint}?name=${name}`
+    this.proxyAgent = await this.proxyService.getProxy(this.proxyName)
   }
 
   /**

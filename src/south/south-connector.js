@@ -34,6 +34,7 @@ export default class SouthConnector {
    * Constructor for SouthConnector
    * @constructor
    * @param {Object} configuration - The South connector configuration
+   * @param {ProxyService} proxyService - The proxy service
    * @param {Function} engineAddValuesCallback - The Engine add values callback
    * @param {Function} engineAddFilesCallback - The Engine add file callback
    * @param {Object} logger - The Pino child logger to use
@@ -42,6 +43,7 @@ export default class SouthConnector {
    */
   constructor(
     configuration,
+    proxyService,
     engineAddValuesCallback,
     engineAddFilesCallback,
     logger,
@@ -62,6 +64,7 @@ export default class SouthConnector {
     this.scanGroups = configuration.settings.scanGroups
 
     this.encryptionService = EncryptionService.getInstance()
+    this.proxyService = proxyService
     this.logger = logger
 
     this.numberOfRetrievedFiles = 0
