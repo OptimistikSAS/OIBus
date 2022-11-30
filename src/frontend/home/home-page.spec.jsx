@@ -6,7 +6,7 @@ import { act } from 'react-dom/test-utils'
 import * as ReactDOMClient from 'react-dom/client'
 import HomePage from './home-page.jsx'
 
-import { testConfig } from '../../../tests/test-config'
+import { testConfig } from '../../../tests/test-config.js'
 
 // ReacFlow does not seem to be working with jest.
 // so we have to mock this component

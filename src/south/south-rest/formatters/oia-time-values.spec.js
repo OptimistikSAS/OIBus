@@ -1,4 +1,4 @@
-const oiaTimeValues = require('./oia-time-values')
+import oiaTimeValues from './oia-time-values.js'
 
 describe('oia time values formatter', () => {
   it('should reject bad data', () => {

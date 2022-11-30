@@ -1,6 +1,6 @@
-const pg = require('pg')
+import pg from 'pg'
 
-const TimescaleDB = require('./north-timescale-db')
+import TimescaleDB from './north-timescale-db.js'
 
 jest.mock('pg', () => ({ Client: jest.fn() }))
 

@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, hasLengthBetween } from '../../service/validation.service'
+import { notEmpty, hasLengthBetween } from '../../service/validation.service.js'
 
 const schema = { name: 'FileWriter' }
 schema.form = {

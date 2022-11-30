@@ -1,12 +1,12 @@
-const fs = require('node:fs/promises')
-const crypto = require('node:crypto')
+import fs from 'node:fs/promises'
+import crypto from 'node:crypto'
 
-const path = require('node:path')
-const selfSigned = require('selfsigned')
-const os = require('node:os')
-const EncryptionService = require('./encryption.service')
+import path from 'node:path'
+import selfSigned from 'selfsigned'
+import os from 'node:os'
+import EncryptionService from './encryption.service.js'
 
-const utils = require('./utils')
+import * as utils from './utils.js'
 
 jest.mock('./utils')
 jest.mock('node:fs/promises')

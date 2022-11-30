@@ -5,9 +5,9 @@ import React from 'react'
 import { act, Simulate } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import { defaultConfig } from '../../../tests/test-config'
+import { defaultConfig } from '../../../tests/test-config.js'
 import ConfigurePoints from './configure-points.jsx'
-import utils from '../helpers/utils'
+import utils from '../helpers/utils.js'
 
 // mock context
 const dispatchNewConfig = jest.fn()

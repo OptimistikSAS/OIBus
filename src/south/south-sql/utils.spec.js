@@ -1,6 +1,6 @@
-const csv = require('papaparse')
+import csv from 'papaparse'
 
-const utils = require('./utils')
+import * as utils from './utils.js'
 
 jest.mock('papaparse', () => ({ unparse: jest.fn() }))
 

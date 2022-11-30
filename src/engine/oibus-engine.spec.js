@@ -1,7 +1,7 @@
-const OIBusEngine = require('./oibus-engine')
-const EncryptionService = require('../service/encryption.service')
-const config = require('../config/default-config.json')
-const ConfigurationService = require('../service/configuration.service')
+import OIBusEngine from './oibus-engine.js'
+import EncryptionService from '../service/encryption.service.js'
+import config from '../config/default-config.json'
+import ConfigurationService from '../service/configuration.service.js'
 
 // Mock EncryptionService
 EncryptionService.getInstance = () => ({

@@ -1,9 +1,9 @@
-const path = require('node:path')
-const fs = require('node:fs/promises')
+import path from 'node:path'
+import fs from 'node:fs/promises'
 
-const ArchiveService = require('./archive.service')
+import ArchiveService from './archive.service.js'
 
-const { createFolder } = require('../utils')
+import { createFolder } from '../utils.js'
 
 jest.mock('node:fs/promises')
 

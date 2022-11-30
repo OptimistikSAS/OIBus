@@ -1,9 +1,14 @@
-const nodeOPCUAClient = require('node-opcua-client')
+import nodeOPCUAClient, {
+  HistoryReadRequest,
+  TimestampsToReturn,
+  ReadProcessedDetails,
+  AggregateFunction,
+  StatusCodes,
+} from 'node-opcua-client'
 
-const { HistoryReadRequest, TimestampsToReturn, ReadProcessedDetails, AggregateFunction, StatusCodes } = require('node-opcua-client')
-const OPCUA_HA = require('./south-opcua-ha')
+import OPCUA_HA from './south-opcua-ha.js'
 
-const databaseService = require('../../service/database.service')
+import * as databaseService from '../../service/database.service.js'
 
 // Mock node-opcua-client
 jest.mock('node-opcua-client', () => ({

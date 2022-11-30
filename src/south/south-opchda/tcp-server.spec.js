@@ -1,5 +1,5 @@
-const Stream = require('node:stream')
-const TcpServer = require('./tcp-server')
+import Stream from 'node:stream'
+import TcpServer from './tcp-server.js'
 
 const logger = { error: jest.fn(), info: jest.fn() }
 const handleMessage = jest.fn()

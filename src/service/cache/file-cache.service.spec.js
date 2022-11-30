@@ -1,9 +1,9 @@
-const path = require('node:path')
-const fs = require('node:fs/promises')
+import path from 'node:path'
+import fs from 'node:fs/promises'
 
-const FileCache = require('./file-cache.service')
+import FileCache from './file-cache.service.js'
 
-const { createFolder, asyncFilter } = require('../utils')
+import { createFolder, asyncFilter } from '../utils.js'
 
 jest.mock('node:fs/promises')
 

@@ -1,5 +1,5 @@
-const HealthSignal = require('./health-signal')
-const httpRequestStaticFunctions = require('../service/http-request-static-functions')
+import HealthSignal from './health-signal.js'
+import * as httpRequestStaticFunctions from '../service/http-request-static-functions.js'
 
 // Mock engine
 const engine = {

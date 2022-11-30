@@ -4,7 +4,7 @@
 import React from 'react'
 import { act, Simulate } from 'react-dom/test-utils'
 import * as ReactDOMClient from 'react-dom/client'
-import { testConfig } from '../../../tests/test-config'
+import { testConfig } from '../../../tests/test-config.js'
 import NorthStatus from './north-status.jsx'
 
 const dispatchNewConfig = jest.fn()

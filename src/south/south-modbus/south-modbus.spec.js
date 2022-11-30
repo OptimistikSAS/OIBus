@@ -1,11 +1,11 @@
-const net = require('node:net')
-const path = require('node:path')
-const Stream = require('node:stream')
+import net from 'node:net'
+import path from 'node:path'
+import Stream from 'node:stream'
 
-const Modbus = require('./south-modbus')
+import Modbus from './south-modbus.js'
 
-const databaseService = require('../../service/database.service')
-const utils = require('./utils')
+import * as databaseService from '../../service/database.service.js'
+import getNumberOfWords from './utils.js'
 
 // Mock jsmobdus
 jest.mock('jsmodbus', () => ({ client: { TCP: jest.fn() } }))
@@ -56,7 +56,7 @@ describe('SouthModbus', () => {
       },
     })
 
-    utils.getNumberOfWords.mockReturnValue(1)
+    getNumberOfWords.mockReturnValue(1)
 
     configuration = {
       id: 'southId',

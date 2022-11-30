@@ -1,4 +1,4 @@
-const schema = require('./north-file-writer.schema.jsx').default
-const testSchema = require('../../../tests/test-schema').default
+import schema from './north-file-writer.schema.jsx'
+import testSchema from '../../../tests/test-schema.js'
 
 testSchema(schema)

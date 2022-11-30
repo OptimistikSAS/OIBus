@@ -1,6 +1,6 @@
-const InfluxDB = require('./north-influx-db')
+import InfluxDB from './north-influx-db.js'
 
-const httpRequestStaticFunctions = require('../../service/http-request-static-functions')
+import * as httpRequestStaticFunctions from '../../service/http-request-static-functions.js'
 // Mock fs
 jest.mock('node:fs/promises')
 

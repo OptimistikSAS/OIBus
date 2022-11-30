@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty } from '../../service/validation.service'
+import { notEmpty } from '../../service/validation.service.js'
 
 const schema = { name: 'OIConnect' }
 schema.form = {

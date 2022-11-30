@@ -1,12 +1,12 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const fetch = require('node-fetch')
-const RestApi = require('./south-rest')
-const utils = require('./utils')
-const mainUtils = require('../../service/utils')
+import fetch from 'node-fetch'
+import RestApi from './south-rest.js'
+import * as utils from './utils.js'
+import * as mainUtils from '../../service/utils.js'
 
-const databaseService = require('../../service/database.service')
+import * as databaseService from '../../service/database.service.js'
 
 // Mock utils class
 jest.mock('./utils', () => ({

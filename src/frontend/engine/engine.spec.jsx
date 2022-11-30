@@ -6,7 +6,7 @@ import { act, Simulate } from 'react-dom/test-utils'
 import timexe from 'timexe'
 
 import * as ReactDOMClient from 'react-dom/client'
-import { testConfig } from '../../../tests/test-config'
+import { testConfig } from '../../../tests/test-config.js'
 import Engine from './engine.jsx'
 
 const dispatchNewConfig = jest.fn()

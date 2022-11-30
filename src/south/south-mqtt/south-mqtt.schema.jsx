@@ -1,5 +1,5 @@
 import React from 'react'
-import { minValue, notEmpty, optional } from '../../service/validation.service'
+import { minValue, notEmpty, optional } from '../../service/validation.service.js'
 
 const schema = { name: 'MQTT' }
 schema.form = {

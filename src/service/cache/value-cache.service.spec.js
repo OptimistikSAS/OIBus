@@ -1,11 +1,11 @@
-const path = require('node:path')
-const fs = require('node:fs/promises')
+import path from 'node:path'
+import fs from 'node:fs/promises'
 
-const nanoid = require('nanoid')
+import nanoid from 'nanoid'
 
-const ValueCache = require('./value-cache.service')
+import ValueCache from './value-cache.service.js'
 
-const { createFolder } = require('../utils')
+import { createFolder } from '../utils.js'
 
 jest.mock('node:fs/promises')
 jest.mock('../utils')

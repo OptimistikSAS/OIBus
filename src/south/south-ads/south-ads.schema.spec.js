@@ -1,5 +1,5 @@
-const schema = require('./south-ads.schema.jsx').default
-const testSchema = require('../../../tests/test-schema').default
+import schema from './south-ads.schema.jsx'
+import testSchema from '../../../tests/test-schema.js'
 
 testSchema(schema)
 

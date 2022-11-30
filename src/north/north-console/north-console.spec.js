@@ -1,6 +1,6 @@
-const fs = require('node:fs/promises')
+import fs from 'node:fs/promises'
 
-const Console = require('./north-console')
+import Console from './north-console.js'
 
 // Spy on console table and info
 jest.spyOn(global.console, 'table').mockImplementation(() => {})

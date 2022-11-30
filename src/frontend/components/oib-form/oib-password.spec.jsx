@@ -6,7 +6,7 @@ import { act, Simulate } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
 import OibPassword from './oib-password.jsx'
-import { minLength } from '../../../service/validation.service'
+import { minLength } from '../../../service/validation.service.js'
 
 const PREFIX = '{{notEncrypted}}'
 

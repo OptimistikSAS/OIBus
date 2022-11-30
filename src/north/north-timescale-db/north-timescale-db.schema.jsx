@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, hasLengthBetween, optional } from '../../service/validation.service'
+import { notEmpty, hasLengthBetween, optional } from '../../service/validation.service.js'
 
 const schema = { name: 'TimescaleDB' }
 schema.form = {

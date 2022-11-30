@@ -1,4 +1,4 @@
-const schema = require('./north-timescale-db.schema.jsx').default
-const testSchema = require('../../../tests/test-schema').default
+import schema from './north-timescale-db.schema.jsx'
+import testSchema from '../../../tests/test-schema.js'
 
 testSchema(schema)

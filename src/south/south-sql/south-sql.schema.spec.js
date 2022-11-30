@@ -1,4 +1,4 @@
-const schema = require('./south-sql.schema.jsx').default
-const testSchema = require('../../../tests/test-schema').default
+import schema from './south-sql.schema.jsx'
+import testSchema from '../../../tests/test-schema.js'
 
 testSchema(schema)

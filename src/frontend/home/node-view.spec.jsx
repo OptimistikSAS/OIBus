@@ -5,7 +5,7 @@ import React from 'react'
 import { act } from 'react-dom/test-utils'
 import * as ReactDOMClient from 'react-dom/client'
 import NodeView from './node-view.jsx'
-import newConfig from '../../../tests/test-config'
+import newConfig from '../../../tests/test-config.js'
 
 const dispatchNewConfig = jest.fn()
 

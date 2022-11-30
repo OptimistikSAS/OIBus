@@ -1,5 +1,5 @@
-import apis from './apis'
-import { testConfig } from '../../../tests/test-config'
+import apis from './apis.js'
+import { testConfig } from '../../../tests/test-config.js'
 
 const logSample = {
   id: 12852,

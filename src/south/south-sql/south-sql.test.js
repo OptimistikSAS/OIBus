@@ -1,9 +1,9 @@
-const mysql = require('mysql2/promise')
-const { Client } = require('pg')
-const mssql = require('mssql')
+import mysql from 'mysql2/promise'
+import { Client } from 'pg'
+import mssql from 'mssql'
 
-const SQL = require('./south-sql')
-const { integrationTestConfig: testConfig } = require('../../../tests/test-config')
+import SQL from './south-sql.js'
+import { integrationTestConfig } from '../../../tests/test-config.js'
 
 // Mock fs
 jest.mock('node:fs/promises')
@@ -26,7 +26,7 @@ const logger = {
 }
 
 describe('MySQL Integration test', () => {
-  const configuration = testConfig.south[0]
+  const configuration = integrationTestConfig.south[0]
   const mysqlConfig = {
     host: configuration.settings.host,
     user: configuration.settings.username,
@@ -76,7 +76,7 @@ describe('MySQL Integration test', () => {
 })
 
 describe('PostgreSQL Integration test', () => {
-  const configuration = testConfig.south[1]
+  const configuration = integrationTestConfig.south[1]
   const postgresqlConfig = {
     host: configuration.settings.host,
     user: configuration.settings.username,
@@ -126,7 +126,7 @@ describe('PostgreSQL Integration test', () => {
 })
 
 describe('MSSQL Integration test', () => {
-  const configuration = testConfig.south[2]
+  const configuration = integrationTestConfig.south[2]
   const mssqlConfig = {
     user: configuration.settings.username,
     password: configuration.settings.password,

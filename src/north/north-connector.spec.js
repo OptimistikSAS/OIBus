@@ -1,6 +1,6 @@
-const NorthConnector = require('./north-connector')
+import NorthConnector from './north-connector.js'
 
-const httpRequestStaticFunctions = require('../service/http-request-static-functions')
+import * as httpRequestStaticFunctions from '../service/http-request-static-functions.js'
 
 // Mock fs
 jest.mock('node:fs/promises')

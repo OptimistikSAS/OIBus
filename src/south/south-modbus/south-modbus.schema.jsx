@@ -5,7 +5,7 @@ import {
   notEmpty,
   isHexaOrDecimal,
   combinedValidations, minValue,
-} from '../../service/validation.service'
+} from '../../service/validation.service.js'
 
 const schema = { name: 'Modbus' }
 schema.form = {

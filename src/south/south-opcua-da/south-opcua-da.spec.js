@@ -1,6 +1,6 @@
-const nodeOPCUAClient = require('node-opcua-client')
+import nodeOPCUAClient from 'node-opcua-client'
 
-const OPCUA_DA = require('./south-opcua-da')
+import OPCUA_DA from './south-opcua-da.js'
 
 // Mock node-opcua-client
 jest.mock('node-opcua-client', () => ({

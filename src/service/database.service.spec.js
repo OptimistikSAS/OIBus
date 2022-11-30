@@ -1,4 +1,4 @@
-const databaseService = require('./database.service')
+import * as databaseService from './database.service.js'
 
 const values = [
   { id: 1, timestamp: '2022-08-25T12:58:00.000Z', data: { value: 1, quality: 192 }, pointId: 'point001' },

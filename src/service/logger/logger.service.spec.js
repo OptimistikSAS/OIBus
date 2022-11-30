@@ -1,6 +1,8 @@
-const pino = require('pino')
-const path = require('node:path')
-const LoggerService = require('./logger.service')
+import path from 'node:path'
+
+import pino from 'pino'
+
+import LoggerService from './logger.service.js'
 
 jest.mock('pino')
 jest.mock('./file-cleanup.service')
@@ -41,7 +43,6 @@ describe('Logger', () => {
         },
       },
     }
-    pino.stdTimeFunctions = { isoTime: jest.fn() }
   })
 
   it('should be properly initialized', async () => {

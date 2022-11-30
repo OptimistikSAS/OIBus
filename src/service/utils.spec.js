@@ -1,12 +1,12 @@
-const path = require('node:path')
-const fs = require('node:fs/promises')
-const fsSync = require('node:fs')
-const zlib = require('node:zlib')
+import path from 'node:path'
+import fs from 'node:fs/promises'
+import fsSync from 'node:fs'
+import zlib from 'node:zlib'
 
-const minimist = require('minimist')
+import minimist from 'minimist'
 
-const { DateTime } = require('luxon')
-const utils = require('./utils')
+import { DateTime } from 'luxon'
+import * as utils from './utils.js'
 
 jest.mock('node:zlib')
 jest.mock('node:fs/promises')

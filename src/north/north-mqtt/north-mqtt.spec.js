@@ -1,6 +1,6 @@
-const mqtt = require('mqtt')
+import mqtt from 'mqtt'
 
-const MQTT = require('./north-mqtt')
+import MQTT from './north-mqtt.js'
 
 // Mock mqtt
 jest.mock('mqtt', () => ({ connect: jest.fn() }))

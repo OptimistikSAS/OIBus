@@ -1,4 +1,4 @@
-const DeferredPromise = require('./deferred-promise')
+import DeferredPromise from './deferred-promise.js'
 
 describe('DeferredPromise', () => {
   beforeEach(() => {
@@ -47,5 +47,3 @@ describe('DeferredPromise', () => {
     expect(callback).not.toHaveBeenCalled()
   })
 })
-
-module.exports = DeferredPromise

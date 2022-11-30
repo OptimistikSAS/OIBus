@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, inRange } from '../../service/validation.service'
+import { notEmpty, inRange } from '../../service/validation.service.js'
 
 const schema = { name: 'CsvToHttp' }
 

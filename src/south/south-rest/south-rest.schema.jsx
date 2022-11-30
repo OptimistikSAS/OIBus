@@ -1,5 +1,5 @@
 import React from 'react'
-import { inRange, minValue, notEmpty, optional, startsWith } from '../../service/validation.service'
+import { inRange, minValue, notEmpty, optional, startsWith } from '../../service/validation.service.js'
 
 const schema = { name: 'RestApi' }
 schema.form = {

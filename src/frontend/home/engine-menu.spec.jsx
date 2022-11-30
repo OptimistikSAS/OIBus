@@ -7,7 +7,7 @@ import { act, Simulate } from 'react-dom/test-utils'
 import * as ReactDOMClient from 'react-dom/client'
 import EngineMenu from './engine-menu.jsx'
 
-import activeConfig from '../../../tests/test-config'
+import { testConfig } from '../../../tests/test-config.js'
 
 const mockNavigate = jest.fn()
 
@@ -35,7 +35,7 @@ afterEach(() => {
   jest.clearAllMocks()
 })
 
-React.useContext = jest.fn().mockReturnValue({ activeConfig })
+React.useContext = jest.fn().mockReturnValue({ activeConfig: testConfig })
 describe('EngineMenu', () => {
   test('display EngineMenu page based on config', async () => {
     act(() => {

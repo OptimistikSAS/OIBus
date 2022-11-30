@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, startsWith, combinedValidations } from '../../service/validation.service'
+import { notEmpty, startsWith, combinedValidations } from '../../service/validation.service.js'
 import userpass from './userpass.png'
 import oiaApiKeyGen from './oia-api-key-gen.png'
 
