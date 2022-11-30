@@ -71,7 +71,7 @@ describe('North InfluxDB', () => {
         },
       },
     }
-    north = new InfluxDB(configuration, [], logger)
+    north = new InfluxDB(configuration, {}, logger)
   })
 
   it('should call makeRequest and manage error', async () => {

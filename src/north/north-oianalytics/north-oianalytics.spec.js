@@ -15,6 +15,7 @@ jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ dec
 jest.mock('../../service/cache/value-cache.service')
 jest.mock('../../service/cache/file-cache.service')
 jest.mock('../../service/cache/archive.service')
+jest.mock('../../service/proxy.service')
 jest.mock('../../service/utils')
 jest.mock('../../service/http-request-static-functions')
 
@@ -27,6 +28,8 @@ const logger = {
   trace: jest.fn(),
 }
 
+const proxyService = { getProxy: jest.fn() }
+
 const nowDateString = '2020-02-02T02:02:02.222Z'
 let configuration = null
 let north = null
@@ -35,6 +38,8 @@ describe('NorthOIAnalytics', () => {
   beforeEach(async () => {
     jest.resetAllMocks()
     jest.useFakeTimers().setSystemTime(new Date(nowDateString))
+
+    proxyService.getProxy.mockReturnValue(null)
 
     configuration = {
       id: 'northId',
@@ -60,17 +65,18 @@ describe('NorthOIAnalytics', () => {
           username: 'anyuser',
           password: 'anypass',
         },
+        proxy: '',
       },
-      proxy: '',
       subscribedTo: [],
     }
-    north = new OIAnalytics(configuration, [], logger)
+    north = new OIAnalytics(configuration, proxyService, logger)
     await north.start('baseFolder', 'oibusName')
   })
 
   it('should be properly initialized', () => {
     expect(north.manifest.modes.points).toBeTruthy()
     expect(north.manifest.modes.files).toBeTruthy()
+    expect(north.proxyService.getProxy).toHaveBeenCalledWith('')
   })
 
   it('should properly handle values', async () => {

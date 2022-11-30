@@ -56,7 +56,7 @@ describe('SouthFolderScanner', () => {
       points: [],
       scanMode: 'every10Second',
     }
-    south = new FolderScanner(configuration, addValues, addFiles, logger)
+    south = new FolderScanner(configuration, {}, addValues, addFiles, logger)
     await south.start('baseFolder', 'oibusName')
     databaseService.getConfig.mockClear()
   })

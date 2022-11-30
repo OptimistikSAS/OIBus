@@ -111,7 +111,7 @@ describe('SouthRest', () => {
       },
       scanMode: 'every10Seconds',
     }
-    south = new RestApi(configuration, addValues, addFiles, logger)
+    south = new RestApi(configuration, {}, addValues, addFiles, logger)
   })
 
   it('should create RestApi connector and connect', async () => {

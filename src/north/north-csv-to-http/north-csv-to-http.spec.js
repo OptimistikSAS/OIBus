@@ -22,6 +22,7 @@ jest.mock('../../service/cache/file-cache.service')
 jest.mock('../../service/cache/archive.service')
 jest.mock('../../service/utils')
 jest.mock('../../service/http-request-static-functions')
+jest.mock('../../service/proxy.service')
 
 // Mock logger
 const logger = {
@@ -32,6 +33,8 @@ const logger = {
   trace: jest.fn(),
 }
 
+const proxyService = { getProxy: jest.fn() }
+
 let configuration = null
 let north = null
 
@@ -40,6 +43,7 @@ describe('NorthCsvToHttp', () => {
     jest.resetAllMocks()
     jest.useFakeTimers()
 
+    proxyService.getProxy.mockReturnValue(null)
     utils.isHeaderValid.mockReturnValue(true)
 
     configuration = {
@@ -85,12 +89,15 @@ describe('NorthCsvToHttp', () => {
       },
       subscribedTo: [],
     }
-    north = new CsvToHttp(configuration, [], logger)
+    north = new CsvToHttp(configuration, proxyService, logger)
   })
 
   it('should be properly initialized', async () => {
+    await north.start('baseFolder', 'oibusName')
+
     expect(north.manifest.modes.points).toBeFalsy()
     expect(north.manifest.modes.files).toBeTruthy()
+    expect(proxyService.getProxy).toHaveBeenCalledWith('')
   })
 
   it('should properly reject file if type is other than csv', async () => {

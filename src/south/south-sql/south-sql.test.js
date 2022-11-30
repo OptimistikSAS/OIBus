@@ -55,7 +55,7 @@ describe('MySQL Integration test', () => {
   })
 
   it('should retrieve some values in the MySQL database', async () => {
-    const south = new SQL(configuration, addValues, addFiles, logger)
+    const south = new SQL(configuration, {}, addValues, addFiles, logger)
 
     await south.start('baseFolder', 'oibusName')
     await south.connect()
@@ -105,7 +105,7 @@ describe('PostgreSQL Integration test', () => {
   })
 
   it('should retrieve some values in the PostgreSQL database', async () => {
-    const south = new SQL(configuration, addValues, addFiles, logger)
+    const south = new SQL(configuration, {}, addValues, addFiles, logger)
 
     await south.start('baseFolder', 'oibusName')
     await south.connect()
@@ -161,7 +161,7 @@ describe('MSSQL Integration test', () => {
   })
 
   it('should retrieve some values in the MSSQL database', async () => {
-    const south = new SQL(configuration, addValues, addFiles, logger)
+    const south = new SQL(configuration, {}, addValues, addFiles, logger)
 
     await south.start('baseFolder', 'oibusName')
     await south.connect()

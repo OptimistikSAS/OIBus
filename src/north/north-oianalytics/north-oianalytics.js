@@ -14,18 +14,18 @@ export default class NorthOIAnalytics extends NorthConnector {
    * Constructor for NorthOIAnalytics
    * @constructor
    * @param {Object} configuration - The North connector configuration
-   * @param {Object[]} proxies - The list of available proxies
+   * @param {ProxyService} proxyService - The proxy service
    * @param {Object} logger - The Pino child logger to use
    * @return {void}
    */
   constructor(
     configuration,
-    proxies,
+    proxyService,
     logger,
   ) {
     super(
       configuration,
-      proxies,
+      proxyService,
       logger,
       manifest,
     )
@@ -39,7 +39,18 @@ export default class NorthOIAnalytics extends NorthConnector {
     this.valuesUrl = `${host}/api/oianalytics/oibus/time-values${queryParam}`
     this.fileUrl = `${host}/api/oianalytics/value-upload/file${queryParam}`
     this.authentication = authentication
-    this.proxySettings = proxy
+    this.proxyName = proxy
+  }
+
+  /**
+   * Initialize services (logger, certificate, status data) at startup
+   * @param {String} baseFolder - The base cache folder
+   * @param {String} _oibusName - The OIBus name
+   * @returns {Promise<void>} - The result promise
+   */
+  async start(baseFolder, _oibusName) {
+    await super.start(baseFolder, _oibusName)
+    this.proxyAgent = await this.proxyService.getProxy(this.proxyName)
   }
 
   /**
