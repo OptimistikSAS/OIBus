@@ -5,11 +5,11 @@ import React from 'react'
 import { act } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import apis from '../service/apis'
-import utils from '../helpers/utils'
+import apis from '../service/apis.js'
+import utils from '../helpers/utils.js'
 import About from './about.jsx'
 
-import activeConfig from '../../../tests/test-config'
+import { testConfig } from '../../../tests/test-config.js'
 
 // eslint-disable-next-line no-undef
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -35,7 +35,7 @@ apis.getOIBusInfo = () => new Promise((_resolve, _reject) => {
   reject = _reject
 })
 utils.createEventSource = jest.fn().mockImplementation(() => ({ close: jest.fn() }))
-React.useContext = jest.fn().mockReturnValue({ activeConfig, setAlert })
+React.useContext = jest.fn().mockReturnValue({ activeConfig: testConfig, setAlert })
 
 let container
 let root
@@ -91,6 +91,6 @@ describe('About', () => {
       )
     })
     expect(container).toMatchSnapshot()
-    React.useContext = jest.fn().mockReturnValue({ activeConfig, setAlert })
+    React.useContext = jest.fn().mockReturnValue({ activeConfig: testConfig, setAlert })
   })
 })

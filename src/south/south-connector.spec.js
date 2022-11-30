@@ -1,8 +1,8 @@
-const SouthConnector = require('./south-connector')
+import SouthConnector from './south-connector.js'
 
-const databaseService = require('../service/database.service')
+import * as databaseService from '../service/database.service.js'
 
-const utils = require('../service/utils')
+import * as utils from '../service/utils.js'
 
 // Mock fs
 jest.mock('node:fs/promises')

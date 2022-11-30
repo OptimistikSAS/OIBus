@@ -1,6 +1,6 @@
-const mongodb = require('mongodb')
+import mongodb from 'mongodb'
 
-const MongoDB = require('./north-mongo-db')
+import MongoDB from './north-mongo-db.js'
 
 jest.mock('mongodb', () => ({ MongoClient: jest.fn() }))
 

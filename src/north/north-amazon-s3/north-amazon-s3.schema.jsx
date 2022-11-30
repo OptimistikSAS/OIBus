@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, optional } from '../../service/validation.service'
+import { notEmpty, optional } from '../../service/validation.service.js'
 
 const schema = { name: 'CSV' }
 schema.form = {

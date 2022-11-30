@@ -1,6 +1,6 @@
-const HistoryQueryEngine = require('./history-query-engine')
-const config = require('../config/default-config.json')
-const ConfigurationService = require('../service/configuration.service')
+import HistoryQueryEngine from './history-query-engine.js'
+import config from '../config/default-config.json'
+import ConfigurationService from '../service/configuration.service.js'
 
 // Mock fs
 jest.mock('node:fs/promises')

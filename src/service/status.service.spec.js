@@ -1,5 +1,5 @@
-const { PassThrough } = require('node:stream')
-const StatusService = require('./status.service')
+import { PassThrough } from 'node:stream'
+import StatusService from './status.service.js'
 
 let statusService = null
 

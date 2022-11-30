@@ -5,7 +5,7 @@ import React from 'react'
 import { act } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
-import { testConfig } from '../../../../tests/test-config'
+import { testConfig } from '../../../../tests/test-config.js'
 import Logging from './logging.jsx'
 
 const mockMath = Object.create(global.Math)

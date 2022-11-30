@@ -6,7 +6,7 @@ import { act, Simulate } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
 import OibInteger from './oib-integer.jsx'
-import { minValue } from '../../../service/validation.service'
+import { minValue } from '../../../service/validation.service.js'
 
 let container
 let root

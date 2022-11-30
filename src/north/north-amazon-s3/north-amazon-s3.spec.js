@@ -1,9 +1,9 @@
-const fs = require('node:fs')
+import fs from 'node:fs'
 
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3')
-const { NodeHttpHandler } = require('@aws-sdk/node-http-handler')
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { NodeHttpHandler } from '@aws-sdk/node-http-handler'
 
-const AmazonS3 = require('./north-amazon-s3')
+import AmazonS3 from './north-amazon-s3.js'
 
 // Mock AWS
 jest.mock('@aws-sdk/client-s3', () => ({ S3Client: jest.fn(), PutObjectCommand: jest.fn() }))

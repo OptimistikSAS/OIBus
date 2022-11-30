@@ -1,7 +1,7 @@
-const CsvToHttp = require('./north-csv-to-http')
+import CsvToHttp from './north-csv-to-http.js'
 
-const utils = require('./utils')
-const httpRequestStaticFunctions = require('../../service/http-request-static-functions')
+import * as utils from './utils.js'
+import * as httpRequestStaticFunctions from '../../service/http-request-static-functions.js'
 
 // Mock utils class
 jest.mock('./utils', () => ({

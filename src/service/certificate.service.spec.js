@@ -1,7 +1,7 @@
-const fs = require('node:fs/promises')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const path = require('path')
-const CertificateService = require('./certificate.service')
+import CertificateService from './certificate.service.js'
 
 jest.mock('node:fs/promises')
 

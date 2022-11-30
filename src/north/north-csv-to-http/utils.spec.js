@@ -1,4 +1,4 @@
-const utils = require('./utils')
+import * as utils from './utils.js'
 
 describe('North CsvToHttp utils', () => {
   it('should properly convert one row (from a json)', async () => {

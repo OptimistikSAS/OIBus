@@ -1,14 +1,14 @@
-const fsSync = require('node:fs')
+import fsSync from 'node:fs'
 
-const fetch = require('node-fetch')
+import fetch from 'node-fetch'
+
+import * as httpRequestStaticFunctions from './http-request-static-functions.js'
 
 jest.mock('node:fs')
 
 // Mock node-fetch
 jest.mock('node-fetch')
 const { Response } = jest.requireActual('node-fetch')
-
-const httpRequestStaticFunctions = require('./http-request-static-functions')
 
 describe('HTTP request static functions', () => {
   beforeEach(() => {

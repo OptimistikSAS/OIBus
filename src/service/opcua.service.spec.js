@@ -1,7 +1,7 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const { initOpcuaCertificateFolders } = require('./opcua.service')
+import { initOpcuaCertificateFolders } from './opcua.service.js'
 
 describe('opcua service', () => {
   it('should copy certificates', async () => {

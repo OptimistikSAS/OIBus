@@ -1,4 +1,4 @@
-const utils = require('./utils')
+import formatValue from './utils.js'
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 
@@ -26,7 +26,7 @@ describe('South connector MQTT utils', () => {
       qualityPath: 'myQualityPath',
     }
     const pointsList = []
-    const formattedValue = utils.formatValue(data, topic, formatOptions, pointsList)
+    const formattedValue = formatValue(data, topic, formatOptions, pointsList)
 
     const expectedValue = { data: { quality: 192, value: 123 }, pointId: 'pointId', timestamp: '2020-02-02T02:02:02.222Z' }
     expect(formattedValue).toEqual(expectedValue)
@@ -50,7 +50,7 @@ describe('South connector MQTT utils', () => {
       pointIdPath: 'myPointIdPath',
     }
     const pointsList = []
-    const formattedValue = utils.formatValue(data, topic, formatOptions, pointsList)
+    const formattedValue = formatValue(data, topic, formatOptions, pointsList)
 
     const expectedValue = { data: { quality: 192, value: 123 }, pointId: 'myPointId', timestamp: '2020-02-02T01:02:02.000Z' }
     expect(formattedValue).toEqual(expectedValue)
@@ -71,7 +71,7 @@ describe('South connector MQTT utils', () => {
     const pointsList = []
     let formatError
     try {
-      utils.formatValue(data, topic, formatOptions, pointsList)
+      formatValue(data, topic, formatOptions, pointsList)
     } catch (error) {
       formatError = error
     }
@@ -87,7 +87,7 @@ describe('South connector MQTT utils', () => {
       qualityPath: 'myQualityPath',
     }
     const pointsList = [{ topic: 'France/#', pointId: 'France/#' }]
-    const formattedValue = utils.formatValue(data, topic, formatOptions, pointsList)
+    const formattedValue = formatValue(data, topic, formatOptions, pointsList)
 
     const expectedValue = { data: { quality: 192, value: 123 }, pointId: 'France/Paris/temperatureTank1', timestamp: '2020-02-02T02:02:02.222Z' }
     expect(formattedValue).toEqual(expectedValue)
@@ -105,7 +105,7 @@ describe('South connector MQTT utils', () => {
 
     let formatError
     try {
-      utils.formatValue(data, topic, formatOptions, pointsList)
+      formatValue(data, topic, formatOptions, pointsList)
     } catch (error) {
       formatError = error
     }
@@ -125,7 +125,7 @@ describe('South connector MQTT utils', () => {
 
     let formatError
     try {
-      utils.formatValue(data, topic, formatOptions, pointsList)
+      formatValue(data, topic, formatOptions, pointsList)
     } catch (error) {
       formatError = error
     }
@@ -144,7 +144,7 @@ describe('South connector MQTT utils', () => {
 
     let formatError
     try {
-      utils.formatValue(data, topic, formatOptions, pointsList)
+      formatValue(data, topic, formatOptions, pointsList)
     } catch (error) {
       formatError = error
     }
@@ -160,7 +160,7 @@ describe('South connector MQTT utils', () => {
       qualityPath: 'myQualityPath',
     }
     const pointsList = [{ topic: 'France/Paris/temperatureTank1', pointId: 'France/Paris/temperatureTank1' }]
-    const formattedValue = utils.formatValue(data, topic, formatOptions, pointsList)
+    const formattedValue = formatValue(data, topic, formatOptions, pointsList)
 
     const expectedValue = { data: { quality: 192, value: 123 }, pointId: 'France/Paris/temperatureTank1', timestamp: '2020-02-02T02:02:02.222Z' }
     expect(formattedValue).toEqual(expectedValue)

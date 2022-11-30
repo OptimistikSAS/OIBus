@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 
 import Table from '../table/table.jsx'
 import { ConfigContext } from '../../context/config-context.jsx'
-import * as Controls from './index'
+import * as Controls from './index.js'
 
 const OibTable = ({ name, rows, value }) => {
   const { dispatchNewConfig } = React.useContext(ConfigContext)

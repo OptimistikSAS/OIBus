@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, isHost, inRange, minValue, hasLengthBetween, optional } from '../../service/validation.service'
+import { notEmpty, isHost, inRange, minValue, hasLengthBetween, optional } from '../../service/validation.service.js'
 
 const schema = { name: 'SQL' }
 schema.form = {

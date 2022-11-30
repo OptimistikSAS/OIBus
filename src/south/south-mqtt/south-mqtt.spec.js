@@ -1,10 +1,10 @@
-const Stream = require('node:stream')
+import Stream from 'node:stream'
 
-const mqtt = require('mqtt')
+import mqtt from 'mqtt'
 
-const MQTT = require('./south-mqtt')
+import MQTT from './south-mqtt.js'
 
-const utils = require('./utils')
+import formatValue from './utils.js'
 
 // Mock mqtt
 jest.mock('mqtt')
@@ -13,7 +13,7 @@ jest.mock('mqtt')
 jest.mock('node:fs/promises')
 
 // Mock utils class
-jest.mock('./utils', () => ({ formatValue: jest.fn() }))
+jest.mock('./utils')
 
 // Mock certificate service
 const CertificateService = jest.mock('../../service/certificate.service')
@@ -253,7 +253,7 @@ describe('SouthMQTT', () => {
       value: 666.666,
       quality: true,
     }
-    utils.formatValue.mockReturnValue({
+    formatValue.mockReturnValue({
       pointId,
       timestamp,
       data,
@@ -279,7 +279,7 @@ describe('SouthMQTT', () => {
       quality: true,
     }
 
-    utils.formatValue.mockReturnValue({
+    formatValue.mockReturnValue({
       pointId,
       timestamp,
       data,
@@ -302,7 +302,7 @@ describe('SouthMQTT', () => {
   })
 
   it('should properly handle message parsing error', async () => {
-    utils.formatValue.mockImplementationOnce(() => {
+    formatValue.mockImplementationOnce(() => {
       throw new Error('test')
     })
 
@@ -341,7 +341,7 @@ describe('SouthMQTT', () => {
     expect(addValues).not.toHaveBeenCalled()
 
     south.dataArrayPath = 'myOtherArray'
-    utils.formatValue.mockImplementationOnce(() => {
+    formatValue.mockImplementationOnce(() => {
       throw new Error('test')
     })
 

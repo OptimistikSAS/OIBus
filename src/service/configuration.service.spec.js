@@ -1,9 +1,9 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const utils = require('./utils')
+import * as utils from './utils.js'
 
-const ConfigurationService = require('./configuration.service')
+import ConfigurationService from './configuration.service.js'
 
 jest.mock('node:fs/promises')
 

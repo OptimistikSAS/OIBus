@@ -1,11 +1,11 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const FolderScanner = require('./south-folder-scanner')
+import FolderScanner from './south-folder-scanner.js'
 
-const databaseService = require('../../service/database.service')
+import * as databaseService from '../../service/database.service.js'
 
-const utils = require('../../service/utils')
+import * as utils from '../../service/utils.js'
 
 // Mock utils class
 jest.mock('../../service/utils')

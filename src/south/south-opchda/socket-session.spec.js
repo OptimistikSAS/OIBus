@@ -1,5 +1,5 @@
-const Stream = require('node:stream')
-const SocketSession = require('./socket-session')
+import Stream from 'node:stream'
+import SocketSession from './socket-session.js'
 
 const logger = { error: jest.fn() }
 const closeCallback = jest.fn()

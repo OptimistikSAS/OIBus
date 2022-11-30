@@ -1,8 +1,8 @@
-const child = require('node:child_process')
-const Stream = require('node:stream')
-const OPCHDA = require('./south-opchda')
-const tcpServer = require('./tcp-server')
-const deferredPromise = require('../../service/deferred-promise')
+import child from 'node:child_process'
+import Stream from 'node:stream'
+import OPCHDA from './south-opchda.js'
+import tcpServer from './tcp-server.js'
+import deferredPromise from '../../service/deferred-promise.js'
 
 const mockSpawnChild = new Stream()
 mockSpawnChild.stdout = new Stream()

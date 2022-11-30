@@ -1,15 +1,17 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const mssql = require('mssql')
-const mysql = require('mysql2/promise')
+import mssql from 'mssql'
+import mysql from 'mysql2/promise'
 // eslint-disable-next-line import/no-unresolved
-const oracledb = require('oracledb')
-const { Client, types } = require('pg')
+import oracledb from 'oracledb'
+import * as pg from 'pg'
 
-const SQL = require('./south-sql')
-const utils = require('./utils')
-const mainUtils = require('../../service/utils')
+import SQL from './south-sql.js'
+import * as utils from './utils.js'
+import * as mainUtils from '../../service/utils.js'
+
+import * as databaseService from '../../service/database.service.js'
 
 // Mock utils class
 jest.mock('./utils', () => ({
@@ -24,8 +26,6 @@ jest.mock('../../service/utils', () => ({
   compress: jest.fn(),
   createFolder: jest.fn(),
 }))
-
-const databaseService = require('../../service/database.service')
 
 const mockDatabase = {
   prepare: jest.fn(),
@@ -329,7 +329,7 @@ describe('SouthSQL', () => {
 
     south.driver = 'postgresql'
     const valueTimestamp = new Date('2019-10-03T13:38:38.380.000Z')
-    types.setTypeParser = jest.fn()
+    pg.types.setTypeParser = jest.fn()
     const client = {
       connect: jest.fn(),
       query: jest.fn((adaptedQuery, params) => (
@@ -342,7 +342,7 @@ describe('SouthSQL', () => {
       )),
       end: jest.fn(),
     }
-    Client.mockReturnValue(client)
+    pg.Client.mockReturnValue(client)
 
     await south.historyQuery(settings.scanMode, startTime, endTime)
 
@@ -359,8 +359,8 @@ describe('SouthSQL', () => {
       new Date('2019-10-03T13:36:36.360Z'),
       new Date('2019-10-03T13:40:40.400Z'),
     ]
-    expect(types.setTypeParser).toBeCalledWith(1114, expect.any(Function))
-    expect(Client).toBeCalledWith(expectedConfig)
+    expect(pg.types.setTypeParser).toBeCalledWith(1114, expect.any(Function))
+    expect(pg.Client).toBeCalledWith(expectedConfig)
     expect(client.connect).toBeCalledTimes(1)
     expect(client.query).toBeCalledWith(expectedQuery, expectedExecuteParams)
     expect(client.end).toBeCalledTimes(1)
@@ -372,7 +372,7 @@ describe('SouthSQL', () => {
 
     south.driver = 'postgresql'
 
-    types.setTypeParser = jest.fn()
+    pg.types.setTypeParser = jest.fn()
     const client = {
       connect: jest.fn(),
       query: jest.fn(() => {
@@ -380,7 +380,7 @@ describe('SouthSQL', () => {
       }),
       end: jest.fn(),
     }
-    Client.mockReturnValueOnce(client)
+    pg.Client.mockReturnValueOnce(client)
 
     await expect(south.historyQuery(
       settings.scanMode,

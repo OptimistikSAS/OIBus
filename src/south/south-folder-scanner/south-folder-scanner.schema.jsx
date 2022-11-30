@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, minValue } from '../../service/validation.service'
+import { notEmpty, minValue } from '../../service/validation.service.js'
 
 const schema = { name: 'FolderScanner' }
 schema.form = {

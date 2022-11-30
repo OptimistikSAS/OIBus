@@ -1,8 +1,8 @@
-const fs = require('node:fs/promises')
+import fs from 'node:fs/promises'
 
-const OIConnect = require('./north-oiconnect')
+import OIConnect from './north-oiconnect.js'
 
-const httpRequestStaticFunctions = require('../../service/http-request-static-functions')
+import * as httpRequestStaticFunctions from '../../service/http-request-static-functions.js'
 // Mock fs
 jest.mock('node:fs/promises')
 

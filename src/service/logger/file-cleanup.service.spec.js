@@ -1,7 +1,7 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
-const FileCleanupService = require('./file-cleanup.service')
-const { filesExists } = require('../utils')
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import FileCleanupService from './file-cleanup.service.js'
+import { filesExists } from '../utils.js'
 
 jest.mock('node:fs/promises')
 jest.mock('../utils')

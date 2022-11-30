@@ -1,8 +1,8 @@
-const mqtt = require('mqtt')
+import mqtt from 'mqtt'
 
-const WATSYConnect = require('./north-watsy')
+import WATSYConnect from './north-watsy.js'
 
-const utils = require('./utils')
+import * as utils from './utils.js'
 
 // Mock mqtt
 jest.mock('mqtt', () => ({ connect: jest.fn() }))

@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import timexe from 'timexe'
-import utils from './utils'
+import utils from './utils.js'
 
 // fixing date to match snapshot
 const RealDate = Date

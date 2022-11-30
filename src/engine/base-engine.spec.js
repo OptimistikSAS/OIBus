@@ -1,8 +1,8 @@
-const BaseEngine = require('./base-engine')
-const EncryptionService = require('../service/encryption.service')
-const ConfigurationService = require('../service/configuration.service')
+import BaseEngine from './base-engine.js'
+import EncryptionService from '../service/encryption.service.js'
+import ConfigurationService from '../service/configuration.service.js'
 
-const { testConfig: config } = require('../../tests/test-config')
+import { testConfig } from '../../tests/test-config.js'
 
 // Mock logger
 const logger = {
@@ -27,15 +27,15 @@ describe('BaseEngine', () => {
 
     const mockConfigService = { getConfig: jest.fn() }
     mockConfigService.getConfig.mockReturnValue({
-      engineConfig: config.engine,
-      southConfig: config.south,
+      engineConfig: testConfig.engine,
+      southConfig: testConfig.south,
     })
     ConfigurationService.mockImplementation(() => mockConfigService)
 
     engine = new BaseEngine(mockConfigService, EncryptionService.getInstance(), {}, 'myCacheFolder')
     engine.logger = logger
 
-    await engine.initEngineServices(config.engine)
+    await engine.initEngineServices(testConfig.engine)
   })
 
   it('should warn when calling add values', async () => {
@@ -73,7 +73,7 @@ describe('BaseEngine', () => {
   })
 
   it('should create south', () => {
-    const south = engine.createSouth(config.south[0])
+    const south = engine.createSouth(testConfig.south[0])
     expect(south.constructor.name).toEqual('SouthFolderScanner')
   })
 
@@ -144,7 +144,7 @@ describe('BaseEngine', () => {
   })
 
   it('should create north', () => {
-    const north = engine.createNorth(config.north[0])
+    const north = engine.createNorth(testConfig.north[0])
     expect(north.constructor.name).toEqual('Console')
   })
 

@@ -1,4 +1,4 @@
-const slims = require('./slims')
+import slims from './slims.js'
 
 describe('slims formatter', () => {
   it('should reject if no entries', () => {

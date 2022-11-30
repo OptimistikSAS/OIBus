@@ -1,5 +1,5 @@
 import React from 'react'
-import { notEmpty, hasLengthBetween, inRange } from '../../service/validation.service'
+import { notEmpty, hasLengthBetween, inRange } from '../../service/validation.service.js'
 
 const schema = { name: 'WATSYConnect' }
 schema.form = {

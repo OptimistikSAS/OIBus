@@ -1,4 +1,4 @@
-const schema = require('./north-oiconnect.schema.jsx').default
-const testSchema = require('../../../tests/test-schema').default
+import schema from './north-oiconnect.schema.jsx'
+import testSchema from '../../../tests/test-schema.js'
 
 testSchema(schema)

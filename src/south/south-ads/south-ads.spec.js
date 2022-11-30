@@ -1,9 +1,9 @@
-const ads = require('ads-client')
+import ads from 'ads-client'
 
-const path = require('node:path')
-const ADS = require('./south-ads')
+import path from 'node:path'
+import ADS from './south-ads.js'
 
-const databaseService = require('../../service/database.service')
+import * as databaseService from '../../service/database.service.js'
 
 // Mock ads client
 jest.mock('ads-client')

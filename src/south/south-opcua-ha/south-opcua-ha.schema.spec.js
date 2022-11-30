@@ -1,4 +1,4 @@
-const schema = require('./south-opcua-ha.schema.jsx').default
-const testSchema = require('../../../tests/test-schema').default
+import schema from './south-opcua-ha.schema.jsx'
+import testSchema from '../../../tests/test-schema.js'
 
 testSchema(schema)

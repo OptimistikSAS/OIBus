@@ -6,7 +6,7 @@ import { act } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
 import OibText from './oib-text.jsx'
-import { minLength } from '../../../service/validation.service'
+import { minLength } from '../../../service/validation.service.js'
 
 let container
 let root

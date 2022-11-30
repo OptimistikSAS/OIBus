@@ -6,7 +6,7 @@ import { act, Simulate } from 'react-dom/test-utils'
 
 import * as ReactDOMClient from 'react-dom/client'
 import OibTimezone from './oib-timezone.jsx'
-import { notEmpty } from '../../../service/validation.service'
+import { notEmpty } from '../../../service/validation.service.js'
 
 let container
 let root

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
 import humanizeString from 'humanize-string'
 
-import * as Controls from './index'
+import * as Controls from './index.js'
 import OibTable from './oib-table.jsx'
 
 const OibForm = ({ schema, onChange, values, name: configName }) => {

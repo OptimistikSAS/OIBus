@@ -4,7 +4,7 @@
 import React from 'react'
 import { act, Simulate } from 'react-dom/test-utils'
 import * as ReactDOMClient from 'react-dom/client'
-import newConfig from '../../../../tests/test-config'
+import newConfig from '../../../../tests/test-config.js'
 import OibProxy from './oib-proxy.jsx'
 
 React.useContext = jest.fn().mockReturnValue({ newConfig })

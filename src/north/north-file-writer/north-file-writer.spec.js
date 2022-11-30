@@ -1,7 +1,7 @@
-const fs = require('node:fs/promises')
-const path = require('node:path')
+import fs from 'node:fs/promises'
+import path from 'node:path'
 
-const FileWriter = require('./north-file-writer')
+import FileWriter from './north-file-writer.js'
 
 // Mock fs
 jest.mock('node:fs/promises')

@@ -1,10 +1,10 @@
-const http = require('node:http')
-const https = require('node:https')
-const Stream = require('node:stream')
+import http from 'node:http'
+import https from 'node:https'
+import Stream from 'node:stream'
 
-const csv = require('papaparse')
+import csv from 'papaparse'
 
-const utils = require('./utils')
+import * as utils from './utils.js'
 
 jest.mock('papaparse', () => ({ unparse: jest.fn() }))
 jest.mock('node:http', () => ({ request: jest.fn() }))
