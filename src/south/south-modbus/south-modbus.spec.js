@@ -116,7 +116,7 @@ describe('SouthModbus', () => {
         },
       ],
     }
-    south = new Modbus(configuration, addValues, addFiles, logger)
+    south = new Modbus(configuration, {}, addValues, addFiles, logger)
     await south.start('baseFolder', 'oibusName')
   })
 

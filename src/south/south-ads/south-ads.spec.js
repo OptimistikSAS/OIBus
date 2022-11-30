@@ -782,7 +782,7 @@ describe('South ADS', () => {
         },
       ],
     }
-    south = new ADS(configuration, addValues, addFiles, logger)
+    south = new ADS(configuration, {}, addValues, addFiles, logger)
     await south.start('baseFolder', 'oibusName')
   })
 

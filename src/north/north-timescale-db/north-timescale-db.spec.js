@@ -70,7 +70,7 @@ describe('North TimescaleDB', () => {
       },
       subscribedTo: [],
     }
-    north = new TimescaleDB(configuration, [], logger)
+    north = new TimescaleDB(configuration, {}, logger)
   })
 
   it('should properly handle values and publish them', async () => {

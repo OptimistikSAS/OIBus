@@ -13,6 +13,7 @@ export default class SouthADS extends SouthConnector {
    * Constructor for SouthADS
    * @constructor
    * @param {Object} configuration - The South connector configuration
+   * @param {ProxyService} proxyService - The proxy service
    * @param {Function} engineAddValuesCallback - The Engine add values callback
    * @param {Function} engineAddFilesCallback - The Engine add file callback
    * @param {Object} logger - The Pino child logger to use
@@ -20,12 +21,14 @@ export default class SouthADS extends SouthConnector {
    */
   constructor(
     configuration,
+    proxyService,
     engineAddValuesCallback,
     engineAddFilesCallback,
     logger,
   ) {
     super(
       configuration,
+      proxyService,
       engineAddValuesCallback,
       engineAddFilesCallback,
       logger,

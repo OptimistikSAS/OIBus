@@ -49,7 +49,7 @@ describe('North Console', () => {
         },
       },
     }
-    north = new Console(configuration, [], logger)
+    north = new Console(configuration, {}, logger)
     await north.start('baseFolder', 'oibusName')
   })
 

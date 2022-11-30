@@ -6,7 +6,6 @@ import StatusService from '../service/status.service.js'
 import ValueCache from '../service/cache/value-cache.service.js'
 import FileCache from '../service/cache/file-cache.service.js'
 import { createFolder } from '../service/utils.js'
-import { createProxyAgent } from '../service/http-request-static-functions.js'
 import ArchiveService from '../service/cache/archive.service.js'
 
 /**
@@ -31,14 +30,14 @@ export default class NorthConnector {
    * Constructor for NorthConnector
    * @constructor
    * @param {Object} configuration - The North connector settings
-   * @param {Object[]} proxies - The list of available proxies
+   * @param {ProxyService} proxyService - The proxy service
    * @param {Object} logger - The Pino child logger to use
    * @param {Object} manifest - The associated manifest
    * @return {void}
    */
   constructor(
     configuration,
-    proxies,
+    proxyService,
     logger,
     manifest,
   ) {
@@ -51,9 +50,9 @@ export default class NorthConnector {
     this.logParameters = configuration.logParameters
     this.cacheSettings = configuration.caching
     this.subscribedTo = configuration.subscribedTo
-    this.proxies = proxies
 
     this.encryptionService = EncryptionService.getInstance()
+    this.proxyService = proxyService
     this.logger = logger
 
     // Variable initialized in start()
@@ -67,8 +66,6 @@ export default class NorthConnector {
     this.certFile = null
     this.caFile = null
     this.authentication = null
-    this.proxySettings = null
-    this.proxyAgent = null
 
     this.numberOfSentValues = 0
     this.numberOfSentFiles = 0
@@ -122,8 +119,6 @@ export default class NorthConnector {
       'Number of values sent since OIBus has started': this.manifest.modes.points ? 0 : undefined,
       'Number of files sent since OIBus has started': this.manifest.modes.files ? 0 : undefined,
     })
-
-    this.proxyAgent = await this.getProxy(this.proxySettings)
   }
 
   /**
@@ -220,26 +215,6 @@ export default class NorthConnector {
    */
   async cacheFile(filePath) {
     await this.fileCache.cacheFile(filePath)
-  }
-
-  /**
-   * Get proxy by name
-   * @param {String} proxyName - The name of the proxy
-   * @return {Promise<Object>} - The proxy
-   */
-  async getProxy(proxyName) {
-    if (!proxyName) return null
-    const foundProxy = this.proxies.find(({ name }) => name === proxyName)
-    if (foundProxy) {
-      return createProxyAgent(
-        foundProxy.protocol,
-        foundProxy.host,
-        foundProxy.port,
-        foundProxy.username,
-        await this.encryptionService.decryptText(foundProxy.password || ''),
-      )
-    }
-    return null
   }
 
   /**

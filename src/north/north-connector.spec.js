@@ -1,7 +1,5 @@
 import NorthConnector from './north-connector.js'
 
-import * as httpRequestStaticFunctions from '../service/http-request-static-functions.js'
-
 // Mock fs
 jest.mock('node:fs/promises')
 
@@ -11,7 +9,6 @@ jest.mock('../service/status.service')
 jest.mock('../service/certificate.service')
 jest.mock('../service/encryption.service', () => ({ getInstance: () => ({ decryptText: (password) => password }) }))
 jest.mock('../service/utils')
-jest.mock('../service/http-request-static-functions')
 jest.mock('../service/cache/value-cache.service')
 jest.mock('../service/cache/file-cache.service')
 jest.mock('../service/cache/archive.service')
@@ -59,7 +56,7 @@ describe('NorthConnector', () => {
         },
       },
     }
-    north = new NorthConnector(configuration, [{ name: 'proxyTest' }], logger, manifest)
+    north = new NorthConnector(configuration, {}, logger, manifest)
     await north.start('baseFolder', 'oibusName')
   })
 
@@ -114,13 +111,6 @@ describe('NorthConnector', () => {
   it('should properly cache file', () => {
     north.cacheFile('myFilePath', new Date().getTime())
     expect(north.fileCache.cacheFile).toHaveBeenCalledWith('myFilePath')
-  })
-
-  it('should get proxy', async () => {
-    httpRequestStaticFunctions.createProxyAgent.mockImplementation(() => ({ proxyAgent: 'a field' }))
-    expect(await north.getProxy()).toBeNull()
-    expect(await north.getProxy('proxyTest')).toEqual({ proxyAgent: 'a field' })
-    expect(await north.getProxy('anotherProxy')).toBeNull()
   })
 
   it('should properly check if a north is subscribed to a south', () => {

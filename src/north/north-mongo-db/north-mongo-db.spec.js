@@ -72,7 +72,7 @@ describe('NorthMongoDB', () => {
         },
       },
     }
-    north = new MongoDB(configuration, [], logger)
+    north = new MongoDB(configuration, {}, logger)
   })
 
   it('should properly connect and disconnect', async () => {

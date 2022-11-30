@@ -15,6 +15,7 @@ export default class SouthMQTT extends SouthConnector {
    * Constructor for SouthMQTT
    * @constructor
    * @param {Object} configuration - The South connector configuration
+   * @param {ProxyService} proxyService - The proxy service
    * @param {Function} engineAddValuesCallback - The Engine add values callback
    * @param {Function} engineAddFilesCallback - The Engine add file callback
    * @param {Object} logger - The Pino child logger to use
@@ -22,12 +23,14 @@ export default class SouthMQTT extends SouthConnector {
    */
   constructor(
     configuration,
+    proxyService,
     engineAddValuesCallback,
     engineAddFilesCallback,
     logger,
   ) {
     super(
       configuration,
+      proxyService,
       engineAddValuesCallback,
       engineAddFilesCallback,
       logger,
@@ -86,11 +89,10 @@ export default class SouthMQTT extends SouthConnector {
    * Initialize services (logger, certificate, status data) at startup
    * @param {String} baseFolder - The base cache folder
    * @param {String} oibusName - The OIBus name
-   * @param {Object} defaultLogParameters - The default logs parameters
    * @returns {Promise<void>} - The result promise
    */
-  async start(baseFolder, oibusName, defaultLogParameters) {
-    await super.start(baseFolder, oibusName, defaultLogParameters)
+  async start(baseFolder, oibusName) {
+    await super.start(baseFolder, oibusName)
     this.clientId = `${oibusName}-${this.id}`
 
     if (!this.timezone || !DateTime.local().setZone(this.timezone).isValid) {

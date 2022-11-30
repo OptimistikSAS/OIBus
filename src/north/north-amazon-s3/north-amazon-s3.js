@@ -28,18 +28,18 @@ export default class NorthAmazonS3 extends NorthConnector {
    * Constructor for NorthAmazonS3
    * @constructor
    * @param {Object} configuration - The North connector configuration
-   * @param {Object[]} proxies - The list of available proxies
+   * @param {ProxyService} proxyService - The proxy service
    * @param {Object} logger - The Pino child logger to use
    * @return {void}
    */
   constructor(
     configuration,
-    proxies,
+    proxyService,
     logger,
   ) {
     super(
       configuration,
-      proxies,
+      proxyService,
       logger,
       manifest,
     )
@@ -50,26 +50,26 @@ export default class NorthAmazonS3 extends NorthConnector {
     this.folder = folder
     this.region = region
     this.authentication = authentication
-    this.proxySettings = proxy
+    this.proxyName = proxy
   }
 
   /**
    * Initialize services (logger, certificate, status data) at startup
    * @param {String} baseFolder - The base cache folder
    * @param {String} oibusName - The OIBus name
-   * @param {Object} defaultLogParameters - The default logs parameters
    * @returns {Promise<void>} - The result promise
    */
-  async start(baseFolder, oibusName, defaultLogParameters) {
-    await super.start(baseFolder, oibusName, defaultLogParameters)
+  async start(baseFolder, oibusName) {
+    await super.start(baseFolder, oibusName)
 
+    const proxyAgent = await this.proxyService.getProxy(this.proxyName)
     this.s3 = new S3Client({
       region: this.region,
       credentials: {
         accessKeyId: this.authentication.key,
         secretAccessKey: await this.encryptionService.decryptText(this.authentication.secret),
       },
-      requestHandler: this.proxyAgent ? new NodeHttpHandler({ httpAgent: this.proxyAgent }) : null,
+      requestHandler: proxyAgent ? new NodeHttpHandler({ httpAgent: proxyAgent }) : null,
     })
   }
 

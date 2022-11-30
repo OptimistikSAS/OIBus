@@ -91,7 +91,7 @@ describe('SouthOPCUAHA', () => {
         scanMode: 'every10Second',
       }],
     }
-    south = new OPCUA_HA(configuration, addValues, addFiles, logger)
+    south = new OPCUA_HA(configuration, {}, addValues, addFiles, logger)
   })
 
   it('should be properly initialized', async () => {

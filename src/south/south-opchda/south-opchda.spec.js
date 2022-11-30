@@ -91,7 +91,7 @@ describe('South OPCHDA', () => {
         scanMode: 'every10Second',
       }],
     }
-    south = new OPCHDA(configuration, addValues, addFiles, logger)
+    south = new OPCHDA(configuration, {}, addValues, addFiles, logger)
     await south.start('baseFolder', 'oibusName')
   })
 

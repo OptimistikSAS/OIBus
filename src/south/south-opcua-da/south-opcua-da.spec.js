@@ -69,7 +69,7 @@ describe('SouthOPCUADA', () => {
         scanMode: 'every10Second',
       }],
     }
-    south = new OPCUA_DA(configuration, addValues, addFiles, logger)
+    south = new OPCUA_DA(configuration, {}, addValues, addFiles, logger)
     await south.start('baseFolder', 'oibusName')
   })
 
@@ -194,7 +194,7 @@ describe('SouthOPCUADA', () => {
       }],
     }
 
-    const opcuaSouthTest = new OPCUA_DA(testOpcuaConfig, addValues, addFiles, logger)
+    const opcuaSouthTest = new OPCUA_DA(testOpcuaConfig, {}, addValues, addFiles, logger)
     await opcuaSouthTest.start('baseFolder', 'oibusName')
     await opcuaSouthTest.connect()
     opcuaSouthTest.connected = true

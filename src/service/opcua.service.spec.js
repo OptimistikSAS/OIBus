@@ -1,7 +1,10 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import { createFolder } from './utils.js'
 
 import { initOpcuaCertificateFolders } from './opcua.service.js'
+
+jest.mock('./utils')
 
 describe('opcua service', () => {
   it('should copy certificates', async () => {
@@ -10,9 +13,8 @@ describe('opcua service', () => {
     })
     jest.spyOn(path, 'join').mockImplementationOnce(() => 'stubFolder')
     fs.copyFile = jest.fn()
-    fs.mkdir = jest.fn()
 
     await initOpcuaCertificateFolders('certFolder')
-    expect(fs.mkdir).toHaveBeenCalledTimes(10)
+    expect(createFolder).toHaveBeenCalledTimes(10)
   })
 })

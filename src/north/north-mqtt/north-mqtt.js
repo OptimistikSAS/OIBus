@@ -15,18 +15,18 @@ export default class NorthMQTT extends NorthConnector {
    * Constructor for NorthMQTT
    * @constructor
    * @param {Object} configuration - The North connector configuration
-   * @param {Object[]} proxies - The list of available proxies
+   * @param {ProxyService} proxyService - The proxy service
    * @param {Object} logger - The Pino child logger to use
    * @return {void}
    */
   constructor(
     configuration,
-    proxies,
+    proxyService,
     logger,
   ) {
     super(
       configuration,
-      proxies,
+      proxyService,
       logger,
       manifest,
     )

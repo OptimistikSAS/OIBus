@@ -21,6 +21,7 @@ jest.mock('../../service/encryption.service', () => ({ getInstance: () => ({ dec
 jest.mock('../../service/cache/value-cache.service')
 jest.mock('../../service/cache/file-cache.service')
 jest.mock('../../service/cache/archive.service')
+jest.mock('../../service/proxy.service')
 
 const proxies = [
   {
@@ -56,6 +57,8 @@ const logger = {
   trace: jest.fn(),
 }
 
+const proxyService = { getProxy: jest.fn() }
+
 let configuration = null
 let north = null
 
@@ -63,6 +66,8 @@ describe('NorthAmazonS3', () => {
   beforeEach(async () => {
     jest.resetAllMocks()
     jest.useFakeTimers()
+
+    proxyService.getProxy.mockReturnValue(null)
 
     configuration = {
       id: 'northId',
@@ -91,13 +96,14 @@ describe('NorthAmazonS3', () => {
       },
       subscribedTo: [],
     }
-    north = new AmazonS3(configuration, [], logger)
+    north = new AmazonS3(configuration, proxyService, logger)
     await north.start('baseFolder', 'oibusName')
   })
 
   it('should be properly initialized', () => {
     expect(north.bucket).toEqual(configuration.settings.bucket)
     expect(north.folder).toEqual(configuration.settings.folder)
+    expect(north.proxyService.getProxy).toHaveBeenCalledWith('')
 
     expect(S3Client).toHaveBeenCalledWith({
       region: 'eu-west-3',
@@ -116,6 +122,8 @@ describe('NorthAmazonS3', () => {
     const amazonS3WithProxyConfig = configuration
     amazonS3WithProxyConfig.settings.proxy = 'sss'
 
+    proxyService.getProxy.mockReturnValue(proxies[0])
+
     const expectedAgent = {
       auth: 'uuu:pppppppppp',
       hash: null,
@@ -132,8 +140,8 @@ describe('NorthAmazonS3', () => {
     }
     NodeHttpHandler.mockReturnValueOnce(expectedAgent)
 
-    const amazonS3WithProxy = new AmazonS3(amazonS3WithProxyConfig, proxies)
-    await amazonS3WithProxy.start('baseFolder', 'oibusName', {})
+    const amazonS3WithProxy = new AmazonS3(amazonS3WithProxyConfig, proxyService, logger)
+    await amazonS3WithProxy.start('baseFolder', 'oibusName')
 
     expect(amazonS3WithProxy.bucket).toEqual(amazonS3WithProxyConfig.settings.bucket)
     expect(amazonS3WithProxy.folder).toEqual(amazonS3WithProxyConfig.settings.folder)
@@ -152,6 +160,8 @@ describe('NorthAmazonS3', () => {
     const amazonS3WithProxyConfig = configuration
     amazonS3WithProxyConfig.settings.proxy = 'no-auth'
 
+    proxyService.getProxy.mockReturnValue(proxies[2])
+
     const expectedAgent = {
       auth: null,
       hash: null,
@@ -168,8 +178,8 @@ describe('NorthAmazonS3', () => {
     }
     NodeHttpHandler.mockReturnValueOnce(expectedAgent)
 
-    const amazonS3WithProxy = new AmazonS3(amazonS3WithProxyConfig, proxies)
-    await amazonS3WithProxy.start('baseFolder', 'oibusName', {})
+    const amazonS3WithProxy = new AmazonS3(amazonS3WithProxyConfig, proxyService, logger)
+    await amazonS3WithProxy.start('baseFolder', 'oibusName')
 
     expect(amazonS3WithProxy.bucket).toEqual(amazonS3WithProxyConfig.settings.bucket)
     expect(amazonS3WithProxy.folder).toEqual(amazonS3WithProxyConfig.settings.folder)
