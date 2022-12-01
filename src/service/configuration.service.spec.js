@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import defaultConfig from '../config/default-config.json'
 
 import * as utils from './utils.js'
 
@@ -26,28 +27,19 @@ describe('Configuration service', () => {
   })
 
   it('should properly initialized service with default conf', async () => {
-    const mockConf = {
-      engine: 'myEngineConfig',
-      north: [{ id: 'myNorthConfig' }],
-      south: [{ id: 'mySouthConfig' }],
-    }
-    fs.readFile.mockImplementationOnce(() => {
-      throw new Error('file does not exist')
-    }).mockImplementationOnce(() => (JSON.stringify(mockConf)))
+    utils.filesExists.mockImplementation(() => false)
 
     service.activateConfiguration = jest.fn()
     await service.init()
 
-    expect(fs.readFile).toHaveBeenCalledTimes(2)
-    expect(fs.readFile).toHaveBeenCalledWith(path.resolve(configFilePath), 'utf8')
-    expect(fs.readFile).toHaveBeenCalledWith(`${__dirname}/../config/default-config.json`, 'utf8')
-    expect(fs.copyFile).not.toHaveBeenCalled()
+    expect(fs.readFile).not.toHaveBeenCalled()
     expect(service.activateConfiguration).not.toHaveBeenCalled()
-    expect(service.config).toEqual(mockConf)
-    expect(service.modifiedConfig).toEqual(mockConf)
+    expect(service.config).toEqual(defaultConfig)
+    expect(service.modifiedConfig).toEqual(defaultConfig)
   })
 
   it('should properly initialized service with config file', async () => {
+    utils.filesExists.mockImplementation(() => true)
     const mockConf = {
       engine: { name: 'myEngineConfig' },
       north: [{ id: 'myNorthConfig' }],
@@ -62,8 +54,7 @@ describe('Configuration service', () => {
     await service.init()
 
     expect(fs.readFile).toHaveBeenCalledTimes(1)
-    expect(fs.readFile).toHaveBeenCalledWith(path.resolve(configFilePath), 'utf8')
-    expect(fs.copyFile).not.toHaveBeenCalled()
+    expect(fs.readFile).toHaveBeenCalledWith(path.resolve(configFilePath), { encoding: 'utf8' })
     expect(service.activateConfiguration).toHaveBeenCalledTimes(1)
     expect(service.modifiedConfig).toEqual({
       engine: { name: 'myEngineConfig', encryptedPassword: 'encryptedPassword' },

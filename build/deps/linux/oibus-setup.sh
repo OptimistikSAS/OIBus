@@ -122,9 +122,9 @@ if ! sudo mv oibus.service /etc/systemd/system/; then
   exit 1
 fi
 
-conf_path=$(readlink -m "$conf_file")
+conf_path=$(readlink -m "$my_data_directory")
 touch oibus-env
-printf "ARG1=--config\nARG2=%s" "$conf_path" >>oibus-env
+printf "ARG1=--config\nARG2=%s" "$conf_path" >> oibus-env
 
 if ! sudo mv oibus-env $install_dir; then
   printf "ERROR: Could not create OIBus service file. Terminating installation process."
@@ -162,7 +162,7 @@ fi
   printf '#!/bin/bash\n\n'
   printf "echo 'Stopping OIBus service...'\n"
   printf 'sudo systemctl stop oibus\n'
-  printf "%s/oibus --config '%s/oibus.json'" "$dir" "$data_directory"
+  printf "%s/oibus --config '%s'" "$dir" "$data_directory"
 } >> "$dir"/go.sh
 
 # Updating uninstall script

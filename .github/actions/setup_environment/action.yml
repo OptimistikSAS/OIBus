@@ -16,7 +16,7 @@ runs:
     - name: Get current date
       shell: bash
       id: date
-      run: echo "::set-output name=date::$(date +'calendar-week-%W')"
+      run: echo "date=$(date +'calendar-week-%W')" >> $GITHUB_OUTPUT
 
     - name: Write cache version
       shell: bash

@@ -50,9 +50,9 @@ jobs:
           npx standard-version -i ./CHANGELOG.md $VERSION_ARGS
           git status
           git push --follow-tags origin HEAD
-          echo ::set-output name=version-tag::$(git describe --tags $(git rev-list --tags --max-count=1))
-          echo ::set-output name=prerelease::$PRERELEASE
-          echo ::set-output name=branch-release::$BRANCH_RELEASE
+          echo "version-tag=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_OUTPUT
+          echo "prerelease=$PRERELEASE"  >> $GITHUB_OUTPUT
+          echo "branch-release=$BRANCH_RELEASE"  >> $GITHUB_OUTPUT
 
       - name: Upload artifact CHANGELOG.md
         uses: actions/upload-artifact@v3
@@ -86,7 +86,7 @@ jobs:
         run: |
           npm run build:${{ matrix.config['platform'] }}
           cd build/bin/${{ matrix.config['platform'] }}
-          ./oibus --config ../../../data-folder/oibus.json --check true
+          ./oibus --config ../../../data-folder --check true
           ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }} .
 
       - name: Upload artifact ${{ matrix.config['archiveName'] }}

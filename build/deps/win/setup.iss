@@ -29,7 +29,7 @@ PrivilegesRequired=admin
 SolidCompression=yes
 UsePreviousAppDir=no
 UserInfoPage=no
-SetupIconFile=favicon.ico
+SetupIconFile=..\..\..\src\frontend\favicon.ico
 WizardImageFile=installer_oibus.bmp
 WizardSmallImageFile=installer_small.bmp
 WizardStyle=modern
@@ -43,10 +43,9 @@ Name: "en"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 Source: "..\..\bin\win\oibus.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "HdaAgent\*"; DestDir: "{app}\HdaAgent"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "OPC REDISTRIBUTABLES Agreement of Use.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\bin\win\HdaAgent\*"; DestDir: "{app}\HdaAgent"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\..\bin\win\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\bin\win\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\..\src\config\default-config.json"; DestDir: "{app}"; Flags: ignoreversion
 
 
@@ -191,9 +190,9 @@ begin
     Result := False
   else if not ExecCmd('nssm.exe', 'stop OIBus >nul 2>&1', ExpandConstant('{app}')) then
     Result := False
-  else if not SaveStringToFile(LogPath, 'nssm.exe install OIBus "' + ExpandConstant('{app}') + '\oibus.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '\oibus.json"""' + #13#10, True) then
+  else if not SaveStringToFile(LogPath, 'nssm.exe install OIBus "' + ExpandConstant('{app}') + '\oibus.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '"""' + #13#10, True) then
     Result := False
-  else  if not ExecCmd('nssm.exe', 'install OIBus "' + ExpandConstant('{app}') + '\oibus.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '\oibus.json"""', ExpandConstant('{app}')) then
+  else  if not ExecCmd('nssm.exe', 'install OIBus "' + ExpandConstant('{app}') + '\oibus.exe" "--config ""' + OIBus_DataDirPage.Values[0] + '"""', ExpandConstant('{app}')) then
     Result := False
   else if not SaveStringToFile(LogPath, 'nssm.exe set OIBus AppDirectory "' + ExpandConstant('{app}') + '"' + #13#10, True) then
     Result := False
@@ -229,7 +228,7 @@ var
   FileContent: ansistring;
   ConfigFilePath: string;
 begin;
-    ConfigFilePath := OIBus_DataDirPage.Values[0] + '\oibus.json';
+    ConfigFilePath := OIBus_DataDirPage.Values[0];
     FileContent := 'echo Stopping OIBus service...' + #13#10
       + 'nssm.exe stop OIBus' + #13#10
       + '@echo Starting OIBus in the console...' + #13#10
