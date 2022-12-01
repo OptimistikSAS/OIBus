@@ -1,5 +1,5 @@
 import HistoryQueryEngine from './history-query-engine.js'
-import config from '../config/default-config.json'
+import { testConfig } from '../../tests/test-config.js'
 import ConfigurationService from '../service/configuration.service.js'
 
 // Mock fs
@@ -30,8 +30,8 @@ describe('HistoryQueryEngine', () => {
 
     const mockConfigService = { getConfig: jest.fn() }
     mockConfigService.getConfig.mockReturnValue({
-      engineConfig: config.engine,
-      southConfig: config.south,
+      engineConfig: testConfig.engine,
+      southConfig: testConfig.south,
     })
 
     ConfigurationService.mockImplementation(() => mockConfigService)
@@ -41,12 +41,12 @@ describe('HistoryQueryEngine', () => {
   })
 
   it('should be properly initialized', async () => {
-    await engine.initEngineServices(config.engine)
+    await engine.initEngineServices(testConfig.engine)
     expect(engine.historyOnGoing).toBeFalsy()
   })
 
   it('should add values', async () => {
-    await engine.initEngineServices(config.engine)
+    await engine.initEngineServices(testConfig.engine)
 
     const sampleValues = [
       {

@@ -21,7 +21,7 @@
     "lint": "eslint src --ext .jsx --ext .js",
     "lint:fix": "eslint src --ext .jsx --ext .js --fix",
     "build:all": "npm ci && npm run build:win && npm run build:macos && npm run build:linux",
-    "build:win": "npm run internal:build:web-client && npm run internal:build:backend && npm run internal:build:lib-win && rimraf ./build/bin/win && pkg ./build/backend/index.js --public --compress GZip --config package.json --output ./build/bin/win/oibus --target node16-win-x64 && ncp ./build/deps/win ./build/bin/win",
+    "build:win": "npm run internal:build:web-client && npm run internal:build:backend && npm run internal:build:lib-win && rimraf ./build/bin/win && pkg ./build/backend/index.js --public --compress GZip --config package.json --output ./build/bin/win/oibus --target node16-win-x64 && ncp ./build/deps/win/HdaAgent ./build/bin/win/HdaAgent && ncp ./build/deps/win/nssm.exe ./build/bin/win/nssm.exe && ncp ./LICENSE ./build/bin/win/LICENSE",
     "build:macos": "npm run internal:build:web-client && npm run internal:build:backend && npm run internal:build:lib-macos && rimraf ./build/bin/macos && pkg ./build/backend/index.js --public --compress GZip --config package.json --output ./build/bin/macos/oibus --target node16-macos-x64",
     "build:linux": "npm run internal:build:web-client && npm run internal:build:backend && npm run internal:build:lib-linux && rimraf ./build/bin/linux && pkg ./build/backend/index.js --public --compress GZip --config package.json --output ./build/bin/linux/oibus --target node16-linux-x64 && ncp ./build/deps/linux ./build/bin/linux && ncp ./src/config/default-config.json ./build/bin/linux/default-config.json",
     "build:win-setup": "rimraf ./build/bin/win/win-setup-release && C:\\\"Program Files (x86)\"\\\"Inno Setup 6\"\\iscc.exe \"./build/deps/win/setup.iss\" \"/DMyAppVersion=\"%npm_package_version% \"/DMyCertFile=\"%PFX_PATH% \"/DMyCertPassword=\"%PFX_PASSWORD% \"/ssigntool=./build/deps/signtool/signtool.exe sign /debug $p\"",
@@ -155,8 +155,7 @@
       "build/backend/service/logger/loki-transport.js",
       "node_modules/sqlite3/**/*.node",
       "node_modules/oracledb/**/*.node",
-      "node_modules/better-sqlite3/build/Release/better_sqlite3.node",
-      "src/config/default-config.json"
+      "node_modules/better-sqlite3/build/Release/better_sqlite3.node"
     ]
   }
 }
