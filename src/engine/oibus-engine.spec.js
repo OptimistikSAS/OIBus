@@ -1,6 +1,6 @@
 import OIBusEngine from './oibus-engine.js'
 import EncryptionService from '../service/encryption.service.js'
-import config from '../config/default-config.json'
+import { testConfig } from '../../tests/test-config.js'
 import ConfigurationService from '../service/configuration.service.js'
 
 // Mock EncryptionService
@@ -32,15 +32,15 @@ describe('OIBusEngine', () => {
 
     const mockConfigService = { getConfig: jest.fn() }
     mockConfigService.getConfig.mockReturnValue({
-      engineConfig: config.engine,
-      southConfig: config.south,
+      engineConfig: testConfig.engine,
+      southConfig: testConfig.south,
     })
 
     ConfigurationService.mockImplementation(() => mockConfigService)
 
     const mockLoggerService = { createChildLogger: jest.fn(() => logger) }
     engine = new OIBusEngine(mockConfigService, {}, mockLoggerService)
-    await engine.initEngineServices(config.engine)
+    await engine.initEngineServices(testConfig.engine)
   })
 
   it('should be properly initialized', () => {

@@ -3,6 +3,7 @@ import fs from 'node:fs/promises'
 
 import EncryptionService from './encryption.service.js'
 import { filesExists } from './utils.js'
+import defaultConfig from '../config/default-config.json'
 
 const KEYS_FOLDER = './keys'
 const CERTS_FOLDER = './certs'
@@ -36,19 +37,20 @@ export default class ConfigurationService {
    * @returns {Promise<void>} - The result promise
    */
   async init() {
-    let tempConfig
-    try {
-      tempConfig = await fs.readFile(this.configFilePath, 'utf8')
-    } catch (err) {
-      tempConfig = await fs.readFile(`${__dirname}/../config/default-config.json`, 'utf8')
+    let config
+    if (await filesExists(this.configFilePath)) {
+      config = JSON.parse(await fs.readFile(this.configFilePath, { encoding: 'utf8' }))
+    } else {
+      config = defaultConfig
     }
 
+    const previousConfig = JSON.stringify(config)
     // When a specific config is used with unencrypted secrets, it allows to encrypt credentials and update the config.
     // In this case, no backup is used to avoid plain text secrets
     // This can happen after a fresh installation with a config file edited by the user or an installation script
-    await this.updateConfig(JSON.parse(tempConfig))
+    await this.updateConfig(config)
 
-    if (JSON.stringify(this.modifiedConfig) !== tempConfig) {
+    if (JSON.stringify(this.modifiedConfig) !== previousConfig) {
       await this.activateConfiguration(false)
     } else {
       this.config = this.modifiedConfig
@@ -77,19 +79,19 @@ export default class ConfigurationService {
 
   /**
    * Update configuration and encrypt password and secrets
-   * @param {Object} config - The updated configuration
+   * @param {Object} newConfig - The updated configuration
    * @returns {Promise<void>} - The result promise
    */
-  async updateConfig(config) {
-    await this.encryptionService.encryptSecrets(config.engine)
+  async updateConfig(newConfig) {
+    await this.encryptionService.encryptSecrets(newConfig.engine)
 
-    await config.north.reduce((promise, north) => promise.then(
+    await newConfig.north.reduce((promise, north) => promise.then(
       async () => this.encryptionService.encryptSecrets(north),
     ), Promise.resolve())
-    await config.south.reduce((promise, south) => promise.then(
+    await newConfig.south.reduce((promise, south) => promise.then(
       async () => this.encryptionService.encryptSecrets(south),
     ), Promise.resolve())
-    this.modifiedConfig = config
+    this.modifiedConfig = newConfig
   }
 
   /**
@@ -110,9 +112,9 @@ export default class ConfigurationService {
     this.config = JSON.parse(JSON.stringify(this.modifiedConfig))
   }
 
-  async removeOrphanCacheFolders(config) {
-    const northIdList = config.north.map((north) => north.id)
-    const southIdList = config.south.map((south) => south.id)
+  async removeOrphanCacheFolders(newConfig) {
+    const northIdList = newConfig.north.map((north) => north.id)
+    const southIdList = newConfig.south.map((south) => south.id)
     const idList = [...northIdList, ...southIdList]
 
     const dataStreamFolderPath = path.resolve(this.cacheFolder, 'data-stream')
