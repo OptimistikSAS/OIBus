@@ -37,7 +37,7 @@ describe('HistoryQueryEngine', () => {
     ConfigurationService.mockImplementation(() => mockConfigService)
     const mockLoggerService = { createChildLogger: jest.fn(() => logger) }
 
-    engine = new HistoryQueryEngine(mockConfigService, {}, mockLoggerService)
+    engine = new HistoryQueryEngine('version', mockConfigService, {}, mockLoggerService)
   })
 
   it('should be properly initialized', async () => {
