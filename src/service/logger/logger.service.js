@@ -141,7 +141,7 @@ class LoggerService {
       // Get the first CallSite outside the logger and outside pino library
       const callSite = this.stack.find((line) => line.getFileName().indexOf('logger.service.js') === -1
         && line.getFileName().indexOf('pino') === -1)
-      return `${path.parse(callSite.getFileName()).name}(${callSite.getLineNumber()})`
+      return path.parse(callSite.getFileName()).name
     } finally {
       Error.prepareStackTrace = oldStackTrace
     }

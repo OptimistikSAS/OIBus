@@ -23,12 +23,14 @@ export default class HistoryQueryEngine extends BaseEngine {
    * Makes the necessary changes to the pointId attributes.
    * Checks for critical entries such as scanModes and data sources.
    * @constructor
+   * @param {String} version - The OIBus version
    * @param {ConfigurationService} configService - The config service
    * @param {EncryptionService} encryptionService - The encryption service
    * @param {LoggerService} loggerService - The logger service
    */
-  constructor(configService, encryptionService, loggerService) {
+  constructor(version, configService, encryptionService, loggerService) {
     super(
+      version,
       configService,
       encryptionService,
       loggerService,

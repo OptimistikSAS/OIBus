@@ -39,7 +39,7 @@ describe('OIBusEngine', () => {
     ConfigurationService.mockImplementation(() => mockConfigService)
 
     const mockLoggerService = { createChildLogger: jest.fn(() => logger) }
-    engine = new OIBusEngine(mockConfigService, {}, mockLoggerService)
+    engine = new OIBusEngine('version', mockConfigService, {}, mockLoggerService)
     await engine.initEngineServices(testConfig.engine)
   })
 

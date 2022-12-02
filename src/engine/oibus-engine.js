@@ -19,13 +19,15 @@ export default class OIBusEngine extends BaseEngine {
    * Reads the config file and create the corresponding Object.
    * Checks for critical entries such as scanModes and connectors.
    * @constructor
+   * @param {String} version - The OIBus version
    * @param {ConfigurationService} configService - The config service
    * @param {EncryptionService} encryptionService - The encryption service
    * @param {LoggerService} loggerService - The logger service
    * @return {void}
    */
-  constructor(configService, encryptionService, loggerService) {
+  constructor(version, configService, encryptionService, loggerService) {
     super(
+      version,
       configService,
       encryptionService,
       loggerService,
