@@ -1,6 +1,7 @@
 import cluster from 'node:cluster'
 import path from 'node:path'
 
+import { version } from '../package.json'
 import migrationService from './migration/migration.service.js'
 import ConfigurationService from './service/configuration.service.js'
 import Server from './web-server/web-server.js'
@@ -42,9 +43,6 @@ if (cluster.isMaster) {
   const baseDir = path.resolve(path.extname(configFile) ? path.parse(configFile).dir : configFile)
   process.chdir(baseDir)
   createFolder(baseDir).then(async () => {
-    // TODO
-    const packageJson = '2.4.0' // JSON.parse(await fs.readFile('package.json'))
-
     // Create the base cache folder
     await createFolder(CACHE_FOLDER)
 
@@ -52,7 +50,7 @@ if (cluster.isMaster) {
     const mainLogger = loggerService.createChildLogger('main-thread')
     // Master role is nothing except launching a worker and relaunching another
     // one if exit is detected (typically to load a new configuration)
-    mainLogger.info(`Starting OIBus version ${packageJson}.`)
+    mainLogger.info(`Starting OIBus version ${version}.`)
 
     let restartCount = 0
     let startTime = (new Date()).getTime()
@@ -133,8 +131,8 @@ if (cluster.isMaster) {
     oibusLoggerService.setEncryptionService(encryptionService)
     await oibusLoggerService.start(engineConfig.name, engineConfig.logParameters)
 
-    const oibusEngine = new OIBusEngine(configService, encryptionService, oibusLoggerService)
-    const historyQueryEngine = new HistoryQueryEngine(configService, encryptionService, oibusLoggerService)
+    const oibusEngine = new OIBusEngine(version, configService, encryptionService, oibusLoggerService)
+    const historyQueryEngine = new HistoryQueryEngine(version, configService, encryptionService, oibusLoggerService)
     const server = new Server(
       encryptionService,
       oibusEngine,

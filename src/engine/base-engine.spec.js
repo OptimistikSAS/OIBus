@@ -32,7 +32,13 @@ describe('BaseEngine', () => {
     })
     ConfigurationService.mockImplementation(() => mockConfigService)
 
-    engine = new BaseEngine(mockConfigService, EncryptionService.getInstance(), {}, 'myCacheFolder')
+    engine = new BaseEngine(
+      'version',
+      mockConfigService,
+      EncryptionService.getInstance(),
+      {},
+      'myCacheFolder',
+    )
     engine.logger = logger
 
     await engine.initEngineServices(testConfig.engine)

@@ -60,6 +60,7 @@ export default class BaseEngine {
   /**
    * Constructor for BaseEngine
    * @constructor
+   * @param {String} version - The OIBus version
    * @param {ConfigurationService} configService - The config service
    * @param {EncryptionService} encryptionService - The encryption service
    * @param {LoggerService} loggerService - The logger service
@@ -67,12 +68,13 @@ export default class BaseEngine {
    * @return {void}
    */
   constructor(
+    version,
     configService,
     encryptionService,
     loggerService,
     cacheFolder,
   ) {
-    this.version = null
+    this.version = version
     this.cacheFolder = path.resolve(cacheFolder)
 
     this.installedNorthConnectors = northList
@@ -93,10 +95,6 @@ export default class BaseEngine {
    * @returns {Promise<void>} - The result promise
    */
   async initEngineServices(engineConfig) {
-    // const packageJson = JSON.parse(await fs.readFile('package.json'))
-    // this.version = packageJson.version
-    // TODO
-    this.version = '2.4.0'
     this.oibusName = engineConfig.name
     this.defaultLogParameters = engineConfig.logParameters
     this.proxies = engineConfig.proxies
