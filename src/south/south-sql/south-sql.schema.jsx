@@ -37,18 +37,21 @@ schema.form = {
   },
   databasePath: {
     type: 'OibText',
+    label: 'Database path',
     defaultValue: './test.db',
     valid: optional(),
     help: <div>The path of the SQLite database</div>,
   },
   host: {
     type: 'OibText',
+    label: 'Host',
     defaultValue: 'localhost',
     valid: isHost(),
     help: <div>IP address of the SQL server</div>,
   },
   port: {
     type: 'OibInteger',
+    label: 'Port',
     newRow: false,
     md: 2,
     valid: inRange(0, 65535),
@@ -57,6 +60,7 @@ schema.form = {
   },
   database: {
     type: 'OibText',
+    label: 'Database',
     defaultValue: 'db',
     md: 3,
     valid: notEmpty(),
@@ -64,6 +68,7 @@ schema.form = {
   },
   username: {
     type: 'OibText',
+    label: 'Username',
     defaultValue: '',
     valid: notEmpty(),
     help: <div>(Preferably with only readonly access to the database)</div>,
@@ -71,6 +76,7 @@ schema.form = {
   },
   password: {
     newRow: false,
+    label: 'Password',
     type: 'OibPassword',
     defaultValue: '',
     valid: hasLengthBetween(0, 256),
@@ -78,6 +84,7 @@ schema.form = {
   },
   domain: {
     newRow: false,
+    label: 'Domain',
     type: 'OibText',
     valid: optional(),
     defaultValue: '',
@@ -146,6 +153,7 @@ schema.form = {
   query: {
     md: 12,
     type: 'OibTextArea',
+    label: 'Query',
     contentType: 'sql',
     defaultValue: 'SELECT * FROM Table WHERE timestamp > @StartTime',
     valid: notEmpty(),
@@ -225,6 +233,7 @@ schema.form = {
   },
   filename: {
     type: 'OibText',
+    label: 'Filename',
     defaultValue: 'sql-@CurrentDate.csv',
     valid: notEmpty(),
     help: <div>The name of the CSV file. Available variables: @CurrentDate, @ConnectorName, @QueryPart</div>,
@@ -239,6 +248,7 @@ schema.form = {
   },
   delimiter: {
     type: 'OibText',
+    label: 'Delimiter',
     defaultValue: ',',
     valid: notEmpty(),
     help: <div>Delimiter in the CSV file</div>,
@@ -246,6 +256,7 @@ schema.form = {
   },
   dateFormat: {
     newRow: false,
+    label: 'Date format',
     type: 'OibText',
     defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
     valid: notEmpty(),
@@ -253,6 +264,7 @@ schema.form = {
   },
   timeColumn: {
     newRow: false,
+    label: 'Time column',
     type: 'OibText',
     md: 2,
     defaultValue: 'timestamp',
@@ -260,6 +272,7 @@ schema.form = {
   },
   timezone: {
     type: 'OibTimezone',
+    label: 'Timezone',
     newRow: false,
     md: 2,
   },

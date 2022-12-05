@@ -5,6 +5,7 @@ const schema = { name: 'MongoDB' }
 schema.form = {
   MongodbParameters: {
     type: 'OibTitle',
+    label: 'MongoDB Settings',
     children: (
       <>
         <p>Send points data to MongoDB</p>
@@ -30,17 +31,20 @@ schema.form = {
   },
   user: {
     type: 'OibText',
+    label: 'User',
     valid: notEmpty(),
     defaultValue: '',
   },
   password: {
     type: 'OibPassword',
+    label: 'Password',
     newRow: false,
     valid: hasLengthBetween(0, 256),
     defaultValue: '',
   },
   host: {
     type: 'OibText',
+    label: 'Host',
     valid: notEmpty(),
     defaultValue: '',
     help: <div>The host is only the mongoDB server with port separated by &ldquo;:&ldquo; (it not includes mongodb:// protocol)</div>,
@@ -54,6 +58,7 @@ schema.form = {
   },
   pointIdParameters: {
     type: 'OibTitle',
+    label: 'Point ID parameters',
     children: (
       <>
         <p>Regexp will be used to identify token in the pointId that will be used to build the MongoDB query.</p>
@@ -69,6 +74,7 @@ schema.form = {
   },
   regExp: {
     type: 'OibText',
+    label: 'RegExp',
     valid: notEmpty(),
     defaultValue: '(.*)',
     help: (
@@ -80,11 +86,13 @@ schema.form = {
   },
   collection: {
     type: 'OibText',
+    label: 'Collection',
     valid: notEmpty(),
     defaultValue: '%1$s',
   },
   indexFields: {
     type: 'OibText',
+    label: 'Index fields',
     defaultValue: '',
     valid: hasLengthBetween(0, 256),
     newRow: false,
@@ -92,11 +100,13 @@ schema.form = {
   },
   createCollection: {
     type: 'OibCheckbox',
-    label: 'Create collection with its indexes when collection does not exist',
+    label: 'Create collection if it does not exist',
     defaultValue: false,
+    help: <div>The indexes will also be created</div>,
   },
   timeStampKey: {
     type: 'OibText',
+    label: 'Timestamp key',
     valid: notEmpty(),
     newRow: false,
     defaultValue: 'timestamp',
@@ -104,6 +114,7 @@ schema.form = {
   },
   valueParameters: {
     type: 'OibTitle',
+    label: 'Value parameters',
     children: (
       <>
         <p>data value to process by north connector is a Json object which contains :  </p>
@@ -159,18 +170,20 @@ schema.form = {
   useDataKeyValue: {
     type: 'OibCheckbox',
     valid: notEmpty(),
-    label: 'use key "value" of Json "data"',
+    label: 'Use key "value" of Json "data"',
     help: <div>When checked, means that the field &quot;value&quot; will be parsed as JSON object</div>,
     defaultValue: false,
   },
   keyParentValue: {
     type: 'OibText',
+    label: 'Key parent value',
     valid: optional(),
     defaultValue: '',
     help: <div>Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>,
   },
   timestampPathInDataValue: {
     type: 'OibText',
+    label: 'Timestamp path in data value',
     defaultValue: '',
     valid: optional(),
     newRow: false,

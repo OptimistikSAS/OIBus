@@ -134,7 +134,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -142,7 +142,7 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -190,13 +190,13 @@ exports[`ConfigurePoints check ConfigurePoints 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -651,7 +651,7 @@ exports[`ConfigurePoints check add new point 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -659,7 +659,7 @@ exports[`ConfigurePoints check add new point 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -707,13 +707,13 @@ exports[`ConfigurePoints check add new point 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -1168,7 +1168,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -1176,7 +1176,7 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -1224,13 +1224,13 @@ exports[`ConfigurePoints check confirm on delete all points 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -1685,7 +1685,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -1693,7 +1693,7 @@ exports[`ConfigurePoints check delete all points 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -1741,13 +1741,13 @@ exports[`ConfigurePoints check delete all points 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -2202,7 +2202,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -2210,7 +2210,7 @@ exports[`ConfigurePoints check delete first point 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -2258,13 +2258,13 @@ exports[`ConfigurePoints check delete first point 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -2719,7 +2719,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -2727,7 +2727,7 @@ exports[`ConfigurePoints check edit filter input 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -2775,13 +2775,13 @@ exports[`ConfigurePoints check edit filter input 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -3236,7 +3236,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -3244,7 +3244,7 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -3292,13 +3292,13 @@ exports[`ConfigurePoints check edit first pointId 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -3753,7 +3753,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -3761,7 +3761,7 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -3809,13 +3809,13 @@ exports[`ConfigurePoints check edit first pointId 2`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -4270,7 +4270,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -4278,7 +4278,7 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -4326,13 +4326,13 @@ exports[`ConfigurePoints check edit first scanMode 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -4787,7 +4787,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -4795,7 +4795,7 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -4843,13 +4843,13 @@ exports[`ConfigurePoints check edit first scanMode 2`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -5304,7 +5304,7 @@ exports[`ConfigurePoints check export points 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -5312,7 +5312,7 @@ exports[`ConfigurePoints check export points 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -5360,13 +5360,13 @@ exports[`ConfigurePoints check export points 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -5821,7 +5821,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -5829,7 +5829,7 @@ exports[`ConfigurePoints check import points file input 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -5877,13 +5877,13 @@ exports[`ConfigurePoints check import points file input 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -6338,7 +6338,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -6346,7 +6346,7 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -6394,13 +6394,13 @@ exports[`ConfigurePoints check import points parseCSV fail 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -6855,7 +6855,7 @@ exports[`ConfigurePoints check import points press 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -6863,7 +6863,7 @@ exports[`ConfigurePoints check import points press 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -6911,13 +6911,13 @@ exports[`ConfigurePoints check import points press 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -7372,7 +7372,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -7380,7 +7380,7 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -7428,13 +7428,13 @@ exports[`ConfigurePoints check import points readFileContent fail 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -7889,7 +7889,7 @@ exports[`ConfigurePoints check import points success 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -7897,7 +7897,7 @@ exports[`ConfigurePoints check import points success 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -7945,13 +7945,13 @@ exports[`ConfigurePoints check import points success 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -8426,7 +8426,7 @@ exports[`ConfigurePoints check no points 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -8434,7 +8434,7 @@ exports[`ConfigurePoints check no points 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -8482,13 +8482,13 @@ exports[`ConfigurePoints check no points 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -8673,7 +8673,7 @@ exports[`ConfigurePoints check pagination 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -8681,7 +8681,7 @@ exports[`ConfigurePoints check pagination 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -8729,13 +8729,13 @@ exports[`ConfigurePoints check pagination 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"
@@ -9190,7 +9190,7 @@ exports[`ConfigurePoints check render with filterText 1`] = `
             >
               <div>
                 <b>
-                  Point id: 
+                  Point ID: 
                 </b>
                 <div>
                   The pointId to used to send the data
@@ -9198,7 +9198,7 @@ exports[`ConfigurePoints check render with filterText 1`] = `
               </div>
               <div>
                 <b>
-                  Node id: 
+                  Node ID: 
                 </b>
                 <div>
                   The nodeId referenced in the OPCUA server
@@ -9246,13 +9246,13 @@ exports[`ConfigurePoints check render with filterText 1`] = `
                 />
               </svg>
               <span>
-                Point id
+                Point ID
               </span>
             </th>
             <th
               scope="col"
             >
-              Node id
+              Node ID
             </th>
             <th
               scope="col"

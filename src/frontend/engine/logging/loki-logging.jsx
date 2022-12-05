@@ -7,6 +7,7 @@ const schema = { name: 'LokiLogging' }
 schema.form = {
   level: {
     type: 'OibSelect',
+    label: 'Level',
     md: 3,
     options: ['trace', 'debug', 'info', 'warning', 'error', 'silent'],
     defaultValue: 'info',
@@ -22,6 +23,7 @@ schema.form = {
   },
   interval: {
     type: 'OibInteger',
+    label: 'Interval (s)',
     newRow: false,
     md: 2,
     valid: minValue(10),
@@ -38,6 +40,7 @@ schema.form = {
   },
   username: {
     type: 'OibText',
+    label: 'Username',
     defaultValue: '',
     valid: optional(),
     md: 3,
@@ -45,6 +48,7 @@ schema.form = {
   password: {
     newRow: false,
     type: 'OibPassword',
+    label: 'Password',
     defaultValue: '',
     valid: optional(),
     md: 3,

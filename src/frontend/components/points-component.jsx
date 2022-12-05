@@ -1,6 +1,5 @@
 import React from 'react'
 import { Button, Input } from 'reactstrap'
-import humanizeString from 'humanize-string'
 
 import PropTypes from 'prop-types'
 import Table from './table/table.jsx'
@@ -112,12 +111,12 @@ const PointsComponent = ({
   const pointsWithHelp = Object.entries(southSchema.points).filter(([name, value]) => name && value.help)
   const tableHelps = pointsWithHelp.length > 0 && pointsWithHelp.map(([name, value]) => (
     <div key={name}>
-      <b>{`${value.label || humanizeString(name)}: `}</b>
+      <b>{`${value.label || name}: `}</b>
       {value.help}
     </div>
   ))
   // configure table header and rows
-  const tableHeaders = Object.entries(southSchema.points).map(([name, value]) => value.label || humanizeString(name))
+  const tableHeaders = Object.entries(southSchema.points).map(([_name, value]) => value.label || _name)
 
   // paging
   const pagedPoints = filteredPoints.filter((_, index) => index >= pageOffset && index < selectedPage * MAX_ON_PAGE)

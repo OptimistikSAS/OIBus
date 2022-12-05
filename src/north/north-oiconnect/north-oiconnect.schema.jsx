@@ -5,7 +5,7 @@ const schema = { name: 'OIConnect' }
 schema.form = {
   OIConnectSettings: {
     type: 'OibTitle',
-    label: 'OIConnect settings',
+    label: 'OIConnect Settings',
     md: 12,
     children: (
       <>
@@ -21,6 +21,7 @@ schema.form = {
   },
   host: {
     type: 'OibLink',
+    label: 'Host',
     defaultValue: '',
   },
   valuesEndpoint: {
@@ -37,7 +38,7 @@ schema.form = {
     valid: notEmpty(),
     defaultValue: '/engine/addFile',
   },
-  authentication: { type: 'OibAuthentication' },
+  authentication: { type: 'OibAuthentication', label: 'Authentication' },
   networkSection: {
     type: 'OibTitle',
     label: 'Network',
@@ -50,7 +51,7 @@ schema.form = {
       </>
     ),
   },
-  proxy: { type: 'OibProxy' },
+  proxy: { type: 'OibProxy', label: 'Proxy' },
 }
 schema.category = 'Optimistik'
 

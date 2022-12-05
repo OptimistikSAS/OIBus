@@ -5,6 +5,7 @@ const schema = { name: 'InfluxDB' }
 schema.form = {
   InfluxdbParameters: {
     type: 'OibTitle',
+    label: 'InfluxDB Settings',
     children: (
       <>
         <p>Send points data to InfluxDB</p>
@@ -17,17 +18,20 @@ schema.form = {
   },
   user: {
     type: 'OibText',
+    label: 'User',
     valid: notEmpty(),
     defaultValue: '',
   },
   password: {
     type: 'OibPassword',
+    label: 'Password',
     newRow: false,
     valid: hasLengthBetween(0, 256),
     defaultValue: '',
   },
   host: {
     type: 'OibLink',
+    label: 'Host',
     protocols: ['http'],
     defaultValue: 'http://localhost:8086',
   },
@@ -40,6 +44,7 @@ schema.form = {
   },
   timestampPathInDataValue: {
     type: 'OibText',
+    label: 'Timestamp path in data value',
     defaultValue: '',
     valid: optional(),
     newRow: false,
@@ -47,11 +52,13 @@ schema.form = {
   },
   precision: {
     type: 'OibSelect',
+    label: 'Precision',
     defaultValue: 'ms',
     options: ['ns', 'u', 'ms', 's', 'm', 'h'],
   },
   pointIdParameters: {
     type: 'OibTitle',
+    label: 'Point ID parameters',
     children: (
       <>
         <p>Regexp will be used to identify token in the pointId that will be used to build the InfluxDB query.</p>
@@ -67,6 +74,7 @@ schema.form = {
   },
   regExp: {
     type: 'OibText',
+    label: 'RegExp',
     valid: notEmpty(),
     defaultValue: '(.*)',
     help: (
@@ -78,11 +86,13 @@ schema.form = {
   },
   measurement: {
     type: 'OibText',
+    label: 'Measurement',
     valid: notEmpty(),
     defaultValue: '%1$s',
   },
   tags: {
     type: 'OibText',
+    label: 'Tags',
     defaultValue: '',
     valid: hasLengthBetween(0, 256),
     newRow: false,
@@ -90,6 +100,7 @@ schema.form = {
   },
   valueParameters: {
     type: 'OibTitle',
+    label: 'Value parameters',
     children: (
       <>
         <p>data value to process by north connector is a Json object which contains :  </p>
@@ -145,12 +156,13 @@ schema.form = {
   useDataKeyValue: {
     type: 'OibCheckbox',
     valid: notEmpty(),
-    label: 'use key "value" of Json "data"',
+    label: 'Use key "value" of Json "data"',
     help: <div>When checked, means that the field &quot;value&quot; will be parsed as JSON object</div>,
     defaultValue: false,
   },
   keyParentValue: {
     type: 'OibText',
+    label: 'Key parent value',
     valid: optional(),
     defaultValue: '',
     help: <div>Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>,

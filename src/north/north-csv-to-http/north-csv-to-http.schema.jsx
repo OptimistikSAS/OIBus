@@ -36,6 +36,7 @@ schema.form = {
   },
   requestMethod: {
     type: 'OibSelect',
+    label: 'Request method',
     newRow: false,
     options: ['POST', 'PUT', 'PATCH'],
     md: 3,
@@ -50,11 +51,12 @@ schema.form = {
   },
   acceptUnconvertedRows: {
     type: 'OibCheckbox',
+    label: 'Accept unconverted rows',
     md: 2,
     newRow: true,
     defaultValue: true,
   },
-  authentication: { type: 'OibAuthentication' },
+  authentication: { type: 'OibAuthentication', label: 'Authentication' },
   CsvToHttpParameters: {
     type: 'OibTitle',
     label: 'Mapping Parameters',
@@ -106,6 +108,7 @@ schema.form = {
   },
   csvDelimiter: {
     type: 'OibSelect',
+    label: 'CSV delimiter',
     newRow: false,
     options: [',', ';'],
     md: 3,
@@ -148,7 +151,7 @@ schema.form = {
       </>
     ),
   },
-  proxy: { type: 'OibProxy' },
+  proxy: { type: 'OibProxy', label: 'Proxy' },
 }
 schema.category = 'API'
 export default schema
