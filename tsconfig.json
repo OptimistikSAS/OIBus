@@ -9,6 +9,6 @@
     "target": "es5",
     "outDir": "./build/backend"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "src/frontend", "**/*.spec.js", "**/*.test.js", "**/*.d.ts"]
+  "include": ["src/**/*", "node_modules/nanoid/**/*"],
+  "exclude": ["src/frontend", "**/*.spec.js", "**/*.test.js", "**/*.d.ts"]
 }
