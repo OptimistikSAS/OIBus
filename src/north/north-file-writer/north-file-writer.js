@@ -2,12 +2,13 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import NorthConnector from '../north-connector.js'
+import manifest from './manifest.js'
 
 /**
  * Class NorthFileWriter - Write file in an output folder. Values are stored in JSON files
  */
 export default class NorthFileWriter extends NorthConnector {
-  static category = 'FileIn'
+  static category = manifest.category
 
   /**
    * Constructor for NorthFileWriter
@@ -26,9 +27,8 @@ export default class NorthFileWriter extends NorthConnector {
       configuration,
       proxies,
       logger,
+      manifest,
     )
-    this.canHandleValues = true
-    this.canHandleFiles = true
 
     const { outputFolder, prefixFileName, suffixFileName } = configuration.settings
     this.outputFolder = path.resolve(outputFolder)

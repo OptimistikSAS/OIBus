@@ -1,6 +1,7 @@
 import React from 'react'
+import manifest from './manifest.js'
 
-const schema = { name: 'Console' }
+const schema = { ...manifest }
 schema.form = {
   ConsoleSettings: {
     type: 'OibTitle',
@@ -22,5 +23,4 @@ schema.form = {
     defaultValue: false,
   },
 }
-schema.category = 'Debug'
 export default schema

@@ -1,7 +1,8 @@
 import React from 'react'
 import { notEmpty, isHost, inRange, minValue, hasLengthBetween, optional } from '../../service/validation.service.js'
+import manifest from './manifest.js'
 
-const schema = { name: 'SQL' }
+const schema = { ...manifest }
 schema.form = {
   SQLSettings: {
     type: 'OibTitle',
@@ -277,7 +278,6 @@ schema.form = {
     md: 2,
   },
 }
-
 schema.withDriver = (driver) => {
   schema.form.domain.hidden = driver !== 'mssql'
   schema.form.databasePath.hidden = driver !== 'sqlite'
@@ -290,7 +290,5 @@ schema.withDriver = (driver) => {
   schema.form.connectionTimeout.hidden = driver === 'sqlite'
   return schema
 }
-
-schema.category = 'DatabaseOut'
 
 export default schema

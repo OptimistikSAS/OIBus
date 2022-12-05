@@ -134,8 +134,6 @@ describe('SouthRest', () => {
     expect(south.acceptSelfSigned).toEqual(configuration.settings.acceptSelfSigned)
     expect(south.payloadParser).toEqual(configuration.settings.payloadParser)
     expect(south.convertToCsv).toEqual(configuration.settings.convertToCsv)
-    expect(south.canHandleHistory).toEqual(true)
-    expect(south.handlesFiles).toEqual(true)
 
     await south.connect()
     expect(south.lastCompletedAt[configuration.scanMode]).toEqual(new Date('2020-02-02T02:02:02.222Z'))

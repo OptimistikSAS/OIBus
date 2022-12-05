@@ -1,8 +1,9 @@
 import React from 'react'
 import { notEmpty, inRange, isPath, minValue, isHost } from '../../service/validation.service.js'
 import validation from '../../frontend/south/form/south.validation.js'
+import manifest from './manifest.js'
 
-const schema = { name: 'OPCHDA' }
+const schema = { ...manifest }
 schema.form = {
   AgentSection: {
     type: 'OibTitle',
@@ -617,7 +618,6 @@ schema.form = {
     md: 6,
   },
 }
-
 schema.points = {
   pointId: {
     type: 'OibText',
@@ -648,7 +648,5 @@ schema.points = {
     ),
   },
 }
-
-schema.category = 'IoT'
 
 export default schema

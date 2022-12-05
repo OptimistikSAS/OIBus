@@ -83,8 +83,8 @@ describe('North TimescaleDB', () => {
     await north.start('baseFolder', 'oibusName')
     await north.connect()
 
-    expect(north.canHandleValues).toBeTruthy()
-    expect(north.canHandleFiles).toBeFalsy()
+    expect(north.manifest.modes.points).toBeTruthy()
+    expect(north.manifest.modes.files).toBeFalsy()
 
     expect(north.logger.info).toHaveBeenCalledWith('North connector "timescale" of type TimescaleDB '
         + 'started with url: postgres://anyuser:anypass@anyhost/anydb.')

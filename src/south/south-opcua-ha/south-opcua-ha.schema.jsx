@@ -1,8 +1,9 @@
 import React from 'react'
 import { notEmpty, minValue, optional } from '../../service/validation.service.js'
 import validation from '../../frontend/south/form/south.validation.js'
+import manifest from './manifest.js'
 
-const schema = { name: 'OPCUA_HA' }
+const schema = { ...manifest }
 schema.form = {
   opcuaNetworkSettings: {
     type: 'OibTitle',
@@ -215,7 +216,6 @@ schema.form = {
     md: 6,
   },
 }
-
 schema.points = {
   pointId: {
     type: 'OibText',
@@ -246,6 +246,5 @@ schema.points = {
     ),
   },
 }
-schema.category = 'IoT'
 
 export default schema

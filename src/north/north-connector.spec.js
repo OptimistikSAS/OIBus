@@ -28,6 +28,14 @@ const logger = {
 const nowDateString = '2020-02-02T02:02:02.222Z'
 let configuration = null
 let north = null
+const manifest = {
+  name: 'north',
+  category: 'Debug',
+  modes: {
+    files: false,
+    points: true,
+  },
+}
 
 describe('NorthConnector', () => {
   beforeEach(async () => {
@@ -51,7 +59,7 @@ describe('NorthConnector', () => {
         },
       },
     }
-    north = new NorthConnector(configuration, [{ name: 'proxyTest' }], logger)
+    north = new NorthConnector(configuration, [{ name: 'proxyTest' }], logger, manifest)
     await north.start('baseFolder', 'oibusName')
   })
 
@@ -61,17 +69,9 @@ describe('NorthConnector', () => {
 
   it('should be properly initialized', async () => {
     expect(north.connected).toBeFalsy()
-    expect(north.canHandleValues).toBeFalsy()
-    expect(north.canHandleFiles).toBeFalsy()
-    expect(north.statusService.updateStatusDataStream).toHaveBeenCalledWith({})
-
-    north.canHandleFiles = true
-    north.canHandleValues = true
-    await north.start('baseFolder', 'oibusName', {})
-    expect(north.statusService.updateStatusDataStream).toHaveBeenCalledWith({
-      'Number of values sent since OIBus has started': 0,
-      'Number of files sent since OIBus has started': 0,
-    })
+    expect(north.manifest.modes.points).toBeTruthy()
+    expect(north.manifest.modes.files).toBeFalsy()
+    expect(north.statusService.updateStatusDataStream).toHaveBeenCalledWith({ 'Number of values sent since OIBus has started': 0 })
 
     await north.connect()
     expect(north.connected).toBeTruthy()

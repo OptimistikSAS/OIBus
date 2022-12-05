@@ -3,12 +3,13 @@ import { DateTime } from 'luxon'
 
 import SouthConnector from '../south-connector.js'
 import formatValue from './utils.js'
+import manifest from './manifest.js'
 
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
  */
 export default class SouthMQTT extends SouthConnector {
-  static category = 'IoT'
+  static category = manifest.category
 
   /**
    * Constructor for SouthMQTT
@@ -30,12 +31,7 @@ export default class SouthMQTT extends SouthConnector {
       engineAddValuesCallback,
       engineAddFilesCallback,
       logger,
-      {
-        supportListen: true,
-        supportLastPoint: false,
-        supportFile: false,
-        supportHistory: false,
-      },
+      manifest,
     )
 
     const {

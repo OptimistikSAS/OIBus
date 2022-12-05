@@ -1,7 +1,8 @@
 import React from 'react'
 import { notEmpty, minValue } from '../../service/validation.service.js'
+import manifest from './manifest.js'
 
-const schema = { name: 'FolderScanner' }
+const schema = { ...manifest }
 schema.form = {
   FolderScannerSettings: {
     type: 'OibTitle',
@@ -82,7 +83,4 @@ schema.form = {
   },
 }
 
-schema.points = null
-
-schema.category = 'FileOut'
 export default schema

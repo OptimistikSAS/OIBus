@@ -1,7 +1,8 @@
 import React from 'react'
 import { notEmpty, hasLengthBetween } from '../../service/validation.service.js'
+import manifest from './manifest.js'
 
-const schema = { name: 'FileWriter' }
+const schema = { ...manifest }
 schema.form = {
   FileWriterSettings: {
     type: 'OibTitle',
@@ -35,5 +36,4 @@ schema.form = {
     valid: hasLengthBetween(0, 256),
   },
 }
-schema.category = 'FileIn'
 export default schema

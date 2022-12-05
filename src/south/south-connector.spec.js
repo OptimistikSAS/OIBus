@@ -34,6 +34,16 @@ jest.mock('../service/encryption.service', () => ({ getInstance: () => ({ decryp
 const nowDateString = '2020-02-02T02:02:02.222Z'
 let configuration = null
 let south = null
+const manifest = {
+  name: 'south',
+  category: 'Debug',
+  modes: {
+    subscription: false,
+    lastPoint: false,
+    file: false,
+    history: false,
+  },
+}
 
 describe('SouthConnector', () => {
   beforeEach(async () => {
@@ -41,16 +51,16 @@ describe('SouthConnector', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString))
 
     configuration = { id: 'id', name: 'south', type: 'test', settings: {} }
-    south = new SouthConnector(configuration, addValues, addFiles, logger)
+    south = new SouthConnector(configuration, addValues, addFiles, logger, manifest)
     await south.start('baseFolder', 'oibusName')
   })
 
   it('should be properly initialized without support, without scan mode', async () => {
     expect(south.connected).toBeFalsy()
-    expect(south.handlesPoints).toBeFalsy()
-    expect(south.handlesFiles).toBeFalsy()
-    expect(south.statusService.updateStatusDataStream).toHaveBeenCalledWith({})
-    expect(south.statusService.updateStatusDataStream).toHaveBeenCalledWith({})
+    expect(south.manifest.modes.subscription).toEqual(manifest.modes.subscription)
+    expect(south.manifest.modes.lastPoint).toEqual(manifest.modes.lastPoint)
+    expect(south.manifest.modes.file).toEqual(manifest.modes.file)
+    expect(south.manifest.modes.history).toEqual(manifest.modes.history)
     expect(south.logger.error('SouthConnector should support at least 1 operation mode.'))
     expect(south.logger.error).toHaveBeenCalledWith('Scan mode or scan groups for South "south" are not defined.'
         + 'This South connector will not work.')
@@ -59,13 +69,11 @@ describe('SouthConnector', () => {
   })
 
   it('should be properly initialized with support, without handlers and with scan mode', async () => {
-    south.handlesPoints = true
-    south.handlesFiles = true
-    south.supportedModes = {
-      supportListen: true,
-      supportLastPoint: true,
-      supportFile: true,
-      supportHistory: true,
+    south.manifest.modes = {
+      subscription: true,
+      lastPoint: true,
+      file: true,
+      history: true,
     }
     south.scanMode = 'scanModeTest'
 
@@ -300,7 +308,9 @@ describe('SouthConnector', () => {
     south.historyQueryHandler = jest.fn()
     south.lastPointQuery = jest.fn()
     south.fileQuery = jest.fn()
-    south.supportedModes = { supportHistory: true, supportFile: true, supportLastPoint: true }
+    south.manifest.modes.file = true
+    south.manifest.modes.lastPoint = true
+    south.manifest.modes.history = true
     south.ignoredReadsCounters.scanModeTest = 0
     south.currentlyOnScan.scanModeTest = 0
     south.scanGroups = [{ scanMode: 'scanModeTest', points: [{}] }]
@@ -319,7 +329,9 @@ describe('SouthConnector', () => {
     expect(south.historyQueryHandler).toHaveBeenCalledTimes(1)
 
     jest.clearAllMocks()
-    south.supportedModes = { supportHistory: false, supportFile: false, supportLastPoint: true }
+    south.manifest.modes.file = false
+    south.manifest.modes.lastPoint = true
+    south.manifest.modes.history = false
     await south.onScan('scanModeTest')
 
     expect(south.lastPointQuery).toHaveBeenCalledTimes(1)
@@ -344,7 +356,9 @@ describe('SouthConnector', () => {
   it('should ignore if scan mode not found in scan groups', async () => {
     south.scanMode = 'scanModeTest'
     south.historyQueryHandler = jest.fn()
-    south.supportedModes = { supportHistory: true }
+    south.manifest.modes.history = true
+    south.manifest.modes.lastPoint = false
+    south.manifest.modes.file = false
     south.ignoredReadsCounters.scanModeTest = 0
     south.currentlyOnScan.scanModeTest = 0
     south.scanGroups = [{ scanMode: 'anotherScanMode' }]
@@ -368,7 +382,7 @@ describe('SouthConnector', () => {
     south.lastPointQuery = jest.fn(() => {
       throw new Error('last point query error')
     })
-    south.supportedModes = { supportLastPoint: true }
+    south.manifest.modes.lastPoint = true
     south.ignoredReadsCounters.scanModeTest = 0
     south.currentlyOnScan.scanModeTest = 0
 

@@ -1,5 +1,6 @@
 import React from 'react'
 import { inRange, optional, notEmpty, minValue } from '../../service/validation.service.js'
+import manifest from './manifest.js'
 
 // eslint-disable-next-line max-len
 const adsNetId = /^\s*((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))\s*$/
@@ -7,7 +8,7 @@ const isAdsNetId = (name = 'Value') => (val) => (
   adsNetId.test(val) ? null : `${name} should be a valid ads net ip`
 )
 
-const schema = { name: 'ADS' }
+const schema = { ...manifest }
 schema.form = {
   AdsSettings: {
     type: 'OibTitle',
@@ -189,7 +190,6 @@ schema.form = {
     },
   },
 }
-
 schema.points = {
   pointId: {
     type: 'OibText',
@@ -202,6 +202,5 @@ schema.points = {
     label: 'Scan Mode',
   },
 }
-schema.category = 'IoT'
 
 export default schema

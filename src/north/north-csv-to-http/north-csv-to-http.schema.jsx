@@ -1,8 +1,8 @@
 import React from 'react'
 import { notEmpty, inRange } from '../../service/validation.service.js'
+import manifest from './manifest.js'
 
-const schema = { name: 'CsvToHttp' }
-
+const schema = { ...manifest }
 schema.form = {
   WebParameters: {
     type: 'OibTitle',
@@ -153,5 +153,4 @@ schema.form = {
   },
   proxy: { type: 'OibProxy', label: 'Proxy' },
 }
-schema.category = 'API'
 export default schema

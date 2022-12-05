@@ -3,12 +3,13 @@ import path from 'node:path'
 
 import SouthConnector from '../south-connector.js'
 import { compress } from '../../service/utils.js'
+import manifest from './manifest.js'
 
 /**
  * Class SouthFolderScanner - Retrieve file from a local or remote folder
  */
 export default class SouthFolderScanner extends SouthConnector {
-  static category = 'FileOut'
+  static category = manifest.category
 
   /**
    * Constructor for SouthFolderScanner
@@ -30,14 +31,8 @@ export default class SouthFolderScanner extends SouthConnector {
       engineAddValuesCallback,
       engineAddFilesCallback,
       logger,
-      {
-        supportListen: false,
-        supportLastPoint: false,
-        supportFile: true,
-        supportHistory: false,
-      },
+      manifest,
     )
-    this.handlesFiles = true
 
     const {
       inputFolder,
