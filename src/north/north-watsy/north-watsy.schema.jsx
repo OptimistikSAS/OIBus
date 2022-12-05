@@ -5,7 +5,7 @@ const schema = { name: 'WATSYConnect' }
 schema.form = {
   WATSYConnectParameters: {
     type: 'OibTitle',
-    label: 'WATSY Parameters',
+    label: 'WATSY Settings',
     children: (
       <div>
         <ul>
@@ -50,22 +50,26 @@ schema.form = {
   },
   MQTTUrl: {
     type: 'OibLink',
+    label: 'MQTT URL',
     protocols: ['mqtt', 'mqtts'],
     defaultValue: '',
   },
   port: {
     type: 'OibInteger',
+    label: 'Port',
     newRow: false,
     valid: inRange(1, 65535),
     defaultValue: 1883,
   },
   username: {
     type: 'OibText',
+    label: 'Username',
     valid: notEmpty(),
     defaultValue: '',
   },
   password: {
     type: 'OibPassword',
+    label: 'Password',
     newRow: false,
     valid: hasLengthBetween(0, 256),
     defaultValue: '',
@@ -90,6 +94,7 @@ schema.form = {
   },
   applicativeHostUrl: {
     type: 'OibLink',
+    label: 'Applicative Host URL',
     protocols: ['http', 'https'],
     defaultValue: '',
   },

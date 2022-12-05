@@ -3,9 +3,9 @@ import { notEmpty, hasLengthBetween } from '../../service/validation.service.js'
 
 const schema = { name: 'FileWriter' }
 schema.form = {
-  OIConnectSettings: {
+  FileWriterSettings: {
     type: 'OibTitle',
-    label: 'OIFileWriter settings',
+    label: 'FileWriter Settings',
     md: 12,
     children: (
       <p>
@@ -15,18 +15,21 @@ schema.form = {
   },
   outputFolder: {
     type: 'OibText',
+    label: 'Output folder',
     valid: notEmpty(),
     defaultValue: './output',
     help: <div>Path to the output folder</div>,
   },
   prefixFileName: {
     type: 'OibText',
+    label: 'Prefix',
     defaultValue: '',
     help: <div>A prefix for the filename</div>,
     valid: hasLengthBetween(0, 256),
   },
   suffixFileName: {
     type: 'OibText',
+    label: 'Suffix',
     defaultValue: '',
     help: <div>A suffix for the filename</div>,
     valid: hasLengthBetween(0, 256),

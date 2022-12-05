@@ -75,7 +75,7 @@ const Engine = () => {
           <Col md={3}>
             <OibText
               name="engine.user"
-              label="Admin user name"
+              label="Admin username"
               value={newConfig.engine.user}
               valid={validation.engine.user}
               defaultValue="admin"

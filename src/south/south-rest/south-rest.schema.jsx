@@ -15,12 +15,14 @@ schema.form = {
   },
   protocol: {
     type: 'OibSelect',
+    label: 'Protocol',
     options: ['http', 'https'],
     md: 1,
     defaultValue: 'http',
   },
   requestMethod: {
     type: 'OibSelect',
+    label: 'Request Method',
     newRow: false,
     options: ['GET', 'POST', 'PUT', 'PATCH'],
     md: 1,
@@ -28,6 +30,7 @@ schema.form = {
   },
   host: {
     type: 'OibText',
+    label: 'Host',
     newRow: false,
     md: 4,
     defaultValue: 'localhost',
@@ -36,6 +39,7 @@ schema.form = {
   },
   port: {
     type: 'OibInteger',
+    label: 'Port',
     newRow: false,
     md: 1,
     valid: inRange(0, 65535),
@@ -44,15 +48,16 @@ schema.form = {
   },
   endpoint: {
     type: 'OibText',
+    label: 'Endpoint',
     newRow: false,
     md: 4,
     valid: startsWith('/'),
     help: <div>Endpoint to request</div>,
   },
-  authentication: { type: 'OibAuthentication' },
+  authentication: { type: 'OibAuthentication', label: 'Authentication' },
   acceptSelfSigned: {
     type: 'OibCheckbox',
-    label: 'Accept rejected certificates ?',
+    label: 'Accept rejected certificates?',
     md: 2,
     defaultValue: false,
   },
@@ -150,6 +155,7 @@ schema.form = {
     md: 6,
     newRow: false,
     type: 'OibTextArea',
+    label: 'Body',
     contentType: 'json',
     defaultValue: '',
     valid: optional(),
@@ -157,6 +163,7 @@ schema.form = {
   },
   variableDateFormat: {
     type: 'OibSelect',
+    label: 'Variable Date Format',
     options: ['ISO', 'number'],
     md: 1,
     defaultValue: 'ISO',
@@ -194,18 +201,20 @@ schema.form = {
   },
   payloadParser: {
     type: 'OibSelect',
+    label: 'Payload parser',
     options: ['Raw', 'OIAnalytics time values', 'SLIMS'],
     md: 2,
     defaultValue: 'Raw',
   },
   convertToCsv: {
     type: 'OibCheckbox',
-    label: 'Convert payload into CSV ?',
+    label: 'Convert payload into CSV?',
     md: 2,
     defaultValue: true,
   },
   delimiter: {
     type: 'OibText',
+    label: 'Delimiter',
     newRow: false,
     defaultValue: ',',
     valid: notEmpty(),
@@ -214,6 +223,7 @@ schema.form = {
   },
   fileName: {
     type: 'OibText',
+    label: 'Filename',
     defaultValue: '@ConnectorName-results_@CurrentDate-@QueryPart.csv',
     valid: notEmpty(),
     help: <div>The name of the CSV file containing the results</div>,

@@ -11,6 +11,7 @@ const schema = { name: 'ADS' }
 schema.form = {
   AdsSettings: {
     type: 'OibTitle',
+    label: 'ADS Settings',
     children: (
       <div>
         <p>
@@ -41,12 +42,14 @@ schema.form = {
   },
   netId: {
     type: 'OibText',
+    label: 'Net ID',
     defaultValue: '127.0.0.1.1.1',
     valid: isAdsNetId(),
     help: <div>The ADS net id of the PLC</div>,
   },
   port: {
     type: 'OibInteger',
+    label: 'Port',
     newRow: false,
     valid: inRange(1, 65535),
     defaultValue: 851,
@@ -55,11 +58,13 @@ schema.form = {
 
   routerAddress: {
     type: 'OibText',
+    label: 'Router address',
     valid: optional(),
     help: <div>The IP address where the AMS router is</div>,
   },
   routerTcpPort: {
     type: 'OibInteger',
+    label: 'Router TCP port',
     newRow: false,
     valid: optional(),
     defaultValue: '',
@@ -68,11 +73,13 @@ schema.form = {
 
   clientAmsNetId: {
     type: 'OibText',
+    label: 'AMS Net ID',
     valid: optional(),
-    help: <div>The AMS net id set to this client from the AMS router settings</div>,
+    help: <div>The AMS Net ID set to this client from the AMS router settings</div>,
   },
   clientAdsPort: {
     type: 'OibInteger',
+    label: 'ADS Client port',
     newRow: false,
     valid: optional(),
     defaultValue: '',
@@ -81,15 +88,16 @@ schema.form = {
 
   retryInterval: {
     type: 'OibInteger',
+    label: 'Retry interval (ms)',
     newRow: true,
     md: 2,
     valid: minValue(1000),
     defaultValue: 10000,
-    help: <div>Retry Interval (ms)</div>,
   },
 
   AdsDataSettings: {
     type: 'OibTitle',
+    label: 'ADS Data Settings',
     children: (
       <div>
         <ul>
@@ -132,6 +140,7 @@ schema.form = {
   },
   plcName: {
     type: 'OibText',
+    label: 'PLC name',
     defaultValue: '',
     valid: optional(),
     help: <div>The name of the PLC that will be added to the points ID as prefix.</div>,
@@ -151,6 +160,7 @@ schema.form = {
   },
   AdsStructures: {
     type: 'OibTitle',
+    label: 'ADS structures',
     children: (
       <div>
         Only specified structures will be taken into account. To take all fields of a structure, you can use the wildcard *.
@@ -183,6 +193,7 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OibText',
+    label: 'Point ID',
     valid: notEmpty(),
     defaultValue: '',
   },

@@ -5,6 +5,7 @@ const schema = { name: 'MQTT' }
 schema.form = {
   MqttSettings: {
     type: 'OibTitle',
+    label: 'MQTT Settings',
     children: (
       <div>
         <ul>
@@ -77,11 +78,13 @@ schema.form = {
   url: {
     type: 'OibLink',
     protocols: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'],
+    label: 'URL',
     defaultValue: '',
     help: <div>The URL of the MQTT server. The protocol should be one of mqtt, mqtts, tcp, tls, ws, wss</div>,
   },
   qos: {
     type: 'OibSelect',
+    label: 'QoS',
     newRow: false,
     md: 1,
     options: [0, 1, 2],
@@ -89,17 +92,20 @@ schema.form = {
   },
   persistent: {
     type: 'OibCheckbox',
+    label: 'Persistent',
     md: 1,
     newRow: false,
     defaultValue: false,
   },
   username: {
     type: 'OibText',
+    label: 'Username',
     valid: optional(),
     defaultValue: '',
   },
   password: {
     type: 'OibPassword',
+    label: 'Password',
     newRow: false,
     valid: optional(),
     defaultValue: '',
@@ -134,7 +140,7 @@ schema.form = {
   },
   keepalive: {
     type: 'OibInteger',
-    label: 'Keep Alive Interval',
+    label: 'Keep Alive Interval (ms)',
     valid: minValue(0),
     defaultValue: 60000,
   },
@@ -154,6 +160,7 @@ schema.form = {
   },
   MqttPayload: {
     type: 'OibTitle',
+    label: 'MQTT Payload',
     children: (
       <div>
         <ul>
@@ -186,27 +193,32 @@ schema.form = {
   },
   dataArrayPath: {
     type: 'OibText',
+    label: 'Data array path',
     valid: optional(),
   },
   valuePath: {
     type: 'OibText',
+    label: 'Value path',
     defaultValue: 'value',
     valid: notEmpty(),
   },
   pointIdPath: {
     type: 'OibText',
+    label: 'Point ID path',
     defaultValue: '',
     newRow: false,
     valid: optional(),
   },
   qualityPath: {
     type: 'OibText',
+    label: 'Quality path',
     defaultValue: 'quality',
     newRow: false,
     valid: notEmpty(),
   },
   timestampSettings: {
     type: 'OibTitle',
+    label: 'Timestamp settings',
     children: (
       <div>
         <p>These parameters describe how to determine the timeStamp</p>
@@ -243,23 +255,27 @@ schema.form = {
   },
   timestampOrigin: {
     type: 'OibSelect',
+    label: 'Timestamp origin',
     options: ['payload', 'oibus'],
     defaultValue: 'oibus',
   },
   timestampPath: {
     type: 'OibText',
+    label: 'Timestamp path',
     newRow: false,
     valid: notEmpty(),
     defaultValue: 'timestamp',
   },
   timestampFormat: {
     type: 'OibText',
+    label: 'Timestamp format',
     newRow: false,
     valid: notEmpty(),
     defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
   },
   timestampTimezone: {
     type: 'OibTimezone',
+    label: 'Timestamp timezone',
     newRow: false,
     md: 2,
   },
@@ -268,6 +284,7 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OibText',
+    label: 'Point ID',
     valid: notEmpty(),
     unique: true,
     defaultValue: '',
@@ -294,6 +311,7 @@ schema.points = {
   },
   topic: {
     type: 'OibText',
+    label: 'Topic',
     defaultValue: '',
     valid: notEmpty(),
   },

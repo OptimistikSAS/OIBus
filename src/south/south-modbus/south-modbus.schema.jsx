@@ -11,6 +11,7 @@ const schema = { name: 'Modbus' }
 schema.form = {
   ModbusSettings: {
     type: 'OibTitle',
+    label: 'Modbus Settings',
     children: (
       <div>
         <p>The Modbus address scheme follows the Modicon Convention Notation.</p>
@@ -56,12 +57,14 @@ schema.form = {
   },
   host: {
     type: 'OibText',
+    label: 'Host',
     defaultValue: '127.0.0.1',
     valid: isHost(),
     help: <div>IP address of the Modbus source</div>,
   },
   port: {
     type: 'OibInteger',
+    label: 'Port',
     newRow: false,
     valid: inRange(1, 65535),
     defaultValue: 502,
@@ -69,6 +72,7 @@ schema.form = {
   },
   slaveId: {
     type: 'OibInteger',
+    label: 'Slave ID',
     newRow: false,
     valid: inRange(1, 255),
     defaultValue: 1,
@@ -76,11 +80,11 @@ schema.form = {
   },
   retryInterval: {
     type: 'OibInteger',
+    label: 'Retry Interval (ms)',
     newRow: true,
     md: 2,
     valid: minValue(1000),
     defaultValue: 10000,
-    help: <div>Retry Interval (ms)</div>,
   },
   addressOffset: {
     type: 'OibSelect',
@@ -119,12 +123,14 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OibText',
+    label: 'Point ID',
     valid: notEmpty(),
     defaultValue: '',
     help: <div>The id of the data. This id can then be used by another application where the data is sent by a north connector.</div>,
   },
   address: {
     type: 'OibText',
+    label: 'Address',
     defaultValue: '',
     valid: combinedValidations([isHexaOrDecimal(), notEmpty()]),
     help: (
@@ -137,14 +143,14 @@ schema.points = {
   modbusType: {
     type: 'OibSelect',
     options: ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'],
-    label: 'Modbus type',
+    label: 'Modbus Type',
     defaultValue: 'holdingRegister',
     help: <div>Modbus data type (Coil, DiscreteInput, InputRegister, HoldingRegister).</div>,
   },
   dataType: {
     type: 'OibSelect',
     options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'BigUInt64', 'BigInt64', 'Float', 'Double'],
-    label: 'Data type',
+    label: 'Data Type',
     defaultValue: 'UInt16',
     help: (
       <div>

@@ -6,6 +6,7 @@ const schema = { name: 'OPCUA_HA' }
 schema.form = {
   opcuaNetworkSettings: {
     type: 'OibTitle',
+    label: 'OPCUA Network Settings',
     children: (
       <>
         <p>
@@ -55,6 +56,7 @@ schema.form = {
   },
   url: {
     type: 'OibLink',
+    label: 'URL',
     protocols: ['http', 'opc.tcp'],
     defaultValue: 'opc.tcp://servername:port/endpoint',
     help: <div>The URL of the OPCUA server</div>,
@@ -62,6 +64,7 @@ schema.form = {
   },
   keepSessionAlive: {
     type: 'OibCheckbox',
+    label: 'Keep Session Alive',
     md: 1,
     newRow: false,
     defaultValue: false,
@@ -73,7 +76,6 @@ schema.form = {
     md: 2,
     valid: minValue(0),
     defaultValue: 180000,
-    help: <div>Read timeout (ms)</div>,
   },
   retryInterval: {
     type: 'OibInteger',
@@ -111,6 +113,7 @@ schema.form = {
   },
   opcuaSecuritySettings: {
     type: 'OibTitle',
+    label: 'OPCUA Security Settings',
     children: (
       <>
       </>
@@ -118,12 +121,14 @@ schema.form = {
   },
   username: {
     type: 'OibText',
+    label: 'Username',
     md: 2,
     valid: optional(),
     defaultValue: '',
   },
   password: {
     type: 'OibPassword',
+    label: 'Password',
     newRow: false,
     md: 2,
     valid: optional(),
@@ -131,6 +136,7 @@ schema.form = {
   },
   securityMode: {
     type: 'OibSelect',
+    label: 'Security Mode',
     newRow: false,
     md: 2,
     options: ['None', 'Sign', 'SignAndEncrypt'],
@@ -138,6 +144,7 @@ schema.form = {
   },
   securityPolicy: {
     type: 'OibSelect',
+    label: 'Security Policy',
     newRow: false,
     md: 2,
     options: [
@@ -172,7 +179,7 @@ schema.form = {
   },
   scanGroupsSection: {
     type: 'OibTitle',
-    label: 'ScanGroups',
+    label: 'Scan Groups',
     md: 12,
     children: (
       <p>
@@ -194,11 +201,13 @@ schema.form = {
       },
       aggregate: {
         type: 'OibSelect',
+        label: 'Aggregate',
         options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Count'],
         defaultValue: 'Raw',
       },
       resampling: {
         type: 'OibSelect',
+        label: 'Resampling',
         options: ['None', 'Second', '10 Seconds', '30 Seconds', 'Minute', 'Hour', 'Day'],
         defaultValue: 'None',
       },
@@ -210,6 +219,7 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OibText',
+    label: 'Point ID',
     valid: notEmpty(),
     defaultValue: '',
     unique: true,
@@ -217,6 +227,7 @@ schema.points = {
   },
   nodeId: {
     type: 'OibText',
+    label: 'Node ID',
     valid: notEmpty(),
     defaultValue: '',
     unique: true,

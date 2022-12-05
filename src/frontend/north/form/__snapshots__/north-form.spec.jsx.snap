@@ -135,7 +135,7 @@ exports[`NorthForm check NorthForm with North connector: TestConsole 1`] = `
             class="row"
           >
             <h5>
-              OIConsole settings
+              Console Settings
               <button
                 class="util-button mt-1 btn btn-link"
                 id="id"
@@ -327,7 +327,7 @@ exports[`NorthForm check NorthForm with North connector: TestConsole 1`] = `
               class="form-label"
               for="north.0.caching.timeout"
             >
-              Timeout (in s)
+              Timeout (s)
             </label>
             <input
               aria-invalid="false"
@@ -462,7 +462,7 @@ exports[`NorthForm check NorthForm with North connector: TestConsole 1`] = `
               class="form-label"
               for="north.0.caching.archive.retentionDuration"
             >
-              Retention duration
+              Retention duration (h)
             </label>
             <input
               aria-invalid="false"
@@ -739,7 +739,7 @@ exports[`NorthForm check NorthForm with empty North connector 1`] = `
             class="row"
           >
             <h5>
-              OIConsole settings
+              Console Settings
               <button
                 class="util-button mt-1 btn btn-link"
                 id="id"
@@ -919,7 +919,7 @@ exports[`NorthForm check NorthForm with empty North connector 1`] = `
               class="form-label"
               for="north.0.caching.timeout"
             >
-              Timeout (in s)
+              Timeout (s)
             </label>
             <input
               aria-invalid="false"

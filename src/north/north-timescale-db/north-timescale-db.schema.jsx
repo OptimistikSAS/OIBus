@@ -5,7 +5,7 @@ const schema = { name: 'TimescaleDB' }
 schema.form = {
   TimescaledbParameters: {
     type: 'OibTitle',
-    label: 'Timescale parameters',
+    label: 'TimescaleDB Settings',
     children: (
       <>
         <p>Send points data to Timescale Database</p>
@@ -17,17 +17,20 @@ schema.form = {
   },
   user: {
     type: 'OibText',
+    label: 'User',
     valid: notEmpty(),
     defaultValue: '',
   },
   password: {
     type: 'OibPassword',
+    label: 'Password',
     newRow: false,
     valid: hasLengthBetween(0, 256),
     defaultValue: '',
   },
   host: {
     type: 'OibText',
+    label: 'Host',
     valid: notEmpty(),
     defaultValue: '',
     help: <div>The host is only the postgresql server with port separated by &ldquo;:&ldquo; character (it not includes postgres:// protocol)</div>,
@@ -41,6 +44,7 @@ schema.form = {
   },
   pointIdParameters: {
     type: 'OibTitle',
+    label: 'Point ID parameters',
     children: (
       <>
         <p>Regexp will be used to identify token in the pointId that will be used to build the TimescaleDB query.</p>
@@ -56,6 +60,7 @@ schema.form = {
   },
   regExp: {
     type: 'OibText',
+    label: 'RegExp',
     valid: notEmpty(),
     defaultValue: '(.*)',
     help: (
@@ -67,11 +72,13 @@ schema.form = {
   },
   table: {
     type: 'OibText',
+    label: 'Table',
     valid: notEmpty(),
     defaultValue: '%1$s',
   },
   optFields: {
     type: 'OibText',
+    label: 'Optional fields',
     defaultValue: '',
     valid: hasLengthBetween(0, 256),
     newRow: false,
@@ -79,6 +86,7 @@ schema.form = {
   },
   timestampPathInDataValue: {
     type: 'OibText',
+    label: 'Timestamp path in data value',
     defaultValue: '',
     valid: optional(),
     newRow: false,
@@ -86,6 +94,7 @@ schema.form = {
   },
   valueParameters: {
     type: 'OibTitle',
+    label: 'Value parameters',
     children: (
       <>
         <p>data value to process by north connector is a Json object which contains :  </p>
@@ -141,12 +150,13 @@ schema.form = {
   useDataKeyValue: {
     type: 'OibCheckbox',
     valid: notEmpty(),
-    label: 'use key "value" of Json "data"',
+    label: 'Use key "value" of Json "data"',
     help: <div>When checked, means that the field &quot;value&quot; will be parsed as JSON object</div>,
     defaultValue: false,
   },
   keyParentValue: {
     type: 'OibText',
+    label: 'Key parent value',
     valid: optional(),
     defaultValue: '',
     help: <div>Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>,
