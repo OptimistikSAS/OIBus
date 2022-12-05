@@ -67,8 +67,8 @@ describe('NorthOIConnect', () => {
   })
 
   it('should be properly initialized', () => {
-    expect(north.canHandleFiles).toBeTruthy()
-    expect(north.canHandleFiles).toBeTruthy()
+    expect(north.manifest.modes.points).toBeTruthy()
+    expect(north.manifest.modes.files).toBeTruthy()
   })
 
   it('should properly handle values', async () => {

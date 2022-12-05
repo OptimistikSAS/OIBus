@@ -42,10 +42,10 @@ exports[`South Status display SouthStatus page based on config 1`] = `
       class="pull-right me-3"
     >
       <button
-        class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
-        disabled=""
+        class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+        type="button"
       >
-        File
+        Points (0)
       </button>
     </div>
   </div>
@@ -103,10 +103,10 @@ exports[`South Status go to previous page 1`] = `
       class="pull-right me-3"
     >
       <button
-        class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
-        disabled=""
+        class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+        type="button"
       >
-        File
+        Points (0)
       </button>
     </div>
   </div>

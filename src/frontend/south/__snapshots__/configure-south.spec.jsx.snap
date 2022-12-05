@@ -36,10 +36,10 @@ exports[`ConfigureSouth check ConfigureSouth 1`] = `
         Status
       </button>
       <button
-        class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
-        disabled=""
+        class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+        type="button"
       >
-        File
+        Points (0)
       </button>
     </div>
   </div>
@@ -475,10 +475,10 @@ exports[`ConfigureSouth check update 1`] = `
         Status
       </button>
       <button
-        class="inline-button autosize oi-points-button btn btn-secondary btn-sm disabled"
-        disabled=""
+        class="inline-button autosize oi-points-button btn btn-outline-secondary btn-sm"
+        type="button"
       >
-        File
+        Points (0)
       </button>
     </div>
   </div>

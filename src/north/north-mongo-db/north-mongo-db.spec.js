@@ -78,8 +78,8 @@ describe('NorthMongoDB', () => {
   it('should properly connect and disconnect', async () => {
     await north.start('baseFolder', 'oibusName')
 
-    expect(north.canHandleValues).toBeTruthy()
-    expect(north.canHandleFiles).toBeFalsy()
+    expect(north.manifest.modes.points).toBeTruthy()
+    expect(north.manifest.modes.files).toBeFalsy()
 
     const mongoDatabase = {
       listCollections: jest.fn(() => ({ toArray: jest.fn(() => ([{ name: 'collection1' }, { name: 'collection2' }])) })),

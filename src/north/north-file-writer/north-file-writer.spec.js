@@ -60,8 +60,8 @@ describe('NorthFileWriter', () => {
   })
 
   it('should be properly initialized', () => {
-    expect(north.canHandleFiles).toBeTruthy()
-    expect(north.canHandleValues).toBeTruthy()
+    expect(north.manifest.modes.points).toBeTruthy()
+    expect(north.manifest.modes.files).toBeTruthy()
     expect(north.prefixFileName).toBe('')
     expect(north.suffixFileName).toBe('')
     expect(north.outputFolder).toEqual(path.resolve(configuration.settings.outputFolder))

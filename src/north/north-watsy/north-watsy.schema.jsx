@@ -1,7 +1,8 @@
 import React from 'react'
 import { notEmpty, hasLengthBetween, inRange } from '../../service/validation.service.js'
+import manifest from './manifest.js'
 
-const schema = { name: 'WATSYConnect' }
+const schema = { ...manifest }
 schema.form = {
   WATSYConnectParameters: {
     type: 'OibTitle',
@@ -106,6 +107,5 @@ schema.form = {
     defaultValue: '',
   },
 }
-schema.category = 'API'
 
 export default schema

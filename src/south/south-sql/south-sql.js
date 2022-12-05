@@ -9,6 +9,7 @@ import { DateTime } from 'luxon'
 import humanizeDuration from 'humanize-duration'
 
 import SouthConnector from '../south-connector.js'
+import manifest from './manifest.js'
 import { generateCSV, getMostRecentDate, generateReplacementParameters } from './utils.js'
 import { replaceFilenameWithVariable, compress } from '../../service/utils.js'
 
@@ -23,7 +24,7 @@ let oracledb
  * - SQLite
  */
 export default class SouthSQL extends SouthConnector {
-  static category = 'DatabaseOut'
+  static category = manifest.category
 
   /**
    * Constructor for SouthSQL
@@ -45,15 +46,8 @@ export default class SouthSQL extends SouthConnector {
       engineAddValuesCallback,
       engineAddFilesCallback,
       logger,
-      {
-        supportListen: false,
-        supportLastPoint: false,
-        supportFile: false,
-        supportHistory: true,
-      },
+      manifest,
     )
-    this.canHandleHistory = true
-    this.handlesFiles = true
 
     const {
       driver,

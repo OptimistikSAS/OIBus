@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process'
 
+import manifest from './manifest.js'
 import SouthConnector from '../south-connector.js'
 import TcpServer from './tcp-server.js'
 import DeferredPromise from '../../service/deferred-promise.js'
@@ -13,7 +14,7 @@ const DISCONNECTION_TIMEOUT = 10000
  * and associated to this connector
  */
 export default class SouthOPCHDA extends SouthConnector {
-  static category = 'IoT'
+  static category = manifest.category
 
   /**
    * Constructor for SouthOPCHDA
@@ -35,15 +36,8 @@ export default class SouthOPCHDA extends SouthConnector {
       engineAddValuesCallback,
       engineAddFilesCallback,
       logger,
-      {
-        supportListen: false,
-        supportLastPoint: false,
-        supportFile: false,
-        supportHistory: true,
-      },
+      manifest,
     )
-    this.canHandleHistory = true
-    this.handlesPoints = true
 
     const {
       agentFilename,

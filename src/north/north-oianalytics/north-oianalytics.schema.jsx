@@ -2,8 +2,9 @@ import React from 'react'
 import { notEmpty, startsWith, combinedValidations } from '../../service/validation.service.js'
 import userpass from './userpass.png'
 import oiaApiKeyGen from './oia-api-key-gen.png'
+import manifest from './manifest.js'
 
-const schema = { name: 'OIAnalytics' }
+const schema = { ...manifest }
 schema.form = {
   OIAnalyticsSettings: {
     type: 'OibTitle',
@@ -61,6 +62,5 @@ schema.form = {
   },
   proxy: { type: 'OibProxy', label: 'Proxy' },
 }
-schema.category = 'Optimistik'
 
 export default schema

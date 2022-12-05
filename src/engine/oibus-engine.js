@@ -90,7 +90,7 @@ export default class OIBusEngine extends BaseEngine {
   async addValues(southId, values) {
     // Do not resolve promise if one of the connector fails. Otherwise, if a file is removed after a North fails,
     // the file can be lost.
-    await Promise.all(this.activeNorths.filter((north) => north.canHandleValues && north.isSubscribed(southId))
+    await Promise.all(this.activeNorths.filter((north) => north.manifest.modes.points && north.isSubscribed(southId))
       .map((north) => north.cacheValues(values)))
   }
 
@@ -106,7 +106,7 @@ export default class OIBusEngine extends BaseEngine {
     try {
       // Do not resolve promise if one of the connector fails. Otherwise, if a file is removed after a North fails,
       // the file can be lost.
-      await Promise.all(this.activeNorths.filter((north) => north.canHandleFiles && north.isSubscribed(southId))
+      await Promise.all(this.activeNorths.filter((north) => north.manifest.modes.files && north.isSubscribed(southId))
         .map((north) => north.cacheFile(filePath)))
 
       if (!preserveFiles) {
@@ -152,7 +152,7 @@ export default class OIBusEngine extends BaseEngine {
     await Promise.allSettled(this.activeNorths.map((north) => {
       const initAndConnect = async () => {
         try {
-          await north.start(this.cacheFolder, this.oibusName, this.defaultLogParameters)
+          await north.start(this.cacheFolder, this.oibusName)
           await north.connect()
         } catch (error) {
           this.logger.error(error)
@@ -202,7 +202,7 @@ export default class OIBusEngine extends BaseEngine {
     await Promise.allSettled(this.activeSouths.map((south) => {
       const initAndConnect = async () => {
         try {
-          await south.start(this.cacheFolder, this.oibusName, this.defaultLogParameters)
+          await south.start(this.cacheFolder, this.oibusName)
           await south.connect()
         } catch (error) {
           this.logger.error(error)
@@ -357,27 +357,19 @@ export default class OIBusEngine extends BaseEngine {
     const northConnectorsStatus = {}
     this.activeNorths.forEach((activeNorthConnector) => {
       const northStatus = activeNorthConnector.statusService.getStatus()
-      if (activeNorthConnector.canHandleValues) {
-        northConnectorsStatus[`Number of values sent to North "${
-          activeNorthConnector.name}"`] = northStatus['Number of values sent since OIBus has started']
-      }
-      if (activeNorthConnector.canHandleFiles) {
-        northConnectorsStatus[`Number of files sent to North "${
-          activeNorthConnector.name}"`] = northStatus['Number of files sent since OIBus has started']
-      }
+      northConnectorsStatus[`Number of values sent to North "${
+        activeNorthConnector.name}"`] = northStatus['Number of values sent since OIBus has started']
+      northConnectorsStatus[`Number of files sent to North "${
+        activeNorthConnector.name}"`] = northStatus['Number of files sent since OIBus has started']
     })
 
     const southConnectorsStatus = {}
     this.activeSouths.forEach((activeSouthConnector) => {
       const southStatus = activeSouthConnector.statusService.getStatus()
-      if (activeSouthConnector.handlesPoints) {
-        southConnectorsStatus[`Number of values retrieved from South "${
-          activeSouthConnector.name}"`] = southStatus['Number of values since OIBus has started']
-      }
-      if (activeSouthConnector.handlesFiles) {
-        southConnectorsStatus[`Number of files retrieved from South "${
-          activeSouthConnector.name}"`] = southStatus['Number of files since OIBus has started']
-      }
+      southConnectorsStatus[`Number of values retrieved from South "${
+        activeSouthConnector.name}"`] = southStatus['Number of values since OIBus has started']
+      southConnectorsStatus[`Number of files retrieved from South "${
+        activeSouthConnector.name}"`] = southStatus['Number of files since OIBus has started']
     })
 
     this.statusService.updateStatusDataStream({

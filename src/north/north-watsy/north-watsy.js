@@ -2,6 +2,7 @@ import mqtt from 'mqtt'
 
 import NorthConnector from '../north-connector.js'
 import { initMQTTTopic, recursiveSplitMessages } from './utils.js'
+import manifest from './manifest.js'
 
 /**
  * Class NorthWATSY - Send MQTT messages for WATSY application
@@ -23,7 +24,7 @@ import { initMQTTTopic, recursiveSplitMessages } from './utils.js'
   }
  */
 export default class NorthWATSY extends NorthConnector {
-  static category = 'API'
+  static category = manifest.category
 
   /**
    * Constructor for NorthWATSY
@@ -42,8 +43,8 @@ export default class NorthWATSY extends NorthConnector {
       configuration,
       proxies,
       logger,
+      manifest,
     )
-    this.canHandleValues = true
 
     const {
       MQTTUrl,

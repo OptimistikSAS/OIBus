@@ -3,8 +3,9 @@ import path from 'node:path'
 
 import fetch from 'node-fetch'
 import https from 'https'
-
 import humanizeDuration from 'humanize-duration'
+
+import manifest from './manifest.js'
 import SouthConnector from '../south-connector.js'
 import { parsers, httpGetWithBody, formatQueryParams, generateCSV } from './utils.js'
 import { replaceFilenameWithVariable, compress } from '../../service/utils.js'
@@ -14,7 +15,7 @@ import { replaceFilenameWithVariable, compress } from '../../service/utils.js'
  * The results are parsed through the available parsers
  */
 export default class SouthRest extends SouthConnector {
-  static category = 'API'
+  static category = manifest.category
 
   /**
    * Constructor for SouthRest
@@ -36,16 +37,8 @@ export default class SouthRest extends SouthConnector {
       engineAddValuesCallback,
       engineAddFilesCallback,
       logger,
-      {
-        supportListen: false,
-        supportLastPoint: false,
-        supportFile: false,
-        supportHistory: true,
-      },
+      manifest,
     )
-
-    this.canHandleHistory = true
-    this.handlesFiles = true
 
     const {
       requestMethod,

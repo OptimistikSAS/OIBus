@@ -1,7 +1,8 @@
 import React from 'react'
 import { notEmpty, minValue, optional } from '../../service/validation.service.js'
+import manifest from './manifest.js'
 
-const schema = { name: 'OPCUA_DA' }
+const schema = { ...manifest }
 schema.form = {
   opcuaNetworkSettings: {
     type: 'OibTitle',
@@ -100,7 +101,6 @@ schema.form = {
     help: <div>OPCUA client private key (PEM format)</div>,
   },
 }
-
 schema.points = {
   pointId: {
     type: 'OibText',
@@ -124,6 +124,5 @@ schema.points = {
   },
   scanMode: { type: 'OibScanMode', label: 'Scan Mode' },
 }
-schema.category = 'IoT'
 
 export default schema

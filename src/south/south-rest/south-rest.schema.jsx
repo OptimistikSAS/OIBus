@@ -1,7 +1,8 @@
 import React from 'react'
 import { inRange, minValue, notEmpty, optional, startsWith } from '../../service/validation.service.js'
+import manifest from './manifest.js'
 
-const schema = { name: 'RestApi' }
+const schema = { ...manifest }
 schema.form = {
   RestApiSettings: {
     type: 'OibTitle',
@@ -237,7 +238,5 @@ schema.form = {
     defaultValue: false,
   },
 }
-
-schema.category = 'API'
 
 export default schema

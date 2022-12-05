@@ -1,5 +1,6 @@
 import NorthConnector from '../north-connector.js'
 import { httpSend, addAuthenticationToHeaders } from '../../service/http-request-static-functions.js'
+import manifest from './manifest.js'
 
 /**
  * Class NorthOIConnect - Send files through a POST Multipart HTTP request and values as JSON payload
@@ -9,7 +10,7 @@ import { httpSend, addAuthenticationToHeaders } from '../../service/http-request
  *  -values endpoint: /engine/addValues
  */
 export default class NorthOIConnect extends NorthConnector {
-  static category = 'Optimistik'
+  static category = manifest.category
 
   /**
    * Constructor for NorthOIConnect
@@ -28,9 +29,8 @@ export default class NorthOIConnect extends NorthConnector {
       configuration,
       proxies,
       logger,
+      manifest,
     )
-    this.canHandleValues = true
-    this.canHandleFiles = true
 
     const {
       host,

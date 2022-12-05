@@ -1,12 +1,13 @@
 import ads from 'ads-client'
 
+import manifest from './manifest.js'
 import SouthConnector from '../south-connector.js'
 
 /**
  * Class SouthADS - Provides instruction for TwinCAT ADS client connection
  */
 export default class SouthADS extends SouthConnector {
-  static category = 'IoT'
+  static category = manifest.category
 
   /**
    * Constructor for SouthADS
@@ -28,14 +29,8 @@ export default class SouthADS extends SouthConnector {
       engineAddValuesCallback,
       engineAddFilesCallback,
       logger,
-      {
-        supportListen: false,
-        supportLastPoint: true,
-        supportFile: false,
-        supportHistory: false,
-      },
+      manifest,
     )
-    this.handlesPoints = true
 
     const {
       netId,

@@ -1,7 +1,8 @@
 import React from 'react'
 import { notEmpty, optional } from '../../service/validation.service.js'
+import manifest from './manifest.js'
 
-const schema = { name: 'MQTT' }
+const schema = { ...manifest }
 schema.form = {
   MQTTParameters: {
     type: 'OibTitle',
@@ -227,6 +228,5 @@ schema.form = {
     help: <div>Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>,
   },
 }
-schema.category = 'IoT'
 
 export default schema

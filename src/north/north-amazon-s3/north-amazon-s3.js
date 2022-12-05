@@ -5,6 +5,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { NodeHttpHandler } from '@aws-sdk/node-http-handler'
 
 import NorthConnector from '../north-connector.js'
+import manifest from './manifest.js'
 
 /**
  * Get filename without timestamp from file path.
@@ -21,7 +22,7 @@ const getFilenameWithoutTimestamp = (filePath) => {
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
  */
 export default class NorthAmazonS3 extends NorthConnector {
-  static category = 'FileIn'
+  static category = manifest.category
 
   /**
    * Constructor for NorthAmazonS3
@@ -40,8 +41,8 @@ export default class NorthAmazonS3 extends NorthConnector {
       configuration,
       proxies,
       logger,
+      manifest,
     )
-    this.canHandleFiles = true
 
     const { bucket, folder, region, authentication, proxy } = configuration.settings
 

@@ -89,10 +89,8 @@ describe('NorthCsvToHttp', () => {
   })
 
   it('should be properly initialized', async () => {
-    await north.start('baseFolder', 'oibusName')
-
-    expect(north.canHandleValues).toBeFalsy()
-    expect(north.canHandleFiles).toBeTruthy()
+    expect(north.manifest.modes.points).toBeFalsy()
+    expect(north.manifest.modes.files).toBeTruthy()
   })
 
   it('should properly reject file if type is other than csv', async () => {

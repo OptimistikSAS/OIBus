@@ -54,8 +54,8 @@ describe('North Console', () => {
   })
 
   it('should be properly initialized', () => {
-    expect(north.canHandleFiles).toBeTruthy()
-    expect(north.canHandleValues).toBeTruthy()
+    expect(north.manifest.modes.points).toBeTruthy()
+    expect(north.manifest.modes.files).toBeTruthy()
     expect(north.verbose).toBeFalsy()
   })
 

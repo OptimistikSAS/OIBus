@@ -3,12 +3,13 @@ import { vsprintf } from 'sprintf-js'
 import objectPath from 'object-path'
 
 import NorthConnector from '../north-connector.js'
+import manifest from './manifest.js'
 
 /**
  * Class NorthMongoDB - Send data to MongoDB
  */
 export default class NorthMongoDB extends NorthConnector {
-  static category = 'DatabaseIn'
+  static category = manifest.category
 
   /**
    * Constructor for NorthMongoDB
@@ -27,8 +28,8 @@ export default class NorthMongoDB extends NorthConnector {
       configuration,
       proxies,
       logger,
+      manifest,
     )
-    this.canHandleValues = true
 
     const {
       host,

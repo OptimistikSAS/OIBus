@@ -108,7 +108,8 @@ describe('NorthAmazonS3', () => {
       requestHandler: null,
     })
     expect(S3Client).toHaveBeenCalledTimes(1)
-    expect(north.canHandleFiles).toBeTruthy()
+    expect(north.manifest.modes.points).toBeFalsy()
+    expect(north.manifest.modes.files).toBeTruthy()
   })
 
   it('should be properly initialized with a proxy', async () => {
@@ -145,7 +146,6 @@ describe('NorthAmazonS3', () => {
       },
       requestHandler: expectedAgent,
     })
-    expect(amazonS3WithProxy.canHandleFiles).toBeTruthy()
   })
 
   it('should be properly initialized with a proxy without authentication', async () => {
@@ -182,7 +182,6 @@ describe('NorthAmazonS3', () => {
       },
       requestHandler: expectedAgent,
     })
-    expect(amazonS3WithProxy.canHandleFiles).toBeTruthy()
   })
 
   it('should properly handle file', async () => {

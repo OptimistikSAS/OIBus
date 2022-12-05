@@ -1,7 +1,8 @@
 import React from 'react'
 import { notEmpty } from '../../service/validation.service.js'
+import manifest from './manifest.js'
 
-const schema = { name: 'OIConnect' }
+const schema = { ...manifest }
 schema.form = {
   OIConnectSettings: {
     type: 'OibTitle',
@@ -53,6 +54,5 @@ schema.form = {
   },
   proxy: { type: 'OibProxy', label: 'Proxy' },
 }
-schema.category = 'Optimistik'
 
 export default schema

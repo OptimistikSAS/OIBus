@@ -12,6 +12,7 @@ import {
 } from 'node-opcua-client'
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager'
 
+import manifest from './manifest.js'
 import SouthConnector from '../south-connector.js'
 import { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG } from '../../service/opcua.service.js'
 
@@ -19,7 +20,7 @@ import { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG } from '../../se
  * Class SouthOPCUAHA - Connect to an OPCUA server in HA (Historian Access) mode
  */
 export default class SouthOPCUAHA extends SouthConnector {
-  static category = 'IoT'
+  static category = manifest.category
 
   /**
    * Constructor for SouthOPCUAHA
@@ -41,15 +42,8 @@ export default class SouthOPCUAHA extends SouthConnector {
       engineAddValuesCallback,
       engineAddFilesCallback,
       logger,
-      {
-        supportListen: false,
-        supportLastPoint: false,
-        supportFile: false,
-        supportHistory: true,
-      },
+      manifest,
     )
-    this.canHandleHistory = true
-    this.handlesPoints = true
 
     const {
       url,
