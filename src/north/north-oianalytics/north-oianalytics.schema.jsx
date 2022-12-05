@@ -7,7 +7,7 @@ const schema = { name: 'OIAnalytics' }
 schema.form = {
   OIAnalyticsSettings: {
     type: 'OibTitle',
-    label: 'OIAnalytics settings',
+    label: 'OIAnalytics Settings',
     md: 12,
     children: (
       <>
@@ -39,17 +39,14 @@ schema.form = {
       </>
     ),
   },
-  hostSection: {
-    type: 'OibTitle',
-    label: 'Host',
-    help: <p>Host for OIAnalytics is https://_account_.oianalytics.fr</p>,
-  },
   host: {
     type: 'OibLink',
+    label: 'Host',
     valid: combinedValidations([notEmpty('Host'), startsWith('http', 'Host')]),
     defaultValue: '',
+    help: <p>Host for OIAnalytics is https://_account_.oianalytics.fr</p>,
   },
-  authentication: { type: 'OibAuthentication' },
+  authentication: { type: 'OibAuthentication', label: 'Authentication' },
   networkSection: {
     type: 'OibTitle',
     label: 'Network',
@@ -62,7 +59,7 @@ schema.form = {
       </>
     ),
   },
-  proxy: { type: 'OibProxy' },
+  proxy: { type: 'OibProxy', label: 'Proxy' },
 }
 schema.category = 'Optimistik'
 

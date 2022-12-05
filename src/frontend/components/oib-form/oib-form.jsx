@@ -1,7 +1,6 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Row, Col } from 'reactstrap'
-import humanizeString from 'humanize-string'
 
 import * as Controls from './index.js'
 import OibTable from './oib-table.jsx'
@@ -17,7 +16,7 @@ const OibForm = ({ schema, onChange, values, name: configName }) => {
       rows.push([])
       rowNum += 1
     }
-    if (!rest.label) rest.label = humanizeString(controlName)
+    if (!rest.label) rest.label = controlName
     rows[rowNum].push({ name: controlName, ...rest })
   })
   return rows.map((cols) => (

@@ -4,7 +4,7 @@ const schema = { name: 'Console' }
 schema.form = {
   ConsoleSettings: {
     type: 'OibTitle',
-    label: 'OIConsole settings',
+    label: 'Console Settings',
     md: 12,
     children: (
       <p>
@@ -16,6 +16,7 @@ schema.form = {
   },
   verbose: {
     type: 'OibCheckbox',
+    label: 'Verbose',
     md: 2,
     newRow: true,
     defaultValue: false,

@@ -5,6 +5,7 @@ const schema = { name: 'OPCUA_DA' }
 schema.form = {
   opcuaNetworkSettings: {
     type: 'OibTitle',
+    label: 'OPCUA Network Settings',
     children: (
       <p>
         <b>Retry interval:</b>
@@ -14,6 +15,7 @@ schema.form = {
   },
   url: {
     type: 'OibLink',
+    label: 'URL',
     protocols: ['http', 'opc.tcp'],
     defaultValue: 'opc.tcp://servername:port/endpoint',
     help: <div>The URL of the OPCUA server</div>,
@@ -21,19 +23,21 @@ schema.form = {
   },
   keepSessionAlive: {
     type: 'OibCheckbox',
+    label: 'Keep Session Alive',
     md: 1,
     newRow: false,
     defaultValue: false,
   },
   retryInterval: {
     type: 'OibInteger',
+    label: 'Retry interval (ms)',
     md: 2,
     valid: minValue(1000),
     defaultValue: 10000,
-    help: <div>Retry Interval (ms)</div>,
   },
   opcuaSecuritySettings: {
     type: 'OibTitle',
+    label: 'OPCUA Security Settings',
     children: (
       <>
       </>
@@ -41,12 +45,14 @@ schema.form = {
   },
   username: {
     type: 'OibText',
+    label: 'Username',
     md: 2,
     valid: optional(),
     defaultValue: '',
   },
   password: {
     type: 'OibPassword',
+    label: 'Password',
     newRow: false,
     md: 2,
     valid: optional(),
@@ -54,6 +60,7 @@ schema.form = {
   },
   securityMode: {
     type: 'OibSelect',
+    label: 'Security Mode',
     newRow: false,
     md: 2,
     options: ['None', 'Sign', 'SignAndEncrypt'],
@@ -61,6 +68,7 @@ schema.form = {
   },
   securityPolicy: {
     type: 'OibSelect',
+    label: 'Security Policy',
     newRow: false,
     md: 2,
     options: [
@@ -96,6 +104,7 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OibText',
+    label: 'Point ID',
     valid: notEmpty(),
     defaultValue: '',
     unique: true,
@@ -105,6 +114,7 @@ schema.points = {
   },
   nodeId: {
     type: 'OibText',
+    label: 'Node ID',
     valid: notEmpty(),
     defaultValue: '',
     unique: true,

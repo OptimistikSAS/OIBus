@@ -5,6 +5,7 @@ const schema = { name: 'MQTT' }
 schema.form = {
   MQTTParameters: {
     type: 'OibTitle',
+    label: 'MQTT Settings',
     children: (
       <div>
         <ul>
@@ -83,12 +84,14 @@ schema.form = {
   },
   url: {
     type: 'OibLink',
+    label: 'URL',
     protocols: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'],
     defaultValue: '',
     help: <div>The URL of the MQTT server. The protocol should be one of mqtt, mqtts, tcp, tls, ws, wss</div>,
   },
   qos: {
     type: 'OibSelect',
+    label: 'QoS',
     newRow: false,
     md: 1,
     options: [0, 1, 2],
@@ -96,11 +99,13 @@ schema.form = {
   },
   username: {
     type: 'OibText',
+    label: 'Username',
     valid: optional(),
     defaultValue: '',
   },
   password: {
     type: 'OibPassword',
+    label: 'Password',
     newRow: false,
     valid: optional,
     defaultValue: '',
@@ -135,6 +140,7 @@ schema.form = {
   },
   regExp: {
     type: 'OibText',
+    label: 'RegExp',
     valid: notEmpty(),
     defaultValue: '(.*)',
     help: (
@@ -146,12 +152,14 @@ schema.form = {
   },
   topic: {
     type: 'OibText',
+    label: 'Topic',
     valid: notEmpty(),
     defaultValue: '%1$s',
     help: <div>Topic value used to publish data to broker MQTT. Topic is based on PointId group part(s) split using Regexp (see help)</div>,
   },
   valueParameters: {
     type: 'OibTitle',
+    label: 'Value parameters',
     children: (
       <>
         <p>data value to process by north connector is a Json object which contains :  </p>
@@ -207,12 +215,13 @@ schema.form = {
   useDataKeyValue: {
     type: 'OibCheckbox',
     valid: notEmpty(),
-    label: 'use key "value" of Json "data"',
+    label: 'Use key "value" of Json "data"',
     help: <div>When checked, means that the field &quot;value&quot; will be parsed as JSON object</div>,
     defaultValue: false,
   },
   keyParentValue: {
     type: 'OibText',
+    label: 'Key parent value',
     valid: optional(),
     defaultValue: '',
     help: <div>Indicates which field of the JSON object contains the value (empty means the JSON &quot;data&quot; field is used)</div>,

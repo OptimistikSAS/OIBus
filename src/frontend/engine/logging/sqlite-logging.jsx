@@ -7,6 +7,7 @@ const schema = { name: 'SQLiteLogging' }
 schema.form = {
   level: {
     type: 'OibSelect',
+    label: 'Level',
     md: 3,
     options: ['trace', 'debug', 'info', 'warning', 'error', 'silent'],
     defaultValue: 'info',

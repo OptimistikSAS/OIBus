@@ -571,7 +571,7 @@ exports[`Logging check Logging 1`] = `
               class="form-label"
               for="engine.logParameters.lokiLog.interval"
             >
-              Interval
+              Interval (s)
             </label>
             <input
               aria-invalid="false"

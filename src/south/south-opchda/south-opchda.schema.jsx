@@ -464,6 +464,7 @@ schema.form = {
   },
   agentFilename: {
     type: 'OibText',
+    label: 'Agent file path',
     valid: isPath(),
     defaultValue: '\\HdaAgent\\HdaAgent.exe',
     help: <div>ex: c:\HdaAgent\HdaAgent.exe</div>,
@@ -523,11 +524,13 @@ schema.form = {
   },
   host: {
     type: 'OibText',
+    label: 'Host',
     valid: isHost(),
     help: <div>IP address or hostname of the HDA server</div>,
   },
   serverName: {
     type: 'OibText',
+    label: 'Server name',
     newRow: false,
     valid: notEmpty(),
     help: <div>HDA server (Matrikon.OPC.Simulation)</div>,
@@ -599,12 +602,14 @@ schema.form = {
       },
       aggregate: {
         type: 'OibSelect',
+        label: 'Aggregate',
         options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Start', 'End'],
         defaultValue: 'Raw',
         help: <div>Check that the aggregate is supported by the OPC Server</div>,
       },
       resampling: {
         type: 'OibSelect',
+        label: 'Resampling',
         options: ['None', 'Minute', 'Hour', 'Day'],
         defaultValue: 'None',
       },
@@ -616,6 +621,7 @@ schema.form = {
 schema.points = {
   pointId: {
     type: 'OibText',
+    label: 'Point ID',
     valid: notEmpty(),
     defaultValue: '',
     unique: true,
@@ -623,6 +629,7 @@ schema.points = {
   },
   nodeId: {
     type: 'OibText',
+    label: 'Node ID',
     valid: notEmpty(),
     defaultValue: '',
     unique: true,
@@ -630,6 +637,7 @@ schema.points = {
   },
   scanMode: {
     type: 'OibScanMode',
+    label: 'Scan mode',
     help: (
       <div>
         <ul>

@@ -118,7 +118,7 @@ exports[`SouthForm check SouthForm with empty south 1`] = `
             class="row"
           >
             <h5>
-              Mqtt settings
+              MQTT Settings
               <button
                 class="util-button mt-1 btn btn-link"
                 id="id"
@@ -303,7 +303,7 @@ exports[`SouthForm check SouthForm with empty south 1`] = `
               class="form-label"
               for="south.0.settings.keepalive"
             >
-              Keep Alive Interval
+              Keep Alive Interval (ms)
             </label>
             <input
               aria-invalid="false"
@@ -379,7 +379,7 @@ exports[`SouthForm check SouthForm with empty south 1`] = `
             class="row"
           >
             <h5>
-              Mqtt payload
+              MQTT Payload
               <button
                 class="util-button mt-1 btn btn-link"
                 id="id"

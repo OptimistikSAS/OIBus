@@ -150,7 +150,7 @@ exports[`Engine check Engine 1`] = `
               class="form-label"
               for="engine.user"
             >
-              Admin user name
+              Admin username
             </label>
             <input
               aria-invalid="false"
@@ -1058,7 +1058,7 @@ exports[`Engine check Engine 1`] = `
                   class="form-label"
                   for="engine.logParameters.lokiLog.interval"
                 >
-                  Interval
+                  Interval (s)
                 </label>
                 <input
                   aria-invalid="false"
@@ -3115,7 +3115,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
               class="form-label"
               for="engine.user"
             >
-              Admin user name
+              Admin username
             </label>
             <input
               aria-invalid="false"
@@ -4023,7 +4023,7 @@ exports[`Engine check Engine when config has no proxies 1`] = `
                   class="form-label"
                   for="engine.logParameters.lokiLog.interval"
                 >
-                  Interval
+                  Interval (s)
                 </label>
                 <input
                   aria-invalid="false"
@@ -5666,7 +5666,7 @@ exports[`Engine check change OIBus name 1`] = `
               class="form-label"
               for="engine.user"
             >
-              Admin user name
+              Admin username
             </label>
             <input
               aria-invalid="false"
@@ -6574,7 +6574,7 @@ exports[`Engine check change OIBus name 1`] = `
                   class="form-label"
                   for="engine.logParameters.lokiLog.interval"
                 >
-                  Interval
+                  Interval (s)
                 </label>
                 <input
                   aria-invalid="false"
@@ -8631,7 +8631,7 @@ exports[`Engine check change password 1`] = `
               class="form-label"
               for="engine.user"
             >
-              Admin user name
+              Admin username
             </label>
             <input
               aria-invalid="false"
@@ -9539,7 +9539,7 @@ exports[`Engine check change password 1`] = `
                   class="form-label"
                   for="engine.logParameters.lokiLog.interval"
                 >
-                  Interval
+                  Interval (s)
                 </label>
                 <input
                   aria-invalid="false"
@@ -11596,7 +11596,7 @@ exports[`Engine check change port 1`] = `
               class="form-label"
               for="engine.user"
             >
-              Admin user name
+              Admin username
             </label>
             <input
               aria-invalid="false"
@@ -12504,7 +12504,7 @@ exports[`Engine check change port 1`] = `
                   class="form-label"
                   for="engine.logParameters.lokiLog.interval"
                 >
-                  Interval
+                  Interval (s)
                 </label>
                 <input
                   aria-invalid="false"
@@ -14561,7 +14561,7 @@ exports[`Engine check change user 1`] = `
               class="form-label"
               for="engine.user"
             >
-              Admin user name
+              Admin username
             </label>
             <input
               aria-invalid="false"
@@ -15469,7 +15469,7 @@ exports[`Engine check change user 1`] = `
                   class="form-label"
                   for="engine.logParameters.lokiLog.interval"
                 >
-                  Interval
+                  Interval (s)
                 </label>
                 <input
                   aria-invalid="false"

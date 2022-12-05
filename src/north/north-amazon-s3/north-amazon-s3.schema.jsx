@@ -5,17 +5,19 @@ const schema = { name: 'CSV' }
 schema.form = {
   AmazonS3Settings: {
     type: 'OibTitle',
-    label: 'Amazon S3 settings',
+    label: 'Amazon S3 Settings',
     md: 12,
   },
   bucket: {
     type: 'OibText',
+    label: 'Bucket',
     md: 4,
     valid: notEmpty(),
     defaultValue: '',
   },
   region: {
     type: 'OibText',
+    label: 'Region',
     md: 4,
     newRow: false,
     valid: optional(),
@@ -23,6 +25,7 @@ schema.form = {
   },
   folder: {
     type: 'OibText',
+    label: 'Folder',
     md: 4,
     newRow: false,
     valid: notEmpty(),
@@ -30,6 +33,7 @@ schema.form = {
   },
   authentication: {
     type: 'OibAuthentication',
+    label: 'Authentication',
     mode: 'API Key',
   },
   networkSection: {
@@ -42,7 +46,7 @@ schema.form = {
       </>
     ),
   },
-  proxy: { type: 'OibProxy' },
+  proxy: { type: 'OibProxy', label: 'Proxy' },
 }
 schema.category = 'FileIn'
 

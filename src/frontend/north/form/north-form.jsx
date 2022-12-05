@@ -166,7 +166,7 @@ const NorthForm = ({ north, northIndex, onChange }) => {
                 defaultValue={30}
                 valid={validation.caching.timeout}
                 name={`${prefix}.caching.timeout`}
-                label="Timeout (in s)"
+                label="Timeout (s)"
               />
             </Col>
             <Col md="3">
@@ -216,7 +216,7 @@ const NorthForm = ({ north, northIndex, onChange }) => {
             {north.caching.archive.enabled && (
             <Col md={2}>
               <OibInteger
-                label="Retention duration"
+                label="Retention duration (h)"
                 name={`${prefix}.caching.archive.retentionDuration`}
                 value={north.caching.archive.retentionDuration}
                 defaultValue={720}

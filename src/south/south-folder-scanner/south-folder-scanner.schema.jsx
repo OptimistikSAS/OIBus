@@ -46,6 +46,7 @@ schema.form = {
   },
   inputFolder: {
     type: 'OibText',
+    label: 'Input folder',
     valid: notEmpty(),
     defaultValue: './input/',
     help: <div>Path to folder such as: c:/input/</div>,
