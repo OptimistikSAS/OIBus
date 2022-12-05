@@ -1,12 +1,13 @@
 import fs from 'node:fs/promises'
 
 import NorthConnector from '../north-connector.js'
+import manifest from './manifest.js'
 
 /**
  * Class Console - display values and file path into the console
  */
 export default class Console extends NorthConnector {
-  static category = 'Debug'
+  static category = manifest.category
 
   /**
    * Constructor for Console
@@ -25,9 +26,8 @@ export default class Console extends NorthConnector {
       configuration,
       proxies,
       logger,
+      manifest,
     )
-    this.canHandleValues = true
-    this.canHandleFiles = true
 
     const { verbose } = configuration.settings
     this.verbose = verbose

@@ -3,6 +3,7 @@ import objectPath from 'object-path'
 
 import NorthConnector from '../north-connector.js'
 import { httpSend } from '../../service/http-request-static-functions.js'
+import manifest from './manifest.js'
 
 /**
  * Convert timestamp to the configured precision
@@ -33,7 +34,7 @@ const getConvertedTimestamp = (timestampTime, precision) => {
  * Class NorthInfluxDB - Send data to InfluxDB
  */
 export default class NorthInfluxDB extends NorthConnector {
-  static category = 'DatabaseIn'
+  static category = manifest.category
 
   /**
    * Constructor for NorthInfluxDB
@@ -52,8 +53,8 @@ export default class NorthInfluxDB extends NorthConnector {
       configuration,
       proxies,
       logger,
+      manifest,
     )
-    this.canHandleValues = true
 
     const {
       host,

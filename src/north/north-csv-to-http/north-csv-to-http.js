@@ -5,6 +5,7 @@ import csv from 'papaparse'
 import NorthConnector from '../north-connector.js'
 import { convertCSVRowIntoHttpBody, isHeaderValid } from './utils.js'
 import { httpSend, addAuthenticationToHeaders } from '../../service/http-request-static-functions.js'
+import manifest from './manifest.js'
 
 const ERROR_PRINT_SIZE = 5
 
@@ -12,7 +13,7 @@ const ERROR_PRINT_SIZE = 5
  * Class NorthCsvToHttp - convert a CSV file into JSON payload for HTTP requests (POST/PUT/PATCH)
  */
 export default class NorthCsvToHttp extends NorthConnector {
-  static category = 'API'
+  static category = manifest.category
 
   /**
    * Constructor for NorthCsvToHttp
@@ -31,8 +32,8 @@ export default class NorthCsvToHttp extends NorthConnector {
       configuration,
       proxies,
       logger,
+      manifest,
     )
-    this.canHandleFiles = true
 
     const {
       applicativeHostUrl,

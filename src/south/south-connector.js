@@ -37,7 +37,7 @@ export default class SouthConnector {
    * @param {Function} engineAddValuesCallback - The Engine add values callback
    * @param {Function} engineAddFilesCallback - The Engine add file callback
    * @param {Object} logger - The Pino child logger to use
-   * @param {Object} supportedModes - The supported modes
+   * @param {Object} manifest - The associated manifest
    * @return {void}
    */
   constructor(
@@ -45,10 +45,9 @@ export default class SouthConnector {
     engineAddValuesCallback,
     engineAddFilesCallback,
     logger,
-    supportedModes = {},
+    manifest,
   ) {
-    this.handlesPoints = false
-    this.handlesFiles = false
+    this.manifest = manifest
     this.engineAddValuesCallback = engineAddValuesCallback
     this.engineAddFilesCallback = engineAddFilesCallback
     this.connected = false
@@ -64,7 +63,6 @@ export default class SouthConnector {
 
     this.encryptionService = EncryptionService.getInstance()
     this.logger = logger
-    this.supportedModes = supportedModes
 
     this.numberOfRetrievedFiles = 0
     this.numberOfRetrievedValues = 0
@@ -100,13 +98,6 @@ export default class SouthConnector {
 
     await createFolder(this.baseFolder)
     this.southDatabase = createConfigDatabase(path.resolve(this.baseFolder, CACHE_DB_FILE_NAME))
-
-    const {
-      supportListen,
-      supportLastPoint,
-      supportFile,
-      supportHistory,
-    } = this.supportedModes
 
     // Each scanMode will maintain a counter on the number of ignored reads
     this.currentlyOnScan = {}
@@ -173,25 +164,32 @@ export default class SouthConnector {
       this.scanGroups = []
     }
 
-    if (!supportListen && !supportLastPoint && !supportFile && !supportHistory) {
+    const {
+      subscription,
+      lastPoint,
+      file,
+      history,
+    } = this.manifest.modes
+
+    if (!subscription && !lastPoint && !file && !history) {
       this.logger.error(`${this.type} should support at least 1 operation mode.`)
     }
-    if (supportListen && typeof this.listen !== 'function') {
+    if (subscription && typeof this.listen !== 'function') {
       this.logger.error(`${this.type} should implement the listen() method.`)
     }
-    if (supportLastPoint && typeof this.lastPointQuery !== 'function') {
+    if (lastPoint && typeof this.lastPointQuery !== 'function') {
       this.logger.error(`${this.type} should implement the lastPointQuery() method.`)
     }
-    if (supportFile && typeof this.fileQuery !== 'function') {
+    if (file && typeof this.fileQuery !== 'function') {
       this.logger.error(`${this.type} should implement the fileQuery() method.`)
     }
-    if (supportHistory && typeof this.historyQuery !== 'function') {
+    if (history && typeof this.historyQuery !== 'function') {
       this.logger.error(`${this.type} should implement the historyQuery() method.`)
     }
 
     this.statusService.updateStatusDataStream({
-      'Number of values since OIBus has started': this.handlesPoints ? 0 : undefined,
-      'Number of files since OIBus has started': this.handlesFiles ? 0 : undefined,
+      'Number of values since OIBus has started': 0,
+      'Number of files since OIBus has started': 0,
     })
     this.logger.info(`South connector "${this.name}" (${this.id}) of type ${this.type} started.`)
   }
@@ -320,13 +318,13 @@ export default class SouthConnector {
     this.currentlyOnScan[scanMode] += 1
     this.statusService.updateStatusDataStream({ 'Last scan at': new Date().toISOString() })
     try {
-      if (this.supportedModes.supportLastPoint) {
+      if (this.manifest.modes.lastPoint) {
         await this.lastPointQuery(scanMode)
       }
-      if (this.supportedModes.supportFile) {
+      if (this.manifest.modes.file) {
         await this.fileQuery(scanMode)
       }
-      if (this.supportedModes.supportHistory) {
+      if (this.manifest.modes.history) {
         await this.historyQueryHandler(scanMode, this.lastCompletedAt[scanMode], new Date())
         this.queryParts[scanMode] = 0
       }

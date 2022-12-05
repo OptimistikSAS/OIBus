@@ -4,12 +4,13 @@ import modbus from 'jsmodbus'
 
 import SouthConnector from '../south-connector.js'
 import getNumberOfWords from './utils.js'
+import manifest from './manifest.js'
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
  */
 export default class SouthModbus extends SouthConnector {
-  static category = 'IoT'
+  static category = manifest.category
 
   /**
    * Constructor for SouthModbus
@@ -31,14 +32,8 @@ export default class SouthModbus extends SouthConnector {
       engineAddValuesCallback,
       engineAddFilesCallback,
       logger,
-      {
-        supportListen: false,
-        supportLastPoint: true,
-        supportFile: false,
-        supportHistory: false,
-      },
+      manifest,
     )
-    this.handlesPoints = true
 
     const {
       addressOffset,

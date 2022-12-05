@@ -3,12 +3,13 @@ import { vsprintf } from 'sprintf-js'
 import objectPath from 'object-path'
 
 import NorthConnector from '../north-connector.js'
+import manifest from './manifest.js'
 
 /**
  * Class NorthTimescaleDB - Send Data to Timescale DB
  */
 export default class NorthTimescaleDB extends NorthConnector {
-  static category = 'DatabaseIn'
+  static category = manifest.category
 
   /**
    * Constructor for NorthTimescaleDB
@@ -27,8 +28,8 @@ export default class NorthTimescaleDB extends NorthConnector {
       configuration,
       proxies,
       logger,
+      manifest,
     )
-    this.canHandleValues = true
 
     const {
       host,

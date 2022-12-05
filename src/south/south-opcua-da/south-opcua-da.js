@@ -6,6 +6,7 @@ import {
 } from 'node-opcua-client'
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager'
 
+import manifest from './manifest.js'
 import SouthConnector from '../south-connector.js'
 import { initOpcuaCertificateFolders } from '../../service/opcua.service.js'
 
@@ -13,7 +14,7 @@ import { initOpcuaCertificateFolders } from '../../service/opcua.service.js'
  * Class SouthOPCUADA - Connect to an OPCUA server in DA (Data Access) mode
  */
 export default class SouthOPCUADA extends SouthConnector {
-  static category = 'IoT'
+  static category = manifest.category
 
   /**
    * Constructor for SouthOPCUADA
@@ -35,14 +36,8 @@ export default class SouthOPCUADA extends SouthConnector {
       engineAddValuesCallback,
       engineAddFilesCallback,
       logger,
-      {
-        supportListen: false,
-        supportLastPoint: true,
-        supportFile: false,
-        supportHistory: false,
-      },
+      manifest,
     )
-    this.handlesPoints = true
 
     const {
       url,

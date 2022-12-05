@@ -72,7 +72,7 @@ export default class HistoryQueryEngine extends BaseEngine {
    * @return {Promise<void>} - The result promise
    */
   async addValues(southId, values) {
-    if (!this.historyQuery.north.canHandleValues) {
+    if (!this.historyQuery.north.manifest.modes.points) {
       this.logger.warn(`North "${this.historyQuery.north.name}" used in history query ${this.historyQuery.id} `
           + 'does not handle values. Retrieved values are discarded.')
       return
@@ -93,7 +93,7 @@ export default class HistoryQueryEngine extends BaseEngine {
    * @return {Promise<void>} - The result promise
    */
   async addFile(southId, filePath, _preserveFiles) {
-    if (!this.historyQuery.north.canHandleFiles) {
+    if (!this.historyQuery.north.manifest.modes.files) {
       this.logger.warn(`North "${this.historyQuery.north.name}" used in history query ${this.historyQuery.id} `
           + 'does not handle files. Retrieved files are discarded.')
       return

@@ -3,12 +3,13 @@ import mqtt from 'mqtt'
 import objectPath from 'object-path'
 
 import NorthConnector from '../north-connector.js'
+import manifest from './manifest.js'
 
 /**
  * Class NorthMQTT - Publish data to a MQTT broker
  */
 export default class NorthMQTT extends NorthConnector {
-  static category = 'IoT'
+  static category = manifest.category
 
   /**
    * Constructor for NorthMQTT
@@ -27,8 +28,8 @@ export default class NorthMQTT extends NorthConnector {
       configuration,
       proxies,
       logger,
+      manifest,
     )
-    this.canHandleValues = true
 
     const {
       url,

@@ -6,8 +6,9 @@ import {
   isHexaOrDecimal,
   combinedValidations, minValue,
 } from '../../service/validation.service.js'
+import manifest from './manifest.js'
 
-const schema = { name: 'Modbus' }
+const schema = { ...manifest }
 schema.form = {
   ModbusSettings: {
     type: 'OibTitle',
@@ -119,7 +120,6 @@ schema.form = {
     help: <div>Swap Words (16 bits) in groups of 32 bits?</div>,
   },
 }
-
 schema.points = {
   pointId: {
     type: 'OibText',
@@ -174,7 +174,5 @@ schema.points = {
     label: 'Scan Mode',
   },
 }
-
-schema.category = 'IoT'
 
 export default schema

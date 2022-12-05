@@ -1,7 +1,8 @@
 import React from 'react'
 import { notEmpty, hasLengthBetween, optional } from '../../service/validation.service.js'
+import manifest from './manifest.js'
 
-const schema = { name: 'MongoDB' }
+const schema = { ...manifest }
 schema.form = {
   MongodbParameters: {
     type: 'OibTitle',
@@ -190,6 +191,5 @@ schema.form = {
     help: <div>Timestamp field extracted from the JSON object (empty means the JSON &quot;timestamp&quot; field is used)</div>,
   },
 }
-schema.category = 'DatabaseIn'
 
 export default schema

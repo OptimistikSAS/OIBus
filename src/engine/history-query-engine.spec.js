@@ -90,7 +90,7 @@ describe('HistoryQueryEngine', () => {
       }]
 
     const cacheValues = jest.fn()
-    engine.historyQuery = { north: { canHandleValues: true, cacheValues }, south: { settings: { name: 'mySouth' } } }
+    engine.historyQuery = { north: { manifest: { modes: { points: true } }, cacheValues }, south: { settings: { name: 'mySouth' } } }
     await engine.addValues('southId', sampleValues)
     expect(cacheValues).toHaveBeenCalledTimes(1)
     expect(cacheValues).toHaveBeenCalledWith('southId', sampleValues)

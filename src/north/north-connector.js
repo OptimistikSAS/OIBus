@@ -33,15 +33,16 @@ export default class NorthConnector {
    * @param {Object} configuration - The North connector settings
    * @param {Object[]} proxies - The list of available proxies
    * @param {Object} logger - The Pino child logger to use
+   * @param {Object} manifest - The associated manifest
    * @return {void}
    */
   constructor(
     configuration,
     proxies,
     logger,
+    manifest,
   ) {
-    this.canHandleValues = false
-    this.canHandleFiles = false
+    this.manifest = manifest
     this.connected = false
 
     this.id = configuration.id
@@ -81,7 +82,6 @@ export default class NorthConnector {
    */
   async start(baseFolder, _oibusName) {
     this.baseFolder = path.resolve(baseFolder, `north-${this.id}`)
-
     this.statusService = new StatusService()
 
     await createFolder(this.baseFolder)
@@ -119,8 +119,8 @@ export default class NorthConnector {
     await this.certificate.init(this.keyFile, this.certFile, this.caFile)
 
     this.statusService.updateStatusDataStream({
-      'Number of values sent since OIBus has started': this.canHandleValues ? 0 : undefined,
-      'Number of files sent since OIBus has started': this.canHandleFiles ? 0 : undefined,
+      'Number of values sent since OIBus has started': this.manifest.modes.points ? 0 : undefined,
+      'Number of files sent since OIBus has started': this.manifest.modes.files ? 0 : undefined,
     })
 
     this.proxyAgent = await this.getProxy(this.proxySettings)

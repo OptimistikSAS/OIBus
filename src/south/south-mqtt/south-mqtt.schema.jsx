@@ -1,7 +1,8 @@
 import React from 'react'
 import { minValue, notEmpty, optional } from '../../service/validation.service.js'
+import manifest from './manifest.js'
 
-const schema = { name: 'MQTT' }
+const schema = { ...manifest }
 schema.form = {
   MqttSettings: {
     type: 'OibTitle',
@@ -280,7 +281,6 @@ schema.form = {
     md: 2,
   },
 }
-
 schema.points = {
   pointId: {
     type: 'OibText',
@@ -316,7 +316,5 @@ schema.points = {
     valid: notEmpty(),
   },
 }
-
-schema.category = 'IoT'
 
 export default schema
