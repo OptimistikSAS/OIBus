@@ -22,6 +22,7 @@ import AlertContainer from './components/alert-container.jsx'
 import { AlertProvider } from './context/alert-context.jsx'
 import ConfigProviders from './context/config-providers.jsx'
 import ConfigureHistoryQuery from './history-query/configure-history-query.jsx'
+import HistoryQueryForm from './history-query/form/history-query-form.jsx'
 
 const Main = () => (
   <Router>
@@ -34,7 +35,8 @@ const Main = () => (
             <Route exact path="/" element={<HomePage />} />
             <Route exact path="/engine" element={<Engine />} />
             <Route exact path="/history-query" element={<HistoryQuery />} />
-            <Route exact path="/history-query/:id" element={<ConfigureHistoryQuery />} />
+            <Route exact path="/history-query/:id/edit" element={<ConfigureHistoryQuery />} />
+            <Route exact path="/history-query/create" element={<HistoryQueryForm mode="create" />} />
             <Route exact path="/south/:id" element={<ConfigureSouth />} />
             <Route exact path="/south/:id/live" element={<SouthStatus />} />
             <Route exact path="/south/:id/points" element={<ConfigurePoints />} />

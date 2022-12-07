@@ -62,7 +62,7 @@ describe('NewNorth', () => {
   test('display NewNorth page based on config', async () => {
     act(() => {
       root.render(
-        <NewNorth modal={false} toggle={() => false} />,
+        <NewNorth displayModal={false} toggle={() => false} callback={() => null} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -96,7 +96,7 @@ describe('NewNorth', () => {
 
     act(() => {
       root.render(
-        <NewNorth modal={false} toggle={() => false} />,
+        <NewNorth displayModal={false} toggle={() => false} callback={() => null} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -130,7 +130,7 @@ describe('NewNorth', () => {
 
     act(() => {
       root.render(
-        <NewNorth modal={false} toggle={() => false} />,
+        <NewNorth displayModal={false} toggle={() => false} callback={() => null} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -163,7 +163,7 @@ describe('NewNorth', () => {
     })
 
     act(() => {
-      root.render(<NewNorth modal={false} toggle={() => false} />)
+      root.render(<NewNorth displayModal={false} toggle={() => false} callback={() => null} />)
     })
     expect(container).toMatchSnapshot()
 
@@ -196,7 +196,7 @@ describe('NewNorth', () => {
 
     act(() => {
       root.render(
-        <NewNorth modal={false} toggle={() => false} />,
+        <NewNorth displayModal={false} toggle={() => false} callback={() => null} />,
       )
     })
     expect(container).toMatchSnapshot()

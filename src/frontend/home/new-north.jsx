@@ -1,20 +1,18 @@
 import React, { useState } from 'react'
-import { nanoid } from 'nanoid'
 import PropTypes from 'prop-types'
 import { Button, Container, Row, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
-import { useNavigate } from 'react-router-dom'
 import { ConfigContext } from '../context/config-context.jsx'
 import validationNorth from '../north/form/north.validation.js'
 import { OibText } from '../components/oib-form/index.js'
 import imageCategories from './image-categories.js'
 
 const NewNorth = ({
-  modal,
+  displayModal,
   toggle,
+  callback,
 }) => {
   const {
     newConfig,
-    dispatchNewConfig,
     northTypes,
   } = React.useContext(ConfigContext)
   const [name, setName] = React.useState('')
@@ -23,7 +21,6 @@ const NewNorth = ({
   const [nameError, setNameError] = React.useState(null)
   const [northType, setNorthType] = React.useState(null)
   const northConnectors = newConfig?.north ?? []
-  const navigate = useNavigate()
 
   const northCategoryList = northTypes ? [...new Set(northTypes.map((e) => e.category))] : []
 
@@ -39,31 +36,18 @@ const NewNorth = ({
     }
 
     if (!validationNorth.north.isValidName(name, northConnectors.map((north) => north.name)) && name !== '' && northType !== null) {
-      const myNewId = nanoid()
-
-      dispatchNewConfig({
-        type: 'addRow',
-        name: 'north',
-        value: {
-          id: myNewId,
-          name,
-          type: northType,
-          enabled: false,
-        },
-      })
-
       toggle()
       setNorthType(null)
       setName('')
       setNorthTypeError(null)
       setNameError(null)
-      navigate(`/north/${myNewId}`)
+      callback('north', northType, name)
     }
   }
 
   return (
     <Modal
-      isOpen={modal}
+      isOpen={displayModal}
       toggle={toggle}
       aria-labelledby="contained-modal-title-vcenter"
       centered
@@ -162,7 +146,9 @@ const NewNorth = ({
 }
 
 NewNorth.propTypes = {
-  modal: PropTypes.bool.isRequired,
+  displayModal: PropTypes.bool.isRequired,
   toggle: PropTypes.func.isRequired,
+  callback: PropTypes.func.isRequired,
 }
+
 export default NewNorth

@@ -73,8 +73,6 @@ const putRequest = async (uri, body) => {
   }
 }
 
-const getSouthProtocols = () => getRequest('/config/schemas/south')
-const getNorthApis = () => getRequest('/config/schemas/north')
 const getConfig = () => getRequest('/config')
 const updateConfig = (body) => putRequest('/config', body)
 const activateConfig = () => putRequest('/config/activate')
@@ -90,21 +88,24 @@ const getLastCompletedForHistoryQuery = async (id) => getRequest(`/history-queri
 
 const getLogs = (fromDate, toDate, verbosity) => getRequest(`/logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&verbosity=[${verbosity}]`)
 const getOIBusInfo = () => getRequest('/info')
-const getSouthStatus = (id) => getRequest(`/status/south/${id}`)
-const getNorthStatus = (id) => getRequest(`/status/north/${id}`)
-
+const getSouthTypes = () => getRequest('/api/installed-south')
+const getNorthTypes = () => getRequest('/api/installed-north')
+const getSouth = async (id) => getRequest(`/api/south/${id}`)
+const getNorth = async (id) => getRequest(`/api/north/${id}`)
+const getSouthStatus = (id) => getRequest(`/south/${id}/status`)
+const getNorthStatus = (id) => getRequest(`/north/${id}/status`)
 const reload = () => getRequest('/reload')
 const shutdown = () => getRequest('/shutdown')
 
 export default {
-  getSouthTypes: getSouthProtocols,
-  getNorthTypes: getNorthApis,
+  getSouthTypes,
+  getNorthTypes,
   getConfig,
   activateConfig,
   updateConfig,
-  createHistoryQuery,
   getHistoryQueries,
   getHistoryQueryById,
+  createHistoryQuery,
   updateHistoryQuery,
   enableHistoryQuery,
   orderHistoryQuery,
@@ -113,7 +114,9 @@ export default {
   getLogs,
   getOIBusInfo,
   getSouthStatus,
+  getSouth,
   getNorthStatus,
+  getNorth,
   reload,
   shutdown,
 }

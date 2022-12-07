@@ -11,6 +11,7 @@ import OibTitle from './oib-title.jsx'
 import OibAuthentication from './oib-authentication.jsx'
 import OibTimezone from './oib-timezone.jsx'
 import OibCron from './oib-cron.jsx'
+import OibDate from './oib-date.jsx'
 
 export {
   OibCheckbox,
@@ -25,5 +26,6 @@ export {
   OibTitle,
   OibAuthentication,
   OibTimezone,
+  OibDate,
   OibCron,
 }

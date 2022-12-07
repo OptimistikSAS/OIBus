@@ -105,7 +105,7 @@ const TableRows = ({
                 <FaTrashAlt
                   className="oi-icon mx-2"
                   onClick={confirm(() => {
-                    handleDelete(index)
+                    handleDelete(row[0].id || index)
                   })}
                 />
               )}

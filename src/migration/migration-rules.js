@@ -1762,4 +1762,20 @@ export default {
       config.engine.logParameters.sqliteLog.maxNumberOfLogs = 100000
     }
   },
+  30: async (config, logger) => {
+    for (const south of config.south) {
+      logger.info(`Create UID for points for South connector ${south.name} (${south.id}).`)
+      south.points = south.points.map((point) => ({ ...point, id: nanoid() }))
+      if (south.settings.scanGroups) {
+        logger.info(`Create UID for scan groups for South connector ${south.name} (${south.id}).`)
+        south.settings.scanGroups = south.settings.scanGroups.map((scanGroup) => ({ ...scanGroup, id: nanoid() }))
+      }
+    }
+
+    logger.info('Create UID for scan modes.')
+    config.engine.scanModes = config.engine.scanModes.map((scanMode) => ({ ...scanMode, id: nanoid() }))
+
+    logger.info('Create UID for proxies.')
+    config.engine.proxies = config.engine.proxies.map((proxy) => ({ ...proxy, id: nanoid() }))
+  },
 }

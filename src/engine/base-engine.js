@@ -176,6 +176,16 @@ export default class BaseEngine {
   }
 
   /**
+   * Retrieve a south connector from the config
+   * @param {String} id - The South ID
+   * @returns {Object} - The connector
+   */
+  getSouth(id) {
+    const { southConfig } = this.configService.getConfig()
+    return southConfig.find((southConnector) => southConnector.id === id)
+  }
+
+  /**
    * Return the North connector
    * @param {Object} configuration - The North connector configuration
    * @param {Object} logger - The logger to use
@@ -204,5 +214,15 @@ export default class BaseEngine {
       connectorName,
       category,
     }))
+  }
+
+  /**
+   * Retrieve a north connector from the config
+   * @param {String} id - The North ID
+   * @returns {Object} - The connector
+   */
+  getNorth(id) {
+    const { northConfig } = this.configService.getConfig()
+    return northConfig.find((northConnector) => northConnector.id === id)
   }
 }

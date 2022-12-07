@@ -1,20 +1,18 @@
 import React, { useState } from 'react'
-import { nanoid } from 'nanoid'
 import PropTypes from 'prop-types'
 import { Row, Container, Button, Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap'
-import { useNavigate } from 'react-router-dom'
 import { ConfigContext } from '../context/config-context.jsx'
 import validationSouth from '../south/form/south.validation.js'
 import { OibText } from '../components/oib-form/index.js'
 import imageCategories from './image-categories.js'
 
 const NewSouth = ({
-  modal,
+  displayModal,
   toggle,
+  callback,
 }) => {
   const {
     newConfig,
-    dispatchNewConfig,
     southTypes,
   } = React.useContext(ConfigContext)
   const [name, setName] = React.useState('')
@@ -23,11 +21,10 @@ const NewSouth = ({
   const [nameError, setNameError] = React.useState(null)
   const [southType, setSouthType] = React.useState(null)
   const southConnectors = newConfig?.south ?? []
-  const navigate = useNavigate()
 
   const southCategoryList = southTypes ? [...new Set(southTypes.map((e) => e.category))] : []
 
-  const addSouth = () => {
+  const addSouth = async () => {
     if (southType === null && name !== '') {
       setSouthTypeError('A South type must be selected')
     }
@@ -38,29 +35,18 @@ const NewSouth = ({
       setSouthTypeError('A name must be specified and a South type must be selected')
     }
     if (!validationSouth.south.isValidName(name, southConnectors.map((south) => south.name)) && name !== '' && southType !== null) {
-      const myNewId = nanoid()
-      dispatchNewConfig({
-        type: 'addRow',
-        name: 'south',
-        value: {
-          id: myNewId,
-          name,
-          type: southType,
-          enabled: false,
-        },
-      })
       toggle()
       setSouthType(null)
       setName('')
       setSouthTypeError(null)
       setNameError(null)
-      navigate(`/south/${myNewId}`)
+      callback('south', southType, name)
     }
   }
 
   return (
     <Modal
-      isOpen={modal}
+      isOpen={displayModal}
       toggle={toggle}
       aria-labelledby="contained-modal-title-vcenter"
       centered
@@ -159,7 +145,9 @@ const NewSouth = ({
 }
 
 NewSouth.propTypes = {
-  modal: PropTypes.bool.isRequired,
+  displayModal: PropTypes.bool.isRequired,
   toggle: PropTypes.func.isRequired,
+  callback: PropTypes.func.isRequired,
 }
+
 export default NewSouth

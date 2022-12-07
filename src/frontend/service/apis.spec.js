@@ -12,10 +12,10 @@ const logSample = {
 global.fetch = jest.fn().mockImplementation((uri) => {
   let jsonString
   switch (uri) {
-    case '/config/schemas/north':
+    case '/api/installed-north':
       jsonString = JSON.stringify(['a', 'b', 'c'])
       break
-    case '/config/schemas/south':
+    case '/api/installed-south':
       jsonString = JSON.stringify(['d', 'e', 'f'])
       break
     case '/config':
@@ -37,12 +37,12 @@ global.fetch = jest.fn().mockImplementation((uri) => {
 })
 
 describe('apis', () => {
-  it('check getSouthProtocols', async () => {
+  it('check getSouthTypes', async () => {
     const result = await apis.getSouthTypes()
     expect(result).toEqual(['d', 'e', 'f'])
   })
 
-  it('check getSouthProtocols with status 500', async () => {
+  it('check getSouthTypes with status 500', async () => {
     const originalError = console.error
     console.error = jest.fn()
     const originalGlobalFetchMock = global.fetch
@@ -56,7 +56,7 @@ describe('apis', () => {
     console.error = originalError
   })
 
-  it('check getSouthProtocols with catch error', async () => {
+  it('check getSouthTypes with catch error', async () => {
     const originalError = console.error
     console.error = jest.fn()
     const originalGlobalFetchMock = global.fetch
@@ -73,7 +73,7 @@ describe('apis', () => {
     console.error = originalError
   })
 
-  it('check getNorthApis', async () => {
+  it('check getNorthTypes', async () => {
     const result = await apis.getNorthTypes()
     expect(result).toEqual(['a', 'b', 'c'])
   })

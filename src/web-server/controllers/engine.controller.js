@@ -18,12 +18,40 @@ const getNorthList = (ctx) => {
 }
 
 /**
+ * Retrieve a specific North.
+ * @param {Object} ctx - The KOA context
+ * @return {void}
+ */
+const getNorth = (ctx) => {
+  const connector = ctx.app.engine.getNorth(ctx.params.id)
+  if (connector) {
+    ctx.ok(connector)
+  } else {
+    throw ctx(404, `North connector ${ctx.params.id} not found`)
+  }
+}
+
+/**
  * Get South list.
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
 const getSouthList = (ctx) => {
   ctx.ok(ctx.app.engine.getSouthList())
+}
+
+/**
+ * Retrieve a specific North.
+ * @param {Object} ctx - The KOA context
+ * @return {void}
+ */
+const getSouth = (ctx) => {
+  const connector = ctx.app.engine.getSouth(ctx.params.id)
+  if (connector) {
+    ctx.ok(connector)
+  } else {
+    throw ctx(404, `South connector ${ctx.params.id} not found`)
+  }
 }
 
 /**
@@ -87,7 +115,9 @@ const aliveSignal = async (ctx) => {
 export default {
   getOIBusInfo,
   getNorthList,
+  getNorth,
   getSouthList,
+  getSouth,
   addValues,
   addFile,
   aliveSignal,
