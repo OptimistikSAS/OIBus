@@ -3,11 +3,15 @@ import PropTypes from 'prop-types'
 import { FaEllipsisV } from 'react-icons/fa'
 import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap'
 import { useNavigate } from 'react-router-dom'
+import { nanoid } from 'nanoid'
 import ConfirmationModal from '../components/confirmation-modal.jsx'
 import NewSouth from './new-south.jsx'
 import NewNorth from './new-north.jsx'
+import { ConfigContext } from '../context/config-context.jsx'
 
 const EngineMenu = ({ onRestart, onShutdown }) => {
+  const { dispatchNewConfig } = React.useContext(ConfigContext)
+
   const [southModal, setSouthModal] = useState(false)
   const [northModal, setNorthModal] = useState(false)
   const [restartShow, setRestartShow] = useState(false)
@@ -15,6 +19,22 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const toggle = () => setDropdownOpen((prevState) => !prevState)
   const navigate = useNavigate()
+
+  const callback = (connector, type, name) => {
+    const myNewId = nanoid()
+
+    dispatchNewConfig({
+      type: 'addRow',
+      name: connector,
+      value: {
+        id: myNewId,
+        name,
+        type,
+        enabled: false,
+      },
+    })
+    navigate(`/${connector}/${myNewId}`)
+  }
 
   return (
     <>
@@ -78,8 +98,8 @@ const EngineMenu = ({ onRestart, onShutdown }) => {
         </DropdownMenu>
 
       </Dropdown>
-      <NewSouth modal={southModal} toggle={() => setSouthModal(false)} />
-      <NewNorth modal={northModal} toggle={() => setNorthModal(false)} />
+      <NewSouth displayModal={southModal} toggle={() => setSouthModal(false)} callback={callback} />
+      <NewNorth displayModal={northModal} toggle={() => setNorthModal(false)} callback={callback} />
     </>
   )
 }

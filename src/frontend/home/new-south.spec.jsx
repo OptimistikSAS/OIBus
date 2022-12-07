@@ -63,7 +63,7 @@ describe('NewSouth', () => {
   test('display NewSouth page based on config', async () => {
     act(() => {
       root.render(
-        <NewSouth modal={false} toggle={() => false} />,
+        <NewSouth displayModal={false} toggle={() => false} callback={() => null} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -97,7 +97,7 @@ describe('NewSouth', () => {
 
     act(() => {
       root.render(
-        <NewSouth modal={false} toggle={() => false} />,
+        <NewSouth displayModal={false} toggle={() => false} callback={() => null} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -131,7 +131,7 @@ describe('NewSouth', () => {
 
     act(() => {
       root.render(
-        <NewSouth modal={false} toggle={() => false} />,
+        <NewSouth displayModal={false} toggle={() => false} callback={() => null} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -165,7 +165,7 @@ describe('NewSouth', () => {
 
     act(() => {
       root.render(
-        <NewSouth modal={false} toggle={() => false} />,
+        <NewSouth displayModal={false} toggle={() => false} callback={() => null} />,
       )
     })
     expect(container).toMatchSnapshot()
@@ -199,7 +199,7 @@ describe('NewSouth', () => {
 
     act(() => {
       root.render(
-        <NewSouth modal={false} toggle={() => false} />,
+        <NewSouth displayModal={false} toggle={() => false} callback={() => null} />,
       )
     })
     expect(container).toMatchSnapshot()

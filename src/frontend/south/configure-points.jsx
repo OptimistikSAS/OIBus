@@ -1,97 +1,41 @@
-import React from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button, Container, Spinner } from 'reactstrap'
 import { FaArrowLeft } from 'react-icons/fa'
-import { AlertContext } from '../context/alert-context.jsx'
 import { ConfigContext } from '../context/config-context.jsx'
-import utils from '../helpers/utils.js'
 import PointsComponent from '../components/points-component.jsx'
 import StatusButton from '../components/status-button.jsx'
+import SouthSchemas from './south-types.jsx'
 
 const ConfigurePoints = () => {
-  const { newConfig, dispatchNewConfig } = React.useContext(ConfigContext)
-  const { setAlert } = React.useContext(AlertContext)
-  const navigate = useNavigate()
+  const { newConfig, dispatchNewConfig } = useContext(ConfigContext)
 
   const { id } = useParams()
+  const navigate = useNavigate()
 
-  if (!newConfig?.south) {
-    return (
-      <div className="spinner-container">
-        <Spinner color="primary" type="grow" />
-        ...loading points from OIBus server...
-      </div>
-    )
-  }
-  const southIndex = newConfig.south.findIndex(
-    (south) => south.id === id,
-  )
-  const south = newConfig.south[southIndex]
+  const [south, setSouth] = useState(null)
+  const [southIndex, setSouthIndex] = useState(null)
 
-  const { points: pointsOrdered = [], type } = south
-
-  /**
-   * add point
-   * @returns {void}
-   */
-  const handleAdd = () => {
-    dispatchNewConfig({ type: 'addRow', name: `south.${southIndex}.points`, value: {} })
-  }
-
-  /**
-   * Delete point
-   * @param {string} index the index of point
-   * @returns {void}
-   */
-  const handleDelete = (index) => {
-    dispatchNewConfig({ type: 'deleteRow', name: `south.${southIndex}.points.${index}` })
-  }
-
-  /**
-   * Delete all points
-   * @returns {void}
-   */
-  const handleDeleteAllPoint = () => {
-    dispatchNewConfig({ type: 'deleteAllRows', name: `south.${southIndex}.points` })
-  }
-
-  /**
-   * Send the imported file content to the backend
-   * @param {Object} file the file returned by input
-   * @returns {void}
-   */
-  const handleImportPoints = async (file) => {
-    try {
-      const text = await utils.readFileContent(file)
-      utils
-        .parseCSV(text)
-        .then((newPoints) => {
-          dispatchNewConfig({
-            type: 'importPoints',
-            name: `south.${southIndex}.points`,
-            value: newPoints,
-          })
-        })
-        .catch((error) => {
-          console.error(error)
-          setAlert({ text: error.message, type: 'danger' })
-        })
-    } catch (error) {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
+  useEffect(() => {
+    if (newConfig?.south && south?.id !== id) {
+      const index = newConfig.south.findIndex(
+        (connector) => connector.id === id,
+      )
+      setSouthIndex(index)
+      setSouth(newConfig.south[index])
     }
-  }
+  }, [newConfig])
 
   const onChange = (name, value, validity) => {
     dispatchNewConfig({
       type: 'update',
-      name: `south.${southIndex}.${name}`,
+      name,
       value,
       validity,
     })
   }
 
-  return (
+  return south ? (
     <>
       <div className="d-flex align-items-center w-100 oi-sub-nav">
         <h6 className="text-muted d-flex align-items-center ps-3 pt-2 pb-2 mb-0">
@@ -119,17 +63,18 @@ const ConfigurePoints = () => {
       </div>
       <Container fluid>
         <PointsComponent
-          southId={id}
-          southType={type}
-          points={pointsOrdered}
-          handleAdd={handleAdd}
-          handleDelete={handleDelete}
-          handleDeleteAllPoint={handleDeleteAllPoint}
-          handleImportPoints={handleImportPoints}
-          onUpdate={onChange}
+          prefix={`south.${southIndex}.points`}
+          points={south.points}
+          schema={SouthSchemas[south.type]}
+          onChange={onChange}
         />
       </Container>
     </>
+  ) : (
+    <div className="spinner-container">
+      <Spinner color="primary" type="grow" />
+      ...loading points from OIBus server...
+    </div>
   )
 }
 
