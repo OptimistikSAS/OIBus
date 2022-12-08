@@ -40,8 +40,9 @@ const manifest = {
   modes: {
     subscription: false,
     lastPoint: false,
-    file: false,
-    history: false,
+    lastFile: false,
+    historyPoint: false,
+    historyFile: false,
   },
 }
 
@@ -59,8 +60,9 @@ describe('SouthConnector', () => {
     expect(south.connected).toBeFalsy()
     expect(south.manifest.modes.subscription).toEqual(manifest.modes.subscription)
     expect(south.manifest.modes.lastPoint).toEqual(manifest.modes.lastPoint)
-    expect(south.manifest.modes.file).toEqual(manifest.modes.file)
-    expect(south.manifest.modes.history).toEqual(manifest.modes.history)
+    expect(south.manifest.modes.lastFile).toEqual(manifest.modes.lastFile)
+    expect(south.manifest.modes.historyPoint).toEqual(manifest.modes.historyPoint)
+    expect(south.manifest.modes.historyFile).toEqual(manifest.modes.historyFile)
     expect(south.logger.error('SouthConnector should support at least 1 operation mode.'))
     expect(south.logger.error).toHaveBeenCalledWith('Scan mode or scan groups for South "south" are not defined.'
         + 'This South connector will not work.')
@@ -72,8 +74,9 @@ describe('SouthConnector', () => {
     south.manifest.modes = {
       subscription: true,
       lastPoint: true,
-      file: true,
-      history: true,
+      lastFile: true,
+      historyPoint: true,
+      historyFile: true,
     }
     south.scanMode = 'scanModeTest'
 
@@ -308,9 +311,10 @@ describe('SouthConnector', () => {
     south.historyQueryHandler = jest.fn()
     south.lastPointQuery = jest.fn()
     south.fileQuery = jest.fn()
-    south.manifest.modes.file = true
+    south.manifest.modes.lastFile = true
     south.manifest.modes.lastPoint = true
-    south.manifest.modes.history = true
+    south.manifest.modes.historyPoint = true
+    south.manifest.modes.historyFile = true
     south.ignoredReadsCounters.scanModeTest = 0
     south.currentlyOnScan.scanModeTest = 0
     south.scanGroups = [{ scanMode: 'scanModeTest', points: [{}] }]
@@ -329,9 +333,10 @@ describe('SouthConnector', () => {
     expect(south.historyQueryHandler).toHaveBeenCalledTimes(1)
 
     jest.clearAllMocks()
-    south.manifest.modes.file = false
+    south.manifest.modes.lastFile = false
     south.manifest.modes.lastPoint = true
-    south.manifest.modes.history = false
+    south.manifest.modes.historyFile = false
+    south.manifest.modes.historyPoint = false
     await south.onScan('scanModeTest')
 
     expect(south.lastPointQuery).toHaveBeenCalledTimes(1)
@@ -342,7 +347,6 @@ describe('SouthConnector', () => {
   it('should skip scan if scan already ongoing', async () => {
     south.scanMode = 'scanModeTest'
     south.historyQueryHandler = jest.fn()
-    south.supportedModes = { supportHistory: true }
     south.currentlyOnScan.scanModeTest = 1
     await south.connect()
 
@@ -356,9 +360,10 @@ describe('SouthConnector', () => {
   it('should ignore if scan mode not found in scan groups', async () => {
     south.scanMode = 'scanModeTest'
     south.historyQueryHandler = jest.fn()
-    south.manifest.modes.history = true
+    south.manifest.modes.lastFile = false
     south.manifest.modes.lastPoint = false
-    south.manifest.modes.file = false
+    south.manifest.modes.historyPoint = false
+    south.manifest.modes.historyFile = true
     south.ignoredReadsCounters.scanModeTest = 0
     south.currentlyOnScan.scanModeTest = 0
     south.scanGroups = [{ scanMode: 'anotherScanMode' }]
