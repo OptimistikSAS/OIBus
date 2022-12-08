@@ -170,11 +170,12 @@ export default class SouthConnector {
     const {
       subscription,
       lastPoint,
-      file,
-      history,
+      lastFile,
+      historyPoint,
+      historyFile,
     } = this.manifest.modes
 
-    if (!subscription && !lastPoint && !file && !history) {
+    if (!subscription && !lastPoint && !lastFile && !historyPoint && !historyFile) {
       this.logger.error(`${this.type} should support at least 1 operation mode.`)
     }
     if (subscription && typeof this.listen !== 'function') {
@@ -183,10 +184,10 @@ export default class SouthConnector {
     if (lastPoint && typeof this.lastPointQuery !== 'function') {
       this.logger.error(`${this.type} should implement the lastPointQuery() method.`)
     }
-    if (file && typeof this.fileQuery !== 'function') {
+    if (lastFile && typeof this.fileQuery !== 'function') {
       this.logger.error(`${this.type} should implement the fileQuery() method.`)
     }
-    if (history && typeof this.historyQuery !== 'function') {
+    if ((historyPoint || historyFile) && typeof this.historyQuery !== 'function') {
       this.logger.error(`${this.type} should implement the historyQuery() method.`)
     }
 
@@ -324,10 +325,10 @@ export default class SouthConnector {
       if (this.manifest.modes.lastPoint) {
         await this.lastPointQuery(scanMode)
       }
-      if (this.manifest.modes.file) {
+      if (this.manifest.modes.lastFile) {
         await this.fileQuery(scanMode)
       }
-      if (this.manifest.modes.history) {
+      if (this.manifest.modes.historyFile || this.manifest.modes.historyPoint) {
         await this.historyQueryHandler(scanMode, this.lastCompletedAt[scanMode], new Date())
         this.queryParts[scanMode] = 0
       }
