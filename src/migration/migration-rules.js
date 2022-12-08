@@ -1778,4 +1778,13 @@ export default {
     logger.info('Create UID for proxies.')
     config.engine.proxies = config.engine.proxies.map((proxy) => ({ ...proxy, id: nanoid() }))
   },
+  31: async (config, logger) => {
+    for (const south of config.south) {
+      if (south.type === 'SQL') {
+        logger.info(`Add ODBC settingsSouth connector ${south.name} (${south.id}).`)
+        south.settings.selfSigned = false
+        south.settings.odbcDriverPath = ''
+      }
+    }
+  },
 }
