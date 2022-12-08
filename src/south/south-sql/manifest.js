@@ -4,7 +4,8 @@ export default {
   modes: {
     subscription: false,
     lastPoint: false,
-    file: false,
-    history: true,
+    lastFile: false,
+    historyPoint: false,
+    historyFile: true,
   },
 }
