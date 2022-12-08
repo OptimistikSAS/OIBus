@@ -31,10 +31,18 @@ schema.form = {
   driver: {
     type: 'OibSelect',
     md: 2,
-    options: ['mssql', 'mysql', 'postgresql', 'oracle', 'sqlite'],
+    options: ['mssql', 'mysql', 'postgresql', 'oracle', 'sqlite', 'odbc'],
     label: 'SQL Driver',
     defaultValue: 'mssql',
     help: <div>Driver SQL</div>,
+  },
+  odbcDriverPath: {
+    newRow: false,
+    type: 'OibText',
+    label: 'ODBC Driver Path',
+    defaultValue: '',
+    valid: optional(),
+    help: <div>The path to the ODBC driver config to be used to connect to your DB (for example libmsodbcsql.18.dylib)</div>,
   },
   databasePath: {
     type: 'OibText',
@@ -97,6 +105,14 @@ schema.form = {
     label: 'Encryption?',
     defaultValue: true,
     help: <div>Disable encryption for mssql if TLS 1.2 patch is not installed</div>,
+    md: 2,
+  },
+  selfSigned: {
+    newRow: false,
+    type: 'OibCheckbox',
+    label: 'Accept self-signed certificate ?',
+    defaultValue: false,
+    help: <div>Used for ODBC secured connections</div>,
     md: 2,
   },
   QuerySettings: {
@@ -280,6 +296,9 @@ schema.form = {
 }
 schema.withDriver = (driver) => {
   schema.form.domain.hidden = driver !== 'mssql'
+  schema.form.encryption.hidden = driver !== 'mssql'
+  schema.form.odbcDriverPath.hidden = driver !== 'odbc'
+  schema.form.selfSigned.hidden = driver !== 'odbc'
   schema.form.databasePath.hidden = driver !== 'sqlite'
   schema.form.database.hidden = driver === 'sqlite'
   schema.form.host.hidden = driver === 'sqlite'

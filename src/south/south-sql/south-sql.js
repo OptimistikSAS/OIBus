@@ -14,6 +14,8 @@ import { generateCSV, getMostRecentDate, generateReplacementParameters } from '.
 import { replaceFilenameWithVariable, compress } from '../../service/utils.js'
 
 let oracledb
+let odbc
+
 /**
  * Class SouthSQL - Retrieve data from SQL databases and send them to the cache as CSV files.
  * Available drivers are :
@@ -54,6 +56,7 @@ export default class SouthSQL extends SouthConnector {
 
     const {
       driver,
+      odbcDriverPath,
       databasePath,
       host,
       port,
@@ -62,6 +65,7 @@ export default class SouthSQL extends SouthConnector {
       domain,
       database,
       encryption,
+      selfSigned,
       query,
       connectionTimeout,
       requestTimeout,
@@ -76,6 +80,7 @@ export default class SouthSQL extends SouthConnector {
     } = configuration.settings
 
     this.driver = driver
+    this.odbcDriverPath = odbcDriverPath
     this.databasePath = databasePath ? path.resolve(databasePath) : null
     this.host = host
     this.port = port
@@ -84,6 +89,7 @@ export default class SouthSQL extends SouthConnector {
     this.domain = domain
     this.database = database
     this.encryption = encryption
+    this.selfSigned = selfSigned
     this.query = query
     this.connectionTimeout = connectionTimeout
     this.timeColumn = timeColumn
@@ -110,6 +116,13 @@ export default class SouthSQL extends SouthConnector {
       oracledb = require('oracledb')
     } catch {
       this.logger.warn('Could not load node oracledb')
+    }
+
+    try {
+      // eslint-disable-next-line global-require,import/no-unresolved,import/no-extraneous-dependencies
+      odbc = require('odbc')
+    } catch {
+      this.logger.warn('Could not load node odbc')
     }
 
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp')
@@ -159,6 +172,9 @@ export default class SouthSQL extends SouthConnector {
         break
       case 'sqlite':
         result = await this.getDataFromSqlite(updatedStartTime, endTime)
+        break
+      case 'odbc':
+        result = await this.getDataFromOdbc(updatedStartTime, endTime)
         break
       default:
         throw new Error(`SQL driver "${this.driver}" not supported for South "${this.name}".`)
@@ -411,6 +427,46 @@ export default class SouthSQL extends SouthConnector {
     }
     if (database) {
       database.close()
+    }
+    return data
+  }
+
+  /**
+   * Apply the SQL query to the target ODBC database.
+   * @param {Date} startTime - The start time
+   * @param {Date} endTime - The end time
+   * @returns {Promise<Object[]>} - The SQL results
+   */
+  async getDataFromOdbc(startTime, endTime) {
+    const adaptedQuery = this.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?')
+
+    let connectionString = `Driver=${this.odbcDriverPath};SERVER=${this.host};TrustServerCertificate=${this.selfSigned ? 'yes' : 'no'};`
+    connectionString += `Database=${this.database};UID=${this.username};PWD=${await this.encryptionService.decryptText(this.password)}`
+    let connection = null
+    let data = []
+    try {
+      const connectionConfig = {
+        connectionString,
+        connectionTimeout: this.connectionTimeout,
+        loginTimeout: this.connectionTimeout,
+      }
+      connection = await odbc.connect(connectionConfig)
+
+      const params = generateReplacementParameters(this.query, startTime, endTime)
+      data = await connection.query(adaptedQuery, params)
+    } catch (error) {
+      if (error.odbcErrors?.length > 0) {
+        error.odbcErrors.forEach((odbcError) => {
+          this.logger.error(odbcError.message)
+        })
+      }
+      if (connection) {
+        await connection.close()
+      }
+      throw error
+    }
+    if (connection) {
+      await connection.close()
     }
     return data
   }
