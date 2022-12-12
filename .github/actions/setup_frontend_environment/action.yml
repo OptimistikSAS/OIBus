@@ -1,5 +1,5 @@
 name: Setup environment
-description: "Checkout project, set up Node and install dependencies"
+description: "Checkout project, set up Node and install frontend dependencies"
 inputs:
   cache_version:
     description: 'Value gets appended to the cache key and will therefore invalidate the cache if it changes'
@@ -8,11 +8,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Use Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 16
-
     - name: Get current date
       shell: bash
       id: date
@@ -20,28 +15,31 @@ runs:
 
     - name: Write cache version
       shell: bash
+      working-directory: frontend
       run: echo $CACHE_VERSION >> cache_version
       env:
         CACHE_VERSION: ${{ inputs.cache_version }}
 
     - name: Load cached venv
       id: cached-node-modules-dependencies
-      uses: actions/cache@v3.3.1
+      uses: actions/cache@v3.0.11
       with:
         path: |
-          node_modules
-          package-lock.json
+          ./frontend/node_modules
+          ./frontend/package-lock.json
         # Cache the complete node_modules dir for a given os the current
         # calendar week and the cache version.
         # Providing a different value for the cache version enables manual
         # invalidation of the cache in case it is in some erroneous state.
-        key: node_modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ steps.date.outputs.date }}-${{ hashFiles('cache_version') }}
+        key: frontend_node_modules-${{ runner.os }}-${{ hashFiles('./frontend/package-lock.json') }}-${{ steps.date.outputs.date }}-${{ hashFiles('cache_version') }}
 
     - name: Remove cache version
+      working-directory: frontend
       shell: bash
       run: rm cache_version
 
     - name: Install dependencies
+      working-directory: frontend
       shell: bash
       if: steps.cached-node-modules-dependencies.outputs.cache-hit != 'true'
       run: npm ci

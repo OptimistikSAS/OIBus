@@ -4,7 +4,7 @@ description: "Run tests"
 runs:
   using: "composite"
   steps:
-    - name: Run lint
+    - name: Run backend linting
       shell: bash
       run: npm run lint
 
@@ -12,3 +12,17 @@ runs:
       shell: bash
       run: npm test
 
+    - name: Run frontend linting
+      shell: bash
+      working-directory: frontend
+      run: npm run lint
+
+    - name: Build frontend
+      shell: bash
+      working-directory: frontend
+      run: npm run build
+
+    - name: Run frontend unit tests
+      shell: bash
+      working-directory: frontend
+      run: npm test
