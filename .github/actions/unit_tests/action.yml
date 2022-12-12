@@ -8,6 +8,7 @@ runs:
       shell: bash
       run: npm run lint
 
-    - name: Run unit tests
+    - name: Run backend unit tests
       shell: bash
       run: npm test
+
