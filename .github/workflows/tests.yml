@@ -17,8 +17,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup environment
-        uses: ./.github/actions/setup_environment
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Setup backend environment
+        uses: ./.github/actions/setup_backend_environment
+        with:
+          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
+
+      - name: Setup frontend environment
+        uses: ./.github/actions/setup_frontend_environment
         with:
           cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
 
@@ -27,14 +37,16 @@ jobs:
 
       - name: Prepare integration test
         if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
+        working-directory: ./backend
         run: npm run test:setup-env
 
       - name: Wait for docker containers
         if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
         uses: jakejarvis/wait-action@master
         with:
-          time: '15s'
+          time: '25s'
 
       - name: Integration test
         if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
+        working-directory: ./backend
         run: npm run test:integration
