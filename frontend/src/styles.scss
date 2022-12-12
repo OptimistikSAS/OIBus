@@ -1,0 +1,16 @@
+html {
+  // this sets the value of one rem, and is thus the base of all the relative sizings of Bootstrap:
+  // text, buttons, inputs, etc. are all sized relative to this unit.
+  font-size: 12px;
+}
+
+$fa-font-path: '../fonts';
+
+@import 'font-awesome/scss/font-awesome';
+@import './custom-bootstrap';
+
+:root {
+  --menu-background-color: #323e48;
+  --menu-active-color: #f5bb51;
+  --menu-height: 35px;
+}
