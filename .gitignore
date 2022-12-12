@@ -5,6 +5,7 @@
 
 build/bin/
 build/web-client/
+build/frontend/
 build/backend/
 node_modules/
 
