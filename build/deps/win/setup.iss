@@ -29,7 +29,7 @@ PrivilegesRequired=admin
 SolidCompression=yes
 UsePreviousAppDir=no
 UserInfoPage=no
-SetupIconFile=..\..\..\src\frontend\favicon.ico
+SetupIconFile=..\..\..\frontend\src\favicon.ico
 WizardImageFile=installer_oibus.bmp
 WizardSmallImageFile=installer_small.bmp
 WizardStyle=modern
@@ -46,7 +46,7 @@ Source: "..\..\bin\win\oibus.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\bin\win\HdaAgent\*"; DestDir: "{app}\HdaAgent"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\..\bin\win\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\bin\win\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\..\src\config\default-config.json"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\..\..\backend\config\default-config.json"; DestDir: "{app}"; Flags: ignoreversion
 
 
 [Messages]
