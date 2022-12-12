@@ -39,6 +39,7 @@ jobs:
 
       - name: Bump version
         id: standard-version
+        working-directory: ./backend
         run: |
           git config --global user.name 'optimistik-actions'
           git config --global user.email 'optimistiksas@users.noreply.github.com'
@@ -57,7 +58,7 @@ jobs:
               git commit -m "Merge ${BRANCH} in ${BRANCH_RELEASE} with conflicts resolved"
             }
           fi
-          npx standard-version -i ./CHANGELOG.md $VERSION_ARGS
+          npx standard-version -i ../CHANGELOG.md $VERSION_ARGS
           git status
           git push --follow-tags origin HEAD
           echo "version-tag=$(git describe --tags $(git rev-list --tags --max-count=1))" >> $GITHUB_OUTPUT
@@ -67,7 +68,7 @@ jobs:
       - name: Upload artifact CHANGELOG.md
         uses: actions/upload-artifact@v3
         with:
-          path: ./CHANGELOG.md
+          path: CHANGELOG.md
 
   build-binaries:
     needs: standard-version
@@ -87,15 +88,33 @@ jobs:
         with:
           ref: ${{ needs.standard-version.outputs.branch-release }}
 
-      - name: Setup environment
-        uses: ./.github/actions/setup_environment
+      - name: Setup backend environment
+        uses: ./.github/actions/setup_backend_environment
         with:
           cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
 
+      - name: Setup frontend environment
+        uses: ./.github/actions/setup_frontend_environment
+        with:
+          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
+
+      - name: Bundle legacy frontend
+        working-directory: ./backend
+        run: npm run build:legacy-frontend
+
+      - name: Bundle frontend
+        working-directory: ./frontend
+        run: npm run build
+
+      - name: Bundle legacy frontend
+        working-directory: ./backend
+        run: npm run build
+
       - name: Package OIBus for ${{ matrix.config['platform'] }}
+        working-directory: ./backend
         run: |
           npm run build:${{ matrix.config['platform'] }}
-          cd build/bin/${{ matrix.config['platform'] }}
+          cd ../build/bin/${{ matrix.config['platform'] }}
           ./oibus --config ../../../data-folder --check true
           ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }} .
 
@@ -111,7 +130,7 @@ jobs:
           PFX_PATH: C://oibus.pfx
         if: ${{ matrix.config['platform'] == 'win' }}
         shell: pwsh
-        working-directory: ./build/bin/win
+        working-directory: ./backend
         run: |
           $encodedBytes = [System.Convert]::FromBase64String("$env:PFX_BASE64_CONTENT")
           Set-Content -Path "$env:PFX_PATH" -AsByteStream -Value $encodedBytes
