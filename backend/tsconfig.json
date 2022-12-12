@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "Node",
+    "module": "CommonJS",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "removeComments": true,
+    "target": "es5",
+    "outDir": "./dist/backend"
+  },
+  "include": [
+    "**/*",
+    "node_modules/nanoid/**/*"
+  ],
+  "exclude": [
+    "webpack.frontend.js",
+    "frontend",
+    "tests",
+    "dist",
+    "**/*.spec.js",
+    "**/*.test.js",
+    "**/*.d.ts"
+  ]
+}

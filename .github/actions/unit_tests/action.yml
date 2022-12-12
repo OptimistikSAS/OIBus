@@ -1,15 +1,22 @@
 name: Run unit tests
-description: "Run tests"
+description: "Run lint, build and tests"
 
 runs:
   using: "composite"
   steps:
     - name: Run backend linting
       shell: bash
+      working-directory: backend
       run: npm run lint
+
+    - name: Build backend
+      shell: bash
+      working-directory: backend
+      run: npm run build
 
     - name: Run backend unit tests
       shell: bash
+      working-directory: backend
       run: npm test
 
     - name: Run frontend linting
