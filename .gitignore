@@ -1,12 +1,28 @@
-.DS_Store
+# Compiled output
+/build/bin
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# IDEs and editors
 .idea/
-.vscode/
-.env
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
-build/bin/
-build/web-client/
-build/frontend/
-build/backend/
-node_modules/
-
-tests/coverage/
+# System files
+.DS_Store
+Thumbs.db
