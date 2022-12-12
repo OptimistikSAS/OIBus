@@ -6,8 +6,8 @@
     "start": "ng serve",
     "build": "ng build --no-progress",
     "watch": "ng build --watch --configuration development",
-    "test": "NODE_OPTIONS=\"--max-old-space-size=4096\" ng test --code-coverage --no-progress --no-watch",
-    "lint": "ng lint > eslint-result.txt"
+    "test": "ng test --browsers=ChromeHeadless --code-coverage --no-progress --no-watch",
+    "lint": "ng lint"
   },
   "private": true,
   "dependencies": {
