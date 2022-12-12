@@ -135,6 +135,7 @@
   "jest": {
     "globalSetup": "./tests/jest-config.js",
     "coverageDirectory": "./tests/coverage",
+    "testPathIgnorePatterns": ["<rootDir>/build/","<rootDir>/frontend/", "<rootDir>/node_modules/"],
     "moduleNameMapper": {
       "\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/tests/__mocks__/file.mock.js",
       "monaco-editor": "<rootDir>/tests/__mocks__/monaco-editor.mock.js",

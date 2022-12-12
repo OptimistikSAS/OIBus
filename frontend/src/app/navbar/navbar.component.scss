@@ -1,0 +1,22 @@
+.oi-navbar-top {
+  height: var(--menu-height);
+  min-height: var(--menu-height);
+  background-color: var(--menu-background-color);
+
+  .nav-link {
+    color: white;
+    font-size: 13px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    &.active {
+      background-color: var(--menu-active-color);
+      color: black;
+      &:hover {
+        color: black;
+      }
+    }
+    &:hover {
+      color: var(--menu-active-color);
+    }
+  }
+}
