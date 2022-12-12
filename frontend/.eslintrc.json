@@ -1,0 +1,75 @@
+{
+  "root": true,
+  "ignorePatterns": ["dist", "results", "coverage", "*.d.ts"],
+  "parserOptions": {
+    "ecmaVersion": 2020
+  },
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "parserOptions": {
+        "project": ["tsconfig.json"],
+        "createDefaultProgram": true
+      },
+      "extends": [
+        "plugin:@angular-eslint/recommended",
+        "eslint:recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:prettier/recommended"
+      ],
+      "plugins": ["ban", "deprecation"],
+      "rules": {
+        "@angular-eslint/component-selector": [
+          "error",
+          {
+            "type": "element",
+            "prefix": "oib",
+            "style": "kebab-case"
+          }
+        ],
+        "@angular-eslint/directive-selector": [
+          "error",
+          {
+            "type": "attribute",
+            "prefix": "oib",
+            "style": "camelCase"
+          }
+        ],
+        "@typescript-eslint/ban-ts-comment": "off",
+        "@typescript-eslint/no-empty-function": "off",
+        "@typescript-eslint/no-empty-interface": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+        "no-case-declarations": "off",
+        "ban/ban": [
+          "error",
+          {"name": "fit", "message": "Do not use focused tests (fit)"},
+          {"name": "fdescribe", "message": "Do not use focused test suites (fdescribe)"}
+        ],
+        "deprecation/deprecation": "error",
+        "no-console": "error",
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              "rxjs/operators"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["*.html"],
+      "extends": ["plugin:@angular-eslint/template/recommended", "plugin:prettier/recommended"],
+      "rules": {
+        "@angular-eslint/template/eqeqeq": [
+          "error",
+          {
+            "allowNullOrUndefined": true
+          }
+        ]
+      }
+    }
+  ]
+}

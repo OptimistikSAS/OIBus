@@ -1,0 +1,30 @@
+$blue: #8291a7;
+$red: #ff0000;
+$lightGreen: #5abf90;
+$lightRed: #ff5f40;
+
+$veryLightGrey: #fafafa;
+$lightGrey: #f4f4f4;
+$mediumGrey: #e9ecef;
+$normalGrey: #8291a7;
+$darkGrey: #323e48;
+
+$orange: #f5bb51;
+$lightOrange: #ffdb81;
+$selectedColor: $lightOrange;
+$simpleLinkColor: $darkGrey;
+$simpleLinkHoverColor: $orange;
+
+$font-family-base: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+$body-color: #333333;
+$link-color: #627187;
+$link-decoration: none;
+$link-hover-color: $orange;
+$link-hover-decoration: none;
+$toast-font-size: inherit;
+
+$enable-validation-icons: false;
+
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/mixins';
