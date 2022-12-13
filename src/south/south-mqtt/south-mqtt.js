@@ -154,7 +154,7 @@ class SouthMQTT extends SouthConnector {
       const parsedMessage = JSON.parse(message.toString())
       const formatOptions = {
         timestampPath: this.timestampPath,
-        timeOrigin: this.timestampOrigin,
+        timestampOrigin: this.timestampOrigin,
         timestampFormat: this.timestampFormat,
         timezone: this.timezone,
         valuePath: this.valuePath,
