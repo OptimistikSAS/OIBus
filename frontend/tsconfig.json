@@ -10,7 +10,7 @@
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "unusedLocals": true,
+    "noUnusedLocals": true,
     "sourceMap": true,
     "declaration": false,
     "downlevelIteration": true,
