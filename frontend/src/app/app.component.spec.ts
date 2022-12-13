@@ -17,6 +17,7 @@ class AppComponentTester extends ComponentTester<AppComponent> {
     return this.element('router-outlet');
   }
 }
+
 describe('AppComponent', () => {
   let tester: AppComponentTester;
 
