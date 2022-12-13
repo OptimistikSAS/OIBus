@@ -1,22 +1,33 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 
 import { HomeComponent } from './home.component';
+import { provideTestingI18n } from '../../i18n/mock-i18n';
+import { ComponentTester } from 'ngx-speculoos';
+
+class HomeComponentTester extends ComponentTester<HomeComponent> {
+  constructor() {
+    super(HomeComponent);
+  }
+
+  get title() {
+    return this.element('h1');
+  }
+}
 
 describe('HomeComponent', () => {
-  let component: HomeComponent;
-  let fixture: ComponentFixture<HomeComponent>;
+  let tester: HomeComponentTester;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HomeComponent]
+      imports: [HomeComponent],
+      providers: [provideTestingI18n()]
     });
 
-    fixture = TestBed.createComponent(HomeComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
+    tester = new HomeComponentTester();
+    tester.detectChanges();
   });
 
   it('should create', () => {
-    expect(component).toBeTruthy();
+    expect(tester.title).toHaveText('Welcome to OiBus');
   });
 });
