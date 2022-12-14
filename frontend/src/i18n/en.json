@@ -1,5 +1,21 @@
 {
+  "nav": {
+    "engine": "Engine",
+    "north-list": "North",
+    "south-list": "South",
+    "logs": "Logs",
+    "about": "About"
+  },
   "home": {
     "welcome": "Welcome to OiBus"
+  },
+  "engine": {
+    "title": "Engine settings"
+  },
+  "south-list": {
+    "title": "South list"
+  },
+  "north-list": {
+    "title": "North list"
   }
 }
