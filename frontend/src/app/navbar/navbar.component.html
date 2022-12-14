@@ -1,15 +1,24 @@
 <nav class="navbar navbar-dark navbar-expand oi-navbar-top">
   <a class="navbar-brand" routerLink="/">
-    <img src="/frontend/assets/logo-oibus.png" alt="logo" style="height: 24px; margin: 5px; margin-right: 15px" />
+    <img src="/frontend/assets/logo-oibus.png" alt="logo" style="height: 24px; margin: 5px; padding-left: 5px" />
   </a>
   <div id="navbar" class="navbar-collapse collapse">
     <ng-container>
       <ul class="navbar-nav mr-auto d-none d-lg-flex">
         <li class="nav-item">
-          <a class="nav-link" routerLink="/logs">Logs</a>
+          <a class="nav-link" routerLink="/engine" translate="nav.engine"></a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" routerLink="/about">About</a>
+          <a class="nav-link" routerLink="/north" translate="nav.north-list"></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/south" translate="nav.south-list"></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/logs" translate="nav.logs"></a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/about" translate="nav.about"></a>
         </li>
       </ul>
     </ng-container>
