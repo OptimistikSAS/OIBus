@@ -3,6 +3,7 @@ import { AppComponent } from './app.component';
 import { provideRouter } from '@angular/router';
 import { ComponentTester } from 'ngx-speculoos';
 import { NavbarComponent } from './navbar/navbar.component';
+import { provideTestingI18n } from '../i18n/mock-i18n';
 
 class AppComponentTester extends ComponentTester<AppComponent> {
   constructor() {
@@ -24,7 +25,7 @@ describe('AppComponent', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [AppComponent, NavbarComponent],
-      providers: [provideRouter([])]
+      providers: [provideRouter([]), provideTestingI18n()]
     });
 
     tester = new AppComponentTester();
