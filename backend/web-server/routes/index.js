@@ -7,6 +7,7 @@ import engineController from '../controllers/engine.controller.js'
 import historyQueryController from '../controllers/history-query.controller.js'
 import oibusController from '../controllers/oibus.controller.js'
 import fileCacheController from '../controllers/file-cache.controller.js'
+import apiController from '../controllers/api.controller'
 
 const router = new Router()
 
@@ -48,5 +49,18 @@ router.delete('/north/:id/cache/file-errors', fileCacheController.removeFileErro
 router.post('/north/:id/cache/file-errors/retry', fileCacheController.retryFileErrors)
 router.delete('/north/:id/cache/file-errors/remove-all', fileCacheController.removeAllFileErrors)
 router.post('/north/:id/cache/file-errors/retry-all', fileCacheController.retryAllFileErrors)
+
+router.get('/api/engine', apiController.getEngineSettings)
+router.put('/api/engine', apiController.updateEngineSettings)
+router.get('/api/proxies', apiController.getProxies)
+router.get('/api/proxies/:id', apiController.getProxy)
+router.post('/api/proxies', apiController.createProxy)
+router.put('/api/proxies/:id', apiController.updateProxy)
+router.delete('/api/scan-modes/:id', apiController.deleteProxy)
+router.get('/api/scan-modes', apiController.getScanModes)
+router.get('/api/scan-modes/:id', apiController.getScanMode)
+router.post('/api/scan-modes', apiController.createScanMode)
+router.put('/api/scan-modes/:id', apiController.updateScanMode)
+router.delete('/api/scan-modes/:id', apiController.deleteScanMode)
 
 export default router

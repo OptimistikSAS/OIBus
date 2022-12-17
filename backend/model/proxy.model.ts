@@ -5,19 +5,9 @@ export interface ProxyDTO {
   id: string;
   name: string;
   description: string;
-  protocol: "http" | "https";
-  host: string;
-  port: number;
+  address;
   username: string;
   password: string;
-}
-
-/**
- * Light DTO for proxies in list
- */
-export interface ProxyLightDTO {
-  id: string;
-  name: string;
 }
 
 /**
@@ -26,9 +16,7 @@ export interface ProxyLightDTO {
 export interface ProxyCommandDTO {
   name: string;
   description: string;
-  protocol: "http" | "https";
-  host: string;
-  port: number;
+  address: string;
   username: string;
   password: string;
 }
