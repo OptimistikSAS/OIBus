@@ -11,6 +11,7 @@ import LoggerService from './service/logger/logger.service.js'
 import EncryptionService from './service/encryption.service.js'
 
 import { getCommandLineArguments, createFolder } from './service/utils.js'
+import RepositoryService from './service/repository.service'
 
 // In case there is an error the worker process will exit.
 // If this happens MAX_RESTART_COUNT times in less than MAX_INTERVAL_MILLISECOND interval
@@ -21,6 +22,7 @@ const MAX_INTERVAL_MILLISECOND = 30 * 1000
 const CACHE_FOLDER = './cache'
 const MAIN_LOG_FILE_NAME = 'main-journal.log'
 const CONFIG_FILE_NAME = 'oibus.json'
+const CONFIG_DATABASE = 'oibus.db'
 
 const loggerService = new LoggerService()
 
@@ -110,8 +112,11 @@ if (cluster.isMaster) {
   // The base directory has changed in the main thread into the config file directory, so we need to create the path from
   // the basename of the configFile path
   const configFilePath = path.resolve(CONFIG_FILE_NAME)
+  const configDbFilePath = path.resolve(CONFIG_DATABASE)
   loggerService.start('OIBus-main', logParameters).then(async () => {
     const forkLogger = loggerService.createChildLogger('forked-thread')
+
+    const repositoryService = new RepositoryService(configDbFilePath)
 
     // Migrate config file, if needed
     await migrationService(configFilePath, loggerService.createChildLogger('migration'))
@@ -138,6 +143,7 @@ if (cluster.isMaster) {
       oibusEngine,
       historyQueryEngine,
       oibusLoggerService,
+      repositoryService,
     )
 
     if (check) {
