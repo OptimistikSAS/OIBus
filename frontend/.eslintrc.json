@@ -1,5 +1,4 @@
 {
-  "root": true,
   "ignorePatterns": ["dist", "results", "coverage", "*.d.ts"],
   "parserOptions": {
     "ecmaVersion": 2020
