@@ -1,65 +1,102 @@
 {
-  "parser": "@babel/eslint-parser",
+  "ignorePatterns": ["dist", "results", "coverage", "*.d.ts"],
   "parserOptions": {
-    "ecmaVersion": 2018,
-    "sourceType": "module",
-    "ecmaFeatures": {
-      "jsx": true,
-      "js": true
+    "ecmaVersion": 2020
+  },
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "parserOptions": {
+        "project": ["tsconfig.json"],
+        "sourceType": "module"
+      },
+      "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:prettier/recommended"
+      ],
+      "plugins": ["ban", "deprecation"],
+      "rules": {
+        "@typescript-eslint/ban-ts-comment": "off",
+        "@typescript-eslint/no-empty-function": "off",
+        "@typescript-eslint/no-empty-interface": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-non-null-assertion": "off",
+        "@typescript-eslint/no-unused-vars": "off",
+        "no-case-declarations": "off",
+        "ban/ban": [
+          "error",
+          {"name": "fit", "message": "Do not use focused tests (fit)"},
+          {"name": "fdescribe", "message": "Do not use focused test suites (fdescribe)"}
+        ],
+        "deprecation/deprecation": "error",
+        "no-console": "error",
+        "no-restricted-imports": [
+          "error"
+        ]
+      }
+    },
+    {
+      "files": ["*.js", "*.jsx"],
+      "env": {
+        "es6": true,
+        "browser": true,
+        "node": true,
+        "jest": true
+      },
+      "parser": "@babel/eslint-parser",
+      "parserOptions": {
+        "sourceType": "module",
+        "ecmaFeatures": {
+          "jsx": true,
+          "js": true
+        }
+      },
+      "extends": "airbnb",
+      "plugins": ["react-hooks"],
+      "rules": {
+        "valid-jsdoc": "error",
+        "no-unused-vars": [
+          "error",
+          {
+            "argsIgnorePattern": "^_"
+          }
+        ],
+        "no-console": [
+          "warn",
+          {
+            "allow": ["warn", "error", "info", "table"]
+          }
+        ],
+        "linebreak-style": 0,
+        "object-curly-newline": ["error", { "multiline": true }],
+        "no-param-reassign": ["error", { "props": false }],
+        "max-len": ["error", { "code": 150 }],
+        "semi": ["error", "never"],
+        "jsx-a11y/anchor-is-valid": 1,
+        "import/extensions": [
+          "off",
+          "ignorePackages"
+        ],
+        "import/no-extraneous-dependencies": ["error", {"devDependencies": [
+          "src/frontend/**/*.jsx",
+          "src/south/**/*.jsx",
+          "src/north/**/*.jsx",
+          "webpack.*.js"
+        ]}],
+        "import/no-unresolved": [
+          "off"
+        ],
+        "arrow-parens": ["error", "always"],
+        "react/forbid-prop-types": [
+          "error",
+          {
+            "forbid": ["any", "array"]
+          }
+        ],
+        "react/function-component-definition": ["error", { "namedComponents": "arrow-function", "unnamedComponents": "arrow-function"}]
+      }
     }
-  },
-  "plugins": ["react-hooks"],
-  "extends": "airbnb",
-  "env": {
-    "es6": true,
-    "browser": true,
-    "node": true,
-    "jest": true
-  },
-  "globals": {
-    "server": false,
-    "browser": false,
-    "expect": false,
-    "logger": "writable"
-  },
-  "rules": {
-    "valid-jsdoc": "error",
-    "no-unused-vars": [
-      "error",
-      {
-        "argsIgnorePattern": "^_"
-      }
-    ],
-    "no-console": [
-      "warn",
-      {
-        "allow": ["warn", "error", "info", "table"]
-      }
-    ],
-    "linebreak-style": 0,
-    "object-curly-newline": ["error", { "multiline": true }],
-    "no-param-reassign": ["error", { "props": false }],
-    "max-len": ["error", { "code": 150 }],
-    "semi": ["error", "never"],
-    "jsx-a11y/anchor-is-valid": 1,
-    "import/extensions": [
-      "error",
-      "ignorePackages"
-    ],
-    "import/no-extraneous-dependencies": ["error", {"devDependencies": [
-      "src/frontend/**/*.jsx",
-      "src/south/**/*.jsx",
-      "src/north/**/*.jsx",
-      "webpack.*.js"
-    ]}],
-    "arrow-parens": ["error", "always"],
-    "react/forbid-prop-types": [
-      "error",
-      {
-        "forbid": ["any", "array"]
-      }
-    ],
-    "react/function-component-definition": ["error", { "namedComponents": "arrow-function", "unnamedComponents": "arrow-function"}]
-  },
-  "ignorePatterns": ["build/**/*"]
+  ]
 }
