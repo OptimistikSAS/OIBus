@@ -94,6 +94,8 @@
     "@babel/preset-react": "7.18.6",
     "@types/jest": "29.2.4",
     "@types/luxon": "3.1.0",
+    "@typescript-eslint/eslint-plugin": "5.46.0",
+    "@typescript-eslint/parser": "5.46.1",
     "babel-jest": "29.3.1",
     "babel-loader": "9.1.0",
     "bootstrap": "5.2.3",
@@ -101,8 +103,12 @@
     "dotenv": "16.0.3",
     "eslint": "8.29.0",
     "eslint-config-airbnb": "19.0.4",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-ban": "1.6.0",
+    "eslint-plugin-deprecation": "1.3.3",
     "eslint-plugin-import": "2.26.0",
     "eslint-plugin-jsx-a11y": "6.6.1",
+    "eslint-plugin-prettier": "4.2.1",
     "eslint-plugin-react-hooks": "4.6.0",
     "eslint-webpack-plugin": "3.2.0",
     "html-webpack-plugin": "5.5.0",
@@ -114,6 +120,7 @@
     "ncp": "2.0.0",
     "path-browserify": "1.0.1",
     "pkg": "5.8.0",
+    "prettier": "2.8.1",
     "prop-types": "15.8.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -135,7 +142,10 @@
   "jest": {
     "globalSetup": "./tests/jest-config.js",
     "coverageDirectory": "./tests/coverage",
-    "testPathIgnorePatterns": ["<rootDir>/dist/", "<rootDir>/node_modules/"],
+    "testPathIgnorePatterns": [
+      "<rootDir>/dist/",
+      "<rootDir>/node_modules/"
+    ],
     "moduleNameMapper": {
       "\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/tests/__mocks__/file.mock.js",
       "monaco-editor": "<rootDir>/tests/__mocks__/monaco-editor.mock.js",
