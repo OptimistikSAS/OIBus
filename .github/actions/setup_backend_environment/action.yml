@@ -32,7 +32,7 @@ runs:
         # calendar week and the cache version.
         # Providing a different value for the cache version enables manual
         # invalidation of the cache in case it is in some erroneous state.
-        key: backend-node_modules-${{ runner.os }}-${{ hashFiles('./backend/package-lock.json') }}-${{ steps.date.outputs.date }}-${{ hashFiles('cache_version') }}
+        key: backend-node_modules-${{ runner.os }}-${{ hashFiles('./backend/package-lock.json') }}-${{ hashFiles('./backend/package.json') }}-${{ steps.date.outputs.date }}-${{ hashFiles('cache_version') }}
 
     - name: Remove cache version
       shell: bash

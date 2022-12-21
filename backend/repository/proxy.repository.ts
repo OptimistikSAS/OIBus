@@ -10,14 +10,9 @@ export default class ProxyRepository {
   private readonly database;
   constructor(database) {
     this.database = database;
-    const query = `CREATE TABLE IF NOT EXISTS ${PROXY_TABLE} (
-                   id TEXT PRIMARY KEY,
-                   name TEXT,
-                   description TEXT,
-                   address TEXT,
-                   username TEXT,
-                   password TEXT
-                 );`;
+    const query =
+      `CREATE TABLE IF NOT EXISTS ${PROXY_TABLE} (id TEXT PRIMARY KEY, name TEXT, description TEXT, ` +
+      "address TEXT, username TEXT, password TEXT);";
     this.database.prepare(query).run();
   }
 
@@ -25,7 +20,7 @@ export default class ProxyRepository {
    * Retrieve all proxies
    */
   getProxies(): Array<ProxyDTO> {
-    const query = `SELECT id, name, description, address, username, password FROM ${PROXY_TABLE}`;
+    const query = `SELECT id, name, description, address, username, password FROM ${PROXY_TABLE};`;
     return this.database.prepare(query).all();
   }
 
@@ -33,7 +28,7 @@ export default class ProxyRepository {
    * Retrieve a proxy by its ID
    */
   getProxy(id: string): ProxyDTO {
-    const query = `SELECT id, name, description, address, username, password FROM ${PROXY_TABLE} WHERE id = ?`;
+    const query = `SELECT id, name, description, address, username, password FROM ${PROXY_TABLE} WHERE id = ?;`;
     return this.database.prepare(query).get(id);
   }
 
@@ -41,10 +36,10 @@ export default class ProxyRepository {
    * Create a proxy with a random generated ID
    */
   createProxy(command: ProxyCommandDTO): void {
-    const id = generateRandomId();
+    const id = generateRandomId(6);
     const query =
       `INSERT INTO ${PROXY_TABLE} (id, name, description, address, username, password) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+      "VALUES (?, ?, ?, ?, ?, ?);";
     return this.database
       .prepare(query)
       .run(
@@ -61,7 +56,7 @@ export default class ProxyRepository {
    * Update a proxy by its ID
    */
   updateProxy(id: string, command: ProxyCommandDTO): void {
-    const query = `UPDATE ${PROXY_TABLE} SET name = ?, description = ?, address = ?, username = ?, password = ? WHERE id = ?`;
+    const query = `UPDATE ${PROXY_TABLE} SET name = ?, description = ?, address = ?, username = ?, password = ? WHERE id = ?;`;
     return this.database
       .prepare(query)
       .run(
@@ -78,7 +73,7 @@ export default class ProxyRepository {
    * Delete a proxy by its ID
    */
   deleteProxy(id: string): void {
-    const query = `DELETE FROM ${PROXY_TABLE} WHERE id = ?`;
+    const query = `DELETE FROM ${PROXY_TABLE} WHERE id = ?;`;
     return this.database.prepare(query).run(id);
   }
 }
