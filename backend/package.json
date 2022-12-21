@@ -20,9 +20,11 @@
     "start": "tsc --sourceMap && npm run start:backend",
     "start:backend": "node ./dist/backend/index.js --config ../data-folder/oibus.json",
     "watch:web-client": "webpack --mode development --watch --config webpack.frontend.js",
-    "test": "jest --coverage --modulePathIgnorePatterns='.*\\.test\\.js$'",
+    "test": "npm run test:cjs && npm run test:ts",
+    "test:ts": "jest --config=tests/jest-ts.config.js --coverage",
+    "test:cjs": "jest --config=tests/jest-config.js --coverage",
     "test:setup-env": "docker-compose --file ./tests/docker-compose.yml --env-file ./tests/.env.test up -d",
-    "test:integration": "jest --testPathPattern='.*\\.test\\.js$'",
+    "test:integration": "jest --config=jest-config.js --testPathPattern='.*\\.test\\.js$'",
     "lint": "eslint --ext .jsx --ext .js",
     "lint:fix": "eslint --ext .jsx --ext .js --fix",
     "build": "tsc",
@@ -132,26 +134,13 @@
     "rimraf": "3.0.2",
     "standard-version": "9.5.0",
     "style-loader": "3.3.1",
+    "ts-jest": "29.0.3",
     "typescript": "4.9.3",
     "webpack": "5.75.0",
     "webpack-cli": "5.0.0"
   },
   "optionalDependencies": {
     "oracledb": "5.5.0"
-  },
-  "jest": {
-    "globalSetup": "./tests/jest-config.js",
-    "coverageDirectory": "./tests/coverage",
-    "testPathIgnorePatterns": [
-      "<rootDir>/dist/",
-      "<rootDir>/node_modules/"
-    ],
-    "moduleNameMapper": {
-      "\\.(jpg|ico|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/tests/__mocks__/file.mock.js",
-      "monaco-editor": "<rootDir>/tests/__mocks__/monaco-editor.mock.js",
-      "nanoid": "<rootDir>/tests/__mocks__/nanoid.mock.js",
-      "oracledb": "<rootDir>/tests/__mocks__/oracledb.mock.js"
-    }
   },
   "pkg": {
     "scripts": [
