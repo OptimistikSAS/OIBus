@@ -1,4 +1,57 @@
 {
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "validation-errors": {
+      "this-field": "This field",
+      "required": "{{ label }} is required",
+      "invalid-date": "{{ label }} is not a valid date",
+      "minlength": "{{ label }} must have at least {{ requiredLength }} characters",
+      "maxlength": "{{ label }} must have at most {{ requiredLength }} characters",
+      "pattern": "{{ label }} doesn't have the required format",
+      "email": "{{ label }} must be a valid email address",
+      "min": "{{ label }} must be at least {{ min }}",
+      "max": "{{ label }} must be at most {{ max }}",
+      "end-must-be-after-start": "The end date must be after the start date",
+      "descending-limits-error": "Limit values must be descending",
+      "invalid-period": "The period is not valid",
+      "invalid-positive-integer": "The number must be a positive integer",
+      "null-period-error": "The period can not be null",
+      "invalid-regex": "The regular expression is not valid",
+      "invalid-json": "The json is not valid",
+      "all-access-control-tag-keys-must-be-valued": "All the tag keys used for access control must have a value. Missing tag key(s): {{ missingTagKeys }}.",
+      "parsing-processor-error": "The parsing processor is not valid. {{ error }}",
+      "cron-error": "The cron expression is not valid"
+    },
+    "period": {
+      "none": "None",
+      "years": "y.",
+      "quarters": "q.",
+      "months": "month",
+      "weeks": "w.",
+      "days": "d.",
+      "hours": "h.",
+      "minutes": "mn.",
+      "seconds": "s.",
+      "milliseconds": "ms.",
+      "custom": "Custom"
+    },
+    "size": {
+      "B": "B",
+      "kB": "kB",
+      "MB": "MB"
+    }
+  },
+  "enums": {
+    "log-levels": {
+      "silent":  "Silent",
+      "error": "Error",
+      "warning":  "Warning",
+      "info": "Info",
+      "debug":  "Debug",
+      "trace": "Trace"
+    }
+  },
   "nav": {
     "engine": "Engine",
     "north-list": "North",
@@ -10,7 +63,58 @@
     "welcome": "Welcome to OiBus"
   },
   "engine": {
-    "title": "Engine settings"
+    "title": "Engine",
+    "updated": "Engine settings updated",
+    "general-settings": {
+      "title": "General settings",
+      "name": "Name",
+      "port": "Port"
+    },
+    "logger": {
+      "title": "Logger",
+      "console": {
+        "title": "Console",
+        "level": "Level"
+      },
+      "file": {
+        "title": "File",
+        "level": "Level",
+        "max-file-size": "Max file size",
+        "number-of-files": "Number of files"
+      },
+      "database": {
+        "title": "Database",
+        "level": "Level",
+        "max-number-of-logs": "Max number of logs"
+      },
+      "loki": {
+        "title": "Loki",
+        "level": "Level",
+        "interval": "Interval",
+        "address": "Address",
+        "proxy": "Proxy",
+        "token-address": "Token address",
+        "username": "Username",
+        "password": "Password"
+      }
+    },
+    "health-signal": {
+      "title": "Health signal",
+      "logging": {
+        "title": "Logger",
+        "enabled": "Enabled",
+        "interval": "Interval"
+      },
+      "http": {
+        "title": "HTTP",
+        "enabled": "Enabled",
+        "interval": "Interval",
+        "verbose": "Verbose",
+        "address": "Address",
+        "proxy": "Proxy"
+      }
+    }
+
   },
   "south-list": {
     "title": "South list"

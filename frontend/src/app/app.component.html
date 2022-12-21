@@ -1,2 +1,9 @@
-<oib-navbar></oib-navbar>
-<router-outlet></router-outlet>
+<div class="fixed-top">
+  <oib-navbar></oib-navbar>
+</div>
+<oib-notification aria-live="polite" aria-atomic="true"></oib-notification>
+<main class="container-fluid" style="margin-top: 45px">
+  <router-outlet></router-outlet>
+</main>
+
+<oib-default-validation-errors></oib-default-validation-errors>
