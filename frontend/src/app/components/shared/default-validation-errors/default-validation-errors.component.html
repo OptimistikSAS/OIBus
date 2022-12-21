@@ -1,0 +1,83 @@
+<val-default-errors>
+  <!-- error for ng-boostrap invalid date -->
+  <!-- it has to be before required, as the value is null if the date is invalid, so both errors will be present -->
+  <!-- and this one is more specific, so it's better to display it instead of required -->
+  <ng-template valError="ngbDate" let-label>
+    <span
+      translate="common.validation-errors.invalid-date"
+      [translateParams]="{ label: label || ('common.validation-errors.this-field' | translate) }"
+    ></span>
+  </ng-template>
+  <ng-template valError="required" let-label>
+    <span
+      translate="common.validation-errors.required"
+      [translateParams]="{ label: label || ('common.validation-errors.this-field' | translate) }"
+    ></span>
+  </ng-template>
+  <ng-template valError="minlength" let-error="error" let-label>
+    <span
+      translate="common.validation-errors.minlength"
+      [translateParams]="{
+        label: label || ('common.validation-errors.this-field' | translate),
+        requiredLength: error.requiredLength | number
+      }"
+    ></span
+  ></ng-template>
+  <ng-template valError="maxlength" let-error="error" let-label>
+    <span
+      translate="common.validation-errors.maxlength"
+      [translateParams]="{
+        label: label || ('common.validation-errors.this-field' | translate),
+        requiredLength: error.requiredLength | number
+      }"
+    ></span>
+  </ng-template>
+  <ng-template valError="pattern" let-label>
+    <span
+      translate="common.validation-errors.pattern"
+      [translateParams]="{ label: label || ('common.validation-errors.this-field' | translate) }"
+    ></span>
+  </ng-template>
+  <ng-template valError="email" let-label>
+    <span
+      translate="common.validation-errors.email"
+      [translateParams]="{ label: label || ('common.validation-errors.this-field' | translate) }"
+    ></span>
+  </ng-template>
+  <ng-template valError="min" let-error="error" let-label>
+    <span
+      translate="common.validation-errors.min"
+      [translateParams]="{ label: label || ('common.validation-errors.this-field' | translate), min: error.min | number }"
+    ></span
+  ></ng-template>
+  <ng-template valError="max" let-error="error" let-label>
+    <span
+      translate="common.validation-errors.max"
+      [translateParams]="{ label: label || ('common.validation-errors.this-field' | translate), max: error.max | number }"
+    ></span>
+  </ng-template>
+  <ng-template valError="ascendingDates">
+    <span translate="common.validation-errors.end-must-be-after-start"></span>
+  </ng-template>
+  <ng-template valError="ascendingLimits">
+    <span translate="common.validation-errors.descending-limits-error"></span>
+  </ng-template>
+  <ng-template valError="invalidPeriod">
+    <span translate="common.validation-errors.invalid-period"></span>
+  </ng-template>
+  <ng-template valError="invalidPositiveInteger">
+    <span translate="common.validation-errors.invalid-positive-integer"></span>
+  </ng-template>
+  <ng-template valError="nullPeriod">
+    <span translate="common.validation-errors.null-period-error"></span>
+  </ng-template>
+  <ng-template valError="invalidRegex">
+    <span translate="common.validation-errors.invalid-regex"></span>
+  </ng-template>
+  <ng-template valError="invalidJson">
+    <span translate="common.validation-errors.invalid-json"></span>
+  </ng-template>
+  <ng-template valError="cronError">
+    <span translate="common.validation-errors.cron-error"></span>
+  </ng-template>
+</val-default-errors>

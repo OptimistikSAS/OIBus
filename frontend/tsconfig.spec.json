@@ -6,7 +6,8 @@
     "resolveJsonModule": true, // needed for provideTestingI18n(), to be able to import json
     "outDir": "./out-tsc/spec",
     "types": [
-      "jasmine"
+      "jasmine",
+      "@angular/localize"
     ]
   },
   "files": [
