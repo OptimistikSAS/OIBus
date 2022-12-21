@@ -167,10 +167,10 @@ describe("Empty engine repository", () => {
       "UPDATE engine SET name = ?, port = ?, log_console_level = ?, log_file_level = ?, log_file_max_file_size = ?, " +
         "log_file_number_of_files = ?, log_database_level = ?, log_database_max_number_of_logs = ?, log_loki_level = ?, " +
         "log_loki_interval = ?, log_loki_address = ?, log_loki_token_address = ?, log_loki_proxy_id = ?, log_loki_username = ?, " +
-        "log_loki_password = ?, health_signal_log_enabled = ?, health_signal_log_interval = ?health_signal_http_enabled = ?, " +
+        "log_loki_password = ?, health_signal_log_enabled = ?, health_signal_log_interval = ?, health_signal_http_enabled = ?, " +
         "health_signal_http_interval = ?, health_signal_http_verbose = ?, health_signal_http_address = ?, " +
         "health_signal_http_proxy_id = ?, health_signal_http_authentication_type = ?, health_signal_http_authentication_key = ?, " +
-        "health_signal_http_authentication_secret = ? WHERE id = ?;"
+        "health_signal_http_authentication_secret = ? WHERE rowid=(SELECT MIN(rowid) FROM engine);"
     );
     expect(database.run).toHaveBeenCalledWith(
       command.name,

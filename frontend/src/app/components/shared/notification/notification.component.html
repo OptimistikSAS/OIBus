@@ -1,0 +1,19 @@
+<ng-container *ngIf="notifications$ | async as notifications">
+  <ngb-toast
+    *ngFor="let notification of notifications"
+    [autohide]="true"
+    [delay]="5000"
+    (hidden)="close(notification)"
+    class="text-light lead bump"
+    [class.bg-danger]="notification.type === 'error'"
+    [class.bg-success]="notification.type === 'success'"
+  >
+    <span class="notification-content" *ngIf="notification.message">{{ notification.message }}</span>
+    <span
+      class="notification-content"
+      *ngIf="!notification.message"
+      [translate]="notification.i18nKey!"
+      [translateParams]="notification.i18nArgs"
+    ></span>
+  </ngb-toast>
+</ng-container>
