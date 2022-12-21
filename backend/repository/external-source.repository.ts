@@ -14,11 +14,7 @@ export default class ExternalSourceRepository {
 
   constructor(database) {
     this.database = database;
-    const query = `CREATE TABLE IF NOT EXISTS ${EXTERNAL_SOURCES_TABLE} (
-                   id TEXT PRIMARY KEY,
-                   reference TEXT,
-                   description TEXT
-                 );`;
+    const query = `CREATE TABLE IF NOT EXISTS ${EXTERNAL_SOURCES_TABLE} (id TEXT PRIMARY KEY, reference TEXT, description TEXT);`;
     this.database.prepare(query).run();
   }
 
@@ -26,7 +22,7 @@ export default class ExternalSourceRepository {
    * Retrieve all external sources
    */
   getExternalSources(): Array<ExternalSourceDTO> {
-    const query = `SELECT id, reference, description FROM ${EXTERNAL_SOURCES_TABLE}`;
+    const query = `SELECT id, reference, description FROM ${EXTERNAL_SOURCES_TABLE};`;
     return this.database.prepare(query).all();
   }
 
@@ -34,7 +30,7 @@ export default class ExternalSourceRepository {
    * Retrieve an external source by its ID
    */
   getExternalSource(id: string): ExternalSourceDTO {
-    const query = `SELECT id, reference, description FROM ${EXTERNAL_SOURCES_TABLE} WHERE id = ?`;
+    const query = `SELECT id, reference, description FROM ${EXTERNAL_SOURCES_TABLE} WHERE id = ?;`;
     return this.database.prepare(query).get(id);
   }
 
@@ -42,10 +38,10 @@ export default class ExternalSourceRepository {
    * Create an external source with a random generated ID
    */
   createExternalSource(command: ExternalSourceCommandDTO): void {
-    const id = generateRandomId();
+    const id = generateRandomId(6);
     const query =
       `INSERT INTO ${EXTERNAL_SOURCES_TABLE} (id, reference, description) ` +
-      `VALUES (?, ?, ?)`;
+      `VALUES (?, ?, ?);`;
     return this.database
       .prepare(query)
       .run(id, command.reference, command.description);
@@ -55,7 +51,7 @@ export default class ExternalSourceRepository {
    * Update an external source by its ID
    */
   updateExternalSource(id: string, command: ExternalSourceCommandDTO): void {
-    const query = `UPDATE ${EXTERNAL_SOURCES_TABLE} SET reference = ?, description = ? WHERE id = ?`;
+    const query = `UPDATE ${EXTERNAL_SOURCES_TABLE} SET reference = ?, description = ? WHERE id = ?;`;
     return this.database
       .prepare(query)
       .run(command.reference, command.description, id);
@@ -65,7 +61,7 @@ export default class ExternalSourceRepository {
    * Delete an external source by its ID
    */
   deleteExternalSource(id: string): void {
-    const query = `DELETE FROM ${EXTERNAL_SOURCES_TABLE} WHERE id = ?`;
+    const query = `DELETE FROM ${EXTERNAL_SOURCES_TABLE} WHERE id = ?;`;
     return this.database.prepare(query).run(id);
   }
 }

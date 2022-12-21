@@ -10,12 +10,7 @@ export default class ScanModeRepository {
   private readonly database;
   constructor(database) {
     this.database = database;
-    const query = `CREATE TABLE IF NOT EXISTS ${SCAN_MODE_TABLE} (
-                   id TEXT PRIMARY KEY,
-                   name TEXT,
-                   description TEXT,
-                   cron TEXT
-                 );`;
+    const query = `CREATE TABLE IF NOT EXISTS ${SCAN_MODE_TABLE} (id TEXT PRIMARY KEY, name TEXT, description TEXT, cron TEXT);`;
     this.database.prepare(query).run();
   }
 
@@ -23,7 +18,7 @@ export default class ScanModeRepository {
    * Retrieve all scan modes
    */
   getScanModes(): Array<ScanModeDTO> {
-    const query = `SELECT id, name, description, cron FROM ${SCAN_MODE_TABLE}`;
+    const query = `SELECT id, name, description, cron FROM ${SCAN_MODE_TABLE};`;
     return this.database.prepare(query).all();
   }
 
@@ -31,7 +26,7 @@ export default class ScanModeRepository {
    * Retrieve a scan mode by its ID
    */
   getScanMode(id: string): ScanModeDTO {
-    const query = `SELECT id, name, description, cron FROM ${SCAN_MODE_TABLE} WHERE id = ?`;
+    const query = `SELECT id, name, description, cron FROM ${SCAN_MODE_TABLE} WHERE id = ?;`;
     return this.database.prepare(query).get(id);
   }
 
@@ -39,24 +34,28 @@ export default class ScanModeRepository {
    * Create a scan mode with a random generated ID
    */
   createScanMode(command: ScanModeCommandDTO): void {
-    const id = generateRandomId();
-    const query =
-      `INSERT INTO ${SCAN_MODE_TABLE} (id, name, description, cron) ` +
-      `VALUES (?, ?, ?, ?)`;
+    const id = generateRandomId(6);
+    const query = `INSERT INTO ${SCAN_MODE_TABLE} (id, name, description, cron) VALUES (?, ?, ?, ?);`;
     return this.database
       .prepare(query)
       .run(id, command.name, command.description, command.cron);
   }
 
+  /**
+   * Update a scan mode by its ID
+   */
   updateScanMode(id: string, command: ScanModeCommandDTO): void {
-    const query = `UPDATE ${SCAN_MODE_TABLE} SET name = ?, description = ?, cron = ? WHERE id = ?`;
+    const query = `UPDATE ${SCAN_MODE_TABLE} SET name = ?, description = ?, cron = ? WHERE id = ?;`;
     return this.database
       .prepare(query)
       .run(command.name, command.description, command.cron, id);
   }
 
+  /**
+   * Delete a scan mode by its ID
+   */
   deleteScanMode(id: string): void {
-    const query = `DELETE FROM ${SCAN_MODE_TABLE} WHERE id = ?`;
+    const query = `DELETE FROM ${SCAN_MODE_TABLE} WHERE id = ?;`;
     return this.database.prepare(query).run(id);
   }
 }

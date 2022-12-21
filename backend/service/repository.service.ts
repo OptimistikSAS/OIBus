@@ -15,11 +15,11 @@ export default class RepositoryService {
 
   constructor(databasePath: string) {
     const database = db(databasePath);
-    this._engineRepository = new EngineRepository(database);
     this._externalSourceRepository = new ExternalSourceRepository(database);
     this._ipFilterRepository = new IpFilterRepository(database);
     this._proxyRepository = new ProxyRepository(database);
     this._scanModeRepository = new ScanModeRepository(database);
+    this._engineRepository = new EngineRepository(database);
   }
 
   get engineRepository(): EngineRepository {

@@ -5,7 +5,7 @@ export interface ProxyDTO {
   id: string;
   name: string;
   description: string;
-  address;
+  address: string;
   username: string;
   password: string;
 }
