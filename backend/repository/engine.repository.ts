@@ -184,7 +184,7 @@ export default class EngineRepository {
       `log_loki_username = ?, ` +
       `log_loki_password = ?, ` +
       `health_signal_log_enabled = ?, ` +
-      `health_signal_log_interval = ?` +
+      `health_signal_log_interval = ?, ` +
       `health_signal_http_enabled = ?, ` +
       `health_signal_http_interval = ?, ` +
       `health_signal_http_verbose = ?, ` +
@@ -193,7 +193,7 @@ export default class EngineRepository {
       `health_signal_http_authentication_type = ?, ` +
       `health_signal_http_authentication_key = ?, ` +
       `health_signal_http_authentication_secret = ? ` +
-      `WHERE id = ?;`;
+      `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINE_TABLE});`;
     this.database
       .prepare(query)
       .run(
