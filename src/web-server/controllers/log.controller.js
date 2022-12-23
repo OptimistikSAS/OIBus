@@ -1,9 +1,12 @@
 import path from 'node:path'
 
-import { getLogs } from '../../service/database.service.js'
+import { getPaginatedLogs } from '../../service/database.service.js'
 
 const LOG_FOLDER = './logs'
 const LOG_DB_NAME = 'journal.db'
+const LOG_SORTING_VALUES = ['asc', 'dsc', 'ASC', 'DSC']
+const LOG_DEFAULT_PAGE_SIZE = 50
+const LOG_DEFAULT_PAGE = 0
 
 /**
  * Get logs.
@@ -22,8 +25,13 @@ const getLogsEndpoint = (ctx) => {
   const fromDate = ctx.query.fromDate || new Date(dayAgo).toISOString()
   const toDate = ctx.query.toDate || new Date(now).toISOString()
   const verbosity = ctx.query.verbosity?.replace(/[[\]]/g, '').split(',') || 'info'
+  const scope = ctx.query.scope || 'OIBusEngine'
+  const textMessage = ctx.query.textMessage || ''
+  const sorting = LOG_SORTING_VALUES.includes(ctx.query.sorting) ? ctx.query.sorting : 'ASC'
+  const pageNumber = ctx.query.pageNumber || LOG_DEFAULT_PAGE
+  const pageSize = ctx.query.pageSize || LOG_DEFAULT_PAGE_SIZE
 
-  const logs = getLogs(databasePath, fromDate, toDate, verbosity)
+  const logs = getPaginatedLogs(databasePath, fromDate, toDate, scope, textMessage, verbosity, sorting, pageNumber, pageSize)
   ctx.ok(logs)
 }
 
