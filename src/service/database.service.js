@@ -1,7 +1,7 @@
 import db from 'better-sqlite3'
 
 const CACHE_TABLE_NAME = 'cache'
-const PAGE_SIZE = 50
+const DEFAULT_PAGE_SIZE = 50
 
 /**
  * Initiate SQLite database and create the cache table.
@@ -74,6 +74,7 @@ const getLogs = (databasePath, fromDate, toDate, verbosity) => {
  * @param {string[]} verbosity - Verbosity levels
  * @param {'ASC' | 'DESC'} sorting - The sorting to use
  * @param {number} pageNumber - The page number to request
+ * @param {number} pageSize - The size of the page
  * @return {
  * {
  *  content: {timestamp: String, level: String, scope: String, source: String}[],
@@ -92,6 +93,7 @@ const getPaginatedLogs = (
   verbosity,
   sorting,
   pageNumber = 0,
+  pageSize = DEFAULT_PAGE_SIZE,
 ) => {
   const database = db(databasePath)
   let whereClause = `WHERE timestamp BETWEEN '${fromDate}' AND '${toDate}' `
@@ -104,10 +106,10 @@ const getPaginatedLogs = (
   }
 
   const query = `SELECT timestamp, level, scope, source, message FROM logs ${whereClause}`
-      + ` ORDER BY timestamp ${sorting} LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * pageNumber}`
+      + ` ORDER BY timestamp ${sorting} LIMIT ${pageSize} OFFSET ${pageSize * pageNumber}`
   const results = database.prepare(query).all()
   const totalNumberOfElements = database.prepare(`SELECT COUNT(*) as count FROM logs ${whereClause}`).get().count
-  const totalNumberOfPages = Math.ceil(totalNumberOfElements / PAGE_SIZE)
+  const totalNumberOfPages = Math.ceil(totalNumberOfElements / pageSize)
 
   return {
     content: results,
