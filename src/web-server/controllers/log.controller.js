@@ -25,11 +25,11 @@ const getLogsEndpoint = (ctx) => {
   const fromDate = ctx.query.fromDate || new Date(dayAgo).toISOString()
   const toDate = ctx.query.toDate || new Date(now).toISOString()
   const verbosity = ctx.query.verbosity?.replace(/[[\]]/g, '').split(',') || 'info'
-  const scope = ctx.query.scope || 'OIBusEngine'
+  const scope = ctx.query.scope || ''
   const textMessage = ctx.query.textMessage || ''
   const sorting = LOG_SORTING_VALUES.includes(ctx.query.sorting) ? ctx.query.sorting : 'ASC'
   const pageNumber = ctx.query.pageNumber || LOG_DEFAULT_PAGE
-  const pageSize = ctx.query.pageSize || LOG_DEFAULT_PAGE_SIZE
+  const pageSize = LOG_DEFAULT_PAGE_SIZE
 
   const logs = getPaginatedLogs(databasePath, fromDate, toDate, scope, textMessage, verbosity, sorting, pageNumber, pageSize)
   ctx.ok(logs)

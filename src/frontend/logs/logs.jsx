@@ -8,15 +8,14 @@ import {
   Card,
   CardBody,
   Row,
-  Col, Container,
-  Pagination,
-  PaginationItem,
-  PaginationLink,
+  Col, 
+  Container,
 } from 'reactstrap'
 import apis from '../service/apis.js'
 import { useLocation } from 'react-router-dom'
 import { AlertContext } from '../context/alert-context.jsx'
 import OibDate from '../components/oib-form/oib-date.jsx'
+import TablePagination from '../components/table/table-pagination.jsx'
 
 const selectStyle = (level) => {
   switch (level) {
@@ -37,9 +36,7 @@ const Log = () => {
   const verbosityOptions = ['error', 'warn', 'info', 'debug', 'trace']
   const defaultMaxLog = 300
   const defaultMaxPageSize = 10
-  const defaultPageSize = 10
-  const defaultPageNumber = 0
-  const PAGE_NEIGHBOUR_LIMIT = 3
+  const defaultActivePage = 1
 
   const { search } = useLocation()
   const params = new URLSearchParams(search)
@@ -52,34 +49,20 @@ const Log = () => {
   const [verbosity, setVerbosity] = React.useState(verbosityOptions)
   const [logs, setLogs] = React.useState([])
   const [filterText, setFilterText] = React.useState('')
-  const [maxLog, setMaxLog] = React.useState(defaultMaxLog)
+  const [scope, setScope] = React.useState('')
   const [maxPageSize, setMaxPageSize] = React.useState(defaultMaxPageSize)
-  const [pageSize, setPageSize] = React.useState(parseInt(params.get('pageSize')) || defaultPageSize)
-  const [pageNumber, setPageNumber] = React.useState(parseInt(params.get('pageNumber')) || defaultPageNumber)
-  const [startPageNumber] = React.useState(pageNumber > PAGE_NEIGHBOUR_LIMIT ? pageNumber - PAGE_NEIGHBOUR_LIMIT : 1)
-  const [endPageNumber, setEndPageNumber] = React.useState(pageNumber + PAGE_NEIGHBOUR_LIMIT > maxPageSize ? maxPageSize : pageNumber + PAGE_NEIGHBOUR_LIMIT)
+  const [activePageNumber, setActivePageNumber] = React.useState(defaultActivePage)
   const { setAlert } = React.useContext(AlertContext)
 
-  // console.log(parseInt(params.get('pageNumber')), parseInt(params.get('pageSize')))
-  // console.log(pageNumber, pageSize)
-  console.log(startPageNumber, endPageNumber, maxPageSize)
   /**
    * Retrieve the logs from sqlite database
    * @returns {void}
    */
   const retrieveLogs = async () => {
     try {
-      const logsResponse = await apis.getLogs(fromDate, toDate, pageNumber, pageSize, verbosity.join(','))
-      console.log(logsResponse)
-      // logsResponse = logsResponse.slice((pageNumber - 1) * pageSize, pageNumber * pageSize);
-      // console.log(logsResponse)
-      // sort logs based on timestamp
-
+      const logsResponse = await apis.getLogs(fromDate, toDate, activePageNumber-1, verbosity.join(','),filterText,scope)
       setLogs(logsResponse.content)
-      setMaxLog(logsResponse.totalNumberOfElements)
-      // TODO: add backend logic to support max page size
       setMaxPageSize(logsResponse.totalNumberOfPages)
-      setEndPageNumber(pageNumber + PAGE_NEIGHBOUR_LIMIT > maxPageSize ? maxPageSize : pageNumber + PAGE_NEIGHBOUR_LIMIT)
     } catch (error) {
       console.error(error)
       setAlert({ text: error.message, type: 'danger' })
@@ -88,7 +71,7 @@ const Log = () => {
 
   useEffect(() => {
     retrieveLogs()
-  }, [])
+  }, [activePageNumber,fromDate,toDate,verbosity,filterText,scope])
 
   /**
    * Handles the form's submission and set the logs if any response
@@ -96,6 +79,7 @@ const Log = () => {
    * @returns {void}
    */
   const handleVerbosityChange = (value) => {
+    setActivePageNumber(defaultActivePage)
     if (verbosity.includes(value)) {
       setVerbosity(verbosity.filter((item) => item !== value))
     } else {
@@ -103,15 +87,9 @@ const Log = () => {
     }
   }
 
-  /**
- * Handles the form's submission and set the logs if any response
- * @param {string} value checked/unchecked item
- * @returns {void}
- */
-  const handlePageSizeChange = (event) => {
-    const { target } = event
-    const { value: newVal } = target
-    setPageSize(parseInt(newVal))
+  const handlePageSelection = (pageNumber) => {
+    console.log("Selected page is:" + pageNumber)
+    setActivePageNumber(pageNumber)
   }
 
   /**
@@ -121,7 +99,7 @@ const Log = () => {
   const renderFilter = () => (
     <FormGroup row>
       <Label sm={1} for="filterText">
-        Filter
+        Text Filter
       </Label>
       <Col sm={11}>
         <Input
@@ -131,8 +109,22 @@ const Log = () => {
           placeholder="message contains..."
           value={filterText}
           onChange={(event) => {
-            setMaxLog(defaultMaxLog)
             setFilterText(event.target.value.toLowerCase())
+          }}
+        />
+      </Col>
+      <Label sm={1} for="filterText">
+        Scope Filter
+      </Label>
+      <Col sm={11}>
+        <Input
+          className="oi-form-input"
+          type="text"
+          id="scope"
+          placeholder="scope contains..."
+          value={scope}
+          onChange={(event) => {
+            setScope(event.target.value.toLowerCase())
           }}
         />
       </Col>
@@ -162,7 +154,6 @@ const Log = () => {
             </thead>
             <tbody>
               {filteredLogs
-                .filter((_, index) => index < maxLog)
                 .map((item) => {
                   const { id, source, scope, level, message, timestamp } = item
                   const date = new Date(timestamp)
@@ -178,78 +169,20 @@ const Log = () => {
                 })}
             </tbody>
           </Table>
-          {filteredLogs.length > maxLog && (
-            <Button id="showMore" color="primary" onClick={() => setMaxLog(maxLog + defaultMaxLog)}>
-              Show more...
-            </Button>
-          )}
         </CardBody>
       </Card>
     </Col>
   )
 
-  /**
-     * Render pagination control
-     * @returns {JSX.Element} - The pagination component
-     */
-  const renderPaginationControl = () => (
-    <Pagination size="sm">
-      <PaginationItem key='a'>
-        <PaginationLink
-          first
-          href={`/log?pageNumber=1&pageSize=${pageSize}`}
-        />
-      </PaginationItem>
-      <PaginationItem key='b'>
-        <PaginationLink
-          href={`/log?pageNumber=${pageNumber < 1 ? 1 : pageNumber}&pageSize=${pageSize}`}
-          previous
-        />
-      </PaginationItem>
-      {pageNumber - PAGE_NEIGHBOUR_LIMIT > 1 ?
-        (<PaginationItem key='c' disabled>
-          <PaginationLink>
-            ...
-          </PaginationLink>
-        </PaginationItem>
-        ) : ""}
-      {
-        [...Array(endPageNumber - startPageNumber)].map((e, i) => (
-          <PaginationItem key={i} active={pageNumber == startPageNumber + i}>
-            <PaginationLink
-              href={`/log?pageNumber=${startPageNumber + i}&pageSize=${pageSize}`}
-            >
-              {startPageNumber + i}
-            </PaginationLink>
-          </PaginationItem>
-        ))
-      }
-      {maxPageSize - pageNumber > PAGE_NEIGHBOUR_LIMIT ?
-        (<PaginationItem key='d' disabled>
-          <PaginationLink>
-            ...
-          </PaginationLink>
-        </PaginationItem>
-        ) : ""}
-      <PaginationItem key='e'>
-        <PaginationLink
-          href={`/log?pageNumber=${pageNumber + 1 > maxPageSize ? maxPageSize : pageNumber + 1}&pageSize=${pageSize}`}
-          next
-        />
-      </PaginationItem>
-      <PaginationItem key='f'>
-        <PaginationLink
-          href={`/log?pageNumber=${maxPageSize}&pageSize=${pageSize}`}
-          last
-        />
-      </PaginationItem>
-    </Pagination>
-  )
-
   return (
     <Container fluid>
       <Row>
-        {renderPaginationControl()}
+      <TablePagination
+        maxToDisplay={Math.min(maxPageSize,10)}
+        selected={activePageNumber}
+        total={maxPageSize}
+        onPagePressed={(event) => handlePageSelection(event)}
+      />
       </Row>
       <Row className="p-3">
         <Col className="log-left-panel">
@@ -263,6 +196,7 @@ const Log = () => {
                   value={fromDate}
                   onChange={(_name, newVal, _valid) => {
                     const date = new Date(newVal).toISOString()
+                    setActivePageNumber(defaultActivePage)
                     setFromDate(date)
                   }}
                   help="default: Current datetime - 24 hours (now - 24 hours)"
@@ -276,20 +210,11 @@ const Log = () => {
                   value={toDate}
                   onChange={(_name, newVal, _valid) => {
                     const date = new Date(newVal).toISOString()
+                    setActivePageNumber(defaultActivePage)
                     setToDate(date)
                   }}
                   help="default: Current datetime (now)"
                 />
-              </FormGroup>
-
-              <FormGroup>
-                <Label for="pageSizeSelect">Select Page Size</Label>
-                <Input type="select" name="select" id="pageSizeSelect" onChange={(value) => handlePageSizeChange(value)} value={pageSize}>
-                  <option>10</option>
-                  <option>25</option>
-                  <option>50</option>
-                  <option>100</option>
-                </Input>
               </FormGroup>
 
               <FormGroup>
@@ -309,17 +234,13 @@ const Log = () => {
                   </FormGroup>
                 ))}
               </FormGroup>
-
-              <Button id="showLog" color="primary" onClick={retrieveLogs}>
-                Show log
-              </Button>
             </CardBody>
           </Card>
         </Col>
         <Col>
 
           <Row>
-            {logs && renderLogs(logs.filter((item) => item.message.toLowerCase().includes(filterText)))}
+            {logs && renderLogs(logs)}
           </Row>
         </Col>
       </Row>
