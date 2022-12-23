@@ -99,13 +99,13 @@ const getPaginatedLogs = (
   let whereClause = `WHERE timestamp BETWEEN '${fromDate}' AND '${toDate}' `
   + `AND level IN (${verbosity.map((verb) => `'${verb}'`)})`
   if (scope) {
-    whereClause += ` AND scope = '${scope}'`
+    whereClause += ` AND scope like '%${scope}%'`
   }
   if (textMessage) {
     whereClause += ` AND message like '%${textMessage}%'`
   }
 
-  const query = `SELECT timestamp, level, scope, source, message FROM logs ${whereClause}`
+  const query = `SELECT id, timestamp, level, scope, source, message FROM logs ${whereClause}`
       + ` ORDER BY timestamp ${sorting} LIMIT ${pageSize} OFFSET ${pageSize * pageNumber}`
   const results = database.prepare(query).all()
   const totalNumberOfElements = database.prepare(`SELECT COUNT(*) as count FROM logs ${whereClause}`).get().count

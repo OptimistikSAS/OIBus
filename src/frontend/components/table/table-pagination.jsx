@@ -18,7 +18,7 @@ const TablePagination = ({ maxToDisplay, selected, total, onPagePressed }) => {
     const items = []
     for (let i = from; i <= to; i += 1) {
       items.push(
-        <PaginationItem key={i} disabled={i === selected}>
+        <PaginationItem key={i} active={i === selected}>
           <PaginationLink className="pagination-cell" onClick={() => onPagePressed(i)}>
             {i}
           </PaginationLink>
