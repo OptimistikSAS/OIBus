@@ -86,8 +86,8 @@ const orderHistoryQuery = async (id, body) => putRequest(`/history-queries/${id}
 const deleteHistoryQuery = async (id, position) => deleteRequest(`/history-queries/${id}?position=${position}`)
 const getLastCompletedForHistoryQuery = async (id) => getRequest(`/history-queries/${id}/status`)
 
-const getLogs = (fromDate, toDate, pageNumber, verbosity, filterText,scope) => getRequest(
-  `/logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&pageNumber=${pageNumber}&verbosity=[${verbosity}]&textMessage=${filterText}&scope=${scope}`,
+const getLogs = (fromDate, toDate, pageNumber, verbosity, filter, scope) => getRequest(
+  `/logs?fromDate=${fromDate || ''}&toDate=${toDate || ''}&pageNumber=${pageNumber}&verbosity=[${verbosity}]&textMessage=${filter}&scope=${scope}`,
 )
 const getOIBusInfo = () => getRequest('/info')
 const getSouthTypes = () => getRequest('/api/installed-south')
