@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { DateTime } from 'luxon'
-import { FormGroup, FormFeedback, FormText, Label, Input } from 'reactstrap'
+import { FormGroup, FormFeedback, FormText, Label, Input, Row, Col } from 'reactstrap'
 
 const OibDate = ({ label, help, valid, value, name, onChange, inline, hidden, maxDateString }) => {
   let dateTime = value ? DateTime.fromISO(new Date(value).toISOString()) : DateTime.now().set({ second: 0, millisecond: 0 })
@@ -37,30 +37,38 @@ const OibDate = ({ label, help, valid, value, name, onChange, inline, hidden, ma
 
   return (
     <FormGroup style={style}>
-      {label && <Label for={dateId}>{label}</Label>}
-      <Input
-        className="oi-form-input"
-        type="date"
-        id={dateId}
-        max={maxDateString}
-        value={formattedDate}
-        placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-        required
-        onChange={handleDateChange}
-      />
+      <Row className="align-items-sm-baseline">
+        <Col className="col-sm-auto">
+          {label && <Label for={dateId}>{label}</Label>}
+        </Col>
+        <Col className="col-sm-auto">
+          <Input
+            className="oi-form-input"
+            type="date"
+            id={dateId}
+            max={maxDateString}
+            value={formattedDate}
+            placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+            required
+            onChange={handleDateChange}
+          />
+        </Col>
+        <Col className="col-sm-auto">
+          <Input
+            className="oi-form-input"
+            type="time"
+            id={timeId}
+            max={maxDateString}
+            value={formattedTime}
+            placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+            required
+            onChange={handleTimeChange}
+          />
+        </Col>
 
-      <Input
-        className="oi-form-input"
-        type="time"
-        id={timeId}
-        max={maxDateString}
-        value={formattedTime}
-        placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-        required
-        onChange={handleTimeChange}
-      />
-      <FormFeedback>{validCheck}</FormFeedback>
-      {help && <FormText>{help}</FormText>}
+        <FormFeedback>{validCheck}</FormFeedback>
+      </Row>
+      <Row>{help && <FormText>{help}</FormText>}</Row>
     </FormGroup>
   )
 }

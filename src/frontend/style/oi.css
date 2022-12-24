@@ -341,20 +341,6 @@ label {
   padding-left: 2rem;
 }
 
-/* log pannels */
-
-.log-left-panel {
-  min-width: 200px;
-  width: 200px;
-  position: fixed;
-  padding: 0;
-  z-index: 1;
-}
-
-.log-right-panel {
-  padding-left: 210px;
-}
-
 /* spinner container */
 .spinner-container {
   position: absolute;
@@ -553,4 +539,8 @@ h3 {
 .react-flow__node-output.selected,
 .react-flow__node-input.selected {
   box-shadow: unset !important;
+}
+
+.pagination {
+  margin: 0
 }
