@@ -14,6 +14,7 @@ import apis from '../service/apis.js'
 import { AlertContext } from '../context/alert-context.jsx'
 import OibDate from '../components/oib-form/oib-date.jsx'
 import TablePagination from '../components/table/table-pagination.jsx'
+import { OibTitle } from '../components/oib-form/index.js'
 
 const selectStyle = (level) => {
   switch (level) {
@@ -102,7 +103,7 @@ const Log = () => {
                   setActivePageNumber(defaultActivePage)
                   setFromDate(date)
                 }}
-                help="default: Current datetime - 24 hours (now - 24 hours)"
+                help="default: now - 24 hours"
               />
             </Col>
             <Col className="col-sm-auto">
@@ -115,7 +116,7 @@ const Log = () => {
                   setActivePageNumber(defaultActivePage)
                   setToDate(date)
                 }}
-                help="default: Current datetime (now)"
+                help="default: now"
               />
             </Col>
           </Row>
@@ -138,7 +139,7 @@ const Log = () => {
                 }}
               />
             </Col>
-            <Label className="col-sm-auto" for="filterText">
+            <Label className="col-sm-auto" for="scope">
               Scope Filter
             </Label>
             <Col>
@@ -161,8 +162,8 @@ const Log = () => {
           <Label for="verbosity">Verbosity</Label>
         </Col>
         {verbosityOptions.map((item) => (
-          <Col className="col-sm-auto">
-            <FormGroup check className={`${selectStyle(item)}`} key={item}>
+          <Col className="col-sm-auto" key={item}>
+            <FormGroup check className={`${selectStyle(item)}`}>
               <Label>
                 <Input
                   className="oi-form-input"
@@ -189,7 +190,6 @@ const Log = () => {
     <Card>
       <Label className="label-card-title">Logs</Label>
       <CardBody className="card-body">
-
         <Table size="small" bordered hover responsive>
           <thead>
             <tr>
@@ -203,7 +203,14 @@ const Log = () => {
           <tbody>
             {filteredLogs
               .map((item) => {
-                const { id, source, scope, level, message, timestamp } = item
+                const {
+                  id,
+                  source,
+                  scope,
+                  level,
+                  message,
+                  timestamp,
+                } = item
                 const date = new Date(timestamp)
                 return (
                   <tr key={id} className={`oi-log ${selectStyle(level)}`}>
@@ -224,6 +231,7 @@ const Log = () => {
   return (
     <Container fluid>
       <Row className="p-2">
+        <OibTitle label="Logs" />
         <Card>
           <CardBody className="card-body">
             {renderFilter()}
@@ -231,7 +239,7 @@ const Log = () => {
         </Card>
       </Row>
       <Row>
-        <Col className="d-flex justify-content-center">
+        <Col className="d-flex justify-content-end">
           <TablePagination
             maxToDisplay={Math.min(maxPageSize, 10)}
             selected={activePageNumber}
@@ -246,4 +254,5 @@ const Log = () => {
     </Container>
   )
 }
+
 export default Log

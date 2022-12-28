@@ -48,7 +48,7 @@ exports[`TablePagination check TablePagination 1`] = `
         </button>
       </li>
       <li
-        class="page-item disabled"
+        class="page-item active"
       >
         <button
           class="pagination-cell page-link"
@@ -228,7 +228,7 @@ exports[`TablePagination check maxToDisplay > total 1`] = `
         </button>
       </li>
       <li
-        class="page-item disabled"
+        class="page-item active"
       >
         <button
           class="pagination-cell page-link"
@@ -399,7 +399,7 @@ exports[`TablePagination check press first page 1`] = `
         </button>
       </li>
       <li
-        class="page-item disabled"
+        class="page-item active"
       >
         <button
           class="pagination-cell page-link"
@@ -588,7 +588,7 @@ exports[`TablePagination check press last page 1`] = `
         </button>
       </li>
       <li
-        class="page-item disabled"
+        class="page-item active"
       >
         <button
           class="pagination-cell page-link"
@@ -705,7 +705,7 @@ exports[`TablePagination check press next page 1`] = `
         </button>
       </li>
       <li
-        class="page-item disabled"
+        class="page-item active"
       >
         <button
           class="pagination-cell page-link"
@@ -831,7 +831,7 @@ exports[`TablePagination check press next page incorect selected 1`] = `
         </button>
       </li>
       <li
-        class="page-item disabled"
+        class="page-item active"
       >
         <button
           class="pagination-cell page-link"
@@ -939,7 +939,7 @@ exports[`TablePagination check press prev page 1`] = `
         </button>
       </li>
       <li
-        class="page-item disabled"
+        class="page-item active"
       >
         <button
           class="pagination-cell page-link"
@@ -1290,7 +1290,7 @@ exports[`TablePagination check press second page 1`] = `
         </button>
       </li>
       <li
-        class="page-item disabled"
+        class="page-item active"
       >
         <button
           class="pagination-cell page-link"
@@ -1506,7 +1506,7 @@ exports[`TablePagination check when not first page 1`] = `
         </button>
       </li>
       <li
-        class="page-item disabled"
+        class="page-item active"
       >
         <button
           class="pagination-cell page-link"
