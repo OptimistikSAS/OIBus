@@ -177,30 +177,49 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           <div
             class="mb-3"
           >
-            <label
-              class="form-label"
-              for="startDate"
-            >
-              From date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="startDate"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="date"
-              value="2021-10-15"
-            />
-            <input
-              class="oi-form-input form-control"
-              id="startTime"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="time"
-              value="14:18"
-            />
             <div
-              class="invalid-feedback"
+              class="align-items-sm-baseline row"
+            >
+              <div
+                class="col-sm-auto col"
+              >
+                <label
+                  class="form-label"
+                  for="startDate"
+                >
+                  From date
+                </label>
+              </div>
+              <div
+                class="col-sm-auto col"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="startDate"
+                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                  required=""
+                  type="date"
+                  value="2021-10-15"
+                />
+              </div>
+              <div
+                class="col-sm-auto col"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="startTime"
+                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                  required=""
+                  type="time"
+                  value="14:18"
+                />
+              </div>
+              <div
+                class="invalid-feedback"
+              />
+            </div>
+            <div
+              class="row"
             />
           </div>
         </div>
@@ -210,30 +229,49 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
           <div
             class="mb-3"
           >
-            <label
-              class="form-label"
-              for="endDate"
-            >
-              To date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="endDate"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="date"
-              value="2021-10-16"
-            />
-            <input
-              class="oi-form-input form-control"
-              id="endTime"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="time"
-              value="14:18"
-            />
             <div
-              class="invalid-feedback"
+              class="align-items-sm-baseline row"
+            >
+              <div
+                class="col-sm-auto col"
+              >
+                <label
+                  class="form-label"
+                  for="endDate"
+                >
+                  To date
+                </label>
+              </div>
+              <div
+                class="col-sm-auto col"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="endDate"
+                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                  required=""
+                  type="date"
+                  value="2021-10-16"
+                />
+              </div>
+              <div
+                class="col-sm-auto col"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="endTime"
+                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                  required=""
+                  type="time"
+                  value="14:18"
+                />
+              </div>
+              <div
+                class="invalid-feedback"
+              />
+            </div>
+            <div
+              class="row"
             />
           </div>
         </div>
@@ -549,30 +587,49 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           <div
             class="mb-3"
           >
-            <label
-              class="form-label"
-              for="startDate"
-            >
-              From date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="startDate"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="date"
-              value="2021-10-15"
-            />
-            <input
-              class="oi-form-input form-control"
-              id="startTime"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="time"
-              value="14:18"
-            />
             <div
-              class="invalid-feedback"
+              class="align-items-sm-baseline row"
+            >
+              <div
+                class="col-sm-auto col"
+              >
+                <label
+                  class="form-label"
+                  for="startDate"
+                >
+                  From date
+                </label>
+              </div>
+              <div
+                class="col-sm-auto col"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="startDate"
+                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                  required=""
+                  type="date"
+                  value="2021-10-15"
+                />
+              </div>
+              <div
+                class="col-sm-auto col"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="startTime"
+                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                  required=""
+                  type="time"
+                  value="14:18"
+                />
+              </div>
+              <div
+                class="invalid-feedback"
+              />
+            </div>
+            <div
+              class="row"
             />
           </div>
         </div>
@@ -582,30 +639,49 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
           <div
             class="mb-3"
           >
-            <label
-              class="form-label"
-              for="endDate"
-            >
-              To date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="endDate"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="date"
-              value="2021-10-16"
-            />
-            <input
-              class="oi-form-input form-control"
-              id="endTime"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="time"
-              value="14:18"
-            />
             <div
-              class="invalid-feedback"
+              class="align-items-sm-baseline row"
+            >
+              <div
+                class="col-sm-auto col"
+              >
+                <label
+                  class="form-label"
+                  for="endDate"
+                >
+                  To date
+                </label>
+              </div>
+              <div
+                class="col-sm-auto col"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="endDate"
+                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                  required=""
+                  type="date"
+                  value="2021-10-16"
+                />
+              </div>
+              <div
+                class="col-sm-auto col"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="endTime"
+                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                  required=""
+                  type="time"
+                  value="14:18"
+                />
+              </div>
+              <div
+                class="invalid-feedback"
+              />
+            </div>
+            <div
+              class="row"
             />
           </div>
         </div>
@@ -920,30 +996,49 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty North 1`] = `
           <div
             class="mb-3"
           >
-            <label
-              class="form-label"
-              for="startDate"
-            >
-              From date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="startDate"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="date"
-              value=""
-            />
-            <input
-              class="oi-form-input form-control"
-              id="startTime"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="time"
-              value=""
-            />
             <div
-              class="invalid-feedback"
+              class="align-items-sm-baseline row"
+            >
+              <div
+                class="col-sm-auto col"
+              >
+                <label
+                  class="form-label"
+                  for="startDate"
+                >
+                  From date
+                </label>
+              </div>
+              <div
+                class="col-sm-auto col"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="startDate"
+                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                  required=""
+                  type="date"
+                  value=""
+                />
+              </div>
+              <div
+                class="col-sm-auto col"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="startTime"
+                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                  required=""
+                  type="time"
+                  value=""
+                />
+              </div>
+              <div
+                class="invalid-feedback"
+              />
+            </div>
+            <div
+              class="row"
             />
           </div>
         </div>
@@ -953,30 +1048,49 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty North 1`] = `
           <div
             class="mb-3"
           >
-            <label
-              class="form-label"
-              for="endDate"
-            >
-              To date
-            </label>
-            <input
-              class="oi-form-input form-control"
-              id="endDate"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="date"
-              value=""
-            />
-            <input
-              class="oi-form-input form-control"
-              id="endTime"
-              placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-              required=""
-              type="time"
-              value=""
-            />
             <div
-              class="invalid-feedback"
+              class="align-items-sm-baseline row"
+            >
+              <div
+                class="col-sm-auto col"
+              >
+                <label
+                  class="form-label"
+                  for="endDate"
+                >
+                  To date
+                </label>
+              </div>
+              <div
+                class="col-sm-auto col"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="endDate"
+                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                  required=""
+                  type="date"
+                  value=""
+                />
+              </div>
+              <div
+                class="col-sm-auto col"
+              >
+                <input
+                  class="oi-form-input form-control"
+                  id="endTime"
+                  placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+                  required=""
+                  type="time"
+                  value=""
+                />
+              </div>
+              <div
+                class="invalid-feedback"
+              />
+            </div>
+            <div
+              class="row"
             />
           </div>
         </div>

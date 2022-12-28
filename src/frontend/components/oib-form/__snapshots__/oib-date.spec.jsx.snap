@@ -5,30 +5,49 @@ exports[`OIbDate check date with value="2021-11-20" 1`] = `
   <div
     class="mb-3"
   >
-    <label
-      class="form-label"
-      for="endDate"
-    >
-      To date
-    </label>
-    <input
-      class="oi-form-input form-control"
-      id="endDate"
-      placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-      required=""
-      type="date"
-      value="2021-11-20"
-    />
-    <input
-      class="oi-form-input form-control"
-      id="endTime"
-      placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
-      required=""
-      type="time"
-      value="00:00"
-    />
     <div
-      class="invalid-feedback"
+      class="align-items-sm-baseline row"
+    >
+      <div
+        class="col-sm-auto col"
+      >
+        <label
+          class="form-label"
+          for="endDate"
+        >
+          To date
+        </label>
+      </div>
+      <div
+        class="col-sm-auto col"
+      >
+        <input
+          class="oi-form-input form-control"
+          id="endDate"
+          placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+          required=""
+          type="date"
+          value="2021-11-20"
+        />
+      </div>
+      <div
+        class="col-sm-auto col"
+      >
+        <input
+          class="oi-form-input form-control"
+          id="endTime"
+          placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
+          required=""
+          type="time"
+          value="00:00"
+        />
+      </div>
+      <div
+        class="invalid-feedback"
+      />
+    </div>
+    <div
+      class="row"
     />
   </div>
 </div>

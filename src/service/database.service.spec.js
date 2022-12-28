@@ -125,12 +125,12 @@ describe('Database service', () => {
       'ASC',
     )
     expect(prepare).toHaveBeenCalledTimes(2)
-    expect(prepare).toHaveBeenCalledWith('SELECT timestamp, level, scope, source, message FROM logs WHERE '
+    expect(prepare).toHaveBeenCalledWith('SELECT id, timestamp, level, scope, source, message FROM logs WHERE '
         + 'timestamp BETWEEN \'2022-07-25T12:58:00.000Z\' AND \'2022-08-25T12:58:00.000Z\' AND level IN (\'error\',\'warn\') '
-        + 'AND scope = \'myScope\' AND message like \'%myTextContent%\' ORDER BY timestamp ASC LIMIT 50 OFFSET 0')
+        + 'AND scope like \'%myScope%\' AND message like \'%myTextContent%\' ORDER BY timestamp ASC LIMIT 50 OFFSET 0')
     expect(prepare).toHaveBeenCalledWith('SELECT COUNT(*) as count FROM logs WHERE timestamp BETWEEN '
         + '\'2022-07-25T12:58:00.000Z\' AND \'2022-08-25T12:58:00.000Z\' AND level IN (\'error\',\'warn\') '
-        + 'AND scope = \'myScope\' AND message like \'%myTextContent%\'')
+        + 'AND scope like \'%myScope%\' AND message like \'%myTextContent%\'')
 
     expect(localAll).toHaveBeenCalledTimes(1)
     expect(localGet).toHaveBeenCalledTimes(1)
@@ -168,7 +168,7 @@ describe('Database service', () => {
       1,
     )
     expect(prepare).toHaveBeenCalledTimes(2)
-    expect(prepare).toHaveBeenCalledWith('SELECT timestamp, level, scope, source, message FROM logs WHERE '
+    expect(prepare).toHaveBeenCalledWith('SELECT id, timestamp, level, scope, source, message FROM logs WHERE '
         + 'timestamp BETWEEN \'2022-07-25T12:58:00.000Z\' AND \'2022-08-25T12:58:00.000Z\' AND level IN (\'error\',\'warn\') '
         + 'ORDER BY timestamp DESC LIMIT 50 OFFSET 50')
     expect(prepare).toHaveBeenCalledWith('SELECT COUNT(*) as count FROM logs WHERE timestamp BETWEEN '

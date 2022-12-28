@@ -115,9 +115,6 @@ describe('Logs', () => {
         <Logs />,
       )
     })
-    await act(() => {
-      Simulate.click(document.getElementById('showLog'))
-    })
 
     await act(async () => {
       resolve(testLogs)
@@ -132,9 +129,6 @@ describe('Logs', () => {
     })
     await act(() => {
       Simulate.change(document.getElementById('startDate'), { target: { value: '2020-02-01' } })
-    })
-    await act(() => {
-      Simulate.click(document.getElementById('showLog'))
     })
 
     await act(async () => {
@@ -151,9 +145,7 @@ describe('Logs', () => {
     await act(() => {
       Simulate.change(document.getElementById('endDate'), { target: { value: '2020-02-01' } })
     })
-    await act(() => {
-      Simulate.click(document.getElementById('showLog'))
-    })
+
     await act(async () => {
       resolve(testLogs)
     })
@@ -171,9 +163,6 @@ describe('Logs', () => {
     await act(() => {
       Simulate.change(document.getElementById('filterText'), { target: { value: 'debug' } })
     })
-    await act(() => {
-      Simulate.click(document.getElementById('showLog'))
-    })
     expect(container).toMatchSnapshot()
   })
   test('check change verbosity, uncheck error', async () => {
@@ -187,9 +176,6 @@ describe('Logs', () => {
     })
     await act(() => {
       Simulate.change(document.getElementById('verbosity'), { target: { checked: false } })
-    })
-    await act(() => {
-      Simulate.click(document.getElementById('showLog'))
     })
 
     expect(container).toMatchSnapshot()
@@ -217,43 +203,11 @@ describe('Logs', () => {
         <Logs />,
       )
     })
-    await act(() => {
-      // resolve the call requested by showLog
-      Simulate.click(document.getElementById('showLog'))
-    })
+
     await act(async () => {
       reject('Logs: testing error on getLogs request')
     })
     console.error = originalError
-    expect(container).toMatchSnapshot()
-  })
-  test('check press showMore', async () => {
-    await act(() => {
-      root.render(
-        <Logs />,
-      )
-    })
-    await act(() => {
-      // resolve the call requested by showLog
-      Simulate.click(document.getElementById('showLog'))
-    })
-    await act(async () => {
-      const logs = []
-      for (let index = 0; index < 1000; index += 1) {
-        logs[index] = {
-          id: index,
-          timestamp: '2020-01-01T00:00:00.000Z',
-          level: 'debug',
-          source: 'Source',
-          message: 'Testing lot of logs',
-        }
-      }
-      resolve(logs)
-    })
-    expect(container).toMatchSnapshot()
-    await act(() => {
-      Simulate.click(document.getElementById('showMore'))
-    })
     expect(container).toMatchSnapshot()
   })
 })
