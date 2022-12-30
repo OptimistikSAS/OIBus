@@ -27,7 +27,7 @@ const getLogsEndpoint = (ctx) => {
   const verbosity = ctx.query.verbosity?.replace(/[[\]]/g, '').split(',') || 'info'
   const scope = ctx.query.scope || ''
   const textMessage = ctx.query.textMessage || ''
-  const sorting = LOG_SORTING_VALUES.includes(ctx.query.sorting) ? ctx.query.sorting : 'ASC'
+  const sorting = LOG_SORTING_VALUES.includes(ctx.query.sorting) ? ctx.query.sorting : 'DESC'
   const pageNumber = ctx.query.pageNumber || LOG_DEFAULT_PAGE
   const pageSize = LOG_DEFAULT_PAGE_SIZE
 
