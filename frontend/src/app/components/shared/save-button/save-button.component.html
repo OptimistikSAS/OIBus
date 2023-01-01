@@ -1,0 +1,5 @@
+<button class="btn btn-primary" [attr.form]="form" [id]="buttonId" [disabled]="disabled || (state.isPending | async)">
+  <span aria-hidden="true" class="fa fa-spinner fa-spin me-2" role="status" *ngIf="state.isPending | async"></span>
+  <span aria-hidden="true" class="fa me-2" [ngClass]="iconClass" role="status" *ngIf="(state.isPending | async) === false"></span>
+  <span [translate]="translationKey"></span>
+</button>

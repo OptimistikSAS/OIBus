@@ -1,7 +1,12 @@
 {
   "common": {
+    "yes": "Yes",
+    "no": "No",
     "save": "Save",
     "cancel": "Cancel",
+    "delete": "Delete",
+    "close": "Close",
+    "confirmation-modal-title": "Confirmation",
     "validation-errors": {
       "this-field": "This field",
       "required": "{{ label }} is required",
@@ -113,6 +118,18 @@
         "address": "Address",
         "proxy": "Proxy"
       }
+    },
+    "proxy": {
+      "list": "Proxy list",
+      "title-create": "Create a proxy",
+      "title-edit": "Edit proxy",
+      "add": "Add",
+      "none": "No proxy",
+      "name": "Name",
+      "description": "Description",
+      "address": "Address",
+      "username": "Username",
+      "password": "Password"
     }
 
   },

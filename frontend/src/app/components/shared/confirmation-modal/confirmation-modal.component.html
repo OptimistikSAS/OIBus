@@ -1,0 +1,12 @@
+<div class="modal-header">
+  <h4 class="modal-title">{{ title }}</h4>
+</div>
+<div class="modal-body">
+  <p style="white-space: pre-line">{{ message }}</p>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="button" class="btn btn-cancel" (click)="activeModal.close()" id="yes-button">{{ yes }}</button>
+    <button type="button" class="btn btn-primary" (click)="activeModal.dismiss()" id="no-button">{{ no }}</button>
+  </div>
+</div>

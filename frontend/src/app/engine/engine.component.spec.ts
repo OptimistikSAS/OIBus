@@ -11,6 +11,7 @@ import { ProxyService } from '../services/proxy.service';
 import { ProxyDTO } from '../model/proxy.model';
 import { of } from 'rxjs';
 import { NotificationService } from '../components/shared/notification.service';
+import { SaveButtonComponent } from '../components/shared/save-button/save-button.component';
 
 class EngineComponentTester extends ComponentTester<EngineComponent> {
   constructor() {
@@ -110,7 +111,7 @@ class EngineComponentTester extends ComponentTester<EngineComponent> {
   }
 
   get submitButton() {
-    return this.button('#submit-button')!;
+    return this.button('#save-button')!;
   }
 }
 
@@ -191,7 +192,7 @@ describe('EngineComponent', () => {
     notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
-      imports: [EngineComponent],
+      imports: [EngineComponent, SaveButtonComponent],
       providers: [
         provideHttpClient(),
         provideRouter([]),
