@@ -1,0 +1,43 @@
+<div class="modal-header">
+  <h4 class="modal-title" [translate]="'engine.proxy.title-' + mode"></h4>
+</div>
+<div class="modal-body">
+  <form [formGroup]="form" (ngSubmit)="save()" id="form">
+    <!-- Name -->
+    <div class="form-group">
+      <label class="form-label" for="name" translate="engine.proxy.name"></label>
+      <input formControlName="name" id="name" class="form-control" />
+      <val-errors controlName="name"></val-errors>
+    </div>
+    <!-- Description -->
+    <div class="form-group">
+      <label class="form-label" for="description" translate="engine.proxy.description"></label>
+      <textarea formControlName="description" id="description" class="form-control"></textarea>
+    </div>
+
+    <!-- Address -->
+    <div class="form-group">
+      <label class="form-label" for="address" translate="engine.proxy.address"></label>
+      <input formControlName="address" id="address" class="form-control" />
+      <val-errors controlName="address"></val-errors>
+    </div>
+
+    <!-- Username -->
+    <div class="form-group">
+      <label class="form-label" for="username" translate="engine.proxy.username"></label>
+      <input formControlName="username" id="username" class="form-control" />
+    </div>
+
+    <!-- Password -->
+    <div class="form-group">
+      <label class="form-label" for="password" translate="engine.proxy.password"></label>
+      <input formControlName="password" id="password" class="form-control" />
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <oib-save-button [state]="state"></oib-save-button>
+    <button type="button" class="btn btn-cancel" ngbAutofocus (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>
