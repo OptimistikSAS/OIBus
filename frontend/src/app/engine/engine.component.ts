@@ -9,11 +9,16 @@ import { ProxyDTO } from '../model/proxy.model';
 import { AuthenticationType, EngineSettingsCommandDTO, LOG_LEVELS, LogLevel } from '../model/engine.model';
 import { NotificationService } from '../components/shared/notification.service';
 import { formDirectives } from '../components/shared/form-directives';
+import { Observable, switchMap, tap } from 'rxjs';
+import { ConfirmationService } from '../components/shared/confirmation.service';
+import { Modal, ModalService } from '../components/shared/modal.service';
+import { EditProxyModalComponent } from './edit-proxy-modal/edit-proxy-modal.component';
+import { ObservableState, SaveButtonComponent } from '../components/shared/save-button/save-button.component';
 
 @Component({
   selector: 'oib-engine',
   standalone: true,
-  imports: [TranslateModule, ...formDirectives, RouterLink, NgForOf, NgIf],
+  imports: [TranslateModule, ...formDirectives, RouterLink, NgForOf, NgIf, SaveButtonComponent],
   templateUrl: './engine.component.html',
   styleUrls: ['./engine.component.scss']
 })
@@ -68,9 +73,13 @@ export class EngineComponent implements OnInit {
     })
   });
 
+  state = new ObservableState();
+
   constructor(
     private fb: NonNullableFormBuilder,
     private notificationService: NotificationService,
+    private confirmationService: ConfirmationService,
+    private modalService: ModalService,
     private engineService: EngineService,
     private proxyService: ProxyService
   ) {}
@@ -178,8 +187,69 @@ export class EngineComponent implements OnInit {
       }
     };
 
-    this.engineService.updateEngineSettings(updatedSettings).subscribe(() => {
-      this.notificationService.success('engine.updated');
+    this.engineService
+      .updateEngineSettings(updatedSettings)
+      .pipe(this.state.pendingUntilFinalization())
+      .subscribe(() => {
+        this.notificationService.success('engine.updated');
+      });
+  }
+
+  /**
+   * Reload the proxy list when a proxy creation / update occurs
+   */
+  refreshProxyList(): Observable<Array<ProxyDTO>> {
+    return this.proxyService.getProxies().pipe(
+      tap(proxies => {
+        this.proxies = proxies;
+      })
+    );
+  }
+
+  /**
+   * Open a modal to edit a proxy
+   */
+  openEditProxyModal(proxy: ProxyDTO) {
+    const modalRef = this.modalService.open(EditProxyModalComponent);
+    const component: EditProxyModalComponent = modalRef.componentInstance;
+    component.prepareForEdition(proxy);
+    this.refreshAfterEditProxyModalClosed(modalRef);
+  }
+
+  /**
+   * Open a modal to create a proxy
+   */
+  openCreationProxyModal() {
+    const modalRef = this.modalService.open(EditProxyModalComponent);
+    const component: EditProxyModalComponent = modalRef.componentInstance;
+    component.prepareForCreation();
+    this.refreshAfterEditProxyModalClosed(modalRef);
+  }
+
+  /**
+   * Refresh the proxy list when the proxy is edited
+   */
+  private refreshAfterEditProxyModalClosed(modalRef: Modal<any>) {
+    modalRef.result.pipe(switchMap(() => this.refreshProxyList())).subscribe(() => {
+      this.notificationService.success('engine.proxy.updated');
     });
+  }
+
+  /**
+   * Delete a proxy by its ID
+   */
+  deleteProxy(proxy: ProxyDTO) {
+    this.confirmationService
+      .confirm({
+        messageKey: 'engine.proxy.confirm-deletion',
+        interpolateParams: { name: proxy.name }
+      })
+      .pipe(
+        switchMap(() => this.proxyService.deleteProxy(proxy.id)),
+        switchMap(() => this.refreshProxyList())
+      )
+      .subscribe(() => {
+        this.notificationService.success('engine.proxy.deleted');
+      });
   }
 }
