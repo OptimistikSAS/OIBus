@@ -7,6 +7,41 @@
 
   <div class="row justify-content-center">
     <div class="col-md-10 col-lg-8">
+      <h2 translate="engine.proxy.list">
+        <button class="btn btn-primary ms-3" id="add-proxy" (click)="openCreationProxyModal()">
+          <span class="fa fa-plus me-2"></span>
+          <span translate="engine.proxy.add"></span>
+        </button>
+      </h2>
+      <!-- the proxy list -->
+      <div *ngIf="proxies.length !== 0; else emptyProxies">
+        <table class="mt-2 table table-sm table-hover">
+          <thead class="table-light">
+            <tr>
+              <th translate="engine.proxy.name"></th>
+              <th translate="engine.proxy.description"></th>
+              <th style="width: 3%"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let proxy of proxies">
+              <td>{{ proxy.name}}</td>
+              <td>{{ proxy.description}}</td>
+              <td class="text-nowrap action-buttons">
+                <div class="pull-right">
+                  <!-- Edit button -->
+                  <button type="button" class="btn btn-link edit-proxy fa fa-pencil px-1 py-0" (click)="openEditProxyModal(proxy)"></button>
+                  <!-- Delete button -->
+                  <button type="button" class="btn btn-link proxy fa fa-trash px-1 py-0" (click)="deleteProxy(proxy)"></button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #emptyProxies>
+        <div class="oi-details empty" id="no-proxy" translate="engine.proxy.none"></div>
+      </ng-template>
       <form [formGroup]="engineForm" (ngSubmit)="save()" id="engine-form" class="mt-3">
         <!-- General settings -->
         <h2 translate="engine.general-settings.title"></h2>
@@ -232,7 +267,7 @@
       </form>
       <div id="actions" class="mb-2 mt-3 d-flex justify-content-end">
         <div class="btn-group">
-          <button class="btn btn-primary" form="engine-form" translate="common.save" id="submit-button"></button>
+          <oib-save-button form="engine-form" [state]="state"></oib-save-button>
           <button class="btn btn-cancel" translate="common.cancel" id="cancel-button" routerLink="/"></button>
         </div>
       </div>
