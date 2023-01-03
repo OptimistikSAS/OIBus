@@ -5,11 +5,22 @@ import { RouterLink } from '@angular/router';
 import { EngineService } from '../services/engine.service';
 import { EngineSettingsDTO } from '../model/engine.model';
 import { NgIf } from '@angular/common';
+import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
+import { ExternalSourceListComponent } from './external-source-list/external-source-list.component';
+import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
 
 @Component({
   selector: 'oib-engine',
   standalone: true,
-  imports: [NgIf, TranslateModule, RouterLink, ProxyListComponent],
+  imports: [
+    NgIf,
+    TranslateModule,
+    RouterLink,
+    ProxyListComponent,
+    ScanModeListComponent,
+    ExternalSourceListComponent,
+    IpFilterListComponent
+  ],
   templateUrl: './engine.component.html',
   styleUrls: ['./engine.component.scss']
 })

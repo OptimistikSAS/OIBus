@@ -1,0 +1,43 @@
+<h2 translate="engine.external-source.list">
+  <button class="btn btn-primary pull-right" id="add-external-source" (click)="openCreationExternalSourceModal()">
+    <span class="fa fa-plus me-2"></span>
+    <span translate="engine.external-source.add"></span>
+  </button>
+</h2>
+<!-- the External Source list -->
+<div *ngIf="externalSources.length !== 0; else emptyExternalSources">
+  <table class="mt-2 table table-sm table-hover">
+    <thead class="table-light">
+      <tr>
+        <th translate="engine.external-source.reference"></th>
+        <th translate="engine.external-source.description"></th>
+        <th style="width: 3%"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let externalSource of externalSources">
+        <td>{{ externalSource.reference }}</td>
+        <td>{{ externalSource.description }}</td>
+        <td class="text-nowrap action-buttons">
+          <div class="pull-right">
+            <!-- Edit button -->
+            <button
+              type="button"
+              class="btn btn-link edit-external-source fa fa-pencil px-1 py-0"
+              (click)="openEditExternalSourceModal(externalSource)"
+            ></button>
+            <!-- Delete button -->
+            <button
+              type="button"
+              class="btn btn-link delete-external-source fa fa-trash px-1 py-0"
+              (click)="deleteExternalSource(externalSource)"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<ng-template #emptyExternalSources>
+  <div class="oi-details empty" id="no-external-source" translate="engine.external-source.none"></div>
+</ng-template>
