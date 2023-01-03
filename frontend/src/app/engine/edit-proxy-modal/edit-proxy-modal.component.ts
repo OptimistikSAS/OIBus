@@ -22,7 +22,7 @@ export class EditProxyModalComponent {
   form = this.fb.group({
     name: ['', Validators.required],
     description: '',
-    address: ['', Validators.required],
+    address: ['', [Validators.required, Validators.pattern(/http.*/)]],
     username: '',
     password: ''
   });

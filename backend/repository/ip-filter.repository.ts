@@ -33,14 +33,17 @@ export default class IpFilterRepository {
   /**
    * Create an IP filter with a random generated ID
    */
-  createIpFilter(command: IpFilterCommandDTO): void {
+  createIpFilter(command: IpFilterCommandDTO): IpFilterDTO {
     const id = generateRandomId(6);
-    const query =
+    const insertQuery =
       `INSERT INTO ${IP_FILTER_TABLE} (id, address, description) ` +
       `VALUES (?, ?, ?);`;
-    return this.database
-      .prepare(query)
+    const result = this.database
+      .prepare(insertQuery)
       .run(id, command.address, command.description);
+
+    const query = `SELECT id, address, description FROM ${IP_FILTER_TABLE} WHERE ROWID = ?;`;
+    return this.database.prepare(query).get(result.lastInsertRowid);
   }
 
   /**

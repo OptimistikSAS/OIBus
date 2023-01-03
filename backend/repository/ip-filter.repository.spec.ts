@@ -75,6 +75,9 @@ describe("IP Filter repository", () => {
       command.address,
       command.description
     );
+    expect(database.prepare).toHaveBeenCalledWith(
+      "SELECT id, address, description FROM ip_filter WHERE ROWID = ?;"
+    );
   });
 
   it("should update an IP filter", () => {

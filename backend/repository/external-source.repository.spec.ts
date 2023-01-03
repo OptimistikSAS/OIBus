@@ -78,6 +78,10 @@ describe("External source repository", () => {
       command.reference,
       command.description
     );
+
+    expect(database.prepare).toHaveBeenCalledWith(
+      "SELECT id, reference, description FROM external_sources WHERE ROWID = ?;"
+    );
   });
 
   it("should update an external source", () => {

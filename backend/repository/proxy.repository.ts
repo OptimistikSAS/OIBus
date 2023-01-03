@@ -35,13 +35,13 @@ export default class ProxyRepository {
   /**
    * Create a proxy with a random generated ID
    */
-  createProxy(command: ProxyCommandDTO): void {
+  createProxy(command: ProxyCommandDTO): ProxyDTO {
     const id = generateRandomId(6);
-    const query =
+    const insertQuery =
       `INSERT INTO ${PROXY_TABLE} (id, name, description, address, username, password) ` +
       "VALUES (?, ?, ?, ?, ?, ?);";
-    return this.database
-      .prepare(query)
+    const result = this.database
+      .prepare(insertQuery)
       .run(
         id,
         command.name,
@@ -50,6 +50,8 @@ export default class ProxyRepository {
         command.username,
         command.password
       );
+    const query = `SELECT id, name, description, address, username, password FROM ${PROXY_TABLE} WHERE ROWID = ?;`;
+    return this.database.prepare(query).get(result.lastInsertRowid);
   }
 
   /**
@@ -57,7 +59,7 @@ export default class ProxyRepository {
    */
   updateProxy(id: string, command: ProxyCommandDTO): void {
     const query = `UPDATE ${PROXY_TABLE} SET name = ?, description = ?, address = ?, username = ?, password = ? WHERE id = ?;`;
-    return this.database
+    this.database
       .prepare(query)
       .run(
         command.name,
@@ -74,6 +76,6 @@ export default class ProxyRepository {
    */
   deleteProxy(id: string): void {
     const query = `DELETE FROM ${PROXY_TABLE} WHERE id = ?;`;
-    return this.database.prepare(query).run(id);
+    this.database.prepare(query).run(id);
   }
 }
