@@ -1,0 +1,241 @@
+<div class="oi-padded-container">
+  <div class="d-flex justify-content-between">
+    <div class="oi-header-container">
+      <h1 translate="engine.title"></h1>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <form [formGroup]="engineForm" (ngSubmit)="save()" id="engine-form" class="mt-3">
+        <!-- General settings -->
+        <h2 translate="engine.general-settings.title"></h2>
+        <div class="row mb-3">
+          <!-- Name -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="name" translate="engine.general-settings.name"></label>
+              <input formControlName="name" id="name" class="form-control" />
+              <val-errors controlName="name"> </val-errors>
+            </div>
+          </div>
+          <!-- Port -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="port" translate="engine.general-settings.port"></label>
+              <input formControlName="port" id="port" class="form-control" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Logger settings -->
+        <div formGroupName="logParameters">
+          <h2 translate="engine.logger.title"></h2>
+          <!-- Console settings -->
+          <div formGroupName="console" class="mb-3">
+            <h4 translate="engine.logger.console.title"></h4>
+            <div class="row">
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="console-level" translate="engine.logger.console.level"></label>
+                  <select formControlName="level" class="form-select mb-2 mr-sm-2" id="console-level">
+                    <option *ngFor="let level of logLevels" [ngValue]="level">{{ 'enums.log-levels.' + level | translate }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- File settings -->
+          <div formGroupName="file" class="mb-3">
+            <h4 translate="engine.logger.file.title"></h4>
+            <div class="row">
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="file-level" translate="engine.logger.file.level"></label>
+                  <select formControlName="level" class="form-select mb-2 mr-sm-2" id="file-level">
+                    <option *ngFor="let level of logLevels" [ngValue]="level">{{ 'enums.log-levels.' + level | translate }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="row" *ngIf="engineForm.controls.logParameters.controls.file.controls.level.value !== 'silent'">
+              <!-- Max file size -->
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="file-max-file-size" translate="engine.logger.file.max-file-size"></label>
+                  <input type="number" formControlName="maxFileSize" id="file-max-file-size" class="form-control" />
+                </div>
+              </div>
+              <!-- Number of files -->
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="file-number-of-files" translate="engine.logger.file.number-of-files"></label>
+                  <input type="number" formControlName="numberOfFiles" id="file-number-of-files" class="form-control" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Database settings -->
+          <div formGroupName="database" class="mb-3">
+            <h4 translate="engine.logger.database.title"></h4>
+            <div class="row">
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="database-level" translate="engine.logger.database.level"></label>
+                  <select formControlName="level" class="form-select mb-2 mr-sm-2" id="database-level">
+                    <option *ngFor="let level of logLevels" [ngValue]="level">{{ 'enums.log-levels.' + level | translate }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="row" *ngIf="engineForm.controls.logParameters.controls.database.controls.level.value !== 'silent'">
+              <!-- Max number of logs -->
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="database-max-number-of-logs" translate="engine.logger.database.max-number-of-logs"></label>
+                  <input type="number" formControlName="maxNumberOfLogs" id="database-max-number-of-logs" class="form-control" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loki settings -->
+          <div formGroupName="loki" class="mb-3">
+            <h4 translate="engine.logger.loki.title"></h4>
+            <div class="row">
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="loki-level" translate="engine.logger.loki.level"></label>
+                  <select formControlName="level" class="form-select mb-2 mr-sm-2" id="loki-level">
+                    <option *ngFor="let level of logLevels" [ngValue]="level">{{ 'enums.log-levels.' + level | translate }}</option>
+                  </select>
+                </div>
+              </div>
+              <!-- Interval -->
+              <div class="col-4" *ngIf="engineForm.controls.logParameters.controls.loki.controls.level.value !== 'silent'">
+                <div class="form-group">
+                  <label for="loki-interval" translate="engine.logger.loki.interval"></label>
+                  <input type="number" formControlName="interval" id="loki-interval" class="form-control" />
+                </div>
+              </div>
+            </div>
+            <div class="row" *ngIf="engineForm.controls.logParameters.controls.loki.controls.level.value !== 'silent'">
+              <!-- Address -->
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="loki-address" translate="engine.logger.loki.address"></label>
+                  <input formControlName="address" id="loki-address" class="form-control" />
+                </div>
+              </div>
+              <!-- Proxy -->
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="loki-proxy" translate="engine.logger.loki.proxy"></label>
+                  <select formControlName="proxy" class="form-select mb-2 mr-sm-2" id="loki-proxy">
+                    <option [ngValue]="null">{{ '' }}</option>
+                    <option *ngFor="let proxy of proxies" [ngValue]="proxy.id">{{ proxy.name }}</option>
+                  </select>
+                </div>
+              </div>
+              <!-- Token address -->
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="loki-token-address" translate="engine.logger.loki.token-address"></label>
+                  <input formControlName="tokenAddress" id="loki-token-address" class="form-control" />
+                </div>
+              </div>
+            </div>
+            <div class="row" *ngIf="engineForm.controls.logParameters.controls.loki.controls.level.value !== 'silent'">
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="loki-username" translate="engine.logger.loki.username"></label>
+                  <input formControlName="username" id="loki-username" class="form-control" />
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="loki-password" translate="engine.logger.loki.password"></label>
+                  <input formControlName="password" id="loki-password" class="form-control" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div formGroupName="healthSignal">
+          <h2 translate="engine.health-signal.title"></h2>
+          <div formGroupName="logging">
+            <h3 translate="engine.health-signal.logging.title"></h3>
+            <div class="row">
+              <div class="col-4">
+                <div class="form-check form-switch">
+                  <input formControlName="enabled" id="health-signal-logging-enabled" type="checkbox" class="form-check-input" />
+                  <label for="health-signal-logging-enabled" translate="engine.health-signal.logging.enabled"></label>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-4" *ngIf="engineForm.controls.healthSignal.controls.logging.controls.enabled.value">
+                <div class="form-group">
+                  <label for="health-signal-logging-interval" translate="engine.health-signal.logging.interval"></label>
+                  <input formControlName="interval" id="health-signal-logging-interval" type="number" class="form-control" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div formGroupName="http">
+            <h3 translate="engine.health-signal.http.title"></h3>
+            <div class="row">
+              <div class="col-4">
+                <div class="form-check form-switch">
+                  <input formControlName="enabled" id="health-signal-http-enabled" type="checkbox" class="form-check-input" />
+                  <label for="health-signal-http-enabled" translate="engine.health-signal.http.enabled"></label>
+                </div>
+              </div>
+              <div class="col-4" *ngIf="engineForm.controls.healthSignal.controls.http.controls.enabled.value">
+                <div class="form-check form-switch">
+                  <input formControlName="verbose" id="health-signal-http-verbose" type="checkbox" class="form-check-input" />
+                  <label for="health-signal-http-verbose" translate="engine.health-signal.http.verbose"></label>
+                </div>
+              </div>
+            </div>
+            <div class="row" *ngIf="engineForm.controls.healthSignal.controls.http.controls.enabled.value">
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="health-signal-http-interval" translate="engine.health-signal.http.interval"></label>
+                  <input formControlName="interval" id="health-signal-http-interval" type="number" class="form-control" />
+                </div>
+              </div>
+            </div>
+            <div class="row" *ngIf="engineForm.controls.healthSignal.controls.http.controls.enabled.value">
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="health-signal-http-address" translate="engine.health-signal.http.address"></label>
+                  <input formControlName="address" id="health-signal-http-address" class="form-control" />
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="form-group">
+                  <label for="health-signal-http-proxy" translate="engine.health-signal.http.proxy"></label>
+
+                  <select formGroupName="proxy" class="form-select mb-2 mr-sm-2" id="health-signal-http-proxy">
+                    <option [ngValue]="null">{{ ''}}</option>
+                    <option *ngFor="let proxy of proxies" [ngValue]="proxy.id">{{ proxy.name }}</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+      <div id="actions" class="mb-2 mt-3 d-flex justify-content-end">
+        <div class="btn-group">
+          <oib-save-button form="engine-form" [state]="state"></oib-save-button>
+          <button class="btn btn-cancel" translate="common.cancel" id="cancel-button" routerLink="/engine"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
