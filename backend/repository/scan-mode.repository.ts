@@ -33,12 +33,15 @@ export default class ScanModeRepository {
   /**
    * Create a scan mode with a random generated ID
    */
-  createScanMode(command: ScanModeCommandDTO): void {
+  createScanMode(command: ScanModeCommandDTO): ScanModeDTO {
     const id = generateRandomId(6);
-    const query = `INSERT INTO ${SCAN_MODE_TABLE} (id, name, description, cron) VALUES (?, ?, ?, ?);`;
-    return this.database
-      .prepare(query)
+    const insertQuery = `INSERT INTO ${SCAN_MODE_TABLE} (id, name, description, cron) VALUES (?, ?, ?, ?);`;
+    const result = this.database
+      .prepare(insertQuery)
       .run(id, command.name, command.description, command.cron);
+
+    const query = `SELECT id, name, description, cron FROM ${SCAN_MODE_TABLE} WHERE ROWID = ?;`;
+    return this.database.prepare(query).get(result.lastInsertRowid);
   }
 
   /**

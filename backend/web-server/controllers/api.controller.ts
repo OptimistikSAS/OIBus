@@ -39,8 +39,10 @@ const getProxy = async (ctx: KoaContext<void, ProxyDTO>) => {
 };
 
 const createProxy = async (ctx: KoaContext<ProxyCommandDTO, void>) => {
-  ctx.app.repositoryService.proxyRepository.createProxy(ctx.request.body);
-  ctx.ok("Proxy created!");
+  const proxy = ctx.app.repositoryService.proxyRepository.createProxy(
+    ctx.request.body
+  );
+  ctx.ok(proxy);
 };
 
 const updateProxy = async (ctx: KoaContext<ProxyCommandDTO, void>) => {
@@ -49,12 +51,12 @@ const updateProxy = async (ctx: KoaContext<ProxyCommandDTO, void>) => {
     ctx.request.body
   );
 
-  ctx.ok("Proxy updated!");
+  ctx.ok();
 };
 
 const deleteProxy = async (ctx: KoaContext<void, void>) => {
   ctx.app.repositoryService.proxyRepository.deleteProxy(ctx.params.id);
-  ctx.ok("Proxy deleted!");
+  ctx.ok();
 };
 
 const getScanModes = async (ctx: KoaContext<void, Array<ScanModeDTO>>) => {
@@ -70,8 +72,10 @@ const getScanMode = async (ctx: KoaContext<void, ScanModeDTO>) => {
 };
 
 const createScanMode = async (ctx: KoaContext<ScanModeCommandDTO, void>) => {
-  ctx.app.repositoryService.scanModeRepository.createScanMode(ctx.request.body);
-  ctx.ok("Scan mode created!");
+  const scanMode = ctx.app.repositoryService.scanModeRepository.createScanMode(
+    ctx.request.body
+  );
+  ctx.ok(scanMode);
 };
 
 const updateScanMode = async (ctx: KoaContext<ScanModeCommandDTO, void>) => {
@@ -79,12 +83,12 @@ const updateScanMode = async (ctx: KoaContext<ScanModeCommandDTO, void>) => {
     ctx.params.id,
     ctx.request.body
   );
-  ctx.ok("Scan mode updated!");
+  ctx.ok();
 };
 
 const deleteScanMode = async (ctx: KoaContext<void, void>) => {
   ctx.app.repositoryService.scanModeRepository.deleteScanMode(ctx.params.id);
-  ctx.ok("Scan mode deleted!");
+  ctx.ok();
 };
 
 const getIpFilters = async (ctx: KoaContext<void, Array<IpFilterDTO>>) => {
@@ -100,8 +104,10 @@ const getIpFilter = async (ctx: KoaContext<void, IpFilterDTO>) => {
 };
 
 const createIpFilter = async (ctx: KoaContext<IpFilterCommandDTO, void>) => {
-  ctx.app.repositoryService.ipFilterRepository.createIpFilter(ctx.request.body);
-  ctx.ok("IP Filter created!");
+  const ipFilter = ctx.app.repositoryService.ipFilterRepository.createIpFilter(
+    ctx.request.body
+  );
+  ctx.ok(ipFilter);
 };
 
 const updateIpFilter = async (ctx: KoaContext<IpFilterCommandDTO, void>) => {
@@ -109,12 +115,12 @@ const updateIpFilter = async (ctx: KoaContext<IpFilterCommandDTO, void>) => {
     ctx.params.id,
     ctx.request.body
   );
-  ctx.ok("IP Filter updated!");
+  ctx.ok();
 };
 
 const deleteIpFilter = async (ctx: KoaContext<void, void>) => {
   ctx.app.repositoryService.ipFilterRepository.deleteIpFilter(ctx.params.id);
-  ctx.ok("IP Filter deleted!");
+  ctx.ok();
 };
 
 const getExternalSources = async (
@@ -136,10 +142,11 @@ const getExternalSource = async (ctx: KoaContext<void, ExternalSourceDTO>) => {
 const createExternalSource = async (
   ctx: KoaContext<ExternalSourceCommandDTO, void>
 ) => {
-  ctx.app.repositoryService.externalSourceRepository.createExternalSource(
-    ctx.request.body
-  );
-  ctx.ok("External source created!");
+  const externalSource =
+    ctx.app.repositoryService.externalSourceRepository.createExternalSource(
+      ctx.request.body
+    );
+  ctx.ok(externalSource);
 };
 
 const updateExternalSource = async (
@@ -149,14 +156,14 @@ const updateExternalSource = async (
     ctx.params.id,
     ctx.request.body
   );
-  ctx.ok("External source updated!");
+  ctx.ok();
 };
 
 const deleteExternalSource = async (ctx: KoaContext<void, void>) => {
   ctx.app.repositoryService.externalSourceRepository.deleteExternalSource(
     ctx.params.id
   );
-  ctx.ok("External source deleted!");
+  ctx.ok();
 };
 
 export default {

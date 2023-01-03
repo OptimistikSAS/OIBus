@@ -80,6 +80,10 @@ describe("Scan mode repository", () => {
       command.description,
       command.cron
     );
+
+    expect(database.prepare).toHaveBeenCalledWith(
+      "SELECT id, name, description, cron FROM scan_mode WHERE ROWID = ?;"
+    );
   });
 
   it("should update a scan mode", () => {

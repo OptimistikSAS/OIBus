@@ -84,6 +84,10 @@ val-errors > div {
     color: #fff;
     background-color: $orange;
   }
+
+  &:focus {
+    color: #fff;
+  }
 }
 
 .btn-cancel {

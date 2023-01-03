@@ -4,6 +4,7 @@ import { ConfirmationOptions, ConfirmationService } from '../confirmation.servic
 import { Component } from '@angular/core';
 import { Observable } from 'rxjs';
 import { NgbModalModule } from '@ng-bootstrap/ng-bootstrap';
+import { noAnimation } from '../test-utils';
 
 class ModalComponentTester {
   constructor(private fixture: ComponentFixture<any>) {}
@@ -49,13 +50,14 @@ class ModalComponentTester {
 })
 class TestComponent {}
 
-xdescribe('ConfirmationModalComponent and ConfirmationService', () => {
+describe('ConfirmationModalComponent and ConfirmationService', () => {
   let tester: ModalComponentTester;
   let confirmationService: ConfirmationService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [TestComponent, MockI18nModule, NgbModalModule]
+      imports: [TestComponent, MockI18nModule, NgbModalModule],
+      providers: [noAnimation]
     });
 
     confirmationService = TestBed.inject(ConfirmationService);

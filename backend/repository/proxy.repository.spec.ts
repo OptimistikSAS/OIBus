@@ -90,6 +90,9 @@ describe("Proxy repository", () => {
       command.username,
       command.password
     );
+    expect(database.prepare).toHaveBeenCalledWith(
+      "SELECT id, name, description, address, username, password FROM proxy WHERE ROWID = ?;"
+    );
   });
 
   it("should update a proxy", () => {
