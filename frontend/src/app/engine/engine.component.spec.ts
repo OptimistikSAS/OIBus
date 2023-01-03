@@ -9,6 +9,9 @@ import { provideTestingI18n } from '../../i18n/mock-i18n';
 import { ProxyListComponent } from './proxy-list/proxy-list.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
+import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
+import { ExternalSourceListComponent } from './external-source-list/external-source-list.component';
+import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
 
 class EngineComponentTester extends ComponentTester<EngineComponent> {
   constructor() {
@@ -57,6 +60,18 @@ class EngineComponentTester extends ComponentTester<EngineComponent> {
 
   get proxyList() {
     return this.element(ProxyListComponent);
+  }
+
+  get scanModeList() {
+    return this.element(ScanModeListComponent);
+  }
+
+  get externalSourceList() {
+    return this.element(ExternalSourceListComponent);
+  }
+
+  get ipFilterList() {
+    return this.element(IpFilterListComponent);
   }
 }
 
@@ -119,5 +134,8 @@ describe('EngineComponent', () => {
     expect(tester.editButton).toContainText('Edit settings');
 
     expect(tester.proxyList).toBeDefined();
+    expect(tester.scanModeList).toBeDefined();
+    expect(tester.externalSourceList).toBeDefined();
+    expect(tester.ipFilterList).toBeDefined();
   });
 });

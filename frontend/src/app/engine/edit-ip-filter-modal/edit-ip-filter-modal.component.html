@@ -1,0 +1,24 @@
+<div class="modal-header">
+  <h4 class="modal-title" [translate]="'engine.ip-filter.title-' + mode"></h4>
+</div>
+<div class="modal-body">
+  <form [formGroup]="form" (ngSubmit)="save()" id="form">
+    <!-- Address -->
+    <div class="form-group">
+      <label class="form-label" for="address" translate="engine.ip-filter.address"></label>
+      <input formControlName="address" id="address" class="form-control" />
+      <val-errors controlName="address"></val-errors>
+    </div>
+    <!-- Description -->
+    <div class="form-group">
+      <label class="form-label" for="description" translate="engine.ip-filter.description"></label>
+      <textarea formControlName="description" id="description" class="form-control"></textarea>
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <oib-save-button [state]="state"></oib-save-button>
+    <button type="button" class="btn btn-cancel" ngbAutofocus (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>

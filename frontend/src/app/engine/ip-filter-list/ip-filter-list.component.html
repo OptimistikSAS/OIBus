@@ -1,0 +1,39 @@
+<h2 translate="engine.ip-filter.list">
+  <button class="btn btn-primary pull-right" id="add-ip-filter" (click)="openCreationIpFilterModal()">
+    <span class="fa fa-plus me-2"></span>
+    <span translate="engine.ip-filter.add"></span>
+  </button>
+</h2>
+<!-- the IP filter list -->
+<div *ngIf="ipFilters.length !== 0; else emptyIpFilters">
+  <table class="mt-2 table table-sm table-hover">
+    <thead class="table-light">
+      <tr>
+        <th translate="engine.ip-filter.address"></th>
+        <th translate="engine.ip-filter.description"></th>
+        <th style="width: 3%"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let ipFilter of ipFilters">
+        <td>{{ ipFilter.address }}</td>
+        <td>{{ ipFilter.description }}</td>
+        <td class="text-nowrap action-buttons">
+          <div class="pull-right">
+            <!-- Edit button -->
+            <button
+              type="button"
+              class="btn btn-link edit-ip-filter fa fa-pencil px-1 py-0"
+              (click)="openEditIpFilterModal(ipFilter)"
+            ></button>
+            <!-- Delete button -->
+            <button type="button" class="btn btn-link delete-ip-filter fa fa-trash px-1 py-0" (click)="deleteIpFilter(ipFilter)"></button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<ng-template #emptyIpFilters>
+  <div class="oi-details empty" id="no-ip-filter" translate="engine.ip-filter.none"></div>
+</ng-template>
