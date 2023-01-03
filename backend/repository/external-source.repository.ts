@@ -37,14 +37,17 @@ export default class ExternalSourceRepository {
   /**
    * Create an external source with a random generated ID
    */
-  createExternalSource(command: ExternalSourceCommandDTO): void {
+  createExternalSource(command: ExternalSourceCommandDTO): ExternalSourceDTO {
     const id = generateRandomId(6);
-    const query =
+    const insertQuery =
       `INSERT INTO ${EXTERNAL_SOURCES_TABLE} (id, reference, description) ` +
       `VALUES (?, ?, ?);`;
-    return this.database
-      .prepare(query)
+    const result = this.database
+      .prepare(insertQuery)
       .run(id, command.reference, command.description);
+
+    const query = `SELECT id, reference, description FROM ${EXTERNAL_SOURCES_TABLE} WHERE ROWID = ?;`;
+    return this.database.prepare(query).get(result.lastInsertRowid);
   }
 
   /**
