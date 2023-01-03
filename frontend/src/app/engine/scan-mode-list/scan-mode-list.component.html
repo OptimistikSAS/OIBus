@@ -1,0 +1,41 @@
+<h2 translate="engine.scan-mode.list">
+  <button class="btn btn-primary pull-right" id="add-scan-mode" (click)="openCreationScanModeModal()">
+    <span class="fa fa-plus me-2"></span>
+    <span translate="engine.scan-mode.add"></span>
+  </button>
+</h2>
+<!-- the scan mode list -->
+<div *ngIf="scanModes.length !== 0; else emptyScanModes">
+  <table class="mt-2 table table-sm table-hover">
+    <thead class="table-light">
+      <tr>
+        <th translate="engine.scan-mode.name"></th>
+        <th translate="engine.scan-mode.description"></th>
+        <th translate="engine.scan-mode.cron"></th>
+        <th style="width: 3%"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let scanMode of scanModes">
+        <td>{{ scanMode.name }}</td>
+        <td>{{ scanMode.description }}</td>
+        <td>{{ scanMode.cron }}</td>
+        <td class="text-nowrap action-buttons">
+          <div class="pull-right">
+            <!-- Edit button -->
+            <button
+              type="button"
+              class="btn btn-link edit-scan-mode fa fa-pencil px-1 py-0"
+              (click)="openEditScanModeModal(scanMode)"
+            ></button>
+            <!-- Delete button -->
+            <button type="button" class="btn btn-link delete-scan-mode fa fa-trash px-1 py-0" (click)="deleteScanMode(scanMode)"></button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<ng-template #emptyScanModes>
+  <div class="oi-details empty" id="no-scan-mode" translate="engine.scan-mode.none"></div>
+</ng-template>

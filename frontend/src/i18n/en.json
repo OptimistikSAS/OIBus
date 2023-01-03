@@ -138,8 +138,49 @@
       "address": "Address",
       "username": "Username",
       "password": "Password"
+    },
+    "scan-mode": {
+      "list": "Scan mode list",
+      "title-create": "Create a scan mode",
+      "title-edit": "Edit scan mode",
+      "confirm-deletion": "Are you sure you want to delete the scan mode {{ name }}? Beforehand, be sure it is not used.",
+      "updated": "Scan mode {{ name }} successfully updated",
+      "created": "Scan mode {{ name }} successfully created",
+      "deleted": "Scan mode {{ name }} deleted",
+      "add": "Add",
+      "none": "No scan mode",
+      "name": "Name",
+      "description": "Description",
+      "cron": "Cron"
+    },
+    "ip-filter": {
+      "list": "IP filter list",
+      "title-create": "Create an IP filter",
+      "title-edit": "Edit IP filter",
+      "confirm-deletion": "Are you sure you want to delete the IP filter {{ address }}? Beforehand, be sure it is not used.",
+      "updated": "IP filter {{ address }} successfully updated",
+      "created": "IP filter {{ address }} successfully created",
+      "deleted": "IP filter {{ address }} deleted",
+      "add": "Add",
+      "none": "No IP filter",
+      "name": "Name",
+      "description": "Description",
+      "address": "Address"
+    },
+    "external-source": {
+      "list": "External source list",
+      "title-create": "Create an external source",
+      "title-edit": "Edit external source",
+      "confirm-deletion": "Are you sure you want to delete the external source {{ reference }}? Beforehand, be sure it is not used.",
+      "updated": "External source {{ reference }} successfully updated",
+      "created": "External source {{ reference }} successfully created",
+      "deleted": "External source {{ reference }} deleted",
+      "add": "Add",
+      "none": "No external source",
+      "name": "Name",
+      "description": "Description",
+      "reference": "Reference"
     }
-
   },
   "south-list": {
     "title": "South list"
