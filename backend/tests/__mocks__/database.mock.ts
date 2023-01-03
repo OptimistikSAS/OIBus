@@ -3,7 +3,7 @@
  */
 export default jest.fn().mockImplementation(() => {
   const execution = {
-    run: jest.fn(),
+    run: jest.fn(() => ({ lastInsertRowId: 1 })),
     get: jest.fn(),
     all: jest.fn(),
   };

@@ -2,9 +2,10 @@ import { Routes } from '@angular/router';
 import { HomeComponent } from './home/home.component';
 import { LogsComponent } from './logs/logs.component';
 import { AboutComponent } from './about/about.component';
-import { EngineComponent } from './engine/engine.component';
+import { EditEngineComponent } from './engine/edit-engine/edit-engine.component';
 import { SouthListComponent } from './south-list/south-list.component';
 import { NorthListComponent } from './north-list/north-list.component';
+import { EngineComponent } from './engine/engine.component';
 
 export const ROUTES: Routes = [
   {
@@ -14,6 +15,10 @@ export const ROUTES: Routes = [
   {
     path: 'engine',
     component: EngineComponent
+  },
+  {
+    path: 'engine/edit',
+    component: EditEngineComponent
   },
   {
     path: 'north',

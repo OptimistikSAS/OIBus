@@ -6,6 +6,9 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "close": "Close",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "colon-separator": ": ",
     "confirmation-modal-title": "Confirmation",
     "validation-errors": {
       "this-field": "This field",
@@ -69,6 +72,7 @@
   },
   "engine": {
     "title": "Engine",
+    "edit": "Edit settings",
     "updated": "Engine settings updated",
     "general-settings": {
       "title": "General settings",
@@ -123,6 +127,10 @@
       "list": "Proxy list",
       "title-create": "Create a proxy",
       "title-edit": "Edit proxy",
+      "confirm-deletion": "Are you sure you want to delete the proxy {{ name }}? Beforehand, be sure it is not used.",
+      "updated": "Proxy {{ name }} successfully updated",
+      "created": "Proxy {{ name }} successfully created",
+      "deleted": "Proxy {{ name }} deleted",
       "add": "Add",
       "none": "No proxy",
       "name": "Name",

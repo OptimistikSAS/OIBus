@@ -40,7 +40,7 @@ export class ProxyService {
    * @param proxyId - the ID of the proxy
    * @param command - the new values of the selected proxy
    */
-  updateProxy(proxyId: string, command: ProxyCommandDTO) {
+  updateProxy(proxyId: string, command: ProxyCommandDTO): Observable<void> {
     return this.http.put<void>(`/api/proxies/${proxyId}`, command);
   }
 
@@ -48,7 +48,7 @@ export class ProxyService {
    * Delete the selected proxy
    * @param proxyId - the ID of the proxy to delete
    */
-  deleteProxy(proxyId: string) {
+  deleteProxy(proxyId: string): Observable<void> {
     return this.http.delete<void>(`/api/proxies/${proxyId}`);
   }
 }
