@@ -3,6 +3,7 @@ import {
   EngineSettingsDTO,
 } from "../model/engine.model";
 import { generateRandomId } from "./utils";
+import { PROXY_TABLE } from "./proxy.repository";
 
 const ENGINE_TABLE = "engine";
 
@@ -68,8 +69,8 @@ export default class EngineRepository {
       "health_signal_http_interval INTEGER, health_signal_http_verbose INTEGER, health_signal_http_address TEXT, " +
       "health_signal_http_proxy_id TEXT, health_signal_http_authentication_type TEXT, health_signal_http_authentication_key TEXT, " +
       "health_signal_http_authentication_secret TEXT, " +
-      "FOREIGN KEY(log_loki_proxy_id) REFERENCES proxy(id), " +
-      "FOREIGN KEY(health_signal_http_proxy_id) REFERENCES proxy(id));";
+      `FOREIGN KEY(log_loki_proxy_id) REFERENCES ${PROXY_TABLE}(id), ` +
+      `FOREIGN KEY(health_signal_http_proxy_id) REFERENCES ${PROXY_TABLE}(id));`;
     this.database.prepare(query).run();
 
     this.createEngineSettings(defaultEngineSettings);
