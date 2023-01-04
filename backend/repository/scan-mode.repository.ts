@@ -1,7 +1,7 @@
 import { ScanModeCommandDTO, ScanModeDTO } from "../model/scan-mode.model";
 import { generateRandomId } from "./utils";
 
-const SCAN_MODE_TABLE = "scan_mode";
+export const SCAN_MODE_TABLE = "scan_mode";
 
 /**
  * Repository used for scan modes (cron definitions)
