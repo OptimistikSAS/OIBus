@@ -8,6 +8,11 @@ import historyQueryController from '../controllers/history-query.controller.js'
 import oibusController from '../controllers/oibus.controller.js'
 import fileCacheController from '../controllers/file-cache.controller.js'
 import apiController from '../controllers/api.controller'
+import proxyController from '../controllers/proxy.controller'
+import externalSourceController from '../controllers/external-source.controller'
+import ipFilterController from '../controllers/ip-filter.controller'
+import scanModeController from '../controllers/scan-mode.controller'
+import southConnectorController from '../controllers/south-connector.controller'
 
 const router = new Router()
 
@@ -52,25 +57,35 @@ router.post('/north/:id/cache/file-errors/retry-all', fileCacheController.retryA
 
 router.get('/api/engine', apiController.getEngineSettings)
 router.put('/api/engine', apiController.updateEngineSettings)
-router.get('/api/proxies', apiController.getProxies)
-router.get('/api/proxies/:id', apiController.getProxy)
-router.post('/api/proxies', apiController.createProxy)
-router.put('/api/proxies/:id', apiController.updateProxy)
-router.delete('/api/proxies/:id', apiController.deleteProxy)
-router.get('/api/scan-modes', apiController.getScanModes)
-router.get('/api/scan-modes/:id', apiController.getScanMode)
-router.post('/api/scan-modes', apiController.createScanMode)
-router.put('/api/scan-modes/:id', apiController.updateScanMode)
-router.delete('/api/scan-modes/:id', apiController.deleteScanMode)
-router.get('/api/ip-filters', apiController.getIpFilters)
-router.get('/api/ip-filters/:id', apiController.getIpFilter)
-router.post('/api/ip-filters', apiController.createIpFilter)
-router.put('/api/ip-filters/:id', apiController.updateIpFilter)
-router.delete('/api/ip-filters/:id', apiController.deleteIpFilter)
-router.get('/api/external-sources', apiController.getExternalSources)
-router.get('/api/external-sources/:id', apiController.getExternalSource)
-router.post('/api/external-sources', apiController.createExternalSource)
-router.put('/api/external-sources/:id', apiController.updateExternalSource)
-router.delete('/api/external-sources/:id', apiController.deleteExternalSource)
+router.get('/api/proxies', proxyController.getProxies)
+router.get('/api/proxies/:id', proxyController.getProxy)
+router.post('/api/proxies', proxyController.createProxy)
+router.put('/api/proxies/:id', proxyController.updateProxy)
+router.delete('/api/proxies/:id', proxyController.deleteProxy)
+router.get('/api/scan-modes', scanModeController.getScanModes)
+router.get('/api/scan-modes/:id', scanModeController.getScanMode)
+router.post('/api/scan-modes', scanModeController.createScanMode)
+router.put('/api/scan-modes/:id', scanModeController.updateScanMode)
+router.delete('/api/scan-modes/:id', scanModeController.deleteScanMode)
+router.get('/api/ip-filters', ipFilterController.getIpFilters)
+router.get('/api/ip-filters/:id', ipFilterController.getIpFilter)
+router.post('/api/ip-filters', ipFilterController.createIpFilter)
+router.put('/api/ip-filters/:id', ipFilterController.updateIpFilter)
+router.delete('/api/ip-filters/:id', ipFilterController.deleteIpFilter)
+router.get('/api/external-sources', externalSourceController.getExternalSources)
+router.get('/api/external-sources/:id', externalSourceController.getExternalSource)
+router.post('/api/external-sources', externalSourceController.createExternalSource)
+router.put('/api/external-sources/:id', externalSourceController.updateExternalSource)
+router.delete('/api/external-sources/:id', externalSourceController.deleteExternalSource)
+router.get('/api/south-connector', southConnectorController.getSouthConnectors)
+router.get('/api/south-connector/:id', southConnectorController.getSouthConnector)
+router.post('/api/south-connector', southConnectorController.createSouthConnector)
+router.put('/api/south-connector/:id', southConnectorController.updateSouthConnector)
+router.delete('/api/south-connector/:id', southConnectorController.deleteSouthConnector)
+router.get('/api/south-connector/:southId/scan', southConnectorController.getSouthScans)
+router.get('/api/south-connector/:southId/scan/:id', southConnectorController.getSouthScan)
+router.post('/api/south-connector/:southId/scan', southConnectorController.createSouthScan)
+router.put('/api/south-connector/:southId/scan/:id', southConnectorController.updateSouthScan)
+router.delete('/api/south-connector/:southId/scan/:id', southConnectorController.deleteSouthScan)
 
 export default router

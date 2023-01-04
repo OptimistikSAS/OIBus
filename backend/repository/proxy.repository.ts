@@ -1,7 +1,7 @@
 import { generateRandomId } from "./utils";
 import { ProxyCommandDTO, ProxyDTO } from "../model/proxy.model";
 
-const PROXY_TABLE = "proxy";
+export const PROXY_TABLE = "proxy";
 
 /**
  * Repository used for proxies
