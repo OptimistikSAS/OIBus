@@ -7,6 +7,8 @@ import ExternalSourceRepository from "../repository/external-source.repository";
 import IpFilterRepository from "../repository/ip-filter.repository";
 import ProxyRepository from "../repository/proxy.repository";
 import ScanModeRepository from "../repository/scan-mode.repository";
+import SouthConnectorRepository from "../repository/south-connector.repository";
+import SouthScanRepository from "../repository/south-scan.repository";
 
 jest.mock("better-sqlite3", () => jest.fn(() => "sqlite database"));
 jest.mock("../repository/external-source.repository");
@@ -14,6 +16,8 @@ jest.mock("../repository/ip-filter.repository");
 jest.mock("../repository/proxy.repository");
 jest.mock("../repository/scan-mode.repository");
 jest.mock("../repository/engine.repository");
+jest.mock("../repository/south-connector.repository");
+jest.mock("../repository/south-scan.repository");
 
 describe("Repository service", () => {
   it("should properly initialize service", () => {
@@ -24,11 +28,15 @@ describe("Repository service", () => {
     expect(IpFilterRepository).toHaveBeenCalledWith("sqlite database");
     expect(ProxyRepository).toHaveBeenCalledWith("sqlite database");
     expect(ScanModeRepository).toHaveBeenCalledWith("sqlite database");
+    expect(SouthConnectorRepository).toHaveBeenCalledWith("sqlite database");
+    expect(SouthScanRepository).toHaveBeenCalledWith("sqlite database");
 
     expect(repositoryService.engineRepository).toBeDefined();
     expect(repositoryService.externalSourceRepository).toBeDefined();
     expect(repositoryService.ipFilterRepository).toBeDefined();
     expect(repositoryService.proxyRepository).toBeDefined();
     expect(repositoryService.scanModeRepository).toBeDefined();
+    expect(repositoryService.southConnectorRepository).toBeDefined();
+    expect(repositoryService.southScanRepository).toBeDefined();
   });
 });
