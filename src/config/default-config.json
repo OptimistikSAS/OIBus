@@ -3,7 +3,7 @@
     "name": "OIBus",
     "port": 2223,
     "user": "admin",
-    "password": "",
+    "password": "{{notEncrypted}}pass",
     "filter": ["127.0.0.1", "::1", "::ffff:127.0.0.1"],
     "safeMode": true,
     "logParameters": {
@@ -77,5 +77,5 @@
   },
   "south": [],
   "north": [],
-  "schemaVersion": 28
+  "schemaVersion": 31
 }
