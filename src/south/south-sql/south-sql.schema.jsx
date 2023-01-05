@@ -25,6 +25,10 @@ schema.form = {
           Note for all SQL connections with username:
           To avoid accidental data deletion/alteration the SQL user should have only readonly access to the database.
         </p>
+        <p>
+          Note for ODBC:
+          At the moment it only supports MSSQL.
+        </p>
       </>
     ),
   },

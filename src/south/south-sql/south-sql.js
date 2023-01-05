@@ -452,7 +452,9 @@ export default class SouthSQL extends SouthConnector {
       }
       connection = await odbc.connect(connectionConfig)
 
-      const params = generateReplacementParameters(this.query, startTime, endTime)
+      const startDateTime = DateTime.fromJSDate(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
+      const endDateTime = DateTime.fromJSDate(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
+      const params = generateReplacementParameters(this.query, startDateTime, endDateTime)
       data = await connection.query(adaptedQuery, params)
     } catch (error) {
       if (error.odbcErrors?.length > 0) {

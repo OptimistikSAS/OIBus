@@ -80,7 +80,7 @@ const getMostRecentDate = (entryList, startTime, timeColumn, timezone) => {
  * Get all occurrences of a substring with a value
  * @param {String} str - The string to look for occurrences in
  * @param {String} keyword - The keyword
- * @param {Object} value - The value to assign to the occurrences index
+ * @param {Date|string} value - The value to assign to the occurrences index
  * @return {Object[]} - The result as { index, value}
  */
 const getOccurrences = (str, keyword, value) => {
@@ -99,8 +99,8 @@ const getOccurrences = (str, keyword, value) => {
 /**
  * Generate replacements parameters
  * @param {String} query - The query
- * @param {Date} startTime - The StartTime
- * @param {Date} endTime - The EndTime
+ * @param {Date|string} startTime - The StartTime
+ * @param {Date|string} endTime - The EndTime
  * @return {Object[]} - The replacement parameters
  */
 const generateReplacementParameters = (query, startTime, endTime) => {
