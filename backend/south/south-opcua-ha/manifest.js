@@ -16,7 +16,7 @@ export default {
       label: 'URL',
       defaultValue: 'opc.tcp://servername:port/endpoint',
       newRow: true,
-      validators: ['required', ['pattern', '^http.*'], ['pattern', '^opc.tcp.*']],
+      validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|opc.tcp:\\/\\/).*' } }],
       readDisplay: true,
     },
     {
@@ -25,7 +25,7 @@ export default {
       label: 'Keep Session Alive',
       defaultValue: false,
       newRow: false,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -34,7 +34,7 @@ export default {
       label: 'Read timeout (ms)',
       defaultValue: 180_000,
       newRow: true,
-      validators: ['required', ['min', 100], ['max', 3_600_000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: false,
     },
     {
@@ -43,7 +43,7 @@ export default {
       label: 'Retry interval (ms)',
       defaultValue: 10_000,
       newRow: false,
-      validators: ['required', ['min', 100], ['max', 3_600_000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: false,
     },
     {
@@ -51,7 +51,7 @@ export default {
       type: 'OibNumber',
       label: 'Max read interval (s)',
       newRow: true,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: false,
     },
     {
@@ -60,7 +60,7 @@ export default {
       label: 'Read interval delay (ms)',
       defaultValue: 200,
       newRow: false,
-      validators: ['required', ['min', 100], ['max', 3_600_000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: false,
     },
     {
@@ -69,7 +69,7 @@ export default {
       label: 'Max return values',
       defaultValue: 1000,
       newRow: false,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: false,
     },
     {
@@ -92,6 +92,7 @@ export default {
       label: 'Security Mode',
       options: ['None', 'Sign', 'SignAndEncrypt'],
       defaultValue: 'None',
+      validators: [{ key: 'required' }],
       newRow: true,
       readDisplay: true,
     },
@@ -139,7 +140,7 @@ export default {
       key: 'scanMode',
       type: 'OibScanMode',
       label: 'Scan mode',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -148,6 +149,7 @@ export default {
       label: 'Aggregate',
       options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Count'],
       defaultValue: 'Raw',
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -162,7 +164,7 @@ export default {
       key: 'nodeId',
       type: 'OibText',
       label: 'Node ID',
-      defaultValue: '',
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
   ],

@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { NgForOf, NgIf } from '@angular/common';
 import { switchMap } from 'rxjs';
-import { Modal, ModalService } from '../../components/shared/modal.service';
-import { ConfirmationService } from '../../components/shared/confirmation.service';
-import { NotificationService } from '../../components/shared/notification.service';
+import { Modal, ModalService } from '../../shared/modal.service';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { NotificationService } from '../../shared/notification.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { ScanModeDTO } from '../../model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';

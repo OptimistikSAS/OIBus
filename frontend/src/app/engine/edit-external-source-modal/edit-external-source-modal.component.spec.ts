@@ -6,7 +6,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
-import { DefaultValidationErrorsComponent } from '../../components/shared/default-validation-errors/default-validation-errors.component';
+import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ExternalSourceService } from '../../services/external-source.service';
 import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../model/external-sources.model';
 
