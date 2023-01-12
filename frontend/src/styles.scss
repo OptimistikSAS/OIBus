@@ -57,6 +57,15 @@ $fa-font-path: '../fonts';
   }
 }
 
+.form-group {
+  margin-bottom: 1rem;
+}
+
+label.form-check-label {
+  font-size: 1rem;
+  font-weight: normal;
+}
+
 // This targets the errors that appear inside the val-errors component.
 // Since errors occupy some vertical space, clicking on a button such as a cancel button which comes after a focused
 // invalid control misses the button, because the click is done after the blur of the invalid control, which makes the
@@ -75,6 +84,27 @@ val-errors > div {
 
   to {
     opacity: 1;
+  }
+}
+
+.modal-content {
+  background-color: transparent;
+
+  .modal-header {
+    background-color: $darkGrey;
+    border-bottom: 1px solid $darkGrey;
+    color: white;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+
+    .modal-title {
+      font-size: 1.1rem;
+    }
+  }
+
+  .modal-body,
+  .modal-footer {
+    background-color: $lightGrey;
   }
 }
 

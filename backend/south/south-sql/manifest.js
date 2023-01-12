@@ -16,7 +16,7 @@ export default {
       label: 'SQL Driver',
       defaultValue: 'MSSQL',
       newRow: true,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -26,7 +26,7 @@ export default {
       defaultValue: './test.db',
       newRow: true,
       conditionalDisplay: { driver: ['SQLite'] },
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -36,7 +36,7 @@ export default {
       defaultValue: 'localhost',
       newRow: true,
       conditionalDisplay: { driver: ['MSSQL', 'MySQL', 'PostgreSQL', 'Oracle'] },
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -47,7 +47,7 @@ export default {
       newRow: false,
       class: 'col-2',
       conditionalDisplay: { driver: ['MSSQL', 'MySQL', 'PostgreSQL', 'Oracle'] },
-      validators: ['required', ['min', 1], ['max', 65535]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       readDisplay: true,
     },
     {
@@ -57,7 +57,7 @@ export default {
       defaultValue: 'db',
       newRow: true,
       conditionalDisplay: { driver: ['MSSQL', 'MySQL', 'PostgreSQL', 'Oracle'] },
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -101,7 +101,7 @@ export default {
       newRow: true,
       class: 'col-4',
       conditionalDisplay: { driver: ['MSSQL', 'MySQL', 'PostgreSQL', 'Oracle'] },
-      validators: ['required', ['min', 100], ['max', 30000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
       readDisplay: false,
     },
   ],
@@ -110,7 +110,7 @@ export default {
       key: 'scanMode',
       type: 'OibScanMode',
       label: 'Scan mode',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -127,7 +127,7 @@ export default {
       type: 'OibNumber',
       label: 'Request timeout (ms)',
       defaultValue: 1000,
-      validators: ['required', ['min', 100], ['max', 60000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60000 } }],
       readDisplay: false,
     },
     {
@@ -135,7 +135,7 @@ export default {
       type: 'OibNumber',
       label: 'Max read interval (s)',
       defaultValue: 0,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: false,
     },
     {
@@ -143,7 +143,7 @@ export default {
       type: 'OibNumber',
       label: 'Read interval delay (ms)',
       defaultValue: 200,
-      validators: ['required', ['min', 100], ['max', 3_600_000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: false,
     },
     {

@@ -1,0 +1,44 @@
+@import '../../../common';
+
+.module-button {
+  border: none;
+  width: 100%;
+  padding: 10px;
+  background-color: $lightGrey;
+  // becomes darker on hover
+  &:hover {
+    background-color: $mediumGrey;
+  }
+
+  &:active,
+  &:focus,
+  &:default {
+    box-shadow: none;
+  }
+}
+
+.category-image {
+  height: 40px;
+}
+
+.image-block {
+  height: 100%;
+  text-align: center;
+  color: $white;
+  border-radius: 12px;
+  background-color: $darkGrey;
+  width: 50px;
+  min-height: 30px;
+}
+
+h5 {
+  font-size: 2rem;
+}
+
+h6 {
+  font-size: 1.75rem;
+}
+
+p {
+  font-size: 1.2rem;
+}

@@ -17,7 +17,7 @@ export default {
       defaultValue: './input/',
       newRow: true,
       class: 'col-8',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -27,7 +27,7 @@ export default {
       defaultValue: true,
       newRow: false,
       class: 'col-2',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -38,7 +38,7 @@ export default {
       newRow: false,
       class: 'col-2',
       conditionalDisplay: { preserveFiles: [true] },
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: false,
     },
     {
@@ -48,7 +48,7 @@ export default {
       defaultValue: 1000,
       newRow: true,
       class: 'col-4',
-      validators: ['required', ['min', 100], ['max', 3_600_000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: true,
     },
     {
@@ -58,7 +58,7 @@ export default {
       defaultValue: false,
       newRow: true,
       class: 'col-4',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
   ],
@@ -67,7 +67,7 @@ export default {
       key: 'scanMode',
       type: 'OibScanMode',
       label: 'Scan mode',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -75,7 +75,7 @@ export default {
       type: 'OibText',
       label: 'RegExp',
       defaultValue: '.txt',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
   ],

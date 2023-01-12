@@ -7,7 +7,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { ProxyService } from '../../services/proxy.service';
 import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
-import { DefaultValidationErrorsComponent } from '../../components/shared/default-validation-errors/default-validation-errors.component';
+import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ProxyCommandDTO, ProxyDTO } from '../../model/proxy.model';
 
 class EditProxyModalComponentTester extends ComponentTester<EditProxyModalComponent> {

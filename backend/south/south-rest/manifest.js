@@ -16,7 +16,7 @@ export default {
       label: 'URL',
       defaultValue: 'http://localhost',
       newRow: true,
-      validators: ['required', ['pattern', '^http.*'], ['pattern', '^opc.tcp.*']],
+      validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }],
       readDisplay: true,
     },
     {
@@ -25,7 +25,7 @@ export default {
       label: 'Port',
       defaultValue: 80,
       newRow: false,
-      validators: ['required', ['min', 1], ['max', 65535]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
     },
     {
       key: 'requestMethod',
@@ -34,7 +34,7 @@ export default {
       label: 'HTTP Method',
       defaultValue: 'GET',
       newRow: false,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
     },
     {
       key: 'authentication',
@@ -48,6 +48,7 @@ export default {
       label: 'Accept rejected certificates?',
       defaultValue: false,
       newRow: false,
+      validators: [{ key: 'required' }],
       class: 'col-2',
     },
     {
@@ -57,7 +58,7 @@ export default {
       defaultValue: 1000,
       newRow: true,
       class: 'col-2',
-      validators: ['required', ['min', 100], ['max', 30000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }],
     },
   ],
   items: [
@@ -66,7 +67,7 @@ export default {
       type: 'OibScanMode',
       label: 'Scan mode',
       newRow: true,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
     },
     {
       key: 'requestTimeout',
@@ -75,7 +76,7 @@ export default {
       defaultValue: 1000,
       newRow: false,
       class: 'col-2',
-      validators: ['required', ['min', 100], ['max', 60000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60_000 } }],
     },
     {
       key: 'maxReadInterval',
@@ -84,7 +85,7 @@ export default {
       defaultValue: 0,
       newRow: true,
       class: 'col-2',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
     },
     {
       key: 'readIntervalDelay',
@@ -93,7 +94,7 @@ export default {
       defaultValue: 200,
       newRow: false,
       class: 'col-2',
-      validators: ['required', ['min', 100], ['max', 3_600_000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
     },
     {
       key: 'queryParams',
@@ -126,6 +127,7 @@ export default {
       options: ['ISO', 'number'],
       defaultValue: 'ISO',
       newRow: true,
+      validators: [{ key: 'required' }],
     },
     {
       key: 'payloadParser',
@@ -134,7 +136,7 @@ export default {
       options: ['Raw', 'OIAnalytics time values', 'SLIMS'],
       defaultValue: 'Raw',
       newRow: true,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
     },
     {
       key: 'convertToCsv',
@@ -142,7 +144,7 @@ export default {
       label: 'Convert payload into CSV?',
       defaultValue: true,
       newRow: true,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
     },
     {
       key: 'delimiter',
@@ -151,14 +153,14 @@ export default {
       label: 'Delimiter',
       defaultValue: ',',
       newRow: false,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
     },
     {
       key: 'filename',
       type: 'OibText',
       label: 'Filename',
       defaultValue: '@ConnectorName-results_@CurrentDate-@QueryPart.csv',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
     },
     {
       key: 'compression',
@@ -166,7 +168,7 @@ export default {
       label: 'Compress File?',
       defaultValue: false,
       newRow: false,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
     },
   ],
 }
