@@ -17,7 +17,7 @@ const createProxy = async (ctx: KoaContext<ProxyCommandDTO, void>) => {
   const proxy = ctx.app.repositoryService.proxyRepository.createProxy(
     ctx.request.body
   );
-  ctx.ok(proxy);
+  ctx.created(proxy);
 };
 
 const updateProxy = async (ctx: KoaContext<ProxyCommandDTO, void>) => {
@@ -26,12 +26,12 @@ const updateProxy = async (ctx: KoaContext<ProxyCommandDTO, void>) => {
     ctx.request.body
   );
 
-  ctx.ok();
+  ctx.noContent();
 };
 
 const deleteProxy = async (ctx: KoaContext<void, void>) => {
   ctx.app.repositoryService.proxyRepository.deleteProxy(ctx.params.id);
-  ctx.ok();
+  ctx.noContent();
 };
 
 export default {

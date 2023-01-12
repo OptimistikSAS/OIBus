@@ -1,3 +1,9 @@
+export interface SouthType {
+  category: string;
+  type: string;
+  description: string;
+}
+
 /**
  * DTO for South connectors
  */
@@ -22,9 +28,9 @@ export interface SouthConnectorCommandDTO {
 }
 
 /**
- * DTO used for South scan (a point/query/regexp and its settings linked to a scan mode)
+ * DTO used for South item (a point/query/regexp and its settings linked to a scan mode)
  */
-export interface SouthScanDTO {
+export interface SouthItemDTO {
   id: string;
   name: string;
   southId: string;
@@ -33,11 +39,15 @@ export interface SouthScanDTO {
 }
 
 /**
- * Command DTO used for South scan (a point/query/folder and its settings linked to a scan mode)
+ * Command DTO used for South item (a point/query/folder and its settings linked to a scan mode)
  */
-export interface SouthScanCommandDTO {
-  southId: string;
+export interface SouthItemCommandDTO {
   name: string;
   settings: object;
   scanModeId: string;
+}
+
+export interface SouthItemSearchParam {
+  page: number | null;
+  name: string | null;
 }
