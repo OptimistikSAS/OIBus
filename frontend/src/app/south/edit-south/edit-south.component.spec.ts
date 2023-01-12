@@ -137,7 +137,10 @@ describe('EditSouthComponent', () => {
             historyPoint: false,
             historyFile: true
           },
-          items: [],
+          items: {
+            scanMode: { subscriptionOnly: false, acceptSubscription: true },
+            settings: []
+          },
           settings: []
         })
       );

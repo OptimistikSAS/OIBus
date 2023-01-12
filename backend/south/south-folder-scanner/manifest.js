@@ -62,21 +62,18 @@ export default {
       readDisplay: true,
     },
   ],
-  items: [
-    {
-      key: 'scanMode',
-      type: 'OibScanMode',
-      label: 'Scan mode',
-      validators: [{ key: 'required' }],
-      readDisplay: true,
+  items: {
+    scanMode: {
+      acceptSubscription: false,
+      subscriptionOnly: false,
     },
-    {
+    settings: [{
       key: 'regex',
       type: 'OibText',
       label: 'RegExp',
       defaultValue: '.txt',
       validators: [{ key: 'required' }],
       readDisplay: true,
-    },
-  ],
+    }],
+  },
 }

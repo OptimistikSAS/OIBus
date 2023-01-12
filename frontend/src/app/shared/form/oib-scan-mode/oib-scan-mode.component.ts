@@ -3,20 +3,23 @@ import { formDirectives } from '../../form-directives';
 import { NgForOf, NgIf } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder } from '@angular/forms';
 import { ScanModeDTO } from '../../../model/scan-mode.model';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'oib-scan-mode',
   standalone: true,
-  imports: [...formDirectives, NgIf, NgForOf],
+  imports: [...formDirectives, NgIf, NgForOf, TranslateModule],
   templateUrl: './oib-scan-mode.component.html',
   styleUrls: ['./oib-scan-mode.component.scss'],
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => OibScanModeComponent), multi: true }]
 })
 export class OibScanModeComponent implements ControlValueAccessor {
-  @Input() label = '';
   @Input() key = '';
   @Input() scanModes: Array<ScanModeDTO> = [];
-  scanModeInputCtrl = this.fb.control(null as ScanModeDTO | null);
+  @Input() acceptSubscription = false;
+  @Input() subscriptionOnly = false;
+  readonly subscriptionScanMode = { id: 'subscribe', name: '', description: '', cron: '' };
+  scanModeInputCtrl = this.fb.control((this.subscriptionOnly ? this.subscriptionScanMode : null) as ScanModeDTO | null);
   disabled = false;
   onChange: (value: ScanModeDTO) => void = () => {};
   onTouched = () => {};

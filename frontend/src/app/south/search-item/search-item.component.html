@@ -1,0 +1,14 @@
+<form class="px-3 pb-3 mb-4 d-none d-lg-block oi-search-form" id="search-form" [formGroup]="searchForm" (ngSubmit)="triggerSearch()">
+  <div class="row gx-2 pt-3">
+    <label class="col-auto col-form-label"><i class="fa fa-search fa-lg"></i></label>
+    <label for="name" class="col-auto col-form-label" translate="south.items.search.name"></label>
+    <div class="col">
+      <!-- Item name -->
+      <input type="text" class="form-control" id="name" formControlName="name" />
+    </div>
+
+    <div class="col-auto">
+      <button class="btn btn-primary" id="search-button" form="search-form" translate="common.search"></button>
+    </div>
+  </div>
+</form>
