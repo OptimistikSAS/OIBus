@@ -2,9 +2,55 @@ import { KoaContext } from "../koa";
 import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
-  SouthScanCommandDTO,
-  SouthScanDTO,
+  SouthItemCommandDTO,
+  SouthItemDTO,
+  SouthItemSearchParam,
+  SouthType,
 } from "../../model/south-connector.model";
+
+import adsManifest from "../../south/south-ads/manifest";
+import folderScannerManifest from "../../south/south-folder-scanner/manifest";
+import modbusManifest from "../../south/south-modbus/manifest";
+import mqttManifest from "../../south/south-mqtt/manifest";
+import opchdaManifest from "../../south/south-opchda/manifest";
+import opcuaDaManifest from "../../south/south-opcua-da/manifest";
+import opcuaHaManifest from "../../south/south-opcua-ha/manifest";
+import restManifest from "../../south/south-rest/manifest";
+import sqlManifest from "../../south/south-sql/manifest";
+import { Page } from "../../model/types";
+
+// TODO: retrieve south types from a local store
+const manifest = [
+  sqlManifest,
+  restManifest,
+  opcuaHaManifest,
+  opcuaDaManifest,
+  opchdaManifest,
+  mqttManifest,
+  modbusManifest,
+  folderScannerManifest,
+  adsManifest,
+];
+
+const getSouthConnectorTypes = async (
+  ctx: KoaContext<void, Array<SouthType>>
+) => {
+  ctx.ok(
+    manifest.map((connector) => ({
+      category: connector.category,
+      type: connector.name,
+      description: connector.description,
+    }))
+  );
+};
+
+const getSouthConnectorManifest = async (ctx: KoaContext<void, object>) => {
+  const connector = manifest.find((south) => south.name === ctx.params.id);
+  if (!connector) {
+    ctx.throw(404, "North not found");
+  }
+  ctx.ok(connector);
+};
 
 const getSouthConnectors = async (
   ctx: KoaContext<void, Array<SouthConnectorDTO>>
@@ -29,7 +75,7 @@ const createSouthConnector = async (
     ctx.app.repositoryService.southConnectorRepository.createSouthConnector(
       ctx.request.body
     );
-  ctx.ok(southConnector);
+  ctx.created(southConnector);
 };
 
 const updateSouthConnector = async (
@@ -39,61 +85,71 @@ const updateSouthConnector = async (
     ctx.params.id,
     ctx.request.body
   );
-  ctx.ok();
+  ctx.noContent({});
 };
 
 const deleteSouthConnector = async (ctx: KoaContext<void, void>) => {
   ctx.app.repositoryService.southConnectorRepository.deleteSouthConnector(
     ctx.params.id
   );
-  ctx.ok();
+  ctx.noContent();
 };
 
-const getSouthScans = async (ctx: KoaContext<void, Array<SouthScanDTO>>) => {
+const searchSouthItems = async (ctx: KoaContext<void, Page<SouthItemDTO>>) => {
+  const searchParams: SouthItemSearchParam = {
+    page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
+    name: (ctx.query.name as string) || null,
+  };
   const southScans =
-    ctx.app.repositoryService.southScanRepository.getSouthScans(
-      ctx.params.southId
+    ctx.app.repositoryService.southItemRepository.searchSouthItems(
+      ctx.params.southId,
+      searchParams
     );
   ctx.ok(southScans);
 };
 
-const getSouthScan = async (ctx: KoaContext<void, SouthScanDTO>) => {
-  const southScan = ctx.app.repositoryService.southScanRepository.getSouthScan(
+const getSouthItem = async (ctx: KoaContext<void, SouthItemDTO>) => {
+  const southScan = ctx.app.repositoryService.southItemRepository.getSouthItem(
     ctx.params.id
   );
   ctx.ok(southScan);
 };
 
-const createSouthScan = async (ctx: KoaContext<SouthScanCommandDTO, void>) => {
+const createSouthItem = async (
+  ctx: KoaContext<SouthItemCommandDTO, SouthItemDTO>
+) => {
   const southScan =
-    ctx.app.repositoryService.southScanRepository.createSouthScan(
+    ctx.app.repositoryService.southItemRepository.createSouthItem(
+      ctx.params.southId,
       ctx.request.body
     );
-  ctx.ok(southScan);
+  ctx.created(southScan);
 };
 
-const updateSouthScan = async (ctx: KoaContext<SouthScanCommandDTO, void>) => {
-  ctx.app.repositoryService.southScanRepository.updateSouthScan(
+const updateSouthItem = async (ctx: KoaContext<SouthItemCommandDTO, void>) => {
+  ctx.app.repositoryService.southItemRepository.updateSouthItem(
     ctx.params.id,
     ctx.request.body
   );
-  ctx.ok();
+  ctx.noContent({});
 };
 
-const deleteSouthScan = async (ctx: KoaContext<void, void>) => {
-  ctx.app.repositoryService.southScanRepository.deleteSouthScan(ctx.params.id);
-  ctx.ok();
+const deleteSouthItem = async (ctx: KoaContext<void, void>) => {
+  ctx.app.repositoryService.southItemRepository.deleteSouthItem(ctx.params.id);
+  ctx.noContent();
 };
 
 export default {
+  getSouthConnectorTypes,
+  getSouthConnectorManifest,
   getSouthConnectors,
   getSouthConnector,
   createSouthConnector,
   updateSouthConnector,
   deleteSouthConnector,
-  getSouthScans,
-  getSouthScan,
-  createSouthScan,
-  updateSouthScan,
-  deleteSouthScan,
+  searchSouthItems,
+  getSouthItem,
+  createSouthItem,
+  updateSouthItem,
+  deleteSouthItem,
 };

@@ -27,7 +27,7 @@ const createExternalSource = async (
     ctx.app.repositoryService.externalSourceRepository.createExternalSource(
       ctx.request.body
     );
-  ctx.ok(externalSource);
+  ctx.created(externalSource);
 };
 
 const updateExternalSource = async (
@@ -37,14 +37,14 @@ const updateExternalSource = async (
     ctx.params.id,
     ctx.request.body
   );
-  ctx.ok();
+  ctx.noContent();
 };
 
 const deleteExternalSource = async (ctx: KoaContext<void, void>) => {
   ctx.app.repositoryService.externalSourceRepository.deleteExternalSource(
     ctx.params.id
   );
-  ctx.ok();
+  ctx.noContent();
 };
 
 export default {
