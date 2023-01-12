@@ -17,7 +17,7 @@ const createIpFilter = async (ctx: KoaContext<IpFilterCommandDTO, void>) => {
   const ipFilter = ctx.app.repositoryService.ipFilterRepository.createIpFilter(
     ctx.request.body
   );
-  ctx.ok(ipFilter);
+  ctx.created(ipFilter);
 };
 
 const updateIpFilter = async (ctx: KoaContext<IpFilterCommandDTO, void>) => {
@@ -25,12 +25,12 @@ const updateIpFilter = async (ctx: KoaContext<IpFilterCommandDTO, void>) => {
     ctx.params.id,
     ctx.request.body
   );
-  ctx.ok();
+  ctx.noContent();
 };
 
 const deleteIpFilter = async (ctx: KoaContext<void, void>) => {
   ctx.app.repositoryService.ipFilterRepository.deleteIpFilter(ctx.params.id);
-  ctx.ok();
+  ctx.noContent();
 };
 
 export default {

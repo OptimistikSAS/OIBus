@@ -12,10 +12,10 @@ const logSample = {
 global.fetch = jest.fn().mockImplementation((uri) => {
   let jsonString
   switch (uri) {
-    case '/api/installed-north':
+    case '/legacy/installed-north':
       jsonString = JSON.stringify(['a', 'b', 'c'])
       break
-    case '/api/installed-south':
+    case '/legacy/installed-south':
       jsonString = JSON.stringify(['d', 'e', 'f'])
       break
     case '/config':
