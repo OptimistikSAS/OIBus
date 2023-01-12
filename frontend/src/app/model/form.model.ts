@@ -1,3 +1,6 @@
+import { ScanModeDTO } from './scan-mode.model';
+import { ProxyDTO } from './proxy.model';
+
 export const CONNECTOR_FORM_TYPES = [
   'OibText',
   'OibNumber',
@@ -8,7 +11,8 @@ export const CONNECTOR_FORM_TYPES = [
   'OibCheckbox',
   'OibScanMode',
   'OibScanMode',
-  'OibTimezone'
+  'OibTimezone',
+  'OibProxy'
 ] as const;
 export type ConnectorFormType = typeof CONNECTOR_FORM_TYPES[number];
 
@@ -113,12 +117,18 @@ export interface OibCheckboxFormControl extends BaseOibFormControl<boolean> {
   type: 'OibCheckbox';
 }
 
-export interface OibScanModeFormControl extends BaseOibFormControl<string> {
+export interface OibScanModeFormControl extends BaseOibFormControl<ScanModeDTO> {
   type: 'OibScanMode';
+  acceptSubscription: boolean;
+  subscriptionOnly: boolean;
 }
 
 export interface OibTimezoneFormControl extends BaseOibFormControl<string> {
   type: 'OibTimezone';
+}
+
+export interface OibProxyFormControl extends BaseOibFormControl<ProxyDTO> {
+  type: 'OibProxy';
 }
 
 export type OibFormControl =
@@ -130,4 +140,5 @@ export type OibFormControl =
   | OibSecretFormControl
   | OibCheckboxFormControl
   | OibScanModeFormControl
-  | OibTimezoneFormControl;
+  | OibTimezoneFormControl
+  | OibProxyFormControl;

@@ -99,37 +99,36 @@ export default {
       readDisplay: false,
     },
   ],
-  items: [
-    {
-      key: 'scanMode',
-      type: 'OibScanMode',
-      label: 'Scan mode',
-      validators: [{ key: 'required' }],
-      readDisplay: true,
+  items: {
+    scanMode: {
+      acceptSubscription: false,
+      subscriptionOnly: false,
     },
-    {
-      key: 'aggregate',
-      type: 'OibSelect',
-      label: 'Aggregate',
-      options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Count'],
-      defaultValue: 'Raw',
-      validators: [{ key: 'required' }],
-      readDisplay: true,
-    },
-    {
-      key: 'resampling',
-      type: 'OibSelect',
-      label: 'Resampling',
-      options: ['None', 'Second', '10 Seconds', '30 Seconds', 'Minute', 'Hour', 'Day'],
-      defaultValue: 'None',
-      readDisplay: true,
-    },
-    {
-      key: 'nodeId',
-      type: 'OibText',
-      label: 'Node ID',
-      validators: [{ key: 'required' }],
-      readDisplay: true,
-    },
-  ],
+    settings: [
+      {
+        key: 'aggregate',
+        type: 'OibSelect',
+        label: 'Aggregate',
+        options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Count'],
+        defaultValue: 'Raw',
+        validators: [{ key: 'required' }],
+        readDisplay: true,
+      },
+      {
+        key: 'resampling',
+        type: 'OibSelect',
+        label: 'Resampling',
+        options: ['None', 'Second', '10 Seconds', '30 Seconds', 'Minute', 'Hour', 'Day'],
+        defaultValue: 'None',
+        readDisplay: true,
+      },
+      {
+        key: 'nodeId',
+        type: 'OibText',
+        label: 'Node ID',
+        validators: [{ key: 'required' }],
+        readDisplay: true,
+      },
+    ],
+  },
 }
