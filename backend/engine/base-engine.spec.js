@@ -98,39 +98,39 @@ describe('BaseEngine', () => {
     const southList = engine.getSouthList()
     const expectedResult = [
       {
-        category: 'DatabaseOut',
+        category: 'database',
         connectorName: 'SQL',
       },
       {
-        category: 'FileOut',
+        category: 'file',
         connectorName: 'FolderScanner',
       },
       {
-        category: 'IoT',
+        category: 'iot',
         connectorName: 'OPCUA_HA',
       },
       {
-        category: 'IoT',
+        category: 'iot',
         connectorName: 'OPCUA_DA',
       },
       {
-        category: 'IoT',
+        category: 'iot',
         connectorName: 'MQTT',
       },
       {
-        category: 'IoT',
+        category: 'iot',
         connectorName: 'ADS',
       },
       {
-        category: 'IoT',
+        category: 'iot',
         connectorName: 'Modbus',
       },
       {
-        category: 'IoT',
+        category: 'iot',
         connectorName: 'OPCHDA',
       },
       {
-        category: 'API',
+        category: 'api',
         connectorName: 'RestApi',
       },
     ]
