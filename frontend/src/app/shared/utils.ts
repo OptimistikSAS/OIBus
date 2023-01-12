@@ -1,5 +1,6 @@
 import { ConnectorFormValidator, OibFormControl } from '../model/form.model';
 import { FormControl, FormControlOptions, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { ScanModeDTO } from '../model/scan-mode.model';
 
 /**
  * Create the validators associated to an input from the settings schema
@@ -27,7 +28,7 @@ export const getValidators = (validators: Array<ConnectorFormValidator>): FormCo
   return { validators: formValidators };
 };
 
-export const createInput = (value: OibFormControl, form: FormGroup) => {
+export const createInput = (value: OibFormControl, form: FormGroup, scanModes: Array<ScanModeDTO> = []) => {
   switch (value.type) {
     case 'OibText':
     case 'OibNumber':
@@ -36,9 +37,28 @@ export const createInput = (value: OibFormControl, form: FormGroup) => {
     case 'OibSelect':
     case 'OibCodeBlock':
     case 'OibTextArea':
-    case 'OibScanMode':
     case 'OibTimezone':
       form.addControl(value.key, new FormControl(value.currentValue || value.defaultValue, getValidators(value.validators || [])));
       break;
+    case 'OibScanMode':
+      const scanMode = scanModes.find(element => element.id === value.currentValue?.id);
+      form.addControl(value.key, new FormControl(scanMode, getValidators(value.validators || [])));
+      break;
   }
+};
+
+export const getRowSettings = (settings: Array<OibFormControl>, settingsValues: any): Array<Array<OibFormControl>> => {
+  const rowList: Array<Array<OibFormControl>> = [];
+  // Create rows from the manifest so settings can be put together on the same row
+  settings.forEach(element => {
+    if (settingsValues) {
+      element.currentValue = settingsValues[element.key];
+    }
+    if (element.newRow || rowList.length === 0) {
+      rowList.push([element]);
+    } else {
+      rowList[rowList.length - 1].push(element);
+    }
+  });
+  return rowList;
 };

@@ -180,13 +180,19 @@ export default {
       readDisplay: false,
     },
   ],
-  items: [
-    {
-      key: 'topic',
-      type: 'OibText',
-      label: 'Topic',
-      validators: [{ key: 'required' }],
-      readDisplay: true,
+  items: {
+    scanMode: {
+      acceptSubscription: false,
+      subscriptionOnly: true,
     },
-  ],
+    settings: [
+      {
+        key: 'topic',
+        type: 'OibText',
+        label: 'Topic',
+        validators: [{ key: 'required' }],
+        readDisplay: true,
+      },
+    ],
+  },
 }

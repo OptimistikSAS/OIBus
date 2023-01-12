@@ -1,0 +1,82 @@
+<div class="modal-header">
+  <h4 class="modal-title" [translate]="'engine.external-source.title-' + mode"></h4>
+</div>
+<div class="modal-body" *ngIf="southItemSchema">
+  <form [formGroup]="form" (ngSubmit)="save()" id="form">
+    <!-- Name -->
+    <div class="form-group">
+      <label class="form-label" for="name" translate="south.items.name"></label>
+      <input formControlName="name" id="name" class="form-control" />
+      <val-errors controlName="name"></val-errors>
+    </div>
+
+    <oib-scan-mode
+      [scanModes]="scanModes"
+      *ngIf="!southItemSchema.scanMode.subscriptionOnly"
+      key="item-scan-mode"
+      formControlName="scanMode"
+      [acceptSubscription]="southItemSchema.scanMode.acceptSubscription"
+      [subscriptionOnly]="southItemSchema.scanMode.subscriptionOnly"
+    ></oib-scan-mode>
+    <div formGroupName="settings">
+      <ng-container *ngFor="let settings of southItemSchema.settings">
+        <oib-text
+          *ngIf="settings.type === 'OibText'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+        ></oib-text>
+        <oib-text-area
+          *ngIf="settings.type === 'OibTextArea'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+        ></oib-text-area>
+        <oib-code-block
+          *ngIf="settings.type === 'OibCodeBlock'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+          [contentType]="settings.contentType"
+        ></oib-code-block>
+        <oib-number
+          *ngIf="settings.type === 'OibNumber'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+        ></oib-number>
+        <oib-select
+          *ngIf="settings.type === 'OibSelect'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+          [options]="settings.options"
+        ></oib-select>
+        <oib-checkbox
+          *ngIf="settings.type === 'OibCheckbox'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+        ></oib-checkbox>
+        <oib-secret
+          *ngIf="settings.type === 'OibSecret'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+        ></oib-secret>
+        <oib-timezone
+          *ngIf="settings.type === 'OibTimezone'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+        ></oib-timezone>
+      </ng-container>
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <oib-save-button form="form" [state]="state"></oib-save-button>
+    <button type="button" class="btn btn-cancel" ngbAutofocus (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>

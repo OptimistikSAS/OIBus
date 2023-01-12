@@ -7,11 +7,18 @@ import { formDirectives } from '../../form-directives';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup } from '@angular/forms';
 import { ScanModeDTO } from '../../../model/scan-mode.model';
+import { MockI18nModule } from '../../../../i18n/mock-i18n.spec';
 
 @Component({
   template: `<form [formGroup]="form">
     <div formGroupName="settings">
-      <oib-scan-mode [scanModes]="scanModes" [key]="settings.key" [label]="settings.label" [formControlName]="settings.key"></oib-scan-mode>
+      <oib-scan-mode
+        [scanModes]="scanModes"
+        [key]="settings.key"
+        [formControlName]="settings.key"
+        [acceptSubscription]="true"
+        [subscriptionOnly]="false"
+      ></oib-scan-mode>
     </div>
   </form>`,
   standalone: true,
@@ -44,7 +51,7 @@ describe('OibScanModeComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [OibScanModeComponent]
+      imports: [OibScanModeComponent, MockI18nModule]
     });
 
     tester = new OibFormComponentTester();
