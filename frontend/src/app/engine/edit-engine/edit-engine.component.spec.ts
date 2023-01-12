@@ -10,8 +10,8 @@ import { EngineService } from '../../services/engine.service';
 import { ProxyService } from '../../services/proxy.service';
 import { ProxyDTO } from '../../model/proxy.model';
 import { of } from 'rxjs';
-import { NotificationService } from '../../components/shared/notification.service';
-import { SaveButtonComponent } from '../../components/shared/save-button/save-button.component';
+import { NotificationService } from '../../shared/notification.service';
+import { SaveButtonComponent } from '../../shared/save-button/save-button.component';
 
 class EditEngineComponentTester extends ComponentTester<EditEngineComponent> {
   constructor() {

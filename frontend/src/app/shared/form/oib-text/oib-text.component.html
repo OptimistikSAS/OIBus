@@ -1,0 +1,5 @@
+<div class="form-group">
+  <label *ngIf="label" [for]="'oib-text-input-' + key">{{ label }}</label>
+  <input [formControl]="textInputCtrl" [id]="'oib-text-input-' + key" class="form-control" />
+  <val-errors [control]="textInputCtrl"></val-errors>
+</div>

@@ -7,9 +7,9 @@ import { EngineService } from '../../services/engine.service';
 import { ProxyService } from '../../services/proxy.service';
 import { ProxyDTO } from '../../model/proxy.model';
 import { AuthenticationType, EngineSettingsCommandDTO, LOG_LEVELS, LogLevel } from '../../model/engine.model';
-import { NotificationService } from '../../components/shared/notification.service';
-import { formDirectives } from '../../components/shared/form-directives';
-import { ObservableState, SaveButtonComponent } from '../../components/shared/save-button/save-button.component';
+import { NotificationService } from '../../shared/notification.service';
+import { formDirectives } from '../../shared/form-directives';
+import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 
 @Component({
   selector: 'oib-edit-engine',

@@ -3,9 +3,11 @@ import { HomeComponent } from './home/home.component';
 import { LogsComponent } from './logs/logs.component';
 import { AboutComponent } from './about/about.component';
 import { EditEngineComponent } from './engine/edit-engine/edit-engine.component';
-import { SouthListComponent } from './south-list/south-list.component';
-import { NorthListComponent } from './north-list/north-list.component';
+import { SouthListComponent } from './south/south-list.component';
+import { NorthListComponent } from './north/north-list.component';
 import { EngineComponent } from './engine/engine.component';
+import { SouthDisplayComponent } from './south/south-display/south-display.component';
+import { EditSouthComponent } from './south/edit-south/edit-south.component';
 
 export const ROUTES: Routes = [
   {
@@ -27,6 +29,18 @@ export const ROUTES: Routes = [
   {
     path: 'south',
     component: SouthListComponent
+  },
+  {
+    path: 'south/create',
+    component: EditSouthComponent
+  },
+  {
+    path: 'south/:southId/edit',
+    component: EditSouthComponent
+  },
+  {
+    path: 'south/:southId',
+    component: SouthDisplayComponent
   },
   {
     path: 'logs',

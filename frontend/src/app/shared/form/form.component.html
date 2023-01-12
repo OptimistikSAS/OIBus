@@ -1,0 +1,58 @@
+<div [formGroup]="form">
+  <div class="row" *ngFor="let row of settingsSchema">
+    <ng-container *ngFor="let settings of row">
+      <div *ngIf="!this.form?.get(settings.key)?.disabled" [class]="settings.class || 'col'">
+        <oib-text
+          *ngIf="settings.type === 'OibText'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+        ></oib-text>
+        <oib-text-area
+          *ngIf="settings.type === 'OibTextArea'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+        ></oib-text-area>
+        <oib-code-block
+          *ngIf="settings.type === 'OibCodeBlock'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+          [contentType]="settings.contentType"
+        ></oib-code-block>
+        <oib-number
+          *ngIf="settings.type === 'OibNumber'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+        ></oib-number>
+        <oib-select
+          *ngIf="settings.type === 'OibSelect'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+          [options]="settings.options"
+        ></oib-select>
+        <oib-checkbox
+          *ngIf="settings.type === 'OibCheckbox'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+        ></oib-checkbox>
+        <oib-secret
+          *ngIf="settings.type === 'OibSecret'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+        ></oib-secret>
+        <oib-timezone
+          *ngIf="settings.type === 'OibTimezone'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+        ></oib-timezone>
+      </div>
+    </ng-container>
+  </div>
+</div>
