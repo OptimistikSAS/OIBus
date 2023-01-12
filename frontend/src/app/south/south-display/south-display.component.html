@@ -1,0 +1,15 @@
+<div class="oi-padded-container">
+  <div class="d-flex justify-content-between">
+    <div *ngIf="southConnector" class="oi-header-container">
+      <h1 id="title" translate="south.title" [translateParams]="{ name: southConnector.name }">
+        <span class="ms-2">
+          <button class="btn btn-primary" id="edit-link" routerLink="edit">
+            <i class="fa fa-pencil"></i>
+            {{ 'south.edit' | translate }}
+          </button>
+        </span>
+      </h1>
+      <div id="description">{{ southConnector.description }}</div>
+    </div>
+  </div>
+</div>

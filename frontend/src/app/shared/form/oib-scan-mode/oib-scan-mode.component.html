@@ -1,0 +1,7 @@
+<div class="form-group">
+  <label *ngIf="label" [for]="'oib-scan-mode-input-' + key">{{ label }}</label>
+  <select [formControl]="scanModeInputCtrl" [id]="'oib-scan-mode-input-' + key" class="form-select mb-2 mr-sm-2">
+    <option *ngFor="let scanMode of scanModes" [ngValue]="scanMode">{{ scanMode.name }}</option>
+  </select>
+  <val-errors [control]="scanModeInputCtrl"></val-errors>
+</div>

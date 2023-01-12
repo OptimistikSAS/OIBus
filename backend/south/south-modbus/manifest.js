@@ -17,7 +17,7 @@ export default {
       defaultValue: '127.0.0.1',
       newRow: true,
       class: 'col-4',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -26,7 +26,7 @@ export default {
       label: 'Port',
       defaultValue: 502,
       newRow: false,
-      validators: ['required', ['min', 1], ['max', 65535]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       readDisplay: true,
     },
     {
@@ -35,7 +35,7 @@ export default {
       label: 'Slave ID',
       defaultValue: 1,
       newRow: false,
-      validators: ['required', ['min', 1], ['max', 65535]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       readDisplay: true,
     },
     {
@@ -45,7 +45,7 @@ export default {
       defaultValue: 10000,
       newRow: true,
       class: 'col-2',
-      validators: ['required', ['min', 100], ['max', 60_000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60_000 } }],
       readDisplay: false,
     },
     {
@@ -56,7 +56,7 @@ export default {
       defaultValue: 'Modbus',
       newRow: true,
       class: 'col-4',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -67,7 +67,7 @@ export default {
       defaultValue: 'Big Endian',
       newRow: false,
       class: 'col-4',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -77,7 +77,7 @@ export default {
       defaultValue: false,
       newRow: true,
       class: 'col-4',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -87,7 +87,7 @@ export default {
       defaultValue: false,
       newRow: false,
       class: 'col-4',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
   ],
@@ -96,7 +96,7 @@ export default {
       key: 'scanMode',
       type: 'OibScanMode',
       label: 'Scan mode',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -104,7 +104,7 @@ export default {
       type: 'OibText',
       label: 'Address',
       defaultValue: '',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -113,7 +113,7 @@ export default {
       options: ['coil', 'discreteInput', 'inputRegister', 'holdingRegister'],
       label: 'Modbus Type',
       defaultValue: 'holdingRegister',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -122,6 +122,7 @@ export default {
       options: ['UInt16', 'Int16', 'UInt32', 'Int32', 'BigUInt64', 'BigInt64', 'Float', 'Double'],
       label: 'Data Type',
       defaultValue: 'UInt16',
+      validators: [{ key: 'required' }],
       readDisplay: false,
     },
     {
@@ -129,6 +130,7 @@ export default {
       type: 'OibText',
       label: 'Multiplier Coefficient',
       defaultValue: 1,
+      validators: [{ key: 'required' }],
       readDisplay: false,
     },
   ],

@@ -16,7 +16,7 @@ export default {
       label: 'Agent file path',
       defaultValue: '\\HdaAgent\\HdaAgent.exe',
       newRow: true,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -25,7 +25,7 @@ export default {
       label: 'HDA Agent Port',
       defaultValue: '2224',
       newRow: false,
-      validators: ['required'],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       readDisplay: true,
     },
     {
@@ -35,7 +35,7 @@ export default {
       options: ['trace', 'debug', 'info', 'warning', 'error'],
       defaultValue: 'debug',
       newRow: false,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: false,
     },
     {
@@ -43,7 +43,7 @@ export default {
       type: 'OibText',
       label: 'Host',
       newRow: true,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: false,
     },
     {
@@ -51,7 +51,7 @@ export default {
       type: 'OibText',
       label: 'Server name',
       newRow: false,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: false,
     },
     {
@@ -60,7 +60,7 @@ export default {
       label: 'Read timeout (ms)',
       defaultValue: 180_000,
       newRow: true,
-      validators: ['required', ['min', 100], ['max', 3_600_000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: false,
     },
     {
@@ -69,7 +69,7 @@ export default {
       label: 'Retry interval (ms)',
       defaultValue: 10_000,
       newRow: false,
-      validators: ['required', ['min', 100], ['max', 3_600_000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: false,
     },
     {
@@ -77,7 +77,7 @@ export default {
       type: 'OibNumber',
       label: 'Max read interval (s)',
       newRow: true,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: false,
     },
     {
@@ -86,7 +86,7 @@ export default {
       label: 'Read interval delay (ms)',
       defaultValue: 200,
       newRow: false,
-      validators: ['required', ['min', 100], ['max', 3_600_000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: false,
     },
     {
@@ -95,7 +95,7 @@ export default {
       label: 'Max return values',
       defaultValue: 1000,
       newRow: false,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: false,
     },
   ],
@@ -104,7 +104,7 @@ export default {
       key: 'scanMode',
       type: 'OibScanMode',
       label: 'Scan mode',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -113,6 +113,7 @@ export default {
       label: 'Aggregate',
       options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Count'],
       defaultValue: 'Raw',
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -127,7 +128,7 @@ export default {
       key: 'nodeId',
       type: 'OibText',
       label: 'Node ID',
-      defaultValue: '',
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
   ],

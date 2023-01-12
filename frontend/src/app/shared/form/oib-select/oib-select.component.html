@@ -1,0 +1,7 @@
+<div class="form-group">
+  <label *ngIf="label" [for]="'oib-select-input-' + key">{{ label }}</label>
+  <select [formControl]="selectInputCtrl" [id]="'oib-select-input-' + key" class="form-select mb-2 mr-sm-2">
+    <option *ngFor="let option of options" [ngValue]="option">{{ option }}</option>
+  </select>
+  <val-errors [control]="selectInputCtrl"></val-errors>
+</div>

@@ -1,0 +1,7 @@
+<div class="form-group">
+  <label *ngIf="label" [for]="'oib-code-block-input-' + key">{{ label }}</label>
+  <div [formControl]="codeBlockInputCtrl" class="editor-container" [id]="'oib-code-block-input-' + key" #editorContainer>
+    <span class="fa fa-spinner fa-spin" *ngIf="!codeEditorInstance"></span>
+  </div>
+  <val-errors [control]="codeBlockInputCtrl"></val-errors>
+</div>
