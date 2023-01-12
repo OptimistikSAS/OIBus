@@ -105,15 +105,12 @@ export default {
       readDisplay: false,
     },
   ],
-  items: [
-    {
-      key: 'scanMode',
-      type: 'OibScanMode',
-      label: 'Scan mode',
-      validators: [{ key: 'required' }],
-      readDisplay: true,
+  items: {
+    scanMode: {
+      acceptSubscription: false,
+      subscriptionOnly: false,
     },
-    {
+    settings: [{
       key: 'query',
       type: 'OibCodeBlock',
       label: 'Query',
@@ -186,7 +183,6 @@ export default {
       label: 'Date format',
       defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
       readDisplay: false,
-    },
-  ],
-
+    }],
+  },
 }

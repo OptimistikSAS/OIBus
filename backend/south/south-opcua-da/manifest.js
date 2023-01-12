@@ -110,20 +110,20 @@ export default {
       readDisplay: false,
     },
   ],
-  items: [
-    {
-      key: 'scanMode',
-      type: 'OibScanMode',
-      label: 'Scan mode',
-      validators: [{ key: 'required' }],
-      readDisplay: true,
+  items: {
+    scanMode: {
+      acceptSubscription: false,
+      subscriptionOnly: false,
     },
-    {
-      key: 'nodeId',
-      type: 'OibText',
-      label: 'Node ID',
-      validators: [{ key: 'required' }],
-      readDisplay: true,
-    },
-  ],
+    settings: [
+      {
+        key: 'nodeId',
+        type: 'OibText',
+        label: 'Node ID',
+        validators: [{ key: 'required' }],
+        readDisplay: true,
+      },
+    ],
+  },
+
 }

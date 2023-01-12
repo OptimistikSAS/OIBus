@@ -26,7 +26,7 @@ export interface SouthConnectorCommandDTO {
   type: string;
   description: string;
   enabled: boolean;
-  settings: object;
+  settings: any;
 }
 
 /**
@@ -45,13 +45,21 @@ export interface SouthItemDTO {
  */
 export interface SouthItemCommandDTO {
   name: string;
-  settings: object;
-  scanModeId: string;
+  settings: any;
+  scanModeId: string | null;
 }
 
 export interface SouthItemSearchParam {
   name: string | null;
   page: number | null;
+}
+
+export interface SouthItemManifest {
+  scanMode: {
+    acceptSubscription: boolean;
+    subscriptionOnly: boolean;
+  };
+  settings: Array<OibFormControl>;
 }
 
 export interface SouthConnectorManifest {
@@ -65,5 +73,5 @@ export interface SouthConnectorManifest {
     historyFile: boolean;
   };
   settings: Array<OibFormControl>;
-  items: Array<OibFormControl>;
+  items: SouthItemManifest;
 }

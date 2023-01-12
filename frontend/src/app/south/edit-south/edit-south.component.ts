@@ -15,7 +15,7 @@ import { ScanModeDTO } from '../../model/scan-mode.model';
 import { ProxyDTO } from '../../model/proxy.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { ProxyService } from '../../services/proxy.service';
-import { createInput } from '../../shared/utils';
+import { createInput, getRowSettings } from '../../shared/utils';
 
 @Component({
   selector: 'oib-edit-south',
@@ -91,18 +91,7 @@ export class EditSouthComponent implements OnInit {
           this.loading = false;
           return;
         }
-        const rowList: Array<Array<OibFormControl>> = [];
-        // Create rows from the manifest so settings can be put together on the same row
-        manifest.settings.forEach(element => {
-          if (this.southConnector?.settings) {
-            element.currentValue = this.southConnector.settings[element.key];
-          }
-          if (element.newRow || rowList.length === 0) {
-            rowList.push([element]);
-          } else {
-            rowList[rowList.length - 1].push(element);
-          }
-        });
+        const rowList = getRowSettings(manifest.settings, this.southConnector?.settings);
 
         this.southSettingsSchema = rowList;
         const inputsToSubscribeTo: Set<string> = new Set();
