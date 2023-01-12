@@ -1,14 +1,27 @@
+export const AUTHENTICATION_TYPES = ["none", "basic", "bearer", "api-key"];
+export type AuthenticationType = typeof AUTHENTICATION_TYPES[number];
+
 interface Authentication {
-  type: "basic" | "bearer" | "api-key";
+  type: AuthenticationType;
   key: string;
   secret: string;
 }
+
+export const LOG_LEVELS = [
+  "silent",
+  "error",
+  "warning",
+  "info",
+  "debug",
+  "trace",
+];
+export type LogLevel = typeof LOG_LEVELS[number];
 
 /**
  * Base settings for log parameters
  */
 interface BaseLogSettings {
-  level: "silent" | "error" | "warning" | "info" | "debug" | "trace";
+  level: LogLevel;
 }
 
 /**
@@ -40,7 +53,7 @@ interface LokiLogSettings extends BaseLogSettings {
   tokenAddress: string;
   username: string;
   password: string;
-  proxyId: string;
+  proxyId: string | null;
 }
 
 /**
@@ -69,7 +82,7 @@ interface HealthSignalHTTPDTO {
   interval: number;
   verbose: boolean;
   address: string;
-  proxyId: string;
+  proxyId: string | null;
   authentication: Authentication;
 }
 

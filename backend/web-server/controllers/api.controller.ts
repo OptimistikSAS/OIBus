@@ -16,7 +16,7 @@ const updateEngineSettings = async (
   ctx.app.repositoryService.engineRepository.updateEngineSettings(
     ctx.request.body
   );
-  ctx.ok("Engine settings updated!");
+  ctx.noContent();
 };
 
 export default {
