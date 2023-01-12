@@ -16,7 +16,7 @@ export default {
       label: 'Net ID',
       defaultValue: '127.0.0.1.1.1',
       newRow: true,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -26,7 +26,7 @@ export default {
       defaultValue: 851,
       newRow: false,
       class: 'col-2',
-      validators: ['required', ['min', 1], ['max', 65535]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       readDisplay: true,
     },
     {
@@ -42,7 +42,7 @@ export default {
       label: 'Router TCP port',
       newRow: false,
       class: 'col-2',
-      validators: [['min', 1], ['max', 65535]],
+      validators: [{ key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       readDisplay: true,
     },
     {
@@ -58,7 +58,7 @@ export default {
       label: 'ADS Client port',
       newRow: false,
       class: 'col-2',
-      validators: [['min', 1], ['max', 65535]],
+      validators: [{ key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       readDisplay: true,
     },
     {
@@ -68,7 +68,7 @@ export default {
       defaultValue: 10000,
       newRow: true,
       class: 'col-2',
-      validators: ['required', ['min', 100], ['max', 60_000]],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60_000 } }],
       readDisplay: false,
     },
     {
@@ -88,7 +88,7 @@ export default {
       defaultValue: 'Integer',
       newRow: true,
       class: 'col-4',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
     {
@@ -99,7 +99,7 @@ export default {
       defaultValue: 'Integer',
       newRow: false,
       class: 'col-4',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
   ],
@@ -108,7 +108,7 @@ export default {
       key: 'scanMode',
       type: 'OibScanMode',
       label: 'Scan mode',
-      validators: ['required'],
+      validators: [{ key: 'required' }],
       readDisplay: true,
     },
   ],

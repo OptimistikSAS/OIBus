@@ -1,0 +1,75 @@
+<div class="oi-padded-container">
+  <div class="d-flex justify-content-between">
+    <div class="oi-header-container">
+      <h1 *ngIf="southConnector" translate="south.edit-title"></h1>
+      <h1 *ngIf="!southConnector" translate="south.create-title"></h1>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <form [formGroup]="southForm" (ngSubmit)="save()" id="south-form" class="mt-3">
+        <!-- General settings -->
+        <h2 translate="south.general-settings"></h2>
+        <div class="row mb-3">
+          <!-- Name -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="south-name" translate="south.name"></label>
+              <input formControlName="name" id="south-name" class="form-control" />
+              <val-errors controlName="name"> </val-errors>
+            </div>
+          </div>
+
+          <!-- Enabled -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="south-enabled" translate="south.enabled"></label>
+              <div class="form-check form-switch">
+                <input formControlName="enabled" id="south-enabled" type="checkbox" class="form-check-input" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <!-- Description -->
+          <div class="form-group">
+            <label class="form-label" for="south-description" translate="south.description"></label>
+            <textarea formControlName="description" id="south-description" class="form-control"></textarea>
+          </div>
+        </div>
+
+        <!-- Specific settings -->
+        <h2 translate="south.specific-settings" [translateParams]="{ type: southType }" id="specific-settings-title"></h2>
+
+        <ng-container *ngIf="southSettingsSchema.length > 0" formGroupName="settings">
+          <oib-form
+            [settingsSchema]="southSettingsSchema"
+            [form]="southForm.controls.settings"
+            [scanModes]="scanModes"
+            [proxies]="proxies"
+          ></oib-form>
+        </ng-container>
+      </form>
+      <div id="actions" class="mb-2 mt-3 d-flex justify-content-end">
+        <div class="btn-group">
+          <oib-save-button form="south-form" [state]="state"></oib-save-button>
+          <button
+            *ngIf="!southConnector"
+            class="btn btn-cancel"
+            translate="common.cancel"
+            id="cancel-create-button"
+            routerLink="/south"
+          ></button>
+          <button
+            *ngIf="southConnector"
+            class="btn btn-cancel"
+            translate="common.cancel"
+            id="cancel-edit-button"
+            [routerLink]="['/south', southConnector.id]"
+          ></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

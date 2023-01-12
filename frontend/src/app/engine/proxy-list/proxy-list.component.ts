@@ -3,10 +3,10 @@ import { NgForOf, NgIf } from '@angular/common';
 import { switchMap } from 'rxjs';
 import { ProxyDTO } from '../../model/proxy.model';
 import { EditProxyModalComponent } from '../edit-proxy-modal/edit-proxy-modal.component';
-import { Modal, ModalService } from '../../components/shared/modal.service';
-import { ConfirmationService } from '../../components/shared/confirmation.service';
+import { Modal, ModalService } from '../../shared/modal.service';
+import { ConfirmationService } from '../../shared/confirmation.service';
 import { ProxyService } from '../../services/proxy.service';
-import { NotificationService } from '../../components/shared/notification.service';
+import { NotificationService } from '../../shared/notification.service';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({

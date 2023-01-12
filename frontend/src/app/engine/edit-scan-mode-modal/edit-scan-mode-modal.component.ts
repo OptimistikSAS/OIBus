@@ -1,18 +1,18 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
-import { ObservableState, SaveButtonComponent } from '../../components/shared/save-button/save-button.component';
-import { ValidationErrorsComponent } from 'ngx-valdemort';
+import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { ScanModeCommandDTO, ScanModeDTO } from '../../model/scan-mode.model';
+import { formDirectives } from '../../shared/form-directives';
 
 @Component({
   selector: 'oib-edit-scan-mode-modal',
   templateUrl: './edit-scan-mode-modal.component.html',
   styleUrls: ['./edit-scan-mode-modal.component.scss'],
-  imports: [ReactiveFormsModule, TranslateModule, ValidationErrorsComponent, SaveButtonComponent],
+  imports: [...formDirectives, TranslateModule, SaveButtonComponent],
   standalone: true
 })
 export class EditScanModeModalComponent {
