@@ -208,7 +208,7 @@ describe("North connector repository", () => {
       command.caching.retryCount,
       command.caching.maxSendCount,
       command.caching.timeout,
-      command.archive.enabled,
+      +command.archive.enabled,
       command.archive.retentionDuration
     );
 
@@ -258,7 +258,7 @@ describe("North connector repository", () => {
       command.caching.retryCount,
       command.caching.maxSendCount,
       command.caching.timeout,
-      command.archive.enabled,
+      +command.archive.enabled,
       command.archive.retentionDuration,
       "id1"
     );

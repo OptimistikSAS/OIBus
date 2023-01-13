@@ -8,6 +8,8 @@ import { NorthListComponent } from './north/north-list.component';
 import { EngineComponent } from './engine/engine.component';
 import { SouthDisplayComponent } from './south/south-display/south-display.component';
 import { EditSouthComponent } from './south/edit-south/edit-south.component';
+import { NorthDisplayComponent } from './north/north-display/north-display.component';
+import { EditNorthComponent } from './north/edit-north/edit-north.component';
 
 export const ROUTES: Routes = [
   {
@@ -25,6 +27,18 @@ export const ROUTES: Routes = [
   {
     path: 'north',
     component: NorthListComponent
+  },
+  {
+    path: 'north/create',
+    component: EditNorthComponent
+  },
+  {
+    path: 'north/:northId/edit',
+    component: EditNorthComponent
+  },
+  {
+    path: 'north/:northId',
+    component: NorthDisplayComponent
   },
   {
     path: 'south',

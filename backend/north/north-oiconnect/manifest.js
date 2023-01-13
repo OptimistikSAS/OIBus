@@ -11,6 +11,7 @@ export default {
       type: 'OibText',
       label: 'Host',
       validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }],
+      readDisplay: true,
     },
     {
       key: 'valuesEndpoint',
@@ -19,7 +20,7 @@ export default {
       defaultValue: '/engine/addValues',
       newRow: false,
       validators: [{ key: 'required' }],
-
+      readDisplay: true,
     },
     {
       key: 'fileEndpoint',
@@ -28,6 +29,7 @@ export default {
       defaultValue: '/engine/addFile',
       newRow: false,
       validators: [{ key: 'required' }],
+      readDisplay: true,
     },
     { key: 'authentication', type: 'OibAuthentication', label: 'Authentication', newRow: true },
     { key: 'proxy', type: 'OibProxy', label: 'Proxy', newRow: true },
