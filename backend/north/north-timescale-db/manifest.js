@@ -74,7 +74,7 @@ export default {
       type: 'OibCheckbox',
       label: 'Use key "value" of Json "data"',
       defaultValue: false,
-      validators: ['required'],
+      validators: [{ key: 'required' }],
     },
     {
       key: 'keyParentValue',

@@ -115,7 +115,7 @@ export default class NorthConnectorRepository {
         command.caching.retryCount,
         command.caching.maxSendCount,
         command.caching.timeout,
-        command.archive.enabled,
+        +command.archive.enabled,
         command.archive.retentionDuration
       );
 
@@ -172,7 +172,7 @@ export default class NorthConnectorRepository {
         command.caching.retryCount,
         command.caching.maxSendCount,
         command.caching.timeout,
-        command.archive.enabled,
+        +command.archive.enabled,
         command.archive.retentionDuration,
         id
       );

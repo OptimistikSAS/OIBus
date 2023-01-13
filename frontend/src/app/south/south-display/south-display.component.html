@@ -18,7 +18,7 @@
       <div class="row" *ngFor="let row of southSettingsSchema">
         <ng-container *ngFor="let settings of row">
           <div *ngIf="shouldDisplayInput(settings)" [class]="settings.class || 'col'">
-            <div class="mb-3" id="port">
+            <div class="mb-3">
               <span class="fw-bold">{{ settings.label }}</span>
               <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
               <span>{{ settings.currentValue }}</span>

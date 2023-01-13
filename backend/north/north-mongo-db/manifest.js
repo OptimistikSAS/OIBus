@@ -14,7 +14,6 @@ export default {
       defaultValue: 'http://localhost:8086',
       newRow: true,
       readDisplay: true,
-
     },
     {
       key: 'database',
@@ -32,7 +31,6 @@ export default {
       defaultValue: '',
       validators: [{ key: 'required' }],
       readDisplay: true,
-
     },
     {
       key: 'password',
@@ -48,6 +46,7 @@ export default {
       label: 'RegExp',
       defaultValue: '(.*)',
       validators: [{ key: 'required' }],
+      newRow: true,
     },
     {
       key: 'collection',

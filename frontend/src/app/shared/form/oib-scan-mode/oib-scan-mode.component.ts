@@ -14,6 +14,7 @@ import { TranslateModule } from '@ngx-translate/core';
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => OibScanModeComponent), multi: true }]
 })
 export class OibScanModeComponent implements ControlValueAccessor {
+  @Input() label = '';
   @Input() key = '';
   @Input() scanModes: Array<ScanModeDTO> = [];
   @Input() acceptSubscription = false;
