@@ -7,6 +7,7 @@ import ProxyRepository from "../repository/proxy.repository";
 import ScanModeRepository from "../repository/scan-mode.repository";
 import SouthConnectorRepository from "../repository/south-connector.repository";
 import SouthItemRepository from "../repository/south-item.repository";
+import NorthConnectorRepository from "../repository/north-connector.repository";
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -14,6 +15,7 @@ export default class RepositoryService {
   private readonly _ipFilterRepository: IpFilterRepository;
   private readonly _proxyRepository: ProxyRepository;
   private readonly _scanModeRepository: ScanModeRepository;
+  private readonly _northConnectorRepository: NorthConnectorRepository;
   private readonly _southConnectorRepository: SouthConnectorRepository;
   private readonly _southItemRepository: SouthItemRepository;
 
@@ -24,6 +26,7 @@ export default class RepositoryService {
     this._proxyRepository = new ProxyRepository(database);
     this._scanModeRepository = new ScanModeRepository(database);
     this._engineRepository = new EngineRepository(database);
+    this._northConnectorRepository = new NorthConnectorRepository(database);
     this._southConnectorRepository = new SouthConnectorRepository(database);
     this._southItemRepository = new SouthItemRepository(database);
   }
@@ -46,6 +49,10 @@ export default class RepositoryService {
 
   get scanModeRepository(): ScanModeRepository {
     return this._scanModeRepository;
+  }
+
+  get northConnectorRepository(): NorthConnectorRepository {
+    return this._northConnectorRepository;
   }
 
   get southConnectorRepository(): SouthConnectorRepository {
