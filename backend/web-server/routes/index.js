@@ -13,6 +13,7 @@ import externalSourceController from '../controllers/external-source.controller'
 import ipFilterController from '../controllers/ip-filter.controller'
 import scanModeController from '../controllers/scan-mode.controller'
 import southConnectorController from '../controllers/south-connector.controller'
+import northConnectorController from '../controllers/north-connector.controller'
 
 const router = new Router()
 
@@ -81,6 +82,15 @@ router.get('/api/external-sources/:id', externalSourceController.getExternalSour
 router.post('/api/external-sources', externalSourceController.createExternalSource)
 router.put('/api/external-sources/:id', externalSourceController.updateExternalSource)
 router.delete('/api/external-sources/:id', externalSourceController.deleteExternalSource)
+
+router.get('/api/north-types', northConnectorController.getNorthConnectorTypes)
+router.get('/api/north-types/:id', northConnectorController.getNorthConnectorManifest)
+
+router.get('/api/north', northConnectorController.getNorthConnectors)
+router.get('/api/north/:id', northConnectorController.getNorthConnector)
+router.post('/api/north', northConnectorController.createNorthConnector)
+router.put('/api/north/:id', northConnectorController.updateNorthConnector)
+router.delete('/api/north/:id', northConnectorController.deleteNorthConnector)
 
 router.get('/api/south-types', southConnectorController.getSouthConnectorTypes)
 router.get('/api/south-types/:id', southConnectorController.getSouthConnectorManifest)

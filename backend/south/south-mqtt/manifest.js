@@ -13,14 +13,14 @@ export default {
     {
       key: 'url',
       type: 'OibText',
-      protocols: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'],
       label: 'URL',
       defaultValue: '',
       newRow: true,
       validators: [{ key: 'required' },
         { key: 'pattern', params: { pattern: '^(mqtt:\\/\\/|mqtts:\\/\\/|tcp:\\/\\/|tls:\\/\\/|ws:\\/\\/|wss:\\/\\/).*' } }],
       readDisplay: true,
-    }, {
+    },
+    {
       key: 'qos',
       type: 'OibSelect',
       options: [0, 1, 2],
