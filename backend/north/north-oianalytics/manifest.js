@@ -1,8 +1,23 @@
 export default {
   name: 'OIAnalytics',
-  category: 'Optimistik',
+  category: 'oi',
   modes: {
     files: true,
     points: true,
   },
+  settings: [
+    {
+      key: 'host',
+      type: 'OibText',
+      label: 'Host',
+      validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }],
+    },
+    {
+      key: 'authentication',
+      type: 'OibAuthentication',
+      label: 'Authentication',
+      newRow: true,
+    },
+    { key: 'proxy', type: 'OibProxy', label: 'Proxy', newRow: true },
+  ],
 }

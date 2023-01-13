@@ -158,47 +158,47 @@ describe('BaseEngine', () => {
     const northList = engine.getNorthList()
     const expectedResults = [
       {
-        category: 'Optimistik',
+        category: 'oi',
         connectorName: 'OIAnalytics',
       },
       {
-        category: 'Optimistik',
+        category: 'oi',
         connectorName: 'OIConnect',
       },
       {
-        category: 'FileIn',
+        category: 'file',
         connectorName: 'FileWriter',
       },
       {
-        category: 'FileIn',
+        category: 'file',
         connectorName: 'AmazonS3',
       },
       {
-        category: 'DatabaseIn',
+        category: 'database',
         connectorName: 'InfluxDB',
       },
       {
-        category: 'DatabaseIn',
+        category: 'database',
         connectorName: 'TimescaleDB',
       },
       {
-        category: 'DatabaseIn',
+        category: 'database',
         connectorName: 'MongoDB',
       },
       {
-        category: 'IoT',
+        category: 'iot',
         connectorName: 'MQTT',
       },
       {
-        category: 'Debug',
+        category: 'debug',
         connectorName: 'Console',
       },
       {
-        category: 'API',
+        category: 'api',
         connectorName: 'WATSYConnect',
       },
       {
-        category: 'API',
+        category: 'api',
         connectorName: 'CsvToHttp',
       },
     ]
