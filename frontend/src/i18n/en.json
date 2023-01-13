@@ -228,7 +228,7 @@
     }
   },
   "north": {
-    "title": "North list",
+    "title": "North connector {{ name }}",
     "list": "North list",
     "type-title": "North type",
     "type-error": "You must select a North type",
@@ -246,7 +246,21 @@
     "enabled": "Enabled",
     "type": "Type",
     "general-settings": "General settings",
-    "specific-settings": "{{ type }} settings"
+    "specific-settings": "{{ type }} settings",
+    "cache-settings": {
+      "title": "Cache",
+      "send-scan-mode": "Send interval",
+      "retry-interval": "Retry interval (ms)",
+      "retry-count": "Retry count",
+      "group-count": "Group count",
+      "max-send-count": "Max send count",
+      "timeout": "Timeout (s)"
+    },
+    "archive-settings": {
+      "title": "Archive",
+      "enabled": "Enabled",
+      "retention-duration": "Retention duration"
+    }
   },
   "scan-mode": {
     "title": "Scan mode",

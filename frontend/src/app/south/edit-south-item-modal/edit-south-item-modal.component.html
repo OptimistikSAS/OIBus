@@ -14,6 +14,7 @@
       [scanModes]="scanModes"
       *ngIf="!southItemSchema.scanMode.subscriptionOnly"
       key="item-scan-mode"
+      [label]="'scan-mode.label' | translate"
       formControlName="scanMode"
       [acceptSubscription]="southItemSchema.scanMode.acceptSubscription"
       [subscriptionOnly]="southItemSchema.scanMode.subscriptionOnly"
