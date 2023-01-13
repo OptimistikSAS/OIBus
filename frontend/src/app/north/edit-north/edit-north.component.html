@@ -1,0 +1,146 @@
+<div class="oi-padded-container">
+  <div class="d-flex justify-content-between">
+    <div class="oi-header-container">
+      <h1 *ngIf="northConnector" translate="north.edit-title"></h1>
+      <h1 *ngIf="!northConnector" translate="north.create-title"></h1>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <form [formGroup]="northForm" (ngSubmit)="save()" id="north-form" class="mt-3">
+        <!-- General settings -->
+        <h2 translate="north.general-settings"></h2>
+        <div class="row mb-3">
+          <!-- Name -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="north-name" translate="north.name"></label>
+              <input formControlName="name" id="north-name" class="form-control" />
+              <val-errors controlName="name"> </val-errors>
+            </div>
+          </div>
+
+          <!-- Enabled -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="north-enabled" translate="north.enabled"></label>
+              <div class="form-check form-switch">
+                <input formControlName="enabled" id="north-enabled" type="checkbox" class="form-check-input" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <!-- Description -->
+          <div class="form-group">
+            <label class="form-label" for="north-description" translate="north.description"></label>
+            <textarea formControlName="description" id="north-description" class="form-control"></textarea>
+          </div>
+        </div>
+
+        <!-- Specific settings -->
+        <h2 translate="north.specific-settings" [translateParams]="{ type: northType }" id="specific-settings-title"></h2>
+
+        <oib-form
+          *ngIf="northSettingsSchema.length > 0"
+          formGroupName="settings"
+          [form]="northForm.controls.settings"
+          [settingsSchema]="northSettingsSchema"
+          [scanModes]="scanModes"
+          [proxies]="proxies"
+        ></oib-form>
+        <!-- Cache settings -->
+        <h2 translate="north.cache-settings.title" id="cache-settings-title"></h2>
+        <div class="row mb-3" formGroupName="caching">
+          <div class="col-4">
+            <oib-scan-mode
+              key="cache-scan-mode"
+              formControlName="scanMode"
+              [scanModes]="scanModes"
+              [label]="'north.cache-settings.send-scan-mode' | translate "
+            ></oib-scan-mode>
+          </div>
+          <!-- Retry interval -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="retry-interval" translate="north.cache-settings.retry-interval"></label>
+              <input type="number" formControlName="retryInterval" id="retry-interval" class="form-control" />
+            </div>
+          </div>
+          <!-- Retry count -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="retry-count" translate="north.cache-settings.retry-count"></label>
+              <input type="number" formControlName="retryCount" id="retry-count" class="form-control" />
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3" formGroupName="caching" *ngIf="manifest?.modes?.points">
+          <!-- Group count -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="group-count" translate="north.cache-settings.group-count"></label>
+              <input type="number" formControlName="groupCount" id="group-count" class="form-control" />
+            </div>
+          </div>
+          <!-- Max send count -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="max-send-count" translate="north.cache-settings.max-send-count"></label>
+              <input type="number" formControlName="maxSendCount" id="max-send-count" class="form-control" />
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3" formGroupName="caching">
+          <!-- Timeout -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="timeout" translate="north.cache-settings.timeout"></label>
+              <input type="number" formControlName="timeout" id="timeout" class="form-control" />
+            </div>
+          </div>
+        </div>
+        <!-- Archive settings -->
+        <h2 translate="north.archive-settings.title" id="archive-settings-title"></h2>
+        <div class="row mb-3" formGroupName="archive">
+          <!-- Archive Enabled -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="archive-enabled" translate="north.archive-settings.enabled"></label>
+              <div class="form-check form-switch">
+                <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
+              </div>
+            </div>
+          </div>
+          <!-- Retention duration -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="archive-retention-duration" translate="north.archive-settings.retention-duration"></label>
+              <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
+            </div>
+          </div>
+        </div>
+      </form>
+      <div id="actions" class="mb-2 mt-3 d-flex justify-content-end">
+        <div class="btn-group">
+          <oib-save-button form="north-form" [state]="state"></oib-save-button>
+          <button
+            *ngIf="!northConnector"
+            class="btn btn-cancel"
+            translate="common.cancel"
+            id="cancel-create-button"
+            routerLink="/north"
+          ></button>
+          <button
+            *ngIf="northConnector"
+            class="btn btn-cancel"
+            translate="common.cancel"
+            id="cancel-edit-button"
+            [routerLink]="['/north', northConnector.id]"
+          ></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -45,7 +45,7 @@ describe('SouthListComponent', () => {
     }
   ];
 
-  beforeEach(async () => {
+  beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
 
     TestBed.configureTestingModule({

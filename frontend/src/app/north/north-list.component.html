@@ -1,3 +1,66 @@
-<div class="row justify-content-center">
-  <h1 translate="north.list"></h1>
+<div class="oi-padded-container">
+  <div class="d-flex justify-content-between">
+    <div class="oi-header-container">
+      <h1>
+        <span translate="north.list"></span>
+        <span class="ms-2">
+          <button class="btn btn-primary" id="create-modal" (click)="openCreationNorthModal()">
+            <span class="fa fa-plus me-2"></span>
+            <span translate="north.add"></span>
+          </button>
+        </span>
+      </h1>
+    </div>
+  </div>
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <!-- the North list -->
+      <div *ngIf="northList.length !== 0; else emptyNorth">
+        <table class="mt-2 table table-sm table-hover">
+          <thead class="table-light">
+            <tr>
+              <th translate="north.name"></th>
+              <th translate="north.type"></th>
+              <th translate="north.description"></th>
+              <th style="width: 3%"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let north of northList">
+              <td>
+                <span>{{ north.name }}</span>
+                <span *ngIf="north.enabled" class="fa fa-play text-muted ms-2"></span>
+                <span *ngIf="!north.enabled" class="fa fa-pause text-muted ms-2"></span>
+              </td>
+              <td>{{ north.type }}</td>
+              <td>{{ north.description }}</td>
+              <td class="text-nowrap action-buttons">
+                <div class="pull-right">
+                  <!-- Display button -->
+                  <button class="btn btn-link display-north px-1 py-0" id="display-link" [routerLink]="[north.id]">
+                    <span class="fa fa-info-circle"></span>
+                  </button>
+                  <!-- Edit button -->
+                  <button class="btn btn-link edit-north px-1 py-0" id="edit-link" [routerLink]="[north.id, 'edit']">
+                    <span class="fa fa-pencil"></span>
+                  </button>
+                  <!-- Duplicate button -->
+                  <button class="btn btn-link duplicate-north px-1 py-0" routerLink="create" [queryParams]="{ duplicate: north.id }">
+                    <span class="fa fa-copy"></span>
+                  </button>
+                  <!-- Delete button -->
+                  <button type="button" class="btn btn-link delete-north px-1 py-0" (click)="deleteNorth(north)">
+                    <span class="fa fa-trash"></span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #emptyNorth>
+        <div class="oi-details empty" id="no-proxy" translate="north.none"></div>
+      </ng-template>
+    </div>
+  </div>
 </div>

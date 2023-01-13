@@ -1,0 +1,69 @@
+<div class="oi-padded-container">
+  <div class="d-flex justify-content-between">
+    <div *ngIf="northConnector" class="oi-header-container">
+      <h1 id="title" translate="north.title" [translateParams]="{ name: northConnector.name }">
+        <span class="ms-2">
+          <button class="btn btn-primary" id="edit-link" routerLink="edit">
+            <i class="fa fa-pencil"></i>
+            {{ 'north.edit' | translate }}
+          </button>
+        </span>
+      </h1>
+      <div id="description">{{ northConnector.description }}</div>
+    </div>
+  </div>
+  <div *ngIf="northConnector && manifest" class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <h2><span translate="north.specific-settings" [translateParams]="{type: northConnector.type}"></span></h2>
+      <div class="row" *ngFor="let row of northSettingsSchema">
+        <ng-container *ngFor="let settings of row">
+          <div *ngIf="shouldDisplayInput(settings)" [class]="settings.class || 'col'">
+            <div class="mb-3">
+              <span class="fw-bold">{{ settings.label }}</span>
+              <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+              <span>{{ settings.currentValue }}</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+      <!-- Cache-->
+      <h2><span translate="north.cache-settings.title"></span></h2>
+      <div class="row">
+        <div class="col-4">
+          <span class="fw-bold" translate="north.cache-settings.send-scan-mode"></span>
+          <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+          <span>{{ getScanMode(northConnector.caching.scanModeId) }}</span>
+        </div>
+        <div class="col-4">
+          <span class="fw-bold" translate="north.cache-settings.retry-interval"></span>
+          <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+          <span>{{ northConnector.caching.retryInterval | number }}</span>
+        </div>
+        <div class="col-4">
+          <span class="fw-bold" translate="north.cache-settings.retry-count"></span>
+          <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+          <span>{{ northConnector.caching.retryCount | number }}</span>
+        </div>
+      </div>
+      <div class="row" *ngIf="manifest.modes.points">
+        <div class="col-4">
+          <span class="fw-bold" translate="north.cache-settings.group-count"></span>
+          <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+          <span>{{ northConnector.caching.groupCount | number }}</span>
+        </div>
+        <div class="col-4">
+          <span class="fw-bold" translate="north.cache-settings.max-send-count"></span>
+          <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+          <span>{{ northConnector.caching.maxSendCount | number }}</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-4">
+          <span class="fw-bold" translate="north.cache-settings.timeout"></span>
+          <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+          <span>{{ northConnector.caching.timeout | number }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

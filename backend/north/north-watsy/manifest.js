@@ -46,7 +46,6 @@ export default {
       defaultValue: '',
       validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }],
       readDisplay: true,
-
     },
     {
       key: 'secretKey',
