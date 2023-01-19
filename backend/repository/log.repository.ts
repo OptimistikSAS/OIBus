@@ -23,14 +23,16 @@ export default class LogRepository {
    */
   searchLogs(searchParams: LogSearchParam): Page<LogDTO> {
     const queryParams = [];
-    let whereClause =
-      `WHERE timestamp BETWEEN ? AND ? ` +
-      `AND level IN (${searchParams.levels.map(() => "?")})`;
+    let whereClause = `WHERE timestamp BETWEEN ? AND ? `;
     queryParams.push(
       searchParams.start,
       searchParams.end,
       ...searchParams.levels
     );
+    if (searchParams.levels.length > 0) {
+      whereClause += `AND level IN (${searchParams.levels.map(() => "?")})`;
+      queryParams.push(...searchParams.levels);
+    }
     if (searchParams.scope) {
       whereClause += ` AND scope LIKE '%?%'`;
       queryParams.push(searchParams.scope);

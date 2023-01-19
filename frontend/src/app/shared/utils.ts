@@ -62,3 +62,7 @@ export const getRowSettings = (settings: Array<OibFormControl>, settingsValues: 
   });
   return rowList;
 };
+
+export function byIdComparisonFn(o1: { id: string } | null, o2: { id: string } | null) {
+  return (!o1 && !o2) || (o1 && o2 && o1.id === o2.id);
+}

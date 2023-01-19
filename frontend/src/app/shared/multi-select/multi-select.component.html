@@ -1,0 +1,38 @@
+<div
+  ngbDropdown
+  autoClose="outside"
+  container="body"
+  [placement]="['bottom-left', 'top-left']"
+  (openChange)="openChanged($event, button)"
+  #dropdown="ngbDropdown"
+>
+  <button
+    #button
+    type="button"
+    [disabled]="disabled"
+    (blur)="touched()"
+    class="form-select"
+    [class.form-select-sm]="isSmall"
+    ngbDropdownToggle
+  >
+    <span *ngIf="selectedLabels; else placeholderSpan">{{ selectedLabels }}</span>
+    <ng-template #placeholderSpan>
+      <span class="placeholder">{{ placeholder }}</span>
+    </ng-template>
+  </button>
+  <div ngbDropdownMenu (keyup.esc)="dropdown.close(); $event.stopPropagation()">
+    <button
+      type="button"
+      *ngFor="let option of options"
+      ngbDropdownItem
+      (click)="toggle(option)"
+      [class.selected]="isSelected(option)"
+      (keydown.esc)="$event.stopPropagation()"
+    >
+      <div class="d-flex">
+        <div class="flex-grow-1 me-3">{{ option.label }}</div>
+        <div class="fa-fw"><span *ngIf="isSelected(option)" class="fa fa-check"></span></div>
+      </div>
+    </button>
+  </div>
+</div>

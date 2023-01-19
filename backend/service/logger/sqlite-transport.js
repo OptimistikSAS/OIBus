@@ -5,7 +5,7 @@ const LOGS_TABLE_NAME = 'logs'
 const DEFAULT_MAX_NUMBER_OF_LOGS = 2000000
 const CLEAN_UP_INTERVAL = 24 * 3600 * 1000 // One day
 
-const LEVEL_FORMAT = { 10: 'trace', 20: 'debug', 30: 'info', 40: 'warn', 50: 'error', 60: 'fatal' }
+const LEVEL_FORMAT = { 10: 'trace', 20: 'debug', 30: 'info', 40: 'warning', 50: 'error', 60: 'fatal' }
 
 /**
  * Class to support logging to sqlite as a custom Pino Transport module
