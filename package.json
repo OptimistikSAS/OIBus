@@ -68,7 +68,7 @@
     "mqtt": "4.3.7",
     "mqtt-wildcard": "3.0.9",
     "mssql": "9.1.1",
-    "mysql2": "2.3.3",
+    "mysql2": "3.0.1",
     "nanoid": "4.0.0",
     "node-fetch": "2.6.7",
     "node-opcua-certificate-manager": "2.88.0",
