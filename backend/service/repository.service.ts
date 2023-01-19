@@ -8,6 +8,7 @@ import ScanModeRepository from "../repository/scan-mode.repository";
 import SouthConnectorRepository from "../repository/south-connector.repository";
 import SouthItemRepository from "../repository/south-item.repository";
 import NorthConnectorRepository from "../repository/north-connector.repository";
+import LogRepository from "../repository/log.repository";
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -18,17 +19,31 @@ export default class RepositoryService {
   private readonly _northConnectorRepository: NorthConnectorRepository;
   private readonly _southConnectorRepository: SouthConnectorRepository;
   private readonly _southItemRepository: SouthItemRepository;
+  private readonly _logRepository: LogRepository;
 
-  constructor(databasePath: string) {
-    const database = db(databasePath);
-    this._externalSourceRepository = new ExternalSourceRepository(database);
-    this._ipFilterRepository = new IpFilterRepository(database);
-    this._proxyRepository = new ProxyRepository(database);
-    this._scanModeRepository = new ScanModeRepository(database);
-    this._engineRepository = new EngineRepository(database);
-    this._northConnectorRepository = new NorthConnectorRepository(database);
-    this._southConnectorRepository = new SouthConnectorRepository(database);
-    this._southItemRepository = new SouthItemRepository(database);
+  constructor(oibusDatabasePath: string, logsDatabasePath: string) {
+    const oibusDatabase = db(oibusDatabasePath);
+    const logsDatabase = db(logsDatabasePath);
+    this._externalSourceRepository = new ExternalSourceRepository(
+      oibusDatabase
+    );
+    this._ipFilterRepository = new IpFilterRepository(oibusDatabase);
+    this._proxyRepository = new ProxyRepository(oibusDatabase);
+    this._scanModeRepository = new ScanModeRepository(oibusDatabase);
+    this._engineRepository = new EngineRepository(oibusDatabase);
+    this._northConnectorRepository = new NorthConnectorRepository(
+      oibusDatabase
+    );
+    this._southConnectorRepository = new SouthConnectorRepository(
+      oibusDatabase
+    );
+    this._southItemRepository = new SouthItemRepository(oibusDatabase);
+    this._southItemRepository = new SouthItemRepository(oibusDatabase);
+    this._logRepository = new LogRepository(logsDatabase);
+  }
+
+  get logRepository(): LogRepository {
+    return this._logRepository;
   }
 
   get engineRepository(): EngineRepository {

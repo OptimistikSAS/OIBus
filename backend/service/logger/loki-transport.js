@@ -49,7 +49,6 @@ class LokiTransport {
               oibus: this.oibusName,
               level: LEVEL_FORMAT[logLevel],
               scope: jsonMessage.scope,
-              source: jsonMessage.source,
             },
             values: [[logMessage[0], jsonMessage.message]],
           })
