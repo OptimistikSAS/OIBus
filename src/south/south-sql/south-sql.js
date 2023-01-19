@@ -19,8 +19,8 @@ import('oracledb')
   .then((obj) => {
     oracledb = obj
   })
-  .catch((err) => {
-    console.error(err)
+  .catch(() => {
+    console.error('Could not load oracledb')
   })
 
 let odbc = null
@@ -28,8 +28,8 @@ import('odbc')
   .then((obj) => {
     odbc = obj
   })
-  .catch((err) => {
-    console.error(err)
+  .catch(() => {
+    console.error('Could not load odbc')
   })
 
 /**
