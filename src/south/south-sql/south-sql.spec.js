@@ -5,6 +5,7 @@ import mssql from 'mssql'
 import mysql from 'mysql2/promise'
 // eslint-disable-next-line import/no-unresolved
 import oracledb from 'oracledb'
+import odbc from 'odbc'
 import * as pg from 'pg'
 
 import SQL from './south-sql.js'
@@ -36,6 +37,9 @@ jest.mock('pg', () => ({
   Client: jest.fn(),
   types: jest.fn(),
 }))
+
+jest.mock('oracledb')
+jest.mock('odbc')
 
 // Mock fs
 jest.mock('node:fs/promises')
@@ -396,7 +400,7 @@ describe('SouthSQL', () => {
     south.driver = 'oracle'
     const startTime = new Date('2019-10-03T13:36:36.360Z')
     const endTime = new Date('2019-10-03T13:40:40.400Z')
-    utils.generateReplacementParameters.mockReturnValue([startTime, endTime])
+    utils.generateReplacementParameters.mockReturnValueOnce([startTime, endTime])
     const valueTimestamp = new Date('2019-10-03T13:38:38.380Z')
     const connection = {
       callTimeout: 0,
@@ -410,7 +414,7 @@ describe('SouthSQL', () => {
       )),
       close: jest.fn(),
     }
-    jest.spyOn(oracledb, 'getConnection').mockImplementation(() => connection)
+    oracledb.getConnection.mockReturnValue(connection)
 
     await south.historyQuery(settings.scanMode, startTime, endTime)
 
@@ -445,7 +449,68 @@ describe('SouthSQL', () => {
       }),
       close: jest.fn(),
     }
-    jest.spyOn(oracledb, 'getConnection').mockImplementationOnce(() => connection)
+    oracledb.getConnection.mockReturnValueOnce(connection)
+
+    await expect(south.historyQuery(
+      settings.scanMode,
+      new Date('2019-10-03T13:36:38.590Z'),
+      new Date('2019-10-03T15:36:38.590Z'),
+    )).rejects.toThrowError('execute error')
+  })
+
+  it('should interact with ODBC if driver is odbc', async () => {
+    await south.start('baseFolder', 'oibusName')
+    await south.connect()
+
+    south.driver = 'odbc'
+    south.odbcDriverPath = '/odbc/driver/path'
+    const startTime = new Date('2019-10-03T13:36:36.360Z')
+    const endTime = new Date('2019-10-03T13:40:40.400Z')
+    utils.generateReplacementParameters.mockReturnValueOnce([startTime, endTime])
+    const valueTimestamp = new Date('2019-10-03T13:38:38.380Z')
+    const connection = {
+      query: jest.fn((_adaptedQuery, params) => (
+        params[0] < valueTimestamp ? [{
+          value: 75.2,
+          timestamp: '2019-10-03 15:38:38.380',
+        }] : []
+      )),
+      close: jest.fn(),
+    }
+    odbc.connect.mockReturnValue(connection)
+
+    await south.historyQuery(settings.scanMode, startTime, endTime)
+
+    const expectedConfig = {
+      connectionTimeout: south.connectionTimeout,
+      loginTimeout: south.connectionTimeout,
+      connectionString: 'Driver=/odbc/driver/path;SERVER=192.168.0.11;TrustServerCertificate=no;Database=oibus;UID=oibus_user;PWD=popopopopopopopopo',
+    }
+
+    const expectedQuery = 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > ? AND created_at <= ?'
+    const expectedExecuteParams = [
+      new Date('2019-10-03T13:36:36.360Z'),
+      new Date('2019-10-03T13:40:40.400Z'),
+    ]
+    expect(odbc.connect).toHaveBeenCalledWith(expectedConfig)
+    expect(connection.query).toBeCalledTimes(1)
+    expect(connection.query).toBeCalledWith(expectedQuery, expectedExecuteParams)
+    expect(connection.close).toBeCalledTimes(1)
+  })
+
+  it('should interact with ODBC server and catch request error', async () => {
+    await south.start('baseFolder', 'oibusName')
+    await south.connect()
+
+    south.driver = 'odbc'
+
+    const connection = {
+      query: jest.fn(() => {
+        throw new Error('execute error')
+      }),
+      close: jest.fn(),
+    }
+    odbc.connect.mockReturnValueOnce(connection)
 
     await expect(south.historyQuery(
       settings.scanMode,
