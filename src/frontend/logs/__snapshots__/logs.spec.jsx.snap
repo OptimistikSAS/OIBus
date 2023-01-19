@@ -302,6 +302,17 @@ exports[`Logs check Logs 1`] = `
                 </label>
               </div>
             </div>
+            <div
+              class="col-sm-auto pull-right col"
+            >
+              <button
+                class="btn btn-primary"
+                id="reload"
+                type="button"
+              >
+                Search
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -707,6 +718,17 @@ exports[`Logs check change filterText 1`] = `
                   trace
                 </label>
               </div>
+            </div>
+            <div
+              class="col-sm-auto pull-right col"
+            >
+              <button
+                class="btn btn-primary"
+                id="reload"
+                type="button"
+              >
+                Search
+              </button>
             </div>
           </div>
         </div>
@@ -1114,6 +1136,17 @@ exports[`Logs check change fromDate 1`] = `
                 </label>
               </div>
             </div>
+            <div
+              class="col-sm-auto pull-right col"
+            >
+              <button
+                class="btn btn-primary"
+                id="reload"
+                type="button"
+              >
+                Search
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1519,6 +1552,17 @@ exports[`Logs check change toDate 1`] = `
                   trace
                 </label>
               </div>
+            </div>
+            <div
+              class="col-sm-auto pull-right col"
+            >
+              <button
+                class="btn btn-primary"
+                id="reload"
+                type="button"
+              >
+                Search
+              </button>
             </div>
           </div>
         </div>
@@ -1926,6 +1970,17 @@ exports[`Logs check change verbosity, check trace 1`] = `
                 </label>
               </div>
             </div>
+            <div
+              class="col-sm-auto pull-right col"
+            >
+              <button
+                class="btn btn-primary"
+                id="reload"
+                type="button"
+              >
+                Search
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -2332,6 +2387,17 @@ exports[`Logs check change verbosity, uncheck error 1`] = `
                 </label>
               </div>
             </div>
+            <div
+              class="col-sm-auto pull-right col"
+            >
+              <button
+                class="btn btn-primary"
+                id="reload"
+                type="button"
+              >
+                Search
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -2737,6 +2803,17 @@ exports[`Logs check press Show Logs, error in logs call 1`] = `
                   trace
                 </label>
               </div>
+            </div>
+            <div
+              class="col-sm-auto pull-right col"
+            >
+              <button
+                class="btn btn-primary"
+                id="reload"
+                type="button"
+              >
+                Search
+              </button>
             </div>
           </div>
         </div>

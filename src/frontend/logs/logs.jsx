@@ -8,7 +8,7 @@ import {
   CardBody,
   Row,
   Col,
-  Container,
+  Container, Button,
 } from 'reactstrap'
 import apis from '../service/apis.js'
 import { AlertContext } from '../context/alert-context.jsx'
@@ -177,6 +177,9 @@ const Log = () => {
             </FormGroup>
           </Col>
         ))}
+        <Col className="col-sm-auto pull-right">
+          <Button id="reload" color="primary" onClick={() => retrieveLogs()}>Search</Button>
+        </Col>
       </Row>
     </>
   )
