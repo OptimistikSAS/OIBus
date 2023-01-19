@@ -64,7 +64,7 @@
     "luxon": "3.2.1",
     "micromatch": "4.0.5",
     "minimist": "1.2.7",
-    "mongodb": "4.12.1",
+    "mongodb": "4.13.0",
     "mqtt": "4.3.7",
     "mqtt-wildcard": "3.0.9",
     "mssql": "9.0.1",
