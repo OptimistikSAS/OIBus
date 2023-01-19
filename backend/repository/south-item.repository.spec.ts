@@ -48,7 +48,7 @@ describe("South item repository", () => {
           settings: {},
         },
       ],
-      size: 2,
+      size: 50,
       number: 0,
       totalElements: 2,
       totalPages: 1,
@@ -72,10 +72,11 @@ describe("South item repository", () => {
     database.get.mockReturnValueOnce({ count: 2 });
     const southScans = repository.searchSouthItems("southId", {
       page: 0,
-      name: null,
+      name: "my item",
     });
     expect(database.prepare).toHaveBeenCalledWith(
-      "SELECT id, name, south_id AS southId, scan_mode_id AS scanModeId, settings FROM south_item WHERE south_id = ? LIMIT 50 OFFSET 0;"
+      "SELECT id, name, south_id AS southId, scan_mode_id AS scanModeId, settings FROM south_item WHERE " +
+        "south_id = ? AND name like '%my item%' LIMIT 50 OFFSET 0;"
     );
     expect(southScans).toEqual(expectedValue);
   });
