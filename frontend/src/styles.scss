@@ -57,6 +57,12 @@ $fa-font-path: '../fonts';
   }
 }
 
+.oi-search-form {
+  background-color: $gray-200;
+  border-bottom: 2px solid $gray-300;
+  border-top: 2px solid $gray-300;
+}
+
 .form-group {
   margin-bottom: 1rem;
 }
