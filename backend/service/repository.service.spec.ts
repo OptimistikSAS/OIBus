@@ -10,6 +10,7 @@ import ScanModeRepository from "../repository/scan-mode.repository";
 import SouthConnectorRepository from "../repository/south-connector.repository";
 import SouthItemRepository from "../repository/south-item.repository";
 import NorthConnectorRepository from "../repository/north-connector.repository";
+import LogRepository from "../repository/log.repository";
 
 jest.mock("better-sqlite3", () => jest.fn(() => "sqlite database"));
 jest.mock("../repository/external-source.repository");
@@ -20,11 +21,16 @@ jest.mock("../repository/engine.repository");
 jest.mock("../repository/north-connector.repository");
 jest.mock("../repository/south-connector.repository");
 jest.mock("../repository/south-item.repository");
+jest.mock("../repository/log.repository");
 
 describe("Repository service", () => {
   it("should properly initialize service", () => {
-    const repositoryService = new RepositoryService("myDatabase");
-    expect(db).toHaveBeenCalledWith("myDatabase");
+    const repositoryService = new RepositoryService(
+      "myConfigDatabase",
+      "myLogDatabase"
+    );
+    expect(db).toHaveBeenCalledWith("myConfigDatabase");
+    expect(db).toHaveBeenCalledWith("myLogDatabase");
     expect(EngineRepository).toHaveBeenCalledWith("sqlite database");
     expect(ExternalSourceRepository).toHaveBeenCalledWith("sqlite database");
     expect(IpFilterRepository).toHaveBeenCalledWith("sqlite database");
@@ -33,6 +39,7 @@ describe("Repository service", () => {
     expect(NorthConnectorRepository).toHaveBeenCalledWith("sqlite database");
     expect(SouthConnectorRepository).toHaveBeenCalledWith("sqlite database");
     expect(SouthItemRepository).toHaveBeenCalledWith("sqlite database");
+    expect(LogRepository).toHaveBeenCalledWith("sqlite database");
 
     expect(repositoryService.engineRepository).toBeDefined();
     expect(repositoryService.externalSourceRepository).toBeDefined();
@@ -42,5 +49,6 @@ describe("Repository service", () => {
     expect(repositoryService.northConnectorRepository).toBeDefined();
     expect(repositoryService.southConnectorRepository).toBeDefined();
     expect(repositoryService.southItemRepository).toBeDefined();
+    expect(repositoryService.logRepository).toBeDefined();
   });
 });

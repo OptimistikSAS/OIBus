@@ -14,6 +14,7 @@ import ipFilterController from '../controllers/ip-filter.controller'
 import scanModeController from '../controllers/scan-mode.controller'
 import southConnectorController from '../controllers/south-connector.controller'
 import northConnectorController from '../controllers/north-connector.controller'
+import logApiController from '../controllers/log-api.controller'
 
 const router = new Router()
 
@@ -106,5 +107,8 @@ router.get('/api/south/:southId/items/:id', southConnectorController.getSouthIte
 router.post('/api/south/:southId/items', southConnectorController.createSouthItem)
 router.put('/api/south/:southId/items/:id', southConnectorController.updateSouthItem)
 router.delete('/api/south/:southId/items/:id', southConnectorController.deleteSouthItem)
+
+router.get('/api/logs', logApiController.searchLogs)
+router.post('/api/logs', logApiController.addLogs)
 
 export default router
