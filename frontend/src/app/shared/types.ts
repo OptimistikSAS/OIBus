@@ -1,4 +1,10 @@
 export type Instant = string;
+export type LocalDate = string;
+export type LocalTime = string;
+export type LocalDateTime = string;
+export type Timezone = string;
+
+export const DEFAULT_TZ: Timezone = 'Etc/UTC';
 
 export interface Page<T> {
   /**

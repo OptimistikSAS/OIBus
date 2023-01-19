@@ -1,10 +1,6 @@
 import SqliteDatabaseMock from "../tests/__mocks__/database.mock";
-import { generateRandomId } from "./utils";
-import IpFilterRepository from "./ip-filter.repository";
-import { IpFilterCommandDTO, IpFilterDTO } from "../model/ip-filter.model";
 import LogRepository from "./log.repository";
 import { Page } from "../model/types";
-import { SouthItemDTO } from "../model/south-connector.model";
 import { LogDTO } from "../model/logs.model";
 
 jest.mock("../tests/__mocks__/database.mock");
