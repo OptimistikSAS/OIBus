@@ -12,6 +12,7 @@
     "disabled": "Disabled",
     "colon-separator": ": ",
     "confirmation-modal-title": "Confirmation",
+    "date-hour-format": "yyyy-MM-dd HH:mm",
     "validation-errors": {
       "this-field": "This field",
       "required": "{{ label }} is required",
@@ -261,6 +262,21 @@
       "enabled": "Enabled",
       "retention-duration": "Retention duration"
     }
+  },
+  "logs": {
+    "title": "Logs",
+    "search": {
+      "start": "Start",
+      "end":"End",
+      "message-content": "Message",
+      "scope": "Scope",
+      "levels": "Levels"
+    },
+    "date": "Date",
+    "level": "Level",
+    "scope": "Scope",
+    "message": "Message",
+    "none": "No log found"
   },
   "scan-mode": {
     "title": "Scan mode",

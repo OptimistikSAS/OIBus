@@ -1,4 +1,10 @@
-import { AbstractControl } from '@angular/forms';
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { Instant } from './types';
+
+export interface RangeFormValue {
+  start: Instant;
+  end: Instant;
+}
 
 /**
  * Validator to check if a number is a positive integer
@@ -42,4 +48,14 @@ export function validJson(control: AbstractControl): { invalidJson: true } | nul
   } catch (e) {
     return { invalidJson: true };
   }
+}
+
+/**
+ * Validates that the start is before the end in the FormGroup.
+ * If this is not the case, returns an `ascendingDates` error.
+ * The FormGroup must have a `start` and an `end` field.
+ */
+export function ascendingDates(group: AbstractControl): ValidationErrors | null {
+  const value: RangeFormValue = group.value;
+  return value.start && value.end && value.start > value.end ? { ascendingDates: true } : null;
 }

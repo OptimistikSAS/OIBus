@@ -1,1 +1,80 @@
-<p>logs works!</p>
+<div class="oi-padded-container">
+  <div class="oi-header-container">
+    <div class="row">
+      <div class="col">
+        <h1>{{ 'logs.title' | translate }}</h1>
+      </div>
+    </div>
+    <div>
+      <form class="px-3 mb-4 oi-search-form" id="logs-form" [formGroup]="searchForm" (ngSubmit)="triggerSearch()">
+        <div class="row gx-2 py-3">
+          <label class="col-auto col-form-label"><i class="fa fa-search fa-lg"></i></label>
+          <label for="start" class="col-auto col-form-label" translate="logs.search.start"></label>
+          <div class="col">
+            <oib-datetimepicker formControlName="start" id="start"></oib-datetimepicker>
+          </div>
+          <label for="end" class="col-auto col-form-label" translate="logs.search.end"></label>
+          <div class="col">
+            <oib-datetimepicker formControlName="end" id="end"></oib-datetimepicker>
+            <val-errors [control]="searchForm"></val-errors>
+          </div>
+          <label for="levels" class="col-auto col-form-label" translate="logs.search.levels"></label>
+          <div class="col-2">
+            <oib-multi-select formControlName="levels" id="levels">
+              <oib-multi-select-option
+                *ngFor="let level of levels"
+                [value]="level"
+                [label]="level | logLevelsEnum"
+              ></oib-multi-select-option>
+            </oib-multi-select>
+          </div>
+          <label for="scope" class="col-auto col-form-label" translate="logs.search.scope"></label>
+          <div class="col-2">
+            <input type="text" class="form-control" id="scope" formControlName="scope" />
+          </div>
+        </div>
+        <div class="row gx-2 py-3">
+          <label for="message-content" class="col-auto col-form-label" translate="logs.search.message-content"></label>
+          <div class="col-8">
+            <input type="text" class="form-control" id="message-content" formControlName="messageContent" />
+          </div>
+          <div class="col">
+            <button class="btn btn-primary pull-right" id="search-button" [disabled]="loading">
+              <span *ngIf="loading" class="fa fa-spin fa-spinner"></span>
+              <span *ngIf="!loading" translate="common.search"></span>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <div class="d-flex pull-right mb-2" *ngIf="logs?.totalElements">
+        <div [class]="logs.totalPages > 1 ? 'ms-2' : ''">
+          <oib-pagination [page]="logs" [navigate]="true"></oib-pagination>
+        </div>
+      </div>
+      <div *ngIf="logs.totalElements !== 0; else empty">
+        <table class="table table-sm table-hover">
+          <thead class="table-light">
+            <tr>
+              <th translate="logs.date"></th>
+              <th translate="logs.level"></th>
+              <th translate="logs.scope"></th>
+              <th translate="logs.message"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="data" *ngFor="let log of logs.content">
+              <td>{{ log.timestamp | datetime:'mediumWithSeconds'}}</td>
+              <td>{{ log.level | logLevelsEnum }}</td>
+              <td>{{ log.scope }}</td>
+              <td>{{ log.message }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #empty>
+        <div class="oi-details empty" translate="logs.none"></div>
+      </ng-template>
+    </div>
+  </div>
+</div>
