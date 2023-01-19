@@ -8,7 +8,7 @@ const FeatureList = [
     Svg: require('@site/static/img/multi-source.svg').default,
     description: (
       <>
-        Access as many data sources that you have, when you want from databases to IoT and PLCs, securely and remotely.
+        Access a variety of data sources securely and remotely, including databases and IoT devices.
       </>
     ),
   },
@@ -17,8 +17,7 @@ const FeatureList = [
     Svg: require('@site/static/img/no-code.svg').default,
     description: (
       <>
-        OIBus is easy to use: connect a data source, cache and send your data at specific intervals directly from
-        its web interface.
+        Using OIBus is simple: connect a data source and send your data at desired intervals directly from the web interface.
       </>
     ),
   },
@@ -27,7 +26,8 @@ const FeatureList = [
     Svg: require('@site/static/img/real-time.svg').default,
     description: (
       <>
-        With subscriptions management and high precision cron tasks, adapt your data stream to your real time needs.
+        Manage your subscriptions and schedule tasks with high precision to adapt your data stream to your real-time
+        needs.
       </>
     ),
   },
