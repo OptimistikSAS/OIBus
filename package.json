@@ -83,7 +83,7 @@
     "proxy-agent": "5.0.0",
     "selfsigned": "2.1.1",
     "sprintf-js": "1.1.2",
-    "thread-stream": "2.2.0",
+    "thread-stream": "2.3.0",
     "timexe": "1.0.6"
   },
   "devDependencies": {
