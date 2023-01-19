@@ -5,8 +5,8 @@
   "author": "Optimistik SAS",
   "license": "EUPL",
   "engines": {
-    "node": ">=v16.17.0",
-    "npm": ">=8.15.0"
+    "node": ">=v16.19.0",
+    "npm": ">=8.19.3"
   },
   "scripts": {
     "start": "npm run internal:build:backend -- --sourceMap && npm run start:backend",
@@ -27,10 +27,10 @@
     "build:macos-arm64": "npm run internal:build:web-client && npm run internal:build:backend -- --removeComments && npm run internal:build:lib-macos-arm64 && rimraf ./build/bin/macos-arm64 && pkg ./build/backend/src/index.js --public --compress GZip --config package.json --output ./build/bin/macos-arm64/oibus --target node16-macos-arm64",
     "build:linux": "npm run internal:build:web-client && npm run internal:build:backend -- --removeComments && npm run internal:build:lib-linux && rimraf ./build/bin/linux && pkg ./build/backend/src/index.js --public --compress GZip --config package.json --output ./build/bin/linux/oibus --target node16-linux-x64 && ncp ./build/deps/linux ./build/bin/linux && ncp ./src/config/default-config.json ./build/bin/linux/default-config.json",
     "build:win-setup": "rimraf ./build/bin/win/win-setup-release && C:\\\"Program Files (x86)\"\\\"Inno Setup 6\"\\iscc.exe \"./build/deps/win/setup.iss\" \"/DMyAppVersion=\"%npm_package_version% \"/DMyCertFile=\"%PFX_PATH% \"/DMyCertPassword=\"%PFX_PASSWORD% \"/ssigntool=./build/deps/signtool/signtool.exe sign /debug $p\"",
-    "internal:build:lib-win": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.16.0 --arch=x64",
-    "internal:build:lib-macos": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.16.0 --arch=x64",
-    "internal:build:lib-macos-arm64": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.16.0 --arch=arm64",
-    "internal:build:lib-linux": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.16.0 --arch=x64",
+    "internal:build:lib-win": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.19.0 --arch=x64",
+    "internal:build:lib-macos": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.19.0 --arch=x64",
+    "internal:build:lib-macos-arm64": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.19.0 --arch=arm64",
+    "internal:build:lib-linux": "npm run --prefix node_modules/better-sqlite3 build-release -- --target=v16.19.0 --arch=x64",
     "internal:build:web-client": "webpack --mode production --config webpack.frontend.js",
     "internal:build:backend": "tsc"
   },
