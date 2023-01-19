@@ -10,11 +10,16 @@ const searchLogs = async (ctx: KoaContext<void, Page<LogDTO>>) => {
   const now = Date.now();
   const dayAgo = new Date(now - 86400000);
 
+  const levels = Array.isArray(ctx.query.levels) ? ctx.query.levels : [];
+  if (typeof ctx.query.levels === "string") {
+    levels.push(ctx.query.levels);
+  }
+
   const searchParams: LogSearchParam = {
     page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
     start: ctx.query.start || new Date(dayAgo).toISOString(),
     end: ctx.query.end || new Date(now).toISOString(),
-    levels: ctx.query.levels || ["error", "warning", "info"],
+    levels,
     scope: (ctx.query.scope as string) || null,
     messageContent: (ctx.query.messageContent as string) || null,
   };
