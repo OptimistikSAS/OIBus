@@ -13,8 +13,24 @@ import manifest from './manifest.js'
 import { generateCSV, getMostRecentDate, generateReplacementParameters } from './utils.js'
 import { replaceFilenameWithVariable, compress } from '../../service/utils.js'
 
-let oracledb
-let odbc
+let oracledb = null
+// eslint-disable-next-line import/no-unresolved
+import('oracledb')
+  .then((obj) => {
+    oracledb = obj
+  })
+  .catch((err) => {
+    console.error(err)
+  })
+
+let odbc = null
+import('odbc')
+  .then((obj) => {
+    odbc = obj
+  })
+  .catch((err) => {
+    console.error(err)
+  })
 
 /**
  * Class SouthSQL - Retrieve data from SQL databases and send them to the cache as CSV files.
@@ -111,19 +127,6 @@ export default class SouthSQL extends SouthConnector {
    */
   async start(baseFolder, oibusName) {
     await super.start(baseFolder, oibusName)
-    try {
-      // eslint-disable-next-line global-require,import/no-unresolved,import/no-extraneous-dependencies
-      oracledb = require('oracledb')
-    } catch {
-      this.logger.warn('Could not load node oracledb')
-    }
-
-    try {
-      // eslint-disable-next-line global-require,import/no-unresolved,import/no-extraneous-dependencies
-      odbc = require('odbc')
-    } catch {
-      this.logger.warn('Could not load node odbc')
-    }
 
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp')
     // Create tmp folder to write files locally before sending them to the cache
@@ -438,6 +441,10 @@ export default class SouthSQL extends SouthConnector {
    * @returns {Promise<Object[]>} - The SQL results
    */
   async getDataFromOdbc(startTime, endTime) {
+    if (!odbc) {
+      throw new Error('odbc library not loaded.')
+    }
+
     const adaptedQuery = this.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?')
 
     let connectionString = `Driver=${this.odbcDriverPath};SERVER=${this.host};TrustServerCertificate=${this.selfSigned ? 'yes' : 'no'};`
