@@ -13,6 +13,8 @@ Several databases are supported by OIBus:
 - Oracle. This driver requires the local installation of an Oracle Instant Client (Basic or Basic Light, minimal supported version is 18.5.0.0.0)
 - MySQL
 - SQLite
+- ODBC. This driver requires [the installation of a local module](docs/guide/advanced/sql-with-odbc.md) that matches the 
+Database you want to connect.
 
 ### Connection 
 Several fields are required to connect to a database.
@@ -22,9 +24,10 @@ Several fields are required to connect to a database.
 - **Database**: the name of the database to connect to
 - **Username**: the username used for authentication
 - **Password**: the password used for authentication
-- **Domain**: this field is useful for example when the user wishes to connect to an Active Directory domain
-- **Database path**: Path of the SQLite file 
-- **Encryption**: Encrypt the data between the database and OIBus (can overload the server)
+- **Domain** (MSSQL only): this field is useful for example when the user wishes to connect to an Active Directory domain
+- **Database path** (SQLite only): Path of the SQLite file 
+- **Encryption** (MSSQL only): Encrypt the data between the database and OIBus (can overload the server)
+- **ODBC Driver Path** (ODBC only): The path to the ODBC driver config to be used to connect to your DB (for example libmsodbcsql.18.dylib) 
 
 :::tip Database access
 
