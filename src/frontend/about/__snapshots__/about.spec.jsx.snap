@@ -13,7 +13,7 @@ exports[`About display About with config null 1`] = `
       >
         <a
           class="list-group-item"
-          href="https://optimistik.io/oibus"
+          href="https://oibus.optimistik.com/"
         >
           <img
             alt="logo"
@@ -134,7 +134,7 @@ exports[`About display page based on config and status 1`] = `
       >
         <a
           class="list-group-item"
-          href="https://optimistik.io/oibus"
+          href="https://oibus.optimistik.com/"
         >
           <img
             alt="logo"
@@ -255,7 +255,7 @@ exports[`About display page based on config and status 2`] = `
       >
         <a
           class="list-group-item"
-          href="https://optimistik.io/oibus"
+          href="https://oibus.optimistik.com/"
         >
           <img
             alt="logo"

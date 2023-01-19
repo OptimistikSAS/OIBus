@@ -59,7 +59,7 @@ export default () => {
       <Container fluid>
         {oibusInfo && (
           <ListGroup>
-            <ListGroupItem tag="a" href="https://optimistik.io/oibus">
+            <ListGroupItem tag="a" href="https://oibus.optimistik.com/">
               <img src={logo} alt="logo" height="100px" />
             </ListGroupItem>
             <ListGroupItem>
