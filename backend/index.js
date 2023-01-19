@@ -23,6 +23,8 @@ const CACHE_FOLDER = './cache'
 const MAIN_LOG_FILE_NAME = 'main-journal.log'
 const CONFIG_FILE_NAME = 'oibus.json'
 const CONFIG_DATABASE = 'oibus.db'
+const LOG_FOLDER_NAME = 'logs'
+const LOG_DB_NAME = 'journal.db'
 
 const loggerService = new LoggerService()
 
@@ -116,7 +118,7 @@ if (cluster.isMaster) {
   loggerService.start('OIBus-main', logParameters).then(async () => {
     const forkLogger = loggerService.createChildLogger('forked-thread')
 
-    const repositoryService = new RepositoryService(configDbFilePath)
+    const repositoryService = new RepositoryService(configDbFilePath, path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME))
 
     // Migrate config file, if needed
     await migrationService(configFilePath, loggerService.createChildLogger('migration'))

@@ -59,7 +59,7 @@ export default class SouthItemRepository {
 
     return {
       content: results,
-      size: results.length,
+      size: PAGE_SIZE,
       number: searchParams.page,
       totalElements,
       totalPages,

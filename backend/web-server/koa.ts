@@ -1,5 +1,8 @@
 import { Context, Request } from "koa";
 import RepositoryService from "../service/repository.service";
+import LoggerService from "../service/logger/logger.service";
+import pino from "pino";
+import Logger = pino.Logger;
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
@@ -18,6 +21,7 @@ export interface KoaContext<RequestBody, ResponseBody> extends Context {
   app: {
     id: string;
     repositoryService: RepositoryService;
+    logger: Logger;
   };
 }
 
