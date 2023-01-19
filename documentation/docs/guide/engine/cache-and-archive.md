@@ -18,14 +18,20 @@ the form `north-id` or `south-id`.
 ## Managing values
 When a South connector retrieves values, they are sent to each activated North and gathered in batches, directly written 
 on disk for persistence in case of server crash (in the folder `values`). 
-The values are flush in the queue (in-memory buffer) and persisted into chunk files on either one of the following conditions:
-- The max buffer size is reached (default is 250)
-- The buffer flush interval is reached (default is 300 ms)
 
-The queue is used at regular interval (parameter _Send Interval_) to send values into the North. The values can be sent
-when a _Group count_ is reached. The max chunk size (number of values in each chunk, parameter _Max group count_) can 
-be set to limit the size of the payload when taking back the network activity.
+When getting values, the North cache first create a `<random-string>.buffer.tmp file` file which contains a JSON with the 
+values retrieved from the South. These files allow OIBus to persist values right away.
 
+Every 300ms, the North cache gather the `<random-string>.buffer.tmp` files into a `<random-string>.queue.tmp` single file
+and put it at the end of the connector queue.
+
+The queue is used at regular interval (parameter _Send Interval_) to send values into the North target. The values can 
+be sent when a _Group count_ is reached. 
+
+In case of failure (for example a network error), the size of the queue will grow. If _Max group count_ is reach, several 
+queue files will be gathered into a single `<random-string>.compact.tmp` JSON file. These files will be on top of the queue
+to be sent once the network comes back online. Increasing the max chunk size (number of values in each chunk) 
+will increase the size of these compact files.
 
 ## Managing files
 When a South connector retrieves files, it copies each file in the North cache directory (in the folder `files`).
