@@ -26,7 +26,7 @@ class SqliteTransport {
    * @returns {void}
    */
   log = (payload) => {
-    this.addLog(payload.time, payload.level, payload.scope, payload.source, payload.msg)
+    this.addLog(payload.time, payload.level, payload.scope, payload.msg)
   }
 
   /**
@@ -34,13 +34,12 @@ class SqliteTransport {
    * @param {String} timestamp - The timestamp
    * @param {String} level - The level
    * @param {String} scope - The scope (south/north connector, engine...)
-   * @param {String} source - The source file
    * @param {String} message - The message
    * @returns {void}
    */
-  addLog = (timestamp, level, scope, source, message) => {
-    const query = `INSERT INTO ${this.tableName} (timestamp, level, scope, source, message) VALUES (?, ?, ?, ?, ?);`
-    this.database.prepare(query).run(timestamp, LEVEL_FORMAT[level], scope, source, message)
+  addLog = (timestamp, level, scope, message) => {
+    const query = `INSERT INTO ${this.tableName} (timestamp, level, scope, message) VALUES (?, ?, ?, ?);`
+    this.database.prepare(query).run(timestamp, LEVEL_FORMAT[level], scope, message)
   }
 
   /**

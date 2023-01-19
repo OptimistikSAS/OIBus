@@ -96,7 +96,6 @@ class LoggerService {
     }
 
     this.logger = await pino({
-      mixin: this.pinoMixin.bind(this),
       base: undefined,
       level: 'trace', // default to trace since each transport has its defined level
       timestamp: pino.stdTimeFunctions.isoTime,
@@ -119,32 +118,6 @@ class LoggerService {
    */
   createChildLogger(scope) {
     return this.logger.child({ scope })
-  }
-
-  /**
-   * Mixin method to add parameters to the logs for Pino logger
-   * @returns {{ source: String}} - Add scope and source to the log
-   */
-  pinoMixin() {
-    return { source: this.getSource() }
-  }
-
-  /**
-   * Use CallSite to extract filename, for more info read: https://v8.dev/docs/stack-trace-api#customizing-stack-traces
-   * @returns {String} filename
-   */
-  getSource() {
-    const oldStackTrace = Error.prepareStackTrace
-    try {
-      Error.prepareStackTrace = (err, structuredStackTrace) => structuredStackTrace
-      Error.captureStackTrace(this)
-      // Get the first CallSite outside the logger and outside pino library
-      const callSite = this.stack.find((line) => line.getFileName().indexOf('logger.service.js') === -1
-        && line.getFileName().indexOf('pino') === -1)
-      return path.parse(callSite.getFileName()).name
-    } finally {
-      Error.prepareStackTrace = oldStackTrace
-    }
   }
 
   /**

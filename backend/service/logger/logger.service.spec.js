@@ -87,7 +87,6 @@ describe('Logger', () => {
 
     expect(pino).toHaveBeenCalledTimes(1)
     expect(pino).toHaveBeenCalledWith({
-      mixin: expect.any(Function),
       base: undefined,
       level: 'trace',
       timestamp: pino.stdTimeFunctions.isoTime,
@@ -150,7 +149,6 @@ describe('Logger', () => {
 
     expect(pino).toHaveBeenCalledTimes(1)
     expect(pino).toHaveBeenCalledWith({
-      mixin: expect.any(Function),
       base: undefined,
       level: 'trace',
       timestamp: pino.stdTimeFunctions.isoTime,
@@ -183,29 +181,12 @@ describe('Logger', () => {
 
     expect(pino).toHaveBeenCalledTimes(1)
     expect(pino).toHaveBeenCalledWith({
-      mixin: expect.any(Function),
       base: undefined,
       level: 'trace',
       timestamp: pino.stdTimeFunctions.isoTime,
       transport: { targets: expectedTargets },
     })
     expect(service.createChildLogger).toHaveBeenCalledWith('logger-service')
-  })
-
-  it('should properly get additional parameter from mixin', () => {
-    service = new LoggerService()
-    service.getSource = jest.fn(() => 'my file source')
-
-    const mixinResults = service.pinoMixin()
-
-    expect(mixinResults).toEqual({ source: 'my file source' })
-  })
-
-  it('should properly get source', () => {
-    service = new LoggerService()
-    const result = service.getSource()
-
-    expect(result).toEqual(expect.stringContaining('logger.service.spec'))
   })
 
   it('should properly create child logger', () => {
