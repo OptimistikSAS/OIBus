@@ -12,6 +12,7 @@ import MQTTNorth from '../north/north-mqtt/north-mqtt.js'
 import Console from '../north/north-console/north-console.js'
 import WATSYConnect from '../north/north-watsy/north-watsy.js'
 import CsvToHttp from '../north/north-csv-to-http/north-csv-to-http.js'
+import RestApiNorth from '../north/north-rest/north-rest.js'
 
 // South imports
 import SQL from '../south/south-sql/south-sql.js'
@@ -39,6 +40,7 @@ const northList = {
   Console,
   WATSYConnect,
   CsvToHttp,
+  RestApi: RestApiNorth,
 }
 
 const southList = {

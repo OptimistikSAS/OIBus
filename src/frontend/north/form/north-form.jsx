@@ -27,7 +27,7 @@ const NorthForm = ({ north, northIndex, onChange }) => {
   if (!north.subscribedTo) north.subscribedTo = []
 
   // load the proper schema based on the North type
-  const northSchema = NorthSchemas[north.type]
+  const northSchema = north.type === 'RestApi' ? NorthSchemas.RestApi.withAuthType(north.settings.authType) : NorthSchemas[north.type]
   const prefix = `north.${northIndex}`
   const handleConnectorNameChanged = (name) => (oldConnectorName, newConnectorName) => {
     setRenamingConnector(null)
