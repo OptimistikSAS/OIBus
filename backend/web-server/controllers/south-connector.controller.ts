@@ -40,6 +40,7 @@ const getSouthConnectorTypes = async (
       category: connector.category,
       type: connector.name,
       description: connector.description,
+      modes: connector.modes,
     }))
   );
 };

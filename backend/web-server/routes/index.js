@@ -4,9 +4,9 @@ import multer from '@koa/multer'
 import configController from '../controllers/config.controller.js'
 import logController from '../controllers/log.controller.js'
 import engineController from '../controllers/engine.controller.js'
-import historyQueryController from '../controllers/history-query.controller.js'
 import oibusController from '../controllers/oibus.controller.js'
 import fileCacheController from '../controllers/file-cache.controller.js'
+
 import apiController from '../controllers/api.controller'
 import proxyController from '../controllers/proxy.controller'
 import externalSourceController from '../controllers/external-source.controller'
@@ -15,6 +15,7 @@ import scanModeController from '../controllers/scan-mode.controller'
 import southConnectorController from '../controllers/south-connector.controller'
 import northConnectorController from '../controllers/north-connector.controller'
 import logApiController from '../controllers/log-api.controller'
+import historyQueryController from '../controllers/history-query.controller'
 
 const router = new Router()
 
@@ -41,15 +42,6 @@ router.get('/legacy/installed-north', engineController.getNorthList)
 router.get('/legacy/installed-south', engineController.getSouthList)
 router.get('/legacy/north/:id', engineController.getNorth)
 router.get('/legacy/south/:id', engineController.getSouth)
-
-router.post('/history-queries', historyQueryController.createHistoryQuery)
-router.get('/history-queries', historyQueryController.getHistoryQueries)
-router.get('/history-queries/:id', historyQueryController.getHistoryQueryById)
-router.put('/history-queries/:id', historyQueryController.updateHistoryQuery)
-router.put('/history-queries/:id/enable', historyQueryController.enableHistoryQuery)
-router.put('/history-queries/:id/order', historyQueryController.orderHistoryQuery)
-router.delete('/history-queries/:id', historyQueryController.deleteHistoryQuery)
-router.get('/history-queries/:id/status', historyQueryController.getStatus)
 
 router.get('/north/:id/cache/file-errors', fileCacheController.getFileErrors)
 router.delete('/north/:id/cache/file-errors', fileCacheController.removeFileErrors)
@@ -107,6 +99,12 @@ router.get('/api/south/:southId/items/:id', southConnectorController.getSouthIte
 router.post('/api/south/:southId/items', southConnectorController.createSouthItem)
 router.put('/api/south/:southId/items/:id', southConnectorController.updateSouthItem)
 router.delete('/api/south/:southId/items/:id', southConnectorController.deleteSouthItem)
+
+router.get('/api/history-queries', historyQueryController.getHistoryQueries)
+router.get('/api/history-queries/:id', historyQueryController.getHistoryQuery)
+router.post('/api/history-queries', historyQueryController.createHistoryQuery)
+router.put('/api/history-queries/:id', historyQueryController.updateHistoryQuery)
+router.delete('/api/history-queries/:id', historyQueryController.deleteHistoryQuery)
 
 router.get('/api/logs', logApiController.searchLogs)
 router.post('/api/logs', logApiController.addLogs)

@@ -11,6 +11,7 @@ import SouthConnectorRepository from "../repository/south-connector.repository";
 import SouthItemRepository from "../repository/south-item.repository";
 import NorthConnectorRepository from "../repository/north-connector.repository";
 import LogRepository from "../repository/log.repository";
+import HistoryQueryRepository from "../repository/history-query.repository";
 
 jest.mock("better-sqlite3", () => jest.fn(() => "sqlite database"));
 jest.mock("../repository/external-source.repository");
@@ -22,6 +23,7 @@ jest.mock("../repository/north-connector.repository");
 jest.mock("../repository/south-connector.repository");
 jest.mock("../repository/south-item.repository");
 jest.mock("../repository/log.repository");
+jest.mock("../repository/history-query.repository");
 
 describe("Repository service", () => {
   it("should properly initialize service", () => {
@@ -40,6 +42,7 @@ describe("Repository service", () => {
     expect(SouthConnectorRepository).toHaveBeenCalledWith("sqlite database");
     expect(SouthItemRepository).toHaveBeenCalledWith("sqlite database");
     expect(LogRepository).toHaveBeenCalledWith("sqlite database");
+    expect(HistoryQueryRepository).toHaveBeenCalledWith("sqlite database");
 
     expect(repositoryService.engineRepository).toBeDefined();
     expect(repositoryService.externalSourceRepository).toBeDefined();
@@ -50,5 +53,6 @@ describe("Repository service", () => {
     expect(repositoryService.southConnectorRepository).toBeDefined();
     expect(repositoryService.southItemRepository).toBeDefined();
     expect(repositoryService.logRepository).toBeDefined();
+    expect(repositoryService.historyQueryRepository).toBeDefined();
   });
 });
