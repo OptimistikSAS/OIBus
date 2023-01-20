@@ -201,6 +201,10 @@ describe('BaseEngine', () => {
         category: 'API',
         connectorName: 'CsvToHttp',
       },
+      {
+        category: 'API',
+        connectorName: 'RestApi',
+      },
     ]
     expect(northList).toEqual(expectedResults)
   })
