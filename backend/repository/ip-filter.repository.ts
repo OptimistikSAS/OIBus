@@ -26,7 +26,7 @@ export default class IpFilterRepository {
   /**
    * Retrieve an IP address by its ID
    */
-  getIpFilter(id: string): IpFilterDTO {
+  getIpFilter(id: string): IpFilterDTO | null {
     const query = `SELECT id, address, description FROM ${IP_FILTER_TABLE} WHERE id = ?;`;
     return this.database.prepare(query).get(id);
   }
