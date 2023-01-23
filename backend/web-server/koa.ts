@@ -23,6 +23,7 @@ export interface KoaContext<RequestBody, ResponseBody> extends Context {
   noContent: any;
   created: any;
   badRequest: any;
+  notFound: any;
   throw: any;
   app: KoaApplication;
 }
