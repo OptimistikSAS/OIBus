@@ -12,7 +12,6 @@ import EncryptionService from './service/encryption.service.js'
 
 import { getCommandLineArguments, createFolder } from './service/utils.js'
 import RepositoryService from './service/repository.service'
-import ValidatorService from "./service/validator.service";
 
 // In case there is an error the worker process will exit.
 // If this happens MAX_RESTART_COUNT times in less than MAX_INTERVAL_MILLISECOND interval
@@ -120,7 +119,6 @@ if (cluster.isMaster) {
     const forkLogger = loggerService.createChildLogger('forked-thread')
 
     const repositoryService = new RepositoryService(configDbFilePath, path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME))
-    const validatorService = new ValidatorService()
 
     // Migrate config file, if needed
     await migrationService(configFilePath, loggerService.createChildLogger('migration'))
@@ -148,7 +146,6 @@ if (cluster.isMaster) {
       historyQueryEngine,
       oibusLoggerService,
       repositoryService,
-      validatorService,
     )
 
     if (check) {
