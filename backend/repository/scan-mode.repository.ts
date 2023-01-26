@@ -26,7 +26,7 @@ export default class ScanModeRepository {
   /**
    * Retrieve a scan mode by its ID
    */
-  getScanMode(id: string): ScanModeDTO {
+  getScanMode(id: string): ScanModeDTO | null {
     const query = `SELECT id, name, description, cron FROM ${SCAN_MODE_TABLE} WHERE id = ?;`;
     return this.database.prepare(query).get(id);
   }
