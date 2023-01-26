@@ -10,13 +10,14 @@ import fileCacheController from '../controllers/file-cache.controller.js'
 import apiController from '../controllers/api.controller'
 import proxyController from '../controllers/proxy.controller'
 import externalSourceController from '../controllers/external-source.controller'
-import ipFilterController from '../controllers/ip-filter.controller'
+import IpFilterController from '../controllers/ip-filter.controller'
 import scanModeController from '../controllers/scan-mode.controller'
 import southConnectorController from '../controllers/south-connector.controller'
 import northConnectorController from '../controllers/north-connector.controller'
 import logApiController from '../controllers/log-api.controller'
 import historyQueryController from '../controllers/history-query.controller'
 
+const ipFilterController = new IpFilterController()
 const router = new Router()
 
 const storage = multer.diskStorage({

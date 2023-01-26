@@ -38,6 +38,7 @@ export default class Server {
    * @param {HistoryQueryEngine} historyQueryEngine - The HistoryQuery engine
    * @param {LoggerService} loggerService - LoggerService to use to create a child logger dedicated to the web server
    * @param {RepositoryService} repositoryService - RepositoryService used to interact with the local database
+   * @param {ValidatorService} validatorService - ValidatorService used to interact with validators
    * @return {void}
    */
   constructor(
@@ -46,6 +47,7 @@ export default class Server {
     historyQueryEngine,
     loggerService,
     repositoryService,
+    validatorService,
   ) {
     this.encryptionService = encryptionService
     // capture the engine and logger under app for reuse in routes.
@@ -53,6 +55,7 @@ export default class Server {
     this.historyQueryEngine = historyQueryEngine
     this.loggerService = loggerService
     this.repositoryService = repositoryService
+    this.validatorService = validatorService
     this.logger = null
     this.webServer = null // store the listening web server
   }
@@ -84,6 +87,7 @@ export default class Server {
     this.app = new Koa()
     this.app.id = 'oibus-id' // TODO: retrieve original OIBus ID
     this.app.repositoryService = this.repositoryService
+    this.app.validatorService = this.validatorService
     this.app.engine = this.engine
     this.app.historyQueryEngine = this.historyQueryEngine
     this.app.logger = this.logger
