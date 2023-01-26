@@ -14,10 +14,12 @@ import IpFilterController from '../controllers/ip-filter.controller'
 import scanModeController from '../controllers/scan-mode.controller'
 import southConnectorController from '../controllers/south-connector.controller'
 import northConnectorController from '../controllers/north-connector.controller'
+import ValidatorService from '../../service/validator.service'
 import logApiController from '../controllers/log-api.controller'
 import historyQueryController from '../controllers/history-query.controller'
 
-const ipFilterController = new IpFilterController()
+const validatorService = new ValidatorService()
+const ipFilterController = new IpFilterController(validatorService.ipFilterValidator)
 const router = new Router()
 
 const storage = multer.diskStorage({
@@ -65,11 +67,11 @@ router.post('/api/scan-modes', scanModeController.createScanMode)
 router.put('/api/scan-modes/:id', scanModeController.updateScanMode)
 router.delete('/api/scan-modes/:id', scanModeController.deleteScanMode)
 
-router.get('/api/ip-filters', ipFilterController.getIpFilters)
-router.get('/api/ip-filters/:id', ipFilterController.getIpFilter)
-router.post('/api/ip-filters', ipFilterController.createIpFilter)
-router.put('/api/ip-filters/:id', ipFilterController.updateIpFilter)
-router.delete('/api/ip-filters/:id', ipFilterController.deleteIpFilter)
+router.get('/api/ip-filters', (ctx) => ipFilterController.getIpFilters(ctx))
+router.get('/api/ip-filters/:id', (ctx) => ipFilterController.getIpFilter(ctx))
+router.post('/api/ip-filters', (ctx) => ipFilterController.createIpFilter(ctx))
+router.put('/api/ip-filters/:id', (ctx) => ipFilterController.updateIpFilter(ctx))
+router.delete('/api/ip-filters/:id', (ctx) => ipFilterController.deleteIpFilter(ctx))
 
 router.get('/api/external-sources', externalSourceController.getExternalSources)
 router.get('/api/external-sources/:id', externalSourceController.getExternalSource)
