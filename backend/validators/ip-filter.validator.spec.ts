@@ -1,5 +1,6 @@
-import IpFilterValidator from "./ip-filter.validator";
+import JoiValidator from "./joi.validator";
 import { ipFilterSchema } from "../engine/oibus-validation-schema";
+import ValidatorInterface from "./validator.interface";
 
 interface IpFilterDataProvider {
   ipFilterCommandDTO: any;
@@ -53,7 +54,7 @@ const ipFilterDataProviders: IpFilterDataProvider[] = [
 ];
 
 describe("Ip filter validator", () => {
-  const validator: IpFilterValidator = new IpFilterValidator(ipFilterSchema);
+  const validator: ValidatorInterface = new JoiValidator(ipFilterSchema);
 
   it.each(ipFilterDataProviders)(
     `$# Should be valid: $isValid`,
