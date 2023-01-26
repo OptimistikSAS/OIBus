@@ -1,7 +1,10 @@
 import { KoaContext } from '../koa';
 import { IpFilterCommandDTO, IpFilterDTO } from '../../../shared/model/ip-filter.model';
+import ValidatorInterface from '../../validators/validator.interface';
 
 export default class IpFilterController {
+  constructor(private readonly validator: ValidatorInterface) {}
+
   async getIpFilters(ctx: KoaContext<void, Array<IpFilterDTO>>): Promise<void> {
     const ipFilters = ctx.app.repositoryService.ipFilterRepository.getIpFilters();
     ctx.ok(ipFilters);
@@ -18,8 +21,7 @@ export default class IpFilterController {
 
   async createIpFilter(ctx: KoaContext<IpFilterCommandDTO, void>): Promise<void> {
     try {
-      await ctx.app.validatorService.ipFilterValidator.validate(ctx.request.body);
-
+      await this.validator.validate(ctx.request.body);
       const ipFilter = ctx.app.repositoryService.ipFilterRepository.createIpFilter(ctx.request.body as IpFilterCommandDTO);
       ctx.created(ipFilter);
     } catch (error: any) {
@@ -29,8 +31,7 @@ export default class IpFilterController {
 
   async updateIpFilter(ctx: KoaContext<IpFilterCommandDTO, void>) {
     try {
-      await ctx.app.validatorService.ipFilterValidator.validate(ctx.request.body);
-
+      await this.validator.validate(ctx.request.body);
       ctx.app.repositoryService.ipFilterRepository.updateIpFilter(ctx.params.id, ctx.request.body as IpFilterCommandDTO);
       ctx.noContent();
     } catch (error: any) {
