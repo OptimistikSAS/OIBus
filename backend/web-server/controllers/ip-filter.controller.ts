@@ -1,55 +1,50 @@
-import { KoaContext, KoaError } from '../koa';
+import { KoaContext } from '../koa';
 import { IpFilterCommandDTO, IpFilterDTO } from '../../../shared/model/ip-filter.model';
-import oibusSchema from '../../engine/oibus-validation-schema';
 
-const getIpFilters = async (ctx: KoaContext<void, Array<IpFilterDTO>>) => {
-  const ipFilters = ctx.app.repositoryService.ipFilterRepository.getIpFilters();
-  ctx.ok(ipFilters);
-};
-
-const getIpFilter = async (ctx: KoaContext<void, IpFilterDTO>) => {
-  const ipFilter = ctx.app.repositoryService.ipFilterRepository.getIpFilter(ctx.params.id);
-  if (ipFilter) {
-    ctx.ok(ipFilter);
-  } else {
-    ctx.notFound();
+export default class IpFilterController {
+  async getIpFilters(ctx: KoaContext<void, Array<IpFilterDTO>>): Promise<void> {
+    const ipFilters = ctx.app.repositoryService.ipFilterRepository.getIpFilters();
+    ctx.ok(ipFilters);
   }
-};
 
-const createIpFilter = async (ctx: KoaContext<IpFilterCommandDTO, void>) => {
-  try {
-    const ipFilterCommandDTO: IpFilterCommandDTO = await oibusSchema.ipFilterSchema.validateAsync(ctx.request.body);
-    const ipFilter = ctx.app.repositoryService.ipFilterRepository.createIpFilter(ipFilterCommandDTO);
-    ctx.created(ipFilter);
-  } catch (error: any) {
-    ctx.badRequest(error.message);
+  async getIpFilter(ctx: KoaContext<void, IpFilterDTO>): Promise<void> {
+    const ipFilter = ctx.app.repositoryService.ipFilterRepository.getIpFilter(ctx.params.id);
+    if (ipFilter) {
+      ctx.ok(ipFilter);
+    } else {
+      ctx.notFound();
+    }
   }
-};
 
-const updateIpFilter = async (ctx: KoaContext<IpFilterCommandDTO, void>) => {
-  try {
-    const ipFilterCommandDTO: IpFilterCommandDTO = await oibusSchema.ipFilterSchema.validateAsync(ctx.request.body);
-    ctx.app.repositoryService.ipFilterRepository.updateIpFilter(ctx.params.id, ipFilterCommandDTO);
-    ctx.noContent();
-  } catch (error: any) {
-    ctx.badRequest(error.message);
+  async createIpFilter(ctx: KoaContext<IpFilterCommandDTO, void>): Promise<void> {
+    try {
+      await ctx.app.validatorService.ipFilterValidator.validate(ctx.request.body);
+
+      const ipFilter = ctx.app.repositoryService.ipFilterRepository.createIpFilter(ctx.request.body as IpFilterCommandDTO);
+      ctx.created(ipFilter);
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
   }
-};
 
-const deleteIpFilter = async (ctx: KoaContext<void, void>) => {
-  const ipFilter = ctx.app.repositoryService.ipFilterRepository.getIpFilter(ctx.params.id);
-  if (ipFilter) {
-    ctx.app.repositoryService.ipFilterRepository.deleteIpFilter(ctx.params.id);
-    ctx.noContent();
-  } else {
-    ctx.notFound();
+  async updateIpFilter(ctx: KoaContext<IpFilterCommandDTO, void>) {
+    try {
+      await ctx.app.validatorService.ipFilterValidator.validate(ctx.request.body);
+
+      ctx.app.repositoryService.ipFilterRepository.updateIpFilter(ctx.params.id, ctx.request.body as IpFilterCommandDTO);
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
   }
-};
 
-export default {
-  getIpFilters,
-  getIpFilter,
-  createIpFilter,
-  updateIpFilter,
-  deleteIpFilter
-};
+  async deleteIpFilter(ctx: KoaContext<void, void>): Promise<void> {
+    const ipFilter = ctx.app.repositoryService.ipFilterRepository.getIpFilter(ctx.params.id);
+    if (ipFilter) {
+      ctx.app.repositoryService.ipFilterRepository.deleteIpFilter(ctx.params.id);
+      ctx.noContent();
+    } else {
+      ctx.notFound();
+    }
+  }
+}
