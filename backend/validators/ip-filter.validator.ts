@@ -5,6 +5,8 @@ export default class IpFilterValidator {
   constructor(private readonly ipFilterSchema: Joi.ObjectSchema) {}
 
   async validate(ipFilterCommandDTO: IpFilterCommandDTO): Promise<void> {
-    await this.ipFilterSchema.validateAsync(ipFilterCommandDTO);
+    await this.ipFilterSchema.validateAsync(ipFilterCommandDTO, {
+      abortEarly: false,
+    });
   }
 }
