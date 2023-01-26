@@ -17,12 +17,10 @@ const ipFilterSchema: Joi.ObjectSchema = Joi.object({
   description: Joi.string().required().min(0).allow(null),
 });
 
-const oibusSchema: OibusSchema = {
+export {
   scanModeSchema,
   proxySchema,
   externalSourceSchema,
   engineSchema,
   ipFilterSchema,
 };
-
-export default oibusSchema;
