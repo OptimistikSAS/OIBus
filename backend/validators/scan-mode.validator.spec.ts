@@ -1,5 +1,5 @@
 import JoiValidator from "./joi.validator";
-import { ipFilterSchema } from "../engine/oibus-validation-schema";
+import { scanModeSchema } from "../engine/oibus-validation-schema";
 import ValidatorInterface from "./validator.interface";
 
 interface DataProvider {
@@ -11,50 +11,56 @@ interface DataProvider {
 const dataProviders: DataProvider[] = [
   {
     dto: {
-      address1: "missing",
+      name1: "missing",
       description1: "missing",
+      cron1: "missing",
     },
     isValid: false,
     errorMessage:
-      '"address" is required. "description" is required. "address1" is not allowed. "description1" is not allowed',
+      '"name" is required. "description" is required. "cron" is required. "name1" is not allowed. "description1" is not allowed. "cron1" is not allowed',
   },
   {
     dto: {
-      address: false,
+      name: null,
       description: null,
+      cron: null,
     },
     isValid: false,
-    errorMessage: '"address" must be a string',
+    errorMessage: '"name" must be a string. "cron" must be a string',
   },
   {
     dto: {
-      address: "",
+      name: "",
       description: "",
+      cron: "",
     },
     isValid: false,
-    errorMessage: '"address" is not allowed to be empty',
+    errorMessage:
+      '"name" is not allowed to be empty. "cron" is not allowed to be empty',
   },
   {
     dto: {
-      address: "valid",
+      name: "valid",
       description: "valid",
-      description1: "invalid",
+      description1: "valid",
+      cron: "valid",
     },
     isValid: false,
     errorMessage: '"description1" is not allowed',
   },
   {
     dto: {
-      address: "valid",
+      name: "valid",
       description: "valid",
+      cron: "valid",
     },
     isValid: true,
     errorMessage: null,
   },
 ];
 
-describe("Ip filter validator", () => {
-  const validator: ValidatorInterface = new JoiValidator(ipFilterSchema);
+describe("Scan mode validator", () => {
+  const validator: ValidatorInterface = new JoiValidator(scanModeSchema);
 
   it.each(dataProviders)(
     `$# Should be valid: $isValid`,

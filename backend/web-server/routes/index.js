@@ -10,15 +10,17 @@ import fileCacheController from '../controllers/file-cache.controller.js'
 import apiController from '../controllers/api.controller'
 import proxyController from '../controllers/proxy.controller'
 import externalSourceController from '../controllers/external-source.controller'
-import IpFilterController from '../controllers/ip-filter.controller'
-import scanModeController from '../controllers/scan-mode.controller'
 import southConnectorController from '../controllers/south-connector.controller'
 import northConnectorController from '../controllers/north-connector.controller'
+
 import ValidatorService from '../../service/validator.service'
+import ScanModeController from '../controllers/scan-mode.controller'
+import IpFilterController from '../controllers/ip-filter.controller'
 import logApiController from '../controllers/log-api.controller'
 import historyQueryController from '../controllers/history-query.controller'
 
 const validatorService = new ValidatorService()
+const scanModeController = new ScanModeController(validatorService.scanModeValidator)
 const ipFilterController = new IpFilterController(validatorService.ipFilterValidator)
 const router = new Router()
 
@@ -61,11 +63,11 @@ router.post('/api/proxies', proxyController.createProxy)
 router.put('/api/proxies/:id', proxyController.updateProxy)
 router.delete('/api/proxies/:id', proxyController.deleteProxy)
 
-router.get('/api/scan-modes', scanModeController.getScanModes)
-router.get('/api/scan-modes/:id', scanModeController.getScanMode)
-router.post('/api/scan-modes', scanModeController.createScanMode)
-router.put('/api/scan-modes/:id', scanModeController.updateScanMode)
-router.delete('/api/scan-modes/:id', scanModeController.deleteScanMode)
+router.get('/api/scan-modes', (ctx) => scanModeController.getScanModes(ctx))
+router.get('/api/scan-modes/:id', (ctx) => scanModeController.getScanMode(ctx))
+router.post('/api/scan-modes', (ctx) => scanModeController.createScanMode(ctx))
+router.put('/api/scan-modes/:id', (ctx) => scanModeController.updateScanMode(ctx))
+router.delete('/api/scan-modes/:id', (ctx) => scanModeController.deleteScanMode(ctx))
 
 router.get('/api/ip-filters', (ctx) => ipFilterController.getIpFilters(ctx))
 router.get('/api/ip-filters/:id', (ctx) => ipFilterController.getIpFilter(ctx))
