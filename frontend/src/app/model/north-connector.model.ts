@@ -27,6 +27,10 @@ export interface NorthType {
   category: string;
   type: string;
   description: string;
+  modes: {
+    files: boolean;
+    points: boolean;
+  };
 }
 
 /**

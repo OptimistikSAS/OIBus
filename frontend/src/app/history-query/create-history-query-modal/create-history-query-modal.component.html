@@ -1,0 +1,47 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="history-query.modal.title"></h4>
+</div>
+<div class="modal-body">
+  <div class="d-flex justify-content-between">
+    <div class="col">
+      <div *ngFor="let southType of southTypes">
+        <button class="btn d-flex align-items-center category-button" (click)="createForm.controls.southType.setValue(southType.type)">
+          <div class="image-block">
+            <img
+              class="category-image"
+              [src]="'/frontend/assets/' + southType.category + '.svg'"
+              [alt]="'enums.categories.' + southType.category | translate"
+            />
+          </div>
+          <div class="ms-5 text-start">
+            <h6 class="mb-0">{{ southType.type }}</h6>
+            <p class="mb-0">{{ southType.description }}</p>
+          </div>
+        </button>
+      </div>
+    </div>
+    <div class="col">
+      <div *ngFor="let northType of northTypes">
+        <button class="btn d-flex align-items-center category-button" (click)="createForm.controls.northType.setValue(northType.type)">
+          <div class="image-block">
+            <img
+              class="category-image"
+              [src]="'/frontend/assets/' + northType.category + '.svg'"
+              [alt]="'enums.categories.' + northType.category | translate"
+            />
+          </div>
+          <div class="ms-5 text-start">
+            <h6 class="mb-0">{{ northType.type }}</h6>
+            <p class="mb-0">{{ northType.description }}</p>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button type="button" class="btn btn-primary" (click)="create()" translate="common.ok" id="create-button"></button>
+    <button type="button" class="btn btn-cancel" ngbAutofocus (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>

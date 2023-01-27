@@ -4,6 +4,13 @@ export interface SouthType {
   category: string;
   type: string;
   description: string;
+  modes: {
+    subscription: boolean;
+    lastPoint: boolean;
+    lastFile: boolean;
+    historyPoint: boolean;
+    historyFile: boolean;
+  };
 }
 
 /**

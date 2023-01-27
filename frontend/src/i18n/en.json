@@ -75,6 +75,7 @@
     "engine": "Engine",
     "north-list": "North",
     "south-list": "South",
+    "history-queries": "History",
     "logs": "Logs",
     "about": "About"
   },
@@ -277,6 +278,48 @@
     "scope": "Scope",
     "message": "Message",
     "none": "No log found"
+  },
+  "history-query": {
+    "list": "History query list",
+    "title": "History query {{ name }}",
+    "confirm-deletion": "Are you sure you want to delete the History query {{ name }}?",
+    "updated": "History query {{ name }} successfully updated",
+    "created": "History query {{ name }} successfully created",
+    "deleted": "History query {{ name }} deleted",
+    "create-title": "Create a new history query",
+    "edit-title": "Edit history query {{ name }}",
+    "general-settings": "General settings",
+    "add": "Add",
+    "edit": "Edit",
+    "none": "No History query",
+    "name": "Name",
+    "description": "Description",
+    "enabled": "Enabled",
+    "start": "Start",
+    "end": "End",
+    "modal": {
+      "title": "Create a new history query"
+    },
+    "north": {
+      "specific-settings": "{{ type }} settings"
+    },
+    "cache-settings": {
+      "title": "Cache",
+      "send-scan-mode": "Send interval",
+      "retry-interval": "Retry interval (ms)",
+      "retry-count": "Retry count",
+      "group-count": "Group count",
+      "max-send-count": "Max send count",
+      "timeout": "Timeout (s)"
+    },
+    "archive-settings": {
+      "title": "Archive",
+      "enabled": "Enabled",
+      "retention-duration": "Retention duration"
+    },
+    "south": {
+      "specific-settings": "{{ type }} settings"
+    }
   },
   "scan-mode": {
     "title": "Scan mode",

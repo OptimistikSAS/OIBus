@@ -48,8 +48,8 @@ describe('CreateNorthConnectorModalComponent', () => {
 
     northConnectorService.getNorthConnectorTypes.and.returnValue(
       of([
-        { category: 'database', type: 'MongoDB', description: 'MongoDB description' },
-        { category: 'iot', type: 'MQTT', description: 'MQTT description' }
+        { category: 'database', type: 'MongoDB', description: 'MongoDB description', modes: { files: false, points: true } },
+        { category: 'iot', type: 'MQTT', description: 'MQTT description', modes: { files: false, points: true } }
       ])
     );
 
