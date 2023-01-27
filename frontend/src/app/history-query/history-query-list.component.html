@@ -1,0 +1,68 @@
+<div class="oi-padded-container">
+  <div class="d-flex justify-content-between">
+    <div class="oi-header-container">
+      <h1>
+        <span translate="history-query.list"></span>
+        <span class="ms-2">
+          <button class="btn btn-primary" id="create-modal" (click)="openCreationHistoryQueryModal()">
+            <span class="fa fa-plus me-2"></span>
+            <span translate="history-query.add"></span>
+          </button>
+        </span>
+      </h1>
+    </div>
+  </div>
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <!-- the History query list -->
+      <div *ngIf="historyQueryList.length !== 0; else emptyHistoryQuery">
+        <table class="mt-2 table table-sm table-hover">
+          <thead class="table-light">
+            <tr>
+              <th translate="history-query.name"></th>
+              <th translate="history-query.description"></th>
+              <th style="width: 3%"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let historyQuery of historyQueryList">
+              <td>
+                <span>{{ historyQuery.name }}</span>
+                <span *ngIf="historyQuery.enabled" class="fa fa-play text-muted ms-2"></span>
+                <span *ngIf="!historyQuery.enabled" class="fa fa-pause text-muted ms-2"></span>
+              </td>
+              <td>{{ historyQuery.description }}</td>
+              <td class="text-nowrap action-buttons">
+                <div class="pull-right">
+                  <!-- Display button -->
+                  <button class="btn btn-link display-history-query px-1 py-0" id="display-link" [routerLink]="[historyQuery.id]">
+                    <span class="fa fa-info-circle"></span>
+                  </button>
+                  <!-- Edit button -->
+                  <button class="btn btn-link edit-history-query px-1 py-0" id="edit-link" [routerLink]="[historyQuery.id, 'edit']">
+                    <span class="fa fa-pencil"></span>
+                  </button>
+                  <!-- Duplicate button -->
+                  <button
+                    class="btn btn-link duplicate-history-query px-1 py-0"
+                    routerLink="create"
+                    [queryParams]="{ duplicate: historyQuery.id }"
+                  >
+                    <span class="fa fa-copy"></span>
+                  </button>
+                  <!-- Delete button -->
+                  <button type="button" class="btn btn-link delete-history-query px-1 py-0" (click)="deleteHistoryQuery(historyQuery)">
+                    <span class="fa fa-trash"></span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <ng-template #emptyHistoryQuery>
+        <div class="oi-details empty" id="no-history-query" translate="history-query.none"></div>
+      </ng-template>
+    </div>
+  </div>
+</div>
