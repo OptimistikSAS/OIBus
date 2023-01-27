@@ -1,0 +1,196 @@
+<div class="oi-padded-container">
+  <div class="d-flex justify-content-between">
+    <div class="oi-header-container">
+      <h1 *ngIf="historyQuery" translate="history-query.edit-title" [translateParams]="{ name: historyQuery.name }"></h1>
+      <h1 *ngIf="!historyQuery" translate="history-query.create-title"></h1>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <form [formGroup]="historyQueryForm" (ngSubmit)="save()" id="history-query-form" class="mt-3">
+        <!-- General settings -->
+        <h2 translate="history-query.general-settings"></h2>
+        <div class="row mb-3">
+          <!-- Name -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="history-query-name" translate="history-query.name"></label>
+              <input formControlName="name" id="history-query-name" class="form-control" />
+              <val-errors controlName="name"></val-errors>
+            </div>
+          </div>
+
+          <!-- Enabled -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="history-query-enabled" translate="history-query.enabled"></label>
+              <div class="form-check form-switch">
+                <input formControlName="enabled" id="history-query-enabled" type="checkbox" class="form-check-input" />
+                <val-errors controlName="enabled"></val-errors>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <!-- Description -->
+          <div class="form-group">
+            <label class="form-label" for="history-query-description" translate="history-query.description"></label>
+            <textarea formControlName="description" id="history-query-description" class="form-control"></textarea>
+            <val-errors controlName="description"></val-errors>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <label for="start" class="col-auto col-form-label" translate="history-query.start"></label>
+          <div class="col">
+            <oib-datetimepicker formControlName="start" id="start"></oib-datetimepicker>
+          </div>
+          <label for="end" class="col-auto col-form-label" translate="history-query.end"></label>
+          <div class="col">
+            <oib-datetimepicker formControlName="end" id="end"></oib-datetimepicker>
+          </div>
+          <val-errors controlName=""></val-errors>
+        </div>
+
+        <!-- Cache settings -->
+        <h2 translate="north.cache-settings.title" id="cache-settings-title"></h2>
+        <div class="row mb-3" formGroupName="caching">
+          <div class="col-4">
+            <oib-scan-mode
+              key="cache-scan-mode"
+              formControlName="scanMode"
+              [scanModes]="scanModes"
+              [label]="'north.cache-settings.send-scan-mode' | translate "
+            ></oib-scan-mode>
+            <val-errors controlName="scanMode"></val-errors>
+          </div>
+          <!-- Retry interval -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="retry-interval" translate="north.cache-settings.retry-interval"></label>
+              <input type="number" formControlName="retryInterval" id="retry-interval" class="form-control" />
+              <val-errors controlName="retryInterval"></val-errors>
+            </div>
+          </div>
+          <!-- Retry count -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="retry-count" translate="north.cache-settings.retry-count"></label>
+              <input type="number" formControlName="retryCount" id="retry-count" class="form-control" />
+              <val-errors controlName="retryCount"></val-errors>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3" formGroupName="caching" *ngIf="northManifest?.modes?.points">
+          <!-- Group count -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="group-count" translate="north.cache-settings.group-count"></label>
+              <input type="number" formControlName="groupCount" id="group-count" class="form-control" />
+              <val-errors controlName="groupCount"></val-errors>
+            </div>
+          </div>
+          <!-- Max send count -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="max-send-count" translate="north.cache-settings.max-send-count"></label>
+              <input type="number" formControlName="maxSendCount" id="max-send-count" class="form-control" />
+              <val-errors controlName="maxSendCount"></val-errors>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3" formGroupName="caching">
+          <!-- Timeout -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="timeout" translate="north.cache-settings.timeout"></label>
+              <input type="number" formControlName="timeout" id="timeout" class="form-control" />
+              <val-errors controlName="timeout"></val-errors>
+            </div>
+          </div>
+        </div>
+
+        <!-- Archive settings -->
+        <h2 translate="north.archive-settings.title" id="archive-settings-title"></h2>
+        <div class="row mb-3" formGroupName="archive">
+          <!-- Archive Enabled -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="archive-enabled" translate="north.archive-settings.enabled"></label>
+              <div class="form-check form-switch">
+                <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
+                <val-errors controlName="enabled"></val-errors>
+              </div>
+            </div>
+          </div>
+          <!-- Retention duration -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="archive-retention-duration" translate="north.archive-settings.retention-duration"></label>
+              <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
+              <val-errors controlName="retentionDuration"></val-errors>
+            </div>
+          </div>
+        </div>
+
+        <!-- North settings -->
+        <ng-container formGroupName="north">
+          <!-- Specific settings -->
+          <h2
+            translate="history-query.north.specific-settings"
+            [translateParams]="{ type: northType }"
+            id="north-specific-settings-title"
+          ></h2>
+
+          <oib-form
+            *ngIf="northSettingsSchema.length > 0"
+            formGroupName="settings"
+            [form]="historyQueryForm.controls.north.controls.settings"
+            [settingsSchema]="northSettingsSchema"
+            [scanModes]="scanModes"
+            [proxies]="proxies"
+          ></oib-form>
+        </ng-container>
+
+        <!-- South settings -->
+        <ng-container formGroupName="south">
+          <!-- Specific settings -->
+          <h2
+            translate="history-query.south.specific-settings"
+            [translateParams]="{ type: southType }"
+            id="south-specific-settings-title"
+          ></h2>
+
+          <oib-form
+            *ngIf="southSettingsSchema.length > 0"
+            formGroupName="settings"
+            [form]="historyQueryForm.controls.south.controls.settings"
+            [settingsSchema]="southSettingsSchema"
+            [scanModes]="scanModes"
+            [proxies]="proxies"
+          ></oib-form>
+        </ng-container>
+      </form>
+      <div id="actions" class="mb-2 mt-3 d-flex justify-content-end">
+        <div class="btn-group">
+          <oib-save-button form="history-query-form" [state]="state"></oib-save-button>
+          <button
+            *ngIf="!historyQuery"
+            class="btn btn-cancel"
+            translate="common.cancel"
+            id="cancel-create-button"
+            routerLink="/history-queries"
+          ></button>
+          <button
+            *ngIf="historyQuery"
+            class="btn btn-cancel"
+            translate="common.cancel"
+            id="cancel-edit-button"
+            [routerLink]="['/history-queries', historyQuery.id]"
+          ></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
