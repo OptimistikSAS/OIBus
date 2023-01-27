@@ -1,0 +1,83 @@
+<div class="oi-padded-container">
+  <div class="d-flex justify-content-between">
+    <div *ngIf="historyQuery" class="oi-header-container">
+      <h1 id="title" translate="history-query.title" [translateParams]="{ name: historyQuery.name }">
+        <span class="ms-2">
+          <button class="btn btn-primary" id="edit-link" routerLink="edit">
+            <i class="fa fa-pencil"></i>
+            {{ 'history-query.edit' | translate }}
+          </button>
+        </span>
+      </h1>
+      <div id="description">{{ historyQuery.description }}</div>
+    </div>
+  </div>
+  <div *ngIf="historyQuery && northManifest && southManifest" class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <!-- Cache-->
+      <h2><span translate="history-query.cache-settings.title"></span></h2>
+      <div class="row">
+        <div class="col-4">
+          <span class="fw-bold" translate="history-query.cache-settings.send-scan-mode"></span>
+          <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+          <span>{{ getScanMode(historyQuery.caching.scanModeId) }}</span>
+        </div>
+        <div class="col-4">
+          <span class="fw-bold" translate="history-query.cache-settings.retry-interval"></span>
+          <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+          <span>{{ historyQuery.caching.retryInterval | number }}</span>
+        </div>
+        <div class="col-4">
+          <span class="fw-bold" translate="history-query.cache-settings.retry-count"></span>
+          <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+          <span>{{ historyQuery.caching.retryCount | number }}</span>
+        </div>
+      </div>
+      <div class="row" *ngIf="northManifest.modes.points">
+        <div class="col-4">
+          <span class="fw-bold" translate="history-query.cache-settings.group-count"></span>
+          <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+          <span>{{ historyQuery.caching.groupCount | number }}</span>
+        </div>
+        <div class="col-4">
+          <span class="fw-bold" translate="history-query.cache-settings.max-send-count"></span>
+          <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+          <span>{{ historyQuery.caching.maxSendCount | number }}</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-4">
+          <span class="fw-bold" translate="history-query.cache-settings.timeout"></span>
+          <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+          <span>{{ historyQuery.caching.timeout | number }}</span>
+        </div>
+      </div>
+
+      <h2><span translate="history-query.north.specific-settings" [translateParams]="{type: historyQuery.northType}"></span></h2>
+      <div class="row" *ngFor="let row of northSettingsSchema">
+        <ng-container *ngFor="let settings of row">
+          <div *ngIf="shouldDisplayInput(settings, historyQuery.northSettings)" [class]="settings.class || 'col'">
+            <div class="mb-3">
+              <span class="fw-bold">{{ settings.label }}</span>
+              <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+              <span>{{ settings.currentValue }}</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+
+      <h2><span translate="history-query.south.specific-settings" [translateParams]="{type: historyQuery.southType}"></span></h2>
+      <div class="row" *ngFor="let row of southSettingsSchema">
+        <ng-container *ngFor="let settings of row">
+          <div *ngIf="shouldDisplayInput(settings, historyQuery.southSettings)" [class]="settings.class || 'col'">
+            <div class="mb-3">
+              <span class="fw-bold">{{ settings.label }}</span>
+              <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
+              <span>{{ settings.currentValue }}</span>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</div>

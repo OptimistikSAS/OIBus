@@ -10,6 +10,9 @@ import { SouthDisplayComponent } from './south/south-display/south-display.compo
 import { EditSouthComponent } from './south/edit-south/edit-south.component';
 import { NorthDisplayComponent } from './north/north-display/north-display.component';
 import { EditNorthComponent } from './north/edit-north/edit-north.component';
+import { EditHistoryQueryComponent } from './history-query/edit-history-query/edit-history-query.component';
+import { HistoryQueryListComponent } from './history-query/history-query-list.component';
+import { HistoryQueryDisplayComponent } from './history-query/history-query-display/history-query-display.component';
 
 export const ROUTES: Routes = [
   {
@@ -55,6 +58,26 @@ export const ROUTES: Routes = [
   {
     path: 'south/:southId',
     component: SouthDisplayComponent
+  },
+  {
+    path: 'engine/edit',
+    component: EditEngineComponent
+  },
+  {
+    path: 'history-queries',
+    component: HistoryQueryListComponent
+  },
+  {
+    path: 'history-queries/create',
+    component: EditHistoryQueryComponent
+  },
+  {
+    path: 'history-queries/:historyQueryId/edit',
+    component: EditHistoryQueryComponent
+  },
+  {
+    path: 'history-queries/:historyQueryId',
+    component: HistoryQueryDisplayComponent
   },
   {
     path: 'logs',
