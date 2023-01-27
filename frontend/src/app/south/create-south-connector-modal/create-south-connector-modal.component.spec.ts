@@ -48,8 +48,18 @@ describe('CreateSouthConnectorModalComponent', () => {
 
     southConnectorService.getSouthConnectorTypes.and.returnValue(
       of([
-        { category: 'database', type: 'SQL', description: 'SQL description' },
-        { category: 'iot', type: 'MQTT', description: 'MQTT description' }
+        {
+          category: 'database',
+          type: 'SQL',
+          description: 'SQL description',
+          modes: { lastFile: false, lastPoint: false, subscription: true, historyFile: false, historyPoint: true }
+        },
+        {
+          category: 'iot',
+          type: 'MQTT',
+          description: 'MQTT description',
+          modes: { lastFile: false, lastPoint: false, subscription: true, historyFile: false, historyPoint: true }
+        }
       ])
     );
 
