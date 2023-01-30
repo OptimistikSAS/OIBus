@@ -134,7 +134,7 @@
   },
   "optionalDependencies": {
     "oracledb": "5.5.0",
-    "odbc": "2.4.6"
+    "odbc": "2.4.7"
   },
   "jest": {
     "globalSetup": "./tests/jest-config.js",
