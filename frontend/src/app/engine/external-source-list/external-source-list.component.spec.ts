@@ -5,7 +5,7 @@ import { provideTestingI18n } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { ExternalSourceService } from '../../services/external-source.service';
-import { ExternalSourceDTO } from '../../model/external-sources.model';
+import { ExternalSourceDTO } from '../../../../../shared/model/external-sources.model';
 
 class ExternalSourceListComponentTester extends ComponentTester<ExternalSourceListComponent> {
   constructor() {

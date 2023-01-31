@@ -2,7 +2,7 @@ import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/rout
 import { Subject } from 'rxjs';
 import { PageLoader } from './page-loader.service';
 import { createMock } from 'ngx-speculoos';
-import { Page } from './types';
+import { Page } from '../../../../shared/model/types';
 
 describe('PageLoader', () => {
   it('should emit when the router navigates and when the current page is reloaded', () => {

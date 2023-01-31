@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { SouthConnectorDTO } from '../model/south-connector.model';
+import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { switchMap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';

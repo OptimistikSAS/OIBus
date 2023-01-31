@@ -1,7 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorManifest, NorthType } from '../model/north-connector.model';
+import {
+  NorthConnectorCommandDTO,
+  NorthConnectorDTO,
+  NorthConnectorManifest,
+  NorthType
+} from '../../../../shared/model/north-connector.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on North connectors

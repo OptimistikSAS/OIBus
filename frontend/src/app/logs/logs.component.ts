@@ -3,11 +3,11 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
 import { NonNullableFormBuilder } from '@angular/forms';
-import { LogDTO, LogSearchParam } from '../model/logs.model';
+import { LogDTO, LogSearchParam } from '../../../../shared/model/logs.model';
 import { DateTime } from 'luxon';
-import { Instant, Page } from '../shared/types';
+import { Instant, Page } from '../../../../shared/model//types';
 import { ascendingDates } from '../shared/validators';
-import { LOG_LEVELS, LogLevel } from '../model/engine.model';
+import { LOG_LEVELS, LogLevel } from '../../../../shared/model/engine.model';
 import { catchError, EMPTY, exhaustMap, map, Subscription, switchMap, timer } from 'rxjs';
 import { emptyPage } from '../shared/test-utils';
 import { LogService } from '../services/log.service';
@@ -103,7 +103,7 @@ export class LogsComponent implements OnInit, OnDestroy {
     const start = queryParamMap.get('start') ?? now.minus({ days: 1 }).toISO();
     const end = queryParamMap.get('end');
     const levels = queryParamMap.getAll('levels');
-    const page = queryParamMap.get('page') ? parseInt(queryParamMap.get('page')!, 10) : null;
+    const page = queryParamMap.get('page') ? parseInt(queryParamMap.get('page')!, 10) : 0;
     return { messageContent, scope, start, end, levels, page };
   }
 

@@ -1,5 +1,5 @@
-import { KoaContext } from "../koa";
-import { ScanModeCommandDTO, ScanModeDTO } from "../../model/scan-mode.model";
+import { KoaContext } from '../koa';
+import { ScanModeCommandDTO, ScanModeDTO } from '../../../shared/model/scan-mode.model';
 
 const getScanModes = async (ctx: KoaContext<void, Array<ScanModeDTO>>) => {
   const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
@@ -7,25 +7,28 @@ const getScanModes = async (ctx: KoaContext<void, Array<ScanModeDTO>>) => {
 };
 
 const getScanMode = async (ctx: KoaContext<void, ScanModeDTO>) => {
-  const scanMode = ctx.app.repositoryService.scanModeRepository.getScanMode(
-    ctx.params.id
-  );
+  const scanMode = ctx.app.repositoryService.scanModeRepository.getScanMode(ctx.params.id);
   ctx.ok(scanMode);
 };
 
 const createScanMode = async (ctx: KoaContext<ScanModeCommandDTO, void>) => {
-  const scanMode = ctx.app.repositoryService.scanModeRepository.createScanMode(
-    ctx.request.body
-  );
-  ctx.created(scanMode);
+  const command: ScanModeCommandDTO | undefined = ctx.request.body;
+  if (command) {
+    const scanMode = ctx.app.repositoryService.scanModeRepository.createScanMode(command);
+    ctx.created(scanMode);
+  } else {
+    ctx.badRequest();
+  }
 };
 
 const updateScanMode = async (ctx: KoaContext<ScanModeCommandDTO, void>) => {
-  ctx.app.repositoryService.scanModeRepository.updateScanMode(
-    ctx.params.id,
-    ctx.request.body
-  );
-  ctx.noContent();
+  const command: ScanModeCommandDTO | undefined = ctx.request.body;
+  if (command) {
+    ctx.app.repositoryService.scanModeRepository.updateScanMode(ctx.params.id, command);
+    ctx.noContent();
+  } else {
+    ctx.badRequest();
+  }
 };
 
 const deleteScanMode = async (ctx: KoaContext<void, void>) => {
@@ -38,5 +41,5 @@ export default {
   getScanMode,
   createScanMode,
   updateScanMode,
-  deleteScanMode,
+  deleteScanMode
 };

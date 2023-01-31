@@ -8,7 +8,7 @@ import { of } from 'rxjs';
 import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { ScanModeCommandDTO, ScanModeDTO } from '../../model/scan-mode.model';
+import { ScanModeCommandDTO, ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 
 class EditScanModeModalComponentTester extends ComponentTester<EditScanModeModalComponent> {
   constructor() {

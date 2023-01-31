@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { Page } from '../shared/types';
-import { LogDTO, LogSearchParam } from '../model/logs.model';
+import { Page } from '../../../../shared/model/types';
+import { LogDTO, LogSearchParam } from '../../../../shared/model/logs.model';
 
 /**
  * Service used to interact with the backend Log repository

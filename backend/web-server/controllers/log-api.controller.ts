@@ -1,17 +1,13 @@
-import { KoaContext } from "../koa";
-import { Page } from "../../model/types";
-import {
-  LogDTO,
-  LogSearchParam,
-  LogStreamCommandDTO,
-} from "../../model/logs.model";
+import { KoaContext } from '../koa';
+import { Page } from '../../../shared/model/types';
+import { LogDTO, LogSearchParam, LogStreamCommandDTO } from '../../../shared/model/logs.model';
 
 const searchLogs = async (ctx: KoaContext<void, Page<LogDTO>>) => {
   const now = Date.now();
   const dayAgo = new Date(now - 86400000);
 
   const levels = Array.isArray(ctx.query.levels) ? ctx.query.levels : [];
-  if (typeof ctx.query.levels === "string") {
+  if (typeof ctx.query.levels === 'string') {
     levels.push(ctx.query.levels);
   }
 
@@ -21,53 +17,53 @@ const searchLogs = async (ctx: KoaContext<void, Page<LogDTO>>) => {
     end: ctx.query.end || new Date(now).toISOString(),
     levels,
     scope: (ctx.query.scope as string) || null,
-    messageContent: (ctx.query.messageContent as string) || null,
+    messageContent: (ctx.query.messageContent as string) || null
   };
-  const externalSources =
-    ctx.app.repositoryService.logRepository.searchLogs(searchParams);
+  const externalSources = ctx.app.repositoryService.logRepository.searchLogs(searchParams);
   ctx.ok(externalSources);
 };
 
 const addLogs = async (ctx: KoaContext<LogStreamCommandDTO, void>) => {
-  ctx.request.body.streams.forEach((myStream) => {
-    myStream?.values.forEach((value) => {
-      const formattedLog = {
-        oibus: myStream.stream.oibus,
-        time: new Date(value[0] / 1000000),
-        scope: `${myStream.stream.oibus}:${myStream.stream.scope}`,
-        msg: value[1],
-      };
-      switch (myStream.stream.level) {
-        case "trace":
-          ctx.app.logger.trace(formattedLog);
-          break;
+  const command: LogStreamCommandDTO | undefined = ctx.request.body;
+  if (command) {
+    command.streams.forEach(myStream => {
+      myStream?.values.forEach(value => {
+        const formattedLog = {
+          oibus: myStream.stream.oibus,
+          time: new Date(value[0] / 1000000),
+          scope: `${myStream.stream.oibus}:${myStream.stream.scope}`,
+          msg: value[1] as string
+        };
+        switch (myStream.stream.level) {
+          case 'trace':
+            ctx.app.logger.trace(formattedLog);
+            break;
 
-        case "debug":
-          ctx.app.logger.debug(formattedLog);
-          break;
+          case 'debug':
+            ctx.app.logger.debug(formattedLog);
+            break;
 
-        case "info":
-          ctx.app.logger.info(formattedLog);
-          break;
+          case 'info':
+            ctx.app.logger.info(formattedLog);
+            break;
 
-        case "warn":
-          ctx.app.logger.warn(formattedLog);
-          break;
+          case 'warn':
+            ctx.app.logger.warn(formattedLog);
+            break;
 
-        case "error":
-          ctx.app.logger.error(formattedLog);
-          break;
-
-        default:
-          ctx.app.logger.warn(formattedLog);
-          break;
-      }
+          case 'error':
+            ctx.app.logger.error(formattedLog);
+            break;
+        }
+      });
     });
-  });
-  ctx.noContent();
+    ctx.noContent();
+  } else {
+    ctx.badRequest();
+  }
 };
 
 export default {
   searchLogs,
-  addLogs,
+  addLogs
 };

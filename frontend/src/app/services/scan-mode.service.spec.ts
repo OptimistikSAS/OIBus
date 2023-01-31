@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ScanModeService } from './scan-mode.service';
-import { ScanModeCommandDTO, ScanModeDTO } from '../model/scan-mode.model';
+import { ScanModeCommandDTO, ScanModeDTO } from '../../../../shared/model/scan-mode.model';
 
 describe('ScanModeService', () => {
   let http: HttpTestingController;

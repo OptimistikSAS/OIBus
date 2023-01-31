@@ -4,7 +4,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
-import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../model/external-sources.model';
+import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../../../../shared/model/external-sources.model';
 import { ExternalSourceService } from '../../services/external-source.service';
 import { formDirectives } from '../../shared/form-directives';
 

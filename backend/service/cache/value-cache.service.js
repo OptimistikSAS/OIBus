@@ -1,10 +1,10 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-import { nanoid } from 'nanoid'
 
 import { createFolder, dirSize } from '../utils.js'
 import DeferredPromise from '../deferred-promise.js'
+import { generateRandomId } from "../../repository/utils"
 
 const BUFFER_MAX = 250
 const BUFFER_TIMEOUT = 300
@@ -165,7 +165,7 @@ export default class ValueCacheService {
       fileInBuffer.push(key)
       valuesToFlush = [...valuesToFlush, ...values]
     })
-    const tmpFileName = `${nanoid()}.queue.tmp`
+    const tmpFileName = `${generateRandomId()}.queue.tmp`
 
     try {
       // Save the buffer to be sent and immediately clear it
@@ -221,7 +221,7 @@ export default class ValueCacheService {
       fileInBuffer.push(key)
       valuesInQueue = [...valuesInQueue, ...values]
     })
-    const compactFileName = `${nanoid()}.compact.tmp`
+    const compactFileName = `${generateRandomId()}.compact.tmp`
     this.logger.trace(`Max group count reach. Compacting queue into "${compactFileName}".`)
     try {
       // Store the values in a tmp file
@@ -439,7 +439,7 @@ export default class ValueCacheService {
       return
     }
     this.logger.debug(`Caching ${values.length} values (cache size : ${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB)`)
-    const tmpFileName = `${nanoid()}.buffer.tmp`
+    const tmpFileName = `${generateRandomId()}.buffer.tmp`
 
     // Immediately write the values into the buffer.tmp file to persist them on disk
     await fs.writeFile(

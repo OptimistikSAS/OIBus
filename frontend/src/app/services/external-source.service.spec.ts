@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ExternalSourceService } from './external-source.service';
-import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../model/external-sources.model';
+import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../../../shared/model/external-sources.model';
 
 describe('ExternalSourceService', () => {
   let http: HttpTestingController;
