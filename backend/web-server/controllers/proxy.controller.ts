@@ -1,45 +1,51 @@
 import { KoaContext } from '../koa';
 import { ProxyCommandDTO, ProxyDTO } from '../../../shared/model/proxy.model';
+import ValidatorInterface from '../../validators/validator.interface';
 
-const getProxies = async (ctx: KoaContext<void, Array<ProxyDTO>>) => {
-  const proxies = ctx.app.repositoryService.proxyRepository.getProxies();
-  ctx.ok(proxies);
-};
+export default class ProxyController {
+  constructor(private readonly validator: ValidatorInterface) {}
 
-const getProxy = async (ctx: KoaContext<void, ProxyDTO>) => {
-  const proxy = ctx.app.repositoryService.proxyRepository.getProxy(ctx.params.id);
-  ctx.ok(proxy);
-};
-
-const createProxy = async (ctx: KoaContext<ProxyCommandDTO, void>) => {
-  const command: ProxyCommandDTO | undefined = ctx.request.body;
-  if (command) {
-    const proxy = ctx.app.repositoryService.proxyRepository.createProxy(command);
-    ctx.created(proxy);
-  } else {
-    ctx.badRequest();
+  async getProxies(ctx: KoaContext<void, Array<ProxyDTO>>): Promise<void> {
+    const proxies = ctx.app.repositoryService.proxyRepository.getProxies();
+    ctx.ok(proxies);
   }
-};
 
-const updateProxy = async (ctx: KoaContext<ProxyCommandDTO, void>) => {
-  const command: ProxyCommandDTO | undefined = ctx.request.body;
-  if (command) {
-    ctx.app.repositoryService.proxyRepository.updateProxy(ctx.params.id, command);
-    ctx.noContent();
-  } else {
-    ctx.badRequest();
+  async getProxy(ctx: KoaContext<void, ProxyDTO>): Promise<void> {
+    const proxy = ctx.app.repositoryService.proxyRepository.getProxy(ctx.params.id);
+    if (proxy) {
+      ctx.ok(proxy);
+    } else {
+      ctx.notFound();
+    }
   }
-};
 
-const deleteProxy = async (ctx: KoaContext<void, void>) => {
-  ctx.app.repositoryService.proxyRepository.deleteProxy(ctx.params.id);
-  ctx.noContent();
-};
+  async createProxy(ctx: KoaContext<ProxyCommandDTO, void>): Promise<void> {
+    try {
+      await this.validator.validate(ctx.request.body);
+      const proxy = ctx.app.repositoryService.proxyRepository.createProxy(ctx.request.body as ProxyCommandDTO);
+      ctx.created(proxy);
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
 
-export default {
-  getProxies,
-  getProxy,
-  createProxy,
-  updateProxy,
-  deleteProxy
-};
+  async updateProxy(ctx: KoaContext<ProxyCommandDTO, void>): Promise<void> {
+    try {
+      await this.validator.validate(ctx.request.body);
+      ctx.app.repositoryService.proxyRepository.updateProxy(ctx.params.id, ctx.request.body as ProxyCommandDTO);
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
+  async deleteProxy(ctx: KoaContext<void, void>): Promise<void> {
+    const proxy = ctx.app.repositoryService.proxyRepository.getProxy(ctx.params.id);
+    if (proxy) {
+      ctx.app.repositoryService.proxyRepository.deleteProxy(ctx.params.id);
+      ctx.noContent();
+    } else {
+      ctx.notFound();
+    }
+  }
+}
