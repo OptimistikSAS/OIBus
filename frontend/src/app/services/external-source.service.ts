@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../model/external-sources.model';
+import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../../../shared/model/external-sources.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on external sources

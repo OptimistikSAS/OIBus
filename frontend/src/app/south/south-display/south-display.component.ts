@@ -1,20 +1,25 @@
 import { Component, OnInit } from '@angular/core';
 import { NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { SouthConnectorDTO, SouthItemDTO, SouthItemManifest, SouthItemSearchParam } from '../../model/south-connector.model';
+import {
+  SouthConnectorDTO,
+  SouthItemDTO,
+  SouthItemManifest,
+  SouthItemSearchParam
+} from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { of, switchMap } from 'rxjs';
-import { OibFormControl, OibScanModeFormControl } from '../../model/form.model';
+import { OibFormControl, OibScanModeFormControl } from '../../../../../shared/model/form.model';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
-import { Page } from '../../shared/types';
+import { Page } from '../../../../../shared/model/types';
 import { NotificationService } from '../../shared/notification.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { PageLoader } from '../../shared/page-loader.service';
 import { EditSouthItemModalComponent } from '../edit-south-item-modal/edit-south-item-modal.component';
 import { SearchItemComponent } from '../search-item/search-item.component';
-import { ScanModeDTO } from '../../model/scan-mode.model';
+import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { toPage } from '../../shared/test-utils';
 import { getRowSettings } from '../../shared/utils';

@@ -1,6 +1,6 @@
 import { DatetimePipe } from './datetime.pipe';
 import { DateTime } from 'luxon';
-import { DEFAULT_TZ } from './types';
+import { DEFAULT_TZ } from '../../../../shared/model/types';
 
 describe('DatetimePipe', () => {
   let pipe: DatetimePipe;

@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { SouthDisplayComponent } from './south-display.component';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthConnectorDTO } from '../../model/south-connector.model';
+import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideTestingI18n } from '../../../i18n/mock-i18n';

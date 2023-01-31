@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { OibTimezoneComponent } from './oib-timezone.component';
 import { Component } from '@angular/core';
-import { OibTimezoneFormControl } from '../../../model/form.model';
+import { OibTimezoneFormControl } from '../../../../../../shared/model/form.model';
 import { formDirectives } from '../../form-directives';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup, FormRecord } from '@angular/forms';

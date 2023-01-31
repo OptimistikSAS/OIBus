@@ -5,7 +5,7 @@ import { provideTestingI18n } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { IpFilterService } from '../../services/ip-filter.service';
-import { IpFilterDTO } from '../../model/ip-filter.model';
+import { IpFilterDTO } from '../../../../../shared/model/ip-filter.model';
 
 class IpFilterListComponentTester extends ComponentTester<IpFilterListComponent> {
   constructor() {

@@ -1,28 +1,26 @@
 {
+  "compileOnSave": false,
   "compilerOptions": {
-    "moduleResolution": "Node",
-    "module": "CommonJS",
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
+    "baseUrl": "./",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "sourceMap": true,
+    "declaration": false,
+    "downlevelIteration": true,
+    "experimentalDecorators": true,
     "resolveJsonModule": true,
-    "removeComments": true,
-    "strictNullChecks": false,
-
-    "target": "es5",
-    "outDir": "./dist/backend"
-  },
-  "include": [
-    "**/*",
-    "node_modules/nanoid/**/*"
-  ],
-  "exclude": [
-    "webpack.frontend.js",
-    "frontend",
-    "tests",
-    "dist",
-    "**/*.spec.js",
-    "**/*.test.js",
-    "**/*.d.ts"
-  ]
+    "moduleResolution": "Node",
+    "importHelpers": true,
+    "allowJs": true,
+    "target": "ES5",
+    "module": "CommonJS",
+    "esModuleInterop": true,
+    "useDefineForClassFields": false,
+    "allowSyntheticDefaultImports": true
+  }
 }

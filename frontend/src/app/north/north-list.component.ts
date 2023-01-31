@@ -4,7 +4,7 @@ import { switchMap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
 import { ModalService } from '../shared/modal.service';
-import { NorthConnectorDTO } from '../model/north-connector.model';
+import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../services/north-connector.service';
 import { CreateNorthConnectorModalComponent } from './create-north-connector-modal/create-north-connector-modal.component';
 import { RouterLink } from '@angular/router';

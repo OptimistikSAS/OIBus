@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../model/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on History queries

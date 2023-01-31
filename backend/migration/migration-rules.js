@@ -4,7 +4,6 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import db from 'better-sqlite3'
-import { nanoid } from 'nanoid'
 
 import {
   changeColumnName,
@@ -14,6 +13,7 @@ import {
 } from './database-migration.service.js'
 import { createConfigDatabase, getConfig, upsertConfig } from '../service/database.service.js'
 import { createFolder, filesExists } from '../service/utils.js'
+import { generateRandomId } from "../repository/utils"
 
 export default {
   2: (config, logger) => {
@@ -1075,7 +1075,7 @@ export default {
     logger.info('Migrating dataSources name/id and cache/temp folders')
     for (const dataSource of config.south.dataSources) {
       // Generate new id for each connector
-      dataSource.id = nanoid()
+      dataSource.id = generateRandomId()
       // The old dataSourceId will be the new name
       dataSource.name = dataSource.dataSourceId
 
@@ -1189,7 +1189,7 @@ export default {
       logger.info(`No ${fileCacheErrorDbPath} file to migrate`)
     }
     for (const application of config.north.applications) {
-      application.id = nanoid()
+      application.id = generateRandomId()
       application.name = application.applicationId
       const oldApplicationPath = `${cachePath}/${application.name}.db`
       let oldApplicationDbExists = false
@@ -1657,7 +1657,7 @@ export default {
 
           if (results.length > 0) {
             try {
-              const compactFileName = `${nanoid()}.compact.tmp`
+              const compactFileName = `${generateRandomId()}.compact.tmp`
               await fs.writeFile(
                 path.resolve(northCache, 'values', compactFileName),
                 JSON.stringify(results.map((value) => ({
@@ -1765,17 +1765,17 @@ export default {
   30: async (config, logger) => {
     for (const south of config.south) {
       logger.info(`Create UID for points for South connector ${south.name} (${south.id}).`)
-      south.points = south.points.map((point) => ({ ...point, id: nanoid() }))
+      south.points = south.points.map((point) => ({ ...point, id: generateRandomId() }))
       if (south.settings.scanGroups) {
         logger.info(`Create UID for scan groups for South connector ${south.name} (${south.id}).`)
-        south.settings.scanGroups = south.settings.scanGroups.map((scanGroup) => ({ ...scanGroup, id: nanoid() }))
+        south.settings.scanGroups = south.settings.scanGroups.map((scanGroup) => ({ ...scanGroup, id: generateRandomId() }))
       }
     }
 
     logger.info('Create UID for scan modes.')
-    config.engine.scanModes = config.engine.scanModes.map((scanMode) => ({ ...scanMode, id: nanoid() }))
+    config.engine.scanModes = config.engine.scanModes.map((scanMode) => ({ ...scanMode, id: generateRandomId() }))
 
     logger.info('Create UID for proxies.')
-    config.engine.proxies = config.engine.proxies.map((proxy) => ({ ...proxy, id: nanoid() }))
+    config.engine.proxies = config.engine.proxies.map((proxy) => ({ ...proxy, id: generateRandomId() }))
   },
 }

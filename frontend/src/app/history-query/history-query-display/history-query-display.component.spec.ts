@@ -7,7 +7,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideTestingI18n } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { HistoryQueryDTO } from '../../model/history-query.model';
+import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 
 class HistoryQueryDisplayComponentTester extends ComponentTester<HistoryQueryDisplayComponent> {
   constructor() {

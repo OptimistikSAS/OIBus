@@ -6,3 +6,4 @@ yarn-error.log
 /dist
 /tests/coverage
 /tests/legacy-coverage
+/tests/out-tsc

@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, Validators } from '@angular/forms';
 import { ProxyService } from '../../services/proxy.service';
-import { ProxyCommandDTO, ProxyDTO } from '../../model/proxy.model';
+import { ProxyCommandDTO, ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
