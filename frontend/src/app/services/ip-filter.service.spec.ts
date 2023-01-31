@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { IpFilterService } from './ip-filter.service';
-import { IpFilterCommandDTO, IpFilterDTO } from '../model/ip-filter.model';
+import { IpFilterCommandDTO, IpFilterDTO } from '../../../../shared/model/ip-filter.model';
 
 describe('IpFilterService', () => {
   let http: HttpTestingController;

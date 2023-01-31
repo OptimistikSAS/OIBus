@@ -2,7 +2,7 @@ import { Component, forwardRef, Input } from '@angular/core';
 import { formDirectives } from '../../form-directives';
 import { NgForOf, NgIf } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder } from '@angular/forms';
-import { ScanModeDTO } from '../../../model/scan-mode.model';
+import { ScanModeDTO } from '../../../../../../shared/model/scan-mode.model';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({

@@ -3,12 +3,12 @@ import { DecimalPipe, NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { of, switchMap } from 'rxjs';
-import { OibFormControl } from '../../model/form.model';
+import { OibFormControl } from '../../../../../shared/model/form.model';
 import { PageLoader } from '../../shared/page-loader.service';
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { getRowSettings } from '../../shared/utils';
-import { ScanModeDTO } from '../../model/scan-mode.model';
+import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 
 @Component({

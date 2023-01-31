@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { OibSecretComponent } from './oib-secret.component';
 import { Component } from '@angular/core';
-import { OibSecretFormControl } from '../../../model/form.model';
+import { OibSecretFormControl } from '../../../../../../shared/model/form.model';
 import { formDirectives } from '../../form-directives';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup } from '@angular/forms';

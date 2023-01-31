@@ -6,7 +6,7 @@ import { provideTestingI18n } from '../../i18n/mock-i18n';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { HistoryQueryDTO } from '../model/history-query.model';
+import { HistoryQueryDTO } from '../../../../shared/model/history-query.model';
 import { HistoryQueryService } from '../services/history-query.service';
 
 class HistoryQueryListComponentTester extends ComponentTester<HistoryQueryListComponent> {

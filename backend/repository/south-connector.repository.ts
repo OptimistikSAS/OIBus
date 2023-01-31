@@ -1,17 +1,15 @@
-import { generateRandomId } from "./utils";
-import {
-  SouthConnectorCommandDTO,
-  SouthConnectorDTO,
-} from "../model/south-connector.model";
+import { generateRandomId } from './utils';
+import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../shared/model/south-connector.model';
+import { Database } from 'better-sqlite3';
 
-export const SOUTH_CONNECTOR_TABLE = "south_connector";
+export const SOUTH_CONNECTOR_TABLE = 'south_connector';
 
 /**
  * Repository used for South connectors (Data sources)
  */
 export default class SouthConnectorRepository {
-  private readonly database;
-  constructor(database) {
+  private readonly database: Database;
+  constructor(database: Database) {
     this.database = database;
     const query =
       `CREATE TABLE IF NOT EXISTS ${SOUTH_CONNECTOR_TABLE} (id TEXT PRIMARY KEY, name TEXT, type TEXT, description TEXT, ` +
@@ -27,13 +25,13 @@ export default class SouthConnectorRepository {
     return this.database
       .prepare(query)
       .all()
-      .map((result) => ({
+      .map(result => ({
         id: result.id,
         name: result.name,
         type: result.type,
         description: result.description,
         enabled: result.enabled,
-        settings: JSON.parse(result.settings),
+        settings: JSON.parse(result.settings)
       }));
   }
 
@@ -49,7 +47,7 @@ export default class SouthConnectorRepository {
       type: result.type,
       description: result.description,
       enabled: result.enabled,
-      settings: JSON.parse(result.settings),
+      settings: JSON.parse(result.settings)
     };
   }
 
@@ -59,30 +57,20 @@ export default class SouthConnectorRepository {
   createSouthConnector(command: SouthConnectorCommandDTO): SouthConnectorDTO {
     const id = generateRandomId(6);
     const insertQuery =
-      `INSERT INTO ${SOUTH_CONNECTOR_TABLE} (id, name, type, description, enabled, settings) ` +
-      `VALUES (?, ?, ?, ?, ?, ?);`;
+      `INSERT INTO ${SOUTH_CONNECTOR_TABLE} (id, name, type, description, enabled, settings) ` + `VALUES (?, ?, ?, ?, ?, ?);`;
     const insertResult = this.database
       .prepare(insertQuery)
-      .run(
-        id,
-        command.name,
-        command.type,
-        command.description,
-        +command.enabled,
-        JSON.stringify(command.settings)
-      );
+      .run(id, command.name, command.type, command.description, +command.enabled, JSON.stringify(command.settings));
 
     const query = `SELECT id, name, type, description, enabled, settings FROM ${SOUTH_CONNECTOR_TABLE} WHERE ROWID = ?;`;
-    const result = this.database
-      .prepare(query)
-      .get(insertResult.lastInsertRowid);
+    const result = this.database.prepare(query).get(insertResult.lastInsertRowid);
     return {
       id: result.id,
       name: result.name,
       type: result.type,
       description: result.description,
       enabled: result.enabled,
-      settings: JSON.parse(result.settings),
+      settings: JSON.parse(result.settings)
     };
   }
 
@@ -91,15 +79,7 @@ export default class SouthConnectorRepository {
    */
   updateSouthConnector(id: string, command: SouthConnectorCommandDTO): void {
     const query = `UPDATE ${SOUTH_CONNECTOR_TABLE} SET name = ?, description = ?, enabled = ?, settings = ? WHERE id = ?;`;
-    return this.database
-      .prepare(query)
-      .run(
-        command.name,
-        command.description,
-        +command.enabled,
-        JSON.stringify(command.settings),
-        id
-      );
+    this.database.prepare(query).run(command.name, command.description, +command.enabled, JSON.stringify(command.settings), id);
   }
 
   /**
@@ -107,6 +87,6 @@ export default class SouthConnectorRepository {
    */
   deleteSouthConnector(id: string): void {
     const query = `DELETE FROM ${SOUTH_CONNECTOR_TABLE} WHERE id = ?;`;
-    return this.database.prepare(query).run(id);
+    this.database.prepare(query).run(id);
   }
 }

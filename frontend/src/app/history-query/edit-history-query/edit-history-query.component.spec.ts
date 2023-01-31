@@ -12,7 +12,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { HistoryQueryDTO } from '../../model/history-query.model';
+import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 
 class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryComponent> {
   constructor() {
@@ -177,6 +177,7 @@ describe('EditHistoryQueryComponent', () => {
         of({
           category: 'debug',
           name: 'Console',
+          description: 'Console description',
           modes: {
             files: true,
             points: true
@@ -188,6 +189,7 @@ describe('EditHistoryQueryComponent', () => {
         of({
           category: 'database',
           name: 'SQL',
+          description: 'SQL description',
           modes: {
             historyFile: true,
             historyPoint: false,

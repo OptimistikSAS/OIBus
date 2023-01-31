@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { Page } from '../shared/types';
+import { Page } from '../../../../shared/model/types';
 import { toPage } from '../shared/test-utils';
 import { LogService } from './log.service';
-import { LogDTO } from '../model/logs.model';
+import { LogDTO } from '../../../../shared/model/logs.model';
 
 describe('LogService', () => {
   let http: HttpTestingController;

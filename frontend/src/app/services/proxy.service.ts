@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { ProxyCommandDTO, ProxyDTO } from '../model/proxy.model';
+import { ProxyCommandDTO, ProxyDTO } from '../../../../shared/model/proxy.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on proxies

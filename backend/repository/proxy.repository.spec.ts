@@ -1,127 +1,113 @@
-import ProxyRepository from "./proxy.repository";
-import SqliteDatabaseMock from "../tests/__mocks__/database.mock";
-import { generateRandomId } from "./utils";
-import { ProxyCommandDTO, ProxyDTO } from "../model/proxy.model";
+import ProxyRepository from './proxy.repository';
+import SqliteDatabaseMock, { run, all, get } from '../tests/__mocks__/database.mock';
+import { generateRandomId } from './utils';
+import { ProxyCommandDTO, ProxyDTO } from '../../shared/model/proxy.model';
+import { Database } from 'better-sqlite3';
 
-jest.mock("../tests/__mocks__/database.mock");
-jest.mock("./utils", () => ({
-  generateRandomId: jest.fn(() => "123456"),
+jest.mock('../tests/__mocks__/database.mock');
+jest.mock('./utils', () => ({
+  generateRandomId: jest.fn(() => '123456')
 }));
 
-let database;
+let database: Database;
 let repository: ProxyRepository;
-describe("Proxy repository", () => {
+describe('Proxy repository', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     database = new SqliteDatabaseMock();
+    database.prepare = jest.fn().mockReturnValue({
+      run,
+      get,
+      all
+    });
     repository = new ProxyRepository(database);
   });
 
-  it("should properly init proxy table", () => {
+  it('should properly init proxy table', () => {
     expect(database.prepare).toHaveBeenCalledWith(
-      "CREATE TABLE IF NOT EXISTS proxy (id TEXT PRIMARY KEY, name TEXT, description TEXT, address TEXT, username TEXT, password TEXT);"
+      'CREATE TABLE IF NOT EXISTS proxy (id TEXT PRIMARY KEY, name TEXT, description TEXT, address TEXT, username TEXT, password TEXT);'
     );
-    expect(database.run).toHaveBeenCalledTimes(1);
+    expect(run).toHaveBeenCalledTimes(1);
   });
 
-  it("should properly get all proxies", () => {
+  it('should properly get all proxies', () => {
     const expectedValue: Array<ProxyDTO> = [
       {
-        id: "id1",
-        name: "proxy1",
-        description: "my first proxy",
-        address: "http://proxy.com:1234",
-        username: "username",
-        password: "password",
+        id: 'id1',
+        name: 'proxy1',
+        description: 'my first proxy',
+        address: 'http://proxy.com:1234',
+        username: 'username',
+        password: 'password'
       },
       {
-        id: "id2",
-        name: "proxy2",
-        description: "my second proxy",
-        address: "https://proxy.com:8080",
-        username: "username",
-        password: "password",
-      },
+        id: 'id2',
+        name: 'proxy2',
+        description: 'my second proxy',
+        address: 'https://proxy.com:8080',
+        username: 'username',
+        password: 'password'
+      }
     ];
-    database.all.mockReturnValueOnce(expectedValue);
+    all.mockReturnValueOnce(expectedValue);
     const proxies = repository.getProxies();
-    expect(database.prepare).toHaveBeenCalledWith(
-      "SELECT id, name, description, address, username, password FROM proxy;"
-    );
+    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, description, address, username, password FROM proxy;');
     expect(proxies).toEqual(expectedValue);
   });
 
-  it("should properly get a proxy", () => {
+  it('should properly get a proxy', () => {
     const expectedValue: ProxyDTO = {
-      id: "id1",
-      name: "proxy1",
-      description: "my first proxy",
-      address: "http://proxy.com:1234",
-      username: "username",
-      password: "password",
+      id: 'id1',
+      name: 'proxy1',
+      description: 'my first proxy',
+      address: 'http://proxy.com:1234',
+      username: 'username',
+      password: 'password'
     };
-    database.get.mockReturnValueOnce(expectedValue);
-    const proxy = repository.getProxy("id1");
-    expect(database.prepare).toHaveBeenCalledWith(
-      "SELECT id, name, description, address, username, password FROM proxy WHERE id = ?;"
-    );
-    expect(database.get).toHaveBeenCalledWith("id1");
+    get.mockReturnValueOnce(expectedValue);
+    const proxy = repository.getProxy('id1');
+    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, description, address, username, password FROM proxy WHERE id = ?;');
+    expect(get).toHaveBeenCalledWith('id1');
     expect(proxy).toEqual(expectedValue);
   });
 
-  it("should create a proxy", () => {
+  it('should create a proxy', () => {
+    run.mockReturnValueOnce({ lastInsertRowid: 1 });
+
     const command: ProxyCommandDTO = {
-      name: "proxy1",
-      description: "my first proxy",
-      address: "http://proxy.com:1234",
-      username: "username",
-      password: "password",
+      name: 'proxy1',
+      description: 'my first proxy',
+      address: 'http://proxy.com:1234',
+      username: 'username',
+      password: 'password'
     };
     repository.createProxy(command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
-      "INSERT INTO proxy (id, name, description, address, username, password) VALUES (?, ?, ?, ?, ?, ?);"
+      'INSERT INTO proxy (id, name, description, address, username, password) VALUES (?, ?, ?, ?, ?, ?);'
     );
-    expect(database.run).toHaveBeenCalledWith(
-      "123456",
-      command.name,
-      command.description,
-      command.address,
-      command.username,
-      command.password
-    );
-    expect(database.prepare).toHaveBeenCalledWith(
-      "SELECT id, name, description, address, username, password FROM proxy WHERE ROWID = ?;"
-    );
+    expect(run).toHaveBeenCalledWith('123456', command.name, command.description, command.address, command.username, command.password);
+    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, description, address, username, password FROM proxy WHERE ROWID = ?;');
   });
 
-  it("should update a proxy", () => {
+  it('should update a proxy', () => {
     const command: ProxyCommandDTO = {
-      name: "proxy1",
-      description: "my first proxy",
-      address: "http://proxy.com:1234",
-      username: "username",
-      password: "password",
+      name: 'proxy1',
+      description: 'my first proxy',
+      address: 'http://proxy.com:1234',
+      username: 'username',
+      password: 'password'
     };
-    repository.updateProxy("id1", command);
+    repository.updateProxy('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
-      "UPDATE proxy SET name = ?, description = ?, address = ?, username = ?, password = ? WHERE id = ?;"
+      'UPDATE proxy SET name = ?, description = ?, address = ?, username = ?, password = ? WHERE id = ?;'
     );
-    expect(database.run).toHaveBeenCalledWith(
-      command.name,
-      command.description,
-      command.address,
-      command.username,
-      command.password,
-      "id1"
-    );
+    expect(run).toHaveBeenCalledWith(command.name, command.description, command.address, command.username, command.password, 'id1');
   });
 
-  it("should delete a proxy", () => {
-    repository.deleteProxy("id1");
-    expect(database.prepare).toHaveBeenCalledWith(
-      "DELETE FROM proxy WHERE id = ?;"
-    );
-    expect(database.run).toHaveBeenCalledWith("id1");
+  it('should delete a proxy', () => {
+    repository.deleteProxy('id1');
+    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM proxy WHERE id = ?;');
+    expect(run).toHaveBeenCalledWith('id1');
   });
 });

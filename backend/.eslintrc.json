@@ -12,7 +12,9 @@
       },
       "extends": [
         "eslint:recommended",
-        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:import/recommended",
+        "plugin:import/typescript",
+        "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended",
         "plugin:prettier/recommended"
       ],
@@ -37,7 +39,7 @@
       }
     },
     {
-      "files": ["*.js", "*.jsx"],
+      "files": ["*.js"],
       "env": {
         "es6": true,
         "browser": true,
@@ -48,12 +50,9 @@
       "parserOptions": {
         "sourceType": "module",
         "ecmaFeatures": {
-          "jsx": true,
           "js": true
         }
       },
-      "extends": "airbnb",
-      "plugins": ["react-hooks"],
       "rules": {
         "valid-jsdoc": "error",
         "no-unused-vars": [
@@ -73,28 +72,14 @@
         "no-param-reassign": ["error", { "props": false }],
         "max-len": ["error", { "code": 150 }],
         "semi": ["error", "never"],
-        "jsx-a11y/anchor-is-valid": 1,
         "import/extensions": [
           "off",
           "ignorePackages"
         ],
-        "import/no-extraneous-dependencies": ["error", {"devDependencies": [
-          "src/frontend/**/*.jsx",
-          "src/south/**/*.jsx",
-          "src/north/**/*.jsx",
-          "webpack.*.js"
-        ]}],
         "import/no-unresolved": [
           "off"
         ],
-        "arrow-parens": ["error", "always"],
-        "react/forbid-prop-types": [
-          "error",
-          {
-            "forbid": ["any", "array"]
-          }
-        ],
-        "react/function-component-definition": ["error", { "namedComponents": "arrow-function", "unnamedComponents": "arrow-function"}]
+        "arrow-parens": ["error", "always"]
       }
     }
   ]

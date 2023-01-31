@@ -5,7 +5,7 @@ import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { TranslateModule } from '@ngx-translate/core';
-import { ExternalSourceDTO } from '../../model/external-sources.model';
+import { ExternalSourceDTO } from '../../../../../shared/model/external-sources.model';
 import { ExternalSourceService } from '../../services/external-source.service';
 import { EditExternalSourceModalComponent } from '../edit-external-source-modal/edit-external-source-modal.component';
 

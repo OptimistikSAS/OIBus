@@ -4,7 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { formDirectives } from '../../shared/form-directives';
 import { NgForOf } from '@angular/common';
-import { NorthType } from '../../model/north-connector.model';
+import { NorthType } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 
 @Component({

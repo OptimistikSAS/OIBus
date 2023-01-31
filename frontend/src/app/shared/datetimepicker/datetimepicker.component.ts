@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ContentChild, ElementRef, forwardRef, Input, 
 import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, NonNullableFormBuilder, Validator } from '@angular/forms';
 import { combineLatest } from 'rxjs';
 import { DateTime } from 'luxon';
-import { Instant, LocalDate, LocalTime } from '../types';
+import { Instant, LocalDate, LocalTime } from '../../../../../shared/model/types';
 import { NgTemplateOutlet } from '@angular/common';
 import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';

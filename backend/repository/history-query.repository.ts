@@ -1,17 +1,35 @@
-import { SCAN_MODE_TABLE } from "./scan-mode.repository";
-import {
-  HistoryQueryCommandDTO,
-  HistoryQueryDTO,
-} from "../model/history-query.model";
-import { generateRandomId } from "./utils";
-import { NORTH_CONNECTOR_TABLE } from "./north-connector.repository";
+import { SCAN_MODE_TABLE } from './scan-mode.repository';
+import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../shared/model/history-query.model';
+import { generateRandomId } from './utils';
+import { Database } from 'better-sqlite3';
 
-const HISTORY_QUERIES_TABLE = "history_queries";
+const HISTORY_QUERIES_TABLE = 'history_queries';
+
+interface HistoryQueryResult {
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+  startTime: string;
+  endTime: string;
+  southType: string;
+  northType: string;
+  southSettings: string;
+  northSettings: string;
+  cachingScanModeId: string;
+  cachingGroupCount: number;
+  cachingRetryInterval: number;
+  cachingRetryCount: number;
+  cachingMaxSendCount: number;
+  cachingTimeout: number;
+  archiveEnabled: boolean;
+  archiveRetentionDuration: number;
+}
 
 export default class HistoryQueryRepository {
-  private readonly database;
+  private readonly database: Database;
 
-  constructor(database) {
+  constructor(database: Database) {
     this.database = database;
     const query =
       `CREATE TABLE IF NOT EXISTS ${HISTORY_QUERIES_TABLE} (id TEXT PRIMARY KEY, name TEXT, description TEXT, ` +
@@ -35,13 +53,13 @@ export default class HistoryQueryRepository {
       `caching_timeout AS cachingTimeout, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${HISTORY_QUERIES_TABLE};`;
     const results = this.database.prepare(query).all();
-    return results.map((result) => this.toHistoryQueryDTO(result));
+    return results.map(result => this.toHistoryQueryDTO(result));
   }
 
   /**
    * Get a HistoryQuery
    */
-  getHistoryQuery(id: string): HistoryQueryDTO {
+  getHistoryQuery(id: string): HistoryQueryDTO | null {
     const query =
       `SELECT id, name, description, enabled, start_time as startTime, end_time as endTime, south_type AS southType, ` +
       `north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
@@ -99,9 +117,7 @@ export default class HistoryQueryRepository {
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
       `caching_timeout AS cachingTimeout, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${HISTORY_QUERIES_TABLE} WHERE ROWID = ?;`;
-    const result = this.database
-      .prepare(query)
-      .get(insertResult.lastInsertRowid);
+    const result = this.database.prepare(query).get(insertResult.lastInsertRowid);
 
     return this.toHistoryQueryDTO(result);
   }
@@ -116,7 +132,7 @@ export default class HistoryQueryRepository {
       `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
       `caching_max_send_count = ?, caching_timeout = ?, archive_enabled = ?, archive_retention_duration = ? ` +
       `WHERE id = ?;`;
-    return this.database
+    this.database
       .prepare(query)
       .run(
         command.name,
@@ -145,10 +161,10 @@ export default class HistoryQueryRepository {
    */
   deleteHistoryQuery(id: string): void {
     const query = `DELETE FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`;
-    return this.database.prepare(query).run(id);
+    this.database.prepare(query).run(id);
   }
 
-  private toHistoryQueryDTO(result): HistoryQueryDTO {
+  private toHistoryQueryDTO(result: HistoryQueryResult): HistoryQueryDTO {
     return {
       id: result.id,
       name: result.name,
@@ -166,12 +182,12 @@ export default class HistoryQueryRepository {
         retryInterval: result.cachingRetryInterval,
         retryCount: result.cachingRetryCount,
         maxSendCount: result.cachingMaxSendCount,
-        timeout: result.cachingTimeout,
+        timeout: result.cachingTimeout
       },
       archive: {
         enabled: result.archiveEnabled,
-        retentionDuration: result.archiveRetentionDuration,
-      },
+        retentionDuration: result.archiveRetentionDuration
+      }
     };
   }
 }

@@ -8,7 +8,7 @@ import { of } from 'rxjs';
 import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ExternalSourceService } from '../../services/external-source.service';
-import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../model/external-sources.model';
+import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../../../../shared/model/external-sources.model';
 
 class EditExternalSourceModalComponentTester extends ComponentTester<EditExternalSourceModalComponent> {
   constructor() {
