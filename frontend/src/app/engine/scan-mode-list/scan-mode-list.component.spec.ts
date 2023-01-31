@@ -5,7 +5,7 @@ import { provideTestingI18n } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { ScanModeDTO } from '../../model/scan-mode.model';
+import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 
 class ScanModeListComponentTester extends ComponentTester<ScanModeListComponent> {
   constructor() {

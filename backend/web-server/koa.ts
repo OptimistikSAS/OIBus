@@ -1,11 +1,17 @@
-import { Context, Request } from "koa";
-import RepositoryService from "../service/repository.service";
-import LoggerService from "../service/logger/logger.service";
-import pino from "pino";
+import { Context, Request } from 'koa';
+import RepositoryService from '../service/repository.service';
+import pino from 'pino';
 import Logger = pino.Logger;
+import * as Application from 'koa';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
+}
+
+interface KoaApplication extends Application {
+  id: string;
+  repositoryService: RepositoryService;
+  logger: Logger;
 }
 
 export interface KoaContext<RequestBody, ResponseBody> extends Context {
@@ -18,12 +24,5 @@ export interface KoaContext<RequestBody, ResponseBody> extends Context {
   created: any;
   badRequest: any;
   throw: any;
-  app: {
-    id: string;
-    repositoryService: RepositoryService;
-    logger: Logger;
-  };
+  app: KoaApplication;
 }
-
-export interface KoaResponseContext<ResponseBody>
-  extends KoaContext<any, ResponseBody> {}

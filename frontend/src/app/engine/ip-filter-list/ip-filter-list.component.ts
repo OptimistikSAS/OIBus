@@ -6,7 +6,7 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { IpFilterService } from '../../services/ip-filter.service';
-import { IpFilterDTO } from '../../model/ip-filter.model';
+import { IpFilterDTO } from '../../../../../shared/model/ip-filter.model';
 import { EditIpFilterModalComponent } from '../edit-ip-filter-modal/edit-ip-filter-modal.component';
 
 @Component({

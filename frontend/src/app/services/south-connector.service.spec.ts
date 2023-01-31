@@ -9,8 +9,8 @@ import {
   SouthItemCommandDTO,
   SouthItemDTO,
   SouthType
-} from '../model/south-connector.model';
-import { Page } from '../shared/types';
+} from '../../../../shared/model/south-connector.model';
+import { Page } from '../../../../shared/model/types';
 import { toPage } from '../shared/test-utils';
 
 describe('SouthConnectorService', () => {

@@ -8,20 +8,20 @@ import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
-import { OibFormControl } from '../../model/form.model';
-import { ScanModeDTO } from '../../model/scan-mode.model';
-import { ProxyDTO } from '../../model/proxy.model';
+import { OibFormControl } from '../../../../../shared/model/form.model';
+import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { ProxyService } from '../../services/proxy.service';
-import { NorthConnectorManifest } from '../../model/north-connector.model';
+import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { createInput, getRowSettings } from '../../shared/utils';
-import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../model/history-query.model';
-import { SouthConnectorManifest } from '../../model/south-connector.model';
+import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
+import { SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { Instant } from '../../shared/types';
+import { Instant } from '../../../../../shared/model//types';
 import { DatetimepickerComponent } from '../../shared/datetimepicker/datetimepicker.component';
 
 @Component({

@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ProxyService } from './proxy.service';
-import { ProxyCommandDTO, ProxyDTO } from '../model/proxy.model';
+import { ProxyCommandDTO, ProxyDTO } from '../../../../shared/model/proxy.model';
 
 describe('ProxyService', () => {
   let http: HttpTestingController;

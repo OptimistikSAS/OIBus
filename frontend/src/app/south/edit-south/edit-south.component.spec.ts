@@ -10,7 +10,7 @@ import { FormComponent } from '../../shared/form/form.component';
 import { ProxyService } from '../../services/proxy.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
-import { SouthConnectorDTO } from '../../model/south-connector.model';
+import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 
 class EditSouthComponentTester extends ComponentTester<EditSouthComponent> {
   constructor() {
@@ -130,6 +130,7 @@ describe('EditSouthComponent', () => {
         of({
           category: 'database',
           name: 'SQL',
+          description: 'SQL description',
           modes: {
             subscription: false,
             lastPoint: false,

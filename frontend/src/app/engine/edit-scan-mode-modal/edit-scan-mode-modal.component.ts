@@ -5,7 +5,7 @@ import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { ScanModeCommandDTO, ScanModeDTO } from '../../model/scan-mode.model';
+import { ScanModeCommandDTO, ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { formDirectives } from '../../shared/form-directives';
 
 @Component({

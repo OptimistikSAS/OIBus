@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NgForOf, NgIf } from '@angular/common';
 import { switchMap } from 'rxjs';
-import { ProxyDTO } from '../../model/proxy.model';
+import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { EditProxyModalComponent } from '../edit-proxy-modal/edit-proxy-modal.component';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';

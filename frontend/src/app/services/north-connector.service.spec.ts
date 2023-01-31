@@ -3,7 +3,12 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 import { NorthConnectorService } from './north-connector.service';
-import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorManifest, NorthType } from '../model/north-connector.model';
+import {
+  NorthConnectorCommandDTO,
+  NorthConnectorDTO,
+  NorthConnectorManifest,
+  NorthType
+} from '../../../../shared/model/north-connector.model';
 
 describe('NorthConnectorService', () => {
   let http: HttpTestingController;

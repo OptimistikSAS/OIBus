@@ -5,7 +5,7 @@ import { provideTestingI18n } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { ProxyService } from '../../services/proxy.service';
 import { of } from 'rxjs';
-import { ProxyDTO } from '../../model/proxy.model';
+import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 
 class ProxyListComponentTester extends ComponentTester<ProxyListComponent> {
   constructor() {
