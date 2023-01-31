@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NonNullableFormBuilder } from '@angular/forms';
 import { formDirectives } from '../../shared/form-directives';
-import { SouthItemSearchParam } from '../../model/south-connector.model';
+import { SouthItemSearchParam } from '../../../../../shared/model/south-connector.model';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({

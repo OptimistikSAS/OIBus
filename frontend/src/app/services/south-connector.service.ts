@@ -9,8 +9,8 @@ import {
   SouthItemDTO,
   SouthItemSearchParam,
   SouthType
-} from '../model/south-connector.model';
-import { Page } from '../shared/types';
+} from '../../../../shared/model/south-connector.model';
+import { Page } from '../../../../shared/model/types';
 
 /**
  * Service used to interact with the backend for CRUD operations on South connectors

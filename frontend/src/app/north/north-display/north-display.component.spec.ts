@@ -7,7 +7,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideTestingI18n } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { NorthConnectorDTO } from '../../model/north-connector.model';
+import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
 
 class NorthDisplayComponentTester extends ComponentTester<NorthDisplayComponent> {
   constructor() {

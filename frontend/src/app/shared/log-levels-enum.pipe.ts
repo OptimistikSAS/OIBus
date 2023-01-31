@@ -1,7 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { BaseEnumPipe } from './base-enum-pipe';
 import { TranslateService } from '@ngx-translate/core';
-import { LogLevel } from '../model/engine.model';
+import { LogLevel } from '../../../../shared/model/engine.model';
 
 @Pipe({
   name: 'logLevelsEnum',

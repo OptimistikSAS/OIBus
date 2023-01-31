@@ -1,22 +1,19 @@
-import { generateRandomId } from "./utils";
-import {
-  SouthItemCommandDTO,
-  SouthItemDTO,
-  SouthItemSearchParam,
-} from "../model/south-connector.model";
-import { SOUTH_CONNECTOR_TABLE } from "./south-connector.repository";
-import { SCAN_MODE_TABLE } from "./scan-mode.repository";
-import { Page } from "../model/types";
+import { generateRandomId } from './utils';
+import { SouthItemCommandDTO, SouthItemDTO, SouthItemSearchParam } from '../../shared/model/south-connector.model';
+import { SOUTH_CONNECTOR_TABLE } from './south-connector.repository';
+import { SCAN_MODE_TABLE } from './scan-mode.repository';
+import { Page } from '../../shared/model/types';
+import { Database } from 'better-sqlite3';
 
-const SOUTH_ITEM_TABLE = "south_item";
+const SOUTH_ITEM_TABLE = 'south_item';
 const PAGE_SIZE = 50;
 
 /**
  * Repository used for South connectors items
  */
 export default class SouthItemRepository {
-  private readonly database;
-  constructor(database) {
+  private readonly database: Database;
+  constructor(database: Database) {
     this.database = database;
     const query =
       `CREATE TABLE IF NOT EXISTS ${SOUTH_ITEM_TABLE} (id TEXT PRIMARY KEY, south_id TEXT, scan_mode_id TEXT, name TEXT, ` +
@@ -28,10 +25,7 @@ export default class SouthItemRepository {
   /**
    * Retrieve all South items (point, query, folder...) associated to a South connector
    */
-  searchSouthItems(
-    southId: string,
-    searchParams: SouthItemSearchParam
-  ): Page<SouthItemDTO> {
+  searchSouthItems(southId: string, searchParams: SouthItemSearchParam): Page<SouthItemDTO> {
     let whereClause = `WHERE south_id = ?`;
 
     if (searchParams.name) {
@@ -43,18 +37,14 @@ export default class SouthItemRepository {
     const results = this.database
       .prepare(query)
       .all(southId)
-      .map((result) => ({
+      .map(result => ({
         id: result.id,
         name: result.name,
         southId: result.southId,
         scanModeId: result.scanModeId,
-        settings: JSON.parse(result.settings),
+        settings: JSON.parse(result.settings)
       }));
-    const totalElements = this.database
-      .prepare(
-        `SELECT COUNT(*) as count FROM ${SOUTH_ITEM_TABLE} ${whereClause}`
-      )
-      .get(southId).count;
+    const totalElements = this.database.prepare(`SELECT COUNT(*) as count FROM ${SOUTH_ITEM_TABLE} ${whereClause}`).get(southId).count;
     const totalPages = Math.ceil(totalElements / PAGE_SIZE);
 
     return {
@@ -62,7 +52,7 @@ export default class SouthItemRepository {
       size: PAGE_SIZE,
       number: searchParams.page,
       totalElements,
-      totalPages,
+      totalPages
     };
   }
 
@@ -77,7 +67,7 @@ export default class SouthItemRepository {
       name: result.name,
       southId: result.southId,
       scanModeId: result.scanModeId,
-      settings: JSON.parse(result.settings),
+      settings: JSON.parse(result.settings)
     };
   }
 
@@ -86,29 +76,19 @@ export default class SouthItemRepository {
    */
   createSouthItem(southId: string, command: SouthItemCommandDTO): SouthItemDTO {
     const id = generateRandomId(6);
-    const insertQuery =
-      `INSERT INTO ${SOUTH_ITEM_TABLE} (id, name, south_id, scan_mode_id, settings) ` +
-      `VALUES (?, ?, ?, ?, ?);`;
+    const insertQuery = `INSERT INTO ${SOUTH_ITEM_TABLE} (id, name, south_id, scan_mode_id, settings) ` + `VALUES (?, ?, ?, ?, ?);`;
     const insertResult = this.database
       .prepare(insertQuery)
-      .run(
-        id,
-        command.name,
-        southId,
-        command.scanModeId,
-        JSON.stringify(command.settings)
-      );
+      .run(id, command.name, southId, command.scanModeId, JSON.stringify(command.settings));
 
     const query = `SELECT id, name, south_id AS southId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEM_TABLE} WHERE ROWID = ?;`;
-    const result = this.database
-      .prepare(query)
-      .get(insertResult.lastInsertRowid);
+    const result = this.database.prepare(query).get(insertResult.lastInsertRowid);
     return {
       id: result.id,
       name: result.name,
       southId: result.southId,
       scanModeId: result.scanModeId,
-      settings: JSON.parse(result.settings),
+      settings: JSON.parse(result.settings)
     };
   }
 
@@ -117,14 +97,7 @@ export default class SouthItemRepository {
    */
   updateSouthItem(id: string, command: SouthItemCommandDTO): void {
     const query = `UPDATE ${SOUTH_ITEM_TABLE} SET name = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`;
-    return this.database
-      .prepare(query)
-      .run(
-        command.name,
-        command.scanModeId,
-        JSON.stringify(command.settings),
-        id
-      );
+    this.database.prepare(query).run(command.name, command.scanModeId, JSON.stringify(command.settings), id);
   }
 
   /**
@@ -132,6 +105,6 @@ export default class SouthItemRepository {
    */
   deleteSouthItem(id: string): void {
     const query = `DELETE FROM ${SOUTH_ITEM_TABLE} WHERE id = ?;`;
-    return this.database.prepare(query).run(id);
+    this.database.prepare(query).run(id);
   }
 }

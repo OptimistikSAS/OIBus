@@ -10,7 +10,7 @@ import { ProxyService } from '../../services/proxy.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { NorthConnectorDTO } from '../../model/north-connector.model';
+import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
 
 class EditNorthComponentTester extends ComponentTester<EditNorthComponent> {
   constructor() {
@@ -141,6 +141,7 @@ describe('EditNorthComponent', () => {
         of({
           category: 'debug',
           name: 'Console',
+          description: 'Console description',
           modes: {
             files: true,
             points: true

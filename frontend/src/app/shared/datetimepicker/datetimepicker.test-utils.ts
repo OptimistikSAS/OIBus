@@ -1,6 +1,6 @@
 import { ComponentTester, TestHtmlElement } from 'ngx-speculoos';
 import { DebugElement } from '@angular/core';
-import { LocalDate } from '../types';
+import { LocalDate } from '../../../../../shared/model/types';
 
 export class TestDatetimepicker extends TestHtmlElement<HTMLElement> {
   constructor(tester: ComponentTester<unknown>, debugElement: DebugElement) {

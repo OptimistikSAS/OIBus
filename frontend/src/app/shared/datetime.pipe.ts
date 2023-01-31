@@ -1,6 +1,6 @@
 import { Inject, LOCALE_ID, Pipe, PipeTransform } from '@angular/core';
 import { DateTime } from 'luxon';
-import { DEFAULT_TZ, Timezone } from './types';
+import { DEFAULT_TZ, Timezone } from '../../../../shared/model/types';
 
 const FRIENDLY_FORMATS = {
   short: 'f',

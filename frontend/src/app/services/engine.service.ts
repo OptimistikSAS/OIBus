@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../model/engine.model';
+import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../../../../shared/model/engine.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on the engine settings

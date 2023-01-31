@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 import { HistoryQueryService } from './history-query.service';
-import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../model/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
 
 describe('HistoryQueryService', () => {
   let http: HttpTestingController;

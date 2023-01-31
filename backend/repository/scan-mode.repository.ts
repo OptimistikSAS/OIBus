@@ -1,14 +1,15 @@
-import { ScanModeCommandDTO, ScanModeDTO } from "../model/scan-mode.model";
-import { generateRandomId } from "./utils";
+import { ScanModeCommandDTO, ScanModeDTO } from '../../shared/model/scan-mode.model';
+import { generateRandomId } from './utils';
+import { Database } from 'better-sqlite3';
 
-export const SCAN_MODE_TABLE = "scan_mode";
+export const SCAN_MODE_TABLE = 'scan_mode';
 
 /**
  * Repository used for scan modes (cron definitions)
  */
 export default class ScanModeRepository {
-  private readonly database;
-  constructor(database) {
+  private readonly database: Database;
+  constructor(database: Database) {
     this.database = database;
     const query = `CREATE TABLE IF NOT EXISTS ${SCAN_MODE_TABLE} (id TEXT PRIMARY KEY, name TEXT, description TEXT, cron TEXT);`;
     this.database.prepare(query).run();
@@ -36,9 +37,7 @@ export default class ScanModeRepository {
   createScanMode(command: ScanModeCommandDTO): ScanModeDTO {
     const id = generateRandomId(6);
     const insertQuery = `INSERT INTO ${SCAN_MODE_TABLE} (id, name, description, cron) VALUES (?, ?, ?, ?);`;
-    const result = this.database
-      .prepare(insertQuery)
-      .run(id, command.name, command.description, command.cron);
+    const result = this.database.prepare(insertQuery).run(id, command.name, command.description, command.cron);
 
     const query = `SELECT id, name, description, cron FROM ${SCAN_MODE_TABLE} WHERE ROWID = ?;`;
     return this.database.prepare(query).get(result.lastInsertRowid);
@@ -49,9 +48,7 @@ export default class ScanModeRepository {
    */
   updateScanMode(id: string, command: ScanModeCommandDTO): void {
     const query = `UPDATE ${SCAN_MODE_TABLE} SET name = ?, description = ?, cron = ? WHERE id = ?;`;
-    return this.database
-      .prepare(query)
-      .run(command.name, command.description, command.cron, id);
+    this.database.prepare(query).run(command.name, command.description, command.cron, id);
   }
 
   /**
@@ -59,6 +56,6 @@ export default class ScanModeRepository {
    */
   deleteScanMode(id: string): void {
     const query = `DELETE FROM ${SCAN_MODE_TABLE} WHERE id = ?;`;
-    return this.database.prepare(query).run(id);
+    this.database.prepare(query).run(id);
   }
 }

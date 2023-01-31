@@ -7,7 +7,7 @@ import { ModalService } from '../shared/modal.service';
 import { Router, RouterLink } from '@angular/router';
 import { NgForOf, NgIf } from '@angular/common';
 import { CreateHistoryQueryModalComponent } from './create-history-query-modal/create-history-query-modal.component';
-import { HistoryQueryDTO } from '../model/history-query.model';
+import { HistoryQueryDTO } from '../../../../shared/model/history-query.model';
 import { HistoryQueryService } from '../services/history-query.service';
 
 @Component({

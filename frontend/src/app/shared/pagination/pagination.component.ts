@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Optional, Output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Page } from '../types';
+import { Page } from '../../../../../shared/model/types';
 import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgIf } from '@angular/common';
 

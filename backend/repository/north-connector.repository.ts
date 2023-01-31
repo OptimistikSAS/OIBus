@@ -1,18 +1,16 @@
-import { generateRandomId } from "./utils";
-import {
-  NorthConnectorCommandDTO,
-  NorthConnectorDTO,
-} from "../model/north-connector.model";
-import { SCAN_MODE_TABLE } from "./scan-mode.repository";
+import { generateRandomId } from './utils';
+import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../shared/model/north-connector.model';
+import { SCAN_MODE_TABLE } from './scan-mode.repository';
+import { Database } from 'better-sqlite3';
 
-export const NORTH_CONNECTOR_TABLE = "north_connector";
+export const NORTH_CONNECTOR_TABLE = 'north_connector';
 
 /**
  * Repository used for North connectors
  */
 export default class NorthConnectorRepository {
-  private readonly database;
-  constructor(database) {
+  private readonly database: Database;
+  constructor(database: Database) {
     this.database = database;
     const query =
       `CREATE TABLE IF NOT EXISTS ${NORTH_CONNECTOR_TABLE} (id TEXT PRIMARY KEY, name TEXT, type TEXT, description TEXT, ` +
@@ -35,7 +33,7 @@ export default class NorthConnectorRepository {
     return this.database
       .prepare(query)
       .all()
-      .map((result) => ({
+      .map(result => ({
         id: result.id,
         name: result.name,
         type: result.type,
@@ -48,12 +46,12 @@ export default class NorthConnectorRepository {
           retryInterval: result.cachingRetryInterval,
           retryCount: result.cachingRetryCount,
           maxSendCount: result.cachingMaxSendCount,
-          timeout: result.cachingTimeout,
+          timeout: result.cachingTimeout
         },
         archive: {
           enabled: result.archiveEnabled,
-          retentionDuration: result.archiveRetentionDuration,
-        },
+          retentionDuration: result.archiveRetentionDuration
+        }
       }));
   }
 
@@ -81,12 +79,12 @@ export default class NorthConnectorRepository {
         retryInterval: result.cachingRetryInterval,
         retryCount: result.cachingRetryCount,
         maxSendCount: result.cachingMaxSendCount,
-        timeout: result.cachingTimeout,
+        timeout: result.cachingTimeout
       },
       archive: {
         enabled: result.archiveEnabled,
-        retentionDuration: result.archiveRetentionDuration,
-      },
+        retentionDuration: result.archiveRetentionDuration
+      }
     };
   }
 
@@ -125,9 +123,7 @@ export default class NorthConnectorRepository {
       `caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
       `caching_timeout AS cachingTimeout, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${NORTH_CONNECTOR_TABLE} WHERE ROWID = ?;`;
-    const result = this.database
-      .prepare(query)
-      .get(insertResult.lastInsertRowid);
+    const result = this.database.prepare(query).get(insertResult.lastInsertRowid);
     return {
       id: result.id,
       name: result.name,
@@ -141,12 +137,12 @@ export default class NorthConnectorRepository {
         retryInterval: result.cachingRetryInterval,
         retryCount: result.cachingRetryCount,
         maxSendCount: result.cachingMaxSendCount,
-        timeout: result.cachingTimeout,
+        timeout: result.cachingTimeout
       },
       archive: {
         enabled: result.archiveEnabled,
-        retentionDuration: result.archiveRetentionDuration,
-      },
+        retentionDuration: result.archiveRetentionDuration
+      }
     };
   }
 
@@ -159,7 +155,7 @@ export default class NorthConnectorRepository {
       `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
       `caching_max_send_count = ?, caching_timeout = ?, archive_enabled = ?, archive_retention_duration = ? ` +
       `WHERE id = ?;`;
-    return this.database
+    this.database
       .prepare(query)
       .run(
         command.name,
@@ -183,6 +179,6 @@ export default class NorthConnectorRepository {
    */
   deleteNorthConnector(id: string): void {
     const query = `DELETE FROM ${NORTH_CONNECTOR_TABLE} WHERE id = ?;`;
-    return this.database.prepare(query).run(id);
+    this.database.prepare(query).run(id);
   }
 }

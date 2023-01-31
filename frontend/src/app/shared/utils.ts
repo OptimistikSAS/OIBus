@@ -1,6 +1,6 @@
-import { ConnectorFormValidator, OibFormControl } from '../model/form.model';
+import { ConnectorFormValidator, OibFormControl } from '../../../../shared/model/form.model';
 import { FormControl, FormControlOptions, FormGroup, ValidatorFn, Validators } from '@angular/forms';
-import { ScanModeDTO } from '../model/scan-mode.model';
+import { ScanModeDTO } from '../../../../shared/model/scan-mode.model';
 
 /**
  * Create the validators associated to an input from the settings schema
