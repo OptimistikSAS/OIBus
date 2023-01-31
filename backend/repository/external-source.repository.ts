@@ -27,7 +27,7 @@ export default class ExternalSourceRepository {
   /**
    * Retrieve an external source by its ID
    */
-  getExternalSource(id: string): ExternalSourceDTO {
+  getExternalSource(id: string): ExternalSourceDTO | null {
     const query = `SELECT id, reference, description FROM ${EXTERNAL_SOURCES_TABLE} WHERE id = ?;`;
     return this.database.prepare(query).get(id);
   }

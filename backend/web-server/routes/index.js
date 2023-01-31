@@ -8,19 +8,21 @@ import oibusController from '../controllers/oibus.controller.js'
 import fileCacheController from '../controllers/file-cache.controller.js'
 
 import apiController from '../controllers/api.controller'
-import proxyController from '../controllers/proxy.controller'
-import externalSourceController from '../controllers/external-source.controller'
 import southConnectorController from '../controllers/south-connector.controller'
 import northConnectorController from '../controllers/north-connector.controller'
 
 import ValidatorService from '../../service/validator.service'
 import ScanModeController from '../controllers/scan-mode.controller'
+import ProxyController from '../controllers/proxy.controller'
+import ExternalSourceController from '../controllers/external-source.controller'
 import IpFilterController from '../controllers/ip-filter.controller'
 import logApiController from '../controllers/log-api.controller'
 import historyQueryController from '../controllers/history-query.controller'
 
 const validatorService = new ValidatorService()
 const scanModeController = new ScanModeController(validatorService.scanModeValidator)
+const externalSourceController = new ExternalSourceController(validatorService.proxyValidator)
+const proxyController = new ProxyController(validatorService.proxyValidator)
 const ipFilterController = new IpFilterController(validatorService.ipFilterValidator)
 const router = new Router()
 
@@ -57,29 +59,29 @@ router.post('/north/:id/cache/file-errors/retry-all', fileCacheController.retryA
 router.get('/api/engine', apiController.getEngineSettings)
 router.put('/api/engine', apiController.updateEngineSettings)
 
-router.get('/api/proxies', proxyController.getProxies)
-router.get('/api/proxies/:id', proxyController.getProxy)
-router.post('/api/proxies', proxyController.createProxy)
-router.put('/api/proxies/:id', proxyController.updateProxy)
-router.delete('/api/proxies/:id', proxyController.deleteProxy)
-
 router.get('/api/scan-modes', (ctx) => scanModeController.getScanModes(ctx))
 router.get('/api/scan-modes/:id', (ctx) => scanModeController.getScanMode(ctx))
 router.post('/api/scan-modes', (ctx) => scanModeController.createScanMode(ctx))
 router.put('/api/scan-modes/:id', (ctx) => scanModeController.updateScanMode(ctx))
 router.delete('/api/scan-modes/:id', (ctx) => scanModeController.deleteScanMode(ctx))
 
+router.get('/api/proxies', (ctx) => proxyController.getProxies(ctx))
+router.get('/api/proxies/:id', (ctx) => proxyController.getProxy(ctx))
+router.post('/api/proxies', (ctx) => proxyController.createProxy(ctx))
+router.put('/api/proxies/:id', (ctx) => proxyController.updateProxy(ctx))
+router.delete('/api/proxies/:id', (ctx) => proxyController.deleteProxy(ctx))
+
+router.get('/api/external-sources', (ctx) => externalSourceController.getExternalSources(ctx))
+router.get('/api/external-sources/:id', (ctx) => externalSourceController.getExternalSource(ctx))
+router.post('/api/external-sources', (ctx) => externalSourceController.createExternalSource(ctx))
+router.put('/api/external-sources/:id', (ctx) => externalSourceController.updateExternalSource(ctx))
+router.delete('/api/external-sources/:id', (ctx) => externalSourceController.deleteExternalSource(ctx))
+
 router.get('/api/ip-filters', (ctx) => ipFilterController.getIpFilters(ctx))
 router.get('/api/ip-filters/:id', (ctx) => ipFilterController.getIpFilter(ctx))
 router.post('/api/ip-filters', (ctx) => ipFilterController.createIpFilter(ctx))
 router.put('/api/ip-filters/:id', (ctx) => ipFilterController.updateIpFilter(ctx))
 router.delete('/api/ip-filters/:id', (ctx) => ipFilterController.deleteIpFilter(ctx))
-
-router.get('/api/external-sources', externalSourceController.getExternalSources)
-router.get('/api/external-sources/:id', externalSourceController.getExternalSource)
-router.post('/api/external-sources', externalSourceController.createExternalSource)
-router.put('/api/external-sources/:id', externalSourceController.updateExternalSource)
-router.delete('/api/external-sources/:id', externalSourceController.deleteExternalSource)
 
 router.get('/api/north-types', northConnectorController.getNorthConnectorTypes)
 router.get('/api/north-types/:id', northConnectorController.getNorthConnectorManifest)
