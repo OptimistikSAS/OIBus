@@ -28,7 +28,7 @@ export default class ProxyRepository {
   /**
    * Retrieve a proxy by its ID
    */
-  getProxy(id: string): ProxyDTO {
+  getProxy(id: string): ProxyDTO | null {
     const query = `SELECT id, name, description, address, username, password FROM ${PROXY_TABLE} WHERE id = ?;`;
     return this.database.prepare(query).get(id);
   }
