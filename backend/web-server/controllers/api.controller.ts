@@ -1,22 +1,26 @@
 import { KoaContext } from '../koa';
 import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../../../shared/model/engine.model';
+import ValidatorInterface from '../../validators/validator.interface';
 
-const getEngineSettings = async (ctx: KoaContext<void, EngineSettingsDTO>) => {
-  const settings = ctx.app.repositoryService.engineRepository.getEngineSettings();
-  ctx.ok(settings);
-};
+export default class ApiController {
+  constructor(private readonly validator: ValidatorInterface) {}
 
-const updateEngineSettings = async (ctx: KoaContext<EngineSettingsCommandDTO, void>) => {
-  const command: EngineSettingsCommandDTO | undefined = ctx.request.body;
-  if (command) {
-    ctx.app.repositoryService.engineRepository.updateEngineSettings(command);
-    ctx.noContent();
-  } else {
-    ctx.badRequest();
+  async getEngineSettings(ctx: KoaContext<void, EngineSettingsDTO>): Promise<void> {
+    const settings = ctx.app.repositoryService.engineRepository.getEngineSettings();
+    if (settings) {
+      ctx.ok(settings);
+    } else {
+      ctx.notFound();
+    }
   }
-};
 
-export default {
-  getEngineSettings,
-  updateEngineSettings
-};
+  async updateEngineSettings(ctx: KoaContext<EngineSettingsCommandDTO, void>): Promise<void> {
+    try {
+      await this.validator.validate(ctx.request.body);
+      ctx.app.repositoryService.engineRepository.updateEngineSettings(ctx.request.body as EngineSettingsCommandDTO);
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+}
