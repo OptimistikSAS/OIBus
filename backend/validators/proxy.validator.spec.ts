@@ -1,5 +1,5 @@
 import JoiValidator from "./joi.validator";
-import { ipFilterSchema } from "../engine/oibus-validation-schema";
+import { proxySchema } from "../engine/oibus-validation-schema";
 import ValidatorInterface from "./validator.interface";
 
 interface DataProvider {
@@ -11,50 +11,66 @@ interface DataProvider {
 const dataProviders: DataProvider[] = [
   {
     dto: {
-      address1: "missing",
+      name1: "missing",
       description1: "missing",
+      address1: "missing",
+      username1: "missing",
+      password1: "missing",
     },
     isValid: false,
     errorMessage:
-      '"address" is required. "description" is required. "address1" is not allowed. "description1" is not allowed',
+      '"name" is required. "description" is required. "address" is required. "username" is required. "password" is required. "name1" is not allowed. "description1" is not allowed. "address1" is not allowed. "username1" is not allowed. "password1" is not allowed',
   },
   {
     dto: {
-      address: null,
+      name: null,
       description: null,
+      address: null,
+      username: null,
+      password: null,
     },
     isValid: false,
-    errorMessage: '"address" must be a string',
+    errorMessage: '"name" must be a string. "address" must be a string',
   },
   {
     dto: {
-      address: "",
+      name: "",
       description: "",
+      address: "",
+      username: "",
+      password: "",
     },
     isValid: false,
-    errorMessage: '"address" is not allowed to be empty',
+    errorMessage:
+      '"name" is not allowed to be empty. "address" is not allowed to be empty',
   },
   {
     dto: {
-      address: "valid",
+      name: "valid",
       description: "valid",
-      description1: "invalid",
+      description1: "valid",
+      address: "valid",
+      username: "valid",
+      password: "valid",
     },
     isValid: false,
     errorMessage: '"description1" is not allowed',
   },
   {
     dto: {
-      address: "valid",
+      name: "valid",
       description: "valid",
+      address: "valid",
+      username: "valid",
+      password: "valid",
     },
     isValid: true,
     errorMessage: null,
   },
 ];
 
-describe("Ip filter validator", () => {
-  const validator: ValidatorInterface = new JoiValidator(ipFilterSchema);
+describe("Proxy validator", () => {
+  const validator: ValidatorInterface = new JoiValidator(proxySchema);
 
   it.each(dataProviders)(
     `$# Should be valid: $isValid`,
