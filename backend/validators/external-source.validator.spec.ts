@@ -1,5 +1,5 @@
 import JoiValidator from "./joi.validator";
-import { ipFilterSchema } from "../engine/oibus-validation-schema";
+import { externalSourceSchema } from "../engine/oibus-validation-schema";
 import ValidatorInterface from "./validator.interface";
 
 interface DataProvider {
@@ -11,32 +11,32 @@ interface DataProvider {
 const dataProviders: DataProvider[] = [
   {
     dto: {
-      address1: "missing",
+      reference1: "missing",
       description1: "missing",
     },
     isValid: false,
     errorMessage:
-      '"address" is required. "description" is required. "address1" is not allowed. "description1" is not allowed',
+      '"reference" is required. "description" is required. "reference1" is not allowed. "description1" is not allowed',
   },
   {
     dto: {
-      address: null,
+      reference: null,
       description: null,
     },
     isValid: false,
-    errorMessage: '"address" must be a string',
+    errorMessage: '"reference" must be a string',
   },
   {
     dto: {
-      address: "",
+      reference: "",
       description: "",
     },
     isValid: false,
-    errorMessage: '"address" is not allowed to be empty',
+    errorMessage: '"reference" is not allowed to be empty',
   },
   {
     dto: {
-      address: "valid",
+      reference: "valid",
       description: "valid",
       description1: "invalid",
     },
@@ -45,7 +45,7 @@ const dataProviders: DataProvider[] = [
   },
   {
     dto: {
-      address: "valid",
+      reference: "valid",
       description: "valid",
     },
     isValid: true,
@@ -53,8 +53,8 @@ const dataProviders: DataProvider[] = [
   },
 ];
 
-describe("Ip filter validator", () => {
-  const validator: ValidatorInterface = new JoiValidator(ipFilterSchema);
+describe("External source validator", () => {
+  const validator: ValidatorInterface = new JoiValidator(externalSourceSchema);
 
   it.each(dataProviders)(
     `$# Should be valid: $isValid`,
