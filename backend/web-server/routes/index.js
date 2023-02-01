@@ -6,8 +6,6 @@ import logController from '../controllers/log.controller.js'
 import engineController from '../controllers/engine.controller.js'
 import oibusController from '../controllers/oibus.controller.js'
 import fileCacheController from '../controllers/file-cache.controller.js'
-
-import apiController from '../controllers/api.controller'
 import southConnectorController from '../controllers/south-connector.controller'
 import northConnectorController from '../controllers/north-connector.controller'
 
@@ -15,14 +13,16 @@ import ValidatorService from '../../service/validator.service'
 import ScanModeController from '../controllers/scan-mode.controller'
 import ProxyController from '../controllers/proxy.controller'
 import ExternalSourceController from '../controllers/external-source.controller'
+import ApiController from '../controllers/api.controller'
 import IpFilterController from '../controllers/ip-filter.controller'
 import logApiController from '../controllers/log-api.controller'
 import historyQueryController from '../controllers/history-query.controller'
 
 const validatorService = new ValidatorService()
 const scanModeController = new ScanModeController(validatorService.scanModeValidator)
-const externalSourceController = new ExternalSourceController(validatorService.proxyValidator)
+const externalSourceController = new ExternalSourceController(validatorService.externalSourceValidator)
 const proxyController = new ProxyController(validatorService.proxyValidator)
+const apiController = new ApiController(validatorService.engineValidator)
 const ipFilterController = new IpFilterController(validatorService.ipFilterValidator)
 const router = new Router()
 
@@ -56,9 +56,6 @@ router.post('/north/:id/cache/file-errors/retry', fileCacheController.retryFileE
 router.delete('/north/:id/cache/file-errors/remove-all', fileCacheController.removeAllFileErrors)
 router.post('/north/:id/cache/file-errors/retry-all', fileCacheController.retryAllFileErrors)
 
-router.get('/api/engine', apiController.getEngineSettings)
-router.put('/api/engine', apiController.updateEngineSettings)
-
 router.get('/api/scan-modes', (ctx) => scanModeController.getScanModes(ctx))
 router.get('/api/scan-modes/:id', (ctx) => scanModeController.getScanMode(ctx))
 router.post('/api/scan-modes', (ctx) => scanModeController.createScanMode(ctx))
@@ -76,6 +73,9 @@ router.get('/api/external-sources/:id', (ctx) => externalSourceController.getExt
 router.post('/api/external-sources', (ctx) => externalSourceController.createExternalSource(ctx))
 router.put('/api/external-sources/:id', (ctx) => externalSourceController.updateExternalSource(ctx))
 router.delete('/api/external-sources/:id', (ctx) => externalSourceController.deleteExternalSource(ctx))
+
+router.get('/api/engine', (ctx) => apiController.getEngineSettings(ctx))
+router.put('/api/engine', (ctx) => apiController.updateEngineSettings(ctx))
 
 router.get('/api/ip-filters', (ctx) => ipFilterController.getIpFilters(ctx))
 router.get('/api/ip-filters/:id', (ctx) => ipFilterController.getIpFilter(ctx))
