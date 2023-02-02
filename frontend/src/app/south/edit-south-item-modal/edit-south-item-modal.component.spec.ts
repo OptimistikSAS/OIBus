@@ -21,7 +21,7 @@ class EditSouthItemModalComponentTester extends ComponentTester<EditSouthItemMod
   }
 
   get scanMode() {
-    return this.select('#oib-scan-mode-input-item-scan-mode')!;
+    return this.select('#OibScanMode-item-scan-mode')!;
   }
 
   get validationErrors() {
@@ -104,8 +104,8 @@ describe('EditSouthItemModalComponent', () => {
     it('should not save if invalid', () => {
       tester.save.click();
 
-      // name
-      expect(tester.validationErrors.length).toBe(1);
+      // name, scan mode
+      expect(tester.validationErrors.length).toBe(2);
       expect(fakeActiveModal.close).not.toHaveBeenCalled();
     });
 
