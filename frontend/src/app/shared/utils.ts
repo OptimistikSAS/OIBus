@@ -38,11 +38,11 @@ export const createInput = (value: OibFormControl, form: FormGroup, scanModes: A
     case 'OibCodeBlock':
     case 'OibTextArea':
     case 'OibTimezone':
-      form.addControl(value.key, new FormControl(value.currentValue || value.defaultValue, getValidators(value.validators || [])));
+      form.addControl(value.key, new FormControl(value.currentValue ?? value.defaultValue, getValidators(value.validators || [])));
       break;
     case 'OibScanMode':
       const scanMode = scanModes.find(element => element.id === value.currentValue?.id);
-      form.addControl(value.key, new FormControl(scanMode, getValidators(value.validators || [])));
+      form.addControl(value.key, new FormControl(scanMode, getValidators(value.validators ?? [])));
       break;
   }
 };
