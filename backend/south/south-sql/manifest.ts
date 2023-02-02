@@ -121,6 +121,7 @@ const manifest: SouthConnectorManifest = {
         contentType: 'sql',
         defaultValue: 'SELECT * FROM Table WHERE timestamp > @StartTime',
         class: 'col-4 text-nowrap',
+        validators: [{ key: 'required' }],
         readDisplay: true
       },
       {

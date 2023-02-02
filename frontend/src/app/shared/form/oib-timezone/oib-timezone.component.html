@@ -1,7 +1,0 @@
-<div class="form-group">
-  <label *ngIf="label" [for]="'oib-timezone-input-' + key">{{ label }}</label>
-  <select [formControl]="timezoneInputCtrl" [id]="'oib-timezone-input-' + key" class="form-select mb-2 mr-sm-2">
-    <option *ngFor="let timezone of timezones" [ngValue]="timezone">{{ timezone }}</option>
-  </select>
-  <val-errors [control]="timezoneInputCtrl"></val-errors>
-</div>

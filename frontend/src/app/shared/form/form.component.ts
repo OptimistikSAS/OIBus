@@ -5,32 +5,19 @@ import { formDirectives } from '../form-directives';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ProxyDTO } from '../../../../../shared/model/proxy.model';
-import { OibTextComponent } from './oib-text/oib-text.component';
-import { OibTextAreaComponent } from './oib-text-area/oib-text-area.component';
-import { OibNumberComponent } from './oib-number/oib-number.component';
 import { OibCodeBlockComponent } from './oib-code-block/oib-code-block.component';
-import { OibSelectComponent } from './oib-select/oib-select.component';
-import { OibCheckboxComponent } from './oib-checkbox/oib-checkbox.component';
-import { OibSecretComponent } from './oib-secret/oib-secret.component';
-import { OibTimezoneComponent } from './oib-timezone/oib-timezone.component';
 
+// TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
+// eslint-disable-next-line @typescript-eslint/no-namespace
+declare namespace Intl {
+  type Key = 'calendar' | 'collation' | 'currency' | 'numberingSystem' | 'timeZone' | 'unit';
+
+  function supportedValuesOf(input: Key): string[];
+}
 @Component({
   selector: 'oib-form',
   standalone: true,
-  imports: [
-    ...formDirectives,
-    NgIf,
-    NgForOf,
-    OibTextComponent,
-    OibTextAreaComponent,
-    OibCodeBlockComponent,
-    OibNumberComponent,
-    OibCodeBlockComponent,
-    OibSelectComponent,
-    OibCheckboxComponent,
-    OibSecretComponent,
-    OibTimezoneComponent
-  ],
+  imports: [...formDirectives, NgIf, NgForOf, OibCodeBlockComponent],
   templateUrl: './form.component.html',
   styleUrls: ['./form.component.scss'],
   viewProviders: [
@@ -45,6 +32,8 @@ export class FormComponent {
   @Input() scanModes: Array<ScanModeDTO> = [];
   @Input() proxies: Array<ProxyDTO> = [];
   @Input() form: FormRecord = this.fb.record({});
+
+  timezones = Intl.supportedValuesOf('timeZone');
 
   constructor(private fb: NonNullableFormBuilder) {}
 }

@@ -9,18 +9,17 @@ import { SouthConnectorDTO, SouthItemCommandDTO, SouthItemDTO, SouthItemManifest
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { NgForOf, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
-import { OibScanModeFormControl } from '../../../../../shared/model/form.model';
-import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
-import { OibTextComponent } from '../../shared/form/oib-text/oib-text.component';
-import { OibTextAreaComponent } from '../../shared/form/oib-text-area/oib-text-area.component';
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
-import { OibNumberComponent } from '../../shared/form/oib-number/oib-number.component';
-import { OibSelectComponent } from '../../shared/form/oib-select/oib-select.component';
-import { OibCheckboxComponent } from '../../shared/form/oib-checkbox/oib-checkbox.component';
-import { OibSecretComponent } from '../../shared/form/oib-secret/oib-secret.component';
-import { OibTimezoneComponent } from '../../shared/form/oib-timezone/oib-timezone.component';
 import { createInput } from '../../shared/utils';
+import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 
+// TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
+// eslint-disable-next-line @typescript-eslint/no-namespace
+declare namespace Intl {
+  type Key = 'calendar' | 'collation' | 'currency' | 'numberingSystem' | 'timeZone' | 'unit';
+
+  function supportedValuesOf(input: Key): string[];
+}
 @Component({
   selector: 'oib-edit-south-item-modal',
   templateUrl: './edit-south-item-modal.component.html',
@@ -33,15 +32,8 @@ import { createInput } from '../../shared/utils';
     NgSwitch,
     NgSwitchCase,
     NgIf,
-    OibScanModeComponent,
-    OibTextComponent,
-    OibTextAreaComponent,
     OibCodeBlockComponent,
-    OibNumberComponent,
-    OibSelectComponent,
-    OibCheckboxComponent,
-    OibSecretComponent,
-    OibTimezoneComponent
+    OibScanModeComponent
   ],
   standalone: true
 })
@@ -52,7 +44,7 @@ export class EditSouthItemModalComponent {
   southItemSchema: SouthItemManifest | null = null;
   southItem: SouthItemDTO | null = null;
   scanModes: Array<ScanModeDTO> = [];
-  scanModeOptions: OibScanModeFormControl | null = null;
+  timezones = Intl.supportedValuesOf('timeZone');
   form = this.fb.group({
     name: ['', Validators.required],
     scanMode: [null as ScanModeDTO | null, Validators.required],

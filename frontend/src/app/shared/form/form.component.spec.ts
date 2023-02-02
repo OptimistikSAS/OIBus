@@ -7,14 +7,7 @@ import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { FormControl, FormGroup, FormRecord } from '@angular/forms';
 import { OibFormControl } from '../../../../../shared/model/form.model';
-import { OibCheckboxComponent } from './oib-checkbox/oib-checkbox.component';
-import { OibSecretComponent } from './oib-secret/oib-secret.component';
-import { OibNumberComponent } from './oib-number/oib-number.component';
 import { OibCodeBlockComponent } from './oib-code-block/oib-code-block.component';
-import { OibSelectComponent } from './oib-select/oib-select.component';
-import { OibTextAreaComponent } from './oib-text-area/oib-text-area.component';
-import { OibTextComponent } from './oib-text/oib-text.component';
-import { OibTimezoneComponent } from './oib-timezone/oib-timezone.component';
 import { formDirectives } from '../form-directives';
 
 @Component({
@@ -128,23 +121,32 @@ class FormComponentTester extends ComponentTester<TestComponent> {
   get rows() {
     return this.elements('.row');
   }
+
+  get oibSelectComponent() {
+    return this.select('#OibSelect-myOibSelectField')!;
+  }
+  get oibTextComponent() {
+    return this.input('#OibText-myOibTextField')!;
+  }
+  get oibNumberComponent() {
+    return this.input('#OibNumber-myOibNumberField')!;
+  }
+  get oibTextAreaComponent() {
+    return this.textarea('#OibTextArea-myOibTextAreaField')!;
+  }
+  get oibSecretComponent() {
+    return this.input('#OibSecret-myOibSecretField')!;
+  }
+  get oibCheckboxComponent() {
+    return this.input('#OibCheckbox-myOibCheckboxField')!;
+  }
 }
 describe('FormComponent', () => {
   let tester: FormComponentTester;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [
-        FormComponent,
-        OibCheckboxComponent,
-        OibSecretComponent,
-        OibNumberComponent,
-        OibCodeBlockComponent,
-        OibSelectComponent,
-        OibTextComponent,
-        OibTextAreaComponent,
-        OibTimezoneComponent
-      ]
+      imports: [FormComponent, OibCodeBlockComponent]
     });
 
     tester = new FormComponentTester();
@@ -156,11 +158,11 @@ describe('FormComponent', () => {
   });
 
   it('should display filled element', () => {
-    expect(tester.component(OibSelectComponent).selectInputCtrl.value).toBe('option2');
-    expect(tester.component(OibTextComponent).textInputCtrl.value).toBe(null);
-    expect(tester.component(OibNumberComponent).numberInputCtrl.value).toBe(2224);
-    expect(tester.component(OibTextAreaComponent).textAreaCtrl.value).toBe(null);
-    expect(tester.component(OibSecretComponent).secretInputCtrl.value).toBe('pass');
-    expect(tester.component(OibCheckboxComponent).checkboxCtrl.value).toBe(true);
+    expect(tester.oibSelectComponent.selectedLabel).toBe('option2');
+    expect(tester.oibTextComponent.value).toBe('');
+    expect(tester.oibNumberComponent.value).toBe('2224');
+    expect(tester.oibTextAreaComponent.value).toBe('');
+    expect(tester.oibSecretComponent.value).toBe('pass');
+    expect(tester.oibCheckboxComponent).toBeChecked();
   });
 });
