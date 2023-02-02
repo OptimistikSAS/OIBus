@@ -1,6 +1,6 @@
-import JoiValidator from "./joi.validator";
-import { externalSourceSchema } from "../engine/oibus-validation-schema";
-import ValidatorInterface from "./validator.interface";
+import JoiValidator from './joi.validator';
+import { externalSourceSchema } from '../engine/oibus-validation-schema';
+import ValidatorInterface from './validator.interface';
 
 interface DataProvider {
   dto: any;
@@ -11,63 +11,55 @@ interface DataProvider {
 const dataProviders: DataProvider[] = [
   {
     dto: {
-      reference1: "missing",
-      description1: "missing",
+      reference1: 'missing',
+      description1: 'missing'
     },
     isValid: false,
-    errorMessage:
-      '"reference" is required. "description" is required. "reference1" is not allowed. "description1" is not allowed',
+    errorMessage: '"reference" is required. "description" is required. "reference1" is not allowed. "description1" is not allowed'
   },
   {
     dto: {
       reference: null,
-      description: null,
+      description: null
     },
     isValid: false,
-    errorMessage: '"reference" must be a string',
+    errorMessage: '"reference" must be a string'
   },
   {
     dto: {
-      reference: "",
-      description: "",
+      reference: '',
+      description: ''
     },
     isValid: false,
-    errorMessage: '"reference" is not allowed to be empty',
+    errorMessage: '"reference" is not allowed to be empty'
   },
   {
     dto: {
-      reference: "valid",
-      description: "valid",
-      description1: "invalid",
+      reference: 'valid',
+      description: 'valid',
+      description1: 'invalid'
     },
     isValid: false,
-    errorMessage: '"description1" is not allowed',
+    errorMessage: '"description1" is not allowed'
   },
   {
     dto: {
-      reference: "valid",
-      description: "valid",
+      reference: 'valid',
+      description: 'valid'
     },
     isValid: true,
-    errorMessage: null,
-  },
+    errorMessage: null
+  }
 ];
 
-describe("External source validator", () => {
+describe('External source validator', () => {
   const validator: ValidatorInterface = new JoiValidator(externalSourceSchema);
 
-  it.each(dataProviders)(
-    `$# Should be valid: $isValid`,
-    async (dataProvider) => {
-      if (dataProvider.isValid) {
-        await expect(
-          validator.validate(dataProvider.dto)
-        ).resolves.not.toThrow();
-      } else {
-        await expect(validator.validate(dataProvider.dto)).rejects.toThrowError(
-          new Error(dataProvider.errorMessage)
-        );
-      }
+  it.each(dataProviders)(`$# Should be valid: $isValid`, async dataProvider => {
+    if (dataProvider.isValid) {
+      await expect(validator.validate(dataProvider.dto)).resolves.not.toThrow();
+    } else {
+      await expect(validator.validate(dataProvider.dto)).rejects.toThrowError(new Error(dataProvider.errorMessage as string));
     }
-  );
+  });
 });
