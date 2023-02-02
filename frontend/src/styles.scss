@@ -83,6 +83,10 @@ val-errors > div {
   animation: opacity-in 600ms ease-out;
 }
 
+.invalid-feedback {
+  display: block;
+}
+
 @keyframes opacity-in {
   from {
     opacity: 0;
