@@ -13,6 +13,7 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
+import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 
 class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryComponent> {
   constructor() {
@@ -54,6 +55,14 @@ class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryCo
   get specificForm() {
     return this.element(FormComponent);
   }
+
+  get save() {
+    return this.button('#save-button')!;
+  }
+
+  get validationErrors() {
+    return this.elements('val-errors div');
+  }
 }
 describe('EditHistoryQueryComponent', () => {
   let tester: EditHistoryQueryComponentTester;
@@ -72,7 +81,7 @@ describe('EditHistoryQueryComponent', () => {
       proxyService = createMock(ProxyService);
 
       TestBed.configureTestingModule({
-        imports: [EditHistoryQueryComponent],
+        imports: [EditHistoryQueryComponent, DefaultValidationErrorsComponent],
         providers: [
           provideTestingI18n(),
           provideRouter([]),
@@ -97,6 +106,8 @@ describe('EditHistoryQueryComponent', () => {
       scanModeService.getScanModes.and.returnValue(of([]));
       proxyService.getProxies.and.returnValue(of([]));
 
+      TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
+
       tester = new EditHistoryQueryComponentTester();
       tester.detectChanges();
     });
@@ -111,6 +122,11 @@ describe('EditHistoryQueryComponent', () => {
 
       expect(scanModeService.getScanModes).toHaveBeenCalledTimes(1);
       expect(proxyService.getProxies).toHaveBeenCalledTimes(1);
+
+      tester.save.click();
+
+      // name, scan mode
+      expect(tester.validationErrors.length).toBe(2);
     });
   });
 

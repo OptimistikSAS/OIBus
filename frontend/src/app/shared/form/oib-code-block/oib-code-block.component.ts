@@ -24,7 +24,6 @@ import { NgIf } from '@angular/common';
 })
 export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccessor {
   @ViewChild('editorContainer') _editorContainer: ElementRef | null = null;
-  @Input() label = '';
   @Input() key = '';
   @Input() contentType = '';
   codeBlockInputCtrl = this.fb.control(null as string | null);

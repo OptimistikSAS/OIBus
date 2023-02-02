@@ -42,7 +42,7 @@ class OibFormComponentTester extends ComponentTester<TestComponent> {
   }
 
   get oibFormInput() {
-    return this.select('#oib-scan-mode-input-myOibScanMode')!;
+    return this.select('#OibScanMode-myOibScanMode')!;
   }
 }
 
