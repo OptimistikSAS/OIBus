@@ -1,6 +1,6 @@
-import JoiValidator from "./joi.validator";
-import { ipFilterSchema } from "../engine/oibus-validation-schema";
-import ValidatorInterface from "./validator.interface";
+import JoiValidator from './joi.validator';
+import { ipFilterSchema } from '../engine/oibus-validation-schema';
+import ValidatorInterface from './validator.interface';
 
 interface DataProvider {
   dto: any;
@@ -11,63 +11,55 @@ interface DataProvider {
 const dataProviders: DataProvider[] = [
   {
     dto: {
-      address1: "missing",
-      description1: "missing",
+      address1: 'missing',
+      description1: 'missing'
     },
     isValid: false,
-    errorMessage:
-      '"address" is required. "description" is required. "address1" is not allowed. "description1" is not allowed',
+    errorMessage: '"address" is required. "description" is required. "address1" is not allowed. "description1" is not allowed'
   },
   {
     dto: {
       address: null,
-      description: null,
+      description: null
     },
     isValid: false,
-    errorMessage: '"address" must be a string',
+    errorMessage: '"address" must be a string'
   },
   {
     dto: {
-      address: "",
-      description: "",
+      address: '',
+      description: ''
     },
     isValid: false,
-    errorMessage: '"address" is not allowed to be empty',
+    errorMessage: '"address" is not allowed to be empty'
   },
   {
     dto: {
-      address: "valid",
-      description: "valid",
-      description1: "invalid",
+      address: 'valid',
+      description: 'valid',
+      description1: 'invalid'
     },
     isValid: false,
-    errorMessage: '"description1" is not allowed',
+    errorMessage: '"description1" is not allowed'
   },
   {
     dto: {
-      address: "valid",
-      description: "valid",
+      address: 'valid',
+      description: 'valid'
     },
     isValid: true,
-    errorMessage: null,
-  },
+    errorMessage: null
+  }
 ];
 
-describe("Ip filter validator", () => {
+describe('Ip filter validator', () => {
   const validator: ValidatorInterface = new JoiValidator(ipFilterSchema);
 
-  it.each(dataProviders)(
-    `$# Should be valid: $isValid`,
-    async (dataProvider) => {
-      if (dataProvider.isValid) {
-        await expect(
-          validator.validate(dataProvider.dto)
-        ).resolves.not.toThrow();
-      } else {
-        await expect(validator.validate(dataProvider.dto)).rejects.toThrowError(
-          new Error(dataProvider.errorMessage)
-        );
-      }
+  it.each(dataProviders)(`$# Should be valid: $isValid`, async dataProvider => {
+    if (dataProvider.isValid) {
+      await expect(validator.validate(dataProvider.dto)).resolves.not.toThrow();
+    } else {
+      await expect(validator.validate(dataProvider.dto)).rejects.toThrowError(new Error(dataProvider.errorMessage as string));
     }
-  );
+  });
 });
