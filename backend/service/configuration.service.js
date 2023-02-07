@@ -1,8 +1,6 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
-
-import EncryptionService from './encryption.service.js'
-import { filesExists } from './utils.js'
+import {filesExists} from './utils.js'
 import defaultConfig from '../config/default-config.json'
 
 const KEYS_FOLDER = './keys'
@@ -20,8 +18,7 @@ export default class ConfigurationService {
    * @param {String} cacheFolder - The cache folder to use
    * @return {void}
    */
-  constructor(configFilePath, cacheFolder) {
-    this.encryptionService = EncryptionService.getInstance()
+  constructor(configFilePath, cacheFolder ) {
     this.configFilePath = path.resolve(configFilePath)
     this.cacheFolder = path.resolve(cacheFolder)
 
@@ -83,14 +80,6 @@ export default class ConfigurationService {
    * @returns {Promise<void>} - The result promise
    */
   async updateConfig(newConfig) {
-    await this.encryptionService.encryptSecrets(newConfig.engine)
-
-    await newConfig.north.reduce((promise, north) => promise.then(
-      async () => this.encryptionService.encryptSecrets(north),
-    ), Promise.resolve())
-    await newConfig.south.reduce((promise, south) => promise.then(
-      async () => this.encryptionService.encryptSecrets(south),
-    ), Promise.resolve())
     this.modifiedConfig = newConfig
   }
 
