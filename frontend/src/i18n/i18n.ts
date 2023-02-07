@@ -2,15 +2,28 @@ import { ENVIRONMENT_INITIALIZER, importProvidersFrom, inject, LOCALE_ID } from 
 import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { WebpackTranslateLoader } from './webpack-translate-loader';
 
-export const LANGUAGES = ['fr', 'en'];
-export type Language = typeof LANGUAGES[number];
+import { DEFAULT_TZ, Language, Timezone } from '../../../shared/model/types';
+
 const languageKey = 'oibus-language';
+const timezoneKey = 'oibus-timezone';
 
 /**
  * Retrieves the language from the local storage or return 'en'.
  */
 export function languageToUse(): Language {
   return localStorage.getItem(languageKey) || 'en';
+}
+
+export function storeLanguage(language: Language) {
+  localStorage.setItem(languageKey, language);
+}
+
+export function timezoneToUse(): Timezone {
+  return localStorage.getItem(timezoneKey) || DEFAULT_TZ;
+}
+
+export function storeTimezone(timezone: Timezone) {
+  localStorage.setItem(timezoneKey, timezone);
 }
 
 /**
