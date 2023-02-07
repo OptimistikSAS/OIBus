@@ -72,12 +72,25 @@
     }
   },
   "nav": {
+    "home": "Home",
     "engine": "Engine",
     "north-list": "North",
     "south-list": "South",
     "history-queries": "History",
     "logs": "Logs",
-    "about": "About"
+    "about": "About",
+    "version": "Version {{ version }}",
+    "account": {
+      "logout": "Logout",
+      "settings": "Settings"
+    }
+  },
+  "login": {
+    "title": "Sign in",
+    "login": "Login",
+    "password": "Password",
+    "login-button": "Sumit",
+    "login-error": "Invalid username or password"
   },
   "home": {
     "welcome": "Welcome to OiBus"
