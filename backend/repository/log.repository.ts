@@ -25,7 +25,7 @@ export default class LogRepository {
   searchLogs(searchParams: LogSearchParam): Page<LogDTO> {
     const queryParams = [];
     let whereClause = `WHERE timestamp BETWEEN ? AND ? `;
-    queryParams.push(searchParams.start, searchParams.end, ...searchParams.levels);
+    queryParams.push(searchParams.start, searchParams.end);
     if (searchParams.levels.length > 0) {
       whereClause += `AND level IN (${searchParams.levels.map(() => '?')})`;
       queryParams.push(...searchParams.levels);

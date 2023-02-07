@@ -1,16 +1,17 @@
-import { Context, Request } from 'koa';
+import Koa, { Context, Request } from 'koa';
 import RepositoryService from '../service/repository.service';
 import pino from 'pino';
+import EncryptionService from '../service/encryption.service';
 import Logger = pino.Logger;
-import * as Application from 'koa';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
 }
 
-interface KoaApplication extends Application {
+export interface KoaApplication extends Koa {
   id: string;
   repositoryService: RepositoryService;
+  encryptionService: EncryptionService;
   logger: Logger;
 }
 
