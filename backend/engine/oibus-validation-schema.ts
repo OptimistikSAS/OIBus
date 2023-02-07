@@ -65,5 +65,13 @@ const ipFilterSchema: Joi.ObjectSchema = Joi.object({
   address: Joi.string().required(),
   description: Joi.string().required().allow(null, '')
 });
+const userSchema: Joi.ObjectSchema = Joi.object({
+  login: Joi.string().required().min(4),
+  firstName: Joi.string().optional(),
+  lastName: Joi.string().optional(),
+  email: Joi.string().optional(),
+  language: Joi.string().required(),
+  timezone: Joi.string().required()
+});
 
-export { scanModeSchema, proxySchema, externalSourceSchema, engineSchema, ipFilterSchema };
+export { scanModeSchema, proxySchema, externalSourceSchema, engineSchema, ipFilterSchema, userSchema };

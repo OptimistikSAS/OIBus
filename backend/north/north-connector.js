@@ -1,11 +1,9 @@
 import path from 'node:path'
-
-import EncryptionService from '../service/encryption.service.js'
 import CertificateService from '../service/certificate.service.js'
 import StatusService from '../service/status.service.js'
 import ValueCache from '../service/cache/value-cache.service.js'
 import FileCache from '../service/cache/file-cache.service.js'
-import { createFolder } from '../service/utils.js'
+import {createFolder} from '../service/utils.js'
 import ArchiveService from '../service/cache/archive.service.js'
 
 /**
@@ -33,6 +31,7 @@ export default class NorthConnector {
    * @param {ProxyService} proxyService - The proxy service
    * @param {Object} logger - The Pino child logger to use
    * @param {Object} manifest - The associated manifest
+   * @param {EncryptionService} encryptionService - The encryption service
    * @return {void}
    */
   constructor(
@@ -40,6 +39,7 @@ export default class NorthConnector {
     proxyService,
     logger,
     manifest,
+    encryptionService
   ) {
     this.manifest = manifest
     this.connected = false
@@ -51,7 +51,7 @@ export default class NorthConnector {
     this.cacheSettings = configuration.caching
     this.subscribedTo = configuration.subscribedTo
 
-    this.encryptionService = EncryptionService.getInstance()
+    this.encryptionService = encryptionService
     this.proxyService = proxyService
     this.logger = logger
 
@@ -113,7 +113,7 @@ export default class NorthConnector {
     await this.archiveService.start()
 
     this.certificate = new CertificateService(this.logger)
-    await this.certificate.init(this.keyFile, this.certFile, this.caFile)
+    await this.certificate.init({ privateKeyFilePath: this.keyFile, certFilePath:  this.certFile, caFilePath: this.caFile })
 
     this.statusService.updateStatusDataStream({
       'Number of values sent since OIBus has started': this.manifest.modes.points ? 0 : undefined,
