@@ -114,7 +114,7 @@ class LoggerService {
   /**
    * Create a child logger from the main logger already set up
    * @param {String} scope - The scope of the logger (Engine, South, North...)
-   * @returns {Object} - The child logger
+   * @returns {pino.Logger} - The child logger
    */
   createChildLogger(scope) {
     return this.logger.child({ scope })

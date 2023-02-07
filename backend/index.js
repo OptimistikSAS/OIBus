@@ -4,7 +4,7 @@ import path from 'node:path'
 import { version } from './package.json'
 import migrationService from './migration/migration.service.js'
 import ConfigurationService from './service/configuration.service.js'
-import Server from './web-server/web-server.js'
+import WebServer from './web-server/web-server.js'
 import OIBusEngine from './engine/oibus-engine.js'
 import HistoryQueryEngine from './engine/history-query-engine.js'
 import LoggerService from './service/logger/logger.service.js'
@@ -124,9 +124,7 @@ if (cluster.isMaster) {
     await migrationService(configFilePath, loggerService.createChildLogger('migration'))
 
     const configService = new ConfigurationService(configFilePath, CACHE_FOLDER)
-    const encryptionService = EncryptionService.getInstance()
-    encryptionService.setKeyFolder(configService.keyFolder)
-    encryptionService.setCertsFolder(configService.certFolder)
+    const encryptionService = new EncryptionService(configService.keyFolder, configService.certFolder)
     await encryptionService.checkOrCreatePrivateKey()
     await encryptionService.checkOrCreateCertFiles()
     await configService.init()
@@ -140,7 +138,7 @@ if (cluster.isMaster) {
 
     const oibusEngine = new OIBusEngine(version, configService, encryptionService, oibusLoggerService)
     const historyQueryEngine = new HistoryQueryEngine(version, configService, encryptionService, oibusLoggerService)
-    const server = new Server(
+    const server = new WebServer(
       encryptionService,
       oibusEngine,
       historyQueryEngine,
@@ -158,7 +156,7 @@ if (cluster.isMaster) {
       historyQueryEngine.start(safeMode).then(() => {
         forkLogger.info('History query engine fully started.')
       })
-      server.start().then(() => {
+      server.start(engineConfig.id, engineConfig.port).then(() => {
         forkLogger.info('OIBus web server fully started.')
       })
     }
@@ -195,7 +193,7 @@ if (cluster.isMaster) {
             historyQueryEngine.start(safeMode).then(() => {
               forkLogger.info('History engine fully started.')
             })
-            server.start().then(() => {
+            server.start(newEngineConfig.id, newEngineConfig.port).then(() => {
               forkLogger.info('OIBus web server fully started.')
             })
           }

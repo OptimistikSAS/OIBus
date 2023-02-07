@@ -2,7 +2,10 @@ import { KoaContext } from '../koa';
 import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../../../shared/model/engine.model';
 import AbstractController from './abstract.controller';
 
-export default class ApiController extends AbstractController {
+const DELAY_RELOAD = 1000;
+const DELAY_SHUTDOWN = 1000;
+
+export default class OibusController extends AbstractController {
   async getEngineSettings(ctx: KoaContext<void, EngineSettingsDTO>): Promise<void> {
     const settings = ctx.app.repositoryService.engineRepository.getEngineSettings();
     if (settings) {
@@ -20,5 +23,27 @@ export default class ApiController extends AbstractController {
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
+  }
+
+  async restart(ctx: KoaContext<void, void>): Promise<void> {
+    setTimeout(() => {
+      // TODO: restart oibus
+      ctx.app.logger.info('Restarting OIBus');
+      // Ask the Master Cluster to reload
+      // process.send({ type: 'reload' });
+    }, DELAY_RELOAD);
+
+    ctx.noContent();
+  }
+
+  async shutdown(ctx: KoaContext<void, void>): Promise<void> {
+    setTimeout(() => {
+      // TODO: shutdown oibus
+      ctx.app.logger.info('Shutting down OIBus');
+      // Ask the Master Cluster to shut down
+      // process.send({ type: 'shutdown' });
+    }, DELAY_SHUTDOWN);
+
+    ctx.noContent();
   }
 }

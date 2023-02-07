@@ -15,7 +15,6 @@
         "plugin:import/recommended",
         "plugin:import/typescript",
         "plugin:@typescript-eslint/recommended",
-        "plugin:@typescript-eslint/recommended",
         "plugin:prettier/recommended"
       ],
       "plugins": ["ban", "deprecation"],
@@ -32,54 +31,10 @@
           {"name": "fdescribe", "message": "Do not use focused test suites (fdescribe)"}
         ],
         "deprecation/deprecation": "error",
-        "no-console": "error",
+        "no-console": ["error", { "allow": ["warn", "error"] }],
         "no-restricted-imports": [
           "error"
         ]
-      }
-    },
-    {
-      "files": ["*.js"],
-      "env": {
-        "es6": true,
-        "browser": true,
-        "node": true,
-        "jest": true
-      },
-      "parser": "@babel/eslint-parser",
-      "parserOptions": {
-        "sourceType": "module",
-        "ecmaFeatures": {
-          "js": true
-        }
-      },
-      "rules": {
-        "valid-jsdoc": "error",
-        "no-unused-vars": [
-          "error",
-          {
-            "argsIgnorePattern": "^_"
-          }
-        ],
-        "no-console": [
-          "warn",
-          {
-            "allow": ["warn", "error", "info", "table"]
-          }
-        ],
-        "linebreak-style": 0,
-        "object-curly-newline": ["error", { "multiline": true }],
-        "no-param-reassign": ["error", { "props": false }],
-        "max-len": ["error", { "code": 150 }],
-        "semi": ["error", "never"],
-        "import/extensions": [
-          "off",
-          "ignorePackages"
-        ],
-        "import/no-unresolved": [
-          "off"
-        ],
-        "arrow-parens": ["error", "always"]
       }
     }
   ]

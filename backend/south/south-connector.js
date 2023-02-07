@@ -1,10 +1,8 @@
 import path from 'node:path'
-
-import EncryptionService from '../service/encryption.service.js'
-import { createConfigDatabase, getConfig, upsertConfig } from '../service/database.service.js'
+import {createConfigDatabase, getConfig, upsertConfig} from '../service/database.service.js'
 import CertificateService from '../service/certificate.service.js'
 import StatusService from '../service/status.service.js'
-import { generateIntervals, delay, createFolder } from '../service/utils.js'
+import {createFolder, delay, generateIntervals} from '../service/utils.js'
 
 const CACHE_DB_FILE_NAME = 'cache.db'
 
@@ -39,6 +37,7 @@ export default class SouthConnector {
    * @param {Function} engineAddFilesCallback - The Engine add file callback
    * @param {Object} logger - The Pino child logger to use
    * @param {Object} manifest - The associated manifest
+   * @param {EncryptionService} encryptionService - The encryption service
    * @return {void}
    */
   constructor(
@@ -48,6 +47,7 @@ export default class SouthConnector {
     engineAddFilesCallback,
     logger,
     manifest,
+    encryptionService
   ) {
     this.manifest = manifest
     this.engineAddValuesCallback = engineAddValuesCallback
@@ -63,7 +63,7 @@ export default class SouthConnector {
     this.points = configuration.points
     this.scanGroups = configuration.settings.scanGroups
 
-    this.encryptionService = EncryptionService.getInstance()
+    this.encryptionService = encryptionService
     this.proxyService = proxyService
     this.logger = logger
 
@@ -97,7 +97,7 @@ export default class SouthConnector {
     this.statusService = new StatusService()
 
     this.certificate = new CertificateService(this.logger)
-    await this.certificate.init(this.keyFile, this.certFile, this.caFile)
+    await this.certificate.init({ privateKeyFilePath: this.keyFile, certFilePath:  this.certFile, caFilePath: this.caFile })
 
     await createFolder(this.baseFolder)
     this.southDatabase = createConfigDatabase(path.resolve(this.baseFolder, CACHE_DB_FILE_NAME))
