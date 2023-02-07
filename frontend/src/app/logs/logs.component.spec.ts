@@ -84,23 +84,24 @@ describe('LogsComponent', () => {
     tick();
     tester.detectChanges();
 
+    // Default timezone is Europe/Paris
     expect(logService.searchLogs).toHaveBeenCalledWith({
       messageContent: null,
       scope: null,
-      start: '2023-01-01T00:00:00.000Z',
-      end: '2023-03-01T00:00:00.000Z',
+      start: '2022-12-31T23:00:00.000Z',
+      end: '2023-02-28T23:00:00.000Z',
       levels: ['info', 'error'],
       page: 2
     });
     expect(tester.logs.length).toBe(2);
 
     expect(tester.logs[0].elements('td').length).toBe(4);
-    expect(tester.logs[0].elements('td')[0]).toContainText('1 Jan 2023, 00:00:00');
+    expect(tester.logs[0].elements('td')[0]).toContainText('1 Jan 2023, 01:00:00');
     expect(tester.logs[0].elements('td')[1]).toContainText('Error');
     expect(tester.logs[0].elements('td')[2]).toContainText('engine');
     expect(tester.logs[0].elements('td')[3]).toContainText('my log 1');
 
-    expect(tester.logs[1].elements('td')[0]).toContainText('2 Jan 2023, 00:00:00');
+    expect(tester.logs[1].elements('td')[0]).toContainText('2 Jan 2023, 01:00:00');
     expect(tester.logs[1].elements('td')[1]).toContainText('Error');
     expect(tester.logs[1].elements('td')[2]).toContainText('engine');
     expect(tester.logs[1].elements('td')[3]).toContainText('my log 2');
