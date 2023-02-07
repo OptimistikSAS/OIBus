@@ -1,8 +1,8 @@
 module.exports = {
   rootDir: '../',
   coverageDirectory: './tests/coverage',
-  transform: { '^.+\\.ts?$': 'ts-jest' },
+  transform: { '^.+\\.(ts|js)?$': 'ts-jest' },
   testEnvironment: 'node',
   testRegex: '.*\\.(test|spec)?\\.(ts|tsx)$',
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'json', 'node']
 }

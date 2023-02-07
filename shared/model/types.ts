@@ -4,7 +4,10 @@ export type LocalTime = string;
 export type LocalDateTime = string;
 export type Timezone = string;
 
-export const DEFAULT_TZ: Timezone = 'Etc/UTC';
+export const DEFAULT_TZ: Timezone = 'Europe/Paris';
+
+export const LANGUAGES = ['fr', 'en'];
+export type Language = typeof LANGUAGES[number];
 
 export interface Page<T> {
   /**

@@ -26,17 +26,20 @@ export default class SouthItemRepository {
    * Retrieve all South items (point, query, folder...) associated to a South connector
    */
   searchSouthItems(southId: string, searchParams: SouthItemSearchParam): Page<SouthItemDTO> {
+    const queryParams = [];
     let whereClause = `WHERE south_id = ?`;
 
     if (searchParams.name) {
+      queryParams.push(searchParams.name);
       whereClause += ` AND name like '%${searchParams.name}%'`;
     }
+    queryParams.push(southId);
     const query =
       `SELECT id, name, south_id AS southId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEM_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
     const results = this.database
       .prepare(query)
-      .all(southId)
+      .all(...queryParams)
       .map(result => ({
         id: result.id,
         name: result.name,
