@@ -1,10 +1,10 @@
 <nav class="navbar navbar-dark navbar-expand oi-navbar-top">
   <a class="navbar-brand" routerLink="/">
-    <img src="/frontend/assets/logo-oibus.png" alt="logo" style="height: 24px; margin: 5px; padding-left: 5px" />
+    <img src="/assets/logo-oibus.png" alt="logo" style="height: 24px; margin: 5px; padding-left: 5px" />
   </a>
   <div id="navbar" class="navbar-collapse collapse">
-    <ng-container>
-      <ul class="navbar-nav mr-auto d-none d-lg-flex">
+    <ng-container *ngIf="user">
+      <ul class="navbar-nav me-auto d-none d-md-flex">
         <li class="nav-item">
           <a class="nav-link" routerLink="/engine" translate="nav.engine"></a>
         </li>
@@ -22,6 +22,50 @@
         </li>
         <li class="nav-item">
           <a class="nav-link" routerLink="/about" translate="nav.about"></a>
+        </li>
+
+        <li class="nav-item" ngbDropdown>
+          <a class="nav-link" ngbDropdownToggle role="button" href="#" (click)="$event.preventDefault()" id="accountDropDown"
+            ><span class="fa fa-user"></span
+          ></a>
+          <div ngbDropdownMenu aria-labelledby="accountDropDown">
+            <a class="dropdown-item" role="button" (click)="logout(); $event.preventDefault()" translate="nav.account.logout"></a>
+          </div>
+        </li>
+      </ul>
+      <ul class="navbar-nav d-none d-md-flex me-2">
+        <li>
+          <span class="navbar-text" id="navbar-version" translate="nav.version"></span>
+        </li>
+      </ul>
+      <ul class="navbar-nav d-none d-md-flex me-2" *ngIf="user">
+        <li>
+          <span class="navbar-text" id="user-login"> {{ user.login }} </span>
+        </li>
+      </ul>
+
+      <ul class="navbar-nav ms-auto d-md-none">
+        <li class="nav-item" ngbDropdown>
+          <a class="nav-link" ngbDropdownToggle role="button" href="#" (click)="$event.preventDefault()" id="mainMobileDropDown">
+            <span class="fa fa-ellipsis-h fa-fw"></span>
+          </a>
+          <div ngbDropdownMenu aria-labelledby="mainMobileDropDown" class="dropdown-menu-right">
+            <a class="dropdown-item" routerLink="/" translate="nav.home"></a>
+            <a class="dropdown-item" routerLink="/engine" translate="nav.engine"></a>
+            <a class="dropdown-item" routerLink="/north" translate="nav.north-list"></a>
+            <a class="dropdown-item" routerLink="/south" translate="nav.south-list"></a>
+            <a class="dropdown-item" routerLink="/history-queries" translate="nav.history-queries"></a>
+            <a class="dropdown-item" routerLink="/logs" translate="nav.logs"></a>
+            <a class="dropdown-item" routerLink="/about" translate="nav.about"></a>
+          </div>
+        </li>
+        <li class="nav-item" ngbDropdown>
+          <a class="nav-link" ngbDropdownToggle role="button" id="accountMobileDropDown" tabindex="0"
+            ><span class="fa fa-user fa-fw"></span
+          ></a>
+          <div ngbDropdownMenu aria-labelledby="accountMobileDropDown" class="dropdown-menu-right">
+            <a class="dropdown-item" role="button" (click)="logout(); $event.preventDefault()" translate="nav.account.logout"></a>
+          </div>
         </li>
       </ul>
     </ng-container>

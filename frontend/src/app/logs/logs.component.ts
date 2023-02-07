@@ -96,7 +96,7 @@ export class LogsComponent implements OnInit, OnDestroy {
   }
 
   toSearchParams(route: ActivatedRoute): LogSearchParam {
-    const now = DateTime.utc().endOf('minute');
+    const now = DateTime.now().endOf('minute');
     const queryParamMap = route.snapshot.queryParamMap;
     const messageContent = queryParamMap.get('content');
     const scope = queryParamMap.get('scope');
