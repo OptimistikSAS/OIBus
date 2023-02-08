@@ -30,9 +30,9 @@ const addLogs = async (ctx: KoaContext<LogStreamCommandDTO, void>) => {
       myStream?.values.forEach(value => {
         const formattedLog = {
           oibus: myStream.stream.oibus,
-          time: new Date(value[0] / 1000000),
-          scope: `${myStream.stream.oibus}:${myStream.stream.scope}`,
-          msg: value[1] as string
+          time: new Date(parseInt(value[0]) / 1000000),
+          scope: myStream.stream.scope,
+          msg: value[1]
         };
         switch (myStream.stream.level) {
           case 'trace':
