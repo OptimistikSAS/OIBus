@@ -50,7 +50,7 @@ if (cluster.isMaster) {
     // Create the base cache folder
     await createFolder(CACHE_FOLDER)
 
-    await loggerService.start('OIBus-main', logParameters)
+    await loggerService.start('OIBus-main', logParameters, MAIN_LOG_FILE_NAME)
     const mainLogger = loggerService.createChildLogger('main-thread')
     // Master role is nothing except launching a worker and relaunching another
     // one if exit is detected (typically to load a new configuration)
@@ -132,8 +132,7 @@ if (cluster.isMaster) {
     const safeMode = process.env.SAFE_MODE === 'true'
 
     const { engineConfig } = configService.getConfig()
-    const oibusLoggerService = new LoggerService()
-    oibusLoggerService.setEncryptionService(encryptionService)
+    const oibusLoggerService = new LoggerService(encryptionService)
     await oibusLoggerService.start(engineConfig.name, engineConfig.logParameters)
 
     const oibusEngine = new OIBusEngine(version, configService, encryptionService, oibusLoggerService)
