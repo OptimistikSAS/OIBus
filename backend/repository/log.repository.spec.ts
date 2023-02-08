@@ -5,9 +5,6 @@ import { LogDTO } from '../../shared/model/logs.model';
 import { Database } from 'better-sqlite3';
 
 jest.mock('../tests/__mocks__/database.mock');
-jest.mock('./utils', () => ({
-  generateRandomId: jest.fn(() => '123456')
-}));
 
 let database: Database;
 let repository: LogRepository;

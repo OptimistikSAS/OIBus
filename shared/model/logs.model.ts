@@ -11,7 +11,7 @@ export interface LogDTO {
 }
 
 export interface LogStreamValuesCommandDTO {
-  values: Array<[number, string]>;
+  values: Array<[string, string]>;
   stream: {
     level: LogLevel;
     oibus: string;
