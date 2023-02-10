@@ -13,20 +13,21 @@ jest.mock('node:fs/promises');
 jest.mock('node:crypto');
 jest.mock('selfsigned');
 
-const keyFolder = 'myTestKeys';
-const certsFolder = 'myTestCerts';
+const securityFolder = 'securityFolder';
+const keyFolder = 'keys';
+const certsFolder = 'certs';
 let encryptionService: EncryptionService;
 
 describe('Encryption service', () => {
   beforeEach(() => {
     jest.resetAllMocks();
 
-    encryptionService = new EncryptionService(keyFolder, certsFolder);
+    encryptionService = new EncryptionService(securityFolder);
   });
 
   it('should properly initialized encryption service', () => {
-    expect(encryptionService.keyFolder).toEqual(keyFolder);
-    expect(encryptionService.certsFolder).toEqual(certsFolder);
+    expect(encryptionService.keyFolder).toEqual(path.resolve(securityFolder, keyFolder));
+    expect(encryptionService.certsFolder).toEqual(path.resolve(securityFolder, certsFolder));
     expect(encryptionService.privateKey).toEqual('');
     expect(encryptionService.publicKey).toEqual('');
   });
@@ -35,9 +36,9 @@ describe('Encryption service', () => {
     (utils.filesExists as jest.Mock).mockReturnValue(true);
 
     await encryptionService.checkOrCreatePrivateKey();
-    expect(utils.createFolder).toHaveBeenCalledWith(keyFolder);
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(keyFolder, 'private.pem'));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(keyFolder, 'public.pem'));
+    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder));
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder, 'private.pem'));
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder, 'public.pem'));
     expect(crypto.generateKeyPairSync).not.toHaveBeenCalled();
     expect(fs.writeFile).not.toHaveBeenCalled();
   });
@@ -47,8 +48,8 @@ describe('Encryption service', () => {
     (crypto.generateKeyPairSync as jest.Mock).mockReturnValue({ privateKey: 'myPrivateKey', publicKey: 'myPublicKey' });
 
     await encryptionService.checkOrCreatePrivateKey();
-    expect(utils.createFolder).toHaveBeenCalledWith(keyFolder);
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(keyFolder, 'private.pem'));
+    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder));
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder, 'private.pem'));
     expect(crypto.generateKeyPairSync).toHaveBeenCalledWith('rsa', {
       modulusLength: 4096,
       publicKeyEncoding: {
@@ -62,18 +63,18 @@ describe('Encryption service', () => {
         passphrase: ''
       }
     });
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(keyFolder, 'private.pem'), 'myPrivateKey');
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(keyFolder, 'public.pem'), 'myPublicKey');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder, 'private.pem'), 'myPrivateKey');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder, 'public.pem'), 'myPublicKey');
   });
 
   it('should not create certificate if it already exists', async () => {
     (utils.filesExists as jest.Mock).mockReturnValue(true);
 
     await encryptionService.checkOrCreateCertFiles();
-    expect(utils.createFolder).toHaveBeenCalledWith(certsFolder);
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certsFolder, 'privateKey.pem'));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certsFolder, 'publicKey.pem'));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certsFolder, 'cert.pem'));
+    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder));
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder, 'privateKey.pem'));
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder, 'publicKey.pem'));
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder, 'cert.pem'));
     expect(selfSigned.generate).not.toHaveBeenCalled();
     expect(fs.writeFile).not.toHaveBeenCalled();
   });
@@ -83,8 +84,8 @@ describe('Encryption service', () => {
     (selfSigned.generate as jest.Mock).mockReturnValue({ private: 'myPrivateKey', public: 'myPublicKey', cert: 'myCert' });
 
     await encryptionService.checkOrCreateCertFiles();
-    expect(utils.createFolder).toHaveBeenCalledWith(certsFolder);
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(certsFolder, 'privateKey.pem'));
+    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder));
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder, 'privateKey.pem'));
     expect(selfSigned.generate).toHaveBeenCalledWith(
       [
         { name: 'commonName', value: 'OIBus' },
@@ -133,9 +134,9 @@ describe('Encryption service', () => {
         ]
       }
     );
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certsFolder, 'privateKey.pem'), 'myPrivateKey');
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certsFolder, 'publicKey.pem'), 'myPublicKey');
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(certsFolder, 'cert.pem'), 'myCert');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder, 'privateKey.pem'), 'myPrivateKey');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder, 'publicKey.pem'), 'myPublicKey');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder, 'cert.pem'), 'myCert');
   });
 
   it('should properly encrypt text', async () => {
@@ -149,7 +150,7 @@ describe('Encryption service', () => {
 
     expect(encryptedText).toEqual(expectedResult);
     expect(crypto.publicEncrypt).toHaveBeenCalledWith(myPublicKey, Buffer.from(myPlainText, 'utf8'));
-    expect(fs.readFile).toHaveBeenCalledWith(path.resolve(keyFolder, 'public.pem'), 'utf8');
+    expect(fs.readFile).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder, 'public.pem'), 'utf8');
   });
 
   it('should properly decrypt text', async () => {
@@ -170,7 +171,7 @@ describe('Encryption service', () => {
       },
       Buffer.from(myEncryptedText, 'base64')
     );
-    expect(fs.readFile).toHaveBeenCalledWith(path.resolve(keyFolder, 'private.pem'), 'utf8');
+    expect(fs.readFile).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder, 'private.pem'), 'utf8');
   });
 
   it('should encrypt secrets', async () => {

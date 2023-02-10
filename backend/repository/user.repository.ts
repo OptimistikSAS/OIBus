@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import { Database } from 'better-sqlite3';
 
-import { generateRandomId, SALT } from './utils';
+import { generateRandomId, SALT } from '../service/utils';
 import { User, UserCommandDTO, UserLight, UserSearchParam } from '../../shared/model/user.model';
 import { Page } from '../../shared/model/types';
 

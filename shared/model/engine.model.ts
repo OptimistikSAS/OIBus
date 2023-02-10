@@ -1,13 +1,13 @@
 export const AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key'];
 export type AuthenticationType = typeof AUTHENTICATION_TYPES[number];
 
-interface Authentication {
+export interface Authentication {
   type: AuthenticationType;
   key: string;
   secret: string;
 }
 
-export const LOG_LEVELS = ['silent', 'error', 'warning', 'info', 'debug', 'trace'];
+export const LOG_LEVELS = ['silent', 'error', 'warn', 'info', 'debug', 'trace'];
 export type LogLevel = typeof LOG_LEVELS[number];
 
 /**

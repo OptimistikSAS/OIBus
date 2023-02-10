@@ -18,7 +18,7 @@
     "build:linux": "npm run internal:build:lib-linux && rimraf ../build/bin/linux && pkg ./dist/backend/index.js --public --compress GZip --config package.json --output ../build/bin/linux/oibus --target node16-linux-x64 && ncp ../build/deps/linux ../build/bin/linux && ncp ./config/default-config.json ../build/bin/linux/default-config.json",
     "build:win-setup": "rimraf ../build/bin/win/win-setup-release && C:\\\"Program Files (x86)\"\\\"Inno Setup 6\"\\iscc.exe \"../build/deps/win/setup.iss\" \"/DMyAppVersion=\"%npm_package_version% \"/DMyCertFile=\"%PFX_PATH% \"/DMyCertPassword=\"%PFX_PASSWORD% \"/ssigntool=../build/deps/signtool/signtool.exe sign /debug $p\"",
     "start": "tsc --sourceMap --project tsconfig.app.json && npm run start:backend",
-    "start:backend": "node ./dist/backend/index.js --config ../data-folder/oibus.json",
+    "start:backend": "node ./dist/backend/index.js --config ../data-folder",
     "test": "jest --config=tests/jest-ts.config.js --coverage",
     "test:setup-env": "docker-compose --file ./tests/docker-compose.yml --env-file ./tests/.env.test up -d",
     "test:integration": "jest --config=jest-config.js --testPathPattern='.*\\.test\\.js$'",

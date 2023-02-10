@@ -18,7 +18,10 @@ export default class OibusController extends AbstractController {
   async updateEngineSettings(ctx: KoaContext<EngineSettingsCommandDTO, void>): Promise<void> {
     try {
       await this.validate(ctx.request.body);
+      const oldEngineSettings = ctx.app.repositoryService.engineRepository.getEngineSettings();
       ctx.app.repositoryService.engineRepository.updateEngineSettings(ctx.request.body as EngineSettingsCommandDTO);
+      const newEngineSettings = ctx.app.repositoryService.engineRepository.getEngineSettings();
+      await ctx.app.reloadService.onUpdateOibusSettings(oldEngineSettings, newEngineSettings!);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
