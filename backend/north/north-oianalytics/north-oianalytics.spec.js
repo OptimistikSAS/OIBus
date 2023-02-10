@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
 
-import OIAnalytics from './north-oianalytics.js'
+import OIAnalytics from './north-oianalytics.ts'
 
 import * as httpRequestStaticFunctions from '../../service/http-request-static-functions.js'
 
@@ -70,7 +70,7 @@ describe('NorthOIAnalytics', () => {
       subscribedTo: [],
     }
     north = new OIAnalytics(configuration, proxyService, logger)
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
   })
 
   it('should be properly initialized', () => {

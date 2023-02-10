@@ -138,8 +138,8 @@ describe('SouthOPCUADA', () => {
 
   it('should properly connect to OPCUA server with certificate', async () => {
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout')
-    await south.start('baseFolder', 'oibusName', {})
-    const expectedOptions = {
+    await south.start()
+      const expectedOptions = {
       applicationName: 'OIBus',
       clientName: 'southId',
       connectionStrategy: {

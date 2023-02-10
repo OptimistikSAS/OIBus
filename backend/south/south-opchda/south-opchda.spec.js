@@ -254,8 +254,8 @@ describe('South OPCHDA', () => {
   })
 
   it('should properly disconnect when connected', async () => {
-    await south.start('baseFolder', 'oibusName', {})
-    await south.runTcpServer()
+    await south.start()
+      await south.runTcpServer()
     south.agentConnected = true
 
     south.reconnectTimeout = jest.fn()
@@ -272,8 +272,8 @@ describe('South OPCHDA', () => {
   })
 
   it('should send init message', async () => {
-    await south.start('baseFolder', 'oibusName', {})
-    south.sendTCPMessageToHdaAgent = jest.fn()
+    await south.start()
+      south.sendTCPMessageToHdaAgent = jest.fn()
     south.generateTransactionId = jest.fn(() => 1234)
 
     await south.sendInitializeMessage()
@@ -297,8 +297,8 @@ describe('South OPCHDA', () => {
   })
 
   it('should send read message', async () => {
-    await south.start('baseFolder', 'oibusName', {})
-    south.sendTCPMessageToHdaAgent = jest.fn()
+    await south.start()
+      south.sendTCPMessageToHdaAgent = jest.fn()
     south.generateTransactionId = jest.fn(() => 1234)
 
     const startTime = new Date('2020-01-01T00:00:00.000Z')
@@ -318,8 +318,8 @@ describe('South OPCHDA', () => {
   })
 
   it('should send stop message', async () => {
-    await south.start('baseFolder', 'oibusName', {})
-    south.sendTCPMessageToHdaAgent = jest.fn()
+    await south.start()
+      south.sendTCPMessageToHdaAgent = jest.fn()
     south.generateTransactionId = jest.fn(() => 1234)
 
     await south.sendStopMessage()
@@ -337,9 +337,9 @@ describe('South OPCHDA', () => {
   })
 
   it('should send TCP message', async () => {
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start()
 
-    south.agentConnected = true
+      south.agentConnected = true
     south.tcpServer = { sendMessage: jest.fn() }
 
     await south.sendTCPMessageToHdaAgent({ message: 'myMessage' })
@@ -349,9 +349,9 @@ describe('South OPCHDA', () => {
 
   it('should not send TCP message and try to reconnect', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
-    await south.start('baseFolder', 'oibusName', {})
+    await south.start()
 
-    south.disconnect = jest.fn()
+      south.disconnect = jest.fn()
     south.connect = jest.fn()
     south.agentConnected = false
     south.tcpServer = { sendMessage: jest.fn() }
@@ -461,8 +461,8 @@ describe('South OPCHDA', () => {
   })
 
   it('should handle Read message when the scan group is not found', async () => {
-    await south.start('baseFolder', 'oibusName', {})
-    const receivedMessage = { Reply: 'Read', Content: { Group: 'myScanMode', Points: [{}] } }
+    await south.start()
+      const receivedMessage = { Reply: 'Read', Content: { Group: 'myScanMode', Points: [{}] } }
     south.historyRead$ = { reject: jest.fn() }
 
     await south.handleTcpHdaAgentMessages(JSON.stringify(receivedMessage))
@@ -470,8 +470,8 @@ describe('South OPCHDA', () => {
   })
 
   it('should handle Read message and cache values', async () => {
-    await south.start('baseFolder', 'oibusName', {})
-    const receivedMessage = {
+    await south.start()
+      const receivedMessage = {
       Reply: 'Read',
       Content: {
         Group: 'every10Second',

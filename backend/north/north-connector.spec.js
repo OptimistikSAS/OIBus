@@ -57,7 +57,7 @@ describe('NorthConnector', () => {
       },
     }
     north = new NorthConnector(configuration, {}, logger, manifest)
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
   })
 
   afterEach(() => {
