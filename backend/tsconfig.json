@@ -4,11 +4,11 @@
     "baseUrl": "./",
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitOverride": false, // true
+    "noPropertyAccessFromIndexSignature": false, // true
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false, // true
     "sourceMap": true,
     "declaration": false,
     "downlevelIteration": true,

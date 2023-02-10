@@ -76,9 +76,9 @@ describe('NorthMongoDB', () => {
   })
 
   it('should properly connect and disconnect', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    expect(north.manifest.modes.points).toBeTruthy()
+      expect(north.manifest.modes.points).toBeTruthy()
     expect(north.manifest.modes.files).toBeFalsy()
 
     const mongoDatabase = {
@@ -109,9 +109,9 @@ describe('NorthMongoDB', () => {
   })
 
   it('should fail to connect', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    const client = {
+      const client = {
       connect: jest.fn(() => {
         throw new Error('connection error')
       }),
@@ -128,9 +128,9 @@ describe('NorthMongoDB', () => {
   })
 
   it('should fail to list collections', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    const client = {
+      const client = {
       connect: jest.fn(),
       db: jest.fn(() => ({
         listCollections: jest.fn(() => ({
@@ -147,9 +147,9 @@ describe('NorthMongoDB', () => {
   })
 
   it('should properly handle values', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    north.createCollection = true
+      north.createCollection = true
 
     const insertManyFunction = jest.fn()
     const mongoDatabase = {
@@ -197,9 +197,9 @@ describe('NorthMongoDB', () => {
   })
 
   it('should not create collection if it already exists', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    const mongoDatabase = {
+      const mongoDatabase = {
       listCollections: jest.fn(() => ({ toArray: jest.fn(() => ([{ name: 'collection1' }, { name: 'collection2' }])) })),
       collection: jest.fn(() => ({ insertMany: jest.fn(), createIndex: jest.fn() })),
       createCollection: jest.fn(),
@@ -220,9 +220,9 @@ describe('NorthMongoDB', () => {
   })
 
   it('should properly manage collection creation errors', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    north.mongoDatabase = {
+      north.mongoDatabase = {
       collection: jest.fn(() => ({
         insertMany: jest.fn(),
         createIndex: jest.fn(() => {
@@ -257,9 +257,9 @@ describe('NorthMongoDB', () => {
   })
 
   it('should properly handle values with index fields and collection values errors', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    const insertManyFunction = jest.fn()
+      const insertManyFunction = jest.fn()
     const mongoDatabase = {
       listCollections: jest.fn(() => ({ toArray: jest.fn(() => ([{ name: 'collection1' }, { name: 'collection2' }])) })),
       collection: jest.fn(() => ({ insertMany: insertManyFunction, createIndex: jest.fn() })),

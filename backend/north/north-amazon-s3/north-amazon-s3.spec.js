@@ -97,7 +97,7 @@ describe('NorthAmazonS3', () => {
       subscribedTo: [],
     }
     north = new AmazonS3(configuration, proxyService, logger)
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
   })
 
   it('should be properly initialized', () => {
@@ -141,9 +141,9 @@ describe('NorthAmazonS3', () => {
     NodeHttpHandler.mockReturnValueOnce(expectedAgent)
 
     const amazonS3WithProxy = new AmazonS3(amazonS3WithProxyConfig, proxyService, logger)
-    await amazonS3WithProxy.start('baseFolder', 'oibusName')
+    await amazonS3WithProxy.start()
 
-    expect(amazonS3WithProxy.bucket).toEqual(amazonS3WithProxyConfig.settings.bucket)
+      expect(amazonS3WithProxy.bucket).toEqual(amazonS3WithProxyConfig.settings.bucket)
     expect(amazonS3WithProxy.folder).toEqual(amazonS3WithProxyConfig.settings.folder)
 
     expect(S3Client).toHaveBeenCalledWith({
@@ -179,9 +179,9 @@ describe('NorthAmazonS3', () => {
     NodeHttpHandler.mockReturnValueOnce(expectedAgent)
 
     const amazonS3WithProxy = new AmazonS3(amazonS3WithProxyConfig, proxyService, logger)
-    await amazonS3WithProxy.start('baseFolder', 'oibusName')
+    await amazonS3WithProxy.start()
 
-    expect(amazonS3WithProxy.bucket).toEqual(amazonS3WithProxyConfig.settings.bucket)
+      expect(amazonS3WithProxy.bucket).toEqual(amazonS3WithProxyConfig.settings.bucket)
     expect(amazonS3WithProxy.folder).toEqual(amazonS3WithProxyConfig.settings.folder)
 
     expect(S3Client).toHaveBeenCalledWith({

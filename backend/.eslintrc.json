@@ -31,7 +31,7 @@
           {"name": "fdescribe", "message": "Do not use focused test suites (fdescribe)"}
         ],
         "deprecation/deprecation": "error",
-        "no-console": ["error", { "allow": ["info", "warn", "error"] }],
+        "no-console": ["error", { "allow": ["info", "warn", "error", "table"] }],
         "no-restricted-imports": [
           "error"
         ]
