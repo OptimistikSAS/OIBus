@@ -70,8 +70,8 @@ export default class NorthMQTT extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async start(baseFolder, oibusName) {
-    await super.start(baseFolder, oibusName)
-    this.clientId = `${oibusName}-${this.id}`
+    await super.start()
+      this.clientId = `${oibusName}-${this.id}`
   }
 
   /**

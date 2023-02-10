@@ -59,7 +59,7 @@ describe('SouthRest', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString))
 
     utils.formatQueryParams.mockReturnValue('?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z'
-      + '&aggregation=RAW_VALUES&data-reference=SP_003_X')
+        + '&aggregation=RAW_VALUES&data-reference=SP_003_X')
     mainUtils.replaceFilenameWithVariable.mockReturnValue('myFile')
 
     configuration = {
@@ -83,8 +83,8 @@ describe('SouthRest', () => {
         timezone: 'Europe/Paris',
         variableDateFormat: 'ISO',
         authentication: {
-          key: 'user',
-          secret: 'password',
+          username: 'user',
+          password: 'password',
           type: 'Basic',
         },
         queryParams: [
@@ -105,7 +105,6 @@ describe('SouthRest', () => {
             queryParamValue: 'SP_003_X',
           },
         ],
-        body: '',
         acceptSelfSigned: false,
         convertToCsv: true,
         payloadParser: 'Raw',
@@ -117,9 +116,9 @@ describe('SouthRest', () => {
 
   it('should create RestApi connector and connect', async () => {
     databaseService.getConfig.mockReturnValue(null)
-    await south.start('baseFolder', 'oibusName')
+    await south.start()
 
-    expect(south.requestMethod).toEqual(configuration.settings.requestMethod)
+      expect(south.requestMethod).toEqual(configuration.settings.requestMethod)
     expect(south.host).toEqual(configuration.settings.host)
     expect(south.port).toEqual(configuration.settings.port)
     expect(south.endpoint).toEqual(configuration.settings.endpoint)
@@ -145,22 +144,15 @@ describe('SouthRest', () => {
       throw new Error('mkdir error test')
     })
 
-    await south.start('baseFolder', 'oibusName')
+    await south.start()
 
-    expect(south.logger.error).toHaveBeenCalledWith(new Error('mkdir error test'))
+      expect(south.logger.error).toHaveBeenCalledWith(new Error('mkdir error test'))
   })
 
   it('should fail to scan', async () => {
-    fetch.mockReturnValue(Promise.resolve({
-      ok: false,
-      status: 400,
-      text: () => new Promise((resolve) => {
-        resolve(JSON.stringify('error'))
-      }),
-      statusText: 'statusText',
-    }))
-    await south.start('baseFolder', 'oibusName')
-    await south.connect()
+    fetch.mockReturnValue(Promise.resolve({ ok: false, status: 400, statusText: 'statusText' }))
+    await south.start()
+      await south.connect()
 
     await expect(south.historyQuery(
       configuration.scanMode,
@@ -170,18 +162,18 @@ describe('SouthRest', () => {
 
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:4200/api/oianalytics/data/values/query'
-      + '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
+        + '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       { agent: null, headers: { Authorization: 'Basic dXNlcjpwYXNzd29yZA==' }, method: 'GET', timeout: 1000 },
     )
     expect(south.logger.info).toHaveBeenCalledWith('Requesting data with Basic authentication and GET '
-      + 'method on URL "http://localhost:4200/api/oianalytics/data/values/query'
-      + '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X"')
+        + 'method: "http://localhost:4200/api/oianalytics/data/values/query'
+        + '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X".')
 
     // Test fetch error and bearer auth
     south.logger.info.mockClear()
     fetch.mockClear()
     south.authentication.type = 'Bearer'
-    south.authentication.secret = 'myToken'
+    south.authentication.token = 'myToken'
     await expect(south.historyQuery(
       configuration.scanMode,
       new Date('2019-10-03T13:36:38.590Z'),
@@ -189,7 +181,7 @@ describe('SouthRest', () => {
     )).rejects.toThrowError('HTTP request failed with status code 400 and message: statusText.')
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:4200/api/oianalytics/data/values/query'
-      + '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
+        + '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
         agent: null,
         headers: { Authorization: 'Bearer myToken' },
@@ -202,7 +194,7 @@ describe('SouthRest', () => {
     fetch.mockClear()
     south.authentication.type = 'API Key'
     south.authentication.key = 'myKey'
-    south.authentication.secret = 'mySecret'
+    south.authentication.secretKey = 'mySecret'
     await expect(south.historyQuery(
       configuration.scanMode,
       new Date('2019-10-03T13:36:38.590Z'),
@@ -210,7 +202,7 @@ describe('SouthRest', () => {
     )).rejects.toThrowError('HTTP request failed with status code 400 and message: statusText.')
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:4200/api/oianalytics/data/values/query?'
-      + 'from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
+        + 'from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
         agent: null,
         headers: { myKey: 'mySecret' },
@@ -230,10 +222,10 @@ describe('SouthRest', () => {
     )).rejects.toThrowError('HTTP request failed with status code 400 and message: statusText.')
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:4200/api/oianalytics/data/values/query'
-      + '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
+        + '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
-        agent: {},
-        headers: {},
+        agent: { },
+        headers: { },
         method: 'GET',
         timeout: 1000,
       },
@@ -241,10 +233,7 @@ describe('SouthRest', () => {
   })
 
   it('should successfully scan http endpoint', async () => {
-    utils.parsers.Raw = jest.fn((results) => ({
-      httpResults: results,
-      latestDateRetrieved: new Date('2020-01-01T00:00:00.000Z'),
-    }))
+    utils.parsers.Raw = jest.fn((results) => ({ httpResults: results, latestDateRetrieved: new Date('2020-01-01T00:00:00.000Z') }))
     const endpointResult = [
       {
         value: 'val1',
@@ -259,8 +248,8 @@ describe('SouthRest', () => {
         resolve(endpointResult)
       }),
     }))
-    await south.start('baseFolder', 'oibusName')
-    await south.connect()
+    await south.start()
+      await south.connect()
 
     await south.historyQuery(configuration.scanMode, new Date('2020-01-01T00:00:00.000Z'), new Date('2021-01-01T00:00:00.000Z'))
     expect(utils.generateCSV).toHaveBeenCalledWith(endpointResult, ',')
@@ -293,8 +282,8 @@ describe('SouthRest', () => {
         resolve(endpointResult)
       }),
     }))
-    await south.start('baseFolder', 'oibusName')
-    await south.connect()
+    await south.start()
+      await south.connect()
 
     await south.historyQuery(configuration.scanMode, new Date('2019-10-03T13:36:38.590Z'), new Date('2019-10-03T15:36:38.590Z'))
 
@@ -302,8 +291,8 @@ describe('SouthRest', () => {
   })
 
   it('should use http get with body function with self signed certificates accepted and without authentication', async () => {
-    await south.start('baseFolder', 'oibusName')
-    await south.connect()
+    await south.start()
+      await south.connect()
 
     south.body = '{ startTime: @StartTime, endTime: @EndTime }'
     south.acceptSelfSigned = true
@@ -326,12 +315,13 @@ describe('SouthRest', () => {
         protocol: 'http:',
         timeout: 1000,
       },
+
     )
   })
 
   it('should use http get with body function with ISO dates', async () => {
-    await south.start('baseFolder', 'oibusName')
-    await south.connect()
+    await south.start()
+      await south.connect()
 
     south.body = '{ startTime: @StartTime, endTime: @EndTime }'
 
@@ -353,12 +343,13 @@ describe('SouthRest', () => {
         protocol: 'http:',
         timeout: 1000,
       },
+
     )
   })
 
   it('should use http get with body function with numerical dates', async () => {
-    await south.start('baseFolder', 'oibusName')
-    await south.connect()
+    await south.start()
+      await south.connect()
 
     south.body = '{ startTime: @StartTime, endTime: @EndTime }'
     south.variableDateFormat = 'number'
@@ -381,6 +372,7 @@ describe('SouthRest', () => {
         protocol: 'http:',
         timeout: 1000,
       },
+
     )
   })
 
@@ -396,8 +388,8 @@ describe('SouthRest', () => {
       }),
     }))
 
-    await south.start('baseFolder', 'oibusName')
-    await south.connect()
+    await south.start()
+      await south.connect()
 
     south.requestMethod = 'PUT'
     south.body = '{ startTime: @StartTime, endTime: @EndTime }'
@@ -406,7 +398,7 @@ describe('SouthRest', () => {
 
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:4200/api/oianalytics/data/values/query?from=2019-10-03T13%3A36%3A38.590Z&'
-      + 'to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
+        + 'to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
         agent: null,
         body: '{ startTime: 2019-10-03T13:36:38.590Z, endTime: 2019-10-03T15:36:38.590Z }',
@@ -418,6 +410,7 @@ describe('SouthRest', () => {
         method: 'PUT',
         timeout: 1000,
       },
+
     )
   })
 
@@ -433,8 +426,8 @@ describe('SouthRest', () => {
       }),
     }))
 
-    await south.start('baseFolder', 'oibusName')
-    await south.connect()
+    await south.start()
+      await south.connect()
     south.variableDateFormat = 'number'
 
     south.requestMethod = 'PUT'
@@ -444,7 +437,7 @@ describe('SouthRest', () => {
 
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:4200/api/oianalytics/data/values/query?from=2019-10-03T13%3A36%3A38.590Z&'
-      + 'to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
+        + 'to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
         agent: null,
         body: '{ startTime: 1570109798590, endTime: 1570116998590 }',
@@ -456,6 +449,7 @@ describe('SouthRest', () => {
         method: 'PUT',
         timeout: 1000,
       },
+
     )
   })
 
@@ -471,8 +465,8 @@ describe('SouthRest', () => {
         resolve([])
       }),
     }))
-    await south.start('baseFolder', 'oibusName')
-    await south.connect()
+    await south.start()
+      await south.connect()
 
     await expect(south.historyQuery(
       configuration.scanMode,
@@ -512,8 +506,8 @@ describe('SouthRest', () => {
     const expectedCompressedPath = path.join(tmpFolder, 'myFile.gz')
     const startTime = new Date('2019-10-03T13:36:38.590Z')
     const endTime = new Date('2019-10-03T15:36:38.590Z')
-    await south.start('baseFolder', 'oibusName', {})
-    await south.connect()
+    await south.start()
+      await south.connect()
 
     await south.historyQuery(configuration.scanMode, startTime, endTime)
     expect(utils.generateCSV).toHaveBeenCalledWith(endpointResult, ',')

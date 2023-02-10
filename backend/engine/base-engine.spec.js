@@ -67,10 +67,10 @@ describe('BaseEngine', () => {
 
   it('should warn when calling start', async () => {
     await engine.start()
-    expect(engine.logger.warn).toHaveBeenCalledWith('start() should be surcharged. Called with safe mode false.')
+      expect(engine.logger.warn).toHaveBeenCalledWith('start() should be surcharged. Called with safe mode false.')
 
-    await engine.start(true)
-    expect(engine.logger.warn).toHaveBeenCalledWith('start() should be surcharged. Called with safe mode true.')
+    await engine.start()
+      expect(engine.logger.warn).toHaveBeenCalledWith('start() should be surcharged. Called with safe mode true.')
   })
 
   it('should warn when calling stop', async () => {

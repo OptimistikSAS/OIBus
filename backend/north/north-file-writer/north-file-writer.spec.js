@@ -56,7 +56,7 @@ describe('NorthFileWriter', () => {
       subscribedTo: [],
     }
     north = new FileWriter(configuration, {}, logger)
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
   })
 
   it('should be properly initialized', () => {

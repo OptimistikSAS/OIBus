@@ -93,17 +93,17 @@ describe('NorthCsvToHttp', () => {
   })
 
   it('should be properly initialized', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    expect(north.manifest.modes.points).toBeFalsy()
+      expect(north.manifest.modes.points).toBeFalsy()
     expect(north.manifest.modes.files).toBeTruthy()
     expect(proxyService.getProxy).toHaveBeenCalledWith('')
   })
 
   it('should properly reject file if type is other than csv', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    await expect(north.handleFile('filePath')).rejects
+      await expect(north.handleFile('filePath')).rejects
       .toThrowError('Invalid file format: .csv file expected. File "filePath" skipped.')
   })
 
@@ -122,17 +122,17 @@ describe('NorthCsvToHttp', () => {
       ['5', '2020-12-17 05:00'],
     ])
 
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    await north.handleFile('csvToHttpTest.csv')
+      await north.handleFile('csvToHttpTest.csv')
 
     expect(httpRequestStaticFunctions.httpSend).toHaveBeenCalledTimes(1)
   })
 
   it('should properly test validity of header', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    const jsonObject = {}
+      const jsonObject = {}
 
     north.mapping.forEach((mapping) => {
       jsonObject[mapping.csvField] = 'testValue'
@@ -155,9 +155,9 @@ describe('NorthCsvToHttp', () => {
   })
 
   it('should properly send data (body.length <= bodyMaxLength)', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    const httpBody = []
+      const httpBody = []
     for (let i = 0; i < north.bodyMaxLength - 1; i += 1) {
       httpBody.push({ test: 'test' })
     }
