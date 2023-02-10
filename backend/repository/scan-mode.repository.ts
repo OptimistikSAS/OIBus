@@ -1,5 +1,5 @@
 import { ScanModeCommandDTO, ScanModeDTO } from '../../shared/model/scan-mode.model';
-import { generateRandomId } from './utils';
+import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
 
 export const SCAN_MODE_TABLE = 'scan_mode';

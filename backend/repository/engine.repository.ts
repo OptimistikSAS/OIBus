@@ -1,5 +1,5 @@
 import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../../shared/model/engine.model';
-import { generateRandomId } from './utils';
+import { generateRandomId } from '../service/utils';
 import { PROXY_TABLE } from './proxy.repository';
 import { Database } from 'better-sqlite3';
 
@@ -140,13 +140,13 @@ export default class EngineRepository {
         },
         healthSignal: {
           logging: {
-            enabled: results[0].healthSignalLogEnabled,
+            enabled: results[0].healthSignalLogEnabled === 1,
             interval: results[0].healthSignalLogInterval
           },
           http: {
-            enabled: results[0].healthSignalHttpEnabled,
+            enabled: results[0].healthSignalHttpEnabled === 1,
             interval: results[0].healthSignalHttpInterval,
-            verbose: results[0].healthSignalHttpVerbose,
+            verbose: results[0].healthSignalHttpVerbose === 1,
             address: results[0].healthSignalHttpAddress,
             proxyId: results[0].healthSignalHttpProxyId,
             authentication: {

@@ -1,4 +1,4 @@
-import { generateRandomId } from './utils';
+import { generateRandomId } from '../service/utils';
 import { IpFilterCommandDTO, IpFilterDTO } from '../../shared/model/ip-filter.model';
 import { Database } from 'better-sqlite3';
 

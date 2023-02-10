@@ -1,12 +1,12 @@
 import SqliteDatabaseMock, { all, get, run } from '../tests/__mocks__/database.mock';
-import { generateRandomId } from './utils';
+import { generateRandomId } from '../service/utils';
 import { User, UserCommandDTO, UserLight } from '../../shared/model/user.model';
 import { Page } from '../../shared/model/types';
 import { Database } from 'better-sqlite3';
 import UserRepository from './user.repository';
 
 jest.mock('../tests/__mocks__/database.mock');
-jest.mock('./utils', () => ({
+jest.mock('../service/utils', () => ({
   generateRandomId: jest.fn(() => '123456')
 }));
 jest.mock('bcrypt', () => ({

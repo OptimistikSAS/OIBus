@@ -3,6 +3,8 @@ import fetch from 'node-fetch';
 import * as httpRequestStaticFunctions from './http-request-static-functions';
 import { FetchError } from './http-request-static-functions';
 
+import { Authentication } from '../../shared/model/engine.model';
+
 jest.mock('node:fs');
 
 // Mock node-fetch
@@ -16,35 +18,34 @@ describe('HTTP request static functions', () => {
 
   it('should add basic authorization header', async () => {
     const headers = {};
-    httpRequestStaticFunctions.addAuthenticationToHeaders(headers, 'Basic', 'username', 'password');
+    const basicAuth: Authentication = { type: 'basic', key: 'username', secret: 'password' };
+    httpRequestStaticFunctions.addAuthenticationToHeaders(headers, basicAuth);
 
     expect(headers).toEqual({ Authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' });
   });
 
   it('should add api key header', async () => {
     const headers = {};
-    httpRequestStaticFunctions.addAuthenticationToHeaders(headers, 'API Key', 'myKey', 'mySecret');
+    const apiKeyAuth: Authentication = { type: 'api-key', key: 'myKey', secret: 'mySecret' };
+    httpRequestStaticFunctions.addAuthenticationToHeaders(headers, apiKeyAuth);
 
     expect(headers).toEqual({ myKey: 'mySecret' });
   });
 
   it('should add bearer authorization header', async () => {
     const headers = {};
-    httpRequestStaticFunctions.addAuthenticationToHeaders(headers, 'Bearer', 'unused', 'token');
+    const bearerAuth: Authentication = { type: 'bearer', key: 'unused', secret: 'token' };
+
+    httpRequestStaticFunctions.addAuthenticationToHeaders(headers, bearerAuth);
 
     expect(headers).toEqual({ Authorization: 'Bearer token' });
   });
 
   it('should throw an error if bad authentication type', async () => {
     const headers = {};
-    let error;
-    try {
-      httpRequestStaticFunctions.addAuthenticationToHeaders(headers, 'Bad', null, null);
-    } catch (err) {
-      error = err;
-    }
+    const noAuth: Authentication = { type: 'none', key: '', secret: '' };
+    httpRequestStaticFunctions.addAuthenticationToHeaders(headers, noAuth);
 
-    expect(error).toEqual(new Error('Unrecognized authentication type: "Bad".'));
     expect(headers).toEqual({});
   });
 

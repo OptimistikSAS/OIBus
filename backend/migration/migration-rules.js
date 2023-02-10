@@ -12,8 +12,7 @@ import {
   changeColumnValue,
 } from './database-migration.service.js'
 import { createConfigDatabase, getConfig, upsertConfig } from '../service/database.service.js'
-import { createFolder, filesExists } from '../service/utils.js'
-import { generateRandomId } from "../repository/utils"
+import { createFolder, filesExists, generateRandomId } from '../service/utils.js'
 
 export default {
   2: (config, logger) => {

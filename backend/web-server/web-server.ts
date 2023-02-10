@@ -11,61 +11,70 @@ import ipFilter from './middlewares/ip-filter';
 import webClient from './middlewares/web-client';
 import sse from './middlewares/sse';
 import EncryptionService from '../service/encryption.service';
-import OIBusEngine from '../engine/oibus-engine';
-import HistoryQueryEngine from '../engine/history-query-engine';
-import LoggerService from '../service/logger/logger.service';
 import RepositoryService from '../service/repository.service';
 import pino from 'pino';
 import * as Http from 'http';
 import Koa from 'koa';
-import Logger = pino.Logger;
 import oibus from './middlewares/oibus';
+import ReloadService from '../service/reload-service';
+import { KoaApplication } from './koa';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
  */
 export default class WebServer {
   private readonly encryptionService: EncryptionService;
-  private readonly loggerService: LoggerService;
   private readonly repositoryService: RepositoryService;
-  private logger: Logger | null = null;
-  private port: number | null = null;
-  private app: Koa | null = null;
+  private readonly reloadService: ReloadService;
+  private _logger: pino.Logger;
+  private _id: string;
+  private _port: number;
+  private app: KoaApplication | null = null;
   private webServer: Http.Server | null = null;
 
-  /**
-   * Constructor for Server
-   * @constructor
-   * @param {EncryptionService} encryptionService - The encryption service
-   * @param {OIBusEngine} oibusEngine - The OIBus engine
-   * @param {HistoryQueryEngine} historyQueryEngine - The HistoryQuery engine
-   * @param {LoggerService} loggerService - LoggerService to use to create a child logger dedicated to the web server
-   * @param {RepositoryService} repositoryService - RepositoryService used to interact with the local database
-   * @return {void}
-   */
   constructor(
+    id: string,
+    port: number,
     encryptionService: EncryptionService,
-    oibusEngine: OIBusEngine,
-    historyQueryEngine: HistoryQueryEngine,
-    loggerService: LoggerService,
+    reloadService: ReloadService,
+    logger: pino.Logger,
     repositoryService: RepositoryService
   ) {
+    this._id = id;
+    this._port = port;
     this.encryptionService = encryptionService;
-    this.loggerService = loggerService;
+    this.reloadService = reloadService;
+    this._logger = logger;
     this.repositoryService = repositoryService;
   }
 
+  get logger(): pino.Logger {
+    return this._logger;
+  }
+
+  async setLogger(value: pino.Logger): Promise<void> {
+    this._logger = value;
+    await this.stop();
+    await this.init();
+  }
+
+  get port(): number {
+    return this._port;
+  }
+
+  async setPort(value: number): Promise<void> {
+    this._port = value;
+    await this.stop();
+    await this.start();
+  }
+
   /**
-   * Start the web server
-   * @returns {Promise<void>} - The result promise
+   * Initialise the web server services and middlewares
    */
-  async start(id: string, port = 2223) {
-    this.logger = this.loggerService.createChildLogger('web-server');
-    this.port = port;
+  async init(): Promise<void> {
+    this.app = new Koa() as KoaApplication;
 
-    this.app = new Koa();
-
-    this.app.use(oibus(id, this.repositoryService, this.encryptionService, this.logger));
+    this.app.use(oibus(this._id, this.repositoryService, this.reloadService, this.encryptionService, this.logger));
 
     // koa-helmet is a wrapper for helmet to work with koa.
     // It provides important security headers to make your app more secure by default.
@@ -101,16 +110,22 @@ export default class WebServer {
     this.app.use(router.allowedMethods());
     this.app.use(webClient);
 
+    await this.start();
+    this.reloadService.setWebServerChangeLogger(this.setLogger.bind(this));
+    this.reloadService.setWebServerChangePort(this.setPort.bind(this));
+  }
+
+  async start(): Promise<void> {
+    if (!this.app) return;
     this.webServer = this.app.listen(this.port, () => {
-      this.logger!.info(`Web server started on ${this.port}`);
+      this.logger.info(`OIBus web server started on ${this.port}`);
     });
   }
 
   /**
    * Stop the web server
-   * @returns {Promise<void>} - The result promise
    */
-  async stop() {
+  async stop(): Promise<void> {
     await this.webServer?.close();
   }
 }

@@ -1,8 +1,8 @@
 import Koa, { Context, Request } from 'koa';
 import RepositoryService from '../service/repository.service';
-import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
-import Logger = pino.Logger;
+import ReloadService from '../service/reload-service';
+import pino from 'pino';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
@@ -11,8 +11,9 @@ interface KoaRequest<RequestBody> extends Request {
 export interface KoaApplication extends Koa {
   id: string;
   repositoryService: RepositoryService;
+  reloadService: ReloadService;
   encryptionService: EncryptionService;
-  logger: Logger;
+  logger: pino.Logger;
 }
 
 export interface KoaContext<RequestBody, ResponseBody> extends Context {
