@@ -4,6 +4,8 @@ import path from 'node:path';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 
+import { Authentication } from '../../shared/model/engine.model';
+
 export interface FetchError extends Error {
   responseError?: boolean;
   statusCode?: number;
@@ -11,32 +13,26 @@ export interface FetchError extends Error {
 
 /**
  * Mutate the headers to add authentication headers according to the type of authentication
- * @return {void}
  */
-const addAuthenticationToHeaders = (
-  headers: any,
-  type: 'Basic' | 'API Key' | 'Bearer' | string,
-  key: string | null,
-  secret: string | null
-) => {
-  switch (type) {
-    case 'Basic':
-      headers.Authorization = `Basic ${Buffer.from(`${key}:${secret}`).toString('base64')}`;
+const addAuthenticationToHeaders = (headers: any, authentication: Authentication): void => {
+  switch (authentication.type) {
+    case 'basic':
+      headers.Authorization = `Basic ${Buffer.from(`${authentication.key}:${authentication.secret}`).toString('base64')}`;
       break;
 
-    case 'API Key':
-      if (!key) {
+    case 'api-key':
+      if (!authentication.key) {
         throw new Error(`Authentication type API key needs a key.`);
       }
-      headers[key] = secret;
+      headers[authentication.key] = authentication.secret;
       break;
 
-    case 'Bearer':
-      headers.Authorization = `Bearer ${secret}`;
+    case 'bearer':
+      headers.Authorization = `Bearer ${authentication.secret}`;
       break;
 
-    default:
-      throw new Error(`Unrecognized authentication type: "${type}".`);
+    case 'none':
+      return;
   }
 };
 
@@ -45,7 +41,14 @@ const addAuthenticationToHeaders = (
  * If "headers" contains Content-Type "data" is sent as string in the body.
  * If "headers" doesn't contain Content-Type "data" is interpreted as a path and sent as a file.
  */
-const httpSend = async (requestUrl: string, method: string, headers: any, data: string, timeout: number, proxyAgent: any) => {
+const httpSend = async (
+  requestUrl: string,
+  method: string,
+  headers: any,
+  data: string,
+  timeout: number,
+  proxyAgent: any
+): Promise<void> => {
   let body;
   let readStream;
   if (Object.prototype.hasOwnProperty.call(headers, 'Content-Type')) {

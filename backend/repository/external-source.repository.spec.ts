@@ -1,10 +1,10 @@
 import SqliteDatabaseMock, { all, get, run } from '../tests/__mocks__/database.mock';
-import { generateRandomId } from './utils';
+import { generateRandomId } from '../service/utils';
 import ExternalSourceRepository from './external-source.repository';
 import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../shared/model/external-sources.model';
 import { Database } from 'better-sqlite3';
 
-jest.mock('./utils', () => ({
+jest.mock('../service/utils', () => ({
   generateRandomId: jest.fn(() => '123456')
 }));
 

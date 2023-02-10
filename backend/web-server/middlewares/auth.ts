@@ -2,7 +2,7 @@ import basicAuth, { BasicAuthResult } from 'basic-auth';
 import jwt from 'jsonwebtoken';
 import Koa from 'koa';
 import bcrypt from 'bcrypt';
-import { SALT } from '../../repository/utils';
+import { SALT } from '../../service/utils';
 import { KoaContext } from '../koa';
 
 const auth = () => {

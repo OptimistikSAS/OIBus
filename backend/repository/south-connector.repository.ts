@@ -1,4 +1,4 @@
-import { generateRandomId } from './utils';
+import { generateRandomId } from '../service/utils';
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../shared/model/south-connector.model';
 import { Database } from 'better-sqlite3';
 

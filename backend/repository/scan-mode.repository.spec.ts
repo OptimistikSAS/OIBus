@@ -1,11 +1,11 @@
 import ScanModeRepository from './scan-mode.repository';
 import { ScanModeCommandDTO, ScanModeDTO } from '../../shared/model/scan-mode.model';
 import SqliteDatabaseMock, { run, all, get } from '../tests/__mocks__/database.mock';
-import { generateRandomId } from './utils';
+import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
 
 jest.mock('../tests/__mocks__/database.mock');
-jest.mock('./utils', () => ({
+jest.mock('../service/utils', () => ({
   generateRandomId: jest.fn(() => '123456')
 }));
 
