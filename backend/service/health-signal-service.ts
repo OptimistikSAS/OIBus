@@ -29,9 +29,7 @@ export default class HealthSignalService {
     this.httpSignalInterval = null;
     this.logSignalInterval = null;
 
-    console.log(this._settings);
     if (this._settings.http.enabled) {
-      console.log('test ');
       this._logger.debug(`Initializing HTTP health signal timer every ${this._settings.http.interval}s.`);
       this.httpSignalInterval = setInterval(this.prepareAndSendHttpSignal.bind(this), this._settings.http.interval * 1000);
     }

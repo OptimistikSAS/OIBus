@@ -27,9 +27,9 @@ describe('TcpServer', () => {
 
     const startCallback = jest.fn()
 
-    tcpServer.start(startCallback)
+    tcpServer.start()
 
-    expect(mockNetServer.listen).toHaveBeenCalledWith(1234, startCallback)
+      expect(mockNetServer.listen).toHaveBeenCalledWith(1234, startCallback)
 
     mockNetServer.emit('listening')
     expect(logger.info).toHaveBeenCalledWith('TCP server listening on port 1234.')

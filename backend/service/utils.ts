@@ -6,7 +6,7 @@ import path from 'node:path';
 import minimist from 'minimist';
 import { DateTime } from 'luxon';
 
-import { Timezone } from '../../shared/model/types';
+import { Instant, Interval, Timezone } from '../../shared/model/types';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -29,27 +29,29 @@ const delay = async (timeout: number): Promise<void> =>
   });
 
 /**
- * Compute a list of end interval from a startTime, endTime and maxInterval.
+ * Compute a list of end interval from a start, end and maxInterval.
  */
-const generateIntervals = (startTime: Date, endTime: Date, maxInterval: number): Array<{ startTime: Date; endTime: Date }> => {
-  const originalInterval = endTime.getTime() - startTime.getTime();
-  if (maxInterval > 0 && endTime.getTime() - startTime.getTime() > 1000 * maxInterval) {
+const generateIntervals = (start: Instant, end: Instant, maxInterval: number): Array<Interval> => {
+  const startTime = DateTime.fromISO(start);
+  const endTime = DateTime.fromISO(end);
+  const originalInterval = endTime.toMillis() - startTime.toMillis();
+  if (maxInterval > 0 && endTime.toMillis() - startTime.toMillis() > 1000 * maxInterval) {
     const numberOfInterval = originalInterval / (maxInterval * 1000);
-    const intervalLists = [];
+    const intervalLists: Array<Interval> = [];
     for (let i = 0; i < numberOfInterval; i += 1) {
       // Compute the newStartTime and the newEndTime for each interval
-      const newStartTime = new Date(startTime.getTime() + i * 1000 * maxInterval);
-      const newEndTime = new Date(startTime.getTime() + (i + 1) * 1000 * maxInterval);
+      const newStartTime = DateTime.fromMillis(startTime.toMillis() + i * 1000 * maxInterval);
+      const newEndTime = DateTime.fromMillis(startTime.toMillis() + (i + 1) * 1000 * maxInterval);
 
-      // If the newEndTime is bigger than the original endTime, the definitive end of the interval must be endTime
+      // If the newEndTime is bigger than the original end, the definitive end of the interval must be end
       intervalLists.push({
-        startTime: newStartTime,
-        endTime: newEndTime < endTime ? newEndTime : endTime
+        start: newStartTime.toISO(),
+        end: newEndTime < endTime ? newEndTime.toISO() : endTime.toISO()
       });
     }
     return intervalLists;
   }
-  return [{ startTime, endTime }];
+  return [{ start: startTime.toISO(), end: endTime.toISO() }];
 };
 
 /**

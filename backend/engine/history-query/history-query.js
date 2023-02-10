@@ -64,19 +64,11 @@ export default class HistoryQuery {
 
     this.overwriteConnectorsSettings()
 
-    await this.north.start(
-      path.resolve(this.cacheFolder, `north-${this.north.id}`),
-      this.engine.oibusName,
-      this.engine.defaultLogParameters,
-    )
-    await this.north.connect()
+    await this.north.start()
+      await this.north.connect()
 
-    await this.south.start(
-      path.resolve(this.cacheFolder, `south-${this.south.id}`),
-      this.engine.oibusName,
-      this.engine.defaultLogParameters,
-    )
-    await this.south.connect()
+    await this.south.start()
+      await this.south.connect()
 
     if (!this.south.connected || !this.north.connected) {
       throw new Error('Connection failed.')

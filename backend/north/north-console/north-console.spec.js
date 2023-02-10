@@ -50,7 +50,7 @@ describe('North Console', () => {
       },
     }
     north = new Console(configuration, {}, logger)
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
   })
 
   it('should be properly initialized', () => {
@@ -60,8 +60,8 @@ describe('North Console', () => {
   })
 
   it('should properly handle values in non verbose mode', async () => {
-    await north.start('baseFolder', 'oibusName', {})
-    const values = [
+    await north.start()
+      const values = [
       {
         pointId: 'pointId',
         timestamp: nowDateString,

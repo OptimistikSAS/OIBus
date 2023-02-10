@@ -17,7 +17,8 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }],
       readDisplay: true
     },
-    { key: 'proxy', type: 'OibProxy', label: 'Proxy', newRow: true }
+    { key: 'proxy', type: 'OibProxy', label: 'Proxy', newRow: true },
+    { key: 'authentication', type: 'OibAuthentication', label: 'Authentication', newRow: true, authTypes: ['none', 'basic'] }
   ],
   schema: Joi.object({
     host: Joi.string()

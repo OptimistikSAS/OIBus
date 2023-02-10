@@ -57,8 +57,8 @@ export default class NorthOIConnect extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async start(baseFolder, oibusName) {
-    await super.start(baseFolder, oibusName)
-    const name = `${oibusName}:${this.name}`
+    await super.start()
+      const name = `${oibusName}:${this.name}`
     this.valuesUrl = `${this.host}${this.valuesEndpoint}?name=${name}`
     this.fileUrl = `${this.host}${this.fileEndpoint}?name=${name}`
     this.proxyAgent = await this.proxyService.getProxy(this.proxyName)
