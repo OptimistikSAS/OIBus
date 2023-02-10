@@ -7,6 +7,8 @@ import selfSigned from 'selfsigned';
 
 import { createFolder, filesExists } from './utils';
 
+const CERT_FOLDER = 'certs';
+const KEYS_FOLDER = 'keys';
 const CERT_PRIVATE_KEY_FILE_NAME = 'privateKey.pem';
 const CERT_PUBLIC_KEY_FILE_NAME = 'publicKey.pem';
 const CERT_FILE_NAME = 'cert.pem';
@@ -24,9 +26,9 @@ export default class EncryptionService {
   private _privateKey = '';
   private _publicKey = '';
 
-  constructor(keyFolder: string, certsFolder: string) {
-    this._keyFolder = keyFolder;
-    this._certsFolder = certsFolder;
+  constructor(securityFolder: string) {
+    this._keyFolder = path.resolve(securityFolder, KEYS_FOLDER);
+    this._certsFolder = path.resolve(securityFolder, CERT_FOLDER);
   }
 
   get privateKey() {
@@ -43,6 +45,11 @@ export default class EncryptionService {
 
   get certsFolder(): string {
     return this._certsFolder;
+  }
+
+  async init() {
+    await this.checkOrCreatePrivateKey();
+    await this.checkOrCreateCertFiles();
   }
 
   /**

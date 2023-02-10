@@ -5,7 +5,7 @@ import timexe from 'timexe'
 import humanizeDuration from 'humanize-duration'
 
 import BaseEngine from './base-engine.js'
-import HealthSignal from './health-signal.js'
+import HealthSignalService from '../service/health-signal-service.ts'
 
 const CACHE_FOLDER = './cache/data-stream'
 
@@ -236,7 +236,7 @@ export default class OIBusEngine extends BaseEngine {
       })
 
     // 5. Start HealthSignal
-    this.healthSignal = new HealthSignal(this)
+    this.healthSignal = new HealthSignalService(this)
     this.healthSignal.start()
 
     this.logger.info('OIBus started.')

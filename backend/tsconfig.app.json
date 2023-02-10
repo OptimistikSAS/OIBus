@@ -5,9 +5,9 @@
     "outDir": "./dist"
   },
   "files": [
-    "index.js",
-    "service/logger/sqlite-transport.js",
-    "service/logger/loki-transport.js"
+    "index.ts",
+    "service/logger/sqlite-transport.ts",
+    "service/logger/loki-transport.ts"
   ],
   "include": [
     "./**/*.ts",

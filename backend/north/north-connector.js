@@ -104,7 +104,6 @@ export default class NorthConnector {
     await this.fileCache.start()
 
     this.archiveService = new ArchiveService(
-      this.id,
       this.logger,
       this.baseFolder,
       this.cacheSettings.archive.enabled,

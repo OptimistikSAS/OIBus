@@ -1,6 +1,6 @@
 import { SCAN_MODE_TABLE } from './scan-mode.repository';
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../shared/model/history-query.model';
-import { generateRandomId } from './utils';
+import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
 
 const HISTORY_QUERIES_TABLE = 'history_queries';
