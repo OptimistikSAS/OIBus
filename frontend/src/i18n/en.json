@@ -57,7 +57,7 @@
     "log-levels": {
       "silent":  "Silent",
       "error": "Error",
-      "warning":  "Warning",
+      "warn":  "Warning",
       "info": "Info",
       "debug":  "Debug",
       "trace": "Trace"

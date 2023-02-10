@@ -1,4 +1,4 @@
-import { generateRandomId } from './utils';
+import { generateRandomId } from '../service/utils';
 import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../shared/model/external-sources.model';
 import { Database } from 'better-sqlite3';
 

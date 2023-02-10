@@ -1,4 +1,4 @@
-import { generateRandomId } from './utils';
+import { generateRandomId } from '../service/utils';
 import { ProxyCommandDTO, ProxyDTO } from '../../shared/model/proxy.model';
 import { Database } from 'better-sqlite3';
 

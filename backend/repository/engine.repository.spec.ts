@@ -1,11 +1,11 @@
 import SqliteDatabaseMock, { all, get, run } from '../tests/__mocks__/database.mock';
-import { generateRandomId } from './utils';
+import { generateRandomId } from '../service/utils';
 import EngineRepository from './engine.repository';
 import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../../shared/model/engine.model';
 import { Database } from 'better-sqlite3';
 
 jest.mock('../tests/__mocks__/database.mock');
-jest.mock('./utils', () => ({
+jest.mock('../service/utils', () => ({
   generateRandomId: jest.fn(() => '123456')
 }));
 
@@ -221,11 +221,11 @@ describe('Non-empty Engine repository', () => {
     lokiLogProxyId: null,
     lokiLogUsername: '',
     lokiLogPassword: '',
-    healthSignalLogEnabled: true,
+    healthSignalLogEnabled: 1,
     healthSignalLogInterval: 60,
-    healthSignalHttpEnabled: false,
+    healthSignalHttpEnabled: 0,
     healthSignalHttpInterval: 60,
-    healthSignalHttpVerbose: false,
+    healthSignalHttpVerbose: 0,
     healthSignalHttpAddress: '',
     healthSignalHttpProxyId: null,
     healthSignalHttpAuthenticationType: 'basic',

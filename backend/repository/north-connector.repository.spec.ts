@@ -1,11 +1,11 @@
 import SqliteDatabaseMock, { run, get, all } from '../tests/__mocks__/database.mock';
-import { generateRandomId } from './utils';
+import { generateRandomId } from '../service/utils';
 import NorthConnectorRepository from './north-connector.repository';
 import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../shared/model/north-connector.model';
 import { Database } from 'better-sqlite3';
 
 jest.mock('../tests/__mocks__/database.mock');
-jest.mock('./utils', () => ({
+jest.mock('../service/utils', () => ({
   generateRandomId: jest.fn(() => '123456')
 }));
 

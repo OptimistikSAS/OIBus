@@ -1,4 +1,4 @@
-import { generateRandomId } from './utils';
+import { generateRandomId } from '../service/utils';
 import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../shared/model/north-connector.model';
 import { SCAN_MODE_TABLE } from './scan-mode.repository';
 import { Database } from 'better-sqlite3';

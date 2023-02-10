@@ -1,4 +1,4 @@
-import { generateRandomId } from './utils';
+import { generateRandomId } from '../service/utils';
 import { SouthItemCommandDTO, SouthItemDTO, SouthItemSearchParam } from '../../shared/model/south-connector.model';
 import { SOUTH_CONNECTOR_TABLE } from './south-connector.repository';
 import { SCAN_MODE_TABLE } from './scan-mode.repository';
