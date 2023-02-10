@@ -70,7 +70,7 @@ describe('NorthOIConnect', () => {
       subscribedTo: [],
     }
     north = new OIConnect(configuration, proxyService, logger)
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
   })
 
   it('should be properly initialized', () => {

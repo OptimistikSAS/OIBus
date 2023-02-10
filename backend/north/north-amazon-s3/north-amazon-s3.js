@@ -60,9 +60,9 @@ export default class NorthAmazonS3 extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async start(baseFolder, oibusName) {
-    await super.start(baseFolder, oibusName)
+    await super.start()
 
-    const proxyAgent = await this.proxyService.getProxy(this.proxyName)
+      const proxyAgent = await this.proxyService.getProxy(this.proxyName)
     this.s3 = new S3Client({
       region: this.region,
       credentials: {

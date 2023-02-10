@@ -67,8 +67,8 @@ export default class NorthCsvToHttp extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async start(baseFolder, _oibusName) {
-    await super.start(baseFolder, _oibusName)
-    this.proxyAgent = await this.proxyService.getProxy(this.proxyName)
+    await super.start()
+      this.proxyAgent = await this.proxyService.getProxy(this.proxyName)
   }
 
   /**

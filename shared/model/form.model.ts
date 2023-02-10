@@ -1,5 +1,6 @@
 import { ScanModeDTO } from './scan-mode.model';
 import { ProxyDTO } from './proxy.model';
+import { Authentication, AuthenticationType } from './engine.model';
 
 export const CONNECTOR_FORM_TYPES = [
   'OibText',
@@ -12,7 +13,8 @@ export const CONNECTOR_FORM_TYPES = [
   'OibScanMode',
   'OibScanMode',
   'OibTimezone',
-  'OibProxy'
+  'OibProxy',
+  'OibAuthentication'
 ] as const;
 export type ConnectorFormType = typeof CONNECTOR_FORM_TYPES[number];
 
@@ -77,7 +79,7 @@ export interface BaseOibFormControl<T> {
   defaultValue?: T | null;
   currentValue?: T | null;
   newRow?: boolean;
-  class?: string | null ;
+  class?: string | null;
   conditionalDisplay?: {
     // Each key refers to another OibFormControl which values must include this OibFormControl value to display this field in a form
     [key: string]: Array<string | number | boolean>;
@@ -131,6 +133,11 @@ export interface OibProxyFormControl extends BaseOibFormControl<ProxyDTO> {
   type: 'OibProxy';
 }
 
+export interface OibAuthenticationFormControl extends BaseOibFormControl<Authentication> {
+  type: 'OibAuthentication';
+  authTypes: Array<AuthenticationType>;
+}
+
 export type OibFormControl =
   | OibTextFormControl
   | OibTextAreaFormControl
@@ -141,4 +148,5 @@ export type OibFormControl =
   | OibCheckboxFormControl
   | OibScanModeFormControl
   | OibTimezoneFormControl
-  | OibProxyFormControl;
+  | OibProxyFormControl
+  | OibAuthenticationFormControl;

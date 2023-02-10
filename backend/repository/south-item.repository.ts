@@ -23,7 +23,7 @@ export default class SouthItemRepository {
   }
 
   /**
-   * Retrieve all South items (point, query, folder...) associated to a South connector
+   * Search South items (point, query, folder...) associated to a South connector
    */
   searchSouthItems(southId: string, searchParams: SouthItemSearchParam): Page<SouthItemDTO> {
     const queryParams = [];
@@ -57,6 +57,23 @@ export default class SouthItemRepository {
       totalElements,
       totalPages
     };
+  }
+
+  /**
+   * Retrieve all South items (point, query, folder...) associated to a South connector
+   */
+  getSouthItems(southId: string): Array<SouthItemDTO> {
+    const query = `SELECT id, name, south_id AS southId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEM_TABLE} WHERE south_id = ?;`;
+    return this.database
+      .prepare(query)
+      .all(southId)
+      .map(result => ({
+        id: result.id,
+        name: result.name,
+        southId: result.southId,
+        scanModeId: result.scanModeId,
+        settings: JSON.parse(result.settings)
+      }));
   }
 
   /**

@@ -76,8 +76,8 @@ export default class NorthWATSY extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async start(baseFolder, oibusName) {
-    await super.start(baseFolder, oibusName)
-    this.mqttTopic = initMQTTTopic(oibusName, this.host)
+    await super.start()
+      this.mqttTopic = initMQTTTopic(oibusName, this.host)
   }
 
   /**

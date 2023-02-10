@@ -4,18 +4,30 @@ import LoggerService from './logger/logger.service';
 import { EngineSettingsDTO } from '../../shared/model/engine.model';
 import pino from 'pino';
 import HealthSignalService from './health-signal-service';
+import NorthService from './north.service';
+import SouthService from './south.service';
 
 export default class ReloadService {
   private readonly _repositoryService: RepositoryService;
   private readonly _loggerService: LoggerService;
   private readonly _healthSignalService: HealthSignalService;
+  private readonly _northService: NorthService;
+  private readonly _southService: SouthService;
   private webServerChangeLoggerCallback: (logger: pino.Logger) => void = () => {};
   private webServerChangePortCallback: (port: number) => Promise<void> = () => Promise.resolve();
 
-  constructor(loggerService: LoggerService, repositoryService: RepositoryService, healthSignalService: HealthSignalService) {
+  constructor(
+    loggerService: LoggerService,
+    repositoryService: RepositoryService,
+    healthSignalService: HealthSignalService,
+    northService: NorthService,
+    southService: SouthService
+  ) {
     this._loggerService = loggerService;
     this._repositoryService = repositoryService;
     this._healthSignalService = healthSignalService;
+    this._northService = northService;
+    this._southService = southService;
   }
 
   get repositoryService(): RepositoryService {
@@ -28,6 +40,14 @@ export default class ReloadService {
 
   get healthSignalService(): HealthSignalService {
     return this._healthSignalService;
+  }
+
+  get northService(): NorthService {
+    return this._northService;
+  }
+
+  get southService(): SouthService {
+    return this._southService;
   }
 
   setWebServerChangeLogger(callback: (logger: pino.Logger) => void): void {

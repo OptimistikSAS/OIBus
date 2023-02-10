@@ -75,9 +75,9 @@ describe('North InfluxDB', () => {
   })
 
   it('should call makeRequest and manage error', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    httpRequestStaticFunctions.httpSend.mockImplementation(() => {
+      httpRequestStaticFunctions.httpSend.mockImplementation(() => {
       throw new Error('http error')
     })
 
@@ -91,9 +91,9 @@ describe('North InfluxDB', () => {
   })
 
   it('should log error when there are not enough groups for placeholders in measurement', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    north.measurement = '%5$s'
+      north.measurement = '%5$s'
 
     await north.handleValues(values)
     const expectedErrorMessage = 'RegExp returned by (.*)/(.{2})(.)(.*) for ANA/BL1RCP05 doesn\'t have enough groups for the measurement.'
@@ -101,18 +101,18 @@ describe('North InfluxDB', () => {
   })
 
   it('should log error when there are not enough groups for placeholders in tags', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    north.tags = 'site=%2$s,unit=%3$s,sensor=%5$s'
+      north.tags = 'site=%2$s,unit=%3$s,sensor=%5$s'
     await north.handleValues(values)
     const expectedErrorMessage = 'RegExp returned by (.*)/(.{2})(.)(.*) for ANA/BL1RCP05 doesn\'t have enough groups for tags.'
     expect(north.logger.error).toHaveBeenCalledWith(expectedErrorMessage)
   })
 
   it('should properly handle values with useDataKeyValue', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    const valueWithDataLevel = [{
+      const valueWithDataLevel = [{
       pointId: 'ANA/BL1RCP05',
       timestamp: new Date(nowDateString),
       data: {
@@ -193,9 +193,9 @@ describe('North InfluxDB', () => {
   })
 
   it('should properly retrieve timestamp with timestampPathInDataValue', async () => {
-    await north.start('baseFolder', 'oibusName')
+    await north.start()
 
-    north.timestampPathInDataValue = 'associatedTimestamp.timestamp'
+      north.timestampPathInDataValue = 'associatedTimestamp.timestamp'
     north.useDataKeyValue = true
 
     const valuesWithTimestamp = [

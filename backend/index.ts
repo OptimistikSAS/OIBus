@@ -8,6 +8,9 @@ import RepositoryService from './service/repository.service';
 import ReloadService from './service/reload-service';
 import ProxyService from './service/proxy.service';
 import HealthSignalService from './service/health-signal-service';
+import NorthService from './service/north.service';
+import SouthService from './service/south.service';
+import OIBusEngine from './engine/oibus-engine';
 
 const CACHE_FOLDER = './cache';
 const SECURITY_FOLDER = './security';
@@ -50,12 +53,24 @@ const LOG_DB_NAME = 'journal.db';
     loggerService.createChildLogger('health')
   );
 
-  const reloadService = new ReloadService(loggerService, repositoryService, healthSignalService);
+  const northService = new NorthService(proxyService, encryptionService, repositoryService, loggerService.logger!);
+  const southService = new SouthService(proxyService, encryptionService, repositoryService, loggerService.logger!);
+  const reloadService = new ReloadService(loggerService, repositoryService, healthSignalService, northService, southService);
 
   if (check) {
     console.info('OIBus started in check mode. Exiting process.');
     return;
   }
+
+  const engine = new OIBusEngine(
+    encryptionService,
+    proxyService,
+    repositoryService,
+    northService,
+    southService,
+    loggerService.createChildLogger('engine')
+  );
+  await engine.start();
 
   const server = new WebServer(
     oibusSettings.id,
@@ -66,6 +81,21 @@ const LOG_DB_NAME = 'journal.db';
     repositoryService
   );
   await server.init();
+
+  let stopping = false;
+  // Catch Ctrl+C and properly stop the Engine
+  process.on('SIGINT', () => {
+    if (stopping) return;
+    console.info('SIGINT (Ctrl+C) received. Stopping everything.');
+    stopping = true;
+    const stopAll = [engine.stop(), server.stop()];
+    Promise.allSettled(stopAll).then(() => {
+      loggerService.stop();
+      console.info('OIBus stopped');
+      process.exit();
+      stopping = false;
+    });
+  });
 
   console.info('OIBus fully started');
 })();
