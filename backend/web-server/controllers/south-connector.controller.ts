@@ -18,9 +18,10 @@ import {
   SouthType
 } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
+import JoiValidator from '../../validators/joi.validator';
 
 // TODO: retrieve south types from a local store
-const manifest = [
+const manifests = [
   sqlManifest,
   restManifest,
   opcuaHaManifest,
@@ -32,110 +33,158 @@ const manifest = [
   adsManifest
 ];
 
-const getSouthConnectorTypes = async (ctx: KoaContext<void, Array<SouthType>>) => {
-  ctx.ok(
-    manifest.map(connector => ({
-      category: connector.category,
-      type: connector.name,
-      description: connector.description,
-      modes: connector.modes
-    }))
-  );
-};
+export default class SouthConnectorController {
+  constructor(protected readonly validator: JoiValidator) {}
 
-const getSouthConnectorManifest = async (ctx: KoaContext<void, object>) => {
-  const connector = manifest.find(south => south.name === ctx.params.id);
-  if (!connector) {
-    ctx.throw(404, 'North not found');
+  async getSouthConnectorTypes(ctx: KoaContext<void, Array<SouthType>>): Promise<void> {
+    ctx.ok(
+      manifests.map(connector => ({
+        category: connector.category,
+        type: connector.name,
+        description: connector.description,
+        modes: connector.modes
+      }))
+    );
   }
-  ctx.ok(connector);
-};
 
-const getSouthConnectors = async (ctx: KoaContext<void, Array<SouthConnectorDTO>>) => {
-  const southConnectors = ctx.app.repositoryService.southConnectorRepository.getSouthConnectors();
-  ctx.ok(southConnectors);
-};
-
-const getSouthConnector = async (ctx: KoaContext<void, SouthConnectorDTO>) => {
-  const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
-  ctx.ok(southConnector);
-};
-
-const createSouthConnector = async (ctx: KoaContext<SouthConnectorCommandDTO, void>) => {
-  const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
-  if (command) {
-    const southConnector = ctx.app.repositoryService.southConnectorRepository.createSouthConnector(command);
-    ctx.created(southConnector);
-  } else {
-    ctx.badRequest();
+  async getSouthConnectorManifest(ctx: KoaContext<void, object>): Promise<void> {
+    const manifest = manifests.find(south => south.name === ctx.params.id);
+    if (!manifest) {
+      ctx.throw(404, 'South not found');
+    }
+    ctx.ok(manifest);
   }
-};
 
-const updateSouthConnector = async (ctx: KoaContext<SouthConnectorCommandDTO, void>) => {
-  const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
-  if (command) {
-    ctx.app.repositoryService.southConnectorRepository.updateSouthConnector(ctx.params.id, command);
+  async getSouthConnectors(ctx: KoaContext<void, Array<SouthConnectorDTO>>): Promise<void> {
+    const southConnectors = ctx.app.repositoryService.southConnectorRepository.getSouthConnectors();
+    ctx.ok(southConnectors);
+  }
+
+  async getSouthConnector(ctx: KoaContext<void, SouthConnectorDTO>): Promise<void> {
+    const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
+    if (southConnector) {
+      ctx.ok(southConnector);
+    } else {
+      ctx.notFound();
+    }
+  }
+
+  async createSouthConnector(ctx: KoaContext<SouthConnectorCommandDTO, void>): Promise<void> {
+    try {
+      const manifest = manifests.find(south => south.name === ctx.request.body?.type);
+      if (!manifest) {
+        return ctx.throw(404, 'South manifest not found');
+      }
+
+      await this.validator.validate(manifest.schema, ctx.request.body);
+
+      const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
+      if (command) {
+        const southConnector = ctx.app.repositoryService.southConnectorRepository.createSouthConnector(command);
+        ctx.created(southConnector);
+      } else {
+        ctx.badRequest();
+      }
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
+  async updateSouthConnector(ctx: KoaContext<SouthConnectorCommandDTO, void>): Promise<void> {
+    try {
+      const manifest = manifests.find(south => south.name === ctx.request.body?.type);
+      if (!manifest) {
+        return ctx.throw(404, 'South not found');
+      }
+
+      await this.validator.validate(manifest.schema, ctx.request.body);
+
+      const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
+      if (command) {
+        ctx.app.repositoryService.southConnectorRepository.updateSouthConnector(ctx.params.id, command);
+        ctx.noContent();
+      } else {
+        ctx.badRequest();
+      }
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
+  async deleteSouthConnector(ctx: KoaContext<void, void>): Promise<void> {
+    ctx.app.repositoryService.southConnectorRepository.deleteSouthConnector(ctx.params.id);
     ctx.noContent();
-  } else {
-    ctx.badRequest();
   }
-};
 
-const deleteSouthConnector = async (ctx: KoaContext<void, void>) => {
-  ctx.app.repositoryService.southConnectorRepository.deleteSouthConnector(ctx.params.id);
-  ctx.noContent();
-};
-
-const searchSouthItems = async (ctx: KoaContext<void, Page<SouthItemDTO>>) => {
-  const searchParams: SouthItemSearchParam = {
-    page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
-    name: (ctx.query.name as string) || null
-  };
-  const southItems = ctx.app.repositoryService.southItemRepository.searchSouthItems(ctx.params.southId, searchParams);
-  ctx.ok(southItems);
-};
-
-const getSouthItem = async (ctx: KoaContext<void, SouthItemDTO>) => {
-  const southItem = ctx.app.repositoryService.southItemRepository.getSouthItem(ctx.params.id);
-  ctx.ok(southItem);
-};
-
-const createSouthItem = async (ctx: KoaContext<SouthItemCommandDTO, SouthItemDTO>) => {
-  const command: SouthItemCommandDTO | undefined = ctx.request.body;
-  if (command) {
-    const southItem = ctx.app.repositoryService.southItemRepository.createSouthItem(ctx.params.southId, command);
-    ctx.created(southItem);
-  } else {
-    ctx.badRequest();
+  async searchSouthItems(ctx: KoaContext<void, Page<SouthItemDTO>>): Promise<void> {
+    const searchParams: SouthItemSearchParam = {
+      page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
+      name: (ctx.query.name as string) || null
+    };
+    const southItems = ctx.app.repositoryService.southItemRepository.searchSouthItems(ctx.params.southId, searchParams);
+    ctx.ok(southItems);
   }
-};
 
-const updateSouthItem = async (ctx: KoaContext<SouthItemCommandDTO, void>) => {
-  const command: SouthItemCommandDTO | undefined = ctx.request.body;
-  if (command) {
-    ctx.app.repositoryService.southItemRepository.updateSouthItem(ctx.params.id, command);
+  async getSouthItem(ctx: KoaContext<void, SouthItemDTO>): Promise<void> {
+    const southItem = ctx.app.repositoryService.southItemRepository.getSouthItem(ctx.params.id);
+    if (southItem) {
+      ctx.ok(southItem);
+    } else {
+      ctx.notFound();
+    }
+  }
+
+  async createSouthItem(ctx: KoaContext<SouthItemCommandDTO, SouthItemDTO>): Promise<void> {
+    const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
+    if (!southConnector) {
+      return ctx.throw(404, 'South not found');
+    }
+
+    const manifest = manifests.find(south => south.name === southConnector.type);
+    if (!manifest) {
+      return ctx.throw(404, 'South manifest not found');
+    }
+
+    const command: SouthItemCommandDTO | undefined = ctx.request.body;
+    if (command) {
+      await this.validator.validate(manifest.items.schema, command);
+
+      const southItem = ctx.app.repositoryService.southItemRepository.createSouthItem(ctx.params.southId, command);
+      ctx.created(southItem);
+    } else {
+      ctx.badRequest();
+    }
+  }
+
+  async updateSouthItem(ctx: KoaContext<SouthItemCommandDTO, void>): Promise<void> {
+    const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
+    if (!southConnector) {
+      return ctx.throw(404, 'South not found');
+    }
+
+    const manifest = manifests.find(south => south.name === southConnector.type);
+    if (!manifest) {
+      return ctx.throw(404, 'South manifest not found');
+    }
+
+    const southItem = ctx.app.repositoryService.southItemRepository.getSouthItem(ctx.params.id);
+    if (southItem) {
+      const command: SouthItemCommandDTO | undefined = ctx.request.body;
+      if (command) {
+        await this.validator.validate(manifest.items.schema, command);
+
+        ctx.app.repositoryService.southItemRepository.updateSouthItem(ctx.params.id, command);
+        ctx.noContent();
+      } else {
+        ctx.badRequest();
+      }
+    } else {
+      ctx.notFound();
+    }
+  }
+
+  async deleteSouthItem(ctx: KoaContext<void, void>): Promise<void> {
+    ctx.app.repositoryService.southItemRepository.deleteSouthItem(ctx.params.id);
     ctx.noContent();
-  } else {
-    ctx.badRequest();
   }
-};
-
-const deleteSouthItem = async (ctx: KoaContext<void, void>) => {
-  ctx.app.repositoryService.southItemRepository.deleteSouthItem(ctx.params.id);
-  ctx.noContent();
-};
-
-export default {
-  getSouthConnectorTypes,
-  getSouthConnectorManifest,
-  getSouthConnectors,
-  getSouthConnector,
-  createSouthConnector,
-  updateSouthConnector,
-  deleteSouthConnector,
-  searchSouthItems,
-  getSouthItem,
-  createSouthItem,
-  updateSouthItem,
-  deleteSouthItem
-};
+}
