@@ -3,7 +3,6 @@ import RepositoryService from '../service/repository.service';
 import pino from 'pino';
 import Logger = pino.Logger;
 import * as Application from 'koa';
-import ValidatorService from '../service/validator.service';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
@@ -12,7 +11,6 @@ interface KoaRequest<RequestBody> extends Request {
 interface KoaApplication extends Application {
   id: string;
   repositoryService: RepositoryService;
-  validatorService: ValidatorService;
   logger: Logger;
 }
 

@@ -1,4 +1,5 @@
 import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+import Joi from 'joi';
 
 const manifest: SouthConnectorManifest = {
   name: 'FolderScanner',
@@ -64,6 +65,13 @@ const manifest: SouthConnectorManifest = {
       readDisplay: true
     }
   ],
+  schema: Joi.object({
+    inputFolder: Joi.string().required().min(1),
+    preserveFiles: Joi.boolean().required(),
+    ignoreModifiedDate: Joi.boolean().required(),
+    minAge: Joi.number().required().min(1000).max(3_600_000),
+    compression: Joi.boolean().required()
+  }),
   items: {
     scanMode: {
       acceptSubscription: false,
@@ -78,7 +86,10 @@ const manifest: SouthConnectorManifest = {
         validators: [{ key: 'required' }],
         readDisplay: true
       }
-    ]
+    ],
+    schema: Joi.object({
+      regex: Joi.string().required().min(1)
+    })
   }
 };
 export default manifest;

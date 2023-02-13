@@ -1,4 +1,5 @@
 import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
+import Joi from 'joi';
 
 const manifest: NorthConnectorManifest = {
   name: 'OIConnect',
@@ -35,7 +36,14 @@ const manifest: NorthConnectorManifest = {
       readDisplay: true
     },
     { key: 'proxy', type: 'OibProxy', label: 'Proxy', newRow: true }
-  ]
+  ],
+  schema: Joi.object({
+    host: Joi.string()
+      .required()
+      .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] }),
+    valuesEndpoint: Joi.string().required(),
+    fileEndpoint: Joi.string().required()
+  })
 };
 
 export default manifest;
