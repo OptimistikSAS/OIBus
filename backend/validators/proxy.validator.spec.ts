@@ -1,6 +1,5 @@
 import JoiValidator from './joi.validator';
 import { proxySchema } from '../engine/oibus-validation-schema';
-import ValidatorInterface from './validator.interface';
 
 interface DataProvider {
   dto: any;
@@ -69,13 +68,13 @@ const dataProviders: DataProvider[] = [
 ];
 
 describe('Proxy validator', () => {
-  const validator: ValidatorInterface = new JoiValidator(proxySchema);
+  const validator: JoiValidator = new JoiValidator();
 
   it.each(dataProviders)(`$# Should be valid: $isValid`, async dataProvider => {
     if (dataProvider.isValid) {
-      await expect(validator.validate(dataProvider.dto)).resolves.not.toThrow();
+      await expect(validator.validate(proxySchema, dataProvider.dto)).resolves.not.toThrow();
     } else {
-      await expect(validator.validate(dataProvider.dto)).rejects.toThrowError(new Error(dataProvider.errorMessage as string));
+      await expect(validator.validate(proxySchema, dataProvider.dto)).rejects.toThrowError(new Error(dataProvider.errorMessage as string));
     }
   });
 });

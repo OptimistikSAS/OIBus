@@ -1,4 +1,5 @@
 import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
+import Joi from 'joi';
 
 const manifest: NorthConnectorManifest = {
   name: 'CsvToHttp',
@@ -51,7 +52,16 @@ const manifest: NorthConnectorManifest = {
       newRow: true
     },
     { key: 'proxy', type: 'OibProxy', label: 'Proxy', newRow: true }
-  ]
+  ],
+  schema: Joi.object({
+    applicativeHostUrl: Joi.string()
+      .required()
+      .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] }),
+    requestMethod: Joi.string().required().allow('GET', 'POST', 'PUT', 'PATCH'),
+    bodyMaxLength: Joi.number().required().min(1).max(10_000),
+    acceptUnconvertedRows: Joi.boolean().required(),
+    csvDelimiter: Joi.string().required().allow(',', ';')
+  })
 };
 
 export default manifest;

@@ -1,10 +1,8 @@
 import { KoaContext } from '../koa';
 import { ScanModeCommandDTO, ScanModeDTO } from '../../../shared/model/scan-mode.model';
-import ValidatorInterface from '../../validators/validator.interface';
+import AbstractController from './abstract.controller';
 
-export default class ScanModeController {
-  constructor(private readonly validator: ValidatorInterface) {}
-
+export default class ScanModeController extends AbstractController {
   async getScanModes(ctx: KoaContext<void, Array<ScanModeDTO>>): Promise<void> {
     const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
     ctx.ok(scanModes);
@@ -21,8 +19,7 @@ export default class ScanModeController {
 
   async createScanMode(ctx: KoaContext<ScanModeCommandDTO, void>): Promise<void> {
     try {
-      await this.validator.validate(ctx.request.body);
-
+      await this.validate(ctx.request.body);
       const scanMode = ctx.app.repositoryService.scanModeRepository.createScanMode(ctx.request.body as ScanModeCommandDTO);
       ctx.created(scanMode);
     } catch (error: any) {
@@ -32,7 +29,7 @@ export default class ScanModeController {
 
   async updateScanMode(ctx: KoaContext<ScanModeCommandDTO, void>): Promise<void> {
     try {
-      await this.validator.validate(ctx.request.body);
+      await this.validate(ctx.request.body);
       ctx.app.repositoryService.scanModeRepository.updateScanMode(ctx.params.id, ctx.request.body as ScanModeCommandDTO);
       ctx.noContent();
     } catch (error: any) {
