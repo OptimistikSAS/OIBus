@@ -1,4 +1,5 @@
 import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
+import Joi from 'joi';
 
 const manifest: NorthConnectorManifest = {
   name: 'WATSY',
@@ -64,7 +65,19 @@ const manifest: NorthConnectorManifest = {
       ],
       defaultValue: ''
     }
-  ]
+  ],
+  schema: Joi.object({
+    MQTTUrl: Joi.string()
+      .required()
+      .uri({ scheme: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'] }),
+    port: Joi.number().required().min(1).max(65535),
+    username: Joi.string().allow(''),
+    password: Joi.string().allow(''),
+    applicativeHostUrl: Joi.string()
+      .required()
+      .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] }),
+    secretKey: Joi.string().required().min(1).max(255)
+  })
 };
 
 export default manifest;

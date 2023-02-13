@@ -1,10 +1,8 @@
 import { KoaContext } from '../koa';
 import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../../shared/model/external-sources.model';
-import ValidatorInterface from '../../validators/validator.interface';
+import AbstractController from './abstract.controller';
 
-export default class ExternalSourceController {
-  constructor(private readonly validator: ValidatorInterface) {}
-
+export default class ExternalSourceController extends AbstractController {
   async getExternalSources(ctx: KoaContext<void, Array<ExternalSourceDTO>>): Promise<void> {
     const externalSources = ctx.app.repositoryService.externalSourceRepository.getExternalSources();
     ctx.ok(externalSources);
@@ -21,7 +19,7 @@ export default class ExternalSourceController {
 
   async createExternalSource(ctx: KoaContext<ExternalSourceCommandDTO, void>): Promise<void> {
     try {
-      await this.validator.validate(ctx.request.body);
+      await this.validate(ctx.request.body);
       const externalSource = ctx.app.repositoryService.externalSourceRepository.createExternalSource(
         ctx.request.body as ExternalSourceCommandDTO
       );
@@ -33,7 +31,7 @@ export default class ExternalSourceController {
 
   async updateExternalSource(ctx: KoaContext<ExternalSourceCommandDTO, void>): Promise<void> {
     try {
-      await this.validator.validate(ctx.request.body);
+      await this.validate(ctx.request.body);
       ctx.app.repositoryService.externalSourceRepository.updateExternalSource(ctx.params.id, ctx.request.body as ExternalSourceCommandDTO);
       ctx.noContent();
     } catch (error: any) {

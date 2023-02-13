@@ -1,4 +1,5 @@
 import { OibFormControl } from './form.model';
+import Joi from 'joi';
 
 export interface SouthType {
   category: string;
@@ -67,6 +68,7 @@ export interface SouthItemManifest {
     subscriptionOnly: boolean;
   };
   settings: Array<OibFormControl>;
+  schema: Joi.ObjectSchema;
 }
 
 export interface SouthConnectorManifest {
@@ -81,5 +83,6 @@ export interface SouthConnectorManifest {
     historyFile: boolean;
   };
   settings: Array<OibFormControl>;
+  schema: Joi.ObjectSchema;
   items: SouthItemManifest;
 }

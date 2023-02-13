@@ -12,9 +12,10 @@ import oiconnectManifest from '../../north/north-oiconnect/manifest';
 import timescaleManifest from '../../north/north-timescale-db/manifest';
 import watsyManifest from '../../north/north-watsy/manifest';
 import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthType } from '../../../shared/model/north-connector.model';
+import JoiValidator from '../../validators/joi.validator';
 
 // TODO: retrieve north types from a local store
-const manifest = [
+const manifests = [
   watsyManifest,
   oiconnectManifest,
   timescaleManifest,
@@ -28,66 +29,91 @@ const manifest = [
   amazonManifest
 ];
 
-const getNorthConnectorTypes = async (ctx: KoaContext<void, Array<NorthType>>) => {
-  ctx.ok(
-    manifest.map(connector => ({
-      category: connector.category,
-      type: connector.name,
-      description: connector.description,
-      modes: connector.modes
-    }))
-  );
-};
+export default class NorthConnectorController {
+  constructor(protected readonly validator: JoiValidator) {}
 
-const getNorthConnectorManifest = async (ctx: KoaContext<void, object>) => {
-  const connector = manifest.find(south => south.name === ctx.params.id);
-  if (!connector) {
-    ctx.throw(404, 'North not found');
+  async getNorthConnectorTypes(ctx: KoaContext<void, Array<NorthType>>): Promise<void> {
+    ctx.ok(
+      manifests.map(connector => ({
+        category: connector.category,
+        type: connector.name,
+        description: connector.description,
+        modes: connector.modes
+      }))
+    );
   }
-  ctx.ok(connector);
-};
 
-const getNorthConnectors = async (ctx: KoaContext<void, Array<NorthConnectorDTO>>) => {
-  const northConnectors = ctx.app.repositoryService.northConnectorRepository.getNorthConnectors();
-  ctx.ok(northConnectors);
-};
-
-const getNorthConnector = async (ctx: KoaContext<void, NorthConnectorDTO>) => {
-  const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
-  ctx.ok(northConnector);
-};
-
-const createNorthConnector = async (ctx: KoaContext<NorthConnectorCommandDTO, void>) => {
-  const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
-  if (command) {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.createNorthConnector(command);
-    ctx.created(northConnector);
-  } else {
-    ctx.badRequest();
+  async getNorthConnectorManifest(ctx: KoaContext<void, object>): Promise<void> {
+    const manifest = manifests.find(north => north.name === ctx.params.id);
+    if (!manifest) {
+      ctx.throw(404, 'North not found');
+    }
+    ctx.ok(manifest);
   }
-};
 
-const updateNorthConnector = async (ctx: KoaContext<NorthConnectorCommandDTO, void>) => {
-  const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
-  if (command) {
-    ctx.app.repositoryService.northConnectorRepository.updateNorthConnector(ctx.params.id, command);
-    ctx.noContent();
-  } else {
-    ctx.badRequest();
+  async getNorthConnectors(ctx: KoaContext<void, Array<NorthConnectorDTO>>): Promise<void> {
+    const northConnectors = ctx.app.repositoryService.northConnectorRepository.getNorthConnectors();
+    ctx.ok(northConnectors);
   }
-};
 
-const deleteNorthConnector = async (ctx: KoaContext<void, void>) => {
-  ctx.app.repositoryService.northConnectorRepository.deleteNorthConnector(ctx.params.id);
-  ctx.noContent();
-};
+  async getNorthConnector(ctx: KoaContext<void, NorthConnectorDTO>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    if (northConnector) {
+      ctx.ok(northConnector);
+    } else {
+      ctx.notFound();
+    }
+  }
 
-export default {
-  getNorthConnectorTypes,
-  getNorthConnectorManifest,
-  getNorthConnectors,
-  getNorthConnector,
-  createNorthConnector,
-  updateNorthConnector,
-  deleteNorthConnector
-};
+  async createNorthConnector(ctx: KoaContext<NorthConnectorCommandDTO, void>): Promise<void> {
+    try {
+      const manifest = manifests.find(north => north.name === ctx.request.body?.type);
+      if (!manifest) {
+        return ctx.throw(404, 'North not found');
+      }
+
+      await this.validator.validate(manifest.schema, ctx.request.body);
+
+      const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
+      if (command) {
+        const northConnector = ctx.app.repositoryService.northConnectorRepository.createNorthConnector(command);
+        ctx.created(northConnector);
+      } else {
+        ctx.badRequest();
+      }
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
+  async updateNorthConnector(ctx: KoaContext<NorthConnectorCommandDTO, void>): Promise<void> {
+    try {
+      const manifest = manifests.find(north => north.name === ctx.request.body?.type);
+      if (!manifest) {
+        return ctx.throw(404, 'North not found');
+      }
+
+      await this.validator.validate(manifest.schema, ctx.request.body);
+
+      const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
+      if (command) {
+        ctx.app.repositoryService.northConnectorRepository.updateNorthConnector(ctx.params.id, command);
+        ctx.noContent();
+      } else {
+        ctx.badRequest();
+      }
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
+  async deleteNorthConnector(ctx: KoaContext<void, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    if (northConnector) {
+      ctx.app.repositoryService.northConnectorRepository.deleteNorthConnector(ctx.params.id);
+      ctx.noContent();
+    } else {
+      ctx.notFound();
+    }
+  }
+}

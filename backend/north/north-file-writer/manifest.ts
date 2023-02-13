@@ -1,4 +1,5 @@
 import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
+import Joi from 'joi';
 
 const manifest: NorthConnectorManifest = {
   name: 'FileWriter',
@@ -39,6 +40,11 @@ const manifest: NorthConnectorManifest = {
         { key: 'maxLength', params: { maxLength: 255 } }
       ]
     }
-  ]
+  ],
+  schema: Joi.object({
+    outputFolder: Joi.string().required().min(1),
+    prefixFileName: Joi.string().required().min(1).max(255),
+    suffixFileName: Joi.string().required().min(1).max(255)
+  })
 };
 export default manifest;

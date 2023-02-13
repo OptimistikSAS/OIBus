@@ -1,3 +1,4 @@
+import Joi from 'joi';
 import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
@@ -17,7 +18,10 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }],
       readDisplay: true
     }
-  ]
+  ],
+  schema: Joi.object({
+    verbose: Joi.boolean().required()
+  })
 };
 
 export default manifest;

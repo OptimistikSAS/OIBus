@@ -1,3 +1,4 @@
+import Joi from 'joi';
 import { OibFormControl } from './form.model';
 
 export interface NorthCacheSettingsDTO {
@@ -69,4 +70,5 @@ export interface NorthConnectorManifest {
     points: boolean;
   };
   settings: Array<OibFormControl>;
+  schema: Joi.ObjectSchema;
 }
