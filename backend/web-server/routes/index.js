@@ -1,29 +1,33 @@
 import Router from '@koa/router'
 import multer from '@koa/multer'
 
+import { scanModeSchema, proxySchema, externalSourceSchema, engineSchema, ipFilterSchema } from '../../engine/oibus-validation-schema'
+
 import configController from '../controllers/config.controller.js'
 import logController from '../controllers/log.controller.js'
 import engineController from '../controllers/engine.controller.js'
 import oibusController from '../controllers/oibus.controller.js'
 import fileCacheController from '../controllers/file-cache.controller.js'
-import southConnectorController from '../controllers/south-connector.controller'
-import northConnectorController from '../controllers/north-connector.controller'
+import logApiController from '../controllers/log-api.controller'
+import historyQueryController from '../controllers/history-query.controller'
 
-import ValidatorService from '../../service/validator.service'
 import ScanModeController from '../controllers/scan-mode.controller'
 import ProxyController from '../controllers/proxy.controller'
 import ExternalSourceController from '../controllers/external-source.controller'
 import ApiController from '../controllers/api.controller'
 import IpFilterController from '../controllers/ip-filter.controller'
-import logApiController from '../controllers/log-api.controller'
-import historyQueryController from '../controllers/history-query.controller'
+import NorthConnectorController from "../controllers/north-connector.controller"
+import SouthConnectorController from "../controllers/south-connector.controller"
+import JoiValidator from "../../validators/joi.validator"
 
-const validatorService = new ValidatorService()
-const scanModeController = new ScanModeController(validatorService.scanModeValidator)
-const externalSourceController = new ExternalSourceController(validatorService.externalSourceValidator)
-const proxyController = new ProxyController(validatorService.proxyValidator)
-const apiController = new ApiController(validatorService.engineValidator)
-const ipFilterController = new IpFilterController(validatorService.ipFilterValidator)
+const joiValidator = new JoiValidator()
+const scanModeController = new ScanModeController(joiValidator, scanModeSchema)
+const externalSourceController = new ExternalSourceController(joiValidator, externalSourceSchema)
+const proxyController = new ProxyController(joiValidator, proxySchema)
+const apiController = new ApiController(joiValidator, engineSchema)
+const ipFilterController = new IpFilterController(joiValidator, ipFilterSchema)
+const northConnectorController = new NorthConnectorController(joiValidator)
+const southConnectorController = new SouthConnectorController(joiValidator)
 const router = new Router()
 
 const storage = multer.diskStorage({
@@ -83,29 +87,29 @@ router.post('/api/ip-filters', (ctx) => ipFilterController.createIpFilter(ctx))
 router.put('/api/ip-filters/:id', (ctx) => ipFilterController.updateIpFilter(ctx))
 router.delete('/api/ip-filters/:id', (ctx) => ipFilterController.deleteIpFilter(ctx))
 
-router.get('/api/north-types', northConnectorController.getNorthConnectorTypes)
-router.get('/api/north-types/:id', northConnectorController.getNorthConnectorManifest)
+router.get('/api/north-types', (ctx) => northConnectorController.getNorthConnectorTypes(ctx))
+router.get('/api/north-types/:id', (ctx) => northConnectorController.getNorthConnectorManifest(ctx))
 
-router.get('/api/north', northConnectorController.getNorthConnectors)
-router.get('/api/north/:id', northConnectorController.getNorthConnector)
-router.post('/api/north', northConnectorController.createNorthConnector)
-router.put('/api/north/:id', northConnectorController.updateNorthConnector)
-router.delete('/api/north/:id', northConnectorController.deleteNorthConnector)
+router.get('/api/north', (ctx) => northConnectorController.getNorthConnectors(ctx))
+router.get('/api/north/:id', (ctx) => northConnectorController.getNorthConnector(ctx))
+router.post('/api/north', (ctx) => northConnectorController.createNorthConnector(ctx))
+router.put('/api/north/:id', (ctx) => northConnectorController.updateNorthConnector(ctx))
+router.delete('/api/north/:id', (ctx) => northConnectorController.deleteNorthConnector(ctx))
 
-router.get('/api/south-types', southConnectorController.getSouthConnectorTypes)
-router.get('/api/south-types/:id', southConnectorController.getSouthConnectorManifest)
+router.get('/api/south-types', (ctx) => southConnectorController.getSouthConnectorTypes(ctx))
+router.get('/api/south-types/:id', (ctx) => southConnectorController.getSouthConnectorManifest(ctx))
 
-router.get('/api/south', southConnectorController.getSouthConnectors)
-router.get('/api/south/:id', southConnectorController.getSouthConnector)
-router.post('/api/south', southConnectorController.createSouthConnector)
-router.put('/api/south/:id', southConnectorController.updateSouthConnector)
-router.delete('/api/south/:id', southConnectorController.deleteSouthConnector)
+router.get('/api/south', (ctx) => southConnectorController.getSouthConnectors(ctx))
+router.get('/api/south/:id', (ctx) => southConnectorController.getSouthConnector(ctx))
+router.post('/api/south', (ctx) => southConnectorController.createSouthConnector(ctx))
+router.put('/api/south/:id', (ctx) => southConnectorController.updateSouthConnector(ctx))
+router.delete('/api/south/:id', (ctx) => southConnectorController.deleteSouthConnector(ctx))
 
-router.get('/api/south/:southId/items', southConnectorController.searchSouthItems)
-router.get('/api/south/:southId/items/:id', southConnectorController.getSouthItem)
-router.post('/api/south/:southId/items', southConnectorController.createSouthItem)
-router.put('/api/south/:southId/items/:id', southConnectorController.updateSouthItem)
-router.delete('/api/south/:southId/items/:id', southConnectorController.deleteSouthItem)
+router.get('/api/south/:southId/items', (ctx) => southConnectorController.searchSouthItems(ctx))
+router.get('/api/south/:southId/items/:id', (ctx) => southConnectorController.getSouthItem(ctx))
+router.post('/api/south/:southId/items', (ctx) => southConnectorController.createSouthItem(ctx))
+router.put('/api/south/:southId/items/:id', (ctx) => southConnectorController.updateSouthItem(ctx))
+router.delete('/api/south/:southId/items/:id', (ctx) => southConnectorController.deleteSouthItem(ctx))
 
 router.get('/api/history-queries', historyQueryController.getHistoryQueries)
 router.get('/api/history-queries/:id', historyQueryController.getHistoryQuery)

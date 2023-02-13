@@ -1,9 +1,10 @@
 import { NorthConnectorManifest } from '../../../shared/model/north-connector.model';
+import Joi from 'joi';
 
 const manifest: NorthConnectorManifest = {
   name: 'InfluxDB',
   category: 'database',
-  description: 'InfluxDB desscription',
+  description: 'InfluxDB description',
   modes: {
     files: false,
     points: true
@@ -99,7 +100,22 @@ const manifest: NorthConnectorManifest = {
       label: 'Key parent value',
       defaultValue: ''
     }
-  ]
+  ],
+  schema: Joi.object({
+    host: Joi.string()
+      .required()
+      .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] }),
+    database: Joi.string().required(),
+    username: Joi.string().required(),
+    password: Joi.string().min(1).max(255).required(),
+    timestampPathInDataValue: Joi.string().allow(''),
+    precision: Joi.string().required(),
+    regExp: Joi.string().required(),
+    measurement: Joi.string().required(),
+    tags: Joi.string().allow(''),
+    useDataKeyValue: Joi.boolean().required(),
+    keyParentValue: Joi.string().allow('')
+  })
 };
 
 export default manifest;

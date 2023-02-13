@@ -1,6 +1,5 @@
 import JoiValidator from './joi.validator';
 import { externalSourceSchema } from '../engine/oibus-validation-schema';
-import ValidatorInterface from './validator.interface';
 
 interface DataProvider {
   dto: any;
@@ -53,13 +52,13 @@ const dataProviders: DataProvider[] = [
 ];
 
 describe('External source validator', () => {
-  const validator: ValidatorInterface = new JoiValidator(externalSourceSchema);
+  const validator: JoiValidator = new JoiValidator();
 
   it.each(dataProviders)(`$# Should be valid: $isValid`, async dataProvider => {
     if (dataProvider.isValid) {
-      await expect(validator.validate(dataProvider.dto)).resolves.not.toThrow();
+      await expect(validator.validate(externalSourceSchema, dataProvider.dto)).resolves.not.toThrow();
     } else {
-      await expect(validator.validate(dataProvider.dto)).rejects.toThrowError(new Error(dataProvider.errorMessage as string));
+      await expect(validator.validate(externalSourceSchema, dataProvider.dto)).rejects.toThrowError(new Error(dataProvider.errorMessage as string));
     }
   });
 });
