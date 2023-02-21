@@ -1,6 +1,8 @@
 import { ConnectorFormValidator, OibFormControl } from '../../../../shared/model/form.model';
 import { FormControl, FormControlOptions, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { ScanModeDTO } from '../../../../shared/model/scan-mode.model';
+import { ProxyDTO } from '../../../../shared/model/proxy.model';
+import { Authentication } from '../../../../shared/model/engine.model';
 
 /**
  * Create the validators associated to an input from the settings schema
@@ -28,7 +30,7 @@ export const getValidators = (validators: Array<ConnectorFormValidator>): FormCo
   return { validators: formValidators };
 };
 
-export const createInput = (value: OibFormControl, form: FormGroup, scanModes: Array<ScanModeDTO> = []) => {
+export const createInput = (value: OibFormControl, form: FormGroup, scanModes: Array<ScanModeDTO> = [], proxies: Array<ProxyDTO> = []) => {
   switch (value.type) {
     case 'OibText':
     case 'OibNumber':
@@ -43,6 +45,18 @@ export const createInput = (value: OibFormControl, form: FormGroup, scanModes: A
     case 'OibScanMode':
       const scanMode = scanModes.find(element => element.id === value.currentValue?.id);
       form.addControl(value.key, new FormControl(scanMode, getValidators(value.validators ?? [])));
+      break;
+    case 'OibProxy':
+      const proxy = proxies.find(element => element.id === value.currentValue);
+      form.addControl(value.key, new FormControl(proxy?.id, getValidators(value.validators || [])));
+      break;
+    case 'OibAuthentication':
+      const authentication: Authentication = {
+        type: value.currentValue?.type || 'none',
+        key: value.currentValue?.key || '',
+        secret: ''
+      };
+      form.addControl(value.key, new FormControl(authentication, getValidators(value.validators || [])));
       break;
   }
 };

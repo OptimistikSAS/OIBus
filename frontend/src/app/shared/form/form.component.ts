@@ -6,6 +6,8 @@ import { OibFormControl } from '../../../../../shared/model/form.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { OibCodeBlockComponent } from './oib-code-block/oib-code-block.component';
+import { OibProxyComponent } from './oib-proxy/oib-proxy.component';
+import { OibAuthComponent } from './oib-auth/oib-auth.component';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -17,7 +19,7 @@ declare namespace Intl {
 @Component({
   selector: 'oib-form',
   standalone: true,
-  imports: [...formDirectives, NgIf, NgForOf, OibCodeBlockComponent],
+  imports: [...formDirectives, NgIf, NgForOf, OibCodeBlockComponent, OibProxyComponent, OibAuthComponent],
   templateUrl: './form.component.html',
   styleUrls: ['./form.component.scss'],
   viewProviders: [

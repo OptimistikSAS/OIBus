@@ -93,7 +93,19 @@ export class EditNorthComponent implements OnInit {
             this.northForm.patchValue({
               name: northConnector.name,
               description: northConnector.description,
-              enabled: northConnector.enabled
+              enabled: northConnector.enabled,
+              caching: {
+                scanMode: this.scanModes.find(scanMode => northConnector.caching.scanModeId === scanMode.id) || null,
+                retryInterval: northConnector.caching.retryInterval,
+                retryCount: northConnector.caching.retryCount,
+                groupCount: northConnector.caching.groupCount,
+                maxSendCount: northConnector.caching.maxSendCount,
+                timeout: northConnector.caching.timeout
+              },
+              archive: {
+                enabled: northConnector.archive.enabled,
+                retentionDuration: northConnector.archive.retentionDuration
+              }
             });
           }
           // If a North connector is not retrieved, the types are needed to create a new connector
@@ -114,7 +126,7 @@ export class EditNorthComponent implements OnInit {
         const settingsForm = this.northForm.controls.settings;
         this.northSettingsSchema.forEach(row => {
           row.forEach(settings => {
-            createInput(settings, settingsForm);
+            createInput(settings, settingsForm, this.scanModes, this.proxies);
             if (settings.conditionalDisplay) {
               Object.entries(settings.conditionalDisplay).forEach(([key]) => {
                 // Keep only one occurrence of each input to subscribe to
@@ -181,6 +193,8 @@ export class EditNorthComponent implements OnInit {
     }
 
     const formValue = this.northForm.value;
+
+    console.log('settings', formValue.settings);
     const command: NorthConnectorCommandDTO = {
       name: formValue.name!,
       type: this.northType,

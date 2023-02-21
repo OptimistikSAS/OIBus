@@ -1,5 +1,4 @@
 import { ScanModeDTO } from './scan-mode.model';
-import { ProxyDTO } from './proxy.model';
 import { Authentication, AuthenticationType } from './engine.model';
 
 export const CONNECTOR_FORM_TYPES = [
@@ -129,7 +128,7 @@ export interface OibTimezoneFormControl extends BaseOibFormControl<string> {
   type: 'OibTimezone';
 }
 
-export interface OibProxyFormControl extends BaseOibFormControl<ProxyDTO> {
+export interface OibProxyFormControl extends BaseOibFormControl<string> {
   type: 'OibProxy';
 }
 
