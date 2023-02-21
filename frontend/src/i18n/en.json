@@ -69,6 +69,12 @@
       "file": "File",
       "iot": "IoT",
       "oi": "OI"
+    },
+    "auth-types": {
+      "none":  "None",
+      "basic":  "Basic auth",
+      "bearer":  "Bearer",
+      "api-key":  "API key"
     }
   },
   "nav": {
@@ -338,5 +344,13 @@
     "title": "Scan mode",
     "label": "Scan mode",
     "subscription": "Subscribe"
+  },
+  "authentication": {
+    "title": "Authentication",
+    "username": "Username",
+    "password": "Password",
+    "api-key": "API key",
+    "secret": "Secret",
+    "bearer": "Bearer"
   }
 }
