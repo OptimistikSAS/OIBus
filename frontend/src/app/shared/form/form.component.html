@@ -60,6 +60,20 @@
           </select>
           <val-errors [controlName]="settings.key"></val-errors>
         </div>
+        <oib-proxy
+          *ngIf="settings.type === 'OibProxy'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+          [proxies]="proxies"
+        ></oib-proxy>
+        <oib-auth
+          *ngIf="settings.type === 'OibAuthentication'"
+          [label]="settings.label"
+          [key]="settings.key"
+          [formControlName]="settings.key"
+          [authTypes]="settings.authTypes"
+        ></oib-auth>
       </div>
     </ng-container>
   </div>
