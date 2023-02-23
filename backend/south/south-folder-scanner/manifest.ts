@@ -67,10 +67,10 @@ const manifest: SouthConnectorManifest = {
   ],
   schema: Joi.object({
     inputFolder: Joi.string().required(),
-    preserveFiles: Joi.boolean().required(),
-    ignoreModifiedDate: Joi.boolean().when('preserveFiles', { is: true, then: Joi.required() }),
+    preserveFiles: Joi.boolean().required().falsy(0).truthy(1),
+    ignoreModifiedDate: Joi.boolean().falsy(0).truthy(1).when('preserveFiles', { is: true, then: Joi.required() }),
     minAge: Joi.number().required().min(1000).max(3_600_000),
-    compression: Joi.boolean().required()
+    compression: Joi.boolean().required().falsy(0).truthy(1)
   }),
   items: {
     scanMode: {

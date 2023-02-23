@@ -72,7 +72,7 @@ export default class NorthConnectorController {
         return ctx.throw(404, 'North not found');
       }
 
-      await this.validator.validate(manifest.schema, ctx.request.body);
+      await this.validator.validate(manifest.schema, ctx.request.body?.settings);
 
       const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
@@ -93,7 +93,7 @@ export default class NorthConnectorController {
         return ctx.throw(404, 'North not found');
       }
 
-      await this.validator.validate(manifest.schema, ctx.request.body);
+      await this.validator.validate(manifest.schema, ctx.request.body?.settings);
 
       const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
