@@ -70,13 +70,13 @@ const manifest: NorthConnectorManifest = {
     MQTTUrl: Joi.string()
       .required()
       .uri({ scheme: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'] }),
-    port: Joi.number().required().min(1).max(65535),
+    port: Joi.number().required().port(),
     username: Joi.string().allow(''),
     password: Joi.string().allow(''),
     applicativeHostUrl: Joi.string()
       .required()
       .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] }),
-    secretKey: Joi.string().required().min(1).max(255)
+    secretKey: Joi.string().min(1).max(255)
   })
 };
 

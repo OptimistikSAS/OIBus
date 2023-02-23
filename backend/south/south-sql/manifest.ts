@@ -1,4 +1,5 @@
 import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+import Joi from "joi";
 
 const manifest: SouthConnectorManifest = {
   name: 'SQL',
@@ -108,6 +109,24 @@ const manifest: SouthConnectorManifest = {
       readDisplay: false
     }
   ],
+  schema: Joi.object({
+    driver: Joi.string().required().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle', 'SQLite'),
+    databasePath: Joi.string().when('driver', { is: 'SQLite', then: Joi.required() }),
+    host: Joi.string().when('driver', { is: Joi.string().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle'), then: Joi.required() }),
+    port: Joi.number()
+      .port()
+      .when('driver', { is: Joi.string().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle'), then: Joi.required() }),
+    database: Joi.string().when('driver', { is: Joi.string().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle'), then: Joi.required() }),
+    username: Joi.string().when('driver', { is: Joi.string().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle'), then: Joi.required() }),
+    password: Joi.string().when('driver', { is: Joi.string().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle'), then: Joi.required() }),
+    domain: Joi.string().when('driver', { is: 'MSSQL', then: Joi.required() }),
+    encryption: Joi.boolean().when('driver', { is: 'MSSQL', then: Joi.required() }),
+    connectionTimeout: Joi.number()
+      .integer()
+      .min(100)
+      .max(30000)
+      .when('driver', { is: Joi.string().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle'), then: Joi.required() })
+  }),
   items: {
     scanMode: {
       acceptSubscription: false,
@@ -189,7 +208,19 @@ const manifest: SouthConnectorManifest = {
         defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
         readDisplay: false
       }
-    ]
+    ],
+    schema: Joi.object({
+      query: Joi.string().required(),
+      requestTimeout: Joi.number().integer().required().min(100).max(60000),
+      maxReadInterval: Joi.number().integer().required(),
+      readIntervalDelay: Joi.number().integer().required().min(100).max(3_600_000),
+      filename: Joi.string(),
+      delimiter: Joi.string().required().valid(',', ';', '|'),
+      compression: Joi.boolean(),
+      timeColumn: Joi.string(),
+      timezone: Joi.string(),
+      dateFormat: Joi.string()
+    })
   }
 };
 
