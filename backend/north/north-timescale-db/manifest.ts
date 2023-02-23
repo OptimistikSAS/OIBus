@@ -104,7 +104,7 @@ const manifest: NorthConnectorManifest = {
     table: Joi.string().required(),
     optFields: Joi.string().min(1).max(255),
     timestampPathInDataValue: Joi.string().allow(''),
-    useDataKeyValue: Joi.boolean().required(),
+    useDataKeyValue: Joi.boolean().required().falsy(0).truthy(1),
     keyParentValue: Joi.string().allow('')
   })
 };

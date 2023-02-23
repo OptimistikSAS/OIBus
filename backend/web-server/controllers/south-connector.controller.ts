@@ -76,7 +76,7 @@ export default class SouthConnectorController {
         return ctx.throw(404, 'South manifest not found');
       }
 
-      await this.validator.validate(manifest.schema, ctx.request.body);
+      await this.validator.validate(manifest.schema, ctx.request.body?.settings);
 
       const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
@@ -97,7 +97,7 @@ export default class SouthConnectorController {
         return ctx.throw(404, 'South not found');
       }
 
-      await this.validator.validate(manifest.schema, ctx.request.body);
+      await this.validator.validate(manifest.schema, ctx.request.body?.settings);
 
       const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
@@ -135,51 +135,59 @@ export default class SouthConnectorController {
   }
 
   async createSouthItem(ctx: KoaContext<SouthItemCommandDTO, SouthItemDTO>): Promise<void> {
-    const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
-    if (!southConnector) {
-      return ctx.throw(404, 'South not found');
-    }
+    try {
+      const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
+      if (!southConnector) {
+        return ctx.throw(404, 'South not found');
+      }
 
-    const manifest = manifests.find(south => south.name === southConnector.type);
-    if (!manifest) {
-      return ctx.throw(404, 'South manifest not found');
-    }
+      const manifest = manifests.find(south => south.name === southConnector.type);
+      if (!manifest) {
+        return ctx.throw(404, 'South manifest not found');
+      }
 
-    const command: SouthItemCommandDTO | undefined = ctx.request.body;
-    if (command) {
-      await this.validator.validate(manifest.items.schema, command);
+      const command: SouthItemCommandDTO | undefined = ctx.request.body;
+      if (command) {
+        await this.validator.validate(manifest.items.schema, command?.settings);
 
-      const southItem = ctx.app.repositoryService.southItemRepository.createSouthItem(ctx.params.southId, command);
-      ctx.created(southItem);
-    } else {
-      ctx.badRequest();
+        const southItem = ctx.app.repositoryService.southItemRepository.createSouthItem(ctx.params.southId, command);
+        ctx.created(southItem);
+      } else {
+        ctx.badRequest();
+      }
+    } catch (error: any) {
+      ctx.badRequest(error.message);
     }
   }
 
   async updateSouthItem(ctx: KoaContext<SouthItemCommandDTO, void>): Promise<void> {
-    const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
-    if (!southConnector) {
-      return ctx.throw(404, 'South not found');
-    }
-
-    const manifest = manifests.find(south => south.name === southConnector.type);
-    if (!manifest) {
-      return ctx.throw(404, 'South manifest not found');
-    }
-
-    const southItem = ctx.app.repositoryService.southItemRepository.getSouthItem(ctx.params.id);
-    if (southItem) {
-      const command: SouthItemCommandDTO | undefined = ctx.request.body;
-      if (command) {
-        await this.validator.validate(manifest.items.schema, command);
-
-        ctx.app.repositoryService.southItemRepository.updateSouthItem(ctx.params.id, command);
-        ctx.noContent();
-      } else {
-        ctx.badRequest();
+    try {
+      const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
+      if (!southConnector) {
+        return ctx.throw(404, 'South not found');
       }
-    } else {
-      ctx.notFound();
+
+      const manifest = manifests.find(south => south.name === southConnector.type);
+      if (!manifest) {
+        return ctx.throw(404, 'South manifest not found');
+      }
+
+      const southItem = ctx.app.repositoryService.southItemRepository.getSouthItem(ctx.params.id);
+      if (southItem) {
+        const command: SouthItemCommandDTO | undefined = ctx.request.body;
+        if (command) {
+          await this.validator.validate(manifest.items.schema, command?.settings);
+
+          ctx.app.repositoryService.southItemRepository.updateSouthItem(ctx.params.id, command);
+          ctx.noContent();
+        } else {
+          ctx.badRequest();
+        }
+      } else {
+        ctx.notFound();
+      }
+    } catch (error: any) {
+      ctx.badRequest(error.message);
     }
   }
 

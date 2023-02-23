@@ -64,7 +64,7 @@ const manifest: SouthConnectorManifest = {
       .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] }),
     port: Joi.number().required().port(),
     requestMethod: Joi.string().required().valid('GET', 'POST', 'PUT', 'PATCH'),
-    acceptSelfSigned: Joi.boolean().required(),
+    acceptSelfSigned: Joi.boolean().required().falsy(0).truthy(1),
     connectionTimeout: Joi.number().integer().required().min(100).max(30_000)
   }),
   items: {
@@ -166,10 +166,10 @@ const manifest: SouthConnectorManifest = {
       body: Joi.string(),
       variableDateFormat: Joi.string().required().valid('ISO', 'number'),
       payloadParser: Joi.string().required().valid('Raw', 'OIAnalytics time values', 'SLIMS'),
-      convertToCsv: Joi.boolean().required(),
+      convertToCsv: Joi.boolean().required().falsy(0).truthy(1),
       delimiter: Joi.string().required().valid(',', ';', '|'),
       filename: Joi.string().required(),
-      compression: Joi.boolean().required()
+      compression: Joi.boolean().required().falsy(0).truthy(1)
     })
   }
 };

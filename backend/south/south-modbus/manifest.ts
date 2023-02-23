@@ -101,8 +101,8 @@ const manifest: SouthConnectorManifest = {
     retryInterval: Joi.number().integer().required().min(100).max(60_000),
     addressOffset: Joi.string().required().valid('Modbus', 'JBus'),
     endianness: Joi.string().required().valid('Big Endian', 'Little Endian'),
-    swapBytesInWords: Joi.boolean().required(),
-    swapWordsInDWords: Joi.boolean().required()
+    swapBytesInWords: Joi.boolean().required().falsy(0).truthy(1),
+    swapWordsInDWords: Joi.boolean().required().falsy(0).truthy(1)
   }),
   items: {
     scanMode: {

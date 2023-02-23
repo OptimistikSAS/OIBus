@@ -117,7 +117,7 @@ const manifest: SouthConnectorManifest = {
     url: Joi.string()
       .required()
       .uri({ scheme: ['http', 'opc.tcp'] }),
-    keepSessionAlive: Joi.boolean().required(),
+    keepSessionAlive: Joi.boolean().required().falsy(0).truthy(1),
     readTimeout: Joi.number().integer().required().min(100).max(3_600_000),
     retryInterval: Joi.number().integer().required().min(100).max(3_600_000),
     username: Joi.string(),

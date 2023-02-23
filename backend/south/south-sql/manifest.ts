@@ -120,7 +120,7 @@ const manifest: SouthConnectorManifest = {
     username: Joi.string().when('driver', { is: Joi.string().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle'), then: Joi.required() }),
     password: Joi.string().when('driver', { is: Joi.string().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle'), then: Joi.required() }),
     domain: Joi.string().when('driver', { is: 'MSSQL', then: Joi.required() }),
-    encryption: Joi.boolean().when('driver', { is: 'MSSQL', then: Joi.required() }),
+    encryption: Joi.boolean().falsy(0).truthy(1).when('driver', { is: 'MSSQL', then: Joi.required() }),
     connectionTimeout: Joi.number()
       .integer()
       .min(100)
@@ -216,7 +216,7 @@ const manifest: SouthConnectorManifest = {
       readIntervalDelay: Joi.number().integer().required().min(100).max(3_600_000),
       filename: Joi.string(),
       delimiter: Joi.string().required().valid(',', ';', '|'),
-      compression: Joi.boolean(),
+      compression: Joi.boolean().falsy(0).truthy(1),
       timeColumn: Joi.string(),
       timezone: Joi.string(),
       dateFormat: Joi.string()

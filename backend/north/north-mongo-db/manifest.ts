@@ -115,9 +115,9 @@ const manifest: NorthConnectorManifest = {
     regExp: Joi.string().required(),
     collection: Joi.string().required(),
     indexFields: Joi.string().min(1).max(255),
-    createCollection: Joi.boolean().required(),
+    createCollection: Joi.boolean().required().falsy(0).truthy(1),
     timestampKey: Joi.string().required(),
-    useDataKeyValue: Joi.boolean().required(),
+    useDataKeyValue: Joi.boolean().required().falsy(0).truthy(1),
     keyParentValue: Joi.string(),
     timestampPathInDataValue: Joi.string()
   })
