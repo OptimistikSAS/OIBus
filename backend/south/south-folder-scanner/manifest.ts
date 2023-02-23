@@ -66,9 +66,9 @@ const manifest: SouthConnectorManifest = {
     }
   ],
   schema: Joi.object({
-    inputFolder: Joi.string().required().min(1),
+    inputFolder: Joi.string().required(),
     preserveFiles: Joi.boolean().required(),
-    ignoreModifiedDate: Joi.boolean().required(),
+    ignoreModifiedDate: Joi.boolean().when('preserveFiles', { is: true, then: Joi.required() }),
     minAge: Joi.number().required().min(1000).max(3_600_000),
     compression: Joi.boolean().required()
   }),
@@ -88,7 +88,7 @@ const manifest: SouthConnectorManifest = {
       }
     ],
     schema: Joi.object({
-      regex: Joi.string().required().min(1)
+      regex: Joi.string().required()
     })
   }
 };
