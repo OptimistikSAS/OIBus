@@ -57,10 +57,10 @@ const manifest: NorthConnectorManifest = {
     applicativeHostUrl: Joi.string()
       .required()
       .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] }),
-    requestMethod: Joi.string().required().allow('GET', 'POST', 'PUT', 'PATCH'),
+    requestMethod: Joi.string().required().valid('GET', 'POST', 'PUT', 'PATCH'),
     bodyMaxLength: Joi.number().required().min(1).max(10_000),
-    acceptUnconvertedRows: Joi.boolean().required(),
-    csvDelimiter: Joi.string().required().allow(',', ';')
+    acceptUnconvertedRows: Joi.boolean(),
+    csvDelimiter: Joi.string().required().valid(',', ';')
   })
 };
 

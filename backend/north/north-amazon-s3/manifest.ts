@@ -45,7 +45,8 @@ const manifest: NorthConnectorManifest = {
   schema: Joi.object({
     bucket: Joi.string().required(),
     region: Joi.string().required(),
-    folder: Joi.string().required()
+    folder: Joi.string().required(),
+    proxy: Joi.string()
   })
 };
 

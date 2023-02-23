@@ -111,15 +111,15 @@ const manifest: NorthConnectorManifest = {
       .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] }),
     database: Joi.string().required(),
     username: Joi.string().required(),
-    password: Joi.string().required().min(1).max(255),
+    password: Joi.string().min(1).max(255),
     regExp: Joi.string().required(),
     collection: Joi.string().required(),
-    indexFields: Joi.string().allow('').max(255),
+    indexFields: Joi.string().min(1).max(255),
     createCollection: Joi.boolean().required(),
     timestampKey: Joi.string().required(),
     useDataKeyValue: Joi.boolean().required(),
-    keyParentValue: Joi.string().allow(''),
-    timestampPathInDataValue: Joi.string().allow('')
+    keyParentValue: Joi.string(),
+    timestampPathInDataValue: Joi.string()
   })
 };
 

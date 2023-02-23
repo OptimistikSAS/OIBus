@@ -1,4 +1,5 @@
 import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+import Joi from 'joi';
 
 const manifest: SouthConnectorManifest = {
   name: 'RestApi',
@@ -57,6 +58,15 @@ const manifest: SouthConnectorManifest = {
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }]
     }
   ],
+  schema: Joi.object({
+    url: Joi.string()
+      .required()
+      .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] }),
+    port: Joi.number().required().port(),
+    requestMethod: Joi.string().required().valid('GET', 'POST', 'PUT', 'PATCH'),
+    acceptSelfSigned: Joi.boolean().required(),
+    connectionTimeout: Joi.number().integer().required().min(100).max(30_000)
+  }),
   items: {
     scanMode: {
       acceptSubscription: false,
@@ -148,7 +158,19 @@ const manifest: SouthConnectorManifest = {
         newRow: false,
         validators: [{ key: 'required' }]
       }
-    ]
+    ],
+    schema: Joi.object({
+      requestTimeout: Joi.number().integer().required().min(100).max(60_000),
+      maxReadInterval: Joi.number().integer().required(),
+      readIntervalDelay: Joi.number().integer().required().min(100).max(3_600_000),
+      body: Joi.string(),
+      variableDateFormat: Joi.string().required().valid('ISO', 'number'),
+      payloadParser: Joi.string().required().valid('Raw', 'OIAnalytics time values', 'SLIMS'),
+      convertToCsv: Joi.boolean().required(),
+      delimiter: Joi.string().required().valid(',', ';', '|'),
+      filename: Joi.string().required(),
+      compression: Joi.boolean().required()
+    })
   }
 };
 

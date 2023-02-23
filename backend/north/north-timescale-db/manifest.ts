@@ -95,12 +95,14 @@ const manifest: NorthConnectorManifest = {
   ],
   schema: Joi.object({
     username: Joi.string().required(),
-    password: Joi.string().required(),
-    host: Joi.string().required(),
+    password: Joi.string().min(1).max(255),
+    host: Joi.string()
+      .required()
+      .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] }),
     database: Joi.string().required(),
     regExp: Joi.string().required(),
     table: Joi.string().required(),
-    optFields: Joi.string().allow(''),
+    optFields: Joi.string().min(1).max(255),
     timestampPathInDataValue: Joi.string().allow(''),
     useDataKeyValue: Joi.boolean().required(),
     keyParentValue: Joi.string().allow('')

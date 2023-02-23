@@ -22,7 +22,8 @@ const manifest: NorthConnectorManifest = {
   schema: Joi.object({
     host: Joi.string()
       .required()
-      .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] })
+      .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] }),
+    proxy: Joi.string()
   })
 };
 export default manifest;
