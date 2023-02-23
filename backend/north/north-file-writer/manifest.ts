@@ -42,9 +42,9 @@ const manifest: NorthConnectorManifest = {
     }
   ],
   schema: Joi.object({
-    outputFolder: Joi.string().required().min(1),
-    prefixFileName: Joi.string().required().min(1).max(255),
-    suffixFileName: Joi.string().required().min(1).max(255)
+    outputFolder: Joi.string().required(),
+    prefixFileName: Joi.string().allow('').min(1).max(255),
+    suffixFileName: Joi.string().allow('').min(1).max(255)
   })
 };
 export default manifest;
