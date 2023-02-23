@@ -115,10 +115,10 @@ const manifest: NorthConnectorManifest = {
     certFile: Joi.string().allow(''),
     keyFile: Joi.string().allow(''),
     caFile: Joi.string().allow(''),
-    rejectUnauthorized: Joi.boolean(),
+    rejectUnauthorized: Joi.boolean().falsy(0).truthy(1),
     regExp: Joi.string().required(),
     topic: Joi.string().required(),
-    useDataKeyValue: Joi.boolean().required(),
+    useDataKeyValue: Joi.boolean().required().falsy(0).truthy(1),
     keyParentValue: Joi.string()
   })
 };
