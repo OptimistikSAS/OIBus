@@ -1,4 +1,5 @@
 import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+import Joi from 'joi';
 
 const manifest: SouthConnectorManifest = {
   name: 'OPCUA_HA',
@@ -137,6 +138,35 @@ const manifest: SouthConnectorManifest = {
       readDisplay: false
     }
   ],
+  schema: Joi.object({
+    url: Joi.string()
+      .required()
+      .uri({ scheme: ['http', 'opc.tcp'] }),
+    keepSessionAlive: Joi.boolean().required(),
+    readTimeout: Joi.number().integer().required().min(100).max(3_600_000),
+    retryInterval: Joi.number().integer().required().min(100).max(3_600_000),
+    maxReadInterval: Joi.number().integer().required(),
+    readIntervalDelay: Joi.number().integer().required().min(100).max(3_600_000),
+    maxReturnValues: Joi.number().integer().required(),
+    username: Joi.string(),
+    password: Joi.string(),
+    securityMode: Joi.string().required().valid('None', 'Sign', 'SignAndEncrypt'),
+    securityPolicy: Joi.string().valid(
+      'None',
+      'Basic128',
+      'Basic192',
+      'Basic256',
+      'Basic128Rsa15',
+      'Basic192Rsa15',
+      'Basic256Rsa15',
+      'Basic256Sha256',
+      'Aes128_Sha256_RsaOaep',
+      'PubSub_Aes128_CTR',
+      'PubSub_Aes256_CTR'
+    ),
+    certFile: Joi.string().allow(''),
+    keyFile: Joi.string().allow('')
+  }),
   items: {
     scanMode: {
       acceptSubscription: false,
@@ -167,7 +197,12 @@ const manifest: SouthConnectorManifest = {
         validators: [{ key: 'required' }],
         readDisplay: true
       }
-    ]
+    ],
+    schema: Joi.object({
+      aggregate: Joi.string().required().valid('Raw', 'Average', 'Minimum', 'Maximum', 'Count'),
+      resampling: Joi.string().required().valid('None', 'Second', '10 Seconds', '30 Seconds', 'Minute', 'Hour', 'Day'),
+      nodeId: Joi.string().required()
+    })
   }
 };
 export default manifest;

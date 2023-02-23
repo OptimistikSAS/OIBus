@@ -1,4 +1,5 @@
 import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+import Joi from 'joi';
 
 const manifest: SouthConnectorManifest = {
   name: 'OPCHDA',
@@ -101,6 +102,18 @@ const manifest: SouthConnectorManifest = {
       readDisplay: false
     }
   ],
+  schema: Joi.object({
+    agentFilename: Joi.string().required(),
+    tcpPort: Joi.number().required().port(),
+    logLevel: Joi.string().required().valid('trace', 'debug', 'info', 'warning', 'error'),
+    host: Joi.string().required(),
+    serverName: Joi.string().required(),
+    readTimeout: Joi.number().integer().required().min(100).max(3_600_000),
+    retryInterval: Joi.number().integer().required().min(100).max(3_600_000),
+    maxReadInterval: Joi.number().integer().required(),
+    readIntervalDelay: Joi.number().required().min(100).max(3_600_000),
+    maxReturnValues: Joi.number().integer().required()
+  }),
   items: {
     scanMode: {
       acceptSubscription: false,
@@ -131,7 +144,12 @@ const manifest: SouthConnectorManifest = {
         validators: [{ key: 'required' }],
         readDisplay: true
       }
-    ]
+    ],
+    schema: Joi.object({
+      aggregate: Joi.string().required().valid('Raw', 'Average', 'Minimum', 'Maximum', 'Count'),
+      resampling: Joi.string().required().valid('None', 'Second', '10 Seconds', '30 Seconds', 'Minute', 'Hour', 'Day'),
+      nodeId: Joi.string().required()
+    })
   }
 };
 export default manifest;

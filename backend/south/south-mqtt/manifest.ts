@@ -1,4 +1,5 @@
 import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+import Joi from 'joi';
 
 const manifest: SouthConnectorManifest = {
   name: 'MQTT',
@@ -185,6 +186,30 @@ const manifest: SouthConnectorManifest = {
       readDisplay: false
     }
   ],
+  schema: Joi.object({
+    url: Joi.string()
+      .required()
+      .uri({ scheme: ['mqtt', 'mqtts', 'tcp', 'tls', 'ws', 'wss'] }),
+    qos: Joi.string().required().valid('0', '1', '2'),
+    persistent: Joi.boolean().when('qos', { is: '2', then: Joi.required() }),
+    username: Joi.string().allow(''),
+    password: Joi.string().allow(''),
+    certFile: Joi.string().allow(''),
+    keyFile: Joi.string().allow(''),
+    caFile: Joi.string().allow(''),
+    rejectUnauthorized: Joi.boolean().required(),
+    keepAlive: Joi.number().integer().required().min(100).max(3_600_000),
+    reconnectPeriod: Joi.number().integer().required().min(100).max(30_000),
+    connectTimeout: Joi.number().integer().required().min(100).max(30_000),
+    dataArrayPath: Joi.string(),
+    valuePath: Joi.string().allow(''),
+    pointIdPath: Joi.string().allow(''),
+    qualityPath: Joi.string().allow(''),
+    timestampOrigin: Joi.string().required().valid('payload', 'oibus'),
+    timestampPath: Joi.string().allow(''),
+    timestampFormat: Joi.string().allow(''),
+    timestampTimezone: Joi.string().allow('')
+  }),
   items: {
     scanMode: {
       acceptSubscription: false,
@@ -198,7 +223,10 @@ const manifest: SouthConnectorManifest = {
         validators: [{ key: 'required' }],
         readDisplay: true
       }
-    ]
+    ],
+    schema: Joi.object({
+      topic: Joi.string().required()
+    })
   }
 };
 export default manifest;
