@@ -44,13 +44,13 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
   }),
   healthSignal: Joi.object({
     logging: Joi.object({
-      enabled: Joi.boolean().required(),
+      enabled: Joi.boolean().required().falsy(0).truthy(1),
       interval: Joi.number().integer().required().min(10)
     }),
     http: Joi.object({
-      enabled: Joi.boolean().required(),
+      enabled: Joi.boolean().required().falsy(0).truthy(1),
       interval: Joi.number().integer().required().min(10),
-      verbose: Joi.boolean().required(),
+      verbose: Joi.boolean().required().falsy(0).truthy(1),
       address: Joi.string().required().allow(''),
       proxyId: Joi.string().required().allow(null, ''),
       authentication: Joi.object({

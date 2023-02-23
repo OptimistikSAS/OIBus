@@ -20,7 +20,7 @@ const manifest: NorthConnectorManifest = {
     }
   ],
   schema: Joi.object({
-    verbose: Joi.boolean().required()
+    verbose: Joi.boolean().required().falsy(0).truthy(1)
   })
 };
 

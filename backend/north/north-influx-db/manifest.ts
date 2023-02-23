@@ -113,7 +113,7 @@ const manifest: NorthConnectorManifest = {
     regExp: Joi.string().required(),
     measurement: Joi.string().required(),
     tags: Joi.string().allow('').min(1).max(255),
-    useDataKeyValue: Joi.boolean().required(),
+    useDataKeyValue: Joi.boolean().required().falsy(0).truthy(1),
     keyParentValue: Joi.string().allow('')
   })
 };
