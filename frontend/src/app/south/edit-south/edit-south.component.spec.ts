@@ -10,7 +10,7 @@ import { FormComponent } from '../../shared/form/form.component';
 import { ProxyService } from '../../services/proxy.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
-import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 
 class EditSouthComponentTester extends ComponentTester<EditSouthComponent> {
   constructor() {
@@ -140,10 +140,12 @@ describe('EditSouthComponent', () => {
           },
           items: {
             scanMode: { subscriptionOnly: false, acceptSubscription: true },
-            settings: []
+            settings: [],
+            schema: {} as unknown
           },
-          settings: []
-        })
+          settings: [],
+          schema: {} as unknown
+        } as SouthConnectorManifest)
       );
       tester = new EditSouthComponentTester();
       tester.detectChanges();
