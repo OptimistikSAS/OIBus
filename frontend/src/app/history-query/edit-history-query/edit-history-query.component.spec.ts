@@ -14,6 +14,8 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
+import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 
 class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryComponent> {
   constructor() {
@@ -198,8 +200,9 @@ describe('EditHistoryQueryComponent', () => {
             files: true,
             points: true
           },
-          settings: []
-        })
+          settings: [],
+          schema: {} as unknown
+        } as NorthConnectorManifest)
       );
       southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
         of({
@@ -219,9 +222,11 @@ describe('EditHistoryQueryComponent', () => {
               acceptSubscription: false,
               subscriptionOnly: false
             },
-            settings: []
-          }
-        })
+            settings: [],
+            schema: {} as unknown
+          },
+          schema: {} as unknown
+        } as SouthConnectorManifest)
       );
       tester = new EditHistoryQueryComponentTester();
       tester.detectChanges();

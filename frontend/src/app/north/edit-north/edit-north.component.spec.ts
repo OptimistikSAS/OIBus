@@ -10,7 +10,7 @@ import { ProxyService } from '../../services/proxy.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 
 class EditNorthComponentTester extends ComponentTester<EditNorthComponent> {
   constructor() {
@@ -146,8 +146,9 @@ describe('EditNorthComponent', () => {
             files: true,
             points: true
           },
-          settings: []
-        })
+          settings: [],
+          schema: {} as unknown
+        } as NorthConnectorManifest)
       );
       tester = new EditNorthComponentTester();
       tester.detectChanges();
