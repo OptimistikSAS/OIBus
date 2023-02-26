@@ -51,7 +51,11 @@ describe('EditSouthItemModalComponent', () => {
     settings: {}
   };
 
-  const southItemSchema: SouthItemManifest = { scanMode: { subscriptionOnly: false, acceptSubscription: true }, settings: [] };
+  const southItemSchema: SouthItemManifest = {
+    scanMode: { subscriptionOnly: false, acceptSubscription: true },
+    settings: [],
+    schema: {} as unknown
+  } as SouthItemManifest;
   const scanModes: Array<ScanModeDTO> = [
     {
       id: 'scanModeId1',
