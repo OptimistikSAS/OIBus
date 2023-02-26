@@ -19,7 +19,7 @@
     "firefox esr"
   ],
   "dependencies": {
-    "joi": "^17.7.1"
+    "joi": "17.7.1"
   },
   "devDependencies": {
     "@types/luxon": "3.1.0",
