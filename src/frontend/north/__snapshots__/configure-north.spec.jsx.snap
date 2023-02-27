@@ -248,6 +248,9 @@ exports[`ConfigureNorth check ConfigureNorth 1`] = `
               </p>
               <ul>
                 <li>
+                  Max Size: The maximum size (in MBytes) this connector cache can reach before discarding any new values or files from South connectors.
+                </li>
+                <li>
                   sendInterval: the cache will try to group a maximum of values in a buffer and to send them in a single transaction. However, if the sendInterval (in ms) is reached, the transaction will be sent even if the buffer is not full.
                 </li>
                 <li>
@@ -261,6 +264,42 @@ exports[`ConfigureNorth check ConfigureNorth 1`] = `
                 </li>
               </ul>
             </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-3"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="north.0.caching.maxSize"
+            >
+              Max cache size (in MB)
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.0.caching.maxSize"
+              name="north.0.caching.maxSize"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Size for this North connector only. Set to 0 for no limit
+              </div>
+            </small>
           </div>
         </div>
       </div>
@@ -895,6 +934,9 @@ exports[`ConfigureNorth check update 1`] = `
               </p>
               <ul>
                 <li>
+                  Max Size: The maximum size (in MBytes) this connector cache can reach before discarding any new values or files from South connectors.
+                </li>
+                <li>
                   sendInterval: the cache will try to group a maximum of values in a buffer and to send them in a single transaction. However, if the sendInterval (in ms) is reached, the transaction will be sent even if the buffer is not full.
                 </li>
                 <li>
@@ -908,6 +950,42 @@ exports[`ConfigureNorth check update 1`] = `
                 </li>
               </ul>
             </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="row"
+      >
+        <div
+          class="col-md-3"
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="north.0.caching.maxSize"
+            >
+              Max cache size (in MB)
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="north.0.caching.maxSize"
+              name="north.0.caching.maxSize"
+              type="integer"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Size for this North connector only. Set to 0 for no limit
+              </div>
+            </small>
           </div>
         </div>
       </div>

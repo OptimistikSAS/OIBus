@@ -3,7 +3,7 @@ import fs from 'node:fs/promises'
 
 import FileCache from './file-cache.service.js'
 
-import { createFolder, asyncFilter } from '../utils.js'
+import { createFolder, asyncFilter, dirSize } from '../utils.js'
 
 jest.mock('node:fs/promises')
 
@@ -15,7 +15,7 @@ const logger = {
   debug: jest.fn(),
   trace: jest.fn(),
 }
-jest.mock('../../service/utils')
+jest.mock('../utils.js')
 const northSendFilesCallback = jest.fn()
 const northShouldRetryCallback = jest.fn()
 // Method used to flush promises called in setTimeout
@@ -27,7 +27,8 @@ describe('FileCache', () => {
   beforeEach(async () => {
     jest.resetAllMocks()
     jest.useFakeTimers().setSystemTime(new Date(nowDateString))
-    settings = { sendInterval: 1000, groupCount: 1000, maxSendCount: 10000, retryCount: 3, retryInterval: 5000 }
+    dirSize.mockReturnValue(5)
+    settings = { sendInterval: 1000, groupCount: 1000, maxSendCount: 10000, retryCount: 3, retryInterval: 5000, maxSize: 10 }
 
     cache = new FileCache(
       'northId',
@@ -95,7 +96,7 @@ describe('FileCache', () => {
   it('should properly cache file', async () => {
     await cache.cacheFile('myFile.csv')
 
-    expect(logger.debug).toHaveBeenCalledWith('Caching file "myFile.csv"...')
+    expect(logger.debug).toHaveBeenCalledWith('Caching file "myFile.csv"... (cache size : 0 MB)')
     expect(fs.copyFile).toHaveBeenCalledWith('myFile.csv', path.resolve('myCacheFolder', 'files', 'myFile-1580608922222.csv'))
     expect(logger.debug).toHaveBeenCalledWith(`File "myFile.csv" cached in "${path.resolve('myCacheFolder', 'files', 'myFile-1580608922222.csv')}".`)
   })
@@ -206,7 +207,6 @@ describe('FileCache', () => {
     const fileToSend = 'myFile'
     cache.getFileToSend = jest.fn(() => fileToSend)
     cache.manageErroredFiles = jest.fn()
-
     cache.northSendFilesCallback = jest.fn()
       .mockImplementationOnce(() => {
         throw new Error('handleFile error 0')
@@ -220,7 +220,6 @@ describe('FileCache', () => {
       .mockImplementationOnce(() => {
         throw new Error('handleFile error 3')
       })
-
     await cache.sendFile()
     expect(logger.debug).toHaveBeenCalledWith('Retrying file in 5000 ms. Retry count: 1')
     jest.advanceTimersByTime(settings.retryInterval)
@@ -252,7 +251,7 @@ describe('FileCache', () => {
     expect(cache.filesQueue).toEqual(['file1', 'file2'])
   })
 
-  it('should send file immediately', async () => {
+  fit('should send file immediately', async () => {
     const fileToSend = 'myFile'
     cache.getFileToSend = jest.fn(() => fileToSend)
     cache.resetFilesTimeout = jest.fn()

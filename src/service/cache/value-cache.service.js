@@ -3,7 +3,7 @@ import path from 'node:path'
 
 import { nanoid } from 'nanoid'
 
-import { createFolder } from '../utils.js'
+import { createFolder, dirSize } from '../utils.js'
 import DeferredPromise from '../deferred-promise.js'
 
 const BUFFER_MAX = 250
@@ -52,6 +52,7 @@ export default class ValueCacheService {
     this.valuesRetryCount = 0
     this.sendingValues$ = null
     this.valuesBeingSent = null
+    this.cacheSize = 0
 
     this.valueFolder = path.resolve(this.baseFolder, VALUE_FOLDER)
     this.errorFolder = path.resolve(this.baseFolder, ERROR_FOLDER)
@@ -67,6 +68,7 @@ export default class ValueCacheService {
     await createFolder(this.valueFolder)
     await createFolder(this.errorFolder)
 
+    this.cacheSize = await dirSize(this.baseFolder)
     const files = await fs.readdir(this.valueFolder)
 
     // Take buffer.tmp file data into this.bufferFiles
@@ -278,6 +280,7 @@ export default class ValueCacheService {
     // This deferred promise allows the connector to wait for the end of this method before stopping
     this.sendingValues$ = new DeferredPromise()
     if (!this.valuesBeingSent) {
+      this.cacheSize = await dirSize(this.baseFolder)
       this.valuesBeingSent = await this.getValuesToSend()
     }
 
@@ -327,6 +330,7 @@ export default class ValueCacheService {
       this.resetValuesTimeout(this.valuesRetryCount > 0 ? this.settings.retryInterval : this.settings.sendInterval)
     }
     this.sendingValuesInProgress = false
+    this.cacheSize = await dirSize(this.baseFolder)
     this.sendingValues$.resolve()
   }
 
@@ -426,6 +430,13 @@ export default class ValueCacheService {
    * @returns {Promise<void>} - The result promise
    */
   async cacheValues(values) {
+    if (this.settings.maxSize !== 0 && this.cacheSize >= this.settings.maxSize * 1024 * 1024) {
+      this.logger.debug(`Cache for North connector ${this.northId} is exceeding the maximum allowed size `
+          + `(${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this.settings.maxSize} MB). `
+          + 'Values will be discarded until the cache is emptied (by sending files/values or manual removal).')
+      return
+    }
+    this.logger.debug(`Caching ${values.length} values (cache size : ${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB)`)
     const tmpFileName = `${nanoid()}.buffer.tmp`
 
     // Immediately write the values into the buffer.tmp file to persist them on disk

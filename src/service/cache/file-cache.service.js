@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-import { createFolder, asyncFilter } from '../utils.js'
+import { createFolder, asyncFilter, dirSize } from '../utils.js'
 import DeferredPromise from '../deferred-promise.js'
 
 const RESEND_IMMEDIATELY_TIMEOUT = 100
@@ -47,6 +47,7 @@ export default class FileCacheService {
     this.sendingFile$ = null
     this.filesQueue = [] // List of object {fileName, creationAt}
     this.fileBeingSent = null
+    this.cacheSize = 0
 
     this.fileFolder = path.resolve(this.baseFolder, FILE_FOLDER)
     this.errorFolder = path.resolve(this.baseFolder, ERROR_FOLDER)
@@ -60,6 +61,7 @@ export default class FileCacheService {
     await createFolder(this.fileFolder)
     await createFolder(this.errorFolder)
 
+    this.cacheSize = await dirSize(this.baseFolder)
     const files = await fs.readdir(this.fileFolder)
 
     const filesWithCreationDate = []
@@ -138,6 +140,7 @@ export default class FileCacheService {
     // This deferred promise allows the connector to wait for the end of this method before stopping
     this.sendingFile$ = new DeferredPromise()
     if (!this.fileBeingSent) {
+      this.cacheSize = await dirSize(this.baseFolder)
       this.fileBeingSent = await this.getFileToSend()
     }
 
@@ -181,6 +184,7 @@ export default class FileCacheService {
       this.resetFilesTimeout(this.filesRetryCount > 0 ? this.settings.retryInterval : this.settings.sendInterval)
     }
     this.sendingFilesInProgress = false
+    this.cacheSize = await dirSize(this.baseFolder)
     this.sendingFile$.resolve()
   }
 
@@ -216,7 +220,13 @@ export default class FileCacheService {
    * @returns {Promise<void>} - The result promise
    */
   async cacheFile(filePath) {
-    this.logger.debug(`Caching file "${filePath}"...`)
+    if (this.settings.maxSize !== 0 && this.cacheSize >= this.settings.maxSize * 1024 * 1024) {
+      this.logger.debug(`Cache for North connector ${this.northId} is exceeding the maximum allowed size `
+          + `(${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this.settings.maxSize} MB). `
+          + 'The file will be discarded until the cache is emptied (by sending files/values or manual removal).')
+      return
+    }
+    this.logger.debug(`Caching file "${filePath}"... (cache size : ${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB)`)
     const timestamp = new Date().getTime()
     // When compressed file is received the name looks like filename.txt.gz
     const filenameInfo = path.parse(filePath)

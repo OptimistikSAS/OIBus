@@ -1781,10 +1781,16 @@ export default {
   31: async (config, logger) => {
     for (const south of config.south) {
       if (south.type === 'SQL') {
-        logger.info(`Add ODBC settingsSouth connector ${south.name} (${south.id}).`)
+        logger.info(`Add ODBC settings to South connector ${south.name} (${south.id}).`)
         south.settings.selfSigned = false
         south.settings.odbcDriverPath = ''
       }
+    }
+  },
+  32: async (config, logger) => {
+    for (const north of config.north) {
+      logger.info(`Add caching max size settings to North connector ${north.name} (${north.id}).`)
+      north.caching.maxSize = 0
     }
   },
 }

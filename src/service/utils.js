@@ -142,9 +142,41 @@ const asyncFilter = async (array, predicate) => {
   return array.filter((item, index) => results[index])
 }
 
+/**
+ *
+ * @param {string} dir - The directory to eval
+ * @returns {Promise<number>} - The size of the directory
+ */
+const dirSize = async (dir) => {
+  const files = await fs.readdir(dir, { withFileTypes: true })
+
+  const paths = files.map(async (file) => {
+    const filePath = path.join(dir, file.name)
+
+    if (file.isDirectory()) {
+      const size = await dirSize(filePath)
+      return size
+    }
+
+    if (file.isFile()) {
+      try {
+        const { size } = await fs.stat(filePath)
+        return size
+      } catch {
+        return 0
+      }
+    }
+
+    return 0
+  })
+
+  return (await Promise.all(paths)).flat(Infinity).reduce((i, size) => i + size, 0)
+}
+
 export {
   getCommandLineArguments,
   delay,
+  dirSize,
   generateIntervals,
   createFolder,
   replaceFilenameWithVariable,

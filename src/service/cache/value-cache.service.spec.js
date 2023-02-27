@@ -5,7 +5,7 @@ import nanoid from 'nanoid'
 
 import ValueCache from './value-cache.service.js'
 
-import { createFolder } from '../utils.js'
+import { createFolder, dirSize } from '../utils.js'
 
 jest.mock('node:fs/promises')
 jest.mock('../utils')
@@ -31,7 +31,8 @@ describe('ValueCache', () => {
   beforeEach(async () => {
     jest.resetAllMocks()
     jest.useFakeTimers().setSystemTime(new Date(nowDateString))
-    settings = { sendInterval: 1000, groupCount: 1000, maxSendCount: 10000, retryCount: 3, retryInterval: 5000 }
+    dirSize.mockReturnValue(5)
+    settings = { sendInterval: 1000, groupCount: 1000, maxSendCount: 10000, retryCount: 3, retryInterval: 5000, maxSize: 10 }
     cache = new ValueCache(
       'northId',
       logger,
@@ -510,7 +511,7 @@ describe('ValueCache', () => {
   it('should retry to send values if it fails', async () => {
     const valuesToSend = [{ key: '1.queue.tmp', values: [{ value: 'myFirstValue' }, { value: 'mySecondValue' }] },
       { key: '2.queue.tmp', values: [{ value: 'myThirdValue' }] }]
-    cache.getValuesToSend = jest.fn().mockImplementationOnce(() => valuesToSend).mockImplementationOnce(() => [])
+    cache.getValuesToSend = jest.fn(() => valuesToSend)
     cache.manageErroredValues = jest.fn()
     cache.northSendValuesCallback = jest.fn()
       .mockImplementationOnce(() => {
