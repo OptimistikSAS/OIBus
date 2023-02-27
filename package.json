@@ -70,7 +70,7 @@
     "mssql": "9.1.1",
     "mysql2": "3.0.1",
     "nanoid": "4.0.0",
-    "node-fetch": "2.6.7",
+    "node-fetch": "2.6.9",
     "node-opcua-certificate-manager": "2.88.0",
     "node-opcua-client": "2.88.0",
     "object-path": "0.11.8",
