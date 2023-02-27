@@ -112,6 +112,10 @@ const NorthForm = ({ north, northIndex, onChange }) => {
               </p>
               <ul>
                 <li>
+                  Max Size: The maximum size (in MBytes) this connector cache can reach before discarding any new values or files from
+                  South connectors.
+                </li>
+                <li>
                   sendInterval: the cache will try to group a maximum of values
                   in a buffer and to send them in a single transaction. However,
                   if the sendInterval (in ms) is reached, the transaction will
@@ -138,6 +142,19 @@ const NorthForm = ({ north, northIndex, onChange }) => {
               </ul>
             </>
           </OibTitle>
+          <Row>
+            <Col md="3">
+              <OibInteger
+                onChange={onChange}
+                value={north.caching.maxSize}
+                defaultValue={0}
+                valid={validation.caching.maxSize}
+                name={`${prefix}.caching.maxSize`}
+                label="Max cache size (in MB)"
+                help={<div>Size for this North connector only. Set to 0 for no limit</div>}
+              />
+            </Col>
+          </Row>
           <Row>
             <Col md="3">
               <OibInteger
