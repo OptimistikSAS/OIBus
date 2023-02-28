@@ -45,13 +45,13 @@ const generateIntervals = (start: Instant, end: Instant, maxInterval: number): A
 
       // If the newEndTime is bigger than the original end, the definitive end of the interval must be end
       intervalLists.push({
-        start: newStartTime.toISO(),
-        end: newEndTime < endTime ? newEndTime.toISO() : endTime.toISO()
+        start: newStartTime.toUTC().toISO(),
+        end: newEndTime < endTime ? newEndTime.toUTC().toISO() : endTime.toUTC().toISO()
       });
     }
     return intervalLists;
   }
-  return [{ start: startTime.toISO(), end: endTime.toISO() }];
+  return [{ start: startTime.toUTC().toISO(), end: endTime.toUTC().toISO() }];
 };
 
 /**

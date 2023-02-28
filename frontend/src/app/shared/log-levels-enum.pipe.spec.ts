@@ -6,7 +6,7 @@ describe('LogLevelsEnumPipe', () => {
     testEnumPipe(ts => new LogLevelsEnumPipe(ts), {
       silent: 'Silent',
       error: 'Error',
-      warning: 'Warning',
+      warn: 'Warning',
       info: 'Info',
       debug: 'Debug',
       trace: 'Trace'

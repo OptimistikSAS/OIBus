@@ -46,21 +46,21 @@ describe('Service utils', () => {
   });
 
   it('should return only one interval', () => {
-    const startTime = new Date('2020-01-01T00:00:00.000Z');
-    const endTime = new Date('2020-01-01T01:00:00.000Z');
-    const expectedIntervals = [{ startTime, endTime }];
+    const startTime = '2020-01-01T00:00:00.000Z';
+    const endTime = '2020-01-01T01:00:00.000Z';
+    const expectedIntervals = [{ start: startTime, end: endTime }];
     const results = utils.generateIntervals(startTime, endTime, 3600);
     expect(results).toEqual(expectedIntervals);
   });
 
   it('should return two intervals', () => {
-    const startTime1 = new Date('2020-01-01T00:00:00.000Z');
-    const endTime1 = new Date('2020-01-01T01:00:00.000Z');
-    const startTime2 = new Date('2020-01-01T01:00:00.000Z');
-    const endTime2 = new Date('2020-01-01T02:00:00.000Z');
+    const startTime1 = '2020-01-01T00:00:00.000Z';
+    const endTime1 = '2020-01-01T01:00:00.000Z';
+    const startTime2 = '2020-01-01T01:00:00.000Z';
+    const endTime2 = '2020-01-01T02:00:00.000Z';
     const expectedIntervals = [
-      { startTime: startTime1, endTime: endTime1 },
-      { startTime: startTime2, endTime: endTime2 }
+      { start: startTime1, end: endTime1 },
+      { start: startTime2, end: endTime2 }
     ];
     const results = utils.generateIntervals(startTime1, endTime2, 3600);
     expect(results).toEqual(expectedIntervals);

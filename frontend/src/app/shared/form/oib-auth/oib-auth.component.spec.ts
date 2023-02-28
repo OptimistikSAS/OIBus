@@ -22,22 +22,38 @@ class TestComponent {
     key: 'myOibAuthentication',
     type: 'OibAuthentication',
     label: 'Select field',
-    authTypes: ['none', 'bearer']
+    authTypes: ['none', 'bearer', 'api-key', 'basic']
   } as OibAuthenticationFormControl;
 
-  form = new FormGroup({ settings: new FormRecord({ myOibTimezone: new FormControl('') }) });
+  form = new FormGroup({
+    settings: new FormRecord({
+      myOibAuthentication: new FormControl({
+        type: new FormControl('none'),
+        key: new FormControl(''),
+        secret: new FormControl('')
+      })
+    })
+  });
 }
 class OibFormComponentTester extends ComponentTester<TestComponent> {
   constructor() {
     super(TestComponent);
   }
 
-  get oibFormInput() {
-    return this.select('#oib-auth-key-input-myOibAuthentication')!;
+  get oibFormInputAuthType() {
+    return this.select('#oib-auth-type-input-myOibAuthentication')!;
+  }
+
+  get oibFormInputKey() {
+    return this.input('#oib-auth-key-input-myOibAuthentication')!;
+  }
+
+  get oibFormInputSecret() {
+    return this.input('#oib-auth-secret-input-myOibAuthentication')!;
   }
 }
 
-fdescribe('OibTimezoneComponent', () => {
+describe('OibAuthComponent', () => {
   let tester: OibFormComponentTester;
 
   beforeEach(() => {
@@ -50,11 +66,27 @@ fdescribe('OibTimezoneComponent', () => {
   });
 
   it('should have a select input', () => {
-    expect(tester.oibFormInput).not.toBeNull();
+    expect(tester.oibFormInputAuthType).not.toBeNull();
+    expect(tester.oibFormInputKey).toBeNull();
+    expect(tester.oibFormInputSecret).toBeNull();
   });
 
   it('should change value', () => {
-    tester.oibFormInput.selectLabel('Europe/Paris');
-    expect(tester.oibFormInput).toHaveSelectedLabel('Europe/Paris');
+    tester.oibFormInputAuthType.selectLabel('Basic auth');
+    expect(tester.oibFormInputKey).not.toBeNull();
+    expect(tester.oibFormInputSecret).not.toBeNull();
+    tester.oibFormInputKey.fillWith('my username');
+    tester.oibFormInputSecret.fillWith('my password');
+
+    tester.oibFormInputAuthType.selectLabel('Bearer');
+    expect(tester.oibFormInputKey).not.toBeNull();
+    expect(tester.oibFormInputSecret).toBeNull();
+    tester.oibFormInputKey.fillWith('my bearer');
+
+    tester.oibFormInputAuthType.selectLabel('API key');
+    expect(tester.oibFormInputKey).not.toBeNull();
+    expect(tester.oibFormInputSecret).not.toBeNull();
+    tester.oibFormInputKey.fillWith('my key');
+    tester.oibFormInputSecret.fillWith('my secret');
   });
 });
