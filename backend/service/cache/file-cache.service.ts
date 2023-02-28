@@ -49,17 +49,17 @@ export default class FileCacheService {
     // Sort the compact queue to have the oldest file first
     this.filesQueue = filesWithCreationDate.sort((a, b) => a.createdAt - b.createdAt).map(file => file.filename);
     if (this.filesQueue.length > 0) {
-      this.logger.debug(`${this.filesQueue.length} files in cache.`);
+      this.logger.debug(`${this.filesQueue.length} files in cache`);
     } else {
-      this.logger.debug('No files in cache.');
+      this.logger.debug('No files in cache');
     }
 
     try {
       const errorFiles = await fs.readdir(this.errorFolder);
       if (errorFiles.length > 0) {
-        this.logger.warn(`${errorFiles.length} files in error cache.`);
+        this.logger.warn(`${errorFiles.length} files in error cache`);
       } else {
-        this.logger.debug('No error files in cache.');
+        this.logger.debug('No error files in cache');
       }
     } catch (error) {
       // If the folder does not exist, an error is logged but not thrown if the file cache folder is accessible
@@ -111,7 +111,7 @@ export default class FileCacheService {
     // Move cache file into the archive folder
     try {
       await fs.rename(filePathInCache, errorPath);
-      this.logger.info(`File "${filePathInCache}" moved to "${errorPath}".`);
+      this.logger.info(`File "${filePathInCache}" moved to "${errorPath}"`);
     } catch (renameError) {
       this.logger.error(renameError);
     }
@@ -168,7 +168,7 @@ export default class FileCacheService {
       filenames.map(async filename => {
         const errorFilePath = path.join(this.errorFolder, filename);
         const cacheFilePath = path.join(this.fileFolder, filename);
-        this.logger.debug(`Moving error file "${errorFilePath}" back to cache "${cacheFilePath}".`);
+        this.logger.debug(`Moving error file "${errorFilePath}" back to cache "${cacheFilePath}"`);
         await fs.rename(errorFilePath, cacheFilePath);
       })
     );
@@ -182,7 +182,7 @@ export default class FileCacheService {
     if (filenames.length > 0) {
       await this.removeErrorFiles(filenames);
     } else {
-      this.logger.debug(`The error folder "${this.errorFolder}" is empty. Nothing to delete.`);
+      this.logger.debug(`The error folder "${this.errorFolder}" is empty. Nothing to delete`);
     }
   }
 
@@ -194,7 +194,7 @@ export default class FileCacheService {
     if (filenames.length > 0) {
       await this.retryErrorFiles(filenames);
     } else {
-      this.logger.debug(`The error folder "${this.errorFolder}" is empty. Nothing to delete.`);
+      this.logger.debug(`The error folder "${this.errorFolder}" is empty. Nothing to delete`);
     }
   }
 

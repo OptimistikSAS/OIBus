@@ -2,7 +2,8 @@ import { TestBed } from '@angular/core/testing';
 
 import { OibProxyComponent } from './oib-proxy.component';
 import { Component } from '@angular/core';
-import { OibTimezoneFormControl } from '../../../../../../shared/model/form.model';
+import { OibProxyFormControl } from '../../../../../../shared/model/form.model';
+import { ProxyDTO } from '../../../../../../shared/model/proxy.model';
 import { formDirectives } from '../../form-directives';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup, FormRecord } from '@angular/forms';
@@ -10,19 +11,20 @@ import { FormControl, FormGroup, FormRecord } from '@angular/forms';
 @Component({
   template: `<form [formGroup]="form">
     <div formGroupName="settings">
-      <oib-timezone [key]="settings.key" [label]="settings.label" [formControlName]="settings.key"></oib-timezone>
+      <oib-proxy [key]="settings.key" [label]="settings.label" [proxies]="proxies" [formControlName]="settings.key"></oib-proxy>
     </div>
   </form>`,
   standalone: true,
   imports: [OibProxyComponent, ...formDirectives]
 })
 class TestComponent {
-  settings: OibTimezoneFormControl = {
-    key: 'myOibTimezone',
-    type: 'OibTimezone',
+  proxies: Array<ProxyDTO> = [{ id: 'id1', name: 'proxy1' } as ProxyDTO, { id: 'id2', name: 'proxy2' } as ProxyDTO];
+  settings: OibProxyFormControl = {
+    key: 'myOibProxy',
+    type: 'OibProxy',
     label: 'Select field'
-  } as OibTimezoneFormControl;
-  form = new FormGroup({ settings: new FormRecord({ myOibTimezone: new FormControl('') }) });
+  } as OibProxyFormControl;
+  form = new FormGroup({ settings: new FormRecord({ myOibProxy: new FormControl('') }) });
 }
 class OibFormComponentTester extends ComponentTester<TestComponent> {
   constructor() {
@@ -30,11 +32,11 @@ class OibFormComponentTester extends ComponentTester<TestComponent> {
   }
 
   get oibFormInput() {
-    return this.select('#oib-timezone-input-myOibTimezone')!;
+    return this.select('#oib-proxy-input-myOibProxy')!;
   }
 }
 
-describe('OibTimezoneComponent', () => {
+describe('OibProxyComponent', () => {
   let tester: OibFormComponentTester;
 
   beforeEach(() => {
@@ -51,7 +53,7 @@ describe('OibTimezoneComponent', () => {
   });
 
   it('should change value', () => {
-    tester.oibFormInput.selectLabel('Europe/Paris');
-    expect(tester.oibFormInput).toHaveSelectedLabel('Europe/Paris');
+    tester.oibFormInput.selectLabel('proxy2');
+    expect(tester.oibFormInput).toHaveSelectedLabel('proxy2');
   });
 });

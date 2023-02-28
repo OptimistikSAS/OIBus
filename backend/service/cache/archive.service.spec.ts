@@ -7,6 +7,8 @@ import { createFolder } from '../utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 
+import { NorthArchiveSettings } from '../../../shared/model/north-connector.model';
+
 jest.mock('../../service/utils');
 jest.mock('node:fs/promises');
 
@@ -16,6 +18,7 @@ const logger: pino.Logger = new PinoLogger();
 const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 const nowDateString = '2020-02-02T02:02:02.222Z';
 let archiveService: ArchiveService;
+
 describe('ArchiveService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -23,8 +26,12 @@ describe('ArchiveService', () => {
   });
 
   describe('with enabled service', () => {
+    const settings: NorthArchiveSettings = {
+      enabled: true,
+      retentionDuration: 1
+    };
     beforeEach(() => {
-      archiveService = new ArchiveService(logger, 'myCacheFolder', true, 1);
+      archiveService = new ArchiveService(logger, 'myCacheFolder', settings);
     });
 
     it('should be properly initialized with archive enabled', async () => {
@@ -131,8 +138,12 @@ describe('ArchiveService', () => {
   });
 
   describe('with enabled service', () => {
+    const settings: NorthArchiveSettings = {
+      enabled: false,
+      retentionDuration: 1
+    };
     beforeEach(() => {
-      archiveService = new ArchiveService(logger, 'myCacheFolder', false, 1);
+      archiveService = new ArchiveService(logger, 'myCacheFolder', settings);
     });
 
     it('should be properly initialized with archive disabled', async () => {
