@@ -2,7 +2,6 @@ import {
   HistoryReadRequest,
   MessageSecurityMode,
   OPCUAClient,
-  ReadProcessedDetails,
   ReadRawModifiedDetails,
   StatusCodes,
   TimestampsToReturn,
@@ -11,7 +10,7 @@ import {
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
 
 import { SouthConnectorDTO, SouthItemDTO } from '../../../shared/model/south-connector.model';
-import { Instant, LANGUAGES } from '../../../shared/model/types';
+import { Instant } from '../../../shared/model/types';
 
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
@@ -141,33 +140,36 @@ export default class SouthOPCUAHA extends SouthConnector {
    */
   override async historyQuery(items: Array<SouthItemDTO>, startTime: Instant, endTime: Instant): Promise<void> {
     try {
-      // console.log('items', items, startTime, endTime);
-      const itemsByAggregates = new Map<AggregateType, Map<Resampling, Array<string>>>();
+      let maxTimestamp = DateTime.fromISO(startTime).toMillis();
+
+      const itemsByAggregates = new Map<AggregateType, Map<Resampling, Array<{ nodeId: string; itemName: string }>>>();
       items.forEach(item => {
         if (!itemsByAggregates.has(item.settings.aggregate)) {
-          itemsByAggregates.set(item.settings.aggregate, new Map<Resampling, Array<string>>());
+          itemsByAggregates.set(item.settings.aggregate, new Map<Resampling, Array<{ nodeId: string; itemName: string }>>());
         }
         if (!itemsByAggregates.get(item.settings.aggregate)!.has(item.settings.resampling)) {
-          itemsByAggregates.get(item.settings.aggregate)!.set(item.settings.resampling, [item.settings.nodeId]);
+          itemsByAggregates
+            .get(item.settings.aggregate)!
+            .set(item.settings.resampling, [{ itemName: item.name, nodeId: item.settings.nodeId }]);
         } else {
           const currentList = itemsByAggregates.get(item.settings.aggregate)!.get(item.settings.resampling)!;
-          currentList.push(item.settings.nodeId);
+          currentList.push({ itemName: item.name, nodeId: item.settings.nodeId });
           itemsByAggregates.get(item.settings.aggregate)!.set(item.settings.resampling, currentList);
         }
       });
 
       this.logger.trace(`Reading ${items.length} items`);
 
+      const dataByItems: Array<any> = [];
       for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
         for (const [resampling, resampledItems] of aggregatedItems.entries()) {
-          const dataValues: Array<Array<any>> = [[]];
           const logs: Map<string, { description: string; affectedNodes: Array<string> }> = new Map();
 
           let nodesToRead = resampledItems.map(item => ({
             continuationPoint: undefined,
             dataEncoding: undefined,
             indexRange: undefined,
-            nodeId: item
+            nodeId: item.nodeId
           }));
 
           this.logger.trace(`Reading ${resampledItems.length} items with aggregate ${aggregate} and resampling ${resampling}`);
@@ -201,31 +203,58 @@ export default class SouthOPCUAHA extends SouthConnector {
             }
 
             if (response.results) {
+              const startTimeMs = DateTime.fromISO(startTime).toMillis();
               this.logger.debug(`Received a response of ${response.results.length} nodes.`);
               nodesToRead = nodesToRead
                 .map((node, i) => {
-                  if (!dataValues[i]) dataValues.push([]);
                   const result = response.results[i];
-                  if (result.historyData?.dataValues) {
-                    this.logger.trace(
-                      `Result for node "${node.nodeId}" (number ${i}) contains ` +
-                        `${result.historyData.dataValues.length} values and has status code ` +
-                        `${JSON.stringify(result.statusCode.value)}, continuation point is ${result.continuationPoint}.`
-                    );
-                    dataValues[i].push(...result.historyData.dataValues);
+                  const associatedItem = resampledItems.find(item => item.nodeId === node.nodeId);
+                  if (associatedItem) {
+                    if (result.historyData?.dataValues) {
+                      this.logger.trace(
+                        `Result for node "${node.nodeId}" (number ${i}) contains ` +
+                          `${result.historyData.dataValues.length} values and has status code ` +
+                          `${JSON.stringify(result.statusCode.value)}, continuation point is ${result.continuationPoint}`
+                      );
+                      dataByItems.push(
+                        ...result.historyData.dataValues
+                          .filter((dataValue: any) => {
+                            // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
+                            // Reading from 1583914010001 returns values with timestamp 1583914010000
+                            // Filter out values with timestamp smaller than startTime
+                            const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
+                            return selectedTimestamp.getTime() >= startTimeMs;
+                          })
+                          .map((dataValue: any) => {
+                            const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
+                            const selectedTime = selectedTimestamp.getTime();
+                            maxTimestamp = selectedTime > maxTimestamp ? selectedTime : maxTimestamp;
+                            return {
+                              pointId: associatedItem.itemName,
+                              timestamp: selectedTimestamp.toISOString(),
+                              data: {
+                                value: dataValue.value.value,
+                                quality: JSON.stringify(dataValue.statusCode)
+                              }
+                            };
+                          })
+                      );
+                    }
+                    // Reason of statusCode not equal to zero could be there is no data for the requested data and interval
+                    if (result.statusCode.value !== StatusCodes.Good) {
+                      if (!logs.has(result.statusCode.value)) {
+                        logs.set(result.statusCode.value, {
+                          description: result.statusCode.description,
+                          affectedNodes: [associatedItem.itemName]
+                        });
+                      } else {
+                        logs.get(result.statusCode.value)!.affectedNodes.push(associatedItem.itemName);
+                      }
+                    }
+                  } else {
+                    this.logger.error(`Node "${node.nodeId}" not found in items for aggregate ${aggregate} and resampling ${resampling}`);
                   }
 
-                  // Reason of statusCode not equal to zero could be there is no data for the requested data and interval
-                  if (result.statusCode.value !== StatusCodes.Good) {
-                    if (!logs.has(result.statusCode.value)) {
-                      logs.set(result.statusCode.value, {
-                        description: result.statusCode.description,
-                        affectedNodes: [node.nodeId]
-                      });
-                    } else {
-                      logs.get(result.statusCode.value)!.affectedNodes.push(node.nodeId);
-                    }
-                  }
                   return {
                     ...node,
                     continuationPoint: result.continuationPoint
@@ -243,7 +272,7 @@ export default class SouthOPCUAHA extends SouthConnector {
             continuationPoint: undefined,
             dataEncoding: undefined,
             indexRange: undefined,
-            nodeId: item
+            nodeId: item.nodeId
           }));
 
           // @ts-ignore
@@ -259,7 +288,6 @@ export default class SouthOPCUAHA extends SouthConnector {
           if (response.responseHeader.serviceResult.isNot(StatusCodes.Good)) {
             this.logger.error(`Error while releasing continuation points: ${response.responseHeader.serviceResult.description}`);
           }
-
           for (const [statusCode, log] of logs.entries()) {
             switch (statusCode) {
               default:
@@ -277,6 +305,9 @@ export default class SouthOPCUAHA extends SouthConnector {
           }
         }
       }
+      this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
+      await this.addValues(dataByItems);
+      // TODO: update last completed date
     } catch (error) {
       if (!this.disconnecting) {
         await this.internalDisconnect();

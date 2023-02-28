@@ -6,7 +6,7 @@ import ValueCache from './value-cache.service';
 import { createFolder, generateRandomId } from '../utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
-import { NorthCacheSettingsDTO } from '../../../shared/model/north-connector.model';
+import { NorthCacheSettingsLightDTO } from '../../../shared/model/north-connector.model';
 
 jest.mock('../utils', () => ({
   generateRandomId: jest.fn(() => 'generated-uuid'),
@@ -20,28 +20,24 @@ const logger: pino.Logger = new PinoLogger();
 
 // const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 const nowDateString = '2020-02-02T02:02:02.222Z';
-let settings: NorthCacheSettingsDTO;
+let settings: NorthCacheSettingsLightDTO;
 let cache: ValueCache;
 describe('ValueCache', () => {
-  const northSendValuesCallback = jest.fn();
-  const northShouldRetryCallback = jest.fn();
-
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     settings = {
-      scanMode: { id: 'id1', name: 'myScanMode', description: 'description', cron: '* * * * *' },
+      scanModeId: 'id1',
       groupCount: 1000,
       maxSendCount: 10000,
       retryCount: 3,
       retryInterval: 5000,
       timeout: 10000
     };
-    cache = new ValueCache(logger, 'myCacheFolder', northSendValuesCallback, northShouldRetryCallback, settings);
+    cache = new ValueCache(logger, 'myCacheFolder', settings);
   });
 
   it('should be properly initialized with values in cache', async () => {
-    cache.resetValuesTimeout = jest.fn();
     fs.readdir = jest.fn().mockImplementation(() => ['1.buffer.tmp', '1.queue.tmp', '2.queue.tmp', '1.compact.tmp', '2.compact.tmp']);
 
     fs.readFile = jest
@@ -65,7 +61,6 @@ describe('ValueCache', () => {
   });
 
   it('should be properly initialized with values in cache and no buffer file', async () => {
-    cache.resetValuesTimeout = jest.fn();
     fs.readdir = jest.fn().mockImplementation(() => ['1.queue.tmp', '2.queue.tmp', '1.compact.tmp', '2.compact.tmp']);
 
     fs.readFile = jest
@@ -89,13 +84,11 @@ describe('ValueCache', () => {
 
   it('should properly flush with no data to flush', async () => {
     cache.compactQueueCache = jest.fn();
-    cache.sendValuesWrapper = jest.fn();
 
     await cache.flush();
     expect(logger.trace).toHaveBeenCalledWith('Nothing to flush (time-flush).');
     expect(fs.rename).not.toHaveBeenCalled();
     expect(cache.compactQueueCache).not.toHaveBeenCalled();
-    expect(cache.sendValuesWrapper).not.toHaveBeenCalled();
   });
 
   it('should check if cache is empty', async () => {
@@ -118,27 +111,10 @@ describe('ValueCache', () => {
     expect(logger.error).toHaveBeenCalledWith(new Error('readdir error'));
   });
 
-  it('should catch error of sendValuesWrapper', async () => {
-    cache.sendValues = jest.fn();
-    await cache.sendValuesWrapper();
-
-    expect(cache.sendValues).toHaveBeenCalledWith('timer');
-    expect(logger.error).not.toHaveBeenCalled();
-
-    cache.sendValues = jest.fn().mockImplementation(() => {
-      throw new Error('send values error');
-    });
-    await cache.sendValuesWrapper('group-count');
-    expect(cache.sendValues).toHaveBeenCalledWith('group-count');
-
-    expect(logger.error).toHaveBeenCalledWith(new Error('send values error'));
-  });
-
   it('should remove sent values', async () => {
-    const valuesToRemove: Array<{ key: string; values: Array<any> }> = [
-      { key: '1.queue.tmp', values: [] },
-      { key: '1.compact.tmp', values: [] }
-    ];
+    const valuesToRemove: Map<string, Array<any>> = new Map();
+    valuesToRemove.set('1.queue.tmp', []);
+    valuesToRemove.set('1.compact.tmp', []);
     cache.deleteKeyFromCache = jest.fn();
     await cache.removeSentValues(valuesToRemove);
 
@@ -177,10 +153,9 @@ describe('ValueCache', () => {
   });
 
   it('should manage error values', async () => {
-    const valuesToRemove: Array<{ key: string; values: Array<any> }> = [
-      { key: '1.queue.tmp', values: [] },
-      { key: '1.compact.tmp', values: [] }
-    ];
+    const valuesToRemove: Map<string, Array<any>> = new Map();
+    valuesToRemove.set('1.queue.tmp', []);
+    valuesToRemove.set('1.compact.tmp', []);
     // cache.compactedQueue = [{ fileName: '1.compact.tmp' }];
     // cache.queue = new Map();
     // cache.queue.set('1.queue.tmp', []);
@@ -215,78 +190,6 @@ describe('ValueCache', () => {
       `Error while moving file "${path.resolve('myCacheFolder', 'values', '1.compact.tmp')}" ` +
         `into cache error "${path.resolve('myCacheFolder', 'values-errors', '1.compact.tmp')}": ${new Error('unlink error')}`
     );
-  });
-
-  it('should not retrieve values if already sending it', async () => {
-    cache.sendingValuesInProgress = true;
-    await cache.sendValues('timer');
-
-    expect(logger.trace).toHaveBeenCalledWith('Sending values (timer).');
-    expect(logger.trace).toHaveBeenCalledWith('Already sending values...');
-
-    await cache.sendValues('group-count');
-
-    expect(logger.trace).toHaveBeenCalledWith('Sending values (group-count).');
-    expect(logger.trace).toHaveBeenCalledWith('Already sending values...');
-  });
-
-  it('should not send values if no values to send', async () => {
-    cache.getValuesToSend = jest.fn(() => Promise.resolve([]));
-    cache.resetValuesTimeout = jest.fn();
-    await cache.sendValues('timer');
-    expect(cache.getValuesToSend).toHaveBeenCalledTimes(1);
-    expect(logger.trace).toHaveBeenCalledWith('No value to send...');
-  });
-
-  it('should successfully send values', async () => {
-    const valuesToSend = [
-      { key: '1.queue.tmp', values: [{ value: 'myFirstValue' }, { value: 'mySecondValue' }] },
-      { key: '2.queue.tmp', values: [{ value: 'myThirdValue' }] }
-    ];
-    cache.getValuesToSend = jest
-      .fn()
-      .mockImplementationOnce(() => valuesToSend)
-      .mockImplementationOnce(() => []);
-    cache.removeSentValues = jest.fn();
-    await cache.sendValues('timer');
-
-    expect(cache.northSendValuesCallback).toHaveBeenCalledTimes(1);
-    expect(cache.northSendValuesCallback).toHaveBeenCalledWith([
-      { value: 'myFirstValue' },
-      { value: 'mySecondValue' },
-      { value: 'myThirdValue' }
-    ]);
-    expect(cache.removeSentValues).toHaveBeenCalledTimes(1);
-    expect(cache.removeSentValues).toHaveBeenCalledWith(valuesToSend);
-
-    expect(logger.trace).toHaveBeenCalledTimes(1);
-  });
-
-  it('should retry to send values if it fails', async () => {
-    const valuesToSend = [
-      { key: '1.queue.tmp', values: [{ value: 'myFirstValue' }, { value: 'mySecondValue' }] },
-      { key: '2.queue.tmp', values: [{ value: 'myThirdValue' }] }
-    ];
-    cache.getValuesToSend = jest
-      .fn()
-      .mockImplementationOnce(() => valuesToSend)
-      .mockImplementationOnce(() => []);
-    cache.manageErroredValues = jest.fn();
-    northSendValuesCallback
-      .mockImplementationOnce(() => {
-        throw new Error('handleValues error 0');
-      })
-      .mockImplementationOnce(() => {
-        throw new Error('handleValues error 1');
-      })
-      .mockImplementationOnce(() => {
-        throw new Error('handleValues error 2');
-      })
-      .mockImplementationOnce(() => {
-        throw new Error('handleValues error 3');
-      });
-    await cache.sendValues('timer');
-    expect(logger.debug).toHaveBeenCalledWith('Retrying values in 5000 ms. Retry count: 1');
   });
 
   it('should cache values and flush because of timer', async () => {

@@ -7,7 +7,7 @@
     >{{ 'authentication.username' | translate }}</label
   >
   <label *ngIf="authCtrl.controls.type.value === 'api-key'" [for]="'oib-auth-key-input-' + key"
-    >{{ 'authentication.key' | translate }}</label
+    >{{ 'authentication.api-key' | translate }}</label
   >
   <label *ngIf="authCtrl.controls.type.value === 'bearer'" [for]="'oib-auth-key-input-' + key"
     >{{ 'authentication.bearer' | translate }}</label
