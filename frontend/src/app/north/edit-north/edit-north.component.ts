@@ -194,7 +194,6 @@ export class EditNorthComponent implements OnInit {
 
     const formValue = this.northForm.value;
 
-    console.log('settings', formValue.settings);
     const command: NorthConnectorCommandDTO = {
       name: formValue.name!,
       type: this.northType,
