@@ -33,7 +33,7 @@ describe('South item repository', () => {
     expect(run).toHaveBeenCalledTimes(1);
   });
 
-  it('should properly get south items by South ID', () => {
+  it('should properly search south items', () => {
     const expectedValue: Page<SouthItemDTO> = {
       content: [
         {
@@ -80,6 +80,46 @@ describe('South item repository', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, south_id AS southId, scan_mode_id AS scanModeId, settings FROM south_item WHERE ' +
         "south_id = ? AND name like '%my item%' LIMIT 50 OFFSET 0;"
+    );
+    expect(southScans).toEqual(expectedValue);
+  });
+
+  it('should properly get south items by South ID', () => {
+    const expectedValue: Array<SouthItemDTO> = [
+      {
+        id: 'id1',
+        name: 'my south scan',
+        southId: 'south1',
+        scanModeId: 'scanMode1',
+        settings: {}
+      },
+      {
+        id: 'id2',
+        name: 'my second south scan',
+        southId: 'south1',
+        scanModeId: 'scan1',
+        settings: {}
+      }
+    ];
+    all.mockReturnValueOnce([
+      {
+        id: 'id1',
+        name: 'my south scan',
+        southId: 'south1',
+        scanModeId: 'scanMode1',
+        settings: JSON.stringify({})
+      },
+      {
+        id: 'id2',
+        name: 'my second south scan',
+        southId: 'south1',
+        scanModeId: 'scan1',
+        settings: JSON.stringify({})
+      }
+    ]);
+    const southScans = repository.getSouthItems('southId');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT id, name, south_id AS southId, scan_mode_id AS scanModeId, settings FROM south_item WHERE south_id = ?;'
     );
     expect(southScans).toEqual(expectedValue);
   });

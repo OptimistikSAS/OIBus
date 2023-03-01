@@ -14,6 +14,8 @@ import { EventEmitter } from 'node:events';
 import { ScanModeDTO } from '../../shared/model/scan-mode.model';
 import DeferredPromise from '../service/deferred-promise';
 
+import { Instant } from '../../shared/model/types';
+
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
  * Building a new North connector means to extend this class, and to surcharge
@@ -197,7 +199,7 @@ export default class NorthConnector {
    */
   async handleFilesWrapper(): Promise<void> {
     try {
-      const fileBeingSent = await this.fileCacheService.getFileToSend();
+      const fileBeingSent = this.fileCacheService.getFileToSend();
       if (fileBeingSent) {
         await this.handleFile(fileBeingSent);
         this.fileCacheService.removeFileFromQueue();
@@ -285,8 +287,12 @@ export default class NorthConnector {
   /**
    * Get list of error files from file cache. Dates are in ISO format
    */
-  async getErrorFiles(fromDate: string, toDate: string, fileNameContains: string, pageNumber: number): Promise<Array<string>> {
-    return this.fileCacheService.getErrorFiles(fromDate, toDate, fileNameContains, pageNumber);
+  async getErrorFiles(
+    fromDate: string,
+    toDate: string,
+    fileNameContains: string
+  ): Promise<Array<{ filename: string; modificationDate: Instant }>> {
+    return this.fileCacheService.getErrorFiles(fromDate, toDate, fileNameContains);
   }
 
   /**

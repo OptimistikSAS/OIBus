@@ -1,5 +1,6 @@
 import { OibFormControl } from './form.model';
 import Joi from 'joi';
+import { Instant } from './types';
 
 export interface SouthType {
   category: string;
@@ -85,4 +86,10 @@ export interface SouthConnectorManifest {
   settings: Array<OibFormControl>;
   schema: Joi.ObjectSchema;
   items: SouthItemManifest;
+}
+
+export interface SouthCache {
+  scanModeId: string;
+  intervalIndex: number;
+  maxInstant: Instant;
 }

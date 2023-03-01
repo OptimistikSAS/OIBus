@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './navbar/navbar.component';
 import { NotificationComponent } from './shared/notification/notification.component';
@@ -14,7 +14,7 @@ import { User } from '../../../shared/model/user.model';
   standalone: true,
   imports: [RouterOutlet, NavbarComponent, NotificationComponent, DefaultValidationErrorsComponent]
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
   title = 'OIBus';
 
   constructor(private currentUserService: CurrentUserService, private windowService: WindowService) {}
