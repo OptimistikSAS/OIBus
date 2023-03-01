@@ -5,16 +5,14 @@ import FileCache from './file-cache.service';
 import { createFolder } from '../utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
+import { DateTime } from 'luxon';
 
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 
 const logger: pino.Logger = new PinoLogger();
-
-// Method used to flush promises called in setTimeout
 const nowDateString = '2020-02-02T02:02:02.222Z';
 let cache: FileCache;
-
 describe('FileCache', () => {
   beforeEach(() => {
     jest.resetAllMocks();
@@ -187,39 +185,48 @@ describe('FileCache', () => {
     expect(cache.retryErrorFiles).not.toHaveBeenCalled();
   });
 
-  it('should match file with date and name', async () => {
-    const folder = 'folder';
-    const filename = 'file.name';
-    const fromDate = '2022-11-11T11:11:11.111';
-    const toDate = '2022-11-12T11:11:11.111';
-    fs.stat = jest.fn().mockReturnValue({ mtimeMs: new Date('2022-11-12T00:00:00.000').getTime() });
+  it('should properly get and remove file from queue', async () => {
+    const noFile = cache.getFileToSend();
 
-    const match = await cache.matchFile(folder, filename, fromDate, toDate, 'ile');
-    expect(fs.stat).toBeCalledWith(path.join(folder, filename));
-    expect(match).toBeTruthy();
+    expect(noFile).toBeNull();
+
+    await cache.cacheFile('myFile.csv');
+    const file = cache.getFileToSend();
+
+    expect(file).toEqual(path.resolve('myCacheFolder', 'files', 'myFile-1580608922222.csv'));
+
+    cache.removeFileFromQueue();
+    const noMoreFile = cache.getFileToSend();
+    expect(noMoreFile).toBeNull();
   });
 
-  it('should not match file without date match', async () => {
-    const folder = 'folder';
-    const filename = 'file.name';
-    const fromDate = '2022-11-11T11:11:11.111';
-    const toDate = '2022-11-12T11:11:11.111';
-    fs.stat = jest.fn().mockReturnValue({ mtimeMs: new Date('2022-11-13T00:00:00.000').getTime() });
+  it('should properly get error files', async () => {
+    (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2', 'file3', 'anotherFile', 'errorFile']);
+    (fs.stat as jest.Mock)
+      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T04:02:02.222Z').toMillis() }))
+      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T06:02:02.222Z').toMillis() }))
+      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-04T02:02:02.222Z').toMillis() }))
+      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-05T02:02:02.222Z').toMillis() }))
+      .mockImplementationOnce(() => {
+        throw new Error('error file');
+      });
 
-    const match = await cache.matchFile(folder, filename, fromDate, toDate, 'ile');
-    expect(fs.stat).toBeCalledWith(path.join(folder, filename));
-    expect(match).toBeFalsy();
+    const files = await cache.getErrorFiles('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
+
+    expect(files).toEqual([
+      { filename: 'file1', modificationDate: '2020-02-02T04:02:02.222Z' },
+      { filename: 'file2', modificationDate: '2020-02-02T06:02:02.222Z' }
+    ]);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while reading in error folder file stats "${path.resolve('myCacheFolder', 'files-errors', 'errorFile')}": Error: error file`
+    );
   });
 
-  it('should not match file without name match', async () => {
-    const folder = 'folder';
-    const filename = 'file.name';
-    const fromDate = '2022-11-11T11:11:11.111';
-    const toDate = '2022-11-12T11:11:11.111';
-    fs.stat = jest.fn().mockReturnValue({ mtimeMs: new Date('2022-11-13T00:00:00.000').getTime() });
+  it('should properly get error files', async () => {
+    (fs.readdir as jest.Mock).mockImplementation(() => []);
 
-    const match = await cache.matchFile(folder, filename, fromDate, toDate, 'noMatch');
-    expect(fs.stat).toBeCalledWith(path.join(folder, filename));
-    expect(match).toBeFalsy();
+    const files = await cache.getErrorFiles('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
+
+    expect(files).toEqual([]);
   });
 });

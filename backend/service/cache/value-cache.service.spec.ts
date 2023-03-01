@@ -29,7 +29,7 @@ describe('ValueCache', () => {
     settings = {
       scanModeId: 'id1',
       groupCount: 1000,
-      maxSendCount: 10000,
+      maxSendCount: 1000,
       retryCount: 3,
       retryInterval: 5000,
       timeout: 10000
@@ -38,15 +38,33 @@ describe('ValueCache', () => {
   });
 
   it('should be properly initialized with values in cache', async () => {
-    fs.readdir = jest.fn().mockImplementation(() => ['1.buffer.tmp', '1.queue.tmp', '2.queue.tmp', '1.compact.tmp', '2.compact.tmp']);
+    fs.readdir = jest
+      .fn()
+      .mockImplementation(() => [
+        '1.buffer.tmp',
+        'error.buffer.tmp',
+        '1.queue.tmp',
+        '2.queue.tmp',
+        'error.queue.tmp',
+        '1.compact.tmp',
+        '2.compact.tmp',
+        'error.compact.tmp'
+      ]);
 
     fs.readFile = jest
       .fn()
       .mockImplementationOnce(() => JSON.stringify([{ data: 'myFlushBuffer' }]))
+      .mockImplementationOnce(() => 'malformed buffer file')
       .mockImplementationOnce(() => JSON.stringify([{ data: 'myFirstQueueValue1' }, { data: 'myFirstQueueValue2' }]))
       .mockImplementationOnce(() => JSON.stringify([{ data: 'mySecondQueueValue1' }, { data: 'mySecondQueueValue2' }]))
+      .mockImplementationOnce(() => {
+        throw new Error('queue error');
+      })
       .mockImplementationOnce(() => JSON.stringify([{ data: 'myFirstCompactValue1' }, { data: 'myFirstCompactValue2' }]))
-      .mockImplementationOnce(() => JSON.stringify([{ data: 'mySecondCompactValue1' }, { data: 'mySecondCompactValue2' }]));
+      .mockImplementationOnce(() => JSON.stringify([{ data: 'mySecondCompactValue1' }, { data: 'mySecondCompactValue2' }]))
+      .mockImplementationOnce(() => {
+        throw new Error('compact error');
+      });
     fs.stat = jest
       .fn()
       .mockImplementationOnce(() => ({ ctimeMs: 2 }))
@@ -57,7 +75,31 @@ describe('ValueCache', () => {
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values'));
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors'));
 
-    expect(logger.info).toHaveBeenCalledWith('8 values in cache.');
+    expect(logger.info).toHaveBeenCalledWith('8 values in cache');
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while reading buffer file "${path.resolve(
+        'myCacheFolder',
+        'values',
+        'error.buffer.tmp'
+      )}": SyntaxError: Unexpected token m in JSON at position 0`
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while reading queue file "${path.resolve('myCacheFolder', 'values', 'error.queue.tmp')}": Error: queue error`
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while reading compact file "${path.resolve('myCacheFolder', 'values', 'error.compact.tmp')}": Error: compact error`
+    );
+  });
+
+  it('should be properly initialized with no values in queue', async () => {
+    // Buffer files are not taken into account for values in queue
+    fs.readdir = jest.fn().mockImplementation(() => ['1.buffer.tmp']);
+
+    fs.readFile = jest.fn().mockImplementationOnce(() => JSON.stringify([{ data: 'myFlushBuffer' }]));
+
+    await cache.start();
+
+    expect(logger.info).toHaveBeenCalledWith('No value in cache');
   });
 
   it('should be properly initialized with values in cache and no buffer file', async () => {
@@ -79,16 +121,17 @@ describe('ValueCache', () => {
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values'));
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors'));
 
-    expect(logger.info).toHaveBeenCalledWith('8 values in cache.');
+    expect(logger.info).toHaveBeenCalledWith('8 values in cache');
   });
 
-  it('should properly flush with no data to flush', async () => {
-    cache.compactQueueCache = jest.fn();
+  it('should properly time flush with no data to flush', async () => {
+    const compactSpy = jest.spyOn(cache, 'compactQueueCache');
 
     await cache.flush();
-    expect(logger.trace).toHaveBeenCalledWith('Nothing to flush (time-flush).');
+    expect(logger.trace).toHaveBeenCalledWith('Nothing to flush (time-flush)');
     expect(fs.rename).not.toHaveBeenCalled();
-    expect(cache.compactQueueCache).not.toHaveBeenCalled();
+    expect(compactSpy).not.toHaveBeenCalled();
+    compactSpy.mockReset();
   });
 
   it('should check if cache is empty', async () => {
@@ -124,27 +167,22 @@ describe('ValueCache', () => {
   });
 
   it('should delete key from cache', async () => {
-    // cache.compactedQueue = [{ fileName: '1.compact.tmp' }];
-    // cache.queue = new Map();
-    // cache.queue.set('1.queue.tmp', []);
-    // cache.queue.set('2.queue.tmp', []);
     fs.unlink = jest
       .fn()
       .mockImplementationOnce(() => '')
-      .mockImplementation(() => {
+      .mockImplementationOnce(() => {
         throw new Error('unlink error');
       });
 
     await cache.deleteKeyFromCache('1.queue.tmp');
-    // expect(cache.compactedQueue).toEqual([{ fileName: '1.compact.tmp' }]);
     const expectedMap = new Map();
     expectedMap.set('2.queue.tmp', []);
     expect(logger.error).not.toHaveBeenCalled();
-    expect(logger.trace).toHaveBeenCalledWith(`Removing "${path.resolve('myCacheFolder', 'values', '1.queue.tmp')}" from cache.`);
+    expect(logger.trace).toHaveBeenCalledWith(`Removing "${path.resolve('myCacheFolder', 'values', '1.queue.tmp')}" from cache`);
     expect(fs.unlink).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values', '1.queue.tmp'));
 
     await cache.deleteKeyFromCache('1.compact.tmp');
-    expect(logger.trace).toHaveBeenCalledWith(`Removing "${path.resolve('myCacheFolder', 'values', '1.compact.tmp')}" from cache.`);
+    expect(logger.trace).toHaveBeenCalledWith(`Removing "${path.resolve('myCacheFolder', 'values', '1.compact.tmp')}" from cache`);
     expect(fs.unlink).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values', '1.compact.tmp'));
     expect(logger.error).toHaveBeenCalledWith(
       'Error while removing file ' +
@@ -156,10 +194,6 @@ describe('ValueCache', () => {
     const valuesToRemove: Map<string, Array<any>> = new Map();
     valuesToRemove.set('1.queue.tmp', []);
     valuesToRemove.set('1.compact.tmp', []);
-    // cache.compactedQueue = [{ fileName: '1.compact.tmp' }];
-    // cache.queue = new Map();
-    // cache.queue.set('1.queue.tmp', []);
-    // cache.queue.set('2.queue.tmp', []);
     fs.rename = jest
       .fn()
       .mockImplementationOnce(() => '')
@@ -172,7 +206,7 @@ describe('ValueCache', () => {
     expectedMap.set('2.queue.tmp', []);
     expect(logger.trace).toHaveBeenCalledWith(
       `Moving "${path.resolve('myCacheFolder', 'values', '1.queue.tmp')}" ` +
-        `to error cache: "${path.resolve('myCacheFolder', 'values-errors', '1.queue.tmp')}".`
+        `to error cache: "${path.resolve('myCacheFolder', 'values-errors', '1.queue.tmp')}"`
     );
     expect(fs.rename).toHaveBeenCalledWith(
       path.resolve('myCacheFolder', 'values', '1.queue.tmp'),
@@ -180,7 +214,7 @@ describe('ValueCache', () => {
     );
     expect(logger.trace).toHaveBeenCalledWith(
       `Moving "${path.resolve('myCacheFolder', 'values', '1.compact.tmp')}" ` +
-        `to error cache: "${path.resolve('myCacheFolder', 'values-errors', '1.compact.tmp')}".`
+        `to error cache: "${path.resolve('myCacheFolder', 'values-errors', '1.compact.tmp')}"`
     );
     expect(fs.rename).toHaveBeenCalledWith(
       path.resolve('myCacheFolder', 'values', '1.compact.tmp'),
@@ -206,27 +240,78 @@ describe('ValueCache', () => {
     jest.advanceTimersByTime(150);
     await cache.cacheValues(valuesToCache);
     expect(cache.flush).not.toHaveBeenCalled();
-
-    jest.advanceTimersByTime(150);
-    expect(cache.flush).toHaveBeenCalledWith();
   });
 
   it('should cache values and flush because of buffer max', async () => {
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+    const compactSpy = jest.spyOn(cache, 'compactQueueCache');
+    (generateRandomId as jest.Mock)
+      .mockReturnValueOnce('generated-uuid1') // buffer with 2 values
+      .mockReturnValueOnce('generated-uuid2') // buffer with 251 values
+      .mockReturnValueOnce('generated-uuid3') // queue with 253 values
+      .mockReturnValueOnce('generated-uuid4') // buffer with 251 values
+      .mockReturnValueOnce('generated-uuid5') // queue with 251 value
+      .mockReturnValueOnce('generated-uuid6') // buffer with 251 values
+      .mockReturnValueOnce('generated-uuid7') // queue with 251 value
+      .mockReturnValueOnce('generated-uuid8') // buffer with 251 values
+      .mockReturnValueOnce('generated-uuid9'); // queue with 251 value
+
+    fs.unlink = jest.fn().mockImplementationOnce(() => {
+      throw new Error('unlink error');
+    });
+
+    fs.writeFile = jest
+      .fn()
+      .mockImplementationOnce(() => '') // buffer 1
+      .mockImplementationOnce(() => '') // buffer 2
+      .mockImplementationOnce(() => {
+        // queue 1
+        throw new Error('write error');
+      });
+
     const valuesToCache = [];
     for (let i = 0; i < 251; i += 1) {
       valuesToCache.push({});
     }
-    cache.flush = jest.fn();
-    await cache.cacheValues(valuesToCache);
+    await cache.cacheValues([valuesToCache[0], valuesToCache[0]]);
+    expect(clearTimeoutSpy).not.toHaveBeenCalled();
     expect(fs.writeFile).toHaveBeenCalledWith(
-      path.resolve('myCacheFolder', 'values', 'generated-uuid.buffer.tmp'),
+      path.resolve('myCacheFolder', 'values', 'generated-uuid1.buffer.tmp'),
+      JSON.stringify([valuesToCache[0], valuesToCache[0]]),
+      {
+        encoding: 'utf8'
+      }
+    );
+
+    await cache.cacheValues(valuesToCache);
+    // clearTimeout called because max-flush has been triggered
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while writing queue file ${path.resolve('myCacheFolder', 'values', 'generated-uuid3.queue.tmp')}: Error: write error`
+    );
+
+    jest.advanceTimersByTime(150);
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      path.resolve('myCacheFolder', 'values', 'generated-uuid2.buffer.tmp'),
       JSON.stringify(valuesToCache),
       {
         encoding: 'utf8'
       }
     );
-    jest.advanceTimersByTime(300);
-    expect(cache.flush).toHaveBeenCalledWith('max-flush');
+    await cache.cacheValues(valuesToCache);
+    expect(compactSpy).not.toHaveBeenCalled();
+    expect(logger.trace).toHaveBeenCalledWith(
+      `Flush 504 values (max-flush) into "${path.resolve('myCacheFolder', 'values', 'generated-uuid5.queue.tmp')}". 504 values in queue`
+    );
+
+    await cache.cacheValues(valuesToCache);
+    expect(logger.trace).toHaveBeenCalledWith(
+      `Flush 251 values (max-flush) into "${path.resolve('myCacheFolder', 'values', 'generated-uuid7.queue.tmp')}". 755 values in queue`
+    );
+    expect(compactSpy).not.toHaveBeenCalled();
+    await cache.cacheValues(valuesToCache); // compact queue here
+    expect(compactSpy).toHaveBeenCalledTimes(1);
+    compactSpy.mockReset();
   });
 
   it('should compact queue', async () => {
@@ -237,7 +322,7 @@ describe('ValueCache', () => {
     cache.deleteKeyFromCache = jest.fn();
 
     await cache.compactQueueCache(queue);
-    expect(logger.trace).toHaveBeenCalledWith('Max group count reach. Compacting queue into "generated-uuid.compact.tmp".');
+    expect(logger.trace).toHaveBeenCalledWith('Max group count reach. Compacting queue into "generated-uuid.compact.tmp"');
     expect(cache.deleteKeyFromCache).toHaveBeenCalledTimes(2);
   });
 
@@ -250,5 +335,88 @@ describe('ValueCache', () => {
     await cache.compactQueueCache(queue);
     expect(logger.error).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith(new Error('writing error'));
+  });
+
+  describe('with values loaded', () => {
+    const valuesToCache: Array<any> = [];
+    for (let i = 0; i < 251; i += 1) {
+      valuesToCache.push({});
+    }
+
+    beforeEach(async () => {
+      jest.resetAllMocks();
+      (generateRandomId as jest.Mock)
+        .mockReturnValueOnce('generated-uuid1')
+        .mockReturnValueOnce('generated-uuid2')
+        .mockReturnValueOnce('generated-uuid3')
+        .mockReturnValueOnce('generated-uuid4')
+        .mockReturnValueOnce('generated-uuid5')
+        .mockReturnValueOnce('generated-uuid6')
+        .mockReturnValueOnce('generated-uuid7')
+        .mockReturnValueOnce('generated-uuid8')
+        .mockReturnValueOnce('generated-uuid9');
+
+      cache = new ValueCache(logger, 'myCacheFolder', settings);
+
+      await cache.cacheValues(valuesToCache);
+      await cache.cacheValues(valuesToCache);
+      await cache.cacheValues(valuesToCache);
+    });
+
+    it('should properly get values to send from queue', async () => {
+      const expectedValues: Map<string, Array<any>> = new Map();
+      expectedValues.set('generated-uuid2.queue.tmp', valuesToCache);
+      expectedValues.set('generated-uuid4.queue.tmp', valuesToCache);
+      expectedValues.set('generated-uuid6.queue.tmp', valuesToCache);
+      const valuesToSend = await cache.getValuesToSend();
+
+      expect(valuesToSend).toEqual(expectedValues);
+    });
+
+    it('should properly get values to send from compact and delete from cache', async () => {
+      (fs.readFile as jest.Mock).mockImplementationOnce(() => '[{}]');
+
+      const expectedValues: Map<string, Array<any>> = new Map();
+      expectedValues.set('generated-uuid9.compact.tmp', [{}]);
+
+      await cache.cacheValues(valuesToCache); // compact queue here
+      const valuesToSend = await cache.getValuesToSend();
+      expect(valuesToSend).toEqual(expectedValues);
+
+      await cache.deleteKeyFromCache('generated-uuid9.compact.tmp');
+      expect(logger.trace).toHaveBeenCalledWith(
+        `Removing "${path.resolve('myCacheFolder', 'values', 'generated-uuid9.compact.tmp')}" from cache`
+      );
+    });
+
+    it('should properly get values to send from compact manage error', async () => {
+      (fs.readFile as jest.Mock).mockImplementationOnce(() => {
+        throw new Error('read file error');
+      });
+
+      await cache.cacheValues(valuesToCache); // compact queue here
+      const noValues = await cache.getValuesToSend();
+      expect(noValues).toEqual(new Map());
+      expect(logger.error).toHaveBeenCalledWith(`Error while reading compacted file "generated-uuid9.compact.tmp": Error: read file error`);
+
+      const errorMap = new Map();
+      errorMap.set('generated-uuid9.compact.tmp', []);
+      await cache.manageErroredValues(errorMap);
+      expect(logger.trace).toHaveBeenCalledWith(
+        `Moving "${path.resolve('myCacheFolder', 'values', 'generated-uuid9.compact.tmp')}" to error cache: "${path.resolve(
+          'myCacheFolder',
+          'values-errors',
+          'generated-uuid9.compact.tmp'
+        )}"`
+      );
+    });
+
+    it('should properly stop and clear timeout', async () => {
+      const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+      await cache.stop();
+
+      expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+    });
   });
 });

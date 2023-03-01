@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
 import { createFolder, delay, generateIntervals } from '../service/utils';
 
-import { SouthConnectorDTO, SouthConnectorManifest, SouthItemDTO } from '../../shared/model/south-connector.model';
+import { SouthCache, SouthConnectorDTO, SouthConnectorManifest, SouthItemDTO } from '../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../shared/model/scan-mode.model';
 import { Instant } from '../../shared/model/types';
 import pino from 'pino';
@@ -12,6 +12,7 @@ import ProxyService from '../service/proxy.service';
 import RepositoryService from '../service/repository.service';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
+import SouthCacheService from '../service/south-cache.service';
 
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
@@ -34,7 +35,7 @@ import { DateTime } from 'luxon';
  * All other operations (cache, store&forward, communication to North connectors) will be handled by the OIBus engine
  * and should not be taken care at the South level.
  */
-export default class SouthConnector {
+export default abstract class SouthConnector {
   protected configuration: SouthConnectorDTO;
   protected encryptionService: EncryptionService;
   protected proxyService: ProxyService;
@@ -52,6 +53,8 @@ export default class SouthConnector {
   private readonly streamMode: boolean;
   private stopping = false;
   private runProgress$: DeferredPromise | null = null;
+
+  private southCacheService: SouthCacheService;
 
   /**
    * Constructor for SouthConnector
@@ -85,6 +88,12 @@ export default class SouthConnector {
     this.baseFolder = path.resolve(baseFolder, `south-${this.configuration.id}`);
     this.manifest = manifest;
     this.streamMode = streamMode;
+
+    this.southCacheService = new SouthCacheService(path.resolve(baseFolder, `south-${this.configuration.id}`, 'cache.db'));
+
+    if (this.manifest.modes.historyFile || this.manifest.modes.historyPoint) {
+      this.southCacheService.createCacheHistoryTable();
+    }
 
     if (this.streamMode) {
       this.taskRunner.on('next', async () => {
@@ -171,9 +180,8 @@ export default class SouthConnector {
     this.logger.trace(`Running South with scan mode ${scanMode.name} and ${items.length} items`);
     if (this.manifest.modes.historyFile || this.manifest.modes.historyPoint) {
       try {
-        // TODO: get dates from last completed
-        await this.historyQueryHandler(items, DateTime.fromISO('2023-02-19').toISO(), DateTime.fromISO('2023-02-20').toISO());
-        // TODO: set last completed
+        const southCache = this.southCacheService.getSouthCache(scanMode.id);
+        await this.historyQueryHandler(items, DateTime.fromISO(southCache.maxInstant).toISO(), DateTime.now().toISO(), southCache);
       } catch (error) {
         this.logger.error(`Error when calling historyQuery ${error}`);
       }
@@ -202,24 +210,61 @@ export default class SouthConnector {
     }
   }
 
-  async historyQueryHandler(items: Array<SouthItemDTO>, startTime: Instant, endTime: Instant): Promise<void> {
+  async historyQueryHandler(items: Array<SouthItemDTO>, startTime: Instant, endTime: Instant, southCache: SouthCache): Promise<void> {
     // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
     // requests. For example only one hour if maxReadInterval is 3600 (in s)
     const intervals = generateIntervals(startTime, endTime, this.configuration.settings.maxReadInterval);
 
-    // TODO: filter already requested intervals
+    const intervalToKeep = intervals.length - southCache.intervalIndex;
+    const intervalsToQuery = intervals.slice(-intervalToKeep);
 
-    for (const [index, interval] of intervals.entries()) {
-      await this.historyQuery(items, interval.start, interval.end);
+    if (intervals.length > 2) {
+      this.logger.trace(
+        `Interval split in ${intervals.length} sub-intervals: \r\n` +
+          `[${JSON.stringify(intervals[0], null, 2)}\r\n` +
+          `${JSON.stringify(intervals[1], null, 2)}\r\n` +
+          '...\r\n' +
+          `${JSON.stringify(intervals[intervals.length - 1], null, 2)}]`
+      );
+      this.logger.trace(
+        `Take back to interval number ${southCache.intervalIndex}: \r\n` + `${JSON.stringify(intervalsToQuery[0], null, 2)}\r\n`
+      );
+    } else if (intervals.length === 2) {
+      this.logger.trace(
+        `Interval split in ${intervals.length} sub-intervals: \r\n` +
+          `[${JSON.stringify(intervals[0], null, 2)}\r\n` +
+          `${JSON.stringify(intervals[1], null, 2)}]`
+      );
+      this.logger.trace(
+        `Take back to interval number ${southCache.intervalIndex}: \r\n` + `${JSON.stringify(intervalsToQuery[0], null, 2)}\r\n`
+      );
+    } else {
+      this.logger.trace(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
+    }
 
-      // TODO: save last requested intervals
+    for (const [index, interval] of intervalsToQuery.entries()) {
+      const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
+
       if (index !== intervals.length - 1) {
+        this.southCacheService.createOrUpdateCacheScanMode({
+          scanModeId: southCache.scanModeId,
+          maxInstant: lastInstantRetrieved,
+          intervalIndex: index + southCache.intervalIndex
+        });
         await delay(this.configuration.settings.readIntervalDelay);
+      } else {
+        this.southCacheService.createOrUpdateCacheScanMode({
+          scanModeId: southCache.scanModeId,
+          maxInstant: lastInstantRetrieved,
+          intervalIndex: 0
+        });
       }
     }
   }
 
-  async historyQuery(items: Array<SouthItemDTO>, startTime: Instant, endTime: Instant): Promise<void> {}
+  async historyQuery(items: Array<SouthItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+    return '';
+  }
   async fileQuery(items: Array<SouthItemDTO>): Promise<void> {}
   async lastPointQuery(items: Array<SouthItemDTO>): Promise<void> {}
   async subscribe(items: Array<SouthItemDTO>): Promise<void> {}
