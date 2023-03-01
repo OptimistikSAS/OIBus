@@ -117,14 +117,6 @@ const filesExists = async (filePath: string): Promise<boolean> => {
   return true;
 };
 
-/**
- * Async filter implementation
- */
-const asyncFilter = async (array: Array<any>, predicate: (item: any) => Promise<boolean>) => {
-  const results = await Promise.all(array.map(predicate));
-  return array.filter((item, index) => results[index]);
-};
-
 const CHARACTER_SET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const RANDOM_LENGTH = 16;
 
@@ -146,6 +138,5 @@ export {
   replaceFilenameWithVariable,
   generateDateWithTimezone,
   compress,
-  filesExists,
-  asyncFilter
+  filesExists
 };

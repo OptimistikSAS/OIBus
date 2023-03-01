@@ -22,7 +22,7 @@ export default class ValueCacheService {
   private readonly errorFolder: string;
   private readonly settings: NorthCacheSettingsLightDTO;
 
-  private bufferTimeout: NodeJS.Timeout | null = null;
+  private bufferTimeout: NodeJS.Timeout | undefined;
   private compactedQueue: Array<{ filename: string; createdAt: number; numberOfValues: number }> = []; // List of compact filename (randomId.compact.tmp)
   private bufferFiles: Map<string, Array<any>> = new Map(); // key: buffer filename (randomId.buffer.tmp, value: the values in the queue file)
   private queue: Map<string, Array<any>> = new Map(); // key: queue filename (randomId.queue.tmp, value: the values in the queue file)
@@ -89,16 +89,16 @@ export default class ValueCacheService {
       } catch (error) {
         // If a file is being written or corrupted, the stat method can fail
         // An error is logged and the cache goes through the other files
-        this.logger.error(`Error while reading queue file "${path.resolve(this.valueFolder, filename)}": ${error}`);
+        this.logger.error(`Error while reading compact file "${path.resolve(this.valueFolder, filename)}": ${error}`);
       }
     }
 
     // Sort the compact queue to have the oldest file first
     this.compactedQueue.sort((a, b) => a.createdAt - b.createdAt);
     if (numberOfValuesInCache > 0) {
-      this.logger.info(`${numberOfValuesInCache} values in cache.`);
+      this.logger.info(`${numberOfValuesInCache} values in cache`);
     } else {
-      this.logger.info('No value in cache.');
+      this.logger.info('No value in cache');
     }
   }
 
@@ -107,48 +107,53 @@ export default class ValueCacheService {
    * Flushing the buffer create a queue file and keep the values in memory for sending them
    */
   async flush(flag: 'time-flush' | 'max-flush' = 'time-flush'): Promise<void> {
-    if (flag === 'max-flush' && this.bufferTimeout) {
+    if (flag === 'max-flush') {
       clearTimeout(this.bufferTimeout);
     }
     // Reset timeout to null to set the buffer timeout again on the next send values
-    this.bufferTimeout = null;
+    this.bufferTimeout = undefined;
 
-    const copiedBufferFiles = this.bufferFiles;
     const valuesInBufferFiles: Array<{ key: string; values: Array<any> }> = [];
-
-    copiedBufferFiles.forEach((values, key) => {
+    for (const [key, values] of this.bufferFiles.entries()) {
       valuesInBufferFiles.push({ key, values });
-    });
+    }
+    const valuesToFlush = valuesInBufferFiles.reduce((prev: Array<any>, { values }) => {
+      prev.push(...values);
+      return prev;
+    }, []);
     const tmpFileName = `${generateRandomId()}.queue.tmp`;
-
+    // Save the buffer to be sent and immediately clear it
+    if (valuesToFlush.length === 0) {
+      this.logger.trace(`Nothing to flush (${flag})`);
+      return;
+    }
+    // Store the values in a tmp file
     try {
-      const valuesToFlush = valuesInBufferFiles.reduce((prev: Array<any>, { values }) => {
-        prev.push(...values);
-        return prev;
-      }, []);
-      // Save the buffer to be sent and immediately clear it
-      if (valuesToFlush.length === 0) {
-        this.logger.trace(`Nothing to flush (${flag}).`);
-        return;
-      }
-      // Store the values in a tmp file
       await fs.writeFile(path.resolve(this.valueFolder, tmpFileName), JSON.stringify(valuesToFlush), { encoding: 'utf8', flag: 'w' });
-      this.queue.set(tmpFileName, valuesToFlush);
-      this.logger.trace(`Flush ${valuesToFlush.length} values (${flag}) into "${path.resolve(this.valueFolder, tmpFileName)}".`);
-
-      // Once compacted, remove values from queue.
-      for (const { key } of valuesInBufferFiles) {
-        this.bufferFiles.delete(key);
-        await fs.unlink(path.resolve(this.valueFolder, key));
-      }
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error(`Error while writing queue file ${path.resolve(this.valueFolder, tmpFileName)}: ${error}`);
+      return; // Do not empty the buffer if the file could not be written
+    }
+
+    this.queue.set(tmpFileName, valuesToFlush);
+    // Once compacted, remove values from queue.
+    for (const { key } of valuesInBufferFiles) {
+      this.bufferFiles.delete(key);
+      try {
+        await fs.unlink(path.resolve(this.valueFolder, key));
+      } catch (error) {
+        this.logger.error(`Error while removing buffer file ${path.resolve(this.valueFolder, key)}: ${error}`);
+      }
     }
 
     let groupCount = 0;
-    this.queue.forEach(values => {
+    for (const values of this.queue.values()) {
       groupCount += values.length;
-    });
+    }
+    this.logger.trace(
+      `Flush ${valuesToFlush.length} values (${flag}) into "${path.resolve(this.valueFolder, tmpFileName)}". ${groupCount} values in queue`
+    );
+
     if (groupCount >= this.settings.maxSendCount) {
       const copiedQueue = this.queue;
       await this.compactQueueCache(copiedQueue);
@@ -165,7 +170,7 @@ export default class ValueCacheService {
       valuesInQueue.push({ key, values });
     });
     const compactFilename = `${generateRandomId()}.compact.tmp`;
-    this.logger.trace(`Max group count reach. Compacting queue into "${compactFilename}".`);
+    this.logger.trace(`Max group count reach. Compacting queue into "${compactFilename}"`);
     try {
       const compactValues = valuesInQueue.reduce((prev: Array<any>, { values }) => {
         prev.push(...values);
@@ -196,12 +201,13 @@ export default class ValueCacheService {
     const valuesInQueue: Map<string, Array<any>> = new Map();
     // If there is no file in the compacted queue, the values are retrieved from the regular queue
     if (this.compactedQueue.length === 0) {
-      this.logger.trace('Retrieving values from queue.');
+      this.logger.trace('Retrieving values from queue');
       this.queue.forEach((values, key) => {
         valuesInQueue.set(key, values);
       });
       return valuesInQueue;
     }
+
     // Otherwise, get the first element from the compacted queue and retrieve the values from the file
     const [queueFile] = this.compactedQueue;
     try {
@@ -238,7 +244,7 @@ export default class ValueCacheService {
 
     // Remove file from disk
     try {
-      this.logger.trace(`Removing "${path.resolve(this.valueFolder, key)}" from cache.`);
+      this.logger.trace(`Removing "${path.resolve(this.valueFolder, key)}" from cache`);
       await fs.unlink(path.resolve(this.valueFolder, key));
     } catch (err) {
       // Catch error locally to not block the removal of other files
@@ -261,7 +267,7 @@ export default class ValueCacheService {
       const filePath = path.parse(key);
       try {
         this.logger.trace(
-          `Moving "${path.resolve(this.valueFolder, key)}" to error cache: "${path.resolve(this.errorFolder, filePath.base)}".`
+          `Moving "${path.resolve(this.valueFolder, key)}" to error cache: "${path.resolve(this.errorFolder, filePath.base)}"`
         );
         await fs.rename(path.resolve(this.valueFolder, key), path.resolve(this.errorFolder, filePath.base));
       } catch (err) {
@@ -284,12 +290,12 @@ export default class ValueCacheService {
     await fs.writeFile(path.resolve(this.valueFolder, tmpFileName), JSON.stringify(values), { encoding: 'utf8' });
     this.bufferFiles.set(tmpFileName, values);
     let numberOfValuesInBufferFiles = 0;
-    this.bufferFiles.forEach(valuesInFile => {
+    for (const valuesInFile of this.bufferFiles.values()) {
       numberOfValuesInBufferFiles += valuesInFile.length;
-    });
+    }
     if (numberOfValuesInBufferFiles > BUFFER_MAX) {
       await this.flush('max-flush');
-    } else if (this.bufferTimeout === null) {
+    } else if (!this.bufferTimeout) {
       this.bufferTimeout = setTimeout(this.flush.bind(this), BUFFER_TIMEOUT);
     }
   }
@@ -312,6 +318,7 @@ export default class ValueCacheService {
    * Wait for cache to finish sending the values and clear the timers
    */
   async stop(): Promise<void> {
-    if (this.bufferTimeout) clearTimeout(this.bufferTimeout);
+    clearTimeout(this.bufferTimeout);
+    this.bufferTimeout = undefined;
   }
 }

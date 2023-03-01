@@ -1,10 +1,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { asyncFilter, createFolder } from '../utils';
+import { createFolder } from '../utils';
 import pino from 'pino';
 
-const PAGE_SIZE = 50;
+import { Instant } from '../../../shared/model/types';
+import { DateTime } from 'luxon';
 
 const FILE_FOLDER = 'files';
 const ERROR_FOLDER = 'files-errors';
@@ -70,7 +71,7 @@ export default class FileCacheService {
   /**
    * Retrieve the file from the queue
    */
-  async getFileToSend(): Promise<string | null> {
+  getFileToSend(): string | null {
     // If there is no file in the queue, return null
     if (this.filesQueue.length === 0) {
       return null;
@@ -134,17 +135,33 @@ export default class FileCacheService {
   /**
    * Get list of error files.
    */
-  async getErrorFiles(fromDate: string, toDate: string, nameFilter: string, pageNumber: number): Promise<Array<string>> {
+  async getErrorFiles(
+    fromDate: Instant,
+    toDate: Instant,
+    nameFilter: string
+  ): Promise<Array<{ filename: string; modificationDate: Instant }>> {
     const filenames = await fs.readdir(this.errorFolder);
     if (filenames.length === 0) {
-      return filenames;
+      return [];
     }
 
-    const filteredFilenames = await asyncFilter(filenames, async filename =>
-      this.matchFile(this.errorFolder, filename, fromDate, toDate, nameFilter)
-    );
+    const filteredFilenames: Array<{ filename: string; modificationDate: Instant }> = [];
+    for (const filename of filenames) {
+      try {
+        const stats = await fs.stat(path.join(this.errorFolder, filename));
 
-    return filteredFilenames.slice((pageNumber - 1) * PAGE_SIZE, pageNumber * PAGE_SIZE);
+        const fromDateInMillis = DateTime.fromISO(fromDate).toMillis();
+        const toDateInMillis = DateTime.fromISO(toDate).toMillis();
+        const dateIsBetween = stats.mtimeMs >= fromDateInMillis && stats.mtimeMs <= toDateInMillis;
+        const filenameContains = filename.toUpperCase().includes(nameFilter.toUpperCase());
+        if (dateIsBetween && filenameContains) {
+          filteredFilenames.push({ filename, modificationDate: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO() });
+        }
+      } catch (error) {
+        this.logger.error(`Error while reading in error folder file stats "${path.join(this.errorFolder, filename)}": ${error}`);
+      }
+    }
+    return filteredFilenames;
   }
 
   /**
@@ -196,25 +213,5 @@ export default class FileCacheService {
     } else {
       this.logger.debug(`The error folder "${this.errorFolder}" is empty. Nothing to delete`);
     }
-  }
-
-  /**
-   * Whether the file matches the given criteria.
-   */
-  async matchFile(folder: string, filename: string, fromDate: string, toDate: string, nameFilter: string): Promise<boolean> {
-    let stats;
-    try {
-      // If a file is being written or corrupted, the stat method can fail an error is logged
-      stats = await fs.stat(path.join(folder, filename));
-    } catch (error) {
-      this.logger.error(error);
-      return false;
-    }
-
-    const fromDateInMillis = new Date(fromDate).getTime();
-    const toDateInMillis = new Date(toDate).getTime();
-    const dateIsBetween = stats && stats.mtimeMs >= fromDateInMillis && stats.mtimeMs <= toDateInMillis;
-    const filenameContains = filename.toUpperCase().includes(nameFilter.toUpperCase());
-    return dateIsBetween && filenameContains;
   }
 }

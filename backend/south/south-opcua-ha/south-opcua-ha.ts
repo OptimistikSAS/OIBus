@@ -138,7 +138,7 @@ export default class SouthOPCUAHA extends SouthConnector {
   /**
    * Get values from the OPCUA server between startTime and endTime and write them into the cache.
    */
-  override async historyQuery(items: Array<SouthItemDTO>, startTime: Instant, endTime: Instant): Promise<void> {
+  override async historyQuery(items: Array<SouthItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
     try {
       let maxTimestamp = DateTime.fromISO(startTime).toMillis();
 
@@ -307,7 +307,7 @@ export default class SouthOPCUAHA extends SouthConnector {
       }
       this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
       await this.addValues(dataByItems);
-      // TODO: update last completed date
+      return DateTime.fromMillis(maxTimestamp).toUTC().toISO();
     } catch (error) {
       if (!this.disconnecting) {
         await this.internalDisconnect();
