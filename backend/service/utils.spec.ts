@@ -117,7 +117,7 @@ describe('Service utils', () => {
     expect(fs.mkdir).toHaveBeenCalledWith(path.resolve(folderToCreate), { recursive: true });
   });
 
-  it('should properly compress file', async () => {
+  it('should properly manage error when compressing file', async () => {
     const myReadStream = {
       pipe: jest.fn().mockReturnThis(),
       on: jest.fn().mockImplementation((event, handler) => {
@@ -151,13 +151,34 @@ describe('Service utils', () => {
     expect(fsSync.createWriteStream).toHaveBeenCalledWith('myOutputFile');
   });
 
-  it('should properly filter asynchronously', async () => {
-    const array = ['ok', 'ok', 'notOk', 'ok'];
-    const predicate = async (item: string) => item === 'ok';
+  it('should properly compress file', async () => {
+    const onFinish = jest.fn((event, handler) => handler());
+    const onError = jest.fn().mockImplementation(() => {
+      return { on: onFinish };
+    });
+    const myReadStream = {
+      pipe: jest.fn().mockReturnThis(),
+      on: onError
+    };
+    (fsSync.createReadStream as jest.Mock).mockReturnValueOnce(myReadStream);
 
-    const result = await utils.asyncFilter(array, predicate);
+    const myWriteStream = {
+      pipe: jest.fn().mockReturnThis(),
+      on: jest.fn().mockImplementation((event, handler) => {
+        handler();
+        return this;
+      })
+    };
+    (fsSync.createReadStream as jest.Mock).mockReturnValueOnce(myWriteStream);
 
-    expect(result).toEqual(['ok', 'ok', 'ok']);
+    (zlib.createGzip as jest.Mock).mockReturnValue({});
+    await utils.compress('myInputFile', 'myOutputFile');
+
+    expect(fsSync.createReadStream).toBeCalledTimes(1);
+    expect(fsSync.createReadStream).toHaveBeenCalledWith('myInputFile');
+    expect(myReadStream.pipe).toBeCalledTimes(2);
+    expect(fsSync.createWriteStream).toBeCalledTimes(1);
+    expect(fsSync.createWriteStream).toHaveBeenCalledWith('myOutputFile');
   });
 
   it('should properly generate a random ID with a standard size', () => {
