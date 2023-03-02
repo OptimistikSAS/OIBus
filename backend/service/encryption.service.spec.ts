@@ -4,77 +4,52 @@ import crypto from 'node:crypto';
 import path from 'node:path';
 import selfSigned from 'selfsigned';
 import os from 'node:os';
-import EncryptionService from './encryption.service';
+
+import EncryptionService, {
+  CERT_FILE_NAME,
+  CERT_FOLDER,
+  CERT_PRIVATE_KEY_FILE_NAME,
+  CERT_PUBLIC_KEY_FILE_NAME
+} from './encryption.service';
 
 import * as utils from './utils';
+import { OibFormControl } from '../../shared/model/form.model';
+
+import { SouthConnectorCommandDTO } from '../../shared/model/south-connector.model';
 
 jest.mock('./utils');
 jest.mock('node:fs/promises');
 jest.mock('node:crypto');
 jest.mock('selfsigned');
 
-const securityFolder = 'securityFolder';
-const keyFolder = 'keys';
-const certsFolder = 'certs';
 let encryptionService: EncryptionService;
 
-describe('Encryption service', () => {
+const cryptoSettings = {
+  algorithm: 'aes-256-cbc',
+  initVector: Buffer.from('0123456789abcdef').toString('base64'),
+  securityKey: Buffer.from('0123456789abcdef').toString('base64')
+};
+
+describe('Encryption service with crypto settings', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-
-    encryptionService = new EncryptionService(securityFolder);
+    encryptionService = new EncryptionService(Buffer.from(JSON.stringify(cryptoSettings)).toString('base64'));
   });
 
   it('should properly initialized encryption service', () => {
-    expect(encryptionService.keyFolder).toEqual(path.resolve(securityFolder, keyFolder));
-    expect(encryptionService.certsFolder).toEqual(path.resolve(securityFolder, certsFolder));
-    expect(encryptionService.privateKey).toEqual('');
-    expect(encryptionService.publicKey).toEqual('');
-  });
-
-  it('should not create private and public keys if exist', async () => {
-    (utils.filesExists as jest.Mock).mockReturnValue(true);
-
-    await encryptionService.checkOrCreatePrivateKey();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder, 'private.pem'));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder, 'public.pem'));
-    expect(crypto.generateKeyPairSync).not.toHaveBeenCalled();
-    expect(fs.writeFile).not.toHaveBeenCalled();
-  });
-
-  it('should create private and public keys if they do not exist', async () => {
-    (utils.filesExists as jest.Mock).mockReturnValue(false);
-    (crypto.generateKeyPairSync as jest.Mock).mockReturnValue({ privateKey: 'myPrivateKey', publicKey: 'myPublicKey' });
-
-    await encryptionService.checkOrCreatePrivateKey();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder, 'private.pem'));
-    expect(crypto.generateKeyPairSync).toHaveBeenCalledWith('rsa', {
-      modulusLength: 4096,
-      publicKeyEncoding: {
-        type: 'spki',
-        format: 'pem'
-      },
-      privateKeyEncoding: {
-        type: 'pkcs8',
-        format: 'pem',
-        cipher: 'aes-256-cbc',
-        passphrase: ''
-      }
-    });
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder, 'private.pem'), 'myPrivateKey');
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder, 'public.pem'), 'myPublicKey');
+    expect(encryptionService.getCertPath()).toEqual(path.resolve('./', CERT_FOLDER, CERT_FILE_NAME));
+    expect(encryptionService.getPrivateKeyPath()).toEqual(path.resolve('./', CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME));
+    expect(encryptionService.getPublicKeyPath()).toEqual(path.resolve('./', CERT_FOLDER, CERT_PUBLIC_KEY_FILE_NAME));
   });
 
   it('should not create certificate if it already exists', async () => {
     (utils.filesExists as jest.Mock).mockReturnValue(true);
 
-    await encryptionService.checkOrCreateCertFiles();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder, 'privateKey.pem'));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder, 'publicKey.pem'));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder, 'cert.pem'));
+    await encryptionService.init();
+    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER));
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_FILE_NAME));
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_PUBLIC_KEY_FILE_NAME));
+    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_PUBLIC_KEY_FILE_NAME));
     expect(selfSigned.generate).not.toHaveBeenCalled();
     expect(fs.writeFile).not.toHaveBeenCalled();
   });
@@ -83,20 +58,17 @@ describe('Encryption service', () => {
     (utils.filesExists as jest.Mock).mockReturnValue(false);
     (selfSigned.generate as jest.Mock).mockReturnValue({ private: 'myPrivateKey', public: 'myPublicKey', cert: 'myCert' });
 
-    await encryptionService.checkOrCreateCertFiles();
-    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder));
-    expect(utils.filesExists).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder, 'privateKey.pem'));
+    await encryptionService.init();
     expect(selfSigned.generate).toHaveBeenCalledWith(
       [
         { name: 'commonName', value: 'OIBus' },
         { name: 'countryName', value: 'FR' },
         { name: 'stateOrProvinceName', value: 'Savoie' },
         { name: 'localityName', value: 'Chambery' },
-        { name: 'organizationName', value: 'Optimistik' },
-        { name: 'organizationalUnitName', value: 'R&D' }
+        { name: 'organizationName', value: 'Optimistik' }
       ],
       {
-        keySize: 2048,
+        keySize: 4096,
         days: 36500,
         algorithm: 'sha256',
         pkcs7: true,
@@ -134,80 +106,161 @@ describe('Encryption service', () => {
         ]
       }
     );
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder, 'privateKey.pem'), 'myPrivateKey');
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder, 'publicKey.pem'), 'myPublicKey');
-    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve(securityFolder, certsFolder, 'cert.pem'), 'myCert');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME), 'myPrivateKey');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_PUBLIC_KEY_FILE_NAME), 'myPublicKey');
+    expect(fs.writeFile).toHaveBeenCalledWith(path.resolve('./', CERT_FOLDER, CERT_FILE_NAME), 'myCert');
+  });
+
+  it('should properly retrieve files', async () => {
+    (fs.readFile as jest.Mock)
+      .mockReturnValueOnce('cert file content')
+      .mockReturnValueOnce('private key file content')
+      .mockReturnValueOnce('public key file content');
+
+    expect(await encryptionService.getCert()).toEqual('cert file content');
+    expect(await encryptionService.getCert()).toEqual('cert file content');
+    expect(fs.readFile).toHaveBeenCalledTimes(1);
+    expect(await encryptionService.getPrivateKey()).toEqual('private key file content');
+    expect(await encryptionService.getPrivateKey()).toEqual('private key file content');
+    expect(fs.readFile).toHaveBeenCalledTimes(2);
+    expect(await encryptionService.getPublicKey()).toEqual('public key file content');
+    expect(await encryptionService.getPublicKey()).toEqual('public key file content');
+    expect(fs.readFile).toHaveBeenCalledTimes(3);
   });
 
   it('should properly encrypt text', async () => {
-    const expectedResult = 'myEncryptedText';
-    const myPublicKey = 'myPublicKey';
-    const myPlainText = 'text to encrypt';
-    (crypto.publicEncrypt as jest.Mock).mockReturnValue(expectedResult);
-    (fs.readFile as jest.Mock).mockReturnValue(myPublicKey);
+    const update = jest.fn(() => 'encrypted text');
+    const final = jest.fn(() => '');
+    (crypto.createCipheriv as jest.Mock).mockImplementationOnce(() => ({
+      update,
+      final
+    }));
 
     const encryptedText = await encryptionService.encryptText('text to encrypt');
-
-    expect(encryptedText).toEqual(expectedResult);
-    expect(crypto.publicEncrypt).toHaveBeenCalledWith(myPublicKey, Buffer.from(myPlainText, 'utf8'));
-    expect(fs.readFile).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder, 'public.pem'), 'utf8');
+    expect(encryptedText).toEqual('encrypted text');
+    expect(crypto.createCipheriv).toHaveBeenCalledWith(
+      cryptoSettings.algorithm,
+      Buffer.from(cryptoSettings.securityKey, 'base64'),
+      Buffer.from(cryptoSettings.initVector, 'base64')
+    );
+    expect(update).toHaveBeenCalledWith('text to encrypt', 'utf8', 'base64');
+    expect(final).toHaveBeenCalledWith('base64');
   });
 
   it('should properly decrypt text', async () => {
-    const myEncryptedText = 'myEncryptedText';
-    const myPrivateKey = 'myPrivateKey';
-    const expectedResult = 'myPlainText';
-    (crypto.privateDecrypt as jest.Mock).mockReturnValue(expectedResult);
-    (fs.readFile as jest.Mock).mockReturnValue(myPrivateKey);
+    const update = jest.fn(() => 'decrypted text');
+    const final = jest.fn(() => '');
+    (crypto.createDecipheriv as jest.Mock).mockImplementationOnce(() => ({
+      update,
+      final
+    }));
 
-    const decryptedText = await encryptionService.decryptText('myEncryptedText');
-
-    expect(decryptedText).toEqual(expectedResult);
-    expect(crypto.privateDecrypt).toHaveBeenCalledWith(
-      {
-        key: myPrivateKey,
-        passphrase: '',
-        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING
-      },
-      Buffer.from(myEncryptedText, 'base64')
+    const encryptedText = await encryptionService.decryptText('text to decrypt');
+    expect(encryptedText).toEqual('decrypted text');
+    expect(crypto.createDecipheriv).toHaveBeenCalledWith(
+      cryptoSettings.algorithm,
+      Buffer.from(cryptoSettings.securityKey, 'base64'),
+      Buffer.from(cryptoSettings.initVector, 'base64')
     );
-    expect(fs.readFile).toHaveBeenCalledWith(path.resolve(securityFolder, keyFolder, 'private.pem'), 'utf8');
+    expect(update).toHaveBeenCalledWith('text to decrypt', 'base64', 'utf8');
+    expect(final).toHaveBeenCalledWith('utf8');
   });
 
-  it('should encrypt secrets', async () => {
-    const myPublicKey = 'myPublicKey';
-    (crypto.publicEncrypt as jest.Mock).mockReturnValueOnce('encryptedPassword').mockReturnValueOnce('encryptedSecretKey');
-    (fs.readFile as jest.Mock).mockReturnValue(myPublicKey);
-    const objectToEncrypt = {
-      key1: 'key1',
-      password: '{{notEncrypted}}password',
-      object1: {
-        key2: 'key2',
-        secretKey: '{{notEncrypted}}secretKey'
+  it('should properly encrypt connector secrets', async () => {
+    const command: SouthConnectorCommandDTO = {
+      name: 'connector',
+      type: 'any',
+      description: 'my connector',
+      enabled: true,
+      settings: {
+        field1: 'not a secret',
+        field2: 'secret',
+        field3: {
+          type: 'basic',
+          key: 'my auth',
+          secret: 'secret'
+        },
+        field4: 'not a secret'
       }
     };
-    const expectedResult = {
-      key1: 'key1',
-      password: 'encryptedPassword',
-      object1: {
-        key2: 'key2',
-        secretKey: 'encryptedSecretKey'
+    const expectedCommand = {
+      name: 'connector',
+      type: 'any',
+      description: 'my connector',
+      enabled: true,
+      settings: {
+        field1: 'not a secret',
+        field2: 'encrypted secret',
+        field3: {
+          type: 'basic',
+          key: 'my auth',
+          secret: 'encrypted secret'
+        },
+        field4: 'not a secret'
       }
     };
+    const settings: Array<OibFormControl> = [
+      {
+        key: 'field1',
+        type: 'OibText',
+        label: 'Field 1'
+      },
+      {
+        key: 'field2',
+        type: 'OibSecret',
+        label: 'Field 2'
+      },
+      {
+        key: 'field3',
+        type: 'OibAuthentication',
+        label: 'Field 3',
+        authTypes: ['none', 'basic']
+      },
+      {
+        key: 'field4',
+        type: 'OibText',
+        label: 'Field 4'
+      }
+    ];
 
-    await encryptionService.encryptSecrets(objectToEncrypt);
+    const update = jest.fn(() => 'encrypted secret');
+    const final = jest.fn(() => '');
+    (crypto.createCipheriv as jest.Mock).mockImplementation(() => ({
+      update,
+      final
+    }));
 
-    expect(objectToEncrypt).toEqual(expectedResult);
-    expect(crypto.publicEncrypt).toHaveBeenCalledWith(myPublicKey, Buffer.from('password', 'utf8'));
-    expect(crypto.publicEncrypt).toHaveBeenCalledWith(myPublicKey, Buffer.from('secretKey', 'utf8'));
-    expect(crypto.publicEncrypt).toHaveBeenCalledTimes(2);
+    const encryptedCommand = await encryptionService.encryptConnectorSecrets(command, settings);
+
+    expect(encryptedCommand).toEqual(expectedCommand);
+  });
+});
+
+describe('Encryption service with bad crypto settings', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
   });
 
-  it('should not encrypt secrets if entry is null', async () => {
-    const mySpy = jest.spyOn(Object, 'entries');
+  it('should properly initialized encryption service', async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementationOnce(() => {});
+    encryptionService = new EncryptionService('');
+    expect(consoleSpy).toHaveBeenCalledTimes(1);
+    expect(consoleSpy).toHaveBeenCalledWith(`Could not parse crypto settings: SyntaxError: Unexpected end of JSON input`);
 
-    await encryptionService.encryptSecrets(null);
+    let decryptError;
+    try {
+      await encryptionService.decryptText('encrypted');
+    } catch (err) {
+      decryptError = err;
+    }
+    expect(decryptError).toEqual(new Error('Encryption service not initialized properly'));
 
-    expect(mySpy).not.toHaveBeenCalled();
+    let encryptError;
+    try {
+      await encryptionService.encryptText('plain text');
+    } catch (err) {
+      encryptError = err;
+    }
+    expect(encryptError).toEqual(new Error('Encryption service not initialized properly'));
   });
 });
