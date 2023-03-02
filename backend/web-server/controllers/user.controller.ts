@@ -14,7 +14,7 @@ export default class UserController extends AbstractController {
   }
 
   async getUser(ctx: KoaContext<void, User>): Promise<void> {
-    const user = ctx.app.repositoryService.userRepository.getUser(ctx.params.id);
+    const user = ctx.app.repositoryService.userRepository.getUserById(ctx.params.id);
     if (user) {
       ctx.ok(user);
     } else {
@@ -22,10 +22,13 @@ export default class UserController extends AbstractController {
     }
   }
 
-  async createUser(ctx: KoaContext<UserCommandDTO, void>): Promise<void> {
+  async createUser(ctx: KoaContext<{ user: UserCommandDTO; password: string }, void>): Promise<void> {
     try {
-      await this.validate(ctx.request.body);
-      const user = await ctx.app.repositoryService.userRepository.createUser(ctx.request.body as UserCommandDTO);
+      await this.validate(ctx.request.body!.user);
+      if (!ctx.request.body!.password) {
+        return ctx.badRequest(`No password provided`);
+      }
+      const user = await ctx.app.repositoryService.userRepository.createUser(ctx.request.body!.user, ctx.request.body!.password);
       ctx.created(user);
     } catch (error: any) {
       ctx.badRequest(error.message);
@@ -42,8 +45,20 @@ export default class UserController extends AbstractController {
     }
   }
 
+  async changePassword(ctx: KoaContext<string, void>) {
+    try {
+      if (!ctx.request.body) {
+        return ctx.badRequest(`No password provided`);
+      }
+      await ctx.app.repositoryService.userRepository.updatePassword(ctx.params.id, ctx.request.body);
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
   async deleteUser(ctx: KoaContext<void, void>): Promise<void> {
-    const ipFilter = ctx.app.repositoryService.userRepository.getUser(ctx.params.id);
+    const ipFilter = ctx.app.repositoryService.userRepository.getUserById(ctx.params.id);
     if (ipFilter) {
       ctx.app.repositoryService.userRepository.deleteUser(ctx.params.id);
       ctx.noContent();
