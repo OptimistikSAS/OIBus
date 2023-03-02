@@ -27,7 +27,7 @@ const auth = () => {
       try {
         const verifiedToken: any = jwt.verify(
           ctx.request.headers.authorization.replace('Bearer ', ''),
-          ctx.app.encryptionService.publicKey,
+          await ctx.app.encryptionService.getPublicKey(),
           {
             algorithms: ['RS256'],
             issuer: 'oibus'
@@ -57,7 +57,7 @@ const auth = () => {
       const token = jwt.sign(
         // login and hashed password
         { login: headerUser.name, password: headerUser.pass },
-        { key: ctx.app.encryptionService.privateKey, passphrase: '' },
+        { key: await ctx.app.encryptionService.getPrivateKey(), passphrase: '' },
         {
           algorithm: 'RS256',
           expiresIn: '7d',

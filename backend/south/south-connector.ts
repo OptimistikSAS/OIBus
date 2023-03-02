@@ -41,7 +41,7 @@ export default abstract class SouthConnector {
   protected proxyService: ProxyService;
   private repositoryService: RepositoryService;
   protected logger: pino.Logger;
-  private readonly baseFolder: string;
+  protected readonly baseFolder: string;
   private manifest: SouthConnectorManifest;
   private readonly engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>;
   private readonly engineAddFileCallback: (southId: string, filePath: string) => Promise<void>;
@@ -85,12 +85,11 @@ export default abstract class SouthConnector {
     this.proxyService = proxyService;
     this.repositoryService = repositoryService;
     this.logger = logger;
-    this.baseFolder = path.resolve(baseFolder, `south-${this.configuration.id}`);
+    this.baseFolder = baseFolder;
     this.manifest = manifest;
     this.streamMode = streamMode;
 
-    this.southCacheService = new SouthCacheService(path.resolve(baseFolder, `south-${this.configuration.id}`, 'cache.db'));
-
+    this.southCacheService = new SouthCacheService(path.resolve(this.baseFolder, 'cache.db'));
     if (this.manifest.modes.historyFile || this.manifest.modes.historyPoint) {
       this.southCacheService.createCacheHistoryTable();
     }
@@ -107,8 +106,6 @@ export default abstract class SouthConnector {
   }
 
   async start(): Promise<void> {
-    await createFolder(this.baseFolder);
-
     if (!this.configuration.enabled) {
       this.logger.trace(`South connector ${this.configuration.name} not enabled`);
       return;

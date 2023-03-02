@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../../shared/model/engine.model';
 import { generateRandomId } from '../service/utils';
 import { PROXY_TABLE } from './proxy.repository';
@@ -66,7 +68,7 @@ export default class EngineRepository {
       'health_signal_log_enabled INTEGER, health_signal_log_interval INTEGER, health_signal_http_enabled INTEGER, ' +
       'health_signal_http_interval INTEGER, health_signal_http_verbose INTEGER, health_signal_http_address TEXT, ' +
       'health_signal_http_proxy_id TEXT, health_signal_http_authentication_type TEXT, health_signal_http_authentication_key TEXT, ' +
-      'health_signal_http_authentication_secret TEXT, ' +
+      'health_signal_http_authentication_secret TEXT, crypto_settings TEXT, ' +
       `FOREIGN KEY(log_loki_proxy_id) REFERENCES ${PROXY_TABLE}(id), ` +
       `FOREIGN KEY(health_signal_http_proxy_id) REFERENCES ${PROXY_TABLE}(id));`;
     this.database.prepare(query).run();
@@ -164,7 +166,6 @@ export default class EngineRepository {
 
   /**
    * Update engine settings in the database.
-   * @param {EngineSettingsCommandDTO} command - The command
    */
   updateEngineSettings(command: EngineSettingsCommandDTO): void {
     const query =
@@ -224,15 +225,36 @@ export default class EngineRepository {
       );
   }
 
+  getCryptoSettings(): string | null {
+    const query = `SELECT crypto_settings AS cryptoSettingsBase64 from ${ENGINE_TABLE};`;
+
+    const results = this.database.prepare(query).all();
+    if (results.length > 0) {
+      return results[0].cryptoSettingsBase64;
+    } else {
+      return null;
+    }
+  }
+
   /**
    * Create engine settings in the database.
-   * @param {EngineSettingsCommandDTO} command - The command
    */
   createEngineSettings(command: EngineSettingsCommandDTO): void {
     if (this.getEngineSettings()) {
       return;
     }
-    const query = `INSERT INTO ${ENGINE_TABLE} VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
+
+    const algorithm = 'aes-256-cbc';
+    // generate 16 bytes of random data
+    const initVector = crypto.randomBytes(16);
+    // secret key generate 32 bytes of random data
+    const securityKey = crypto.randomBytes(32);
+
+    const cryptoSettings = Buffer.from(
+      JSON.stringify({ algorithm, initVector: initVector.toString('base64'), securityKey: securityKey.toString('base64') })
+    ).toString('base64');
+
+    const query = `INSERT INTO ${ENGINE_TABLE} VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
     this.database
       .prepare(query)
       .run(
@@ -261,7 +283,8 @@ export default class EngineRepository {
         command.healthSignal.http.proxyId,
         command.healthSignal.http.authentication.type,
         command.healthSignal.http.authentication.key,
-        command.healthSignal.http.authentication.secret
+        command.healthSignal.http.authentication.secret,
+        cryptoSettings
       );
   }
 }
