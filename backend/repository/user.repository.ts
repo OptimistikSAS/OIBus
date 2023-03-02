@@ -1,7 +1,7 @@
-import bcrypt from 'bcrypt';
+import argon2 from 'argon2';
 import { Database } from 'better-sqlite3';
 
-import { generateRandomId, SALT } from '../service/utils';
+import { generateRandomId } from '../service/utils';
 import { User, UserCommandDTO, UserLight, UserSearchParam } from '../../shared/model/user.model';
 import { Page } from '../../shared/model/types';
 
@@ -10,13 +10,14 @@ const PAGE_SIZE = 50;
 
 const DEFAULT_USER: UserCommandDTO = {
   login: 'admin',
-  password: 'pass',
   firstName: '',
   lastName: '',
   email: '',
   language: 'en',
   timezone: 'Europe/Paris'
 };
+
+const DEFAULT_PASSWORD = 'pass';
 
 /**
  * Repository used for Users
@@ -67,7 +68,7 @@ export default class UserRepository {
   /**
    * Retrieve a user by its id
    */
-  getUser(id: string): User {
+  getUserById(id: string): User {
     const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USER_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
     return {
@@ -83,19 +84,14 @@ export default class UserRepository {
   }
 
   /**
-   * Retrieve a user by the login to authenticate the user in middleware
+   * Retrieve a user by its login
    */
-  getUserByLogin(login: string): User | null {
-    const query = `SELECT id, login, password, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USER_TABLE} WHERE login = ?;`;
+  getUserByLogin(login: string): User {
+    const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USER_TABLE} WHERE login = ?;`;
     const result = this.database.prepare(query).get(login);
-    if (!result) {
-      return null;
-    }
-
     return {
       id: result.id,
       login: result.login,
-      password: result.password,
       firstName: result.firstName,
       lastName: result.lastName,
       email: result.email,
@@ -106,18 +102,30 @@ export default class UserRepository {
   }
 
   /**
+   * Retrieve a user by the login to authenticate the user in middleware
+   */
+  getHashedPasswordByLogin(login: string): string | null {
+    const query = `SELECT password FROM ${USER_TABLE} WHERE login = ?;`;
+    const result = this.database.prepare(query).get(login);
+    if (!result) {
+      return null;
+    }
+    return result.password;
+  }
+
+  /**
    * Create a User with a random generated ID
    */
-  async createUser(command: UserCommandDTO): Promise<User> {
+  async createUser(command: UserCommandDTO, password: string): Promise<User> {
     const id = generateRandomId(6);
     const insertQuery =
       `INSERT INTO ${USER_TABLE} (id, login, password, first_name, last_name, email, language, timezone) ` +
       `VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
 
-    const password = await bcrypt.hash(command.password!, SALT);
+    const hash = await argon2.hash(password);
     const insertResult = this.database
       .prepare(insertQuery)
-      .run(id, command.login, password, command.firstName, command.lastName, command.email, command.language, command.timezone);
+      .run(id, command.login, hash, command.firstName, command.lastName, command.email, command.language, command.timezone);
 
     const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USER_TABLE} WHERE ROWID = ?;`;
     const result = this.database.prepare(query).get(insertResult.lastInsertRowid);
@@ -133,23 +141,21 @@ export default class UserRepository {
     };
   }
 
+  async updatePassword(id: string, password: string): Promise<void> {
+    const hash = await argon2.hash(password);
+
+    const queryUpdate = `UPDATE ${USER_TABLE} SET password = ? WHERE id = ?;`;
+    this.database.prepare(queryUpdate).run(hash, id);
+  }
+
   /**
    * Update a User by its ID
    */
-  async updateUser(id: string, command: UserCommandDTO): Promise<void> {
-    const queryUser = `SELECT password FROM ${USER_TABLE} WHERE id = ?;`;
-    const result = this.database.prepare(queryUser).get(id);
-
-    let password = '';
-    if (command.password) {
-      password = await bcrypt.hash(command.password, SALT);
-    } else {
-      password = result.password;
-    }
-    const queryUpdate = `UPDATE ${USER_TABLE} SET login = ?, password = ?, first_name = ?, last_name = ?, email = ?, language = ?, timezone = ? WHERE id = ?;`;
+  updateUser(id: string, command: UserCommandDTO): void {
+    const queryUpdate = `UPDATE ${USER_TABLE} SET login = ?, first_name = ?, last_name = ?, email = ?, language = ?, timezone = ? WHERE id = ?;`;
     this.database
       .prepare(queryUpdate)
-      .run(command.login, password, command.firstName, command.lastName, command.email, command.language, command.timezone, id);
+      .run(command.login, command.firstName, command.lastName, command.email, command.language, command.timezone, id);
   }
 
   /**
@@ -161,11 +167,13 @@ export default class UserRepository {
   }
 
   createDefaultUser(): void {
-    if (this.getUserByLogin(DEFAULT_USER.login)) {
+    const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USER_TABLE} WHERE login = ?;`;
+    const result = this.database.prepare(query).get(DEFAULT_USER.login);
+    if (result) {
       return;
     }
 
-    this.createUser(DEFAULT_USER).catch(err => {
+    this.createUser(DEFAULT_USER, DEFAULT_PASSWORD).catch(err => {
       console.error(err);
     });
   }
