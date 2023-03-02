@@ -13,7 +13,6 @@ export interface UserLight {
 
 export interface UserCommandDTO {
   login: string;
-  password?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -24,7 +23,6 @@ export interface UserCommandDTO {
 export interface User {
   id: string;
   login: string;
-  password?: string;
   firstName: string;
   lastName: string;
   email: string;
