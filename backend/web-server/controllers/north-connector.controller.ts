@@ -76,7 +76,10 @@ export default class NorthConnectorController {
 
       const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
-        const northConnector = ctx.app.repositoryService.northConnectorRepository.createNorthConnector(command);
+        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, manifest.settings);
+        const northConnector = ctx.app.repositoryService.northConnectorRepository.createNorthConnector(
+          encryptedCommand as NorthConnectorCommandDTO
+        );
         ctx.created(northConnector);
       } else {
         ctx.badRequest();
@@ -97,7 +100,12 @@ export default class NorthConnectorController {
 
       const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
-        ctx.app.repositoryService.northConnectorRepository.updateNorthConnector(ctx.params.id, command);
+        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, manifest.settings);
+
+        ctx.app.repositoryService.northConnectorRepository.updateNorthConnector(
+          ctx.params.id,
+          encryptedCommand as NorthConnectorCommandDTO
+        );
         ctx.noContent();
       } else {
         ctx.badRequest();

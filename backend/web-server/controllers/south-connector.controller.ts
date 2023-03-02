@@ -80,7 +80,10 @@ export default class SouthConnectorController {
 
       const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
-        const southConnector = ctx.app.repositoryService.southConnectorRepository.createSouthConnector(command);
+        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, manifest.settings);
+        const southConnector = ctx.app.repositoryService.southConnectorRepository.createSouthConnector(
+          encryptedCommand as SouthConnectorCommandDTO
+        );
         ctx.created(southConnector);
       } else {
         ctx.badRequest();
@@ -101,7 +104,11 @@ export default class SouthConnectorController {
 
       const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
-        ctx.app.repositoryService.southConnectorRepository.updateSouthConnector(ctx.params.id, command);
+        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, manifest.settings);
+        ctx.app.repositoryService.southConnectorRepository.updateSouthConnector(
+          ctx.params.id,
+          encryptedCommand as SouthConnectorCommandDTO
+        );
         ctx.noContent();
       } else {
         ctx.badRequest();

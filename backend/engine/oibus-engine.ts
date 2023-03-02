@@ -7,6 +7,8 @@ import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import NorthService from '../service/north.service';
 import SouthService from '../service/south.service';
+import { createFolder } from '../service/utils';
+import path from 'node:path';
 
 const CACHE_FOLDER = './cache/data-stream';
 
@@ -63,7 +65,10 @@ export default class OIBusEngine extends BaseEngine {
     const northListSettings = this.northService.getNorthList();
     for (const settings of northListSettings) {
       try {
-        const north = this.northService.createNorth(settings, this.cacheFolder);
+        const baseFolder = path.resolve(this.cacheFolder, `north-${settings.id}`);
+        await createFolder(baseFolder);
+
+        const north = this.northService.createNorth(settings, baseFolder);
         await north.start();
         this.northConnectors.set(settings.id, north);
       } catch (error) {
@@ -75,15 +80,11 @@ export default class OIBusEngine extends BaseEngine {
     const southListSettings = this.southService.getSouthList();
     for (const settings of southListSettings) {
       try {
+        const baseFolder = path.resolve(this.cacheFolder, `south-${settings.id}`);
+        await createFolder(baseFolder);
+
         const items = this.southService.getSouthItems(settings.id);
-        const south = this.southService.createSouth(
-          settings,
-          items,
-          this.addValues.bind(this),
-          this.addFile.bind(this),
-          this.cacheFolder,
-          true
-        );
+        const south = this.southService.createSouth(settings, items, this.addValues.bind(this), this.addFile.bind(this), baseFolder, true);
         await south.start();
         this.southConnectors.set(settings.id, south);
       } catch (error) {
