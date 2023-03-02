@@ -13,7 +13,6 @@ import SouthService from './service/south.service';
 import OIBusEngine from './engine/oibus-engine';
 
 const CACHE_FOLDER = './cache';
-const SECURITY_FOLDER = './security';
 
 const CONFIG_DATABASE = 'oibus.db';
 const LOG_FOLDER_NAME = 'logs';
@@ -30,11 +29,12 @@ const LOG_DB_NAME = 'journal.db';
   await createFolder(CACHE_FOLDER);
   const configDbFilePath = path.resolve(CONFIG_DATABASE);
 
-  const encryptionService = new EncryptionService(SECURITY_FOLDER);
-  await encryptionService.init();
-
   const repositoryService = new RepositoryService(configDbFilePath, path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME));
+
   const oibusSettings = repositoryService.engineRepository.getEngineSettings();
+
+  const encryptionService = new EncryptionService(repositoryService.engineRepository.getCryptoSettings() || '');
+  await encryptionService.init();
 
   if (!oibusSettings) {
     console.error('Error while loading OIBus settings from database');
