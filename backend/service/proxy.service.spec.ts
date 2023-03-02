@@ -82,4 +82,11 @@ describe('proxy service', () => {
     });
     expect(encryptionService.decryptText).toHaveBeenCalledWith('pass');
   });
+
+  it('should return null if proxy not found', async () => {
+    proxyRepository.getProxy = jest.fn().mockReturnValue(null);
+
+    const agent = await service.createProxyAgent('id1');
+    expect(agent).toEqual(null);
+  });
 });

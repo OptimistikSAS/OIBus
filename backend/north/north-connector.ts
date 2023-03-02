@@ -1,5 +1,3 @@
-import path from 'node:path';
-import { createFolder } from '../service/utils';
 import ArchiveService from '../service/cache/archive.service';
 
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../shared/model/north-connector.model';
@@ -64,7 +62,7 @@ export default class NorthConnector {
     this.proxyService = proxyService;
     this.repositoryService = repositoryService;
     this.logger = logger;
-    this.baseFolder = path.resolve(baseFolder, `north-${this.configuration.id}`);
+    this.baseFolder = baseFolder;
     this.manifest = manifest;
 
     this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.configuration.archive);
@@ -88,8 +86,6 @@ export default class NorthConnector {
    * Initialize services at startup
    */
   async start(): Promise<void> {
-    await createFolder(this.baseFolder);
-
     await this.valueCacheService.start();
     await this.fileCacheService.start();
 
@@ -159,12 +155,12 @@ export default class NorthConnector {
     }
     this.runProgress$ = new DeferredPromise();
 
-    if (this.manifest.modes.files) {
-      await this.handleFilesWrapper();
-    }
-
     if (this.manifest.modes.points) {
       await this.handleValuesWrapper();
+    }
+
+    if (this.manifest.modes.files) {
+      await this.handleFilesWrapper();
     }
 
     this.runProgress$.resolve();
@@ -184,8 +180,12 @@ export default class NorthConnector {
       arrayValues.push(...array);
     }
     if (arrayValues.length > 0) {
-      await this.handleValues(arrayValues);
-      await this.valueCacheService.removeSentValues(valuesToSend);
+      try {
+        await this.handleValues(arrayValues);
+        await this.valueCacheService.removeSentValues(valuesToSend);
+      } catch (error) {
+        this.logger.error(`Error while sending ${arrayValues.length} values: ${error}`);
+      }
     }
   }
 
@@ -198,15 +198,15 @@ export default class NorthConnector {
    * to send them to a third party application.
    */
   async handleFilesWrapper(): Promise<void> {
-    try {
-      const fileBeingSent = this.fileCacheService.getFileToSend();
-      if (fileBeingSent) {
+    const fileBeingSent = this.fileCacheService.getFileToSend();
+    if (fileBeingSent) {
+      try {
         await this.handleFile(fileBeingSent);
         this.fileCacheService.removeFileFromQueue();
         await this.archiveService.archiveOrRemoveFile(fileBeingSent);
+      } catch (error) {
+        this.logger.error(`Error while handling file ${fileBeingSent}: ${error}`);
       }
-    } catch (error) {
-      this.logger.error(`Error while handling file: ${error}`);
     }
   }
 

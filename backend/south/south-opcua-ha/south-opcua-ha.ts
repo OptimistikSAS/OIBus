@@ -70,10 +70,10 @@ export default class SouthOPCUAHA extends SouthConnector {
 
   override async start(): Promise<void> {
     await super.start();
-    await initOpcuaCertificateFolders(this.encryptionService.certsFolder);
+    await initOpcuaCertificateFolders(this.baseFolder);
     if (!this.clientCertificateManager) {
       this.clientCertificateManager = new OPCUACertificateManager({
-        rootFolder: `${this.encryptionService.certsFolder}/opcua`,
+        rootFolder: `${this.baseFolder}/opcua`,
         automaticallyAcceptUnknownCertificate: true
       });
       // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
@@ -120,7 +120,7 @@ export default class SouthOPCUAHA extends SouthConnector {
         userIdentity = {
           type: UserTokenType.UserName,
           userName: this.configuration.settings.username,
-          password: this.configuration.settings.password // await this.encryptionService.decryptText(this.configuration.settings.password)
+          password: await this.encryptionService.decryptText(this.configuration.settings.password)
         };
       } else {
         userIdentity = { type: UserTokenType.Anonymous };
@@ -157,8 +157,6 @@ export default class SouthOPCUAHA extends SouthConnector {
           itemsByAggregates.get(item.settings.aggregate)!.set(item.settings.resampling, currentList);
         }
       });
-
-      this.logger.trace(`Reading ${items.length} items`);
 
       const dataByItems: Array<any> = [];
       for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
