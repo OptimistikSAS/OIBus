@@ -1,14 +1,17 @@
 import NorthConnector from '../north-connector';
-import { addAuthenticationToHeaders, httpSend } from '../../service/http-request-static-functions';
 
 import manifest from './manifest';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
-import { Authentication } from '../../../shared/model/engine.model';
+import { OIBusError } from '../../../shared/model/engine.model';
 
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
+import { createReadStream } from 'node:fs';
+import FormData from 'form-data';
+import path from 'node:path';
+import fetch from 'node-fetch';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -19,7 +22,7 @@ export default class NorthOIAnalytics extends NorthConnector {
 
   private readonly valuesUrl: string;
   private readonly fileUrl: string;
-  private proxyAgent: any | null;
+  private proxyAgent: any | undefined;
 
   constructor(
     configuration: NorthConnectorDTO,
@@ -60,32 +63,92 @@ export default class NorthOIAnalytics extends NorthConnector {
         data: value.data,
         pointId: value.pointId
       }));
-    const data = JSON.stringify(cleanedValues);
-    const headers = { 'Content-Type': 'application/json' };
-    const authentication: Authentication = {
-      type: this.configuration.settings.authentication.type,
-      key: this.configuration.settings.authentication.key,
-      secret: this.configuration.settings.authentication.secret
-        ? await this.encryptionService.decryptText(this.configuration.settings.authentication.secret)
-        : ''
+
+    const headers: Record<string, string> = {
+      Authorization: `Basic ${Buffer.from(
+        `${this.configuration.settings.authentication.key}:${
+          this.configuration.settings.authentication.secret
+            ? await this.encryptionService.decryptText(this.configuration.settings.authentication.secret)
+            : ''
+        }`
+      ).toString('base64')}`,
+      'Content-Type': 'application/json'
     };
-    addAuthenticationToHeaders(headers, authentication);
-    await httpSend(this.valuesUrl, 'POST', headers, data, this.configuration.caching.timeout, this.proxyAgent);
+
+    let response;
+    try {
+      response = await fetch(this.valuesUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(cleanedValues),
+        timeout: this.configuration.caching.timeout * 1000
+        // agent: this.proxyAgent
+      });
+    } catch (fetchError) {
+      throw {
+        message: `Fail to reach values endpoint ${this.valuesUrl}. ${fetchError}`,
+        retry: true
+      };
+    }
+
+    if (!response.ok) {
+      // Only retry if server send a 500 error code
+      throw {
+        message: `Error ${response.status}: ${response.statusText}`,
+        retry: response.status === 500
+      };
+    }
   }
 
   /**
    * Handle the file by sending it to OIAnalytics.
    */
   override async handleFile(filePath: string): Promise<void> {
-    const headers = {};
-    const authentication: Authentication = {
-      type: this.configuration.settings.authentication.type,
-      key: this.configuration.settings.authentication.key,
-      secret: this.configuration.settings.authentication.secret
-        ? await this.encryptionService.decryptText(this.configuration.settings.authentication.secret)
-        : ''
+    const headers: Record<string, string> = {
+      Authorization: `Basic ${Buffer.from(
+        `${this.configuration.settings.authentication.key}:${
+          this.configuration.settings.authentication.secret
+            ? await this.encryptionService.decryptText(this.configuration.settings.authentication.secret)
+            : ''
+        }`
+      ).toString('base64')}`
     };
-    addAuthenticationToHeaders(headers, authentication);
-    await httpSend(this.fileUrl, 'POST', headers, filePath, this.configuration.caching.timeout, this.proxyAgent);
+    const readStream = createReadStream(filePath);
+    // Remove timestamp from the file path
+    const { name, ext } = path.parse(filePath);
+    const filename = name.slice(0, name.lastIndexOf('-'));
+
+    const body = new FormData();
+    body.append('file', readStream, { filename: `${filename}${ext}` });
+    const formHeaders = body.getHeaders();
+    Object.keys(formHeaders).forEach(key => {
+      headers[key] = formHeaders[key];
+    });
+
+    let response;
+    try {
+      response = await fetch(this.fileUrl, {
+        method: 'POST',
+        headers,
+        body,
+        timeout: this.configuration.caching.timeout * 1000,
+        agent: this.proxyAgent
+      });
+      readStream.close();
+    } catch (fetchError) {
+      readStream.close();
+      throw {
+        message: `Fail to reach file endpoint ${this.fileUrl}. ${fetchError}`,
+        retry: true
+      };
+    }
+
+    if (!response.ok) {
+      // Only retry if server send a 500 error code
+      throw {
+        message: `Error ${response.status}: ${response.statusText}`,
+        retry: response.status === 500
+      };
+    }
   }
 }
