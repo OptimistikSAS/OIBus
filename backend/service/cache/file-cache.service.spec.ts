@@ -114,11 +114,17 @@ describe('FileCache', () => {
         throw new Error('rename error');
       });
 
-    await cache.manageErroredFiles('myFile.csv');
-    expect(logger.info).toHaveBeenCalledWith(`File "myFile.csv" moved to "${path.resolve('myCacheFolder', 'files-errors', 'myFile.csv')}"`);
+    await cache.manageErroredFiles('myFile.csv', 1);
+    expect(logger.warn).toHaveBeenCalledWith(
+      `File "myFile.csv" moved to "${path.resolve('myCacheFolder', 'files-errors', 'myFile.csv')}" after 1 errors`
+    );
 
-    await cache.manageErroredFiles('myFile.csv');
-    expect(logger.error).toHaveBeenCalledWith(new Error('rename error'));
+    await cache.manageErroredFiles('myFile.csv', 1);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while moving file "myFile.csv" to "${path.resolve('myCacheFolder', 'files-errors', 'myFile.csv')}": ${new Error(
+        'rename error'
+      )}`
+    );
   });
 
   it('should remove error files', async () => {
