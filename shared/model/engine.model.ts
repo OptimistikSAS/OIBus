@@ -107,3 +107,8 @@ export interface EngineSettingsCommandDTO {
   logParameters: LogSettings;
   healthSignal: HealthSignalDTO;
 }
+
+export interface OIBusError {
+  retry: boolean;
+  message: string;
+}

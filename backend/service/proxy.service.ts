@@ -21,9 +21,9 @@ export default class ProxyService {
   /**
    * Create a proxy agent to use wih HTTP requests
    */
-  async createProxyAgent(proxyId: string): Promise<any> {
+  async createProxyAgent(proxyId: string): Promise<any | undefined> {
     const proxySettings: ProxyDTO | null = this.proxyRepository.getProxy(proxyId);
-    if (!proxySettings) return null;
+    if (!proxySettings) return undefined;
 
     const proxyOptions = url.parse(proxySettings.address);
 

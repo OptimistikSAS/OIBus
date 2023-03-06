@@ -87,6 +87,6 @@ describe('proxy service', () => {
     proxyRepository.getProxy = jest.fn().mockReturnValue(null);
 
     const agent = await service.createProxyAgent('id1');
-    expect(agent).toEqual(null);
+    expect(agent).toEqual(undefined);
   });
 });
