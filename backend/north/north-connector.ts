@@ -13,6 +13,7 @@ import { ScanModeDTO } from '../../shared/model/scan-mode.model';
 import DeferredPromise from '../service/deferred-promise';
 
 import { Instant } from '../../shared/model/types';
+import { OIBusError } from '../../shared/model/engine.model';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -42,6 +43,11 @@ export default class NorthConnector {
   protected logger: pino.Logger;
   private readonly baseFolder: string;
   private manifest: NorthConnectorManifest;
+
+  private fileBeingSent: string | null = null;
+  private fileErrorCount = 0;
+  private valuesBeingSent: Map<string, Array<any>> = new Map();
+  private valueErrorCount = 0;
 
   private taskJobQueue: Array<ScanModeDTO> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
@@ -90,10 +96,10 @@ export default class NorthConnector {
     await this.fileCacheService.start();
 
     if (!this.enabled()) {
-      this.logger.trace(`North connector ${this.configuration.name} not enabled.`);
+      this.logger.trace(`North connector "${this.configuration.name}" not enabled`);
       return;
     }
-    this.logger.trace(`North connector ${this.configuration.name} enabled. Starting services...`);
+    this.logger.trace(`North connector "${this.configuration.name}" enabled. Starting services...`);
     await this.archiveService.start();
     await this.connect();
   }
@@ -107,10 +113,10 @@ export default class NorthConnector {
     if (scanMode) {
       this.createCronJob(scanMode);
     } else {
-      this.logger.error(`Scan mode ${this.configuration.caching.scanModeId} not found.`);
+      this.logger.error(`Scan mode ${this.configuration.caching.scanModeId} not found`);
     }
 
-    this.logger.info(`North connector "${this.configuration.name}" of type ${this.configuration.type} started.`);
+    this.logger.info(`North connector "${this.configuration.name}" of type ${this.configuration.type} started`);
   }
 
   /**
@@ -119,10 +125,12 @@ export default class NorthConnector {
   createCronJob(scanMode: ScanModeDTO): void {
     const existingCronJob = this.cronByScanModeIds.get(scanMode.id);
     if (existingCronJob) {
+      this.logger.debug(`Removing existing cron job associated to scan mode "${scanMode.name}" (${scanMode.cron})`);
+
       existingCronJob.stop();
       this.cronByScanModeIds.delete(scanMode.id);
     }
-    this.logger.trace(`Creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
+    this.logger.debug(`Creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
     const job = new CronJob(
       scanMode.cron,
       () => {
@@ -163,6 +171,8 @@ export default class NorthConnector {
       await this.handleFilesWrapper();
     }
 
+    // TODO: update cache size here
+
     this.runProgress$.resolve();
     this.runProgress$ = null;
     this.taskJobQueue.shift();
@@ -174,17 +184,27 @@ export default class NorthConnector {
    * to send them to a third party applications
    */
   async handleValuesWrapper(): Promise<void> {
-    const valuesToSend = await this.valueCacheService.getValuesToSend();
     const arrayValues = [];
-    for (const array of valuesToSend.values()) {
-      arrayValues.push(...array);
+    if (!this.valuesBeingSent.size) {
+      this.valuesBeingSent = await this.valueCacheService.getValuesToSend();
+      this.valueErrorCount = 0;
     }
-    if (arrayValues.length > 0) {
+    if (this.valuesBeingSent.size) {
+      for (const array of this.valuesBeingSent.values()) {
+        arrayValues.push(...array);
+      }
       try {
         await this.handleValues(arrayValues);
-        await this.valueCacheService.removeSentValues(valuesToSend);
+        await this.valueCacheService.removeSentValues(this.valuesBeingSent);
+        this.valuesBeingSent = new Map();
       } catch (error) {
-        this.logger.error(`Error while sending ${arrayValues.length} values: ${error}`);
+        const oibusError = this.createOIBusError(error);
+        this.valueErrorCount += 1;
+        this.logger.error(`Error while sending ${arrayValues.length} values (${this.valueErrorCount}). ${oibusError.message}`);
+        if (this.valueErrorCount > this.configuration.caching.retryCount && !oibusError.retry) {
+          await this.valueCacheService.manageErroredValues(this.valuesBeingSent!, this.valueErrorCount);
+          this.fileBeingSent = null;
+        }
       }
     }
   }
@@ -198,14 +218,24 @@ export default class NorthConnector {
    * to send them to a third party application.
    */
   async handleFilesWrapper(): Promise<void> {
-    const fileBeingSent = this.fileCacheService.getFileToSend();
-    if (fileBeingSent) {
+    if (!this.fileBeingSent) {
+      this.fileBeingSent = this.fileCacheService.getFileToSend();
+      this.fileErrorCount = 0;
+    }
+    if (this.fileBeingSent) {
       try {
-        await this.handleFile(fileBeingSent);
+        await this.handleFile(this.fileBeingSent);
         this.fileCacheService.removeFileFromQueue();
-        await this.archiveService.archiveOrRemoveFile(fileBeingSent);
+        await this.archiveService.archiveOrRemoveFile(this.fileBeingSent);
+        this.fileBeingSent = null;
       } catch (error) {
-        this.logger.error(`Error while handling file ${fileBeingSent}: ${error}`);
+        const oibusError = this.createOIBusError(error);
+        this.fileErrorCount += 1;
+        this.logger.error(`Error while handling file "${this.fileBeingSent}" (${this.fileErrorCount}). ${oibusError.message}`);
+        if (this.fileErrorCount > this.configuration.caching.retryCount && !oibusError.retry) {
+          await this.fileCacheService.manageErroredFiles(this.fileBeingSent!, this.fileErrorCount);
+          this.fileBeingSent = null;
+        }
       }
     }
   }
@@ -215,10 +245,35 @@ export default class NorthConnector {
   }
 
   /**
+   * Create a OIBusError from an unknown error thrown by the handleFile or handleValues connector method
+   * The error thrown can be overriden with an OIBusError to force a retry on specific cases
+   */
+  createOIBusError(error: unknown): OIBusError {
+    // The error is unknown by default, but it can be overridden with an OIBusError. In this case, we can retrieve the message
+    let message = '';
+
+    if (typeof error === 'object') {
+      message = (error as any)?.message ?? JSON.stringify(error);
+    } else if (typeof error === 'string') {
+      message = error;
+    } else {
+      message = JSON.stringify(error);
+    }
+
+    // Retry by default, other retrieve the retry flag from the OIBusError object
+    const retry = typeof error === 'object' ? (error as any)?.retry ?? true : true;
+    return {
+      message: message,
+      retry
+    };
+  }
+
+  /**
    * Method called by the Engine to cache an array of values in order to cache them
    * and send them to a third party application.
    */
   async cacheValues(values: Array<any>): Promise<void> {
+    this.logger.trace(`Caching ${values.length} values in North connector "${this.configuration.name}"...`);
     await this.valueCacheService.cacheValues(values);
   }
 
@@ -226,6 +281,8 @@ export default class NorthConnector {
    * Method called by the Engine to cache a file and send them to a third party application.
    */
   async cacheFile(filePath: string): Promise<void> {
+    this.logger.trace(`Caching file "${filePath}" in North connector "${this.configuration.name}"...`);
+
     await this.fileCacheService.cacheFile(filePath);
   }
 
@@ -237,14 +294,6 @@ export default class NorthConnector {
     // if (!Array.isArray(this.subscribedTo) || this.subscribedTo.length === 0) return true;
 
     return true;
-  }
-
-  /**
-   * Default should retry method, to override for specific North implementation
-   */
-  shouldRetry(_error: any): boolean {
-    this.logger.trace('Default retry test always return false.');
-    return false;
   }
 
   /**
@@ -266,9 +315,10 @@ export default class NorthConnector {
    * Stop services and timer
    */
   async stop(): Promise<void> {
-    this.logger.info(`Stopping North "${this.configuration.name}" (${this.configuration.id})`);
+    this.logger.info(`Stopping North "${this.configuration.name}" (${this.configuration.id})...`);
 
     if (this.runProgress$) {
+      this.logger.debug('Waiting for task to finish');
       await this.runProgress$.promise;
     }
 
@@ -281,7 +331,7 @@ export default class NorthConnector {
     await this.archiveService.stop();
     await this.valueCacheService.stop();
     await this.disconnect();
-    this.logger.debug(`North connector ${this.configuration.id} stopped.`);
+    this.logger.debug(`North connector ${this.configuration.id} stopped`);
   }
 
   /**
@@ -291,35 +341,39 @@ export default class NorthConnector {
     fromDate: string,
     toDate: string,
     fileNameContains: string
-  ): Promise<Array<{ filename: string; modificationDate: Instant }>> {
-    return this.fileCacheService.getErrorFiles(fromDate, toDate, fileNameContains);
+  ): Promise<Array<{ filename: string; modificationDate: Instant; size: number }>> {
+    return await this.fileCacheService.getErrorFiles(fromDate, toDate, fileNameContains);
   }
 
   /**
    * Remove error files from file cache.
    */
   async removeErrorFiles(filenames: Array<string>): Promise<void> {
-    return this.fileCacheService.removeErrorFiles(filenames);
+    this.logger.trace(`Removing ${filenames.length} error files from North connector "${this.configuration.name}"...`);
+    await this.fileCacheService.removeErrorFiles(filenames);
   }
 
   /**
    * Retry error files from file cache.
    */
   async retryErrorFiles(filenames: Array<string>): Promise<void> {
-    return this.fileCacheService.retryErrorFiles(filenames);
+    this.logger.trace(`Retrying ${filenames.length} error files in North connector "${this.configuration.name}"...`);
+    await this.fileCacheService.retryErrorFiles(filenames);
   }
 
   /**
    * Remove all error files from file cache.
    */
   async removeAllErrorFiles(): Promise<void> {
-    return this.fileCacheService.removeAllErrorFiles();
+    this.logger.trace(`Removing all error files from North connector "${this.configuration.name}"...`);
+    await this.fileCacheService.removeAllErrorFiles();
   }
 
   /**
    * Retry all error files from file cache.
    */
   async retryAllErrorFiles(): Promise<void> {
-    return this.fileCacheService.retryAllErrorFiles();
+    this.logger.trace(`Retrying all error files in North connector "${this.configuration.name}"...`);
+    await this.fileCacheService.retryAllErrorFiles();
   }
 }

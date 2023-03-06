@@ -255,7 +255,7 @@ export default class ValueCacheService {
   /**
    * Remove values from North connector cache and save them to the values error cache db
    */
-  async manageErroredValues(values: Map<string, Array<any>>): Promise<void> {
+  async manageErroredValues(values: Map<string, Array<any>>, errorCount: number): Promise<void> {
     for (const key of values.keys()) {
       // Remove values from queues
       const indexToRemove = this.compactedQueue.findIndex(queueFile => queueFile.filename === key);
@@ -266,15 +266,18 @@ export default class ValueCacheService {
 
       const filePath = path.parse(key);
       try {
-        this.logger.trace(
-          `Moving "${path.resolve(this.valueFolder, key)}" to error cache: "${path.resolve(this.errorFolder, filePath.base)}"`
-        );
         await fs.rename(path.resolve(this.valueFolder, key), path.resolve(this.errorFolder, filePath.base));
-      } catch (err) {
+        this.logger.warn(
+          `Values file "${path.resolve(this.valueFolder, key)}" moved to "${path.resolve(
+            this.errorFolder,
+            filePath.base
+          )}" after ${errorCount} errors`
+        );
+      } catch (renameError) {
         // Catch error locally to let OIBus moving the other files.
         this.logger.error(
-          `Error while moving file "${path.resolve(this.valueFolder, key)}" into cache error ` +
-            `"${path.resolve(this.errorFolder, filePath.base)}": ${err}`
+          `Error while moving values file "${path.resolve(this.valueFolder, key)}" into cache error ` +
+            `"${path.resolve(this.errorFolder, filePath.base)}": ${renameError}`
         );
       }
     }

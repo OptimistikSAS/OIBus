@@ -201,27 +201,23 @@ describe('ValueCache', () => {
         throw new Error('unlink error');
       });
 
-    await cache.manageErroredValues(valuesToRemove);
+    await cache.manageErroredValues(valuesToRemove, 1);
     const expectedMap = new Map();
     expectedMap.set('2.queue.tmp', []);
-    expect(logger.trace).toHaveBeenCalledWith(
-      `Moving "${path.resolve('myCacheFolder', 'values', '1.queue.tmp')}" ` +
-        `to error cache: "${path.resolve('myCacheFolder', 'values-errors', '1.queue.tmp')}"`
+    expect(logger.warn).toHaveBeenCalledWith(
+      `Values file "${path.resolve('myCacheFolder', 'values', '1.queue.tmp')}" ` +
+        `moved to "${path.resolve('myCacheFolder', 'values-errors', '1.queue.tmp')}" after 1 errors`
     );
     expect(fs.rename).toHaveBeenCalledWith(
       path.resolve('myCacheFolder', 'values', '1.queue.tmp'),
       path.resolve('myCacheFolder', 'values-errors', '1.queue.tmp')
-    );
-    expect(logger.trace).toHaveBeenCalledWith(
-      `Moving "${path.resolve('myCacheFolder', 'values', '1.compact.tmp')}" ` +
-        `to error cache: "${path.resolve('myCacheFolder', 'values-errors', '1.compact.tmp')}"`
     );
     expect(fs.rename).toHaveBeenCalledWith(
       path.resolve('myCacheFolder', 'values', '1.compact.tmp'),
       path.resolve('myCacheFolder', 'values-errors', '1.compact.tmp')
     );
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while moving file "${path.resolve('myCacheFolder', 'values', '1.compact.tmp')}" ` +
+      `Error while moving values file "${path.resolve('myCacheFolder', 'values', '1.compact.tmp')}" ` +
         `into cache error "${path.resolve('myCacheFolder', 'values-errors', '1.compact.tmp')}": ${new Error('unlink error')}`
     );
   });
@@ -401,13 +397,13 @@ describe('ValueCache', () => {
 
       const errorMap = new Map();
       errorMap.set('generated-uuid9.compact.tmp', []);
-      await cache.manageErroredValues(errorMap);
-      expect(logger.trace).toHaveBeenCalledWith(
-        `Moving "${path.resolve('myCacheFolder', 'values', 'generated-uuid9.compact.tmp')}" to error cache: "${path.resolve(
+      await cache.manageErroredValues(errorMap, 1);
+      expect(logger.warn).toHaveBeenCalledWith(
+        `Values file "${path.resolve('myCacheFolder', 'values', 'generated-uuid9.compact.tmp')}" moved to "${path.resolve(
           'myCacheFolder',
           'values-errors',
           'generated-uuid9.compact.tmp'
-        )}"`
+        )}" after 1 errors`
       );
     });
 
