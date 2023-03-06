@@ -106,15 +106,14 @@ export default class FileCacheService {
   /**
    * Move the file from North cache folder to its error folder
    */
-  async manageErroredFiles(filePathInCache: string): Promise<void> {
+  async manageErroredFiles(filePathInCache: string, errorCount: number): Promise<void> {
     const filenameInfo = path.parse(filePathInCache);
     const errorPath = path.join(this.errorFolder, filenameInfo.base);
-    // Move cache file into the archive folder
     try {
       await fs.rename(filePathInCache, errorPath);
-      this.logger.info(`File "${filePathInCache}" moved to "${errorPath}"`);
+      this.logger.warn(`File "${filePathInCache}" moved to "${errorPath}" after ${errorCount} errors`);
     } catch (renameError) {
-      this.logger.error(renameError);
+      this.logger.error(`Error while moving file "${filePathInCache}" to "${errorPath}": ${renameError}`);
     }
   }
 
@@ -139,13 +138,13 @@ export default class FileCacheService {
     fromDate: Instant,
     toDate: Instant,
     nameFilter: string
-  ): Promise<Array<{ filename: string; modificationDate: Instant }>> {
+  ): Promise<Array<{ filename: string; modificationDate: Instant; size: number }>> {
     const filenames = await fs.readdir(this.errorFolder);
     if (filenames.length === 0) {
       return [];
     }
 
-    const filteredFilenames: Array<{ filename: string; modificationDate: Instant }> = [];
+    const filteredFilenames: Array<{ filename: string; modificationDate: Instant; size: number }> = [];
     for (const filename of filenames) {
       try {
         const stats = await fs.stat(path.join(this.errorFolder, filename));
@@ -155,7 +154,11 @@ export default class FileCacheService {
         const dateIsBetween = stats.mtimeMs >= fromDateInMillis && stats.mtimeMs <= toDateInMillis;
         const filenameContains = filename.toUpperCase().includes(nameFilter.toUpperCase());
         if (dateIsBetween && filenameContains) {
-          filteredFilenames.push({ filename, modificationDate: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO() });
+          filteredFilenames.push({
+            filename,
+            modificationDate: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO(),
+            size: stats.size
+          });
         }
       } catch (error) {
         this.logger.error(`Error while reading in error folder file stats "${path.join(this.errorFolder, filename)}": ${error}`);
