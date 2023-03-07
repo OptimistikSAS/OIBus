@@ -131,8 +131,8 @@ export default class HistoryQueryController {
 
     const command = ctx.request.body as HistoryQueryCommandDTO;
     try {
-      await this.validator.validate(southManifest.schema, historyQuery.southSettings);
-      await this.validator.validate(northManifest.schema, historyQuery.northSettings);
+      await this.validator.validateSettings(southManifest.settings, historyQuery.southSettings);
+      await this.validator.validateSettings(northManifest.settings, historyQuery.northSettings);
 
       command.southSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
         command.southSettings,
@@ -189,7 +189,7 @@ export default class HistoryQueryController {
 
       const command: OibusItemCommandDTO | undefined = ctx.request.body;
       if (command) {
-        await this.validator.validate(manifest.items.schema, command?.settings);
+        await this.validator.validateSettings(manifest.items.settings, command?.settings);
         const historyQueryItem = await ctx.app.reloadService.onCreateHistoryItem(ctx.params.historyQueryId, command);
         ctx.created(historyQueryItem);
       } else {
@@ -216,7 +216,7 @@ export default class HistoryQueryController {
       if (historyQueryItem) {
         const command: OibusItemCommandDTO | undefined = ctx.request.body;
         if (command) {
-          await this.validator.validate(manifest.items.schema, command?.settings);
+          await this.validator.validateSettings(manifest.items.settings, command?.settings);
           await ctx.app.reloadService.onUpdateHistoryItemsSettings(ctx.params.historyQueryId, historyQueryItem, command);
           ctx.noContent();
         } else {

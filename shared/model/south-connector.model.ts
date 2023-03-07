@@ -1,5 +1,4 @@
 import { OibFormControl } from './form.model';
-import Joi from 'joi';
 import { Instant } from './types';
 
 export interface SouthType {
@@ -69,7 +68,6 @@ export interface OibusItemManifest {
     subscriptionOnly: boolean;
   };
   settings: Array<OibFormControl>;
-  schema: Joi.ObjectSchema;
 }
 
 export interface SouthConnectorManifest {
@@ -84,7 +82,6 @@ export interface SouthConnectorManifest {
     historyFile: boolean;
   };
   settings: Array<OibFormControl>;
-  schema: Joi.ObjectSchema;
   items: OibusItemManifest;
 }
 
