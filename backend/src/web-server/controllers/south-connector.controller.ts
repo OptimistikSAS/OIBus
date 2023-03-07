@@ -10,11 +10,11 @@ import opcuaHaManifest from '../../south/south-opcua-ha/manifest';
 import restManifest from '../../south/south-rest/manifest';
 import sqlManifest from '../../south/south-sql/manifest';
 import {
-  SouthConnectorCommandDTO,
-  SouthConnectorDTO,
   OibusItemCommandDTO,
   OibusItemDTO,
   OibusItemSearchParam,
+  SouthConnectorCommandDTO,
+  SouthConnectorDTO,
   SouthType
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
@@ -91,12 +91,12 @@ export default class SouthConnectorController {
         return ctx.throw(404, 'South manifest not found');
       }
 
-      await this.validator.validate(manifest.schema, ctx.request.body?.settings);
+      await this.validator.validateSettings(manifest.settings, ctx.request.body?.settings);
 
       const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
-        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, null, manifest.settings);
-        const southConnector = await ctx.app.reloadService.onCreateSouth(encryptedCommand as SouthConnectorCommandDTO);
+        command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, null, manifest.settings);
+        const southConnector = await ctx.app.reloadService.onCreateSouth(command);
         ctx.created(southConnector);
       } else {
         ctx.badRequest();
@@ -112,17 +112,19 @@ export default class SouthConnectorController {
       if (!manifest) {
         return ctx.throw(404, 'South manifest not found');
       }
-      await this.validator.validate(manifest.schema, ctx.request.body?.settings);
 
-      const southSettings = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
-      if (!southSettings) {
+      await this.validator.validateSettings(manifest.settings, ctx.request.body?.settings);
+
+      const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
+      if (!southConnector) {
         return ctx.notFound();
       }
+
       const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
         command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
           command.settings,
-          southSettings.settings,
+          southConnector.settings,
           manifest.settings
         );
         await ctx.app.reloadService.onUpdateSouthSettings(ctx.params.id, command);
@@ -177,7 +179,7 @@ export default class SouthConnectorController {
 
       const command: OibusItemCommandDTO | undefined = ctx.request.body;
       if (command) {
-        await this.validator.validate(manifest.items.schema, command?.settings);
+        await this.validator.validateSettings(manifest.items.settings, command?.settings);
 
         const southItem = await ctx.app.reloadService.onCreateSouthItem(ctx.params.southId, command);
         ctx.created(southItem);
@@ -205,7 +207,7 @@ export default class SouthConnectorController {
       if (southItem) {
         const command: OibusItemCommandDTO | undefined = ctx.request.body;
         if (command) {
-          await this.validator.validate(manifest.items.schema, command?.settings);
+          await this.validator.validateSettings(manifest.items.settings, command?.settings);
 
           await ctx.app.reloadService.onUpdateSouthItemsSettings(ctx.params.southId, southItem, command);
           ctx.noContent();

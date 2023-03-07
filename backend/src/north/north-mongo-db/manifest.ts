@@ -1,5 +1,4 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
-import Joi from 'joi';
 
 const manifest: NorthConnectorManifest = {
   name: 'MongoDB',
@@ -104,23 +103,7 @@ const manifest: NorthConnectorManifest = {
       type: 'OibText',
       label: 'Timestamp path in data value'
     }
-  ],
-  schema: Joi.object({
-    host: Joi.string()
-      .required()
-      .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] }),
-    database: Joi.string().required(),
-    username: Joi.string().required(),
-    password: Joi.string().min(1).max(255),
-    regExp: Joi.string().required(),
-    collection: Joi.string().required(),
-    indexFields: Joi.string().min(1).max(255),
-    createCollection: Joi.boolean().required().falsy(0).truthy(1),
-    timestampKey: Joi.string().required(),
-    useDataKeyValue: Joi.boolean().required().falsy(0).truthy(1),
-    keyParentValue: Joi.string(),
-    timestampPathInDataValue: Joi.string()
-  })
+  ]
 };
 
 export default manifest;
