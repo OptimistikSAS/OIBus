@@ -12,6 +12,7 @@ import RepositoryService from '../service/repository.service';
 
 // Mock fs
 jest.mock('node:fs/promises');
+
 const getValuesToSendMock = jest.fn();
 const getFileToSend = jest.fn();
 const valueCacheIsEmpty = jest.fn();
@@ -144,10 +145,12 @@ describe('NorthConnector enabled', () => {
 
     north.addToQueue = jest.fn();
     await north.connect();
-    expect(logger.debug).toHaveBeenCalledWith(`Creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
+    expect(logger.debug).toHaveBeenCalledWith(`Creating North cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
 
     await north.connect();
-    expect(logger.debug).toHaveBeenCalledWith(`Removing existing cron job associated to scan mode "${scanMode.name}" (${scanMode.cron})`);
+    expect(logger.debug).toHaveBeenCalledWith(
+      `Removing existing North cron job associated to scan mode "${scanMode.name}" (${scanMode.cron})`
+    );
 
     jest.advanceTimersByTime(1000);
     expect(north.addToQueue).toHaveBeenCalledTimes(1);
@@ -171,7 +174,7 @@ describe('NorthConnector enabled', () => {
     expect(north.run).toHaveBeenCalledTimes(1);
     north.addToQueue(scanMode);
 
-    expect(logger.warn).toHaveBeenCalledWith(`Task job not added in queue for cron "${scanMode.name}" (${scanMode.cron})`);
+    expect(logger.warn).toHaveBeenCalledWith(`Task job not added in North connector queue for cron "${scanMode.name}" (${scanMode.cron})`);
     expect(north.run).toHaveBeenCalledTimes(1);
   });
 
@@ -223,11 +226,11 @@ describe('NorthConnector enabled', () => {
     north.run(scanMode);
 
     await north.run(scanMode);
-    expect(logger.warn).toHaveBeenCalledWith(`A task is already running with scan mode ${scanMode.name}`);
+    expect(logger.warn).toHaveBeenCalledWith(`A North task is already running with scan mode ${scanMode.name}`);
 
     north.stop();
     expect(logger.info).toHaveBeenCalledWith(`Stopping North "${configuration.name}" (${configuration.id})...`);
-    expect(logger.debug).toHaveBeenCalledWith('Waiting for task to finish');
+    expect(logger.debug).toHaveBeenCalledWith('Waiting for North task to finish');
     expect(north.disconnect).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
     await flushPromises();

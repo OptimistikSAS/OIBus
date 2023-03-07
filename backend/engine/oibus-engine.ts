@@ -69,7 +69,12 @@ export default class OIBusEngine extends BaseEngine {
         await createFolder(baseFolder);
 
         const north = this.northService.createNorth(settings, baseFolder);
-        await north.start();
+        // Do not await here, so it can start all connectors without blocking the thread
+        north.start().catch(error => {
+          this.logger.error(
+            `Error while starting North connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`
+          );
+        });
         this.northConnectors.set(settings.id, north);
       } catch (error) {
         this.logger.error(`Error while creating North connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`);
@@ -85,7 +90,12 @@ export default class OIBusEngine extends BaseEngine {
 
         const items = this.southService.getSouthItems(settings.id);
         const south = this.southService.createSouth(settings, items, this.addValues.bind(this), this.addFile.bind(this), baseFolder, true);
-        await south.start();
+        // Do not await here, so it can start all connectors without blocking the thread
+        south.start().catch(error => {
+          this.logger.error(
+            `Error while starting South connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`
+          );
+        });
         this.southConnectors.set(settings.id, south);
       } catch (error) {
         this.logger.error(`Error while creating South connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`);
