@@ -1,4 +1,3 @@
-import Joi from 'joi';
 import { OibFormControl } from './form.model';
 import { ScanModeDTO } from './scan-mode.model';
 
@@ -80,5 +79,4 @@ export interface NorthConnectorManifest {
     points: boolean;
   };
   settings: Array<OibFormControl>;
-  schema: Joi.ObjectSchema;
 }

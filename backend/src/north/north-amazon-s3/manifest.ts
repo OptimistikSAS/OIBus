@@ -1,5 +1,4 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
-import Joi from 'joi';
 
 const manifest: NorthConnectorManifest = {
   name: 'AWS3',
@@ -41,13 +40,7 @@ const manifest: NorthConnectorManifest = {
       newRow: true,
       readDisplay: false
     }
-  ],
-  schema: Joi.object({
-    bucket: Joi.string().required(),
-    region: Joi.string().required(),
-    folder: Joi.string().required(),
-    proxy: Joi.string()
-  })
+  ]
 };
 
 export default manifest;
