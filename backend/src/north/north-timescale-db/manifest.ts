@@ -1,5 +1,4 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
-import Joi from 'joi';
 
 const manifest: NorthConnectorManifest = {
   name: 'TimescaleDB',
@@ -92,21 +91,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Key parent value',
       defaultValue: ''
     }
-  ],
-  schema: Joi.object({
-    username: Joi.string().required(),
-    password: Joi.string().min(1).max(255),
-    host: Joi.string()
-      .required()
-      .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] }),
-    database: Joi.string().required(),
-    regExp: Joi.string().required(),
-    table: Joi.string().required(),
-    optFields: Joi.string().min(1).max(255),
-    timestampPathInDataValue: Joi.string().allow(''),
-    useDataKeyValue: Joi.boolean().required().falsy(0).truthy(1),
-    keyParentValue: Joi.string().allow('')
-  })
+  ]
 };
 
 export default manifest;

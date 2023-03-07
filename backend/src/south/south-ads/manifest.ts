@@ -1,5 +1,4 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
-import Joi from 'joi';
 
 const manifest: SouthConnectorManifest = {
   name: 'ADS',
@@ -112,25 +111,12 @@ const manifest: SouthConnectorManifest = {
       readDisplay: true
     }
   ],
-  schema: Joi.object({
-    netId: Joi.string().required(),
-    port: Joi.number().required().port(),
-    routerAddress: Joi.string(),
-    routerTcpPort: Joi.number().port(),
-    clientAmsNetId: Joi.string(),
-    clientAdsPort: Joi.number().port(),
-    retryInterval: Joi.number().required().integer().min(100).max(60_000),
-    plcName: Joi.string().allow(''),
-    enumAsText: Joi.string().required().valid('Text', 'Integer'),
-    boolAsText: Joi.string().required().valid('Text', 'Integer')
-  }),
   items: {
     scanMode: {
       acceptSubscription: false,
       subscriptionOnly: false
     },
-    settings: [],
-    schema: Joi.object({})
+    settings: []
   }
 };
 export default manifest;
