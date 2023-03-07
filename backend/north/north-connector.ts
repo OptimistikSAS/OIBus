@@ -125,12 +125,11 @@ export default class NorthConnector {
   createCronJob(scanMode: ScanModeDTO): void {
     const existingCronJob = this.cronByScanModeIds.get(scanMode.id);
     if (existingCronJob) {
-      this.logger.debug(`Removing existing cron job associated to scan mode "${scanMode.name}" (${scanMode.cron})`);
-
+      this.logger.debug(`Removing existing North cron job associated to scan mode "${scanMode.name}" (${scanMode.cron})`);
       existingCronJob.stop();
       this.cronByScanModeIds.delete(scanMode.id);
     }
-    this.logger.debug(`Creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
+    this.logger.debug(`Creating North cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
     const job = new CronJob(
       scanMode.cron,
       () => {
@@ -146,7 +145,7 @@ export default class NorthConnector {
     const foundJob = this.taskJobQueue.find(element => element.id === scanMode.id);
     if (foundJob) {
       // If a job is already scheduled in queue, it will not be added
-      this.logger.warn(`Task job not added in queue for cron "${scanMode.name}" (${scanMode.cron})`);
+      this.logger.warn(`Task job not added in North connector queue for cron "${scanMode.name}" (${scanMode.cron})`);
       return;
     }
 
@@ -158,7 +157,7 @@ export default class NorthConnector {
 
   async run(scanMode: ScanModeDTO): Promise<void> {
     if (this.runProgress$) {
-      this.logger.warn(`A task is already running with scan mode ${scanMode.name}`);
+      this.logger.warn(`A North task is already running with scan mode ${scanMode.name}`);
       return;
     }
     this.runProgress$ = new DeferredPromise();
@@ -318,7 +317,7 @@ export default class NorthConnector {
     this.logger.info(`Stopping North "${this.configuration.name}" (${this.configuration.id})...`);
 
     if (this.runProgress$) {
-      this.logger.debug('Waiting for task to finish');
+      this.logger.debug('Waiting for North task to finish');
       await this.runProgress$.promise;
     }
 

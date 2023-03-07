@@ -2,7 +2,6 @@ import NorthConnector from '../north-connector';
 
 import manifest from './manifest';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
-import { OIBusError } from '../../../shared/model/engine.model';
 
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
@@ -20,8 +19,6 @@ import fetch from 'node-fetch';
 export default class NorthOIAnalytics extends NorthConnector {
   static category = manifest.category;
 
-  private readonly valuesUrl: string;
-  private readonly fileUrl: string;
   private proxyAgent: any | undefined;
 
   constructor(
@@ -33,9 +30,6 @@ export default class NorthOIAnalytics extends NorthConnector {
     baseFolder: string
   ) {
     super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder, manifest);
-    const queryParam = `?dataSourceId=${this.configuration.name}`;
-    this.valuesUrl = `${this.configuration.settings.host}/api/oianalytics/oibus/time-values${queryParam}`;
-    this.fileUrl = `${this.configuration.settings.host}/api/oianalytics/value-upload/file${queryParam}`;
   }
 
   /**
@@ -76,17 +70,18 @@ export default class NorthOIAnalytics extends NorthConnector {
     };
 
     let response;
+    const valuesUrl = `${this.configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${this.configuration.name}`;
     try {
-      response = await fetch(this.valuesUrl, {
+      response = await fetch(valuesUrl, {
         method: 'POST',
         headers,
         body: JSON.stringify(cleanedValues),
-        timeout: this.configuration.caching.timeout * 1000
-        // agent: this.proxyAgent
+        timeout: this.configuration.caching.timeout * 1000,
+        agent: this.proxyAgent
       });
     } catch (fetchError) {
       throw {
-        message: `Fail to reach values endpoint ${this.valuesUrl}. ${fetchError}`,
+        message: `Fail to reach values endpoint ${valuesUrl}. ${fetchError}`,
         retry: true
       };
     }
@@ -126,8 +121,9 @@ export default class NorthOIAnalytics extends NorthConnector {
     });
 
     let response;
+    const fileUrl = `${this.configuration.settings.host}/api/oianalytics/value-upload/file?dataSourceId=${this.configuration.name}`;
     try {
-      response = await fetch(this.fileUrl, {
+      response = await fetch(fileUrl, {
         method: 'POST',
         headers,
         body,
@@ -138,7 +134,7 @@ export default class NorthOIAnalytics extends NorthConnector {
     } catch (fetchError) {
       readStream.close();
       throw {
-        message: `Fail to reach file endpoint ${this.fileUrl}. ${fetchError}`,
+        message: `Fail to reach file endpoint ${fileUrl}. ${fetchError}`,
         retry: true
       };
     }
