@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import SouthCacheRepository from '../repository/south-cache.repository';
 
 import { SouthCache } from '../../shared/model/south-connector.model';
-import { DateTime } from 'luxon';
+import { Instant } from '../../shared/model/types';
 
 export default class SouthCacheService {
   private readonly _southCacheRepository: SouthCacheRepository;
@@ -21,12 +21,15 @@ export default class SouthCacheService {
     this._southCacheRepository.createCacheHistoryTable();
   }
 
-  getSouthCache(id: string): SouthCache {
+  /**
+   * Retrieve south cache or return a new one with startTime
+   */
+  getSouthCache(id: string, startTime: Instant): SouthCache {
     const southCache = this._southCacheRepository.getSouthCacheScanMode(id);
     if (!southCache) {
       return {
         scanModeId: id,
-        maxInstant: DateTime.now().toUTC().toISO(),
+        maxInstant: startTime,
         intervalIndex: 0
       };
     }

@@ -1,9 +1,9 @@
 import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
-import { createFolder, delay, generateIntervals } from '../service/utils';
+import { delay, generateIntervals } from '../service/utils';
 
-import { SouthCache, SouthConnectorDTO, SouthConnectorManifest, SouthItemDTO } from '../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorManifest, SouthItemDTO } from '../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../shared/model/scan-mode.model';
 import { Instant } from '../../shared/model/types';
 import pino from 'pino';
@@ -35,7 +35,7 @@ import SouthCacheService from '../service/south-cache.service';
  * All other operations (cache, store&forward, communication to North connectors) will be handled by the OIBus engine
  * and should not be taken care at the South level.
  */
-export default abstract class SouthConnector {
+export default class SouthConnector {
   protected configuration: SouthConnectorDTO;
   protected encryptionService: EncryptionService;
   protected proxyService: ProxyService;
@@ -128,6 +128,8 @@ export default abstract class SouthConnector {
           this.logger.error(`Scan mode ${scanModeId} not found.`);
         }
       }
+    } else {
+      this.logger.trace(`Stream mode not enabled. Cron jobs and subscription won't start`);
     }
   }
 
@@ -137,10 +139,11 @@ export default abstract class SouthConnector {
   createCronJob(scanMode: ScanModeDTO): void {
     const existingCronJob = this.cronByScanModeIds.get(scanMode.id);
     if (existingCronJob) {
+      this.logger.debug(`Removing existing South cron job associated to scan mode "${scanMode.name}" (${scanMode.cron})`);
       existingCronJob.stop();
       this.cronByScanModeIds.delete(scanMode.id);
     }
-    this.logger.trace(`Creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
+    this.logger.debug(`Creating South cron job for scan mode "${scanMode.name}" (${scanMode.cron})`);
     const job = new CronJob(
       scanMode.cron,
       () => {
@@ -156,7 +159,7 @@ export default abstract class SouthConnector {
     const foundJob = this.taskJobQueue.find(element => element.id === scanMode.id);
     if (foundJob) {
       // If a job is already scheduled in queue, it will not be added
-      this.logger.warn(`Task job not added in queue for cron "${scanMode.name}" (${scanMode.cron})`);
+      this.logger.warn(`Task job not added in South connector queue for cron "${scanMode.name}" (${scanMode.cron})`);
       return;
     }
 
@@ -168,17 +171,27 @@ export default abstract class SouthConnector {
 
   async run(scanMode: ScanModeDTO, streamMode: boolean): Promise<void> {
     if (this.runProgress$) {
-      this.logger.warn(`A task is already running with scan mode ${scanMode.name}`);
+      this.logger.warn(`A South task is already running with scan mode ${scanMode.name}`);
       return;
     }
-    this.runProgress$ = new DeferredPromise();
-    const items = Array.from(this.itemsByScanModeIds.get(scanMode.id) || new Map(), ([_scanModeId, item]) => item);
 
+    const items = Array.from(this.itemsByScanModeIds.get(scanMode.id) || new Map(), ([_scanModeId, item]) => item);
     this.logger.trace(`Running South with scan mode ${scanMode.name} and ${items.length} items`);
+    this.createDeferredPromise();
+
     if (this.manifest.modes.historyFile || this.manifest.modes.historyPoint) {
       try {
-        const southCache = this.southCacheService.getSouthCache(scanMode.id);
-        await this.historyQueryHandler(items, DateTime.fromISO(southCache.maxInstant).toISO(), DateTime.now().toISO(), southCache);
+        // By default, retrieve the last hour. If the scan mode has already run, and retrieve a data, the max instant will
+        // be retrieved from the South cache inside the history query handler
+        await this.historyQueryHandler(
+          items,
+          DateTime.now()
+            .minus(3600 * 1000)
+            .toUTC()
+            .toISO(),
+          DateTime.now().toUTC().toISO(),
+          scanMode.id
+        );
       } catch (error) {
         this.logger.error(`Error when calling historyQuery ${error}`);
       }
@@ -198,8 +211,7 @@ export default abstract class SouthConnector {
       }
     }
 
-    this.runProgress$.resolve();
-    this.runProgress$ = null;
+    this.resolveDeferredPromise();
 
     if (streamMode && !this.stopping) {
       this.taskJobQueue.shift();
@@ -207,10 +219,32 @@ export default abstract class SouthConnector {
     }
   }
 
-  async historyQueryHandler(items: Array<SouthItemDTO>, startTime: Instant, endTime: Instant, southCache: SouthCache): Promise<void> {
+  /**
+   * Methode used to set the runProgress$ variable with a DeferredPromise
+   * This allows to call historyQueryHandler from outside (like history query engine) in a blocking way for other
+   * calls
+   */
+  createDeferredPromise(): void {
+    this.runProgress$ = new DeferredPromise();
+  }
+
+  /**
+   * Method used to resolve and unset the DeferredPromise kept in the runProgress$ variable
+   * This allows to control the promise from an outside class (like history query engine)
+   */
+  resolveDeferredPromise(): void {
+    if (this.runProgress$) {
+      this.runProgress$.resolve();
+      this.runProgress$ = null;
+    }
+  }
+
+  async historyQueryHandler(items: Array<SouthItemDTO>, startTime: Instant, endTime: Instant, scanModeId: string): Promise<void> {
+    const southCache = this.southCacheService.getSouthCache(scanModeId, startTime);
+
     // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
     // requests. For example only one hour if maxReadInterval is 3600 (in s)
-    const intervals = generateIntervals(startTime, endTime, this.configuration.settings.maxReadInterval);
+    const intervals = generateIntervals(southCache.maxInstant, endTime, this.configuration.settings.maxReadInterval);
 
     const intervalToKeep = intervals.length - southCache.intervalIndex;
     const intervalsToQuery = intervals.slice(-intervalToKeep);
@@ -239,6 +273,11 @@ export default abstract class SouthConnector {
       this.logger.trace(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     }
 
+    if (!this.runProgress$) {
+      // For history queries, the historyQueryHandler is not called from the run method, so the runProgress$ promise must be set here instead
+      this.runProgress$ = new DeferredPromise();
+    }
+
     for (const [index, interval] of intervalsToQuery.entries()) {
       const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
 
@@ -248,6 +287,10 @@ export default abstract class SouthConnector {
           maxInstant: lastInstantRetrieved,
           intervalIndex: index + southCache.intervalIndex
         });
+        if (this.stopping) {
+          this.logger.debug(`Connector is stopping. Exiting history query at interval ${index}: [${interval.start}, ${interval.end}]`);
+          return;
+        }
         await delay(this.configuration.settings.readIntervalDelay);
       } else {
         this.southCacheService.createOrUpdateCacheScanMode({
@@ -260,11 +303,21 @@ export default abstract class SouthConnector {
   }
 
   async historyQuery(items: Array<SouthItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+    this.logger.warn('historyQuery method must be override');
     return '';
   }
-  async fileQuery(items: Array<SouthItemDTO>): Promise<void> {}
-  async lastPointQuery(items: Array<SouthItemDTO>): Promise<void> {}
-  async subscribe(items: Array<SouthItemDTO>): Promise<void> {}
+
+  async fileQuery(items: Array<SouthItemDTO>): Promise<void> {
+    this.logger.warn('fileQuery method must be override');
+  }
+
+  async lastPointQuery(items: Array<SouthItemDTO>): Promise<void> {
+    this.logger.warn('lastPointQuery method must be override');
+  }
+
+  async subscribe(items: Array<SouthItemDTO>): Promise<void> {
+    this.logger.warn('subscribe method must be override');
+  }
 
   /**
    * Add new values to the South connector buffer.
@@ -294,10 +347,12 @@ export default abstract class SouthConnector {
 
   async stop(): Promise<void> {
     this.stopping = true;
-    this.logger.info(`Stopping South "${this.configuration.name}" (${this.configuration.id})`);
+    this.logger.info(`Stopping South "${this.configuration.name}" (${this.configuration.id})...`);
 
     if (this.runProgress$) {
+      this.logger.debug('Waiting for South task to finish');
       await this.runProgress$.promise;
+      console.log('after promise');
     }
 
     for (const cronJob of this.cronByScanModeIds.values()) {

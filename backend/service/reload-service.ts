@@ -58,17 +58,17 @@ export default class ReloadService {
     this.webServerChangePortCallback = callback;
   }
 
-  async onUpdateOibusSettings(oldSettngs: EngineSettingsDTO | null, newSettings: EngineSettingsDTO): Promise<void> {
-    if (!oldSettngs || JSON.stringify(oldSettngs.logParameters) !== JSON.stringify(newSettings.logParameters)) {
+  async onUpdateOibusSettings(oldSettings: EngineSettingsDTO | null, newSettings: EngineSettingsDTO): Promise<void> {
+    if (!oldSettings || JSON.stringify(oldSettings.logParameters) !== JSON.stringify(newSettings.logParameters)) {
       await this.loggerService.stop();
       await this.loggerService.start(newSettings.id, newSettings.logParameters);
       await this.webServerChangeLoggerCallback(this.loggerService.createChildLogger('web-server'));
       await this.healthSignalService.setLogger(this.loggerService.createChildLogger('health'));
     }
-    if (!oldSettngs || oldSettngs.port !== newSettings.port) {
+    if (!oldSettings || oldSettings.port !== newSettings.port) {
       await this.webServerChangePortCallback(newSettings.port);
     }
-    if (!oldSettngs || JSON.stringify(oldSettngs.healthSignal) !== JSON.stringify(newSettings.healthSignal)) {
+    if (!oldSettings || JSON.stringify(oldSettings.healthSignal) !== JSON.stringify(newSettings.healthSignal)) {
       await this.healthSignalService.setSettings(newSettings.healthSignal);
     }
   }
