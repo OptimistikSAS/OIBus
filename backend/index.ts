@@ -55,7 +55,6 @@ const LOG_DB_NAME = 'journal.db';
 
   const northService = new NorthService(proxyService, encryptionService, repositoryService, loggerService.logger!);
   const southService = new SouthService(proxyService, encryptionService, repositoryService, loggerService.logger!);
-  const reloadService = new ReloadService(loggerService, repositoryService, healthSignalService, northService, southService);
 
   if (check) {
     console.info('OIBus started in check mode. Exiting process.');
@@ -72,6 +71,7 @@ const LOG_DB_NAME = 'journal.db';
   );
   await engine.start();
 
+  const reloadService = new ReloadService(loggerService, repositoryService, healthSignalService, northService, southService, engine);
   const server = new WebServer(
     oibusSettings.id,
     oibusSettings.port,

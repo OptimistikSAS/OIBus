@@ -10,6 +10,9 @@ import SouthService from '../service/south.service';
 import { createFolder } from '../service/utils';
 import path from 'node:path';
 
+import { SouthConnectorDTO, SouthItemCommandDTO, SouthItemDTO } from '../../shared/model/south-connector.model';
+import { NorthConnectorDTO } from '../../shared/model/north-connector.model';
+
 const CACHE_FOLDER = './cache/data-stream';
 
 /**
@@ -65,17 +68,7 @@ export default class OIBusEngine extends BaseEngine {
     const northListSettings = this.northService.getNorthList();
     for (const settings of northListSettings) {
       try {
-        const baseFolder = path.resolve(this.cacheFolder, `north-${settings.id}`);
-        await createFolder(baseFolder);
-
-        const north = this.northService.createNorth(settings, baseFolder);
-        // Do not await here, so it can start all connectors without blocking the thread
-        north.start().catch(error => {
-          this.logger.error(
-            `Error while starting North connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`
-          );
-        });
-        this.northConnectors.set(settings.id, north);
+        await this.startNorth(settings.id, settings);
       } catch (error) {
         this.logger.error(`Error while creating North connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`);
       }
@@ -85,18 +78,7 @@ export default class OIBusEngine extends BaseEngine {
     const southListSettings = this.southService.getSouthList();
     for (const settings of southListSettings) {
       try {
-        const baseFolder = path.resolve(this.cacheFolder, `south-${settings.id}`);
-        await createFolder(baseFolder);
-
-        const items = this.southService.getSouthItems(settings.id);
-        const south = this.southService.createSouth(settings, items, this.addValues.bind(this), this.addFile.bind(this), baseFolder, true);
-        // Do not await here, so it can start all connectors without blocking the thread
-        south.start().catch(error => {
-          this.logger.error(
-            `Error while starting South connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`
-          );
-        });
-        this.southConnectors.set(settings.id, south);
+        await this.startSouth(settings.id, settings);
       } catch (error) {
         this.logger.error(`Error while creating South connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`);
       }
@@ -109,12 +91,73 @@ export default class OIBusEngine extends BaseEngine {
    * Gracefully stop every timer, South and North connectors
    */
   override async stop(): Promise<void> {
-    for (const south of this.southConnectors.values()) {
-      await south.stop();
+    for (const id of this.southConnectors.keys()) {
+      await this.stopSouth(id);
     }
 
-    for (const north of this.northConnectors.values()) {
-      await north.stop();
+    for (const id of this.northConnectors.keys()) {
+      await this.stopNorth(id);
+    }
+  }
+
+  async startSouth(southId: string, settings: SouthConnectorDTO): Promise<void> {
+    const baseFolder = path.resolve(this.cacheFolder, `south-${settings.id}`);
+    await createFolder(baseFolder);
+
+    const items = this.southService.getSouthItems(settings.id);
+    const south = this.southService.createSouth(settings, items, this.addValues.bind(this), this.addFile.bind(this), baseFolder, true);
+    // Do not await here, so it can start all connectors without blocking the thread
+    south.start().catch(error => {
+      this.logger.error(`Error while starting South connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`);
+    });
+    this.southConnectors.set(settings.id, south);
+  }
+
+  async startNorth(southId: string, settings: NorthConnectorDTO): Promise<void> {
+    const baseFolder = path.resolve(this.cacheFolder, `north-${settings.id}`);
+    await createFolder(baseFolder);
+
+    const north = this.northService.createNorth(settings, baseFolder);
+    // Do not await here, so it can start all connectors without blocking the thread
+    north.start().catch(error => {
+      this.logger.error(`Error while starting North connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`);
+    });
+    this.northConnectors.set(settings.id, north);
+  }
+
+  addItemToSouth(southId: string, item: SouthItemDTO): void {
+    this.southConnectors.get(southId)?.addItem(item);
+  }
+
+  deleteItemFromSouth(southId: string, item: SouthItemDTO): void {
+    this.southConnectors.get(southId)?.deleteItem(item);
+  }
+
+  updateItemInSouth(southId: string, oldItem: SouthItemDTO, newItem: SouthItemCommandDTO): void {
+    this.southConnectors.get(southId)?.updateItem(oldItem, newItem);
+  }
+
+  async stopSouth(southId: string): Promise<void> {
+    await this.southConnectors.get(southId)?.stop();
+    this.southConnectors.delete(southId);
+  }
+
+  async stopNorth(northId: string): Promise<void> {
+    await this.northConnectors.get(northId)?.stop();
+    this.northConnectors.delete(northId);
+  }
+
+  setLogger(value: pino.Logger) {
+    super.setLogger(value);
+
+    for (const [id, south] of this.southConnectors.entries()) {
+      const southSettings = this.southService.getSouth(id);
+      south.setLogger(this.logger.child({ scope: `south:${southSettings.name}` }));
+    }
+
+    for (const [id, north] of this.northConnectors.entries()) {
+      const northSettings = this.northService.getNorth(id);
+      north.setLogger(this.logger.child({ scope: `north:${northSettings.name}` }));
     }
   }
 }

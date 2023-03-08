@@ -67,6 +67,8 @@ jest.mock(
 jest.mock('../service/cache/archive.service');
 
 const logger: pino.Logger = new PinoLogger();
+const anotherLogger: pino.Logger = new PinoLogger();
+
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
@@ -460,5 +462,14 @@ describe('NorthConnector disabled', () => {
 
   it('should check if North caches are empty', async () => {
     expect(await north.isCacheEmpty()).toBeFalsy();
+  });
+
+  it('should use another logger', async () => {
+    jest.resetAllMocks();
+
+    north.setLogger(anotherLogger);
+    await north.retryAllErrorFiles();
+    expect(anotherLogger.trace).toHaveBeenCalledTimes(1);
+    expect(logger.trace).not.toHaveBeenCalled();
   });
 });
