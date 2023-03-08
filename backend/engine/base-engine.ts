@@ -12,7 +12,7 @@ import RepositoryService from '../service/repository.service';
  */
 export default class BaseEngine {
   protected readonly encryptionService: EncryptionService;
-  protected readonly logger: pino.Logger;
+  protected logger: pino.Logger;
   protected readonly proxyService: ProxyService;
   protected cacheFolder: string;
   protected northService: NorthService;
@@ -66,5 +66,9 @@ export default class BaseEngine {
    */
   async stop(): Promise<void> {
     this.logger.warn('stop() should be surcharged.');
+  }
+
+  setLogger(value: pino.Logger) {
+    this.logger = value;
   }
 }

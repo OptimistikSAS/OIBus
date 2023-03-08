@@ -375,4 +375,8 @@ export default class NorthConnector {
     this.logger.trace(`Retrying all error files in North connector "${this.configuration.name}"...`);
     await this.fileCacheService.retryAllErrorFiles();
   }
+
+  setLogger(value: pino.Logger) {
+    this.logger = value;
+  }
 }

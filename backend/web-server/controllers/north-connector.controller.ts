@@ -77,9 +77,7 @@ export default class NorthConnectorController {
       const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
         const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, manifest.settings);
-        const northConnector = ctx.app.repositoryService.northConnectorRepository.createNorthConnector(
-          encryptedCommand as NorthConnectorCommandDTO
-        );
+        const northConnector = await ctx.app.reloadService.onCreateNorth(encryptedCommand as NorthConnectorCommandDTO);
         ctx.created(northConnector);
       } else {
         ctx.badRequest();
@@ -101,11 +99,7 @@ export default class NorthConnectorController {
       const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
         const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, manifest.settings);
-
-        ctx.app.repositoryService.northConnectorRepository.updateNorthConnector(
-          ctx.params.id,
-          encryptedCommand as NorthConnectorCommandDTO
-        );
+        await ctx.app.reloadService.onUpdateNorthSettings(ctx.params.id, encryptedCommand as NorthConnectorCommandDTO);
         ctx.noContent();
       } else {
         ctx.badRequest();
@@ -118,7 +112,7 @@ export default class NorthConnectorController {
   async deleteNorthConnector(ctx: KoaContext<void, void>): Promise<void> {
     const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
     if (northConnector) {
-      ctx.app.repositoryService.northConnectorRepository.deleteNorthConnector(ctx.params.id);
+      await ctx.app.reloadService.onDeleteNorth(ctx.params.id);
       ctx.noContent();
     } else {
       ctx.notFound();

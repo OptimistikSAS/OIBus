@@ -39,6 +39,8 @@ jest.mock('../service/status.service');
 jest.mock('../service/utils');
 
 const logger: pino.Logger = new PinoLogger();
+const anotherLogger: pino.Logger = new PinoLogger();
+
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
@@ -543,10 +545,90 @@ describe('SouthConnector without stream mode', () => {
       false,
       manifest
     );
+
     await south.start();
   });
 
   it('should be properly initialized ', () => {
     expect(logger.trace(`Stream mode not enabled. Cron jobs and subscription won't start`));
+  });
+
+  it('should properly add item', () => {
+    const item: SouthItemDTO = { id: 'id1', scanModeId: 'scanModeId', southId: 'southId1', name: 'my item', settings: {} };
+    south.createCronJob = jest.fn();
+
+    (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValueOnce(null).mockReturnValueOnce({
+      id: 'id1',
+      name: 'scanMode1',
+      description: 'my scan mode',
+      cron: '* * * * * *'
+    });
+
+    south.addItem(item);
+
+    expect(logger.error).toHaveBeenCalledWith(`Error when creating South item in cron jobs: scan mode ${item.scanModeId} not found`);
+
+    south.addItem(item);
+
+    expect(south.createCronJob).toHaveBeenCalledTimes(1);
+  });
+
+  it('should properly update item', () => {
+    const item: SouthItemDTO = { id: 'id1', scanModeId: 'scanModeId', southId: 'southId1', name: 'my item', settings: {} };
+    south.addItem = jest.fn();
+    south.deleteItem = jest.fn();
+
+    (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValueOnce(null).mockReturnValueOnce({
+      id: 'id1',
+      name: 'scanMode1',
+      description: 'my scan mode',
+      cron: '* * * * * *'
+    });
+
+    south.updateItem(item, item);
+
+    expect(logger.error).toHaveBeenCalledWith(`Error when creating South item in cron jobs: scan mode ${item.scanModeId} not found`);
+
+    south.updateItem(item, item);
+
+    expect(south.addItem).toHaveBeenCalledTimes(1);
+    expect(south.deleteItem).toHaveBeenCalledTimes(1);
+  });
+
+  it('should properly delete item', () => {
+    const item1: SouthItemDTO = { id: 'id1', scanModeId: 'scanModeId3', southId: 'southId1', name: 'my item', settings: {} };
+    const item2: SouthItemDTO = { id: 'id2', scanModeId: 'scanModeId3', southId: 'southId1', name: 'my item', settings: {} };
+    const item3: SouthItemDTO = { id: 'id3', scanModeId: 'scanModeId1', southId: 'southId1', name: 'my item', settings: {} };
+
+    (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValue({
+      id: 'scanModeId3',
+      name: 'scanMode1',
+      description: 'my scan mode',
+      cron: '* * * * * *'
+    });
+
+    south.deleteItem(item1);
+    expect(logger.error).toHaveBeenCalledWith(`Error when removing South item from cron jobs: scan mode ${item1.scanModeId} was not set`);
+
+    south.addItem(item1);
+    south.addItem(item2);
+    south.addItem(item3);
+
+    south.deleteItem(item1);
+    south.deleteItem(item1);
+    expect(logger.error).toHaveBeenCalledWith(`Error when removing South item from cron jobs: item ${item1.id} was not set`);
+
+    south.deleteItem(item2);
+    south.deleteItem(items[0]);
+    south.deleteItem(items[1]);
+  });
+
+  it('should use another logger', async () => {
+    jest.resetAllMocks();
+
+    south.setLogger(anotherLogger);
+    await south.stop();
+    expect(anotherLogger.info).toHaveBeenCalledTimes(2);
+    expect(logger.info).not.toHaveBeenCalled();
   });
 });
