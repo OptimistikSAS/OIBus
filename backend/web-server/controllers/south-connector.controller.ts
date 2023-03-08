@@ -81,9 +81,7 @@ export default class SouthConnectorController {
       const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
         const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, manifest.settings);
-        const southConnector = ctx.app.repositoryService.southConnectorRepository.createSouthConnector(
-          encryptedCommand as SouthConnectorCommandDTO
-        );
+        const southConnector = await ctx.app.reloadService.onCreateSouth(encryptedCommand as SouthConnectorCommandDTO);
         ctx.created(southConnector);
       } else {
         ctx.badRequest();
@@ -97,18 +95,18 @@ export default class SouthConnectorController {
     try {
       const manifest = manifests.find(south => south.name === ctx.request.body?.type);
       if (!manifest) {
-        return ctx.throw(404, 'South not found');
+        return ctx.throw(404, 'South manifest not found');
       }
-
       await this.validator.validate(manifest.schema, ctx.request.body?.settings);
 
+      const southSettings = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
+      if (!southSettings) {
+        return ctx.notFound();
+      }
       const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
         const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, manifest.settings);
-        ctx.app.repositoryService.southConnectorRepository.updateSouthConnector(
-          ctx.params.id,
-          encryptedCommand as SouthConnectorCommandDTO
-        );
+        await ctx.app.reloadService.onUpdateSouthSettings(ctx.params.id, encryptedCommand as SouthConnectorCommandDTO);
         ctx.noContent();
       } else {
         ctx.badRequest();
@@ -119,8 +117,13 @@ export default class SouthConnectorController {
   }
 
   async deleteSouthConnector(ctx: KoaContext<void, void>): Promise<void> {
-    ctx.app.repositoryService.southConnectorRepository.deleteSouthConnector(ctx.params.id);
-    ctx.noContent();
+    const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
+    if (southConnector) {
+      await ctx.app.reloadService.onDeleteSouth(ctx.params.id);
+      ctx.noContent();
+    } else {
+      ctx.notFound();
+    }
   }
 
   async searchSouthItems(ctx: KoaContext<void, Page<SouthItemDTO>>): Promise<void> {
@@ -157,7 +160,7 @@ export default class SouthConnectorController {
       if (command) {
         await this.validator.validate(manifest.items.schema, command?.settings);
 
-        const southItem = ctx.app.repositoryService.southItemRepository.createSouthItem(ctx.params.southId, command);
+        const southItem = await ctx.app.reloadService.onCreateSouthItem(ctx.params.southId, command);
         ctx.created(southItem);
       } else {
         ctx.badRequest();
@@ -185,7 +188,7 @@ export default class SouthConnectorController {
         if (command) {
           await this.validator.validate(manifest.items.schema, command?.settings);
 
-          ctx.app.repositoryService.southItemRepository.updateSouthItem(ctx.params.id, command);
+          await ctx.app.reloadService.onUpdateSouthItemsSettings(ctx.params.id, southItem, command);
           ctx.noContent();
         } else {
           ctx.badRequest();
@@ -199,7 +202,7 @@ export default class SouthConnectorController {
   }
 
   async deleteSouthItem(ctx: KoaContext<void, void>): Promise<void> {
-    ctx.app.repositoryService.southItemRepository.deleteSouthItem(ctx.params.id);
+    await ctx.app.reloadService.onDeleteSouthItem(ctx.params.id);
     ctx.noContent();
   }
 }

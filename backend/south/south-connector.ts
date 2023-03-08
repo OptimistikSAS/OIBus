@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
 import { delay, generateIntervals } from '../service/utils';
 
-import { SouthConnectorDTO, SouthConnectorManifest, SouthItemDTO } from '../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorManifest, SouthItemCommandDTO, SouthItemDTO } from '../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../shared/model/scan-mode.model';
 import { Instant } from '../../shared/model/types';
 import pino from 'pino';
@@ -246,9 +246,6 @@ export default class SouthConnector {
     // requests. For example only one hour if maxReadInterval is 3600 (in s)
     const intervals = generateIntervals(southCache.maxInstant, endTime, this.configuration.settings.maxReadInterval);
 
-    const intervalToKeep = intervals.length - southCache.intervalIndex;
-    const intervalsToQuery = intervals.slice(-intervalToKeep);
-
     if (intervals.length > 2) {
       this.logger.trace(
         `Interval split in ${intervals.length} sub-intervals: \r\n` +
@@ -257,28 +254,17 @@ export default class SouthConnector {
           '...\r\n' +
           `${JSON.stringify(intervals[intervals.length - 1], null, 2)}]`
       );
-      this.logger.trace(
-        `Take back to interval number ${southCache.intervalIndex}: \r\n` + `${JSON.stringify(intervalsToQuery[0], null, 2)}\r\n`
-      );
     } else if (intervals.length === 2) {
       this.logger.trace(
         `Interval split in ${intervals.length} sub-intervals: \r\n` +
           `[${JSON.stringify(intervals[0], null, 2)}\r\n` +
           `${JSON.stringify(intervals[1], null, 2)}]`
       );
-      this.logger.trace(
-        `Take back to interval number ${southCache.intervalIndex}: \r\n` + `${JSON.stringify(intervalsToQuery[0], null, 2)}\r\n`
-      );
     } else {
       this.logger.trace(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     }
 
-    if (!this.runProgress$) {
-      // For history queries, the historyQueryHandler is not called from the run method, so the runProgress$ promise must be set here instead
-      this.runProgress$ = new DeferredPromise();
-    }
-
-    for (const [index, interval] of intervalsToQuery.entries()) {
+    for (const [index, interval] of intervals.entries()) {
       const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
 
       if (index !== intervals.length - 1) {
@@ -352,7 +338,6 @@ export default class SouthConnector {
     if (this.runProgress$) {
       this.logger.debug('Waiting for South task to finish');
       await this.runProgress$.promise;
-      console.log('after promise');
     }
 
     for (const cronJob of this.cronByScanModeIds.values()) {
@@ -363,5 +348,63 @@ export default class SouthConnector {
 
     await this.disconnect();
     this.stopping = false;
+  }
+
+  addItem(item: SouthItemDTO): void {
+    if (item.scanModeId) {
+      const scanMode = this.repositoryService.scanModeRepository.getScanMode(item.scanModeId);
+      if (!scanMode) {
+        this.logger.error(`Error when creating South item in cron jobs: scan mode ${item.scanModeId} not found`);
+        return;
+      }
+
+      let newCronJob = false;
+      if (!this.itemsByScanModeIds.get(item.scanModeId)) {
+        newCronJob = true;
+        this.itemsByScanModeIds.set(item.scanModeId, new Map());
+      }
+      this.itemsByScanModeIds.get(item.scanModeId)!.set(item.id, item);
+
+      // Create a new cron job if the scan mode was not already set, other the item will be taken by the task
+      if (newCronJob) {
+        this.createCronJob(scanMode);
+      }
+    }
+  }
+
+  updateItem(oldItem: SouthItemDTO, newItem: SouthItemCommandDTO): void {
+    if (newItem.scanModeId) {
+      const scanMode = this.repositoryService.scanModeRepository.getScanMode(newItem.scanModeId);
+      if (!scanMode) {
+        this.logger.error(`Error when creating South item in cron jobs: scan mode ${newItem.scanModeId} not found`);
+        return;
+      }
+    }
+
+    this.deleteItem(oldItem);
+    this.addItem(oldItem);
+  }
+
+  deleteItem(item: SouthItemDTO) {
+    if (!this.itemsByScanModeIds.get(item.scanModeId)) {
+      this.logger.error(`Error when removing South item from cron jobs: scan mode ${item.scanModeId} was not set`);
+      return;
+    }
+
+    if (!this.itemsByScanModeIds.get(item.scanModeId)!.get(item.id)) {
+      this.logger.error(`Error when removing South item from cron jobs: item ${item.id} was not set`);
+      return;
+    }
+
+    this.itemsByScanModeIds.get(item.scanModeId)!.delete(item.id);
+    if (this.itemsByScanModeIds.get(item.scanModeId)!.size === 0) {
+      this.itemsByScanModeIds.delete(item.scanModeId);
+      this.cronByScanModeIds.get(item.scanModeId)?.stop();
+      this.cronByScanModeIds.delete(item.scanModeId);
+    }
+  }
+
+  setLogger(value: pino.Logger) {
+    this.logger = value;
   }
 }
