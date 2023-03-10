@@ -1,34 +1,28 @@
-<div class="form-group">
-  <label>{{ 'authentication.title' | translate }}</label>
-  <select [formControl]="authCtrl.controls.type" [id]="'oib-auth-type-input-' + key" class="form-select mb-2 mr-sm-2">
-    <option *ngFor="let auth of authTypes" [ngValue]="auth">{{ auth | authTypesEnum }}</option>
-  </select>
-  <label *ngIf="authCtrl.controls.type.value === 'basic'" [for]="'oib-auth-key-input-' + key"
-    >{{ 'authentication.username' | translate }}</label
-  >
-  <label *ngIf="authCtrl.controls.type.value === 'api-key'" [for]="'oib-auth-key-input-' + key"
-    >{{ 'authentication.api-key' | translate }}</label
-  >
-  <label *ngIf="authCtrl.controls.type.value === 'bearer'" [for]="'oib-auth-key-input-' + key"
-    >{{ 'authentication.bearer' | translate }}</label
-  >
-  <input
-    *ngIf="authCtrl.controls.type.value === 'basic' || authCtrl.controls.type.value === 'bearer' || authCtrl.controls.type.value === 'api-key'"
-    [formControl]="authCtrl.controls.key"
-    [id]="'oib-auth-key-input-' + key"
-    class="form-control"
-  />
+<select [formControl]="authCtrl.controls.type" [id]="'oib-auth-type-input-' + key" class="form-select mb-2 mr-sm-2">
+  <option *ngFor="let auth of authTypes" [ngValue]="auth">{{ auth | authTypesEnum }}</option>
+</select>
+<ng-container *ngIf="authCtrl.controls.type.value === 'basic'">
+  <label [for]="'oib-auth-username-input-' + key"> {{ 'authentication.username' | translate }} </label>
+  <input [formControl]="authCtrl.controls.username" [id]="'oib-auth-username-input-' + key" class="form-control" />
+  <label [for]="'oib-auth-password-input-' + key"> {{ 'authentication.password' | translate }} </label>
+  <input [formControl]="authCtrl.controls.password" [id]="'oib-auth-password-input-' + key" type="password" class="form-control" />
+</ng-container>
 
-  <label *ngIf="authCtrl.controls.type.value === 'basic'" [for]="'oib-auth-secret-input-' + key"
-    >{{ 'authentication.password' | translate }}</label
-  >
-  <label *ngIf="authCtrl.controls.type.value === 'api-key'" [for]="'oib-auth-secret-input-' + key"
-    >{{ 'authentication.secret' | translate }}</label
-  >
-  <input
-    *ngIf="authCtrl.controls.type.value === 'basic' || authCtrl.controls.type.value === 'api-key'"
-    [formControl]="authCtrl.controls.secret"
-    [id]="'oib-auth-secret-input-' + key"
-    class="form-control"
-  />
-</div>
+<ng-container *ngIf="authCtrl.controls.type.value === 'bearer'">
+  <label [for]="'oib-auth-token-input-' + key"> {{ 'authentication.token' | translate }} </label>
+  <input [formControl]="authCtrl.controls.token" [id]="'oib-auth-token-input-' + key" type="password" class="form-control" />
+</ng-container>
+
+<ng-container *ngIf="authCtrl.controls.type.value === 'api-key'">
+  <label [for]="'oib-auth-api-key-input-' + key"> {{ 'authentication.api-key' | translate }} </label>
+  <input [formControl]="authCtrl.controls.key" [id]="'oib-auth-api-key-input-' + key" class="form-control" />
+  <label [for]="'oib-auth-api-secret-input-' + key">{{ 'authentication.secret' | translate }}</label>
+  <input [formControl]="authCtrl.controls.secret" [id]="'oib-auth-api-secret-input-' + key" type="password" class="form-control" />
+</ng-container>
+
+<ng-container *ngIf="authCtrl.controls.type.value === 'cert'">
+  <label [for]="'oib-auth-cert-path-input-' + key"> {{ 'authentication.cert-path' | translate }} </label>
+  <input [formControl]="authCtrl.controls.certPath" [id]="'oib-auth-cert-path-input-' + key" class="form-control" />
+  <label [for]="'oib-auth-key-path-input-' + key"> {{ 'authentication.key-path' | translate }} </label>
+  <input [formControl]="authCtrl.controls.keyPath" [id]="'oib-auth-key-path-input-' + key" class="form-control" />
+</ng-container>

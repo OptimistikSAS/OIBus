@@ -4,8 +4,12 @@ import * as httpRequestStaticFunctions from './http-request-static-functions';
 import { FetchError } from './http-request-static-functions';
 
 import { Authentication } from '../../shared/model/engine.model';
+import EncryptionService from './encryption.service';
+import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 
 jest.mock('node:fs');
+
+const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 
 // Mock node-fetch
 jest.mock('node-fetch');
@@ -18,8 +22,8 @@ describe('HTTP request static functions', () => {
 
   it('should add basic authorization header', async () => {
     const headers = {};
-    const basicAuth: Authentication = { type: 'basic', key: 'username', secret: 'password' };
-    httpRequestStaticFunctions.addAuthenticationToHeaders(headers, basicAuth);
+    const basicAuth: Authentication = { type: 'basic', username: 'username', password: 'password' };
+    await httpRequestStaticFunctions.addAuthenticationToHeaders(headers, basicAuth, encryptionService);
 
     expect(headers).toEqual({ Authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' });
   });
@@ -27,24 +31,24 @@ describe('HTTP request static functions', () => {
   it('should add api key header', async () => {
     const headers = {};
     const apiKeyAuth: Authentication = { type: 'api-key', key: 'myKey', secret: 'mySecret' };
-    httpRequestStaticFunctions.addAuthenticationToHeaders(headers, apiKeyAuth);
+    await httpRequestStaticFunctions.addAuthenticationToHeaders(headers, apiKeyAuth, encryptionService);
 
     expect(headers).toEqual({ myKey: 'mySecret' });
   });
 
   it('should add bearer authorization header', async () => {
     const headers = {};
-    const bearerAuth: Authentication = { type: 'bearer', key: 'unused', secret: 'token' };
+    const bearerAuth: Authentication = { type: 'bearer', token: 'token' };
 
-    httpRequestStaticFunctions.addAuthenticationToHeaders(headers, bearerAuth);
+    await httpRequestStaticFunctions.addAuthenticationToHeaders(headers, bearerAuth, encryptionService);
 
     expect(headers).toEqual({ Authorization: 'Bearer token' });
   });
 
   it('should throw an error if bad authentication type', async () => {
     const headers = {};
-    const noAuth: Authentication = { type: 'none', key: '', secret: '' };
-    httpRequestStaticFunctions.addAuthenticationToHeaders(headers, noAuth);
+    const noAuth: Authentication = { type: 'none' };
+    await httpRequestStaticFunctions.addAuthenticationToHeaders(headers, noAuth, encryptionService);
 
     expect(headers).toEqual({});
   });

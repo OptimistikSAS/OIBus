@@ -5,6 +5,7 @@ import FormData from 'form-data';
 import fetch from 'node-fetch';
 
 import { Authentication } from '../../shared/model/engine.model';
+import EncryptionService from './encryption.service';
 
 export interface FetchError extends Error {
   responseError?: boolean;
@@ -14,24 +15,31 @@ export interface FetchError extends Error {
 /**
  * Mutate the headers to add authentication headers according to the type of authentication
  */
-const addAuthenticationToHeaders = (headers: any, authentication: Authentication): void => {
+const addAuthenticationToHeaders = async (
+  headers: any,
+  authentication: Authentication,
+  encryptionService: EncryptionService
+): Promise<void> => {
   switch (authentication.type) {
     case 'basic':
-      headers.Authorization = `Basic ${Buffer.from(`${authentication.key}:${authentication.secret}`).toString('base64')}`;
+      headers.Authorization = `Basic ${Buffer.from(
+        `${authentication.username}:${await encryptionService.decryptText(authentication.password)}`
+      ).toString('base64')}`;
       break;
 
     case 'api-key':
       if (!authentication.key) {
         throw new Error(`Authentication type API key needs a key.`);
       }
-      headers[authentication.key] = authentication.secret;
+      headers[authentication.key] = await encryptionService.decryptText(authentication.secret);
       break;
 
     case 'bearer':
-      headers.Authorization = `Bearer ${authentication.secret}`;
+      headers.Authorization = `Bearer ${await encryptionService.decryptText(authentication.token)}`;
       break;
 
     case 'none':
+    default:
       return;
   }
 };
