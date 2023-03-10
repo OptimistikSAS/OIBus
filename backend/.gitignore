@@ -4,6 +4,6 @@ npm-debug.log
 yarn-error.log
 
 /dist
-/tests/coverage
-/tests/legacy-coverage
-/tests/out-tsc
+/src/tests/coverage
+/src/tests/legacy-coverage
+/src/tests/out-tsc
