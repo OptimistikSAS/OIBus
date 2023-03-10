@@ -22,7 +22,7 @@ class TestComponent {
     key: 'myOibAuthentication',
     type: 'OibAuthentication',
     label: 'Select field',
-    authTypes: ['none', 'bearer', 'api-key', 'basic']
+    authTypes: ['none', 'bearer', 'api-key', 'basic', 'cert']
   } as OibAuthenticationFormControl;
 
   form = new FormGroup({
@@ -44,12 +44,32 @@ class OibFormComponentTester extends ComponentTester<TestComponent> {
     return this.select('#oib-auth-type-input-myOibAuthentication')!;
   }
 
+  get oibFormInputUsername() {
+    return this.input('#oib-auth-username-input-myOibAuthentication')!;
+  }
+
+  get oibFormInputPassword() {
+    return this.input('#oib-auth-password-input-myOibAuthentication')!;
+  }
+
+  get oibFormInputToken() {
+    return this.input('#oib-auth-token-input-myOibAuthentication')!;
+  }
+
+  get oibFormInputCertPath() {
+    return this.input('#oib-auth-cert-path-input-myOibAuthentication')!;
+  }
+
+  get oibFormInputKeyPath() {
+    return this.input('#oib-auth-key-path-input-myOibAuthentication')!;
+  }
+
   get oibFormInputKey() {
-    return this.input('#oib-auth-key-input-myOibAuthentication')!;
+    return this.input('#oib-auth-api-key-input-myOibAuthentication')!;
   }
 
   get oibFormInputSecret() {
-    return this.input('#oib-auth-secret-input-myOibAuthentication')!;
+    return this.input('#oib-auth-api-secret-input-myOibAuthentication')!;
   }
 }
 
@@ -67,26 +87,58 @@ describe('OibAuthComponent', () => {
 
   it('should have a select input', () => {
     expect(tester.oibFormInputAuthType).not.toBeNull();
+    expect(tester.oibFormInputAuthType).toHaveSelectedLabel('None');
     expect(tester.oibFormInputKey).toBeNull();
     expect(tester.oibFormInputSecret).toBeNull();
+    expect(tester.oibFormInputUsername).toBeNull();
+    expect(tester.oibFormInputPassword).toBeNull();
+    expect(tester.oibFormInputToken).toBeNull();
+    expect(tester.oibFormInputCertPath).toBeNull();
+    expect(tester.oibFormInputKeyPath).toBeNull();
   });
 
   it('should change value', () => {
     tester.oibFormInputAuthType.selectLabel('Basic auth');
-    expect(tester.oibFormInputKey).not.toBeNull();
-    expect(tester.oibFormInputSecret).not.toBeNull();
-    tester.oibFormInputKey.fillWith('my username');
-    tester.oibFormInputSecret.fillWith('my password');
+    expect(tester.oibFormInputKey).toBeNull();
+    expect(tester.oibFormInputSecret).toBeNull();
+    expect(tester.oibFormInputUsername).not.toBeNull();
+    expect(tester.oibFormInputPassword).not.toBeNull();
+    expect(tester.oibFormInputToken).toBeNull();
+    expect(tester.oibFormInputCertPath).toBeNull();
+    expect(tester.oibFormInputKeyPath).toBeNull();
+    tester.oibFormInputUsername.fillWith('my username');
+    tester.oibFormInputPassword.fillWith('my password');
 
     tester.oibFormInputAuthType.selectLabel('Bearer');
-    expect(tester.oibFormInputKey).not.toBeNull();
+    expect(tester.oibFormInputKey).toBeNull();
     expect(tester.oibFormInputSecret).toBeNull();
-    tester.oibFormInputKey.fillWith('my bearer');
+    expect(tester.oibFormInputUsername).toBeNull();
+    expect(tester.oibFormInputPassword).toBeNull();
+    expect(tester.oibFormInputToken).not.toBeNull();
+    expect(tester.oibFormInputCertPath).toBeNull();
+    expect(tester.oibFormInputKeyPath).toBeNull();
+    tester.oibFormInputToken.fillWith('my bearer');
 
     tester.oibFormInputAuthType.selectLabel('API key');
     expect(tester.oibFormInputKey).not.toBeNull();
     expect(tester.oibFormInputSecret).not.toBeNull();
+    expect(tester.oibFormInputUsername).toBeNull();
+    expect(tester.oibFormInputPassword).toBeNull();
+    expect(tester.oibFormInputToken).toBeNull();
+    expect(tester.oibFormInputCertPath).toBeNull();
+    expect(tester.oibFormInputKeyPath).toBeNull();
     tester.oibFormInputKey.fillWith('my key');
     tester.oibFormInputSecret.fillWith('my secret');
+
+    tester.oibFormInputAuthType.selectLabel('Certificate');
+    expect(tester.oibFormInputKey).toBeNull();
+    expect(tester.oibFormInputSecret).toBeNull();
+    expect(tester.oibFormInputUsername).toBeNull();
+    expect(tester.oibFormInputPassword).toBeNull();
+    expect(tester.oibFormInputToken).toBeNull();
+    expect(tester.oibFormInputCertPath).not.toBeNull();
+    expect(tester.oibFormInputKeyPath).not.toBeNull();
+    tester.oibFormInputKeyPath.fillWith('my key path');
+    tester.oibFormInputCertPath.fillWith('my cert path');
   });
 });

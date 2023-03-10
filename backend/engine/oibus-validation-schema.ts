@@ -55,9 +55,14 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
       proxyId: Joi.string().required().allow(null, ''),
       authentication: Joi.object({
         type: Joi.string().required().allow('none', 'basic', 'bearer', 'api-key'),
-        key: Joi.string().required().allow(''),
-        secret: Joi.string().required().allow('')
-      })
+        username: Joi.optional(),
+        password: Joi.optional(),
+        token: Joi.optional(),
+        key: Joi.optional(),
+        secret: Joi.optional(),
+        certPath: Joi.optional(),
+        keyPath: Joi.optional()
+      }).required()
     })
   })
 });

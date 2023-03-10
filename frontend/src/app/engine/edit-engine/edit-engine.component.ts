@@ -1,20 +1,22 @@
 import { Component, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { NonNullableFormBuilder, Validators } from '@angular/forms';
+import { FormControl, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NgForOf, NgIf } from '@angular/common';
 import { EngineService } from '../../services/engine.service';
 import { ProxyService } from '../../services/proxy.service';
 import { ProxyDTO } from '../../../../../shared/model/proxy.model';
-import { AuthenticationType, EngineSettingsCommandDTO, LOG_LEVELS, LogLevel } from '../../../../../shared/model/engine.model';
+import { EngineSettingsCommandDTO, LOG_LEVELS, LogLevel } from '../../../../../shared/model/engine.model';
 import { NotificationService } from '../../shared/notification.service';
 import { formDirectives } from '../../shared/form-directives';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
+import { createAuthenticationForm, getAuthenticationDTOFromForm } from '../../shared/utils';
+import { OibAuthComponent } from '../../shared/form/oib-auth/oib-auth.component';
 
 @Component({
   selector: 'oib-edit-engine',
   standalone: true,
-  imports: [TranslateModule, ...formDirectives, RouterLink, NgForOf, NgIf, SaveButtonComponent],
+  imports: [TranslateModule, ...formDirectives, RouterLink, NgForOf, NgIf, SaveButtonComponent, OibAuthComponent],
   templateUrl: './edit-engine.component.html',
   styleUrls: ['./edit-engine.component.scss']
 })
@@ -60,11 +62,7 @@ export class EditEngineComponent implements OnInit {
         verbose: false,
         address: ['', Validators.pattern(/http.*/)],
         proxy: null as ProxyDTO | null,
-        authentication: this.fb.group({
-          type: null as AuthenticationType | null,
-          key: '',
-          secret: ''
-        })
+        authentication: new FormControl(createAuthenticationForm({ type: 'none' }))
       })
     })
   });
@@ -119,11 +117,7 @@ export class EditEngineComponent implements OnInit {
             verbose: settings.healthSignal.http.verbose,
             interval: settings.healthSignal.http.interval,
             address: settings.healthSignal.http.address,
-            authentication: {
-              type: settings.healthSignal.http.authentication.type,
-              key: settings.healthSignal.http.authentication.key,
-              secret: settings.healthSignal.http.authentication.secret
-            }
+            authentication: createAuthenticationForm(settings.healthSignal.http.authentication)
           }
         }
       });
@@ -173,11 +167,7 @@ export class EditEngineComponent implements OnInit {
           verbose: formValue.healthSignal!.http!.verbose!,
           address: formValue.healthSignal!.http!.address!,
           proxyId: formValue.healthSignal!.http!.proxy ? formValue.healthSignal!.http!.proxy.id : null,
-          authentication: {
-            type: formValue.healthSignal!.http!.authentication!.type!,
-            key: formValue.healthSignal!.http!.authentication!.key!,
-            secret: formValue.healthSignal!.http!.authentication!.secret!
-          }
+          authentication: getAuthenticationDTOFromForm(formValue.healthSignal!.http!.authentication!)
         }
       }
     };

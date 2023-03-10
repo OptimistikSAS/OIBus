@@ -71,10 +71,11 @@
       "oi": "OI"
     },
     "auth-types": {
-      "none":  "None",
-      "basic":  "Basic auth",
-      "bearer":  "Bearer",
-      "api-key":  "API key"
+      "none": "None",
+      "basic": "Basic auth",
+      "bearer": "Bearer",
+      "api-key": "API key",
+      "cert": "Certificate"
     }
   },
   "nav": {
@@ -352,6 +353,8 @@
     "password": "Password",
     "api-key": "API key",
     "secret": "Secret",
-    "bearer": "Bearer"
+    "token": "Bearer token",
+    "cert-path": "Certificate path",
+    "key-path": "Private key path"
   }
 }
