@@ -1,7 +1,7 @@
 import { addAuthenticationToHeaders, httpSend } from './http-request-static-functions';
 import pino from 'pino';
 
-import { Authentication, HealthSignalDTO } from '../../shared/model/engine.model';
+import { HealthSignalDTO } from '../../shared/model/engine.model';
 import ProxyService from './proxy.service';
 import EncryptionService from './encryption.service';
 
@@ -62,14 +62,7 @@ export default class HealthSignalService {
       const headers = { 'Content-Type': 'application/json' };
       const proxyAgent = this._settings.http.proxyId ? await this.proxyService.createProxyAgent(this._settings.http.proxyId) : null;
 
-      const authentication: Authentication = {
-        type: this._settings.http.authentication.type,
-        key: this._settings.http.authentication.key,
-        secret: this._settings.http.authentication.secret
-          ? await this.encryptionService.decryptText(this._settings.http.authentication.secret)
-          : ''
-      };
-      addAuthenticationToHeaders(headers, authentication);
+      await addAuthenticationToHeaders(headers, this._settings.http.authentication, this.encryptionService);
       await httpSend(this._settings.http.address, 'POST', headers, data, 10, proxyAgent);
       this._logger.trace(`Health signal successfully sent to "${this._settings.http.address}".`);
     } catch (error) {

@@ -7,8 +7,8 @@ import selfSigned from 'selfsigned';
 
 import { createFolder, filesExists } from './utils';
 
-import { SouthConnectorCommandDTO } from '../../shared/model/south-connector.model';
-import { NorthConnectorCommandDTO } from '../../shared/model/north-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../shared/model/south-connector.model';
+import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../shared/model/north-connector.model';
 import { OibFormControl } from '../../shared/model/form.model';
 
 export const CERT_FOLDER = 'certs';
@@ -137,17 +137,67 @@ export default class EncryptionService {
 
   async encryptConnectorSecrets(
     command: SouthConnectorCommandDTO | NorthConnectorCommandDTO,
+    connector: SouthConnectorDTO | NorthConnectorDTO | null,
     settings: Array<OibFormControl>
   ): Promise<SouthConnectorCommandDTO | NorthConnectorCommandDTO> {
     const encryptedCommand: SouthConnectorCommandDTO | NorthConnectorCommandDTO = JSON.parse(JSON.stringify(command));
     for (const fieldSettings of settings) {
       if (fieldSettings.type === 'OibSecret') {
-        encryptedCommand.settings[fieldSettings.key] = await this.encryptText(encryptedCommand.settings[fieldSettings.key]);
+        if (encryptedCommand.settings[fieldSettings.key]) {
+          encryptedCommand.settings[fieldSettings.key] = await this.encryptText(encryptedCommand.settings[fieldSettings.key]);
+        } else {
+          encryptedCommand.settings[fieldSettings.key] = connector?.settings[fieldSettings.key] || '';
+        }
       } else if (fieldSettings.type === 'OibAuthentication') {
-        encryptedCommand.settings[fieldSettings.key].secret = await this.encryptText(encryptedCommand.settings[fieldSettings.key].secret);
+        switch (encryptedCommand.settings[fieldSettings.key].type) {
+          case 'api-key':
+            encryptedCommand.settings[fieldSettings.key].secret = encryptedCommand.settings[fieldSettings.key].secret
+              ? await this.encryptText(encryptedCommand.settings[fieldSettings.key].secret)
+              : connector?.settings[fieldSettings.key].secret || '';
+            break;
+          case 'bearer':
+            encryptedCommand.settings[fieldSettings.key].token = encryptedCommand.settings[fieldSettings.key].token
+              ? await this.encryptText(encryptedCommand.settings[fieldSettings.key].token)
+              : connector?.settings[fieldSettings.key].token || '';
+            break;
+          case 'basic':
+            encryptedCommand.settings[fieldSettings.key].password = encryptedCommand.settings[fieldSettings.key].password
+              ? await this.encryptText(encryptedCommand.settings[fieldSettings.key].password)
+              : connector?.settings[fieldSettings.key].password || '';
+            break;
+          case 'none':
+          case 'cert':
+          default:
+            break;
+        }
       }
     }
     return encryptedCommand;
+  }
+
+  filterSecrets(connector: SouthConnectorDTO | NorthConnectorDTO, settings: Array<OibFormControl>): SouthConnectorDTO | NorthConnectorDTO {
+    for (const fieldSettings of settings) {
+      if (fieldSettings.type === 'OibSecret') {
+        connector.settings[fieldSettings.key] = '';
+      } else if (fieldSettings.type === 'OibAuthentication') {
+        switch (connector.settings[fieldSettings.key].type) {
+          case 'api-key':
+            connector.settings[fieldSettings.key].secret = '';
+            break;
+          case 'bearer':
+            connector.settings[fieldSettings.key].token = '';
+            break;
+          case 'basic':
+            connector.settings[fieldSettings.key].password = '';
+            break;
+          case 'none':
+          case 'cert':
+          default:
+            break;
+        }
+      }
+    }
+    return connector;
   }
 
   /**
