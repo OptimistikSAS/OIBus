@@ -4,9 +4,9 @@
     "outDir": "./dist"
   },
   "files": [
-    "index.ts",
-    "service/logger/sqlite-transport.ts",
-    "service/logger/loki-transport.ts"
+    "src/index.ts",
+    "src/service/logger/sqlite-transport.ts",
+    "src/service/logger/loki-transport.ts"
   ],
   "exclude": [
     "./**/*.spec.ts",
