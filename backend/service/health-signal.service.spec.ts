@@ -35,9 +35,7 @@ describe('HealthSignal service', () => {
         address: 'http://localhost:2223',
         proxyId: null,
         authentication: {
-          type: 'None',
-          key: '',
-          secret: ''
+          type: 'none'
         },
         verbose: true
       }
@@ -63,9 +61,7 @@ describe('HealthSignal service', () => {
         address: 'http://localhost:2223',
         proxyId: null,
         authentication: {
-          type: 'None',
-          key: '',
-          secret: ''
+          type: 'none'
         },
         verbose: true
       }

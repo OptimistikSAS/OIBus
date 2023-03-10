@@ -24,8 +24,17 @@ const manifest: NorthConnectorManifest = {
     host: Joi.string()
       .required()
       .uri({ scheme: ['http', 'https', 'HTTP', 'HTTPS'] }),
-    proxy: Joi.string(),
-    authentication: Joi.object()
+    proxy: Joi.string().optional(),
+    authentication: Joi.object({
+      type: Joi.string().required().allow('none', 'basic'),
+      username: Joi.optional(),
+      password: Joi.optional(),
+      token: Joi.optional(),
+      key: Joi.optional(),
+      secret: Joi.optional(),
+      certPath: Joi.optional(),
+      keyPath: Joi.optional()
+    }).required()
   })
 };
 export default manifest;

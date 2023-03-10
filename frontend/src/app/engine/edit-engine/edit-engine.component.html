@@ -227,6 +227,13 @@
                 </div>
               </div>
             </div>
+            <div class="row" *ngIf="engineForm.controls.healthSignal.controls.http.controls.enabled.value">
+              <oib-auth
+                key="health-signal-authentication"
+                formControlName="authentication"
+                [authTypes]="['none', 'basic', 'bearer', 'api-key']"
+              ></oib-auth>
+            </div>
           </div>
         </div>
       </form>

@@ -2,7 +2,7 @@ import { ConnectorFormValidator, OibFormControl } from '../../../../shared/model
 import { FormControl, FormControlOptions, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { ScanModeDTO } from '../../../../shared/model/scan-mode.model';
 import { ProxyDTO } from '../../../../shared/model/proxy.model';
-import { Authentication } from '../../../../shared/model/engine.model';
+import { Authentication, AuthenticationType } from '../../../../shared/model/engine.model';
 
 /**
  * Create the validators associated to an input from the settings schema
@@ -30,6 +30,109 @@ export const getValidators = (validators: Array<ConnectorFormValidator>): FormCo
   return { validators: formValidators };
 };
 
+export const createAuthenticationForm = (value: Authentication) => {
+  switch (value?.type) {
+    case 'basic':
+      return {
+        type: 'basic' as AuthenticationType | null,
+        username: value.username as string | null,
+        password: value.password as string | null,
+        token: null as string | null,
+        key: null as string | null,
+        secret: null as string | null,
+        certPath: null as string | null,
+        keyPath: null as string | null
+      };
+    case 'bearer':
+      return {
+        type: 'bearer' as AuthenticationType | null,
+        username: null as string | null,
+        password: null as string | null,
+        token: value.token as string | null,
+        key: null as string | null,
+        secret: null as string | null,
+        certPath: null as string | null,
+        keyPath: null as string | null
+      };
+    case 'api-key':
+      return {
+        type: 'api-key' as AuthenticationType | null,
+        username: null as string | null,
+        password: null as string | null,
+        token: null as string | null,
+        key: value.key as string | null,
+        secret: value.secret as string | null,
+        certPath: null as string | null,
+        keyPath: null as string | null
+      };
+    case 'cert':
+      return {
+        type: 'cert' as AuthenticationType | null,
+        username: null as string | null,
+        password: null as string | null,
+        token: null as string | null,
+        key: null as string | null,
+        secret: null as string | null,
+        certPath: value.certPath as string | null,
+        keyPath: value.keyPath as string | null
+      };
+    case 'none':
+    default:
+      return {
+        type: 'none' as AuthenticationType | null,
+        username: null as string | null,
+        password: null as string | null,
+        token: null as string | null,
+        key: null as string | null,
+        secret: null as string | null,
+        certPath: null as string | null,
+        keyPath: null as string | null
+      };
+  }
+};
+
+export const getAuthenticationDTOFromForm = (
+  formValue: Partial<{
+    type: AuthenticationType | null;
+    username: string | null;
+    password: string | null;
+    token: string | null;
+    key: string | null;
+    secret: string | null;
+    certPath: string | null;
+    keyPath: string | null;
+  }>
+): Authentication => {
+  switch (formValue.type) {
+    case 'basic':
+      return {
+        type: formValue.type,
+        username: formValue.username!,
+        password: formValue.password!
+      };
+    case 'bearer':
+      return {
+        type: formValue.type,
+        token: formValue.token!
+      };
+    case 'api-key':
+      return {
+        type: formValue.type,
+        key: formValue.key!,
+        secret: formValue.secret!
+      };
+    case 'cert':
+      return {
+        type: formValue.type,
+        certPath: formValue.certPath!,
+        keyPath: formValue.keyPath!
+      };
+    case 'none':
+    default:
+      return { type: 'none' };
+  }
+};
+
 export const createInput = (value: OibFormControl, form: FormGroup, scanModes: Array<ScanModeDTO> = [], proxies: Array<ProxyDTO> = []) => {
   switch (value.type) {
     case 'OibText':
@@ -51,12 +154,7 @@ export const createInput = (value: OibFormControl, form: FormGroup, scanModes: A
       form.addControl(value.key, new FormControl(proxy?.id, getValidators(value.validators || [])));
       break;
     case 'OibAuthentication':
-      const authentication: Authentication = {
-        type: value.currentValue?.type || 'none',
-        key: value.currentValue?.key || '',
-        secret: ''
-      };
-      form.addControl(value.key, new FormControl(authentication, getValidators(value.validators || [])));
+      form.addControl(value.key, new FormControl(createAuthenticationForm(value.currentValue!), getValidators(value.validators || [])));
       break;
   }
 };

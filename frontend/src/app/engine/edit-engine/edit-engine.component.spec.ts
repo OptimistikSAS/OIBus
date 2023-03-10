@@ -161,8 +161,8 @@ describe('EditEngineComponent', () => {
         proxyId: null,
         authentication: {
           type: 'basic',
-          key: 'oibus',
-          secret: 'pass'
+          username: 'oibus',
+          password: 'pass'
         }
       }
     }
@@ -314,8 +314,8 @@ describe('EditEngineComponent', () => {
           proxyId: null,
           authentication: {
             type: 'basic',
-            key: 'oibus',
-            secret: 'pass'
+            username: 'oibus',
+            password: 'pass'
           }
         }
       }

@@ -46,8 +46,8 @@ const defaultEngineSettings: EngineSettingsCommandDTO = {
       proxyId: null,
       authentication: {
         type: 'basic',
-        key: '',
-        secret: ''
+        username: '',
+        password: ''
       }
     }
   }
@@ -67,8 +67,7 @@ export default class EngineRepository {
       'log_loki_address TEXT, log_loki_token_address TEXT, log_loki_proxy_id TEXT, log_loki_username TEXT, log_loki_password TEXT, ' +
       'health_signal_log_enabled INTEGER, health_signal_log_interval INTEGER, health_signal_http_enabled INTEGER, ' +
       'health_signal_http_interval INTEGER, health_signal_http_verbose INTEGER, health_signal_http_address TEXT, ' +
-      'health_signal_http_proxy_id TEXT, health_signal_http_authentication_type TEXT, health_signal_http_authentication_key TEXT, ' +
-      'health_signal_http_authentication_secret TEXT, crypto_settings TEXT, ' +
+      'health_signal_http_proxy_id TEXT, health_signal_http_authentication TEXT, crypto_settings TEXT, ' +
       `FOREIGN KEY(log_loki_proxy_id) REFERENCES ${PROXY_TABLE}(id), ` +
       `FOREIGN KEY(health_signal_http_proxy_id) REFERENCES ${PROXY_TABLE}(id));`;
     this.database.prepare(query).run();
@@ -106,9 +105,7 @@ export default class EngineRepository {
       'health_signal_http_verbose AS healthSignalHttpVerbose, ' +
       'health_signal_http_address AS healthSignalHttpAddress, ' +
       'health_signal_http_proxy_id AS healthSignalHttpProxyId, ' +
-      'health_signal_http_authentication_type AS healthSignalHttpAuthenticationType, ' +
-      'health_signal_http_authentication_key AS healthSignalHttpAuthenticationKey, ' +
-      'health_signal_http_authentication_secret AS healthSignalHttpAuthenticationSecret ' +
+      'health_signal_http_authentication AS healthSignalHttpAuthentication ' +
       `FROM ${ENGINE_TABLE};`;
     const results = this.database.prepare(query).all();
 
@@ -151,11 +148,7 @@ export default class EngineRepository {
             verbose: results[0].healthSignalHttpVerbose === 1,
             address: results[0].healthSignalHttpAddress,
             proxyId: results[0].healthSignalHttpProxyId,
-            authentication: {
-              type: results[0].healthSignalHttpAuthenticationType,
-              key: results[0].healthSignalHttpAuthenticationKey,
-              secret: results[0].healthSignalHttpAuthenticationSecret
-            }
+            authentication: JSON.parse(Buffer.from(results[0].healthSignalHttpAuthentication, 'base64').toString())
           }
         }
       };
@@ -190,10 +183,9 @@ export default class EngineRepository {
       'health_signal_http_verbose = ?, ' +
       'health_signal_http_address = ?, ' +
       'health_signal_http_proxy_id = ?, ' +
-      'health_signal_http_authentication_type = ?, ' +
-      'health_signal_http_authentication_key = ?, ' +
-      'health_signal_http_authentication_secret = ? ' +
+      'health_signal_http_authentication = ? ' +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINE_TABLE});`;
+
     this.database
       .prepare(query)
       .run(
@@ -219,9 +211,7 @@ export default class EngineRepository {
         +command.healthSignal.http.verbose,
         command.healthSignal.http.address,
         command.healthSignal.http.proxyId,
-        command.healthSignal.http.authentication.type,
-        command.healthSignal.http.authentication.key,
-        command.healthSignal.http.authentication.secret
+        Buffer.from(JSON.stringify(command.healthSignal.http.authentication)).toString('base64')
       );
   }
 
@@ -254,7 +244,7 @@ export default class EngineRepository {
       JSON.stringify({ algorithm, initVector: initVector.toString('base64'), securityKey: securityKey.toString('base64') })
     ).toString('base64');
 
-    const query = `INSERT INTO ${ENGINE_TABLE} VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
+    const query = `INSERT INTO ${ENGINE_TABLE} VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
     this.database
       .prepare(query)
       .run(
@@ -281,9 +271,7 @@ export default class EngineRepository {
         +command.healthSignal.http.verbose,
         command.healthSignal.http.address,
         command.healthSignal.http.proxyId,
-        command.healthSignal.http.authentication.type,
-        command.healthSignal.http.authentication.key,
-        command.healthSignal.http.authentication.secret,
+        Buffer.from(JSON.stringify(command.healthSignal.http.authentication)).toString('base64'),
         cryptoSettings
       );
   }

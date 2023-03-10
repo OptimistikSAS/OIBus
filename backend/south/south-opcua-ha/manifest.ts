@@ -76,20 +76,6 @@ const manifest: SouthConnectorManifest = {
       readDisplay: false
     },
     {
-      key: 'username',
-      type: 'OibText',
-      label: 'Username',
-      newRow: true,
-      readDisplay: false
-    },
-    {
-      key: 'password',
-      type: 'OibSecret',
-      label: 'Password',
-      newRow: false,
-      readDisplay: false
-    },
-    {
       key: 'securityMode',
       type: 'OibSelect',
       label: 'Security Mode',
@@ -121,22 +107,7 @@ const manifest: SouthConnectorManifest = {
       newRow: false,
       readDisplay: true
     },
-    {
-      key: 'certFile',
-      type: 'OibText',
-      label: 'Cert File',
-      defaultValue: '',
-      newRow: true,
-      readDisplay: false
-    },
-    {
-      key: 'keyFile',
-      type: 'OibText',
-      label: 'Key File',
-      defaultValue: '',
-      newRow: false,
-      readDisplay: false
-    }
+    { key: 'authentication', type: 'OibAuthentication', label: 'Authentication', newRow: true, authTypes: ['none', 'basic', 'cert'] }
   ],
   schema: Joi.object({
     url: Joi.string()
@@ -165,7 +136,17 @@ const manifest: SouthConnectorManifest = {
       'PubSub_Aes256_CTR'
     ),
     certFile: Joi.string().allow(''),
-    keyFile: Joi.string().allow('')
+    keyFile: Joi.string().allow(''),
+    authentication: Joi.object({
+      type: Joi.string().required().allow('none', 'basic'),
+      username: Joi.optional(),
+      password: Joi.optional(),
+      token: Joi.optional(),
+      key: Joi.optional(),
+      secret: Joi.optional(),
+      certPath: Joi.optional(),
+      keyPath: Joi.optional()
+    }).required()
   }),
   items: {
     scanMode: {

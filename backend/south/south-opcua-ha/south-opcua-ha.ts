@@ -23,6 +23,8 @@ import { ClientSession } from 'node-opcua-client/source/client_session';
 import { UserIdentityInfo } from 'node-opcua-client/source/user_identity_info';
 import { OPCUAClientOptions } from 'node-opcua-client/source/opcua_client';
 import { DateTime } from 'luxon';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 const AGGREGATE_TYPES = ['raw', 'count', 'max', 'min', 'avg'];
 type AggregateType = typeof AGGREGATE_TYPES[number];
@@ -69,7 +71,6 @@ export default class SouthOPCUAHA extends SouthConnector {
   }
 
   override async start(): Promise<void> {
-    await super.start();
     await initOpcuaCertificateFolders(this.baseFolder);
     if (!this.clientCertificateManager) {
       this.clientCertificateManager = new OPCUACertificateManager({
@@ -80,6 +81,7 @@ export default class SouthOPCUAHA extends SouthConnector {
       // It is useful for offline instances of OIBus where downloading openssl is not possible
       this.clientCertificateManager.state = 2;
     }
+    await super.start();
   }
 
   override async connect(): Promise<void> {
@@ -109,27 +111,31 @@ export default class SouthOPCUAHA extends SouthConnector {
       };
 
       let userIdentity: UserIdentityInfo;
-      // if (this.certificate.privateKey && this.certificate.cert) {
-      //   userIdentity = {
-      //     type: UserTokenType.Certificate,
-      //     certificateData: this.certificate.cert,
-      //     privateKey: Buffer.from(this.certificate.privateKey, 'utf-8').toString()
-      //   };
-      // } else
-      if (this.configuration.settings.username) {
-        userIdentity = {
-          type: UserTokenType.UserName,
-          userName: this.configuration.settings.username,
-          password: await this.encryptionService.decryptText(this.configuration.settings.password)
-        };
-      } else {
-        userIdentity = { type: UserTokenType.Anonymous };
+      switch (this.configuration.settings.authentication.type) {
+        case 'basic':
+          userIdentity = {
+            type: UserTokenType.UserName,
+            userName: this.configuration.settings.authentication.username,
+            password: await this.encryptionService.decryptText(this.configuration.settings.authentication.password)
+          };
+          break;
+        case 'cert':
+          const certContent = await fs.readFile(path.resolve(this.configuration.settings.authentication.certPath));
+          const privateKeyContent = await fs.readFile(path.resolve(this.configuration.settings.authentication.keyPath));
+          userIdentity = {
+            type: UserTokenType.Certificate,
+            certificateData: certContent,
+            privateKey: privateKeyContent.toString('utf8')
+          };
+          break;
+        default:
+          userIdentity = { type: UserTokenType.Anonymous };
       }
       this.session = await OPCUAClient.createSession(this.configuration.settings.url, userIdentity, options);
       this.logger.info(`OPCUA_HA ${this.configuration.name} connected`);
       await super.connect();
     } catch (error) {
-      this.logger.error(error);
+      this.logger.error(`Error while connecting to the OPCUA HA server: ${error}`);
       await this.internalDisconnect();
       this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.configuration.settings.retryInterval);
     }

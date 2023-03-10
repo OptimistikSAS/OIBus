@@ -53,13 +53,26 @@ export default class NorthConnectorController {
 
   async getNorthConnectors(ctx: KoaContext<void, Array<NorthConnectorDTO>>): Promise<void> {
     const northConnectors = ctx.app.repositoryService.northConnectorRepository.getNorthConnectors();
-    ctx.ok(northConnectors);
+    ctx.ok(
+      northConnectors.map(connector => {
+        const manifest = manifests.find(north => north.name === connector.type);
+        if (manifest) {
+          return ctx.app.encryptionService.filterSecrets(connector, manifest.settings);
+        }
+        return null;
+      })
+    );
   }
 
   async getNorthConnector(ctx: KoaContext<void, NorthConnectorDTO>): Promise<void> {
     const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
     if (northConnector) {
-      ctx.ok(northConnector);
+      const manifest = manifests.find(north => north.name === northConnector.type);
+      if (manifest) {
+        ctx.ok(ctx.app.encryptionService.filterSecrets(northConnector, manifest.settings));
+      } else {
+        ctx.throw(404, 'North type not found');
+      }
     } else {
       ctx.notFound();
     }
@@ -76,7 +89,7 @@ export default class NorthConnectorController {
 
       const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
-        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, manifest.settings);
+        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, null, manifest.settings);
         const northConnector = await ctx.app.reloadService.onCreateNorth(encryptedCommand as NorthConnectorCommandDTO);
         ctx.created(northConnector);
       } else {
@@ -93,12 +106,14 @@ export default class NorthConnectorController {
       if (!manifest) {
         return ctx.throw(404, 'North not found');
       }
-
+      const northSettings = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+      if (!northSettings) {
+        return ctx.notFound();
+      }
       await this.validator.validate(manifest.schema, ctx.request.body?.settings);
-
       const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
-        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, manifest.settings);
+        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, northSettings, manifest.settings);
         await ctx.app.reloadService.onUpdateNorthSettings(ctx.params.id, encryptedCommand as NorthConnectorCommandDTO);
         ctx.noContent();
       } else {
