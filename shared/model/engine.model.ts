@@ -1,11 +1,38 @@
-export const AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key'];
+export const AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key', 'cert'];
 export type AuthenticationType = typeof AUTHENTICATION_TYPES[number];
 
-export interface Authentication {
+interface BaseAuthentication {
   type: AuthenticationType;
+}
+
+export interface BasicAuthentication extends BaseAuthentication {
+  type: 'basic';
+  username: string;
+  password: string;
+}
+
+export interface BearerAuthentication extends BaseAuthentication {
+  type: 'bearer';
+  token: string;
+}
+
+export interface ApiKeyAuthentication extends BaseAuthentication {
+  type: 'api-key';
   key: string;
   secret: string;
 }
+
+export interface CertAuthentication extends BaseAuthentication {
+  type: 'cert';
+  keyPath: string;
+  certPath: string;
+}
+
+export interface NoAuthentication extends BaseAuthentication {
+  type: 'none';
+}
+
+export type Authentication = BasicAuthentication | BearerAuthentication | ApiKeyAuthentication | CertAuthentication | NoAuthentication;
 
 export const LOG_LEVELS = ['silent', 'error', 'warn', 'info', 'debug', 'trace'];
 export type LogLevel = typeof LOG_LEVELS[number];

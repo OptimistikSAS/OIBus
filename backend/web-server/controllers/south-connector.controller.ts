@@ -57,13 +57,26 @@ export default class SouthConnectorController {
 
   async getSouthConnectors(ctx: KoaContext<void, Array<SouthConnectorDTO>>): Promise<void> {
     const southConnectors = ctx.app.repositoryService.southConnectorRepository.getSouthConnectors();
-    ctx.ok(southConnectors);
+    ctx.ok(
+      southConnectors.map(connector => {
+        const manifest = manifests.find(south => south.name === connector.type);
+        if (manifest) {
+          return ctx.app.encryptionService.filterSecrets(connector, manifest.settings);
+        }
+        return null;
+      })
+    );
   }
 
   async getSouthConnector(ctx: KoaContext<void, SouthConnectorDTO>): Promise<void> {
     const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
     if (southConnector) {
-      ctx.ok(southConnector);
+      const manifest = manifests.find(south => south.name === southConnector.type);
+      if (manifest) {
+        ctx.ok(ctx.app.encryptionService.filterSecrets(southConnector, manifest.settings));
+      } else {
+        ctx.throw(404, 'South type not found');
+      }
     } else {
       ctx.notFound();
     }
@@ -80,7 +93,7 @@ export default class SouthConnectorController {
 
       const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
-        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, manifest.settings);
+        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, null, manifest.settings);
         const southConnector = await ctx.app.reloadService.onCreateSouth(encryptedCommand as SouthConnectorCommandDTO);
         ctx.created(southConnector);
       } else {
@@ -105,7 +118,7 @@ export default class SouthConnectorController {
       }
       const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
-        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, manifest.settings);
+        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, southSettings, manifest.settings);
         await ctx.app.reloadService.onUpdateSouthSettings(ctx.params.id, encryptedCommand as SouthConnectorCommandDTO);
         ctx.noContent();
       } else {

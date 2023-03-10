@@ -37,8 +37,7 @@ describe('Empty engine repository', () => {
         'log_loki_address TEXT, log_loki_token_address TEXT, log_loki_proxy_id TEXT, log_loki_username TEXT, ' +
         'log_loki_password TEXT, health_signal_log_enabled INTEGER, health_signal_log_interval INTEGER, ' +
         'health_signal_http_enabled INTEGER, health_signal_http_interval INTEGER, health_signal_http_verbose INTEGER, ' +
-        'health_signal_http_address TEXT, health_signal_http_proxy_id TEXT, health_signal_http_authentication_type TEXT, ' +
-        'health_signal_http_authentication_key TEXT, health_signal_http_authentication_secret TEXT, crypto_settings TEXT, ' +
+        'health_signal_http_address TEXT, health_signal_http_proxy_id TEXT, health_signal_http_authentication TEXT, crypto_settings TEXT, ' +
         'FOREIGN KEY(log_loki_proxy_id) REFERENCES proxy(id), FOREIGN KEY(health_signal_http_proxy_id) REFERENCES proxy(id));'
     );
 
@@ -81,8 +80,8 @@ describe('Empty engine repository', () => {
           proxyId: null,
           authentication: {
             type: 'basic',
-            key: '',
-            secret: ''
+            username: '',
+            password: ''
           }
         }
       }
@@ -95,7 +94,7 @@ describe('Empty engine repository', () => {
     };
     repository.createEngineSettings(command);
     expect(generateRandomId).toHaveBeenCalledWith();
-    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO engine VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);');
+    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO engine VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);');
     expect(run).toHaveBeenCalledWith(
       '123456',
       command.name,
@@ -120,9 +119,7 @@ describe('Empty engine repository', () => {
       +command.healthSignal.http.verbose,
       command.healthSignal.http.address,
       command.healthSignal.http.proxyId,
-      command.healthSignal.http.authentication.type,
-      command.healthSignal.http.authentication.key,
-      command.healthSignal.http.authentication.secret,
+      Buffer.from(JSON.stringify(command.healthSignal.http.authentication)).toString('base64'),
       Buffer.from(JSON.stringify(cryptoSettings)).toString('base64')
     );
 
@@ -168,9 +165,7 @@ describe('Empty engine repository', () => {
           address: '',
           proxyId: null,
           authentication: {
-            type: 'basic',
-            key: '',
-            secret: ''
+            type: 'none'
           }
         }
       }
@@ -182,8 +177,7 @@ describe('Empty engine repository', () => {
         'log_loki_interval = ?, log_loki_address = ?, log_loki_token_address = ?, log_loki_proxy_id = ?, log_loki_username = ?, ' +
         'log_loki_password = ?, health_signal_log_enabled = ?, health_signal_log_interval = ?, health_signal_http_enabled = ?, ' +
         'health_signal_http_interval = ?, health_signal_http_verbose = ?, health_signal_http_address = ?, ' +
-        'health_signal_http_proxy_id = ?, health_signal_http_authentication_type = ?, health_signal_http_authentication_key = ?, ' +
-        'health_signal_http_authentication_secret = ? WHERE rowid=(SELECT MIN(rowid) FROM engine);'
+        'health_signal_http_proxy_id = ?, health_signal_http_authentication = ? WHERE rowid=(SELECT MIN(rowid) FROM engine);'
     );
     expect(run).toHaveBeenCalledWith(
       command.name,
@@ -208,9 +202,7 @@ describe('Empty engine repository', () => {
       +command.healthSignal.http.verbose,
       command.healthSignal.http.address,
       command.healthSignal.http.proxyId,
-      command.healthSignal.http.authentication.type,
-      command.healthSignal.http.authentication.key,
-      command.healthSignal.http.authentication.secret
+      Buffer.from(JSON.stringify(command.healthSignal.http.authentication)).toString('base64')
     );
   });
 
@@ -246,9 +238,7 @@ describe('Non-empty Engine repository', () => {
     healthSignalHttpVerbose: 0,
     healthSignalHttpAddress: '',
     healthSignalHttpProxyId: null,
-    healthSignalHttpAuthenticationType: 'basic',
-    healthSignalHttpAuthenticationKey: '',
-    healthSignalHttpAuthenticationSecret: ''
+    healthSignalHttpAuthentication: Buffer.from(JSON.stringify({ type: 'basic', username: 'user', password: 'pass' })).toString('base64')
   };
   beforeEach(() => {
     jest.clearAllMocks();
@@ -270,9 +260,8 @@ describe('Non-empty Engine repository', () => {
         'log_loki_address TEXT, log_loki_token_address TEXT, log_loki_proxy_id TEXT, log_loki_username TEXT, ' +
         'log_loki_password TEXT, health_signal_log_enabled INTEGER, health_signal_log_interval INTEGER, ' +
         'health_signal_http_enabled INTEGER, health_signal_http_interval INTEGER, health_signal_http_verbose INTEGER, ' +
-        'health_signal_http_address TEXT, health_signal_http_proxy_id TEXT, health_signal_http_authentication_type TEXT, ' +
-        'health_signal_http_authentication_key TEXT, health_signal_http_authentication_secret TEXT, crypto_settings TEXT, ' +
-        'FOREIGN KEY(log_loki_proxy_id) REFERENCES proxy(id), FOREIGN KEY(health_signal_http_proxy_id) REFERENCES proxy(id));'
+        'health_signal_http_address TEXT, health_signal_http_proxy_id TEXT, health_signal_http_authentication TEXT, ' +
+        'crypto_settings TEXT, FOREIGN KEY(log_loki_proxy_id) REFERENCES proxy(id), FOREIGN KEY(health_signal_http_proxy_id) REFERENCES proxy(id));'
     );
     expect(generateRandomId).not.toHaveBeenCalled();
     expect(run).toHaveBeenCalledTimes(1);
@@ -317,11 +306,7 @@ describe('Non-empty Engine repository', () => {
           verbose: false,
           address: '',
           proxyId: null,
-          authentication: {
-            type: 'basic',
-            key: '',
-            secret: ''
-          }
+          authentication: { type: 'basic', username: 'user', password: 'pass' }
         }
       }
     };
@@ -337,9 +322,7 @@ describe('Non-empty Engine repository', () => {
         'health_signal_http_enabled AS healthSignalHttpEnabled, health_signal_http_interval AS healthSignalHttpInterval, ' +
         'health_signal_http_verbose AS healthSignalHttpVerbose, health_signal_http_address AS healthSignalHttpAddress, ' +
         'health_signal_http_proxy_id AS healthSignalHttpProxyId, ' +
-        'health_signal_http_authentication_type AS healthSignalHttpAuthenticationType, ' +
-        'health_signal_http_authentication_key AS healthSignalHttpAuthenticationKey, ' +
-        'health_signal_http_authentication_secret AS healthSignalHttpAuthenticationSecret FROM engine;'
+        'health_signal_http_authentication AS healthSignalHttpAuthentication FROM engine;'
     );
     expect(all).toHaveBeenCalledTimes(2);
     expect(externalSource).toEqual(expectedValue);
@@ -384,9 +367,7 @@ describe('Non-empty Engine repository', () => {
           address: '',
           proxyId: null,
           authentication: {
-            type: 'basic',
-            key: '',
-            secret: ''
+            type: 'none'
           }
         }
       }
