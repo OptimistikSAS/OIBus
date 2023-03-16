@@ -2,7 +2,12 @@ import RepositoryService from './repository.service';
 import LoggerService from './logger/logger.service';
 
 import { EngineSettingsDTO } from '../../../shared/model/engine.model';
-import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthItemCommandDTO, SouthItemDTO } from '../../../shared/model/south-connector.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorDTO,
+  SouthItemCommandDTO,
+  SouthItemDTO
+} from '../../../shared/model/south-connector.model';
 import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import pino from 'pino';
 import HealthSignalService from './health-signal-service';
@@ -121,7 +126,7 @@ export default class ReloadService {
 
   async onCreateNorth(command: NorthConnectorCommandDTO): Promise<NorthConnectorDTO> {
     const northSettings = this.repositoryService.northConnectorRepository.createNorthConnector(command);
-    await this.oibusEngine.startSouth(northSettings.id, northSettings);
+    await this.oibusEngine.startNorth(northSettings.id, northSettings);
     return northSettings;
   }
 
