@@ -137,13 +137,18 @@ export const createInput = (value: OibFormControl, form: FormGroup, scanModes: A
   switch (value.type) {
     case 'OibText':
     case 'OibNumber':
-    case 'OibCheckbox':
     case 'OibSecret':
     case 'OibSelect':
     case 'OibCodeBlock':
     case 'OibTextArea':
     case 'OibTimezone':
       form.addControl(value.key, new FormControl(value.currentValue ?? value.defaultValue, getValidators(value.validators || [])));
+      break;
+    case 'OibCheckbox':
+      form.addControl(
+        value.key,
+        new FormControl(value.currentValue ?? (value.defaultValue || false), getValidators(value.validators || []))
+      );
       break;
     case 'OibScanMode':
       const scanMode = scanModes.find(element => element.id === value.currentValue?.id);
