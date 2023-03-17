@@ -16,7 +16,7 @@ import pino from 'pino';
 import * as Http from 'http';
 import Koa from 'koa';
 import oibus from './middlewares/oibus';
-import ReloadService from '../service/reload-service';
+import ReloadService from '../service/reload.service';
 import { KoaApplication } from './koa';
 
 /**

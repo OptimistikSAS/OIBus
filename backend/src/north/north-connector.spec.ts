@@ -130,7 +130,7 @@ describe('NorthConnector enabled', () => {
   });
 
   it('should be properly initialized', async () => {
-    expect(north.enabled()).toBeTruthy();
+    expect(north.isEnabled()).toBeTruthy();
     expect(logger.trace).toHaveBeenCalledWith(`North connector "${configuration.name}" enabled. Starting services...`);
     expect(logger.error).toHaveBeenCalledWith(`Scan mode ${configuration.caching.scanModeId} not found`);
     expect(logger.info).toHaveBeenCalledWith(`North connector "${configuration.name}" of type ${configuration.type} started`);
@@ -397,16 +397,10 @@ describe('NorthConnector disabled', () => {
     manifest.modes.files = false;
     manifest.modes.points = false;
     north = new NorthConnector(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder', manifest);
-    await north.start();
   });
 
   afterEach(() => {
     jest.clearAllTimers();
-  });
-
-  it('should be properly initialized', async () => {
-    expect(north.enabled()).toBeFalsy();
-    expect(logger.trace).toHaveBeenCalledWith(`North connector "${configuration.name}" not enabled`);
   });
 
   it('should not call handle values and handle file', async () => {

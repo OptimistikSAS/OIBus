@@ -84,7 +84,7 @@ export default class NorthConnector {
     });
   }
 
-  enabled(): boolean {
+  isEnabled(): boolean {
     return this.configuration.enabled;
   }
 
@@ -94,11 +94,6 @@ export default class NorthConnector {
   async start(): Promise<void> {
     await this.valueCacheService.start();
     await this.fileCacheService.start();
-
-    if (!this.enabled()) {
-      this.logger.trace(`North connector "${this.configuration.name}" not enabled`);
-      return;
-    }
     this.logger.trace(`North connector "${this.configuration.name}" enabled. Starting services...`);
     await this.archiveService.start();
     await this.connect();

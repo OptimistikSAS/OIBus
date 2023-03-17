@@ -19,7 +19,7 @@ export interface HistoryQueryDTO {
 }
 
 /**
- * Command DTO for history queries
+ * Command DTO for history queries creation
  */
 export interface HistoryQueryCommandDTO {
   name: string;
@@ -33,4 +33,16 @@ export interface HistoryQueryCommandDTO {
   northSettings: object;
   caching: NorthCacheSettingsLightDTO;
   archive: NorthArchiveSettings;
+}
+
+/**
+ * Command DTO for history queries
+ */
+export interface HistoryQueryCreateCommandDTO {
+  name: string;
+  description: string;
+  southType: string | null;
+  northType: string | null;
+  southId: string | null;
+  northId: string | null;
 }

@@ -10,13 +10,7 @@ import { ProxyDTO } from '../../../shared/model/proxy.model';
  * This service manage proxies for use in north or south connectors
  */
 export default class ProxyService {
-  private proxyRepository: ProxyRepository;
-  private encryptionService: EncryptionService;
-
-  constructor(proxyRepository: ProxyRepository, encryptionService: EncryptionService) {
-    this.proxyRepository = proxyRepository;
-    this.encryptionService = encryptionService;
-  }
+  constructor(private readonly proxyRepository: ProxyRepository, private readonly encryptionService: EncryptionService) {}
 
   /**
    * Create a proxy agent to use wih HTTP requests

@@ -160,7 +160,7 @@ export default class HistoryQuery {
    * @return {void}
    */
   async disable() {
-    this.historyConfiguration.enabled = false
+    this.historyConfiguration.isEnabled = false
     this.engine.historyQueryRepository.update(this.historyConfiguration)
   }
 }

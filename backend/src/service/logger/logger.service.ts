@@ -23,12 +23,9 @@ const LOG_DB_NAME = 'journal.db';
  */
 class LoggerService {
   logger: pino.Logger | null = null;
-  private encryptionService: EncryptionService;
   fileCleanUpService: FileCleanupService | null = null;
 
-  constructor(encryptionService: EncryptionService) {
-    this.encryptionService = encryptionService;
-  }
+  constructor(private readonly encryptionService: EncryptionService) {}
 
   /**
    * Run the appropriate pino log transports according to the configuration

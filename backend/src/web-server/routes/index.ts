@@ -14,16 +14,16 @@ import {
 import logController from '../controllers/log.controller';
 import engineController from '../controllers/engine.controller.js';
 import fileCacheController from '../controllers/file-cache.controller.js';
-import historyQueryController from '../controllers/history-query.controller';
 
 import ScanModeController from '../controllers/scan-mode.controller';
 import ProxyController from '../controllers/proxy.controller';
 import ExternalSourceController from '../controllers/external-source.controller';
 import OibusController from '../controllers/oibus.controller';
 import IpFilterController from '../controllers/ip-filter.controller';
-import NorthConnectorController from '../controllers/north-connector.controller';
-import SouthConnectorController from '../controllers/south-connector.controller';
+import NorthConnectorController, { northManifests } from '../controllers/north-connector.controller';
+import SouthConnectorController, { southManifests } from '../controllers/south-connector.controller';
 import UserController from '../controllers/user.controller';
+import HistoryQueryController from '../controllers/history-query.controller';
 import JoiValidator from '../../validators/joi.validator';
 import { KoaContext } from '../koa';
 
@@ -35,6 +35,7 @@ const oibusController = new OibusController(joiValidator, engineSchema);
 const ipFilterController = new IpFilterController(joiValidator, ipFilterSchema);
 const northConnectorController = new NorthConnectorController(joiValidator);
 const southConnectorController = new SouthConnectorController(joiValidator);
+const historyQueryController = new HistoryQueryController(joiValidator, southManifests, northManifests);
 const userController = new UserController(joiValidator, userSchema);
 
 const router = new Router();
@@ -121,6 +122,22 @@ router.get('/api/history-queries/:id', (ctx: KoaContext<any, any>) => historyQue
 router.post('/api/history-queries', (ctx: KoaContext<any, any>) => historyQueryController.createHistoryQuery(ctx));
 router.put('/api/history-queries/:id', (ctx: KoaContext<any, any>) => historyQueryController.updateHistoryQuery(ctx));
 router.delete('/api/history-queries/:id', (ctx: KoaContext<any, any>) => historyQueryController.deleteHistoryQuery(ctx));
+
+router.get('/api/history-queries/:historyQueryId/items', (ctx: KoaContext<any, any>) =>
+  historyQueryController.searchHistoryQueryItems(ctx)
+);
+router.get('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext<any, any>) =>
+  historyQueryController.getHistoryQueryItem(ctx)
+);
+router.post('/api/history-queries/:historyQueryId/items', (ctx: KoaContext<any, any>) =>
+  historyQueryController.createHistoryQueryItem(ctx)
+);
+router.put('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext<any, any>) =>
+  historyQueryController.updateHistoryQueryItem(ctx)
+);
+router.delete('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext<any, any>) =>
+  historyQueryController.deleteHistoryQueryItem(ctx)
+);
 
 router.get('/api/logs', (ctx: KoaContext<any, any>) => logController.searchLogs(ctx));
 router.post('/api/logs', (ctx: KoaContext<any, any>) => logController.addLogs(ctx));

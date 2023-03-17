@@ -3,7 +3,7 @@ import PinoLogger from '../tests/__mocks__/logger.mock';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
 
-import { SouthConnectorDTO, SouthConnectorManifest, SouthItemDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorManifest, OibusItemDTO } from '../../../shared/model/south-connector.model';
 
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
@@ -76,18 +76,18 @@ const manifest: SouthConnectorManifest = {
   }
 } as SouthConnectorManifest;
 
-const items: Array<SouthItemDTO> = [
+const items: Array<OibusItemDTO> = [
   {
     id: 'id1',
     name: 'item1',
-    southId: 'southId',
+    connectorId: 'southId',
     settings: {},
     scanModeId: 'scanModeId1'
   },
   {
     id: 'id2',
     name: 'item2',
-    southId: 'southId',
+    connectorId: 'southId',
     settings: {},
     scanModeId: 'scanModeId2'
   }
@@ -134,6 +134,7 @@ describe('SouthConnector enabled', () => {
     expect(createCacheHistoryTableMock).toHaveBeenCalledTimes(1);
     expect(repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith('scanModeId1');
     expect(logger.error).toHaveBeenCalledWith('Scan mode scanModeId2 not found.');
+    expect(south.isEnabled()).toBeTruthy();
   });
 
   it('should properly create cron job and add to queue', async () => {
@@ -205,7 +206,7 @@ describe('SouthConnector enabled', () => {
         {
           id: 'id1',
           name: 'item1',
-          southId: 'southId',
+          connectorId: 'southId',
           settings: {},
           scanModeId: 'scanModeId1'
         }
@@ -554,7 +555,7 @@ describe('SouthConnector without stream mode', () => {
   });
 
   it('should properly add item', () => {
-    const item: SouthItemDTO = { id: 'id1', scanModeId: 'scanModeId', southId: 'southId1', name: 'my item', settings: {} };
+    const item: OibusItemDTO = { id: 'id1', scanModeId: 'scanModeId', connectorId: 'southId1', name: 'my item', settings: {} };
     south.createCronJob = jest.fn();
 
     (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValueOnce(null).mockReturnValueOnce({
@@ -574,31 +575,30 @@ describe('SouthConnector without stream mode', () => {
   });
 
   it('should properly update item', () => {
-    const item: SouthItemDTO = { id: 'id1', scanModeId: 'scanModeId', southId: 'southId1', name: 'my item', settings: {} };
+    const item: OibusItemDTO = { id: 'id1', scanModeId: 'scanModeId', connectorId: 'southId1', name: 'my item', settings: {} };
     south.addItem = jest.fn();
     south.deleteItem = jest.fn();
 
     (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValueOnce(null).mockReturnValueOnce({
       id: 'id1',
       name: 'scanMode1',
-      description: 'my scan mode',
       cron: '* * * * * *'
     });
 
-    south.updateItem(item, item);
+    south.updateItem(item, { scanModeId: 'scanModeId', name: 'my updated item', settings: {} });
 
     expect(logger.error).toHaveBeenCalledWith(`Error when creating South item in cron jobs: scan mode ${item.scanModeId} not found`);
 
-    south.updateItem(item, item);
+    south.updateItem(item, { scanModeId: 'scanModeId', name: 'my updated item', settings: {} });
 
     expect(south.addItem).toHaveBeenCalledTimes(1);
     expect(south.deleteItem).toHaveBeenCalledTimes(1);
   });
 
   it('should properly delete item', () => {
-    const item1: SouthItemDTO = { id: 'id1', scanModeId: 'scanModeId3', southId: 'southId1', name: 'my item', settings: {} };
-    const item2: SouthItemDTO = { id: 'id2', scanModeId: 'scanModeId3', southId: 'southId1', name: 'my item', settings: {} };
-    const item3: SouthItemDTO = { id: 'id3', scanModeId: 'scanModeId1', southId: 'southId1', name: 'my item', settings: {} };
+    const item1: OibusItemDTO = { id: 'id1', scanModeId: 'scanModeId3', connectorId: 'southId1', name: 'my item', settings: {} };
+    const item2: OibusItemDTO = { id: 'id2', scanModeId: 'scanModeId3', connectorId: 'southId1', name: 'my item', settings: {} };
+    const item3: OibusItemDTO = { id: 'id3', scanModeId: 'scanModeId1', connectorId: 'southId1', name: 'my item', settings: {} };
 
     (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValue({
       id: 'scanModeId3',
@@ -621,6 +621,7 @@ describe('SouthConnector without stream mode', () => {
     south.deleteItem(item2);
     south.deleteItem(items[0]);
     south.deleteItem(items[1]);
+    south.deleteItem({ ...item1, scanModeId: undefined });
   });
 
   it('should use another logger', async () => {

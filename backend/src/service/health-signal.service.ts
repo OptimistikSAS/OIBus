@@ -9,19 +9,15 @@ import EncryptionService from './encryption.service';
  * Class HealthSignal - sends health signal to a remote host or into the logs
  */
 export default class HealthSignalService {
-  private _settings: HealthSignalDTO;
-  private _logger: pino.Logger;
-  private proxyService: ProxyService;
-  private encryptionService: EncryptionService;
   private httpSignalInterval: NodeJS.Timeout | null = null;
   private logSignalInterval: NodeJS.Timeout | null = null;
 
-  constructor(settings: HealthSignalDTO, proxyService: ProxyService, encryptionService: EncryptionService, logger: pino.Logger) {
-    this._settings = settings;
-    this.proxyService = proxyService;
-    this.encryptionService = encryptionService;
-    this._logger = logger;
-
+  constructor(
+    private _settings: HealthSignalDTO,
+    private readonly proxyService: ProxyService,
+    private readonly encryptionService: EncryptionService,
+    private _logger: pino.Logger
+  ) {
     this.initTimers();
   }
 
