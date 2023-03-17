@@ -61,7 +61,8 @@ export default class SouthConnectorController {
       southConnectors.map(connector => {
         const manifest = southManifests.find(south => south.name === connector.type);
         if (manifest) {
-          return ctx.app.encryptionService.filterSecrets(connector, manifest.settings);
+          connector.settings = ctx.app.encryptionService.filterSecrets(connector.settings, manifest.settings);
+          return connector;
         }
         return null;
       })
@@ -73,7 +74,8 @@ export default class SouthConnectorController {
     if (southConnector) {
       const manifest = southManifests.find(south => south.name === southConnector.type);
       if (manifest) {
-        ctx.ok(ctx.app.encryptionService.filterSecrets(southConnector, manifest.settings));
+        southConnector.settings = ctx.app.encryptionService.filterSecrets(southConnector.settings, manifest.settings);
+        ctx.ok(southConnector);
       } else {
         ctx.throw(404, 'South type not found');
       }
@@ -118,8 +120,12 @@ export default class SouthConnectorController {
       }
       const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
-        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, southSettings, manifest.settings);
-        await ctx.app.reloadService.onUpdateSouthSettings(ctx.params.id, encryptedCommand as SouthConnectorCommandDTO);
+        command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
+          command.settings,
+          southSettings.settings,
+          manifest.settings
+        );
+        await ctx.app.reloadService.onUpdateSouthSettings(ctx.params.id, command);
         ctx.noContent();
       } else {
         ctx.badRequest();

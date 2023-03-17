@@ -57,7 +57,8 @@ export default class NorthConnectorController {
       northConnectors.map(connector => {
         const manifest = northManifests.find(north => north.name === connector.type);
         if (manifest) {
-          return ctx.app.encryptionService.filterSecrets(connector, manifest.settings);
+          connector.settings = ctx.app.encryptionService.filterSecrets(connector.settings, manifest.settings);
+          return connector;
         }
         return null;
       })
@@ -69,7 +70,8 @@ export default class NorthConnectorController {
     if (northConnector) {
       const manifest = northManifests.find(north => north.name === northConnector.type);
       if (manifest) {
-        ctx.ok(ctx.app.encryptionService.filterSecrets(northConnector, manifest.settings));
+        northConnector.settings = ctx.app.encryptionService.filterSecrets(northConnector.settings, manifest.settings);
+        ctx.ok(northConnector);
       } else {
         ctx.throw(404, 'North type not found');
       }
@@ -113,8 +115,12 @@ export default class NorthConnectorController {
       await this.validator.validate(manifest.schema, ctx.request.body?.settings);
       const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
       if (command) {
-        const encryptedCommand = await ctx.app.encryptionService.encryptConnectorSecrets(command, northSettings, manifest.settings);
-        await ctx.app.reloadService.onUpdateNorthSettings(ctx.params.id, encryptedCommand as NorthConnectorCommandDTO);
+        command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
+          command.settings,
+          northSettings.settings,
+          manifest.settings
+        );
+        await ctx.app.reloadService.onUpdateNorthSettings(ctx.params.id, command);
         ctx.noContent();
       } else {
         ctx.badRequest();

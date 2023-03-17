@@ -225,20 +225,14 @@ describe('Encryption service with crypto settings', () => {
       }
     };
     const expectedCommand = {
-      name: 'connector',
-      type: 'any',
-      description: 'my connector',
-      enabled: true,
-      settings: {
-        field1: 'not a secret',
-        field2: 'encrypted secret',
-        field3: {
-          type: 'basic',
-          username: 'user',
-          password: 'encrypted secret'
-        } as unknown,
-        field4: 'not a secret'
-      }
+      field1: 'not a secret',
+      field2: 'encrypted secret',
+      field3: {
+        type: 'basic',
+        username: 'user',
+        password: 'encrypted secret'
+      } as unknown,
+      field4: 'not a secret'
     };
 
     const update = jest.fn(() => 'encrypted secret');
@@ -248,18 +242,18 @@ describe('Encryption service with crypto settings', () => {
       final
     }));
 
-    expect(await encryptionService.encryptConnectorSecrets(command, connector, settings)).toEqual(expectedCommand);
-    expectedCommand.settings.field3 = { type: 'api-key', key: 'my key', secret: 'encrypted secret' };
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
+    expectedCommand.field3 = { type: 'api-key', key: 'my key', secret: 'encrypted secret' };
     command.settings.field3 = { type: 'api-key', key: 'my key', secret: 'secret' };
-    expect(await encryptionService.encryptConnectorSecrets(command, connector, settings)).toEqual(expectedCommand);
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
 
-    expectedCommand.settings.field3 = { type: 'bearer', token: 'encrypted secret' };
+    expectedCommand.field3 = { type: 'bearer', token: 'encrypted secret' };
     command.settings.field3 = { type: 'bearer', token: 'my token' };
-    expect(await encryptionService.encryptConnectorSecrets(command, connector, settings)).toEqual(expectedCommand);
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
 
-    expectedCommand.settings.field3 = { type: 'cert', certPath: 'my cert', keyPath: 'my key' };
+    expectedCommand.field3 = { type: 'cert', certPath: 'my cert', keyPath: 'my key' };
     command.settings.field3 = { type: 'cert', certPath: 'my cert', keyPath: 'my key' };
-    expect(await encryptionService.encryptConnectorSecrets(command, connector, settings)).toEqual(expectedCommand);
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
   });
 
   it('should properly keep existing and encrypted connector secrets', async () => {
@@ -297,20 +291,14 @@ describe('Encryption service with crypto settings', () => {
       }
     };
     const expectedCommand = {
-      name: 'connector',
-      type: 'any',
-      description: 'my connector',
-      enabled: true,
-      settings: {
-        field1: 'not a secret',
-        field2: 'encrypted secret',
-        field3: {
-          type: 'basic',
-          username: 'user',
-          password: 'encrypted pass'
-        },
-        field4: 'not a secret'
-      }
+      field1: 'not a secret',
+      field2: 'encrypted secret',
+      field3: {
+        type: 'basic',
+        username: 'user',
+        password: 'encrypted pass'
+      },
+      field4: 'not a secret'
     };
 
     const update = jest.fn(() => 'encrypted secret');
@@ -320,7 +308,7 @@ describe('Encryption service with crypto settings', () => {
       final
     }));
 
-    expect(await encryptionService.encryptConnectorSecrets(command, connector, settings)).toEqual(expectedCommand);
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
   });
 
   it('should properly keep empty string when secrets not set in auth', async () => {
@@ -358,20 +346,14 @@ describe('Encryption service with crypto settings', () => {
       }
     };
     const expectedCommand = {
-      name: 'connector',
-      type: 'any',
-      description: 'my connector',
-      enabled: true,
-      settings: {
-        field1: 'not a secret',
-        field2: 'encrypted secret',
-        field3: {
-          type: 'basic',
-          username: 'user',
-          password: ''
-        } as unknown,
-        field4: 'not a secret'
-      }
+      field1: 'not a secret',
+      field2: 'encrypted secret',
+      field3: {
+        type: 'basic',
+        username: 'user',
+        password: ''
+      } as unknown,
+      field4: 'not a secret'
     };
 
     const update = jest.fn(() => 'encrypted secret');
@@ -381,31 +363,34 @@ describe('Encryption service with crypto settings', () => {
       final
     }));
 
-    expect(await encryptionService.encryptConnectorSecrets(command, connector, settings)).toEqual(expectedCommand);
-    expectedCommand.settings.field2 = '';
-    expect(await encryptionService.encryptConnectorSecrets(command, null, settings)).toEqual(expectedCommand);
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
+    expectedCommand.field2 = '';
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, null, settings)).toEqual(expectedCommand);
 
     connector.settings.field3 = { type: 'none' };
-    expectedCommand.settings.field2 = 'encrypted secret';
-    expectedCommand.settings.field3 = { type: 'none' };
+    expectedCommand.field2 = '';
+    connector.settings.field2 = null;
+    expectedCommand.field3 = { type: 'none' };
     command.settings.field3 = { type: 'none' };
-    expect(await encryptionService.encryptConnectorSecrets(command, connector, settings)).toEqual(expectedCommand);
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
 
     connector.settings.field3 = { type: 'api-key', key: 'my key', secret: '' };
-    expectedCommand.settings.field2 = 'encrypted secret';
-    expectedCommand.settings.field3 = { type: 'api-key', key: 'my key', secret: '' };
+    expectedCommand.field2 = 'encrypted secret';
+    connector.settings.field2 = 'encrypted secret';
+
+    expectedCommand.field3 = { type: 'api-key', key: 'my key', secret: '' };
     command.settings.field3 = { type: 'api-key', key: 'my key', secret: '' };
-    expect(await encryptionService.encryptConnectorSecrets(command, connector, settings)).toEqual(expectedCommand);
-    expectedCommand.settings.field2 = '';
-    expect(await encryptionService.encryptConnectorSecrets(command, null, settings)).toEqual(expectedCommand);
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
+    expectedCommand.field2 = '';
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, null, settings)).toEqual(expectedCommand);
 
     connector.settings.field3 = { type: 'bearer' };
-    expectedCommand.settings.field2 = 'encrypted secret';
-    expectedCommand.settings.field3 = { type: 'bearer', token: '' };
+    expectedCommand.field2 = 'encrypted secret';
+    expectedCommand.field3 = { type: 'bearer', token: '' };
     command.settings.field3 = { type: 'bearer' };
-    expect(await encryptionService.encryptConnectorSecrets(command, connector, settings)).toEqual(expectedCommand);
-    expectedCommand.settings.field2 = '';
-    expect(await encryptionService.encryptConnectorSecrets(command, null, settings)).toEqual(expectedCommand);
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
+    expectedCommand.field2 = '';
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, null, settings)).toEqual(expectedCommand);
   });
 
   it('should properly filter out secret', () => {
@@ -427,76 +412,48 @@ describe('Encryption service with crypto settings', () => {
       }
     };
 
-    expect(encryptionService.filterSecrets(connector, settings)).toEqual({
-      id: 'id1',
-      name: 'connector',
-      type: 'any',
-      description: 'my connector',
-      enabled: true,
-      settings: {
-        field1: 'not a secret',
-        field2: '',
-        field3: {
-          type: 'basic',
-          username: 'user',
-          password: ''
-        } as unknown,
-        field4: 'not a secret'
-      }
+    expect(encryptionService.filterSecrets(connector.settings, settings)).toEqual({
+      field1: 'not a secret',
+      field2: '',
+      field3: {
+        type: 'basic',
+        username: 'user',
+        password: ''
+      } as unknown,
+      field4: 'not a secret'
     });
 
     connector.settings.field3 = { type: 'api-key', key: 'my key', secret: 'secret' };
-    expect(encryptionService.filterSecrets(connector, settings)).toEqual({
-      id: 'id1',
-      name: 'connector',
-      type: 'any',
-      description: 'my connector',
-      enabled: true,
-      settings: {
-        field1: 'not a secret',
-        field2: '',
-        field3: {
-          type: 'api-key',
-          key: 'my key',
-          secret: ''
-        } as unknown,
-        field4: 'not a secret'
-      }
+    expect(encryptionService.filterSecrets(connector.settings, settings)).toEqual({
+      field1: 'not a secret',
+      field2: '',
+      field3: {
+        type: 'api-key',
+        key: 'my key',
+        secret: ''
+      } as unknown,
+      field4: 'not a secret'
     });
 
     connector.settings.field3 = { type: 'bearer', token: 'secret' };
-    expect(encryptionService.filterSecrets(connector, settings)).toEqual({
-      id: 'id1',
-      name: 'connector',
-      type: 'any',
-      description: 'my connector',
-      enabled: true,
-      settings: {
-        field1: 'not a secret',
-        field2: '',
-        field3: {
-          type: 'bearer',
-          token: ''
-        } as unknown,
-        field4: 'not a secret'
-      }
+    expect(encryptionService.filterSecrets(connector.settings, settings)).toEqual({
+      field1: 'not a secret',
+      field2: '',
+      field3: {
+        type: 'bearer',
+        token: ''
+      } as unknown,
+      field4: 'not a secret'
     });
 
     connector.settings.field3 = { type: 'none' };
-    expect(encryptionService.filterSecrets(connector, settings)).toEqual({
-      id: 'id1',
-      name: 'connector',
-      type: 'any',
-      description: 'my connector',
-      enabled: true,
-      settings: {
-        field1: 'not a secret',
-        field2: '',
-        field3: {
-          type: 'none'
-        } as unknown,
-        field4: 'not a secret'
-      }
+    expect(encryptionService.filterSecrets(connector.settings, settings)).toEqual({
+      field1: 'not a secret',
+      field2: '',
+      field3: {
+        type: 'none'
+      } as unknown,
+      field4: 'not a secret'
     });
   });
 });
