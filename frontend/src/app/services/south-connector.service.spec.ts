@@ -6,8 +6,8 @@ import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorManifest,
-  SouthItemCommandDTO,
-  SouthItemDTO,
+  OibusItemCommandDTO,
+  OibusItemDTO,
   SouthType
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
@@ -121,9 +121,9 @@ describe('SouthConnectorService', () => {
   });
 
   it('should search South connector items', () => {
-    let expectedSouthConnectorItems: Page<SouthItemDTO> | null = null;
-    const southConnectorItems = toPage<SouthItemDTO>([
-      { id: 'southItemId', name: 'MySouthItem', southId: 'id1', scanModeId: 'scanModeId', settings: {} }
+    let expectedSouthConnectorItems: Page<OibusItemDTO> | null = null;
+    const southConnectorItems = toPage<OibusItemDTO>([
+      { id: 'southItemId', name: 'MySouthItem', connectorId: 'id1', scanModeId: 'scanModeId', settings: {} }
     ]);
 
     service.searchSouthItems('id1', { page: 0, name: null }).subscribe(c => (expectedSouthConnectorItems = c));
@@ -144,7 +144,7 @@ describe('SouthConnectorService', () => {
 
   it('should create a South connector item', () => {
     let done = false;
-    const command: SouthItemCommandDTO = {
+    const command: OibusItemCommandDTO = {
       name: 'myPointId',
       scanModeId: 'scanModeId',
       settings: {}
@@ -159,7 +159,7 @@ describe('SouthConnectorService', () => {
 
   it('should update a South connector item', () => {
     let done = false;
-    const command: SouthItemCommandDTO = {
+    const command: OibusItemCommandDTO = {
       name: 'myPointId',
       scanModeId: 'scanModeId',
       settings: {}

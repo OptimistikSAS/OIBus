@@ -2,7 +2,7 @@ import { KoaContext } from '../koa';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
-import ReloadService from '../../service/reload-service';
+import ReloadService from '../../service/reload.service';
 
 /**
  * OIBus middleware for Koa

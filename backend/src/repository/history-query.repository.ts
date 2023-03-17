@@ -3,7 +3,7 @@ import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../shared/model/h
 import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
 
-const HISTORY_QUERIES_TABLE = 'history_queries';
+export const HISTORY_QUERIES_TABLE = 'history_queries';
 
 interface HistoryQueryResult {
   id: string;
@@ -27,10 +27,7 @@ interface HistoryQueryResult {
 }
 
 export default class HistoryQueryRepository {
-  private readonly database: Database;
-
-  constructor(database: Database) {
-    this.database = database;
+  constructor(private readonly database: Database) {
     const query =
       `CREATE TABLE IF NOT EXISTS ${HISTORY_QUERIES_TABLE} (id TEXT PRIMARY KEY, name TEXT, description TEXT, ` +
       `enabled INTEGER, start_time TEXT, end_time TEXT, south_type TEXT, north_type TEXT, ` +
