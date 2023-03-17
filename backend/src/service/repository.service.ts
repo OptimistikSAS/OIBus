@@ -11,6 +11,7 @@ import NorthConnectorRepository from '../repository/north-connector.repository';
 import LogRepository from '../repository/log.repository';
 import HistoryQueryRepository from '../repository/history-query.repository';
 import UserRepository from '../repository/user.repository';
+import HistoryQueryItemRepository from '../repository/history-query-item.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -23,6 +24,7 @@ export default class RepositoryService {
   private readonly _southItemRepository: SouthItemRepository;
   private readonly _logRepository: LogRepository;
   private readonly _historyQueryRepository: HistoryQueryRepository;
+  private readonly _historyQueryItemRepository: HistoryQueryItemRepository;
   private readonly _userRepository: UserRepository;
 
   constructor(oibusDatabasePath: string, logsDatabasePath: string) {
@@ -38,6 +40,7 @@ export default class RepositoryService {
     this._southItemRepository = new SouthItemRepository(oibusDatabase);
     this._southItemRepository = new SouthItemRepository(oibusDatabase);
     this._historyQueryRepository = new HistoryQueryRepository(oibusDatabase);
+    this._historyQueryItemRepository = new HistoryQueryItemRepository(oibusDatabase);
     this._userRepository = new UserRepository(oibusDatabase);
     this._logRepository = new LogRepository(logsDatabase);
   }
@@ -84,5 +87,9 @@ export default class RepositoryService {
 
   get historyQueryRepository(): HistoryQueryRepository {
     return this._historyQueryRepository;
+  }
+
+  get historyQueryItemRepository(): HistoryQueryItemRepository {
+    return this._historyQueryItemRepository;
   }
 }

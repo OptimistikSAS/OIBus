@@ -53,6 +53,7 @@ const manifest: SouthConnectorManifest = {
       key: 'maxReadInterval',
       type: 'OibNumber',
       label: 'Max read interval (s)',
+      defaultValue: 3600,
       newRow: true,
       validators: [{ key: 'required' }],
       readDisplay: false

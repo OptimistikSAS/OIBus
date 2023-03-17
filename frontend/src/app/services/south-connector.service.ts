@@ -5,9 +5,9 @@ import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorManifest,
-  SouthItemCommandDTO,
-  SouthItemDTO,
-  SouthItemSearchParam,
+  OibusItemCommandDTO,
+  OibusItemDTO,
+  OibusItemSearchParam,
   SouthType
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
@@ -88,14 +88,14 @@ export class SouthConnectorService {
    * @param southId - the ID of the South connector
    * @param searchParams - The search params
    */
-  searchSouthItems(southId: string, searchParams: SouthItemSearchParam): Observable<Page<SouthItemDTO>> {
+  searchSouthItems(southId: string, searchParams: OibusItemSearchParam): Observable<Page<OibusItemDTO>> {
     const params: { [key: string]: string | string[] } = {
       page: `${searchParams.page || 0}`
     };
     if (searchParams.name) {
       params['name'] = searchParams.name;
     }
-    return this.http.get<Page<SouthItemDTO>>(`/api/south/${southId}/items`, { params });
+    return this.http.get<Page<OibusItemDTO>>(`/api/south/${southId}/items`, { params });
   }
 
   /**
@@ -103,8 +103,8 @@ export class SouthConnectorService {
    * @param southId - the ID of the South connector
    * @param southItemId - the ID of the South connector item
    */
-  getSouthConnectorItem(southId: string, southItemId: string): Observable<SouthItemDTO> {
-    return this.http.get<SouthItemDTO>(`/api/south/${southId}/items/${southItemId}`);
+  getSouthConnectorItem(southId: string, southItemId: string): Observable<OibusItemDTO> {
+    return this.http.get<OibusItemDTO>(`/api/south/${southId}/items/${southItemId}`);
   }
 
   /**
@@ -112,8 +112,8 @@ export class SouthConnectorService {
    * @param southId - the ID of the South connector
    * @param command - The values of the South connector item to create
    */
-  createSouthItem(southId: string, command: SouthItemCommandDTO): Observable<SouthItemDTO> {
-    return this.http.post<SouthItemDTO>(`/api/south/${southId}/items`, command);
+  createSouthItem(southId: string, command: OibusItemCommandDTO): Observable<OibusItemDTO> {
+    return this.http.post<OibusItemDTO>(`/api/south/${southId}/items`, command);
   }
 
   /**
@@ -122,7 +122,7 @@ export class SouthConnectorService {
    * @param southItemId - the ID of the South connector item
    * @param command - the new values of the selected South connector item
    */
-  updateSouthItem(southId: string, southItemId: string, command: SouthItemCommandDTO) {
+  updateSouthItem(southId: string, southItemId: string, command: OibusItemCommandDTO) {
     return this.http.put<void>(`/api/south/${southId}/items/${southItemId}`, command);
   }
 

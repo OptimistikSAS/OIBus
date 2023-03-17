@@ -8,6 +8,7 @@ export default jest.fn().mockImplementation(() => {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-    fatal: jest.fn()
+    fatal: jest.fn(),
+    child: jest.fn()
   };
 });

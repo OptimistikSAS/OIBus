@@ -9,7 +9,7 @@ import {
 } from 'node-opcua-client';
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
 
-import { SouthConnectorDTO, SouthItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, OibusItemDTO } from '../../../../shared/model/south-connector.model';
 import { Instant } from '../../../../shared/model/types';
 
 import manifest from './manifest';
@@ -45,7 +45,7 @@ export default class SouthOPCUAHA extends SouthConnector {
 
   constructor(
     configuration: SouthConnectorDTO,
-    items: Array<SouthItemDTO>,
+    items: Array<OibusItemDTO>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -144,7 +144,7 @@ export default class SouthOPCUAHA extends SouthConnector {
   /**
    * Get values from the OPCUA server between startTime and endTime and write them into the cache.
    */
-  override async historyQuery(items: Array<SouthItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  override async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
     try {
       let maxTimestamp = DateTime.fromISO(startTime).toMillis();
 

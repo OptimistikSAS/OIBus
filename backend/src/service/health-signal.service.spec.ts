@@ -1,4 +1,4 @@
-import HealthSignalService from './health-signal-service';
+import HealthSignalService from './health-signal.service';
 
 import { HealthSignalDTO } from '../../../shared/model/engine.model';
 import ProxyRepository from '../repository/proxy.repository';
