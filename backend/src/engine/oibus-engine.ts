@@ -2,7 +2,6 @@ import BaseEngine from './base-engine';
 import EncryptionService from '../service/encryption.service';
 import pino from 'pino';
 import ProxyService from '../service/proxy.service';
-import RepositoryService from '../service/repository.service';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import NorthService from '../service/north.service';
@@ -10,7 +9,7 @@ import SouthService from '../service/south.service';
 import { createFolder } from '../service/utils';
 import path from 'node:path';
 
-import { SouthConnectorDTO, SouthItemCommandDTO, SouthItemDTO } from '../../../shared/model/south-connector.model';
+import { OibusItemCommandDTO, OibusItemDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 
 const CACHE_FOLDER = './cache/data-stream';
@@ -25,12 +24,11 @@ export default class OIBusEngine extends BaseEngine {
   constructor(
     encryptionService: EncryptionService,
     proxyService: ProxyService,
-    repositoryService: RepositoryService,
     northService: NorthService,
     southService: SouthService,
     logger: pino.Logger
   ) {
-    super(encryptionService, proxyService, repositoryService, northService, southService, logger, CACHE_FOLDER);
+    super(encryptionService, proxyService, northService, southService, logger, CACHE_FOLDER);
   }
 
   /**
@@ -40,7 +38,7 @@ export default class OIBusEngine extends BaseEngine {
   override async addValues(southId: string, values: Array<any>): Promise<void> {
     this.logger.info(`Add "${values.length}" values from ${southId} to north`);
     for (const north of this.northConnectors.values()) {
-      if (north.enabled() && north.isSubscribed(southId)) {
+      if (north.isEnabled() && north.isSubscribed(southId)) {
         await north.cacheValues(values);
       }
     }
@@ -53,7 +51,7 @@ export default class OIBusEngine extends BaseEngine {
   override async addFile(southId: string, filePath: string): Promise<void> {
     this.logger.info(`Add file "${filePath}" from ${southId} to north connectors`);
     for (const north of this.northConnectors.values()) {
-      if (north.enabled() && north.isSubscribed(southId)) {
+      if (north.isEnabled() && north.isSubscribed(southId)) {
         await north.cacheFile(filePath);
       }
     }
@@ -105,11 +103,23 @@ export default class OIBusEngine extends BaseEngine {
     await createFolder(baseFolder);
 
     const items = this.southService.getSouthItems(settings.id);
-    const south = this.southService.createSouth(settings, items, this.addValues.bind(this), this.addFile.bind(this), baseFolder, true);
-    // Do not await here, so it can start all connectors without blocking the thread
-    south.start().catch(error => {
-      this.logger.error(`Error while starting South connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`);
-    });
+    const south = this.southService.createSouth(
+      settings,
+      items,
+      this.addValues.bind(this),
+      this.addFile.bind(this),
+      baseFolder,
+      true,
+      this.logger
+    );
+    if (south.isEnabled()) {
+      // Do not await here, so it can start all connectors without blocking the thread
+      south.start().catch(error => {
+        this.logger.error(`Error while starting South connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`);
+      });
+    } else {
+      this.logger.trace(`South connector ${settings.name} not enabled`);
+    }
     this.southConnectors.set(settings.id, south);
   }
 
@@ -117,23 +127,27 @@ export default class OIBusEngine extends BaseEngine {
     const baseFolder = path.resolve(this.cacheFolder, `north-${settings.id}`);
     await createFolder(baseFolder);
 
-    const north = this.northService.createNorth(settings, baseFolder);
-    // Do not await here, so it can start all connectors without blocking the thread
-    north.start().catch(error => {
-      this.logger.error(`Error while starting North connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`);
-    });
+    const north = this.northService.createNorth(settings, baseFolder, this.logger);
+    if (north.isEnabled()) {
+      // Do not await here, so it can start all connectors without blocking the thread
+      north.start().catch(error => {
+        this.logger.error(`Error while starting North connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`);
+      });
+    } else {
+      this.logger.trace(`North connector "${settings.name}" not enabled`);
+    }
     this.northConnectors.set(settings.id, north);
   }
 
-  addItemToSouth(southId: string, item: SouthItemDTO): void {
+  addItemToSouth(southId: string, item: OibusItemDTO): void {
     this.southConnectors.get(southId)?.addItem(item);
   }
 
-  deleteItemFromSouth(southId: string, item: SouthItemDTO): void {
+  deleteItemFromSouth(southId: string, item: OibusItemDTO): void {
     this.southConnectors.get(southId)?.deleteItem(item);
   }
 
-  updateItemInSouth(southId: string, oldItem: SouthItemDTO, newItem: SouthItemCommandDTO): void {
+  updateItemInSouth(southId: string, oldItem: OibusItemDTO, newItem: OibusItemCommandDTO): void {
     this.southConnectors.get(southId)?.updateItem(oldItem, newItem);
   }
 

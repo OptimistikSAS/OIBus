@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
 import { delay, generateIntervals } from '../service/utils';
 
-import { SouthConnectorDTO, SouthConnectorManifest, SouthItemCommandDTO, SouthItemDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorManifest, OibusItemCommandDTO, OibusItemDTO } from '../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { Instant } from '../../../shared/model/types';
 import pino from 'pino';
@@ -46,7 +46,7 @@ export default class SouthConnector {
   private readonly engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>;
   private readonly engineAddFileCallback: (southId: string, filePath: string) => Promise<void>;
 
-  private itemsByScanModeIds: Map<string, Map<string, SouthItemDTO>> = new Map<string, Map<string, SouthItemDTO>>();
+  private itemsByScanModeIds: Map<string, Map<string, OibusItemDTO>> = new Map<string, Map<string, OibusItemDTO>>();
   private taskJobQueue: Array<ScanModeDTO> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   private taskRunner: EventEmitter = new EventEmitter();
@@ -61,7 +61,7 @@ export default class SouthConnector {
    */
   constructor(
     configuration: SouthConnectorDTO,
-    items: Array<SouthItemDTO>,
+    items: Array<OibusItemDTO>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -73,12 +73,14 @@ export default class SouthConnector {
     manifest: SouthConnectorManifest
   ) {
     this.configuration = configuration;
-    items.forEach(item => {
-      if (!this.itemsByScanModeIds.get(item.scanModeId)) {
-        this.itemsByScanModeIds.set(item.scanModeId, new Map<string, SouthItemDTO>());
-      }
-      this.itemsByScanModeIds.get(item.scanModeId)!.set(item.id, item);
-    });
+    items
+      .filter(item => item.scanModeId)
+      .forEach(item => {
+        if (!this.itemsByScanModeIds.get(item.scanModeId!)) {
+          this.itemsByScanModeIds.set(item.scanModeId!, new Map<string, OibusItemDTO>());
+        }
+        this.itemsByScanModeIds.get(item.scanModeId!)!.set(item.id, item);
+      });
     this.engineAddValuesCallback = engineAddValuesCallback;
     this.engineAddFileCallback = engineAddFileCallback;
     this.encryptionService = encryptionService;
@@ -106,10 +108,6 @@ export default class SouthConnector {
   }
 
   async start(): Promise<void> {
-    if (!this.configuration.enabled) {
-      this.logger.trace(`South connector ${this.configuration.name} not enabled`);
-      return;
-    }
     this.logger.trace(`South connector ${this.configuration.name} enabled. Starting services...`);
     await this.connect();
   }
@@ -131,6 +129,10 @@ export default class SouthConnector {
     } else {
       this.logger.trace(`Stream mode not enabled. Cron jobs and subscription won't start`);
     }
+  }
+
+  isEnabled(): boolean {
+    return this.configuration.enabled;
   }
 
   /**
@@ -239,7 +241,7 @@ export default class SouthConnector {
     }
   }
 
-  async historyQueryHandler(items: Array<SouthItemDTO>, startTime: Instant, endTime: Instant, scanModeId: string): Promise<void> {
+  async historyQueryHandler(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant, scanModeId: string): Promise<void> {
     const southCache = this.southCacheService.getSouthCache(scanModeId, startTime);
 
     // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
@@ -288,20 +290,20 @@ export default class SouthConnector {
     }
   }
 
-  async historyQuery(items: Array<SouthItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
     this.logger.warn('historyQuery method must be override');
     return '';
   }
 
-  async fileQuery(items: Array<SouthItemDTO>): Promise<void> {
+  async fileQuery(items: Array<OibusItemDTO>): Promise<void> {
     this.logger.warn('fileQuery method must be override');
   }
 
-  async lastPointQuery(items: Array<SouthItemDTO>): Promise<void> {
+  async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
     this.logger.warn('lastPointQuery method must be override');
   }
 
-  async subscribe(items: Array<SouthItemDTO>): Promise<void> {
+  async subscribe(items: Array<OibusItemDTO>): Promise<void> {
     this.logger.warn('subscribe method must be override');
   }
 
@@ -350,7 +352,7 @@ export default class SouthConnector {
     this.stopping = false;
   }
 
-  addItem(item: SouthItemDTO): void {
+  addItem(item: OibusItemDTO): void {
     if (item.scanModeId) {
       const scanMode = this.repositoryService.scanModeRepository.getScanMode(item.scanModeId);
       if (!scanMode) {
@@ -372,7 +374,7 @@ export default class SouthConnector {
     }
   }
 
-  updateItem(oldItem: SouthItemDTO, newItem: SouthItemCommandDTO): void {
+  updateItem(oldItem: OibusItemDTO, newItem: OibusItemCommandDTO): void {
     if (newItem.scanModeId) {
       const scanMode = this.repositoryService.scanModeRepository.getScanMode(newItem.scanModeId);
       if (!scanMode) {
@@ -385,7 +387,10 @@ export default class SouthConnector {
     this.addItem(oldItem);
   }
 
-  deleteItem(item: SouthItemDTO) {
+  deleteItem(item: OibusItemDTO) {
+    if (!item.scanModeId) {
+      return;
+    }
     if (!this.itemsByScanModeIds.get(item.scanModeId)) {
       this.logger.error(`Error when removing South item from cron jobs: scan mode ${item.scanModeId} was not set`);
       return;

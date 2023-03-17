@@ -41,29 +41,29 @@ export interface SouthConnectorCommandDTO {
 /**
  * DTO used for South scan (a point/query/regexp and its settings linked to a scan mode)
  */
-export interface SouthItemDTO {
+export interface OibusItemDTO {
   id: string;
   name: string;
-  southId: string;
+  connectorId: string;
   settings: any;
-  scanModeId: string;
+  scanModeId?: string;
 }
 
 /**
  * Command DTO used for South scan (a point/query/folder and its settings linked to a scan mode)
  */
-export interface SouthItemCommandDTO {
+export interface OibusItemCommandDTO {
   name: string;
   settings: any;
   scanModeId: string | null;
 }
 
-export interface SouthItemSearchParam {
+export interface OibusItemSearchParam {
   name: string | null;
   page: number;
 }
 
-export interface SouthItemManifest {
+export interface OibusItemManifest {
   scanMode: {
     acceptSubscription: boolean;
     subscriptionOnly: boolean;
@@ -85,7 +85,7 @@ export interface SouthConnectorManifest {
   };
   settings: Array<OibFormControl>;
   schema: Joi.ObjectSchema;
-  items: SouthItemManifest;
+  items: OibusItemManifest;
 }
 
 export interface SouthCache {

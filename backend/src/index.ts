@@ -5,9 +5,9 @@ import EncryptionService from './service/encryption.service';
 
 import { createFolder, getCommandLineArguments } from './service/utils';
 import RepositoryService from './service/repository.service';
-import ReloadService from './service/reload-service';
+import ReloadService from './service/reload.service';
 import ProxyService from './service/proxy.service';
-import HealthSignalService from './service/health-signal-service';
+import HealthSignalService from './service/health-signal.service';
 import NorthService from './service/north.service';
 import SouthService from './service/south.service';
 import OIBusEngine from './engine/oibus-engine';
@@ -53,22 +53,15 @@ const LOG_DB_NAME = 'journal.db';
     loggerService.createChildLogger('health')
   );
 
-  const northService = new NorthService(proxyService, encryptionService, repositoryService, loggerService.logger!);
-  const southService = new SouthService(proxyService, encryptionService, repositoryService, loggerService.logger!);
+  const northService = new NorthService(proxyService, encryptionService, repositoryService);
+  const southService = new SouthService(proxyService, encryptionService, repositoryService);
 
   if (check) {
     console.info('OIBus started in check mode. Exiting process.');
     return;
   }
 
-  const engine = new OIBusEngine(
-    encryptionService,
-    proxyService,
-    repositoryService,
-    northService,
-    southService,
-    loggerService.createChildLogger('engine')
-  );
+  const engine = new OIBusEngine(encryptionService, proxyService, northService, southService, loggerService.createChildLogger('engine'));
   await engine.start();
 
   const reloadService = new ReloadService(loggerService, repositoryService, healthSignalService, northService, southService, engine);

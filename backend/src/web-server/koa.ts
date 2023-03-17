@@ -1,7 +1,7 @@
 import Koa, { Context, Request } from 'koa';
 import RepositoryService from '../service/repository.service';
 import EncryptionService from '../service/encryption.service';
-import ReloadService from '../service/reload-service';
+import ReloadService from '../service/reload.service';
 import pino from 'pino';
 import SouthService from '../service/south.service';
 

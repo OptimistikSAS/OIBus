@@ -12,32 +12,24 @@ const CLEAN_UP_INTERVAL = 24 * 3600 * 1000; // One day
  */
 export default class FileCleanupService {
   private readonly logFolder: string;
-  private logger: pino.Logger;
-  private readonly filename: string;
-  private readonly numberOfFiles: number;
   private cleanUpInterval: NodeJS.Timeout | null = null;
 
-  constructor(logFolder: string, logger: pino.Logger, filename: string, numberOfFiles: number) {
+  constructor(logFolder: string, private logger: pino.Logger, private readonly filename: string, private readonly numberOfFiles: number) {
     this.logFolder = path.resolve(logFolder);
-    this.logger = logger;
-    this.filename = filename;
-    this.numberOfFiles = numberOfFiles;
   }
 
   /**
    * Clean up the folder at start and then every CLEAN_UP_INTERVAL ms
-   * @return {void}
    */
-  async start() {
+  async start(): Promise<void> {
     await this.cleanUpLogFiles();
     this.cleanUpInterval = setInterval(this.cleanUpLogFiles.bind(this), CLEAN_UP_INTERVAL);
   }
 
   /**
    * Clear the interval when OIBus stop
-   * @return {void}
    */
-  stop() {
+  stop(): void {
     this.logger.trace('Stopping file cleanup service.');
     if (this.cleanUpInterval) {
       clearInterval(this.cleanUpInterval);
@@ -46,9 +38,8 @@ export default class FileCleanupService {
 
   /**
    * List the files of the log folder and remove the older files if the number of files is over the limit of files
-   * @return {Promise<void>} - The result promise
    */
-  async cleanUpLogFiles() {
+  async cleanUpLogFiles(): Promise<void> {
     try {
       if (!(await filesExists(this.logFolder))) {
         return;
@@ -61,20 +52,16 @@ export default class FileCleanupService {
 
       this.logger.trace(`Found ${logFiles.length} log files with RegExp ${regexp} in folder "${this.logFolder}".`);
       if (logFiles.length > this.numberOfFiles) {
-        await logFiles.reduce(
-          (promise, filename) =>
-            promise.then(async () => {
-              try {
-                const fileStat = await fs.stat(path.resolve(this.logFolder, filename));
-                fileList.push({ file: path.resolve(this.logFolder, filename), modifiedTime: fileStat.mtimeMs });
-              } catch (error) {
-                // If a file is being written or corrupted, the stat method can fail
-                // An error is logged and the cache goes through the other files
-                this.logger.error(`Error while reading log file "${path.resolve(this.logFolder, filename)}": ${error}`);
-              }
-            }),
-          Promise.resolve()
-        );
+        for (const filename of logFiles) {
+          try {
+            const fileStat = await fs.stat(path.resolve(this.logFolder, filename));
+            fileList.push({ file: path.resolve(this.logFolder, filename), modifiedTime: fileStat.mtimeMs });
+          } catch (error) {
+            // If a file is being written or corrupted, the stat method can fail
+            // An error is logged and the cache goes through the other files
+            this.logger.error(`Error while reading log file "${path.resolve(this.logFolder, filename)}": ${error}`);
+          }
+        }
 
         // Sort the newest files first and keep the numberOfFiles first files (the other files will be removed
         const fileToRemove = fileList
@@ -82,19 +69,15 @@ export default class FileCleanupService {
           .map(element => element.file)
           .slice(0, fileList.length - this.numberOfFiles);
         this.logger.trace(`Removing ${fileToRemove.length} log files.`);
-        await fileToRemove.reduce(
-          (promise, filename) =>
-            promise.then(async () => {
-              try {
-                await fs.unlink(path.resolve(this.logFolder, filename));
-              } catch (error) {
-                // If a file is being written or corrupted, the stat method can fail
-                // An error is logged and the cache goes through the other files
-                this.logger.error(`Error while removing log file "${path.resolve(this.logFolder, filename)}": ${error}`);
-              }
-            }),
-          Promise.resolve()
-        );
+        for (const filename of fileToRemove) {
+          try {
+            await fs.unlink(path.resolve(this.logFolder, filename));
+          } catch (error) {
+            // If a file is being written or corrupted, the stat method can fail
+            // An error is logged and the cache goes through the other files
+            this.logger.error(`Error while removing log file "${path.resolve(this.logFolder, filename)}": ${error}`);
+          }
+        }
       }
     } catch (error) {
       this.logger.error(error);

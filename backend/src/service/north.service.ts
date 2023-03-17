@@ -14,33 +14,23 @@ const northList = {
 };
 
 export default class NorthService {
-  private readonly _logger: pino.Logger;
-  private readonly proxyService: ProxyService;
-  private readonly repositoryService: RepositoryService;
-  private readonly encryptionService: EncryptionService;
-
-  constructor(proxyService: ProxyService, encryptionService: EncryptionService, repositoryService: RepositoryService, logger: pino.Logger) {
-    this.proxyService = proxyService;
-    this.encryptionService = encryptionService;
-    this.repositoryService = repositoryService;
-    this._logger = logger;
-  }
-
-  get logger(): pino.Logger {
-    return this._logger;
-  }
+  constructor(
+    private readonly proxyService: ProxyService,
+    private readonly encryptionService: EncryptionService,
+    private readonly repositoryService: RepositoryService
+  ) {}
 
   /**
    * Return the North connector
    */
-  createNorth(settings: NorthConnectorDTO, baseFolder: string): NorthConnector {
+  createNorth(settings: NorthConnectorDTO, baseFolder: string, logger: pino.Logger): NorthConnector {
     // @ts-ignore
     return new northList[settings.type](
       settings,
       this.encryptionService,
       this.proxyService,
       this.repositoryService,
-      this.logger.child({ scope: `north:${settings.name}` }),
+      logger.child({ scope: `north:${settings.name}` }),
       baseFolder
     );
   }
