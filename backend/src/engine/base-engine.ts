@@ -11,23 +11,16 @@ import RepositoryService from '../service/repository.service';
  * Abstract class used to manage North and South connectors
  */
 export default class BaseEngine {
-  protected readonly encryptionService: EncryptionService;
-  protected logger: pino.Logger;
-  protected readonly proxyService: ProxyService;
-  protected cacheFolder: string;
-  protected northService: NorthService;
-  protected southService: SouthService;
   /**
    * Constructor for BaseEngine
    */
   constructor(
-    encryptionService: EncryptionService,
-    proxyService: ProxyService,
-    repositoryService: RepositoryService,
-    northService: NorthService,
-    southService: SouthService,
-    logger: pino.Logger,
-    cacheFolder: string
+    protected readonly encryptionService: EncryptionService,
+    protected readonly proxyService: ProxyService,
+    protected readonly northService: NorthService,
+    protected readonly southService: SouthService,
+    protected logger: pino.Logger,
+    protected readonly cacheFolder: string
   ) {
     this.cacheFolder = path.resolve(cacheFolder);
     this.encryptionService = encryptionService;

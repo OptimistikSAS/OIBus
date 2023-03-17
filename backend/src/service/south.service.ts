@@ -7,7 +7,7 @@ import RepositoryService from './repository.service';
 import FolderScanner from '../south/south-folder-scanner/south-folder-scanner';
 import OPCUA_HA from '../south/south-opcua-ha/south-opcua-ha';
 
-import { SouthConnectorDTO, SouthItemDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, OibusItemDTO } from '../../../shared/model/south-connector.model';
 import SouthConnector from '../south/south-connector';
 
 const southList = {
@@ -16,32 +16,23 @@ const southList = {
 };
 
 export default class SouthService {
-  private readonly _logger: pino.Logger;
-  private readonly proxyService: ProxyService;
-  private readonly repositoryService: RepositoryService;
-  private readonly encryptionService: EncryptionService;
-
-  constructor(proxyService: ProxyService, encryptionService: EncryptionService, repositoryService: RepositoryService, logger: pino.Logger) {
-    this.proxyService = proxyService;
-    this.encryptionService = encryptionService;
-    this.repositoryService = repositoryService;
-    this._logger = logger;
-  }
-
-  get logger(): pino.Logger {
-    return this._logger;
-  }
+  constructor(
+    private readonly proxyService: ProxyService,
+    private readonly encryptionService: EncryptionService,
+    private readonly repositoryService: RepositoryService
+  ) {}
 
   /**
    * Return the South connector
    */
   createSouth(
     settings: SouthConnectorDTO,
-    items: Array<SouthItemDTO>,
+    items: Array<OibusItemDTO>,
     addValues: (southId: string, values: Array<any>) => Promise<void>,
     addFile: (southId: string, filePath: string) => Promise<void>,
     baseFolder: string,
-    streamMode: boolean
+    streamMode: boolean,
+    logger: pino.Logger
   ): SouthConnector {
     // @ts-ignore
     return new southList[settings.type](
@@ -52,7 +43,7 @@ export default class SouthService {
       this.encryptionService,
       this.proxyService,
       this.repositoryService,
-      this.logger.child({ scope: `south:${settings.name}` }),
+      logger.child({ scope: `south:${settings.name}` }),
       baseFolder,
       streamMode
     );
@@ -69,7 +60,7 @@ export default class SouthService {
     return this.repositoryService.southConnectorRepository.getSouthConnectors();
   }
 
-  getSouthItems(southId: string): Array<SouthItemDTO> {
+  getSouthItems(southId: string): Array<OibusItemDTO> {
     return this.repositoryService.southItemRepository.getSouthItems(southId);
   }
 }

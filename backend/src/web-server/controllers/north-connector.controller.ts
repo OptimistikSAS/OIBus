@@ -15,7 +15,7 @@ import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthType } from '../../..
 import JoiValidator from '../../validators/joi.validator';
 
 // TODO: retrieve north types from a local store
-const manifests = [
+export const northManifests = [
   watsyManifest,
   oiconnectManifest,
   timescaleManifest,
@@ -34,7 +34,7 @@ export default class NorthConnectorController {
 
   async getNorthConnectorTypes(ctx: KoaContext<void, Array<NorthType>>): Promise<void> {
     ctx.ok(
-      manifests.map(connector => ({
+      northManifests.map(connector => ({
         category: connector.category,
         type: connector.name,
         description: connector.description,
@@ -44,7 +44,7 @@ export default class NorthConnectorController {
   }
 
   async getNorthConnectorManifest(ctx: KoaContext<void, object>): Promise<void> {
-    const manifest = manifests.find(north => north.name === ctx.params.id);
+    const manifest = northManifests.find(north => north.name === ctx.params.id);
     if (!manifest) {
       ctx.throw(404, 'North not found');
     }
@@ -55,7 +55,7 @@ export default class NorthConnectorController {
     const northConnectors = ctx.app.repositoryService.northConnectorRepository.getNorthConnectors();
     ctx.ok(
       northConnectors.map(connector => {
-        const manifest = manifests.find(north => north.name === connector.type);
+        const manifest = northManifests.find(north => north.name === connector.type);
         if (manifest) {
           return ctx.app.encryptionService.filterSecrets(connector, manifest.settings);
         }
@@ -67,7 +67,7 @@ export default class NorthConnectorController {
   async getNorthConnector(ctx: KoaContext<void, NorthConnectorDTO>): Promise<void> {
     const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
     if (northConnector) {
-      const manifest = manifests.find(north => north.name === northConnector.type);
+      const manifest = northManifests.find(north => north.name === northConnector.type);
       if (manifest) {
         ctx.ok(ctx.app.encryptionService.filterSecrets(northConnector, manifest.settings));
       } else {
@@ -80,7 +80,7 @@ export default class NorthConnectorController {
 
   async createNorthConnector(ctx: KoaContext<NorthConnectorCommandDTO, void>): Promise<void> {
     try {
-      const manifest = manifests.find(north => north.name === ctx.request.body?.type);
+      const manifest = northManifests.find(north => north.name === ctx.request.body?.type);
       if (!manifest) {
         return ctx.throw(404, 'North not found');
       }
@@ -102,7 +102,7 @@ export default class NorthConnectorController {
 
   async updateNorthConnector(ctx: KoaContext<NorthConnectorCommandDTO, void>): Promise<void> {
     try {
-      const manifest = manifests.find(north => north.name === ctx.request.body?.type);
+      const manifest = northManifests.find(north => north.name === ctx.request.body?.type);
       if (!manifest) {
         return ctx.throw(404, 'North not found');
       }
