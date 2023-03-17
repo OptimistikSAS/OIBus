@@ -136,34 +136,40 @@ export default class EncryptionService {
   }
 
   async encryptConnectorSecrets(
-    command: SouthConnectorCommandDTO | NorthConnectorCommandDTO,
-    connector: SouthConnectorDTO | NorthConnectorDTO | null,
-    settings: Array<OibFormControl>
+    newSettings: any,
+    oldSettings: any,
+    formSettings: Array<OibFormControl>
   ): Promise<SouthConnectorCommandDTO | NorthConnectorCommandDTO> {
-    const encryptedCommand: SouthConnectorCommandDTO | NorthConnectorCommandDTO = JSON.parse(JSON.stringify(command));
-    for (const fieldSettings of settings) {
+    const encryptedSettings: any = JSON.parse(JSON.stringify(newSettings));
+    for (const fieldSettings of formSettings) {
       if (fieldSettings.type === 'OibSecret') {
-        if (encryptedCommand.settings[fieldSettings.key]) {
-          encryptedCommand.settings[fieldSettings.key] = await this.encryptText(encryptedCommand.settings[fieldSettings.key]);
+        if (encryptedSettings[fieldSettings.key]) {
+          encryptedSettings[fieldSettings.key] = await this.encryptText(encryptedSettings[fieldSettings.key]);
         } else {
-          encryptedCommand.settings[fieldSettings.key] = connector?.settings[fieldSettings.key] || '';
+          encryptedSettings[fieldSettings.key] = oldSettings ? oldSettings[fieldSettings.key] || '' : '';
         }
       } else if (fieldSettings.type === 'OibAuthentication') {
-        switch (encryptedCommand.settings[fieldSettings.key].type) {
+        switch (encryptedSettings[fieldSettings.key].type) {
           case 'api-key':
-            encryptedCommand.settings[fieldSettings.key].secret = encryptedCommand.settings[fieldSettings.key].secret
-              ? await this.encryptText(encryptedCommand.settings[fieldSettings.key].secret)
-              : connector?.settings[fieldSettings.key].secret || '';
+            encryptedSettings[fieldSettings.key].secret = encryptedSettings[fieldSettings.key].secret
+              ? await this.encryptText(encryptedSettings[fieldSettings.key].secret)
+              : oldSettings
+              ? oldSettings[fieldSettings.key].secret || ''
+              : '';
             break;
           case 'bearer':
-            encryptedCommand.settings[fieldSettings.key].token = encryptedCommand.settings[fieldSettings.key].token
-              ? await this.encryptText(encryptedCommand.settings[fieldSettings.key].token)
-              : connector?.settings[fieldSettings.key].token || '';
+            encryptedSettings[fieldSettings.key].token = encryptedSettings[fieldSettings.key].token
+              ? await this.encryptText(encryptedSettings[fieldSettings.key].token)
+              : oldSettings
+              ? oldSettings[fieldSettings.key].token || ''
+              : '';
             break;
           case 'basic':
-            encryptedCommand.settings[fieldSettings.key].password = encryptedCommand.settings[fieldSettings.key].password
-              ? await this.encryptText(encryptedCommand.settings[fieldSettings.key].password)
-              : connector?.settings[fieldSettings.key].password || '';
+            encryptedSettings[fieldSettings.key].password = encryptedSettings[fieldSettings.key].password
+              ? await this.encryptText(encryptedSettings[fieldSettings.key].password)
+              : oldSettings
+              ? oldSettings[fieldSettings.key].password || ''
+              : '';
             break;
           case 'none':
           case 'cert':
@@ -172,23 +178,23 @@ export default class EncryptionService {
         }
       }
     }
-    return encryptedCommand;
+    return encryptedSettings;
   }
 
-  filterSecrets(connector: SouthConnectorDTO | NorthConnectorDTO, settings: Array<OibFormControl>): SouthConnectorDTO | NorthConnectorDTO {
-    for (const fieldSettings of settings) {
+  filterSecrets(connectorSettings: any, formSettings: Array<OibFormControl>): SouthConnectorDTO | NorthConnectorDTO {
+    for (const fieldSettings of formSettings) {
       if (fieldSettings.type === 'OibSecret') {
-        connector.settings[fieldSettings.key] = '';
+        connectorSettings[fieldSettings.key] = '';
       } else if (fieldSettings.type === 'OibAuthentication') {
-        switch (connector.settings[fieldSettings.key].type) {
+        switch (connectorSettings[fieldSettings.key].type) {
           case 'api-key':
-            connector.settings[fieldSettings.key].secret = '';
+            connectorSettings[fieldSettings.key].secret = '';
             break;
           case 'bearer':
-            connector.settings[fieldSettings.key].token = '';
+            connectorSettings[fieldSettings.key].token = '';
             break;
           case 'basic':
-            connector.settings[fieldSettings.key].password = '';
+            connectorSettings[fieldSettings.key].password = '';
             break;
           case 'none':
           case 'cert':
@@ -197,7 +203,7 @@ export default class EncryptionService {
         }
       }
     }
-    return connector;
+    return connectorSettings;
   }
 
   /**

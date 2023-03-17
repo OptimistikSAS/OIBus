@@ -15,12 +15,23 @@ export default class HistoryQueryController {
   constructor(
     protected readonly validator: JoiValidator,
     private southManifests: Array<SouthConnectorManifest>,
-    private northManifest: Array<NorthConnectorManifest>
+    private northManifests: Array<NorthConnectorManifest>
   ) {}
 
   getHistoryQueries = (ctx: KoaContext<void, Array<HistoryQueryDTO>>) => {
     const historyQueries = ctx.app.repositoryService.historyQueryRepository.getHistoryQueries();
-    ctx.ok(historyQueries);
+    ctx.ok(
+      historyQueries.map(historyQuery => {
+        const southManifest = this.southManifests.find(south => south.name === historyQuery.southType);
+        const northManifest = this.northManifests.find(north => north.name === historyQuery.northType);
+        if (southManifest && northManifest) {
+          historyQuery.southSettings = ctx.app.encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings);
+          historyQuery.northSettings = ctx.app.encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings);
+          return historyQuery;
+        }
+        return null;
+      })
+    );
   };
 
   getHistoryQuery = (ctx: KoaContext<void, HistoryQueryDTO>) => {
@@ -28,7 +39,15 @@ export default class HistoryQueryController {
     if (!historyQuery) {
       return ctx.notFound();
     }
-    ctx.ok(historyQuery);
+    const southManifest = this.southManifests.find(south => south.name === historyQuery.southType);
+    const northManifest = this.northManifests.find(north => north.name === historyQuery.northType);
+    if (southManifest && northManifest) {
+      historyQuery.southSettings = ctx.app.encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings);
+      historyQuery.northSettings = ctx.app.encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings);
+      return ctx.ok(historyQuery);
+    } else {
+      ctx.notFound();
+    }
   };
 
   createHistoryQuery = async (ctx: KoaContext<HistoryQueryCreateCommandDTO, void>) => {
@@ -74,14 +93,14 @@ export default class HistoryQueryController {
 
     let northManifest: NorthConnectorManifest | undefined;
     if (ctx.request.body?.northType) {
-      northManifest = this.northManifest.find(north => north.name === ctx.request.body?.northType);
+      northManifest = this.northManifests.find(north => north.name === ctx.request.body?.northType);
       command.northType = ctx.request.body?.northType;
     } else if (ctx.request.body?.northId) {
       const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.request.body.northId);
       command.northSettings = northConnector.settings;
       command.caching = northConnector.caching;
       command.northType = northConnector.type;
-      northManifest = this.northManifest.find(north => north.name === northConnector.type);
+      northManifest = this.northManifests.find(north => north.name === northConnector.type);
     }
     if (!northManifest) {
       return ctx.throw(404, 'North manifest not found');
@@ -105,17 +124,28 @@ export default class HistoryQueryController {
       return ctx.throw(404, 'South manifest not found');
     }
 
-    const northManifest = this.northManifest.find(north => north.name === historyQuery.northType);
+    const northManifest = this.northManifests.find(north => north.name === historyQuery.northType);
     if (!northManifest) {
       return ctx.throw(404, 'North manifest not found');
     }
 
+    const command = ctx.request.body as HistoryQueryCommandDTO;
     try {
       await this.validator.validate(southManifest.schema, historyQuery.southSettings);
       await this.validator.validate(northManifest.schema, historyQuery.northSettings);
 
-      // TODO: manage encryption
-      await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, ctx.request.body as HistoryQueryCommandDTO);
+      command.southSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
+        command.southSettings,
+        historyQuery.southSettings,
+        southManifest.settings
+      );
+
+      command.northSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
+        command.northSettings,
+        historyQuery.northSettings,
+        southManifest.settings
+      );
+      await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, command);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
