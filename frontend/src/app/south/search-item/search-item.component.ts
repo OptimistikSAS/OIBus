@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NonNullableFormBuilder } from '@angular/forms';
 import { formDirectives } from '../../shared/form-directives';
-import { SouthItemSearchParam } from '../../../../../shared/model/south-connector.model';
+import { OibusItemSearchParam } from '../../../../../shared/model/south-connector.model';
 import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
@@ -12,14 +12,14 @@ import { TranslateModule } from '@ngx-translate/core';
   standalone: true
 })
 export class SearchItemComponent {
-  @Output() readonly search = new EventEmitter<SouthItemSearchParam>();
+  @Output() readonly search = new EventEmitter<OibusItemSearchParam>();
 
   readonly searchForm = this.fb.group({ name: '' });
 
   constructor(private fb: NonNullableFormBuilder) {}
 
   @Input()
-  set searchParams(newSearchParams: SouthItemSearchParam) {
+  set searchParams(newSearchParams: OibusItemSearchParam) {
     this.searchForm.get('name')!.setValue(newSearchParams.name || '');
   }
 

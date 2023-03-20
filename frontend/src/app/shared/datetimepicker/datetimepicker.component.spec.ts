@@ -1,23 +1,26 @@
 import { TestBed } from '@angular/core/testing';
 
 import { Component } from '@angular/core';
-import { FormControl, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ComponentTester } from 'ngx-speculoos';
 import { TestDatetimepicker } from './datetimepicker.test-utils';
 import { noAnimation } from '../test-utils';
 import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
-import { NgTemplateOutlet } from '@angular/common';
-import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
-import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
 import { formDirectives } from '../form-directives';
+import { DatetimepickerComponent } from './datetimepicker.component';
 
 @Component({
   template: '',
-  imports: [...formDirectives],
-  standalone: true
+  standalone: true,
+  imports: [DatetimepickerComponent, ...formDirectives]
 })
 class TestComponent {
-  form = new FormGroup({ from: new FormControl(null as string | null) });
+  form: FormGroup;
+  constructor(fb: FormBuilder) {
+    this.form = fb.group({
+      from: null as string | null
+    });
+  }
 }
 
 class TestComponentTester extends ComponentTester<TestComponent> {
@@ -43,15 +46,7 @@ xdescribe('DatetimepickerComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [
-        ...formDirectives,
-        MockI18nModule,
-        NgTemplateOutlet,
-        NgbTimepicker,
-        DatepickerContainerComponent,
-        NgbInputDatepicker,
-        TestComponent
-      ],
+      imports: [TestComponent, ReactiveFormsModule, MockI18nModule],
       providers: [noAnimation]
     });
   });
@@ -160,12 +155,12 @@ xdescribe('DatetimepickerComponent', () => {
         `
         <form [formGroup]="form">
           <oi-datetimepicker formControlName="from">
-            <ng-template #date let-formControl>
+            <ng-template #date let-formControl="">
               <oi-datepicker-container>
                 <input [formControl]="formControl" [firstDayOfWeek]="7" class="form-control" ngbDatepicker />
               </oi-datepicker-container>
             </ng-template>
-            <ng-template #time let-formControl>
+            <ng-template #time let-formControl="">
               <ngb-timepicker [formControl]="formControl" [seconds]="true"></ngb-timepicker>
             </ng-template>
           </oi-datetimepicker>

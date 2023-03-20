@@ -311,6 +311,8 @@
     "edit-title": "Edit history query {{ name }}",
     "general-settings": "General settings",
     "add": "Add",
+    "from-existing-south": "From existing South",
+    "from-existing-north": "From existing North",
     "edit": "Edit",
     "none": "No History query",
     "name": "Name",
