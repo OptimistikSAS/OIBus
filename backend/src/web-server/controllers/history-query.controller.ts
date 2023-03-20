@@ -107,7 +107,7 @@ export default class HistoryQueryController {
     }
 
     try {
-      const historyQuery = ctx.app.reloadService.onCreateHistoryQuery(command, southItems);
+      const historyQuery = await ctx.app.reloadService.onCreateHistoryQuery(command, southItems);
       ctx.created(historyQuery);
     } catch (error: any) {
       ctx.badRequest(error.message);
@@ -143,7 +143,7 @@ export default class HistoryQueryController {
       command.northSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
         command.northSettings,
         historyQuery.northSettings,
-        southManifest.settings
+        northManifest.settings
       );
       await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, command);
       ctx.noContent();
@@ -190,7 +190,7 @@ export default class HistoryQueryController {
       const command: OibusItemCommandDTO | undefined = ctx.request.body;
       if (command) {
         await this.validator.validate(manifest.items.schema, command?.settings);
-        const historyQueryItem = await ctx.app.reloadService.onCreateHistoryItem(ctx.params.historyId, command);
+        const historyQueryItem = await ctx.app.reloadService.onCreateHistoryItem(ctx.params.historyQueryId, command);
         ctx.created(historyQueryItem);
       } else {
         ctx.badRequest();

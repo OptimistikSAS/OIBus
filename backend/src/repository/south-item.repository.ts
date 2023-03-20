@@ -125,4 +125,12 @@ export default class SouthItemRepository {
     const query = `DELETE FROM ${SOUTH_ITEM_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
+
+  /**
+   * Delete History items associated to a history query ID
+   */
+  deleteSouthItemByConnectorId(connectorId: string): void {
+    const query = `DELETE FROM ${SOUTH_ITEM_TABLE} WHERE connector_id = ?;`;
+    this.database.prepare(query).run(connectorId);
+  }
 }

@@ -185,4 +185,10 @@ describe('South item repository', () => {
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM south_item WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
+
+  it('should delete all south items associated to a connector id', () => {
+    repository.deleteSouthItemByConnectorId('connectorId');
+    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM south_item WHERE connector_id = ?;');
+    expect(run).toHaveBeenCalledWith('connectorId');
+  });
 });
