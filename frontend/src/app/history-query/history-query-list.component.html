@@ -42,14 +42,6 @@
                   <button class="btn btn-link edit-history-query px-1 py-0" id="edit-link" [routerLink]="[historyQuery.id, 'edit']">
                     <span class="fa fa-pencil"></span>
                   </button>
-                  <!-- Duplicate button -->
-                  <button
-                    class="btn btn-link duplicate-history-query px-1 py-0"
-                    routerLink="create"
-                    [queryParams]="{ duplicate: historyQuery.id }"
-                  >
-                    <span class="fa fa-copy"></span>
-                  </button>
                   <!-- Delete button -->
                   <button type="button" class="btn btn-link delete-history-query px-1 py-0" (click)="deleteHistoryQuery(historyQuery)">
                     <span class="fa fa-trash"></span>
