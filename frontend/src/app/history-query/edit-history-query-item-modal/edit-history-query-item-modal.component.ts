@@ -5,13 +5,13 @@ import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
-import { SouthConnectorDTO, OibusItemCommandDTO, OibusItemDTO, OibusItemManifest } from '../../../../../shared/model/south-connector.model';
-import { SouthConnectorService } from '../../services/south-connector.service';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { OibusItemCommandDTO, OibusItemDTO, OibusItemManifest } from '../../../../../shared/model/south-connector.model';
+import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 import { NgForOf, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
 import { createInput } from '../../shared/utils';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
+import { HistoryQueryService } from '../../services/history-query.service';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -21,9 +21,9 @@ declare namespace Intl {
   function supportedValuesOf(input: Key): string[];
 }
 @Component({
-  selector: 'oib-edit-south-item-modal',
-  templateUrl: './edit-south-item-modal.component.html',
-  styleUrls: ['./edit-south-item-modal.component.scss'],
+  selector: 'oib-edit-history-query-item-modal',
+  templateUrl: './edit-history-query-item-modal.component.html',
+  styleUrls: ['./edit-history-query-item-modal.component.scss'],
   imports: [
     ...formDirectives,
     TranslateModule,
@@ -37,21 +37,19 @@ declare namespace Intl {
   ],
   standalone: true
 })
-export class EditSouthItemModalComponent {
+export class EditHistoryQueryItemModalComponent {
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
-  southConnector: SouthConnectorDTO | null = null;
+  historyQuery: HistoryQueryDTO | null = null;
   southItemSchema: OibusItemManifest | null = null;
   southItem: OibusItemDTO | null = null;
-  scanModes: Array<ScanModeDTO> = [];
   timezones = Intl.supportedValuesOf('timeZone');
   form = this.fb.group({
     name: ['', Validators.required],
-    scanMode: [null as ScanModeDTO | null, Validators.required],
     settings: this.fb.record({})
   });
 
-  constructor(private modal: NgbActiveModal, private fb: FormBuilder, private southConnectorService: SouthConnectorService) {}
+  constructor(private modal: NgbActiveModal, private fb: FormBuilder, private historyQueryService: HistoryQueryService) {}
 
   private createSettingsInputs() {
     const inputsToSubscribeTo: Set<string> = new Set();
@@ -75,12 +73,6 @@ export class EditSouthItemModalComponent {
         this.disableInputs(input, inputValue as string | number | boolean, settingsForm);
       });
     });
-
-    if (this.southItemSchema!.scanMode.subscriptionOnly) {
-      this.form.controls.scanMode.disable();
-    } else {
-      this.form.controls.scanMode.enable();
-    }
   }
 
   private disableInputs(input: string, inputValue: string | number | boolean, settingsForm: FormGroup) {
@@ -102,29 +94,21 @@ export class EditSouthItemModalComponent {
   /**
    * Prepares the component for creation.
    */
-  prepareForCreation(southConnector: SouthConnectorDTO, southItemSchema: OibusItemManifest, scanModes: Array<ScanModeDTO>) {
+  prepareForCreation(historyQuery: HistoryQueryDTO, southItemSchema: OibusItemManifest) {
     this.mode = 'create';
-    this.southConnector = southConnector;
+    this.historyQuery = historyQuery;
     this.southItemSchema = southItemSchema;
-    this.scanModes = scanModes;
-
     this.createSettingsInputs();
   }
 
   /**
    * Prepares the component for edition.
    */
-  prepareForEdition(
-    southConnector: SouthConnectorDTO,
-    southItemSchema: OibusItemManifest,
-    scanModes: Array<ScanModeDTO>,
-    southItem: OibusItemDTO
-  ) {
+  prepareForEdition(historyQuery: HistoryQueryDTO, southItemSchema: OibusItemManifest, southItem: OibusItemDTO) {
     this.mode = 'edit';
     this.southItem = southItem;
-    this.southConnector = southConnector;
+    this.historyQuery = historyQuery;
     this.southItemSchema = southItemSchema;
-    this.scanModes = scanModes;
 
     this.southItemSchema.settings.forEach(element => {
       if (this.southItem?.settings) {
@@ -133,8 +117,7 @@ export class EditSouthItemModalComponent {
     });
 
     this.form.patchValue({
-      name: southItem.name,
-      scanMode: this.scanModes.find(scanMode => scanMode.id === southItem.scanModeId) || null
+      name: southItem.name
     });
     this.createSettingsInputs();
   }
@@ -152,20 +135,17 @@ export class EditSouthItemModalComponent {
 
     const command: OibusItemCommandDTO = {
       name: formValue.name!,
-      scanModeId: formValue.scanMode?.id || null,
+      scanModeId: null,
       settings: formValue.settings!
     };
-    if (command.scanModeId === 'subscribe') {
-      command.scanModeId = null;
-    }
 
     let obs: Observable<OibusItemDTO>;
     if (this.mode === 'create') {
-      obs = this.southConnectorService.createSouthItem(this.southConnector!.id, command);
+      obs = this.historyQueryService.createSouthItem(this.historyQuery!.id, command);
     } else {
-      obs = this.southConnectorService
-        .updateSouthItem(this.southConnector!.id, this.southItem!.id, command)
-        .pipe(switchMap(() => this.southConnectorService.getSouthConnectorItem(this.southConnector!.id, this.southItem!.id)));
+      obs = this.historyQueryService
+        .updateSouthItem(this.historyQuery!.id, this.southItem!.id, command)
+        .pipe(switchMap(() => this.historyQueryService.getSouthConnectorItem(this.historyQuery!.id, this.southItem!.id)));
     }
     obs.pipe(this.state.pendingUntilFinalization()).subscribe(southItem => {
       this.modal.close(southItem);

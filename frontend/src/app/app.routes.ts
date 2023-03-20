@@ -75,10 +75,6 @@ export const ROUTES: Routes = [
         component: HistoryQueryListComponent
       },
       {
-        path: 'history-queries/create',
-        component: EditHistoryQueryComponent
-      },
-      {
         path: 'history-queries/:historyQueryId/edit',
         component: EditHistoryQueryComponent
       },

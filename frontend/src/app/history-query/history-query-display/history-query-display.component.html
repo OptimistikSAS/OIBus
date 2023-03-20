@@ -78,6 +78,64 @@
           </div>
         </ng-container>
       </div>
+
+      <div class="row">
+        <h2>
+          <span translate="south.items.title"></span>
+          <span class="ms-2">
+            <button class="btn btn-primary" id="create-modal" (click)="openCreationSouthItemModal()">
+              <span class="fa fa-plus me-2"></span>
+              <span translate="south.add"></span>
+            </button>
+          </span>
+        </h2>
+        <div class="col" *ngIf="historyQueryItems && southSettingsSchema">
+          <div *ngIf="historyQueryItems.totalElements !== 0">
+            <oib-pagination class="d-flex justify-content-end" [page]="historyQueryItems" [navigate]="true"></oib-pagination>
+          </div>
+          <!--          <oib-search-item *ngIf="searchParams" [searchParams]="searchParams" (search)="searchItem($event)"></oib-search-item>-->
+
+          <ng-container>
+            <div *ngIf="historyQueryItems.totalElements !== 0; else empty">
+              <table class="table table-sm table-hover">
+                <thead class="table-light">
+                  <tr>
+                    <th translate="south.items.name"></th>
+                    <ng-container *ngFor="let schema of southManifest.items.settings">
+                      <th *ngIf="schema.readDisplay">{{ schema.label }}</th>
+                    </ng-container>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let item of historyQueryItems.content">
+                    <td>{{ item.name }}</td>
+                    <ng-container *ngFor="let schema of southManifest.items.settings">
+                      <td *ngIf="schema.readDisplay">{{ item.settings[schema.key] }}</td>
+                    </ng-container>
+
+                    <td class="text-nowrap">
+                      <div class="pull-right">
+                        <!-- Edit button -->
+                        <a type="button" class="btn btn-link edit-link px-1 py-0" (click)="openEditSouthItemModal(item)">
+                          <span class="fa fa-pencil"></span>
+                        </a>
+                        <!-- Delete button -->
+                        <button type="button" class="btn btn-link delete-button px-1 py-0" (click)="deleteItem(item)">
+                          <span class="fa fa-trash"></span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <ng-template #empty>
+              <div class="oi-details empty" translate="south.items.none"></div>
+            </ng-template>
+          </ng-container>
+        </div>
+      </div>
     </div>
   </div>
 </div>

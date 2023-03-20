@@ -6,7 +6,7 @@ import { formDirectives } from '../../shared/form-directives';
 import { FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
+import { combineLatest, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
@@ -42,7 +42,6 @@ import { DatetimepickerComponent } from '../../shared/datetimepicker/datetimepic
   styleUrls: ['./edit-history-query.component.scss']
 })
 export class EditHistoryQueryComponent implements OnInit {
-  mode: 'create' | 'edit' = 'create';
   historyQuery: HistoryQueryDTO | null = null;
   state = new ObservableState();
   loading = true;
@@ -50,8 +49,6 @@ export class EditHistoryQueryComponent implements OnInit {
   southSettingsSchema: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
   proxies: Array<ProxyDTO> = [];
-  northType = '';
-  southType = '';
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
 
@@ -94,53 +91,40 @@ export class EditHistoryQueryComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    combineLatest([this.proxyService.getProxies(), this.scanModeService.getScanModes(), this.route.paramMap, this.route.queryParamMap])
+    combineLatest([this.proxyService.getProxies(), this.scanModeService.getScanModes(), this.route.paramMap])
       .pipe(
-        switchMap(([proxies, scanModes, params, queryParams]) => {
+        switchMap(([proxies, scanModes, params]) => {
           this.proxies = proxies;
           this.scanModes = scanModes;
-          let historyQueryId = params.get('historyQueryId');
-          this.northType = queryParams.get('northType') || '';
-          this.southType = queryParams.get('southType') || '';
-          // if there is a History Query ID, we are editing a History Query
-          if (historyQueryId) {
-            this.mode = 'edit';
-          } else {
-            // fetch the History query in case of duplicate
-            historyQueryId = queryParams.get('duplicate');
-          }
-
-          if (historyQueryId) {
-            return this.historyQueryService.getHistoryQuery(historyQueryId).pipe(this.state.pendingUntilFinalization());
-          }
-          // otherwise, we are creating one
-          return of(null);
+          return this.historyQueryService.getHistoryQuery(params.get('historyQueryId') || '').pipe(this.state.pendingUntilFinalization());
         }),
         switchMap(historyQuery => {
           this.historyQuery = historyQuery;
-          if (historyQuery) {
-            this.northType = historyQuery.northType;
-            this.southType = historyQuery.southType;
-            this.historyQueryForm.patchValue({
-              name: historyQuery.name,
-              description: historyQuery.description,
-              enabled: historyQuery.enabled
-            });
-          }
-          // If a North connector is not retrieved, the types are needed to create a new connector
+          this.historyQueryForm.patchValue({
+            name: historyQuery.name,
+            description: historyQuery.description,
+            enabled: historyQuery.enabled,
+            start: historyQuery.startTime,
+            end: historyQuery.endTime,
+            caching: {
+              scanMode: this.scanModes.find(scanMode => scanMode.id === historyQuery.caching.scanModeId),
+              groupCount: historyQuery.caching.groupCount,
+              retryCount: historyQuery.caching.retryCount,
+              retryInterval: historyQuery.caching.retryInterval,
+              maxSendCount: historyQuery.caching.maxSendCount,
+              timeout: historyQuery.caching.timeout
+            },
+            archive: historyQuery.archive
+          });
           return combineLatest([
-            this.northConnectorService.getNorthConnectorTypeManifest(this.northType),
-            this.southConnectorService.getSouthConnectorTypeManifest(this.southType)
+            this.northConnectorService.getNorthConnectorTypeManifest(historyQuery.northType),
+            this.southConnectorService.getSouthConnectorTypeManifest(historyQuery.southType)
           ]);
         })
       )
       .subscribe(([northManifest, southManifest]) => {
-        if (!northManifest || !southManifest) {
-          this.loading = false;
-          return;
-        }
-        const northRowList = getRowSettings(northManifest.settings, this.historyQuery?.northSettings);
-        const southRowList = getRowSettings(southManifest.settings, this.historyQuery?.southSettings);
+        const northRowList = getRowSettings(northManifest.settings, this.historyQuery!.northSettings);
+        const southRowList = getRowSettings(southManifest.settings, this.historyQuery!.southSettings);
 
         this.northManifest = northManifest;
         this.southManifest = southManifest;
@@ -205,26 +189,8 @@ export class EditHistoryQueryComponent implements OnInit {
     });
   }
 
-  createOrUpdateHistoryQuery(command: HistoryQueryCommandDTO): void {
-    let createOrUpdate: Observable<HistoryQueryDTO>;
-    // if we are editing
-    if (this.mode === 'edit') {
-      createOrUpdate = this.historyQueryService.updateHistoryQuery(this.historyQuery!.id, command).pipe(
-        tap(() => this.notificationService.success('history-query.updated', { name: command.name })),
-        switchMap(() => this.historyQueryService.getHistoryQuery(this.historyQuery!.id))
-      );
-    } else {
-      createOrUpdate = this.historyQueryService
-        .createHistoryQuery(command)
-        .pipe(tap(() => this.notificationService.success('history-query.created', { name: command.name })));
-    }
-    createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(historyQuery => {
-      this.router.navigate(['/history-queries', historyQuery.id]);
-    });
-  }
-
   save() {
-    if (!this.historyQueryForm.valid) {
+    if (!this.historyQueryForm.valid || !this.historyQuery) {
       return;
     }
 
@@ -235,8 +201,8 @@ export class EditHistoryQueryComponent implements OnInit {
       enabled: formValue.enabled!,
       startTime: formValue.start!,
       endTime: formValue.end!,
-      northType: this.northType,
-      southType: this.southType,
+      northType: this.historyQuery.northType,
+      southType: this.historyQuery.southType,
       southSettings: formValue.south!.settings!,
       northSettings: formValue.north!.settings!,
       caching: {
@@ -252,6 +218,15 @@ export class EditHistoryQueryComponent implements OnInit {
         retentionDuration: formValue.archive!.retentionDuration!
       }
     };
-    this.createOrUpdateHistoryQuery(command);
+    this.historyQueryService
+      .updateHistoryQuery(this.historyQuery!.id, command)
+      .pipe(
+        tap(() => this.notificationService.success('history-query.updated', { name: command.name })),
+        switchMap(() => this.historyQueryService.getHistoryQuery(this.historyQuery!.id))
+      )
+      .pipe(this.state.pendingUntilFinalization())
+      .subscribe(historyQuery => {
+        this.router.navigate(['/history-queries', historyQuery.id]);
+      });
   }
 }
