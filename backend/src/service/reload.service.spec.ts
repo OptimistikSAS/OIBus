@@ -95,6 +95,7 @@ describe('reload service', () => {
     await service.onDeleteSouth('southId');
     expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
     expect(repositoryRepository.southConnectorRepository.deleteSouthConnector).toHaveBeenCalledWith('southId');
+    expect(repositoryRepository.southItemRepository.deleteSouthItemByConnectorId).toHaveBeenCalledWith('southId');
   });
 
   it('should create south item', async () => {
@@ -179,6 +180,7 @@ describe('reload service', () => {
   it('should delete history query', async () => {
     await service.onDeleteHistoryQuery('historyId');
     expect(repositoryRepository.historyQueryRepository.deleteHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(repositoryRepository.historyQueryItemRepository.deleteHistoryItemByHistoryId).toHaveBeenCalledWith('historyId');
   });
 
   it('should create history item', async () => {
