@@ -92,6 +92,7 @@ export default class ReloadService {
 
   async onDeleteSouth(southId: string): Promise<void> {
     await this.oibusEngine.stopSouth(southId);
+    this.repositoryService.southItemRepository.deleteSouthItemByConnectorId(southId);
     this.repositoryService.southConnectorRepository.deleteSouthConnector(southId);
   }
 
@@ -151,6 +152,7 @@ export default class ReloadService {
 
   async onDeleteHistoryQuery(historyId: string): Promise<void> {
     // TODO: stop history query engine
+    this.repositoryService.historyQueryItemRepository.deleteHistoryItemByHistoryId(historyId);
     this.repositoryService.historyQueryRepository.deleteHistoryQuery(historyId);
   }
 
