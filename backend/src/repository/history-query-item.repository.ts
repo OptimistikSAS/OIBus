@@ -117,4 +117,12 @@ export default class HistoryQueryItemRepository {
     const query = `DELETE FROM ${HISTORY_ITEM_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
+
+  /**
+   * Delete History items associated to a history query ID
+   */
+  deleteHistoryItemByHistoryId(historyId: string): void {
+    const query = `DELETE FROM ${HISTORY_ITEM_TABLE} WHERE history_id = ?;`;
+    this.database.prepare(query).run(historyId);
+  }
 }

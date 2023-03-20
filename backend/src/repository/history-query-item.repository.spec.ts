@@ -168,4 +168,10 @@ describe('History query item repository', () => {
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM history_item WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
+
+  it('should delete all history query items associated to a history id', () => {
+    repository.deleteHistoryItemByHistoryId('historyId');
+    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM history_item WHERE history_id = ?;');
+    expect(run).toHaveBeenCalledWith('historyId');
+  });
 });
