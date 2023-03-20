@@ -1,47 +1,78 @@
-<div class="modal-header">
+<div class="modal-header" xmlns="http://www.w3.org/1999/html">
   <h4 class="modal-title" translate="history-query.modal.title"></h4>
 </div>
 <div class="modal-body">
-  <div class="d-flex justify-content-between">
-    <div class="col">
-      <div *ngFor="let southType of southTypes">
-        <button class="btn d-flex align-items-center category-button" (click)="createForm.controls.southType.setValue(southType.type)">
-          <div class="image-block">
-            <img
-              class="category-image"
-              [src]="'/assets/' + southType.category + '.svg'"
-              [alt]="'enums.categories.' + southType.category | translate"
-            />
-          </div>
-          <div class="ms-5 text-start">
-            <h6 class="mb-0">{{ southType.type }}</h6>
-            <p class="mb-0">{{ southType.description }}</p>
-          </div>
-        </button>
+  <form [formGroup]="createForm" (ngSubmit)="create()" id="form">
+    <div class="row">
+      <div class="form-group">
+        <label for="history-query-name" translate="history-query.name"></label>
+        <input formControlName="name" id="history-query-name" class="form-control" />
+        <val-errors controlName="name"></val-errors>
       </div>
     </div>
-    <div class="col">
-      <div *ngFor="let northType of northTypes">
-        <button class="btn d-flex align-items-center category-button" (click)="createForm.controls.northType.setValue(northType.type)">
-          <div class="image-block">
-            <img
-              class="category-image"
-              [src]="'/assets/' + northType.category + '.svg'"
-              [alt]="'enums.categories.' + northType.category | translate"
-            />
-          </div>
-          <div class="ms-5 text-start">
-            <h6 class="mb-0">{{ northType.type }}</h6>
-            <p class="mb-0">{{ northType.description }}</p>
-          </div>
-        </button>
+    <div class="row">
+      <div class="form-group">
+        <label for="history-query-description" translate="history-query.description"></label>
+        <textarea formControlName="description" id="history-query-description" class="form-control"></textarea>
       </div>
     </div>
-  </div>
+    <div class="row">
+      <div class="col">
+        <div class="form-group">
+          <label for="from-existing-south" translate="history-query.from-existing-south"></label>
+          <div class="form-check form-switch">
+            <input
+              [formControl]="createForm.controls.fromExistingSouth"
+              id="from-existing-south"
+              type="checkbox"
+              class="form-check-input"
+            />
+          </div>
+        </div>
+        <div class="form-group" *ngIf="!createForm.controls.fromExistingSouth.value">
+          <select [formControl]="createForm.controls.southType" id="south-type" class="form-select mb-2 mr-sm-2">
+            <option *ngFor="let southType of southTypes" [ngValue]="southType.type">{{ southType.type }}</option>
+          </select>
+          <val-errors [control]="createForm.controls.southType"></val-errors>
+        </div>
+        <div class="form-group" *ngIf="createForm.controls.fromExistingSouth.value">
+          <select [formControl]="createForm.controls.southId" id="south-connector" class="form-select mb-2 mr-sm-2">
+            <option *ngFor="let connector of southList" [ngValue]="connector.id">{{ connector.name + ' (' + connector.type+')' }}</option>
+          </select>
+          <val-errors [control]="createForm.controls.southId"></val-errors>
+        </div>
+      </div>
+      <div class="col">
+        <div class="form-group">
+          <label for="from-existing-north" translate="history-query.from-existing-north"></label>
+          <div class="form-check form-switch">
+            <input
+              [formControl]="createForm.controls.fromExistingNorth"
+              id="from-existing-north"
+              type="checkbox"
+              class="form-check-input"
+            />
+          </div>
+        </div>
+        <div class="form-group" *ngIf="!createForm.controls.fromExistingNorth.value">
+          <select [formControl]="createForm.controls.northType" id="north-type" class="form-select mb-2 mr-sm-2">
+            <option *ngFor="let northType of northTypes" [ngValue]="northType.type">{{ northType.type }}</option>
+          </select>
+          <val-errors [control]="createForm.controls.northType"></val-errors>
+        </div>
+        <div class="form-group" *ngIf="createForm.controls.fromExistingNorth.value">
+          <select [formControl]="createForm.controls.northId" id="north-connector" class="form-select mb-2 mr-sm-2">
+            <option *ngFor="let connector of northList" [ngValue]="connector.id">{{ connector.name + ' (' + connector.type+')' }}</option>
+          </select>
+          <val-errors [control]="createForm.controls.northId"></val-errors>
+        </div>
+      </div>
+    </div>
+  </form>
 </div>
 <div class="modal-footer">
   <div class="btn-group">
-    <button type="button" class="btn btn-primary" (click)="create()" translate="common.ok" id="create-button"></button>
+    <oib-save-button form="form" [state]="state"></oib-save-button>
     <button type="button" class="btn btn-cancel" ngbAutofocus (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>
