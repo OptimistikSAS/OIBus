@@ -1,8 +1,7 @@
-<div class="oi-padded-container">
+<div class="oi-padded-container" *ngIf="historyQuery">
   <div class="d-flex justify-content-between">
     <div class="oi-header-container">
-      <h1 *ngIf="historyQuery" translate="history-query.edit-title" [translateParams]="{ name: historyQuery.name }"></h1>
-      <h1 *ngIf="!historyQuery" translate="history-query.create-title"></h1>
+      <h1 translate="history-query.edit-title" [translateParams]="{ name: historyQuery.name }"></h1>
     </div>
   </div>
 
@@ -42,15 +41,16 @@
         </div>
 
         <div class="row mb-3">
-          <label for="start" class="col-auto col-form-label" translate="history-query.start"></label>
           <div class="col">
+            <label for="start" class="col-auto col-form-label" translate="history-query.start"></label>
             <oib-datetimepicker formControlName="start" id="start"></oib-datetimepicker>
+            <val-errors controlName="start"></val-errors>
           </div>
-          <label for="end" class="col-auto col-form-label" translate="history-query.end"></label>
           <div class="col">
+            <label for="end" class="col-auto col-form-label" translate="history-query.end"></label>
             <oib-datetimepicker formControlName="end" id="end"></oib-datetimepicker>
+            <val-errors controlName="end"></val-errors>
           </div>
-          <val-errors controlName=""></val-errors>
         </div>
 
         <!-- Cache settings -->
@@ -139,7 +139,7 @@
           <!-- Specific settings -->
           <h2
             translate="history-query.north.specific-settings"
-            [translateParams]="{ type: northType }"
+            [translateParams]="{ type: historyQuery.northType }"
             id="north-specific-settings-title"
           ></h2>
 
@@ -158,7 +158,7 @@
           <!-- Specific settings -->
           <h2
             translate="history-query.south.specific-settings"
-            [translateParams]="{ type: southType }"
+            [translateParams]="{ type: historyQuery.southType }"
             id="south-specific-settings-title"
           ></h2>
 
@@ -176,14 +176,6 @@
         <div class="btn-group">
           <oib-save-button form="history-query-form" [state]="state"></oib-save-button>
           <button
-            *ngIf="!historyQuery"
-            class="btn btn-cancel"
-            translate="common.cancel"
-            id="cancel-create-button"
-            routerLink="/history-queries"
-          ></button>
-          <button
-            *ngIf="historyQuery"
             class="btn btn-cancel"
             translate="common.cancel"
             id="cancel-edit-button"

@@ -2,15 +2,15 @@ import { Component, OnInit } from '@angular/core';
 import { NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-  SouthConnectorDTO,
-  SouthItemDTO,
-  SouthItemManifest,
-  SouthItemSearchParam
+  OibusItemDTO,
+  OibusItemManifest,
+  OibusItemSearchParam,
+  SouthConnectorDTO
 } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { of, switchMap } from 'rxjs';
-import { OibFormControl, OibScanModeFormControl } from '../../../../../shared/model/form.model';
+import { OibFormControl } from '../../../../../shared/model/form.model';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { Page } from '../../../../../shared/model/types';
 import { NotificationService } from '../../shared/notification.service';
@@ -35,11 +35,10 @@ import { getRowSettings } from '../../shared/utils';
 export class SouthDisplayComponent implements OnInit {
   southConnector: SouthConnectorDTO | null = null;
   southSettingsSchema: Array<Array<OibFormControl>> = [];
-  southItemSchema: SouthItemManifest | null = null;
-  southItems: Page<SouthItemDTO> | null = null;
+  southItemSchema: OibusItemManifest | null = null;
+  southItems: Page<OibusItemDTO> | null = null;
   scanModes: Array<ScanModeDTO> = [];
-  scanModeOptions: OibScanModeFormControl | null = null;
-  searchParams: SouthItemSearchParam | null = null;
+  searchParams: OibusItemSearchParam | null = null;
 
   constructor(
     private southConnectorService: SouthConnectorService,
@@ -78,8 +77,7 @@ export class SouthDisplayComponent implements OnInit {
         if (!manifest) {
           return;
         }
-        const rowList = getRowSettings(manifest.settings, this.southConnector?.settings);
-        this.southSettingsSchema = rowList;
+        this.southSettingsSchema = getRowSettings(manifest.settings, this.southConnector!.settings);
         this.southItemSchema = manifest.items;
       });
     this.pageLoader.pageLoads$
@@ -115,18 +113,18 @@ export class SouthDisplayComponent implements OnInit {
     );
   }
 
-  getScanMode(scanModeId: string) {
+  getScanMode(scanModeId: string | undefined) {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
   }
 
-  searchItem(searchParams: SouthItemSearchParam) {
+  searchItem(searchParams: OibusItemSearchParam) {
     this.router.navigate(['.'], { queryParams: { page: 0, name: searchParams.name }, relativeTo: this.route });
   }
 
   /**
    * Open a modal to edit a South item
    */
-  openEditSouthItemModal(southItem: SouthItemDTO) {
+  openEditSouthItemModal(southItem: OibusItemDTO) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent);
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForEdition(this.southConnector!, this.southItemSchema!, this.scanModes, southItem);
