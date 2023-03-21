@@ -1,18 +1,31 @@
 import { TestBed } from '@angular/core/testing';
 
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { ComponentTester } from 'ngx-speculoos';
 import { TestDatetimepicker } from './datetimepicker.test-utils';
 import { noAnimation } from '../test-utils';
 import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
 import { formDirectives } from '../form-directives';
 import { DatetimepickerComponent } from './datetimepicker.component';
+import { provideDatepicker } from '../datepicker.providers';
+import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
+import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
+import { NgTemplateOutlet } from '@angular/common';
 
 @Component({
   template: '',
   standalone: true,
-  imports: [DatetimepickerComponent, ...formDirectives]
+  imports: [
+    DatetimepickerComponent,
+    DatepickerContainerComponent,
+    NgTemplateOutlet,
+    NgbInputDatepicker,
+    NgbTimepicker,
+    ...formDirectives,
+    MockI18nModule
+  ],
+  providers: [noAnimation, provideDatepicker()]
 })
 class TestComponent {
   form: FormGroup;
@@ -41,13 +54,12 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 }
 
-xdescribe('DatetimepickerComponent', () => {
+describe('DatetimepickerComponent', () => {
   let tester: TestComponentTester;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [TestComponent, ReactiveFormsModule, MockI18nModule],
-      providers: [noAnimation]
+      imports: [TestComponent]
     });
   });
 
@@ -154,16 +166,16 @@ xdescribe('DatetimepickerComponent', () => {
         TestComponent,
         `
         <form [formGroup]="form">
-          <oi-datetimepicker formControlName="from">
-            <ng-template #date let-formControl="">
-              <oi-datepicker-container>
+          <oib-datetimepicker formControlName="from">
+            <ng-template #date let-formControl>
+              <oib-datepicker-container>
                 <input [formControl]="formControl" [firstDayOfWeek]="7" class="form-control" ngbDatepicker />
-              </oi-datepicker-container>
+              </oib-datepicker-container>
             </ng-template>
-            <ng-template #time let-formControl="">
+            <ng-template #time let-formControl>
               <ngb-timepicker [formControl]="formControl" [seconds]="true"></ngb-timepicker>
             </ng-template>
-          </oi-datetimepicker>
+          </oib-datetimepicker>
         </form>`
       );
       tester = new TestComponentTester();
