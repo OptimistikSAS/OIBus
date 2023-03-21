@@ -53,6 +53,10 @@
       "MB": "MB"
     }
   },
+  "datepicker": {
+    "parse-pattern": "d/M/yyyy",
+    "format-pattern": "dd/MM/yyyy"
+  },
   "enums": {
     "log-levels": {
       "silent":  "Silent",
