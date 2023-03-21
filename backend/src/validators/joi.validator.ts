@@ -22,12 +22,17 @@ export default class JoiValidator {
   }
 
   async validateSettings(settings: Array<OibFormControl>, dto: any): Promise<void> {
+    const schema = this.generateJoiSchema(settings);
+    await this.validate(schema, dto);
+  }
+
+  protected generateJoiSchema(settings: Array<OibFormControl>): Joi.ObjectSchema {
     let schema = Joi.object({});
     settings.forEach(setting => {
       schema = schema.append(this.generateJoiSchemaFromOibFormControl(setting));
     });
 
-    await this.validate(schema, dto);
+    return schema;
   }
 
   private generateJoiSchemaFromOibFormControl(oibFormControl: OibFormControl): Record<string, AnySchema> {
@@ -158,7 +163,7 @@ export default class JoiValidator {
     let schema = Joi.object({
       type: Joi.string()
         .required()
-        .allow(...formControl.authTypes),
+        .valid(...formControl.authTypes),
       username: Joi.optional(),
       password: Joi.optional(),
       token: Joi.optional(),
@@ -177,7 +182,7 @@ export default class JoiValidator {
   private handleConditionalDisplay(formControl: OibFormControl, schema: AnySchema): AnySchema {
     if (Object.prototype.hasOwnProperty.call(formControl, 'conditionalDisplay')) {
       Object.entries(formControl.conditionalDisplay!).forEach(([key, value]) => {
-        schema.when(key, {
+        schema = schema.when(key, {
           is: Joi.any().valid(...value),
           then: schema.required()
         });
