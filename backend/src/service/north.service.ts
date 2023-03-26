@@ -25,14 +25,7 @@ export default class NorthService {
    */
   createNorth(settings: NorthConnectorDTO, baseFolder: string, logger: pino.Logger): NorthConnector {
     // @ts-ignore
-    return new northList[settings.type](
-      settings,
-      this.encryptionService,
-      this.proxyService,
-      this.repositoryService,
-      logger.child({ scope: `north:${settings.name}` }),
-      baseFolder
-    );
+    return new northList[settings.type](settings, this.encryptionService, this.proxyService, this.repositoryService, logger, baseFolder);
   }
 
   /**
