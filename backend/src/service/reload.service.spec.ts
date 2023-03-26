@@ -4,6 +4,7 @@ import HealthSignalServiceMock from '../tests/__mocks__/health-signal-service.mo
 import NorthServiceMock from '../tests/__mocks__/north-service.mock';
 import SouthServiceMock from '../tests/__mocks__/south-service.mock';
 import OibusEngineMock from '../tests/__mocks__/oibus-engine.mock';
+import HistoryQueryEngineMock from '../tests/__mocks__/history-query-engine.mock';
 import EncryptionService from './encryption.service';
 import RepositoryService from './repository.service';
 import SouthService from './south.service';
@@ -16,6 +17,7 @@ import { EngineSettingsDTO, LogSettings } from '../../../shared/model/engine.mod
 import { OibusItemCommandDTO, OibusItemDTO, SouthConnectorCommandDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
 import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
+import HistoryQueryEngine from '../engine/history-query-engine';
 
 jest.mock('../repository/proxy.repository');
 jest.mock('./encryption.service');
@@ -23,6 +25,7 @@ jest.mock('./logger/logger.service');
 jest.mock('./health-signal.service');
 
 const oibusEngine: OIBusEngine = new OibusEngineMock();
+const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryRepository: RepositoryService = new RepositoryServiceMock('', '');
 const healthSignalService: HealthSignalService = new HealthSignalServiceMock();
@@ -34,7 +37,15 @@ let service: ReloadService;
 describe('reload service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new ReloadService(loggerService, repositoryRepository, healthSignalService, northService, southService, oibusEngine);
+    service = new ReloadService(
+      loggerService,
+      repositoryRepository,
+      healthSignalService,
+      northService,
+      southService,
+      oibusEngine,
+      historyQueryEngine
+    );
   });
 
   it('should be properly initialized', () => {
