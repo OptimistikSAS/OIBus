@@ -79,8 +79,13 @@ export default class HistoryQueryEngine extends BaseEngine {
     await this.historyQueries.get(historyId)?.updateItem(item);
   }
 
-  async stopHistoryQuery(historyId: string): Promise<void> {
-    await this.historyQueries.get(historyId)?.stop();
+  async stopHistoryQuery(historyId: string, resetCache = false): Promise<void> {
+    const historyQuery = this.historyQueries.get(historyId);
+    if (!historyQuery) {
+      return;
+    }
+
+    await historyQuery.stop(resetCache);
     this.historyQueries.delete(historyId);
   }
 
