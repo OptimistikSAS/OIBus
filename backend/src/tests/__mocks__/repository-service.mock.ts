@@ -2,9 +2,6 @@
  * Create a mock object for Repository Service
  */
 export default jest.fn().mockImplementation(() => ({
-  scanModeRepository: {
-    getScanMode: jest.fn()
-  },
   northConnectorRepository: {
     getNorthConnector: jest.fn(),
     getNorthConnectors: jest.fn(),
@@ -20,6 +17,7 @@ export default jest.fn().mockImplementation(() => ({
     deleteSouthConnector: jest.fn()
   },
   southItemRepository: {
+    searchSouthItems: jest.fn(),
     getSouthItem: jest.fn(),
     getSouthItems: jest.fn(),
     createSouthItem: jest.fn(),
@@ -28,8 +26,8 @@ export default jest.fn().mockImplementation(() => ({
     deleteSouthItemByConnectorId: jest.fn()
   },
   historyQueryRepository: {
-    getHistoryQuery: jest.fn(),
     getHistoryQueries: jest.fn(),
+    getHistoryQuery: jest.fn(),
     createHistoryQuery: jest.fn(),
     updateHistoryQuery: jest.fn(),
     deleteHistoryQuery: jest.fn()
@@ -41,5 +39,48 @@ export default jest.fn().mockImplementation(() => ({
     updateHistoryItem: jest.fn(),
     deleteHistoryItem: jest.fn(),
     deleteHistoryItemByHistoryId: jest.fn()
+  },
+  externalSourceRepository: {
+    getExternalSources: jest.fn(),
+    getExternalSource: jest.fn(),
+    createExternalSource: jest.fn(),
+    updateExternalSource: jest.fn(),
+    deleteExternalSource: jest.fn()
+  },
+  ipFilterRepository: {
+    getIpFilters: jest.fn(),
+    getIpFilter: jest.fn(),
+    createIpFilter: jest.fn(),
+    updateIpFilter: jest.fn(),
+    deleteIpFilter: jest.fn()
+  },
+  scanModeRepository: {
+    getScanModes: jest.fn(),
+    getScanMode: jest.fn(),
+    createScanMode: jest.fn(),
+    updateScanMode: jest.fn(),
+    deleteScanMode: jest.fn()
+  },
+  proxyRepository: {
+    getProxies: jest.fn(),
+    getProxy: jest.fn(),
+    createProxy: jest.fn(),
+    updateProxy: jest.fn(),
+    deleteProxy: jest.fn()
+  },
+  userRepository: {
+    searchUsers: jest.fn(),
+    getUserById: jest.fn(),
+    createUser: jest.fn(),
+    updateUser: jest.fn(),
+    updatePassword: jest.fn(),
+    deleteUser: jest.fn()
+  },
+  logRepository: {
+    searchLogs: jest.fn()
+  },
+  engineRepository: {
+    getEngineSettings: jest.fn(),
+    updateEngineSettings: jest.fn()
   }
 }));
