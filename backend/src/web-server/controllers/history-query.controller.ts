@@ -231,7 +231,7 @@ export default class HistoryQueryController {
   }
 
   async deleteHistoryQueryItem(ctx: KoaContext<void, void>): Promise<void> {
-    await ctx.app.reloadService.onDeleteHistoryItem(ctx.params.id);
+    await ctx.app.reloadService.onDeleteHistoryItem(ctx.params.historyQueryId, ctx.params.id);
     ctx.noContent();
   }
 }
