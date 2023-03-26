@@ -28,12 +28,15 @@ export default jest.fn().mockImplementation(() => ({
     deleteSouthItemByConnectorId: jest.fn()
   },
   historyQueryRepository: {
+    getHistoryQuery: jest.fn(),
+    getHistoryQueries: jest.fn(),
     createHistoryQuery: jest.fn(),
     updateHistoryQuery: jest.fn(),
     deleteHistoryQuery: jest.fn()
   },
   historyQueryItemRepository: {
     getHistoryItem: jest.fn(),
+    getHistoryItems: jest.fn(),
     createHistoryItem: jest.fn(),
     updateHistoryItem: jest.fn(),
     deleteHistoryItem: jest.fn(),

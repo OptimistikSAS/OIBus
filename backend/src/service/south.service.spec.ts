@@ -58,6 +58,5 @@ describe('south service', () => {
       logger
     );
     expect(connector).toBeDefined();
-    expect(logger.child).toHaveBeenCalledWith({ scope: 'south:mySouth' });
   });
 });

@@ -94,6 +94,13 @@ describe('Joi validator', () => {
         label: 'OibProxy'
       },
       {
+        key: 'scanMode',
+        type: 'OibScanMode',
+        label: 'OibScanMode',
+        acceptSubscription: false,
+        subscriptionOnly: false
+      },
+      {
         key: 'authentication',
         type: 'OibAuthentication',
         label: 'OibAuthentication',
@@ -112,6 +119,7 @@ describe('Joi validator', () => {
       block: Joi.string().allow(null),
       checkbox: Joi.boolean().falsy(0).truthy(1),
       timezone: Joi.string().allow(null),
+      scanMode: Joi.string().allow(null),
       proxy: Joi.string().allow(null),
       authentication: Joi.object({
         type: Joi.string().required().valid('none', 'basic', 'cert'),

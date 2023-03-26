@@ -43,7 +43,7 @@ export default class SouthService {
       this.encryptionService,
       this.proxyService,
       this.repositoryService,
-      logger.child({ scope: `south:${settings.name}` }),
+      logger,
       baseFolder,
       streamMode
     );
