@@ -3,14 +3,14 @@ import EncryptionService from './encryption.service';
 import pino from 'pino';
 import RepositoryService from './repository.service';
 import NorthConnector from '../north/north-connector';
-import Console from '../north/north-console/north-console';
-import OIAnalytics from '../north/north-oianalytics/north-oianalytics';
+import NorthConsole from '../north/north-console/north-console';
+import NorthOIAnalytics from '../north/north-oianalytics/north-oianalytics';
 
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 
 const northList = {
-  Console,
-  OIAnalytics
+  Console: NorthConsole,
+  OIAnalytics: NorthOIAnalytics
 };
 
 export default class NorthService {

@@ -12,7 +12,7 @@ import RepositoryService from '../../service/repository.service';
 /**
  * Class Console - display values and file path into the console
  */
-export default class Console extends NorthConnector {
+export default class NorthConsole extends NorthConnector {
   static category = manifest.category;
 
   constructor(

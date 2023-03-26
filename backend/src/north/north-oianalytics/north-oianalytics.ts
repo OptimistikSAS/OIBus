@@ -50,7 +50,7 @@ export default class NorthOIAnalytics extends NorthConnector {
     // Remove empty values
     const cleanedValues = values
       .filter(
-        value => value?.data?.value !== undefined && value?.data?.value !== null && value.timestamp !== null && value.pointId !== null
+        value => value && value.data && value.data.value !== undefined && value.data.value !== null && value.timestamp && value.pointId
       )
       .map(value => ({
         timestamp: value.timestamp,
@@ -59,15 +59,22 @@ export default class NorthOIAnalytics extends NorthConnector {
       }));
 
     const headers: Record<string, string> = {
-      Authorization: `Basic ${Buffer.from(
-        `${this.configuration.settings.authentication.key}:${
-          this.configuration.settings.authentication.secret
-            ? await this.encryptionService.decryptText(this.configuration.settings.authentication.secret)
-            : ''
-        }`
-      ).toString('base64')}`,
-      'Content-Type': 'application/json'
+      'content-type': 'application/json'
     };
+    switch (this.configuration.settings.authentication.type) {
+      case 'basic':
+        headers.authorization = `Basic ${Buffer.from(
+          `${this.configuration.settings.authentication.username}:${
+            this.configuration.settings.authentication.password
+              ? await this.encryptionService.decryptText(this.configuration.settings.authentication.password)
+              : ''
+          }`
+        ).toString('base64')}`;
+        break;
+
+      default:
+        break;
+    }
 
     let response;
     const valuesUrl = `${this.configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${this.configuration.name}`;
@@ -99,15 +106,21 @@ export default class NorthOIAnalytics extends NorthConnector {
    * Handle the file by sending it to OIAnalytics.
    */
   override async handleFile(filePath: string): Promise<void> {
-    const headers: Record<string, string> = {
-      Authorization: `Basic ${Buffer.from(
-        `${this.configuration.settings.authentication.key}:${
-          this.configuration.settings.authentication.secret
-            ? await this.encryptionService.decryptText(this.configuration.settings.authentication.secret)
-            : ''
-        }`
-      ).toString('base64')}`
-    };
+    const headers: Record<string, string> = {};
+    switch (this.configuration.settings.authentication.type) {
+      case 'basic':
+        headers.authorization = `Basic ${Buffer.from(
+          `${this.configuration.settings.authentication.username}:${
+            this.configuration.settings.authentication.password
+              ? await this.encryptionService.decryptText(this.configuration.settings.authentication.password)
+              : ''
+          }`
+        ).toString('base64')}`;
+        break;
+
+      default:
+        break;
+    }
     const readStream = createReadStream(filePath);
     // Remove timestamp from the file path
     const { name, ext } = path.parse(filePath);
