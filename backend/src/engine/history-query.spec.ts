@@ -52,9 +52,17 @@ const createdSouth = {
   connect: jest.fn(),
   historyQueryHandler: jest.fn(),
   addItem: jest.fn(),
-  deleteItem: jest.fn()
+  deleteItem: jest.fn(),
+  resetCache: jest.fn()
 };
-const createdNorth = { start: jest.fn(), stop: jest.fn(), connect: jest.fn(), cacheValues: jest.fn(), cacheFile: jest.fn() };
+const createdNorth = {
+  start: jest.fn(),
+  stop: jest.fn(),
+  connect: jest.fn(),
+  cacheValues: jest.fn(),
+  cacheFile: jest.fn(),
+  resetCache: jest.fn()
+};
 
 describe('HistoryQuery enabled', () => {
   beforeEach(async () => {
@@ -193,8 +201,13 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.start();
     await historyQuery.stop();
     expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
-    expect(createdSouth.stop);
-    expect(createdNorth.stop);
+    expect(createdSouth.stop).toHaveBeenCalledTimes(1);
+    expect(createdNorth.stop).toHaveBeenCalledTimes(1);
+    expect(createdNorth.resetCache).not.toHaveBeenCalled();
+    expect(createdSouth.resetCache).not.toHaveBeenCalled();
+    await historyQuery.stop(true);
+    expect(createdNorth.resetCache).toHaveBeenCalledTimes(1);
+    expect(createdSouth.resetCache).toHaveBeenCalledTimes(1);
   });
 
   it('should properly finish', async () => {
@@ -333,6 +346,8 @@ describe('HistoryQuery disabled', () => {
     await historyQuery.stop();
     expect(clearIntervalSpy).not.toHaveBeenCalled();
     expect(createdSouth.stop).not.toHaveBeenCalled();
+    expect(createdSouth.resetCache).not.toHaveBeenCalled();
     expect(createdNorth.stop).not.toHaveBeenCalled();
+    expect(createdNorth.resetCache).not.toHaveBeenCalled();
   });
 });

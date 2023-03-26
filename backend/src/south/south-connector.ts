@@ -396,4 +396,8 @@ export default class SouthConnector {
   setLogger(value: pino.Logger) {
     this.logger = value;
   }
+
+  async resetCache(): Promise<void> {
+    this.southCacheService.resetCache();
+  }
 }

@@ -134,15 +134,21 @@ export default class HistoryQuery {
   /**
    * Stop history query
    */
-  async stop(): Promise<void> {
+  async stop(resetCache = false): Promise<void> {
     if (this.finishInterval) {
       clearInterval(this.finishInterval);
     }
     if (this.south) {
       await this.south.stop();
+      if (resetCache) {
+        await this.south.resetCache();
+      }
     }
     if (this.north) {
       await this.north.stop();
+      if (resetCache) {
+        await this.north.resetCache();
+      }
     }
   }
 

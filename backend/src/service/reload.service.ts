@@ -151,9 +151,8 @@ export default class ReloadService {
   }
 
   async onUpdateHistoryQuerySettings(historyId: string, command: HistoryQueryCommandDTO): Promise<void> {
-    await this.historyEngine.stopHistoryQuery(historyId);
+    await this.historyEngine.stopHistoryQuery(historyId, true);
     this.repositoryService.historyQueryRepository.updateHistoryQuery(historyId, command);
-    // TODO ? reset cache
     const settings = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId);
     await this.historyEngine.startHistoryQuery(settings!);
   }
@@ -166,22 +165,26 @@ export default class ReloadService {
 
   async onCreateHistoryItem(historyId: string, command: OibusItemCommandDTO): Promise<OibusItemDTO> {
     const historyItem = this.repositoryService.historyQueryItemRepository.createHistoryItem(historyId, command);
-    // TODO: stop history query engine
-    // TODO: start history query engine
+    await this.historyEngine.stopHistoryQuery(historyId, true);
+    await this.historyEngine.addItemToHistoryQuery(historyId, historyItem);
+    const settings = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId);
+    await this.historyEngine.startHistoryQuery(settings!);
     return historyItem;
   }
 
-  async onUpdateHistoryItemsSettings(historyId: string, southItem: OibusItemDTO, command: OibusItemCommandDTO): Promise<void> {
-    this.repositoryService.historyQueryItemRepository.updateHistoryItem(southItem.id, command);
-    // TODO: stop history query engine
-    // TODO: start history query engine
+  async onUpdateHistoryItemsSettings(historyId: string, item: OibusItemDTO, command: OibusItemCommandDTO): Promise<void> {
+    await this.historyEngine.stopHistoryQuery(historyId, true);
+    this.repositoryService.historyQueryItemRepository.updateHistoryItem(item.id, command);
+    const historyItem = this.repositoryService.historyQueryItemRepository.getHistoryItem(item.id);
+    await this.historyEngine.updateItemInHistoryQuery(historyId, historyItem);
+    const settings = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId);
+    await this.historyEngine.startHistoryQuery(settings!);
   }
 
-  async onDeleteHistoryItem(itemId: string): Promise<void> {
-    this.repositoryService.historyQueryItemRepository.getHistoryItem(itemId);
-    // TODO: stop history query engine
+  async onDeleteHistoryItem(historyId: string, itemId: string): Promise<void> {
+    const item = this.repositoryService.historyQueryItemRepository.getHistoryItem(itemId);
     this.repositoryService.historyQueryItemRepository.deleteHistoryItem(itemId);
-    // TODO: start history query engine
+    await this.historyEngine.deleteItemFromHistoryQuery(historyId, item);
   }
 
   // TODO: on scan mode delete, add, update

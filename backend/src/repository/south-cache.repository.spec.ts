@@ -82,4 +82,10 @@ describe('South cache repository', () => {
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM cache_history WHERE scan_mode_id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
+
+  it('should reset cache', () => {
+    repository.resetDatabase();
+    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM cache_history;');
+    expect(run).toHaveBeenCalledTimes(1);
+  });
 });

@@ -130,7 +130,7 @@ describe('FileCache', () => {
   it('should remove error files', async () => {
     const filenames = ['file1.name', 'file2.name', 'file3.name'];
 
-    await cache.removeErrorFiles(filenames);
+    await cache.removeFiles(cache.errorFolder, filenames);
     expect(fs.unlink).toHaveBeenNthCalledWith(1, path.join(path.resolve('myCacheFolder', 'files-errors'), filenames[0]));
     expect(fs.unlink).toHaveBeenNthCalledWith(2, path.join(path.resolve('myCacheFolder', 'files-errors'), filenames[1]));
     expect(fs.unlink).toHaveBeenNthCalledWith(3, path.join(path.resolve('myCacheFolder', 'files-errors'), filenames[2]));
@@ -160,18 +160,35 @@ describe('FileCache', () => {
   it('should remove all error files when the error folder is not empty', async () => {
     const filenames = ['file1.name', 'file2.name', 'file3.name'];
     fs.readdir = jest.fn().mockReturnValue(Promise.resolve(filenames));
-    cache.removeErrorFiles = jest.fn();
+    cache.removeFiles = jest.fn();
 
     await cache.removeAllErrorFiles();
-    expect(cache.removeErrorFiles).toHaveBeenCalledWith(filenames);
+    expect(cache.removeFiles).toHaveBeenCalledWith(cache.errorFolder, filenames);
   });
 
   it('should not remove any error file when the error folder is empty', async () => {
     fs.readdir = jest.fn().mockReturnValue(Promise.resolve([]));
-    cache.removeErrorFiles = jest.fn();
+    cache.removeFiles = jest.fn();
 
     await cache.removeAllErrorFiles();
-    expect(cache.removeErrorFiles).not.toHaveBeenCalled();
+    expect(cache.removeFiles).not.toHaveBeenCalled();
+  });
+
+  it('should remove all cache files when the folder is not empty', async () => {
+    const filenames = ['file1.name', 'file2.name', 'file3.name'];
+    fs.readdir = jest.fn().mockReturnValue(Promise.resolve(filenames));
+    cache.removeFiles = jest.fn();
+
+    await cache.removeAllCacheFiles();
+    expect(cache.removeFiles).toHaveBeenCalledWith(cache.fileFolder, filenames);
+  });
+
+  it('should not remove any cache file when the folder is empty', async () => {
+    fs.readdir = jest.fn().mockReturnValue(Promise.resolve([]));
+    cache.removeFiles = jest.fn();
+
+    await cache.removeAllCacheFiles();
+    expect(cache.removeFiles).not.toHaveBeenCalled();
   });
 
   it('should retry all error files when the error folder is not empty', async () => {

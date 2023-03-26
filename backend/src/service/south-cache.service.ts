@@ -39,4 +39,8 @@ export default class SouthCacheService {
   createOrUpdateCacheScanMode(command: SouthCache): void {
     this._southCacheRepository.createOrUpdateCacheScanMode(command);
   }
+
+  resetCache(): void {
+    this._southCacheRepository.resetDatabase();
+  }
 }

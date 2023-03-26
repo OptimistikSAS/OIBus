@@ -344,7 +344,7 @@ export default class NorthConnector {
    */
   async removeErrorFiles(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Removing ${filenames.length} error files from North connector "${this.configuration.name}"...`);
-    await this.fileCacheService.removeErrorFiles(filenames);
+    await this.fileCacheService.removeFiles(this.fileCacheService.errorFolder, filenames);
   }
 
   /**
@@ -373,5 +373,10 @@ export default class NorthConnector {
 
   setLogger(value: pino.Logger) {
     this.logger = value;
+  }
+
+  async resetCache(): Promise<void> {
+    await this.fileCacheService.removeAllErrorFiles();
+    await this.fileCacheService.removeAllCacheFiles();
   }
 }
