@@ -11,6 +11,8 @@ import HealthSignalService from './service/health-signal.service';
 import NorthService from './service/north.service';
 import SouthService from './service/south.service';
 import OIBusEngine from './engine/oibus-engine';
+import HistoryQueryEngine from './engine/history-query-engine';
+import HistoryQueryService from './service/history-query.service';
 
 const CACHE_FOLDER = './cache';
 
@@ -55,6 +57,7 @@ const LOG_DB_NAME = 'journal.db';
 
   const northService = new NorthService(proxyService, encryptionService, repositoryService);
   const southService = new SouthService(proxyService, encryptionService, repositoryService);
+  const historyQueryService = new HistoryQueryService(proxyService, encryptionService, repositoryService);
 
   if (check) {
     console.info('OIBus started in check mode. Exiting process.');
@@ -64,7 +67,25 @@ const LOG_DB_NAME = 'journal.db';
   const engine = new OIBusEngine(encryptionService, proxyService, northService, southService, loggerService.createChildLogger('engine'));
   await engine.start();
 
-  const reloadService = new ReloadService(loggerService, repositoryService, healthSignalService, northService, southService, engine);
+  const historyQueryEngine = new HistoryQueryEngine(
+    encryptionService,
+    proxyService,
+    northService,
+    southService,
+    historyQueryService,
+    loggerService.createChildLogger('history')
+  );
+  await historyQueryEngine.start();
+
+  const reloadService = new ReloadService(
+    loggerService,
+    repositoryService,
+    healthSignalService,
+    northService,
+    southService,
+    engine,
+    historyQueryEngine
+  );
   const server = new WebServer(
     oibusSettings.id,
     oibusSettings.port,

@@ -15,6 +15,7 @@ import HealthSignalService from './health-signal.service';
 import NorthService from './north.service';
 import SouthService from './south.service';
 import OIBusEngine from '../engine/oibus-engine';
+import HistoryQueryEngine from '../engine/history-query-engine';
 
 export default class ReloadService {
   private webServerChangeLoggerCallback: (logger: pino.Logger) => void = () => {};
@@ -26,7 +27,8 @@ export default class ReloadService {
     private readonly _healthSignalService: HealthSignalService,
     private readonly _northService: NorthService,
     private readonly _southService: SouthService,
-    private readonly _oibusEngine: OIBusEngine
+    private readonly _oibusEngine: OIBusEngine,
+    private readonly _historyEngine: HistoryQueryEngine
   ) {}
 
   get repositoryService(): RepositoryService {
@@ -51,6 +53,10 @@ export default class ReloadService {
 
   get oibusEngine(): OIBusEngine {
     return this._oibusEngine;
+  }
+
+  get historyEngine(): HistoryQueryEngine {
+    return this._historyEngine;
   }
 
   setWebServerChangeLogger(callback: (logger: pino.Logger) => void): void {
@@ -140,18 +146,20 @@ export default class ReloadService {
         scanModeId: null
       });
     }
-    // TODO: start history query engine
+    await this.historyEngine.startHistoryQuery(historyQuery);
     return historyQuery;
   }
 
   async onUpdateHistoryQuerySettings(historyId: string, command: HistoryQueryCommandDTO): Promise<void> {
-    // TODO: stop history query engine
+    await this.historyEngine.stopHistoryQuery(historyId);
     this.repositoryService.historyQueryRepository.updateHistoryQuery(historyId, command);
-    // TODO: start history query engine
+    // TODO ? reset cache
+    const settings = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId);
+    await this.historyEngine.startHistoryQuery(settings!);
   }
 
   async onDeleteHistoryQuery(historyId: string): Promise<void> {
-    // TODO: stop history query engine
+    await this.historyEngine.stopHistoryQuery(historyId);
     this.repositoryService.historyQueryItemRepository.deleteHistoryItemByHistoryId(historyId);
     this.repositoryService.historyQueryRepository.deleteHistoryQuery(historyId);
   }

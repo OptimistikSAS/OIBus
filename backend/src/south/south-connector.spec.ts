@@ -133,7 +133,7 @@ describe('SouthConnector enabled', () => {
     expect(logger.trace(`South connector ${configuration.name} enabled. Starting services...`));
     expect(createCacheHistoryTableMock).toHaveBeenCalledTimes(1);
     expect(repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith('scanModeId1');
-    expect(logger.error).toHaveBeenCalledWith('Scan mode scanModeId2 not found.');
+    expect(logger.error).toHaveBeenCalledWith('Scan mode scanModeId2 not found');
     expect(south.isEnabled()).toBeTruthy();
   });
 
@@ -162,6 +162,31 @@ describe('SouthConnector enabled', () => {
     await south.stop();
   });
 
+  it('should not create cron job for history or subscription scan mode', async () => {
+    const historyScanMode = {
+      id: 'history',
+      name: 'history scan mode',
+      description: 'my description',
+      cron: '* * * * * *'
+    };
+    const subscriptionScanMode = {
+      id: 'subscription',
+      name: 'subscription scan mode',
+      description: 'my description',
+      cron: '* * * * * *'
+    };
+    (repositoryService.scanModeRepository.getScanMode as jest.Mock)
+      .mockReturnValueOnce(historyScanMode)
+      .mockReturnValueOnce(subscriptionScanMode);
+
+    south.addToQueue = jest.fn();
+    await south.connect();
+    expect(logger.error).toHaveBeenCalledWith(`Scan mode ${historyScanMode.name} cannot be "subscription" nor "history" in stream mode`);
+
+    await south.connect();
+    expect(logger.error).toHaveBeenCalledWith(`Scan mode ${historyScanMode.name} cannot be "subscription" nor "history" in stream mode`);
+  });
+
   it('should properly add to queue a new task and trigger next run', async () => {
     south.run = jest.fn();
     const scanMode = {
@@ -173,7 +198,7 @@ describe('SouthConnector enabled', () => {
     south.addToQueue(scanMode);
     expect(logger.warn).toHaveBeenCalledWith('subscribe method must be override');
 
-    expect(south.run).toHaveBeenCalledWith(scanMode, true);
+    expect(south.run).toHaveBeenCalledWith(scanMode);
     expect(south.run).toHaveBeenCalledTimes(1);
     south.addToQueue(scanMode);
 
@@ -198,7 +223,7 @@ describe('SouthConnector enabled', () => {
       throw new Error('last point query error');
     });
 
-    await south.run(scanMode, true);
+    await south.run(scanMode);
 
     expect(south.historyQueryHandler).toHaveBeenCalledTimes(1);
     expect(south.historyQueryHandler).toHaveBeenCalledWith(
@@ -221,7 +246,7 @@ describe('SouthConnector enabled', () => {
     expect(logger.error).toHaveBeenCalledWith(`Error when calling fileQuery ${new Error('file query error')}`);
     expect(logger.error).toHaveBeenCalledWith(`Error when calling lastPointQuery ${new Error('last point query error')}`);
 
-    await south.run(scanMode, true);
+    await south.run(scanMode);
     expect(south.historyQueryHandler).toHaveBeenCalledTimes(2);
     expect(south.fileQuery).toHaveBeenCalledTimes(2);
     expect(south.lastPointQuery).toHaveBeenCalledTimes(2);
@@ -251,9 +276,9 @@ describe('SouthConnector enabled', () => {
 
     south.disconnect = jest.fn();
 
-    south.run(scanMode, true);
+    south.run(scanMode);
 
-    await south.run(scanMode, true);
+    await south.run(scanMode);
     expect(logger.warn).toHaveBeenCalledWith(`A South task is already running with scan mode ${scanMode.name}`);
 
     south.stop();
@@ -520,7 +545,7 @@ describe('SouthConnector enabled without any modes', () => {
       description: 'my description',
       cron: '* * * * * *'
     };
-    await south.run(scanMode, true);
+    await south.run(scanMode);
     expect(south.lastPointQuery).not.toHaveBeenCalled();
     expect(south.fileQuery).not.toHaveBeenCalled();
     expect(south.historyQueryHandler).not.toHaveBeenCalled();

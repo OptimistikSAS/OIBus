@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
 import { delay, generateIntervals } from '../service/utils';
 
-import { SouthConnectorDTO, SouthConnectorManifest, OibusItemCommandDTO, OibusItemDTO } from '../../../shared/model/south-connector.model';
+import { OibusItemCommandDTO, OibusItemDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { Instant } from '../../../shared/model/types';
 import pino from 'pino';
@@ -36,21 +36,10 @@ import SouthCacheService from '../service/south-cache.service';
  * and should not be taken care at the South level.
  */
 export default class SouthConnector {
-  protected configuration: SouthConnectorDTO;
-  protected encryptionService: EncryptionService;
-  protected proxyService: ProxyService;
-  private repositoryService: RepositoryService;
-  protected logger: pino.Logger;
-  protected readonly baseFolder: string;
-  private manifest: SouthConnectorManifest;
-  private readonly engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>;
-  private readonly engineAddFileCallback: (southId: string, filePath: string) => Promise<void>;
-
   private itemsByScanModeIds: Map<string, Map<string, OibusItemDTO>> = new Map<string, Map<string, OibusItemDTO>>();
   private taskJobQueue: Array<ScanModeDTO> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   private taskRunner: EventEmitter = new EventEmitter();
-  private readonly streamMode: boolean;
   private stopping = false;
   private runProgress$: DeferredPromise | null = null;
 
@@ -60,19 +49,18 @@ export default class SouthConnector {
    * Constructor for SouthConnector
    */
   constructor(
-    configuration: SouthConnectorDTO,
+    protected configuration: SouthConnectorDTO,
     items: Array<OibusItemDTO>,
-    engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
-    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
-    encryptionService: EncryptionService,
-    proxyService: ProxyService,
-    repositoryService: RepositoryService,
-    logger: pino.Logger,
-    baseFolder: string,
-    streamMode: boolean,
-    manifest: SouthConnectorManifest
+    private engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
+    private engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
+    protected readonly encryptionService: EncryptionService,
+    protected readonly proxyService: ProxyService,
+    private readonly repositoryService: RepositoryService,
+    protected logger: pino.Logger,
+    protected readonly baseFolder: string,
+    private readonly streamMode: boolean,
+    private manifest: SouthConnectorManifest
   ) {
-    this.configuration = configuration;
     items
       .filter(item => item.scanModeId)
       .forEach(item => {
@@ -81,15 +69,6 @@ export default class SouthConnector {
         }
         this.itemsByScanModeIds.get(item.scanModeId!)!.set(item.id, item);
       });
-    this.engineAddValuesCallback = engineAddValuesCallback;
-    this.engineAddFileCallback = engineAddFileCallback;
-    this.encryptionService = encryptionService;
-    this.proxyService = proxyService;
-    this.repositoryService = repositoryService;
-    this.logger = logger;
-    this.baseFolder = baseFolder;
-    this.manifest = manifest;
-    this.streamMode = streamMode;
 
     this.southCacheService = new SouthCacheService(path.resolve(this.baseFolder, 'cache.db'));
     if (this.manifest.modes.historyFile || this.manifest.modes.historyPoint) {
@@ -99,7 +78,7 @@ export default class SouthConnector {
     if (this.streamMode) {
       this.taskRunner.on('next', async () => {
         if (this.taskJobQueue.length > 0) {
-          await this.run(this.taskJobQueue[0], true);
+          await this.run(this.taskJobQueue[0]);
         } else {
           this.logger.trace('No more task to run');
         }
@@ -113,21 +92,26 @@ export default class SouthConnector {
   }
 
   async connect(): Promise<void> {
-    if (this.streamMode) {
-      if (this.manifest.modes.subscription) {
-        await this.subscribe([]);
-      }
+    if (!this.streamMode) {
+      return;
+    }
+    if (this.manifest.modes.subscription) {
+      const items = Array.from(this.itemsByScanModeIds.get('subscription') || new Map(), ([_scanModeId, item]) => item);
+      this.logger.debug(`Subscribing to ${items.length} items`);
+      await this.subscribe(items);
+    }
 
-      for (const scanModeId of this.itemsByScanModeIds.keys()) {
-        const scanMode = this.repositoryService.scanModeRepository.getScanMode(scanModeId);
-        if (scanMode) {
+    for (const scanModeId of this.itemsByScanModeIds.keys()) {
+      const scanMode = this.repositoryService.scanModeRepository.getScanMode(scanModeId);
+      if (!scanMode) {
+        this.logger.error(`Scan mode ${scanModeId} not found`);
+      } else {
+        if (scanMode.id !== 'subscription' && scanMode.id !== 'history') {
           this.createCronJob(scanMode);
         } else {
-          this.logger.error(`Scan mode ${scanModeId} not found.`);
+          this.logger.error(`Scan mode ${scanMode.name} cannot be "subscription" nor "history" in stream mode`);
         }
       }
-    } else {
-      this.logger.trace(`Stream mode not enabled. Cron jobs and subscription won't start`);
     }
   }
 
@@ -171,7 +155,7 @@ export default class SouthConnector {
     }
   }
 
-  async run(scanMode: ScanModeDTO, streamMode: boolean): Promise<void> {
+  async run(scanMode: ScanModeDTO): Promise<void> {
     if (this.runProgress$) {
       this.logger.warn(`A South task is already running with scan mode ${scanMode.name}`);
       return;
@@ -198,14 +182,14 @@ export default class SouthConnector {
         this.logger.error(`Error when calling historyQuery ${error}`);
       }
     }
-    if (this.manifest.modes.lastFile) {
+    if (this.manifest.modes.lastFile && this.streamMode) {
       try {
         await this.fileQuery(items);
       } catch (error) {
         this.logger.error(`Error when calling fileQuery ${error}`);
       }
     }
-    if (this.manifest.modes.lastPoint) {
+    if (this.manifest.modes.lastPoint && this.streamMode) {
       try {
         await this.lastPointQuery(items);
       } catch (error) {
@@ -215,7 +199,7 @@ export default class SouthConnector {
 
     this.resolveDeferredPromise();
 
-    if (streamMode && !this.stopping) {
+    if (!this.stopping) {
       this.taskJobQueue.shift();
       this.taskRunner.emit('next');
     }
