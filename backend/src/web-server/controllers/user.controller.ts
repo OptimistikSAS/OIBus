@@ -58,8 +58,8 @@ export default class UserController extends AbstractController {
   }
 
   async deleteUser(ctx: KoaContext<void, void>): Promise<void> {
-    const ipFilter = ctx.app.repositoryService.userRepository.getUserById(ctx.params.id);
-    if (ipFilter) {
+    const user = ctx.app.repositoryService.userRepository.getUserById(ctx.params.id);
+    if (user) {
       ctx.app.repositoryService.userRepository.deleteUser(ctx.params.id);
       ctx.noContent();
     } else {
