@@ -6,11 +6,13 @@ import { provideI18n } from './i18n/i18n';
 import { importProvidersFrom } from '@angular/core';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { AuthenticationInterceptor } from './app/auth/authentication.interceptor';
+import { provideDatepicker } from './app/shared/datepicker.providers';
 
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(ROUTES),
     provideI18n(),
+    provideDatepicker(),
     importProvidersFrom(HttpClientModule),
     { provide: HTTP_INTERCEPTORS, useClass: AuthenticationInterceptor, multi: true }
   ]

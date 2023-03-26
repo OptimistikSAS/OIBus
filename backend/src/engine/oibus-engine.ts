@@ -35,8 +35,8 @@ export default class OIBusEngine extends BaseEngine {
    * Add new values from a South connector to the Engine.
    * The Engine will forward the values to the Cache.
    */
-  override async addValues(southId: string, values: Array<any>): Promise<void> {
-    this.logger.info(`Add "${values.length}" values from ${southId} to north`);
+  async addValues(southId: string, values: Array<any>): Promise<void> {
+    this.logger.info(`Add ${values.length} values from ${southId} to north`);
     for (const north of this.northConnectors.values()) {
       if (north.isEnabled() && north.isSubscribed(southId)) {
         await north.cacheValues(values);
@@ -48,7 +48,7 @@ export default class OIBusEngine extends BaseEngine {
    * Add a new file from a South connector to the Engine.
    * The Engine will forward the file to the Cache.
    */
-  override async addFile(southId: string, filePath: string): Promise<void> {
+  async addFile(southId: string, filePath: string): Promise<void> {
     this.logger.info(`Add file "${filePath}" from ${southId} to north connectors`);
     for (const north of this.northConnectors.values()) {
       if (north.isEnabled() && north.isSubscribed(southId)) {
@@ -82,7 +82,7 @@ export default class OIBusEngine extends BaseEngine {
       }
     }
 
-    this.logger.info('OIBus started.');
+    this.logger.info('OIBus engine started');
   }
 
   /**
@@ -110,7 +110,7 @@ export default class OIBusEngine extends BaseEngine {
       this.addFile.bind(this),
       baseFolder,
       true,
-      this.logger
+      this.logger.child({ scope: `south:${settings.name}` })
     );
     if (south.isEnabled()) {
       // Do not await here, so it can start all connectors without blocking the thread
@@ -123,11 +123,11 @@ export default class OIBusEngine extends BaseEngine {
     this.southConnectors.set(settings.id, south);
   }
 
-  async startNorth(southId: string, settings: NorthConnectorDTO): Promise<void> {
+  async startNorth(northId: string, settings: NorthConnectorDTO): Promise<void> {
     const baseFolder = path.resolve(this.cacheFolder, `north-${settings.id}`);
     await createFolder(baseFolder);
 
-    const north = this.northService.createNorth(settings, baseFolder, this.logger);
+    const north = this.northService.createNorth(settings, baseFolder, this.logger.child({ scope: `north:${settings.name}` }));
     if (north.isEnabled()) {
       // Do not await here, so it can start all connectors without blocking the thread
       north.start().catch(error => {
