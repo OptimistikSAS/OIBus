@@ -53,4 +53,9 @@ describe('South cache service', () => {
       intervalIndex: 0
     });
   });
+
+  it('should reset cache', () => {
+    service.resetCache();
+    expect(service.southCacheRepository.resetDatabase).toHaveBeenCalledTimes(1);
+  });
 });

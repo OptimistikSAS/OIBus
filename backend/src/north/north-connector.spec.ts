@@ -17,6 +17,8 @@ const getValuesToSendMock = jest.fn();
 const getFileToSend = jest.fn();
 const valueCacheIsEmpty = jest.fn();
 const fileCacheIsEmpty = jest.fn();
+const removeAllErrorFiles = jest.fn();
+const removeAllCacheFiles = jest.fn();
 
 // Mock services
 jest.mock('../service/repository.service');
@@ -53,10 +55,11 @@ jest.mock(
           { filename: 'file3.name', modificationDate: '', size: 3 }
         ]),
         cacheFile: jest.fn(),
-        removeErrorFiles: jest.fn(),
+        removeFiles: jest.fn(),
         retryErrorFiles: jest.fn(),
-        removeAllErrorFiles: jest.fn(),
+        removeAllErrorFiles: removeAllErrorFiles,
         retryAllErrorFiles: jest.fn(),
+        removeAllCacheFiles: removeAllCacheFiles,
         getFileToSend: getFileToSend,
         removeFileFromQueue: jest.fn(),
         manageErroredFiles: jest.fn(),
@@ -465,5 +468,11 @@ describe('NorthConnector disabled', () => {
     await north.retryAllErrorFiles();
     expect(anotherLogger.trace).toHaveBeenCalledTimes(1);
     expect(logger.trace).not.toHaveBeenCalled();
+  });
+
+  it('should reset cache', async () => {
+    await north.resetCache();
+    expect(removeAllErrorFiles).toHaveBeenCalledTimes(1);
+    expect(removeAllCacheFiles).toHaveBeenCalledTimes(1);
   });
 });
