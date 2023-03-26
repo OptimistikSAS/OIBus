@@ -52,4 +52,9 @@ export default class SouthCacheRepository {
     const query = `DELETE FROM ${SOUTH_CACHE_TABLE} WHERE scan_mode_id = ?;`;
     this.database.prepare(query).run(id);
   }
+
+  resetDatabase(): void {
+    const query = `DELETE FROM ${SOUTH_CACHE_TABLE};`;
+    this.database.prepare(query).run();
+  }
 }

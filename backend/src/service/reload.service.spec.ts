@@ -27,7 +27,7 @@ jest.mock('./health-signal.service');
 const oibusEngine: OIBusEngine = new OibusEngineMock();
 const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryRepository: RepositoryService = new RepositoryServiceMock('', '');
+const repositoryService: RepositoryService = new RepositoryServiceMock('', '');
 const healthSignalService: HealthSignalService = new HealthSignalServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const southService: SouthService = new SouthServiceMock();
@@ -39,7 +39,7 @@ describe('reload service', () => {
     jest.clearAllMocks();
     service = new ReloadService(
       loggerService,
-      repositoryRepository,
+      repositoryService,
       healthSignalService,
       northService,
       southService,
@@ -87,7 +87,7 @@ describe('reload service', () => {
 
   it('should create south', async () => {
     const command = {};
-    (repositoryRepository.southConnectorRepository.createSouthConnector as jest.Mock).mockReturnValueOnce({ id: 'southId' });
+    (repositoryService.southConnectorRepository.createSouthConnector as jest.Mock).mockReturnValueOnce({ id: 'southId' });
     const result = await service.onCreateSouth(command as SouthConnectorCommandDTO);
     expect(oibusEngine.startSouth).toHaveBeenCalledWith('southId', { id: 'southId' });
     expect(result).toEqual({ id: 'southId' });
@@ -95,24 +95,24 @@ describe('reload service', () => {
 
   it('should update south', async () => {
     const command = {};
-    (repositoryRepository.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ id: 'southId' });
+    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ id: 'southId' });
     await service.onUpdateSouthSettings('southId', command as SouthConnectorCommandDTO);
     expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
-    expect(repositoryRepository.southConnectorRepository.updateSouthConnector).toHaveBeenCalledWith('southId', command);
+    expect(repositoryService.southConnectorRepository.updateSouthConnector).toHaveBeenCalledWith('southId', command);
     expect(oibusEngine.startSouth).toHaveBeenCalledWith('southId', { id: 'southId' });
   });
 
   it('should delete south', async () => {
     await service.onDeleteSouth('southId');
     expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
-    expect(repositoryRepository.southConnectorRepository.deleteSouthConnector).toHaveBeenCalledWith('southId');
-    expect(repositoryRepository.southItemRepository.deleteSouthItemByConnectorId).toHaveBeenCalledWith('southId');
+    expect(repositoryService.southConnectorRepository.deleteSouthConnector).toHaveBeenCalledWith('southId');
+    expect(repositoryService.southItemRepository.deleteSouthItemByConnectorId).toHaveBeenCalledWith('southId');
   });
 
   it('should create south item', async () => {
     const command = {};
     const southItem = { id: 'southItemId', settings: {} };
-    (repositoryRepository.southItemRepository.createSouthItem as jest.Mock).mockReturnValueOnce(southItem);
+    (repositoryService.southItemRepository.createSouthItem as jest.Mock).mockReturnValueOnce(southItem);
     const result = await service.onCreateSouthItem('southId', command as OibusItemCommandDTO);
     expect(oibusEngine.addItemToSouth).toHaveBeenCalledWith('southId', southItem);
     expect(result).toEqual(southItem);
@@ -122,22 +122,22 @@ describe('reload service', () => {
     const southItem = { id: 'southItemId', settings: {} };
     const command = {};
     await service.onUpdateSouthItemsSettings('southId', southItem as OibusItemDTO, command as OibusItemCommandDTO);
-    expect(repositoryRepository.southItemRepository.updateSouthItem).toHaveBeenCalledWith('southItemId', command);
+    expect(repositoryService.southItemRepository.updateSouthItem).toHaveBeenCalledWith('southItemId', command);
     expect(oibusEngine.updateItemInSouth).toHaveBeenCalledWith('southId', southItem, command);
   });
 
   it('should delete south item', async () => {
     const southItem = { id: 'southItemId', connectorId: 'southId', settings: {} };
-    (repositoryRepository.southItemRepository.getSouthItem as jest.Mock).mockReturnValueOnce(southItem);
+    (repositoryService.southItemRepository.getSouthItem as jest.Mock).mockReturnValueOnce(southItem);
 
     await service.onDeleteSouthItem('southItemId');
     expect(oibusEngine.deleteItemFromSouth).toHaveBeenCalledWith('southId', southItem);
-    expect(repositoryRepository.southItemRepository.deleteSouthItem).toHaveBeenCalledWith('southItemId');
+    expect(repositoryService.southItemRepository.deleteSouthItem).toHaveBeenCalledWith('southItemId');
   });
 
   it('should create north', async () => {
     const command = {};
-    (repositoryRepository.northConnectorRepository.createNorthConnector as jest.Mock).mockReturnValueOnce({ id: 'northId' });
+    (repositoryService.northConnectorRepository.createNorthConnector as jest.Mock).mockReturnValueOnce({ id: 'northId' });
     const result = await service.onCreateNorth(command as NorthConnectorCommandDTO);
     expect(oibusEngine.startNorth).toHaveBeenCalledWith('northId', { id: 'northId' });
     expect(result).toEqual({ id: 'northId' });
@@ -145,17 +145,17 @@ describe('reload service', () => {
 
   it('should update north', async () => {
     const command = {};
-    (repositoryRepository.northConnectorRepository.getNorthConnector as jest.Mock).mockReturnValueOnce({ id: 'northId' });
+    (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock).mockReturnValueOnce({ id: 'northId' });
     await service.onUpdateNorthSettings('northId', command as NorthConnectorCommandDTO);
     expect(oibusEngine.stopNorth).toHaveBeenCalledWith('northId');
-    expect(repositoryRepository.northConnectorRepository.updateNorthConnector).toHaveBeenCalledWith('northId', command);
+    expect(repositoryService.northConnectorRepository.updateNorthConnector).toHaveBeenCalledWith('northId', command);
     expect(oibusEngine.startNorth).toHaveBeenCalledWith('northId', { id: 'northId' });
   });
 
   it('should delete north', async () => {
     await service.onDeleteNorth('northId');
     expect(oibusEngine.stopNorth).toHaveBeenCalledWith('northId');
-    expect(repositoryRepository.northConnectorRepository.deleteNorthConnector).toHaveBeenCalledWith('northId');
+    expect(repositoryService.northConnectorRepository.deleteNorthConnector).toHaveBeenCalledWith('northId');
   });
 
   it('should create history query', async () => {
@@ -164,17 +164,17 @@ describe('reload service', () => {
       { id: 'southItemId1', name: 'southItem1', scanModeId: 'scanModeId1', connectorId: 'southId', settings: {} } as OibusItemDTO,
       { id: 'southItemId2', name: 'southItem2', scanModeId: 'scanModeId1', connectorId: 'southId', settings: {} } as OibusItemDTO
     ];
-    (repositoryRepository.historyQueryRepository.createHistoryQuery as jest.Mock).mockReturnValueOnce({ id: 'historyId' });
+    (repositoryService.historyQueryRepository.createHistoryQuery as jest.Mock).mockReturnValueOnce({ id: 'historyId' });
     const result = await service.onCreateHistoryQuery(command as HistoryQueryCommandDTO, southItems);
-    expect(repositoryRepository.historyQueryRepository.createHistoryQuery).toHaveBeenCalledWith(command);
+    expect(repositoryService.historyQueryRepository.createHistoryQuery).toHaveBeenCalledWith(command);
     expect(result).toEqual({ id: 'historyId' });
-    expect(repositoryRepository.historyQueryItemRepository.createHistoryItem).toHaveBeenCalledTimes(2);
-    expect(repositoryRepository.historyQueryItemRepository.createHistoryItem).toHaveBeenCalledWith('historyId', {
+    expect(repositoryService.historyQueryItemRepository.createHistoryItem).toHaveBeenCalledTimes(2);
+    expect(repositoryService.historyQueryItemRepository.createHistoryItem).toHaveBeenCalledWith('historyId', {
       name: 'southItem1',
       scanModeId: null,
       settings: {}
     });
-    expect(repositoryRepository.historyQueryItemRepository.createHistoryItem).toHaveBeenCalledWith('historyId', {
+    expect(repositoryService.historyQueryItemRepository.createHistoryItem).toHaveBeenCalledWith('historyId', {
       name: 'southItem2',
       scanModeId: null,
       settings: {}
@@ -183,37 +183,52 @@ describe('reload service', () => {
 
   it('should update history query', async () => {
     const command = {};
-    (repositoryRepository.historyQueryRepository.updateHistoryQuery as jest.Mock).mockReturnValueOnce({ id: 'historyId' });
+    (repositoryService.historyQueryRepository.updateHistoryQuery as jest.Mock).mockReturnValueOnce({ id: 'historyId' });
     await service.onUpdateHistoryQuerySettings('historyId', command as HistoryQueryCommandDTO);
-    expect(repositoryRepository.historyQueryRepository.updateHistoryQuery).toHaveBeenCalledWith('historyId', command);
+    expect(repositoryService.historyQueryRepository.updateHistoryQuery).toHaveBeenCalledWith('historyId', command);
   });
 
   it('should delete history query', async () => {
     await service.onDeleteHistoryQuery('historyId');
-    expect(repositoryRepository.historyQueryRepository.deleteHistoryQuery).toHaveBeenCalledWith('historyId');
-    expect(repositoryRepository.historyQueryItemRepository.deleteHistoryItemByHistoryId).toHaveBeenCalledWith('historyId');
+    expect(repositoryService.historyQueryRepository.deleteHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(repositoryService.historyQueryItemRepository.deleteHistoryItemByHistoryId).toHaveBeenCalledWith('historyId');
   });
 
   it('should create history item', async () => {
     const command = {};
     const historyItem = { id: 'southItemId', settings: {} };
-    (repositoryRepository.historyQueryItemRepository.createHistoryItem as jest.Mock).mockReturnValueOnce(historyItem);
+    (repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValueOnce({ id: 'historyId' });
+    (repositoryService.historyQueryItemRepository.createHistoryItem as jest.Mock).mockReturnValueOnce(historyItem);
     const result = await service.onCreateHistoryItem('historyId', command as OibusItemCommandDTO);
+    expect(repositoryService.historyQueryItemRepository.createHistoryItem).toHaveBeenCalledWith('historyId', command);
+    expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith('historyId', true);
+    expect(historyQueryEngine.addItemToHistoryQuery).toHaveBeenCalledWith('historyId', historyItem);
+    expect(repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(historyQueryEngine.startHistoryQuery).toHaveBeenCalledWith({ id: 'historyId' });
     expect(result).toEqual(historyItem);
   });
 
   it('should update history item', async () => {
     const historyItem = { id: 'historyItemId', settings: {} };
     const command = {};
+    (repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValueOnce({ id: 'historyId' });
+    (repositoryService.historyQueryItemRepository.getHistoryItem as jest.Mock).mockReturnValueOnce(historyItem);
     await service.onUpdateHistoryItemsSettings('historyId', historyItem as OibusItemDTO, command as OibusItemCommandDTO);
-    expect(repositoryRepository.historyQueryItemRepository.updateHistoryItem).toHaveBeenCalledWith('historyItemId', command);
+    expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith('historyId', true);
+    expect(repositoryService.historyQueryItemRepository.updateHistoryItem).toHaveBeenCalledWith('historyItemId', command);
+    expect(repositoryService.historyQueryItemRepository.getHistoryItem).toHaveBeenCalledWith('historyItemId');
+    expect(historyQueryEngine.updateItemInHistoryQuery).toHaveBeenCalledWith('historyId', historyItem);
+    expect(repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(historyQueryEngine.startHistoryQuery).toHaveBeenCalledWith({ id: 'historyId' });
   });
 
   it('should delete history item', async () => {
     const historyItem = { id: 'historyItemId', connectorId: 'southId', settings: {} };
-    (repositoryRepository.historyQueryItemRepository.getHistoryItem as jest.Mock).mockReturnValueOnce(historyItem);
+    (repositoryService.historyQueryItemRepository.getHistoryItem as jest.Mock).mockReturnValueOnce(historyItem);
 
-    await service.onDeleteHistoryItem('historyItemId');
-    expect(repositoryRepository.historyQueryItemRepository.deleteHistoryItem).toHaveBeenCalledWith('historyItemId');
+    await service.onDeleteHistoryItem('historyItemId', 'itemId');
+    expect(repositoryService.historyQueryItemRepository.getHistoryItem).toHaveBeenCalledWith('itemId');
+    expect(repositoryService.historyQueryItemRepository.deleteHistoryItem).toHaveBeenCalledWith('itemId');
+    expect(historyQueryEngine.deleteItemFromHistoryQuery).toHaveBeenCalledWith('historyItemId', historyItem);
   });
 });

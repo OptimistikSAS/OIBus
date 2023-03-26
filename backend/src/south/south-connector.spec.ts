@@ -21,7 +21,7 @@ jest.mock('../service/encryption.service');
 const createCacheHistoryTableMock = jest.fn();
 const getSouthCacheMock = jest.fn();
 const createOrUpdateCacheScanModeMock = jest.fn();
-jest.mock('../service/south-cache.service');
+const resetCacheMock = jest.fn();
 jest.mock(
   '../service/south-cache.service',
   () =>
@@ -29,7 +29,8 @@ jest.mock(
       return {
         createCacheHistoryTable: createCacheHistoryTableMock,
         getSouthCache: getSouthCacheMock,
-        createOrUpdateCacheScanMode: createOrUpdateCacheScanModeMock
+        createOrUpdateCacheScanMode: createOrUpdateCacheScanModeMock,
+        resetCache: resetCacheMock
       };
     }
 );
@@ -656,5 +657,10 @@ describe('SouthConnector without stream mode', () => {
     await south.stop();
     expect(anotherLogger.info).toHaveBeenCalledTimes(2);
     expect(logger.info).not.toHaveBeenCalled();
+  });
+
+  it('should reset cache', async () => {
+    await south.resetCache();
+    expect(resetCacheMock).toHaveBeenCalledTimes(1);
   });
 });
