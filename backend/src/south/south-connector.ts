@@ -43,7 +43,7 @@ export default class SouthConnector {
   private stopping = false;
   private runProgress$: DeferredPromise | null = null;
 
-  private southCacheService: SouthCacheService;
+  protected southCacheService: SouthCacheService;
 
   /**
    * Constructor for SouthConnector
