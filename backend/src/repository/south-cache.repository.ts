@@ -7,14 +7,18 @@ export const SOUTH_CACHE_TABLE = 'cache_history';
  * Repository used for South connectors (Data sources)
  */
 export default class SouthCacheRepository {
-  private readonly database: Database;
+  private readonly _database: Database;
   constructor(database: Database) {
-    this.database = database;
+    this._database = database;
+  }
+
+  get database(): Database {
+    return this._database;
   }
 
   createCacheHistoryTable() {
     const query = `CREATE TABLE IF NOT EXISTS ${SOUTH_CACHE_TABLE} (scan_mode_id TEXT PRIMARY KEY, interval_index INTEGER, max_instant TEXT);`;
-    this.database.prepare(query).run();
+    this._database.prepare(query).run();
   }
 
   /**
@@ -22,7 +26,7 @@ export default class SouthCacheRepository {
    */
   getSouthCacheScanMode(id: string): SouthCache | null {
     const query = `SELECT scan_mode_id as scanModeId, interval_index as intervalIndex, max_instant as maxInstant FROM ${SOUTH_CACHE_TABLE} WHERE scan_mode_id = ?;`;
-    const result = this.database.prepare(query).get(id);
+    const result = this._database.prepare(query).get(id);
     if (!result) return null;
     return {
       scanModeId: result.scanModeId,
@@ -38,10 +42,10 @@ export default class SouthCacheRepository {
     const foundScanMode = this.getSouthCacheScanMode(command.scanModeId);
     if (!foundScanMode) {
       const insertQuery = `INSERT INTO ${SOUTH_CACHE_TABLE} (scan_mode_id, interval_index, max_instant) VALUES (?, ?, ?);`;
-      this.database.prepare(insertQuery).run(command.scanModeId, command.intervalIndex, command.maxInstant);
+      this._database.prepare(insertQuery).run(command.scanModeId, command.intervalIndex, command.maxInstant);
     } else {
       const query = `UPDATE ${SOUTH_CACHE_TABLE} SET interval_index = ?, max_instant = ? WHERE scan_mode_id = ?;`;
-      this.database.prepare(query).run(command.intervalIndex, command.maxInstant, command.scanModeId);
+      this._database.prepare(query).run(command.intervalIndex, command.maxInstant, command.scanModeId);
     }
   }
 
@@ -50,11 +54,11 @@ export default class SouthCacheRepository {
    */
   deleteCacheScanMode(id: string): void {
     const query = `DELETE FROM ${SOUTH_CACHE_TABLE} WHERE scan_mode_id = ?;`;
-    this.database.prepare(query).run(id);
+    this._database.prepare(query).run(id);
   }
 
   resetDatabase(): void {
     const query = `DELETE FROM ${SOUTH_CACHE_TABLE};`;
-    this.database.prepare(query).run();
+    this._database.prepare(query).run();
   }
 }

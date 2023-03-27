@@ -1,5 +1,5 @@
 import SqliteDatabaseMock, { all, get, run } from '../tests/__mocks__/database.mock';
-import { SouthCache, SouthConnectorCommandDTO } from '../../../shared/model/south-connector.model';
+import { SouthCache } from '../../../shared/model/south-connector.model';
 import { Database } from 'better-sqlite3';
 import SouthCacheRepository from './south-cache.repository';
 
@@ -22,7 +22,7 @@ describe('South cache repository', () => {
   it('should properly init south cache table', () => {
     repository.createCacheHistoryTable();
 
-    expect(database.prepare).toHaveBeenCalledWith(
+    expect(repository.database.prepare).toHaveBeenCalledWith(
       'CREATE TABLE IF NOT EXISTS cache_history (scan_mode_id TEXT PRIMARY KEY, interval_index INTEGER, max_instant TEXT);'
     );
     expect(run).toHaveBeenCalledTimes(1);
