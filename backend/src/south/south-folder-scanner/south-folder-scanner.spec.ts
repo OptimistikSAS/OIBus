@@ -202,7 +202,7 @@ describe('SouthFolderScanner', () => {
     }));
     south.updateModifiedTime('filename', 999);
     expect(database.prepare).toHaveBeenCalledWith(
-      `INSERT INTO folder_scanner (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET mtime_ms = ?`
+      `INSERT INTO folder_scanner (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`
     );
     expect(run).toHaveBeenCalledWith('filename', 999, 999);
   });
