@@ -246,7 +246,8 @@ describe('Joi validator', () => {
         .allow(null)
         .when('driver', {
           is: Joi.any().valid('SQLite'),
-          then: Joi.string().allow(null).required()
+          then: Joi.string().allow(null).required(),
+          otherwise: Joi.string().allow(null).optional()
         })
     });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
