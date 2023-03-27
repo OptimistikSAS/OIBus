@@ -154,6 +154,7 @@ export default class JoiValidator {
     });
     schema = schema.falsy(0).truthy(1);
     schema = this.handleConditionalDisplay(formControl, schema) as Joi.BooleanSchema;
+
     return {
       [formControl.key]: schema
     };
@@ -184,7 +185,8 @@ export default class JoiValidator {
       Object.entries(formControl.conditionalDisplay!).forEach(([key, value]) => {
         schema = schema.when(key, {
           is: Joi.any().valid(...value),
-          then: schema.required()
+          then: schema.required(),
+          otherwise: schema.optional()
         });
       });
     }
