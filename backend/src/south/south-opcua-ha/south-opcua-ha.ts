@@ -131,11 +131,12 @@ export default class SouthOPCUAHA extends SouthConnector {
         default:
           userIdentity = { type: UserTokenType.Anonymous };
       }
+      this.logger.debug(`Connecting to OPCUA_DA on ${this.configuration.settings.url}`);
       this.session = await OPCUAClient.createSession(this.configuration.settings.url, userIdentity, options);
       this.logger.info(`OPCUA_HA ${this.configuration.name} connected`);
       await super.connect();
     } catch (error) {
-      this.logger.error(`Error while connecting to the OPCUA HA server: ${error}`);
+      this.logger.error(`Error while connecting to the OPCUA HA server. ${error}`);
       await this.internalDisconnect();
       this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.configuration.settings.retryInterval);
     }
