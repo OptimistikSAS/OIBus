@@ -314,6 +314,11 @@ export default class SouthConnector {
    * South connector implementation to allow disconnecting to a third party application for example.
    */
   async disconnect(): Promise<void> {
+    for (const cronJob of this.cronByScanModeIds.values()) {
+      cronJob.stop();
+    }
+    this.cronByScanModeIds.clear();
+    this.taskJobQueue = [];
     this.logger.info(`South connector "${this.configuration.name}" (${this.configuration.id}) disconnected`);
   }
 
@@ -325,12 +330,6 @@ export default class SouthConnector {
       this.logger.debug('Waiting for South task to finish');
       await this.runProgress$.promise;
     }
-
-    for (const cronJob of this.cronByScanModeIds.values()) {
-      cronJob.stop();
-    }
-    this.cronByScanModeIds.clear();
-    this.taskJobQueue = [];
 
     await this.disconnect();
     this.stopping = false;

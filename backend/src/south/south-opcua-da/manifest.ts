@@ -34,9 +34,9 @@ const manifest: SouthConnectorManifest = {
       key: 'readTimeout',
       type: 'OibNumber',
       label: 'Read timeout (ms)',
-      defaultValue: 180_000,
+      defaultValue: 60_000,
       newRow: true,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 1000 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: false
     },
     {
@@ -46,20 +46,6 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 10_000,
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      readDisplay: false
-    },
-    {
-      key: 'username',
-      type: 'OibText',
-      label: 'Username',
-      newRow: true,
-      readDisplay: false
-    },
-    {
-      key: 'password',
-      type: 'OibSecret',
-      label: 'Password',
-      newRow: false,
       readDisplay: false
     },
     {
@@ -91,26 +77,10 @@ const manifest: SouthConnectorManifest = {
       ],
       defaultValue: 'None',
       conditionalDisplay: { securityMode: ['Sign', 'SignAndEncrypt'] },
-      validators: [{ key: 'required' }],
       newRow: false,
       readDisplay: true
     },
-    {
-      key: 'certFile',
-      type: 'OibText',
-      label: 'Cert File',
-      defaultValue: '',
-      newRow: true,
-      readDisplay: false
-    },
-    {
-      key: 'keyFile',
-      type: 'OibText',
-      label: 'Key File',
-      defaultValue: '',
-      newRow: false,
-      readDisplay: false
-    }
+    { key: 'authentication', type: 'OibAuthentication', label: 'Authentication', newRow: true, authTypes: ['none', 'basic', 'cert'] }
   ],
   items: {
     scanMode: {

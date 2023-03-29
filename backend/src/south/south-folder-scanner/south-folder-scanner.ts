@@ -137,7 +137,7 @@ export default class SouthFolderScanner extends SouthConnector {
 
   updateModifiedTime(filename: string, mtimeMs: number): void {
     const query = `INSERT INTO ${FOLDER_SCANNER_TABLE} (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`;
-    const result = this.southCacheService.southCacheRepository.database.prepare(query).run(filename, mtimeMs, mtimeMs);
+    this.southCacheService.southCacheRepository.database.prepare(query).run(filename, mtimeMs, mtimeMs);
   }
 
   /**
