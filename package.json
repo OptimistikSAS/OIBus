@@ -124,7 +124,7 @@
     "react-icons": "4.7.1",
     "react-router": "6.7.0",
     "react-router-dom": "6.7.0",
-    "reactstrap": "9.1.5",
+    "reactstrap": "9.1.8",
     "rimraf": "4.1.2",
     "standard-version": "9.5.0",
     "style-loader": "3.3.1",
