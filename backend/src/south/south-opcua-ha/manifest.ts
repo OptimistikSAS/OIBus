@@ -34,9 +34,9 @@ const manifest: SouthConnectorManifest = {
       key: 'readTimeout',
       type: 'OibNumber',
       label: 'Read timeout (ms)',
-      defaultValue: 180_000,
+      defaultValue: 60_000,
       newRow: true,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 1000 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: false
     },
     {
