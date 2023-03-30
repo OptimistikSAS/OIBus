@@ -19,8 +19,7 @@ export class OibScanModeComponent implements ControlValueAccessor {
   @Input() scanModes: Array<ScanModeDTO> = [];
   @Input() acceptSubscription = false;
   @Input() subscriptionOnly = false;
-  readonly subscriptionScanMode = { id: 'subscribe', name: '', description: '', cron: '' };
-  scanModeInputCtrl = this.fb.control((this.subscriptionOnly ? this.subscriptionScanMode : null) as ScanModeDTO | null);
+  scanModeInputCtrl = this.fb.control(null as ScanModeDTO | null);
   disabled = false;
   onChange: (value: ScanModeDTO) => void = () => {};
   onTouched = () => {};
