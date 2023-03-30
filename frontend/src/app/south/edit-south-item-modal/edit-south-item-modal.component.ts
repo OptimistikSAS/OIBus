@@ -152,12 +152,9 @@ export class EditSouthItemModalComponent {
 
     const command: OibusItemCommandDTO = {
       name: formValue.name!,
-      scanModeId: formValue.scanMode?.id || null,
+      scanModeId: formValue.scanMode?.id || 'subscription',
       settings: formValue.settings!
     };
-    if (command.scanModeId === 'subscribe') {
-      command.scanModeId = null;
-    }
 
     let obs: Observable<OibusItemDTO>;
     if (this.mode === 'create') {

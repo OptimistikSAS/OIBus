@@ -69,7 +69,7 @@ export class EditNorthComponent implements OnInit {
       .pipe(
         switchMap(([proxies, scanModes, params, queryParams]) => {
           this.proxies = proxies;
-          this.scanModes = scanModes;
+          this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
           let paramNorthId = params.get('northId');
           this.northType = queryParams.get('type') || '';
           // if there is a North ID, we are editing a North connector

@@ -71,7 +71,6 @@ export default class JoiValidator {
       | OibScanModeFormControl
       | OibTimezoneFormControl
       | OibProxyFormControl
-      | OibAuthenticationFormControl
   ): Record<string, AnySchema> {
     let schema = Joi.string();
     let isRequired = false;
@@ -93,7 +92,7 @@ export default class JoiValidator {
       }
     });
     if (!isRequired) {
-      schema = schema.allow(null);
+      schema = schema.allow(null, '');
     }
     schema = this.handleConditionalDisplay(formControl, schema) as Joi.StringSchema;
     return {

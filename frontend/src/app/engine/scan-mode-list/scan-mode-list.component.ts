@@ -28,7 +28,7 @@ export class ScanModeListComponent implements OnInit {
 
   ngOnInit() {
     this.scanModeService.getScanModes().subscribe(scanModeList => {
-      this.scanModes = scanModeList;
+      this.scanModes = scanModeList.filter(scanMode => scanMode.id !== 'subscription');
     });
   }
 

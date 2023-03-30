@@ -95,7 +95,7 @@ export class EditHistoryQueryComponent implements OnInit {
       .pipe(
         switchMap(([proxies, scanModes, params]) => {
           this.proxies = proxies;
-          this.scanModes = scanModes;
+          this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
           return this.historyQueryService.getHistoryQuery(params.get('historyQueryId') || '').pipe(this.state.pendingUntilFinalization());
         }),
         switchMap(historyQuery => {

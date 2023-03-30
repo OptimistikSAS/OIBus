@@ -111,16 +111,16 @@ describe('Joi validator', () => {
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
     const expectedSchema = Joi.object({
-      text: Joi.string().allow(null),
+      text: Joi.string().allow(null, ''),
       number: Joi.number().allow(null),
       select: Joi.string().valid('GET', 'POST', 'PUT', 'PATCH'),
-      secret: Joi.string().allow(null),
-      area: Joi.string().allow(null),
-      block: Joi.string().allow(null),
+      secret: Joi.string().allow(null, ''),
+      area: Joi.string().allow(null, ''),
+      block: Joi.string().allow(null, ''),
       checkbox: Joi.boolean().falsy(0).truthy(1),
-      timezone: Joi.string().allow(null),
-      scanMode: Joi.string().allow(null),
-      proxy: Joi.string().allow(null),
+      timezone: Joi.string().allow(null, ''),
+      scanMode: Joi.string().allow(null, ''),
+      proxy: Joi.string().allow(null, ''),
       authentication: Joi.object({
         type: Joi.string().required().valid('none', 'basic', 'cert'),
         username: Joi.optional(),
@@ -243,11 +243,11 @@ describe('Joi validator', () => {
     const expectedSchema = Joi.object({
       driver: Joi.string().required().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle', 'SQLite'),
       databasePath: Joi.string()
-        .allow(null)
+        .allow(null, '')
         .when('driver', {
           is: Joi.any().valid('SQLite'),
-          then: Joi.string().allow(null).required(),
-          otherwise: Joi.string().allow(null).optional()
+          then: Joi.string().allow(null, '').required(),
+          otherwise: Joi.string().allow(null, '').optional()
         })
     });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
