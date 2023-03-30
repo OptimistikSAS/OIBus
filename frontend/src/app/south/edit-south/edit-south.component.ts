@@ -55,7 +55,7 @@ export class EditSouthComponent implements OnInit {
       .pipe(
         switchMap(([proxies, scanModes, params, queryParams]) => {
           this.proxies = proxies;
-          this.scanModes = scanModes;
+          this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
           let paramSouthId = params.get('southId');
           this.southType = queryParams.get('type') || '';
           // if there is a South ID, we are editing a South connector

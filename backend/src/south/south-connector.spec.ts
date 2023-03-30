@@ -164,28 +164,20 @@ describe('SouthConnector enabled', () => {
   });
 
   it('should not create cron job for history or subscription scan mode', async () => {
-    const historyScanMode = {
-      id: 'history',
-      name: 'history scan mode',
-      description: 'my description',
-      cron: '* * * * * *'
-    };
+    jest.clearAllMocks();
     const subscriptionScanMode = {
       id: 'subscription',
       name: 'subscription scan mode',
       description: 'my description',
       cron: '* * * * * *'
     };
-    (repositoryService.scanModeRepository.getScanMode as jest.Mock)
-      .mockReturnValueOnce(historyScanMode)
-      .mockReturnValueOnce(subscriptionScanMode);
+    (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValueOnce(subscriptionScanMode);
 
-    south.addToQueue = jest.fn();
+    south.createCronJob = jest.fn();
+    south.subscribe = jest.fn();
     await south.connect();
-    expect(logger.error).toHaveBeenCalledWith(`Scan mode ${historyScanMode.name} cannot be "subscription" nor "history" in stream mode`);
-
-    await south.connect();
-    expect(logger.error).toHaveBeenCalledWith(`Scan mode ${historyScanMode.name} cannot be "subscription" nor "history" in stream mode`);
+    expect(south.createCronJob).not.toHaveBeenCalled();
+    expect(south.subscribe).toHaveBeenCalled();
   });
 
   it('should properly add to queue a new task and trigger next run', async () => {

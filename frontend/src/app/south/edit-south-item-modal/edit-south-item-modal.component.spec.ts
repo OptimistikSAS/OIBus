@@ -180,7 +180,7 @@ describe('EditSouthItemModalComponent', () => {
 
       const expectedCommand: OibusItemCommandDTO = {
         name: 'South Item 1 (updated)',
-        scanModeId: null,
+        scanModeId: 'scanModeId1',
         settings: {}
       };
 

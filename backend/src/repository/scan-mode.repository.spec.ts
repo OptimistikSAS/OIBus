@@ -15,6 +15,8 @@ describe('Scan mode repository', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     database = new SqliteDatabaseMock();
+    run.mockReturnValue({ lastInsertRowid: 1 });
+
     database.prepare = jest.fn().mockReturnValue({
       run,
       get,
@@ -27,7 +29,7 @@ describe('Scan mode repository', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       'CREATE TABLE IF NOT EXISTS scan_mode (id TEXT PRIMARY KEY, name TEXT, description TEXT, cron TEXT);'
     );
-    expect(run).toHaveBeenCalledTimes(1);
+    expect(run).toHaveBeenCalledTimes(2);
   });
 
   it('should properly get all scan modes', () => {

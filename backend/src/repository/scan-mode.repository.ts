@@ -13,6 +13,9 @@ export default class ScanModeRepository {
     this.database = database;
     const query = `CREATE TABLE IF NOT EXISTS ${SCAN_MODE_TABLE} (id TEXT PRIMARY KEY, name TEXT, description TEXT, cron TEXT);`;
     this.database.prepare(query).run();
+    if (!this.getScanMode('subscription')) {
+      this.createScanMode({ name: 'subscription', description: 'Used for subscription', cron: '' }, 'subscription');
+    }
   }
 
   /**
@@ -34,8 +37,7 @@ export default class ScanModeRepository {
   /**
    * Create a scan mode with a random generated ID
    */
-  createScanMode(command: ScanModeCommandDTO): ScanModeDTO {
-    const id = generateRandomId(6);
+  createScanMode(command: ScanModeCommandDTO, id = generateRandomId(6)): ScanModeDTO {
     const insertQuery = `INSERT INTO ${SCAN_MODE_TABLE} (id, name, description, cron) VALUES (?, ?, ?, ?);`;
     const result = this.database.prepare(insertQuery).run(id, command.name, command.description, command.cron);
 
