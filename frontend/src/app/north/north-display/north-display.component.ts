@@ -34,7 +34,7 @@ export class NorthDisplayComponent implements OnInit {
 
   ngOnInit() {
     this.scanModeService.getScanModes().subscribe(scanModes => {
-      this.scanModes = scanModes;
+      this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
     });
     this.route.paramMap
       .pipe(

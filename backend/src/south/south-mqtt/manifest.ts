@@ -44,22 +44,7 @@ const manifest: SouthConnectorManifest = {
       validators: [{ key: 'required' }],
       readDisplay: true
     },
-    {
-      key: 'username',
-      type: 'OibText',
-      label: 'Username',
-      defaultValue: '',
-      newRow: true,
-      readDisplay: false
-    },
-    {
-      key: 'password',
-      type: 'OibSecret',
-      label: 'Password',
-      defaultValue: '',
-      newRow: false,
-      readDisplay: false
-    },
+    { key: 'authentication', type: 'OibAuthentication', label: 'User authentication', newRow: true, authTypes: ['none', 'basic'] },
     {
       key: 'certFile',
       type: 'OibText',
@@ -166,6 +151,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibText',
       label: 'Timestamp path',
       defaultValue: 'timestamp',
+      conditionalDisplay: { timestampOrigin: ['payload'] },
       newRow: false,
       readDisplay: false
     },
@@ -174,13 +160,16 @@ const manifest: SouthConnectorManifest = {
       type: 'OibText',
       label: 'Timestamp format',
       defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+      conditionalDisplay: { timestampOrigin: ['payload'] },
       newRow: false,
       readDisplay: false
     },
     {
       key: 'timestampTimezone',
       type: 'OibTimezone',
-      label: 'Timestamp timezone',
+      label: 'Timezone',
+      defaultValue: 'Europe/Paris',
+      conditionalDisplay: { timestampOrigin: ['payload'] },
       newRow: false,
       readDisplay: false
     }

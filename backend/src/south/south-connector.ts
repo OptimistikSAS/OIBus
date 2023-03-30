@@ -102,14 +102,15 @@ export default class SouthConnector {
     }
 
     for (const scanModeId of this.itemsByScanModeIds.keys()) {
+      if (scanModeId === 'subscription') {
+        continue;
+      }
       const scanMode = this.repositoryService.scanModeRepository.getScanMode(scanModeId);
       if (!scanMode) {
         this.logger.error(`Scan mode ${scanModeId} not found`);
       } else {
         if (scanMode.id !== 'subscription' && scanMode.id !== 'history') {
           this.createCronJob(scanMode);
-        } else {
-          this.logger.error(`Scan mode ${scanMode.name} cannot be "subscription" nor "history" in stream mode`);
         }
       }
     }
