@@ -67,8 +67,14 @@ const items: Array<OibusItemDTO> = [
   }
 ];
 
-const mqttStream = new Stream();
-// @ts-ignore
+class CustomStream extends Stream {
+  constructor() {
+    super();
+  }
+
+  subscribe() {}
+}
+const mqttStream = new CustomStream();
 mqttStream.subscribe = jest.fn();
 
 let south: SouthMQTT;

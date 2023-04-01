@@ -36,7 +36,7 @@ import SouthCacheService from '../service/south-cache.service';
  * and should not be taken care at the South level.
  */
 export default class SouthConnector {
-  private itemsByScanModeIds: Map<string, Map<string, OibusItemDTO>> = new Map<string, Map<string, OibusItemDTO>>();
+  protected itemsByScanModeIds: Map<string, Map<string, OibusItemDTO>> = new Map<string, Map<string, OibusItemDTO>>();
   private taskJobQueue: Array<ScanModeDTO> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   private taskRunner: EventEmitter = new EventEmitter();
