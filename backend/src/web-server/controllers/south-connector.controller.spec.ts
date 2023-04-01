@@ -23,8 +23,8 @@ const manifestList = [
   },
   {
     category: 'api',
-    type: 'RestApi',
-    description: 'REST description',
+    type: 'OIConnect',
+    description: 'OIConnect description',
     modes: {
       subscription: false,
       lastPoint: false,

@@ -7,7 +7,7 @@ import mqttManifest from '../../south/south-mqtt/manifest';
 import opchdaManifest from '../../south/south-opchda/manifest';
 import opcuaDaManifest from '../../south/south-opcua-da/manifest';
 import opcuaHaManifest from '../../south/south-opcua-ha/manifest';
-import restManifest from '../../south/south-rest/manifest';
+import oiconnectManifest from '../../south/south-oiconnect/manifest';
 import sqlManifest from '../../south/south-sql/manifest';
 import {
   OibusItemCommandDTO,
@@ -23,7 +23,7 @@ import JoiValidator from '../../validators/joi.validator';
 // TODO: retrieve south types from a local store
 export const southManifests = [
   sqlManifest,
-  restManifest,
+  oiconnectManifest,
   opcuaHaManifest,
   opcuaDaManifest,
   opchdaManifest,
