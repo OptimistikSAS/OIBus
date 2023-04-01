@@ -1,9 +1,9 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
-  name: 'RestApi',
+  name: 'OIConnect',
   category: 'api',
-  description: 'REST description',
+  description: 'OIConnect description',
   modes: {
     subscription: false,
     lastPoint: false,
