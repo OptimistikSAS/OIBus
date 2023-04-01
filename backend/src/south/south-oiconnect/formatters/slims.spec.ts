@@ -1,23 +1,24 @@
-import slims from './slims.js'
+import slims from './slims';
+import { DateTime } from 'luxon';
 
 describe('slims formatter', () => {
   it('should reject if no entries', () => {
     try {
-      slims(null)
+      slims(null as any);
     } catch (error) {
-      expect(error).toEqual(new Error('Bad data: expect SLIMS values to be an array.'))
+      expect(error).toEqual(new Error('Bad data: expect SLIMS values to be an array.'));
     }
     try {
-      slims({})
+      slims({} as any);
     } catch (error) {
-      expect(error).toEqual(new Error('Bad data: expect SLIMS values to be an array.'))
+      expect(error).toEqual(new Error('Bad data: expect SLIMS values to be an array.'));
     }
     try {
-      slims({ entities: 1 })
+      slims({ entities: 1 } as any);
     } catch (error) {
-      expect(error).toEqual(new Error('Bad data: expect SLIMS values to be an array.'))
+      expect(error).toEqual(new Error('Bad data: expect SLIMS values to be an array.'));
     }
-  })
+  });
 
   it('should format SLIMS results', () => {
     const slimsResults = {
@@ -26,101 +27,99 @@ describe('slims formatter', () => {
           columns: [
             {
               name: 'rslt_cf_pid',
-              value: 'myPid',
+              value: 'myPid'
             },
             {
               name: 'test_name',
-              value: 'myName',
+              value: 'myName'
             },
             {
               name: 'rslt_value',
               value: 123,
-              unit: 'g/L',
+              unit: 'g/L'
             },
             {
               name: 'rslt_cf_samplingDateAndTime',
-              value: new Date('2020-01-01T00:00:00.000Z').getTime(),
-            },
-          ],
+              value: DateTime.fromISO('2020-01-01T00:00:00.000Z').toMillis()
+            }
+          ]
         },
         {
           columns: [
             {
               name: 'rslt_cf_pid',
-              value: 'myOtherPid',
+              value: 'myOtherPid'
             },
             {
               name: 'test_name',
-              value: 'myOtherName',
+              value: 'myOtherName'
             },
             {
               name: 'rslt_value',
-              value: 0,
+              value: 0
             },
             {
               name: 'rslt_cf_samplingDateAndTime',
-              value: new Date('2021-01-01T00:00:00.000Z').getTime(),
-            },
-          ],
+              value: DateTime.fromISO('2021-01-01T00:00:00.000Z').toMillis()
+            }
+          ]
         },
         {
           columns: [
             {
               name: 'rslt_cf_pid',
-              value: 'anotherPid',
+              value: 'anotherPid'
             },
             {
               name: 'test_name',
-              value: 'anotherName',
+              value: 'anotherName'
             },
             {
               name: 'rslt_value',
-              value: 0,
+              value: 0
             },
             {
               name: 'rslt_cf_samplingDateAndTime',
-              value: new Date('2020-06-01T00:00:00.000Z').getTime(),
-            },
-          ],
-        },
-      ],
-    }
+              value: DateTime.fromISO('2020-06-01T00:00:00.000Z').toMillis()
+            }
+          ]
+        }
+      ]
+    };
 
     const expectedResult = [
       {
         pointId: 'myPid-myName',
         unit: 'g/L',
-        timestamp: new Date('2020-01-01T00:00:00.000Z').toISOString(),
-        value: 123,
+        timestamp: DateTime.fromISO('2020-01-01T00:00:00.000Z').toUTC().toISO(),
+        value: 123
       },
       {
         pointId: 'myOtherPid-myOtherName',
         unit: 'Ø',
-        timestamp: new Date('2021-01-01T00:00:00.000Z').toISOString(),
-        value: 0,
+        timestamp: DateTime.fromISO('2021-01-01T00:00:00.000Z').toUTC().toISO(),
+        value: 0
       },
       {
         pointId: 'anotherPid-anotherName',
         unit: 'Ø',
-        timestamp: new Date('2020-06-01T00:00:00.000Z').toISOString(),
-        value: 0,
-      },
-    ]
+        timestamp: DateTime.fromISO('2020-06-01T00:00:00.000Z').toUTC().toISO(),
+        value: 0
+      }
+    ];
 
-    const result = slims(slimsResults)
-    expect(result).toEqual({ httpResults: expectedResult, latestDateRetrieved: new Date('2021-01-01T00:00:00.001Z') })
-  })
+    const result = slims(slimsResults);
+    expect(result).toEqual({ httpResults: expectedResult, latestDateRetrieved: '2021-01-01T00:00:00.001Z' });
+  });
 
   it('should throw error on parsing', () => {
     const slimsResultsWithoutPid = {
-      entities: [
-        { columns: [] },
-      ],
-    }
+      entities: [{ columns: [] }]
+    };
     try {
-      slims(slimsResultsWithoutPid)
+      slims(slimsResultsWithoutPid);
     } catch (error) {
-      expect(error).toEqual(new Error('Bad data: expect rslt_cf_pid to have a value.'))
+      expect(error).toEqual(new Error('Bad data: expect rslt_cf_pid to have a value.'));
     }
 
     const slimsResultsWithoutPidValue = {
@@ -129,16 +128,16 @@ describe('slims formatter', () => {
           columns: [
             {
               name: 'rslt_cf_pid',
-              value: null,
-            },
-          ],
-        },
-      ],
-    }
+              value: null
+            }
+          ]
+        }
+      ]
+    };
     try {
-      slims(slimsResultsWithoutPidValue)
+      slims(slimsResultsWithoutPidValue);
     } catch (error) {
-      expect(error).toEqual(new Error('Bad data: expect rslt_cf_pid to have a value.'))
+      expect(error).toEqual(new Error('Bad data: expect rslt_cf_pid to have a value.'));
     }
 
     const slimsResultsWithoutTestName = {
@@ -147,16 +146,16 @@ describe('slims formatter', () => {
           columns: [
             {
               name: 'rslt_cf_pid',
-              value: 'myPid',
-            },
-          ],
-        },
-      ],
-    }
+              value: 'myPid'
+            }
+          ]
+        }
+      ]
+    };
     try {
-      slims(slimsResultsWithoutTestName)
+      slims(slimsResultsWithoutTestName);
     } catch (error) {
-      expect(error).toEqual(new Error('Bad data: expect test_name to have a value.'))
+      expect(error).toEqual(new Error('Bad data: expect test_name to have a value.'));
     }
 
     const slimsResultsWithoutTestNameValue = {
@@ -165,20 +164,20 @@ describe('slims formatter', () => {
           columns: [
             {
               name: 'rslt_cf_pid',
-              value: 'myPid',
+              value: 'myPid'
             },
             {
               name: 'test_name',
-              value: null,
-            },
-          ],
-        },
-      ],
-    }
+              value: null
+            }
+          ]
+        }
+      ]
+    };
     try {
-      slims(slimsResultsWithoutTestNameValue)
+      slims(slimsResultsWithoutTestNameValue);
     } catch (error) {
-      expect(error).toEqual(new Error('Bad data: expect test_name to have a value.'))
+      expect(error).toEqual(new Error('Bad data: expect test_name to have a value.'));
     }
 
     const slimsResultsWithoutTestValue = {
@@ -187,20 +186,20 @@ describe('slims formatter', () => {
           columns: [
             {
               name: 'rslt_cf_pid',
-              value: 'myPid',
+              value: 'myPid'
             },
             {
               name: 'test_name',
-              value: 'myName',
-            },
-          ],
-        },
-      ],
-    }
+              value: 'myName'
+            }
+          ]
+        }
+      ]
+    };
     try {
-      slims(slimsResultsWithoutTestValue)
+      slims(slimsResultsWithoutTestValue);
     } catch (error) {
-      expect(error).toEqual(new Error('Bad data: expect rslt_value to have a unit and a value.'))
+      expect(error).toEqual(new Error('Bad data: expect rslt_value to have a unit and a value.'));
     }
 
     const slimsResultsWithEmptyTestValue = {
@@ -209,25 +208,25 @@ describe('slims formatter', () => {
           columns: [
             {
               name: 'rslt_cf_pid',
-              value: 'myPid',
+              value: 'myPid'
             },
             {
               name: 'test_name',
-              value: 'myName',
+              value: 'myName'
             },
             {
               name: 'rslt_value',
               value: null,
-              unit: 'g/L',
-            },
-          ],
-        },
-      ],
-    }
+              unit: 'g/L'
+            }
+          ]
+        }
+      ]
+    };
     try {
-      slims(slimsResultsWithEmptyTestValue)
+      slims(slimsResultsWithEmptyTestValue);
     } catch (error) {
-      expect(error).toEqual(new Error('Bad data: expect rslt_value to have a unit and a value.'))
+      expect(error).toEqual(new Error('Bad data: expect rslt_value to have a unit and a value.'));
     }
 
     const slimsResultsWithoutSamplingDateAndTime = {
@@ -236,25 +235,25 @@ describe('slims formatter', () => {
           columns: [
             {
               name: 'rslt_cf_pid',
-              value: 'myPid',
+              value: 'myPid'
             },
             {
               name: 'test_name',
-              value: 'myName',
+              value: 'myName'
             },
             {
               name: 'rslt_value',
               value: 123,
-              unit: 'g/L',
-            },
-          ],
-        },
-      ],
-    }
+              unit: 'g/L'
+            }
+          ]
+        }
+      ]
+    };
     try {
-      slims(slimsResultsWithoutSamplingDateAndTime)
+      slims(slimsResultsWithoutSamplingDateAndTime);
     } catch (error) {
-      expect(error).toEqual(new Error('Bad data: expect rslt_cf_samplingDateAndTime to have a value.'))
+      expect(error).toEqual(new Error('Bad data: expect rslt_cf_samplingDateAndTime to have a value.'));
     }
 
     const slimsResultsWithoutSamplingDateAndTimeValue = {
@@ -263,29 +262,29 @@ describe('slims formatter', () => {
           columns: [
             {
               name: 'rslt_cf_pid',
-              value: 'myPid',
+              value: 'myPid'
             },
             {
               name: 'test_name',
-              value: 'myName',
+              value: 'myName'
             },
             {
               name: 'rslt_value',
               value: 123,
-              unit: 'g/L',
+              unit: 'g/L'
             },
             {
               name: 'rslt_cf_samplingDateAndTime',
-              value: null,
-            },
-          ],
-        },
-      ],
-    }
+              value: null
+            }
+          ]
+        }
+      ]
+    };
     try {
-      slims(slimsResultsWithoutSamplingDateAndTimeValue)
+      slims(slimsResultsWithoutSamplingDateAndTimeValue);
     } catch (error) {
-      expect(error).toEqual(new Error('Bad data: expect rslt_cf_samplingDateAndTime to have a value.'))
+      expect(error).toEqual(new Error('Bad data: expect rslt_cf_samplingDateAndTime to have a value.'));
     }
-  })
-})
+  });
+});
