@@ -22,7 +22,28 @@ let oracledb: {
   outFormat: any;
   OUT_FORMAT_OBJECT: any;
   getConnection: (arg0: { user: any; password: string; connectString: string }) => any;
-};
+} | null = null;
+// @ts-ignore
+// eslint-disable-next-line import/no-unresolved
+import('oracledb')
+  .then(obj => {
+    oracledb = obj;
+  })
+  .catch(() => {
+    console.error('Could not load oracledb');
+  });
+
+let odbc: { connect: (arg0: { connectionString: string; connectionTimeout: any; loginTimeout: any }) => any } | null = null;
+// @ts-ignore
+// eslint-disable-next-line import/no-unresolved
+import('odbc')
+  .then(obj => {
+    odbc = obj;
+  })
+  .catch(() => {
+    console.error('Could not load odbc');
+  });
+
 /**
  * Class SouthSQL - Retrieve data from SQL databases and send them to the cache as CSV files.
  * Available drivers are :
@@ -68,13 +89,6 @@ export default class SouthSQL extends SouthConnector {
    * Initialize services (logger, certificate, status data) at startup
    */
   async start(): Promise<void> {
-    try {
-      // eslint-disable-next-line global-require,import/no-unresolved,import/no-extraneous-dependencies
-      oracledb = require('oracledb');
-    } catch {
-      this.logger.warn('Could not load node oracledb');
-    }
-
     await createFolder(this.tmpFolder);
     await super.start();
   }
@@ -106,18 +120,16 @@ export default class SouthSQL extends SouthConnector {
         case 'sqlite':
           result = await this.getDataFromSqlite(item, updatedStartTime, endTime);
           break;
+        case 'odbc':
+          result = await this.getDataFromOdbc(item, updatedStartTime, endTime);
+          break;
         default:
           throw new Error(`SQL driver "${this.configuration.settings.driver}" not supported for South "${this.configuration.name}"`);
       }
       this.logger.info(`Found ${result.length} results`);
 
       if (result.length > 0) {
-        const csvContent = generateCSV(
-          result,
-          this.configuration.settings.timezone,
-          item.settings.dateFormat,
-          this.configuration.settings.settings.delimiter
-        );
+        const csvContent = generateCSV(result, item.settings.timezone, item.settings.dateFormat, item.settings.delimiter);
         const filename = replaceFilenameWithVariable(item.settings.filename, 0, this.configuration.name);
         const filePath = path.join(this.tmpFolder, filename);
 
@@ -321,7 +333,7 @@ export default class SouthSQL extends SouthConnector {
   /**
    * Apply the SQL query to the target SQLite database
    */
-  async getDataFromSqlite(item: OibusItemDTO, startTime: Instant, endTime: Instant) {
+  async getDataFromSqlite(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
     const adaptedQuery = item.settings.query;
 
     let database = null;
@@ -329,12 +341,12 @@ export default class SouthSQL extends SouthConnector {
     try {
       database = db(this.configuration.settings.databasePath);
       const stmt = database.prepare(adaptedQuery);
-      const preparedParameters: Record<string, number> = {};
+      const preparedParameters: Record<string, number | string> = {};
       if (item.settings.query.indexOf('@StartTime') !== -1) {
-        preparedParameters.StartTime = DateTime.fromISO(startTime).toMillis();
+        preparedParameters.StartTime = item.settings.datetimeType === 'isostring' ? startTime : DateTime.fromISO(startTime).toMillis();
       }
       if (item.settings.query.indexOf('@EndTime') !== -1) {
-        preparedParameters.EndTime = DateTime.fromISO(endTime).toMillis();
+        preparedParameters.EndTime = item.settings.datetimeType === 'isostring' ? endTime : DateTime.fromISO(endTime).toMillis();
       }
 
       data = stmt.all(preparedParameters);
@@ -346,6 +358,52 @@ export default class SouthSQL extends SouthConnector {
     }
     if (database) {
       database.close();
+    }
+    return data;
+  }
+
+  /**
+   * Apply the SQL query to the target ODBC database
+   */
+  async getDataFromOdbc(item: OibusItemDTO, startTime: Instant, endTime: Instant) {
+    if (!odbc) {
+      throw new Error('odbc library not loaded.');
+    }
+    const adaptedQuery = item.settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?');
+
+    let connectionString = `Driver=${this.configuration.settings.odbcDriverPath};SERVER=${
+      this.configuration.settings.host
+    };TrustServerCertificate=${this.configuration.settings.selfSigned ? 'yes' : 'no'};`;
+    connectionString += `Database=${this.configuration.settings.database};UID=${
+      this.configuration.settings.username
+    };PWD=${await this.encryptionService.decryptText(this.configuration.settings.password)}`;
+    let connection = null;
+    let data = [];
+    try {
+      const connectionConfig = {
+        connectionString,
+        connectionTimeout: this.configuration.settings.connectionTimeout,
+        loginTimeout: this.configuration.settings.connectionTimeout
+      };
+      connection = await odbc.connect(connectionConfig);
+
+      const startDateTime = DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
+      const endDateTime = DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
+      const params = generateReplacementParameters(item.settings.query, startDateTime, endDateTime);
+      data = await connection.query(adaptedQuery, params);
+    } catch (error: any) {
+      if (error.odbcErrors?.length > 0) {
+        error.odbcErrors.forEach((odbcError: any) => {
+          this.logger.error(odbcError.message);
+        });
+      }
+      if (connection) {
+        await connection.close();
+      }
+      throw error;
+    }
+    if (connection) {
+      await connection.close();
     }
     return data;
   }
