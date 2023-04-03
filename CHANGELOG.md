@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.5.0](https://github.com/OptimistikSAS/OIBus/compare/v2.4.0...v2.5.0) (2023-04-03)
+
+
+### Features
+
+* **build:** Generate arm64 build for Mac M1 ([af6e5cb](https://github.com/OptimistikSAS/OIBus/commit/af6e5cb3906788f5feed43d8e2238f3a6a564f26))
+* **cache:** add a max size limit ([9622f75](https://github.com/OptimistikSAS/OIBus/commit/9622f75b4d9a07331888ef78567cf88b7ab7f2dc))
+* **config:** add nanoid for scan modes, proxies and points and retrieve specific south/north from api call ([e995f28](https://github.com/OptimistikSAS/OIBus/commit/e995f28a073a03fdc31bfc43be1ec48413872be0))
+* **connector:** use a manifest for category and modes of south and north connectors ([684ce95](https://github.com/OptimistikSAS/OIBus/commit/684ce95baeaf4318c009ce9956584091799084c2))
+* **deps:** remove humanize string dependency ([439fb9a](https://github.com/OptimistikSAS/OIBus/commit/439fb9a57299e6dc1be2f9d8d439f03dea63127c))
+* **esm:** adapt frontend bundle with global esm ([235be85](https://github.com/OptimistikSAS/OIBus/commit/235be851befbe0b25fd68fb0bc5f6a8b2dbf7ee4))
+* **esm:** move backend code to ECMA script modules ([a192b48](https://github.com/OptimistikSAS/OIBus/commit/a192b48d2cafdd6a390eaaa25b7049cd6ffc2db5))
+* **proxy:** use a proxy service to manage proxy in connectors ([bd4925a](https://github.com/OptimistikSAS/OIBus/commit/bd4925a754349ea0f6960118f128ea13a59596b8))
+* **sql-odbc:** Fix date binding for MSSQL ([ed14285](https://github.com/OptimistikSAS/OIBus/commit/ed142856417a22188899d40b404c695d2c24e8b0))
+* **sql:** Support for ODBC connection ([24bd6ed](https://github.com/OptimistikSAS/OIBus/commit/24bd6edabfe693e4e0d98381c2149ab4eb632fe4))
+* **typescript:** adapt tests with esm ([0ee300d](https://github.com/OptimistikSAS/OIBus/commit/0ee300df63e0ad68e2ea10cf0a30f88302b4b388))
+* **typescript:** use tsc to transpile into commonJS ([ee0aaa8](https://github.com/OptimistikSAS/OIBus/commit/ee0aaa8944631493408357bc28de902f415155b7))
+* **ui:** Adapt tests for logs ([0b012d3](https://github.com/OptimistikSAS/OIBus/commit/0b012d3ffa8f3af8c31bde2b449aa1df54f4cca5))
+* **ui:** Logs pagination final design ([bd32014](https://github.com/OptimistikSAS/OIBus/commit/bd32014d32f96bf7675bb7dcf79e186bad7e8c1c))
+* **ui:** Logs Pagination fully functional state ([a9b2792](https://github.com/OptimistikSAS/OIBus/commit/a9b2792e71e2c24d8741fab93d2565210ab05dba))
+* **ui:** Paginate Logs Initial test version ([169262d](https://github.com/OptimistikSAS/OIBus/commit/169262d902319cfd47d293a471f75180f86e0b85))
+
+
+### Bug Fixes
+
+* **about:** change oibus site address ([a64e0db](https://github.com/OptimistikSAS/OIBus/commit/a64e0dbac3e3f37345e8ef29b5859566d5e321f7))
+* **ci:** do not copy useless file in win/bin and fix config path ([5a56bde](https://github.com/OptimistikSAS/OIBus/commit/5a56bde76bf6b74d4b93c0d07a486345dd757cb5))
+* **config:** Fix default oibus.json not created on first start ([b0c547f](https://github.com/OptimistikSAS/OIBus/commit/b0c547f1982a7b2afd7ba32bcd38bcfcb1a1d186))
+* **connectors:** add modes in connectors manifest ([307da96](https://github.com/OptimistikSAS/OIBus/commit/307da96893a9a9fea78b03ca4e2fdcca2e2b6b20))
+* **doc:** refactor js doc to reflect global logger ([a994998](https://github.com/OptimistikSAS/OIBus/commit/a99499875c6fe706a265d24dcd0801974dc3a13c))
+* **esm:** access package version and remove file line in logs ([2235dd5](https://github.com/OptimistikSAS/OIBus/commit/2235dd5c6f6b5e27d468f5ca58a3012f6ff34391))
+* **esm:** update some dependencies with tsc compiler ([be959e0](https://github.com/OptimistikSAS/OIBus/commit/be959e09db5aab650024fa07cc239ad4f7512711))
+* **logs:** add a button to refresh the logs ([5363a72](https://github.com/OptimistikSAS/OIBus/commit/5363a7204c833fd69d7ee336ac3781e908ad93a8))
+* **log:** sort log in descending order (by timestamp) ([688d7e0](https://github.com/OptimistikSAS/OIBus/commit/688d7e0e9f56595d7bd1b8480a869921ac5bd439))
+* **mqtt-south:** Fix retrieving timestamp from payload ([26b7cc6](https://github.com/OptimistikSAS/OIBus/commit/26b7cc6e1441a98122f50aa51be5eecf11ffa5ab))
+* **odbc:** fix import of odbc library ([951abec](https://github.com/OptimistikSAS/OIBus/commit/951abec6306fd1058ce8a5f0064b9008534b6454))
+* **tests:** fix packages mock names ([592e03a](https://github.com/OptimistikSAS/OIBus/commit/592e03adb26081bfe3b361ddbed84602841ddece))
+
 ## [2.4.0](https://github.com/OptimistikSAS/OIBus/compare/v2.3.4...v2.4.0) (2022-11-28)
 
 
