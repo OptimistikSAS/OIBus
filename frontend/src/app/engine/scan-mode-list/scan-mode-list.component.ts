@@ -58,7 +58,7 @@ export class ScanModeListComponent implements OnInit {
   private refreshAfterEditScanModeModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
     modalRef.result.subscribe((scanMode: ScanModeDTO) => {
       this.scanModeService.getScanModes().subscribe(scanModes => {
-        this.scanModes = scanModes;
+        this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
       });
       this.notificationService.success(`engine.scan-mode.${mode}`, {
         name: scanMode.name
@@ -82,7 +82,7 @@ export class ScanModeListComponent implements OnInit {
       )
       .subscribe(() => {
         this.scanModeService.getScanModes().subscribe(scanModes => {
-          this.scanModes = scanModes;
+          this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
         });
         this.notificationService.success('engine.scan-mode.deleted', {
           name: scanMode.name
