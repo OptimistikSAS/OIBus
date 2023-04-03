@@ -21,7 +21,7 @@ interface HistoryQueryResult {
   cachingRetryInterval: number;
   cachingRetryCount: number;
   cachingMaxSendCount: number;
-  cachingTimeout: number;
+  cachingMaxSize: number;
   archiveEnabled: boolean;
   archiveRetentionDuration: number;
 }
@@ -32,7 +32,7 @@ export default class HistoryQueryRepository {
       `CREATE TABLE IF NOT EXISTS ${HISTORY_QUERIES_TABLE} (id TEXT PRIMARY KEY, name TEXT, description TEXT, ` +
       `enabled INTEGER, start_time TEXT, end_time TEXT, south_type TEXT, north_type TEXT, ` +
       `south_settings TEXT, north_settings TEXT, caching_scan_mode_id TEXT, caching_group_count INTEGER, caching_retry_interval INTEGER, ` +
-      `caching_retry_count INTEGER, caching_max_send_count INTEGER, caching_timeout INTEGER, archive_enabled INTEGER, ` +
+      `caching_retry_count INTEGER, caching_max_send_count INTEGER, caching_max_size INTEGER, archive_enabled INTEGER, ` +
       `archive_retention_duration INTEGER, FOREIGN KEY(caching_scan_mode_id) REFERENCES ${SCAN_MODE_TABLE}(id));`;
     this.database.prepare(query).run();
   }
@@ -47,7 +47,7 @@ export default class HistoryQueryRepository {
       `north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
-      `caching_timeout AS cachingTimeout, archive_enabled AS archiveEnabled, ` +
+      `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${HISTORY_QUERIES_TABLE};`;
     const results = this.database.prepare(query).all();
     return results.map(result => this.toHistoryQueryDTO(result));
@@ -62,7 +62,7 @@ export default class HistoryQueryRepository {
       `north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
-      `caching_timeout AS cachingTimeout, archive_enabled AS archiveEnabled, ` +
+      `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
 
@@ -82,7 +82,7 @@ export default class HistoryQueryRepository {
     const insertQuery =
       `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, enabled, start_time, end_time, ` +
       `south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
-      `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_timeout, archive_enabled, ` +
+      `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_max_size, archive_enabled, ` +
       `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const insertResult = this.database
       .prepare(insertQuery)
@@ -102,7 +102,7 @@ export default class HistoryQueryRepository {
         command.caching.retryInterval,
         command.caching.retryCount,
         command.caching.maxSendCount,
-        command.caching.timeout,
+        command.caching.maxSize,
         +command.archive.enabled,
         command.archive.retentionDuration
       );
@@ -112,7 +112,7 @@ export default class HistoryQueryRepository {
       `north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
-      `caching_timeout AS cachingTimeout, archive_enabled AS archiveEnabled, ` +
+      `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${HISTORY_QUERIES_TABLE} WHERE ROWID = ?;`;
     const result = this.database.prepare(query).get(insertResult.lastInsertRowid);
 
@@ -127,7 +127,7 @@ export default class HistoryQueryRepository {
       `UPDATE ${HISTORY_QUERIES_TABLE} SET name = ?, description = ?, enabled = ?, start_time = ?, ` +
       `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
       `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
-      `caching_max_send_count = ?, caching_timeout = ?, archive_enabled = ?, archive_retention_duration = ? ` +
+      `caching_max_send_count = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
       `WHERE id = ?;`;
     this.database
       .prepare(query)
@@ -146,7 +146,7 @@ export default class HistoryQueryRepository {
         command.caching.retryInterval,
         command.caching.retryCount,
         command.caching.maxSendCount,
-        command.caching.timeout,
+        command.caching.maxSize,
         +command.archive.enabled,
         command.archive.retentionDuration,
         id
@@ -179,7 +179,7 @@ export default class HistoryQueryRepository {
         retryInterval: result.cachingRetryInterval,
         retryCount: result.cachingRetryCount,
         maxSendCount: result.cachingMaxSendCount,
-        timeout: result.cachingTimeout
+        maxSize: result.cachingMaxSize
       },
       archive: {
         enabled: result.archiveEnabled,

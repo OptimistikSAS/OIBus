@@ -83,7 +83,7 @@ export default class NorthOIAnalytics extends NorthConnector {
         method: 'POST',
         headers,
         body: JSON.stringify(cleanedValues),
-        timeout: this.configuration.caching.timeout * 1000,
+        timeout: this.configuration.settings.timeout * 1000,
         agent: this.proxyAgent
       });
     } catch (fetchError) {
@@ -140,7 +140,7 @@ export default class NorthOIAnalytics extends NorthConnector {
         method: 'POST',
         headers,
         body,
-        timeout: this.configuration.caching.timeout * 1000,
+        timeout: this.configuration.settings.timeout * 1000,
         agent: this.proxyAgent
       });
       readStream.close();
