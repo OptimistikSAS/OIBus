@@ -8,6 +8,7 @@ import FolderScanner from '../south/south-folder-scanner/south-folder-scanner';
 import OPCUA_HA from '../south/south-opcua-ha/south-opcua-ha';
 import OPCUA_DA from '../south/south-opcua-da/south-opcua-da';
 import MQTT from '../south/south-mqtt/south-mqtt';
+import SQL from '../south/south-sql/south-sql';
 
 import { SouthConnectorDTO, OibusItemDTO } from '../../../shared/model/south-connector.model';
 import SouthConnector from '../south/south-connector';
@@ -16,7 +17,8 @@ const southList = {
   FolderScanner,
   MQTT,
   OPCUA_HA,
-  OPCUA_DA
+  OPCUA_DA,
+  SQL
 };
 
 export default class SouthService {

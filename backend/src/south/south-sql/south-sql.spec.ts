@@ -6,6 +6,7 @@ import * as utils from './utils';
 import * as mainUtils from '../../service/utils';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import pino from 'pino';
+
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
@@ -18,6 +19,8 @@ const mockDatabase = {
   prepare: jest.fn(),
   close: jest.fn()
 };
+jest.mock('odbc');
+jest.mock('oracledb');
 jest.mock('better-sqlite3', () => () => mockDatabase);
 jest.mock('pg', () => ({
   Client: jest.fn(),
