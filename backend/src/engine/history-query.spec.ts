@@ -85,7 +85,7 @@ describe('HistoryQuery enabled', () => {
       endTime: '2022-02-02T02:02:02.222Z',
       caching: {
         scanModeId: 'scanModeId',
-        timeout: 1,
+        maxSize: 1,
         retryCount: 3,
         groupCount: 1000,
         maxSendCount: 10000,
@@ -302,7 +302,7 @@ describe('HistoryQuery disabled', () => {
       endTime: '2022-02-02T02:02:02.222Z',
       caching: {
         scanModeId: 'scanModeId',
-        timeout: 1,
+        maxSize: 1,
         retryCount: 3,
         groupCount: 1000,
         maxSendCount: 10000,

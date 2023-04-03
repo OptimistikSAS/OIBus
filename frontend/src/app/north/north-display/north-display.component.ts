@@ -58,8 +58,7 @@ export class NorthDisplayComponent implements OnInit {
         if (!manifest) {
           return;
         }
-        const rowList = getRowSettings(manifest.settings, this.northConnector?.settings);
-        this.northSettingsSchema = rowList;
+        this.northSettingsSchema = getRowSettings(manifest.settings, this.northConnector?.settings);
         this.manifest = manifest;
       });
   }

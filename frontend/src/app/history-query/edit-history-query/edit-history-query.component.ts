@@ -64,7 +64,7 @@ export class EditHistoryQueryComponent implements OnInit {
       retryCount: [3 as number | null, Validators.required],
       groupCount: [1000 as number | null, Validators.required],
       maxSendCount: [10_000 as number | null, Validators.required],
-      timeout: [30 as number | null, Validators.required]
+      maxSize: [0, Validators.required]
     }),
     archive: this.fb.group({
       enabled: [false, Validators.required],
@@ -112,7 +112,7 @@ export class EditHistoryQueryComponent implements OnInit {
               retryCount: historyQuery.caching.retryCount,
               retryInterval: historyQuery.caching.retryInterval,
               maxSendCount: historyQuery.caching.maxSendCount,
-              timeout: historyQuery.caching.timeout
+              maxSize: historyQuery.caching.maxSize
             },
             archive: historyQuery.archive
           });
@@ -211,7 +211,7 @@ export class EditHistoryQueryComponent implements OnInit {
         retryCount: formValue.caching!.retryCount!,
         groupCount: formValue.caching!.groupCount!,
         maxSendCount: formValue.caching!.maxSendCount!,
-        timeout: formValue.caching!.timeout!
+        maxSize: formValue.caching!.maxSize!
       },
       archive: {
         enabled: formValue.archive!.enabled!,

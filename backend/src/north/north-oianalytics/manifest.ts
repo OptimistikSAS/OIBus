@@ -16,6 +16,7 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }],
       readDisplay: true
     },
+    { key: 'timeout', type: 'OibNumber', label: 'Timeout', newRow: true },
     { key: 'proxy', type: 'OibProxy', label: 'Proxy', newRow: true },
     { key: 'authentication', type: 'OibAuthentication', label: 'Authentication', newRow: true, authTypes: ['none', 'basic'] }
   ]
