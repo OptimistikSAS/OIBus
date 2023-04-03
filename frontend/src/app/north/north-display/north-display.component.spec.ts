@@ -40,7 +40,7 @@ describe('NorthDisplayComponent', () => {
       retryCount: 3,
       groupCount: 1000,
       maxSendCount: 10000,
-      timeout: 30
+      maxSize: 30
     },
     archive: {
       enabled: false,

@@ -158,8 +158,8 @@ const manifest: SouthConnectorManifest = {
         key: 'datetimeType',
         type: 'OibSelect',
         options: ['number', 'isostring'],
+        defaultValue: 'isostring',
         label: 'Datetime type',
-        defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
         readDisplay: false
       },
       {
