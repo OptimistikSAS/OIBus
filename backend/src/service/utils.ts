@@ -128,6 +128,31 @@ export const generateRandomId = (size = RANDOM_LENGTH): string => {
   return randomId;
 };
 
+const dirSize = async (dir: string): Promise<number> => {
+  const files = await fs.readdir(dir, { withFileTypes: true });
+
+  const paths = files.map(async file => {
+    const filePath = path.join(dir, file.name);
+
+    if (file.isDirectory()) {
+      return await dirSize(filePath);
+    }
+
+    if (file.isFile()) {
+      try {
+        const { size } = await fs.stat(filePath);
+        return size;
+      } catch {
+        return 0;
+      }
+    }
+
+    return 0;
+  });
+
+  return (await Promise.all(paths)).flat(Infinity).reduce((i, size) => i + size, 0);
+};
+
 export {
   getCommandLineArguments,
   delay,
@@ -136,5 +161,6 @@ export {
   replaceFilenameWithVariable,
   generateDateWithTimezone,
   compress,
-  filesExists
+  filesExists,
+  dirSize
 };

@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { createFolder, generateRandomId } from '../utils';
+import { createFolder, dirSize, generateRandomId } from '../utils';
 import pino from 'pino';
 
 import { NorthCacheSettingsLightDTO } from '../../../../shared/model/north-connector.model';
@@ -18,9 +18,11 @@ const ERROR_FOLDER = 'values-errors';
  */
 export default class ValueCacheService {
   private readonly logger: pino.Logger;
+  private readonly baseFolder: string;
   private readonly valueFolder: string;
   private readonly errorFolder: string;
   private readonly settings: NorthCacheSettingsLightDTO;
+  private cacheSize = 0;
 
   private bufferTimeout: NodeJS.Timeout | undefined;
   private compactedQueue: Array<{ filename: string; createdAt: number; numberOfValues: number }> = []; // List of compact filename (randomId.compact.tmp)
@@ -29,6 +31,7 @@ export default class ValueCacheService {
 
   constructor(logger: pino.Logger, baseFolder: string, settings: NorthCacheSettingsLightDTO) {
     this.logger = logger;
+    this.baseFolder = path.resolve(baseFolder);
     this.valueFolder = path.resolve(baseFolder, VALUE_FOLDER);
     this.errorFolder = path.resolve(baseFolder, ERROR_FOLDER);
     this.settings = settings;
@@ -42,6 +45,8 @@ export default class ValueCacheService {
   async start(): Promise<void> {
     await createFolder(this.valueFolder);
     await createFolder(this.errorFolder);
+
+    this.cacheSize = await dirSize(this.baseFolder);
 
     const files = await fs.readdir(this.valueFolder);
 
@@ -229,6 +234,7 @@ export default class ValueCacheService {
     for (const key of sentValues.keys()) {
       await this.deleteKeyFromCache(key);
     }
+    this.cacheSize = await dirSize(this.baseFolder);
   }
 
   /**
@@ -287,6 +293,16 @@ export default class ValueCacheService {
    * Persist values into a tmp file and keep them in a local buffer to flush them in the queue later
    */
   async cacheValues(values: Array<any>): Promise<void> {
+    if (this.settings.maxSize !== 0 && this.cacheSize >= this.settings.maxSize * 1024 * 1024) {
+      this.logger.debug(
+        `North cache is exceeding the maximum allowed size ` +
+          `(${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this.settings.maxSize} MB). ` +
+          'Values will be discarded until the cache is emptied (by sending files/values or manual removal)'
+      );
+      return;
+    }
+
+    this.logger.debug(`Caching ${values.length} values (cache size : ${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB)`);
     const tmpFileName = `${generateRandomId()}.buffer.tmp`;
 
     // Immediately write the values into the buffer.tmp file to persist them on disk

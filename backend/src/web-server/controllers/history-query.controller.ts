@@ -67,7 +67,7 @@ export default class HistoryQueryController {
         retryCount: 3,
         groupCount: 3000,
         maxSendCount: 10000,
-        timeout: 3
+        maxSize: 0
       },
       archive: {
         enabled: false,

@@ -15,7 +15,7 @@ import { OibusItemDTO, SouthConnectorManifest } from '../../../../../shared/mode
 import { HistoryQueryService } from '../../services/history-query.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { emptyPage } from '../../shared/test-utils';
-import { Page } from '../../../../../shared/model//types';
+import { Page } from '../../../../../shared/model/types';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { SearchItemComponent } from '../../south/search-item/search-item.component';
 import { Modal, ModalService } from '../../shared/modal.service';

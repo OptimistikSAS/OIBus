@@ -117,7 +117,7 @@ describe('NorthConnector enabled', () => {
         groupCount: 10000,
         maxSendCount: 10000,
         retryCount: 2,
-        timeout: 1000
+        maxSize: 1000
       },
       archive: {
         enabled: true,
@@ -389,7 +389,7 @@ describe('NorthConnector disabled', () => {
         groupCount: 10000,
         maxSendCount: 10000,
         retryCount: 2,
-        timeout: 1000
+        maxSize: 1000
       },
       archive: {
         enabled: true,

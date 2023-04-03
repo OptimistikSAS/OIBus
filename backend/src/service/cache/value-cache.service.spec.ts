@@ -3,14 +3,15 @@ import fs from 'node:fs/promises';
 
 import ValueCache from './value-cache.service';
 
-import { createFolder, generateRandomId } from '../utils';
+import { createFolder, generateRandomId, dirSize } from '../utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 import { NorthCacheSettingsLightDTO } from '../../../../shared/model/north-connector.model';
 
 jest.mock('../utils', () => ({
   generateRandomId: jest.fn(() => 'generated-uuid'),
-  createFolder: jest.fn(() => Promise.resolve())
+  createFolder: jest.fn(() => Promise.resolve()),
+  dirSize: jest.fn(() => 1000)
 }));
 jest.mock('node:fs/promises');
 jest.mock('../utils');
@@ -32,7 +33,7 @@ describe('ValueCache', () => {
       maxSendCount: 1000,
       retryCount: 3,
       retryInterval: 5000,
-      timeout: 10000
+      maxSize: 10000
     };
     cache = new ValueCache(logger, 'myCacheFolder', settings);
   });

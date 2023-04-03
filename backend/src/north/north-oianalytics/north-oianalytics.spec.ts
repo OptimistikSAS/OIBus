@@ -47,7 +47,7 @@ const configuration: NorthConnectorDTO = {
   enabled: true,
   settings: {
     host: 'https://hostname',
-    endpoint: '/api/optimistik/data/values/upload',
+    timeout: 1000,
     authentication: {
       type: 'basic',
       username: 'anyuser',
@@ -61,7 +61,7 @@ const configuration: NorthConnectorDTO = {
     groupCount: 10000,
     maxSendCount: 10000,
     retryCount: 2,
-    timeout: 1000
+    maxSize: 30000
   },
   archive: {
     enabled: true,
@@ -138,7 +138,7 @@ describe('NorthOIAnalytics', () => {
           pointId: values[0]!.pointId
         }
       ]),
-      timeout: configuration.caching.timeout * 1000,
+      timeout: configuration.settings.timeout * 1000,
       agent: proxy
     };
 
@@ -255,7 +255,7 @@ describe('NorthOIAnalytics', () => {
           pointId: values[0]!.pointId
         }
       ]),
-      timeout: configuration.caching.timeout * 1000,
+      timeout: configuration.settings.timeout * 1000,
       agent: proxy
     };
 
@@ -290,7 +290,7 @@ describe('NorthOIAnalytics', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      timeout: configuration.caching.timeout * 1000,
+      timeout: configuration.settings.timeout * 1000,
       agent: proxy
     };
 
@@ -337,7 +337,7 @@ describe('NorthOIAnalytics', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      timeout: configuration.caching.timeout * 1000,
+      timeout: configuration.settings.timeout * 1000,
       agent: proxy
     };
 
@@ -400,7 +400,7 @@ describe('NorthOIAnalytics without proxy nor password', () => {
           pointId: values[0]!.pointId
         }
       ]),
-      timeout: configuration.caching.timeout * 1000,
+      timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 
@@ -423,7 +423,7 @@ describe('NorthOIAnalytics without proxy nor password', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      timeout: configuration.caching.timeout * 1000,
+      timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 
@@ -470,7 +470,7 @@ describe('NorthOIAnalytics without authentication', () => {
           pointId: values[0]!.pointId
         }
       ]),
-      timeout: configuration.caching.timeout * 1000,
+      timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 
@@ -492,7 +492,7 @@ describe('NorthOIAnalytics without authentication', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      timeout: configuration.caching.timeout * 1000,
+      timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 

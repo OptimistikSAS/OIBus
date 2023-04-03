@@ -1,14 +1,4 @@
 import { OibFormControl } from './form.model';
-import { ScanModeDTO } from './scan-mode.model';
-
-export interface NorthCacheSettingsDTO {
-  scanMode: ScanModeDTO;
-  retryInterval: number;
-  retryCount: number;
-  groupCount: number;
-  maxSendCount: number;
-  timeout: number;
-}
 
 export interface NorthCacheSettingsLightDTO {
   scanModeId: string;
@@ -16,7 +6,7 @@ export interface NorthCacheSettingsLightDTO {
   retryCount: number;
   groupCount: number;
   maxSendCount: number;
-  timeout: number;
+  maxSize: number;
 }
 
 export interface NorthCacheSettingsCommandDTO {
@@ -25,7 +15,7 @@ export interface NorthCacheSettingsCommandDTO {
   retryCount: number;
   groupCount: number;
   maxSendCount: number;
-  timeout: number;
+  maxSize: number;
 }
 
 export interface NorthArchiveSettings {

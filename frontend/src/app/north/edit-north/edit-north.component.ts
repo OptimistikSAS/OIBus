@@ -46,7 +46,7 @@ export class EditNorthComponent implements OnInit {
       retryCount: [3 as number | null, Validators.required],
       groupCount: [1000 as number | null, Validators.required],
       maxSendCount: [10_000 as number | null, Validators.required],
-      timeout: [30 as number | null, Validators.required]
+      maxSize: [0, Validators.required]
     }),
     archive: this.fb.group({
       enabled: [false, Validators.required],
@@ -100,7 +100,7 @@ export class EditNorthComponent implements OnInit {
                 retryCount: northConnector.caching.retryCount,
                 groupCount: northConnector.caching.groupCount,
                 maxSendCount: northConnector.caching.maxSendCount,
-                timeout: northConnector.caching.timeout
+                maxSize: northConnector.caching.maxSize
               },
               archive: {
                 enabled: northConnector.archive.enabled,
@@ -206,7 +206,7 @@ export class EditNorthComponent implements OnInit {
         retryCount: formValue.caching!.retryCount!,
         groupCount: formValue.caching!.groupCount!,
         maxSendCount: formValue.caching!.maxSendCount!,
-        timeout: formValue.caching!.timeout!
+        maxSize: formValue.caching!.maxSize!
       },
       archive: {
         enabled: formValue.archive!.enabled!,

@@ -281,7 +281,7 @@
       "retry-count": "Retry count",
       "group-count": "Group count",
       "max-send-count": "Max send count",
-      "timeout": "Timeout (s)"
+      "max-size": "Max size (MB)"
     },
     "archive-settings": {
       "title": "Archive",
