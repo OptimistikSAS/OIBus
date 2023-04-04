@@ -166,12 +166,16 @@ export default class OIBusEngine extends BaseEngine {
 
     for (const [id, south] of this.southConnectors.entries()) {
       const southSettings = this.southService.getSouth(id);
-      south.setLogger(this.logger.child({ scope: `south:${southSettings.name}` }));
+      if (southSettings) {
+        south.setLogger(this.logger.child({ scope: `south:${southSettings.name}` }));
+      }
     }
 
     for (const [id, north] of this.northConnectors.entries()) {
       const northSettings = this.northService.getNorth(id);
-      north.setLogger(this.logger.child({ scope: `north:${northSettings.name}` }));
+      if (northSettings) {
+        north.setLogger(this.logger.child({ scope: `north:${northSettings.name}` }));
+      }
     }
   }
 }

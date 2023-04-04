@@ -14,5 +14,7 @@ export default jest.fn().mockImplementation(() => ({
   onDeleteSouthItem: jest.fn(),
   onCreateHistoryQuery: jest.fn(),
   onUpdateHistoryItemsSettings: jest.fn(),
-  onDeleteHistoryItem: jest.fn()
+  onDeleteHistoryItem: jest.fn(),
+  onCreateNorthSubscription: jest.fn(),
+  onDeleteNorthSubscription: jest.fn()
 }));

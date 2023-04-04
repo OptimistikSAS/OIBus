@@ -111,7 +111,7 @@ describe('North connector repository', () => {
         archiveRetentionDuration: 1000
       }
     ]);
-    const southConnectors = repository.getNorthConnectors();
+    const northConnectors = repository.getNorthConnectors();
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ' +
         'caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ' +
@@ -119,7 +119,7 @@ describe('North connector repository', () => {
         'caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ' +
         'archive_retention_duration AS archiveRetentionDuration FROM north_connector;'
     );
-    expect(southConnectors).toEqual(expectedValue);
+    expect(northConnectors).toEqual(expectedValue);
   });
 
   it('should properly get a north connector', () => {
@@ -169,6 +169,20 @@ describe('North connector repository', () => {
     );
     expect(get).toHaveBeenCalledWith('id1');
     expect(northConnector).toEqual(expectedValue);
+  });
+
+  it('should return null when north connector not found', () => {
+    get.mockReturnValueOnce(null);
+    const northConnector = repository.getNorthConnector('id1');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ' +
+        'caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ' +
+        'caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ' +
+        'caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ' +
+        'archive_retention_duration AS archiveRetentionDuration FROM north_connector WHERE id = ?;'
+    );
+    expect(get).toHaveBeenCalledWith('id1');
+    expect(northConnector).toBeNull();
   });
 
   it('should create a north connector', () => {

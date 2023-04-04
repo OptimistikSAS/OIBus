@@ -58,7 +58,7 @@ export default class SouthService {
   /**
    * Retrieve a south connector from the config
    */
-  getSouth(southId: string): SouthConnectorDTO {
+  getSouth(southId: string): SouthConnectorDTO | null {
     return this.repositoryService.southConnectorRepository.getSouthConnector(southId);
   }
 
