@@ -98,15 +98,11 @@ jobs:
         with:
           cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
 
-      - name: Bundle legacy frontend
-        working-directory: ./backend
-        run: npm run build:legacy-frontend
-
       - name: Bundle frontend
         working-directory: ./frontend
         run: npm run build
 
-      - name: Bundle legacy frontend
+      - name: Bundle backend
         working-directory: ./backend
         run: npm run build
 
