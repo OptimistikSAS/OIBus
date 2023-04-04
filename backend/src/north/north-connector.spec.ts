@@ -257,8 +257,22 @@ describe('NorthConnector enabled', () => {
     expect(await north.isCacheEmpty()).toBeTruthy();
   });
 
-  it('should check if North caches are empty', () => {
+  it('should check if North is subscribed to all South', async () => {
+    (repositoryService.subscriptionRepository.getNorthSubscriptions as jest.Mock).mockReturnValue([]);
+    await north.start();
     expect(north.isSubscribed('southId')).toBeTruthy();
+  });
+
+  it('should check if North is subscribed to South', async () => {
+    (repositoryService.subscriptionRepository.getNorthSubscriptions as jest.Mock).mockReturnValue(['southId']);
+    await north.start();
+    expect(north.isSubscribed('southId')).toBeTruthy();
+  });
+
+  it('should check if North is not subscribed to South', async () => {
+    (repositoryService.subscriptionRepository.getNorthSubscriptions as jest.Mock).mockReturnValue(['southId1']);
+    await north.start();
+    expect(north.isSubscribed('southId2')).toBeFalsy();
   });
 
   it('should get error files', async () => {

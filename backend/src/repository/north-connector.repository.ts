@@ -58,7 +58,7 @@ export default class NorthConnectorRepository {
   /**
    * Retrieve a North connector by its ID
    */
-  getNorthConnector(id: string): NorthConnectorDTO {
+  getNorthConnector(id: string): NorthConnectorDTO | null {
     const query =
       `SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ` +
       `caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ` +
@@ -66,6 +66,11 @@ export default class NorthConnectorRepository {
       `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${NORTH_CONNECTOR_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
+
+    if (!result) {
+      return null;
+    }
+
     return {
       id: result.id,
       name: result.name,

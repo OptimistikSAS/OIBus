@@ -82,5 +82,13 @@ export default jest.fn().mockImplementation(() => ({
   engineRepository: {
     getEngineSettings: jest.fn(),
     updateEngineSettings: jest.fn()
+  },
+  subscriptionRepository: {
+    getNorthSubscriptions: jest.fn(),
+    getSubscribedNorthConnectors: jest.fn(),
+    checkNorthSubscription: jest.fn(),
+    createNorthSubscription: jest.fn(),
+    deleteNorthSubscription: jest.fn(),
+    deleteNorthSubscriptions: jest.fn()
   }
 }));

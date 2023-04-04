@@ -136,6 +136,7 @@ export default class NorthConnectorController {
   async deleteNorthConnector(ctx: KoaContext<void, void>): Promise<void> {
     const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
     if (northConnector) {
+      await ctx.app.repositoryService.subscriptionRepository.deleteNorthSubscriptions(ctx.params.id);
       await ctx.app.reloadService.onDeleteNorth(ctx.params.id);
       ctx.noContent();
     } else {

@@ -82,6 +82,9 @@ export default class HistoryQueryController {
       command.southType = ctx.request.body?.southType;
     } else if (ctx.request.body?.southId) {
       const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.request.body.southId);
+      if (!southConnector) {
+        return ctx.throw(404, 'South connector not found');
+      }
       command.southSettings = southConnector.settings;
       command.southType = southConnector.type;
       southItems = ctx.app.repositoryService.southItemRepository.getSouthItems(ctx.request.body.southId);
@@ -97,6 +100,9 @@ export default class HistoryQueryController {
       command.northType = ctx.request.body?.northType;
     } else if (ctx.request.body?.northId) {
       const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.request.body.northId);
+      if (!northConnector) {
+        return ctx.throw(404, 'North connector not found');
+      }
       command.northSettings = northConnector.settings;
       command.caching = northConnector.caching;
       command.northType = northConnector.type;

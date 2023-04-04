@@ -24,6 +24,7 @@ import NorthConnectorController, { northManifests } from '../controllers/north-c
 import SouthConnectorController, { southManifests } from '../controllers/south-connector.controller';
 import UserController from '../controllers/user.controller';
 import HistoryQueryController from '../controllers/history-query.controller';
+import SubscriptionController from '../controllers/subscription.controller';
 import JoiValidator from '../../validators/joi.validator';
 import { KoaContext } from '../koa';
 
@@ -37,6 +38,7 @@ const northConnectorController = new NorthConnectorController(joiValidator);
 const southConnectorController = new SouthConnectorController(joiValidator);
 const historyQueryController = new HistoryQueryController(joiValidator, southManifests, northManifests);
 const userController = new UserController(joiValidator, userSchema);
+const subscriptionController = new SubscriptionController();
 
 const router = new Router();
 
@@ -100,6 +102,13 @@ router.get('/api/north/:id', (ctx: KoaContext<any, any>) => northConnectorContro
 router.post('/api/north', (ctx: KoaContext<any, any>) => northConnectorController.createNorthConnector(ctx));
 router.put('/api/north/:id', (ctx: KoaContext<any, any>) => northConnectorController.updateNorthConnector(ctx));
 router.delete('/api/north/:id', (ctx: KoaContext<any, any>) => northConnectorController.deleteNorthConnector(ctx));
+router.get('/api/north/:northId/subscriptions', (ctx: KoaContext<any, any>) => subscriptionController.getNorthSubscriptions(ctx));
+router.post('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<any, any>) =>
+  subscriptionController.createNorthSubscription(ctx)
+);
+router.delete('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<any, any>) =>
+  subscriptionController.deleteNorthSubscription(ctx)
+);
 
 router.get('/api/south-types', (ctx: KoaContext<any, any>) => southConnectorController.getSouthConnectorTypes(ctx));
 router.get('/api/south-types/:id', (ctx: KoaContext<any, any>) => southConnectorController.getSouthConnectorManifest(ctx));

@@ -93,10 +93,14 @@ export default class ReloadService {
     await this.oibusEngine.stopSouth(southId);
     this.repositoryService.southConnectorRepository.updateSouthConnector(southId, command);
     const settings = this.repositoryService.southConnectorRepository.getSouthConnector(southId);
-    await this.oibusEngine.startSouth(southId, settings);
+    if (settings) {
+      await this.oibusEngine.startSouth(southId, settings);
+    }
   }
 
   async onDeleteSouth(southId: string): Promise<void> {
+    const subscribedNorthIds = this.repositoryService.subscriptionRepository.getSubscribedNorthConnectors(southId);
+    await Promise.allSettled(subscribedNorthIds.map(northId => this.onDeleteNorthSubscription(northId, southId)));
     await this.oibusEngine.stopSouth(southId);
     this.repositoryService.southItemRepository.deleteSouthItemByConnectorId(southId);
     this.repositoryService.southConnectorRepository.deleteSouthConnector(southId);
@@ -129,12 +133,32 @@ export default class ReloadService {
     await this.oibusEngine.stopNorth(northId);
     this.repositoryService.northConnectorRepository.updateNorthConnector(northId, command);
     const settings = this.repositoryService.northConnectorRepository.getNorthConnector(northId);
-    await this.oibusEngine.startNorth(northId, settings);
+    if (settings) {
+      await this.oibusEngine.startNorth(northId, settings);
+    }
   }
 
   async onDeleteNorth(northId: string): Promise<void> {
     await this.oibusEngine.stopNorth(northId);
     this.repositoryService.northConnectorRepository.deleteNorthConnector(northId);
+  }
+
+  async onCreateNorthSubscription(northId: string, southId: string): Promise<void> {
+    await this.oibusEngine.stopNorth(northId);
+    this.repositoryService.subscriptionRepository.createNorthSubscription(northId, southId);
+    const settings = this.repositoryService.northConnectorRepository.getNorthConnector(northId);
+    if (settings) {
+      await this.oibusEngine.startNorth(northId, settings);
+    }
+  }
+
+  async onDeleteNorthSubscription(northId: string, southId: string): Promise<void> {
+    await this.oibusEngine.stopNorth(northId);
+    this.repositoryService.subscriptionRepository.deleteNorthSubscription(northId, southId);
+    const settings = this.repositoryService.northConnectorRepository.getNorthConnector(northId);
+    if (settings) {
+      await this.oibusEngine.startNorth(northId, settings);
+    }
   }
 
   async onCreateHistoryQuery(command: HistoryQueryCommandDTO, southItems: Array<OibusItemDTO>): Promise<HistoryQueryDTO> {
