@@ -38,9 +38,14 @@ export default class SouthConnectorRepository {
   /**
    * Retrieve a South connector by its ID
    */
-  getSouthConnector(id: string): SouthConnectorDTO {
+  getSouthConnector(id: string): SouthConnectorDTO | null {
     const query = `SELECT id, name, type, description, enabled, settings FROM ${SOUTH_CONNECTOR_TABLE} WHERE id = ?;`;
     const result = this.database.prepare(query).get(id);
+
+    if (!result) {
+      return null;
+    }
+
     return {
       id: result.id,
       name: result.name,

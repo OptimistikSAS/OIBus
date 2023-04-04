@@ -12,6 +12,7 @@ import LogRepository from '../repository/log.repository';
 import HistoryQueryRepository from '../repository/history-query.repository';
 import UserRepository from '../repository/user.repository';
 import HistoryQueryItemRepository from '../repository/history-query-item.repository';
+import SubscriptionRepository from '../repository/subscription.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -26,6 +27,7 @@ export default class RepositoryService {
   private readonly _historyQueryRepository: HistoryQueryRepository;
   private readonly _historyQueryItemRepository: HistoryQueryItemRepository;
   private readonly _userRepository: UserRepository;
+  private readonly _subscriptionRepository: SubscriptionRepository;
 
   constructor(oibusDatabasePath: string, logsDatabasePath: string) {
     const oibusDatabase = Database(oibusDatabasePath);
@@ -43,6 +45,7 @@ export default class RepositoryService {
     this._historyQueryItemRepository = new HistoryQueryItemRepository(oibusDatabase);
     this._userRepository = new UserRepository(oibusDatabase);
     this._logRepository = new LogRepository(logsDatabase);
+    this._subscriptionRepository = new SubscriptionRepository(oibusDatabase);
   }
 
   get userRepository(): UserRepository {
@@ -91,5 +94,9 @@ export default class RepositoryService {
 
   get historyQueryItemRepository(): HistoryQueryItemRepository {
     return this._historyQueryItemRepository;
+  }
+
+  get subscriptionRepository(): SubscriptionRepository {
+    return this._subscriptionRepository;
   }
 }

@@ -31,7 +31,7 @@ export default class NorthService {
   /**
    * Retrieve a north connector from the config
    */
-  getNorth(northId: string): NorthConnectorDTO {
+  getNorth(northId: string): NorthConnectorDTO | null {
     return this.repositoryService.northConnectorRepository.getNorthConnector(northId);
   }
 

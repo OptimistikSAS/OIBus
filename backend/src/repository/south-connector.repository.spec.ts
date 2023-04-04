@@ -98,6 +98,16 @@ describe('South connector repository', () => {
     expect(southConnector).toEqual(expectedValue);
   });
 
+  it('should return null when south connector not found', () => {
+    get.mockReturnValueOnce(null);
+    const southConnector = repository.getSouthConnector('id1');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT id, name, type, description, enabled, settings FROM south_connector WHERE id = ?;'
+    );
+    expect(get).toHaveBeenCalledWith('id1');
+    expect(southConnector).toBeNull();
+  });
+
   it('should create a south connector', () => {
     run.mockReturnValueOnce({ lastInsertRowid: 1 });
     get.mockReturnValueOnce({ settings: '{}' });
