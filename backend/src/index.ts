@@ -29,6 +29,7 @@ const LOG_DB_NAME = 'journal.db';
 
   // Create the base cache folder
   await createFolder(CACHE_FOLDER);
+  await createFolder(LOG_FOLDER_NAME);
   const configDbFilePath = path.resolve(CONFIG_DATABASE);
 
   const repositoryService = new RepositoryService(configDbFilePath, path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME));
