@@ -912,6 +912,7 @@ export default {
 
         if (Object.prototype.hasOwnProperty.call(application.AmazonS3.authentication, 'accessKey')) {
           application.AmazonS3.authentication.key = application.AmazonS3.authentication.accessKey
+          application.AmazonS3.authentication.secret = application.AmazonS3.authentication.secretKey
           delete application.AmazonS3.authentication.accessKey
         }
 
@@ -1308,11 +1309,16 @@ export default {
 
     await createFolder((path.resolve('./cache/data-stream')))
     await createFolder(path.resolve('./cache/history-query'))
+    await createFolder(path.resolve('./certs'))
+    await createFolder(path.resolve('./keys'))
 
     // Move keys and certs outside cache folder
     try {
-      await fs.rename(path.resolve('./cache', 'certs'), path.resolve('./certs'))
-      await fs.rename(path.resolve('./cache', 'keys'), path.resolve('./keys'))
+      await fs.rename(path.resolve('./cache', 'keys', 'private.pem'), path.resolve('./keys', 'private.pem'))
+      await fs.rename(path.resolve('./cache', 'keys', 'public.pem'), path.resolve('./keys', 'public.pem'))
+      await fs.rename(path.resolve('./cache', 'certs', 'cert.pem'), path.resolve('./certs', 'cert.pem'))
+      await fs.rename(path.resolve('./cache', 'certs', 'privateKey.pem'), path.resolve('./certs', 'privateKey.pem'))
+      await fs.rename(path.resolve('./cache', 'certs', 'publicKey.pem'), path.resolve('./certs', 'publicKey.pem'))
     } catch (err) {
       if (err.code !== 'ENOENT') {
         logger.error(err)
