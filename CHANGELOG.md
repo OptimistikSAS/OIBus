@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.5.1](https://github.com/OptimistikSAS/OIBus/compare/v2.5.0...v2.5.1) (2023-04-04)
+
+
+### Bug Fixes
+
+* **config:** fix async call to update config ([40441d1](https://github.com/OptimistikSAS/OIBus/commit/40441d1e8e9c0221954264bc6caa853b34071cfb))
+* **migration:** fix migration for S3 authentication and encryption keys migration ([b59517f](https://github.com/OptimistikSAS/OIBus/commit/b59517fa926527a1774037a3f9d7db9c02be39d6))
+
 ## [2.5.0](https://github.com/OptimistikSAS/OIBus/compare/v2.4.0...v2.5.0) (2023-04-03)
 
 
