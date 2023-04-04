@@ -103,7 +103,17 @@ describe('reload service', () => {
   });
 
   it('should delete south', async () => {
+    (repositoryService.subscriptionRepository.getSubscribedNorthConnectors as jest.Mock).mockReturnValueOnce(['northId1', 'northId2']);
+    (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock)
+      .mockReturnValueOnce({ id: 'northId1' })
+      .mockReturnValueOnce({ id: 'northId2' });
     await service.onDeleteSouth('southId');
+    expect(oibusEngine.stopNorth).toHaveBeenNthCalledWith(1, 'northId1');
+    expect(oibusEngine.stopNorth).toHaveBeenNthCalledWith(2, 'northId2');
+    expect(repositoryService.subscriptionRepository.deleteNorthSubscription).toHaveBeenNthCalledWith(1, 'northId1', 'southId');
+    expect(repositoryService.subscriptionRepository.deleteNorthSubscription).toHaveBeenNthCalledWith(2, 'northId2', 'southId');
+    expect(oibusEngine.startNorth).toHaveBeenNthCalledWith(1, 'northId1', { id: 'northId1' });
+    expect(oibusEngine.startNorth).toHaveBeenNthCalledWith(2, 'northId2', { id: 'northId2' });
     expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
     expect(repositoryService.southConnectorRepository.deleteSouthConnector).toHaveBeenCalledWith('southId');
     expect(repositoryService.southItemRepository.deleteSouthItemByConnectorId).toHaveBeenCalledWith('southId');
@@ -230,5 +240,21 @@ describe('reload service', () => {
     expect(repositoryService.historyQueryItemRepository.getHistoryItem).toHaveBeenCalledWith('itemId');
     expect(repositoryService.historyQueryItemRepository.deleteHistoryItem).toHaveBeenCalledWith('itemId');
     expect(historyQueryEngine.deleteItemFromHistoryQuery).toHaveBeenCalledWith('historyItemId', historyItem);
+  });
+
+  it('should create North subscription', async () => {
+    (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock).mockReturnValueOnce({ id: 'northId' });
+    await service.onCreateNorthSubscription('northId', 'southId');
+    expect(oibusEngine.stopNorth).toHaveBeenCalledWith('northId');
+    expect(repositoryService.subscriptionRepository.createNorthSubscription).toHaveBeenCalledWith('northId', 'southId');
+    expect(oibusEngine.startNorth).toHaveBeenCalledWith('northId', { id: 'northId' });
+  });
+
+  it('should delete North subscription', async () => {
+    (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock).mockReturnValueOnce({ id: 'northId' });
+    await service.onDeleteNorthSubscription('northId', 'southId');
+    expect(oibusEngine.stopNorth).toHaveBeenCalledWith('northId');
+    expect(repositoryService.subscriptionRepository.deleteNorthSubscription).toHaveBeenCalledWith('northId', 'southId');
+    expect(oibusEngine.startNorth).toHaveBeenCalledWith('northId', { id: 'northId' });
   });
 });
