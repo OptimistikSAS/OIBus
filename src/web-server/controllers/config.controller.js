@@ -12,9 +12,9 @@ const getActiveConfiguration = (ctx) => {
  * @param {Object} ctx - The KOA context
  * @return {void}
  */
-const updateConfig = (ctx) => {
+const updateConfig = async (ctx) => {
   try {
-    ctx.app.engine.configService.updateConfig(ctx.request.body)
+    await ctx.app.engine.configService.updateConfig(ctx.request.body)
     ctx.ok()
   } catch (error) {
     ctx.throw(500, 'Unable to update Config')
