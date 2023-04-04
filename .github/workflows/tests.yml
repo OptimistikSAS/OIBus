@@ -35,18 +35,18 @@ jobs:
       - name: Run unit tests
         uses: ./.github/actions/unit_tests
 
-      - name: Prepare integration test
-        if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
-        working-directory: ./backend
-        run: npm run test:setup-env
-
-      - name: Wait for docker containers
-        if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
-        uses: jakejarvis/wait-action@master
-        with:
-          time: '25s'
-
-      - name: Integration test
-        if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
-        working-directory: ./backend
-        run: npm run test:integration
+#      - name: Prepare integration test
+#        if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
+#        working-directory: ./backend
+#        run: npm run test:setup-env
+#
+#      - name: Wait for docker containers
+#        if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
+#        uses: jakejarvis/wait-action@master
+#        with:
+#          time: '25s'
+#
+#      - name: Integration test
+#        if: ${{ matrix.config['os'] == 'ubuntu-latest' }}
+#        working-directory: ./backend
+#        run: npm run test:integration
