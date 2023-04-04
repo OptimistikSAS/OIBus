@@ -25,7 +25,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version: 18.15
 
       - name: Setup backend environment
         uses: ./.github/actions/setup_backend_environment
