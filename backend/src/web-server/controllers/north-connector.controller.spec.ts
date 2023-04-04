@@ -299,7 +299,7 @@ describe('North connector controller', () => {
     expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onUpdateNorthSettings).not.toHaveBeenCalled();
-    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message)
+    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
   it('updateNorthConnector() should return not found when North connector not found', async () => {
@@ -324,6 +324,7 @@ describe('North connector controller', () => {
 
     await northConnectorController.deleteNorthConnector(ctx);
 
+    expect(ctx.app.repositoryService.subscriptionRepository.deleteNorthSubscriptions).toHaveBeenCalledWith('id');
     expect(ctx.app.reloadService.onDeleteNorth).toHaveBeenCalledWith('id');
     expect(ctx.noContent).toHaveBeenCalled();
   });
@@ -334,6 +335,7 @@ describe('North connector controller', () => {
 
     await northConnectorController.deleteNorthConnector(ctx);
 
+    expect(ctx.app.repositoryService.subscriptionRepository.deleteNorthSubscriptions).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onDeleteNorth).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });

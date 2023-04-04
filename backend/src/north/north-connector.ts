@@ -14,6 +14,7 @@ import DeferredPromise from '../service/deferred-promise';
 
 import { Instant } from '../../../shared/model/types';
 import { OIBusError } from '../../../shared/model/engine.model';
+import { SubscriptionDTO } from '../../../shared/model/subscription.model';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -43,6 +44,7 @@ export default class NorthConnector {
   protected logger: pino.Logger;
   private readonly baseFolder: string;
   private manifest: NorthConnectorManifest;
+  private subscribedTo: SubscriptionDTO[] = [];
 
   private fileBeingSent: string | null = null;
   private fileErrorCount = 0;
@@ -92,6 +94,7 @@ export default class NorthConnector {
    * Initialize services at startup
    */
   async start(): Promise<void> {
+    this.subscribedTo = this.repositoryService.subscriptionRepository.getNorthSubscriptions(this.configuration.id);
     await this.valueCacheService.start();
     await this.fileCacheService.start();
     this.logger.trace(`North connector "${this.configuration.name}" enabled. Starting services...`);
@@ -285,9 +288,7 @@ export default class NorthConnector {
    * If subscribedTo is not defined or an empty array, the subscription is true.
    */
   isSubscribed(southId: string): boolean {
-    // if (!Array.isArray(this.subscribedTo) || this.subscribedTo.length === 0) return true;
-
-    return true;
+    return this.subscribedTo.length === 0 || this.subscribedTo.includes(southId);
   }
 
   /**
