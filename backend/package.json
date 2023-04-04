@@ -140,7 +140,8 @@
       "node_modules/sqlite3/**/*.node",
       "node_modules/argon2/**/*.node",
       "node_modules/oracledb/**/*.node",
-      "node_modules/better-sqlite3/**/*.node"
+      "node_modules/better-sqlite3/build/Release/better_sqlite3.node",
+      "node_modules/odbc/**/*.node"
     ]
   }
 }
