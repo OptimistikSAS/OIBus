@@ -90,7 +90,7 @@
     "history-queries": "History",
     "logs": "Logs",
     "about": "About",
-    "version": "Version {{ version }}",
+    "version": "Version: {{ version }}",
     "account": {
       "logout": "Logout",
       "settings": "Settings"
