@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../../../../shared/model/engine.model';
+import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../shared/model/engine.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on the engine settings
@@ -25,5 +25,9 @@ export class EngineService {
    */
   updateEngineSettings(command: EngineSettingsCommandDTO): Observable<void> {
     return this.http.put<void>(`/api/engine`, command);
+  }
+
+  getInfo(): Observable<OIBusInfo> {
+    return this.http.get<OIBusInfo>('/api/info');
   }
 }

@@ -1,5 +1,5 @@
 import { KoaContext } from '../koa';
-import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../../../../shared/model/engine.model';
+import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../shared/model/engine.model';
 import AbstractController from './abstract.controller';
 
 const DELAY_RELOAD = 1000;
@@ -48,5 +48,10 @@ export default class OibusController extends AbstractController {
     }, DELAY_SHUTDOWN);
 
     ctx.noContent();
+  }
+
+  async getOIBusInfo(ctx: KoaContext<void, OIBusInfo>): Promise<void> {
+    const oibusInfo = ctx.app.oibusService.getOIBusInfo();
+    ctx.ok(oibusInfo);
   }
 }
