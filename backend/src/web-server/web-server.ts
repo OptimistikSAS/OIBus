@@ -86,6 +86,8 @@ export default class WebServer {
     // filter IP addresses
     this.app.use(ipFilter());
 
+    this.app.use(webClient);
+
     // Password protect middleware
     this.app.use(auth());
 
@@ -108,7 +110,6 @@ export default class WebServer {
 
     this.app.use(router.routes());
     this.app.use(router.allowedMethods());
-    this.app.use(webClient);
 
     await this.start();
     this.reloadService.setWebServerChangeLogger(this.setLogger.bind(this));
