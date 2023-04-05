@@ -33,14 +33,14 @@ const sse = () => {
       // this.engine.statusService.forceDataUpdate();
       return next();
     }
-    if (ctx.path.startsWith('/history-engine/')) {
+    if (ctx.path.startsWith('/sse/history-engine/')) {
       console.warn('TODO: send status for history engine');
       // createSocket(ctx);
       // ctx.body = this.historyQueryEngine.statusService.getDataStream();
       // this.historyQueryEngine.statusService.forceDataUpdate();
       return next();
     }
-    if (ctx.path.startsWith('/history-query/')) {
+    if (ctx.path.startsWith('/sse/history-query/')) {
       console.warn('TODO: send status for history query');
 
       // createSocket(ctx);
