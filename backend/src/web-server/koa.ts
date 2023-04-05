@@ -4,6 +4,8 @@ import EncryptionService from '../service/encryption.service';
 import ReloadService from '../service/reload.service';
 import pino from 'pino';
 import SouthService from '../service/south.service';
+import OIBusService from '../service/oibus.service';
+import NorthService from '../service/north.service';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
@@ -13,6 +15,8 @@ export interface KoaApplication extends Koa {
   id: string;
   repositoryService: RepositoryService;
   southService: SouthService;
+  northService: NorthService;
+  oibusService: OIBusService;
   reloadService: ReloadService;
   encryptionService: EncryptionService;
   logger: pino.Logger;
