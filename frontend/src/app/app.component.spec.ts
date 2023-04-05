@@ -8,6 +8,8 @@ import { WindowService } from './shared/window.service';
 import { CurrentUserService } from './shared/current-user.service';
 import { User } from '../../../shared/model/user.model';
 import { of } from 'rxjs';
+import { EngineService } from './services/engine.service';
+import { OIBusInfo } from '../../../shared/model/engine.model';
 
 class AppComponentTester extends ComponentTester<AppComponent> {
   constructor() {
@@ -28,6 +30,7 @@ describe('AppComponent', () => {
 
   let windowService: jasmine.SpyObj<WindowService>;
   let currentUserService: jasmine.SpyObj<CurrentUserService>;
+  let engineService: jasmine.SpyObj<EngineService>;
 
   const currentUser = {
     login: 'admin',
@@ -38,6 +41,7 @@ describe('AppComponent', () => {
   beforeEach(() => {
     windowService = createMock(WindowService);
     currentUserService = createMock(CurrentUserService);
+    engineService = createMock(EngineService);
 
     TestBed.configureTestingModule({
       imports: [AppComponent, NavbarComponent],
@@ -45,11 +49,13 @@ describe('AppComponent', () => {
         provideRouter([]),
         provideTestingI18n(),
         { provide: WindowService, useValue: windowService },
-        { provide: CurrentUserService, useValue: currentUserService }
+        { provide: CurrentUserService, useValue: currentUserService },
+        { provide: EngineService, useValue: engineService }
       ]
     });
 
     currentUserService.get.and.returnValue(of(currentUser));
+    engineService.getInfo.and.returnValue(of({ version: '3.0' } as OIBusInfo));
     tester = new AppComponentTester();
     tester.detectChanges();
   });
