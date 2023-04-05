@@ -7,6 +7,8 @@ import { provideTestingI18n } from '../../i18n/mock-i18n';
 import { CurrentUserService } from '../shared/current-user.service';
 import { of } from 'rxjs';
 import { User } from '../../../../shared/model/user.model';
+import { EngineService } from '../services/engine.service';
+import { OIBusInfo } from '../../../../shared/model/engine.model';
 
 class NavbarComponentTester extends ComponentTester<NavbarComponent> {
   constructor() {
@@ -25,6 +27,7 @@ describe('NavbarComponent', () => {
   let tester: NavbarComponentTester;
 
   let currentUserService: jasmine.SpyObj<CurrentUserService>;
+  let engineService: jasmine.SpyObj<EngineService>;
 
   const currentUser = {
     login: 'admin',
@@ -34,13 +37,20 @@ describe('NavbarComponent', () => {
 
   beforeEach(() => {
     currentUserService = createMock(CurrentUserService);
+    engineService = createMock(EngineService);
 
     TestBed.configureTestingModule({
       imports: [NavbarComponent],
-      providers: [provideRouter([]), provideTestingI18n(), { provide: CurrentUserService, useValue: currentUserService }]
+      providers: [
+        provideRouter([]),
+        provideTestingI18n(),
+        { provide: CurrentUserService, useValue: currentUserService },
+        { provide: EngineService, useValue: engineService }
+      ]
     });
 
     currentUserService.get.and.returnValue(of(currentUser));
+    engineService.getInfo.and.returnValue(of({ version: '3.0' } as OIBusInfo));
 
     tester = new NavbarComponentTester();
   });
@@ -67,7 +77,7 @@ describe('NavbarComponent', () => {
   it('should display version when it is available and there is a user', () => {
     tester.detectChanges();
 
-    expect(tester.version).toContainText('Version');
+    expect(tester.version).toContainText('Version: 3.0');
   });
 
   it('should logout and navigate to login page', () => {

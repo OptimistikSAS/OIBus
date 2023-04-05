@@ -1,5 +1,6 @@
 import OIBusService from './oibus.service';
 import os from 'node:os';
+import { version } from '../../package.json';
 
 let service: OIBusService;
 describe('OIBus service', () => {
@@ -16,7 +17,7 @@ describe('OIBus service', () => {
       hostname: os.hostname(),
       operatingSystem: `${os.type()} ${os.release()}`,
       processId: process.pid.toString(),
-      version: '3.0'
+      version: version
     };
     const result = service.getOIBusInfo();
     expect(result).toEqual(expectedResult);
