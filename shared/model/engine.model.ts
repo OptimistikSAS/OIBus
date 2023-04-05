@@ -139,3 +139,13 @@ export interface OIBusError {
   retry: boolean;
   message: string;
 }
+
+export interface OIBusInfo {
+  version: string;
+  dataDirectory: string;
+  binaryDirectory: string;
+  processId: string;
+  hostname: string;
+  operatingSystem: string;
+  architecture: string;
+}

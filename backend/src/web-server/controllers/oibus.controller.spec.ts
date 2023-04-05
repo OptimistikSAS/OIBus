@@ -3,6 +3,7 @@ import Joi from 'joi';
 import OibusController from './oibus.controller';
 import JoiValidator from '../../validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
+import { OIBusInfo } from '../../../../shared/model/engine.model';
 
 jest.mock('../../validators/joi.validator');
 
@@ -95,5 +96,11 @@ describe('Oibus controller', () => {
     expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1000);
     expect(ctx.app.logger.info).toHaveBeenCalledWith('Shutting down OIBus');
     expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('should get OIBus info', async () => {
+    (ctx.app.oibusService.getOIBusInfo as jest.Mock).mockReturnValue({ version: '3.0' } as OIBusInfo);
+    await oibusController.getOIBusInfo(ctx);
+    expect(ctx.ok).toHaveBeenCalledWith({ version: '3.0' });
   });
 });

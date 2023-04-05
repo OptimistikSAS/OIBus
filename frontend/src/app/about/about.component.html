@@ -3,27 +3,76 @@
 
   <div class="row">
     <div class="col-xs-12 col-sm-8 offset-sm-2 col-md-6 offset-md-3 col-lg-6 offset-lg-4">
-      <div class="border rounded bg-light row">
-        <div class="col-6 p-5">
+      <div class="border rounded bg-light row py-5">
+        <div class="col-6">
           <div class="d-flex flex-column align-items-center">
             <img src="/assets/oibus_white.svg" alt="" class="img-fluid mb-4" />
-            <h5 id="official-site"><a target="_blank" href="https://oibus.optimistik.com/" translate="about.official-site"></a></h5>
+            <h5 id="official-site" class="mt-2">
+              <a target="_blank" href="https://oibus.optimistik.com/" translate="about.official-site"></a>
+            </h5>
           </div>
         </div>
-        <div class="col-6 p-5">
+        <div class="col-6">
           <div id="version">
             <strong translate="about.version"></strong>
             <span translate="common.colon-separator"></span>
-            <span>3.0</span>
+            <span *ngIf="oibusInfo">{{ oibusInfo.version }}</span>
+            <span *ngIf="!oibusInfo" id="version-spinner" class="fa fa-spinner fa-spin"></span>
           </div>
+
+          <div id="executable">
+            <strong translate="about.executable"></strong>
+            <span translate="common.colon-separator"></span>
+            <span class="text-wrap text-break" *ngIf="oibusInfo">{{ oibusInfo.binaryDirectory }}</span>
+            <span *ngIf="!oibusInfo" class="fa fa-spinner fa-spin"></span>
+          </div>
+
+          <div id="data-folder">
+            <strong translate="about.data-folder"></strong>
+            <span translate="common.colon-separator"></span>
+            <span class="text-wrap text-break" *ngIf="oibusInfo">{{ oibusInfo.dataDirectory }}</span>
+            <span *ngIf="!oibusInfo" class="fa fa-spinner fa-spin"></span>
+          </div>
+
+          <div id="operating-system">
+            <strong translate="about.operating-system"></strong>
+            <span translate="common.colon-separator"></span>
+            <span *ngIf="oibusInfo">{{ oibusInfo.operatingSystem }}</span>
+            <span *ngIf="!oibusInfo" class="fa fa-spinner fa-spin"></span>
+          </div>
+
+          <div id="architecture">
+            <strong translate="about.architecture"></strong>
+            <span translate="common.colon-separator"></span>
+            <span *ngIf="oibusInfo">{{ oibusInfo.architecture }}</span>
+            <span *ngIf="!oibusInfo" class="fa fa-spinner fa-spin"></span>
+          </div>
+
+          <div id="process-id">
+            <strong translate="about.process-id"></strong>
+            <span translate="common.colon-separator"></span>
+            <span *ngIf="oibusInfo">{{ oibusInfo.processId }}</span>
+            <span *ngIf="!oibusInfo" class="fa fa-spinner fa-spin"></span>
+          </div>
+
+          <div id="hostname">
+            <strong translate="about.hostname"></strong>
+            <span translate="common.colon-separator"></span>
+            <span *ngIf="oibusInfo">{{ oibusInfo.hostname }}</span>
+            <span *ngIf="!oibusInfo" class="fa fa-spinner fa-spin"></span>
+          </div>
+
           <div id="license">
-            <strong>License</strong>
+            <strong translate="about.license"></strong>
             <span translate="common.colon-separator"></span>
             <a target="_blank" href="https://joinup.ec.europa.eu/sites/default/files/custom-page/attachment/2020-03/EUPL-1.2%20EN.txt"
               >EUPL-1.2-or-later</a
             >
           </div>
         </div>
+      </div>
+      <div class="row">
+        <span class="text-center">{{ copyright }}</span>
       </div>
     </div>
   </div>

@@ -13,6 +13,7 @@ import SouthService from './service/south.service';
 import OIBusEngine from './engine/oibus-engine';
 import HistoryQueryEngine from './engine/history-query-engine';
 import HistoryQueryService from './service/history-query.service';
+import OIBusService from './service/oibus.service';
 
 const CACHE_FOLDER = './cache';
 
@@ -58,6 +59,7 @@ const LOG_DB_NAME = 'journal.db';
 
   const northService = new NorthService(proxyService, encryptionService, repositoryService);
   const southService = new SouthService(proxyService, encryptionService, repositoryService);
+  const oibusService = new OIBusService();
   const historyQueryService = new HistoryQueryService(proxyService, encryptionService, repositoryService);
 
   if (check) {
@@ -92,8 +94,11 @@ const LOG_DB_NAME = 'journal.db';
     oibusSettings.port,
     encryptionService,
     reloadService,
-    loggerService.createChildLogger('web-server'),
-    repositoryService
+    repositoryService,
+    southService,
+    northService,
+    oibusService,
+    loggerService.createChildLogger('web-server')
   );
   await server.init();
 

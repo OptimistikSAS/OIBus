@@ -1,6 +1,9 @@
 import RepositoryServiceMock from './repository-service.mock';
 import ReloadServiceMock from './reload-service.mock';
 import EncryptionServiceMock from './encryption-service.mock';
+import NorthServiceMock from './north-service.mock';
+import SouthServiceMock from './south-service.mock';
+import OIBusServiceMock from './oibus-service.mock';
 
 /**
  * Create a mock object for Koa Context
@@ -10,6 +13,9 @@ export default jest.fn().mockImplementation(() => ({
     repositoryService: new RepositoryServiceMock(),
     reloadService: new ReloadServiceMock(),
     encryptionService: new EncryptionServiceMock(),
+    northService: new NorthServiceMock(),
+    southService: new SouthServiceMock(),
+    oibusService: new OIBusServiceMock(),
     logger: {
       trace: jest.fn(),
       debug: jest.fn(),

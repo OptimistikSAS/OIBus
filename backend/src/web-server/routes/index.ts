@@ -50,7 +50,6 @@ const upload = multer({ storage });
 router.post('/engine/addValues', engineController.addValues);
 router.post('/engine/addFile', upload.single('file'), engineController.addFile);
 router.post('/engine/aliveSignal', engineController.aliveSignal);
-router.get('/info', engineController.getOIBusInfo);
 
 router.get('/north/:id/cache/file-errors', fileCacheController.getFileErrors);
 router.delete('/north/:id/cache/file-errors', fileCacheController.removeFileErrors);
@@ -141,5 +140,7 @@ router.delete('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext
 
 router.get('/api/logs', (ctx: KoaContext<any, any>) => logController.searchLogs(ctx));
 router.post('/api/logs', (ctx: KoaContext<any, any>) => logController.addLogs(ctx));
+
+router.get('/api/info', oibusController.getOIBusInfo);
 
 export default router;
