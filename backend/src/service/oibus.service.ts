@@ -1,13 +1,14 @@
 import os from 'node:os';
 
 import { OIBusInfo } from '../../../shared/model/engine.model';
+import { version } from '../../package.json';
 
 export default class OIBusService {
   constructor() {}
 
   getOIBusInfo(): OIBusInfo {
     return {
-      version: '3.0',
+      version,
       dataDirectory: process.cwd(),
       binaryDirectory: process.execPath,
       processId: process.pid.toString(),

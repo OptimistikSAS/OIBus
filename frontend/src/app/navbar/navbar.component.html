@@ -35,10 +35,17 @@
       </ul>
       <ul class="navbar-nav d-none d-md-flex me-2">
         <li>
-          <span class="navbar-text" id="navbar-version" translate="nav.version"></span>
+          <span
+            *ngIf="info"
+            class="navbar-text"
+            id="navbar-version"
+            translate="nav.version"
+            [translateParams]="{version: info.version}"
+          ></span>
         </li>
-      </ul>
-      <ul class="navbar-nav d-none d-md-flex me-2" *ngIf="user">
+        <li class="mx-1">
+          <span class="navbar-text">/</span>
+        </li>
         <li>
           <span class="navbar-text" id="user-login"> {{ user.login }} </span>
         </li>
