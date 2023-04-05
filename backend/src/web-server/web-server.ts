@@ -18,14 +18,14 @@ import Koa from 'koa';
 import oibus from './middlewares/oibus';
 import ReloadService from '../service/reload.service';
 import { KoaApplication } from './koa';
+import SouthService from '../service/south.service';
+import OIBusService from '../service/oibus.service';
+import NorthService from '../service/north.service';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
  */
 export default class WebServer {
-  private readonly encryptionService: EncryptionService;
-  private readonly repositoryService: RepositoryService;
-  private readonly reloadService: ReloadService;
   private _logger: pino.Logger;
   private _id: string;
   private _port: number;
@@ -35,17 +35,17 @@ export default class WebServer {
   constructor(
     id: string,
     port: number,
-    encryptionService: EncryptionService,
-    reloadService: ReloadService,
-    logger: pino.Logger,
-    repositoryService: RepositoryService
+    private readonly encryptionService: EncryptionService,
+    private readonly reloadService: ReloadService,
+    private readonly repositoryService: RepositoryService,
+    private readonly southService: SouthService,
+    private readonly northService: NorthService,
+    private readonly oibusService: OIBusService,
+    logger: pino.Logger
   ) {
     this._id = id;
     this._port = port;
-    this.encryptionService = encryptionService;
-    this.reloadService = reloadService;
     this._logger = logger;
-    this.repositoryService = repositoryService;
   }
 
   get logger(): pino.Logger {
@@ -74,7 +74,18 @@ export default class WebServer {
   async init(): Promise<void> {
     this.app = new Koa() as KoaApplication;
 
-    this.app.use(oibus(this._id, this.repositoryService, this.reloadService, this.encryptionService, this.logger));
+    this.app.use(
+      oibus(
+        this._id,
+        this.repositoryService,
+        this.reloadService,
+        this.encryptionService,
+        this.southService,
+        this.northService,
+        this.oibusService,
+        this.logger
+      )
+    );
 
     // koa-helmet is a wrapper for helmet to work with koa.
     // It provides important security headers to make your app more secure by default.

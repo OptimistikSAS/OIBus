@@ -109,7 +109,13 @@
   "about": {
     "official-site": "Official site",
     "version": "Version",
-    "license": "License"
+    "license": "License",
+    "executable": "Executable",
+    "hostname": "Hostname",
+    "data-folder": "Data folder",
+    "operating-system": "Operating system",
+    "architecture": "Architecture",
+    "process-id": "Process ID"
   },
   "engine": {
     "title": "Engine",
