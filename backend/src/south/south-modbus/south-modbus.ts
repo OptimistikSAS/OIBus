@@ -1,6 +1,6 @@
 import net from 'node:net';
 
-import modbus from 'jsmodbus';
+import { client } from 'jsmodbus';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
@@ -66,7 +66,6 @@ export default class SouthModbus extends SouthConnector {
 
   /**
    * Dynamically call the right function based on the given point settings
-
    */
   async modbusFunction(item: OibusItemDTO): Promise<void> {
     const offset = this.configuration.settings.addressOffset === 'Modbus' ? 0 : -1;
@@ -173,19 +172,22 @@ export default class SouthModbus extends SouthConnector {
   /**
    * Initiates a connection to the right host and port.
    */
-  async connect(): Promise<void> {
+  override async connect(): Promise<void> {
     return new Promise(resolve => {
       if (this.reconnectTimeout) {
         clearTimeout(this.reconnectTimeout);
       }
       this.socket = new net.Socket();
-      this.client = new modbus.client.TCP(this.socket, this.configuration.settings.slaveId);
+      this.client = new client.TCP(this.socket, this.configuration.settings.slaveId);
+      this.logger.debug(`Connecting Modbus socket into ${this.configuration.settings.host}:${this.configuration.settings.port}`);
       this.socket.connect({ host: this.configuration.settings.host, port: this.configuration.settings.port }, async () => {
+        this.logger.info(`Modbus socket connected to ${this.configuration.settings.host}:${this.configuration.settings.port}`);
+
         await super.connect();
         resolve();
       });
       this.socket.on('error', async error => {
-        this.logger.error(error);
+        this.logger.error(`Modbus socket error: ${error}`);
         await this.disconnect();
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.configuration.settings.retryInterval);
       });
