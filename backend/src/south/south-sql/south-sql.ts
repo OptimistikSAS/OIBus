@@ -167,7 +167,7 @@ export default class SouthSQL extends SouthConnector {
           }
         }
 
-        updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeColumn, this.configuration.settings.timezone);
+        updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeField, this.configuration.settings.timezone);
       } else {
         this.logger.debug(`No result found between ${startTime} and ${endTime}`);
       }
