@@ -1,9 +1,9 @@
-![OIBus](src/frontend/oibus.png)
+![OIBus](frontend/src/assets/oibus.png)
 
 ## OIBus
-OIBus is an executable (Windows, Linux and Mac) able to query data from your industrial sources using various protocols 
-(including OPCUA-HA, OPCHDA, Modbus, MQTT) or simply by scanning folders and will send them to your enterprise 
-applications.
+OIBus is a software application that can be run on Windows, Linux, and Mac operating systems. It is designed to extract 
+data from industrial sources by utilizing multiple protocols, such as OPCUA-HA, OPCHDA, Modbus, MQTT and many more. 
+It can also retrieve data by scanning folders. Once the data is collected, OIBus can transmit it to your enterprise applications.
 
 [**Optimistik**](https://optimistik.io) is using **OIBus** on many industrial sites to send data to its **OIAnalytics** 
 solution to query from 10 to over 10.000 points with sampling rate at the second level.
@@ -22,15 +22,20 @@ OIBus is composed of 3 layers.
 - Several **North** connectors that will be able to transfer the data to application such as OIAnalytics, Rest API,
 Timeseries databases, MQTT broker... 
 
-You can know more about OIBus by reading [our documentation](https://oibus.optimistik.com/).
+You can learn more about OIBus by reading [our documentation](https://oibus.optimistik.com/).
 
 ## Build and deploy step
 * **Fork** the OIBus repository and clone it. Be sure to have NodeJS and npm installed (LTS versions).
-* **Install** the node dependencies : `npm install`
-* **Build** the web client used to display the OIBus interface in a web browser : `npm run build:web-client`. If you want to 
-modify the web client, you must rebuild it. Alternatively, you can build it on changes with `npm run watch:web-client`.
-* **Start** OIBus from source with `npm start`
-* You can compile OIBus on your appropriate distribution with `npm run build:win`, `npm run build:linux` or `npm run build:macos`.
-* You can start OIBus from its binaries with `npm run start:win`, `npm run start:linux` or `npm run start:macos`.
+* **Backend**: open a terminal in the backend folder `cd backend`
+  * Install the node dependencies: `npm install`
+  * Run the backend: `npm start`
+* **Frontend**: open a terminal in the frontend folder `cd frontend`
+  * Install the node dependencies : `npm install`
+  * Run the frontend: `npm start`
+  * Access the application on `http://localhost:2223` (default port)
+* You can compile OIBus on your appropriate distribution. To do that:
+  * In the frontend folder, run `npm install` and `npm run build`
+  * In the backend folder, run the command associated to the distribution you want to build OIBus: `npm run build:win`, `npm run build:linux`, `npm run build:macos`, `npm run build:macos-arm64`
+  * You can now start OIBus from its binaries with `npm run start:win`, `npm run start:linux`, `npm run start:macos` or `npm run start:macos-arm64`
 
 A more complete developer guide is accessible on [our developer documentation](https://oibus.optimistik.com/docs/developer/).
