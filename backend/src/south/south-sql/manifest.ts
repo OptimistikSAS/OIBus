@@ -188,7 +188,7 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'timeField',
         type: 'OibText',
-        label: 'Time column',
+        label: 'Time field',
         defaultValue: 'timestamp',
         readDisplay: true
       },
