@@ -1,6 +1,6 @@
 import net from 'node:net'
 
-import modbus from 'jsmodbus'
+import { client } from 'jsmodbus'
 
 import SouthConnector from '../south-connector.js'
 import getNumberOfWords from './utils.js'
@@ -209,16 +209,18 @@ export default class SouthModbus extends SouthConnector {
         clearTimeout(this.reconnectTimeout)
       }
       this.socket = new net.Socket()
-      this.client = new modbus.client.TCP(this.socket, this.slaveId)
+      this.client = new client.TCP(this.socket, this.slaveId)
+      this.logger.debug(`Connecting Modbus socket into ${this.host}:${this.port}`)
       this.socket.connect(
         { host: this.host, port: this.port },
         async () => {
+          this.logger.info(`Modbus socket connected to ${this.host}:${this.port}`)
           await super.connect()
           resolve()
         },
       )
       this.socket.on('error', async (error) => {
-        this.logger.error(error)
+        this.logger.error(`Modbus socket error: ${error}`)
         await this.disconnect()
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.retryInterval)
       })

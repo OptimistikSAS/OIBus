@@ -145,7 +145,7 @@ describe('SouthModbus', () => {
     mockedEmitter.emit('error', 'connect error')
     await flushPromises()
     expect(south.disconnect).toHaveBeenCalledTimes(1)
-    expect(south.logger.error).toHaveBeenCalledWith('connect error')
+    expect(south.logger.error).toHaveBeenCalledWith('Modbus socket error: connect error')
     jest.advanceTimersByTime(configuration.settings.retryInterval)
 
     expect(net.Socket).toHaveBeenCalledTimes(2)
