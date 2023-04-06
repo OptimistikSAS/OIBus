@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.5.2](https://github.com/OptimistikSAS/OIBus/compare/v2.5.1...v2.5.2) (2023-04-06)
+
+
+### Bug Fixes
+
+* **modbus:** fix points creation / changes and modbus client library ([ed663b2](https://github.com/OptimistikSAS/OIBus/commit/ed663b25f89a6fa4f0cbe156f621671be08740f9))
+
 ### [2.5.1](https://github.com/OptimistikSAS/OIBus/compare/v2.5.0...v2.5.1) (2023-04-04)
 
 
