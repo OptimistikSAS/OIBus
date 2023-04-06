@@ -2,7 +2,6 @@ import React, { useEffect } from 'react'
 import { Button, Input } from 'reactstrap'
 
 import PropTypes from 'prop-types'
-import objectPath from 'object-path'
 import { nanoid } from 'nanoid'
 import Table from './table/table.jsx'
 import TablePagination from './table/table-pagination.jsx'
@@ -53,11 +52,10 @@ const PointsComponent = ({
    * @returns {void}
    */
   const handleAddPoint = () => {
-    const newPoint = Object.entries(schema.points).map(([name]) => name).reduce((previousValue, currentValue) => {
-      objectPath.set(previousValue, currentValue, '')
-      return previousValue
-    }, {})
-    newPoint.id = nanoid()
+    const newPoint = { id: nanoid() }
+    Object.entries(schema.points).forEach(([key, value]) => {
+      newPoint[key] = value.defaultValue
+    })
     const newAllPoints = [...allPoints]
     newAllPoints.unshift(newPoint)
     setAllPoints(newAllPoints)
@@ -71,6 +69,7 @@ const PointsComponent = ({
     const pointToUpdate = newAllPoints.find((point) => point.id === id)
     pointToUpdate[name] = value
     setAllPoints(newAllPoints)
+    onChange(prefix, newAllPoints)
   }
 
   /**
@@ -167,7 +166,7 @@ const PointsComponent = ({
           onPagePressed={(page) => setSelectedPage(page)}
         />
       )}
-      <div className="force-row-display">
+      <div className="force-row-display mt-3">
         <Button className="inline-button" color="primary" onClick={() => document.getElementById('importFile').click()}>
           Import
         </Button>
