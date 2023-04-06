@@ -9,6 +9,10 @@ import OPCUA_HA from '../south/south-opcua-ha/south-opcua-ha';
 import OPCUA_DA from '../south/south-opcua-da/south-opcua-da';
 import MQTT from '../south/south-mqtt/south-mqtt';
 import SQL from '../south/south-sql/south-sql';
+import ADS from '../south/south-ads/south-ads';
+import Modbus from '../south/south-modbus/south-modbus';
+import OIConnect from '../south/south-oiconnect/south-oiconnect';
+import OPCHDA from '../south/south-opchda/south-opchda';
 
 import { SouthConnectorDTO, OibusItemDTO } from '../../../shared/model/south-connector.model';
 import SouthConnector from '../south/south-connector';
@@ -18,7 +22,11 @@ const southList = {
   MQTT,
   OPCUA_HA,
   OPCUA_DA,
-  SQL
+  OPCHDA,
+  SQL,
+  ADS,
+  Modbus,
+  OIConnect
 };
 
 export default class SouthService {
