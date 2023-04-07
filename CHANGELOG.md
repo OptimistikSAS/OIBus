@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.5.3](https://github.com/OptimistikSAS/OIBus/compare/v2.5.2...v2.5.3) (2023-04-07)
+
+
+### Bug Fixes
+
+* **points:** fix points change update ([8d715cb](https://github.com/OptimistikSAS/OIBus/commit/8d715cb71380f506bf7e06ee6035a4edcb82df4a))
+
 ### [2.5.2](https://github.com/OptimistikSAS/OIBus/compare/v2.5.1...v2.5.2) (2023-04-06)
 
 
