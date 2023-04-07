@@ -306,6 +306,16 @@
       "title": "Archive",
       "enabled": "Enabled",
       "retention-duration": "Retention duration"
+    },
+    "subscriptions": {
+      "list": "Subscriptions",
+      "none": "No subscription set. The connector receives data from all south connectors.",
+      "add": "Subscribe to a connector",
+      "title-creation": "Subscribe to a South connector",
+      "created": "The connector is now subscribed to {{ name }}",
+      "confirm-deletion": "Are you sure you want to unsubscribe from South {{ name }}?",
+      "deleted": "The connector is not subscribed to {{ name }} anymore",
+      "name": "South connector"
     }
   },
   "logs": {

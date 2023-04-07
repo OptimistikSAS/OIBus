@@ -66,4 +66,10 @@
       </div>
     </div>
   </div>
+
+  <div *ngIf="northConnector && manifest" class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <oib-north-subscriptions [northConnector]="northConnector"></oib-north-subscriptions>
+    </div>
+  </div>
 </div>

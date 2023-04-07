@@ -1,0 +1,35 @@
+<h2 translate="north.subscriptions.list">
+  <button class="btn btn-primary pull-right" id="add-subscription" (click)="openCreationScanModeModal()">
+    <span class="fa fa-plus me-2"></span>
+    <span translate="north.subscriptions.add"></span>
+  </button>
+</h2>
+<!-- the subscription list -->
+<div *ngIf="northSubscriptions.length !== 0; else emptySubscriptions">
+  <table class="mt-2 table table-sm table-hover">
+    <thead class="table-light">
+      <tr>
+        <th translate="north.subscriptions.name"></th>
+        <th style="width: 3%"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let northSubscription of northSubscriptions">
+        <td>{{ getSouthName(northSubscription) }}</td>
+        <td class="text-nowrap action-buttons">
+          <div class="pull-right">
+            <!-- Delete button -->
+            <button
+              type="button"
+              class="btn btn-link delete-scan-mode fa fa-trash px-1 py-0"
+              (click)="deleteScanMode(northSubscription)"
+            ></button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<ng-template #emptySubscriptions>
+  <div class="oi-details empty" id="no-subscription" translate="north.subscriptions.none"></div>
+</ng-template>
