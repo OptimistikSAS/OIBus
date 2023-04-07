@@ -1,1 +1,91 @@
-<h1 translate="home.welcome"></h1>
+<div class="oi-padded-container">
+  <div class="row">
+    <h1 class="visually-hidden">OIBus</h1>
+
+    <!-- Logo OIBus -->
+    <div class="d-none d-sm-block col-sm-6 col-md-5 offset-md-1">
+      <img ngSrc="/assets/oibus_white.svg" alt="" class="logo" height="149" width="218" />
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12 col-sm-6 col-md-5 offset-md-1">
+      <!-- Engine -->
+      <a routerLink="/engine">
+        <div class="home-button">
+          <div class="row">
+            <div class="col-4">
+              <div class="text-center">
+                <img class="home-icon" ngSrc="/assets/home/engine.svg" alt="" height="159" width="188" />
+              </div>
+            </div>
+
+            <div class="col-8">
+              <h2 translate="home.engine"></h2>
+              <p translate="home.engine-detail"></p>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- North -->
+      <a routerLink="/north">
+        <div class="home-button">
+          <div class="row">
+            <div class="col-4">
+              <div class="text-center">
+                <img class="home-icon" ngSrc="/assets/home/north.svg" alt="" height="171" width="166" />
+              </div>
+            </div>
+
+            <div class="col-8">
+              <h2 translate="home.north"></h2>
+              <p translate="home.north-detail"></p>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    <div class="col-12 col-sm-6 col-md-5">
+      <!-- History queries -->
+      <a routerLink="/history-queries">
+        <div class="home-button">
+          <div class="row">
+            <div class="col-4">
+              <div class="text-center">
+                <img class="home-icon" ngSrc="/assets/home/history-queries.svg" alt="" height="187" width="187" />
+              </div>
+            </div>
+
+            <div class="col-8">
+              <h2 translate="home.history-queries"></h2>
+              <p translate="home.history-queries-detail"></p>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- South -->
+      <a routerLink="/south">
+        <div class="home-button">
+          <div class="row">
+            <div class="col-4">
+              <div class="text-center">
+                <img class="home-icon" ngSrc="/assets/home/south.svg" alt="" height="177" width="188" />
+              </div>
+            </div>
+
+            <div class="col-8">
+              <h2 translate="home.south"></h2>
+              <p translate="home.south-detail"></p>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="row">
+    <span class="text-center" translate="about.copyright" [translateParams]="{nowYear: copyrightYear}"></span>
+  </div>
+</div>

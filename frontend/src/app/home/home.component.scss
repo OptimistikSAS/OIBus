@@ -1,0 +1,35 @@
+@import '../../common';
+
+.logo {
+  height: 86px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.home-button {
+  background-color: $white;
+  color: $black;
+  padding: 10px;
+  border-radius: 8px;
+  margin-top: 10px;
+  border: 2px solid $border-color;
+  cursor: pointer;
+  transition: all 300ms ease-out;
+  &:hover {
+    background-color: $selectedColor;
+    transform: scale(1.05);
+  }
+}
+
+h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  display: inline-block;
+}
+
+.home-icon {
+  height: 50px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}

@@ -104,7 +104,14 @@
     "login-error": "Invalid username or password"
   },
   "home": {
-    "welcome": "Welcome to OiBus"
+    "engine": "Engine",
+    "engine-detail": "Manage log settings, server port, health signal... ",
+    "history-queries": "History Queries",
+    "history-queries-detail": "Retrieve data between a time interval in Historian supported protocols",
+    "north": "North",
+    "north-detail": "Create a connector to send data in a target application or database",
+    "south": "South",
+    "south-detail": "Create a connector to retrieve data from a source"
   },
   "about": {
     "official-site": "Official site",
@@ -115,7 +122,8 @@
     "data-folder": "Data folder",
     "operating-system": "Operating system",
     "architecture": "Architecture",
-    "process-id": "Process ID"
+    "process-id": "Process ID",
+    "copyright": "(c) Copyright 2019-{{nowYear}} Optimistik, all rights reserved."
   },
   "engine": {
     "title": "Engine",
