@@ -24,7 +24,6 @@ const PointsComponent = ({
   const [selectedPage, setSelectedPage] = React.useState(1)
   const [allPoints, setAllPoints] = React.useState(points)
   const [filteredPoints, setFilteredPoints] = React.useState(points)
-  const [tableRows, setTableRows] = React.useState([])
 
   // configure help if exists
   const pointsWithHelp = Object.entries(schema.points).filter(([name, value]) => name && value.help)
@@ -123,28 +122,12 @@ const PointsComponent = ({
   }
 
   useEffect(() => {
-    const pageOffset = selectedPage * MAX_ON_PAGE - MAX_ON_PAGE
     const newFilteredPoints = filterText !== '' ? allPoints.filter((point) => Object.values(point).findIndex((element) => element
       .toString()
       .toLowerCase()
       .includes(filterText.toLowerCase())) >= 0) : allPoints
 
-    const newTableRows = newFilteredPoints.filter((_, index) => index >= pageOffset && index < selectedPage * MAX_ON_PAGE)
-      .map((point) => Object.entries(schema.points).map(([key, value]) => {
-        const { type, ...rest } = value
-        const Control = Controls[type]
-        rest.value = point[key]
-        rest.label = null // remove field title in table rows
-        rest.help = null // remove help in table rows
-        return (
-          // id is used to remove the point from its id with handle delete
-          /* eslint-disable-next-line react/jsx-props-no-spreading */
-          { id: point.id, name: `${point.id}.${key}`, value: <Control onChange={handleChange} name={`${point.id}.${key}`} {...rest} /> }
-        )
-      }))
-
     setFilteredPoints(newFilteredPoints)
-    setTableRows(newTableRows)
   }, [filterText, selectedPage, allPoints])
 
   return (
@@ -157,7 +140,27 @@ const PointsComponent = ({
         help={<div>Type any points related data</div>}
         onChange={(_name, val) => updateFilterText(val)}
       />
-      <Table help={tableHelps || []} headers={tableHeaders} rows={tableRows} handleAdd={handleAddPoint} handleDelete={handleDeletePoint} />
+      <Table
+        help={tableHelps || []}
+        headers={tableHeaders}
+        rows={
+        filteredPoints.filter((_, index) => index >= (selectedPage * MAX_ON_PAGE - MAX_ON_PAGE) && index < selectedPage * MAX_ON_PAGE)
+          .map((point) => Object.entries(schema.points).map(([key, value]) => {
+            const { type, ...rest } = value
+            const Control = Controls[type]
+            rest.value = point[key]
+            rest.label = null // remove field title in table rows
+            rest.help = null // remove help in table rows
+            return (
+            // id is used to remove the point from its id with handle delete
+            /* eslint-disable-next-line react/jsx-props-no-spreading */
+              { id: point.id, name: `${point.id}.${key}`, value: <Control onChange={handleChange} name={`${point.id}.${key}`} {...rest} /> }
+            )
+          }))
+      }
+        handleAdd={handleAddPoint}
+        handleDelete={handleDeletePoint}
+      />
       {filteredPoints.length > 0 && (
         <TablePagination
           maxToDisplay={MAX_PAGINATION_DISPLAY}
