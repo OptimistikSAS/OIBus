@@ -9,6 +9,7 @@ import {
   NorthConnectorManifest,
   NorthType
 } from '../../../../shared/model/north-connector.model';
+import { SubscriptionDTO } from '../../../../shared/model/subscription.model';
 
 describe('NorthConnectorService', () => {
   let http: HttpTestingController;
@@ -137,6 +138,32 @@ describe('NorthConnectorService', () => {
     let done = false;
     service.deleteNorthConnector('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should get North connector subscriptions', () => {
+    let expectedNorthConnectorSubscriptions: Array<SubscriptionDTO> | null = null;
+    const northConnectorSubscriptions: Array<SubscriptionDTO> = [];
+
+    service.getNorthConnectorSubscriptions('id1').subscribe(c => (expectedNorthConnectorSubscriptions = c));
+
+    http.expectOne({ url: '/api/north/id1/subscriptions', method: 'GET' }).flush(northConnectorSubscriptions);
+    expect(expectedNorthConnectorSubscriptions!).toEqual(northConnectorSubscriptions);
+  });
+
+  it('should create a North connector subscription', () => {
+    let done = false;
+    service.createNorthConnectorSubscription('id1', 'southId').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/subscriptions/southId' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should delete a North connector subscription', () => {
+    let done = false;
+    service.deleteNorthConnectorSubscription('id1', 'southId').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/subscriptions/southId' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });

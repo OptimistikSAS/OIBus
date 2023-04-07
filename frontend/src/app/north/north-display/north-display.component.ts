@@ -10,11 +10,12 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { getRowSettings } from '../../shared/utils';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
+import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
 
 @Component({
   selector: 'oib-north-display',
   standalone: true,
-  imports: [NgIf, TranslateModule, RouterLink, NgSwitch, NgForOf, DecimalPipe],
+  imports: [NgIf, TranslateModule, RouterLink, NgSwitch, NgForOf, DecimalPipe, NorthSubscriptionsComponent],
   templateUrl: './north-display.component.html',
   styleUrls: ['./north-display.component.scss'],
   providers: [PageLoader]
