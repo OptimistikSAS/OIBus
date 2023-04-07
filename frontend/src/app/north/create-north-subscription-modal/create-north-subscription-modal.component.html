@@ -1,0 +1,21 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="north.subscriptions.title-creation"></h4>
+</div>
+<div class="modal-body">
+  <form [formGroup]="form" (ngSubmit)="save()" id="form">
+    <!-- Name -->
+    <div class="form-group">
+      <label class="form-label" for="south" translate="north.subscriptions.name"></label>
+      <select formControlName="southConnector" id="south" class="form-select mb-2 mr-sm-2">
+        <option *ngFor="let southConnector of southConnectors" [ngValue]="southConnector">{{ southConnector.name }}</option>
+      </select>
+      <val-errors controlName="southConnector"></val-errors>
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <oib-save-button [state]="state"></oib-save-button>
+    <button type="button" class="btn btn-cancel" ngbAutofocus (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>

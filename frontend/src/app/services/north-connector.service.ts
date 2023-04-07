@@ -7,6 +7,7 @@ import {
   NorthConnectorManifest,
   NorthType
 } from '../../../../shared/model/north-connector.model';
+import { SubscriptionDTO } from '../../../../shared/model/subscription.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on North connectors
@@ -67,7 +68,7 @@ export class NorthConnectorService {
    * @param northId - the ID of the North connector
    * @param command - the new values of the selected North connector
    */
-  updateNorthConnector(northId: string, command: NorthConnectorCommandDTO) {
+  updateNorthConnector(northId: string, command: NorthConnectorCommandDTO): Observable<void> {
     return this.http.put<void>(`/api/north/${northId}`, command);
   }
 
@@ -75,7 +76,28 @@ export class NorthConnectorService {
    * Delete the selected North connector
    * @param northId - the ID of the North connector to delete
    */
-  deleteNorthConnector(northId: string) {
+  deleteNorthConnector(northId: string): Observable<void> {
     return this.http.delete<void>(`/api/north/${northId}`);
+  }
+
+  /**
+   * Retrieve the North connector subscriptions
+   */
+  getNorthConnectorSubscriptions(northId: string): Observable<Array<SubscriptionDTO>> {
+    return this.http.get<Array<SubscriptionDTO>>(`/api/north/${northId}/subscriptions`);
+  }
+
+  /**
+   * Create a new North connector subscription
+   */
+  createNorthConnectorSubscription(northId: string, southId: SubscriptionDTO): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/subscriptions/${southId}`, null);
+  }
+
+  /**
+   * Delete the selected North connector subscription
+   */
+  deleteNorthConnectorSubscription(northId: string, southId: SubscriptionDTO): Observable<void> {
+    return this.http.delete<void>(`/api/north/${northId}/subscriptions/${southId}`);
   }
 }
