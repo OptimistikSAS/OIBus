@@ -24,7 +24,7 @@ import { OIBusInfo } from '../../../../shared/model/engine.model';
 })
 export class AboutComponent implements OnInit {
   oibusInfo: OIBusInfo | null = null;
-  readonly copyright = `(c) Copyright 2019-${new Date().getFullYear()} Optimistik, all rights reserved.`;
+  readonly copyrightYear = new Date().getFullYear();
   constructor(private engineService: EngineService) {}
 
   ngOnInit() {
