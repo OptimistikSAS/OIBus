@@ -8,13 +8,14 @@ import {
   externalSourceSchema,
   engineSchema,
   ipFilterSchema,
-  userSchema
+  userSchema,
+  logSchema
 } from '../../engine/oibus-validation-schema';
 
-import logController from '../controllers/log.controller';
 import engineController from '../controllers/engine.controller.js';
 import fileCacheController from '../controllers/file-cache.controller.js';
 
+import LogController from '../controllers/log.controller';
 import ScanModeController from '../controllers/scan-mode.controller';
 import ProxyController from '../controllers/proxy.controller';
 import ExternalSourceController from '../controllers/external-source.controller';
@@ -38,6 +39,7 @@ const northConnectorController = new NorthConnectorController(joiValidator);
 const southConnectorController = new SouthConnectorController(joiValidator);
 const historyQueryController = new HistoryQueryController(joiValidator, southManifests, northManifests);
 const userController = new UserController(joiValidator, userSchema);
+const logController = new LogController(joiValidator, logSchema);
 const subscriptionController = new SubscriptionController();
 
 const router = new Router();
