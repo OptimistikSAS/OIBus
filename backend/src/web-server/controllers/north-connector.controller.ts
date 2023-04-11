@@ -13,6 +13,7 @@ import timescaleManifest from '../../north/north-timescale-db/manifest';
 import watsyManifest from '../../north/north-watsy/manifest';
 import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthType } from '../../../../shared/model/north-connector.model';
 import JoiValidator from '../../validators/joi.validator';
+import { DateTime } from 'luxon';
 
 // TODO: retrieve north types from a local store
 export const northManifests = [
@@ -142,5 +143,72 @@ export default class NorthConnectorController {
     } else {
       ctx.notFound();
     }
+  }
+
+  async getFileErrors(ctx: KoaContext<void, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    const now = DateTime.now().toMillis();
+    const fromDate =
+      ctx.query.start ||
+      DateTime.fromMillis(now - 86400000)
+        .toUTC()
+        .toISO();
+    const toDate = ctx.query.end || DateTime.fromMillis(now).toUTC().toISO();
+    const fileNameContains = ctx.query.fileNameContains || '';
+
+    const errorFiles = await ctx.app.reloadService.getErrorFiles(northConnector.id, fromDate, toDate, fileNameContains);
+    ctx.ok(errorFiles);
+  }
+
+  async removeFileErrors(ctx: KoaContext<Array<string>, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    if (!Array.isArray(ctx.request.body)) {
+      return ctx.throw(400, 'Invalid file list');
+    }
+
+    await ctx.app.reloadService.removeErrorFiles(northConnector.id, ctx.request.body);
+    ctx.noContent();
+  }
+
+  async retryFileErrors(ctx: KoaContext<Array<string>, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    if (!Array.isArray(ctx.request.body)) {
+      return ctx.throw(400, 'Invalid file list');
+    }
+
+    await ctx.app.reloadService.retryErrorFiles(northConnector.id, ctx.request.body);
+    ctx.noContent();
+  }
+
+  async removeAllErrorFiles(ctx: KoaContext<void, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    await ctx.app.reloadService.removeAllErrorFiles(northConnector.id);
+    ctx.noContent();
+  }
+
+  async retryAllErrorFiles(ctx: KoaContext<void, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    await ctx.app.reloadService.retryAllErrorFiles(northConnector.id);
+    ctx.noContent();
   }
 }

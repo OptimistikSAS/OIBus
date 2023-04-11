@@ -8,7 +8,7 @@ import {
   SouthConnectorCommandDTO,
   SouthConnectorDTO
 } from '../../../shared/model/south-connector.model';
-import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
+import { NorthCacheFiles, NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import pino from 'pino';
 import HealthSignalService from './health-signal.service';
@@ -16,6 +16,7 @@ import NorthService from './north.service';
 import SouthService from './south.service';
 import OIBusEngine from '../engine/oibus-engine';
 import HistoryQueryEngine from '../engine/history-query-engine';
+import { Instant } from '../../../shared/model/types';
 
 export default class ReloadService {
   private webServerChangeLoggerCallback: (logger: pino.Logger) => void = () => {};
@@ -209,6 +210,26 @@ export default class ReloadService {
     const item = this.repositoryService.historyQueryItemRepository.getHistoryItem(itemId);
     this.repositoryService.historyQueryItemRepository.deleteHistoryItem(itemId);
     await this.historyEngine.deleteItemFromHistoryQuery(historyId, item);
+  }
+
+  async getErrorFiles(northId: string, start: Instant, end: Instant, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
+    return await this.oibusEngine.getErrorFiles(northId, start, end, fileNameContains);
+  }
+
+  async removeErrorFiles(northId: string, filenames: Array<string>): Promise<void> {
+    return await this.oibusEngine.removeErrorFiles(northId, filenames);
+  }
+
+  async retryErrorFiles(northId: string, filenames: Array<string>): Promise<void> {
+    return await this.oibusEngine.retryErrorFiles(northId, filenames);
+  }
+
+  async removeAllErrorFiles(northId: string): Promise<void> {
+    return await this.oibusEngine.removeAllErrorFiles(northId);
+  }
+
+  async retryAllErrorFiles(northId: string): Promise<void> {
+    return await this.oibusEngine.retryAllErrorFiles(northId);
   }
 
   // TODO: on scan mode delete, add, update

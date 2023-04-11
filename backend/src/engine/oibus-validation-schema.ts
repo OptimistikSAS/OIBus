@@ -79,4 +79,17 @@ const userSchema: Joi.ObjectSchema = Joi.object({
   timezone: Joi.string().required()
 });
 
-export { scanModeSchema, proxySchema, externalSourceSchema, engineSchema, ipFilterSchema, userSchema };
+const logSchema: Joi.ObjectSchema = Joi.object({
+  streams: Joi.array().items(
+    Joi.object({
+      values: Joi.array().items(Joi.array().items(Joi.string())),
+      stream: Joi.object({
+        level: Joi.string(),
+        oibus: Joi.string(),
+        scope: Joi.string()
+      })
+    })
+  )
+});
+
+export { scanModeSchema, proxySchema, externalSourceSchema, engineSchema, ipFilterSchema, userSchema, logSchema };

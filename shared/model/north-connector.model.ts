@@ -1,4 +1,5 @@
 import { OibFormControl } from './form.model';
+import { Instant } from './types';
 
 export interface NorthCacheSettingsLightDTO {
   scanModeId: string;
@@ -69,4 +70,10 @@ export interface NorthConnectorManifest {
     points: boolean;
   };
   settings: Array<OibFormControl>;
+}
+
+export interface NorthCacheFiles {
+  filename: string;
+  modificationDate: Instant;
+  size: number;
 }
