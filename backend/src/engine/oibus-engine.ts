@@ -11,6 +11,7 @@ import path from 'node:path';
 
 import { OibusItemCommandDTO, OibusItemDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
+import { Instant } from '../../../shared/model/types';
 
 const CACHE_FOLDER = './cache/data-stream';
 
@@ -177,5 +178,25 @@ export default class OIBusEngine extends BaseEngine {
         north.setLogger(this.logger.child({ scope: `north:${northSettings.name}` }));
       }
     }
+  }
+
+  async getErrorFiles(northId: string, start: Instant, end: Instant, fileNameContains: string) {
+    return (await this.northConnectors.get(northId)?.getErrorFiles(start, end, fileNameContains)) || [];
+  }
+
+  async removeErrorFiles(northId: string, filenames: Array<string>): Promise<void> {
+    await this.northConnectors.get(northId)?.removeErrorFiles(filenames);
+  }
+
+  async retryErrorFiles(northId: string, filenames: Array<string>): Promise<void> {
+    await this.northConnectors.get(northId)?.retryErrorFiles(filenames);
+  }
+
+  async removeAllErrorFiles(northId: string): Promise<void> {
+    await this.northConnectors.get(northId)?.removeAllErrorFiles();
+  }
+
+  async retryAllErrorFiles(northId: string): Promise<void> {
+    await this.northConnectors.get(northId)?.retryAllErrorFiles();
   }
 }
