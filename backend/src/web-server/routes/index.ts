@@ -13,7 +13,6 @@ import {
 } from '../../engine/oibus-validation-schema';
 
 import engineController from '../controllers/engine.controller.js';
-import fileCacheController from '../controllers/file-cache.controller.js';
 
 import LogController from '../controllers/log.controller';
 import ScanModeController from '../controllers/scan-mode.controller';
@@ -54,12 +53,6 @@ const upload = multer({ storage });
 router.post('/engine/addValues', engineController.addValues);
 router.post('/engine/addFile', upload.single('file'), engineController.addFile);
 router.post('/engine/aliveSignal', engineController.aliveSignal);
-
-router.get('/north/:id/cache/file-errors', fileCacheController.getFileErrors);
-router.delete('/north/:id/cache/file-errors', fileCacheController.removeFileErrors);
-router.post('/north/:id/cache/file-errors/retry', fileCacheController.retryFileErrors);
-router.delete('/north/:id/cache/file-errors/remove-all', fileCacheController.removeAllFileErrors);
-router.post('/north/:id/cache/file-errors/retry-all', fileCacheController.retryAllFileErrors);
 
 router.get('/api/users', (ctx: KoaContext<any, any>) => userController.searchUsers(ctx));
 router.get('/api/users/:id', (ctx: KoaContext<any, any>) => userController.getUser(ctx));
@@ -110,6 +103,15 @@ router.post('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<any, 
 );
 router.delete('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<any, any>) =>
   subscriptionController.deleteNorthSubscription(ctx)
+);
+router.get('/api/north/:northId/cache/file-errors', (ctx: KoaContext<any, any>) => northConnectorController.getFileErrors(ctx));
+router.delete('/api/north/:northId/cache/file-errors', (ctx: KoaContext<any, any>) => northConnectorController.removeFileErrors(ctx));
+router.post('/api/north/:northId/cache/file-errors/retry', (ctx: KoaContext<any, any>) => northConnectorController.retryFileErrors(ctx));
+router.delete('/api/north/:northId/cache/file-errors/remove-all', (ctx: KoaContext<any, any>) =>
+  northConnectorController.removeAllErrorFiles(ctx)
+);
+router.post('/api/north/:northId/cache/file-errors/retry-all', (ctx: KoaContext<any, any>) =>
+  northConnectorController.retryAllErrorFiles(ctx)
 );
 
 router.get('/api/south-types', (ctx: KoaContext<any, any>) => southConnectorController.getSouthConnectorTypes(ctx));

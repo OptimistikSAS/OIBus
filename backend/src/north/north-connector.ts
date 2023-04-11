@@ -1,6 +1,6 @@
 import ArchiveService from '../service/cache/archive.service';
 
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../shared/model/north-connector.model';
+import { NorthCacheFiles, NorthConnectorDTO, NorthConnectorManifest } from '../../../shared/model/north-connector.model';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import ProxyService from '../service/proxy.service';
@@ -11,8 +11,6 @@ import { CronJob } from 'cron';
 import { EventEmitter } from 'node:events';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import DeferredPromise from '../service/deferred-promise';
-
-import { Instant } from '../../../shared/model/types';
 import { OIBusError } from '../../../shared/model/engine.model';
 import { SubscriptionDTO } from '../../../shared/model/subscription.model';
 
@@ -332,11 +330,7 @@ export default class NorthConnector {
   /**
    * Get list of error files from file cache. Dates are in ISO format
    */
-  async getErrorFiles(
-    fromDate: string,
-    toDate: string,
-    fileNameContains: string
-  ): Promise<Array<{ filename: string; modificationDate: Instant; size: number }>> {
+  async getErrorFiles(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
     return await this.fileCacheService.getErrorFiles(fromDate, toDate, fileNameContains);
   }
 
