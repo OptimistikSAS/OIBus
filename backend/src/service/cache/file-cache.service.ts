@@ -14,16 +14,24 @@ const ERROR_FOLDER = 'files-errors';
  * Local cache implementation to group events and store them when the communication with the North is down.
  */
 export default class FileCacheService {
-  private readonly logger: pino.Logger;
+  private _logger: pino.Logger;
   private readonly _fileFolder: string;
   private readonly _errorFolder: string;
 
   private filesQueue: Array<string> = [];
 
   constructor(logger: pino.Logger, baseFolder: string) {
-    this.logger = logger;
+    this._logger = logger;
     this._fileFolder = path.resolve(baseFolder, FILE_FOLDER);
     this._errorFolder = path.resolve(baseFolder, ERROR_FOLDER);
+  }
+
+  get logger(): pino.Logger {
+    return this._logger;
+  }
+
+  setLogger(value: pino.Logger) {
+    this._logger = value;
   }
 
   get errorFolder(): string {
@@ -51,28 +59,28 @@ export default class FileCacheService {
       } catch (error) {
         // If a file is being written or corrupted, the stat method can fail
         // An error is logged and the cache goes through the other files
-        this.logger.error(`Error while reading queue file "${path.resolve(this._fileFolder, filename)}": ${error}`);
+        this._logger.error(`Error while reading queue file "${path.resolve(this._fileFolder, filename)}": ${error}`);
       }
     }
 
     // Sort the compact queue to have the oldest file first
     this.filesQueue = filesWithCreationDate.sort((a, b) => a.createdAt - b.createdAt).map(file => file.filename);
     if (this.filesQueue.length > 0) {
-      this.logger.debug(`${this.filesQueue.length} files in cache`);
+      this._logger.debug(`${this.filesQueue.length} files in cache`);
     } else {
-      this.logger.debug('No files in cache');
+      this._logger.debug('No files in cache');
     }
 
     try {
       const errorFiles = await fs.readdir(this._errorFolder);
       if (errorFiles.length > 0) {
-        this.logger.warn(`${errorFiles.length} files in error cache`);
+        this._logger.warn(`${errorFiles.length} files in error cache`);
       } else {
-        this.logger.debug('No error files in cache');
+        this._logger.debug('No error files in cache');
       }
     } catch (error) {
       // If the folder does not exist, an error is logged but not thrown if the file cache folder is accessible
-      this.logger.error(error);
+      this._logger.error(error);
     }
   }
 
@@ -97,7 +105,7 @@ export default class FileCacheService {
    * Cache a new file from a South connector
    */
   async cacheFile(filePath: string): Promise<void> {
-    this.logger.trace(`Caching file "${filePath}"...`);
+    this._logger.trace(`Caching file "${filePath}"...`);
     const timestamp = new Date().getTime();
     // When compressed file is received the name looks like filename.txt.gz
     const filenameInfo = path.parse(filePath);
@@ -108,7 +116,7 @@ export default class FileCacheService {
     await fs.copyFile(filePath, cachePath);
     // Add the file to the queue once it is persisted in the cache folder
     this.filesQueue.push(cachePath);
-    this.logger.debug(`File "${filePath}" cached in "${cachePath}"`);
+    this._logger.debug(`File "${filePath}" cached in "${cachePath}"`);
   }
 
   /**
@@ -119,9 +127,9 @@ export default class FileCacheService {
     const errorPath = path.join(this._errorFolder, filenameInfo.base);
     try {
       await fs.rename(filePathInCache, errorPath);
-      this.logger.warn(`File "${filePathInCache}" moved to "${errorPath}" after ${errorCount} errors`);
+      this._logger.warn(`File "${filePathInCache}" moved to "${errorPath}" after ${errorCount} errors`);
     } catch (renameError) {
-      this.logger.error(`Error while moving file "${filePathInCache}" to "${errorPath}": ${renameError}`);
+      this._logger.error(`Error while moving file "${filePathInCache}" to "${errorPath}": ${renameError}`);
     }
   }
 
@@ -134,7 +142,7 @@ export default class FileCacheService {
       files = await fs.readdir(this._fileFolder);
     } catch (error) {
       // Log an error if the folder does not exist (removed by the user while OIBus is running for example)
-      this.logger.error(error);
+      this._logger.error(error);
     }
     return files.length === 0;
   }
@@ -169,7 +177,7 @@ export default class FileCacheService {
           });
         }
       } catch (error) {
-        this.logger.error(`Error while reading in error folder file stats "${path.join(this._errorFolder, filename)}": ${error}`);
+        this._logger.error(`Error while reading in error folder file stats "${path.join(this._errorFolder, filename)}": ${error}`);
       }
     }
     return filteredFilenames;
@@ -182,7 +190,7 @@ export default class FileCacheService {
     await Promise.allSettled(
       filenames.map(async filename => {
         const filePath = path.join(folder, filename);
-        this.logger.debug(`Removing file "${filePath}`);
+        this._logger.debug(`Removing file "${filePath}`);
         await fs.unlink(filePath);
       })
     );
@@ -196,7 +204,7 @@ export default class FileCacheService {
       filenames.map(async filename => {
         const errorFilePath = path.join(this._errorFolder, filename);
         const cacheFilePath = path.join(this._fileFolder, filename);
-        this.logger.debug(`Moving error file "${errorFilePath}" back to cache "${cacheFilePath}"`);
+        this._logger.debug(`Moving error file "${errorFilePath}" back to cache "${cacheFilePath}"`);
         await fs.rename(errorFilePath, cacheFilePath);
       })
     );
@@ -208,10 +216,10 @@ export default class FileCacheService {
   async removeAllCacheFiles(): Promise<void> {
     const filenames = await fs.readdir(this._fileFolder);
     if (filenames.length > 0) {
-      this.logger.debug(`Removing ${filenames.length} files from "${this._fileFolder}"`);
+      this._logger.debug(`Removing ${filenames.length} files from "${this._fileFolder}"`);
       await this.removeFiles(this._fileFolder, filenames);
     } else {
-      this.logger.debug(`The cache folder "${this._fileFolder}" is empty. Nothing to delete`);
+      this._logger.debug(`The cache folder "${this._fileFolder}" is empty. Nothing to delete`);
     }
   }
 
@@ -221,10 +229,10 @@ export default class FileCacheService {
   async removeAllErrorFiles(): Promise<void> {
     const filenames = await fs.readdir(this._errorFolder);
     if (filenames.length > 0) {
-      this.logger.debug(`Removing ${filenames.length} files from "${this._errorFolder}"`);
+      this._logger.debug(`Removing ${filenames.length} files from "${this._errorFolder}"`);
       await this.removeFiles(this._errorFolder, filenames);
     } else {
-      this.logger.debug(`The error folder "${this._errorFolder}" is empty. Nothing to delete`);
+      this._logger.debug(`The error folder "${this._errorFolder}" is empty. Nothing to delete`);
     }
   }
 
@@ -236,7 +244,7 @@ export default class FileCacheService {
     if (filenames.length > 0) {
       await this.retryErrorFiles(filenames);
     } else {
-      this.logger.debug(`The error folder "${this._errorFolder}" is empty. Nothing to delete`);
+      this._logger.debug(`The error folder "${this._errorFolder}" is empty. Nothing to delete`);
     }
   }
 }
