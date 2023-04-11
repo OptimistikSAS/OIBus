@@ -1,5 +1,14 @@
-import logController from './log.controller';
+import Joi from 'joi';
+
+import LogController from './log.controller';
+import JoiValidator from '../../validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
+
+jest.mock('../../validators/joi.validator');
+
+const validator = new JoiValidator();
+const schema = Joi.object({});
+const logController = new LogController(validator, schema);
 
 const ctx = new KoaContextMock();
 const logStreamValuesCommand = {
