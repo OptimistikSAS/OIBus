@@ -374,6 +374,9 @@ export default class NorthConnector {
 
   setLogger(value: pino.Logger) {
     this.logger = value;
+    this.fileCacheService.setLogger(value);
+    this.valueCacheService.setLogger(value);
+    this.archiveService.setLogger(value);
   }
 
   async resetCache(): Promise<void> {

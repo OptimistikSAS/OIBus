@@ -37,7 +37,8 @@ jest.mock(
         getValuesToSend: getValuesToSendMock,
         removeSentValues: jest.fn(),
         manageErroredValues: jest.fn(),
-        isEmpty: valueCacheIsEmpty
+        isEmpty: valueCacheIsEmpty,
+        setLogger: jest.fn()
       };
     }
 );
@@ -63,7 +64,8 @@ jest.mock(
         getFileToSend: getFileToSend,
         removeFileFromQueue: jest.fn(),
         manageErroredFiles: jest.fn(),
-        isEmpty: fileCacheIsEmpty
+        isEmpty: fileCacheIsEmpty,
+        setLogger: jest.fn()
       };
     }
 );
