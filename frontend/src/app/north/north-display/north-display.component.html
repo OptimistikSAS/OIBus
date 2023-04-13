@@ -12,7 +12,7 @@
       <div id="description">{{ northConnector.description }}</div>
     </div>
   </div>
-  <div *ngIf="northConnector && manifest" class="row justify-content-center">
+  <div *ngIf="northConnector && manifest" class="row justify-content-center mb-3">
     <div class="col-md-10 col-lg-8">
       <h2><span translate="north.specific-settings" [translateParams]="{type: northConnector.type}"></span></h2>
       <div class="row" *ngFor="let row of northSettingsSchema">
@@ -57,11 +57,15 @@
           <span>{{ northConnector.caching.maxSendCount | number }}</span>
         </div>
       </div>
-      <div class="row">
+      <div class="row my-2">
         <div class="col-4">
           <span class="fw-bold" translate="north.cache-settings.max-size"></span>
           <span class="fw-bold">{{ 'common.colon-separator' | translate }}</span>
-          <span>{{ northConnector.caching.maxSize | number }}</span>
+          <span class="me-3">{{ northConnector.caching.maxSize | number }}</span>
+          <a class="btn btn-primary d-inline" id="explore-cache" [routerLink]="['/north', northConnector.id, 'cache']">
+            <i class="fa fa-pencil"></i>
+            {{ 'north.cache-settings.explore-cache' | translate }}
+          </a>
         </div>
       </div>
     </div>
