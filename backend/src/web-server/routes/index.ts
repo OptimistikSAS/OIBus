@@ -105,12 +105,12 @@ router.delete('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<any
   subscriptionController.deleteNorthSubscription(ctx)
 );
 router.get('/api/north/:northId/cache/file-errors', (ctx: KoaContext<any, any>) => northConnectorController.getFileErrors(ctx));
-router.delete('/api/north/:northId/cache/file-errors', (ctx: KoaContext<any, any>) => northConnectorController.removeFileErrors(ctx));
+router.post('/api/north/:northId/cache/file-errors/remove', (ctx: KoaContext<any, any>) => northConnectorController.removeFileErrors(ctx));
 router.post('/api/north/:northId/cache/file-errors/retry', (ctx: KoaContext<any, any>) => northConnectorController.retryFileErrors(ctx));
 router.delete('/api/north/:northId/cache/file-errors/remove-all', (ctx: KoaContext<any, any>) =>
   northConnectorController.removeAllErrorFiles(ctx)
 );
-router.post('/api/north/:northId/cache/file-errors/retry-all', (ctx: KoaContext<any, any>) =>
+router.delete('/api/north/:northId/cache/file-errors/retry-all', (ctx: KoaContext<any, any>) =>
   northConnectorController.retryAllErrorFiles(ctx)
 );
 

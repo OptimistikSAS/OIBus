@@ -4,6 +4,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 
 import { NorthConnectorService } from './north-connector.service';
 import {
+  NorthCacheFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorManifest,
@@ -164,6 +165,48 @@ describe('NorthConnectorService', () => {
     let done = false;
     service.deleteNorthConnectorSubscription('id1', 'southId').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/subscriptions/southId' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should get error cache files', () => {
+    let expectedNorthCacheFiles: Array<NorthCacheFiles> | null = null;
+    const northCacheFiles: Array<NorthCacheFiles> = [];
+
+    service.getNorthConnectorCacheErrorFiles('id1').subscribe(c => (expectedNorthCacheFiles = c));
+
+    http.expectOne({ url: '/api/north/id1/cache/file-errors', method: 'GET' }).flush(northCacheFiles);
+    expect(expectedNorthCacheFiles!).toEqual(northCacheFiles);
+  });
+
+  it('should remove listed error cache files', () => {
+    let done = false;
+    service.removeNorthConnectorCacheErrorFiles('id1', ['file1', 'file2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/file-errors/remove' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should retry listed error cache files', () => {
+    let done = false;
+    service.retryNorthConnectorCacheErrorFiles('id1', ['file1', 'file2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/file-errors/retry' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should remove all error cache files', () => {
+    let done = false;
+    service.removeAllNorthConnectorCacheErrorFiles('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/cache/file-errors/remove-all' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should retry all error cache files', () => {
+    let done = false;
+    service.retryAllNorthConnectorCacheErrorFiles('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/cache/file-errors/retry-all' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
