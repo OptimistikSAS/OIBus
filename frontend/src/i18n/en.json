@@ -300,7 +300,15 @@
       "retry-count": "Retry count",
       "group-count": "Group count",
       "max-send-count": "Max send count",
-      "max-size": "Max size (MB)"
+      "max-size": "Max size (MB)",
+      "explore-cache": "Explore cache",
+      "error-files": "Error files",
+      "remove-selected-files": "Remove selected files",
+      "retry-selected-files": "Retry selected files",
+      "error-files-none":  "No error file",
+      "file-date": "Modification date",
+      "file-size": "Size",
+      "filename": "Filename"
     },
     "archive-settings": {
       "title": "Archive",

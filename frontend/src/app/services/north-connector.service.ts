@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
 import {
+  NorthCacheFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorManifest,
@@ -99,5 +100,25 @@ export class NorthConnectorService {
    */
   deleteNorthConnectorSubscription(northId: string, southId: SubscriptionDTO): Observable<void> {
     return this.http.delete<void>(`/api/north/${northId}/subscriptions/${southId}`);
+  }
+
+  getNorthConnectorCacheErrorFiles(northId: string): Observable<Array<NorthCacheFiles>> {
+    return this.http.get<Array<NorthCacheFiles>>(`/api/north/${northId}/cache/file-errors`);
+  }
+
+  retryNorthConnectorCacheErrorFiles(northId: string, filenames: Array<string>): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/cache/file-errors/retry`, filenames);
+  }
+
+  retryAllNorthConnectorCacheErrorFiles(northId: string): Observable<void> {
+    return this.http.delete<void>(`/api/north/${northId}/cache/file-errors/retry-all`);
+  }
+
+  removeNorthConnectorCacheErrorFiles(northId: string, filenames: Array<string>): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/cache/file-errors/remove`, filenames);
+  }
+
+  removeAllNorthConnectorCacheErrorFiles(northId: string): Observable<void> {
+    return this.http.delete<void>(`/api/north/${northId}/cache/file-errors/remove-all`);
   }
 }
