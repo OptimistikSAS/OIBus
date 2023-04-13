@@ -146,26 +146,18 @@ export default class NorthConnectorController {
   }
 
   async getFileErrors(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
     if (!northConnector) {
       return ctx.notFound();
     }
 
-    const now = DateTime.now().toMillis();
-    const fromDate =
-      ctx.query.start ||
-      DateTime.fromMillis(now - 86400000)
-        .toUTC()
-        .toISO();
-    const toDate = ctx.query.end || DateTime.fromMillis(now).toUTC().toISO();
     const fileNameContains = ctx.query.fileNameContains || '';
-
-    const errorFiles = await ctx.app.reloadService.getErrorFiles(northConnector.id, fromDate, toDate, fileNameContains);
+    const errorFiles = await ctx.app.reloadService.getErrorFiles(northConnector.id, '', '', fileNameContains);
     ctx.ok(errorFiles);
   }
 
   async removeFileErrors(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
     if (!northConnector) {
       return ctx.notFound();
     }
@@ -179,7 +171,7 @@ export default class NorthConnectorController {
   }
 
   async retryFileErrors(ctx: KoaContext<Array<string>, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
     if (!northConnector) {
       return ctx.notFound();
     }
@@ -193,7 +185,7 @@ export default class NorthConnectorController {
   }
 
   async removeAllErrorFiles(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
     if (!northConnector) {
       return ctx.notFound();
     }
@@ -203,7 +195,7 @@ export default class NorthConnectorController {
   }
 
   async retryAllErrorFiles(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
     if (!northConnector) {
       return ctx.notFound();
     }

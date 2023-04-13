@@ -6,6 +6,7 @@ import pino from 'pino';
 
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
+import { NorthCacheFiles } from '../../../../shared/model/north-connector.model';
 
 const FILE_FOLDER = 'files';
 const ERROR_FOLDER = 'files-errors';
@@ -150,25 +151,21 @@ export default class FileCacheService {
   /**
    * Get list of error files.
    */
-  async getErrorFiles(
-    fromDate: Instant,
-    toDate: Instant,
-    nameFilter: string
-  ): Promise<Array<{ filename: string; modificationDate: Instant; size: number }>> {
+  async getErrorFiles(fromDate: Instant, toDate: Instant, nameFilter: string): Promise<Array<NorthCacheFiles>> {
     const filenames = await fs.readdir(this._errorFolder);
     if (filenames.length === 0) {
       return [];
     }
 
-    const filteredFilenames: Array<{ filename: string; modificationDate: Instant; size: number }> = [];
+    const filteredFilenames: Array<NorthCacheFiles> = [];
     for (const filename of filenames) {
       try {
         const stats = await fs.stat(path.join(this._errorFolder, filename));
 
-        const fromDateInMillis = DateTime.fromISO(fromDate).toMillis();
-        const toDateInMillis = DateTime.fromISO(toDate).toMillis();
-        const dateIsBetween = stats.mtimeMs >= fromDateInMillis && stats.mtimeMs <= toDateInMillis;
-        const filenameContains = filename.toUpperCase().includes(nameFilter.toUpperCase());
+        const dateIsSuperiorToStart = fromDate ? stats.mtimeMs >= DateTime.fromISO(fromDate).toMillis() : true;
+        const dateIsInferiorToEnd = toDate ? stats.mtimeMs <= DateTime.fromISO(toDate).toMillis() : true;
+        const dateIsBetween = dateIsSuperiorToStart && dateIsInferiorToEnd;
+        const filenameContains = nameFilter ? filename.toUpperCase().includes(nameFilter.toUpperCase()) : true;
         if (dateIsBetween && filenameContains) {
           filteredFilenames.push({
             filename,

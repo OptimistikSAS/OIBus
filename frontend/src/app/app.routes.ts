@@ -15,6 +15,7 @@ import { HistoryQueryListComponent } from './history-query/history-query-list.co
 import { HistoryQueryDisplayComponent } from './history-query/history-query-display/history-query-display.component';
 import { LoginComponent } from './auth/login/login.component';
 import { AuthenticationGuard } from './auth/authentication.guard';
+import { ExploreCacheComponent } from './north/explore-cache/explore-cache.component';
 
 export const ROUTES: Routes = [
   { path: 'login', component: LoginComponent },
@@ -45,6 +46,10 @@ export const ROUTES: Routes = [
       {
         path: 'north/:northId/edit',
         component: EditNorthComponent
+      },
+      {
+        path: 'north/:northId/cache',
+        component: ExploreCacheComponent
       },
       {
         path: 'north/:northId',

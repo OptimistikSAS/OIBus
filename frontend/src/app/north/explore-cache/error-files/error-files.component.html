@@ -1,0 +1,60 @@
+<h4 translate="north.cache-settings.error-files"></h4>
+<div *ngIf="errorFiles.length !== 0; else emptyErrorFiles">
+  <div class="my-2 pull-right">
+    <button
+      type="button"
+      class="btn btn-primary me-1"
+      ngbAutofocus
+      (click)="retryErrorFiles()"
+      translate="north.cache-settings.retry-selected-files"
+      id="retry-selected-files"
+    ></button>
+    <button
+      type="button"
+      class="btn btn-primary"
+      ngbAutofocus
+      (click)="removeErrorFiles()"
+      translate="north.cache-settings.remove-selected-files"
+      id="remove-selected-files"
+    ></button>
+  </div>
+  <table class="table table-sm table-hover">
+    <thead class="table-light">
+      <tr>
+        <th>
+          <input
+            [checked]="mainErrorFilesCheckboxState === 'CHECKED'"
+            [indeterminate]="mainErrorFilesCheckboxState === 'INDETERMINATE'"
+            (click)="onFileErrorMainCheckBoxClick(checkbox.checked)"
+            type="checkbox"
+            #checkbox
+            id="toggle-all-parameters"
+          />
+        </th>
+        <th translate="north.cache-settings.file-date"></th>
+        <th translate="north.cache-settings.filename"></th>
+        <th translate="north.cache-settings.file-size"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="data" *ngFor="let file of errorFiles">
+        <td>
+          <input
+            type="checkbox"
+            (click)="onFileErrorCheckboxClick(checkbox.checked, file)"
+            #checkbox
+            [checked]="checkboxByErrorFiles.get(file.filename)"
+            class="toggle-parameter"
+            [id]="'error-file-' + file.filename"
+          />
+        </td>
+        <td>{{ file.modificationDate | datetime:'mediumWithSeconds'}}</td>
+        <td>{{ file.filename }}</td>
+        <td>{{ file.size | fileSize }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<ng-template #emptyErrorFiles>
+  <div class="oi-details empty" translate="north.cache-settings.error-files-none"></div>
+</ng-template>
