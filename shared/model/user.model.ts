@@ -30,3 +30,8 @@ export interface User {
   timezone: Timezone;
   friendlyName: string;
 }
+
+export interface ChangePasswordCommand {
+  currentPassword: string;
+  newPassword: string;
+}
