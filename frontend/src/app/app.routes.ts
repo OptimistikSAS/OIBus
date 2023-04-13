@@ -16,6 +16,7 @@ import { HistoryQueryDisplayComponent } from './history-query/history-query-disp
 import { LoginComponent } from './auth/login/login.component';
 import { AuthenticationGuard } from './auth/authentication.guard';
 import { ExploreCacheComponent } from './north/explore-cache/explore-cache.component';
+import { EditUserSettingsComponent } from './user-settings/edit-user-settings/edit-user-settings.component';
 
 export const ROUTES: Routes = [
   { path: 'login', component: LoginComponent },
@@ -94,6 +95,10 @@ export const ROUTES: Routes = [
       {
         path: 'about',
         component: AboutComponent
+      },
+      {
+        path: 'user-settings',
+        component: EditUserSettingsComponent
       }
     ]
   }
