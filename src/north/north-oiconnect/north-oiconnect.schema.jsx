@@ -53,6 +53,14 @@ schema.form = {
     ),
   },
   proxy: { type: 'OibProxy', label: 'Proxy' },
+  acceptUnauthorized: {
+    type: 'OibCheckbox',
+    label: 'Accept unauthorized certificates',
+    md: 2,
+    newRow: true,
+    defaultValue: false,
+    help: <p>Accepting unauthorized certificates can create a vulnerability. Use with caution.</p>,
+  },
 }
 
 export default schema

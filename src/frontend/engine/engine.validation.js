@@ -1,4 +1,12 @@
-import { isIp, notEmpty, inRange, minLength, isHost, hasLengthBetween } from '../../service/validation.service.js'
+import {
+  isIp,
+  notEmpty,
+  inRange,
+  minLength,
+  isHost,
+  hasLengthBetween,
+  optional,
+} from '../../service/validation.service.js'
 import utils from '../helpers/utils.js'
 
 const validation = {
@@ -27,7 +35,7 @@ const validation = {
       name: minLength(2),
       host: isHost(),
       port: inRange(1, 65535),
-      username: notEmpty(),
+      username: optional(),
       password: hasLengthBetween(0, 256),
     },
     healthSignal: {

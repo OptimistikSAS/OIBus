@@ -18,9 +18,10 @@ export default class ProxyService {
   /**
    * Get proxy by name
    * @param {String} proxyName - The name of the proxy
+   * @param {Boolean} acceptUnauthorized - Reject unauthorized certificate
    * @return {Promise<Object>} - The proxy
    */
-  async getProxy(proxyName) {
+  async getProxy(proxyName, acceptUnauthorized = false) {
     const foundProxy = this.proxies.find(({ name }) => name === proxyName)
     if (foundProxy) {
       return createProxyAgent(
@@ -29,6 +30,7 @@ export default class ProxyService {
         foundProxy.port,
         foundProxy.username,
         await this.encryptionService.decryptText(foundProxy.password || ''),
+        acceptUnauthorized,
       )
     }
     return null

@@ -5,6 +5,7 @@ import path from 'node:path'
 import FormData from 'form-data'
 import ProxyAgent from 'proxy-agent'
 import fetch from 'node-fetch'
+import https from 'node:https'
 
 /**
  * Create a proxy agent to use wih HTTP requests
@@ -13,14 +14,16 @@ import fetch from 'node-fetch'
  * @param {Number} port - The port
  * @param {String} username - The username
  * @param {String} password - The decrypted password
+ * @param {Boolean} acceptUnauthorized - Reject unauthorized certificate
  * @returns {ProxyAgent.ProxyAgent} - The ProxyAgent to use
  */
-const createProxyAgent = (protocol, host, port, username, password) => {
+const createProxyAgent = (protocol, host, port, username, password, acceptUnauthorized = false) => {
   const proxyOptions = url.parse(`${protocol}://${host}:${port}`)
 
   if (username && password) {
     proxyOptions.auth = `${username}:${password}`
   }
+  proxyOptions.rejectUnauthorized = !acceptUnauthorized
 
   return new ProxyAgent(proxyOptions)
 }
@@ -62,6 +65,7 @@ const addAuthenticationToHeaders = (headers, type, key, secret) => {
  * @param {String} data - The body or file to send
  * @param {Number} timeout - The timeout in seconds
  * @param {Object} proxyAgent - Proxy to use
+ * @param {Boolean} acceptUnauthorized - Reject unauthorized certificate
  * @return {Promise<void>} - The result promise
  */
 const httpSend = async (
@@ -71,6 +75,7 @@ const httpSend = async (
   data,
   timeout,
   proxyAgent,
+  acceptUnauthorized = false,
 ) => {
   let body
   let readStream
@@ -101,6 +106,8 @@ const httpSend = async (
   }
   if (proxyAgent) {
     fetchOptions.agent = proxyAgent
+  } else if (acceptUnauthorized && requestUrl.startsWith('https')) {
+    fetchOptions.agent = new https.Agent({ rejectUnauthorized: false })
   }
 
   let response

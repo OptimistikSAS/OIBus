@@ -3,7 +3,7 @@ import path from 'node:path'
 
 import migrationRules from './migration-rules.js'
 
-const REQUIRED_SCHEMA_VERSION = 32
+const REQUIRED_SCHEMA_VERSION = 33
 const DEFAULT_VERSION = 1
 
 /**

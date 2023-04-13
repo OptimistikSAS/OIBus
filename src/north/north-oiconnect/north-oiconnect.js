@@ -37,12 +37,14 @@ export default class NorthOIConnect extends NorthConnector {
       valuesEndpoint,
       fileEndpoint,
       authentication,
+      acceptUnauthorized,
       proxy,
     } = configuration.settings
     this.host = host
     this.valuesEndpoint = valuesEndpoint
     this.fileEndpoint = fileEndpoint
     this.authentication = authentication
+    this.acceptUnauthorized = acceptUnauthorized
     this.proxyName = proxy
 
     // Initialized at connection or init
@@ -61,7 +63,7 @@ export default class NorthOIConnect extends NorthConnector {
     const name = `${oibusName}:${this.name}`
     this.valuesUrl = `${this.host}${this.valuesEndpoint}?name=${name}`
     this.fileUrl = `${this.host}${this.fileEndpoint}?name=${name}`
-    this.proxyAgent = await this.proxyService.getProxy(this.proxyName)
+    this.proxyAgent = await this.proxyService.getProxy(this.proxyName, this.acceptUnauthorized)
   }
 
   /**
@@ -88,6 +90,7 @@ export default class NorthOIConnect extends NorthConnector {
       data,
       this.cacheSettings.timeout,
       this.proxyAgent,
+      this.acceptUnauthorized,
     )
   }
 
@@ -113,6 +116,7 @@ export default class NorthOIConnect extends NorthConnector {
       filePath,
       this.cacheSettings.timeout,
       this.proxyAgent,
+      this.acceptUnauthorized,
     )
   }
 
