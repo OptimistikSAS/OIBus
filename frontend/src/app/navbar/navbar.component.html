@@ -29,6 +29,7 @@
             ><span class="fa fa-user"></span
           ></a>
           <div ngbDropdownMenu aria-labelledby="accountDropDown">
+            <a class="dropdown-item" routerLink="/user-settings" translate="nav.account.settings"></a>
             <a class="dropdown-item" role="button" (click)="logout(); $event.preventDefault()" translate="nav.account.logout"></a>
           </div>
         </li>
@@ -71,6 +72,7 @@
             ><span class="fa fa-user fa-fw"></span
           ></a>
           <div ngbDropdownMenu aria-labelledby="accountMobileDropDown" class="dropdown-menu-right">
+            <a class="dropdown-item" routerLink="/user-settings" translate="nav.account.settings"></a>
             <a class="dropdown-item" role="button" (click)="logout(); $event.preventDefault()" translate="nav.account.logout"></a>
           </div>
         </li>

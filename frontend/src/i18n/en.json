@@ -103,6 +103,25 @@
     "login-button": "Sumit",
     "login-error": "Invalid username or password"
   },
+  "user-settings": {
+    "edit-user-settings": {
+      "login": "Login: {{ login }}",
+      "first-name": "First name",
+      "last-name": "Last name",
+      "timezone": "Timezone",
+      "change-password": "Change password",
+      "saved": "The user settings have been saved"
+    },
+    "change-password": {
+      "title": "Change password",
+      "current-password": "Current password",
+      "new-password": "New password",
+      "new-password-confirmation": "New password confirmation",
+      "passwords-not-identical": "The new password and its confirmation must be identical",
+      "password-changed": "The password has been changed successfully",
+      "error": "The password has not been changed. Make sure you enter the correct current password."
+    }
+  },
   "home": {
     "engine": "Engine",
     "engine-detail": "Manage log settings, server port, health signal... ",
