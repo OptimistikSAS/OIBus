@@ -66,6 +66,7 @@ describe('NorthOIAnalytics', () => {
           password: 'anypass',
         },
         proxy: '',
+        acceptUnauthorized: false,
       },
       subscribedTo: [],
     }
@@ -76,7 +77,7 @@ describe('NorthOIAnalytics', () => {
   it('should be properly initialized', () => {
     expect(north.manifest.modes.points).toBeTruthy()
     expect(north.manifest.modes.files).toBeTruthy()
-    expect(north.proxyService.getProxy).toHaveBeenCalledWith('')
+    expect(north.proxyService.getProxy).toHaveBeenCalledWith('', false)
   })
 
   it('should properly handle values', async () => {
@@ -103,6 +104,7 @@ describe('NorthOIAnalytics', () => {
       expectedBody,
       configuration.caching.timeout,
       null,
+      false,
     )
   })
 
@@ -120,6 +122,7 @@ describe('NorthOIAnalytics', () => {
       filePath,
       configuration.caching.timeout,
       null,
+      false,
     )
   })
 

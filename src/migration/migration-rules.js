@@ -1799,4 +1799,12 @@ export default {
       north.caching.maxSize = 0
     }
   },
+  33: async (config, logger) => {
+    for (const north of config.north) {
+      if (north.type === 'OIAnalytics' || north.type === 'OIConnect') {
+        logger.info(`Add acceptUnauthorized field for North connector ${north.name} (${north.id}).`)
+        north.settings.acceptUnauthorized = false
+      }
+    }
+  },
 }

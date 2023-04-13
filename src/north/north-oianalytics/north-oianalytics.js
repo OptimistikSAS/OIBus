@@ -33,12 +33,14 @@ export default class NorthOIAnalytics extends NorthConnector {
     const {
       host,
       authentication,
+      acceptUnauthorized,
       proxy,
     } = configuration.settings
     const queryParam = `?dataSourceId=${this.name}`
     this.valuesUrl = `${host}/api/oianalytics/oibus/time-values${queryParam}`
     this.fileUrl = `${host}/api/oianalytics/value-upload/file${queryParam}`
     this.authentication = authentication
+    this.acceptUnauthorized = acceptUnauthorized
     this.proxyName = proxy
   }
 
@@ -50,7 +52,7 @@ export default class NorthOIAnalytics extends NorthConnector {
    */
   async start(baseFolder, _oibusName) {
     await super.start(baseFolder, _oibusName)
-    this.proxyAgent = await this.proxyService.getProxy(this.proxyName)
+    this.proxyAgent = await this.proxyService.getProxy(this.proxyName, this.acceptUnauthorized)
   }
 
   /**
@@ -86,6 +88,7 @@ export default class NorthOIAnalytics extends NorthConnector {
       data,
       this.cacheSettings.timeout,
       this.proxyAgent,
+      this.acceptUnauthorized,
     )
   }
 
@@ -111,6 +114,7 @@ export default class NorthOIAnalytics extends NorthConnector {
       filePath,
       this.cacheSettings.timeout,
       this.proxyAgent,
+      this.acceptUnauthorized,
     )
   }
 
