@@ -23,7 +23,7 @@ describe('UserSettingsService', () => {
     let actualSettings: User | null = null;
     service.get().subscribe(settings => (actualSettings = settings));
 
-    const expectedSettings = { login: 'admin' } as User;
+    const expectedSettings = { id: 'id1', login: 'admin' } as User;
     http.expectOne({ method: 'GET', url: '/api/users/current-user' }).flush(expectedSettings);
 
     expect(actualSettings!).toEqual(expectedSettings);
@@ -32,9 +32,9 @@ describe('UserSettingsService', () => {
   it('should update user settings', () => {
     let done = false;
     const command: UserCommandDTO = { firstName: 'Admin' } as UserCommandDTO;
-    service.update(command).subscribe(() => (done = true));
+    service.update('id1', command).subscribe(() => (done = true));
 
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/users/current-user' });
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/users/id1' });
     expect(testRequest.request.body).toBe(command);
     testRequest.flush(null);
 
@@ -44,9 +44,9 @@ describe('UserSettingsService', () => {
   it('should change password', () => {
     let done = false;
     const command: ChangePasswordCommand = { currentPassword: 'current-password', newPassword: 'new-password' };
-    service.changePassword(command).subscribe(() => (done = true));
+    service.changePassword('id1', command).subscribe(() => (done = true));
 
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/users/current-user/change-password' });
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/users/id1/change-password' });
     expect(testRequest.request.body).toBe(command);
     testRequest.flush(null);
 

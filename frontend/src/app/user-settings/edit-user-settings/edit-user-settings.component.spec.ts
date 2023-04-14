@@ -71,6 +71,7 @@ describe('EditUserSettingsComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
     userSettings = {
+      id: 'id1',
       firstName: 'Admin',
       email: 'email@mail.fr',
       login: 'admin',
@@ -113,7 +114,7 @@ describe('EditUserSettingsComponent', () => {
       timezone: 'Europe/Paris',
       email: 'email@mail.fr'
     };
-    expect(userSettingsService.update).toHaveBeenCalledWith(expectedCommand);
+    expect(userSettingsService.update).toHaveBeenCalledWith(userSettings.id, expectedCommand);
 
     tick(3000);
 
@@ -140,7 +141,7 @@ describe('EditUserSettingsComponent', () => {
       timezone: 'Asia/Tokyo',
       email: 'email@mail.fr'
     };
-    expect(userSettingsService.update).toHaveBeenCalledWith(expectedCommand);
+    expect(userSettingsService.update).toHaveBeenCalledWith(userSettings.id, expectedCommand);
 
     tick(3000);
 
