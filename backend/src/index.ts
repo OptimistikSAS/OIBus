@@ -46,6 +46,11 @@ const LOG_DB_NAME = 'journal.db';
   }
   console.info(`OIBus settings loaded. OIBus ID: ${oibusSettings.id} ; OIBus name : ${oibusSettings.name}.`);
 
+  if (check) {
+    console.info('OIBus started in check mode. Exiting process.');
+    return;
+  }
+
   const loggerService = new LoggerService(encryptionService);
   await loggerService.start(oibusSettings.id, oibusSettings.logParameters);
 
@@ -61,11 +66,6 @@ const LOG_DB_NAME = 'journal.db';
   const southService = new SouthService(proxyService, encryptionService, repositoryService);
   const oibusService = new OIBusService();
   const historyQueryService = new HistoryQueryService(proxyService, encryptionService, repositoryService);
-
-  if (check) {
-    console.info('OIBus started in check mode. Exiting process.');
-    return;
-  }
 
   const engine = new OIBusEngine(encryptionService, proxyService, northService, southService, loggerService.createChildLogger('engine'));
   await engine.start();
