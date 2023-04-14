@@ -14,11 +14,11 @@ export class UserSettingsService {
     return this.http.get<User>('/api/users/current-user');
   }
 
-  update(command: UserCommandDTO): Observable<void> {
-    return this.http.put<void>('/api/users/current-user', command);
+  update(userId: string, command: UserCommandDTO): Observable<void> {
+    return this.http.put<void>(`/api/users/${userId}`, command);
   }
 
-  changePassword(command: ChangePasswordCommand): Observable<void> {
-    return this.http.put<void>('/api/users/current-user/change-password', command);
+  changePassword(userId: string, command: ChangePasswordCommand): Observable<void> {
+    return this.http.put<void>(`/api/users/${userId}/change-password`, command);
   }
 }
