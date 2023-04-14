@@ -58,6 +58,7 @@ router.get('/api/users', (ctx: KoaContext<any, any>) => userController.searchUse
 router.get('/api/users/:id', (ctx: KoaContext<any, any>) => userController.getUser(ctx));
 router.post('/api/users', (ctx: KoaContext<any, any>) => userController.createUser(ctx));
 router.put('/api/users/:id', (ctx: KoaContext<any, any>) => userController.updateUser(ctx));
+router.put('/api/users/:id/change-password', (ctx: KoaContext<any, any>) => userController.changePassword(ctx));
 router.delete('/api/users/:id', (ctx: KoaContext<any, any>) => userController.deleteUser(ctx));
 
 router.get('/api/scan-modes', (ctx: KoaContext<any, any>) => scanModeController.getScanModes(ctx));

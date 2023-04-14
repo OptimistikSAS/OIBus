@@ -7,6 +7,7 @@ import { UserSettingsService } from '../../services/user-settings.service';
 import { formDirectives } from '../../shared/form-directives';
 import { NgIf } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
+import { switchMap } from 'rxjs';
 
 interface NewPasswordFormValue {
   newPassword: string;
@@ -58,13 +59,20 @@ export class ChangePasswordModalComponent {
       currentPassword: formValue.currentPassword!,
       newPassword: formValue.newPasswordForm!.newPassword!
     };
-    this.userSettingsService.changePassword(command).subscribe({
-      next: () => {
-        this.notificationService.success('user-settings.change-password.password-changed');
-        this.modal.close();
-      },
-      error: () => (this.error = true)
-    });
+    this.userSettingsService
+      .get()
+      .pipe(
+        switchMap(user => {
+          return this.userSettingsService.changePassword(user.id, command);
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.notificationService.success('user-settings.change-password.password-changed');
+          this.modal.close();
+        },
+        error: () => (this.error = true)
+      });
   }
 
   cancel() {

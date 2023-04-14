@@ -71,7 +71,7 @@ export class EditUserSettingsComponent {
       timezone: formValue.timezone!
     };
     this.userSettingsService
-      .update(command)
+      .update(this.editedUserSettings!.id, command)
       .pipe(
         tap(() => {
           this.notificationService.success('user-settings.edit-user-settings.saved');

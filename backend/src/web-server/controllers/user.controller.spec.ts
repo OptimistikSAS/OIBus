@@ -158,7 +158,10 @@ describe('User controller', () => {
   it('changePassword() should change password', async () => {
     const id = 'id';
     ctx.params.id = id;
-    ctx.request.body = 'password';
+    ctx.request.body = {
+      currentPassword: 'current',
+      newPassword: 'password'
+    };
 
     await userController.changePassword(ctx);
 
@@ -179,7 +182,10 @@ describe('User controller', () => {
   it('changePassword() should return bad request when exception occurs', async () => {
     const id = 'id';
     ctx.params.id = id;
-    ctx.request.body = 'password';
+    ctx.request.body = {
+      currentPassword: 'current',
+      newPassword: 'password'
+    };
     const error = new Error('error');
     ctx.app.repositoryService.userRepository.updatePassword = jest.fn().mockImplementationOnce(() => {
       throw error;
