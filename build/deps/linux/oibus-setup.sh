@@ -123,8 +123,5 @@ fi
 
 echo 'Installation procedure completed!'
 printf "\nUseful commands:\n\tCheck service status:\tsudo systemctl status oibus\n\tCheck service-logs:\tsudo journalctl -u oibus -n 200 -f\n\n"
-if [[ "$keep_conf" == "N" ]] || [[ "$keep_conf" == "n" ]]; then
-  printf "Access OIBus: http://localhost:2223/ \n"
-fi
 
 rm ./oibus-setup.sh
