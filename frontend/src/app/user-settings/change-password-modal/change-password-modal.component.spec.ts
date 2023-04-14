@@ -8,6 +8,7 @@ import { UserSettingsService } from '../../services/user-settings.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { formDirectives } from '../../shared/form-directives';
 import { provideTestingI18n } from '../../../i18n/mock-i18n';
+import { User } from '../../../../../shared/model/user.model';
 
 class ChangePasswordModalComponentTester extends ComponentTester<ChangePasswordModalComponent> {
   constructor() {
@@ -44,6 +45,8 @@ describe('ChangePasswordModalComponent', () => {
   let activeModal: jasmine.SpyObj<NgbActiveModal>;
   let userSettingsService: jasmine.SpyObj<UserSettingsService>;
 
+  let userSettings: User;
+
   beforeEach(() => {
     activeModal = createMock(NgbActiveModal);
     userSettingsService = createMock(UserSettingsService);
@@ -56,6 +59,17 @@ describe('ChangePasswordModalComponent', () => {
         { provide: UserSettingsService, useValue: userSettingsService }
       ]
     });
+
+    userSettings = {
+      id: 'id1',
+      firstName: 'Admin',
+      email: 'email@mail.fr',
+      login: 'admin',
+      lastName: 'Admin',
+      language: 'en', // current language of the mock i18n translate service
+      timezone: 'Europe/Paris' // current language of the mock i18n translate service
+    } as User;
+    userSettingsService.get.and.returnValue(of(userSettings));
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
@@ -96,7 +110,7 @@ describe('ChangePasswordModalComponent', () => {
     userSettingsService.changePassword.and.returnValue(of(undefined));
     tester.save.click();
 
-    expect(userSettingsService.changePassword).toHaveBeenCalledWith({
+    expect(userSettingsService.changePassword).toHaveBeenCalledWith(userSettings.id, {
       currentPassword: 'current',
       newPassword: 'newABCD12!'
     });

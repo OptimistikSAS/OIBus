@@ -1,5 +1,5 @@
 import { KoaContext } from '../koa';
-import { User, UserCommandDTO, UserLight, UserSearchParam } from '../../../../shared/model/user.model';
+import { ChangePasswordCommand, User, UserCommandDTO, UserLight, UserSearchParam } from '../../../../shared/model/user.model';
 import { Page } from '../../../../shared/model/types';
 import AbstractController from './abstract.controller';
 
@@ -45,12 +45,12 @@ export default class UserController extends AbstractController {
     }
   }
 
-  async changePassword(ctx: KoaContext<string, void>) {
+  async changePassword(ctx: KoaContext<ChangePasswordCommand, void>) {
     try {
-      if (!ctx.request.body) {
+      if (!ctx.request.body || !ctx.request.body.newPassword) {
         return ctx.badRequest(`No password provided`);
       }
-      await ctx.app.repositoryService.userRepository.updatePassword(ctx.params.id, ctx.request.body);
+      await ctx.app.repositoryService.userRepository.updatePassword(ctx.params.id, ctx.request.body.newPassword);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
