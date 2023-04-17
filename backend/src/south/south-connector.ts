@@ -297,7 +297,7 @@ export default class SouthConnector {
    */
   async addValues(values: Array<any>): Promise<void> {
     if (values.length > 0) {
-      this.logger.trace(`Add ${values.length} values to cache from South "${this.configuration.name}"`);
+      this.logger.debug(`Add ${values.length} values to cache from South "${this.configuration.name}"`);
       await this.engineAddValuesCallback(this.configuration.id, values);
     }
   }
@@ -306,7 +306,7 @@ export default class SouthConnector {
    * Add a new file to the Engine.
    */
   async addFile(filePath: string): Promise<void> {
-    this.logger.trace(`Add file "${filePath}" to cache from South "${this.configuration.name}"`);
+    this.logger.debug(`Add file "${filePath}" to cache from South "${this.configuration.name}"`);
     await this.engineAddFileCallback(this.configuration.id, filePath);
   }
 

@@ -66,12 +66,12 @@ describe('Log repository', () => {
     });
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT timestamp, level, scope, message FROM logs WHERE timestamp BETWEEN ? AND ? AND level IN (?,?) ' +
-        "AND scope LIKE '%?%' AND message LIKE '%?%' ORDER BY timestamp DESC LIMIT 50 OFFSET ?;"
+        "AND scope LIKE '%' || ? || '%' AND message LIKE '%' || ? || '%' ORDER BY timestamp DESC LIMIT 50 OFFSET ?;"
     );
     expect(logs).toEqual(expectedValue);
 
     expect(database.prepare).toHaveBeenCalledWith(
-      "SELECT COUNT(*) as count FROM logs WHERE timestamp BETWEEN ? AND ? AND level IN (?,?) AND scope LIKE '%?%' AND message LIKE '%?%'"
+      "SELECT COUNT(*) as count FROM logs WHERE timestamp BETWEEN ? AND ? AND level IN (?,?) AND scope LIKE '%' || ? || '%' AND message LIKE '%' || ? || '%'"
     );
   });
 });

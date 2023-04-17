@@ -37,7 +37,6 @@ export default class OIBusEngine extends BaseEngine {
    * The Engine will forward the values to the Cache.
    */
   async addValues(southId: string, values: Array<any>): Promise<void> {
-    this.logger.info(`Add ${values.length} values from ${southId} to north`);
     for (const north of this.northConnectors.values()) {
       if (north.isEnabled() && north.isSubscribed(southId)) {
         await north.cacheValues(values);
@@ -50,7 +49,6 @@ export default class OIBusEngine extends BaseEngine {
    * The Engine will forward the file to the Cache.
    */
   async addFile(southId: string, filePath: string): Promise<void> {
-    this.logger.info(`Add file "${filePath}" from ${southId} to north connectors`);
     for (const north of this.northConnectors.values()) {
       if (north.isEnabled() && north.isSubscribed(southId)) {
         await north.cacheFile(filePath);
