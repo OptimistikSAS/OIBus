@@ -307,17 +307,17 @@ describe('SouthConnector enabled', () => {
   it('should add values', async () => {
     jest.resetAllMocks();
     await south.addValues([]);
-    expect(logger.trace).not.toHaveBeenCalled();
+    expect(logger.debug).not.toHaveBeenCalled();
     expect(addValues).not.toHaveBeenCalled();
 
     await south.addValues([{}, {}]);
-    expect(logger.trace).toHaveBeenCalledWith(`Add 2 values to cache from South "${configuration.name}"`);
+    expect(logger.debug).toHaveBeenCalledWith(`Add 2 values to cache from South "${configuration.name}"`);
     expect(addValues).toHaveBeenCalledWith(configuration.id, [{}, {}]);
   });
 
   it('should add file', async () => {
     await south.addFile('file.csv');
-    expect(logger.trace).toHaveBeenCalledWith(`Add file "file.csv" to cache from South "${configuration.name}"`);
+    expect(logger.debug).toHaveBeenCalledWith(`Add file "file.csv" to cache from South "${configuration.name}"`);
     expect(addFile).toHaveBeenCalledWith(configuration.id, 'file.csv');
   });
 

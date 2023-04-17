@@ -191,13 +191,11 @@ describe('OIBusEngine', () => {
 
     createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
     await engine.addValues('southId', ['', '']);
-    expect(logger.info).toHaveBeenCalledWith(`Add 2 values from southId to north`);
     expect(createdNorth.cacheValues).toHaveBeenCalledTimes(1);
     expect(createdNorth.cacheValues).toHaveBeenCalledWith(['', '']);
 
     createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
     await engine.addFile('southId', 'filePath');
-    expect(logger.info).toHaveBeenCalledWith(`Add file "filePath" from southId to north connectors`);
     expect(createdNorth.cacheFile).toHaveBeenCalledTimes(1);
     expect(createdNorth.cacheFile).toHaveBeenCalledWith('filePath');
 

@@ -1,6 +1,7 @@
 import { Page } from '../../../shared/model/types';
 import { LogDTO, LogSearchParam } from '../../../shared/model/logs.model';
 import { Database } from 'better-sqlite3';
+import { DateTime } from 'luxon';
 
 const LOG_TABLE = 'logs';
 const PAGE_SIZE = 50;
@@ -24,18 +25,18 @@ export default class LogRepository {
    */
   searchLogs(searchParams: LogSearchParam): Page<LogDTO> {
     const queryParams = [];
-    let whereClause = `WHERE timestamp BETWEEN ? AND ? `;
-    queryParams.push(searchParams.start, searchParams.end);
+    let whereClause = `WHERE timestamp BETWEEN ? AND ?`;
+    queryParams.push(DateTime.fromISO(searchParams.start!).toUTC().toISO(), DateTime.fromISO(searchParams.end!).toUTC().toISO());
     if (searchParams.levels.length > 0) {
-      whereClause += `AND level IN (${searchParams.levels.map(() => '?')})`;
+      whereClause += ` AND level IN (${searchParams.levels.map(() => '?')})`;
       queryParams.push(...searchParams.levels);
     }
     if (searchParams.scope) {
-      whereClause += ` AND scope LIKE '%?%'`;
+      whereClause += ` AND scope LIKE '%' || ? || '%'`;
       queryParams.push(searchParams.scope);
     }
     if (searchParams.messageContent) {
-      whereClause += ` AND message LIKE '%?%'`;
+      whereClause += ` AND message LIKE '%' || ? || '%'`;
       queryParams.push(searchParams.messageContent);
     }
 

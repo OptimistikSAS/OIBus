@@ -22,6 +22,7 @@ export default class LogsConnectorController extends AbstractController {
       scope: (ctx.query.scope as string) || null,
       messageContent: (ctx.query.messageContent as string) || null
     };
+    console.log(ctx.query);
     const externalSources = ctx.app.repositoryService.logRepository.searchLogs(searchParams);
     ctx.ok(externalSources);
   }
