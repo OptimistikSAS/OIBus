@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise'
+import { createConnection } from 'mysql2/promise'
 import { Client } from 'pg'
 import mssql from 'mssql'
 
@@ -37,7 +37,7 @@ describe('MySQL Integration test', () => {
   }
 
   beforeAll(async () => {
-    const connection = await mysql.createConnection(mysqlConfig)
+    const connection = await createConnection(mysqlConfig)
     await connection.query('CREATE TABLE IF NOT EXISTS history (temperature double, created_at datetime)')
 
     await connection.query('INSERT INTO history (temperature, created_at) '
@@ -49,7 +49,7 @@ describe('MySQL Integration test', () => {
   })
 
   afterAll(async () => {
-    const connection = await mysql.createConnection(mysqlConfig)
+    const connection = await createConnection(mysqlConfig)
     await connection.query('DROP TABLE history')
     await connection.end()
   })

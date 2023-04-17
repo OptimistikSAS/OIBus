@@ -3,7 +3,7 @@ import path from 'node:path'
 
 import db from 'better-sqlite3'
 import mssql from 'mssql'
-import mysql from 'mysql2/promise'
+import { createConnection } from 'mysql2/promise'
 import * as pg from 'pg'
 import { DateTime } from 'luxon'
 import humanizeDuration from 'humanize-duration'
@@ -296,7 +296,7 @@ export default class SouthSQL extends SouthConnector {
     let connection = null
     let data = []
     try {
-      connection = await mysql.createConnection(config)
+      connection = await createConnection(config)
 
       const params = generateReplacementParameters(this.query, startTime, endTime)
       const [rows] = await connection.execute(
