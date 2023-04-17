@@ -153,7 +153,7 @@ export default class OIBusEngine extends BaseEngine {
       const initAndConnect = async () => {
         try {
           await north.start(this.cacheFolder, this.oibusName)
-          await north.connect()
+          north.connect()
         } catch (error) {
           this.logger.error(error)
         }
@@ -203,7 +203,7 @@ export default class OIBusEngine extends BaseEngine {
       const initAndConnect = async () => {
         try {
           await south.start(this.cacheFolder, this.oibusName)
-          await south.connect()
+          south.connect()
         } catch (error) {
           this.logger.error(error)
         }
