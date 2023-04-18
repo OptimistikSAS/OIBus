@@ -34,7 +34,7 @@ const manifest: SouthConnectorManifest = {
       key: 'readTimeout',
       type: 'OibNumber',
       label: 'Read timeout (ms)',
-      defaultValue: 60_000,
+      defaultValue: 10_000,
       newRow: true,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1000 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: false
@@ -43,7 +43,7 @@ const manifest: SouthConnectorManifest = {
       key: 'retryInterval',
       type: 'OibNumber',
       label: 'Retry interval (ms)',
-      defaultValue: 10_000,
+      defaultValue: 5_000,
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: false

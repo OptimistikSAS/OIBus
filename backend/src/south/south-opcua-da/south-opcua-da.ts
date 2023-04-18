@@ -78,13 +78,12 @@ export default class SouthOPCUADA extends SouthConnector {
    */
   async connectToOpcuaServer(): Promise<void> {
     try {
-      const connectionStrategy = {
-        initialDelay: 1000,
-        maxRetry: 1
-      };
       const options: OPCUAClientOptions = {
         applicationName: 'OIBus',
-        connectionStrategy,
+        connectionStrategy: {
+          initialDelay: 1000,
+          maxRetry: 1
+        },
         securityMode: MessageSecurityMode[this.configuration.settings.securityMode],
         securityPolicy: this.configuration.settings.securityPolicy,
         endpointMustExist: false,

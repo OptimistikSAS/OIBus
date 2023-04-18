@@ -27,10 +27,10 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 
 const AGGREGATE_TYPES = ['raw', 'count', 'max', 'min', 'avg'];
-type AggregateType = typeof AGGREGATE_TYPES[number];
+type AggregateType = (typeof AGGREGATE_TYPES)[number];
 
 const RESAMPLINGS = ['none', '1s', '10s', '30s', '60s', '1h', '24h'];
-type Resampling = typeof RESAMPLINGS[number];
+type Resampling = (typeof RESAMPLINGS)[number];
 
 /**
  * Class SouthOPCUAHA - Connect to an OPCUA server in HA (Historian Access) mode
@@ -94,13 +94,12 @@ export default class SouthOPCUAHA extends SouthConnector {
    */
   async connectToOpcuaServer(): Promise<void> {
     try {
-      const connectionStrategy = {
-        initialDelay: 1000,
-        maxRetry: 1
-      };
       const options: OPCUAClientOptions = {
         applicationName: 'OIBus',
-        connectionStrategy,
+        connectionStrategy: {
+          initialDelay: 1000,
+          maxRetry: 1
+        },
         securityMode: MessageSecurityMode[this.configuration.settings.securityMode],
         securityPolicy: this.configuration.settings.securityPolicy,
         endpointMustExist: false,
@@ -323,6 +322,7 @@ export default class SouthOPCUAHA extends SouthConnector {
   }
 
   async internalDisconnect(): Promise<void> {
+    this.disconnecting = true;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
     }
@@ -335,7 +335,6 @@ export default class SouthOPCUAHA extends SouthConnector {
   }
 
   override async disconnect(): Promise<void> {
-    this.disconnecting = true;
     await this.internalDisconnect();
   }
 }
