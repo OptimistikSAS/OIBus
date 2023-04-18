@@ -143,6 +143,9 @@ export default class SouthConnector {
   }
 
   addToQueue(scanMode: ScanModeDTO): void {
+    if (this.stopping) {
+      return;
+    }
     const foundJob = this.taskJobQueue.find(element => element.id === scanMode.id);
     if (foundJob) {
       // If a job is already scheduled in queue, it will not be added
@@ -325,6 +328,10 @@ export default class SouthConnector {
 
   async stop(): Promise<void> {
     this.stopping = true;
+    for (const cronJob of this.cronByScanModeIds.values()) {
+      cronJob.stop();
+    }
+    this.cronByScanModeIds.clear();
     this.logger.info(`Stopping South "${this.configuration.name}" (${this.configuration.id})...`);
 
     if (this.runProgress$) {
