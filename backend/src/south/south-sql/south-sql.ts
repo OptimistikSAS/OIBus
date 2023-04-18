@@ -17,6 +17,7 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
+import { ClientConfig } from 'pg';
 
 let oracledb: {
   outFormat: any;
@@ -263,13 +264,14 @@ export default class SouthSQL extends SouthConnector {
   async getDataFromPostgreSQL(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2');
 
-    const config = {
+    const config: ClientConfig = {
       host: this.configuration.settings.host,
       port: this.configuration.settings.port,
       user: this.configuration.settings.username,
       password: await this.encryptionService.decryptText(this.configuration.settings.password),
       database: this.configuration.settings.database,
-      query_timeout: this.configuration.settings.requestTimeout
+      query_timeout: this.configuration.settings.requestTimeout,
+      connectionTimeoutMillis: this.configuration.settings.connectionTimeout
     };
 
     pg.types.setTypeParser(1114, str => new Date(`${str}Z`));
