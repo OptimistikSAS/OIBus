@@ -108,8 +108,9 @@ const LOG_DB_NAME = 'journal.db';
     if (stopping) return;
     console.info('SIGINT (Ctrl+C) received. Stopping everything.');
     stopping = true;
-    const stopAll = [engine.stop(), server.stop()];
-    Promise.allSettled(stopAll).then(() => {
+    const stopAll = [engine.stop(), historyQueryEngine.stop()];
+    Promise.allSettled(stopAll).then(async () => {
+      await server.stop();
       loggerService.stop();
       console.info('OIBus stopped');
       process.exit();
