@@ -23,6 +23,7 @@ export default class ValueCacheService {
   private readonly errorFolder: string;
   private readonly settings: NorthCacheSettingsLightDTO;
   private cacheSize = 0;
+  private flushInProgress = false;
 
   private bufferTimeout: NodeJS.Timeout | undefined;
   private compactedQueue: Array<{ filename: string; createdAt: number; numberOfValues: number }> = []; // List of compact filename (randomId.compact.tmp)
@@ -116,6 +117,10 @@ export default class ValueCacheService {
    * Flushing the buffer create a queue file and keep the values in memory for sending them
    */
   async flush(flag: 'time-flush' | 'max-flush' = 'time-flush'): Promise<void> {
+    if (this.flushInProgress) {
+      return;
+    }
+    this.flushInProgress = true;
     if (flag === 'max-flush') {
       clearTimeout(this.bufferTimeout);
     }
@@ -134,6 +139,7 @@ export default class ValueCacheService {
     // Save the buffer to be sent and immediately clear it
     if (valuesToFlush.length === 0) {
       this._logger.trace(`Nothing to flush (${flag})`);
+      this.flushInProgress = false;
       return;
     }
     // Store the values in a tmp file
@@ -141,6 +147,7 @@ export default class ValueCacheService {
       await fs.writeFile(path.resolve(this.valueFolder, tmpFileName), JSON.stringify(valuesToFlush), { encoding: 'utf8', flag: 'w' });
     } catch (error) {
       this._logger.error(`Error while writing queue file ${path.resolve(this.valueFolder, tmpFileName)}: ${error}`);
+      this.flushInProgress = false;
       return; // Do not empty the buffer if the file could not be written
     }
 
@@ -167,6 +174,7 @@ export default class ValueCacheService {
       const copiedQueue = this.queue;
       await this.compactQueueCache(copiedQueue);
     }
+    this.flushInProgress = false;
   }
 
   /**
