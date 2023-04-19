@@ -33,14 +33,15 @@ jest.mock('../../service/opcua.service');
 jest.mock('../../service/utils');
 const database = new DatabaseMock();
 jest.mock(
-  '../../service/south-cache.service',
+  '../../service/cache.service',
   () =>
     function () {
       return {
         createCacheHistoryTable: jest.fn(),
         southCacheRepository: {
           database
-        }
+        },
+        updateMetrics: jest.fn()
       };
     }
 );

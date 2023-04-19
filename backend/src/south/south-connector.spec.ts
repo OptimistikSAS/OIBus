@@ -22,15 +22,21 @@ const createCacheHistoryTableMock = jest.fn();
 const getSouthCacheMock = jest.fn();
 const createOrUpdateCacheScanModeMock = jest.fn();
 const resetCacheMock = jest.fn();
+const updateMetricsMock = jest.fn();
 jest.mock(
-  '../service/south-cache.service',
+  '../service/cache.service',
   () =>
     function () {
       return {
         createCacheHistoryTable: createCacheHistoryTableMock,
         getSouthCache: getSouthCacheMock,
         createOrUpdateCacheScanMode: createOrUpdateCacheScanModeMock,
-        resetCache: resetCacheMock
+        resetCache: resetCacheMock,
+        updateMetrics: updateMetricsMock,
+        metrics: {
+          numberOfValues: 1,
+          numberOfFiles: 1
+        }
       };
     }
 );
