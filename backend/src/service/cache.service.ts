@@ -8,7 +8,7 @@ import { ConnectorMetrics } from '../../../shared/model/engine.model';
 import { PassThrough } from 'node:stream';
 
 export default class CacheService {
-  private readonly _southCacheRepository: ConnectorCacheRepository;
+  private readonly _cacheRepository: ConnectorCacheRepository;
   private _stream: PassThrough | null = null;
 
   private _metrics: ConnectorMetrics = {
@@ -25,23 +25,23 @@ export default class CacheService {
   constructor(private readonly connectorId: string, cacheDatabasePath: string) {
     const database = Database(cacheDatabasePath);
 
-    this._southCacheRepository = new ConnectorCacheRepository(database);
+    this._cacheRepository = new ConnectorCacheRepository(database);
     this.createMetricsTable();
   }
 
-  get southCacheRepository(): ConnectorCacheRepository {
-    return this._southCacheRepository;
+  get cacheRepository(): ConnectorCacheRepository {
+    return this._cacheRepository;
   }
 
   createCacheHistoryTable(): void {
-    this._southCacheRepository.createCacheHistoryTable();
+    this._cacheRepository.createCacheHistoryTable();
   }
 
   /**
    * Retrieve south cache or return a new one with startTime
    */
   getSouthCache(id: string, startTime: Instant): SouthCache {
-    const southCache = this._southCacheRepository.getSouthCacheScanMode(id);
+    const southCache = this._cacheRepository.getSouthCacheScanMode(id);
     if (!southCache) {
       return {
         scanModeId: id,
@@ -53,16 +53,16 @@ export default class CacheService {
   }
 
   createOrUpdateCacheScanMode(command: SouthCache): void {
-    this._southCacheRepository.createOrUpdateCacheScanMode(command);
+    this._cacheRepository.createOrUpdateCacheScanMode(command);
   }
 
   resetCache(): void {
-    this._southCacheRepository.resetDatabase();
+    this._cacheRepository.resetDatabase();
   }
 
   createMetricsTable(): void {
-    this._southCacheRepository.createMetricsTable(this.connectorId);
-    const results = this._southCacheRepository.getMetrics(this.connectorId);
+    this._cacheRepository.createMetricsTable(this.connectorId);
+    const results = this._cacheRepository.getMetrics(this.connectorId);
     if (results) {
       this._metrics = results;
       this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
@@ -70,7 +70,7 @@ export default class CacheService {
   }
 
   updateMetrics(newMetrics: ConnectorMetrics): void {
-    this._southCacheRepository.updateMetrics(newMetrics);
+    this._cacheRepository.updateMetrics(newMetrics);
     this._metrics = newMetrics;
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }

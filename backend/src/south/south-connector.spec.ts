@@ -41,7 +41,6 @@ jest.mock(
     }
 );
 jest.mock('../service/proxy.service');
-jest.mock('../service/status.service');
 
 jest.mock('../service/utils');
 

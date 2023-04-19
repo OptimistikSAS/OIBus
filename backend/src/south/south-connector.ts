@@ -44,7 +44,7 @@ export default class SouthConnector {
   private stopping = false;
   private runProgress$: DeferredPromise | null = null;
 
-  protected southCacheService: CacheService;
+  protected cacheService: CacheService;
 
   /**
    * Constructor for SouthConnector
@@ -71,10 +71,10 @@ export default class SouthConnector {
         this.itemsByScanModeIds.get(item.scanModeId!)!.set(item.id, item);
       });
 
-    this.southCacheService = new CacheService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
+    this.cacheService = new CacheService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
 
     if (this.manifest.modes.historyFile || this.manifest.modes.historyPoint) {
-      this.southCacheService.createCacheHistoryTable();
+      this.cacheService.createCacheHistoryTable();
     }
 
     if (this.streamMode) {
@@ -94,7 +94,7 @@ export default class SouthConnector {
   }
 
   async connect(): Promise<void> {
-    this.southCacheService.updateMetrics({ ...this.southCacheService.metrics, lastConnection: DateTime.now().toUTC().toISO() });
+    this.cacheService.updateMetrics({ ...this.cacheService.metrics, lastConnection: DateTime.now().toUTC().toISO() });
     if (!this.streamMode) {
       return;
     }
@@ -168,12 +168,12 @@ export default class SouthConnector {
       return;
     }
 
-    const runStart = DateTime.now();
-    this.southCacheService.updateMetrics({ ...this.southCacheService.metrics, lastRunStart: runStart.toUTC().toISO() });
-
     const items = Array.from(this.itemsByScanModeIds.get(scanMode.id) || new Map(), ([_scanModeId, item]) => item);
     this.logger.trace(`Running South with scan mode ${scanMode.name} and ${items.length} items`);
     this.createDeferredPromise();
+
+    const runStart = DateTime.now();
+    this.cacheService.updateMetrics({ ...this.cacheService.metrics, lastRunStart: runStart.toUTC().toISO() });
 
     if (this.manifest.modes.historyFile || this.manifest.modes.historyPoint) {
       try {
@@ -207,8 +207,8 @@ export default class SouthConnector {
       }
     }
 
-    this.southCacheService.updateMetrics({
-      ...this.southCacheService.metrics,
+    this.cacheService.updateMetrics({
+      ...this.cacheService.metrics,
       lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
     });
     this.resolveDeferredPromise();
@@ -240,7 +240,7 @@ export default class SouthConnector {
   }
 
   async historyQueryHandler(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant, scanModeId: string): Promise<void> {
-    const southCache = this.southCacheService.getSouthCache(scanModeId, startTime);
+    const southCache = this.cacheService.getSouthCache(scanModeId, startTime);
 
     // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
     // requests. For example only one hour if maxReadInterval is 3600 (in s)
@@ -268,7 +268,7 @@ export default class SouthConnector {
       const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
 
       if (index !== intervals.length - 1) {
-        this.southCacheService.createOrUpdateCacheScanMode({
+        this.cacheService.createOrUpdateCacheScanMode({
           scanModeId: southCache.scanModeId,
           maxInstant: lastInstantRetrieved,
           intervalIndex: index + southCache.intervalIndex
@@ -279,7 +279,7 @@ export default class SouthConnector {
         }
         await delay(this.configuration.settings.readIntervalDelay);
       } else {
-        this.southCacheService.createOrUpdateCacheScanMode({
+        this.cacheService.createOrUpdateCacheScanMode({
           scanModeId: southCache.scanModeId,
           maxInstant: lastInstantRetrieved,
           intervalIndex: 0
@@ -312,8 +312,8 @@ export default class SouthConnector {
     if (values.length > 0) {
       this.logger.debug(`Add ${values.length} values to cache from South "${this.configuration.name}"`);
       await this.engineAddValuesCallback(this.configuration.id, values);
-      const currentMetrics = this.southCacheService.metrics;
-      this.southCacheService.updateMetrics({
+      const currentMetrics = this.cacheService.metrics;
+      this.cacheService.updateMetrics({
         ...currentMetrics,
         numberOfValues: currentMetrics.numberOfValues + values.length,
         lastValue: values[values.length - 1]
@@ -327,8 +327,8 @@ export default class SouthConnector {
   async addFile(filePath: string): Promise<void> {
     this.logger.debug(`Add file "${filePath}" to cache from South "${this.configuration.name}"`);
     await this.engineAddFileCallback(this.configuration.id, filePath);
-    const currentMetrics = this.southCacheService.metrics;
-    this.southCacheService.updateMetrics({
+    const currentMetrics = this.cacheService.metrics;
+    this.cacheService.updateMetrics({
       ...currentMetrics,
       numberOfFiles: currentMetrics.numberOfFiles + 1,
       lastFile: filePath
@@ -427,14 +427,10 @@ export default class SouthConnector {
   }
 
   async resetCache(): Promise<void> {
-    this.southCacheService.resetCache();
+    this.cacheService.resetCache();
   }
 
   getMetricsDataStream(): PassThrough {
-    return this.southCacheService.stream;
-  }
-
-  updateStream(): void {
-    this.southCacheService.updateMetrics(JSON.parse(JSON.stringify(this.southCacheService.metrics)));
+    return this.cacheService.stream;
   }
 }

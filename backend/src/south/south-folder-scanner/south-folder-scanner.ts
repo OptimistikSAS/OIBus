@@ -50,7 +50,7 @@ export default class SouthFolderScanner extends SouthConnector {
 
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
     if (this.configuration.settings.preserveFiles) {
-      this.southCacheService.southCacheRepository.database
+      this.cacheService.cacheRepository.database
         .prepare(`CREATE TABLE IF NOT EXISTS ${FOLDER_SCANNER_TABLE} (filename TEXT PRIMARY KEY, mtime_ms INTEGER);`)
         .run();
     }
@@ -131,13 +131,13 @@ export default class SouthFolderScanner extends SouthConnector {
 
   getModifiedTime(filename: string): number {
     const query = `SELECT mtime_ms AS mtimeMs FROM ${FOLDER_SCANNER_TABLE} WHERE filename = ?`;
-    const result = this.southCacheService.southCacheRepository.database.prepare(query).get(filename);
+    const result = this.cacheService.cacheRepository.database.prepare(query).get(filename);
     return result ? parseFloat(result.mtimeMs) : 0;
   }
 
   updateModifiedTime(filename: string, mtimeMs: number): void {
     const query = `INSERT INTO ${FOLDER_SCANNER_TABLE} (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`;
-    this.southCacheService.southCacheRepository.database.prepare(query).run(filename, mtimeMs, mtimeMs);
+    this.cacheService.cacheRepository.database.prepare(query).run(filename, mtimeMs, mtimeMs);
   }
 
   /**

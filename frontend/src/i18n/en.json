@@ -376,6 +376,17 @@
       "confirm-deletion": "Are you sure you want to unsubscribe from South {{ name }}?",
       "deleted": "The connector is not subscribed to {{ name }} anymore",
       "name": "South connector"
+    },
+    "data": {
+      "metrics-title": "North metrics",
+      "metrics-start": "From",
+      "number-of-values": "Number of values",
+      "number-of-files": "Number of files",
+      "last-connection": "Last connection",
+      "last-file": "Last file retrieved",
+      "last-value": "Last value retrieved",
+      "last-run-start": "Last run",
+      "last-run-duration": "Last run duration"
     }
   },
   "logs": {

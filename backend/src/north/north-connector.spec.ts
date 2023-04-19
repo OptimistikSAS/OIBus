@@ -24,7 +24,6 @@ const removeAllCacheFiles = jest.fn();
 jest.mock('../service/repository.service');
 jest.mock('../service/encryption.service');
 jest.mock('../service/proxy.service');
-jest.mock('../service/status.service');
 jest.mock('../service/utils');
 jest.mock(
   '../service/cache/value-cache.service',
@@ -70,6 +69,20 @@ jest.mock(
     }
 );
 jest.mock('../service/cache/archive.service');
+
+jest.mock(
+  '../service/cache.service',
+  () =>
+    function () {
+      return {
+        updateMetrics: jest.fn(),
+        metrics: {
+          numberOfValues: 1,
+          numberOfFiles: 1
+        }
+      };
+    }
+);
 
 const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();

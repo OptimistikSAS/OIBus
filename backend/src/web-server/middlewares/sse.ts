@@ -8,23 +8,20 @@ const sse = () => {
     }
     ctx.req.socket.setKeepAlive(true);
     ctx.set({
-      'Content-Type': 'text/event-stream'
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive'
     });
 
     if (ctx.path.startsWith('/sse/south/')) {
       const splitString = ctx.path.split('/');
       ctx.body = ctx.app.reloadService.oibusEngine.getSouthDataStream(splitString[3]);
-      // ctx.app.reloadService.oibusEngine.updateStream(splitString[3]); // force an update of the data stream to receive it on the frontend
       return ctx.ok();
     }
     if (ctx.path.startsWith('/sse/north/')) {
       const splitString = ctx.path.split('/');
-      console.warn('TODO: send status for north', splitString[2]);
-      // const north = this.engine.activeNorths.find(activeNorth => activeNorth.id === splitString[2]);
-      // createSocket(ctx);
-      // ctx.body = north.statusService.getDataStream();
-      // north.statusService.forceDataUpdate();
-      return next();
+      ctx.body = ctx.app.reloadService.oibusEngine.getNorthDataStream(splitString[3]);
+      return ctx.ok();
     }
     if (ctx.path.startsWith('/sse/engine/')) {
       console.warn('TODO: send status for engine');
@@ -52,22 +49,5 @@ const sse = () => {
     return next();
   };
 };
-
-// /**
-//  * Add a socket to the Koa ctx
-//  * @param {Object} ctx - The Koa ctx
-//  * @return {void}
-//  */
-// const createSocket = (ctx: KoaContext<any, any>) => {
-//   ctx.request.socket.setTimeout(0);
-//   ctx.req.socket.setNoDelay(true);
-//   ctx.req.socket.setKeepAlive(true);
-//   ctx.set({
-//     'Content-Type': 'text/event-stream',
-//     'Cache-Control': 'no-cache',
-//     Connection: 'keep-alive'
-//   });
-//   ctx.status = 200;
-// };
 
 export default sse;

@@ -23,7 +23,7 @@ jest.mock(
   () =>
     function () {
       return {
-        southCacheRepository: {
+        cacheRepository: {
           database
         },
         updateMetrics: jest.fn()

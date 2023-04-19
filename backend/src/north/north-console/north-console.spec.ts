@@ -20,6 +20,20 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
+jest.mock(
+  '../../service/cache.service',
+  () =>
+    function () {
+      return {
+        updateMetrics: jest.fn(),
+        metrics: {
+          numberOfValues: 1,
+          numberOfFiles: 1
+        }
+      };
+    }
+);
+
 const nowDateString = '2020-02-02T02:02:02.222Z';
 const configuration: NorthConnectorDTO = {
   id: 'id',
