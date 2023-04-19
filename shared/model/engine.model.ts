@@ -1,3 +1,5 @@
+import { Instant } from './types';
+
 export const AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key', 'cert'];
 export type AuthenticationType = typeof AUTHENTICATION_TYPES[number];
 
@@ -148,4 +150,15 @@ export interface OIBusInfo {
   hostname: string;
   operatingSystem: string;
   architecture: string;
+}
+
+export interface ConnectorMetrics {
+  metricsStart: Instant;
+  numberOfValues: number;
+  numberOfFiles: number;
+  lastValue: any | null;
+  lastFile: string | null;
+  lastConnection: Instant | null;
+  lastRunStart: Instant | null;
+  lastRunDuration: number | null;
 }

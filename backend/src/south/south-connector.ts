@@ -12,7 +12,7 @@ import ProxyService from '../service/proxy.service';
 import RepositoryService from '../service/repository.service';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
-import SouthCacheService from '../service/south-cache.service';
+import CacheService from '../service/cache.service';
 
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
@@ -43,7 +43,7 @@ export default class SouthConnector {
   private stopping = false;
   private runProgress$: DeferredPromise | null = null;
 
-  protected southCacheService: SouthCacheService;
+  protected southCacheService: CacheService;
 
   /**
    * Constructor for SouthConnector
@@ -70,7 +70,8 @@ export default class SouthConnector {
         this.itemsByScanModeIds.get(item.scanModeId!)!.set(item.id, item);
       });
 
-    this.southCacheService = new SouthCacheService(path.resolve(this.baseFolder, 'cache.db'));
+    this.southCacheService = new CacheService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
+
     if (this.manifest.modes.historyFile || this.manifest.modes.historyPoint) {
       this.southCacheService.createCacheHistoryTable();
     }
@@ -92,6 +93,7 @@ export default class SouthConnector {
   }
 
   async connect(): Promise<void> {
+    this.southCacheService.updateMetrics({ ...this.southCacheService.metrics, lastConnection: DateTime.now().toUTC().toISO() });
     if (!this.streamMode) {
       return;
     }
@@ -165,6 +167,9 @@ export default class SouthConnector {
       return;
     }
 
+    const runStart = DateTime.now();
+    this.southCacheService.updateMetrics({ ...this.southCacheService.metrics, lastRunStart: runStart.toUTC().toISO() });
+
     const items = Array.from(this.itemsByScanModeIds.get(scanMode.id) || new Map(), ([_scanModeId, item]) => item);
     this.logger.trace(`Running South with scan mode ${scanMode.name} and ${items.length} items`);
     this.createDeferredPromise();
@@ -201,6 +206,10 @@ export default class SouthConnector {
       }
     }
 
+    this.southCacheService.updateMetrics({
+      ...this.southCacheService.metrics,
+      lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
+    });
     this.resolveDeferredPromise();
 
     if (!this.stopping) {
@@ -302,6 +311,12 @@ export default class SouthConnector {
     if (values.length > 0) {
       this.logger.debug(`Add ${values.length} values to cache from South "${this.configuration.name}"`);
       await this.engineAddValuesCallback(this.configuration.id, values);
+      const currentMetrics = this.southCacheService.metrics;
+      this.southCacheService.updateMetrics({
+        ...currentMetrics,
+        numberOfValues: currentMetrics.numberOfValues + values.length,
+        lastValue: values[values.length - 1]
+      });
     }
   }
 
@@ -311,6 +326,12 @@ export default class SouthConnector {
   async addFile(filePath: string): Promise<void> {
     this.logger.debug(`Add file "${filePath}" to cache from South "${this.configuration.name}"`);
     await this.engineAddFileCallback(this.configuration.id, filePath);
+    const currentMetrics = this.southCacheService.metrics;
+    this.southCacheService.updateMetrics({
+      ...currentMetrics,
+      numberOfFiles: currentMetrics.numberOfFiles + 1,
+      lastFile: filePath
+    });
   }
 
   /**

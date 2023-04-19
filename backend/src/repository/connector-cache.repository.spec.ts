@@ -1,12 +1,12 @@
 import SqliteDatabaseMock, { all, get, run } from '../tests/__mocks__/database.mock';
 import { SouthCache } from '../../../shared/model/south-connector.model';
 import { Database } from 'better-sqlite3';
-import SouthCacheRepository from './south-cache.repository';
+import ConnectorCacheRepository from './connector-cache.repository';
 
 jest.mock('../tests/__mocks__/database.mock');
 
 let database: Database;
-let repository: SouthCacheRepository;
+let repository: ConnectorCacheRepository;
 describe('South cache repository', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -16,7 +16,7 @@ describe('South cache repository', () => {
       get,
       all
     });
-    repository = new SouthCacheRepository(database);
+    repository = new ConnectorCacheRepository(database);
   });
 
   it('should properly init south cache table', () => {

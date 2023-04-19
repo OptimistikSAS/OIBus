@@ -7,7 +7,7 @@ import HistoryQueryService from './history-query.service';
 
 jest.mock('../repository/proxy.repository');
 jest.mock('./encryption.service');
-jest.mock('./south-cache.service');
+jest.mock('./cache.service');
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryRepository: RepositoryService = new RepositoryServiceMock('', '');

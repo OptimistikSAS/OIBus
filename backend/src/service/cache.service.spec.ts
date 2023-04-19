@@ -1,23 +1,23 @@
 import db from 'better-sqlite3';
-import SouthCacheRepository from '../repository/south-cache.repository';
-import SouthCacheService from './south-cache.service';
+import ConnectorCacheRepository from '../repository/connector-cache.repository';
+import CacheService from './cache.service';
 
-jest.mock('../repository/south-cache.repository');
+jest.mock('../repository/connector-cache.repository');
 jest.mock('better-sqlite3', () => jest.fn(() => 'sqlite database'));
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
-let service: SouthCacheService;
+let service: CacheService;
 describe('South cache service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    service = new SouthCacheService('south-cache');
+    service = new CacheService('connectorId', 'south-cache');
   });
 
   it('should be properly initialized', () => {
     expect(db).toHaveBeenCalledWith('south-cache');
-    expect(SouthCacheRepository).toHaveBeenCalledWith('sqlite database');
+    expect(ConnectorCacheRepository).toHaveBeenCalledWith('sqlite database');
     expect(service.southCacheRepository).toBeDefined();
   });
 
