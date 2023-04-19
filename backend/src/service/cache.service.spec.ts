@@ -18,12 +18,12 @@ describe('South cache service', () => {
   it('should be properly initialized', () => {
     expect(db).toHaveBeenCalledWith('south-cache');
     expect(ConnectorCacheRepository).toHaveBeenCalledWith('sqlite database');
-    expect(service.southCacheRepository).toBeDefined();
+    expect(service.cacheRepository).toBeDefined();
   });
 
   it('should create cache history table', () => {
     service.createCacheHistoryTable();
-    expect(service.southCacheRepository.createCacheHistoryTable).toHaveBeenCalledTimes(1);
+    expect(service.cacheRepository.createCacheHistoryTable).toHaveBeenCalledTimes(1);
   });
 
   it('should create or update cache scan mode', () => {
@@ -33,7 +33,7 @@ describe('South cache service', () => {
       maxInstant: ''
     };
     service.createOrUpdateCacheScanMode(command);
-    expect(service.southCacheRepository.createOrUpdateCacheScanMode).toHaveBeenCalledTimes(1);
+    expect(service.cacheRepository.createOrUpdateCacheScanMode).toHaveBeenCalledTimes(1);
   });
 
   it('should get scan mode', () => {
@@ -42,7 +42,7 @@ describe('South cache service', () => {
       intervalIndex: 1,
       maxInstant: ''
     };
-    (service.southCacheRepository.getSouthCacheScanMode as jest.Mock).mockReturnValueOnce(scanMode).mockReturnValue(null);
+    (service.cacheRepository.getSouthCacheScanMode as jest.Mock).mockReturnValueOnce(scanMode).mockReturnValue(null);
     const result = service.getSouthCache('id1', nowDateString);
     expect(result).toEqual(scanMode);
 
@@ -56,6 +56,6 @@ describe('South cache service', () => {
 
   it('should reset cache', () => {
     service.resetCache();
-    expect(service.southCacheRepository.resetDatabase).toHaveBeenCalledTimes(1);
+    expect(service.cacheRepository.resetDatabase).toHaveBeenCalledTimes(1);
   });
 });
