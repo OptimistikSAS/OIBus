@@ -19,13 +19,14 @@ jest.mock('jsmodbus', () => ({
 jest.mock('../../service/utils');
 const database = new DatabaseMock();
 jest.mock(
-  '../../service/south-cache.service',
+  '../../service/cache.service',
   () =>
     function () {
       return {
         southCacheRepository: {
           database
-        }
+        },
+        updateMetrics: jest.fn()
       };
     }
 );

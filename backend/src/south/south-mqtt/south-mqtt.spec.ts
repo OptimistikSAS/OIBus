@@ -17,14 +17,15 @@ jest.mock('mqtt');
 jest.mock('node:fs/promises');
 const database = new DatabaseMock();
 jest.mock(
-  '../../service/south-cache.service',
+  '../../service/cache.service',
   () =>
     function () {
       return {
         createCacheHistoryTable: jest.fn(),
         southCacheRepository: {
           database
-        }
+        },
+        updateMetrics: jest.fn()
       };
     }
 );
