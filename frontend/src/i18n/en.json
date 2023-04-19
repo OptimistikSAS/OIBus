@@ -57,6 +57,28 @@
     "parse-pattern": "d/M/yyyy",
     "format-pattern": "dd/MM/yyyy"
   },
+  "duration-pipe": {
+    "long": {
+      "hour": "{{ hours }} hour",
+      "hours": "{{ hours }} hours",
+      "minute": "{{ minutes }} minute",
+      "minutes": "{{ minutes }} minutes",
+      "second": "{{ seconds }} second",
+      "seconds": "{{ seconds }} seconds"
+    },
+    "short": {
+      "hour": "{{ hours }} h",
+      "hours": "{{ hours }} h",
+      "minute": "{{ minutes }} min",
+      "minutes": "{{ minutes }} min",
+      "second": "{{ seconds }} s",
+      "seconds": "{{ seconds }} s"
+    },
+    "hours-and-minutes": "{{ hours }}, {{ minutes }}",
+    "hours-and-seconds": "{{ hours }}, {{ seconds }}",
+    "hours-and-minutes-and-seconds": "{{ hours }}, {{ minutes }}, {{ seconds }}",
+    "minutes-and-seconds": "{{ minutes }}, {{ seconds }}"
+  },
   "enums": {
     "log-levels": {
       "silent":  "Silent",
@@ -290,6 +312,17 @@
       "search": {
         "name": "Name"
       }
+    },
+    "data": {
+      "metrics-title": "South metrics",
+      "metrics-start": "From",
+      "number-of-values": "Number of values",
+      "number-of-files": "Number of files",
+      "last-connection": "Last connection",
+      "last-file": "Last file retrieved",
+      "last-value": "Last value retrieved",
+      "last-run-start": "Last run",
+      "last-run-duration": "Last run duration"
     }
   },
   "north": {

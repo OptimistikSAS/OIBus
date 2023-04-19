@@ -23,11 +23,12 @@ import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { toPage } from '../../shared/test-utils';
 import { getRowSettings } from '../../shared/utils';
+import { SouthDataComponent } from './south-data/south-data.component';
 
 @Component({
   selector: 'oib-south-display',
   standalone: true,
-  imports: [NgIf, TranslateModule, RouterLink, NgSwitch, NgForOf, PaginationComponent, SearchItemComponent],
+  imports: [NgIf, TranslateModule, RouterLink, NgSwitch, NgForOf, PaginationComponent, SearchItemComponent, SouthDataComponent],
   templateUrl: './south-display.component.html',
   styleUrls: ['./south-display.component.scss'],
   providers: [PageLoader]
