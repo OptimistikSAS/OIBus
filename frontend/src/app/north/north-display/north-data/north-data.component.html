@@ -1,0 +1,45 @@
+<div>
+  <h2><span translate="north.data.metrics-title"></span></h2>
+  <div *ngIf="connectorMetrics">
+    <div>
+      <span translate="north.data.metrics-start"></span>
+      <span translate="common.colon-separator"></span>
+      <span>{{ connectorMetrics.metricsStart | datetime:'mediumWithSeconds' }}</span>
+    </div>
+    <div *ngIf="connectorMetrics.numberOfValues !== null">
+      <span translate="north.data.number-of-values"></span>
+      <span translate="common.colon-separator"></span>
+      <span>{{ connectorMetrics.numberOfValues }}</span>
+    </div>
+    <div *ngIf="connectorMetrics.numberOfFiles !== null">
+      <span translate="north.data.number-of-files"></span>
+      <span translate="common.colon-separator"></span>
+      <span>{{ connectorMetrics.numberOfFiles }}</span>
+    </div>
+    <div *ngIf="connectorMetrics.lastConnection !== null">
+      <span translate="north.data.last-connection"></span>
+      <span translate="common.colon-separator"></span>
+      <span>{{ connectorMetrics.lastConnection | datetime:'mediumWithSeconds' }}</span>
+    </div>
+    <div *ngIf="connectorMetrics.lastValue !== null">
+      <span translate="north.data.last-value"></span>
+      <span translate="common.colon-separator"></span>
+      <span>{{ connectorMetrics.lastValue }}</span>
+    </div>
+    <div *ngIf="connectorMetrics.lastFile !== null">
+      <span translate="north.data.last-file"></span>
+      <span translate="common.colon-separator"></span>
+      <span>{{ connectorMetrics.lastFile }}</span>
+    </div>
+    <div *ngIf="connectorMetrics.lastRunStart !== null">
+      <span translate="north.data.last-run-start"></span>
+      <span translate="common.colon-separator"></span>
+      <span>{{ connectorMetrics.lastRunStart | datetime:'mediumWithSeconds' }}</span>
+    </div>
+    <div *ngIf="connectorMetrics.lastRunDuration !== null">
+      <span translate="north.data.last-run-duration"></span>
+      <span translate="common.colon-separator"></span>
+      <span>{{ connectorMetrics.lastRunDuration | duration:'short' }}</span>
+    </div>
+  </div>
+</div>

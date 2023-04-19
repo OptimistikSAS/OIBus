@@ -14,6 +14,9 @@
   </div>
   <div *ngIf="northConnector && manifest" class="row justify-content-center mb-3">
     <div class="col-md-10 col-lg-8">
+      <div class="row">
+        <oib-north-data [northConnector]="northConnector"></oib-north-data>
+      </div>
       <h2><span translate="north.specific-settings" [translateParams]="{type: northConnector.type}"></span></h2>
       <div class="row" *ngFor="let row of northSettingsSchema">
         <ng-container *ngFor="let settings of row">
