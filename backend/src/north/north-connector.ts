@@ -13,6 +13,10 @@ import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import DeferredPromise from '../service/deferred-promise';
 import { OIBusError } from '../../../shared/model/engine.model';
 import { SubscriptionDTO } from '../../../shared/model/subscription.model';
+import CacheService from '../service/cache.service';
+import path from 'node:path';
+import { DateTime } from 'luxon';
+import { PassThrough } from 'node:stream';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -38,6 +42,7 @@ export default class NorthConnector {
   private fileCacheService: FileCacheService;
   protected encryptionService: EncryptionService;
   protected proxyService: ProxyService;
+  protected cacheService: CacheService;
   protected repositoryService: RepositoryService;
   protected logger: pino.Logger;
   private readonly baseFolder: string;
@@ -74,6 +79,7 @@ export default class NorthConnector {
     this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.configuration.archive);
     this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.configuration.caching);
     this.fileCacheService = new FileCacheService(this.logger, this.baseFolder);
+    this.cacheService = new CacheService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
 
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
@@ -105,6 +111,8 @@ export default class NorthConnector {
    * North connector implementation to allow connection to a third party application for example.
    */
   async connect(): Promise<void> {
+    this.cacheService.updateMetrics({ ...this.cacheService.metrics, lastConnection: DateTime.now().toUTC().toISO() });
+
     const scanMode = this.repositoryService.scanModeRepository.getScanMode(this.configuration.caching.scanModeId);
     if (scanMode) {
       this.createCronJob(scanMode);
@@ -158,6 +166,9 @@ export default class NorthConnector {
     }
     this.runProgress$ = new DeferredPromise();
 
+    const runStart = DateTime.now();
+    this.cacheService.updateMetrics({ ...this.cacheService.metrics, lastRunStart: runStart.toUTC().toISO() });
+
     if (this.manifest.modes.points) {
       await this.handleValuesWrapper();
     }
@@ -167,6 +178,10 @@ export default class NorthConnector {
     }
 
     // TODO: update cache size here
+    this.cacheService.updateMetrics({
+      ...this.cacheService.metrics,
+      lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
+    });
 
     this.runProgress$.resolve();
     this.runProgress$ = null;
@@ -191,6 +206,12 @@ export default class NorthConnector {
       try {
         await this.handleValues(arrayValues);
         await this.valueCacheService.removeSentValues(this.valuesBeingSent);
+        const currentMetrics = this.cacheService.metrics;
+        this.cacheService.updateMetrics({
+          ...currentMetrics,
+          numberOfValues: currentMetrics.numberOfValues + arrayValues.length,
+          lastValue: arrayValues[arrayValues.length - 1]
+        });
         this.valuesBeingSent = new Map();
       } catch (error) {
         const oibusError = this.createOIBusError(error);
@@ -222,6 +243,12 @@ export default class NorthConnector {
         await this.handleFile(this.fileBeingSent);
         this.fileCacheService.removeFileFromQueue();
         await this.archiveService.archiveOrRemoveFile(this.fileBeingSent);
+        const currentMetrics = this.cacheService.metrics;
+        this.cacheService.updateMetrics({
+          ...currentMetrics,
+          numberOfFiles: currentMetrics.numberOfValues + 1,
+          lastFile: this.fileBeingSent
+        });
         this.fileBeingSent = null;
       } catch (error) {
         const oibusError = this.createOIBusError(error);
@@ -376,5 +403,9 @@ export default class NorthConnector {
   async resetCache(): Promise<void> {
     await this.fileCacheService.removeAllErrorFiles();
     await this.fileCacheService.removeAllCacheFiles();
+  }
+
+  getMetricsDataStream(): PassThrough {
+    return this.cacheService.stream;
   }
 }

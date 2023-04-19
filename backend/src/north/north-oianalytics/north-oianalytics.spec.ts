@@ -22,6 +22,20 @@ jest.mock('../../service/cache/value-cache.service');
 jest.mock('../../service/cache/file-cache.service');
 jest.mock('../../service/cache/archive.service');
 
+jest.mock(
+  '../../service/cache.service',
+  () =>
+    function () {
+      return {
+        updateMetrics: jest.fn(),
+        metrics: {
+          numberOfValues: 1,
+          numberOfFiles: 1
+        }
+      };
+    }
+);
+
 const myReadStream = {
   pipe: jest.fn().mockReturnThis(),
   on: jest.fn().mockImplementation((event, handler) => {

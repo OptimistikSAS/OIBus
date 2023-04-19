@@ -12,11 +12,24 @@ import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
 import { SubNavbarComponent } from '../sub-navbar/sub-navbar.component';
+import { SouthDataComponent } from '../../south/south-display/south-data/south-data.component';
+import { NorthDataComponent } from './north-data/north-data.component';
 
 @Component({
   selector: 'oib-north-display',
   standalone: true,
-  imports: [NgIf, TranslateModule, RouterLink, NgSwitch, NgForOf, DecimalPipe, NorthSubscriptionsComponent, SubNavbarComponent],
+  imports: [
+    NgIf,
+    TranslateModule,
+    RouterLink,
+    NgSwitch,
+    NgForOf,
+    DecimalPipe,
+    NorthSubscriptionsComponent,
+    SubNavbarComponent,
+    SouthDataComponent,
+    NorthDataComponent
+  ],
   templateUrl: './north-display.component.html',
   styleUrls: ['./north-display.component.scss'],
   providers: [PageLoader]
