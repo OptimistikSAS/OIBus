@@ -109,7 +109,7 @@ export default class ConnectorCacheRepository {
         metrics.metricsStart,
         metrics.numberOfValues,
         metrics.numberOfFiles,
-        JSON.stringify(metrics.lastValue),
+        metrics.lastValue ? JSON.stringify(metrics.lastValue) : null,
         metrics.lastFile,
         metrics.lastConnection,
         metrics.lastRunStart,
