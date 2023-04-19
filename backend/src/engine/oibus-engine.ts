@@ -12,6 +12,7 @@ import path from 'node:path';
 import { OibusItemCommandDTO, OibusItemDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { Instant } from '../../../shared/model/types';
+import { PassThrough } from 'node:stream';
 
 const CACHE_FOLDER = './cache/data-stream';
 
@@ -196,5 +197,9 @@ export default class OIBusEngine extends BaseEngine {
 
   async retryAllErrorFiles(northId: string): Promise<void> {
     await this.northConnectors.get(northId)?.retryAllErrorFiles();
+  }
+
+  getSouthDataStream(southId: string): PassThrough | null {
+    return this.southConnectors.get(southId)?.getMetricsDataStream() || null;
   }
 }

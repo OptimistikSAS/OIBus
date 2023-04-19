@@ -13,6 +13,7 @@ import RepositoryService from '../service/repository.service';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
 import CacheService from '../service/cache.service';
+import { PassThrough } from 'node:stream';
 
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
@@ -427,5 +428,13 @@ export default class SouthConnector {
 
   async resetCache(): Promise<void> {
     this.southCacheService.resetCache();
+  }
+
+  getMetricsDataStream(): PassThrough {
+    return this.southCacheService.stream;
+  }
+
+  updateStream(): void {
+    this.southCacheService.updateMetrics(JSON.parse(JSON.stringify(this.southCacheService.metrics)));
   }
 }

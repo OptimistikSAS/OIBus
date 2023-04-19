@@ -6,15 +6,16 @@ const sse = () => {
     if (!ctx.path.startsWith('/sse')) {
       return next();
     }
+    ctx.req.socket.setKeepAlive(true);
+    ctx.set({
+      'Content-Type': 'text/event-stream'
+    });
 
     if (ctx.path.startsWith('/sse/south/')) {
       const splitString = ctx.path.split('/');
-      console.warn('TODO: send status for south', splitString[2]);
-      // const south = this.engine.activeSouths.find(activeSouth => activeSouth.id === splitString[2]);
-      // createSocket(ctx);
-      // ctx.body = south.statusService.getDataStream();
-      // south.statusService.forceDataUpdate();
-      return next();
+      ctx.body = ctx.app.reloadService.oibusEngine.getSouthDataStream(splitString[3]);
+      // ctx.app.reloadService.oibusEngine.updateStream(splitString[3]); // force an update of the data stream to receive it on the frontend
+      return ctx.ok();
     }
     if (ctx.path.startsWith('/sse/north/')) {
       const splitString = ctx.path.split('/');

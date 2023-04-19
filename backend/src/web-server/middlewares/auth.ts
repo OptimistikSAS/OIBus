@@ -45,6 +45,21 @@ const auth = () => {
       } catch {
         return authError(ctx);
       }
+    } else if (ctx.request?.url?.startsWith('/sse') && ctx.request?.query?.token) {
+      const token = ctx.request?.query?.token as string;
+      const verifiedToken: any = jwt.verify(token, await ctx.app.encryptionService.getPublicKey(), {
+        algorithms: ['RS256'],
+        issuer: 'oibus'
+      });
+      if (!verifiedToken) {
+        return authError(ctx);
+      }
+      // login and hashed password
+      headerUser = { name: verifiedToken.login, pass: verifiedToken.password };
+      const hashedPassword = await ctx.app.repositoryService.userRepository.getHashedPasswordByLogin(headerUser.name);
+      if (!hashedPassword || hashedPassword !== verifiedToken.password) {
+        return authError(ctx);
+      }
     } else {
       return authError(ctx);
     }
