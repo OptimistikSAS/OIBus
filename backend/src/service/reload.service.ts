@@ -216,22 +216,6 @@ export default class ReloadService {
     return await this.oibusEngine.getErrorFiles(northId, start, end, fileNameContains);
   }
 
-  async removeErrorFiles(northId: string, filenames: Array<string>): Promise<void> {
-    return await this.oibusEngine.removeErrorFiles(northId, filenames);
-  }
-
-  async retryErrorFiles(northId: string, filenames: Array<string>): Promise<void> {
-    return await this.oibusEngine.retryErrorFiles(northId, filenames);
-  }
-
-  async removeAllErrorFiles(northId: string): Promise<void> {
-    return await this.oibusEngine.removeAllErrorFiles(northId);
-  }
-
-  async retryAllErrorFiles(northId: string): Promise<void> {
-    return await this.oibusEngine.retryAllErrorFiles(northId);
-  }
-
   // TODO: on scan mode delete, add, update
   // TODO: on proxy delete, add, update
 }

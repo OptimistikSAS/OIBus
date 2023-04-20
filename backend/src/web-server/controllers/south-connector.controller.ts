@@ -86,21 +86,17 @@ export default class SouthConnectorController {
 
   async createSouthConnector(ctx: KoaContext<SouthConnectorCommandDTO, void>): Promise<void> {
     try {
-      const manifest = southManifests.find(south => south.name === ctx.request.body?.type);
+      const manifest = ctx.request.body ? southManifests.find(south => south.name === ctx.request.body!.type) : null;
       if (!manifest) {
         return ctx.throw(404, 'South manifest not found');
       }
 
-      await this.validator.validateSettings(manifest.settings, ctx.request.body?.settings);
+      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
 
-      const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
-      if (command) {
-        command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, null, manifest.settings);
-        const southConnector = await ctx.app.reloadService.onCreateSouth(command);
-        ctx.created(southConnector);
-      } else {
-        ctx.badRequest();
-      }
+      const command: SouthConnectorCommandDTO = ctx.request.body!;
+      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, null, manifest.settings);
+      const southConnector = await ctx.app.reloadService.onCreateSouth(command);
+      ctx.created(southConnector);
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
@@ -108,30 +104,26 @@ export default class SouthConnectorController {
 
   async updateSouthConnector(ctx: KoaContext<SouthConnectorCommandDTO, void>): Promise<void> {
     try {
-      const manifest = southManifests.find(south => south.name === ctx.request.body?.type);
+      const manifest = ctx.request.body ? southManifests.find(south => south.name === ctx.request.body!.type) : null;
       if (!manifest) {
         return ctx.throw(404, 'South manifest not found');
       }
 
-      await this.validator.validateSettings(manifest.settings, ctx.request.body?.settings);
+      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
 
       const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
       if (!southConnector) {
         return ctx.notFound();
       }
 
-      const command: SouthConnectorCommandDTO | undefined = ctx.request.body;
-      if (command) {
-        command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
-          command.settings,
-          southConnector.settings,
-          manifest.settings
-        );
-        await ctx.app.reloadService.onUpdateSouthSettings(ctx.params.id, command);
-        ctx.noContent();
-      } else {
-        ctx.badRequest();
-      }
+      const command: SouthConnectorCommandDTO = ctx.request.body!;
+      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
+        command.settings,
+        southConnector.settings,
+        manifest.settings
+      );
+      await ctx.app.reloadService.onUpdateSouthSettings(ctx.params.id, command);
+      ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
@@ -141,6 +133,16 @@ export default class SouthConnectorController {
     const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
     if (southConnector) {
       await ctx.app.reloadService.onDeleteSouth(ctx.params.id);
+      ctx.noContent();
+    } else {
+      ctx.notFound();
+    }
+  }
+
+  async resetSouthMetrics(ctx: KoaContext<void, void>): Promise<void> {
+    const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
+    if (southConnector) {
+      await ctx.app.reloadService.oibusEngine.resetSouthMetrics(ctx.params.id);
       ctx.noContent();
     } else {
       ctx.notFound();
@@ -177,15 +179,11 @@ export default class SouthConnectorController {
         return ctx.throw(404, 'South manifest not found');
       }
 
-      const command: OibusItemCommandDTO | undefined = ctx.request.body;
-      if (command) {
-        await this.validator.validateSettings(manifest.items.settings, command?.settings);
+      await this.validator.validateSettings(manifest.items.settings, ctx.request.body?.settings);
 
-        const southItem = await ctx.app.reloadService.onCreateSouthItem(ctx.params.southId, command);
-        ctx.created(southItem);
-      } else {
-        ctx.badRequest();
-      }
+      const command: OibusItemCommandDTO = ctx.request.body!;
+      const southItem = await ctx.app.reloadService.onCreateSouthItem(ctx.params.southId, command);
+      ctx.created(southItem);
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
@@ -205,15 +203,10 @@ export default class SouthConnectorController {
 
       const southItem = ctx.app.repositoryService.southItemRepository.getSouthItem(ctx.params.id);
       if (southItem) {
-        const command: OibusItemCommandDTO | undefined = ctx.request.body;
-        if (command) {
-          await this.validator.validateSettings(manifest.items.settings, command?.settings);
-
-          await ctx.app.reloadService.onUpdateSouthItemsSettings(ctx.params.southId, southItem, command);
-          ctx.noContent();
-        } else {
-          ctx.badRequest();
-        }
+        await this.validator.validateSettings(manifest.items.settings, ctx.request.body?.settings);
+        const command: OibusItemCommandDTO = ctx.request.body!;
+        await ctx.app.reloadService.onUpdateSouthItemsSettings(ctx.params.southId, southItem, command);
+        ctx.noContent();
       } else {
         ctx.notFound();
       }

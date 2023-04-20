@@ -16,5 +16,14 @@ export default jest.fn().mockImplementation(() => ({
   onUpdateHistoryItemsSettings: jest.fn(),
   onDeleteHistoryItem: jest.fn(),
   onCreateNorthSubscription: jest.fn(),
-  onDeleteNorthSubscription: jest.fn()
+  onDeleteNorthSubscription: jest.fn(),
+  oibusEngine: {
+    resetSouthMetrics: jest.fn(),
+    resetNorthMetrics: jest.fn(),
+    getErrorFiles: jest.fn(),
+    removeErrorFiles: jest.fn(),
+    retryErrorFiles: jest.fn(),
+    removeAllErrorFiles: jest.fn(),
+    retryAllErrorFiles: jest.fn()
+  }
 }));

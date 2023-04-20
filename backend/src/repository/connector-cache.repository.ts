@@ -116,4 +116,9 @@ export default class ConnectorCacheRepository {
         metrics.lastRunDuration
       );
   }
+
+  removeMetrics(connectorId: string): void {
+    const query = `DELETE FROM ${METRICS_TABLE} WHERE connector_id = ?;`;
+    this._database.prepare(query).run(connectorId);
+  }
 }

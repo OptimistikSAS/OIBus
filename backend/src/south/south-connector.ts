@@ -433,4 +433,8 @@ export default class SouthConnector {
   getMetricsDataStream(): PassThrough {
     return this.cacheService.stream;
   }
+
+  resetMetrics(): void {
+    this.cacheService.resetMetrics();
+  }
 }
