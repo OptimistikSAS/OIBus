@@ -408,4 +408,8 @@ export default class NorthConnector {
   getMetricsDataStream(): PassThrough {
     return this.cacheService.stream;
   }
+
+  resetMetrics(): void {
+    this.cacheService.resetMetrics();
+  }
 }

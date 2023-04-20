@@ -226,7 +226,18 @@ describe('North connector controller', () => {
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateNorth).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'North not found');
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
+  });
+
+  it('createNorthConnector() should return 404 when body is null', async () => {
+    ctx.request.body = null;
+
+    await northConnectorController.createNorthConnector(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onCreateNorth).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
   });
 
   it('createNorthConnector() should return bad request when validation fails', async () => {
@@ -280,7 +291,7 @@ describe('North connector controller', () => {
     expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onUpdateNorthSettings).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'North not found');
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
   });
 
   it('updateNorthConnector() should return bad request when validation fails', async () => {
@@ -318,6 +329,19 @@ describe('North connector controller', () => {
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
+  it('updateNorthConnector() should return 404 when body is null', async () => {
+    ctx.request.body = null;
+    ctx.params.id = 'id';
+
+    await northConnectorController.updateNorthConnector(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateNorthSettings).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
+  });
+
   it('deleteNorthConnector() should delete North connector', async () => {
     ctx.params.id = 'id';
     ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
@@ -338,5 +362,179 @@ describe('North connector controller', () => {
     expect(ctx.app.repositoryService.subscriptionRepository.deleteNorthSubscriptions).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onDeleteNorth).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
+  });
+
+  it('resetNorthMetrics() should reset North metrics', async () => {
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+
+    await northConnectorController.resetNorthMetrics(ctx);
+
+    expect(ctx.app.reloadService.oibusEngine.resetNorthMetrics).toHaveBeenCalledWith('id');
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('resetNorthMetrics() should not reset North metrics if not found', async () => {
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+
+    await northConnectorController.resetNorthMetrics(ctx);
+
+    expect(ctx.app.reloadService.oibusEngine.resetNorthMetrics).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+  });
+
+  it('getFileErrors() should return North connector error files', async () => {
+    ctx.params.northId = 'id';
+    ctx.query.fileNameContains = 'file';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.reloadService.oibusEngine.getErrorFiles.mockReturnValue([]);
+
+    await northConnectorController.getFileErrors(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.getErrorFiles).toHaveBeenCalledWith(northConnector.id, '', '', 'file');
+    expect(ctx.ok).toHaveBeenCalledWith([]);
+  });
+
+  it('getFileErrors() should return North connector error files with no file name provided', async () => {
+    ctx.params.northId = 'id';
+    ctx.query.fileNameContains = null;
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.reloadService.oibusEngine.getErrorFiles.mockReturnValue([]);
+
+    await northConnectorController.getFileErrors(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.getErrorFiles).toHaveBeenCalledWith(northConnector.id, '', '', '');
+    expect(ctx.ok).toHaveBeenCalledWith([]);
+  });
+
+  it('getFileErrors() should not return North connector error files if not found', async () => {
+    ctx.params.northId = 'id';
+    ctx.query.fileNameContains = 'file';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+
+    await northConnectorController.getFileErrors(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.getErrorFiles).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it('removeFileErrors() should remove error file', async () => {
+    ctx.params.northId = 'id';
+    ctx.request.body = ['file1', 'file2'];
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+
+    await northConnectorController.removeFileErrors(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.removeErrorFiles).toHaveBeenCalledWith(northConnector.id, ['file1', 'file2']);
+    expect(ctx.noContent).toHaveBeenCalledTimes(1);
+  });
+
+  it('removeFileErrors() should not remove error file if not found', async () => {
+    ctx.params.northId = 'id';
+    ctx.request.body = ['file1', 'file2'];
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+
+    await northConnectorController.removeFileErrors(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.removeErrorFiles).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it('removeFileErrors() should not remove error file if invalid body', async () => {
+    ctx.params.northId = 'id';
+    ctx.request.body = 'invalid body';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+
+    await northConnectorController.removeFileErrors(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.removeErrorFiles).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(400, 'Invalid file list');
+  });
+
+  it('retryErrorFiles() should retry error file', async () => {
+    ctx.params.northId = 'id';
+    ctx.request.body = ['file1', 'file2'];
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+
+    await northConnectorController.retryErrorFiles(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.retryErrorFiles).toHaveBeenCalledWith(northConnector.id, ['file1', 'file2']);
+    expect(ctx.noContent).toHaveBeenCalledTimes(1);
+  });
+
+  it('retryErrorFiles() should not retry error file if not found', async () => {
+    ctx.params.northId = 'id';
+    ctx.request.body = ['file1', 'file2'];
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+
+    await northConnectorController.retryErrorFiles(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.retryErrorFiles).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it('retryErrorFiles() should not retry error file if invalid body', async () => {
+    ctx.params.northId = 'id';
+    ctx.request.body = 'invalid body';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+
+    await northConnectorController.retryErrorFiles(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.retryErrorFiles).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(400, 'Invalid file list');
+  });
+
+  it('removeAllErrorFiles() should remove all error file', async () => {
+    ctx.params.northId = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+
+    await northConnectorController.removeAllErrorFiles(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.removeAllErrorFiles).toHaveBeenCalledWith(northConnector.id);
+    expect(ctx.noContent).toHaveBeenCalledTimes(1);
+  });
+
+  it('removeAllErrorFiles() should not remove all error file if not found', async () => {
+    ctx.params.northId = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+
+    await northConnectorController.removeAllErrorFiles(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.removeAllErrorFiles).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it('retryAllErrorFiles() should retry all error file', async () => {
+    ctx.params.northId = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+
+    await northConnectorController.retryAllErrorFiles(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.retryAllErrorFiles).toHaveBeenCalledWith(northConnector.id);
+    expect(ctx.noContent).toHaveBeenCalledTimes(1);
+  });
+
+  it('retryAllErrorFiles() should not retry all error file if not found', async () => {
+    ctx.params.northId = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+
+    await northConnectorController.retryAllErrorFiles(ctx);
+
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.reloadService.oibusEngine.retryAllErrorFiles).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
   });
 });

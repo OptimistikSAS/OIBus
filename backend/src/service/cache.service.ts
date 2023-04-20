@@ -75,6 +75,11 @@ export default class CacheService {
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
+  resetMetrics(): void {
+    this._cacheRepository.removeMetrics(this.connectorId);
+    this.createMetricsTable();
+  }
+
   get metrics(): ConnectorMetrics {
     return this._metrics;
   }

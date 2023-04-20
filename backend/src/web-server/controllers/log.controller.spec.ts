@@ -20,7 +20,7 @@ const logStreamValuesCommand = {
   }
 };
 const logStreamCommand = {
-  streams: [logStreamValuesCommand]
+  streams: [logStreamValuesCommand, null]
 };
 const formattedLog = {
   oibus: logStreamValuesCommand.stream.oibus,

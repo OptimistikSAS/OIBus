@@ -206,4 +206,12 @@ export default class OIBusEngine extends BaseEngine {
   getNorthDataStream(northId: string): PassThrough | null {
     return this.northConnectors.get(northId)?.getMetricsDataStream() || null;
   }
+
+  resetSouthMetrics(southId: string): PassThrough | null {
+    return this.southConnectors.get(southId)?.resetMetrics() || null;
+  }
+
+  resetNorthMetrics(northId: string): PassThrough | null {
+    return this.northConnectors.get(northId)?.resetMetrics() || null;
+  }
 }

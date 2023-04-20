@@ -13,7 +13,6 @@ import timescaleManifest from '../../north/north-timescale-db/manifest';
 import watsyManifest from '../../north/north-watsy/manifest';
 import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthType } from '../../../../shared/model/north-connector.model';
 import JoiValidator from '../../validators/joi.validator';
-import { DateTime } from 'luxon';
 
 // TODO: retrieve north types from a local store
 export const northManifests = [
@@ -83,21 +82,17 @@ export default class NorthConnectorController {
 
   async createNorthConnector(ctx: KoaContext<NorthConnectorCommandDTO, void>): Promise<void> {
     try {
-      const manifest = northManifests.find(north => north.name === ctx.request.body?.type);
+      const manifest = ctx.request.body ? northManifests.find(north => north.name === ctx.request.body!.type) : null;
       if (!manifest) {
-        return ctx.throw(404, 'North not found');
+        return ctx.throw(404, 'North manifest not found');
       }
 
-      await this.validator.validateSettings(manifest.settings, ctx.request.body?.settings);
+      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
 
-      const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
-      if (command) {
-        command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, null, manifest.settings);
-        const northConnector = await ctx.app.reloadService.onCreateNorth(command);
-        ctx.created(northConnector);
-      } else {
-        ctx.badRequest();
-      }
+      const command: NorthConnectorCommandDTO = ctx.request.body!;
+      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, null, manifest.settings);
+      const northConnector = await ctx.app.reloadService.onCreateNorth(command);
+      ctx.created(northConnector);
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
@@ -105,30 +100,26 @@ export default class NorthConnectorController {
 
   async updateNorthConnector(ctx: KoaContext<NorthConnectorCommandDTO, void>): Promise<void> {
     try {
-      const manifest = northManifests.find(north => north.name === ctx.request.body?.type);
+      const manifest = ctx.request.body ? northManifests.find(north => north.name === ctx.request.body!.type) : null;
       if (!manifest) {
-        return ctx.throw(404, 'North not found');
+        return ctx.throw(404, 'North manifest not found');
       }
 
-      await this.validator.validateSettings(manifest.settings, ctx.request.body?.settings);
+      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
 
       const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
       if (!northConnector) {
         return ctx.notFound();
       }
 
-      const command: NorthConnectorCommandDTO | undefined = ctx.request.body;
-      if (command) {
-        command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
-          command.settings,
-          northConnector.settings,
-          manifest.settings
-        );
-        await ctx.app.reloadService.onUpdateNorthSettings(ctx.params.id, command);
-        ctx.noContent();
-      } else {
-        ctx.badRequest();
-      }
+      const command: NorthConnectorCommandDTO = ctx.request.body!;
+      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
+        command.settings,
+        northConnector.settings,
+        manifest.settings
+      );
+      await ctx.app.reloadService.onUpdateNorthSettings(ctx.params.id, command);
+      ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
@@ -145,6 +136,16 @@ export default class NorthConnectorController {
     }
   }
 
+  async resetNorthMetrics(ctx: KoaContext<void, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    if (northConnector) {
+      await ctx.app.reloadService.oibusEngine.resetNorthMetrics(ctx.params.id);
+      ctx.noContent();
+    } else {
+      ctx.notFound();
+    }
+  }
+
   async getFileErrors(ctx: KoaContext<void, void>): Promise<void> {
     const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
     if (!northConnector) {
@@ -152,7 +153,7 @@ export default class NorthConnectorController {
     }
 
     const fileNameContains = ctx.query.fileNameContains || '';
-    const errorFiles = await ctx.app.reloadService.getErrorFiles(northConnector.id, '', '', fileNameContains);
+    const errorFiles = await ctx.app.reloadService.oibusEngine.getErrorFiles(northConnector.id, '', '', fileNameContains);
     ctx.ok(errorFiles);
   }
 
@@ -166,11 +167,11 @@ export default class NorthConnectorController {
       return ctx.throw(400, 'Invalid file list');
     }
 
-    await ctx.app.reloadService.removeErrorFiles(northConnector.id, ctx.request.body);
+    await ctx.app.reloadService.oibusEngine.removeErrorFiles(northConnector.id, ctx.request.body);
     ctx.noContent();
   }
 
-  async retryFileErrors(ctx: KoaContext<Array<string>, void>): Promise<void> {
+  async retryErrorFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
     const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
     if (!northConnector) {
       return ctx.notFound();
@@ -180,7 +181,7 @@ export default class NorthConnectorController {
       return ctx.throw(400, 'Invalid file list');
     }
 
-    await ctx.app.reloadService.retryErrorFiles(northConnector.id, ctx.request.body);
+    await ctx.app.reloadService.oibusEngine.retryErrorFiles(northConnector.id, ctx.request.body);
     ctx.noContent();
   }
 
@@ -190,7 +191,7 @@ export default class NorthConnectorController {
       return ctx.notFound();
     }
 
-    await ctx.app.reloadService.removeAllErrorFiles(northConnector.id);
+    await ctx.app.reloadService.oibusEngine.removeAllErrorFiles(northConnector.id);
     ctx.noContent();
   }
 
@@ -200,7 +201,7 @@ export default class NorthConnectorController {
       return ctx.notFound();
     }
 
-    await ctx.app.reloadService.retryAllErrorFiles(northConnector.id);
+    await ctx.app.reloadService.oibusEngine.retryAllErrorFiles(northConnector.id);
     ctx.noContent();
   }
 }
