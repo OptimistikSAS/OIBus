@@ -276,6 +276,17 @@ describe('South connector controller', () => {
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
   });
 
+  it('createSouthConnector() should return 404 when body is null', async () => {
+    ctx.request.body = null;
+
+    await southConnectorController.createSouthConnector(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onCreateSouth).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+  });
+
   it('createSouthConnector() should return bad request when validation fails', async () => {
     ctx.request.body = {
       ...southConnectorCommand
@@ -319,6 +330,19 @@ describe('South connector controller', () => {
       ...southConnectorCommand,
       type: 'invalid'
     };
+    ctx.params.id = 'id';
+
+    await southConnectorController.updateSouthConnector(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouthSettings).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+  });
+
+  it('updateSouthConnector() should return 404 when body is null', async () => {
+    ctx.request.body = null;
     ctx.params.id = 'id';
 
     await southConnectorController.updateSouthConnector(ctx);
@@ -487,10 +511,14 @@ describe('South connector controller', () => {
   it('createSouthItem() should return bad request when body is missing', async () => {
     ctx.request.body = null;
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    const validationError = new Error('invalid body');
+    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
+      throw validationError;
+    });
 
     await southConnectorController.createSouthItem(ctx);
 
-    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalledTimes(1);
     expect(ctx.app.reloadService.onCreateSouthItem).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalled();
   });
@@ -587,12 +615,16 @@ describe('South connector controller', () => {
     ctx.request.body = null;
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
     ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(oibusItem);
+    const validationError = new Error('invalid body');
+    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
+      throw validationError;
+    });
 
     await southConnectorController.updateSouthItem(ctx);
 
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
     expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
-    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(validator.validateSettings).toHaveBeenCalledTimes(1);
     expect(ctx.app.reloadService.onUpdateSouthItemsSettings).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalled();
   });
@@ -625,5 +657,25 @@ describe('South connector controller', () => {
 
     expect(ctx.app.reloadService.onDeleteSouthItem).toHaveBeenCalledWith('id');
     expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('resetSouthMetrics() should reset South metrics', async () => {
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+
+    await southConnectorController.resetSouthMetrics(ctx);
+
+    expect(ctx.app.reloadService.oibusEngine.resetSouthMetrics).toHaveBeenCalledWith('id');
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('resetSouthMetrics() should not reset South metrics if not found', async () => {
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValueOnce(null);
+
+    await southConnectorController.resetSouthMetrics(ctx);
+
+    expect(ctx.app.reloadService.oibusEngine.resetSouthMetrics).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
   });
 });
