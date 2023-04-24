@@ -791,7 +791,7 @@ export default {
           }
         }
 
-        dataSource.OPCUA_HA.scanGroups = dataSource.OPCUA_HA.scanGroups.map((scanGroup) => ({
+        dataSource.OPCHDA.scanGroups = dataSource.OPCHDA.scanGroups.map((scanGroup) => ({
           aggregate: scanGroup.Aggregate,
           resampling: scanGroup.resampling,
           scanMode: scanGroup.scanMode,
@@ -1782,7 +1782,7 @@ export default {
     config.engine.scanModes = config.engine.scanModes.map((scanMode) => ({ ...scanMode, id: nanoid() }))
 
     logger.info('Create UID for proxies.')
-    config.engine.proxies = config.engine.proxies.map((proxy) => ({ ...proxy, id: nanoid() }))
+    config.engine.proxies = config.engine.proxies ? config.engine.proxies.map((proxy) => ({ ...proxy, id: nanoid() })) : []
   },
   31: async (config, logger) => {
     for (const south of config.south) {
