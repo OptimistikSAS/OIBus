@@ -63,10 +63,8 @@ export default class CacheService {
   createMetricsTable(): void {
     this._cacheRepository.createMetricsTable(this.connectorId);
     const results = this._cacheRepository.getMetrics(this.connectorId);
-    if (results) {
-      this._metrics = results;
-      this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
-    }
+    this._metrics = results!;
+    this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
   updateMetrics(newMetrics: ConnectorMetrics): void {
@@ -92,7 +90,7 @@ export default class CacheService {
     this._stream?.destroy();
     this._stream = new PassThrough();
     setTimeout(() => {
-      this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
+      this._stream!.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
     }, 100);
     return this._stream;
   }

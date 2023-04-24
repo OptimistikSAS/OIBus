@@ -365,7 +365,7 @@ describe('North connector controller', () => {
   });
 
   it('resetNorthMetrics() should reset North metrics', async () => {
-    ctx.params.id = 'id';
+    ctx.params.northId = 'id';
     ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
 
     await northConnectorController.resetNorthMetrics(ctx);
@@ -375,7 +375,7 @@ describe('North connector controller', () => {
   });
 
   it('resetNorthMetrics() should not reset North metrics if not found', async () => {
-    ctx.params.id = 'id';
+    ctx.params.northId = 'id';
     ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
 
     await northConnectorController.resetNorthMetrics(ctx);

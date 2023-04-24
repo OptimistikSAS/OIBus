@@ -140,9 +140,9 @@ export default class SouthConnectorController {
   }
 
   async resetSouthMetrics(ctx: KoaContext<void, void>): Promise<void> {
-    const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
+    const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
     if (southConnector) {
-      await ctx.app.reloadService.oibusEngine.resetSouthMetrics(ctx.params.id);
+      await ctx.app.reloadService.oibusEngine.resetSouthMetrics(ctx.params.southId);
       ctx.noContent();
     } else {
       ctx.notFound();
