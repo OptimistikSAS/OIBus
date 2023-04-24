@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.5.4](https://github.com/OptimistikSAS/OIBus/compare/v2.5.3...v2.5.4) (2023-04-24)
+
+
+### Bug Fixes
+
+* **ci:** fix node version ([4de4103](https://github.com/OptimistikSAS/OIBus/commit/4de4103ef86b82431858a4a9e8b3cda1f40be99d))
+* **endpoint:** Fix addValues endpoint when receiving from legacy OIbus ([45113fb](https://github.com/OptimistikSAS/OIBus/commit/45113fbecce340e322fabffc0a5658574c480f91))
+* **engine:** fix async startup for connectors ([6e3148c](https://github.com/OptimistikSAS/OIBus/commit/6e3148c1e7545e162f241c54e105e6e48ce5351c))
+* **migration:** Fix proxies and OPCHDA migration ([ea1888f](https://github.com/OptimistikSAS/OIBus/commit/ea1888f9375cba4a81ee0ca586fe5c8929538368))
+* **mysql:** fix mysql package ([cf7391b](https://github.com/OptimistikSAS/OIBus/commit/cf7391bc224fe5bb967b28d4b35e4a231100fc68))
+* **north:** add acceptUnauthorized field in OIAnalytics and OIConnect north connectors ([8ec6800](https://github.com/OptimistikSAS/OIBus/commit/8ec68008953927cd419ebb3455e12d82ceb1dd06))
+
 ### [2.5.3](https://github.com/OptimistikSAS/OIBus/compare/v2.5.2...v2.5.3) (2023-04-07)
 
 
