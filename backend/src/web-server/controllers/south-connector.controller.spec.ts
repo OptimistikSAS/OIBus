@@ -660,7 +660,7 @@ describe('South connector controller', () => {
   });
 
   it('resetSouthMetrics() should reset South metrics', async () => {
-    ctx.params.id = 'id';
+    ctx.params.southId = 'id';
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
 
     await southConnectorController.resetSouthMetrics(ctx);
@@ -670,7 +670,7 @@ describe('South connector controller', () => {
   });
 
   it('resetSouthMetrics() should not reset South metrics if not found', async () => {
-    ctx.params.id = 'id';
+    ctx.params.southId = 'id';
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValueOnce(null);
 
     await southConnectorController.resetSouthMetrics(ctx);

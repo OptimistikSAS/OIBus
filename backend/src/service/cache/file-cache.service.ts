@@ -27,10 +27,6 @@ export default class FileCacheService {
     this._errorFolder = path.resolve(baseFolder, ERROR_FOLDER);
   }
 
-  get logger(): pino.Logger {
-    return this._logger;
-  }
-
   setLogger(value: pino.Logger) {
     this._logger = value;
   }
@@ -153,10 +149,6 @@ export default class FileCacheService {
    */
   async getErrorFiles(fromDate: Instant, toDate: Instant, nameFilter: string): Promise<Array<NorthCacheFiles>> {
     const filenames = await fs.readdir(this._errorFolder);
-    if (filenames.length === 0) {
-      return [];
-    }
-
     const filteredFilenames: Array<NorthCacheFiles> = [];
     for (const filename of filenames) {
       try {

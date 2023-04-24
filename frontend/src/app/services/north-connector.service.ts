@@ -121,4 +121,12 @@ export class NorthConnectorService {
   removeAllNorthConnectorCacheErrorFiles(northId: string): Observable<void> {
     return this.http.delete<void>(`/api/north/${northId}/cache/file-errors/remove-all`);
   }
+
+  /**
+   * Reset the selected North metrics
+   * @param northId - the ID of the North connector to reset
+   */
+  resetMetrics(northId: string): Observable<void> {
+    return this.http.put<void>(`/api/north/${northId}/cache/reset-metrics`, null);
+  }
 }

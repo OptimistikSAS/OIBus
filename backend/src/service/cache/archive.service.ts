@@ -31,10 +31,6 @@ export default class ArchiveService {
     this.archiveFolder = path.resolve(baseFolder, ARCHIVE_FOLDER);
   }
 
-  get logger(): pino.Logger {
-    return this._logger;
-  }
-
   /**
    * Create folders and activate archive cleanup if needed
    */
@@ -65,17 +61,17 @@ export default class ArchiveService {
       // Move cache file into the archive folder
       try {
         await fs.rename(filePathInCache, archivePath);
-        this._logger.debug(`File "${filePathInCache}" moved to "${archivePath}".`);
+        this._logger.debug(`File "${filePathInCache}" moved to archive folder "${archivePath}"`);
       } catch (renameError) {
-        this._logger.error(renameError);
+        this._logger.error(`Could not move "${filePathInCache}" from cache: ${renameError}`);
       }
     } else {
       // Delete original file
       try {
         await fs.unlink(filePathInCache);
-        this._logger.debug(`File "${filePathInCache}" removed from disk.`);
+        this._logger.debug(`File "${filePathInCache}" removed from disk`);
       } catch (unlinkError) {
-        this._logger.error(unlinkError);
+        this._logger.error(`Could not remove "${filePathInCache}" from cache: ${unlinkError}`);
       }
     }
   }
@@ -84,7 +80,7 @@ export default class ArchiveService {
    * Delete files in archiveFolder if they are older thant the retention time.
    */
   async refreshArchiveFolder(): Promise<void> {
-    this._logger.debug('Parse archive folder to remove old files.');
+    this._logger.debug('Parse archive folder to remove old files');
     // If a timeout already runs, clear it
     if (this.archiveTimeout) {
       clearTimeout(this.archiveTimeout);
@@ -95,18 +91,17 @@ export default class ArchiveService {
       files = await fs.readdir(this.archiveFolder);
     } catch (error) {
       // If the archive folder doest not exist (removed by the user for example), an error is logged
-      this._logger.error(error);
+      this._logger.error(`Error reading archive folder "${this.archiveFolder}": ${error}`);
     }
     if (files.length > 0) {
       const referenceDate = new Date().getTime();
 
       // Map each file to a promise and remove files sequentially
-      await files.reduce(
-        (promise, file) => promise.then(async () => this.removeFileIfTooOld(file, referenceDate, this.archiveFolder)),
-        Promise.resolve()
-      );
+      for (const file of files) {
+        await this.removeFileIfTooOld(file, referenceDate, this.archiveFolder);
+      }
     } else {
-      this._logger.debug(`The archive folder "${this.archiveFolder}" is empty. Nothing to delete.`);
+      this._logger.debug(`The archive folder "${this.archiveFolder}" is empty. Nothing to delete`);
     }
     this.archiveTimeout = setTimeout(this.refreshArchiveFolder.bind(this), ARCHIVE_TIMEOUT);
   }
@@ -120,14 +115,14 @@ export default class ArchiveService {
       // If a file is being written or corrupted, the stat method can fail an error is logged
       stats = await fs.stat(path.join(archiveFolder, filename));
     } catch (error) {
-      this._logger.error(error);
+      this._logger.error(`Could not read stats from archive file "${path.join(archiveFolder, filename)}": ${error}`);
     }
     if (stats && stats.mtimeMs + this.retentionDuration < referenceDate) {
       try {
         await fs.unlink(path.join(archiveFolder, filename));
-        this._logger.debug(`File "${path.join(archiveFolder, filename)}" removed from archive.`);
+        this._logger.debug(`File "${path.join(archiveFolder, filename)}" removed from archive`);
       } catch (unlinkError) {
-        this._logger.error(unlinkError);
+        this._logger.error(`Could not remove old file "${path.join(archiveFolder, filename)}" from archive: ${unlinkError}`);
       }
     }
   }

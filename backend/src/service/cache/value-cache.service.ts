@@ -38,10 +38,6 @@ export default class ValueCacheService {
     this.settings = settings;
   }
 
-  get logger(): pino.Logger {
-    return this._logger;
-  }
-
   /**
    * Create folders, read the cache folders to initialize the bufferFiles, queue and compactQueue
    * It also counts the values stored in the cache and log it.
@@ -106,9 +102,9 @@ export default class ValueCacheService {
     // Sort the compact queue to have the oldest file first
     this.compactedQueue.sort((a, b) => a.createdAt - b.createdAt);
     if (numberOfValuesInCache > 0) {
-      this._logger.info(`${numberOfValuesInCache} values in cache`);
+      this._logger.debug(`${numberOfValuesInCache} values in cache`);
     } else {
-      this._logger.info('No value in cache');
+      this._logger.debug('No value in cache');
     }
   }
 
@@ -118,6 +114,7 @@ export default class ValueCacheService {
    */
   async flush(flag: 'time-flush' | 'max-flush' = 'time-flush'): Promise<void> {
     if (this.flushInProgress) {
+      this._logger.trace(`Flush already in progress`);
       return;
     }
     this.flushInProgress = true;

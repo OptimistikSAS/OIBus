@@ -1,11 +1,21 @@
 <div>
-  <h2><span translate="north.data.metrics-title"></span></h2>
-  <div *ngIf="connectorMetrics">
+  <div class="d-flex align-items-center">
     <div>
-      <span translate="north.data.metrics-start"></span>
-      <span translate="common.colon-separator"></span>
-      <span>{{ connectorMetrics.metricsStart | datetime:'mediumWithSeconds' }}</span>
+      <h2>
+        <span translate="north.data.metrics-title"></span>
+      </h2>
+      <span
+        *ngIf="connectorMetrics"
+        translate="north.data.metrics-start"
+        class="text-muted"
+        id="reset-button"
+        [translateParams]="{start: connectorMetrics.metricsStart | datetime:'mediumWithSeconds'}"
+      ></span>
     </div>
+    <button *ngIf="connectorMetrics" class="btn btn-primary ms-3" translate="north.data.reset-metrics" (click)="resetMetrics()"></button>
+  </div>
+
+  <div *ngIf="connectorMetrics" class="mt-3">
     <div *ngIf="connectorMetrics.numberOfValues !== null">
       <span translate="north.data.number-of-values"></span>
       <span translate="common.colon-separator"></span>

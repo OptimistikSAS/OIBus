@@ -137,9 +137,9 @@ export default class NorthConnectorController {
   }
 
   async resetNorthMetrics(ctx: KoaContext<void, void>): Promise<void> {
-    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
     if (northConnector) {
-      await ctx.app.reloadService.oibusEngine.resetNorthMetrics(ctx.params.id);
+      await ctx.app.reloadService.oibusEngine.resetNorthMetrics(ctx.params.northId);
       ctx.noContent();
     } else {
       ctx.notFound();
