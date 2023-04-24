@@ -1,9 +1,10 @@
-import { addAuthenticationToHeaders, httpSend } from './http-request-static-functions';
+// import { addAuthenticationToHeaders, httpSend } from './http-request-static-functions';
 import pino from 'pino';
 
 import { HealthSignalDTO } from '../../../shared/model/engine.model';
 import ProxyService from './proxy.service';
 import EncryptionService from './encryption.service';
+import fetch from 'node-fetch';
 
 /**
  * Class HealthSignal - sends health signal to a remote host or into the logs
@@ -55,11 +56,37 @@ export default class HealthSignalService {
    */
   async sendHttpSignal(data: string): Promise<void> {
     try {
-      const headers = { 'Content-Type': 'application/json' };
       const proxyAgent = this._settings.http.proxyId ? await this.proxyService.createProxyAgent(this._settings.http.proxyId) : null;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
 
-      await addAuthenticationToHeaders(headers, this._settings.http.authentication, this.encryptionService);
-      await httpSend(this._settings.http.address, 'POST', headers, data, 10, proxyAgent);
+      switch (this._settings.http.authentication.type) {
+        case 'basic': {
+          const decryptedPassword = await this.encryptionService.decryptText(this._settings.http.authentication.password);
+          const basic = Buffer.from(`${this._settings.http.authentication.username}:${decryptedPassword}`).toString('base64');
+          headers.authorization = `Basic ${basic}`;
+          break;
+        }
+        case 'api-key':
+          headers[this._settings.http.authentication.key] = await this.encryptionService.decryptText(
+            this._settings.http.authentication.secret
+          );
+          break;
+
+        case 'bearer':
+          headers.authorization = `Bearer ${await this.encryptionService.decryptText(this._settings.http.authentication.token)}`;
+          break;
+        default:
+          break;
+      }
+
+      await fetch(this._settings.http.address, {
+        method: 'POST',
+        headers,
+        body: data,
+        timeout: 10_000,
+        agent: proxyAgent
+      });
+
       this._logger.trace(`Health signal successfully sent to "${this._settings.http.address}".`);
     } catch (error) {
       this._logger.error(error);

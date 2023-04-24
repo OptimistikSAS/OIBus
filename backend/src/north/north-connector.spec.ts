@@ -70,12 +70,17 @@ jest.mock(
 );
 jest.mock('../service/cache/archive.service');
 
+const resetMetrics = jest.fn();
 jest.mock(
   '../service/cache.service',
   () =>
     function () {
       return {
         updateMetrics: jest.fn(),
+        get stream() {
+          return { stream: 'myStream' };
+        },
+        resetMetrics,
         metrics: {
           numberOfValues: 1,
           numberOfFiles: 1
@@ -503,5 +508,15 @@ describe('NorthConnector disabled', () => {
     await north.resetCache();
     expect(removeAllErrorFiles).toHaveBeenCalledTimes(1);
     expect(removeAllCacheFiles).toHaveBeenCalledTimes(1);
+  });
+
+  it('should get metrics stream', () => {
+    const stream = north.getMetricsDataStream();
+    expect(stream).toEqual({ stream: 'myStream' });
+  });
+
+  it('should reset metrics', () => {
+    north.resetMetrics();
+    expect(resetMetrics).toHaveBeenCalledTimes(1);
   });
 });

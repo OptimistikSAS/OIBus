@@ -11,15 +11,14 @@ import { NorthCacheSettingsLightDTO } from '../../../../shared/model/north-conne
 jest.mock('../utils', () => ({
   generateRandomId: jest.fn(() => 'generated-uuid'),
   createFolder: jest.fn(() => Promise.resolve()),
-  dirSize: jest.fn(() => 1000)
+  dirSize: jest.fn()
 }));
 jest.mock('node:fs/promises');
-jest.mock('../utils');
 
 // Mock logger
 const logger: pino.Logger = new PinoLogger();
+const anotherLogger: pino.Logger = new PinoLogger();
 
-// const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 const nowDateString = '2020-02-02T02:02:02.222Z';
 let settings: NorthCacheSettingsLightDTO;
 let cache: ValueCache;
@@ -33,8 +32,10 @@ describe('ValueCache', () => {
       maxSendCount: 1000,
       retryCount: 3,
       retryInterval: 5000,
-      maxSize: 10000
+      maxSize: 1000
     };
+    (dirSize as jest.Mock).mockImplementation(() => 1000);
+
     cache = new ValueCache(logger, 'myCacheFolder', settings);
   });
 
@@ -76,7 +77,7 @@ describe('ValueCache', () => {
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values'));
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors'));
 
-    expect(logger.info).toHaveBeenCalledWith('8 values in cache');
+    expect(logger.debug).toHaveBeenCalledWith('8 values in cache');
     expect(logger.error).toHaveBeenCalledWith(
       `Error while reading buffer file "${path.resolve(
         'myCacheFolder',
@@ -100,7 +101,7 @@ describe('ValueCache', () => {
 
     await cache.start();
 
-    expect(logger.info).toHaveBeenCalledWith('No value in cache');
+    expect(logger.debug).toHaveBeenCalledWith('No value in cache');
   });
 
   it('should be properly initialized with values in cache and no buffer file', async () => {
@@ -122,7 +123,7 @@ describe('ValueCache', () => {
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values'));
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors'));
 
-    expect(logger.info).toHaveBeenCalledWith('8 values in cache');
+    expect(logger.debug).toHaveBeenCalledWith('8 values in cache');
   });
 
   it('should properly time flush with no data to flush', async () => {
@@ -309,6 +310,19 @@ describe('ValueCache', () => {
     await cache.cacheValues(valuesToCache); // compact queue here
     expect(compactSpy).toHaveBeenCalledTimes(1);
     compactSpy.mockReset();
+
+    await cache.cacheValues([valuesToCache[0], valuesToCache[0]]);
+
+    const promise = new Promise(resolve => {
+      setTimeout(() => resolve(''), 10);
+    });
+    compactSpy.mockImplementationOnce(async () => {
+      await promise;
+    });
+    cache.flush();
+    cache.flush();
+    jest.advanceTimersByTime(1000);
+    expect(logger.trace).toHaveBeenCalledWith(`Flush already in progress`);
   });
 
   it('should compact queue', async () => {
@@ -332,6 +346,14 @@ describe('ValueCache', () => {
     await cache.compactQueueCache(queue);
     expect(logger.error).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith(new Error('writing error'));
+  });
+
+  it('should properly change logger', async () => {
+    (fs.readdir as jest.Mock).mockReturnValue([]);
+    cache.setLogger(anotherLogger);
+    await cache.start();
+    expect(logger.debug).not.toHaveBeenCalled();
+    expect(anotherLogger.debug).toHaveBeenCalledWith(`No value in cache`);
   });
 
   describe('with values loaded', () => {
@@ -414,6 +436,24 @@ describe('ValueCache', () => {
       await cache.stop();
 
       expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('with cache full of values', () => {
+    beforeEach(async () => {
+      (dirSize as jest.Mock).mockImplementation(() => 10_000_000_000_000); // 10 To
+
+      (fs.readdir as jest.Mock).mockReturnValue([]);
+      await cache.start();
+    });
+
+    it('should not accept new values', async () => {
+      await cache.cacheValues([{}, {}]);
+      expect(logger.debug).toHaveBeenCalledWith(
+        `North cache is exceeding the maximum allowed size ` +
+          `(${Math.floor((10_000_000_000_000 / 1024 / 1024) * 100) / 100} MB >= 1000 MB). ` +
+          'Values will be discarded until the cache is emptied (by sending files/values or manual removal)'
+      );
     });
   });
 });

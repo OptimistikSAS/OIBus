@@ -13,6 +13,7 @@ jest.mock('../../service/utils');
 jest.mock('node:fs/promises');
 
 const logger: pino.Logger = new PinoLogger();
+const anotherLogger: pino.Logger = new PinoLogger();
 
 // Method used to flush promises called in setTimeout
 const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
@@ -65,11 +66,11 @@ describe('ArchiveService', () => {
 
       await archiveService.archiveOrRemoveFile('myFile.csv');
       expect(logger.debug).toHaveBeenCalledWith(
-        `File "myFile.csv" moved to "${path.resolve(archiveService.archiveFolder, 'myFile.csv')}".`
+        `File "myFile.csv" moved to archive folder "${path.resolve(archiveService.archiveFolder, 'myFile.csv')}"`
       );
 
       await archiveService.archiveOrRemoveFile('myFile.csv');
-      expect(logger.error).toHaveBeenCalledWith(new Error('rename error'));
+      expect(logger.error).toHaveBeenCalledWith(`Could not move "myFile.csv" from cache: ${new Error('rename error')}`);
     });
 
     it('should refresh archive folder', async () => {
@@ -80,9 +81,9 @@ describe('ArchiveService', () => {
 
       await archiveService.refreshArchiveFolder();
       expect(clearTimeoutSpy).not.toHaveBeenCalled();
-      expect(logger.debug).toHaveBeenCalledWith('Parse archive folder to remove old files.');
+      expect(logger.debug).toHaveBeenCalledWith('Parse archive folder to remove old files');
       expect(logger.debug).toHaveBeenCalledWith(
-        `The archive folder "${path.resolve('myCacheFolder', 'archive')}" is empty. Nothing to delete.`
+        `The archive folder "${path.resolve('myCacheFolder', 'archive')}" is empty. Nothing to delete`
       );
 
       jest.advanceTimersByTime(3600000);
@@ -99,7 +100,9 @@ describe('ArchiveService', () => {
 
       await archiveService.refreshArchiveFolder();
       expect(archiveService.removeFileIfTooOld).not.toHaveBeenCalled();
-      expect(logger.error).toHaveBeenCalledWith(new Error('readdir error'));
+      expect(logger.error).toHaveBeenCalledWith(
+        `Error reading archive folder "${path.resolve('myCacheFolder', 'archive')}": ${new Error('readdir error')}`
+      );
     });
 
     it('should remove file if too old', async () => {
@@ -109,7 +112,7 @@ describe('ArchiveService', () => {
 
       await archiveService.removeFileIfTooOld('myOldFile.csv', new Date().getTime(), 'archiveFolder');
       expect(fs.unlink).toHaveBeenCalledWith(path.join('archiveFolder', 'myOldFile.csv'));
-      expect(logger.debug).toHaveBeenCalledWith(`File "${path.join('archiveFolder', 'myOldFile.csv')}" removed from archive.`);
+      expect(logger.debug).toHaveBeenCalledWith(`File "${path.join('archiveFolder', 'myOldFile.csv')}" removed from archive`);
       await archiveService.removeFileIfTooOld('myNewFile.csv', new Date().getTime(), 'archiveFolder');
       expect(logger.debug).toHaveBeenCalledTimes(1);
       expect(fs.unlink).toHaveBeenCalledTimes(1);
@@ -122,7 +125,9 @@ describe('ArchiveService', () => {
       });
 
       await archiveService.removeFileIfTooOld('myOldFile.csv', new Date().getTime(), 'archiveFolder');
-      expect(logger.error).toHaveBeenCalledWith(new Error('unlink error'));
+      expect(logger.error).toHaveBeenCalledWith(
+        `Could not remove old file "${path.join('archiveFolder', 'myOldFile.csv')}" from archive: ${new Error('unlink error')}`
+      );
     });
 
     it('should log an error if a problem occur accessing the file', async () => {
@@ -132,12 +137,22 @@ describe('ArchiveService', () => {
 
       await archiveService.removeFileIfTooOld('myOldFile.csv', new Date().getTime(), 'archiveFolder');
       expect(fs.unlink).not.toHaveBeenCalled();
-      expect(logger.error).toHaveBeenCalledWith(new Error('stat error'));
+      expect(logger.error).toHaveBeenCalledWith(
+        `Could not read stats from archive file "${path.join('archiveFolder', 'myOldFile.csv')}": ${new Error('stat error')}`
+      );
       expect(logger.error).toHaveBeenCalledTimes(1);
+    });
+
+    it('should properly change logger', async () => {
+      (fs.readdir as jest.Mock).mockReturnValue([]);
+      archiveService.setLogger(anotherLogger);
+      await archiveService.refreshArchiveFolder();
+      expect(logger.debug).not.toHaveBeenCalled();
+      expect(anotherLogger.debug).toHaveBeenCalledWith('Parse archive folder to remove old files');
     });
   });
 
-  describe('with enabled service', () => {
+  describe('with disabled service', () => {
     const settings: NorthArchiveSettings = {
       enabled: false,
       retentionDuration: 1
@@ -162,10 +177,10 @@ describe('ArchiveService', () => {
         });
 
       await archiveService.archiveOrRemoveFile('myFile.csv');
-      expect(logger.debug).toHaveBeenCalledWith('File "myFile.csv" removed from disk.');
+      expect(logger.debug).toHaveBeenCalledWith('File "myFile.csv" removed from disk');
 
       await archiveService.archiveOrRemoveFile('myFile.csv');
-      expect(logger.error).toHaveBeenCalledWith(new Error('unlink error'));
+      expect(logger.error).toHaveBeenCalledWith(`Could not remove "myFile.csv" from cache: ${new Error('unlink error')}`);
     });
   });
 });

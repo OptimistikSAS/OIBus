@@ -210,4 +210,14 @@ describe('NorthConnectorService', () => {
     testRequest.flush(null);
     expect(done).toBe(true);
   });
+
+  it('should reset North metrics', () => {
+    let done = false;
+
+    service.resetMetrics('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/cache/reset-metrics' });
+    expect(testRequest.request.body).toBeNull();
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
 });

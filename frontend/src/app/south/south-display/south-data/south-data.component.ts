@@ -6,6 +6,8 @@ import { NgIf } from '@angular/common';
 import { WindowService } from '../../../shared/window.service';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { DurationPipe } from '../../../shared/duration.pipe';
+import { NotificationService } from '../../../shared/notification.service';
+import { SouthConnectorService } from '../../../services/south-connector.service';
 
 @Component({
   selector: 'oib-south-data',
@@ -20,7 +22,12 @@ export class SouthDataComponent implements OnInit, OnDestroy {
   connectorMetrics: ConnectorMetrics | null = null;
   connectorStream: EventSource | null = null;
 
-  constructor(private windowService: WindowService, private cd: ChangeDetectorRef) {}
+  constructor(
+    private windowService: WindowService,
+    private southService: SouthConnectorService,
+    private notificationService: NotificationService,
+    private cd: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     const token = this.windowService.getStorageItem('oibus-token');
@@ -36,5 +43,11 @@ export class SouthDataComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.connectorStream?.close();
+  }
+
+  resetMetrics() {
+    this.southService.resetMetrics(this.southConnector.id).subscribe(() => {
+      this.notificationService.success('south.data.metrics-reset');
+    });
   }
 }

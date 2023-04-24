@@ -179,4 +179,14 @@ describe('SouthConnectorService', () => {
     testRequest.flush(null);
     expect(done).toBe(true);
   });
+
+  it('should reset South metrics', () => {
+    let done = false;
+
+    service.resetMetrics('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1/cache/reset-metrics' });
+    expect(testRequest.request.body).toBeNull();
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
 });
