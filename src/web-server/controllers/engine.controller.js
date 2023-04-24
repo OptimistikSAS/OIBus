@@ -61,18 +61,19 @@ const getSouth = (ctx) => {
  * @return {void}
  */
 const addValues = async (ctx) => {
-  const { name } = ctx.request.query
-  if (name && Array.isArray(ctx.request.body)) {
+  const { name, dataSourceId } = ctx.request.query
+  const dataSource = name || dataSourceId
+  if (dataSource && Array.isArray(ctx.request.body)) {
     try {
       ctx.app.engine.addValuesMessages += 1
       ctx.app.engine.addValuesCount += ctx.request.body.length
-      await ctx.app.engine.addValues(name, ctx.request.body)
+      await ctx.app.engine.addValues(dataSource, ctx.request.body)
       ctx.ok()
     } catch (error) {
-      ctx.throw(500, `Unable to add ${ctx.request.body.length} from ${name}`)
+      ctx.throw(500, `Unable to add ${ctx.request.body.length} from ${dataSource}`)
     }
   } else {
-    throw ctx(400, 'Missing datasource name')
+    throw ctx.throw(400, 'Missing datasource name')
   }
 }
 
