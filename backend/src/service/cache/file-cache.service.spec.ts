@@ -11,6 +11,8 @@ jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 
 const logger: pino.Logger = new PinoLogger();
+const anotherLogger: pino.Logger = new PinoLogger();
+
 const nowDateString = '2020-02-02T02:02:02.222Z';
 let cache: FileCache;
 describe('FileCache', () => {
@@ -246,10 +248,39 @@ describe('FileCache', () => {
   });
 
   it('should properly get error files', async () => {
-    (fs.readdir as jest.Mock).mockImplementation(() => []);
+    (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
+    (fs.stat as jest.Mock)
+      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis() })
+      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis() });
 
     const files = await cache.getErrorFiles('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
 
     expect(files).toEqual([]);
+  });
+
+  it('should properly get error files without filtering', async () => {
+    (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
+    (fs.stat as jest.Mock)
+      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis(), size: 100 })
+      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis(), size: 60 });
+
+    const files = await cache.getErrorFiles('', '', '');
+
+    expect(files).toEqual([
+      { filename: 'file1', modificationDate: '2000-02-02T02:02:02.222Z', size: 100 },
+      {
+        filename: 'file2',
+        modificationDate: '2030-02-02T02:02:02.222Z',
+        size: 60
+      }
+    ]);
+  });
+
+  it('should properly change logger', async () => {
+    (fs.readdir as jest.Mock).mockReturnValue([]);
+    cache.setLogger(anotherLogger);
+    await cache.start();
+    expect(logger.debug).not.toHaveBeenCalled();
+    expect(anotherLogger.debug).toHaveBeenCalledWith(`No files in cache`);
   });
 });

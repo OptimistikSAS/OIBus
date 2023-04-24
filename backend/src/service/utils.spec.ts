@@ -1,6 +1,6 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import fsSync from 'node:fs';
+import fsSync, { Dirent, Stats } from 'node:fs';
 import zlib from 'node:zlib';
 
 import minimist from 'minimist';
@@ -194,5 +194,36 @@ describe('Service utils', () => {
   it('should properly generate a random ID with bigger size', () => {
     const randomId = utils.generateRandomId(32);
     expect(randomId.length).toEqual(32);
+  });
+
+  it('should properly retrieve dir size', async () => {
+    const firstFolder: Array<Dirent> = [
+      { name: 'file1', isDirectory: () => false, isFile: () => true } as Dirent,
+      { name: 'file2', isDirectory: () => false, isFile: () => true } as Dirent,
+      { name: 'dir', isDirectory: () => true, isFile: () => false } as Dirent
+    ];
+    const secondFolder: Array<Dirent> = [
+      { name: 'file3', isDirectory: () => false, isFile: () => true } as Dirent,
+      { name: 'file4', isDirectory: () => false, isFile: () => false } as Dirent,
+      { name: 'file5', isDirectory: () => false, isFile: () => true } as Dirent
+    ];
+    (fs.readdir as jest.Mock).mockReturnValueOnce(firstFolder).mockReturnValueOnce(secondFolder);
+    (fs.stat as jest.Mock)
+      .mockReturnValueOnce({ size: 1 } as Stats)
+      .mockReturnValueOnce({ size: 2 } as Stats)
+      .mockImplementationOnce(() => {
+        throw new Error('stat error');
+      })
+      .mockReturnValueOnce({ size: 8 } as Stats);
+
+    const dirSize = await utils.dirSize('myDir');
+    expect(fs.readdir).toHaveBeenCalledWith('myDir', { withFileTypes: true });
+    expect(fs.readdir).toHaveBeenCalledWith(path.join('myDir', 'dir'), { withFileTypes: true });
+    expect(fs.stat).toHaveBeenCalledWith(path.join('myDir', 'file1'));
+    expect(fs.stat).toHaveBeenCalledWith(path.join('myDir', 'file2'));
+    expect(fs.stat).toHaveBeenCalledWith(path.join('myDir', 'dir', 'file3'));
+    expect(fs.stat).toHaveBeenCalledWith(path.join('myDir', 'dir', 'file5'));
+    expect(fs.stat).toHaveBeenCalledTimes(4);
+    expect(dirSize).toEqual(11);
   });
 });

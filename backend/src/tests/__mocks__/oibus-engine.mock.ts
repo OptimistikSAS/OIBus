@@ -10,6 +10,7 @@ export default jest.fn().mockImplementation(() => {
     stopNorth: jest.fn(),
     addItemToSouth: jest.fn(),
     updateItemInSouth: jest.fn(),
-    deleteItemFromSouth: jest.fn()
+    deleteItemFromSouth: jest.fn(),
+    getErrorFiles: jest.fn()
   };
 });

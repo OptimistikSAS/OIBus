@@ -23,6 +23,7 @@ const getSouthCacheMock = jest.fn();
 const createOrUpdateCacheScanModeMock = jest.fn();
 const resetCacheMock = jest.fn();
 const updateMetricsMock = jest.fn();
+const resetMetrics = jest.fn();
 jest.mock(
   '../service/cache.service',
   () =>
@@ -33,6 +34,10 @@ jest.mock(
         createOrUpdateCacheScanMode: createOrUpdateCacheScanModeMock,
         resetCache: resetCacheMock,
         updateMetrics: updateMetricsMock,
+        resetMetrics,
+        get stream() {
+          return { stream: 'myStream' };
+        },
         metrics: {
           numberOfValues: 1,
           numberOfFiles: 1
@@ -659,5 +664,15 @@ describe('SouthConnector without stream mode', () => {
   it('should reset cache', async () => {
     await south.resetCache();
     expect(resetCacheMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('should get metrics stream', () => {
+    const stream = south.getMetricsDataStream();
+    expect(stream).toEqual({ stream: 'myStream' });
+  });
+
+  it('should reset metrics', () => {
+    south.resetMetrics();
+    expect(resetMetrics).toHaveBeenCalledTimes(1);
   });
 });

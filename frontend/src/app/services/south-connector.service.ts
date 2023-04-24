@@ -84,6 +84,14 @@ export class SouthConnectorService {
   }
 
   /**
+   * Reset the selected South metrics
+   * @param southId - the ID of the South connector to reset
+   */
+  resetMetrics(southId: string): Observable<void> {
+    return this.http.put<void>(`/api/south/${southId}/cache/reset-metrics`, null);
+  }
+
+  /**
    * Retrieve the South items from search params
    * @param southId - the ID of the South connector
    * @param searchParams - The search params

@@ -6,6 +6,8 @@ import { WindowService } from '../../../shared/window.service';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { DurationPipe } from '../../../shared/duration.pipe';
 import { NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
+import { NorthConnectorService } from '../../../services/north-connector.service';
+import { NotificationService } from '../../../shared/notification.service';
 
 @Component({
   selector: 'oib-north-data',
@@ -20,7 +22,12 @@ export class NorthDataComponent implements OnInit, OnDestroy {
   connectorMetrics: ConnectorMetrics | null = null;
   connectorStream: EventSource | null = null;
 
-  constructor(private windowService: WindowService, private cd: ChangeDetectorRef) {}
+  constructor(
+    private windowService: WindowService,
+    private northService: NorthConnectorService,
+    private notificationService: NotificationService,
+    private cd: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     const token = this.windowService.getStorageItem('oibus-token');
@@ -36,5 +43,11 @@ export class NorthDataComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.connectorStream?.close();
+  }
+
+  resetMetrics() {
+    this.northService.resetMetrics(this.northConnector.id).subscribe(() => {
+      this.notificationService.success('north.data.metrics-reset');
+    });
   }
 }
