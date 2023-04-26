@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
 import {
   SouthConnectorCommandDTO,
@@ -11,6 +11,7 @@ import {
   SouthType
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
+import { DownloadService } from './download.service';
 
 /**
  * Service used to interact with the backend for CRUD operations on South connectors
@@ -19,7 +20,7 @@ import { Page } from '../../../../shared/model/types';
   providedIn: 'root'
 })
 export class SouthConnectorService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private downloadService: DownloadService) {}
 
   /**
    * Get South connectors types
@@ -141,5 +142,23 @@ export class SouthConnectorService {
    */
   deleteSouthItem(southId: string, southItemId: string) {
     return this.http.delete<void>(`/api/south/${southId}/items/${southItemId}`);
+  }
+
+  /**
+   * Export south items in CSV file
+   */
+  exportItems(southId: string, southName: string): Observable<void> {
+    return this.http
+      .get(`/api/south/${southId}/items/export`, { responseType: 'blob', observe: 'response' })
+      .pipe(map(response => this.downloadService.download(response, `${southName}.csv`)));
+  }
+
+  /**
+   * Upload south items from a CSV file
+   */
+  uploadItems(southId: string, file: File): Observable<void> {
+    const formData = new FormData();
+    formData.set('file', file);
+    return this.http.post<void>(`/api/south/${southId}/items/upload`, formData);
   }
 }

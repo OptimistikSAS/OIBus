@@ -133,4 +133,23 @@ export default class SouthItemRepository {
     const query = `DELETE FROM ${SOUTH_ITEM_TABLE} WHERE connector_id = ?;`;
     this.database.prepare(query).run(connectorId);
   }
+
+  createAndUpdateSouthItems(southId: string, itemsToAdd: Array<OibusItemDTO>, itemsToUpdate: Array<OibusItemDTO>): void {
+    const insert = this.database.prepare(
+      `INSERT INTO ${SOUTH_ITEM_TABLE} (id, name, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?);`
+    );
+    const update = this.database.prepare(`UPDATE ${SOUTH_ITEM_TABLE} SET name = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`);
+
+    const transaction = this.database.transaction(() => {
+      for (const item of itemsToAdd) {
+        const id = generateRandomId(6);
+
+        insert.run(id, item.name, southId, item.scanModeId, JSON.stringify(item.settings));
+      }
+      for (const item of itemsToUpdate) {
+        update.run(item.name, item.scanModeId, JSON.stringify(item.settings), item.id);
+      }
+    });
+    transaction();
+  }
 }

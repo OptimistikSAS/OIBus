@@ -37,6 +37,29 @@
               <span class="fa fa-plus me-2"></span>
               <span translate="south.add"></span>
             </button>
+
+            <div class="pull-right">
+              <button *ngIf="southItems && southItems.size > 0" class="btn btn-primary me-2" id="export-items" (click)="exportItems()">
+                <span *ngIf="exporting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                <span *ngIf="!exporting" class="fa fa-download me-1" role="status" aria-hidden="true"></span>
+                <span translate="south.items.export"></span>
+              </button>
+
+              <button
+                [disabled]="importing"
+                type="button"
+                class="btn btn-outline-secondary"
+                (click)="fileInput.click()"
+                (drop)="onImportDrop($event)"
+                (dragover)="onImportDragOver($event)"
+                id="import-button"
+              >
+                <span *ngIf="importing" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                <span *ngIf="!importing" class="fa fa-upload me-1" role="status" aria-hidden="true"></span>
+                <span translate="south.items.import"></span>
+              </button>
+              <input #fileInput (change)="onImportClick($event)" id="file" type="file" accept=".csv" class="d-none" />
+            </div>
           </span>
         </h2>
         <div class="col" *ngIf="southItems && southItemSchema">

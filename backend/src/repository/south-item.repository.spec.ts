@@ -191,4 +191,33 @@ describe('South item repository', () => {
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM south_item WHERE connector_id = ?;');
     expect(run).toHaveBeenCalledWith('connectorId');
   });
+
+  it('should create and update south items', () => {
+    (database.transaction as jest.Mock).mockImplementationOnce(callback => {
+      return () => callback();
+    });
+    const itemToAdd: OibusItemDTO = {
+      id: 'id1',
+      name: 'southScan1',
+      connectorId: 'southId',
+      scanModeId: 'scanModeId',
+      settings: {}
+    };
+
+    const itemToUpdate: OibusItemDTO = {
+      id: 'id2',
+      name: 'southScan2',
+      connectorId: 'southId',
+      scanModeId: 'scanModeId',
+      settings: {}
+    };
+
+    repository.createAndUpdateSouthItems('connectorId', [itemToAdd], [itemToUpdate]);
+    expect(database.prepare).toHaveBeenCalledWith(
+      `INSERT INTO south_item (id, name, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?);`
+    );
+    expect(database.prepare).toHaveBeenCalledWith(`UPDATE south_item SET name = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`);
+    expect(run).toHaveBeenCalledWith('123456', 'southScan1', 'connectorId', 'scanModeId', '{}');
+    expect(run).toHaveBeenCalledWith('southScan2', 'scanModeId', '{}', 'id2');
+  });
 });
