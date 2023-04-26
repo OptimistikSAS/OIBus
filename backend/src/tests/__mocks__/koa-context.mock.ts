@@ -32,5 +32,6 @@ export default jest.fn().mockImplementation(() => ({
   noContent: jest.fn(),
   badRequest: jest.fn(),
   notFound: jest.fn(),
-  throw: jest.fn()
+  throw: jest.fn(),
+  set: jest.fn()
 }));

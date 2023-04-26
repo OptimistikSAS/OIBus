@@ -1,4 +1,5 @@
 import { KoaContext } from '../koa';
+import csv from 'papaparse';
 
 import adsManifest from '../../south/south-ads/manifest';
 import folderScannerManifest from '../../south/south-folder-scanner/manifest';
@@ -19,6 +20,7 @@ import {
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
 import JoiValidator from '../../validators/joi.validator';
+import fs from 'node:fs/promises';
 
 // TODO: retrieve south types from a local store
 export const southManifests = [
@@ -156,6 +158,74 @@ export default class SouthConnectorController {
     };
     const southItems = ctx.app.repositoryService.southItemRepository.searchSouthItems(ctx.params.southId, searchParams);
     ctx.ok(southItems);
+  }
+
+  async exportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
+    const southItems = ctx.app.repositoryService.southItemRepository.getSouthItems(ctx.params.southId).map(item => {
+      const flattenedItem: Record<string, any> = {
+        ...item
+      };
+      for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
+        flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
+      }
+      delete flattenedItem.settings;
+      delete flattenedItem.connectorId;
+      return flattenedItem;
+    });
+    ctx.body = csv.unparse(southItems);
+    ctx.set('Content-disposition', 'attachment; filename=items.csv');
+    ctx.set('Content-Type', 'application/force-download');
+    ctx.ok();
+  }
+
+  async uploadSouthItems(ctx: KoaContext<void, any>): Promise<void> {
+    const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
+    if (!southConnector) {
+      return ctx.throw(404, 'South not found');
+    }
+
+    const manifest = southManifests.find(south => south.name === southConnector.type);
+    if (!manifest) {
+      return ctx.throw(404, 'South manifest not found');
+    }
+
+    const file = ctx.request.file;
+    if (file.mimetype !== 'text/csv') {
+      return ctx.badRequest();
+    }
+    let items: Array<any> = [];
+    try {
+      const fileContent = await fs.readFile(file.path);
+      const csvContent = csv.parse(fileContent.toString('utf8'), { header: true });
+      items = csvContent.data.map((data: any) => {
+        const item: Record<string, any> = { settings: {} };
+        for (const [key, value] of Object.entries(data)) {
+          if (key.startsWith('settings_')) {
+            item.settings[key.replace('settings_', '')] = value;
+          } else {
+            item[key] = value;
+          }
+        }
+        return item;
+      });
+      // Check if item settings match the item schema, throw an error otherwise
+      for (const item of items) {
+        await this.validator.validateSettings(manifest.items.settings, item.settings);
+      }
+    } catch (error: any) {
+      return ctx.badRequest(error.message);
+    }
+
+    try {
+      const itemsToAdd = items.filter(item => !item.id);
+      const itemsToUpdate = items.filter(item => item.id);
+
+      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, itemsToAdd, itemsToUpdate);
+    } catch {
+      return ctx.badRequest();
+    }
+
+    ctx.noContent();
   }
 
   async getSouthItem(ctx: KoaContext<void, OibusItemDTO>): Promise<void> {

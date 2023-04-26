@@ -9,7 +9,7 @@ import {
 } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { of, switchMap } from 'rxjs';
+import { finalize, of, switchMap } from 'rxjs';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { Page } from '../../../../../shared/model/types';
@@ -40,6 +40,8 @@ export class SouthDisplayComponent implements OnInit {
   southItems: Page<OibusItemDTO> | null = null;
   scanModes: Array<ScanModeDTO> = [];
   searchParams: OibusItemSearchParam | null = null;
+  importing = false;
+  exporting = false;
 
   constructor(
     private southConnectorService: SouthConnectorService,
@@ -165,6 +167,46 @@ export class SouthDisplayComponent implements OnInit {
       .pipe(switchMap(() => this.southConnectorService.deleteSouthItem(this.southConnector!.id, southItem.id)))
       .subscribe(() => {
         this.notificationService.success('south.items.deleted');
+        this.pageLoader.loadPage(this.southItems!);
+      });
+  }
+
+  /**
+   * Export items into a csv file
+   */
+  exportItems() {
+    this.exporting = true;
+    this.southConnectorService
+      .exportItems(this.southConnector!.id, this.southConnector!.name)
+      .pipe(finalize(() => (this.exporting = false)))
+      .subscribe(() => {
+        this.pageLoader.loadPage(this.southItems!);
+      });
+  }
+
+  onImportDragOver(e: Event) {
+    e.preventDefault();
+  }
+
+  onImportDrop(e: DragEvent) {
+    e.preventDefault();
+    const file = e.dataTransfer!.files![0];
+    this.importItems(file!);
+  }
+
+  onImportClick(e: Event) {
+    const fileInput = e.target as HTMLInputElement;
+    const file = fileInput!.files![0];
+    fileInput.value = '';
+    this.importItems(file!);
+  }
+
+  importItems(file: File) {
+    this.importing = true;
+    this.southConnectorService
+      .uploadItems(this.southConnector!.id, file)
+      .pipe(finalize(() => (this.importing = false)))
+      .subscribe(() => {
         this.pageLoader.loadPage(this.southItems!);
       });
   }

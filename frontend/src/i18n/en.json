@@ -309,6 +309,8 @@
       "edit": "Edit",
       "none": "No South items",
       "scan-mode": "Schedule",
+      "export": "Export items",
+      "import": "Import items",
       "search": {
         "name": "Name"
       }
