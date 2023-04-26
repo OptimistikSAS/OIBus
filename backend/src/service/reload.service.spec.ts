@@ -14,7 +14,12 @@ import HealthSignalService from './health-signal.service';
 import NorthService from './north.service';
 import OIBusEngine from '../engine/oibus-engine';
 import { EngineSettingsDTO, LogSettings } from '../../../shared/model/engine.model';
-import { OibusItemCommandDTO, OibusItemDTO, SouthConnectorCommandDTO } from '../../../shared/model/south-connector.model';
+import {
+  OibusItemCommandDTO,
+  OibusItemDTO,
+  SouthConnectorCommandDTO,
+  SouthConnectorDTO
+} from '../../../shared/model/south-connector.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
 import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
 import HistoryQueryEngine from '../engine/history-query-engine';
@@ -140,6 +145,13 @@ describe('reload service', () => {
     await service.onUpdateSouthItemsSettings('southId', southItem as OibusItemDTO, command as OibusItemCommandDTO);
     expect(repositoryService.southItemRepository.updateSouthItem).toHaveBeenCalledWith('southItemId', command);
     expect(oibusEngine.updateItemInSouth).toHaveBeenCalledWith('southId', southItem, command);
+  });
+
+  it('should create or update south items', async () => {
+    await service.onCreateOrUpdateSouthItems({ id: 'southId' } as SouthConnectorDTO, [], []);
+    expect(repositoryService.southItemRepository.createAndUpdateSouthItems).toHaveBeenCalledWith('southId', [], []);
+    expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
+    expect(oibusEngine.startSouth).toHaveBeenCalledWith('southId', { id: 'southId' });
   });
 
   it('should delete south item', async () => {

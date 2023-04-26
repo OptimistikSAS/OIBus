@@ -118,6 +118,16 @@ export default class ReloadService {
     this.oibusEngine.updateItemInSouth(southId, southItem, command);
   }
 
+  async onCreateOrUpdateSouthItems(
+    southSettings: SouthConnectorDTO,
+    itemsToAdd: Array<OibusItemDTO>,
+    itemsToUpdate: Array<OibusItemDTO>
+  ): Promise<void> {
+    await this.oibusEngine.stopSouth(southSettings.id);
+    this.repositoryService.southItemRepository.createAndUpdateSouthItems(southSettings.id, itemsToAdd, itemsToUpdate);
+    await this.oibusEngine.startSouth(southSettings.id, southSettings);
+  }
+
   async onDeleteSouthItem(itemId: string): Promise<void> {
     const southItem = this.repositoryService.southItemRepository.getSouthItem(itemId);
     this.oibusEngine.deleteItemFromSouth(southItem.connectorId, southItem);
