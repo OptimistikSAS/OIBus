@@ -12,10 +12,12 @@ import {
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
 import { toPage } from '../shared/test-utils';
+import { DownloadService } from './download.service';
 
 describe('SouthConnectorService', () => {
   let http: HttpTestingController;
   let service: SouthConnectorService;
+  let downloadService: DownloadService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -24,6 +26,7 @@ describe('SouthConnectorService', () => {
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(SouthConnectorService);
+    downloadService = TestBed.inject(DownloadService);
   });
 
   afterEach(() => http.verify());
@@ -188,5 +191,39 @@ describe('SouthConnectorService', () => {
     expect(testRequest.request.body).toBeNull();
     testRequest.flush(null);
     expect(done).toBe(true);
+  });
+
+  it('should download items blob', () => {
+    let downloaded = false;
+
+    spyOn(downloadService, 'download');
+    service.exportItems('id1', 'southName').subscribe(() => (downloaded = true));
+
+    http
+      .expectOne({
+        method: 'GET',
+        url: '/api/south/id1/items/export'
+      })
+      .flush(new Blob());
+
+    expect(downloaded).toBe(true);
+    expect(downloadService.download).toHaveBeenCalled();
+  });
+
+  it('should import items', () => {
+    const file = new Blob() as File;
+    const expectedFormData = new FormData();
+    expectedFormData.set('file', file);
+    let actualImportation = false;
+
+    service.uploadItems('id1', file).subscribe(() => {
+      actualImportation = true;
+    });
+
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/upload' });
+    expect(testRequest.request.body).toEqual(expectedFormData);
+    testRequest.flush(true);
+
+    expect(actualImportation).toBe(true);
   });
 });

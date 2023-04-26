@@ -11,6 +11,7 @@ export default jest.fn().mockImplementation(() => ({
   onDeleteSouth: jest.fn(),
   onCreateSouthItem: jest.fn(),
   onUpdateSouthItemsSettings: jest.fn(),
+  onCreateOrUpdateSouthItems: jest.fn(),
   onDeleteSouthItem: jest.fn(),
   onCreateHistoryQuery: jest.fn(),
   onUpdateHistoryItemsSettings: jest.fn(),
