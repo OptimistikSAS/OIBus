@@ -163,6 +163,12 @@ describe('reload service', () => {
     expect(repositoryService.southItemRepository.deleteSouthItem).toHaveBeenCalledWith('southItemId');
   });
 
+  it('should delete all south items', async () => {
+    await service.onDeleteAllSouthItems('southId');
+    expect(oibusEngine.deleteAllItemsFromSouth).toHaveBeenCalledWith('southId');
+    expect(repositoryService.southItemRepository.deleteAllSouthItems).toHaveBeenCalledWith('southId');
+  });
+
   it('should create north', async () => {
     const command = {};
     (repositoryService.northConnectorRepository.createNorthConnector as jest.Mock).mockReturnValueOnce({ id: 'northId' });
