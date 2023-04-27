@@ -30,7 +30,7 @@ class LoggerService {
   /**
    * Run the appropriate pino log transports according to the configuration
    */
-  async start(oibusId: string, logParameters: LogSettings): Promise<void> {
+  async start(oibusId: string, oibusName: string, logParameters: LogSettings): Promise<void> {
     await createFolder(LOG_FOLDER_NAME);
 
     const targets = [];
@@ -70,6 +70,7 @@ class LoggerService {
             address: logParameters.loki.address,
             tokenAddress: logParameters.loki.tokenAddress,
             id: oibusId,
+            name: oibusName,
             interval: logParameters.loki.interval
           },
           level: logParameters.loki.level

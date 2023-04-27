@@ -52,7 +52,7 @@ const LOG_DB_NAME = 'journal.db';
   }
 
   const loggerService = new LoggerService(encryptionService);
-  await loggerService.start(oibusSettings.id, oibusSettings.logParameters);
+  await loggerService.start(oibusSettings.id, oibusSettings.name, oibusSettings.logParameters);
 
   const proxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
   const healthSignalService = new HealthSignalService(
