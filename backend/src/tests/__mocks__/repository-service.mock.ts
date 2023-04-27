@@ -24,6 +24,7 @@ export default jest.fn().mockImplementation(() => ({
     updateSouthItem: jest.fn(),
     deleteSouthItem: jest.fn(),
     deleteSouthItemByConnectorId: jest.fn(),
+    deleteAllSouthItems: jest.fn(),
     createAndUpdateSouthItems: jest.fn()
   },
   historyQueryRepository: {

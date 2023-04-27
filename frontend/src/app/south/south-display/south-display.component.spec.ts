@@ -9,6 +9,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideTestingI18n } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { toPage } from '../../shared/test-utils';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { NotificationService } from '../../shared/notification.service';
 
 class SouthDisplayComponentTester extends ComponentTester<SouthDisplayComponent> {
   constructor() {
@@ -42,11 +44,17 @@ class SouthDisplayComponentTester extends ComponentTester<SouthDisplayComponent>
   get exportSpinner() {
     return this.element('#export-items .spinner-border')!;
   }
+
+  get deleteAllButtons() {
+    return this.button('#delete-all-items')!;
+  }
 }
 
 describe('SouthDisplayComponent', () => {
   let tester: SouthDisplayComponentTester;
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
+  let confirmationService: jasmine.SpyObj<ConfirmationService>;
+  let notificationService: jasmine.SpyObj<NotificationService>;
 
   const southConnector: SouthConnectorDTO = {
     id: 'id1',
@@ -59,6 +67,9 @@ describe('SouthDisplayComponent', () => {
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
+    confirmationService = createMock(ConfirmationService);
+    notificationService = createMock(NotificationService);
+
     TestBed.configureTestingModule({
       imports: [SouthDisplayComponent],
       providers: [
@@ -73,7 +84,9 @@ describe('SouthDisplayComponent', () => {
             }
           })
         },
-        { provide: SouthConnectorService, useValue: southConnectorService }
+        { provide: SouthConnectorService, useValue: southConnectorService },
+        { provide: ConfirmationService, useValue: confirmationService },
+        { provide: NotificationService, useValue: notificationService }
       ]
     });
 
@@ -156,5 +169,17 @@ describe('SouthDisplayComponent', () => {
 
     expect(southConnectorService.exportItems).toHaveBeenCalledWith('id1', 'South Connector');
     expect(tester.exportSpinner).toBeNull();
+  });
+
+  it('should delete all items', () => {
+    confirmationService.confirm.and.returnValue(of(undefined));
+    southConnectorService.deleteAllSouthItems.and.returnValue(of(undefined));
+
+    tester.deleteAllButtons.click();
+    tester.detectChanges();
+
+    expect(confirmationService.confirm).toHaveBeenCalled();
+    expect(notificationService.success).toHaveBeenCalledWith('south.items.all-deleted');
+    expect(southConnectorService.deleteAllSouthItems).toHaveBeenCalledWith('id1');
   });
 });

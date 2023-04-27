@@ -134,6 +134,11 @@ export default class ReloadService {
     this.repositoryService.southItemRepository.deleteSouthItem(itemId);
   }
 
+  async onDeleteAllSouthItems(southId: string): Promise<void> {
+    this.oibusEngine.deleteAllItemsFromSouth(southId);
+    this.repositoryService.southItemRepository.deleteAllSouthItems(southId);
+  }
+
   async onCreateNorth(command: NorthConnectorCommandDTO): Promise<NorthConnectorDTO> {
     const northSettings = this.repositoryService.northConnectorRepository.createNorthConnector(command);
     await this.oibusEngine.startNorth(northSettings.id, northSettings);
