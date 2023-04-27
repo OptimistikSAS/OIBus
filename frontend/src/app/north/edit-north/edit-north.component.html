@@ -140,13 +140,7 @@
             id="cancel-create-button"
             routerLink="/north"
           ></button>
-          <button
-            *ngIf="northConnector"
-            class="btn btn-cancel"
-            translate="common.cancel"
-            id="cancel-edit-button"
-            [routerLink]="['/north', northConnector.id]"
-          ></button>
+          <button *ngIf="northConnector" class="btn btn-cancel" translate="common.cancel" id="cancel-edit-button" oibBackButton></button>
         </div>
       </div>
     </div>
