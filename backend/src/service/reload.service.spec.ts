@@ -80,11 +80,11 @@ describe('reload service', () => {
 
   it('should update log parameters', async () => {
     const changeLoggerFn = jest.fn();
-    const newSettings = { id: 'oibusId', logParameters: {} as LogSettings, healthSignal: {} };
+    const newSettings = { id: 'oibusId', name: 'oibusName', logParameters: {} as LogSettings, healthSignal: {} };
     service.setWebServerChangeLogger(changeLoggerFn);
     await service.onUpdateOibusSettings(null, newSettings as EngineSettingsDTO);
     expect(loggerService.stop).toHaveBeenCalledTimes(1);
-    expect(loggerService.start).toHaveBeenCalledWith(newSettings.id, newSettings.logParameters);
+    expect(loggerService.start).toHaveBeenCalledWith(newSettings.id, newSettings.name, newSettings.logParameters);
     expect(changeLoggerFn).toHaveBeenCalledTimes(1);
     expect(healthSignalService.setLogger).toHaveBeenCalledTimes(1);
     expect(healthSignalService.setSettings).toHaveBeenCalledWith(newSettings.healthSignal);

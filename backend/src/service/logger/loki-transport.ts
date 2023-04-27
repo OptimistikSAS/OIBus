@@ -21,6 +21,7 @@ interface LokiOptions {
   tokenAddress?: string;
   address: string;
   id: string;
+  oibusName: string;
   interval?: number;
   batchLimit?: number;
 }
@@ -76,6 +77,7 @@ class LokiTransport {
           streams.push({
             stream: {
               oibus: this.options.id,
+              oibusName: this.options.oibusName,
               level: LEVEL_FORMAT[logLevel],
               scope: jsonMessage.scope
             },

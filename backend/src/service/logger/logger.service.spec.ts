@@ -19,7 +19,8 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 
 let service: LoggerService;
 let logSettings: LogSettings;
-const oibusId = 'MyOIBus';
+const oibusId = 'MyOIBusId';
+const oibusName = 'MyOIBusName';
 
 describe('Logger', () => {
   beforeEach(() => {
@@ -77,13 +78,14 @@ describe('Logger', () => {
           tokenAddress: logSettings.loki.tokenAddress,
           address: logSettings.loki.address,
           id: oibusId,
+          name: oibusName,
           interval: logSettings.loki.interval
         },
         level: logSettings.loki.level
       }
     ];
 
-    await service.start(oibusId, logSettings);
+    await service.start(oibusId, oibusName, logSettings);
 
     expect(pino).toHaveBeenCalledTimes(1);
     expect(pino).toHaveBeenCalledWith({
@@ -105,7 +107,7 @@ describe('Logger', () => {
     });
 
     logSettings.database.maxNumberOfLogs = 0;
-    await service.start(oibusId, logSettings);
+    await service.start(oibusId, oibusName, logSettings);
 
     expect(console.error).toHaveBeenCalledTimes(1);
     expect(console.error).toHaveBeenCalledWith(new Error('decrypt-error'));
@@ -135,13 +137,14 @@ describe('Logger', () => {
           tokenAddress: logSettings.loki.tokenAddress,
           address: logSettings.loki.address,
           id: oibusId,
+          name: oibusName,
           interval: logSettings.loki.interval
         },
         level: logSettings.loki.level
       }
     ];
 
-    await service.start(oibusId, logSettings);
+    await service.start(oibusId, oibusName, logSettings);
 
     expect(pino).toHaveBeenCalledTimes(1);
     expect(pino).toHaveBeenCalledWith({
@@ -171,7 +174,7 @@ describe('Logger', () => {
       }
     ];
 
-    await service.start(oibusId, logSettings);
+    await service.start(oibusId, oibusName, logSettings);
 
     expect(pino).toHaveBeenCalledTimes(1);
     expect(pino).toHaveBeenCalledWith({
