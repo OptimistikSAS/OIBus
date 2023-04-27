@@ -17,11 +17,22 @@ import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorManifest } f
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { createInput, getRowSettings } from '../../shared/utils';
+import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 
 @Component({
   selector: 'oib-edit-north',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule, ...formDirectives, RouterLink, SaveButtonComponent, FormComponent, OibScanModeComponent],
+  imports: [
+    NgIf,
+    NgForOf,
+    TranslateModule,
+    ...formDirectives,
+    RouterLink,
+    SaveButtonComponent,
+    FormComponent,
+    OibScanModeComponent,
+    BackNavigationDirective
+  ],
   templateUrl: './edit-north.component.html',
   styleUrls: ['./edit-north.component.scss']
 })

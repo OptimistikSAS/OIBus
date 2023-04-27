@@ -21,8 +21,9 @@ import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../../../shared/m
 import { SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
-import { Instant } from '../../../../../shared/model//types';
+import { Instant } from '../../../../../shared/model/types';
 import { DatetimepickerComponent } from '../../shared/datetimepicker/datetimepicker.component';
+import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -36,7 +37,8 @@ import { DatetimepickerComponent } from '../../shared/datetimepicker/datetimepic
     SaveButtonComponent,
     FormComponent,
     OibScanModeComponent,
-    DatetimepickerComponent
+    DatetimepickerComponent,
+    BackNavigationDirective
   ],
   templateUrl: './edit-history-query.component.html',
   styleUrls: ['./edit-history-query.component.scss']
