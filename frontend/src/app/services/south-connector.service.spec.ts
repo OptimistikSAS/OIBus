@@ -183,6 +183,14 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
+  it('should delete all South connector items', () => {
+    let done = false;
+    service.deleteAllSouthItems('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/south/id1/items/all' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
   it('should reset South metrics', () => {
     let done = false;
 
