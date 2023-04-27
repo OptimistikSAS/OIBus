@@ -179,7 +179,20 @@ export class SouthDisplayComponent implements OnInit {
     this.southConnectorService
       .exportItems(this.southConnector!.id, this.southConnector!.name)
       .pipe(finalize(() => (this.exporting = false)))
+      .subscribe();
+  }
+
+  /**
+   * Delete all items
+   */
+  deleteAllItems() {
+    this.confirmationService
+      .confirm({
+        messageKey: 'south.items.confirm-delete-all'
+      })
+      .pipe(switchMap(() => this.southConnectorService.deleteAllSouthItems(this.southConnector!.id)))
       .subscribe(() => {
+        this.notificationService.success('south.items.all-deleted');
         this.pageLoader.loadPage(this.southItems!);
       });
   }
@@ -208,6 +221,7 @@ export class SouthDisplayComponent implements OnInit {
       .pipe(finalize(() => (this.importing = false)))
       .subscribe(() => {
         this.pageLoader.loadPage(this.southItems!);
+        this.notificationService.success('south.items.imported');
       });
   }
 }

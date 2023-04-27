@@ -663,6 +663,15 @@ describe('South connector controller', () => {
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
+  it('deleteAllSouthItem() should delete all South items', async () => {
+    ctx.params.southId = 'id';
+
+    await southConnectorController.deleteAllSouthItem(ctx);
+
+    expect(ctx.app.reloadService.onDeleteAllSouthItems).toHaveBeenCalledWith('id');
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
   it('resetSouthMetrics() should reset South metrics', async () => {
     ctx.params.southId = 'id';
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);

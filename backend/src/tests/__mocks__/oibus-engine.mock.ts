@@ -11,6 +11,7 @@ export default jest.fn().mockImplementation(() => {
     addItemToSouth: jest.fn(),
     updateItemInSouth: jest.fn(),
     deleteItemFromSouth: jest.fn(),
+    deleteAllItemsFromSouth: jest.fn(),
     getErrorFiles: jest.fn()
   };
 });

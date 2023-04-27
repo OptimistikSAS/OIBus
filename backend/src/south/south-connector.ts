@@ -422,6 +422,14 @@ export default class SouthConnector {
     }
   }
 
+  deleteAllItems() {
+    this.itemsByScanModeIds.clear();
+    for (const cron of this.cronByScanModeIds.values()) {
+      cron.stop();
+    }
+    this.cronByScanModeIds.clear();
+  }
+
   setLogger(value: pino.Logger) {
     this.logger = value;
   }

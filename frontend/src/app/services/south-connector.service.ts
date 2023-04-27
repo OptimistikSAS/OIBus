@@ -145,6 +145,14 @@ export class SouthConnectorService {
   }
 
   /**
+   * Delete all South items
+   * @param southId - the ID of the South connector
+   */
+  deleteAllSouthItems(southId: string) {
+    return this.http.delete<void>(`/api/south/${southId}/items/all`);
+  }
+
+  /**
    * Export south items in CSV file
    */
   exportItems(southId: string, southName: string): Observable<void> {

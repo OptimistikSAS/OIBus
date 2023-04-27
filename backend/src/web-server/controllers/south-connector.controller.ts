@@ -289,4 +289,9 @@ export default class SouthConnectorController {
     await ctx.app.reloadService.onDeleteSouthItem(ctx.params.id);
     ctx.noContent();
   }
+
+  async deleteAllSouthItem(ctx: KoaContext<void, void>): Promise<void> {
+    await ctx.app.reloadService.onDeleteAllSouthItems(ctx.params.southId);
+    ctx.noContent();
+  }
 }

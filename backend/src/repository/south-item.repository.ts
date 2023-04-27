@@ -127,6 +127,14 @@ export default class SouthItemRepository {
   }
 
   /**
+   * Delete all South items of a South connector
+   */
+  deleteAllSouthItems(southId: string): void {
+    const query = `DELETE FROM ${SOUTH_ITEM_TABLE} WHERE connector_id = ?;`;
+    this.database.prepare(query).run(southId);
+  }
+
+  /**
    * Delete History items associated to a history query ID
    */
   deleteSouthItemByConnectorId(connectorId: string): void {
