@@ -6,6 +6,7 @@ import { DefaultValidationErrorsComponent } from './shared/default-validation-er
 import { WindowService } from './shared/window.service';
 import { CurrentUserService } from './shared/current-user.service';
 import { User } from '../../../shared/model/user.model';
+import { NavigationService } from './shared/navigation.service';
 
 @Component({
   selector: 'oib-root',
@@ -17,9 +18,14 @@ import { User } from '../../../shared/model/user.model';
 export class AppComponent implements OnInit {
   title = 'OIBus';
 
-  constructor(private currentUserService: CurrentUserService, private windowService: WindowService) {}
+  constructor(
+    private currentUserService: CurrentUserService,
+    private windowService: WindowService,
+    private navigationService: NavigationService
+  ) {}
 
   ngOnInit(): void {
+    this.navigationService.init();
     this.currentUserService.get().subscribe(user => this.reloadIfLanguageOrTimezoneNeedsChange(user));
   }
 

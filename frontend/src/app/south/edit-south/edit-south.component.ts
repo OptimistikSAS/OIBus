@@ -16,11 +16,12 @@ import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { ProxyService } from '../../services/proxy.service';
 import { createInput, getRowSettings } from '../../shared/utils';
+import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 
 @Component({
   selector: 'oib-edit-south',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule, ...formDirectives, RouterLink, SaveButtonComponent, FormComponent],
+  imports: [NgIf, NgForOf, TranslateModule, ...formDirectives, RouterLink, SaveButtonComponent, FormComponent, BackNavigationDirective],
   templateUrl: './edit-south.component.html',
   styleUrls: ['./edit-south.component.scss']
 })
@@ -91,9 +92,7 @@ export class EditSouthComponent implements OnInit {
           this.loading = false;
           return;
         }
-        const rowList = getRowSettings(manifest.settings, this.southConnector?.settings);
-
-        this.southSettingsSchema = rowList;
+        this.southSettingsSchema = getRowSettings(manifest.settings, this.southConnector?.settings);
         const inputsToSubscribeTo: Set<string> = new Set();
         const settingsForm = this.southForm.controls.settings;
         this.southSettingsSchema.forEach(row => {
