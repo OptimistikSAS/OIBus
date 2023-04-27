@@ -15,6 +15,7 @@ export interface LogStreamValuesCommandDTO {
   stream: {
     level: LogLevel;
     oibus: string;
+    oibusName: string;
     scope: string;
   };
 }

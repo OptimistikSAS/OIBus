@@ -69,9 +69,13 @@ export default class ReloadService {
   }
 
   async onUpdateOibusSettings(oldSettings: EngineSettingsDTO | null, newSettings: EngineSettingsDTO): Promise<void> {
-    if (!oldSettings || JSON.stringify(oldSettings.logParameters) !== JSON.stringify(newSettings.logParameters)) {
+    if (
+      !oldSettings ||
+      JSON.stringify(oldSettings.logParameters) !== JSON.stringify(newSettings.logParameters) ||
+      oldSettings.name !== newSettings.name
+    ) {
       await this.loggerService.stop();
-      await this.loggerService.start(newSettings.id, newSettings.logParameters);
+      await this.loggerService.start(newSettings.id, newSettings.name, newSettings.logParameters);
       await this.webServerChangeLoggerCallback(this.loggerService.createChildLogger('web-server'));
       await this.healthSignalService.setLogger(this.loggerService.createChildLogger('health'));
       await this.oibusEngine.setLogger(this.loggerService.createChildLogger('engine'));
