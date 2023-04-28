@@ -3,6 +3,8 @@
  */
 export default jest.fn().mockImplementation(() => {
   return {
+    start: jest.fn(),
+    stop: jest.fn(),
     setLogger: jest.fn(),
     startSouth: jest.fn(),
     stopSouth: jest.fn(),
@@ -11,6 +13,8 @@ export default jest.fn().mockImplementation(() => {
     addItemToSouth: jest.fn(),
     updateItemInSouth: jest.fn(),
     deleteItemFromSouth: jest.fn(),
+    addValues: jest.fn(),
+    addFile: jest.fn(),
     deleteAllItemsFromSouth: jest.fn(),
     getErrorFiles: jest.fn()
   };
