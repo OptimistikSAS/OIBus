@@ -3,16 +3,14 @@ import Router from '@koa/router';
 import multer from '@koa/multer';
 
 import {
-  scanModeSchema,
-  proxySchema,
-  externalSourceSchema,
   engineSchema,
+  externalSourceSchema,
   ipFilterSchema,
-  userSchema,
-  logSchema
+  logSchema,
+  proxySchema,
+  scanModeSchema,
+  userSchema
 } from '../../engine/oibus-validation-schema';
-
-import engineController from '../controllers/engine.controller.js';
 
 import LogController from '../controllers/log.controller';
 import ScanModeController from '../controllers/scan-mode.controller';
@@ -27,6 +25,7 @@ import HistoryQueryController from '../controllers/history-query.controller';
 import SubscriptionController from '../controllers/subscription.controller';
 import JoiValidator from '../../validators/joi.validator';
 import { KoaContext } from '../koa';
+import HealthSignalController from '../controllers/health-signal.controller';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
@@ -39,6 +38,7 @@ const southConnectorController = new SouthConnectorController(joiValidator);
 const historyQueryController = new HistoryQueryController(joiValidator, southManifests, northManifests);
 const userController = new UserController(joiValidator, userSchema);
 const logController = new LogController(joiValidator, logSchema);
+const healthSignalController = new HealthSignalController(joiValidator, logSchema);
 const subscriptionController = new SubscriptionController();
 
 const router = new Router();
@@ -49,10 +49,6 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage });
-
-router.post('/engine/addValues', engineController.addValues);
-router.post('/engine/addFile', upload.single('file'), engineController.addFile);
-router.post('/engine/aliveSignal', engineController.aliveSignal);
 
 router.get('/api/users', (ctx: KoaContext<any, any>) => userController.searchUsers(ctx));
 router.get('/api/users/:id', (ctx: KoaContext<any, any>) => userController.getUser(ctx));
@@ -83,6 +79,10 @@ router.get('/api/engine', (ctx: KoaContext<any, any>) => oibusController.getEngi
 router.put('/api/engine', (ctx: KoaContext<any, any>) => oibusController.updateEngineSettings(ctx));
 router.get('/api/reload', (ctx: KoaContext<any, any>) => oibusController.restart(ctx));
 router.get('/api/shutdown', (ctx: KoaContext<any, any>) => oibusController.shutdown(ctx));
+router.post('/api/add-values', (ctx: KoaContext<any, any>) => oibusController.addValues(ctx));
+router.post('/api/add-file', upload.single('file'), (ctx: KoaContext<any, any>) => oibusController.addFile(ctx));
+router.post('/api/health-signal', (ctx: KoaContext<any, any>) => healthSignalController.healthSignal(ctx));
+router.get('/api/info', (ctx: KoaContext<any, any>) => oibusController.getOIBusInfo(ctx));
 
 router.get('/api/ip-filters', (ctx: KoaContext<any, any>) => ipFilterController.getIpFilters(ctx));
 router.get('/api/ip-filters/:id', (ctx: KoaContext<any, any>) => ipFilterController.getIpFilter(ctx));
@@ -160,7 +160,5 @@ router.delete('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext
 
 router.get('/api/logs', (ctx: KoaContext<any, any>) => logController.searchLogs(ctx));
 router.post('/api/logs', (ctx: KoaContext<any, any>) => logController.addLogs(ctx));
-
-router.get('/api/info', oibusController.getOIBusInfo);
 
 export default router;

@@ -64,12 +64,9 @@ const LOG_DB_NAME = 'journal.db';
 
   const northService = new NorthService(proxyService, encryptionService, repositoryService);
   const southService = new SouthService(proxyService, encryptionService, repositoryService);
-  const oibusService = new OIBusService();
   const historyQueryService = new HistoryQueryService(proxyService, encryptionService, repositoryService);
 
   const engine = new OIBusEngine(encryptionService, proxyService, northService, southService, loggerService.createChildLogger('engine'));
-  await engine.start();
-
   const historyQueryEngine = new HistoryQueryEngine(
     encryptionService,
     proxyService,
@@ -78,6 +75,9 @@ const LOG_DB_NAME = 'journal.db';
     historyQueryService,
     loggerService.createChildLogger('history')
   );
+
+  const oibusService = new OIBusService(engine, historyQueryEngine);
+  await engine.start();
   await historyQueryEngine.start();
 
   const reloadService = new ReloadService(
@@ -98,6 +98,7 @@ const LOG_DB_NAME = 'journal.db';
     southService,
     northService,
     oibusService,
+    healthSignalService,
     loggerService.createChildLogger('web-server')
   );
   await server.init();
