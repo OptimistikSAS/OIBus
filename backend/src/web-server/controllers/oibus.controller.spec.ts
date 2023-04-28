@@ -77,30 +77,78 @@ describe('Oibus controller', () => {
   });
 
   it('restart() should restart oibus', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-
     await oibusController.restart(ctx);
-    jest.runAllTimers();
-
-    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1000);
     expect(ctx.app.logger.info).toHaveBeenCalledWith('Restarting OIBus');
     expect(ctx.noContent).toHaveBeenCalled();
+    expect(ctx.app.oibusService.restartOIBus).toHaveBeenCalled();
   });
 
   it('shutdown() should shutdown oibus', async () => {
-    const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
-
     await oibusController.shutdown(ctx);
-    jest.runAllTimers();
-
-    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1000);
     expect(ctx.app.logger.info).toHaveBeenCalledWith('Shutting down OIBus');
     expect(ctx.noContent).toHaveBeenCalled();
+    expect(ctx.app.oibusService.stopOIBus).toHaveBeenCalled();
   });
 
   it('should get OIBus info', async () => {
     (ctx.app.oibusService.getOIBusInfo as jest.Mock).mockReturnValue({ version: '3.0' } as OIBusInfo);
     await oibusController.getOIBusInfo(ctx);
     expect(ctx.ok).toHaveBeenCalledWith({ version: '3.0' });
+  });
+
+  it('should add values', async () => {
+    ctx.request.body = [{ field: 'my value' }];
+    ctx.request.query = { name: 'source' };
+    await oibusController.addValues(ctx);
+    expect(ctx.noContent).toHaveBeenCalled();
+    expect(ctx.app.oibusService.addValues).toHaveBeenCalledWith('source', [{ field: 'my value' }]);
+  });
+
+  it('should not add values if no source name provided', async () => {
+    ctx.request.body = [{ field: 'my value' }];
+    ctx.request.query = { name: '' };
+    await oibusController.addValues(ctx);
+    expect(ctx.badRequest).toHaveBeenCalled();
+    expect(ctx.app.oibusService.addValues).not.toHaveBeenCalled();
+  });
+
+  it('should properly manage internal error when adding values', async () => {
+    (ctx.app.oibusService.addValues as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('internal error');
+    });
+    ctx.request.body = [{ field: 'my value' }];
+    ctx.request.query = { name: 'source' };
+    await oibusController.addValues(ctx);
+    expect(ctx.internalServerError).toHaveBeenCalled();
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+  });
+
+  it('should add file', async () => {
+    ctx.request.query = { name: 'source' };
+    ctx.request.file = { path: 'filePath' };
+    await oibusController.addFile(ctx);
+    expect(ctx.noContent).toHaveBeenCalled();
+    expect(ctx.app.oibusService.addFile).toHaveBeenCalledWith('source', 'filePath');
+  });
+
+  it('should not add file if no source name provided', async () => {
+    ctx.request.file = { path: 'filePath' };
+    ctx.request.query = { name: '' };
+    await oibusController.addFile(ctx);
+    expect(ctx.badRequest).toHaveBeenCalled();
+    expect(ctx.app.oibusService.addFile).not.toHaveBeenCalled();
+  });
+
+  it('should properly manage internal error when adding file', async () => {
+    (ctx.app.oibusService.addFile as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('internal error');
+    });
+    ctx.request.query = { name: 'source' };
+    ctx.request.file = { path: 'filePath' };
+    await oibusController.addFile(ctx);
+    expect(ctx.internalServerError).toHaveBeenCalled();
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
   });
 });
