@@ -3,6 +3,8 @@
  */
 export default jest.fn().mockImplementation(() => {
   return {
+    start: jest.fn(),
+    stop: jest.fn(),
     setLogger: jest.fn(),
     startHistoryQuery: jest.fn(),
     stopHistoryQuery: jest.fn(),

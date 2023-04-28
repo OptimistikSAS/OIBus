@@ -6,6 +6,7 @@ import pino from 'pino';
 import SouthService from '../service/south.service';
 import OIBusService from '../service/oibus.service';
 import NorthService from '../service/north.service';
+import HealthSignalService from '../service/health-signal.service';
 
 interface KoaRequest<RequestBody> extends Request {
   body?: RequestBody;
@@ -17,6 +18,7 @@ export interface KoaApplication extends Koa {
   southService: SouthService;
   northService: NorthService;
   oibusService: OIBusService;
+  healthSignalService: HealthSignalService;
   reloadService: ReloadService;
   encryptionService: EncryptionService;
   logger: pino.Logger;
@@ -31,6 +33,7 @@ export interface KoaContext<RequestBody, ResponseBody> extends Context {
   noContent: any;
   created: any;
   badRequest: any;
+  internalServerError: any;
   notFound: any;
   throw: any;
   app: KoaApplication;

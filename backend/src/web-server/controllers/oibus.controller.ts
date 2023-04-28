@@ -2,9 +2,6 @@ import { KoaContext } from '../koa';
 import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../shared/model/engine.model';
 import AbstractController from './abstract.controller';
 
-const DELAY_RELOAD = 1000;
-const DELAY_SHUTDOWN = 1000;
-
 export default class OibusController extends AbstractController {
   async getEngineSettings(ctx: KoaContext<void, EngineSettingsDTO>): Promise<void> {
     const settings = ctx.app.repositoryService.engineRepository.getEngineSettings();
@@ -29,29 +26,46 @@ export default class OibusController extends AbstractController {
   }
 
   async restart(ctx: KoaContext<void, void>): Promise<void> {
-    setTimeout(() => {
-      // TODO: restart oibus
-      ctx.app.logger.info('Restarting OIBus');
-      // Ask the Master Cluster to reload
-      // process.send({ type: 'reload' });
-    }, DELAY_RELOAD);
-
+    ctx.app.logger.info('Restarting OIBus');
+    await ctx.app.oibusService.restartOIBus();
     ctx.noContent();
   }
 
   async shutdown(ctx: KoaContext<void, void>): Promise<void> {
-    setTimeout(() => {
-      // TODO: shutdown oibus
-      ctx.app.logger.info('Shutting down OIBus');
-      // Ask the Master Cluster to shut down
-      // process.send({ type: 'shutdown' });
-    }, DELAY_SHUTDOWN);
-
+    ctx.app.logger.info('Shutting down OIBus');
+    await ctx.app.oibusService.stopOIBus();
     ctx.noContent();
   }
 
   async getOIBusInfo(ctx: KoaContext<void, OIBusInfo>): Promise<void> {
     const oibusInfo = ctx.app.oibusService.getOIBusInfo();
     ctx.ok(oibusInfo);
+  }
+
+  async addValues(ctx: KoaContext<void, void>): Promise<void> {
+    const { name } = ctx.request.query;
+    if (name && Array.isArray(ctx.request.body)) {
+      try {
+        await ctx.app.oibusService.addValues(name as string, ctx.request.body);
+        return ctx.noContent();
+      } catch (error) {
+        return ctx.internalServerError();
+      }
+    }
+    return ctx.badRequest();
+  }
+
+  async addFile(ctx: KoaContext<void, void>): Promise<void> {
+    const { name } = ctx.request.query;
+    const file = ctx.request.file;
+    if (name && file) {
+      try {
+        await ctx.app.oibusService.addFile(name as string, ctx.request.file.path);
+        return ctx.noContent();
+      } catch (error) {
+        return ctx.internalServerError();
+      }
+    }
+    return ctx.badRequest();
   }
 }
