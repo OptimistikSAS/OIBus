@@ -22,14 +22,13 @@ export default class HistoryQueryItemRepository {
    * Search History items (point, query, folder...) associated to a History Query
    */
   searchHistoryItems(historyId: string, searchParams: OibusItemSearchParam): Page<OibusItemDTO> {
-    const queryParams = [];
     let whereClause = `WHERE history_id = ?`;
+    const queryParams = [historyId];
 
     if (searchParams.name) {
       queryParams.push(searchParams.name);
-      whereClause += ` AND name like '%${searchParams.name}%'`;
+      whereClause += ` AND name like '%' || ? || '%'`;
     }
-    queryParams.push(historyId);
     const query =
       `SELECT id, name, history_id AS historyId, settings FROM ${HISTORY_ITEM_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
@@ -42,7 +41,9 @@ export default class HistoryQueryItemRepository {
         connectorId: result.historyId,
         settings: JSON.parse(result.settings)
       }));
-    const totalElements = this.database.prepare(`SELECT COUNT(*) as count FROM ${HISTORY_ITEM_TABLE} ${whereClause}`).get(historyId).count;
+    const totalElements = this.database
+      .prepare(`SELECT COUNT(*) as count FROM ${HISTORY_ITEM_TABLE} ${whereClause}`)
+      .get(...queryParams).count;
     const totalPages = Math.ceil(totalElements / PAGE_SIZE);
 
     return {

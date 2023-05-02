@@ -24,14 +24,13 @@ export default class SouthItemRepository {
    * Search South items (point, query, folder...) associated to a South connector
    */
   searchSouthItems(southId: string, searchParams: OibusItemSearchParam): Page<OibusItemDTO> {
-    const queryParams = [];
     let whereClause = `WHERE connector_id = ?`;
+    const queryParams = [southId];
 
     if (searchParams.name) {
       queryParams.push(searchParams.name);
-      whereClause += ` AND name like '%${searchParams.name}%'`;
+      whereClause += ` AND name like '%' || ? || '%'`;
     }
-    queryParams.push(southId);
     const query =
       `SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEM_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
@@ -45,7 +44,9 @@ export default class SouthItemRepository {
         scanModeId: result.scanModeId,
         settings: JSON.parse(result.settings)
       }));
-    const totalElements = this.database.prepare(`SELECT COUNT(*) as count FROM ${SOUTH_ITEM_TABLE} ${whereClause}`).get(southId).count;
+    const totalElements = this.database
+      .prepare(`SELECT COUNT(*) as count FROM ${SOUTH_ITEM_TABLE} ${whereClause}`)
+      .get(...queryParams).count;
     const totalPages = Math.ceil(totalElements / PAGE_SIZE);
 
     return {

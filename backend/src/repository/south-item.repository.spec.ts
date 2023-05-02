@@ -79,7 +79,7 @@ describe('South item repository', () => {
     });
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_item WHERE ' +
-        "connector_id = ? AND name like '%my item%' LIMIT 50 OFFSET 0;"
+        "connector_id = ? AND name like '%' || ? || '%' LIMIT 50 OFFSET 0;"
     );
     expect(southScans).toEqual(expectedValue);
   });

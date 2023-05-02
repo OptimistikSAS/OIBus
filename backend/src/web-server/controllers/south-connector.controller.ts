@@ -156,6 +156,7 @@ export default class SouthConnectorController {
       page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
       name: (ctx.query.name as string) || null
     };
+    console.log('searchParams', searchParams);
     const southItems = ctx.app.repositoryService.southItemRepository.searchSouthItems(ctx.params.southId, searchParams);
     ctx.ok(southItems);
   }
