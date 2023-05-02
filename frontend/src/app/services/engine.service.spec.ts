@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { EngineService } from './engine.service';
-import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../../../../shared/model/engine.model';
+import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../shared/model/engine.model';
 
 describe('EngineService', () => {
   let http: HttpTestingController;
@@ -38,6 +38,34 @@ describe('EngineService', () => {
     service.updateEngineSettings(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine' });
     expect(testRequest.request.body).toEqual(command);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should get info', () => {
+    let expectedInfo: OIBusInfo | null = null;
+    const engineInfo = { version: 'version' } as OIBusInfo;
+
+    service.getInfo().subscribe(c => (expectedInfo = c));
+
+    http.expectOne({ url: '/api/info', method: 'GET' }).flush(engineInfo);
+    expect(expectedInfo!).toEqual(engineInfo);
+  });
+
+  it('should shutdown', () => {
+    let done = false;
+
+    service.shutdown().subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/shutdown' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should restart', () => {
+    let done = false;
+
+    service.restart().subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/restart' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });

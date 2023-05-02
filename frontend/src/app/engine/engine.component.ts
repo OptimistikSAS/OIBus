@@ -8,6 +8,9 @@ import { NgIf } from '@angular/common';
 import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
 import { ExternalSourceListComponent } from './external-source-list/external-source-list.component';
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
+import { NotificationService } from '../shared/notification.service';
+import { ConfirmationService } from '../shared/confirmation.service';
+import { switchMap } from 'rxjs';
 
 @Component({
   selector: 'oib-engine',
@@ -26,11 +29,50 @@ import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component
 })
 export class EngineComponent implements OnInit {
   engineSettings: EngineSettingsDTO | null = null;
-  constructor(private engineService: EngineService) {}
+  shuttingDown = false;
+  constructor(
+    private engineService: EngineService,
+    private notificationService: NotificationService,
+    private confirmationService: ConfirmationService
+  ) {}
 
   ngOnInit() {
     this.engineService.getEngineSettings().subscribe(settings => {
       this.engineSettings = settings;
     });
+  }
+
+  shutdown() {
+    this.confirmationService
+      .confirm({
+        messageKey: 'engine.confirm-shutdown'
+      })
+      .pipe(
+        switchMap(() => {
+          this.shuttingDown = true;
+          return this.engineService.shutdown();
+        })
+      )
+      .subscribe(() => {
+        this.shuttingDown = false;
+        this.notificationService.success('engine.shutdown-complete');
+      });
+  }
+
+  restart() {
+    this.confirmationService
+      .confirm({
+        messageKey: 'engine.confirm-restart'
+      })
+      .pipe(
+        switchMap(() => {
+          this.shuttingDown = true;
+          return this.engineService.restart();
+        })
+      )
+      .subscribe(() => {
+        this.shuttingDown = false;
+        this.notificationService.success('engine.restart-complete');
+      });
   }
 }
