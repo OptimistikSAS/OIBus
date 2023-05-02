@@ -15,6 +15,20 @@
               {{ 'engine.edit' | translate }}
             </button>
           </span>
+
+          <div class="pull-right">
+            <button [disabled]="shuttingDown" class="btn btn-danger me-2" id="restart" (click)="restart()">
+              <span *ngIf="shuttingDown" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              <span *ngIf="!shuttingDown" class="fa fa-rotate-right me-1" role="status" aria-hidden="true"></span>
+              <span translate="engine.restart"></span>
+            </button>
+
+            <button [disabled]="shuttingDown" class="btn btn-danger" id="shutdown" (click)="shutdown()">
+              <span *ngIf="shuttingDown" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              <span *ngIf="!shuttingDown" class="fa fa-stop me-1" role="status" aria-hidden="true"></span>
+              <span translate="engine.shutdown"></span>
+            </button>
+          </div>
         </h2>
         <div class="mb-3" id="port">
           <span class="fw-bold">{{ 'engine.general-settings.port' | translate }}</span>
