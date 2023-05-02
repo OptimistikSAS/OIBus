@@ -84,17 +84,18 @@ const addValues = async (ctx) => {
  * @return {void}
  */
 const addFile = async (ctx) => {
-  const { name } = ctx.request.query
+  const { name, dataSourceId } = ctx.request.query
+  const dataSource = name || dataSourceId
   if (name) {
     try {
       ctx.app.engine.addFileCount += 1
-      await ctx.app.engine.addFile(name, ctx.request.file.path, false)
+      await ctx.app.engine.addFile(dataSource, ctx.request.file.path, false)
       ctx.ok()
     } catch (error) {
-      ctx.throw(500, `Unable to add file from ${name}`)
+      ctx.throw(500, `Unable to add file from ${dataSource}`)
     }
   } else {
-    throw ctx(400, 'Missing dataSource name')
+    throw ctx.throw(400, 'Missing dataSource name')
   }
 }
 
