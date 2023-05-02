@@ -169,6 +169,12 @@
   "engine": {
     "title": "Engine",
     "edit": "Edit settings",
+    "shutdown": "Shutdown",
+    "confirm-shutdown": "Are you sure you want to shutdown OIBus engine?",
+    "shutdown-complete": "OIBus shut down",
+    "restart": "Restart",
+    "restart-complete": "OIBus restarted",
+    "confirm-restart": "Are you sure you want to restart OIBus engine?",
     "updated": "Engine settings updated",
     "general-settings": {
       "title": "General settings",
