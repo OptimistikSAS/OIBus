@@ -1,9 +1,10 @@
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
 import { Page } from '../../../../shared/model/types';
 import { OibusItemCommandDTO, OibusItemDTO, OibusItemSearchParam } from '../../../../shared/model/south-connector.model';
+import { DownloadService } from './download.service';
 /**
  * Service used to interact with the backend for CRUD operations on History queries
  */
@@ -11,7 +12,7 @@ import { OibusItemCommandDTO, OibusItemDTO, OibusItemSearchParam } from '../../.
   providedIn: 'root'
 })
 export class HistoryQueryService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private downloadService: DownloadService) {}
 
   /**
    * Get History queries
@@ -103,5 +104,31 @@ export class HistoryQueryService {
    */
   deleteSouthItem(historyQueryId: string, itemId: string) {
     return this.http.delete<void>(`/api/history-queries/${historyQueryId}/items/${itemId}`);
+  }
+
+  /**
+   * Delete all items
+   * @param historyId - the ID of the History Query connector
+   */
+  deleteAllItems(historyId: string) {
+    return this.http.delete<void>(`/api/history-queries/${historyId}/items/all`);
+  }
+
+  /**
+   * Export items in CSV file
+   */
+  exportItems(historyQueryId: string, historyQueryName: string): Observable<void> {
+    return this.http
+      .get(`/api/history-queries/${historyQueryId}/items/export`, { responseType: 'blob', observe: 'response' })
+      .pipe(map(response => this.downloadService.download(response, `${historyQueryName}.csv`)));
+  }
+
+  /**
+   * Upload items from a CSV file
+   */
+  uploadItems(historyQueryId: string, file: File): Observable<void> {
+    const formData = new FormData();
+    formData.set('file', file);
+    return this.http.post<void>(`/api/history-queries/${historyQueryId}/items/upload`, formData);
   }
 }
