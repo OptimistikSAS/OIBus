@@ -10,6 +10,12 @@ const validator = new JoiValidator();
 const northConnectorController = new NorthConnectorController(validator);
 const manifestList = [
   {
+    category: 'file',
+    type: 'AzureBlob',
+    description: 'Azure Blob description',
+    modes: { files: true, points: false }
+  },
+  {
     category: 'api',
     type: 'WATSY',
     description: 'WATSY description',

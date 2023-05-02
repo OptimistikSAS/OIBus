@@ -1,6 +1,7 @@
 import { KoaContext } from '../koa';
 
 import amazonManifest from '../../north/north-amazon-s3/manifest';
+import azureManifest from '../../north/north-azure-blob/manifest';
 import consoleManifest from '../../north/north-console/manifest';
 import csvToHttpManifest from '../../north/north-csv-to-http/manifest';
 import fileWriterManifest from '../../north/north-file-writer/manifest';
@@ -16,6 +17,7 @@ import JoiValidator from '../../validators/joi.validator';
 
 // TODO: retrieve north types from a local store
 export const northManifests = [
+  azureManifest,
   watsyManifest,
   oiconnectManifest,
   timescaleManifest,

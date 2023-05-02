@@ -5,12 +5,13 @@ import RepositoryService from './repository.service';
 import NorthConnector from '../north/north-connector';
 import NorthConsole from '../north/north-console/north-console';
 import NorthOIAnalytics from '../north/north-oianalytics/north-oianalytics';
-
+import NorthAzureBlob from '../north/north-azure-blob/north-azure-blob';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 
 const northList = {
   Console: NorthConsole,
-  OIAnalytics: NorthOIAnalytics
+  OIAnalytics: NorthOIAnalytics,
+  AzureBlob: NorthAzureBlob
 };
 
 export default class NorthService {
