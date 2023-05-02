@@ -139,6 +139,45 @@ describe('EditHistoryQueryItemModalComponent', () => {
     });
   });
 
+  describe('copy mode', () => {
+    const item: OibusItemDTO = {
+      id: 'id1',
+      name: 'myName',
+      connectorId: 'historyId',
+      settings: {}
+    };
+
+    beforeEach(() => {
+      tester.componentInstance.prepareForCopy(historyQuery, southItemSchema, item);
+    });
+
+    it('should save if valid', fakeAsync(() => {
+      tester.detectChanges();
+      expect(tester.name).toHaveValue('myName-copy');
+
+      tester.name.fillWith('MyName-2');
+
+      tester.detectChanges();
+
+      const createdSouthItem = {
+        id: 'id1',
+        connectorId: 'historyId'
+      } as OibusItemDTO;
+      historyQueryService.createSouthItem.and.returnValue(of(createdSouthItem));
+
+      tester.save.click();
+
+      const expectedCommand: OibusItemCommandDTO = {
+        name: 'MyName-2',
+        scanModeId: null,
+        settings: {}
+      };
+
+      expect(historyQueryService.createSouthItem).toHaveBeenCalledWith('historyId', expectedCommand);
+      expect(fakeActiveModal.close).toHaveBeenCalledWith(createdSouthItem);
+    }));
+  });
+
   describe('edit mode', () => {
     const southItem: OibusItemDTO = {
       id: 'id1',

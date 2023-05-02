@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
@@ -12,6 +12,8 @@ import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code
 import { createInput } from '../../shared/utils';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { HistoryQueryService } from '../../services/history-query.service';
+import { Timezone } from '../../../../../shared/model/types';
+import { inMemoryTypeahead } from '../../shared/typeahead';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -33,7 +35,8 @@ declare namespace Intl {
     NgSwitchCase,
     NgIf,
     OibCodeBlockComponent,
-    OibScanModeComponent
+    OibScanModeComponent,
+    NgbTypeahead
   ],
   standalone: true
 })
@@ -42,12 +45,17 @@ export class EditHistoryQueryItemModalComponent {
   state = new ObservableState();
   historyQuery: HistoryQueryDTO | null = null;
   southItemSchema: OibusItemManifest | null = null;
-  southItem: OibusItemDTO | null = null;
-  timezones = Intl.supportedValuesOf('timeZone');
+  item: OibusItemDTO | null = null;
   form = this.fb.group({
     name: ['', Validators.required],
     settings: this.fb.record({})
   });
+
+  private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
+  timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
+    () => ['UTC', ...this.timezones],
+    timezone => timezone
+  );
 
   constructor(private modal: NgbActiveModal, private fb: FormBuilder, private historyQueryService: HistoryQueryService) {}
 
@@ -104,20 +112,42 @@ export class EditHistoryQueryItemModalComponent {
   /**
    * Prepares the component for edition.
    */
-  prepareForEdition(historyQuery: HistoryQueryDTO, southItemSchema: OibusItemManifest, southItem: OibusItemDTO) {
-    this.mode = 'edit';
-    this.southItem = southItem;
+  prepareForCopy(historyQuery: HistoryQueryDTO, southItemSchema: OibusItemManifest, item: OibusItemDTO) {
+    this.item = item;
+    this.item.name = `${item.name}-copy`;
+    this.mode = 'create';
     this.historyQuery = historyQuery;
     this.southItemSchema = southItemSchema;
 
     this.southItemSchema.settings.forEach(element => {
-      if (this.southItem?.settings) {
-        element.currentValue = this.southItem.settings[element.key];
+      if (this.item?.settings) {
+        element.currentValue = this.item.settings[element.key];
       }
     });
 
     this.form.patchValue({
-      name: southItem.name
+      name: this.item.name
+    });
+    this.createSettingsInputs();
+  }
+
+  /**
+   * Prepares the component for edition.
+   */
+  prepareForEdition(historyQuery: HistoryQueryDTO, southItemSchema: OibusItemManifest, item: OibusItemDTO) {
+    this.mode = 'edit';
+    this.item = item;
+    this.historyQuery = historyQuery;
+    this.southItemSchema = southItemSchema;
+
+    this.southItemSchema.settings.forEach(element => {
+      if (this.item?.settings) {
+        element.currentValue = this.item.settings[element.key];
+      }
+    });
+
+    this.form.patchValue({
+      name: this.item.name
     });
     this.createSettingsInputs();
   }
@@ -144,8 +174,8 @@ export class EditHistoryQueryItemModalComponent {
       obs = this.historyQueryService.createSouthItem(this.historyQuery!.id, command);
     } else {
       obs = this.historyQueryService
-        .updateSouthItem(this.historyQuery!.id, this.southItem!.id, command)
-        .pipe(switchMap(() => this.historyQueryService.getSouthConnectorItem(this.historyQuery!.id, this.southItem!.id)));
+        .updateSouthItem(this.historyQuery!.id, this.item!.id, command)
+        .pipe(switchMap(() => this.historyQueryService.getSouthConnectorItem(this.historyQuery!.id, this.item!.id)));
     }
     obs.pipe(this.state.pendingUntilFinalization()).subscribe(southItem => {
       this.modal.close(southItem);

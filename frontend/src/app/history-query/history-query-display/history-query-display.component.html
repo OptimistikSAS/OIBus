@@ -81,19 +81,56 @@
 
       <div class="row">
         <h2>
-          <span translate="south.items.title"></span>
+          <span translate="history-query.items.title"></span>
           <span class="ms-2">
             <button class="btn btn-primary" id="create-modal" (click)="openCreationSouthItemModal()">
               <span class="fa fa-plus me-2"></span>
-              <span translate="south.add"></span>
+              <span translate="history-query.items.add"></span>
             </button>
+
+            <div class="pull-right">
+              <button
+                [disabled]="importing"
+                type="button"
+                class="btn btn-outline-secondary me-2"
+                (click)="fileInput.click()"
+                (drop)="onImportDrop($event)"
+                (dragover)="onImportDragOver($event)"
+                id="import-button"
+              >
+                <span *ngIf="importing" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                <span *ngIf="!importing" class="fa fa-upload me-1" role="status" aria-hidden="true"></span>
+                <span translate="history-query.items.import"></span>
+              </button>
+              <input #fileInput (change)="onImportClick($event)" id="file" type="file" accept=".csv" class="d-none" />
+
+              <button
+                [disabled]="!historyQueryItems || historyQueryItems.content.length === 0"
+                class="btn btn-primary me-2"
+                id="export-items"
+                (click)="exportItems()"
+              >
+                <span *ngIf="exporting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                <span *ngIf="!exporting" class="fa fa-download me-1" role="status" aria-hidden="true"></span>
+                <span translate="history-query.items.export"></span>
+              </button>
+
+              <button
+                [disabled]="!historyQueryItems || historyQueryItems.content.length === 0"
+                class="btn btn-danger"
+                id="delete-all-items"
+                (click)="deleteAllItems()"
+              >
+                <span translate="history-query.items.delete-all"></span>
+              </button>
+            </div>
           </span>
         </h2>
         <div class="col" *ngIf="historyQueryItems && southSettingsSchema">
           <div *ngIf="historyQueryItems.totalElements !== 0">
             <oib-pagination class="d-flex justify-content-end" [page]="historyQueryItems" [navigate]="true"></oib-pagination>
           </div>
-          <!--          <oib-search-item *ngIf="searchParams" [searchParams]="searchParams" (search)="searchItem($event)"></oib-search-item>-->
+          <oib-search-item *ngIf="searchParams" [searchParams]="searchParams" (search)="searchItem($event)"></oib-search-item>
 
           <ng-container>
             <div *ngIf="historyQueryItems.totalElements !== 0; else empty">
@@ -120,6 +157,10 @@
                         <a type="button" class="btn btn-link edit-link px-1 py-0" (click)="openEditSouthItemModal(item)">
                           <span class="fa fa-pencil"></span>
                         </a>
+                        <!-- Duplicate button -->
+                        <button class="btn btn-link duplicate-button px-1 py-0" (click)="duplicateItem(item)">
+                          <span class="fa fa-copy"></span>
+                        </button>
                         <!-- Delete button -->
                         <button type="button" class="btn btn-link delete-button px-1 py-0" (click)="deleteItem(item)">
                           <span class="fa fa-trash"></span>
