@@ -147,6 +147,34 @@ export class EditSouthItemModalComponent {
     this.createSettingsInputs();
   }
 
+  /**
+   * Prepares the component for edition.
+   */
+  prepareForCopy(
+    southConnector: SouthConnectorDTO,
+    southItemSchema: OibusItemManifest,
+    scanModes: Array<ScanModeDTO>,
+    southItem: OibusItemDTO
+  ) {
+    this.southItem = southItem;
+    this.southItem.name = `${southItem.name}-copy`;
+    this.mode = 'create';
+    this.southConnector = southConnector;
+    this.southItemSchema = southItemSchema;
+    this.scanModes = scanModes;
+    this.southItemSchema.settings.forEach(element => {
+      if (this.southItem?.settings) {
+        element.currentValue = this.southItem.settings[element.key];
+      }
+    });
+
+    this.form.patchValue({
+      name: this.southItem.name,
+      scanMode: this.scanModes.find(scanMode => scanMode.id === this.southItem?.scanModeId) || null
+    });
+    this.createSettingsInputs();
+  }
+
   cancel() {
     this.modal.dismiss();
   }

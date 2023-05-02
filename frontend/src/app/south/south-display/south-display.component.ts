@@ -159,16 +159,23 @@ export class SouthDisplayComponent implements OnInit {
   /**
    * Deletes a parser by its ID and refreshes the list
    */
-  deleteItem(southItem: any) {
+  deleteItem(item: OibusItemDTO) {
     this.confirmationService
       .confirm({
         messageKey: 'south.items.confirm-deletion'
       })
-      .pipe(switchMap(() => this.southConnectorService.deleteSouthItem(this.southConnector!.id, southItem.id)))
+      .pipe(switchMap(() => this.southConnectorService.deleteSouthItem(this.southConnector!.id, item.id)))
       .subscribe(() => {
         this.notificationService.success('south.items.deleted');
         this.pageLoader.loadPage(this.southItems!);
       });
+  }
+
+  duplicateItem(item: OibusItemDTO) {
+    const modalRef = this.modalService.open(EditSouthItemModalComponent);
+    const component: EditSouthItemModalComponent = modalRef.componentInstance;
+    component.prepareForCopy(this.southConnector!, this.southItemSchema!, this.scanModes, item);
+    this.refreshAfterEditSouthItemModalClosed(modalRef, 'created');
   }
 
   /**
