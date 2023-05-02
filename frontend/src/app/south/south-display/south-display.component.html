@@ -109,6 +109,10 @@
                         <a type="button" class="btn btn-link edit-link px-1 py-0" (click)="openEditSouthItemModal(item)">
                           <span class="fa fa-pencil"></span>
                         </a>
+                        <!-- Duplicate button -->
+                        <button class="btn btn-link duplicate-button px-1 py-0" (click)="duplicateItem(item)">
+                          <span class="fa fa-copy"></span>
+                        </button>
                         <!-- Delete button -->
                         <button type="button" class="btn btn-link delete-button px-1 py-0" (click)="deleteItem(item)">
                           <span class="fa fa-trash"></span>

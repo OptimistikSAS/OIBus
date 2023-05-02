@@ -143,6 +143,52 @@ describe('EditSouthItemModalComponent', () => {
     });
   });
 
+  describe('copy mode', () => {
+    const southItem: OibusItemDTO = {
+      id: 'id1',
+      name: 'myName',
+      connectorId: 'southId1',
+      scanModeId: 'scanModeId1',
+      settings: {}
+    };
+
+    beforeEach(() => {
+      tester.componentInstance.prepareForCopy(southConnector, southItemSchema, scanModes, southItem);
+      tester.detectChanges();
+    });
+
+    it('should save if valid', fakeAsync(() => {
+      expect(tester.name).toHaveValue('myName-copy');
+
+      tester.name.fillWith('MyName-2');
+      tester.scanMode.selectLabel('scanMode2');
+
+      tester.detectChanges();
+
+      const createdSouthItem = {
+        id: 'id1',
+        connectorId: 'southId1'
+      } as OibusItemDTO;
+      southConnectorService.createSouthItem.and.returnValue(of(createdSouthItem));
+
+      tester.save.click();
+
+      const expectedCommand: OibusItemCommandDTO = {
+        name: 'MyName-2',
+        scanModeId: 'scanModeId2',
+        settings: {}
+      };
+
+      expect(southConnectorService.createSouthItem).toHaveBeenCalledWith('southId1', expectedCommand);
+      expect(fakeActiveModal.close).toHaveBeenCalledWith(createdSouthItem);
+    }));
+
+    it('should cancel', () => {
+      tester.cancel.click();
+      expect(fakeActiveModal.dismiss).toHaveBeenCalled();
+    });
+  });
+
   describe('edit mode', () => {
     const southItem: OibusItemDTO = {
       id: 'id1',
