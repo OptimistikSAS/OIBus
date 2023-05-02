@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.5.5](https://github.com/OptimistikSAS/OIBus/compare/v2.5.4...v2.5.5) (2023-05-02)
+
+
+### Bug Fixes
+
+* **endpoint:** Fix addFile endpoint when receiving from legacy OIbus ([00f9c49](https://github.com/OptimistikSAS/OIBus/commit/00f9c494bfdc6e58630b633162d3edde7557a105))
+
 ### [2.5.4](https://github.com/OptimistikSAS/OIBus/compare/v2.5.3...v2.5.4) (2023-04-24)
 
 
