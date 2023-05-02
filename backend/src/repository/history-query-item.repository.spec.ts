@@ -74,7 +74,7 @@ describe('History query item repository', () => {
     });
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, history_id AS historyId, settings FROM history_item WHERE ' +
-        "history_id = ? AND name like '%my item%' LIMIT 50 OFFSET 0;"
+        "history_id = ? AND name like '%' || ? || '%' LIMIT 50 OFFSET 0;"
     );
     expect(southScans).toEqual(expectedValue);
   });
