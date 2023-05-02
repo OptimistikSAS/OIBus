@@ -40,7 +40,7 @@ export class EditUserSettingsComponent {
 
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
   timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
-    () => [...this.timezones],
+    () => ['UTC', ...this.timezones],
     timezone => timezone
   );
 
@@ -70,6 +70,7 @@ export class EditUserSettingsComponent {
       language: this.editedUserSettings!.language!,
       timezone: formValue.timezone!
     };
+
     this.userSettingsService
       .update(this.editedUserSettings!.id, command)
       .pipe(

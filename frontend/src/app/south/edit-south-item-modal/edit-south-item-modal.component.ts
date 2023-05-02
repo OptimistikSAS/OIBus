@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
@@ -12,6 +12,8 @@ import { NgForOf, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
 import { createInput } from '../../shared/utils';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
+import { Timezone } from '../../../../../shared/model/types';
+import { inMemoryTypeahead } from '../../shared/typeahead';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -33,7 +35,8 @@ declare namespace Intl {
     NgSwitchCase,
     NgIf,
     OibCodeBlockComponent,
-    OibScanModeComponent
+    OibScanModeComponent,
+    NgbTypeahead
   ],
   standalone: true
 })
@@ -44,12 +47,17 @@ export class EditSouthItemModalComponent {
   southItemSchema: OibusItemManifest | null = null;
   southItem: OibusItemDTO | null = null;
   scanModes: Array<ScanModeDTO> = [];
-  timezones = Intl.supportedValuesOf('timeZone');
   form = this.fb.group({
     name: ['', Validators.required],
     scanMode: [null as ScanModeDTO | null, Validators.required],
     settings: this.fb.record({})
   });
+
+  private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
+  timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
+    () => ['UTC', ...this.timezones],
+    timezone => timezone
+  );
 
   constructor(private modal: NgbActiveModal, private fb: FormBuilder, private southConnectorService: SouthConnectorService) {}
 
