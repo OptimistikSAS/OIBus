@@ -7,10 +7,12 @@ import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO, HistoryQueryDTO }
 import { toPage } from '../shared/test-utils';
 import { Page } from '../../../../shared/model/types';
 import { OibusItemCommandDTO, OibusItemDTO } from '../../../../shared/model/south-connector.model';
+import { DownloadService } from './download.service';
 
 describe('HistoryQueryService', () => {
   let http: HttpTestingController;
   let service: HistoryQueryService;
+  let downloadService: DownloadService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -19,6 +21,7 @@ describe('HistoryQueryService', () => {
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(HistoryQueryService);
+    downloadService = TestBed.inject(DownloadService);
   });
 
   afterEach(() => http.verify());
@@ -159,5 +162,47 @@ describe('HistoryQueryService', () => {
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-queries/id1/items/itemId1' });
     testRequest.flush(null);
     expect(done).toBe(true);
+  });
+
+  it('should delete all South connector items', () => {
+    let done = false;
+    service.deleteAllItems('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-queries/id1/items/all' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should download items blob', () => {
+    let downloaded = false;
+
+    spyOn(downloadService, 'download');
+    service.exportItems('id1', 'historyName').subscribe(() => (downloaded = true));
+
+    http
+      .expectOne({
+        method: 'GET',
+        url: '/api/history-queries/id1/items/export'
+      })
+      .flush(new Blob());
+
+    expect(downloaded).toBe(true);
+    expect(downloadService.download).toHaveBeenCalled();
+  });
+
+  it('should import items', () => {
+    const file = new Blob() as File;
+    const expectedFormData = new FormData();
+    expectedFormData.set('file', file);
+    let actualImportation = false;
+
+    service.uploadItems('id1', file).subscribe(() => {
+      actualImportation = true;
+    });
+
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries/id1/items/upload' });
+    expect(testRequest.request.body).toEqual(expectedFormData);
+    testRequest.flush(true);
+
+    expect(actualImportation).toBe(true);
   });
 });

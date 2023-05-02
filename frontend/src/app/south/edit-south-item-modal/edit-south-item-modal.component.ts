@@ -45,7 +45,7 @@ export class EditSouthItemModalComponent {
   state = new ObservableState();
   southConnector: SouthConnectorDTO | null = null;
   southItemSchema: OibusItemManifest | null = null;
-  southItem: OibusItemDTO | null = null;
+  item: OibusItemDTO | null = null;
   scanModes: Array<ScanModeDTO> = [];
   form = this.fb.group({
     name: ['', Validators.required],
@@ -129,14 +129,14 @@ export class EditSouthItemModalComponent {
     southItem: OibusItemDTO
   ) {
     this.mode = 'edit';
-    this.southItem = southItem;
+    this.item = southItem;
     this.southConnector = southConnector;
     this.southItemSchema = southItemSchema;
     this.scanModes = scanModes;
 
     this.southItemSchema.settings.forEach(element => {
-      if (this.southItem?.settings) {
-        element.currentValue = this.southItem.settings[element.key];
+      if (this.item?.settings) {
+        element.currentValue = this.item.settings[element.key];
       }
     });
 
@@ -156,21 +156,21 @@ export class EditSouthItemModalComponent {
     scanModes: Array<ScanModeDTO>,
     southItem: OibusItemDTO
   ) {
-    this.southItem = southItem;
-    this.southItem.name = `${southItem.name}-copy`;
+    this.item = southItem;
+    this.item.name = `${southItem.name}-copy`;
     this.mode = 'create';
     this.southConnector = southConnector;
     this.southItemSchema = southItemSchema;
     this.scanModes = scanModes;
     this.southItemSchema.settings.forEach(element => {
-      if (this.southItem?.settings) {
-        element.currentValue = this.southItem.settings[element.key];
+      if (this.item?.settings) {
+        element.currentValue = this.item.settings[element.key];
       }
     });
 
     this.form.patchValue({
-      name: this.southItem.name,
-      scanMode: this.scanModes.find(scanMode => scanMode.id === this.southItem?.scanModeId) || null
+      name: this.item.name,
+      scanMode: this.scanModes.find(scanMode => scanMode.id === this.item?.scanModeId) || null
     });
     this.createSettingsInputs();
   }
@@ -197,8 +197,8 @@ export class EditSouthItemModalComponent {
       obs = this.southConnectorService.createSouthItem(this.southConnector!.id, command);
     } else {
       obs = this.southConnectorService
-        .updateSouthItem(this.southConnector!.id, this.southItem!.id, command)
-        .pipe(switchMap(() => this.southConnectorService.getSouthConnectorItem(this.southConnector!.id, this.southItem!.id)));
+        .updateSouthItem(this.southConnector!.id, this.item!.id, command)
+        .pipe(switchMap(() => this.southConnectorService.getSouthConnectorItem(this.southConnector!.id, this.item!.id)));
     }
     obs.pipe(this.state.pendingUntilFinalization()).subscribe(southItem => {
       this.modal.close(southItem);
