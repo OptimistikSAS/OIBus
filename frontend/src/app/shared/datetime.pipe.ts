@@ -1,6 +1,7 @@
 import { Inject, LOCALE_ID, Pipe, PipeTransform } from '@angular/core';
 import { DateTime } from 'luxon';
-import { DEFAULT_TZ, Timezone } from '../../../../shared/model/types';
+import { Timezone } from '../../../../shared/model/types';
+import { CurrentUserService } from './current-user.service';
 
 const FRIENDLY_FORMATS = {
   short: 'f',
@@ -69,13 +70,9 @@ export function formatDateTime(
   standalone: true
 })
 export class DatetimePipe implements PipeTransform {
-  constructor(@Inject(LOCALE_ID) private locale: string) {}
+  constructor(@Inject(LOCALE_ID) private locale: string, private currentUserService: CurrentUserService) {}
 
-  transform(
-    value: string | Date | number | DateTime,
-    format: FriendlyFormat | string = 'mediumDate',
-    timezone: Timezone = DEFAULT_TZ
-  ): string | null {
-    return formatDateTime(value, this.locale, timezone, format);
+  transform(value: string | Date | number | DateTime, format: FriendlyFormat | string = 'mediumDate', timezone?: Timezone): string | null {
+    return formatDateTime(value, this.locale, timezone ?? this.currentUserService.getTimezone(), format);
   }
 }
