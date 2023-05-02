@@ -21,7 +21,7 @@ import { EditSouthItemModalComponent } from '../edit-south-item-modal/edit-south
 import { SearchItemComponent } from '../search-item/search-item.component';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { toPage } from '../../shared/test-utils';
+import { emptyPage, toPage } from '../../shared/test-utils';
 import { getRowSettings } from '../../shared/utils';
 import { SouthDataComponent } from './south-data/south-data.component';
 
@@ -37,7 +37,7 @@ export class SouthDisplayComponent implements OnInit {
   southConnector: SouthConnectorDTO | null = null;
   southSettingsSchema: Array<Array<OibFormControl>> = [];
   southItemSchema: OibusItemManifest | null = null;
-  southItems: Page<OibusItemDTO> | null = null;
+  southItems: Page<OibusItemDTO> = emptyPage();
   scanModes: Array<ScanModeDTO> = [];
   searchParams: OibusItemSearchParam | null = null;
   importing = false;

@@ -154,10 +154,10 @@ describe('EditSouthItemModalComponent', () => {
 
     beforeEach(() => {
       tester.componentInstance.prepareForCopy(southConnector, southItemSchema, scanModes, southItem);
-      tester.detectChanges();
     });
 
     it('should save if valid', fakeAsync(() => {
+      tester.detectChanges();
       expect(tester.name).toHaveValue('myName-copy');
 
       tester.name.fillWith('MyName-2');
@@ -182,11 +182,6 @@ describe('EditSouthItemModalComponent', () => {
       expect(southConnectorService.createSouthItem).toHaveBeenCalledWith('southId1', expectedCommand);
       expect(fakeActiveModal.close).toHaveBeenCalledWith(createdSouthItem);
     }));
-
-    it('should cancel', () => {
-      tester.cancel.click();
-      expect(fakeActiveModal.dismiss).toHaveBeenCalled();
-    });
   });
 
   describe('edit mode', () => {

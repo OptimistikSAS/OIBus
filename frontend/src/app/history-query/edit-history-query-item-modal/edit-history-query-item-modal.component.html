@@ -60,14 +60,14 @@
             [id]="settings.type + '-' + settings.key"
             class="form-control"
           />
-          <select
+          <input
             *ngIf="settings.type === 'OibTimezone'"
-            [formControlName]="settings.key"
             [id]="settings.type + '-' + settings.key"
-            class="form-select mb-2 mr-sm-2"
-          >
-            <option *ngFor="let timezone of timezones" [ngValue]="timezone">{{ timezone }}</option>
-          </select>
+            class="form-control"
+            [formControlName]="settings.key"
+            [ngbTypeahead]="timezoneTypeahead"
+            [editable]="false"
+          />
           <val-errors [controlName]="settings.key"></val-errors>
         </div>
       </ng-container>
@@ -77,6 +77,6 @@
 <div class="modal-footer">
   <div class="btn-group">
     <oib-save-button form="form" [state]="state"></oib-save-button>
-    <button type="button" class="btn btn-cancel" ngbAutofocus (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
   </div>
 </div>
