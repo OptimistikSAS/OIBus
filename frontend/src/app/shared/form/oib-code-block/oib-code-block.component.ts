@@ -1,7 +1,7 @@
 /* eslint-disable-next-line */
 /// <reference path="../../../../../node_modules/monaco-editor/monaco.d.ts" />
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, ViewChild } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MonacoEditorLoaderService } from './monaco-editor-loader.service';
 import { formDirectives } from '../../form-directives';
 import { NgIf } from '@angular/common';
@@ -26,8 +26,8 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
   @ViewChild('editorContainer') _editorContainer: ElementRef | null = null;
   @Input() key = '';
   @Input() contentType = '';
-  codeBlockInputCtrl = this.fb.control(null as string | null);
   disabled = false;
+
   onChange: (value: string) => void = () => {};
   onTouched = () => {};
 
@@ -40,11 +40,7 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
    */
   private pendingValueToWrite: string | null = null;
 
-  constructor(private fb: NonNullableFormBuilder, private monacoEditorLoader: MonacoEditorLoaderService) {
-    this.codeBlockInputCtrl.valueChanges.subscribe(newValue => {
-      this.onChange(newValue!);
-    });
-  }
+  constructor(private monacoEditorLoader: MonacoEditorLoaderService) {}
 
   registerOnChange(fn: any): void {
     this.onChange = fn;
@@ -54,14 +50,7 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
     this.onTouched = fn;
   }
 
-  setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
-    if (this.disabled) {
-      this.codeBlockInputCtrl.disable();
-    } else {
-      this.codeBlockInputCtrl.enable();
-    }
-  }
+  setDisabledState(isDisabled: boolean): void {}
 
   ngAfterViewInit() {
     this.monacoEditorLoader.loadMonacoEditor().then(() => {
@@ -84,15 +73,13 @@ export class OibCodeBlockComponent implements AfterViewInit, ControlValueAccesso
   }
 
   writeValue(value: string): void {
-    if (value) {
-      // we can only set the value once the editor is loaded, which can take some time on first load
-      if (this.codeEditorInstance) {
-        this.codeEditorInstance.setValue(value);
-      } else {
-        // if the editor is not yet loaded, we store the value to write,
-        // and it'll be set once the loading is complete
-        this.pendingValueToWrite = value;
-      }
+    // we can only set the value once the editor is loaded, which can take some time on first load
+    if (this.codeEditorInstance) {
+      this.codeEditorInstance.setValue(value);
+    } else {
+      // if the editor is not yet loaded, we store the value to write,
+      // and it'll be set once the loading is complete
+      this.pendingValueToWrite = value;
     }
   }
 }
