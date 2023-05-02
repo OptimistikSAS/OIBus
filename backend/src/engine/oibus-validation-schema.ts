@@ -72,9 +72,9 @@ const ipFilterSchema: Joi.ObjectSchema = Joi.object({
 });
 const userSchema: Joi.ObjectSchema = Joi.object({
   login: Joi.string().required().min(4),
-  firstName: Joi.string().optional(),
-  lastName: Joi.string().optional(),
-  email: Joi.string().optional(),
+  firstName: Joi.optional(),
+  lastName: Joi.optional(),
+  email: Joi.optional(),
   language: Joi.string().required(),
   timezone: Joi.string().required()
 });

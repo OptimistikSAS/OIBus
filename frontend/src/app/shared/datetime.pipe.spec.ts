@@ -1,13 +1,21 @@
 import { DatetimePipe } from './datetime.pipe';
 import { DateTime } from 'luxon';
 import { DEFAULT_TZ } from '../../../../shared/model/types';
+import { CurrentUserService } from './current-user.service';
+import { createMock } from 'ngx-speculoos';
 
 describe('DatetimePipe', () => {
+  let currentUserService: jasmine.SpyObj<CurrentUserService>;
   let pipe: DatetimePipe;
+
+  beforeEach(() => {
+    currentUserService = createMock(CurrentUserService);
+    currentUserService.getTimezone.and.returnValue(DEFAULT_TZ);
+  });
 
   describe('in English', () => {
     beforeEach(() => {
-      pipe = new DatetimePipe('en');
+      pipe = new DatetimePipe('en', currentUserService);
     });
 
     it('should format with default format', () => {
@@ -53,7 +61,7 @@ describe('DatetimePipe', () => {
 
   describe('in French', () => {
     beforeEach(() => {
-      pipe = new DatetimePipe('fr');
+      pipe = new DatetimePipe('fr', currentUserService);
     });
 
     it('should format with default format', () => {
