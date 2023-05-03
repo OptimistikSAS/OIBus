@@ -29,6 +29,10 @@ class EditSouthComponentTester extends ComponentTester<EditSouthComponent> {
     return this.input('#south-enabled');
   }
 
+  get maxInstant() {
+    return this.input('#south-max-instant-per-item')!;
+  }
+
   get description() {
     return this.textarea('#south-description');
   }
@@ -67,6 +71,27 @@ describe('EditSouthComponent', () => {
 
       scanModeService.getScanModes.and.returnValue(of([]));
       proxyService.getProxies.and.returnValue(of([]));
+      southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
+        of({
+          category: 'database',
+          name: 'SQL',
+          description: 'SQL description',
+          modes: {
+            subscription: false,
+            lastPoint: false,
+            lastFile: false,
+            historyPoint: false,
+            historyFile: true
+          },
+          items: {
+            scanMode: { subscriptionOnly: false, acceptSubscription: true },
+            settings: [],
+            schema: {} as unknown
+          },
+          settings: [],
+          schema: {} as unknown
+        } as SouthConnectorManifest)
+      );
 
       tester = new EditSouthComponentTester();
       tester.detectChanges();
@@ -75,6 +100,7 @@ describe('EditSouthComponent', () => {
     it('should display general settings', () => {
       expect(tester.title).toContainText('Create a South connector');
       expect(tester.enabled).not.toBeChecked();
+      expect(tester.maxInstant).not.toBeChecked();
       expect(tester.description).toHaveValue('');
       expect(tester.specificForm).toBeDefined();
 
@@ -152,9 +178,12 @@ describe('EditSouthComponent', () => {
       tester.detectChanges();
     });
     it('should display general settings', () => {
+      tester.maxInstant.check();
       expect(southConnectorService.getSouthConnector).toHaveBeenCalledWith('id1');
       expect(tester.title).toContainText('Edit South connector');
       expect(tester.enabled).toBeChecked();
+      expect(tester.maxInstant).toBeChecked();
+
       expect(tester.description).toHaveValue('My South connector description');
       expect(tester.specificForm).toBeDefined();
       expect(tester.specificTitle).toContainText('SQL settings');
