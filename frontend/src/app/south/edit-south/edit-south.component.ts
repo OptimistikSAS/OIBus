@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NgForOf, NgIf } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
@@ -34,10 +34,12 @@ export class EditSouthComponent implements OnInit {
   scanModes: Array<ScanModeDTO> = [];
   proxies: Array<ProxyDTO> = [];
   southType = '';
+  manifest: SouthConnectorManifest | null = null;
   southForm = this.fb.group({
     name: ['', Validators.required],
     description: '',
     enabled: false,
+    maxInstantPerItem: false,
     settings: this.fb.record({})
   });
 
@@ -80,7 +82,8 @@ export class EditSouthComponent implements OnInit {
             this.southForm.patchValue({
               name: southConnector.name,
               description: southConnector.description,
-              enabled: southConnector.enabled
+              enabled: southConnector.enabled,
+              maxInstantPerItem: southConnector.maxInstantPerItem
             });
           }
           // If a south connector is not retrieved, the types are needed to create a new connector
@@ -118,6 +121,7 @@ export class EditSouthComponent implements OnInit {
           });
         });
 
+        this.manifest = manifest;
         this.loading = false;
       });
   }
@@ -169,7 +173,7 @@ export class EditSouthComponent implements OnInit {
       type: this.southType,
       description: formValue.description!,
       enabled: formValue.enabled!,
-      maxInstantPerItem: false,
+      maxInstantPerItem: formValue.maxInstantPerItem!,
       settings: formValue.settings!
     };
     this.createOrUpdateSouthConnector(command);

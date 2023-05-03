@@ -301,6 +301,7 @@
     "name": "Name",
     "description": "Description",
     "enabled": "Enabled",
+    "max-instant-per-item": "Max instant per item",
     "type": "Type",
     "general-settings": "General settings",
     "specific-settings": "{{ type }} settings",

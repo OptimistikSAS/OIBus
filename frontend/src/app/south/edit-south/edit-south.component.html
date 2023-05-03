@@ -6,7 +6,7 @@
     </div>
   </div>
 
-  <div class="row justify-content-center">
+  <div class="row justify-content-center" *ngIf="manifest">
     <div class="col-md-10 col-lg-8">
       <form [formGroup]="southForm" (ngSubmit)="save()" id="south-form" class="mt-3">
         <!-- General settings -->
@@ -30,7 +30,17 @@
               </div>
             </div>
           </div>
+
+          <div class="col-4" *ngIf="manifest.modes.historyFile || manifest.modes.historyPoint">
+            <div class="form-group">
+              <label for="south-max-instant-per-item" translate="south.max-instant-per-item"></label>
+              <div class="form-check form-switch">
+                <input formControlName="maxInstantPerItem" id="south-max-instant-per-item" type="checkbox" class="form-check-input" />
+              </div>
+            </div>
+          </div>
         </div>
+
         <div class="row mb-3">
           <!-- Description -->
           <div class="form-group">
