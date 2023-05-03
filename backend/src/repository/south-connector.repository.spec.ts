@@ -26,7 +26,7 @@ describe('South connector repository', () => {
   it('should properly init south connector table', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       'CREATE TABLE IF NOT EXISTS south_connector (id TEXT PRIMARY KEY, name TEXT, type TEXT, description TEXT, ' +
-        'enabled INTEGER, settings TEXT);'
+        'enabled INTEGER, max_instant_per_item INTEGER, settings TEXT);'
     );
     expect(run).toHaveBeenCalledTimes(1);
   });
@@ -39,6 +39,7 @@ describe('South connector repository', () => {
         type: 'SouthConnector',
         description: 'My south connector',
         enabled: true,
+        maxInstantPerItem: true,
         settings: {}
       },
       {
@@ -47,6 +48,7 @@ describe('South connector repository', () => {
         type: 'SouthConnector',
         description: 'My second south connector',
         enabled: true,
+        maxInstantPerItem: false,
         settings: {}
       }
     ];
@@ -57,6 +59,7 @@ describe('South connector repository', () => {
         type: 'SouthConnector',
         description: 'My south connector',
         enabled: true,
+        maxInstantPerItem: true,
         settings: JSON.stringify({})
       },
       {
@@ -65,11 +68,14 @@ describe('South connector repository', () => {
         type: 'SouthConnector',
         description: 'My second south connector',
         enabled: true,
+        maxInstantPerItem: false,
         settings: JSON.stringify({})
       }
     ]);
     const southConnectors = repository.getSouthConnectors();
-    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, type, description, enabled, settings FROM south_connector;');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT id, name, type, description, enabled, max_instant_per_item AS maxInstantPerItem, settings FROM south_connector;'
+    );
     expect(southConnectors).toEqual(expectedValue);
   });
 
@@ -80,6 +86,7 @@ describe('South connector repository', () => {
       type: 'SouthConnector',
       description: 'My south connector',
       enabled: true,
+      maxInstantPerItem: false,
       settings: {}
     };
     get.mockReturnValueOnce({
@@ -88,11 +95,12 @@ describe('South connector repository', () => {
       type: 'SouthConnector',
       description: 'My south connector',
       enabled: true,
+      maxInstantPerItem: false,
       settings: JSON.stringify({})
     });
     const southConnector = repository.getSouthConnector('id1');
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, type, description, enabled, settings FROM south_connector WHERE id = ?;'
+      'SELECT id, name, type, description, enabled, max_instant_per_item AS maxInstantPerItem, settings FROM south_connector WHERE id = ?;'
     );
     expect(get).toHaveBeenCalledWith('id1');
     expect(southConnector).toEqual(expectedValue);
@@ -102,7 +110,7 @@ describe('South connector repository', () => {
     get.mockReturnValueOnce(null);
     const southConnector = repository.getSouthConnector('id1');
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, type, description, enabled, settings FROM south_connector WHERE id = ?;'
+      'SELECT id, name, type, description, enabled, max_instant_per_item AS maxInstantPerItem, settings FROM south_connector WHERE id = ?;'
     );
     expect(get).toHaveBeenCalledWith('id1');
     expect(southConnector).toBeNull();
@@ -117,12 +125,13 @@ describe('South connector repository', () => {
       type: 'SouthConnector',
       description: 'My south connector',
       enabled: true,
+      maxInstantPerItem: false,
       settings: {}
     };
     repository.createSouthConnector(command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
-      'INSERT INTO south_connector (id, name, type, description, enabled, settings) VALUES (?, ?, ?, ?, ?, ?);'
+      'INSERT INTO south_connector (id, name, type, description, enabled, max_instant_per_item, settings) VALUES (?, ?, ?, ?, ?, ?, ?);'
     );
     expect(run).toHaveBeenCalledWith(
       '123456',
@@ -130,12 +139,13 @@ describe('South connector repository', () => {
       command.type,
       command.description,
       +command.enabled,
+      +command.maxInstantPerItem,
       JSON.stringify(command.settings)
     );
     expect(get).toHaveBeenCalledWith(1);
 
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, type, description, enabled, settings FROM south_connector WHERE ROWID = ?;'
+      'SELECT id, name, type, description, enabled, max_instant_per_item AS maxInstantPerItem, settings FROM south_connector WHERE ROWID = ?;'
     );
   });
 
@@ -145,13 +155,21 @@ describe('South connector repository', () => {
       type: 'SouthConnector',
       description: 'My south connector',
       enabled: true,
+      maxInstantPerItem: false,
       settings: {}
     };
     repository.updateSouthConnector('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
-      'UPDATE south_connector SET name = ?, description = ?, enabled = ?, settings = ? WHERE id = ?;'
+      'UPDATE south_connector SET name = ?, description = ?, enabled = ?, max_instant_per_item = ?, settings = ? WHERE id = ?;'
     );
-    expect(run).toHaveBeenCalledWith(command.name, command.description, +command.enabled, JSON.stringify(command.settings), 'id1');
+    expect(run).toHaveBeenCalledWith(
+      command.name,
+      command.description,
+      +command.enabled,
+      +command.maxInstantPerItem,
+      JSON.stringify(command.settings),
+      'id1'
+    );
   });
 
   it('should delete a south connector', () => {

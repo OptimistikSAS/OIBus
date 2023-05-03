@@ -48,6 +48,7 @@ describe('EditSouthItemModalComponent', () => {
     name: 'South Connector 1',
     description: 'My South connector description',
     enabled: true,
+    maxInstantPerItem: true,
     settings: {}
   };
 

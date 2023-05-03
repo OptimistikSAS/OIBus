@@ -3,9 +3,15 @@ import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
 import { delay, generateIntervals } from '../service/utils';
 
-import { OibusItemCommandDTO, OibusItemDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+import {
+  OibusItemCommandDTO,
+  OibusItemDTO,
+  SouthCache,
+  SouthConnectorDTO,
+  SouthConnectorManifest
+} from '../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
-import { Instant } from '../../../shared/model/types';
+import { Instant, Interval } from '../../../shared/model/types';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import ProxyService from '../service/proxy.service';
@@ -44,6 +50,7 @@ export default class SouthConnector {
   private stopping = false;
   private runProgress$: DeferredPromise | null = null;
 
+  private maxInstantPerItem = false;
   protected cacheService: CacheService;
 
   /**
@@ -75,6 +82,7 @@ export default class SouthConnector {
 
     if (this.manifest.modes.historyFile || this.manifest.modes.historyPoint) {
       this.cacheService.createCacheHistoryTable();
+      this.maxInstantPerItem = this.configuration.maxInstantPerItem;
     }
 
     if (this.streamMode) {
@@ -240,12 +248,55 @@ export default class SouthConnector {
   }
 
   async historyQueryHandler(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant, scanModeId: string): Promise<void> {
-    const southCache = this.cacheService.getSouthCache(scanModeId, startTime);
+    if (this.maxInstantPerItem) {
+      for (const item of items) {
+        const southCache = this.cacheService.getSouthCache(scanModeId, item.id, startTime);
+        // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
+        // requests. For example only one hour if maxReadInterval is 3600 (in s)
+        const intervals = generateIntervals(southCache.maxInstant, endTime, this.configuration.settings.maxReadInterval);
+        this.logIntervals(intervals);
 
-    // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
-    // requests. For example only one hour if maxReadInterval is 3600 (in s)
-    const intervals = generateIntervals(southCache.maxInstant, endTime, this.configuration.settings.maxReadInterval);
+        await this.queryIntervals(intervals, [item], southCache);
+      }
+    } else {
+      const southCache = this.cacheService.getSouthCache(scanModeId, 'all', startTime);
+      // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
+      // requests. For example only one hour if maxReadInterval is 3600 (in s)
+      const intervals = generateIntervals(southCache.maxInstant, endTime, this.configuration.settings.maxReadInterval);
+      this.logIntervals(intervals);
 
+      await this.queryIntervals(intervals, items, southCache);
+    }
+  }
+
+  private async queryIntervals(intervals: Array<Interval>, items: Array<OibusItemDTO>, southCache: SouthCache) {
+    for (const [index, interval] of intervals.entries()) {
+      const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
+
+      if (index !== intervals.length - 1) {
+        this.cacheService.createOrUpdateCacheScanMode({
+          scanModeId: southCache.scanModeId,
+          itemId: southCache.itemId,
+          maxInstant: lastInstantRetrieved,
+          intervalIndex: index + southCache.intervalIndex
+        });
+        if (this.stopping) {
+          this.logger.debug(`Connector is stopping. Exiting history query at interval ${index}: [${interval.start}, ${interval.end}]`);
+          return;
+        }
+        await delay(this.configuration.settings.readIntervalDelay);
+      } else {
+        this.cacheService.createOrUpdateCacheScanMode({
+          scanModeId: southCache.scanModeId,
+          itemId: southCache.itemId,
+          maxInstant: lastInstantRetrieved,
+          intervalIndex: 0
+        });
+      }
+    }
+  }
+
+  private logIntervals(intervals: Array<Interval>) {
     if (intervals.length > 2) {
       this.logger.trace(
         `Interval split in ${intervals.length} sub-intervals: \r\n` +
@@ -262,29 +313,6 @@ export default class SouthConnector {
       );
     } else {
       this.logger.trace(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
-    }
-
-    for (const [index, interval] of intervals.entries()) {
-      const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
-
-      if (index !== intervals.length - 1) {
-        this.cacheService.createOrUpdateCacheScanMode({
-          scanModeId: southCache.scanModeId,
-          maxInstant: lastInstantRetrieved,
-          intervalIndex: index + southCache.intervalIndex
-        });
-        if (this.stopping) {
-          this.logger.debug(`Connector is stopping. Exiting history query at interval ${index}: [${interval.start}, ${interval.end}]`);
-          return;
-        }
-        await delay(this.configuration.settings.readIntervalDelay);
-      } else {
-        this.cacheService.createOrUpdateCacheScanMode({
-          scanModeId: southCache.scanModeId,
-          maxInstant: lastInstantRetrieved,
-          intervalIndex: 0
-        });
-      }
     }
   }
 

@@ -102,6 +102,7 @@ const configuration: SouthConnectorDTO = {
   type: 'test',
   description: 'my test connector',
   enabled: true,
+  maxInstantPerItem: true,
   settings: {
     port: 4200,
     connectionTimeout: 1000,

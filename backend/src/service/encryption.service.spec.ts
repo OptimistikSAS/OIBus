@@ -196,6 +196,7 @@ describe('Encryption service with crypto settings', () => {
       type: 'any',
       description: 'my connector',
       enabled: true,
+      maxInstantPerItem: true,
       settings: {
         field1: 'not a secret',
         field2: 'secret',
@@ -213,6 +214,7 @@ describe('Encryption service with crypto settings', () => {
       type: 'any',
       description: 'my connector',
       enabled: true,
+      maxInstantPerItem: true,
       settings: {
         field1: 'not a secret',
         field2: 'secret',
@@ -262,6 +264,7 @@ describe('Encryption service with crypto settings', () => {
       type: 'any',
       description: 'my connector',
       enabled: true,
+      maxInstantPerItem: true,
       settings: {
         field1: 'not a secret',
         field2: '',
@@ -279,6 +282,7 @@ describe('Encryption service with crypto settings', () => {
       type: 'any',
       description: 'my connector',
       enabled: true,
+      maxInstantPerItem: true,
       settings: {
         field1: 'not a secret',
         field2: 'encrypted secret',
@@ -317,6 +321,7 @@ describe('Encryption service with crypto settings', () => {
       type: 'any',
       description: 'my connector',
       enabled: true,
+      maxInstantPerItem: true,
       settings: {
         field1: 'not a secret',
         field2: '',
@@ -334,6 +339,7 @@ describe('Encryption service with crypto settings', () => {
       type: 'any',
       description: 'my connector',
       enabled: true,
+      maxInstantPerItem: true,
       settings: {
         field1: 'not a secret',
         field2: 'encrypted secret',
@@ -400,6 +406,7 @@ describe('Encryption service with crypto settings', () => {
       type: 'any',
       description: 'my connector',
       enabled: true,
+      maxInstantPerItem: true,
       settings: {
         field1: 'not a secret',
         field2: 'encrypted secret',

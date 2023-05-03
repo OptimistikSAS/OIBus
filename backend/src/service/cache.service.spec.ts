@@ -50,6 +50,7 @@ describe('South cache service', () => {
   it('should create or update cache scan mode', () => {
     const command = {
       scanModeId: 'id1',
+      itemId: 'itemId',
       intervalIndex: 1,
       maxInstant: ''
     };
@@ -60,16 +61,18 @@ describe('South cache service', () => {
   it('should get scan mode', () => {
     const scanMode = {
       scanModeId: 'id1',
+      itemId: 'itemId',
       intervalIndex: 1,
       maxInstant: ''
     };
     (service.cacheRepository.getSouthCacheScanMode as jest.Mock).mockReturnValueOnce(scanMode).mockReturnValue(null);
-    const result = service.getSouthCache('id1', nowDateString);
+    const result = service.getSouthCache('id1', 'itemId', nowDateString);
     expect(result).toEqual(scanMode);
 
-    const defaultResult = service.getSouthCache('id1', nowDateString);
+    const defaultResult = service.getSouthCache('id1', 'itemId', nowDateString);
     expect(defaultResult).toEqual({
       scanModeId: 'id1',
+      itemId: 'itemId',
       maxInstant: nowDateString,
       intervalIndex: 0
     });
