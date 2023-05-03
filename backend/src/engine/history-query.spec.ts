@@ -58,6 +58,7 @@ const createdSouth = {
 const createdNorth = {
   start: jest.fn(),
   stop: jest.fn(),
+  init: jest.fn(),
   connect: jest.fn(),
   cacheValues: jest.fn(),
   cacheFile: jest.fn(),
@@ -96,13 +97,12 @@ describe('HistoryQuery enabled', () => {
         retentionDuration: 0
       }
     };
-    historyQuery = new HistoryQuery(configuration, southService, northService, items, logger, 'baseFolder');
+    historyQuery = new HistoryQuery(configuration, southService, northService, items, logger, path.resolve('baseFolder', configuration.id));
   });
 
   it('should be properly initialized', async () => {
     historyQuery.runSouthConnector = jest.fn();
     await historyQuery.start();
-    expect(createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', configuration.id));
     expect(createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', configuration.id, 'south'));
     expect(createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', configuration.id, 'north'));
     expect(createdNorth.start).toHaveBeenCalledTimes(1);

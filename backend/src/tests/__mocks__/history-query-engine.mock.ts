@@ -10,6 +10,7 @@ export default jest.fn().mockImplementation(() => {
     stopHistoryQuery: jest.fn(),
     addItemToHistoryQuery: jest.fn(),
     updateItemInHistoryQuery: jest.fn(),
-    deleteItemFromHistoryQuery: jest.fn()
+    deleteItemFromHistoryQuery: jest.fn(),
+    deleteAllItemsFromHistoryQuery: jest.fn()
   };
 });

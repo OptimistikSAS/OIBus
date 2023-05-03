@@ -122,8 +122,24 @@ export default class HistoryQueryItemRepository {
   /**
    * Delete History items associated to a history query ID
    */
-  deleteHistoryItemByHistoryId(historyId: string): void {
+  deleteAllItems(historyId: string): void {
     const query = `DELETE FROM ${HISTORY_ITEM_TABLE} WHERE history_id = ?;`;
     this.database.prepare(query).run(historyId);
+  }
+
+  createAndUpdateItems(historyId: string, itemsToAdd: Array<OibusItemDTO>, itemsToUpdate: Array<OibusItemDTO>): void {
+    const insert = this.database.prepare(`INSERT INTO ${HISTORY_ITEM_TABLE} (id, name, history_id, settings) VALUES (?, ?, ?, ?);`);
+    const update = this.database.prepare(`UPDATE ${HISTORY_ITEM_TABLE} SET name = ?, settings = ? WHERE id = ?;`);
+
+    const transaction = this.database.transaction(() => {
+      for (const item of itemsToAdd) {
+        const id = generateRandomId(6);
+        insert.run(id, item.name, historyId, JSON.stringify(item.settings));
+      }
+      for (const item of itemsToUpdate) {
+        update.run(item.name, JSON.stringify(item.settings), item.id);
+      }
+    });
+    transaction();
   }
 }
