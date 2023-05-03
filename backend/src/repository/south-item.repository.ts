@@ -135,14 +135,6 @@ export default class SouthItemRepository {
     this.database.prepare(query).run(southId);
   }
 
-  /**
-   * Delete History items associated to a history query ID
-   */
-  deleteSouthItemByConnectorId(connectorId: string): void {
-    const query = `DELETE FROM ${SOUTH_ITEM_TABLE} WHERE connector_id = ?;`;
-    this.database.prepare(query).run(connectorId);
-  }
-
   createAndUpdateSouthItems(southId: string, itemsToAdd: Array<OibusItemDTO>, itemsToUpdate: Array<OibusItemDTO>): void {
     const insert = this.database.prepare(
       `INSERT INTO ${SOUTH_ITEM_TABLE} (id, name, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?);`

@@ -94,15 +94,18 @@ export default class NorthConnector {
     return this.configuration.enabled;
   }
 
-  /**
-   * Initialize services at startup
-   */
-  async start(): Promise<void> {
+  async init(): Promise<void> {
     this.subscribedTo = this.repositoryService.subscriptionRepository.getNorthSubscriptions(this.configuration.id);
     await this.valueCacheService.start();
     await this.fileCacheService.start();
     this.logger.trace(`North connector "${this.configuration.name}" enabled. Starting services...`);
     await this.archiveService.start();
+  }
+  /**
+   * Initialize services at startup
+   */
+  async start(): Promise<void> {
+    await this.init();
     await this.connect();
   }
 

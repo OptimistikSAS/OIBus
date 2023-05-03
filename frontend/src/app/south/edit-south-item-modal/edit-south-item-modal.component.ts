@@ -156,7 +156,7 @@ export class EditSouthItemModalComponent {
     scanModes: Array<ScanModeDTO>,
     southItem: OibusItemDTO
   ) {
-    this.item = southItem;
+    this.item = JSON.parse(JSON.stringify(southItem)) as OibusItemDTO;
     this.item.name = `${southItem.name}-copy`;
     this.mode = 'create';
     this.southConnector = southConnector;
