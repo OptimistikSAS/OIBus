@@ -30,7 +30,7 @@ describe('HomeComponent', () => {
 
   it('should display engine home', () => {
     expect(tester.homeButtons.length).toBe(4);
-    expect(tester.homeButtons[0]).toContainText('Engine');
+    expect(tester.homeButtons[1]).toContainText('Engine');
   });
 
   it('should display history queries home', () => {
@@ -40,7 +40,7 @@ describe('HomeComponent', () => {
 
   it('should display North home', () => {
     expect(tester.homeButtons.length).toBe(4);
-    expect(tester.homeButtons[1]).toContainText('North');
+    expect(tester.homeButtons[0]).toContainText('North');
   });
 
   it('should display South home', () => {
