@@ -33,6 +33,7 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }],
       readDisplay: true
     },
+    { key: 'authentication', type: 'OibAuthentication', label: 'Authentication', newRow: true, authTypes: ['api-key'] },
     {
       key: 'proxy',
       type: 'OibProxy',
