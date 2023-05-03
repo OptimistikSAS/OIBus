@@ -107,7 +107,7 @@ export default class ReloadService {
     const subscribedNorthIds = this.repositoryService.subscriptionRepository.getSubscribedNorthConnectors(southId);
     await Promise.allSettled(subscribedNorthIds.map(northId => this.onDeleteNorthSubscription(northId, southId)));
     await this.oibusEngine.stopSouth(southId);
-    this.repositoryService.southItemRepository.deleteSouthItemByConnectorId(southId);
+    this.repositoryService.southItemRepository.deleteAllSouthItems(southId);
     this.repositoryService.southConnectorRepository.deleteSouthConnector(southId);
   }
 
@@ -203,7 +203,7 @@ export default class ReloadService {
 
   async onDeleteHistoryQuery(historyId: string): Promise<void> {
     await this.historyEngine.stopHistoryQuery(historyId);
-    this.repositoryService.historyQueryItemRepository.deleteHistoryItemByHistoryId(historyId);
+    this.repositoryService.historyQueryItemRepository.deleteAllItems(historyId);
     this.repositoryService.historyQueryRepository.deleteHistoryQuery(historyId);
   }
 
@@ -229,6 +229,21 @@ export default class ReloadService {
     const item = this.repositoryService.historyQueryItemRepository.getHistoryItem(itemId);
     this.repositoryService.historyQueryItemRepository.deleteHistoryItem(itemId);
     await this.historyEngine.deleteItemFromHistoryQuery(historyId, item);
+  }
+
+  async onDeleteAllHistoryItems(historyId: string): Promise<void> {
+    await this.historyEngine.deleteAllItemsFromHistoryQuery(historyId);
+    this.repositoryService.historyQueryItemRepository.deleteAllItems(historyId);
+  }
+
+  async onCreateOrUpdateHistoryQueryItems(
+    historyQuery: HistoryQueryDTO,
+    itemsToAdd: Array<OibusItemDTO>,
+    itemsToUpdate: Array<OibusItemDTO>
+  ): Promise<void> {
+    await this.historyEngine.stopHistoryQuery(historyQuery.id);
+    this.repositoryService.historyQueryItemRepository.createAndUpdateItems(historyQuery.id, itemsToAdd, itemsToUpdate);
+    await this.historyEngine.startHistoryQuery(historyQuery);
   }
 
   async getErrorFiles(northId: string, start: Instant, end: Instant, fileNameContains: string): Promise<Array<NorthCacheFiles>> {

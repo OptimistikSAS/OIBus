@@ -9,6 +9,7 @@ import {
   logSchema,
   proxySchema,
   scanModeSchema,
+  historyQuerySchema,
   userSchema
 } from '../../engine/oibus-validation-schema';
 
@@ -35,7 +36,7 @@ const oibusController = new OibusController(joiValidator, engineSchema);
 const ipFilterController = new IpFilterController(joiValidator, ipFilterSchema);
 const northConnectorController = new NorthConnectorController(joiValidator);
 const southConnectorController = new SouthConnectorController(joiValidator);
-const historyQueryController = new HistoryQueryController(joiValidator, southManifests, northManifests);
+const historyQueryController = new HistoryQueryController(joiValidator, historyQuerySchema, southManifests, northManifests);
 const userController = new UserController(joiValidator, userSchema);
 const logController = new LogController(joiValidator, logSchema);
 const healthSignalController = new HealthSignalController(joiValidator, logSchema);
@@ -145,15 +146,20 @@ router.delete('/api/history-queries/:id', (ctx: KoaContext<any, any>) => history
 router.get('/api/history-queries/:historyQueryId/items', (ctx: KoaContext<any, any>) =>
   historyQueryController.searchHistoryQueryItems(ctx)
 );
+router.get('/api/history-queries/:historyQueryId/items/export', (ctx: KoaContext<any, any>) => historyQueryController.exportItems(ctx));
 router.get('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext<any, any>) =>
   historyQueryController.getHistoryQueryItem(ctx)
 );
 router.post('/api/history-queries/:historyQueryId/items', (ctx: KoaContext<any, any>) =>
   historyQueryController.createHistoryQueryItem(ctx)
 );
+router.post('/api/history-queries/:historyQueryId/items/upload', upload.single('file'), (ctx: KoaContext<any, any>) =>
+  historyQueryController.uploadItems(ctx)
+);
 router.put('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext<any, any>) =>
   historyQueryController.updateHistoryQueryItem(ctx)
 );
+router.delete('/api/history-queries/:historyQueryId/items/all', (ctx: KoaContext<any, any>) => historyQueryController.deleteAllItems(ctx));
 router.delete('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext<any, any>) =>
   historyQueryController.deleteHistoryQueryItem(ctx)
 );

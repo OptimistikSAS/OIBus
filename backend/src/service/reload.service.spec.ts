@@ -21,7 +21,7 @@ import {
   SouthConnectorDTO
 } from '../../../shared/model/south-connector.model';
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
-import { HistoryQueryCommandDTO } from '../../../shared/model/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import HistoryQueryEngine from '../engine/history-query-engine';
 
 jest.mock('../repository/proxy.repository');
@@ -127,7 +127,7 @@ describe('reload service', () => {
     expect(oibusEngine.startNorth).toHaveBeenNthCalledWith(2, 'northId2', { id: 'northId2' });
     expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
     expect(repositoryService.southConnectorRepository.deleteSouthConnector).toHaveBeenCalledWith('southId');
-    expect(repositoryService.southItemRepository.deleteSouthItemByConnectorId).toHaveBeenCalledWith('southId');
+    expect(repositoryService.southItemRepository.deleteAllSouthItems).toHaveBeenCalledWith('southId');
   });
 
   it('should create south item', async () => {
@@ -231,7 +231,7 @@ describe('reload service', () => {
   it('should delete history query', async () => {
     await service.onDeleteHistoryQuery('historyId');
     expect(repositoryService.historyQueryRepository.deleteHistoryQuery).toHaveBeenCalledWith('historyId');
-    expect(repositoryService.historyQueryItemRepository.deleteHistoryItemByHistoryId).toHaveBeenCalledWith('historyId');
+    expect(repositoryService.historyQueryItemRepository.deleteAllItems).toHaveBeenCalledWith('historyId');
   });
 
   it('should create history item', async () => {
@@ -303,5 +303,18 @@ describe('reload service', () => {
   it('should retrieve error file from north', async () => {
     await service.getErrorFiles('northId', '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', 'file');
     expect(oibusEngine.getErrorFiles).toHaveBeenCalledWith('northId', '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', 'file');
+  });
+
+  it('should delete all history query items', async () => {
+    await service.onDeleteAllHistoryItems('historyId');
+    expect(historyQueryEngine.deleteAllItemsFromHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(repositoryService.historyQueryItemRepository.deleteAllItems).toHaveBeenCalledWith('historyId');
+  });
+
+  it('should create or update south items', async () => {
+    await service.onCreateOrUpdateHistoryQueryItems({ id: 'historyId' } as HistoryQueryDTO, [], []);
+    expect(repositoryService.historyQueryItemRepository.createAndUpdateItems).toHaveBeenCalledWith('historyId', [], []);
+    expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(historyQueryEngine.startHistoryQuery).toHaveBeenCalledWith({ id: 'historyId' } as HistoryQueryDTO);
   });
 });

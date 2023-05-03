@@ -26,15 +26,13 @@ export default class HistoryQuery {
     private logger: pino.Logger,
     baseFolder: string
   ) {
-    this.baseFolder = path.resolve(baseFolder, historyConfiguration.id);
+    this.baseFolder = baseFolder;
   }
 
   /**
    * Run history query according to its status
    */
   async start(): Promise<void> {
-    await createFolder(this.baseFolder);
-
     const southConfiguration: SouthConnectorDTO = {
       id: this.historyConfiguration.id,
       name: `${this.historyConfiguration.name} (South)`,
@@ -79,6 +77,7 @@ export default class HistoryQuery {
       );
     }
 
+    await this.north.init();
     if (!this.historyConfiguration.enabled) {
       this.logger.trace(`History Query "${this.historyConfiguration.name}" not enabled`);
       return;
@@ -182,6 +181,13 @@ export default class HistoryQuery {
       return;
     }
     this.south.deleteItem(item);
+  }
+
+  deleteItems() {
+    if (!this.south) {
+      return;
+    }
+    this.south.deleteAllItems();
   }
 
   setLogger(value: pino.Logger) {

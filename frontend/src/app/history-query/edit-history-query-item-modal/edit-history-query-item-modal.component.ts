@@ -113,7 +113,7 @@ export class EditHistoryQueryItemModalComponent {
    * Prepares the component for edition.
    */
   prepareForCopy(historyQuery: HistoryQueryDTO, southItemSchema: OibusItemManifest, item: OibusItemDTO) {
-    this.item = item;
+    this.item = JSON.parse(JSON.stringify(item)) as OibusItemDTO;
     this.item.name = `${item.name}-copy`;
     this.mode = 'create';
     this.historyQuery = historyQuery;
