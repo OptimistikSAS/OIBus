@@ -11,7 +11,12 @@ import { getRowSettings } from '../../shared/utils';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
-import { OibusItemDTO, OibusItemSearchParam, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import {
+  OibusItemDTO,
+  OibusItemManifest,
+  OibusItemSearchParam,
+  SouthConnectorManifest
+} from '../../../../../shared/model/south-connector.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { emptyPage, toPage } from '../../shared/test-utils';
@@ -35,6 +40,8 @@ export class HistoryQueryDisplayComponent implements OnInit {
   historyQuery: HistoryQueryDTO | null = null;
   northSettingsSchema: Array<Array<OibFormControl>> = [];
   southSettingsSchema: Array<Array<OibFormControl>> = [];
+  itemSchema: OibusItemManifest | null = null;
+
   scanModes: Array<ScanModeDTO> = [];
   searchParams: OibusItemSearchParam | null = null;
   northManifest: NorthConnectorManifest | null = null;
@@ -85,13 +92,11 @@ export class HistoryQueryDisplayComponent implements OnInit {
         if (!northManifest || !southManifest || !historyItems) {
           return;
         }
-        const northRowList = getRowSettings(northManifest.settings, this.historyQuery!.northSettings);
-        const southRowList = getRowSettings(southManifest.settings, this.historyQuery!.southSettings);
 
-        this.northSettingsSchema = northRowList;
-        this.southSettingsSchema = southRowList;
         this.northManifest = northManifest;
-        this.southManifest = southManifest;
+        this.northSettingsSchema = getRowSettings(northManifest.settings, this.historyQuery!.northSettings);
+        this.southSettingsSchema = getRowSettings(southManifest.settings, this.historyQuery!.southSettings);
+        this.itemSchema = southManifest.items;
         this.historyQueryItems = historyItems;
       });
 
@@ -142,7 +147,7 @@ export class HistoryQueryDisplayComponent implements OnInit {
   openEditSouthItemModal(item: OibusItemDTO) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent);
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForEdition(this.historyQuery!, this.southManifest!.items, item);
+    component.prepareForEdition(this.historyQuery!, this.itemSchema!, item);
     this.refreshAfterEditSouthItemModalClosed(modalRef, 'updated');
   }
 
@@ -152,7 +157,7 @@ export class HistoryQueryDisplayComponent implements OnInit {
   openCreationSouthItemModal() {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent);
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.historyQuery!, this.southManifest!.items);
+    component.prepareForCreation(this.historyQuery!, this.itemSchema!);
     this.refreshAfterEditSouthItemModalClosed(modalRef, 'created');
   }
 
@@ -171,7 +176,7 @@ export class HistoryQueryDisplayComponent implements OnInit {
   duplicateItem(item: OibusItemDTO) {
     const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent);
     const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-    component.prepareForCopy(this.historyQuery!, this.southManifest!.items, item);
+    component.prepareForCopy(this.historyQuery!, this.itemSchema!, item);
     this.refreshAfterEditSouthItemModalClosed(modalRef, 'created');
   }
 

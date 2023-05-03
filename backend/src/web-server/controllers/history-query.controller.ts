@@ -10,13 +10,21 @@ import {
 } from '../../../../shared/model/south-connector.model';
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 import { Page } from '../../../../shared/model/types';
+import csv from 'papaparse';
+import fs from 'node:fs/promises';
+import { southManifests } from './south-connector.controller';
+import AbstractController from './abstract.controller';
+import Joi from 'joi';
 
-export default class HistoryQueryController {
+export default class HistoryQueryController extends AbstractController {
   constructor(
     protected readonly validator: JoiValidator,
+    protected readonly schema: Joi.ObjectSchema,
     private southManifests: Array<SouthConnectorManifest>,
     private northManifests: Array<NorthConnectorManifest>
-  ) {}
+  ) {
+    super(validator, schema);
+  }
 
   getHistoryQueries = (ctx: KoaContext<void, Array<HistoryQueryDTO>>) => {
     const historyQueries = ctx.app.repositoryService.historyQueryRepository.getHistoryQueries();
@@ -51,9 +59,12 @@ export default class HistoryQueryController {
   };
 
   createHistoryQuery = async (ctx: KoaContext<HistoryQueryCreateCommandDTO, void>) => {
+    if (!ctx.request.body) {
+      return ctx.badRequest();
+    }
     const command: HistoryQueryCommandDTO = {
-      name: ctx.request.body?.name || '',
-      description: ctx.request.body?.description || '',
+      name: ctx.request.body.name,
+      description: ctx.request.body.description,
       enabled: false,
       startTime: '',
       endTime: '',
@@ -77,10 +88,10 @@ export default class HistoryQueryController {
 
     let southManifest: SouthConnectorManifest | undefined;
     let southItems: Array<OibusItemDTO> = [];
-    if (ctx.request.body?.southType) {
-      southManifest = this.southManifests.find(south => south.name === ctx.request.body?.southType);
-      command.southType = ctx.request.body?.southType;
-    } else if (ctx.request.body?.southId) {
+    if (ctx.request.body.southType) {
+      southManifest = this.southManifests.find(south => south.name === ctx.request.body!.southType);
+      command.southType = ctx.request.body.southType;
+    } else if (ctx.request.body.southId) {
       const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.request.body.southId);
       if (!southConnector) {
         return ctx.throw(404, 'South connector not found');
@@ -95,16 +106,17 @@ export default class HistoryQueryController {
     }
 
     let northManifest: NorthConnectorManifest | undefined;
-    if (ctx.request.body?.northType) {
-      northManifest = this.northManifests.find(north => north.name === ctx.request.body?.northType);
-      command.northType = ctx.request.body?.northType;
-    } else if (ctx.request.body?.northId) {
+    if (ctx.request.body.northType) {
+      northManifest = this.northManifests.find(north => north.name === ctx.request.body!.northType);
+      command.northType = ctx.request.body.northType;
+    } else if (ctx.request.body.northId) {
       const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.request.body.northId);
       if (!northConnector) {
         return ctx.throw(404, 'North connector not found');
       }
       command.northSettings = northConnector.settings;
       command.caching = northConnector.caching;
+      command.archive = northConnector.archive;
       command.northType = northConnector.type;
       northManifest = this.northManifests.find(north => north.name === northConnector.type);
     }
@@ -113,6 +125,11 @@ export default class HistoryQueryController {
     }
 
     try {
+      await this.validator.validateSettings(southManifest.settings, command.southSettings);
+      await this.validator.validateSettings(northManifest.settings, command.northSettings);
+      command.southSettings = await ctx.app.encryptionService.encryptConnectorSecrets(command.southSettings, null, southManifest.settings);
+      command.northSettings = await ctx.app.encryptionService.encryptConnectorSecrets(command.northSettings, null, northManifest.settings);
+
       const historyQuery = await ctx.app.reloadService.onCreateHistoryQuery(command, southItems);
       ctx.created(historyQuery);
     } catch (error: any) {
@@ -193,14 +210,11 @@ export default class HistoryQueryController {
         return ctx.throw(404, 'South manifest not found');
       }
 
-      const command: OibusItemCommandDTO | undefined = ctx.request.body;
-      if (command) {
-        await this.validator.validateSettings(manifest.items.settings, command?.settings);
-        const historyQueryItem = await ctx.app.reloadService.onCreateHistoryItem(ctx.params.historyQueryId, command);
-        ctx.created(historyQueryItem);
-      } else {
-        ctx.badRequest();
-      }
+      const command: OibusItemCommandDTO = ctx.request.body!;
+      await this.validator.validateSettings(manifest.items.settings, command?.settings);
+
+      const historyQueryItem = await ctx.app.reloadService.onCreateHistoryItem(ctx.params.historyQueryId, command);
+      ctx.created(historyQueryItem);
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
@@ -215,19 +229,15 @@ export default class HistoryQueryController {
 
       const manifest = this.southManifests.find(south => south.name === historyQuery.southType);
       if (!manifest) {
-        return ctx.throw(404, 'South manifest not found');
+        return ctx.throw(404, 'History query South manifest not found');
       }
 
       const historyQueryItem = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem(ctx.params.id);
       if (historyQueryItem) {
-        const command: OibusItemCommandDTO | undefined = ctx.request.body;
-        if (command) {
-          await this.validator.validateSettings(manifest.items.settings, command?.settings);
-          await ctx.app.reloadService.onUpdateHistoryItemsSettings(ctx.params.historyQueryId, historyQueryItem, command);
-          ctx.noContent();
-        } else {
-          ctx.badRequest();
-        }
+        const command: OibusItemCommandDTO = ctx.request.body!;
+        await this.validator.validateSettings(manifest.items.settings, command?.settings);
+        await ctx.app.reloadService.onUpdateHistoryItemsSettings(ctx.params.historyQueryId, historyQueryItem, command);
+        ctx.noContent();
       } else {
         ctx.notFound();
       }
@@ -238,6 +248,78 @@ export default class HistoryQueryController {
 
   async deleteHistoryQueryItem(ctx: KoaContext<void, void>): Promise<void> {
     await ctx.app.reloadService.onDeleteHistoryItem(ctx.params.historyQueryId, ctx.params.id);
+    ctx.noContent();
+  }
+
+  async deleteAllItems(ctx: KoaContext<void, void>): Promise<void> {
+    await ctx.app.reloadService.onDeleteAllHistoryItems(ctx.params.historyQueryId);
+    ctx.noContent();
+  }
+
+  async exportItems(ctx: KoaContext<void, any>): Promise<void> {
+    const southItems = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems(ctx.params.historyQueryId).map(item => {
+      const flattenedItem: Record<string, any> = {
+        ...item
+      };
+      for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
+        flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
+      }
+      delete flattenedItem.settings;
+      delete flattenedItem.connectorId;
+      return flattenedItem;
+    });
+    ctx.body = csv.unparse(southItems);
+    ctx.set('Content-disposition', 'attachment; filename=items.csv');
+    ctx.set('Content-Type', 'application/force-download');
+    ctx.ok();
+  }
+
+  async uploadItems(ctx: KoaContext<void, any>): Promise<void> {
+    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
+    if (!historyQuery) {
+      return ctx.throw(404, 'History query not found');
+    }
+
+    const manifest = southManifests.find(south => south.name === historyQuery.southType);
+    if (!manifest) {
+      return ctx.throw(404, 'History query South manifest not found');
+    }
+
+    const file = ctx.request.file;
+    if (file.mimetype !== 'text/csv') {
+      return ctx.badRequest();
+    }
+    let items: Array<any> = [];
+    try {
+      const fileContent = await fs.readFile(file.path);
+      const csvContent = csv.parse(fileContent.toString('utf8'), { header: true });
+      items = csvContent.data.map((data: any) => {
+        const item: Record<string, any> = { settings: {} };
+        for (const [key, value] of Object.entries(data)) {
+          if (key.startsWith('settings_')) {
+            item.settings[key.replace('settings_', '')] = value;
+          } else {
+            item[key] = value;
+          }
+        }
+        return item;
+      });
+      // Check if item settings match the item schema, throw an error otherwise
+      for (const item of items) {
+        await this.validator.validateSettings(manifest.items.settings, item.settings);
+      }
+    } catch (error: any) {
+      return ctx.badRequest(error.message);
+    }
+
+    try {
+      const itemsToAdd = items.filter(item => !item.id);
+      const itemsToUpdate = items.filter(item => item.id);
+      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, itemsToAdd, itemsToUpdate);
+    } catch {
+      return ctx.badRequest();
+    }
+
     ctx.noContent();
   }
 }

@@ -70,6 +70,19 @@ const ipFilterSchema: Joi.ObjectSchema = Joi.object({
   address: Joi.string().required(),
   description: Joi.string().required().allow(null, '')
 });
+const historyQuerySchema: Joi.ObjectSchema = Joi.object({
+  name: Joi.string().required(),
+  description: Joi.string().required().allow(null, ''),
+  enabled: Joi.boolean(),
+  startTime: Joi.date().required(),
+  endTime: Joi.date().required(),
+  southType: Joi.string().required().allow(null, ''),
+  northType: Joi.string().required().allow(null, ''),
+  southSettings: Joi.object().required(),
+  northSettings: Joi.object().required(),
+  caching: Joi.object().required(),
+  archive: Joi.object().required()
+});
 const userSchema: Joi.ObjectSchema = Joi.object({
   login: Joi.string().required().min(4),
   firstName: Joi.optional(),
@@ -92,4 +105,4 @@ const logSchema: Joi.ObjectSchema = Joi.object({
   )
 });
 
-export { scanModeSchema, proxySchema, externalSourceSchema, engineSchema, ipFilterSchema, userSchema, logSchema };
+export { scanModeSchema, proxySchema, externalSourceSchema, engineSchema, ipFilterSchema, userSchema, historyQuerySchema, logSchema };

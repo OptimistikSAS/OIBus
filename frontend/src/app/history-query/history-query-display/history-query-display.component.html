@@ -12,7 +12,7 @@
       <div id="description">{{ historyQuery.description }}</div>
     </div>
   </div>
-  <div *ngIf="historyQuery && northManifest && southManifest" class="row justify-content-center">
+  <div *ngIf="historyQuery && northManifest" class="row justify-content-center">
     <div class="col-md-10 col-lg-8">
       <!-- Cache-->
       <h2><span translate="history-query.cache-settings.title"></span></h2>
@@ -126,7 +126,7 @@
             </div>
           </span>
         </h2>
-        <div class="col" *ngIf="historyQueryItems && southSettingsSchema">
+        <div class="col" *ngIf="historyQueryItems && itemSchema">
           <div *ngIf="historyQueryItems.totalElements !== 0">
             <oib-pagination class="d-flex justify-content-end" [page]="historyQueryItems" [navigate]="true"></oib-pagination>
           </div>
@@ -138,7 +138,7 @@
                 <thead class="table-light">
                   <tr>
                     <th translate="south.items.name"></th>
-                    <ng-container *ngFor="let schema of southManifest.items.settings">
+                    <ng-container *ngFor="let schema of itemSchema.settings">
                       <th *ngIf="schema.readDisplay">{{ schema.label }}</th>
                     </ng-container>
                     <th></th>
@@ -147,7 +147,7 @@
                 <tbody>
                   <tr *ngFor="let item of historyQueryItems.content">
                     <td>{{ item.name }}</td>
-                    <ng-container *ngFor="let schema of southManifest.items.settings">
+                    <ng-container *ngFor="let schema of itemSchema.settings">
                       <td *ngIf="schema.readDisplay">{{ item.settings[schema.key] }}</td>
                     </ng-container>
 
@@ -172,7 +172,7 @@
               </table>
             </div>
             <ng-template #empty>
-              <div class="oi-details empty" translate="south.items.none"></div>
+              <div class="oi-details empty" translate="history-query.items.none"></div>
             </ng-template>
           </ng-container>
         </div>

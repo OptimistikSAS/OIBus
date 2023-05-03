@@ -170,8 +170,33 @@ describe('History query item repository', () => {
   });
 
   it('should delete all history query items associated to a history id', () => {
-    repository.deleteHistoryItemByHistoryId('historyId');
+    repository.deleteAllItems('historyId');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM history_item WHERE history_id = ?;');
     expect(run).toHaveBeenCalledWith('historyId');
+  });
+
+  it('should create and update items', () => {
+    (database.transaction as jest.Mock).mockImplementationOnce(callback => {
+      return () => callback();
+    });
+    const itemToAdd: OibusItemDTO = {
+      id: 'id1',
+      name: 'item1',
+      connectorId: 'southId',
+      settings: {}
+    };
+
+    const itemToUpdate: OibusItemDTO = {
+      id: 'id2',
+      name: 'item2',
+      connectorId: 'southId',
+      settings: {}
+    };
+
+    repository.createAndUpdateItems('historyId', [itemToAdd], [itemToUpdate]);
+    expect(database.prepare).toHaveBeenCalledWith(`INSERT INTO history_item (id, name, history_id, settings) VALUES (?, ?, ?, ?);`);
+    expect(database.prepare).toHaveBeenCalledWith(`UPDATE history_item SET name = ?, settings = ? WHERE id = ?;`);
+    expect(run).toHaveBeenCalledWith('123456', 'item1', 'historyId', '{}');
+    expect(run).toHaveBeenCalledWith('item2', '{}', 'id2');
   });
 });

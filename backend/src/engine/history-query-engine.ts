@@ -75,6 +75,10 @@ export default class HistoryQueryEngine extends BaseEngine {
     await this.historyQueries.get(historyId)?.deleteItem(item);
   }
 
+  async deleteAllItemsFromHistoryQuery(historyId: string): Promise<void> {
+    await this.historyQueries.get(historyId)?.deleteItems();
+  }
+
   async updateItemInHistoryQuery(historyId: string, item: OibusItemDTO): Promise<void> {
     await this.historyQueries.get(historyId)?.updateItem(item);
   }
