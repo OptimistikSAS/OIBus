@@ -26,7 +26,7 @@ describe('History Query repository', () => {
   it('should properly init north connector table', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       `CREATE TABLE IF NOT EXISTS history_queries (id TEXT PRIMARY KEY, name TEXT, description TEXT, ` +
-        `enabled INTEGER, start_time TEXT, end_time TEXT, south_type TEXT, north_type TEXT, ` +
+        `enabled INTEGER, max_instant_per_item INTEGER, start_time TEXT, end_time TEXT, south_type TEXT, north_type TEXT, ` +
         `south_settings TEXT, north_settings TEXT, caching_scan_mode_id TEXT, caching_group_count INTEGER, caching_retry_interval INTEGER, ` +
         `caching_retry_count INTEGER, caching_max_send_count INTEGER, caching_max_size INTEGER, archive_enabled INTEGER, ` +
         `archive_retention_duration INTEGER, FOREIGN KEY(caching_scan_mode_id) REFERENCES scan_mode(id));`
@@ -41,6 +41,7 @@ describe('History Query repository', () => {
         name: 'historyQuery1',
         description: 'My history query',
         enabled: true,
+        maxInstantPerItem: true,
         startTime: '2023-01-01T00:00:00.000Z',
         endTime: '2023-02-01T00:00:00.000Z',
         southType: 'SQL',
@@ -65,6 +66,7 @@ describe('History Query repository', () => {
         name: 'historyQuery2',
         description: 'My second history query',
         enabled: true,
+        maxInstantPerItem: true,
         startTime: '2023-01-01T00:00:00.000Z',
         endTime: '2023-02-01T00:00:00.000Z',
         southType: 'SQL',
@@ -91,6 +93,7 @@ describe('History Query repository', () => {
         name: 'historyQuery1',
         description: 'My history query',
         enabled: true,
+        maxInstantPerItem: true,
         startTime: '2023-01-01T00:00:00.000Z',
         endTime: '2023-02-01T00:00:00.000Z',
         southType: 'SQL',
@@ -111,6 +114,7 @@ describe('History Query repository', () => {
         name: 'historyQuery2',
         description: 'My second history query',
         enabled: true,
+        maxInstantPerItem: true,
         startTime: '2023-01-01T00:00:00.000Z',
         endTime: '2023-02-01T00:00:00.000Z',
         southType: 'SQL',
@@ -129,7 +133,7 @@ describe('History Query repository', () => {
     ]);
     const southConnectors = repository.getHistoryQueries();
     expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, enabled, start_time as startTime, end_time as endTime, south_type AS southType, ` +
+      `SELECT id, name, description, enabled, max_instant_per_item AS maxInstantPerItem, start_time AS startTime, end_time AS endTime, south_type AS southType, ` +
         `north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
         `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
@@ -145,6 +149,7 @@ describe('History Query repository', () => {
       name: 'historyQuery1',
       description: 'My history query',
       enabled: true,
+      maxInstantPerItem: true,
       startTime: '2023-01-01T00:00:00.000Z',
       endTime: '2023-02-01T00:00:00.000Z',
       southType: 'SQL',
@@ -169,6 +174,7 @@ describe('History Query repository', () => {
       name: 'historyQuery1',
       description: 'My history query',
       enabled: true,
+      maxInstantPerItem: true,
       startTime: '2023-01-01T00:00:00.000Z',
       endTime: '2023-02-01T00:00:00.000Z',
       southType: 'SQL',
@@ -186,7 +192,7 @@ describe('History Query repository', () => {
     });
     const historyQuery = repository.getHistoryQuery('id1');
     expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, enabled, start_time as startTime, end_time as endTime, south_type AS southType, ` +
+      `SELECT id, name, description, enabled, max_instant_per_item AS maxInstantPerItem, start_time AS startTime, end_time AS endTime, south_type AS southType, ` +
         `north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
         `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
@@ -201,7 +207,7 @@ describe('History Query repository', () => {
     get.mockReturnValueOnce(null);
     const historyQuery = repository.getHistoryQuery('id1');
     expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, enabled, start_time as startTime, end_time as endTime, south_type AS southType, ` +
+      `SELECT id, name, description, enabled, max_instant_per_item AS maxInstantPerItem, start_time AS startTime, end_time AS endTime, south_type AS southType, ` +
         `north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
         `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
@@ -217,6 +223,7 @@ describe('History Query repository', () => {
       name: 'historyQuery1',
       description: 'My history query',
       enabled: true,
+      maxInstantPerItem: true,
       startTime: '2023-01-01T00:00:00.000Z',
       endTime: '2023-02-01T00:00:00.000Z',
       southType: 'SQL',
@@ -242,6 +249,7 @@ describe('History Query repository', () => {
       name: 'historyQuery1',
       description: 'My history query',
       enabled: true,
+      maxInstantPerItem: true,
       startTime: '2023-01-01T00:00:00.000Z',
       endTime: '2023-02-01T00:00:00.000Z',
       southType: 'SQL',
@@ -263,16 +271,17 @@ describe('History Query repository', () => {
     repository.createHistoryQuery(command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
-      `INSERT INTO history_queries (id, name, description, enabled, start_time, end_time, ` +
+      `INSERT INTO history_queries (id, name, description, enabled, max_instant_per_item, start_time, end_time, ` +
         `south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
         `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_max_size, archive_enabled, ` +
-        `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     );
     expect(runFn).toHaveBeenCalledWith(
       '123456',
       command.name,
       command.description,
       +command.enabled,
+      +command.maxInstantPerItem,
       command.startTime,
       command.endTime,
       command.southType,
@@ -290,7 +299,7 @@ describe('History Query repository', () => {
     );
 
     expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, enabled, start_time as startTime, end_time as endTime, south_type AS southType, ` +
+      `SELECT id, name, description, enabled, max_instant_per_item AS maxInstantPerItem, start_time AS startTime, end_time AS endTime, south_type AS southType, ` +
         `north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
         `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
@@ -304,6 +313,7 @@ describe('History Query repository', () => {
       name: 'historyQuery1',
       description: 'My history query',
       enabled: true,
+      maxInstantPerItem: true,
       startTime: '2023-01-01T00:00:00.000Z',
       endTime: '2023-02-01T00:00:00.000Z',
       southType: 'SQL',
@@ -325,7 +335,7 @@ describe('History Query repository', () => {
     };
     repository.updateHistoryQuery('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
-      `UPDATE history_queries SET name = ?, description = ?, enabled = ?, start_time = ?, ` +
+      `UPDATE history_queries SET name = ?, description = ?, enabled = ?, max_instant_per_item = ?, start_time = ?, ` +
         `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
         `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
         `caching_max_send_count = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
@@ -335,6 +345,7 @@ describe('History Query repository', () => {
       command.name,
       command.description,
       +command.enabled,
+      +command.maxInstantPerItem,
       command.startTime,
       command.endTime,
       command.southType,

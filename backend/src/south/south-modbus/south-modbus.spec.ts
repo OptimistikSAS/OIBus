@@ -110,6 +110,7 @@ const configuration: SouthConnectorDTO = {
   type: 'test',
   description: 'my test connector',
   enabled: true,
+  maxInstantPerItem: false,
   settings: {
     port: 502,
     host: '127.0.0.1',

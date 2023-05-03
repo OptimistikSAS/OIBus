@@ -85,6 +85,7 @@ const configuration: SouthConnectorDTO = {
   type: 'test',
   description: 'my test connector',
   enabled: true,
+  maxInstantPerItem: false,
   settings: {
     url: 'mqtt://localhost:1883',
     qos: 1,

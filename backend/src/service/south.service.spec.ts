@@ -48,6 +48,7 @@ describe('south service', () => {
         description: 'my test connector',
         type: 'FolderScanner',
         enabled: false,
+        maxInstantPerItem: false,
         settings: { verbose: true }
       },
       [],

@@ -169,6 +169,7 @@ export class EditSouthComponent implements OnInit {
       type: this.southType,
       description: formValue.description!,
       enabled: formValue.enabled!,
+      maxInstantPerItem: false,
       settings: formValue.settings!
     };
     this.createOrUpdateSouthConnector(command);

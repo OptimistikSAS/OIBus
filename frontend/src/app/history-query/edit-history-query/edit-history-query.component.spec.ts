@@ -74,6 +74,7 @@ describe('EditHistoryQueryComponent', () => {
     name: 'Test',
     description: 'My History query description',
     enabled: true,
+    maxInstantPerItem: true,
     startTime: '2023-01-01T00:00:00.000Z',
     endTime: '2023-02-01T00:00:00.000Z',
     northType: 'Console',

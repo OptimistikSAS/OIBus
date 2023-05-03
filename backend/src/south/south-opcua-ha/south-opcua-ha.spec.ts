@@ -84,7 +84,6 @@ const items: Array<OibusItemDTO> = [
   }
 ];
 
-const nowDateString = '2020-02-02T02:02:02.222Z';
 let south: SouthOPCUAHA;
 const configuration: SouthConnectorDTO = {
   id: 'southId',
@@ -92,6 +91,7 @@ const configuration: SouthConnectorDTO = {
   type: 'test',
   description: 'my test connector',
   enabled: true,
+  maxInstantPerItem: true,
   settings: {
     url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
     retryInterval: 10000,

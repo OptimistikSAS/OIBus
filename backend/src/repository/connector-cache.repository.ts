@@ -20,19 +20,20 @@ export default class ConnectorCacheRepository {
   }
 
   createCacheHistoryTable() {
-    const query = `CREATE TABLE IF NOT EXISTS ${SOUTH_CACHE_TABLE} (scan_mode_id TEXT PRIMARY KEY, interval_index INTEGER, max_instant TEXT);`;
+    const query = `CREATE TABLE IF NOT EXISTS ${SOUTH_CACHE_TABLE} (scan_mode_id TEXT, item_id TEXT, interval_index INTEGER, max_instant TEXT, PRIMARY KEY(scan_mode_id, item_id));`;
     this._database.prepare(query).run();
   }
 
   /**
    * Retrieve a South connector cache scan mode
    */
-  getSouthCacheScanMode(id: string): SouthCache | null {
-    const query = `SELECT scan_mode_id as scanModeId, interval_index as intervalIndex, max_instant as maxInstant FROM ${SOUTH_CACHE_TABLE} WHERE scan_mode_id = ?;`;
-    const result: SouthCache | undefined = this._database.prepare(query).get(id) as SouthCache;
+  getSouthCacheScanMode(scanModeId: string, itemId: string): SouthCache | null {
+    const query = `SELECT scan_mode_id AS scanModeId, item_id AS itemId, interval_index AS intervalIndex, max_instant AS maxInstant FROM ${SOUTH_CACHE_TABLE} WHERE scan_mode_id = ? AND item_id = ?;`;
+    const result: SouthCache | undefined = this._database.prepare(query).get(scanModeId, itemId) as SouthCache;
     if (!result) return null;
     return {
       scanModeId: result.scanModeId,
+      itemId: result.itemId,
       intervalIndex: result.intervalIndex,
       maxInstant: result.maxInstant
     };
@@ -42,22 +43,22 @@ export default class ConnectorCacheRepository {
    * Create or update a South connector cache scan mode with the scan mode ID as primary key
    */
   createOrUpdateCacheScanMode(command: SouthCache): void {
-    const foundScanMode = this.getSouthCacheScanMode(command.scanModeId);
+    const foundScanMode = this.getSouthCacheScanMode(command.scanModeId, command.itemId);
     if (!foundScanMode) {
-      const insertQuery = `INSERT INTO ${SOUTH_CACHE_TABLE} (scan_mode_id, interval_index, max_instant) VALUES (?, ?, ?);`;
-      this._database.prepare(insertQuery).run(command.scanModeId, command.intervalIndex, command.maxInstant);
+      const insertQuery = `INSERT INTO ${SOUTH_CACHE_TABLE} (scan_mode_id, item_id, interval_index, max_instant) VALUES (?, ?, ?, ?);`;
+      this._database.prepare(insertQuery).run(command.scanModeId, command.itemId, command.intervalIndex, command.maxInstant);
     } else {
-      const query = `UPDATE ${SOUTH_CACHE_TABLE} SET interval_index = ?, max_instant = ? WHERE scan_mode_id = ?;`;
-      this._database.prepare(query).run(command.intervalIndex, command.maxInstant, command.scanModeId);
+      const query = `UPDATE ${SOUTH_CACHE_TABLE} SET interval_index = ?, max_instant = ? WHERE scan_mode_id = ? AND item_id = ?;`;
+      this._database.prepare(query).run(command.intervalIndex, command.maxInstant, command.scanModeId, command.itemId);
     }
   }
 
   /**
    * Delete a South connector cache scan mode by its scan mode ID
    */
-  deleteCacheScanMode(id: string): void {
-    const query = `DELETE FROM ${SOUTH_CACHE_TABLE} WHERE scan_mode_id = ?;`;
-    this._database.prepare(query).run(id);
+  deleteCacheScanMode(scanModeId: string, itemId: string): void {
+    const query = `DELETE FROM ${SOUTH_CACHE_TABLE} WHERE scan_mode_id = ? AND item_id = ?;`;
+    this._database.prepare(query).run(scanModeId, itemId);
   }
 
   resetDatabase(): void {

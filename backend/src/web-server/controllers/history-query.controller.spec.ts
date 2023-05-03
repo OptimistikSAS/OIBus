@@ -25,6 +25,7 @@ const southConnector: SouthConnectorDTO = {
   type: 'OPCUA_HA',
   description: 'description',
   enabled: true,
+  maxInstantPerItem: true,
   settings: {
     field: 'value'
   }
@@ -60,6 +61,7 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   name: 'name',
   description: 'description',
   enabled: true,
+  maxInstantPerItem: true,
   startTime: 'startTime',
   endTime: 'endTime',
   southType: 'OPCUA_HA',
@@ -214,6 +216,7 @@ describe('History query controller', () => {
         name: 'name',
         description: 'description',
         enabled: false,
+        maxInstantPerItem: false,
         startTime: '',
         endTime: '',
         southType: 'OPCUA_HA',
@@ -269,6 +272,7 @@ describe('History query controller', () => {
         name: 'name',
         description: 'description',
         enabled: false,
+        maxInstantPerItem: true,
         startTime: '',
         endTime: '',
         southType: 'OPCUA_HA',

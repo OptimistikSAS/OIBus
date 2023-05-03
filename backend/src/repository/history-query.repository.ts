@@ -10,6 +10,7 @@ interface HistoryQueryResult {
   name: string;
   description: string;
   enabled: boolean;
+  maxInstantPerItem: boolean;
   startTime: string;
   endTime: string;
   southType: string;
@@ -30,7 +31,7 @@ export default class HistoryQueryRepository {
   constructor(private readonly database: Database) {
     const query =
       `CREATE TABLE IF NOT EXISTS ${HISTORY_QUERIES_TABLE} (id TEXT PRIMARY KEY, name TEXT, description TEXT, ` +
-      `enabled INTEGER, start_time TEXT, end_time TEXT, south_type TEXT, north_type TEXT, ` +
+      `enabled INTEGER, max_instant_per_item INTEGER, start_time TEXT, end_time TEXT, south_type TEXT, north_type TEXT, ` +
       `south_settings TEXT, north_settings TEXT, caching_scan_mode_id TEXT, caching_group_count INTEGER, caching_retry_interval INTEGER, ` +
       `caching_retry_count INTEGER, caching_max_send_count INTEGER, caching_max_size INTEGER, archive_enabled INTEGER, ` +
       `archive_retention_duration INTEGER, FOREIGN KEY(caching_scan_mode_id) REFERENCES ${SCAN_MODE_TABLE}(id));`;
@@ -42,7 +43,7 @@ export default class HistoryQueryRepository {
    */
   getHistoryQueries(): Array<HistoryQueryDTO> {
     const query =
-      `SELECT id, name, description, enabled, start_time as startTime, end_time as endTime, south_type AS southType, ` +
+      `SELECT id, name, description, enabled, max_instant_per_item AS maxInstantPerItem, start_time AS startTime, end_time AS endTime, south_type AS southType, ` +
       `north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
@@ -57,7 +58,7 @@ export default class HistoryQueryRepository {
    */
   getHistoryQuery(id: string): HistoryQueryDTO | null {
     const query =
-      `SELECT id, name, description, enabled, start_time as startTime, end_time as endTime, south_type AS southType, ` +
+      `SELECT id, name, description, enabled, max_instant_per_item AS maxInstantPerItem, start_time AS startTime, end_time AS endTime, south_type AS southType, ` +
       `north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
@@ -79,10 +80,10 @@ export default class HistoryQueryRepository {
     const id = generateRandomId(6);
 
     const insertQuery =
-      `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, enabled, start_time, end_time, ` +
+      `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, enabled, max_instant_per_item, start_time, end_time, ` +
       `south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
       `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_max_size, archive_enabled, ` +
-      `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const insertResult = this.database
       .prepare(insertQuery)
       .run(
@@ -90,6 +91,7 @@ export default class HistoryQueryRepository {
         command.name,
         command.description,
         +command.enabled,
+        +command.maxInstantPerItem,
         command.startTime,
         command.endTime,
         command.southType,
@@ -107,7 +109,7 @@ export default class HistoryQueryRepository {
       );
 
     const query =
-      `SELECT id, name, description, enabled, start_time as startTime, end_time as endTime, south_type AS southType, ` +
+      `SELECT id, name, description, enabled, max_instant_per_item AS maxInstantPerItem, start_time AS startTime, end_time AS endTime, south_type AS southType, ` +
       `north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
@@ -123,7 +125,7 @@ export default class HistoryQueryRepository {
    */
   updateHistoryQuery(id: string, command: HistoryQueryCommandDTO): void {
     const query =
-      `UPDATE ${HISTORY_QUERIES_TABLE} SET name = ?, description = ?, enabled = ?, start_time = ?, ` +
+      `UPDATE ${HISTORY_QUERIES_TABLE} SET name = ?, description = ?, enabled = ?, max_instant_per_item = ?, start_time = ?, ` +
       `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
       `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
       `caching_max_send_count = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
@@ -134,6 +136,7 @@ export default class HistoryQueryRepository {
         command.name,
         command.description,
         +command.enabled,
+        +command.maxInstantPerItem,
         command.startTime,
         command.endTime,
         command.southType,
@@ -166,6 +169,7 @@ export default class HistoryQueryRepository {
       name: result.name,
       description: result.description,
       enabled: result.enabled,
+      maxInstantPerItem: result.maxInstantPerItem,
       startTime: result.startTime,
       endTime: result.endTime,
       southType: result.southType,

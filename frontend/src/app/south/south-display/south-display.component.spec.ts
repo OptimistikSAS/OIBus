@@ -62,6 +62,7 @@ describe('SouthDisplayComponent', () => {
     name: 'South Connector',
     description: 'My South connector description',
     enabled: true,
+    maxInstantPerItem: true,
     settings: {}
   };
 
