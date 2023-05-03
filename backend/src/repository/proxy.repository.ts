@@ -22,7 +22,7 @@ export default class ProxyRepository {
    */
   getProxies(): Array<ProxyDTO> {
     const query = `SELECT id, name, description, address, username, password FROM ${PROXY_TABLE};`;
-    return this.database.prepare(query).all();
+    return this.database.prepare(query).all() as Array<ProxyDTO>;
   }
 
   /**
@@ -30,7 +30,7 @@ export default class ProxyRepository {
    */
   getProxy(id: string): ProxyDTO | null {
     const query = `SELECT id, name, description, address, username, password FROM ${PROXY_TABLE} WHERE id = ?;`;
-    return this.database.prepare(query).get(id);
+    return this.database.prepare(query).get(id) as ProxyDTO | null;
   }
 
   /**
@@ -43,7 +43,7 @@ export default class ProxyRepository {
       .prepare(insertQuery)
       .run(id, command.name, command.description, command.address, command.username, command.password);
     const query = `SELECT id, name, description, address, username, password FROM ${PROXY_TABLE} WHERE ROWID = ?;`;
-    return this.database.prepare(query).get(result.lastInsertRowid);
+    return this.database.prepare(query).get(result.lastInsertRowid) as ProxyDTO;
   }
 
   /**

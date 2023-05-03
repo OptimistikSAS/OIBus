@@ -44,8 +44,10 @@ export default class LogRepository {
       `SELECT timestamp, level, scope, message FROM ${LOG_TABLE} ${whereClause}` +
       ` ORDER BY timestamp DESC LIMIT ${PAGE_SIZE}` +
       ` OFFSET ?;`;
-    const results: Array<LogDTO> = this.database.prepare(query).all(...queryParams, PAGE_SIZE * searchParams.page);
-    const totalElements = this.database.prepare(`SELECT COUNT(*) as count FROM ${LOG_TABLE} ${whereClause}`).get(...queryParams).count;
+    const results: Array<LogDTO> = this.database.prepare(query).all(...queryParams, PAGE_SIZE * searchParams.page) as Array<LogDTO>;
+    const totalElements = (
+      this.database.prepare(`SELECT COUNT(*) as count FROM ${LOG_TABLE} ${whereClause}`).get(...queryParams) as { count: number }
+    ).count;
     const totalPages = Math.ceil(totalElements / PAGE_SIZE);
 
     return {

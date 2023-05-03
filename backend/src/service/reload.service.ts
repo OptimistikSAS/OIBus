@@ -134,6 +134,7 @@ export default class ReloadService {
 
   async onDeleteSouthItem(itemId: string): Promise<void> {
     const southItem = this.repositoryService.southItemRepository.getSouthItem(itemId);
+    if (!southItem) throw new Error('South item not found');
     this.oibusEngine.deleteItemFromSouth(southItem.connectorId, southItem);
     this.repositoryService.southItemRepository.deleteSouthItem(itemId);
   }

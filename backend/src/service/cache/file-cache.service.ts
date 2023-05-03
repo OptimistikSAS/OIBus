@@ -161,7 +161,7 @@ export default class FileCacheService {
         if (dateIsBetween && filenameContains) {
           filteredFilenames.push({
             filename,
-            modificationDate: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO(),
+            modificationDate: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO() as Instant,
             size: stats.size
           });
         }

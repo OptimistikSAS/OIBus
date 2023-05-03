@@ -20,7 +20,7 @@ export default class IpFilterRepository {
    */
   getIpFilters(): Array<IpFilterDTO> {
     const query = `SELECT id, address, description FROM ${IP_FILTER_TABLE};`;
-    return this.database.prepare(query).all();
+    return this.database.prepare(query).all() as Array<IpFilterDTO>;
   }
 
   /**
@@ -28,7 +28,7 @@ export default class IpFilterRepository {
    */
   getIpFilter(id: string): IpFilterDTO | null {
     const query = `SELECT id, address, description FROM ${IP_FILTER_TABLE} WHERE id = ?;`;
-    return this.database.prepare(query).get(id);
+    return this.database.prepare(query).get(id) as IpFilterDTO | null;
   }
 
   /**
@@ -40,7 +40,7 @@ export default class IpFilterRepository {
     const result = this.database.prepare(insertQuery).run(id, command.address, command.description);
 
     const query = `SELECT id, address, description FROM ${IP_FILTER_TABLE} WHERE ROWID = ?;`;
-    return this.database.prepare(query).get(result.lastInsertRowid);
+    return this.database.prepare(query).get(result.lastInsertRowid) as IpFilterDTO;
   }
 
   /**

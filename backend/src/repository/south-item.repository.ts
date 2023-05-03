@@ -37,16 +37,16 @@ export default class SouthItemRepository {
     const results = this.database
       .prepare(query)
       .all(...queryParams)
-      .map(result => ({
+      .map((result: any) => ({
         id: result.id,
         name: result.name,
         connectorId: result.connectorId,
         scanModeId: result.scanModeId,
         settings: JSON.parse(result.settings)
       }));
-    const totalElements = this.database
-      .prepare(`SELECT COUNT(*) as count FROM ${SOUTH_ITEM_TABLE} ${whereClause}`)
-      .get(...queryParams).count;
+    const totalElements = (
+      this.database.prepare(`SELECT COUNT(*) as count FROM ${SOUTH_ITEM_TABLE} ${whereClause}`).get(...queryParams) as { count: number }
+    ).count;
     const totalPages = Math.ceil(totalElements / PAGE_SIZE);
 
     return {
@@ -66,7 +66,7 @@ export default class SouthItemRepository {
     return this.database
       .prepare(query)
       .all(southId)
-      .map(result => ({
+      .map((result: any) => ({
         id: result.id,
         name: result.name,
         connectorId: result.connectorId,
@@ -78,9 +78,10 @@ export default class SouthItemRepository {
   /**
    * Retrieve a South item by its ID
    */
-  getSouthItem(id: string): OibusItemDTO {
+  getSouthItem(id: string): OibusItemDTO | null {
     const query = `SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEM_TABLE} WHERE id = ?;`;
-    const result = this.database.prepare(query).get(id);
+    const result: any = this.database.prepare(query).get(id);
+    if (!result) return null;
     return {
       id: result.id,
       name: result.name,
@@ -101,7 +102,7 @@ export default class SouthItemRepository {
       .run(id, command.name, southId, command.scanModeId, JSON.stringify(command.settings));
 
     const query = `SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEM_TABLE} WHERE ROWID = ?;`;
-    const result = this.database.prepare(query).get(insertResult.lastInsertRowid);
+    const result: any = this.database.prepare(query).get(insertResult.lastInsertRowid);
     return {
       id: result.id,
       name: result.name,

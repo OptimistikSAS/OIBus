@@ -311,7 +311,7 @@ export default class SouthOPCUAHA extends SouthConnector {
       }
       this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
       await this.addValues(dataByItems);
-      return DateTime.fromMillis(maxTimestamp).toUTC().toISO();
+      return DateTime.fromMillis(maxTimestamp).toUTC().toISO() as Instant;
     } catch (error) {
       if (!this.disconnecting) {
         await this.internalDisconnect();

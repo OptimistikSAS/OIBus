@@ -12,7 +12,7 @@ export default class CacheService {
   private _stream: PassThrough | null = null;
 
   private _metrics: ConnectorMetrics = {
-    metricsStart: DateTime.now().toUTC().toISO(),
+    metricsStart: DateTime.now().toUTC().toISO() as Instant,
     numberOfValues: 0,
     numberOfFiles: 0,
     lastValue: null,

@@ -32,25 +32,31 @@ describe('Subscription repository', () => {
 
   it('should properly get all subscriptions', () => {
     const expectedValue: Array<SubscriptionDTO> = ['south1', 'south2'];
-    all.mockReturnValueOnce(expectedValue.map(southId => ({ south_connector_id: southId })));
+    all.mockReturnValueOnce(expectedValue.map(southId => ({ southConnectorId: southId })));
     const subscriptions = repository.getNorthSubscriptions('north1');
-    expect(database.prepare).toHaveBeenCalledWith('SELECT south_connector_id FROM subscription WHERE north_connector_id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT south_connector_id AS southConnectorId FROM subscription WHERE north_connector_id = ?;'
+    );
     expect(subscriptions).toEqual(expectedValue);
   });
 
   it('should properly get all subscribed North connectors', () => {
     const expectedValue = ['north1', 'north2'];
-    all.mockReturnValueOnce(expectedValue.map(northId => ({ north_connector_id: northId })));
+    all.mockReturnValueOnce(expectedValue.map(northId => ({ northConnectorId: northId })));
     const subscriptions = repository.getSubscribedNorthConnectors('south1');
-    expect(database.prepare).toHaveBeenCalledWith('SELECT north_connector_id FROM subscription WHERE south_connector_id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT north_connector_id AS northConnectorId FROM subscription WHERE south_connector_id = ?;'
+    );
     expect(subscriptions).toEqual(expectedValue);
   });
 
   it('should check a subscription', () => {
-    get.mockReturnValueOnce({ south_connector_id: 'south1' });
+    get.mockReturnValueOnce({ southConnectorId: 'south1' });
 
     repository.checkNorthSubscription('north1', 'south1');
-    expect(database.prepare).toHaveBeenCalledWith('SELECT south_connector_id FROM subscription WHERE north_connector_id = ? AND south_connector_id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT south_connector_id AS southConnectorId FROM subscription WHERE north_connector_id = ? AND south_connector_id = ?;'
+    );
     expect(get).toHaveBeenCalledWith('north1', 'south1');
   });
 

@@ -32,18 +32,18 @@ export default class HistoryQueryItemRepository {
     const query =
       `SELECT id, name, history_id AS historyId, settings FROM ${HISTORY_ITEM_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
-    const results = this.database
+    const results: Array<OibusItemDTO> = this.database
       .prepare(query)
       .all(...queryParams)
-      .map(result => ({
+      .map((result: any) => ({
         id: result.id,
         name: result.name,
         connectorId: result.historyId,
         settings: JSON.parse(result.settings)
       }));
-    const totalElements = this.database
-      .prepare(`SELECT COUNT(*) as count FROM ${HISTORY_ITEM_TABLE} ${whereClause}`)
-      .get(...queryParams).count;
+    const totalElements: number = (
+      this.database.prepare(`SELECT COUNT(*) as count FROM ${HISTORY_ITEM_TABLE} ${whereClause}`).get(...queryParams) as { count: number }
+    ).count;
     const totalPages = Math.ceil(totalElements / PAGE_SIZE);
 
     return {
@@ -63,7 +63,7 @@ export default class HistoryQueryItemRepository {
     return this.database
       .prepare(query)
       .all(historyId)
-      .map(result => ({
+      .map((result: any) => ({
         id: result.id,
         name: result.name,
         connectorId: historyId,
@@ -76,7 +76,7 @@ export default class HistoryQueryItemRepository {
    */
   getHistoryItem(id: string): OibusItemDTO {
     const query = `SELECT id, name, history_id AS historyId, settings FROM ${HISTORY_ITEM_TABLE} WHERE id = ?;`;
-    const result = this.database.prepare(query).get(id);
+    const result: any = this.database.prepare(query).get(id);
     return {
       id: result.id,
       name: result.name,
@@ -94,7 +94,7 @@ export default class HistoryQueryItemRepository {
     const insertResult = this.database.prepare(insertQuery).run(id, command.name, historyId, JSON.stringify(command.settings));
 
     const query = `SELECT id, name, history_id AS historyId, settings FROM ${HISTORY_ITEM_TABLE} WHERE ROWID = ?;`;
-    const result = this.database.prepare(query).get(insertResult.lastInsertRowid);
+    const result: any = this.database.prepare(query).get(insertResult.lastInsertRowid);
     return {
       id: result.id,
       name: result.name,

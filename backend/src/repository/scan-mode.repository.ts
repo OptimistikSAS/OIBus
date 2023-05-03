@@ -29,7 +29,7 @@ export default class ScanModeRepository {
    */
   getScanModes(): Array<ScanModeDTO> {
     const query = `SELECT id, name, description, cron FROM ${SCAN_MODE_TABLE};`;
-    return this.database.prepare(query).all();
+    return this.database.prepare(query).all() as Array<ScanModeDTO>;
   }
 
   /**
@@ -37,7 +37,7 @@ export default class ScanModeRepository {
    */
   getScanMode(id: string): ScanModeDTO | null {
     const query = `SELECT id, name, description, cron FROM ${SCAN_MODE_TABLE} WHERE id = ?;`;
-    return this.database.prepare(query).get(id);
+    return this.database.prepare(query).get(id) as ScanModeDTO | null;
   }
 
   /**
@@ -48,7 +48,7 @@ export default class ScanModeRepository {
     const result = this.database.prepare(insertQuery).run(id, command.name, command.description, command.cron);
 
     const query = `SELECT id, name, description, cron FROM ${SCAN_MODE_TABLE} WHERE ROWID = ?;`;
-    return this.database.prepare(query).get(result.lastInsertRowid);
+    return this.database.prepare(query).get(result.lastInsertRowid) as ScanModeDTO;
   }
 
   /**

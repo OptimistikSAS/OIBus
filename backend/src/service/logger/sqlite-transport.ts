@@ -85,8 +85,7 @@ class SqliteTransport {
    */
   countLogs = (): number => {
     const query = `SELECT COUNT(*) AS count FROM ${this.options.table || LOGS_TABLE_NAME}`;
-    const result = this.database.prepare(query).get();
-    return result.count;
+    return (this.database.prepare(query).get() as { count: number }).count;
   };
 
   /**

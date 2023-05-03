@@ -131,7 +131,9 @@ export default class SouthFolderScanner extends SouthConnector {
 
   getModifiedTime(filename: string): number {
     const query = `SELECT mtime_ms AS mtimeMs FROM ${FOLDER_SCANNER_TABLE} WHERE filename = ?`;
-    const result = this.cacheService.cacheRepository.database.prepare(query).get(filename);
+    const result: { mtimeMs: string } | null = this.cacheService.cacheRepository.database.prepare(query).get(filename) as {
+      mtimeMs: string;
+    } | null;
     return result ? parseFloat(result.mtimeMs) : 0;
   }
 

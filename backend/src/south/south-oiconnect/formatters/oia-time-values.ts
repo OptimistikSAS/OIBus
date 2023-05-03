@@ -83,12 +83,12 @@ const format = (httpResult: Array<OIATimeValues>): { httpResults: Array<any>; la
         timestamp: element.timestamps[index],
         value: currentValue
       });
-      if (DateTime.fromISO(element.timestamps[index]).toUTC().toISO() > latestDateRetrieved) {
+      if ((DateTime.fromISO(element.timestamps[index]).toUTC().toISO() as Instant) > (latestDateRetrieved as Instant)) {
         latestDateRetrieved = DateTime.fromISO(element.timestamps[index]).toUTC().toISO();
       }
     });
   });
-  return { httpResults: formattedData, latestDateRetrieved };
+  return { httpResults: formattedData, latestDateRetrieved: latestDateRetrieved as Instant };
 };
 
 export default format;

@@ -38,8 +38,7 @@ export default class HistoryQueryRepository {
   }
 
   /**
-   * Get all HistoryQueries.
-   * @return {Object[]} - The HistoryQueries
+   * Get all HistoryQueries
    */
   getHistoryQueries(): Array<HistoryQueryDTO> {
     const query =
@@ -49,7 +48,7 @@ export default class HistoryQueryRepository {
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
       `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${HISTORY_QUERIES_TABLE};`;
-    const results = this.database.prepare(query).all();
+    const results: Array<HistoryQueryResult> = this.database.prepare(query).all() as Array<HistoryQueryResult>;
     return results.map(result => this.toHistoryQueryDTO(result));
   }
 
@@ -64,7 +63,7 @@ export default class HistoryQueryRepository {
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
       `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`;
-    const result = this.database.prepare(query).get(id);
+    const result: HistoryQueryResult = this.database.prepare(query).get(id) as HistoryQueryResult;
 
     if (!result) {
       return null;
@@ -114,7 +113,7 @@ export default class HistoryQueryRepository {
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
       `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${HISTORY_QUERIES_TABLE} WHERE ROWID = ?;`;
-    const result = this.database.prepare(query).get(insertResult.lastInsertRowid);
+    const result: HistoryQueryResult = this.database.prepare(query).get(insertResult.lastInsertRowid) as HistoryQueryResult;
 
     return this.toHistoryQueryDTO(result);
   }
