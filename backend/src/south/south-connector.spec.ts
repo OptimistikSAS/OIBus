@@ -123,7 +123,15 @@ describe('SouthConnector enabled', () => {
       maxInstant: nowDateString,
       intervalIndex: 0
     });
-    configuration = { id: 'southId', name: 'south', type: 'test', description: 'my test connector', enabled: true, settings: {} };
+    configuration = {
+      id: 'southId',
+      name: 'south',
+      type: 'test',
+      description: 'my test connector',
+      enabled: true,
+      maxInstantPerItem: false,
+      settings: {}
+    };
     south = new SouthConnector(
       configuration,
       items,
@@ -476,7 +484,15 @@ describe('SouthConnector disabled', () => {
     manifest.modes.historyFile = false;
     manifest.modes.subscription = false;
 
-    configuration = { id: 'southId', name: 'south', type: 'test', description: 'my test connector', enabled: false, settings: {} };
+    configuration = {
+      id: 'southId',
+      name: 'south',
+      type: 'test',
+      description: 'my test connector',
+      enabled: false,
+      maxInstantPerItem: false,
+      settings: {}
+    };
     south = new SouthConnector(
       configuration,
       items,
@@ -513,7 +529,15 @@ describe('SouthConnector enabled without any modes', () => {
     manifest.modes.lastPoint = false;
     manifest.modes.lastFile = false;
 
-    configuration = { id: 'southId', name: 'south', type: 'test', description: 'my test connector', enabled: true, settings: {} };
+    configuration = {
+      id: 'southId',
+      name: 'south',
+      type: 'test',
+      description: 'my test connector',
+      enabled: true,
+      maxInstantPerItem: false,
+      settings: {}
+    };
     south = new SouthConnector(
       configuration,
       items,
@@ -560,7 +584,15 @@ describe('SouthConnector without stream mode', () => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    configuration = { id: 'southId', name: 'south', type: 'test', description: 'my test connector', enabled: true, settings: {} };
+    configuration = {
+      id: 'southId',
+      name: 'south',
+      type: 'test',
+      description: 'my test connector',
+      enabled: true,
+      maxInstantPerItem: false,
+      settings: {}
+    };
     south = new SouthConnector(
       configuration,
       items,

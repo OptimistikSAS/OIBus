@@ -23,6 +23,7 @@ export interface SouthConnectorDTO {
   type: string;
   description: string;
   enabled: boolean;
+  maxInstantPerItem: boolean;
   settings: any;
 }
 
@@ -34,6 +35,7 @@ export interface SouthConnectorCommandDTO {
   type: string;
   description: string;
   enabled: boolean;
+  maxInstantPerItem: boolean;
   settings: any;
 }
 
@@ -87,6 +89,7 @@ export interface SouthConnectorManifest {
 
 export interface SouthCache {
   scanModeId: string;
+  itemId: string;
   intervalIndex: number;
   maxInstant: Instant;
 }

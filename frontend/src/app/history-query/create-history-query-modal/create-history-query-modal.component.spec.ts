@@ -173,6 +173,7 @@ describe('CreateHistoryQueryModalComponent', () => {
         name: 'South Connector1 ',
         description: 'My first South connector description',
         enabled: true,
+        maxInstantPerItem: true,
         settings: {}
       },
       {
@@ -181,6 +182,7 @@ describe('CreateHistoryQueryModalComponent', () => {
         name: 'South Connector 2',
         description: 'My second South connector description',
         enabled: true,
+        maxInstantPerItem: true,
         settings: {}
       },
       {
@@ -189,6 +191,7 @@ describe('CreateHistoryQueryModalComponent', () => {
         name: 'South Connector 3',
         description: 'My third South connector description',
         enabled: true,
+        maxInstantPerItem: true,
         settings: {}
       }
     ];

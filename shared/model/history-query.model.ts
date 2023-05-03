@@ -8,6 +8,7 @@ export interface HistoryQueryDTO {
   name: string;
   description: string;
   enabled: boolean;
+  maxInstantPerItem: boolean;
   startTime: string;
   endTime: string;
   southType: string;
@@ -25,6 +26,7 @@ export interface HistoryQueryCommandDTO {
   name: string;
   description: string;
   enabled: boolean;
+  maxInstantPerItem: boolean;
   startTime: string;
   endTime: string;
   southType: string;

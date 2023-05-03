@@ -201,6 +201,7 @@ export class EditHistoryQueryComponent implements OnInit {
       name: formValue.name!,
       description: formValue.description!,
       enabled: formValue.enabled!,
+      maxInstantPerItem: false,
       startTime: formValue.start!,
       endTime: formValue.end!,
       northType: this.historyQuery.northType,

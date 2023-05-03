@@ -77,6 +77,7 @@ const configuration: SouthConnectorDTO = {
   type: 'test',
   description: 'my test connector',
   enabled: true,
+  maxInstantPerItem: false,
   settings: {
     inputFolder: 'inputFolder',
     preserveFiles: false,

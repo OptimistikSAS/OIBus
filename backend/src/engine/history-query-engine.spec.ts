@@ -72,6 +72,7 @@ describe('HistoryQueryEngine', () => {
       northType: 'Console',
       description: 'my test history query',
       enabled: true,
+      maxInstantPerItem: true,
       northSettings: {},
       southSettings: {},
       startTime: '2021-02-02T02:02:02.222Z',

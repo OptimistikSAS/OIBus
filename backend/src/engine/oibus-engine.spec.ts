@@ -77,6 +77,7 @@ describe('OIBusEngine', () => {
       name: 'South Connector1 ',
       description: 'My first South connector description',
       enabled: true,
+      maxInstantPerItem: false,
       settings: {}
     },
     {
@@ -85,6 +86,7 @@ describe('OIBusEngine', () => {
       name: 'South Connector 2',
       description: 'My second South connector description',
       enabled: false,
+      maxInstantPerItem: true,
       settings: {}
     }
   ];
