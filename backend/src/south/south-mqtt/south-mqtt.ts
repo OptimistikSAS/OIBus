@@ -12,7 +12,7 @@ import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
-import { Timezone } from '../../../../shared/model/types';
+import { Instant, Timezone } from '../../../../shared/model/types';
 
 interface MessageFormatOption {
   timestampOrigin: 'payload' | 'oibus';
@@ -222,13 +222,13 @@ export default class SouthMQTT extends SouthConnector {
   }
 
   getTimestamp(elementTimestamp: string, timestampOrigin: 'payload' | 'oibus', timestampFormat: string, timezone: Timezone): string {
-    let timestamp = DateTime.now().toUTC().toISO();
+    let timestamp: Instant = DateTime.now().toUTC().toISO() as Instant;
     if (timestampOrigin === 'payload') {
       if (timezone && elementTimestamp) {
         if (DateTime.fromISO(elementTimestamp).isValid) {
-          timestamp = DateTime.fromISO(elementTimestamp).toUTC().toISO();
+          timestamp = DateTime.fromISO(elementTimestamp).toUTC().toISO() as Instant;
         }
-        timestamp = DateTime.fromFormat(elementTimestamp, timestampFormat, { zone: timezone }).toUTC().toISO();
+        timestamp = DateTime.fromFormat(elementTimestamp, timestampFormat, { zone: timezone }).toUTC().toISO() as Instant;
       }
     }
     return timestamp;

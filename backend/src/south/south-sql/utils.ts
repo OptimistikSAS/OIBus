@@ -51,7 +51,7 @@ const getMostRecentDate = (entryList: Array<any>, startTime: Instant, timeColumn
       if (entryDate > new Date(newLastCompletedAt)) {
         newLastCompletedAt = DateTime.fromMillis(entryDate.setMilliseconds(entryDate.getMilliseconds() + 1))
           .toUTC()
-          .toISO();
+          .toISO() as Instant;
       }
     }
   });

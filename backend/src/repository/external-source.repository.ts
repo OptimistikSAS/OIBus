@@ -21,7 +21,7 @@ export default class ExternalSourceRepository {
    */
   getExternalSources(): Array<ExternalSourceDTO> {
     const query = `SELECT id, reference, description FROM ${EXTERNAL_SOURCES_TABLE};`;
-    return this.database.prepare(query).all();
+    return this.database.prepare(query).all() as Array<ExternalSourceDTO>;
   }
 
   /**
@@ -29,7 +29,7 @@ export default class ExternalSourceRepository {
    */
   getExternalSource(id: string): ExternalSourceDTO | null {
     const query = `SELECT id, reference, description FROM ${EXTERNAL_SOURCES_TABLE} WHERE id = ?;`;
-    return this.database.prepare(query).get(id);
+    return this.database.prepare(query).get(id) as ExternalSourceDTO | null;
   }
 
   /**
@@ -41,7 +41,7 @@ export default class ExternalSourceRepository {
     const result = this.database.prepare(insertQuery).run(id, command.reference, command.description);
 
     const query = `SELECT id, reference, description FROM ${EXTERNAL_SOURCES_TABLE} WHERE ROWID = ?;`;
-    return this.database.prepare(query).get(result.lastInsertRowid);
+    return this.database.prepare(query).get(result.lastInsertRowid) as ExternalSourceDTO;
   }
 
   /**

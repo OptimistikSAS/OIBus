@@ -48,12 +48,13 @@ export default class UserRepository {
     const results = this.database
       .prepare(query)
       .all(...queryParams)
-      .map(result => ({
+      .map((result: any) => ({
         id: result.id,
         login: result.login,
         friendlyName: `${result.firstName} ${result.lastName}`
       }));
-    const totalElements = this.database.prepare(`SELECT COUNT(*) as count FROM ${USER_TABLE} ${whereClause}`).get().count;
+    const totalElements = (this.database.prepare(`SELECT COUNT(*) as count FROM ${USER_TABLE} ${whereClause}`).get() as { count: number })
+      .count;
     const totalPages = Math.ceil(totalElements / PAGE_SIZE);
 
     return {
@@ -68,9 +69,10 @@ export default class UserRepository {
   /**
    * Retrieve a user by its id
    */
-  getUserById(id: string): User {
+  getUserById(id: string): User | null {
     const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USER_TABLE} WHERE id = ?;`;
-    const result = this.database.prepare(query).get(id);
+    const result: User | null = this.database.prepare(query).get(id) as User | null;
+    if (!result) return null;
     return {
       id: result.id,
       login: result.login,
@@ -86,9 +88,10 @@ export default class UserRepository {
   /**
    * Retrieve a user by its login
    */
-  getUserByLogin(login: string): User {
+  getUserByLogin(login: string): User | null {
     const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USER_TABLE} WHERE login = ?;`;
-    const result = this.database.prepare(query).get(login);
+    const result: User | null = this.database.prepare(query).get(login) as User | null;
+    if (!result) return null;
     return {
       id: result.id,
       login: result.login,
@@ -106,7 +109,7 @@ export default class UserRepository {
    */
   getHashedPasswordByLogin(login: string): string | null {
     const query = `SELECT password FROM ${USER_TABLE} WHERE login = ?;`;
-    const result = this.database.prepare(query).get(login);
+    const result: { password: string } | null = this.database.prepare(query).get(login) as { password: string } | null;
     if (!result) {
       return null;
     }
@@ -128,7 +131,7 @@ export default class UserRepository {
       .run(id, command.login, hash, command.firstName, command.lastName, command.email, command.language, command.timezone);
 
     const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USER_TABLE} WHERE ROWID = ?;`;
-    const result = this.database.prepare(query).get(insertResult.lastInsertRowid);
+    const result: any = this.database.prepare(query).get(insertResult.lastInsertRowid);
     return {
       id: result.id,
       login: result.login,

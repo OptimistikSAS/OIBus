@@ -25,7 +25,7 @@ const format = (httpResult: SlimsResults): { httpResults: Array<any>; latestDate
     throw new Error('Bad data: expect SLIMS values to be an array.');
   }
   const formattedData: Array<any> = [];
-  let latestDateRetrieved = DateTime.fromMillis(0).toUTC().toISO();
+  let latestDateRetrieved: Instant = DateTime.fromMillis(0).toUTC().toISO() as Instant;
   httpResult.entities.forEach(element => {
     const rsltCfPid = element.columns.find(column => column.name === 'rslt_cf_pid');
     if (!rsltCfPid?.value) {
@@ -49,12 +49,12 @@ const format = (httpResult: SlimsResults): { httpResults: Array<any>; latestDate
       timestamp: DateTime.fromMillis(rsltCfSamplingDateAndTime.value).toUTC().toISO(),
       value: rsltValue.value
     });
-    if (DateTime.fromMillis(rsltCfSamplingDateAndTime.value).toUTC().toISO() > latestDateRetrieved) {
-      latestDateRetrieved = DateTime.fromMillis(rsltCfSamplingDateAndTime.value).toUTC().toISO();
+    if ((DateTime.fromMillis(rsltCfSamplingDateAndTime.value).toUTC().toISO() as Instant) > (latestDateRetrieved as Instant)) {
+      latestDateRetrieved = DateTime.fromMillis(rsltCfSamplingDateAndTime.value).toUTC().toISO() as Instant;
     }
   });
   // increment the latest date retrieved to avoid loop in history query from slims
-  return { httpResults: formattedData, latestDateRetrieved: DateTime.fromISO(latestDateRetrieved).plus(1).toUTC().toISO() };
+  return { httpResults: formattedData, latestDateRetrieved: DateTime.fromISO(latestDateRetrieved).plus(1).toUTC().toISO() as Instant };
 };
 
 export default format;

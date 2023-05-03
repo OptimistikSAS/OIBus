@@ -107,7 +107,7 @@ export default class EngineRepository {
       'health_signal_http_proxy_id AS healthSignalHttpProxyId, ' +
       'health_signal_http_authentication AS healthSignalHttpAuthentication ' +
       `FROM ${ENGINE_TABLE};`;
-    const results = this.database.prepare(query).all();
+    const results: Array<any> = this.database.prepare(query).all();
 
     if (results.length > 0) {
       return {
@@ -218,7 +218,7 @@ export default class EngineRepository {
   getCryptoSettings(): string | null {
     const query = `SELECT crypto_settings AS cryptoSettingsBase64 from ${ENGINE_TABLE};`;
 
-    const results = this.database.prepare(query).all();
+    const results: Array<any> = this.database.prepare(query).all();
     if (results.length > 0) {
       return results[0].cryptoSettingsBase64;
     } else {

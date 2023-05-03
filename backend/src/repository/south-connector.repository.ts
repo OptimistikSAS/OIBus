@@ -25,7 +25,7 @@ export default class SouthConnectorRepository {
     return this.database
       .prepare(query)
       .all()
-      .map(result => ({
+      .map((result: any) => ({
         id: result.id,
         name: result.name,
         type: result.type,
@@ -40,7 +40,7 @@ export default class SouthConnectorRepository {
    */
   getSouthConnector(id: string): SouthConnectorDTO | null {
     const query = `SELECT id, name, type, description, enabled, settings FROM ${SOUTH_CONNECTOR_TABLE} WHERE id = ?;`;
-    const result = this.database.prepare(query).get(id);
+    const result: SouthConnectorDTO | null = this.database.prepare(query).get(id) as SouthConnectorDTO | null;
 
     if (!result) {
       return null;
@@ -68,7 +68,7 @@ export default class SouthConnectorRepository {
       .run(id, command.name, command.type, command.description, +command.enabled, JSON.stringify(command.settings));
 
     const query = `SELECT id, name, type, description, enabled, settings FROM ${SOUTH_CONNECTOR_TABLE} WHERE ROWID = ?;`;
-    const result = this.database.prepare(query).get(insertResult.lastInsertRowid);
+    const result: SouthConnectorDTO = this.database.prepare(query).get(insertResult.lastInsertRowid) as SouthConnectorDTO;
     return {
       id: result.id,
       name: result.name,

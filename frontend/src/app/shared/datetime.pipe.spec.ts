@@ -1,6 +1,6 @@
 import { DatetimePipe } from './datetime.pipe';
 import { DateTime } from 'luxon';
-import { DEFAULT_TZ } from '../../../../shared/model/types';
+import { DEFAULT_TZ, Instant } from '../../../../shared/model/types';
 import { CurrentUserService } from './current-user.service';
 import { createMock } from 'ngx-speculoos';
 
@@ -23,7 +23,7 @@ describe('DatetimePipe', () => {
       expect(pipe.transform(dateTime)).toBe('12 Feb 2021');
       expect(pipe.transform(dateTime.toJSDate())).toBe('12 Feb 2021');
       expect(pipe.transform(dateTime.toMillis())).toBe('12 Feb 2021');
-      expect(pipe.transform(dateTime.toUTC().toISO())).toBe('12 Feb 2021');
+      expect(pipe.transform(dateTime.toUTC().toISO() as Instant)).toBe('12 Feb 2021');
     });
 
     it('should format with custom format', () => {
@@ -31,7 +31,7 @@ describe('DatetimePipe', () => {
       expect(pipe.transform(dateTime, 'ff')).toBe('12 Jan 2021, 13:35');
       expect(pipe.transform(dateTime.toJSDate(), 'ff')).toBe('12 Jan 2021, 13:35');
       expect(pipe.transform(dateTime.toMillis(), 'ff')).toBe('12 Jan 2021, 13:35');
-      expect(pipe.transform(dateTime.toUTC().toISO(), 'ff')).toBe('12 Jan 2021, 13:35');
+      expect(pipe.transform(dateTime.toUTC().toISO() as Instant, 'ff')).toBe('12 Jan 2021, 13:35');
 
       expect(pipe.transform(dateTime, 'f')).toBe('12/01/2021, 13:35');
     });
@@ -53,7 +53,7 @@ describe('DatetimePipe', () => {
       expect(pipe.transform(dateTime, 'ff', 'UTC')).toBe('12 Jan 2021, 13:35');
       expect(pipe.transform(dateTime.toJSDate(), 'ff', 'UTC')).toBe('12 Jan 2021, 13:35');
       expect(pipe.transform(dateTime.toMillis(), 'ff', 'UTC')).toBe('12 Jan 2021, 13:35');
-      expect(pipe.transform(dateTime.toUTC().toISO(), 'ff', 'UTC')).toBe('12 Jan 2021, 13:35');
+      expect(pipe.transform(dateTime.toUTC().toISO() as Instant, 'ff', 'UTC')).toBe('12 Jan 2021, 13:35');
 
       expect(pipe.transform(dateTime, 'f', 'UTC')).toBe('12/01/2021, 13:35');
     });
@@ -69,7 +69,7 @@ describe('DatetimePipe', () => {
       expect(pipe.transform(dateTime)).toBe('12 févr. 2021');
       expect(pipe.transform(dateTime.toJSDate())).toBe('12 févr. 2021');
       expect(pipe.transform(dateTime.toMillis())).toBe('12 févr. 2021');
-      expect(pipe.transform(dateTime.toUTC().toISO())).toBe('12 févr. 2021');
+      expect(pipe.transform(dateTime.toUTC().toISO() as Instant)).toBe('12 févr. 2021');
     });
 
     it('should format with custom format', () => {
@@ -77,7 +77,7 @@ describe('DatetimePipe', () => {
       expect(pipe.transform(dateTime, 'ff')).toBe('12 janv. 2021, 13:35');
       expect(pipe.transform(dateTime.toJSDate(), 'ff')).toBe('12 janv. 2021, 13:35');
       expect(pipe.transform(dateTime.toMillis(), 'ff')).toBe('12 janv. 2021, 13:35');
-      expect(pipe.transform(dateTime.toUTC().toISO(), 'ff')).toBe('12 janv. 2021, 13:35');
+      expect(pipe.transform(dateTime.toUTC().toISO() as Instant, 'ff')).toBe('12 janv. 2021, 13:35');
 
       // the following format changed in Chrome v103, removing the comma
       expect(pipe.transform(dateTime, 'f')).toBe('12/01/2021 13:35');

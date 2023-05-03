@@ -33,7 +33,7 @@ export default class NorthConnectorRepository {
     return this.database
       .prepare(query)
       .all()
-      .map(result => ({
+      .map((result: any) => ({
         id: result.id,
         name: result.name,
         type: result.type,
@@ -65,7 +65,7 @@ export default class NorthConnectorRepository {
       `caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
       `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${NORTH_CONNECTOR_TABLE} WHERE id = ?;`;
-    const result = this.database.prepare(query).get(id);
+    const result: any = this.database.prepare(query).get(id) as any;
 
     if (!result) {
       return null;
@@ -128,7 +128,7 @@ export default class NorthConnectorRepository {
       `caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
       `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${NORTH_CONNECTOR_TABLE} WHERE ROWID = ?;`;
-    const result = this.database.prepare(query).get(insertResult.lastInsertRowid);
+    const result: any = this.database.prepare(query).get(insertResult.lastInsertRowid);
     return {
       id: result.id,
       name: result.name,

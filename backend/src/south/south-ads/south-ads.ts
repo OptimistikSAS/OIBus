@@ -170,7 +170,7 @@ export default class SouthADS extends SouthConnector {
   }
 
   override async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
-    const timestamp = DateTime.now().toUTC().toISO();
+    const timestamp: Instant = DateTime.now().toUTC().toISO() as Instant;
     try {
       const results = await Promise.all(items.map(item => this.readAdsSymbol(item.name, timestamp)));
       await this.addValues(results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], []));

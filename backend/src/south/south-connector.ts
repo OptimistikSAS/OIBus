@@ -184,8 +184,8 @@ export default class SouthConnector {
           DateTime.now()
             .minus(3600 * 1000)
             .toUTC()
-            .toISO(),
-          DateTime.now().toUTC().toISO(),
+            .toISO() as Instant,
+          DateTime.now().toUTC().toISO() as Instant,
           scanMode.id
         );
       } catch (error) {

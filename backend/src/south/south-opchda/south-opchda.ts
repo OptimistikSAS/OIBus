@@ -130,7 +130,7 @@ export default class SouthOPCHDA extends SouthConnector {
 
     clearTimeout(this.historyReadTimeout);
     this.historyReadTimeout = null;
-    return DateTime.fromMillis(maxTimestamp).toUTC().toISO();
+    return DateTime.fromMillis(maxTimestamp).toUTC().toISO() as Instant;
   }
 
   /**

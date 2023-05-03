@@ -29,7 +29,7 @@ export default class ConnectorCacheRepository {
    */
   getSouthCacheScanMode(id: string): SouthCache | null {
     const query = `SELECT scan_mode_id as scanModeId, interval_index as intervalIndex, max_instant as maxInstant FROM ${SOUTH_CACHE_TABLE} WHERE scan_mode_id = ?;`;
-    const result = this._database.prepare(query).get(id);
+    const result: SouthCache | undefined = this._database.prepare(query).get(id) as SouthCache;
     if (!result) return null;
     return {
       scanModeId: result.scanModeId,
@@ -85,7 +85,7 @@ export default class ConnectorCacheRepository {
       `SELECT metrics_start AS metricsStart, nb_values AS numberOfValues, nb_files AS numberOfFiles, ` +
       `last_value AS lastValue, last_file AS lastFile, last_connection AS lastConnection, last_run_start AS lastRunStart, ` +
       `last_run_duration AS lastRunDuration FROM ${METRICS_TABLE} WHERE connector_id = ?;`;
-    const result = this._database.prepare(query).get(connectorId);
+    const result: ConnectorMetrics | undefined = this._database.prepare(query).get(connectorId) as ConnectorMetrics;
     if (!result) return null;
     return {
       metricsStart: result.metricsStart,
