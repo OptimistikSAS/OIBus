@@ -13,7 +13,7 @@ export default class SouthConnectorRepository {
     this.database = database;
     const query =
       `CREATE TABLE IF NOT EXISTS ${SOUTH_CONNECTOR_TABLE} (id TEXT PRIMARY KEY, name TEXT, type TEXT, description TEXT, ` +
-      `enabled INTEGER, max_instant_per_item INTEGER, settings TEXT);`;
+      `enabled INTEGER, history_max_instant_per_item INTEGER, history_max_read_interval INTEGER, history_read_delay INTEGER, settings TEXT);`;
     this.database.prepare(query).run();
   }
 
@@ -21,7 +21,9 @@ export default class SouthConnectorRepository {
    * Retrieve all South connectors
    */
   getSouthConnectors(): Array<SouthConnectorDTO> {
-    const query = `SELECT id, name, type, description, enabled, max_instant_per_item AS maxInstantPerItem, settings FROM ${SOUTH_CONNECTOR_TABLE};`;
+    const query =
+      `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
+      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM ${SOUTH_CONNECTOR_TABLE};`;
     return this.database
       .prepare(query)
       .all()
@@ -31,7 +33,11 @@ export default class SouthConnectorRepository {
         type: result.type,
         description: result.description,
         enabled: result.enabled,
-        maxInstantPerItem: result.maxInstantPerItem,
+        history: {
+          maxInstantPerItem: result.maxInstantPerItem,
+          maxReadInterval: result.maxReadInterval,
+          readDelay: result.readDelay
+        },
         settings: JSON.parse(result.settings)
       }));
   }
@@ -40,8 +46,10 @@ export default class SouthConnectorRepository {
    * Retrieve a South connector by its ID
    */
   getSouthConnector(id: string): SouthConnectorDTO | null {
-    const query = `SELECT id, name, type, description, enabled, max_instant_per_item AS maxInstantPerItem, settings FROM ${SOUTH_CONNECTOR_TABLE} WHERE id = ?;`;
-    const result: SouthConnectorDTO | null = this.database.prepare(query).get(id) as SouthConnectorDTO | null;
+    const query =
+      `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
+      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM ${SOUTH_CONNECTOR_TABLE} WHERE id = ?;`;
+    const result: any = this.database.prepare(query).get(id);
 
     if (!result) {
       return null;
@@ -53,7 +61,11 @@ export default class SouthConnectorRepository {
       type: result.type,
       description: result.description,
       enabled: result.enabled,
-      maxInstantPerItem: result.maxInstantPerItem,
+      history: {
+        maxInstantPerItem: result.maxInstantPerItem,
+        maxReadInterval: result.maxReadInterval,
+        readDelay: result.readDelay
+      },
       settings: JSON.parse(result.settings)
     };
   }
@@ -64,8 +76,8 @@ export default class SouthConnectorRepository {
   createSouthConnector(command: SouthConnectorCommandDTO): SouthConnectorDTO {
     const id = generateRandomId(6);
     const insertQuery =
-      `INSERT INTO ${SOUTH_CONNECTOR_TABLE} (id, name, type, description, enabled, max_instant_per_item, settings) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?);`;
+      `INSERT INTO ${SOUTH_CONNECTOR_TABLE} (id, name, type, description, enabled, history_max_instant_per_item, history_max_read_interval, history_read_delay, settings) ` +
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`;
     const insertResult = this.database
       .prepare(insertQuery)
       .run(
@@ -74,19 +86,27 @@ export default class SouthConnectorRepository {
         command.type,
         command.description,
         +command.enabled,
-        +command.maxInstantPerItem,
+        +command.history.maxInstantPerItem,
+        command.history.maxReadInterval,
+        command.history.readDelay,
         JSON.stringify(command.settings)
       );
 
-    const query = `SELECT id, name, type, description, enabled, max_instant_per_item AS maxInstantPerItem, settings FROM ${SOUTH_CONNECTOR_TABLE} WHERE ROWID = ?;`;
-    const result: SouthConnectorDTO = this.database.prepare(query).get(insertResult.lastInsertRowid) as SouthConnectorDTO;
+    const query =
+      `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
+      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM ${SOUTH_CONNECTOR_TABLE} WHERE ROWID = ?;`;
+    const result: any = this.database.prepare(query).get(insertResult.lastInsertRowid);
     return {
       id: result.id,
       name: result.name,
       type: result.type,
       description: result.description,
       enabled: result.enabled,
-      maxInstantPerItem: result.maxInstantPerItem,
+      history: {
+        maxInstantPerItem: result.maxInstantPerItem,
+        maxReadInterval: result.maxReadInterval,
+        readDelay: result.readDelay
+      },
       settings: JSON.parse(result.settings)
     };
   }
@@ -95,10 +115,21 @@ export default class SouthConnectorRepository {
    * Update a South connector by its ID
    */
   updateSouthConnector(id: string, command: SouthConnectorCommandDTO): void {
-    const query = `UPDATE ${SOUTH_CONNECTOR_TABLE} SET name = ?, description = ?, enabled = ?, max_instant_per_item = ?, settings = ? WHERE id = ?;`;
+    const query =
+      `UPDATE ${SOUTH_CONNECTOR_TABLE} SET name = ?, description = ?, enabled = ?, ` +
+      `history_max_instant_per_item = ?, history_max_read_interval = ?, history_read_delay = ?, settings = ? WHERE id = ?;`;
     this.database
       .prepare(query)
-      .run(command.name, command.description, +command.enabled, +command.maxInstantPerItem, JSON.stringify(command.settings), id);
+      .run(
+        command.name,
+        command.description,
+        +command.enabled,
+        +command.history.maxInstantPerItem,
+        command.history.maxReadInterval,
+        command.history.readDelay,
+        JSON.stringify(command.settings),
+        id
+      );
   }
 
   /**

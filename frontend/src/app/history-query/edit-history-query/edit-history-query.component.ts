@@ -60,6 +60,11 @@ export class EditHistoryQueryComponent implements OnInit {
     enabled: false,
     start: null as Instant | null,
     end: null as Instant | null,
+    history: this.fb.group({
+      maxInstantPerItem: false,
+      maxReadInterval: 0,
+      readDelay: 200
+    }),
     caching: this.fb.group({
       scanMode: [null as ScanModeDTO | null, Validators.required],
       retryInterval: [5000 as number | null, Validators.required],
@@ -108,6 +113,7 @@ export class EditHistoryQueryComponent implements OnInit {
             enabled: historyQuery.enabled,
             start: historyQuery.startTime,
             end: historyQuery.endTime,
+            history: historyQuery.history,
             caching: {
               scanMode: this.scanModes.find(scanMode => scanMode.id === historyQuery.caching.scanModeId),
               groupCount: historyQuery.caching.groupCount,
@@ -201,13 +207,17 @@ export class EditHistoryQueryComponent implements OnInit {
       name: formValue.name!,
       description: formValue.description!,
       enabled: formValue.enabled!,
-      maxInstantPerItem: false,
       startTime: formValue.start!,
       endTime: formValue.end!,
       northType: this.historyQuery.northType,
       southType: this.historyQuery.southType,
       southSettings: formValue.south!.settings!,
       northSettings: formValue.north!.settings!,
+      history: {
+        maxInstantPerItem: formValue.history!.maxInstantPerItem!,
+        maxReadInterval: formValue.history!.maxReadInterval!,
+        readDelay: formValue.history!.readDelay!
+      },
       caching: {
         scanModeId: formValue.caching!.scanMode!.id,
         retryInterval: formValue.caching!.retryInterval!,

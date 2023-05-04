@@ -72,8 +72,7 @@ const manifest: SouthConnectorManifest = {
     subscription: true,
     lastPoint: true,
     lastFile: true,
-    historyPoint: true,
-    historyFile: true
+    history: true
   },
   settings: [],
   schema: {} as unknown,
@@ -129,7 +128,11 @@ describe('SouthConnector enabled', () => {
       type: 'test',
       description: 'my test connector',
       enabled: true,
-      maxInstantPerItem: false,
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 3600,
+        readDelay: 0
+      },
       settings: {}
     };
     south = new SouthConnector(
@@ -356,7 +359,7 @@ describe('SouthConnector enabled', () => {
     expect(generateIntervals).toHaveBeenCalledWith(
       '2020-02-02T02:02:02.222Z',
       '2023-02-02T02:02:02.222Z',
-      configuration.settings.maxReadInterval
+      configuration.history.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(
       `Interval split in ${intervals.length} sub-intervals: \r\n` +
@@ -397,7 +400,7 @@ describe('SouthConnector enabled', () => {
     expect(generateIntervals).toHaveBeenCalledWith(
       '2020-02-02T02:02:02.222Z',
       '2023-02-02T02:02:02.222Z',
-      configuration.settings.maxReadInterval
+      configuration.history.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(
       `Interval split in ${intervals.length} sub-intervals: \r\n` +
@@ -428,7 +431,7 @@ describe('SouthConnector enabled', () => {
     expect(generateIntervals).toHaveBeenCalledWith(
       '2020-02-02T02:02:02.222Z',
       '2023-02-02T02:02:02.222Z',
-      configuration.settings.maxReadInterval
+      configuration.history.maxReadInterval
     );
     expect(logger.trace).toHaveBeenCalledWith(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     expect(south.historyQuery).toHaveBeenCalledTimes(1);
@@ -480,8 +483,7 @@ describe('SouthConnector disabled', () => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    manifest.modes.historyPoint = false;
-    manifest.modes.historyFile = false;
+    manifest.modes.history = false;
     manifest.modes.subscription = false;
 
     configuration = {
@@ -490,7 +492,11 @@ describe('SouthConnector disabled', () => {
       type: 'test',
       description: 'my test connector',
       enabled: false,
-      maxInstantPerItem: false,
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 3600,
+        readDelay: 0
+      },
       settings: {}
     };
     south = new SouthConnector(
@@ -523,8 +529,7 @@ describe('SouthConnector enabled without any modes', () => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    manifest.modes.historyPoint = false;
-    manifest.modes.historyFile = false;
+    manifest.modes.history = false;
     manifest.modes.subscription = false;
     manifest.modes.lastPoint = false;
     manifest.modes.lastFile = false;
@@ -535,7 +540,11 @@ describe('SouthConnector enabled without any modes', () => {
       type: 'test',
       description: 'my test connector',
       enabled: true,
-      maxInstantPerItem: false,
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 3600,
+        readDelay: 0
+      },
       settings: {}
     };
     south = new SouthConnector(
@@ -590,7 +599,11 @@ describe('SouthConnector without stream mode', () => {
       type: 'test',
       description: 'my test connector',
       enabled: true,
-      maxInstantPerItem: false,
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 3600,
+        readDelay: 0
+      },
       settings: {}
     };
     south = new SouthConnector(

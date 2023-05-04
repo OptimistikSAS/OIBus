@@ -52,13 +52,13 @@ describe('CreateSouthConnectorModalComponent', () => {
           category: 'database',
           type: 'SQL',
           description: 'SQL description',
-          modes: { lastFile: false, lastPoint: false, subscription: true, historyFile: false, historyPoint: true }
+          modes: { lastFile: false, lastPoint: false, subscription: true, history: true }
         },
         {
           category: 'iot',
           type: 'MQTT',
           description: 'MQTT description',
-          modes: { lastFile: false, lastPoint: false, subscription: true, historyFile: false, historyPoint: true }
+          modes: { lastFile: false, lastPoint: false, subscription: true, history: true }
         }
       ])
     );

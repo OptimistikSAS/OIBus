@@ -300,7 +300,7 @@ export default {
       if (dataSource.protocol === 'OPCUA') {
         if (!Object.prototype.hasOwnProperty.call(dataSource.OPCUA, 'readIntervalDelay')) {
           logger.info('Add readIntervalDelay field to OPCUA')
-          dataSource.OPCUA.readIntervalDelay = 200
+          dataSource.OPCUA.readDelay = 200
         }
       }
       if (dataSource.protocol === 'MQTT') {

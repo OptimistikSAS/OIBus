@@ -331,8 +331,8 @@ export default class SouthOPCHDA extends SouthConnector {
       Content: {
         Groups: groups,
         MaxReturnValues: this.configuration.settings.maxReturnValues,
-        MaxReadInterval: this.configuration.settings.maxReadInterval,
-        ReadIntervalDelay: this.configuration.settings.readIntervalDelay
+        MaxReadInterval: this.configuration.history.maxReadInterval,
+        ReadIntervalDelay: this.configuration.history.readDelay
       }
     };
     await this.sendTCPMessageToHdaAgent(message);

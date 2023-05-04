@@ -100,19 +100,19 @@ describe('CreateHistoryQueryModalComponent', () => {
           category: 'database',
           type: 'SQL',
           description: 'SQL description',
-          modes: { lastFile: false, lastPoint: false, subscription: true, historyFile: false, historyPoint: true }
+          modes: { lastFile: false, lastPoint: false, subscription: true, history: true }
         },
         {
           category: 'iot',
           type: 'OPCUA_HA',
           description: 'OPCUA description',
-          modes: { lastFile: false, lastPoint: false, subscription: false, historyFile: false, historyPoint: true }
+          modes: { lastFile: false, lastPoint: false, subscription: false, history: true }
         },
         {
           category: 'iot',
           type: 'MQTT',
           description: 'MQTT description',
-          modes: { lastFile: false, lastPoint: false, subscription: true, historyFile: false, historyPoint: false }
+          modes: { lastFile: false, lastPoint: false, subscription: true, history: false }
         }
       ])
     );
@@ -173,7 +173,11 @@ describe('CreateHistoryQueryModalComponent', () => {
         name: 'South Connector1 ',
         description: 'My first South connector description',
         enabled: true,
-        maxInstantPerItem: true,
+        history: {
+          maxInstantPerItem: false,
+          maxReadInterval: 0,
+          readDelay: 200
+        },
         settings: {}
       },
       {
@@ -182,7 +186,11 @@ describe('CreateHistoryQueryModalComponent', () => {
         name: 'South Connector 2',
         description: 'My second South connector description',
         enabled: true,
-        maxInstantPerItem: true,
+        history: {
+          maxInstantPerItem: false,
+          maxReadInterval: 0,
+          readDelay: 200
+        },
         settings: {}
       },
       {
@@ -191,7 +199,11 @@ describe('CreateHistoryQueryModalComponent', () => {
         name: 'South Connector 3',
         description: 'My third South connector description',
         enabled: true,
-        maxInstantPerItem: true,
+        history: {
+          maxInstantPerItem: false,
+          maxReadInterval: 0,
+          readDelay: 200
+        },
         settings: {}
       }
     ];

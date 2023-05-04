@@ -66,13 +66,17 @@ export default class HistoryQueryController extends AbstractController {
       name: ctx.request.body.name,
       description: ctx.request.body.description,
       enabled: false,
-      maxInstantPerItem: false,
       startTime: '',
       endTime: '',
       southType: '',
       northType: '',
       southSettings: {},
       northSettings: {},
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 0,
+        readDelay: 200
+      },
       caching: {
         scanModeId: '',
         retryInterval: 5000,
@@ -99,7 +103,7 @@ export default class HistoryQueryController extends AbstractController {
       }
       command.southSettings = southConnector.settings;
       command.southType = southConnector.type;
-      command.maxInstantPerItem = southConnector.maxInstantPerItem;
+      command.history = southConnector.history;
       southItems = ctx.app.repositoryService.southItemRepository.getSouthItems(ctx.request.body.southId);
       southManifest = this.southManifests.find(south => south.name === southConnector.type);
     }

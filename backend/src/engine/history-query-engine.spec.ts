@@ -72,7 +72,11 @@ describe('HistoryQueryEngine', () => {
       northType: 'Console',
       description: 'my test history query',
       enabled: true,
-      maxInstantPerItem: true,
+      history: {
+        maxInstantPerItem: true,
+        maxReadInterval: 3600,
+        readDelay: 0
+      },
       northSettings: {},
       southSettings: {},
       startTime: '2021-02-02T02:02:02.222Z',

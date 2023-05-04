@@ -50,7 +50,6 @@ export default class SouthConnector {
   private stopping = false;
   private runProgress$: DeferredPromise | null = null;
 
-  private maxInstantPerItem = false;
   protected cacheService: CacheService;
 
   /**
@@ -80,9 +79,8 @@ export default class SouthConnector {
 
     this.cacheService = new CacheService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
 
-    if (this.manifest.modes.historyFile || this.manifest.modes.historyPoint) {
+    if (this.manifest.modes.history) {
       this.cacheService.createCacheHistoryTable();
-      this.maxInstantPerItem = this.configuration.maxInstantPerItem;
     }
 
     if (this.streamMode) {
@@ -183,7 +181,7 @@ export default class SouthConnector {
     const runStart = DateTime.now();
     this.cacheService.updateMetrics({ ...this.cacheService.metrics, lastRunStart: runStart.toUTC().toISO() });
 
-    if (this.manifest.modes.historyFile || this.manifest.modes.historyPoint) {
+    if (this.manifest.modes.history) {
       try {
         // By default, retrieve the last hour. If the scan mode has already run, and retrieve a data, the max instant will
         // be retrieved from the South cache inside the history query handler
@@ -248,21 +246,29 @@ export default class SouthConnector {
   }
 
   async historyQueryHandler(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant, scanModeId: string): Promise<void> {
-    if (this.maxInstantPerItem) {
-      for (const item of items) {
+    if (this.configuration.history.maxInstantPerItem) {
+      for (const [index, item] of items.entries()) {
+        if (this.stopping) {
+          this.logger.debug(`Connector is stopping. Exiting history query at item ${item.name}`);
+          return;
+        }
+
         const southCache = this.cacheService.getSouthCache(scanModeId, item.id, startTime);
         // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
         // requests. For example only one hour if maxReadInterval is 3600 (in s)
-        const intervals = generateIntervals(southCache.maxInstant, endTime, this.configuration.settings.maxReadInterval);
+        const intervals = generateIntervals(southCache.maxInstant, endTime, this.configuration.history.maxReadInterval);
         this.logIntervals(intervals);
 
         await this.queryIntervals(intervals, [item], southCache);
+        if (index !== items.length) {
+          await delay(this.configuration.history.readDelay);
+        }
       }
     } else {
       const southCache = this.cacheService.getSouthCache(scanModeId, 'all', startTime);
       // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
       // requests. For example only one hour if maxReadInterval is 3600 (in s)
-      const intervals = generateIntervals(southCache.maxInstant, endTime, this.configuration.settings.maxReadInterval);
+      const intervals = generateIntervals(southCache.maxInstant, endTime, this.configuration.history.maxReadInterval);
       this.logIntervals(intervals);
 
       await this.queryIntervals(intervals, items, southCache);
@@ -284,7 +290,7 @@ export default class SouthConnector {
           this.logger.debug(`Connector is stopping. Exiting history query at interval ${index}: [${interval.start}, ${interval.end}]`);
           return;
         }
-        await delay(this.configuration.settings.readIntervalDelay);
+        await delay(this.configuration.history.readDelay);
       } else {
         this.cacheService.createOrUpdateCacheScanMode({
           scanModeId: southCache.scanModeId,

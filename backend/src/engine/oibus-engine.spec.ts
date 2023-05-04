@@ -77,7 +77,11 @@ describe('OIBusEngine', () => {
       name: 'South Connector1 ',
       description: 'My first South connector description',
       enabled: true,
-      maxInstantPerItem: false,
+      history: {
+        maxInstantPerItem: true,
+        maxReadInterval: 3600,
+        readDelay: 0
+      },
       settings: {}
     },
     {
@@ -86,7 +90,11 @@ describe('OIBusEngine', () => {
       name: 'South Connector 2',
       description: 'My second South connector description',
       enabled: false,
-      maxInstantPerItem: true,
+      history: {
+        maxInstantPerItem: true,
+        maxReadInterval: 3600,
+        readDelay: 0
+      },
       settings: {}
     }
   ];
