@@ -102,7 +102,11 @@ const configuration: SouthConnectorDTO = {
   type: 'test',
   description: 'my test connector',
   enabled: true,
-  maxInstantPerItem: true,
+  history: {
+    maxInstantPerItem: true,
+    maxReadInterval: 3600,
+    readDelay: 0
+  },
   settings: {
     port: 4200,
     connectionTimeout: 1000,

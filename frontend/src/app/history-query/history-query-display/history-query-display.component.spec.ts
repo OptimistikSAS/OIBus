@@ -32,7 +32,11 @@ describe('HistoryQueryDisplayComponent', () => {
     name: 'History query',
     description: 'My History query description',
     enabled: true,
-    maxInstantPerItem: true,
+    history: {
+      maxInstantPerItem: false,
+      maxReadInterval: 0,
+      readDelay: 200
+    },
     southType: 'OPCUA_HA',
     northType: 'OIConnect',
     startTime: '2023-01-01T00:00:00.000Z',

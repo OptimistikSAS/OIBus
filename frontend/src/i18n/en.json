@@ -301,7 +301,12 @@
     "name": "Name",
     "description": "Description",
     "enabled": "Enabled",
-    "max-instant-per-item": "Max instant per item",
+    "history": {
+      "settings": "History settings",
+      "max-instant-per-item": "Max instant per item",
+      "max-read-interval": "Max read interval (s)",
+      "read-delay": "Read delay (ms)"
+    },
     "type": "Type",
     "general-settings": "General settings",
     "specific-settings": "{{ type }} settings",

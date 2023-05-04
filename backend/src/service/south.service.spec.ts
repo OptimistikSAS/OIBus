@@ -48,7 +48,11 @@ describe('south service', () => {
         description: 'my test connector',
         type: 'FolderScanner',
         enabled: false,
-        maxInstantPerItem: false,
+        history: {
+          maxInstantPerItem: true,
+          maxReadInterval: 3600,
+          readDelay: 0
+        },
         settings: { verbose: true }
       },
       [],

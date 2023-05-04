@@ -8,8 +8,7 @@ const manifest: SouthConnectorManifest = {
     subscription: true,
     lastPoint: false,
     lastFile: false,
-    historyPoint: false,
-    historyFile: false
+    history: false
   },
   settings: [
     {

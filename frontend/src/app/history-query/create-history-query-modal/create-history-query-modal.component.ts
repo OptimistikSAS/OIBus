@@ -77,12 +77,12 @@ export class CreateHistoryQueryModalComponent implements OnInit {
       this.northList = northList;
       this.southTypes = southTypes.filter(southManifest => {
         // Keep only South with history mode supported
-        return southManifest.modes.historyPoint || southManifest.modes.historyFile;
+        return southManifest.modes.history;
       });
       this.southList = southList.filter(south => {
         // Keep only South with history mode supported
         const southType = southTypes.find(manifest => manifest.type === south.type);
-        return southType && (southType.modes.historyPoint || southType.modes.historyFile);
+        return southType && southType.modes.history;
       });
       if (this.southList.length === 0) {
         this.createForm.controls.fromExistingSouth.setValue(false);

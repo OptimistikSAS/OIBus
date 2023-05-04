@@ -9,9 +9,14 @@ export interface SouthType {
     subscription: boolean;
     lastPoint: boolean;
     lastFile: boolean;
-    historyPoint: boolean;
-    historyFile: boolean;
+    history: boolean;
   };
+}
+
+export interface SouthConnectorHistorySettings {
+  maxInstantPerItem: boolean;
+  maxReadInterval: number;
+  readDelay: number;
 }
 
 /**
@@ -23,8 +28,8 @@ export interface SouthConnectorDTO {
   type: string;
   description: string;
   enabled: boolean;
-  maxInstantPerItem: boolean;
   settings: any;
+  history: SouthConnectorHistorySettings;
 }
 
 /**
@@ -35,7 +40,7 @@ export interface SouthConnectorCommandDTO {
   type: string;
   description: string;
   enabled: boolean;
-  maxInstantPerItem: boolean;
+  history: SouthConnectorHistorySettings;
   settings: any;
 }
 
@@ -80,8 +85,7 @@ export interface SouthConnectorManifest {
     subscription: boolean;
     lastPoint: boolean;
     lastFile: boolean;
-    historyPoint: boolean;
-    historyFile: boolean;
+    history: boolean;
   };
   settings: Array<OibFormControl>;
   items: OibusItemManifest;

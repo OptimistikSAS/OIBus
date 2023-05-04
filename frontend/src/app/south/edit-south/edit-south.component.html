@@ -30,15 +30,6 @@
               </div>
             </div>
           </div>
-
-          <div class="col-4" *ngIf="manifest.modes.historyFile || manifest.modes.historyPoint">
-            <div class="form-group">
-              <label for="south-max-instant-per-item" translate="south.max-instant-per-item"></label>
-              <div class="form-check form-switch">
-                <input formControlName="maxInstantPerItem" id="south-max-instant-per-item" type="checkbox" class="form-check-input" />
-              </div>
-            </div>
-          </div>
         </div>
 
         <div class="row mb-3">
@@ -48,6 +39,33 @@
             <textarea formControlName="description" id="south-description" class="form-control"></textarea>
           </div>
         </div>
+
+        <!-- History settings -->
+        <ng-container *ngIf="manifest.modes.history">
+          <h2 translate="south.history.settings" [translateParams]="{ type: southType }" id="history-settings-title"></h2>
+          <div class="row" formGroupName="history">
+            <div class="col-4">
+              <div class="form-group">
+                <label for="south-max-read-interval" translate="south.history.max-read-interval"></label>
+                <input formControlName="maxReadInterval" id="south-max-read-interval" type="number" class="form-control" />
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="form-group">
+                <label for="south-read-delay" translate="south.history.read-delay"></label>
+                <input formControlName="readDelay" id="south-read-delay" type="number" class="form-control" />
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="form-group">
+                <label for="south-max-instant-per-item" translate="south.history.max-instant-per-item"></label>
+                <div class="form-check form-switch">
+                  <input formControlName="maxInstantPerItem" id="south-max-instant-per-item" type="checkbox" class="form-check-input" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
 
         <!-- Specific settings -->
         <h2 translate="south.specific-settings" [translateParams]="{ type: southType }" id="specific-settings-title"></h2>

@@ -38,7 +38,7 @@ export default class HistoryQuery {
       name: `${this.historyConfiguration.name} (South)`,
       description: '',
       enabled: this.historyConfiguration.enabled,
-      maxInstantPerItem: this.historyConfiguration.maxInstantPerItem,
+      history: this.historyConfiguration.history,
       type: this.historyConfiguration.southType,
       settings: this.historyConfiguration.southSettings
     };

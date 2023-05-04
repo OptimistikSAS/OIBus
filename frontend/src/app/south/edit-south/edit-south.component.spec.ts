@@ -80,8 +80,7 @@ describe('EditSouthComponent', () => {
             subscription: false,
             lastPoint: false,
             lastFile: false,
-            historyPoint: false,
-            historyFile: true
+            history: true
           },
           items: {
             scanMode: { subscriptionOnly: false, acceptSubscription: true },
@@ -116,7 +115,11 @@ describe('EditSouthComponent', () => {
       name: 'South Connector 1',
       description: 'My South connector description',
       enabled: true,
-      maxInstantPerItem: true,
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 0,
+        readDelay: 200
+      },
       settings: {}
     };
 
@@ -162,8 +165,7 @@ describe('EditSouthComponent', () => {
             subscription: false,
             lastPoint: false,
             lastFile: false,
-            historyPoint: false,
-            historyFile: true
+            history: true
           },
           items: {
             scanMode: { subscriptionOnly: false, acceptSubscription: true },

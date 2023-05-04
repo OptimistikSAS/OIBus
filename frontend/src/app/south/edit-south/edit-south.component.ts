@@ -39,7 +39,11 @@ export class EditSouthComponent implements OnInit {
     name: ['', Validators.required],
     description: '',
     enabled: false,
-    maxInstantPerItem: false,
+    history: this.fb.group({
+      maxInstantPerItem: false,
+      maxReadInterval: 0,
+      readDelay: 200
+    }),
     settings: this.fb.record({})
   });
 
@@ -83,7 +87,7 @@ export class EditSouthComponent implements OnInit {
               name: southConnector.name,
               description: southConnector.description,
               enabled: southConnector.enabled,
-              maxInstantPerItem: southConnector.maxInstantPerItem
+              history: southConnector.history
             });
           }
           // If a south connector is not retrieved, the types are needed to create a new connector
@@ -173,7 +177,11 @@ export class EditSouthComponent implements OnInit {
       type: this.southType,
       description: formValue.description!,
       enabled: formValue.enabled!,
-      maxInstantPerItem: formValue.maxInstantPerItem!,
+      history: {
+        maxInstantPerItem: formValue.history!.maxInstantPerItem!,
+        maxReadInterval: formValue.history!.maxReadInterval!,
+        readDelay: formValue.history!.readDelay!
+      },
       settings: formValue.settings!
     };
     this.createOrUpdateSouthConnector(command);

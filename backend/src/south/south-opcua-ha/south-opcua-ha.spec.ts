@@ -91,13 +91,16 @@ const configuration: SouthConnectorDTO = {
   type: 'test',
   description: 'my test connector',
   enabled: true,
-  maxInstantPerItem: true,
+  history: {
+    maxInstantPerItem: true,
+    maxReadInterval: 3600,
+    readDelay: 0
+  },
   settings: {
     url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
     retryInterval: 10000,
     maxReadInterval: 3600,
     readIntervalDelay: 200,
-    maxReturnValues: 1000,
     readTimeout: 180000,
     authentication: {
       type: 'none'

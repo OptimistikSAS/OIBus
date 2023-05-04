@@ -69,7 +69,11 @@ describe('HistoryQueryService', () => {
       name: 'myHistoryQuery',
       description: 'a test history query',
       enabled: true,
-      maxInstantPerItem: true,
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 0,
+        readDelay: 200
+      },
       startTime: '2023-01-01T00:00:00.000Z',
       endTime: '2023-01-01T00:00:00.000Z',
       southType: 'SQL',
