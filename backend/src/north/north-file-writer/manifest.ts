@@ -18,7 +18,7 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }]
     },
     {
-      key: 'prefixFileName',
+      key: 'prefix',
       type: 'OibText',
       label: 'Prefix',
       defaultValue: '',
@@ -29,7 +29,7 @@ const manifest: NorthConnectorManifest = {
       ]
     },
     {
-      key: 'suffixFileName',
+      key: 'suffix',
       type: 'OibText',
       label: 'Suffix',
       defaultValue: '',
