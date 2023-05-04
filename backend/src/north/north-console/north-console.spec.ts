@@ -20,6 +20,10 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
+jest.mock('../../service/cache/value-cache.service');
+jest.mock('../../service/cache/file-cache.service');
+jest.mock('../../service/cache/archive.service');
+
 jest.mock(
   '../../service/cache.service',
   () =>

@@ -8,12 +8,14 @@ import NorthOIAnalytics from '../north/north-oianalytics/north-oianalytics';
 import NorthAzureBlob from '../north/north-azure-blob/north-azure-blob';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import NorthAmazonS3 from '../north/north-amazon-s3/north-amazon-s3';
+import NorthFileWriter from '../north/north-file-writer/north-file-writer';
 
 const northList = {
   Console: NorthConsole,
   OIAnalytics: NorthOIAnalytics,
   AzureBlob: NorthAzureBlob,
-  AWS3: NorthAmazonS3
+  AWS3: NorthAmazonS3,
+  FileWriter: NorthFileWriter
 };
 
 export default class NorthService {
