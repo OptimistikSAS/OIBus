@@ -33,7 +33,11 @@ describe('SouthListComponent', () => {
       name: 'South Connector1 ',
       description: 'My first South connector description',
       enabled: true,
-      maxInstantPerItem: true,
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 0,
+        readDelay: 200
+      },
       settings: {}
     },
     {
@@ -42,7 +46,11 @@ describe('SouthListComponent', () => {
       name: 'South Connector 2',
       description: 'My second South connector description',
       enabled: true,
-      maxInstantPerItem: true,
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 0,
+        readDelay: 200
+      },
       settings: {}
     }
   ];

@@ -8,8 +8,7 @@ const manifest: SouthConnectorManifest = {
     subscription: false,
     lastPoint: false,
     lastFile: false,
-    historyPoint: false,
-    historyFile: true
+    history: true
   },
   settings: [
     {
@@ -119,22 +118,6 @@ const manifest: SouthConnectorManifest = {
       key: 'compression',
       type: 'OibCheckbox',
       label: 'Compress File?',
-      readDisplay: false
-    },
-    {
-      key: 'maxReadInterval',
-      type: 'OibNumber',
-      label: 'Max read interval (s)',
-      defaultValue: 0,
-      validators: [{ key: 'required' }],
-      readDisplay: false
-    },
-    {
-      key: 'readIntervalDelay',
-      type: 'OibNumber',
-      label: 'Read interval delay (ms)',
-      defaultValue: 200,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: false
     }
   ],

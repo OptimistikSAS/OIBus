@@ -21,8 +21,7 @@ const manifestList = [
       subscription: false,
       lastPoint: false,
       lastFile: false,
-      historyPoint: false,
-      historyFile: true
+      history: true
     }
   },
   {
@@ -33,8 +32,7 @@ const manifestList = [
       subscription: false,
       lastPoint: false,
       lastFile: false,
-      historyPoint: false,
-      historyFile: true
+      history: true
     }
   },
   {
@@ -45,8 +43,7 @@ const manifestList = [
       subscription: false,
       lastPoint: false,
       lastFile: false,
-      historyPoint: true,
-      historyFile: false
+      history: true
     }
   },
   {
@@ -57,8 +54,7 @@ const manifestList = [
       subscription: false,
       lastPoint: true,
       lastFile: false,
-      historyPoint: false,
-      historyFile: false
+      history: false
     }
   },
   {
@@ -69,8 +65,7 @@ const manifestList = [
       subscription: false,
       lastPoint: false,
       lastFile: false,
-      historyPoint: true,
-      historyFile: false
+      history: true
     }
   },
   {
@@ -81,8 +76,7 @@ const manifestList = [
       subscription: true,
       lastPoint: false,
       lastFile: false,
-      historyPoint: false,
-      historyFile: false
+      history: false
     }
   },
   {
@@ -93,8 +87,7 @@ const manifestList = [
       subscription: false,
       lastPoint: true,
       lastFile: false,
-      historyPoint: false,
-      historyFile: false
+      history: false
     }
   },
   {
@@ -105,8 +98,7 @@ const manifestList = [
       subscription: false,
       lastPoint: false,
       lastFile: true,
-      historyPoint: false,
-      historyFile: false
+      history: false
     }
   },
   {
@@ -117,8 +109,7 @@ const manifestList = [
       subscription: false,
       lastPoint: true,
       lastFile: false,
-      historyPoint: false,
-      historyFile: false
+      history: false
     }
   }
 ];

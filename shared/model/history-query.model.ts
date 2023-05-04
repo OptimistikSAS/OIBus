@@ -1,4 +1,5 @@
 import { NorthArchiveSettings, NorthCacheSettingsLightDTO } from './north-connector.model';
+import { SouthConnectorHistorySettings } from './south-connector.model';
 
 /**
  * DTO for history queries
@@ -8,13 +9,13 @@ export interface HistoryQueryDTO {
   name: string;
   description: string;
   enabled: boolean;
-  maxInstantPerItem: boolean;
   startTime: string;
   endTime: string;
   southType: string;
   northType: string;
   southSettings: object;
   northSettings: object;
+  history: SouthConnectorHistorySettings;
   caching: NorthCacheSettingsLightDTO;
   archive: NorthArchiveSettings;
 }
@@ -26,13 +27,13 @@ export interface HistoryQueryCommandDTO {
   name: string;
   description: string;
   enabled: boolean;
-  maxInstantPerItem: boolean;
   startTime: string;
   endTime: string;
   southType: string;
   northType: string;
   southSettings: object;
   northSettings: object;
+  history: SouthConnectorHistorySettings;
   caching: NorthCacheSettingsLightDTO;
   archive: NorthArchiveSettings;
 }

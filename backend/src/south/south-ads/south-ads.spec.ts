@@ -874,7 +874,11 @@ const configuration: SouthConnectorDTO = {
   type: 'test',
   description: 'my test connector',
   enabled: true,
-  maxInstantPerItem: false,
+  history: {
+    maxInstantPerItem: true,
+    maxReadInterval: 3600,
+    readDelay: 0
+  },
   settings: {
     port: 851,
     netId: '10.211.55.3.1.1',

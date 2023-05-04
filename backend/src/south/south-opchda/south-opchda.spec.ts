@@ -94,7 +94,11 @@ const configuration: SouthConnectorDTO = {
   type: 'test',
   description: 'my test connector',
   enabled: true,
-  maxInstantPerItem: false,
+  history: {
+    maxInstantPerItem: true,
+    maxReadInterval: 3600,
+    readDelay: 0
+  },
   settings: {
     tcpPort: '2224',
     retryInterval: 10000,

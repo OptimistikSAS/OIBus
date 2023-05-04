@@ -8,8 +8,7 @@ const manifest: SouthConnectorManifest = {
     subscription: false,
     lastPoint: false,
     lastFile: false,
-    historyPoint: true,
-    historyFile: false
+    history: true
   },
   settings: [
     {
@@ -70,23 +69,6 @@ const manifest: SouthConnectorManifest = {
       type: 'OibNumber',
       label: 'Retry interval (ms)',
       defaultValue: 10_000,
-      newRow: false,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      readDisplay: false
-    },
-    {
-      key: 'maxReadInterval',
-      type: 'OibNumber',
-      label: 'Max read interval (s)',
-      newRow: true,
-      validators: [{ key: 'required' }],
-      readDisplay: false
-    },
-    {
-      key: 'readIntervalDelay',
-      type: 'OibNumber',
-      label: 'Read interval delay (ms)',
-      defaultValue: 200,
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: false

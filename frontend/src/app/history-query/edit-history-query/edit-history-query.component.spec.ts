@@ -74,7 +74,11 @@ describe('EditHistoryQueryComponent', () => {
     name: 'Test',
     description: 'My History query description',
     enabled: true,
-    maxInstantPerItem: true,
+    history: {
+      maxInstantPerItem: false,
+      maxReadInterval: 0,
+      readDelay: 200
+    },
     startTime: '2023-01-01T00:00:00.000Z',
     endTime: '2023-02-01T00:00:00.000Z',
     northType: 'Console',
@@ -147,8 +151,7 @@ describe('EditHistoryQueryComponent', () => {
         name: 'SQL',
         description: 'SQL description',
         modes: {
-          historyFile: true,
-          historyPoint: false,
+          history: true,
           lastFile: false,
           lastPoint: false,
           subscription: false

@@ -87,7 +87,11 @@ describe('SouthConnectorService', () => {
       name: 'mySouthConnector',
       description: 'a test south connector',
       enabled: true,
-      maxInstantPerItem: true,
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 0,
+        readDelay: 200
+      },
       type: 'Test',
       settings: {}
     };
@@ -105,7 +109,11 @@ describe('SouthConnectorService', () => {
       name: 'mySouthConnector',
       description: 'a test south connector',
       enabled: true,
-      maxInstantPerItem: true,
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 0,
+        readDelay: 200
+      },
       type: 'Test',
       settings: {}
     };
