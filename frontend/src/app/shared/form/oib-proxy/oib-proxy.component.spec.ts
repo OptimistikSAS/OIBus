@@ -7,6 +7,7 @@ import { ProxyDTO } from '../../../../../../shared/model/proxy.model';
 import { formDirectives } from '../../form-directives';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup, FormRecord } from '@angular/forms';
+import { provideTestingI18n } from '../../../../i18n/mock-i18n';
 
 @Component({
   template: `<form [formGroup]="form">
@@ -41,7 +42,8 @@ describe('OibProxyComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [OibProxyComponent]
+      imports: [OibProxyComponent],
+      providers: [provideTestingI18n()]
     });
 
     tester = new OibFormComponentTester();

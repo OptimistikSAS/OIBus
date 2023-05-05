@@ -28,7 +28,7 @@ describe('proxy service', () => {
     };
     proxyRepository.getProxy = jest.fn().mockReturnValue(proxy);
 
-    const agent = await service.createProxyAgent('id1');
+    const agent = await service.createProxyAgent('id1', true);
     expect(agent).toEqual({
       proxy: {
         protocol: 'http:',
@@ -40,6 +40,7 @@ describe('proxy service', () => {
         hash: null,
         search: null,
         query: null,
+        rejectUnauthorized: false,
         pathname: '/',
         path: '/',
         href: 'http://localhost:8080/'
@@ -73,6 +74,7 @@ describe('proxy service', () => {
         hash: null,
         search: null,
         query: null,
+        rejectUnauthorized: true,
         pathname: '/',
         path: '/',
         href: 'http://localhost:8080/'
