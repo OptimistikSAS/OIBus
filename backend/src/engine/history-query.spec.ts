@@ -53,6 +53,7 @@ const createdSouth = {
   historyQueryHandler: jest.fn(),
   addItem: jest.fn(),
   deleteItem: jest.fn(),
+  deleteAllItems: jest.fn(),
   resetCache: jest.fn()
 };
 const createdNorth = {
@@ -95,6 +96,7 @@ describe('HistoryQuery enabled', () => {
         retryCount: 3,
         groupCount: 1000,
         maxSendCount: 10000,
+        sendFileImmediately: false,
         retryInterval: 5000
       },
       archive: {
@@ -256,6 +258,14 @@ describe('HistoryQuery enabled', () => {
     expect(createdSouth.deleteItem).toHaveBeenCalledWith(items[0]);
   });
 
+  it('should properly delete items', async () => {
+    historyQuery.runSouthConnector = jest.fn();
+
+    await historyQuery.start();
+    await historyQuery.deleteItems();
+    expect(createdSouth.deleteAllItems).toHaveBeenCalledTimes(1);
+  });
+
   it('should do nothing when adding item without any south', async () => {
     historyQuery.stop = jest.fn();
     historyQuery.start = jest.fn();
@@ -316,6 +326,7 @@ describe('HistoryQuery disabled', () => {
         retryCount: 3,
         groupCount: 1000,
         maxSendCount: 10000,
+        sendFileImmediately: false,
         retryInterval: 5000
       },
       archive: {

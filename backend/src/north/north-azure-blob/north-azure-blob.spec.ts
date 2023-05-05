@@ -62,6 +62,7 @@ const configuration: NorthConnectorDTO = {
     groupCount: 10000,
     maxSendCount: 10000,
     retryCount: 2,
+    sendFileImmediately: true,
     maxSize: 1000
   },
   archive: {

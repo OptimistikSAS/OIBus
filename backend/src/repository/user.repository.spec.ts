@@ -118,6 +118,16 @@ describe('User repository', () => {
     expect(user).toEqual(expectedValue);
   });
 
+  it('should properly get null when a user is not found by ID', () => {
+    get.mockReturnValueOnce(null);
+    const user = repository.getUserById('id1');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM user WHERE id = ?;'
+    );
+    expect(get).toHaveBeenCalledWith('id1');
+    expect(user).toEqual(null);
+  });
+
   it('should properly get a user based on a specific login', () => {
     const expectedValue: User = {
       id: 'id1',
@@ -144,6 +154,16 @@ describe('User repository', () => {
     );
     expect(get).toHaveBeenCalledWith('user1');
     expect(user).toEqual(expectedValue);
+  });
+
+  it('should properly get null when user based on a specific login is not found', () => {
+    get.mockReturnValueOnce(null);
+    const user = repository.getUserByLogin('user1');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM user WHERE login = ?;'
+    );
+    expect(get).toHaveBeenCalledWith('user1');
+    expect(user).toEqual(null);
   });
 
   it('should create a user', async () => {

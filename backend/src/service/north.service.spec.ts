@@ -7,7 +7,7 @@ import RepositoryService from './repository.service';
 import pino from 'pino';
 import ProxyService from './proxy.service';
 
-import { NorthCacheSettingsLightDTO } from '../../../shared/model/north-connector.model';
+import { NorthCacheSettingsDTO } from '../../../shared/model/north-connector.model';
 
 jest.mock('../repository/proxy.repository');
 jest.mock('./encryption.service');
@@ -44,7 +44,7 @@ describe('north service', () => {
         description: 'my test connector',
         type: 'Console',
         enabled: false,
-        caching: {} as NorthCacheSettingsLightDTO,
+        caching: {} as NorthCacheSettingsDTO,
         archive: {
           enabled: false,
           retentionDuration: 0

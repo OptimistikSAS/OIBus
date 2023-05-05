@@ -373,6 +373,7 @@
       "group-count": "Group count",
       "max-send-count": "Max send count",
       "max-size": "Max size (MB)",
+      "send-file-immediately": "Send file immediately",
       "explore-cache": "Explore cache",
       "error-files": "Error files",
       "remove-selected-files": "Remove selected files",

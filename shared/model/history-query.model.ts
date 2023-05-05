@@ -1,4 +1,4 @@
-import { NorthArchiveSettings, NorthCacheSettingsLightDTO } from './north-connector.model';
+import { NorthArchiveSettings, NorthCacheSettingsDTO } from './north-connector.model';
 import { SouthConnectorHistorySettings } from './south-connector.model';
 
 /**
@@ -16,7 +16,7 @@ export interface HistoryQueryDTO {
   southSettings: object;
   northSettings: object;
   history: SouthConnectorHistorySettings;
-  caching: NorthCacheSettingsLightDTO;
+  caching: NorthCacheSettingsDTO;
   archive: NorthArchiveSettings;
 }
 
@@ -34,7 +34,7 @@ export interface HistoryQueryCommandDTO {
   southSettings: object;
   northSettings: object;
   history: SouthConnectorHistorySettings;
-  caching: NorthCacheSettingsLightDTO;
+  caching: NorthCacheSettingsDTO;
   archive: NorthArchiveSettings;
 }
 

@@ -163,6 +163,20 @@ describe('reload service', () => {
     expect(repositoryService.southItemRepository.deleteSouthItem).toHaveBeenCalledWith('southItemId');
   });
 
+  it('delete should throw when south item not found', async () => {
+    (repositoryService.southItemRepository.getSouthItem as jest.Mock).mockReturnValue(null);
+
+    let error;
+    try {
+      await service.onDeleteSouthItem('southItemId');
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error('South item not found'));
+    expect(oibusEngine.deleteItemFromSouth).not.toHaveBeenCalled();
+    expect(repositoryService.southItemRepository.deleteSouthItem).not.toHaveBeenCalled();
+  });
+
   it('should delete all south items', async () => {
     await service.onDeleteAllSouthItems('southId');
     expect(oibusEngine.deleteAllItemsFromSouth).toHaveBeenCalledWith('southId');
