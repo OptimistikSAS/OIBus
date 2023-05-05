@@ -4,11 +4,12 @@ import { NgForOf, NgIf } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder } from '@angular/forms';
 
 import { ProxyDTO } from '../../../../../../shared/model/proxy.model';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({
   selector: 'oib-proxy',
   standalone: true,
-  imports: [...formDirectives, NgIf, NgForOf],
+  imports: [...formDirectives, NgIf, NgForOf, TranslateModule],
   templateUrl: './oib-proxy.component.html',
   styleUrls: ['./oib-proxy.component.scss'],
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => OibProxyComponent), multi: true }]

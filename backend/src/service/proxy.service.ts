@@ -15,11 +15,14 @@ export default class ProxyService {
   /**
    * Create a proxy agent to use wih HTTP requests
    */
-  async createProxyAgent(proxyId: string): Promise<any | undefined> {
+  async createProxyAgent(proxyId: string, acceptUnauthorized = false): Promise<any | undefined> {
     const proxySettings: ProxyDTO | null = this.proxyRepository.getProxy(proxyId);
     if (!proxySettings) return undefined;
 
     const proxyOptions = url.parse(proxySettings.address);
+
+    // @ts-ignore
+    proxyOptions.rejectUnauthorized = !acceptUnauthorized;
 
     if (proxySettings.username && proxySettings.password) {
       proxyOptions.auth = `${proxySettings.username}:${await this.encryptionService.decryptText(proxySettings.password)}`;

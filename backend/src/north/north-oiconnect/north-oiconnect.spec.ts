@@ -1,6 +1,6 @@
 import fsSync from 'node:fs';
 
-import NorthOIAnalytics from './north-oianalytics';
+import NorthOIConnect from './north-oiconnect';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 import EncryptionService from '../../service/encryption.service';
@@ -62,14 +62,16 @@ const configuration: NorthConnectorDTO = {
   enabled: true,
   settings: {
     host: 'https://hostname',
-    timeout: 1000,
     acceptUnauthorized: false,
+    valuesEndpoint: '/api/values',
+    fileEndpoint: '/api/file',
+    timeout: 10,
+    proxyId: 'proxyId',
     authentication: {
       type: 'basic',
-      username: 'anyuser',
-      password: 'anypass'
-    },
-    proxyId: 'proxyId'
+      username: 'user',
+      password: 'pass'
+    }
   },
   caching: {
     scanModeId: 'id1',
@@ -84,22 +86,22 @@ const configuration: NorthConnectorDTO = {
     retentionDuration: 720
   }
 };
-let north: NorthOIAnalytics;
+let north: NorthOIConnect;
 
-describe('NorthOIAnalytics', () => {
+describe('NorthOIConnect', () => {
   const proxy = { aField: 'myProxy' };
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     proxyService.createProxyAgent = jest.fn().mockReturnValue(proxy);
-    north = new NorthOIAnalytics(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+    north = new NorthOIConnect(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
 
   it('should be properly initialized with proxy', async () => {
     await north.start();
-    expect(proxyService.createProxyAgent).toHaveBeenCalledWith('proxyId', configuration.settings.acceptUnauthorized);
+    expect(proxyService.createProxyAgent).toHaveBeenCalledWith('proxyId', false);
   });
 
   it('should properly handle values', async () => {
@@ -107,32 +109,6 @@ describe('NorthOIAnalytics', () => {
     const values = [
       {
         pointId: 'pointId1',
-        timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
-      },
-      undefined,
-      {
-        pointId: 'pointId2',
-        timestamp: nowDateString,
-        data: undefined
-      },
-      {
-        pointId: 'pointId3',
-        timestamp: nowDateString,
-        data: { value: undefined, quality: 'good' }
-      },
-      {
-        pointId: 'pointId4',
-        timestamp: nowDateString,
-        data: { value: null, quality: 'good' }
-      },
-      {
-        pointId: 'pointId4',
-        timestamp: undefined,
-        data: { value: 666, quality: 'good' }
-      },
-      {
-        pointId: undefined,
         timestamp: nowDateString,
         data: { value: 666, quality: 'good' }
       }
@@ -147,23 +123,14 @@ describe('NorthOIAnalytics', () => {
         ).toString('base64')}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify([
-        {
-          timestamp: values[0]!.timestamp,
-          data: values[0]!.data,
-          pointId: values[0]!.pointId
-        }
-      ]),
+      body: JSON.stringify(values),
       timeout: configuration.settings.timeout * 1000,
       agent: proxy
     };
 
     await north.handleValues(values);
 
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
-      expectedFetchOptions
-    );
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/values?name=${configuration.name}`, expectedFetchOptions);
   });
 
   it('should properly throw fetch error with values', async () => {
@@ -171,32 +138,6 @@ describe('NorthOIAnalytics', () => {
     const values = [
       {
         pointId: 'pointId1',
-        timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
-      },
-      undefined,
-      {
-        pointId: 'pointId2',
-        timestamp: nowDateString,
-        data: undefined
-      },
-      {
-        pointId: 'pointId3',
-        timestamp: nowDateString,
-        data: { value: undefined, quality: 'good' }
-      },
-      {
-        pointId: 'pointId4',
-        timestamp: nowDateString,
-        data: { value: null, quality: 'good' }
-      },
-      {
-        pointId: 'pointId4',
-        timestamp: undefined,
-        data: { value: 666, quality: 'good' }
-      },
-      {
-        pointId: undefined,
         timestamp: nowDateString,
         data: { value: 666, quality: 'good' }
       }
@@ -212,9 +153,7 @@ describe('NorthOIAnalytics', () => {
       err = error;
     }
     expect(err).toEqual({
-      message: `Fail to reach values endpoint ${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${
-        configuration.name
-      }. ${new Error('error')}`,
+      message: `Fail to reach values endpoint ${configuration.settings.host}/api/values?name=${configuration.name}. ${new Error('error')}`,
       retry: true
     });
   });
@@ -224,32 +163,6 @@ describe('NorthOIAnalytics', () => {
     const values = [
       {
         pointId: 'pointId1',
-        timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
-      },
-      undefined,
-      {
-        pointId: 'pointId2',
-        timestamp: nowDateString,
-        data: undefined
-      },
-      {
-        pointId: 'pointId3',
-        timestamp: nowDateString,
-        data: { value: undefined, quality: 'good' }
-      },
-      {
-        pointId: 'pointId4',
-        timestamp: nowDateString,
-        data: { value: null, quality: 'good' }
-      },
-      {
-        pointId: 'pointId4',
-        timestamp: undefined,
-        data: { value: 666, quality: 'good' }
-      },
-      {
-        pointId: undefined,
         timestamp: nowDateString,
         data: { value: 666, quality: 'good' }
       }
@@ -264,13 +177,7 @@ describe('NorthOIAnalytics', () => {
         ).toString('base64')}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify([
-        {
-          timestamp: values[0]!.timestamp,
-          data: values[0]!.data,
-          pointId: values[0]!.pointId
-        }
-      ]),
+      body: JSON.stringify(values),
       timeout: configuration.settings.timeout * 1000,
       agent: proxy
     };
@@ -287,10 +194,7 @@ describe('NorthOIAnalytics', () => {
       retry: false
     });
 
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
-      expectedFetchOptions
-    );
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/values?name=${configuration.name}`, expectedFetchOptions);
   });
 
   it('should properly handle files', async () => {
@@ -312,10 +216,7 @@ describe('NorthOIAnalytics', () => {
 
     await north.handleFile(filePath);
 
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
-      expectedFetchOptions
-    );
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/file?name=${configuration.name}`, expectedFetchOptions);
   });
 
   it('should properly throw fetch error with files', async () => {
@@ -331,9 +232,7 @@ describe('NorthOIAnalytics', () => {
       err = error;
     }
     expect(err).toEqual({
-      message: `Fail to reach file endpoint ${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${
-        configuration.name
-      }. ${new Error('error')}`,
+      message: `Fail to reach file endpoint ${configuration.settings.host}/api/file?name=${configuration.name}. ${new Error('error')}`,
       retry: true
     });
   });
@@ -369,14 +268,11 @@ describe('NorthOIAnalytics', () => {
       retry: false
     });
 
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
-      expectedFetchOptions
-    );
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/file?name=${configuration.name}`, expectedFetchOptions);
   });
 });
 
-describe('NorthOIAnalytics without proxy nor password and with acceptUnauthorized', () => {
+describe('NorthOIConnect without proxy nor password and with acceptUnauthorized', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
@@ -384,7 +280,7 @@ describe('NorthOIAnalytics without proxy nor password and with acceptUnauthorize
     configuration.settings.authentication.password = null;
     configuration.settings.proxyId = null;
     configuration.settings.acceptUnauthorized = true;
-    north = new NorthOIAnalytics(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+    north = new NorthOIConnect(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
 
@@ -410,23 +306,14 @@ describe('NorthOIAnalytics without proxy nor password and with acceptUnauthorize
         authorization: `Basic ${Buffer.from(`${configuration.settings.authentication.username}:`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify([
-        {
-          timestamp: values[0]!.timestamp,
-          data: values[0]!.data,
-          pointId: values[0]!.pointId
-        }
-      ]),
+      body: JSON.stringify(values),
       timeout: configuration.settings.timeout * 1000,
       agent: expect.any(https.Agent)
     };
 
     await north.handleValues(values);
 
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
-      expectedFetchOptions
-    );
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/values?name=${configuration.name}`, expectedFetchOptions);
   });
 
   it('should properly handle files without password', async () => {
@@ -446,14 +333,11 @@ describe('NorthOIAnalytics without proxy nor password and with acceptUnauthorize
 
     await north.handleFile(filePath);
 
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
-      expectedFetchOptions
-    );
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/file?name=${configuration.name}`, expectedFetchOptions);
   });
 });
 
-describe('NorthOIAnalytics without authentication', () => {
+describe('NorthOIConnect without authentication', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
@@ -461,7 +345,8 @@ describe('NorthOIAnalytics without authentication', () => {
     configuration.settings.authentication = { type: 'none' };
     configuration.settings.proxyId = null;
     configuration.settings.acceptUnauthorized = false;
-    north = new NorthOIAnalytics(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+
+    north = new NorthOIConnect(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
 
@@ -481,23 +366,14 @@ describe('NorthOIAnalytics without authentication', () => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify([
-        {
-          timestamp: values[0]!.timestamp,
-          data: values[0]!.data,
-          pointId: values[0]!.pointId
-        }
-      ]),
+      body: JSON.stringify(values),
       timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 
     await north.handleValues(values);
 
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
-      expectedFetchOptions
-    );
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/values?name=${configuration.name}`, expectedFetchOptions);
   });
 
   it('should properly handle files without auth', async () => {
@@ -516,9 +392,6 @@ describe('NorthOIAnalytics without authentication', () => {
 
     await north.handleFile(filePath);
 
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
-      expectedFetchOptions
-    );
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/file?name=${configuration.name}`, expectedFetchOptions);
   });
 });
