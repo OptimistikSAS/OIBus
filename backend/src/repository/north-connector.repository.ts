@@ -15,7 +15,7 @@ export default class NorthConnectorRepository {
     const query =
       `CREATE TABLE IF NOT EXISTS ${NORTH_CONNECTOR_TABLE} (id TEXT PRIMARY KEY, name TEXT, type TEXT, description TEXT, ` +
       `enabled INTEGER, settings TEXT, caching_scan_mode_id TEXT, caching_group_count INTEGER, caching_retry_interval INTEGER, ` +
-      `caching_retry_count INTEGER, caching_max_send_count INTEGER, caching_max_size INTEGER, archive_enabled INTEGER, ` +
+      `caching_retry_count INTEGER, caching_max_send_count INTEGER, caching_send_file_immediately INTEGER, caching_max_size INTEGER, archive_enabled INTEGER, ` +
       `archive_retention_duration INTEGER, FOREIGN KEY(caching_scan_mode_id) REFERENCES ${SCAN_MODE_TABLE}(id));`;
     this.database.prepare(query).run();
   }
@@ -28,7 +28,7 @@ export default class NorthConnectorRepository {
       `SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ` +
       `caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ` +
       `caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
-      `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
+      `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${NORTH_CONNECTOR_TABLE};`;
     return this.database
       .prepare(query)
@@ -46,6 +46,7 @@ export default class NorthConnectorRepository {
           retryInterval: result.cachingRetryInterval,
           retryCount: result.cachingRetryCount,
           maxSendCount: result.cachingMaxSendCount,
+          sendFileImmediately: result.cachingSendFileImmediately,
           maxSize: result.cachingMaxSize
         },
         archive: {
@@ -63,7 +64,7 @@ export default class NorthConnectorRepository {
       `SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ` +
       `caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ` +
       `caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
-      `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
+      `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${NORTH_CONNECTOR_TABLE} WHERE id = ?;`;
     const result: any = this.database.prepare(query).get(id) as any;
 
@@ -84,6 +85,7 @@ export default class NorthConnectorRepository {
         retryInterval: result.cachingRetryInterval,
         retryCount: result.cachingRetryCount,
         maxSendCount: result.cachingMaxSendCount,
+        sendFileImmediately: result.cachingSendFileImmediately,
         maxSize: result.cachingMaxSize
       },
       archive: {
@@ -101,8 +103,8 @@ export default class NorthConnectorRepository {
     const insertQuery =
       `INSERT INTO ${NORTH_CONNECTOR_TABLE} (id, name, type, description, enabled, settings, ` +
       `caching_scan_mode_id, caching_group_count, caching_retry_interval, caching_retry_count, caching_max_send_count, ` +
-      `caching_max_size, archive_enabled, archive_retention_duration) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      `caching_send_file_immediately, caching_max_size, archive_enabled, archive_retention_duration) ` +
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
     const insertResult = this.database
       .prepare(insertQuery)
       .run(
@@ -117,6 +119,7 @@ export default class NorthConnectorRepository {
         command.caching.retryInterval,
         command.caching.retryCount,
         command.caching.maxSendCount,
+        +command.caching.sendFileImmediately,
         command.caching.maxSize,
         +command.archive.enabled,
         command.archive.retentionDuration
@@ -126,7 +129,7 @@ export default class NorthConnectorRepository {
       `SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ` +
       `caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ` +
       `caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
-      `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
+      `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${NORTH_CONNECTOR_TABLE} WHERE ROWID = ?;`;
     const result: any = this.database.prepare(query).get(insertResult.lastInsertRowid);
     return {
@@ -142,6 +145,7 @@ export default class NorthConnectorRepository {
         retryInterval: result.cachingRetryInterval,
         retryCount: result.cachingRetryCount,
         maxSendCount: result.cachingMaxSendCount,
+        sendFileImmediately: result.cachingSendFileImmediately,
         maxSize: result.cachingMaxSize
       },
       archive: {
@@ -158,7 +162,7 @@ export default class NorthConnectorRepository {
     const query =
       `UPDATE ${NORTH_CONNECTOR_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, ` +
       `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
-      `caching_max_send_count = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
+      `caching_max_send_count = ?, caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
       `WHERE id = ?;`;
     this.database
       .prepare(query)
@@ -172,6 +176,7 @@ export default class NorthConnectorRepository {
         command.caching.retryInterval,
         command.caching.retryCount,
         command.caching.maxSendCount,
+        +command.caching.sendFileImmediately,
         command.caching.maxSize,
         +command.archive.enabled,
         command.archive.retentionDuration,

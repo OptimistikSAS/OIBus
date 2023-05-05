@@ -66,6 +66,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
       retryCount: 3,
       groupCount: 1000,
       maxSendCount: 10000,
+      sendFileImmediately: true,
       maxSize: 30
     },
     archive: {

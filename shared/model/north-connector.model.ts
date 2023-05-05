@@ -1,21 +1,13 @@
 import { OibFormControl } from './form.model';
 import { Instant } from './types';
 
-export interface NorthCacheSettingsLightDTO {
+export interface NorthCacheSettingsDTO {
   scanModeId: string;
   retryInterval: number;
   retryCount: number;
   groupCount: number;
   maxSendCount: number;
-  maxSize: number;
-}
-
-export interface NorthCacheSettingsCommandDTO {
-  scanModeId: string;
-  retryInterval: number;
-  retryCount: number;
-  groupCount: number;
-  maxSendCount: number;
+  sendFileImmediately: boolean;
   maxSize: number;
 }
 
@@ -44,7 +36,7 @@ export interface NorthConnectorDTO {
   description: string;
   enabled: boolean;
   settings: any;
-  caching: NorthCacheSettingsLightDTO;
+  caching: NorthCacheSettingsDTO;
   archive: NorthArchiveSettings;
 }
 
@@ -57,7 +49,7 @@ export interface NorthConnectorCommandDTO {
   description: string;
   enabled: boolean;
   settings: object;
-  caching: NorthCacheSettingsCommandDTO;
+  caching: NorthCacheSettingsDTO;
   archive: NorthArchiveSettings;
 }
 

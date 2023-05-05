@@ -4,7 +4,7 @@ import path from 'node:path';
 import { createFolder, dirSize, generateRandomId } from '../utils';
 import pino from 'pino';
 
-import { NorthCacheSettingsLightDTO } from '../../../../shared/model/north-connector.model';
+import { NorthCacheSettingsDTO } from '../../../../shared/model/north-connector.model';
 
 const BUFFER_MAX = 250;
 const BUFFER_TIMEOUT = 300;
@@ -21,7 +21,7 @@ export default class ValueCacheService {
   private readonly baseFolder: string;
   private readonly valueFolder: string;
   private readonly errorFolder: string;
-  private readonly settings: NorthCacheSettingsLightDTO;
+  private readonly settings: NorthCacheSettingsDTO;
   private cacheSize = 0;
   private flushInProgress = false;
 
@@ -30,7 +30,7 @@ export default class ValueCacheService {
   private bufferFiles: Map<string, Array<any>> = new Map(); // key: buffer filename (randomId.buffer.tmp, value: the values in the queue file)
   private queue: Map<string, Array<any>> = new Map(); // key: queue filename (randomId.queue.tmp, value: the values in the queue file)
 
-  constructor(logger: pino.Logger, baseFolder: string, settings: NorthCacheSettingsLightDTO) {
+  constructor(logger: pino.Logger, baseFolder: string, settings: NorthCacheSettingsDTO) {
     this._logger = logger;
     this.baseFolder = path.resolve(baseFolder);
     this.valueFolder = path.resolve(baseFolder, VALUE_FOLDER);

@@ -29,7 +29,7 @@ describe('History Query repository', () => {
         `enabled INTEGER, start_time TEXT, end_time TEXT, south_type TEXT, north_type TEXT, ` +
         `south_settings TEXT, north_settings TEXT, history_max_instant_per_item INTEGER, history_max_read_interval INTEGER, ` +
         `history_read_delay INTEGER, caching_scan_mode_id TEXT, caching_group_count INTEGER, caching_retry_interval INTEGER, ` +
-        `caching_retry_count INTEGER, caching_max_send_count INTEGER, caching_max_size INTEGER, archive_enabled INTEGER, ` +
+        `caching_retry_count INTEGER, caching_max_send_count INTEGER, caching_send_file_immediately INTEGER, caching_max_size INTEGER, archive_enabled INTEGER, ` +
         `archive_retention_duration INTEGER, FOREIGN KEY(caching_scan_mode_id) REFERENCES scan_mode(id));`
     );
     expect(run).toHaveBeenCalledTimes(1);
@@ -59,6 +59,7 @@ describe('History Query repository', () => {
           retryCount: 3,
           groupCount: 1000,
           maxSendCount: 10000,
+          sendFileImmediately: false,
           maxSize: 10000
         },
         archive: {
@@ -88,6 +89,7 @@ describe('History Query repository', () => {
           retryCount: 3,
           groupCount: 1000,
           maxSendCount: 10000,
+          sendFileImmediately: false,
           maxSize: 10000
         },
         archive: {
@@ -116,6 +118,7 @@ describe('History Query repository', () => {
         cachingRetryCount: 3,
         cachingGroupCount: 1000,
         cachingMaxSendCount: 10000,
+        cachingSendFileImmediately: false,
         cachingMaxSize: 10000,
         archiveEnabled: true,
         archiveRetentionDuration: 1000
@@ -139,6 +142,7 @@ describe('History Query repository', () => {
         cachingRetryCount: 3,
         cachingGroupCount: 1000,
         cachingMaxSendCount: 10000,
+        cachingSendFileImmediately: false,
         cachingMaxSize: 10000,
         archiveEnabled: true,
         archiveRetentionDuration: 1000
@@ -151,7 +155,7 @@ describe('History Query repository', () => {
         `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
         `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
-        `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
+        `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
         `archive_retention_duration AS archiveRetentionDuration FROM history_queries;`
     );
     expect(southConnectors).toEqual(expectedValue);
@@ -180,6 +184,7 @@ describe('History Query repository', () => {
         retryCount: 3,
         groupCount: 1000,
         maxSendCount: 10000,
+        sendFileImmediately: false,
         maxSize: 10000
       },
       archive: {
@@ -206,6 +211,7 @@ describe('History Query repository', () => {
       cachingRetryCount: 3,
       cachingGroupCount: 1000,
       cachingMaxSendCount: 10000,
+      cachingSendFileImmediately: false,
       cachingMaxSize: 10000,
       archiveEnabled: true,
       archiveRetentionDuration: 1000
@@ -217,7 +223,7 @@ describe('History Query repository', () => {
         `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
         `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
-        `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
+        `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
         `archive_retention_duration AS archiveRetentionDuration FROM history_queries WHERE id = ?;`
     );
     expect(get).toHaveBeenCalledWith('id1');
@@ -233,7 +239,7 @@ describe('History Query repository', () => {
         `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
         `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
-        `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
+        `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
         `archive_retention_duration AS archiveRetentionDuration FROM history_queries WHERE id = ?;`
     );
     expect(get).toHaveBeenCalledWith('id1');
@@ -262,6 +268,7 @@ describe('History Query repository', () => {
         retryCount: 3,
         groupCount: 1000,
         maxSendCount: 10000,
+        sendFileImmediately: false,
         maxSize: 10000
       },
       archive: {
@@ -289,6 +296,7 @@ describe('History Query repository', () => {
       cachingRetryCount: 3,
       cachingGroupCount: 1000,
       cachingMaxSendCount: 10000,
+      cachingSendFileImmediately: false,
       cachingMaxSize: 10000,
       archiveEnabled: true,
       archiveRetentionDuration: 1000
@@ -301,8 +309,8 @@ describe('History Query repository', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       `INSERT INTO history_queries (id, name, description, enabled, history_max_instant_per_item, history_max_read_interval, ` +
         `history_read_delay, start_time, end_time, south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
-        `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_max_size, archive_enabled, ` +
-        `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_send_file_immediately, caching_max_size, archive_enabled, ` +
+        `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     );
     expect(runFn).toHaveBeenCalledWith(
       '123456',
@@ -323,6 +331,7 @@ describe('History Query repository', () => {
       command.caching.retryInterval,
       command.caching.retryCount,
       command.caching.maxSendCount,
+      +command.caching.sendFileImmediately,
       command.caching.maxSize,
       +command.archive.enabled,
       command.archive.retentionDuration
@@ -334,7 +343,7 @@ describe('History Query repository', () => {
         `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
         `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
-        `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
+        `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
         `archive_retention_duration AS archiveRetentionDuration FROM history_queries WHERE ROWID = ?;`
     );
   });
@@ -361,6 +370,7 @@ describe('History Query repository', () => {
         retryCount: 3,
         groupCount: 1000,
         maxSendCount: 10000,
+        sendFileImmediately: false,
         maxSize: 10000
       },
       archive: {
@@ -374,7 +384,7 @@ describe('History Query repository', () => {
         `history_max_read_interval = ?, history_read_delay = ?, start_time = ?, ` +
         `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
         `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
-        `caching_max_send_count = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
+        `caching_max_send_count = ?, caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
         `WHERE id = ?;`
     );
     expect(run).toHaveBeenCalledWith(
@@ -395,6 +405,7 @@ describe('History Query repository', () => {
       command.caching.retryInterval,
       command.caching.retryCount,
       command.caching.maxSendCount,
+      +command.caching.sendFileImmediately,
       command.caching.maxSize,
       +command.archive.enabled,
       command.archive.retentionDuration,

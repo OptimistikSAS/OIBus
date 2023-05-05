@@ -83,6 +83,7 @@ export default class HistoryQueryController extends AbstractController {
         retryCount: 3,
         groupCount: 3000,
         maxSendCount: 10000,
+        sendFileImmediately: false,
         maxSize: 0
       },
       archive: {

@@ -147,6 +147,16 @@ describe('South item repository', () => {
     expect(southScan).toEqual(expectedValue);
   });
 
+  it('should properly get null when south item not found', () => {
+    get.mockReturnValueOnce(null);
+    const southScan = repository.getSouthItem('id1');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_item WHERE id = ?;'
+    );
+    expect(get).toHaveBeenCalledWith('id1');
+    expect(southScan).toEqual(null);
+  });
+
   it('should create a south item', () => {
     run.mockReturnValueOnce({ lastInsertRowid: 1 });
     get.mockReturnValueOnce({ settings: '{}' });

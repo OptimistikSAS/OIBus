@@ -6,7 +6,7 @@ import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from '../../validators/joi.validator';
 import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO } from '../../../../shared/model/history-query.model';
 import { historyQuerySchema } from '../../engine/oibus-validation-schema';
-import { NorthArchiveSettings, NorthCacheSettingsCommandDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { NorthArchiveSettings, NorthCacheSettingsDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import csv from 'papaparse';
 import fs from 'node:fs/promises';
@@ -35,12 +35,13 @@ const southConnector: SouthConnectorDTO = {
   }
 };
 
-const northCacheSettings: NorthCacheSettingsCommandDTO = {
+const northCacheSettings: NorthCacheSettingsDTO = {
   scanModeId: 'scanModeId',
   retryInterval: 1000,
   retryCount: 3,
   groupCount: 100,
   maxSendCount: 1000,
+  sendFileImmediately: false,
   maxSize: 10000
 };
 const northArchiveSettings: NorthArchiveSettings = {
@@ -241,6 +242,7 @@ describe('History query controller', () => {
           retryCount: 3,
           groupCount: 3000,
           maxSendCount: 10000,
+          sendFileImmediately: false,
           maxSize: 0
         },
         archive: {

@@ -87,6 +87,7 @@ describe('HistoryQueryEngine', () => {
         retryCount: 3,
         groupCount: 1000,
         maxSendCount: 10000,
+        sendFileImmediately: false,
         retryInterval: 5000
       },
       archive: {
@@ -116,10 +117,12 @@ describe('HistoryQueryEngine', () => {
 
     await engine.addItemToHistoryQuery('anotherId', items[0]);
     await engine.deleteItemFromHistoryQuery('anotherId', items[0]);
+    await engine.deleteAllItemsFromHistoryQuery('anotherId');
     await engine.updateItemInHistoryQuery('anotherId', items[0]);
 
     await engine.addItemToHistoryQuery('historyId', items[0]);
     await engine.deleteItemFromHistoryQuery('historyId', items[0]);
+    await engine.deleteAllItemsFromHistoryQuery('historyId');
     await engine.updateItemInHistoryQuery('historyId', items[0]);
   });
 
