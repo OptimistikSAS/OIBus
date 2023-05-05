@@ -1,23 +1,24 @@
 import NorthConnector from '../north-connector';
-
 import manifest from './manifest';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
-
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { createReadStream } from 'node:fs';
-import FormData from 'form-data';
-import path from 'node:path';
 import fetch from 'node-fetch';
+import { createReadStream } from 'node:fs';
+import path from 'node:path';
+import FormData from 'form-data';
 import https from 'node:https';
 
 /**
- * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
- * OIAnalytics endpoints are set in this connector
+ * Class NorthOIConnect - Send files through a POST Multipart HTTP request and values as JSON payload
+ * Both endpoints are configurable by the user, allowing to send data to any HTTP application
+ * To send data to another OIBus, use the following endpoints:
+ *  -files endpoint: /engine/addFile
+ *  -values endpoint: /engine/addValues
  */
-export default class NorthOIAnalytics extends NorthConnector {
+export default class NorthOIConnect extends NorthConnector {
   static category = manifest.category;
 
   private proxyAgent: any | undefined;
@@ -50,20 +51,9 @@ export default class NorthOIAnalytics extends NorthConnector {
   }
 
   /**
-   * Handle values by sending them to OIAnalytics
+   * Handle values by sending them to the specified endpoint
    */
   override async handleValues(values: Array<any>): Promise<void> {
-    // Remove empty values
-    const cleanedValues = values
-      .filter(
-        value => value && value.data && value.data.value !== undefined && value.data.value !== null && value.timestamp && value.pointId
-      )
-      .map(value => ({
-        timestamp: value.timestamp,
-        data: value.data,
-        pointId: value.pointId
-      }));
-
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     };
@@ -83,12 +73,12 @@ export default class NorthOIAnalytics extends NorthConnector {
     }
 
     let response;
-    const valuesUrl = `${this.configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${this.configuration.name}`;
+    const valuesUrl = `${this.configuration.settings.host}${this.configuration.settings.valuesEndpoint}?name=${this.configuration.name}`;
     try {
       response = await fetch(valuesUrl, {
         method: 'POST',
         headers,
-        body: JSON.stringify(cleanedValues),
+        body: JSON.stringify(values),
         timeout: this.configuration.settings.timeout * 1000,
         agent: this.proxyAgent
       });
@@ -108,7 +98,7 @@ export default class NorthOIAnalytics extends NorthConnector {
   }
 
   /**
-   * Handle the file by sending it to OIAnalytics.
+   * Handle the file by sending it to the specified endpoint
    */
   override async handleFile(filePath: string): Promise<void> {
     const headers: Record<string, string> = {};
@@ -126,6 +116,7 @@ export default class NorthOIAnalytics extends NorthConnector {
       default:
         break;
     }
+
     const readStream = createReadStream(filePath);
     // Remove timestamp from the file path
     const { name, ext } = path.parse(filePath);
@@ -139,7 +130,7 @@ export default class NorthOIAnalytics extends NorthConnector {
     });
 
     let response;
-    const fileUrl = `${this.configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${this.configuration.name}`;
+    const fileUrl = `${this.configuration.settings.host}${this.configuration.settings.fileEndpoint}?name=${this.configuration.name}`;
     try {
       response = await fetch(fileUrl, {
         method: 'POST',
