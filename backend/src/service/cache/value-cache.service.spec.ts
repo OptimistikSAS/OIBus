@@ -6,7 +6,7 @@ import ValueCache from './value-cache.service';
 import { createFolder, generateRandomId, dirSize } from '../utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
-import { NorthCacheSettingsLightDTO } from '../../../../shared/model/north-connector.model';
+import { NorthCacheSettingsDTO } from '../../../../shared/model/north-connector.model';
 
 jest.mock('../utils', () => ({
   generateRandomId: jest.fn(() => 'generated-uuid'),
@@ -20,7 +20,7 @@ const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
-let settings: NorthCacheSettingsLightDTO;
+let settings: NorthCacheSettingsDTO;
 let cache: ValueCache;
 describe('ValueCache', () => {
   beforeEach(() => {
@@ -32,6 +32,7 @@ describe('ValueCache', () => {
       maxSendCount: 1000,
       retryCount: 3,
       retryInterval: 5000,
+      sendFileImmediately: false,
       maxSize: 1000
     };
     (dirSize as jest.Mock).mockImplementation(() => 1000);

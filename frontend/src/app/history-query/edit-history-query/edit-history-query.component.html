@@ -100,6 +100,17 @@
             </div>
           </div>
         </div>
+        <div class="row mb-3" formGroupName="caching" *ngIf="northManifest?.modes?.files">
+          <!-- Send file immediately -->
+          <div class="col-4">
+            <div class="form-group">
+              <label for="send-file-immediately" translate="north.cache-settings.send-file-immediately"></label>
+              <div class="form-check form-switch">
+                <input formControlName="sendFileImmediately" id="send-file-immediately" type="checkbox" class="form-check-input" />
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="row mb-3" formGroupName="caching">
           <!-- Timeout -->
           <div class="col-4">

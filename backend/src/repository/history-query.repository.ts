@@ -24,6 +24,7 @@ interface HistoryQueryResult {
   cachingRetryInterval: number;
   cachingRetryCount: number;
   cachingMaxSendCount: number;
+  cachingSendFileImmediately: boolean;
   cachingMaxSize: number;
   archiveEnabled: boolean;
   archiveRetentionDuration: number;
@@ -36,7 +37,7 @@ export default class HistoryQueryRepository {
       `enabled INTEGER, start_time TEXT, end_time TEXT, south_type TEXT, north_type TEXT, ` +
       `south_settings TEXT, north_settings TEXT, history_max_instant_per_item INTEGER, history_max_read_interval INTEGER, ` +
       `history_read_delay INTEGER, caching_scan_mode_id TEXT, caching_group_count INTEGER, caching_retry_interval INTEGER, ` +
-      `caching_retry_count INTEGER, caching_max_send_count INTEGER, caching_max_size INTEGER, archive_enabled INTEGER, ` +
+      `caching_retry_count INTEGER, caching_max_send_count INTEGER, caching_send_file_immediately INTEGER, caching_max_size INTEGER, archive_enabled INTEGER, ` +
       `archive_retention_duration INTEGER, FOREIGN KEY(caching_scan_mode_id) REFERENCES ${SCAN_MODE_TABLE}(id));`;
     this.database.prepare(query).run();
   }
@@ -51,7 +52,7 @@ export default class HistoryQueryRepository {
       `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
-      `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
+      `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${HISTORY_QUERIES_TABLE};`;
     const results: Array<HistoryQueryResult> = this.database.prepare(query).all() as Array<HistoryQueryResult>;
     return results.map(result => this.toHistoryQueryDTO(result));
@@ -67,7 +68,7 @@ export default class HistoryQueryRepository {
       `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
-      `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
+      `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${HISTORY_QUERIES_TABLE} WHERE id = ?;`;
     const result: HistoryQueryResult = this.database.prepare(query).get(id) as HistoryQueryResult;
 
@@ -87,8 +88,8 @@ export default class HistoryQueryRepository {
     const insertQuery =
       `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, enabled, history_max_instant_per_item, history_max_read_interval, ` +
       `history_read_delay, start_time, end_time, south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
-      `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_max_size, archive_enabled, ` +
-      `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_send_file_immediately, caching_max_size, archive_enabled, ` +
+      `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
     const insertResult = this.database
       .prepare(insertQuery)
       .run(
@@ -110,6 +111,7 @@ export default class HistoryQueryRepository {
         command.caching.retryInterval,
         command.caching.retryCount,
         command.caching.maxSendCount,
+        +command.caching.sendFileImmediately,
         command.caching.maxSize,
         +command.archive.enabled,
         command.archive.retentionDuration
@@ -121,7 +123,7 @@ export default class HistoryQueryRepository {
       `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
       `cachingRetryInterval, caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ` +
-      `caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
+      `caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ` +
       `archive_retention_duration AS archiveRetentionDuration FROM ${HISTORY_QUERIES_TABLE} WHERE ROWID = ?;`;
     const result: HistoryQueryResult = this.database.prepare(query).get(insertResult.lastInsertRowid) as HistoryQueryResult;
 
@@ -137,7 +139,7 @@ export default class HistoryQueryRepository {
       `history_max_read_interval = ?, history_read_delay = ?, start_time = ?, ` +
       `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
       `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
-      `caching_max_send_count = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
+      `caching_max_send_count = ?, caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
       `WHERE id = ?;`;
     this.database
       .prepare(query)
@@ -159,6 +161,7 @@ export default class HistoryQueryRepository {
         command.caching.retryInterval,
         command.caching.retryCount,
         command.caching.maxSendCount,
+        +command.caching.sendFileImmediately,
         command.caching.maxSize,
         +command.archive.enabled,
         command.archive.retentionDuration,
@@ -193,6 +196,7 @@ export default class HistoryQueryRepository {
         retryInterval: result.cachingRetryInterval,
         retryCount: result.cachingRetryCount,
         maxSendCount: result.cachingMaxSendCount,
+        sendFileImmediately: result.cachingSendFileImmediately,
         maxSize: result.cachingMaxSize
       },
       archive: {

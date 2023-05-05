@@ -28,7 +28,7 @@ describe('North connector repository', () => {
       'CREATE TABLE IF NOT EXISTS north_connector (id TEXT PRIMARY KEY, name TEXT, type TEXT, description TEXT, ' +
         'enabled INTEGER, settings TEXT, caching_scan_mode_id TEXT, caching_group_count INTEGER, ' +
         'caching_retry_interval INTEGER, caching_retry_count INTEGER, caching_max_send_count INTEGER, ' +
-        'caching_max_size INTEGER, archive_enabled INTEGER, archive_retention_duration INTEGER, ' +
+        'caching_send_file_immediately INTEGER, caching_max_size INTEGER, archive_enabled INTEGER, archive_retention_duration INTEGER, ' +
         'FOREIGN KEY(caching_scan_mode_id) REFERENCES scan_mode(id));'
     );
     expect(run).toHaveBeenCalledTimes(1);
@@ -49,6 +49,7 @@ describe('North connector repository', () => {
           retryCount: 3,
           groupCount: 1000,
           maxSendCount: 10000,
+          sendFileImmediately: true,
           maxSize: 10000
         },
         archive: {
@@ -69,6 +70,7 @@ describe('North connector repository', () => {
           retryCount: 3,
           groupCount: 1000,
           maxSendCount: 10000,
+          sendFileImmediately: true,
           maxSize: 10000
         },
         archive: {
@@ -90,6 +92,7 @@ describe('North connector repository', () => {
         cachingRetryCount: 3,
         cachingGroupCount: 1000,
         cachingMaxSendCount: 10000,
+        cachingSendFileImmediately: true,
         cachingMaxSize: 10000,
         archiveEnabled: true,
         archiveRetentionDuration: 1000
@@ -106,6 +109,7 @@ describe('North connector repository', () => {
         cachingRetryCount: 3,
         cachingGroupCount: 1000,
         cachingMaxSendCount: 10000,
+        cachingSendFileImmediately: true,
         cachingMaxSize: 10000,
         archiveEnabled: true,
         archiveRetentionDuration: 1000
@@ -116,7 +120,7 @@ describe('North connector repository', () => {
       'SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ' +
         'caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ' +
         'caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ' +
-        'caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ' +
+        'caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ' +
         'archive_retention_duration AS archiveRetentionDuration FROM north_connector;'
     );
     expect(northConnectors).toEqual(expectedValue);
@@ -136,6 +140,7 @@ describe('North connector repository', () => {
         retryCount: 3,
         groupCount: 1000,
         maxSendCount: 10000,
+        sendFileImmediately: true,
         maxSize: 10000
       },
       archive: {
@@ -155,6 +160,7 @@ describe('North connector repository', () => {
       cachingRetryCount: 3,
       cachingGroupCount: 1000,
       cachingMaxSendCount: 10000,
+      cachingSendFileImmediately: true,
       cachingMaxSize: 10000,
       archiveEnabled: true,
       archiveRetentionDuration: 1000
@@ -164,7 +170,7 @@ describe('North connector repository', () => {
       'SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ' +
         'caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ' +
         'caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ' +
-        'caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ' +
+        'caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ' +
         'archive_retention_duration AS archiveRetentionDuration FROM north_connector WHERE id = ?;'
     );
     expect(get).toHaveBeenCalledWith('id1');
@@ -178,7 +184,7 @@ describe('North connector repository', () => {
       'SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ' +
         'caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ' +
         'caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ' +
-        'caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ' +
+        'caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ' +
         'archive_retention_duration AS archiveRetentionDuration FROM north_connector WHERE id = ?;'
     );
     expect(get).toHaveBeenCalledWith('id1');
@@ -201,6 +207,7 @@ describe('North connector repository', () => {
         retryCount: 3,
         groupCount: 1000,
         maxSendCount: 10000,
+        sendFileImmediately: true,
         maxSize: 10000
       },
       archive: {
@@ -212,8 +219,8 @@ describe('North connector repository', () => {
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
       'INSERT INTO north_connector (id, name, type, description, enabled, settings, caching_scan_mode_id, ' +
-        'caching_group_count, caching_retry_interval, caching_retry_count, caching_max_send_count, caching_max_size, ' +
-        'archive_enabled, archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'
+        'caching_group_count, caching_retry_interval, caching_retry_count, caching_max_send_count, caching_send_file_immediately, caching_max_size, ' +
+        'archive_enabled, archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'
     );
     expect(run).toHaveBeenCalledWith(
       '123456',
@@ -227,6 +234,7 @@ describe('North connector repository', () => {
       command.caching.retryInterval,
       command.caching.retryCount,
       command.caching.maxSendCount,
+      +command.caching.sendFileImmediately,
       command.caching.maxSize,
       +command.archive.enabled,
       command.archive.retentionDuration
@@ -237,7 +245,7 @@ describe('North connector repository', () => {
       'SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ' +
         'caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ' +
         'caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ' +
-        'caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ' +
+        'caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ' +
         'archive_retention_duration AS archiveRetentionDuration FROM north_connector WHERE ROWID = ?;'
     );
   });
@@ -255,6 +263,7 @@ describe('North connector repository', () => {
         retryCount: 3,
         groupCount: 1000,
         maxSendCount: 10000,
+        sendFileImmediately: true,
         maxSize: 10000
       },
       archive: {
@@ -266,7 +275,7 @@ describe('North connector repository', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       'UPDATE north_connector SET name = ?, description = ?, enabled = ?, settings = ?, caching_scan_mode_id = ?, ' +
         'caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, caching_max_send_count = ?, ' +
-        'caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? WHERE id = ?;'
+        'caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? WHERE id = ?;'
     );
     expect(run).toHaveBeenCalledWith(
       command.name,
@@ -278,6 +287,7 @@ describe('North connector repository', () => {
       command.caching.retryInterval,
       command.caching.retryCount,
       command.caching.maxSendCount,
+      +command.caching.sendFileImmediately,
       command.caching.maxSize,
       +command.archive.enabled,
       command.archive.retentionDuration,
