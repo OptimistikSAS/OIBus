@@ -169,8 +169,8 @@ describe('MSSQL Integration test', () => {
     expect(south.connected).toEqual(true)
 
     const result = await south.getDataFromMSSQL(
-      new Date('2018-10-03T13:36:36'),
-      new Date('2021-10-03T13:40:40'),
+      new Date('2018-10-03T11:36:36Z'),
+      new Date('2021-10-03T11:40:40Z'),
     )
 
     expect(result).toEqual([
