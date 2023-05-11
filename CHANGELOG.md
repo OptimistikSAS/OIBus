@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.5.6](https://github.com/OptimistikSAS/OIBus/compare/v2.5.5...v2.5.6) (2023-05-11)
+
+
+### Bug Fixes
+
+* **south-sql:** Fix integration test for MSSQL ([5468db6](https://github.com/OptimistikSAS/OIBus/commit/5468db67d54304a359e1f0791447d41517b59356))
+* **sql-south:** adjust test following change ([7dcad0d](https://github.com/OptimistikSAS/OIBus/commit/7dcad0df027ecb9661420b07f7b467c832469af1))
+* **sql-south:** use string in the timezone specified to interpolate start and end time ([71b2c44](https://github.com/OptimistikSAS/OIBus/commit/71b2c44b5c7a88041d6a3093859e46ba21c5caa7))
+
 ### [2.5.5](https://github.com/OptimistikSAS/OIBus/compare/v2.5.4...v2.5.5) (2023-05-02)
 
 
