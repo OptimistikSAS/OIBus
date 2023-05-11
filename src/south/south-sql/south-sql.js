@@ -257,10 +257,10 @@ export default class SouthSQL extends SouthConnector {
       const pool = await new mssql.ConnectionPool(config).connect()
       const request = pool.request()
       if (this.query.indexOf('@StartTime') !== -1) {
-        request.input('StartTime', mssql.DateTimeOffset, startTime)
+        request.input('StartTime', DateTime.fromJSDate(startTime, { zone: this.timezone }).toFormat('yyyy-MM-dd HH:mm:ss.SSS'))
       }
       if (this.query.indexOf('@EndTime') !== -1) {
-        request.input('EndTime', mssql.DateTimeOffset, endTime)
+        request.input('EndTime', DateTime.fromJSDate(endTime, { zone: this.timezone }).toFormat('yyyy-MM-dd HH:mm:ss.SSS'))
       }
       const result = await request.query(adaptedQuery)
       const [first] = result.recordsets
