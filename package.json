@@ -71,7 +71,7 @@
     "multer": "1.4.4",
     "mysql2": "3.2.4",
     "nanoid": "4.0.2",
-    "node-fetch": "2.6.9",
+    "node-fetch": "2.6.11",
     "node-opcua-certificate-manager": "2.99.0",
     "node-opcua-client": "2.101.0",
     "object-path": "0.11.8",
