@@ -11,6 +11,9 @@ import ProxyService from '../../service/proxy.service';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { DefaultAzureCredential } from '@azure/identity';
+import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
+import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
+import CacheServiceMock from '../../tests/__mocks__/cache-service.mock';
 
 const uploadMock = jest.fn().mockReturnValue(Promise.resolve({ requestId: 'requestId' }));
 const getBlockBlobClientMock = jest.fn().mockImplementation(() => ({
@@ -27,17 +30,26 @@ jest.mock('@azure/storage-blob', () => ({
 }));
 jest.mock('@azure/identity', () => ({ DefaultAzureCredential: jest.fn() }));
 jest.mock('node:fs/promises');
+jest.mock('../../service/cache/archive.service');
+jest.mock(
+  '../../service/cache/value-cache.service',
+  () =>
+    function () {
+      return new ValueCacheServiceMock();
+    }
+);
+jest.mock(
+  '../../service/cache/file-cache.service',
+  () =>
+    function () {
+      return new FileCacheServiceMock();
+    }
+);
 jest.mock(
   '../../service/cache.service',
   () =>
     function () {
-      return {
-        updateMetrics: jest.fn(),
-        metrics: {
-          numberOfValues: 1,
-          numberOfFiles: 1
-        }
-      };
+      return new CacheServiceMock();
     }
 );
 

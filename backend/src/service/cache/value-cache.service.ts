@@ -5,6 +5,7 @@ import { createFolder, dirSize, generateRandomId } from '../utils';
 import pino from 'pino';
 
 import { NorthCacheSettingsDTO } from '../../../../shared/model/north-connector.model';
+import { EventEmitter } from 'node:events';
 
 const BUFFER_MAX = 250;
 const BUFFER_TIMEOUT = 300;
@@ -21,7 +22,6 @@ export default class ValueCacheService {
   private readonly baseFolder: string;
   private readonly valueFolder: string;
   private readonly errorFolder: string;
-  private readonly settings: NorthCacheSettingsDTO;
   private cacheSize = 0;
   private flushInProgress = false;
 
@@ -30,12 +30,13 @@ export default class ValueCacheService {
   private bufferFiles: Map<string, Array<any>> = new Map(); // key: buffer filename (randomId.buffer.tmp, value: the values in the queue file)
   private queue: Map<string, Array<any>> = new Map(); // key: queue filename (randomId.queue.tmp, value: the values in the queue file)
 
-  constructor(logger: pino.Logger, baseFolder: string, settings: NorthCacheSettingsDTO) {
+  private _triggerRun: EventEmitter = new EventEmitter();
+
+  constructor(logger: pino.Logger, baseFolder: string, private _settings: NorthCacheSettingsDTO) {
     this._logger = logger;
     this.baseFolder = path.resolve(baseFolder);
     this.valueFolder = path.resolve(baseFolder, VALUE_FOLDER);
     this.errorFolder = path.resolve(baseFolder, ERROR_FOLDER);
-    this.settings = settings;
   }
 
   /**
@@ -167,9 +168,12 @@ export default class ValueCacheService {
       `Flush ${valuesToFlush.length} values (${flag}) into "${path.resolve(this.valueFolder, tmpFileName)}". ${groupCount} values in queue`
     );
 
-    if (groupCount >= this.settings.maxSendCount) {
+    if (groupCount >= this._settings.maxSendCount) {
       const copiedQueue = this.queue;
       await this.compactQueueCache(copiedQueue);
+    }
+    if (groupCount >= this._settings.groupCount) {
+      this.triggerRun.emit('next');
     }
     this.flushInProgress = false;
   }
@@ -302,10 +306,10 @@ export default class ValueCacheService {
    * Persist values into a tmp file and keep them in a local buffer to flush them in the queue later
    */
   async cacheValues(values: Array<any>): Promise<void> {
-    if (this.settings.maxSize !== 0 && this.cacheSize >= this.settings.maxSize * 1024 * 1024) {
+    if (this._settings.maxSize !== 0 && this.cacheSize >= this._settings.maxSize * 1024 * 1024) {
       this._logger.debug(
         `North cache is exceeding the maximum allowed size ` +
-          `(${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this.settings.maxSize} MB). ` +
+          `(${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this._settings.maxSize} MB). ` +
           'Values will be discarded until the cache is emptied (by sending files/values or manual removal)'
       );
       return;
@@ -321,7 +325,7 @@ export default class ValueCacheService {
     for (const valuesInFile of this.bufferFiles.values()) {
       numberOfValuesInBufferFiles += valuesInFile.length;
     }
-    if (numberOfValuesInBufferFiles > BUFFER_MAX) {
+    if (numberOfValuesInBufferFiles > BUFFER_MAX || numberOfValuesInBufferFiles > this._settings.groupCount) {
       await this.flush('max-flush');
     } else if (!this.bufferTimeout) {
       this.bufferTimeout = setTimeout(this.flush.bind(this), BUFFER_TIMEOUT);
@@ -352,5 +356,13 @@ export default class ValueCacheService {
 
   setLogger(value: pino.Logger) {
     this._logger = value;
+  }
+
+  get triggerRun(): EventEmitter {
+    return this._triggerRun;
+  }
+
+  set settings(value: NorthCacheSettingsDTO) {
+    this._settings = value;
   }
 }

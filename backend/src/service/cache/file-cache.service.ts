@@ -6,7 +6,8 @@ import pino from 'pino';
 
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { NorthCacheFiles } from '../../../../shared/model/north-connector.model';
+import { NorthCacheFiles, NorthCacheSettingsDTO } from '../../../../shared/model/north-connector.model';
+import { EventEmitter } from 'node:events';
 
 const FILE_FOLDER = 'files';
 const ERROR_FOLDER = 'files-errors';
@@ -21,7 +22,9 @@ export default class FileCacheService {
 
   private filesQueue: Array<string> = [];
 
-  constructor(logger: pino.Logger, baseFolder: string) {
+  private _triggerRun: EventEmitter = new EventEmitter();
+
+  constructor(logger: pino.Logger, baseFolder: string, private _settings: NorthCacheSettingsDTO) {
     this._logger = logger;
     this._fileFolder = path.resolve(baseFolder, FILE_FOLDER);
     this._errorFolder = path.resolve(baseFolder, ERROR_FOLDER);
@@ -114,6 +117,9 @@ export default class FileCacheService {
     // Add the file to the queue once it is persisted in the cache folder
     this.filesQueue.push(cachePath);
     this._logger.debug(`File "${filePath}" cached in "${cachePath}"`);
+    if (this._settings.sendFileImmediately) {
+      this.triggerRun.emit('next');
+    }
   }
 
   /**
@@ -235,5 +241,13 @@ export default class FileCacheService {
     } else {
       this._logger.debug(`The error folder "${this._errorFolder}" is empty. Nothing to delete`);
     }
+  }
+
+  get triggerRun(): EventEmitter {
+    return this._triggerRun;
+  }
+
+  set settings(value: NorthCacheSettingsDTO) {
+    this._settings = value;
   }
 }
