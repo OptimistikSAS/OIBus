@@ -123,6 +123,7 @@ export default class SouthRest extends SouthConnector {
 
     const requestStartTime = new Date().getTime()
     const results = await this.getDataFromRestApi(startTime, endTime)
+    this.logger.debug(`Response body first 200 chars are {${JSON.stringify(results)?.substring(0, 200)}`)
 
     if (results) {
       let formattedResults = null
@@ -139,6 +140,15 @@ export default class SouthRest extends SouthConnector {
       }
       const requestFinishTime = new Date().getTime()
       this.logger.info(`Found and parsed ${formattedResults.length} results in ${humanizeDuration(requestFinishTime - requestStartTime)}.`)
+
+      if (!Array.isArray(formattedResults)) {
+        this.logger.debug('Formatted results is not an array, dumping the body as text file and submitting it')
+        const fileName = replaceFilenameWithVariable(this.fileName, this.queryParts[scanMode], this.name)
+        const filePath = path.join(this.tmpFolder, fileName)
+        await fs.writeFile(filePath, JSON.stringify(formattedResults))
+        await this.addFile(filePath, false)
+        return
+      }
 
       if (formattedResults.length > 0) {
         if (this.convertToCsv) {
@@ -239,7 +249,7 @@ export default class SouthRest extends SouthConnector {
       }
 
       this.logger.info(`Requesting data ${this.authentication.type ? `with ${this.authentication.type}` : 'without'} `
-      + `authentication and ${this.requestMethod} method on host "${requestOptions.host}" with body ${bodyToSend}`)
+        + `authentication and ${this.requestMethod} method on host "${requestOptions.host}" with body ${bodyToSend}`)
 
       return httpGetWithBody(bodyToSend, requestOptions)
     }
@@ -268,10 +278,13 @@ export default class SouthRest extends SouthConnector {
     }
 
     this.logger.info(`Requesting data ${this.authentication?.type ? `with ${this.authentication.type}` : 'without'} `
-          + `authentication and ${this.requestMethod} method on URL "${requestUrl}"${fetchOptions.body ? ` with body ${fetchOptions.body}` : ''}`)
+      + `authentication and ${this.requestMethod} method on URL "${requestUrl}"${fetchOptions.body ? ` with body ${fetchOptions.body}` : ''}`)
 
     const response = await fetch(requestUrl, fetchOptions)
+    this.logger.debug(`response status is ${response.status}`)
     if (!response.ok) {
+      const errorResponseBody = await response.text()
+      this.logger.debug(`error response body is ${errorResponseBody}`)
       throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}.`)
     }
     return response.json()
