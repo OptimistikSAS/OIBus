@@ -83,8 +83,8 @@ describe('SouthRest', () => {
         timezone: 'Europe/Paris',
         variableDateFormat: 'ISO',
         authentication: {
-          username: 'user',
-          password: 'password',
+          key: 'user',
+          secret: 'password',
           type: 'Basic',
         },
         queryParams: [
@@ -105,6 +105,7 @@ describe('SouthRest', () => {
             queryParamValue: 'SP_003_X',
           },
         ],
+        body: '',
         acceptSelfSigned: false,
         convertToCsv: true,
         payloadParser: 'Raw',
@@ -166,14 +167,14 @@ describe('SouthRest', () => {
       { agent: null, headers: { Authorization: 'Basic dXNlcjpwYXNzd29yZA==' }, method: 'GET', timeout: 1000 },
     )
     expect(south.logger.info).toHaveBeenCalledWith('Requesting data with Basic authentication and GET '
-        + 'method: "http://localhost:4200/api/oianalytics/data/values/query'
-        + '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X".')
+        + 'method on URL "http://localhost:4200/api/oianalytics/data/values/query'
+        + '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X"')
 
     // Test fetch error and bearer auth
     south.logger.info.mockClear()
     fetch.mockClear()
     south.authentication.type = 'Bearer'
-    south.authentication.token = 'myToken'
+    south.authentication.secret = 'myToken'
     await expect(south.historyQuery(
       configuration.scanMode,
       new Date('2019-10-03T13:36:38.590Z'),
@@ -194,7 +195,7 @@ describe('SouthRest', () => {
     fetch.mockClear()
     south.authentication.type = 'API Key'
     south.authentication.key = 'myKey'
-    south.authentication.secretKey = 'mySecret'
+    south.authentication.secret = 'mySecret'
     await expect(south.historyQuery(
       configuration.scanMode,
       new Date('2019-10-03T13:36:38.590Z'),
