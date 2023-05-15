@@ -197,17 +197,17 @@ export default class SouthRest extends SouthConnector {
     const headers = {}
     switch (this.authentication.type) {
       case 'Basic': {
-        const decryptedPassword = await this.encryptionService.decryptText(this.authentication.password)
-        const basic = Buffer.from(`${this.authentication.username}:${decryptedPassword}`).toString('base64')
+        const decryptedPassword = await this.encryptionService.decryptText(this.authentication.secret)
+        const basic = Buffer.from(`${this.authentication.key}:${decryptedPassword}`).toString('base64')
         headers.Authorization = `Basic ${basic}`
         break
       }
       case 'API Key': {
-        headers[this.authentication.key] = await this.encryptionService.decryptText(this.authentication.secretKey)
+        headers[this.authentication.key] = await this.encryptionService.decryptText(this.authentication.secret)
         break
       }
       case 'Bearer': {
-        headers.Authorization = `Bearer ${await this.encryptionService.decryptText(this.authentication.token)}`
+        headers.Authorization = `Bearer ${await this.encryptionService.decryptText(this.authentication.secret)}`
         break
       }
       default:
@@ -239,7 +239,7 @@ export default class SouthRest extends SouthConnector {
       }
 
       this.logger.info(`Requesting data ${this.authentication.type ? `with ${this.authentication.type}` : 'without'} `
-      + `authentication and ${this.requestMethod} method: "${requestOptions.host}".`)
+      + `authentication and ${this.requestMethod} method on host "${requestOptions.host}" with body ${bodyToSend}`)
 
       return httpGetWithBody(bodyToSend, requestOptions)
     }
@@ -268,7 +268,7 @@ export default class SouthRest extends SouthConnector {
     }
 
     this.logger.info(`Requesting data ${this.authentication?.type ? `with ${this.authentication.type}` : 'without'} `
-          + `authentication and ${this.requestMethod} method: "${requestUrl}".`)
+          + `authentication and ${this.requestMethod} method on URL "${requestUrl}"${fetchOptions.body ? ` with body ${fetchOptions.body}` : ''}`)
 
     const response = await fetch(requestUrl, fetchOptions)
     if (!response.ok) {
