@@ -12,6 +12,9 @@ import { NorthConnectorDTO } from '../../../../shared/model/north-connector.mode
 
 import fetch from 'node-fetch';
 import https from 'node:https';
+import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
+import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
+import CacheServiceMock from '../../tests/__mocks__/cache-service.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -19,21 +22,26 @@ jest.mock('node:fs');
 jest.mock('node-fetch');
 const { Response } = jest.requireActual('node-fetch');
 
-jest.mock('../../service/cache/value-cache.service');
-jest.mock('../../service/cache/file-cache.service');
 jest.mock('../../service/cache/archive.service');
-
+jest.mock(
+  '../../service/cache/value-cache.service',
+  () =>
+    function () {
+      return new ValueCacheServiceMock();
+    }
+);
+jest.mock(
+  '../../service/cache/file-cache.service',
+  () =>
+    function () {
+      return new FileCacheServiceMock();
+    }
+);
 jest.mock(
   '../../service/cache.service',
   () =>
     function () {
-      return {
-        updateMetrics: jest.fn(),
-        metrics: {
-          numberOfValues: 1,
-          numberOfFiles: 1
-        }
-      };
+      return new CacheServiceMock();
     }
 );
 

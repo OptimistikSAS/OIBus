@@ -9,6 +9,9 @@ import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import ProxyService from '../../service/proxy.service';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
+import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
+import CacheServiceMock from '../../tests/__mocks__/cache-service.mock';
 
 jest.mock('node:fs/promises');
 // Spy on console table and info
@@ -20,21 +23,26 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
-jest.mock('../../service/cache/value-cache.service');
-jest.mock('../../service/cache/file-cache.service');
 jest.mock('../../service/cache/archive.service');
-
+jest.mock(
+  '../../service/cache/value-cache.service',
+  () =>
+    function () {
+      return new ValueCacheServiceMock();
+    }
+);
+jest.mock(
+  '../../service/cache/file-cache.service',
+  () =>
+    function () {
+      return new FileCacheServiceMock();
+    }
+);
 jest.mock(
   '../../service/cache.service',
   () =>
     function () {
-      return {
-        updateMetrics: jest.fn(),
-        metrics: {
-          numberOfValues: 1,
-          numberOfFiles: 1
-        }
-      };
+      return new CacheServiceMock();
     }
 );
 

@@ -78,15 +78,23 @@ export default class NorthConnector {
 
     this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.configuration.archive);
     this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.configuration.caching);
-    this.fileCacheService = new FileCacheService(this.logger, this.baseFolder);
+    this.fileCacheService = new FileCacheService(this.logger, this.baseFolder, this.configuration.caching);
     this.cacheService = new CacheService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
 
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
-        await this.run(this.taskJobQueue[0]);
+        await this.run('scan');
       } else {
         this.logger.trace('No more task to run');
       }
+    });
+
+    this.valueCacheService.triggerRun.on('next', async () => {
+      await this.run('value-trigger');
+    });
+
+    this.fileCacheService.triggerRun.on('next', async () => {
+      await this.run('file-trigger');
     });
   }
 
@@ -101,6 +109,7 @@ export default class NorthConnector {
     this.logger.trace(`North connector "${this.configuration.name}" enabled. Starting services...`);
     await this.archiveService.start();
   }
+
   /**
    * Initialize services at startup
    */
@@ -162,9 +171,10 @@ export default class NorthConnector {
     }
   }
 
-  async run(scanMode: ScanModeDTO): Promise<void> {
+  async run(flag: 'scan' | 'file-trigger' | 'value-trigger'): Promise<void> {
+    this.logger.trace(`North run triggered with flag ${flag}`);
     if (this.runProgress$) {
-      this.logger.warn(`A North task is already running with scan mode ${scanMode.name}`);
+      this.logger.warn(`A North task is already running`);
       return;
     }
     this.runProgress$ = new DeferredPromise();
@@ -172,11 +182,11 @@ export default class NorthConnector {
     const runStart = DateTime.now();
     this.cacheService.updateMetrics({ ...this.cacheService.metrics, lastRunStart: runStart.toUTC().toISO() });
 
-    if (this.manifest.modes.points) {
+    if (this.manifest.modes.points && (flag === 'scan' || flag === 'value-trigger')) {
       await this.handleValuesWrapper();
     }
 
-    if (this.manifest.modes.files) {
+    if (this.manifest.modes.files && (flag === 'scan' || flag === 'file-trigger')) {
       await this.handleFilesWrapper();
     }
 
@@ -188,8 +198,10 @@ export default class NorthConnector {
 
     this.runProgress$.resolve();
     this.runProgress$ = null;
-    this.taskJobQueue.shift();
-    this.taskRunner.emit('next');
+    if (flag === 'scan') {
+      this.taskJobQueue.shift();
+      this.taskRunner.emit('next');
+    }
   }
 
   /**
@@ -307,7 +319,6 @@ export default class NorthConnector {
    */
   async cacheFile(filePath: string): Promise<void> {
     this.logger.trace(`Caching file "${filePath}" in North connector "${this.configuration.name}"...`);
-
     await this.fileCacheService.cacheFile(filePath);
   }
 
