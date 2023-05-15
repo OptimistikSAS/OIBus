@@ -50,7 +50,7 @@ const httpGetWithBody = (body, options) => new Promise((resolve, reject) => {
  * @returns {String} - The query params in string format with variables' value
  */
 const formatQueryParams = (startTime, endTime, queryParams, variableDateFormat) => {
-  if (queryParams.length === 0) {
+  if (!queryParams || queryParams.length === 0) {
     return ''
   }
   let queryParamsString = '?'
