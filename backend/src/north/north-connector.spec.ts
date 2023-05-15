@@ -9,6 +9,8 @@ import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import ProxyService from '../service/proxy.service';
 import RepositoryService from '../service/repository.service';
+import ValueCacheServiceMock from '../tests/__mocks__/value-cache-service.mock';
+import FileCacheServiceMock from '../tests/__mocks__/file-cache-service.mock';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -29,16 +31,10 @@ jest.mock(
   '../service/cache/value-cache.service',
   () =>
     function () {
-      return {
-        start: jest.fn(),
-        stop: jest.fn(),
-        cacheValues: jest.fn(),
-        getValuesToSend: getValuesToSendMock,
-        removeSentValues: jest.fn(),
-        manageErroredValues: jest.fn(),
-        isEmpty: valueCacheIsEmpty,
-        setLogger: jest.fn()
-      };
+      const valueCacheServiceMock = new ValueCacheServiceMock();
+      valueCacheServiceMock.getValuesToSend = getValuesToSendMock;
+      valueCacheServiceMock.isEmpty = valueCacheIsEmpty;
+      return valueCacheServiceMock;
     }
 );
 
@@ -46,26 +42,12 @@ jest.mock(
   '../service/cache/file-cache.service',
   () =>
     function () {
-      return {
-        start: jest.fn(),
-        stop: jest.fn(),
-        getErrorFiles: jest.fn(() => [
-          { filename: 'file1.name', modificationDate: '', size: 1 },
-          { filename: 'file2.name', modificationDate: '', size: 2 },
-          { filename: 'file3.name', modificationDate: '', size: 3 }
-        ]),
-        cacheFile: jest.fn(),
-        removeFiles: jest.fn(),
-        retryErrorFiles: jest.fn(),
-        removeAllErrorFiles: removeAllErrorFiles,
-        retryAllErrorFiles: jest.fn(),
-        removeAllCacheFiles: removeAllCacheFiles,
-        getFileToSend: getFileToSend,
-        removeFileFromQueue: jest.fn(),
-        manageErroredFiles: jest.fn(),
-        isEmpty: fileCacheIsEmpty,
-        setLogger: jest.fn()
-      };
+      const fileCacheServiceMock = new FileCacheServiceMock();
+      fileCacheServiceMock.removeAllErrorFiles = removeAllErrorFiles;
+      fileCacheServiceMock.removeAllCacheFiles = removeAllCacheFiles;
+      fileCacheServiceMock.getFileToSend = getFileToSend;
+      fileCacheServiceMock.isEmpty = fileCacheIsEmpty;
+      return fileCacheServiceMock;
     }
 );
 jest.mock('../service/cache/archive.service');
@@ -196,7 +178,7 @@ describe('NorthConnector enabled', () => {
     north.addToQueue(scanMode);
     expect(logger.warn).not.toHaveBeenCalled();
 
-    expect(north.run).toHaveBeenCalledWith(scanMode);
+    expect(north.run).toHaveBeenCalledWith('scan');
     expect(north.run).toHaveBeenCalledTimes(1);
     north.addToQueue(scanMode);
 
@@ -205,15 +187,9 @@ describe('NorthConnector enabled', () => {
   });
 
   it('should properly run task a task', async () => {
-    const scanMode = {
-      id: 'id1',
-      name: 'my scan mode',
-      description: 'my description',
-      cron: '* * * * * *'
-    };
     north.handleValuesWrapper = jest.fn();
     north.handleFilesWrapper = jest.fn();
-    await north.run(scanMode);
+    await north.run('scan');
 
     expect(north.handleValuesWrapper).toHaveBeenCalledTimes(1);
     expect(north.handleFilesWrapper).toHaveBeenCalledTimes(1);
@@ -235,12 +211,6 @@ describe('NorthConnector enabled', () => {
   });
 
   it('should properly stop with running task ', async () => {
-    const scanMode = {
-      id: 'id1',
-      name: 'my scan mode',
-      description: 'my description',
-      cron: '* * * * * *'
-    };
     const promise = new Promise<void>(resolve => {
       setTimeout(resolve, 1000);
     });
@@ -249,10 +219,10 @@ describe('NorthConnector enabled', () => {
 
     north.disconnect = jest.fn();
 
-    north.run(scanMode);
+    north.run('scan');
 
-    await north.run(scanMode);
-    expect(logger.warn).toHaveBeenCalledWith(`A North task is already running with scan mode ${scanMode.name}`);
+    await north.run('scan');
+    expect(logger.warn).toHaveBeenCalledWith(`A North task is already running`);
 
     north.stop();
     expect(logger.info).toHaveBeenCalledWith(`Stopping North "${configuration.name}" (${configuration.id})...`);
@@ -443,16 +413,9 @@ describe('NorthConnector disabled', () => {
   });
 
   it('should not call handle values and handle file', async () => {
-    const scanMode = {
-      id: 'id1',
-      name: 'my scan mode',
-      description: 'my description',
-      cron: '* * * * * *'
-    };
-
     north.handleValuesWrapper = jest.fn();
     north.handleFilesWrapper = jest.fn();
-    await north.run(scanMode);
+    await north.run('scan');
     expect(north.handleValuesWrapper).not.toHaveBeenCalled();
     expect(north.handleFilesWrapper).not.toHaveBeenCalled();
   });

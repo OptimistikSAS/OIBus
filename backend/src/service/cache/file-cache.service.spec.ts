@@ -6,6 +6,7 @@ import { createFolder } from '../utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 import { DateTime } from 'luxon';
+import { NorthCacheSettingsDTO } from '../../../../shared/model/north-connector.model';
 
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
@@ -14,12 +15,23 @@ const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
+let settings: NorthCacheSettingsDTO;
 let cache: FileCache;
 describe('FileCache', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    cache = new FileCache(logger, 'myCacheFolder');
+    settings = {
+      scanModeId: 'id1',
+      groupCount: 1000,
+      maxSendCount: 1000,
+      retryCount: 3,
+      retryInterval: 5000,
+      sendFileImmediately: false,
+      maxSize: 1000
+    };
+
+    cache = new FileCache(logger, 'myCacheFolder', settings);
   });
 
   it('should be properly initialized with files in cache', async () => {

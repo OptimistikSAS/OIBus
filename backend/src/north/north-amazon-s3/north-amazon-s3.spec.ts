@@ -9,6 +9,9 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
+import CacheServiceMock from '../../tests/__mocks__/cache-service.mock';
+import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
+import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import ProxyService from '../../service/proxy.service';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
@@ -18,21 +21,26 @@ jest.mock('@aws-sdk/node-http-handler', () => ({ NodeHttpHandler: jest.fn() }));
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
 
-jest.mock('../../service/cache/value-cache.service');
-jest.mock('../../service/cache/file-cache.service');
 jest.mock('../../service/cache/archive.service');
-
+jest.mock(
+  '../../service/cache/value-cache.service',
+  () =>
+    function () {
+      return new ValueCacheServiceMock();
+    }
+);
+jest.mock(
+  '../../service/cache/file-cache.service',
+  () =>
+    function () {
+      return new FileCacheServiceMock();
+    }
+);
 jest.mock(
   '../../service/cache.service',
   () =>
     function () {
-      return {
-        updateMetrics: jest.fn(),
-        metrics: {
-          numberOfValues: 1,
-          numberOfFiles: 1
-        }
-      };
+      return new CacheServiceMock();
     }
 );
 
