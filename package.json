@@ -81,7 +81,7 @@
     "pino-abstract-transport": "1.0.0",
     "pino-pretty": "10.0.0",
     "pino-roll": "1.0.0-rc.1",
-    "proxy-agent": "5.0.0",
+    "proxy-agent": "6.2.0",
     "selfsigned": "2.1.1",
     "sprintf-js": "1.1.2",
     "thread-stream": "2.3.0",
