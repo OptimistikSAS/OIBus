@@ -80,7 +80,7 @@ export default class HistoryQueryEngine extends BaseEngine {
 
     this.logger.trace(`Add ${values.length} historian values to cache from South "${this.historyQuery.south.name}".`)
     if (values.length) {
-      await this.historyQuery.north.cacheValues(southId, values)
+      await this.historyQuery.north.cacheValues(values)
     }
   }
 
@@ -108,7 +108,7 @@ export default class HistoryQueryEngine extends BaseEngine {
     const cachePath = path.join(this.cacheFolder, cacheFilename)
 
     try {
-      await this.historyQuery.north.cacheFile(cachePath, timestamp)
+      await this.historyQuery.north.cacheFile(cachePath)
       try {
         await fs.unlink(filePath)
       } catch (unlinkError) {

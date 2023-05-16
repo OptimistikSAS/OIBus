@@ -93,6 +93,6 @@ describe('HistoryQueryEngine', () => {
     engine.historyQuery = { north: { manifest: { modes: { points: true } }, cacheValues }, south: { settings: { name: 'mySouth' } } }
     await engine.addValues('southId', sampleValues)
     expect(cacheValues).toHaveBeenCalledTimes(1)
-    expect(cacheValues).toHaveBeenCalledWith('southId', sampleValues)
+    expect(cacheValues).toHaveBeenCalledWith(sampleValues)
   })
 })

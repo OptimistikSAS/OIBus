@@ -4,12 +4,9 @@ import { Spinner } from 'reactstrap'
 import PropTypes from 'prop-types'
 import { ConfigContext } from '../../context/config-context.jsx'
 import PointsComponent from '../../components/points-component.jsx'
+import SouthSchemas from '../../south/south-types.jsx'
 
-const PointsSection = ({
-  query, handleAddPoint, handleChange, handleDeletePoint,
-  handleDeleteAllPoint,
-  handleImportPoints,
-}) => {
+const PointsSection = ({ query, handleChange }) => {
   const { newConfig } = React.useContext(ConfigContext)
 
   if (!newConfig?.south) {
@@ -29,25 +26,17 @@ const PointsSection = ({
 
   return (
     <PointsComponent
-      southId={query.southId}
-      southType={south.type}
       points={pointsOrdered}
-      handleAdd={handleAddPoint}
-      handleDelete={handleDeletePoint}
-      handleDeleteAllPoint={handleDeleteAllPoint}
-      handleImportPoints={handleImportPoints}
-      onUpdate={handleChange}
+      onChange={handleChange}
+      prefix={`south.${southIndex}.points`}
+      schema={SouthSchemas[south.type]}
     />
   )
 }
 
 PointsSection.propTypes = {
   query: PropTypes.object.isRequired,
-  handleAddPoint: PropTypes.func.isRequired,
   handleChange: PropTypes.func.isRequired,
-  handleDeletePoint: PropTypes.func.isRequired,
-  handleDeleteAllPoint: PropTypes.func.isRequired,
-  handleImportPoints: PropTypes.func.isRequired,
 }
 
 export default PointsSection

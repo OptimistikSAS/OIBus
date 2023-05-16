@@ -13,7 +13,7 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
   const [south, setSouth] = React.useState(filteredSouthHandlers[0])
   const [north, setNorth] = React.useState(northHandlers[0])
   const southSchema = south.type === 'SQL'
-    ? SouthSchemas.SQL.withDriver(south.SQL.driver)
+    ? SouthSchemas.SQL.withDriver(south.settings.driver)
     : SouthSchemas[south.type]
 
   /**
@@ -33,7 +33,7 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
       southId: south.id,
       northId: north.id,
       settings: {
-        ...(southSchema.points ? { points: south.points || [] } : { query: south[south.type].query || '' }),
+        ...(southSchema.points ? { points: south.points || [] } : { query: south.settings.query || '' }),
         maxReadInterval: south.settings.maxReadInterval,
         readIntervalDelay: south.settings.readIntervalDelay,
       },

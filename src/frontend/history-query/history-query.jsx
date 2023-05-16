@@ -41,7 +41,7 @@ const HistoryQuery = () => {
    */
   const handleEdit = (position) => {
     const historyQuery = queries[findIndexBasedOnId(position)]
-    navigate(`/history-query/${historyQuery.id}`)
+    navigate(`/history-query/${historyQuery.id}/edit`)
   }
 
   /**
@@ -51,7 +51,7 @@ const HistoryQuery = () => {
    */
   const addHistoryQuery = async (queryObject) => {
     apis.createHistoryQuery(queryObject).then((response) => {
-      navigate(`/history-query/${response.id}`)
+      setQueries([...queries, response])
     })
   }
 
