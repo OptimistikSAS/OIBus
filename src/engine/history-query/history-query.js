@@ -48,7 +48,8 @@ export default class HistoryQuery {
       await this.disable()
       return
     }
-    if (!this.south.supportedModes.supportHistory) {
+
+    if (!this.south.manifest.modes.historyPoint && !this.south.manifest.modes.historyFile) {
       this.logger.error(`South connector "${this.southConfiguration.name}" does not support history queries. `
           + `Disabling history query "${this.historyConfiguration.id}".`)
       await this.disable()
@@ -67,14 +68,12 @@ export default class HistoryQuery {
     await this.north.start(
       path.resolve(this.cacheFolder, `north-${this.north.id}`),
       this.engine.oibusName,
-      this.engine.defaultLogParameters,
     )
     await this.north.connect()
 
     await this.south.start(
       path.resolve(this.cacheFolder, `south-${this.south.id}`),
       this.engine.oibusName,
-      this.engine.defaultLogParameters,
     )
     await this.south.connect()
 

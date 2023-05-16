@@ -18,7 +18,7 @@ const HistoryQueryForm = ({ query }) => {
   const [progressStatus, setProgressStatus] = useState({ status: query.status })
 
   const { newConfig } = React.useContext(ConfigContext)
-  const [errors, setErrors] = useState({})
+  const [errors] = useState({})
   const south = newConfig?.south?.find(
     (southHandler) => southHandler.id === queryToUpdate.southId,
   )
@@ -108,88 +108,15 @@ const HistoryQueryForm = ({ query }) => {
     }
   }
 
-  const handleAddPoint = (attributes) => {
-    const newPointAttributes = {}
-    attributes.forEach((attribute) => {
-      newPointAttributes[attribute] = ''
-    })
-    setQueryToUpdate(
-      {
-        ...queryToUpdate,
-        settings: {
-          ...queryToUpdate.settings,
-          points: [...queryToUpdate.settings.points, { ...newPointAttributes }],
-        },
-      },
-    )
-    setQueryHasChanged(true)
-  }
-
-  const handleChangePoint = (attributeDescription, value, validity) => {
-    if (validity) {
-      setErrors((oldErrors) => ({ ...oldErrors, [attributeDescription]: validity }))
-    } else {
-      const copyErrorObject = errors
-      delete copyErrorObject[attributeDescription]
-      setErrors(copyErrorObject)
-    }
-
-    const attributeName = attributeDescription.split('.')[2]
-    const pointIndex = Number(attributeDescription.split('.')[1])
+  const handleChangePoint = (_, value) => {
     setQueryToUpdate((oldQuery) => ({
       ...oldQuery,
       settings: {
         ...oldQuery.settings,
-        points: oldQuery.settings.points.map((point, index) => {
-          if (pointIndex === index) {
-            return { ...point, [attributeName]: value }
-          }
-          return point
-        }),
+        points: value,
       },
     }))
     setQueryHasChanged(true)
-  }
-
-  const handleDeletePoint = (indexInTable) => {
-    setQueryToUpdate((oldQuery) => ({
-      ...oldQuery,
-      settings: {
-        ...oldQuery.settings,
-        points: oldQuery.settings.points.filter((_point, index) => index !== indexInTable),
-      },
-    }))
-    Object.keys(errors).forEach((errorKey) => {
-      if (errorKey.split('.')[1] === String(indexInTable)) delete errors[errorKey]
-    })
-    setQueryHasChanged(true)
-  }
-
-  const handleDeleteAllPoint = () => {
-    setQueryToUpdate({ ...queryToUpdate, settings: { ...queryToUpdate.settings, points: [] } })
-    setQueryHasChanged(true)
-  }
-
-  const handleImportPoints = async (file) => {
-    try {
-      const text = await utils.readFileContent(file)
-      utils
-        .parseCSV(text)
-        .then((newPoints) => {
-          setQueryToUpdate({
-            ...queryToUpdate,
-            settings: { ...queryToUpdate.settings, points: [...queryToUpdate.settings.points, ...newPoints] },
-          })
-          setQueryHasChanged(true)
-        })
-        .catch((error) => {
-          console.error(error)
-          setAlert({ text: error.message, type: 'danger' })
-        })
-    } catch (error) {
-      console.error(error)
-      setAlert({ text: error.message, type: 'danger' })
-    }
   }
 
   /**
@@ -363,14 +290,10 @@ const HistoryQueryForm = ({ query }) => {
           </Row>
           <Row>
             <Col md={8}>
-              {queryToUpdate.settings.points ? (
+              {queryToUpdate.settings?.points ? (
                 <PointsSection
                   query={queryToUpdate}
-                  handleAddPoint={handleAddPoint}
                   handleChange={handleChangePoint}
-                  handleDeletePoint={handleDeletePoint}
-                  handleDeleteAllPoint={handleDeleteAllPoint}
-                  handleImportPoints={handleImportPoints}
                 />
               ) : (
                 <>
