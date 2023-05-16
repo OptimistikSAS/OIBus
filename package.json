@@ -130,7 +130,7 @@
     "standard-version": "9.5.0",
     "style-loader": "3.3.2",
     "typescript": "5.0.4",
-    "webpack": "5.81.0",
+    "webpack": "5.82.1",
     "webpack-cli": "5.0.2"
   },
   "optionalDependencies": {
