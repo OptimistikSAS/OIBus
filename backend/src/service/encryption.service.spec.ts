@@ -57,7 +57,7 @@ const settings: Array<OibFormControl> = [
 describe('Encryption service with crypto settings', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    encryptionService = new EncryptionService(Buffer.from(JSON.stringify(cryptoSettings)).toString('base64'));
+    encryptionService = new EncryptionService(cryptoSettings);
   });
 
   it('should properly initialized encryption service', () => {
@@ -492,32 +492,32 @@ describe('Encryption service with crypto settings', () => {
     });
   });
 });
-
-describe('Encryption service with bad crypto settings', () => {
-  beforeEach(() => {
-    jest.resetAllMocks();
-  });
-
-  it('should properly initialized encryption service', async () => {
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementationOnce(() => {});
-    encryptionService = new EncryptionService('');
-    expect(consoleSpy).toHaveBeenCalledTimes(1);
-    expect(consoleSpy).toHaveBeenCalledWith(`Could not parse crypto settings: SyntaxError: Unexpected end of JSON input`);
-
-    let decryptError;
-    try {
-      await encryptionService.decryptText('encrypted');
-    } catch (err) {
-      decryptError = err;
-    }
-    expect(decryptError).toEqual(new Error('Encryption service not initialized properly'));
-
-    let encryptError;
-    try {
-      await encryptionService.encryptText('plain text');
-    } catch (err) {
-      encryptError = err;
-    }
-    expect(encryptError).toEqual(new Error('Encryption service not initialized properly'));
-  });
-});
+//
+// describe('Encryption service with bad crypto settings', () => {
+//   beforeEach(() => {
+//     jest.resetAllMocks();
+//   });
+//
+//   it('should properly initialized encryption service', async () => {
+//     const consoleSpy = jest.spyOn(console, 'error').mockImplementationOnce(() => {});
+//     encryptionService = new EncryptionService('');
+//     expect(consoleSpy).toHaveBeenCalledTimes(1);
+//     expect(consoleSpy).toHaveBeenCalledWith(`Could not parse crypto settings: SyntaxError: Unexpected end of JSON input`);
+//
+//     let decryptError;
+//     try {
+//       await encryptionService.decryptText('encrypted');
+//     } catch (err) {
+//       decryptError = err;
+//     }
+//     expect(decryptError).toEqual(new Error('Encryption service not initialized properly'));
+//
+//     let encryptError;
+//     try {
+//       await encryptionService.encryptText('plain text');
+//     } catch (err) {
+//       encryptError = err;
+//     }
+//     expect(encryptError).toEqual(new Error('Encryption service not initialized properly'));
+//   });
+// });

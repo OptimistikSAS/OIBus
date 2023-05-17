@@ -15,9 +15,11 @@ import HistoryQueryRepository from '../repository/history-query.repository';
 import HistoryQueryItemRepository from '../repository/history-query-item.repository';
 import UserRepository from '../repository/user.repository';
 import SubscriptionRepository from '../repository/subscription.repository';
+import CryptoRepository from '../repository/crypto.repository';
 
 jest.mock('better-sqlite3', () => jest.fn(() => 'sqlite database'));
 jest.mock('../repository/external-source.repository');
+jest.mock('../repository/crypto.repository');
 jest.mock('../repository/ip-filter.repository');
 jest.mock('../repository/proxy.repository');
 jest.mock('../repository/scan-mode.repository');
@@ -33,10 +35,12 @@ jest.mock('../repository/subscription.repository');
 
 describe('Repository service', () => {
   it('should properly initialize service', () => {
-    const repositoryService = new RepositoryService('myConfigDatabase', 'myLogDatabase');
+    const repositoryService = new RepositoryService('myConfigDatabase', 'myLogDatabase', 'myCryptoDatabase');
     expect(db).toHaveBeenCalledWith('myConfigDatabase');
     expect(db).toHaveBeenCalledWith('myLogDatabase');
+    expect(db).toHaveBeenCalledWith('myCryptoDatabase');
     expect(EngineRepository).toHaveBeenCalledWith('sqlite database');
+    expect(CryptoRepository).toHaveBeenCalledWith('sqlite database');
     expect(ExternalSourceRepository).toHaveBeenCalledWith('sqlite database');
     expect(IpFilterRepository).toHaveBeenCalledWith('sqlite database');
     expect(ProxyRepository).toHaveBeenCalledWith('sqlite database');
@@ -51,6 +55,7 @@ describe('Repository service', () => {
     expect(SubscriptionRepository).toHaveBeenCalledWith('sqlite database');
 
     expect(repositoryService.engineRepository).toBeDefined();
+    expect(repositoryService.cryptoRepository).toBeDefined();
     expect(repositoryService.externalSourceRepository).toBeDefined();
     expect(repositoryService.ipFilterRepository).toBeDefined();
     expect(repositoryService.proxyRepository).toBeDefined();

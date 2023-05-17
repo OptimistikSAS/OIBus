@@ -4,11 +4,6 @@ import EngineRepository from './engine.repository';
 import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../../../shared/model/engine.model';
 import { Database } from 'better-sqlite3';
 
-jest.mock('node:crypto', () => ({
-  randomBytes: () => {
-    return Buffer.from('0123456789abcdef');
-  }
-}));
 jest.mock('../tests/__mocks__/database.mock');
 jest.mock('../service/utils', () => ({
   generateRandomId: jest.fn(() => '123456')
@@ -37,7 +32,7 @@ describe('Empty engine repository', () => {
         'log_loki_address TEXT, log_loki_token_address TEXT, log_loki_proxy_id TEXT, log_loki_username TEXT, ' +
         'log_loki_password TEXT, health_signal_log_enabled INTEGER, health_signal_log_interval INTEGER, ' +
         'health_signal_http_enabled INTEGER, health_signal_http_interval INTEGER, health_signal_http_verbose INTEGER, ' +
-        'health_signal_http_address TEXT, health_signal_http_proxy_id TEXT, health_signal_http_authentication TEXT, crypto_settings TEXT, ' +
+        'health_signal_http_address TEXT, health_signal_http_proxy_id TEXT, health_signal_http_authentication TEXT, ' +
         'FOREIGN KEY(log_loki_proxy_id) REFERENCES proxy(id), FOREIGN KEY(health_signal_http_proxy_id) REFERENCES proxy(id));'
     );
 
@@ -87,14 +82,9 @@ describe('Empty engine repository', () => {
       }
     };
 
-    const cryptoSettings = {
-      algorithm: 'aes-256-cbc',
-      initVector: Buffer.from('0123456789abcdef').toString('base64'),
-      securityKey: Buffer.from('0123456789abcdef').toString('base64')
-    };
     repository.createEngineSettings(command);
     expect(generateRandomId).toHaveBeenCalledWith();
-    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO engine VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);');
+    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO engine VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);');
     expect(run).toHaveBeenCalledWith(
       '123456',
       command.name,
@@ -119,8 +109,7 @@ describe('Empty engine repository', () => {
       +command.healthSignal.http.verbose,
       command.healthSignal.http.address,
       command.healthSignal.http.proxyId,
-      Buffer.from(JSON.stringify(command.healthSignal.http.authentication)).toString('base64'),
-      Buffer.from(JSON.stringify(cryptoSettings)).toString('base64')
+      Buffer.from(JSON.stringify(command.healthSignal.http.authentication)).toString('base64')
     );
 
     expect(run).toHaveBeenCalledTimes(3);
@@ -205,12 +194,6 @@ describe('Empty engine repository', () => {
       Buffer.from(JSON.stringify(command.healthSignal.http.authentication)).toString('base64')
     );
   });
-
-  it('should not retrieve crypto settings', () => {
-    const settings = repository.getCryptoSettings();
-    expect(database.prepare).toHaveBeenCalledWith(`SELECT crypto_settings AS cryptoSettingsBase64 from engine;`);
-    expect(settings).toBeNull();
-  });
 });
 
 describe('Non-empty Engine repository', () => {
@@ -261,7 +244,7 @@ describe('Non-empty Engine repository', () => {
         'log_loki_password TEXT, health_signal_log_enabled INTEGER, health_signal_log_interval INTEGER, ' +
         'health_signal_http_enabled INTEGER, health_signal_http_interval INTEGER, health_signal_http_verbose INTEGER, ' +
         'health_signal_http_address TEXT, health_signal_http_proxy_id TEXT, health_signal_http_authentication TEXT, ' +
-        'crypto_settings TEXT, FOREIGN KEY(log_loki_proxy_id) REFERENCES proxy(id), FOREIGN KEY(health_signal_http_proxy_id) REFERENCES proxy(id));'
+        'FOREIGN KEY(log_loki_proxy_id) REFERENCES proxy(id), FOREIGN KEY(health_signal_http_proxy_id) REFERENCES proxy(id));'
     );
     expect(generateRandomId).not.toHaveBeenCalled();
     expect(run).toHaveBeenCalledTimes(1);
@@ -374,13 +357,5 @@ describe('Non-empty Engine repository', () => {
     };
     repository.createEngineSettings(command);
     expect(generateRandomId).not.toHaveBeenCalled();
-  });
-
-  it('should not retrieve crypto settings', () => {
-    all.mockReturnValue([{ cryptoSettingsBase64: 'crypto settings 64' }]);
-
-    const settings = repository.getCryptoSettings();
-    expect(database.prepare).toHaveBeenCalledWith(`SELECT crypto_settings AS cryptoSettingsBase64 from engine;`);
-    expect(settings).toEqual('crypto settings 64');
   });
 });
