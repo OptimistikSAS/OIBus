@@ -129,10 +129,14 @@ export default class ValueCacheService {
     for (const [key, values] of this.bufferFiles.entries()) {
       valuesInBufferFiles.push({ key, values });
     }
-    const valuesToFlush = valuesInBufferFiles.reduce((prev: Array<any>, { values }) => {
-      prev.push(...values);
-      return prev;
-    }, []);
+    const valuesToFlush = [];
+    for (const { values } of valuesInBufferFiles) {
+      // Copy value one by one to avoid Maximum call stack size exceeded error
+      for (const value of values) {
+        valuesToFlush.push(value);
+      }
+    }
+
     const tmpFileName = `${generateRandomId()}.queue.tmp`;
     // Save the buffer to be sent and immediately clear it
     if (valuesToFlush.length === 0) {
@@ -190,10 +194,13 @@ export default class ValueCacheService {
     const compactFilename = `${generateRandomId()}.compact.tmp`;
     this._logger.trace(`Max group count reach. Compacting queue into "${compactFilename}"`);
     try {
-      const compactValues = valuesInQueue.reduce((prev: Array<any>, { values }) => {
-        prev.push(...values);
-        return prev;
-      }, []);
+      const compactValues = [];
+      for (const { values } of valuesInQueue) {
+        // Copy value one by one to avoid Maximum call stack size exceeded error
+        for (const value of values) {
+          compactValues.push(value);
+        }
+      }
       // Store the values in a tmp file
       await fs.writeFile(path.resolve(this.valueFolder, compactFilename), JSON.stringify(compactValues), { encoding: 'utf8', flag: 'w' });
       this.compactedQueue.push({
