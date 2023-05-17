@@ -127,6 +127,12 @@ export interface EngineSettingsDTO {
   healthSignal: HealthSignalDTO;
 }
 
+export interface CryptoSettings {
+  algorithm: string;
+  initVector: string;
+  securityKey: string;
+}
+
 /**
  * Engine settings command DTO
  */

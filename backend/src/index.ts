@@ -18,6 +18,7 @@ import OIBusService from './service/oibus.service';
 const CACHE_FOLDER = './cache';
 
 const CONFIG_DATABASE = 'oibus.db';
+const CRYPTO_DATABASE = 'crypto.db';
 const LOG_FOLDER_NAME = 'logs';
 const LOG_DB_NAME = 'journal.db';
 
@@ -31,20 +32,31 @@ const LOG_DB_NAME = 'journal.db';
   // Create the base cache folder
   await createFolder(CACHE_FOLDER);
   await createFolder(LOG_FOLDER_NAME);
-  const configDbFilePath = path.resolve(CONFIG_DATABASE);
 
-  const repositoryService = new RepositoryService(configDbFilePath, path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME));
+  const repositoryService = new RepositoryService(
+    path.resolve(CONFIG_DATABASE),
+    path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME),
+    path.resolve(CRYPTO_DATABASE)
+  );
 
   const oibusSettings = repositoryService.engineRepository.getEngineSettings();
-
-  const encryptionService = new EncryptionService(repositoryService.engineRepository.getCryptoSettings() || '');
-  await encryptionService.init();
-
   if (!oibusSettings) {
     console.error('Error while loading OIBus settings from database');
     return;
   }
   console.info(`OIBus settings loaded. OIBus ID: ${oibusSettings.id} ; OIBus name : ${oibusSettings.name}.`);
+
+  if (!repositoryService.cryptoRepository.getCryptoSettings(oibusSettings.id)) {
+    repositoryService.cryptoRepository.createCryptoSettings(oibusSettings.id);
+  }
+  const cryptoSettings = repositoryService.cryptoRepository.getCryptoSettings(oibusSettings.id);
+  if (!cryptoSettings) {
+    console.error('Error while loading OIBus crypto settings from database');
+    return;
+  }
+
+  const encryptionService = new EncryptionService(cryptoSettings);
+  await encryptionService.init();
 
   if (check) {
     console.info('OIBus started in check mode. Exiting process.');

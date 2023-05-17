@@ -13,9 +13,11 @@ import HistoryQueryRepository from '../repository/history-query.repository';
 import UserRepository from '../repository/user.repository';
 import HistoryQueryItemRepository from '../repository/history-query-item.repository';
 import SubscriptionRepository from '../repository/subscription.repository';
+import CryptoRepository from '../repository/crypto.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
+  private readonly _cryptoRepository: CryptoRepository;
   private readonly _externalSourceRepository: ExternalSourceRepository;
   private readonly _ipFilterRepository: IpFilterRepository;
   private readonly _proxyRepository: ProxyRepository;
@@ -29,14 +31,16 @@ export default class RepositoryService {
   private readonly _userRepository: UserRepository;
   private readonly _subscriptionRepository: SubscriptionRepository;
 
-  constructor(oibusDatabasePath: string, logsDatabasePath: string) {
+  constructor(oibusDatabasePath: string, logsDatabasePath: string, cryptoDatabasePath: string) {
     const oibusDatabase = Database(oibusDatabasePath);
     const logsDatabase = Database(logsDatabasePath);
+    const cryptoDatabase = Database(cryptoDatabasePath);
     this._externalSourceRepository = new ExternalSourceRepository(oibusDatabase);
     this._ipFilterRepository = new IpFilterRepository(oibusDatabase);
     this._proxyRepository = new ProxyRepository(oibusDatabase);
     this._scanModeRepository = new ScanModeRepository(oibusDatabase);
     this._engineRepository = new EngineRepository(oibusDatabase);
+    this._cryptoRepository = new CryptoRepository(cryptoDatabase);
     this._northConnectorRepository = new NorthConnectorRepository(oibusDatabase);
     this._southConnectorRepository = new SouthConnectorRepository(oibusDatabase);
     this._southItemRepository = new SouthItemRepository(oibusDatabase);
@@ -46,6 +50,10 @@ export default class RepositoryService {
     this._userRepository = new UserRepository(oibusDatabase);
     this._logRepository = new LogRepository(logsDatabase);
     this._subscriptionRepository = new SubscriptionRepository(oibusDatabase);
+  }
+
+  get cryptoRepository(): CryptoRepository {
+    return this._cryptoRepository;
   }
 
   get userRepository(): UserRepository {

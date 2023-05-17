@@ -10,6 +10,7 @@ import { createFolder, filesExists } from './utils';
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { OibFormControl } from '../../../shared/model/form.model';
+import { CryptoSettings } from '../../../shared/model/engine.model';
 
 export const CERT_FOLDER = 'certs';
 export const CERT_PRIVATE_KEY_FILE_NAME = 'private.pem';
@@ -21,23 +22,18 @@ export const CERT_FILE_NAME = 'cert.pem';
  * Also responsible to create private and public key used for encrypting the secrets
  */
 export default class EncryptionService {
-  private readonly cryptoSettings: { algorithm: string; initVector: Buffer; securityKey: Buffer } | null = null;
+  private readonly cryptoSettings: { algorithm: string; initVector: Buffer; securityKey: Buffer };
   private readonly _certsFolder: string = '';
   private _publicKey: string | null = null;
   private _privateKey: string | null = null;
   private _certFile: string | null = null;
 
-  constructor(cryptoSettingsBase64: string) {
-    try {
-      const cryptoSettings = JSON.parse(Buffer.from(cryptoSettingsBase64, 'base64').toString());
-      this.cryptoSettings = {
-        algorithm: cryptoSettings.algorithm,
-        initVector: Buffer.from(cryptoSettings.initVector, 'base64'),
-        securityKey: Buffer.from(cryptoSettings.securityKey, 'base64')
-      };
-    } catch (error) {
-      console.error(`Could not parse crypto settings: ${error}`);
-    }
+  constructor(cryptoSettings: CryptoSettings) {
+    this.cryptoSettings = {
+      algorithm: cryptoSettings.algorithm,
+      initVector: Buffer.from(cryptoSettings.initVector, 'base64'),
+      securityKey: Buffer.from(cryptoSettings.securityKey, 'base64')
+    };
     this._certsFolder = path.resolve('./', CERT_FOLDER);
   }
 
@@ -210,10 +206,6 @@ export default class EncryptionService {
    * Return the encrypted text
    */
   async encryptText(plainText: string): Promise<string> {
-    if (!this.cryptoSettings) {
-      throw new Error('Encryption service not initialized properly');
-    }
-
     const cipher = crypto.createCipheriv(this.cryptoSettings.algorithm, this.cryptoSettings.securityKey, this.cryptoSettings.initVector);
     let encryptedData = cipher.update(plainText, 'utf8', 'base64');
     encryptedData += cipher.final('base64');
@@ -224,10 +216,6 @@ export default class EncryptionService {
    * Return the decrypted text
    */
   async decryptText(encryptedText: string): Promise<string> {
-    if (!this.cryptoSettings) {
-      throw new Error('Encryption service not initialized properly');
-    }
-
     const decipher = crypto.createDecipheriv(
       this.cryptoSettings.algorithm,
       this.cryptoSettings.securityKey,
