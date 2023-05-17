@@ -378,6 +378,7 @@ describe('ValueCache', () => {
 
       cache = new ValueCache(logger, 'myCacheFolder', settings);
 
+      cache.settings = settings;
       await cache.cacheValues(valuesToCache);
       await cache.cacheValues(valuesToCache);
       await cache.cacheValues(valuesToCache);

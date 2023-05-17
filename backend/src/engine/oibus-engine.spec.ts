@@ -106,8 +106,11 @@ describe('OIBusEngine', () => {
     isEnabled: jest.fn(),
     addItem: jest.fn(),
     deleteItem: jest.fn(),
+    deleteAllItems: jest.fn(),
     updateItem: jest.fn(),
-    setLogger: jest.fn()
+    setLogger: jest.fn(),
+    getMetricsDataStream: jest.fn(),
+    resetMetrics: jest.fn()
   };
   const createdNorth = {
     start: jest.fn(),
@@ -117,7 +120,14 @@ describe('OIBusEngine', () => {
     cacheValues: jest.fn(),
     cacheFile: jest.fn(),
     isSubscribed: jest.fn(),
-    setLogger: jest.fn()
+    setLogger: jest.fn(),
+    getErrorFiles: jest.fn(),
+    removeErrorFiles: jest.fn(),
+    retryErrorFiles: jest.fn(),
+    removeAllErrorFiles: jest.fn(),
+    retryAllErrorFiles: jest.fn(),
+    getMetricsDataStream: jest.fn(),
+    resetMetrics: jest.fn()
   };
 
   beforeEach(async () => {
@@ -209,10 +219,45 @@ describe('OIBusEngine', () => {
     expect(createdNorth.cacheFile).toHaveBeenCalledTimes(1);
     expect(createdNorth.cacheFile).toHaveBeenCalledWith('filePath');
 
+    await engine.getErrorFiles('northId', '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
+    expect(createdNorth.getErrorFiles).not.toHaveBeenCalled();
+    await engine.getErrorFiles(northConnectors[1].id, '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
+    expect(createdNorth.getErrorFiles).toHaveBeenCalledWith('2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
+
+    await engine.retryErrorFiles('northId', ['file1']);
+    expect(createdNorth.retryErrorFiles).not.toHaveBeenCalled();
+    await engine.retryErrorFiles(northConnectors[1].id, ['file1']);
+    expect(createdNorth.retryErrorFiles).toHaveBeenCalledWith(['file1']);
+
+    await engine.removeErrorFiles('northId', ['file1']);
+    expect(createdNorth.removeErrorFiles).not.toHaveBeenCalled();
+    await engine.removeErrorFiles(northConnectors[1].id, ['file1']);
+    expect(createdNorth.removeErrorFiles).toHaveBeenCalledWith(['file1']);
+
+    await engine.removeAllErrorFiles('northId');
+    expect(createdNorth.removeAllErrorFiles).not.toHaveBeenCalled();
+    await engine.removeAllErrorFiles(northConnectors[1].id);
+    expect(createdNorth.removeAllErrorFiles).toHaveBeenCalled();
+
+    await engine.retryAllErrorFiles('northId');
+    expect(createdNorth.retryAllErrorFiles).not.toHaveBeenCalled();
+    await engine.retryAllErrorFiles(northConnectors[1].id);
+    expect(createdNorth.retryAllErrorFiles).toHaveBeenCalled();
+
+    createdNorth.getMetricsDataStream.mockReturnValue({ status: 'myStatus' });
+    expect(engine.getNorthDataStream('northId')).toEqual(null);
+    expect(engine.getNorthDataStream(northConnectors[1].id)).toEqual({ status: 'myStatus' });
+
+    createdNorth.resetMetrics.mockReturnValue({ status: 'myStatus' });
+    expect(engine.resetNorthMetrics('northId')).toEqual(null);
+    expect(engine.resetNorthMetrics(northConnectors[1].id)).toEqual({ status: 'myStatus' });
+
     engine.addItemToSouth('southId', items[0]);
     expect(createdSouth.addItem).not.toHaveBeenCalled();
     engine.deleteItemFromSouth('southId', items[0]);
     expect(createdSouth.deleteItem).not.toHaveBeenCalled();
+    engine.deleteAllItemsFromSouth('southId');
+    expect(createdSouth.deleteAllItems).not.toHaveBeenCalled();
     engine.updateItemInSouth('southId', items[0], { name: 'new name', settings: {}, scanModeId: null });
     expect(createdSouth.updateItem).not.toHaveBeenCalled();
 
@@ -220,8 +265,18 @@ describe('OIBusEngine', () => {
     expect(createdSouth.addItem).toHaveBeenCalledWith(items[0]);
     engine.deleteItemFromSouth(southConnectors[1].id, items[0]);
     expect(createdSouth.deleteItem).toHaveBeenCalledWith(items[0]);
+    engine.deleteAllItemsFromSouth(southConnectors[1].id);
+    expect(createdSouth.deleteAllItems).toHaveBeenCalled();
     engine.updateItemInSouth(southConnectors[1].id, items[0], { name: 'new name', settings: {}, scanModeId: null });
     expect(createdSouth.updateItem).toHaveBeenCalledWith(items[0], { name: 'new name', settings: {}, scanModeId: null });
+
+    createdSouth.getMetricsDataStream.mockReturnValue({ status: 'myStatus' });
+    expect(engine.getSouthDataStream('southId')).toEqual(null);
+    expect(engine.getSouthDataStream(southConnectors[1].id)).toEqual({ status: 'myStatus' });
+
+    createdSouth.resetMetrics.mockReturnValue({ status: 'myStatus' });
+    expect(engine.resetSouthMetrics('southId')).toEqual(null);
+    expect(engine.resetSouthMetrics(southConnectors[1].id)).toEqual({ status: 'myStatus' });
 
     (southService.getSouth as jest.Mock).mockReturnValueOnce(southConnectors[0]).mockReturnValueOnce(southConnectors[1]);
     (northService.getNorth as jest.Mock).mockReturnValueOnce(northConnectors[0]).mockReturnValueOnce(northConnectors[1]);
