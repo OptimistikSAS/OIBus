@@ -1,11 +1,13 @@
+import { EventEmitter } from 'node:events';
+
 /**
  * Create a mock object for Value Cache Service
  */
 export default class ValueCacheServiceMock {
-  triggerRun = {
+  triggerRun: EventEmitter = {
     on: jest.fn(),
     emit: jest.fn()
-  };
+  } as unknown as EventEmitter;
   start = jest.fn();
   stop = jest.fn();
   cacheValues = jest.fn();

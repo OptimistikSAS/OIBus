@@ -83,6 +83,7 @@ export default class NorthConnector {
 
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
+        this.logger.trace(`Next trigger: ${!this.runProgress$}`);
         await this.run('scan');
       } else {
         this.logger.trace('No more task to run');
@@ -90,11 +91,19 @@ export default class NorthConnector {
     });
 
     this.valueCacheService.triggerRun.on('next', async () => {
-      await this.run('value-trigger');
+      this.taskJobQueue.push({ id: 'value-trigger', cron: '', name: '', description: '' });
+      this.logger.trace(`Value cache trigger immediately: ${!this.runProgress$}`);
+      if (!this.runProgress$) {
+        await this.run('value-trigger');
+      }
     });
 
     this.fileCacheService.triggerRun.on('next', async () => {
-      await this.run('file-trigger');
+      this.taskJobQueue.push({ id: 'file-trigger', cron: '', name: '', description: '' });
+      this.logger.trace(`File cache trigger immediately: ${!this.runProgress$}`);
+      if (!this.runProgress$) {
+        await this.run('file-trigger');
+      }
     });
   }
 
@@ -172,12 +181,8 @@ export default class NorthConnector {
   }
 
   async run(flag: 'scan' | 'file-trigger' | 'value-trigger'): Promise<void> {
-    this.logger.trace(`North run triggered with flag ${flag}`);
-    if (this.runProgress$) {
-      this.logger.warn(`A North task is already running`);
-      return;
-    }
     this.runProgress$ = new DeferredPromise();
+    this.logger.trace(`North run triggered with flag ${flag}`);
 
     const runStart = DateTime.now();
     this.cacheService.updateMetrics({ ...this.cacheService.metrics, lastRunStart: runStart.toUTC().toISO() });
@@ -198,10 +203,8 @@ export default class NorthConnector {
 
     this.runProgress$.resolve();
     this.runProgress$ = null;
-    if (flag === 'scan') {
-      this.taskJobQueue.shift();
-      this.taskRunner.emit('next');
-    }
+    this.taskJobQueue.shift();
+    this.taskRunner.emit('next');
   }
 
   /**

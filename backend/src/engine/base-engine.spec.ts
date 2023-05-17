@@ -2,8 +2,6 @@ import PinoLogger from '../tests/__mocks__/logger.mock';
 import SouthServiceMock from '../tests/__mocks__/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/north-service.mock';
 
-import { OibusItemDTO } from '../../../shared/model/south-connector.model';
-
 import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
 

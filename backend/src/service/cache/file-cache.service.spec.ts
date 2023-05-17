@@ -295,4 +295,18 @@ describe('FileCache', () => {
     expect(logger.debug).not.toHaveBeenCalled();
     expect(anotherLogger.debug).toHaveBeenCalledWith(`No files in cache`);
   });
+
+  it('should send file immediately', async () => {
+    const otherSettings: NorthCacheSettingsDTO = {
+      scanModeId: 'id1',
+      groupCount: 1000,
+      maxSendCount: 1000,
+      retryCount: 3,
+      retryInterval: 5000,
+      sendFileImmediately: true,
+      maxSize: 1000
+    };
+    cache.settings = otherSettings;
+    await cache.cacheFile('myFile.csv');
+  });
 });
