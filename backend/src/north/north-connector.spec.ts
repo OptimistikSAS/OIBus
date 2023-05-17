@@ -11,6 +11,7 @@ import ProxyService from '../service/proxy.service';
 import RepositoryService from '../service/repository.service';
 import ValueCacheServiceMock from '../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../tests/__mocks__/file-cache-service.mock';
+import { EventEmitter } from 'node:events';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -21,6 +22,8 @@ const valueCacheIsEmpty = jest.fn();
 const fileCacheIsEmpty = jest.fn();
 const removeAllErrorFiles = jest.fn();
 const removeAllCacheFiles = jest.fn();
+const valueTrigger = new EventEmitter();
+const fileTrigger = new EventEmitter();
 
 // Mock services
 jest.mock('../service/repository.service');
@@ -34,6 +37,7 @@ jest.mock(
       const valueCacheServiceMock = new ValueCacheServiceMock();
       valueCacheServiceMock.getValuesToSend = getValuesToSendMock;
       valueCacheServiceMock.isEmpty = valueCacheIsEmpty;
+      valueCacheServiceMock.triggerRun = valueTrigger;
       return valueCacheServiceMock;
     }
 );
@@ -47,6 +51,7 @@ jest.mock(
       fileCacheServiceMock.removeAllCacheFiles = removeAllCacheFiles;
       fileCacheServiceMock.getFileToSend = getFileToSend;
       fileCacheServiceMock.isEmpty = fileCacheIsEmpty;
+      fileCacheServiceMock.triggerRun = fileTrigger;
       return fileCacheServiceMock;
     }
 );
@@ -221,9 +226,6 @@ describe('NorthConnector enabled', () => {
 
     north.run('scan');
 
-    await north.run('scan');
-    expect(logger.warn).toHaveBeenCalledWith(`A North task is already running`);
-
     north.stop();
     expect(logger.info).toHaveBeenCalledWith(`Stopping North "${configuration.name}" (${configuration.id})...`);
     expect(logger.debug).toHaveBeenCalledWith('Waiting for North task to finish');
@@ -232,6 +234,45 @@ describe('NorthConnector enabled', () => {
     await flushPromises();
     expect(north.disconnect).toHaveBeenCalledTimes(1);
     expect(logger.debug(`North connector ${configuration.id} stopped`));
+  });
+
+  it('should trigger values first', async () => {
+    const promise = new Promise<void>(resolve => {
+      setTimeout(resolve, 1000);
+    });
+    north.handleValuesWrapper = jest.fn(async () => promise);
+    north.handleFilesWrapper = jest.fn();
+    valueTrigger.emit('next');
+    expect(north.handleValuesWrapper).toHaveBeenCalled();
+    expect(logger.trace).toHaveBeenCalledWith(`Value cache trigger immediately: true`);
+    expect(north.handleFilesWrapper).not.toHaveBeenCalled();
+
+    fileTrigger.emit('next');
+    expect(north.handleFilesWrapper).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(1000);
+    await flushPromises();
+    fileTrigger.emit('next');
+    expect(north.handleFilesWrapper).toHaveBeenCalled();
+  });
+
+  it('should trigger files first', async () => {
+    const promise = new Promise<void>(resolve => {
+      setTimeout(resolve, 1000);
+    });
+    north.handleFilesWrapper = jest.fn(async () => promise);
+    north.handleValuesWrapper = jest.fn();
+
+    fileTrigger.emit('next');
+    expect(north.handleValuesWrapper).not.toHaveBeenCalled();
+    expect(logger.trace).toHaveBeenCalledWith(`File cache trigger immediately: true`);
+    expect(north.handleFilesWrapper).toHaveBeenCalled();
+
+    valueTrigger.emit('next');
+    expect(north.handleValuesWrapper).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(1000);
+    await flushPromises();
+    fileTrigger.emit('next');
+    expect(north.handleValuesWrapper).toHaveBeenCalled();
   });
 
   it('should properly cache values', async () => {

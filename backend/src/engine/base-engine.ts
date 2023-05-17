@@ -22,11 +22,6 @@ export default class BaseEngine {
     protected readonly cacheFolder: string
   ) {
     this.cacheFolder = path.resolve(cacheFolder);
-    this.encryptionService = encryptionService;
-    this.northService = northService;
-    this.southService = southService;
-    this.logger = logger;
-    this.proxyService = proxyService;
   }
 
   /**

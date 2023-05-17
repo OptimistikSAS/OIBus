@@ -1,3 +1,5 @@
+import { EventEmitter } from 'node:events';
+
 /**
  * Create a mock object for File Cache Service
  */
@@ -20,8 +22,8 @@ export default class FileCacheServiceMock {
   manageErroredFiles = jest.fn();
   isEmpty = jest.fn();
   setLogger = jest.fn();
-  triggerRun = {
+  triggerRun: EventEmitter = {
     on: jest.fn(),
     emit: jest.fn()
-  };
+  } as unknown as EventEmitter;
 }
