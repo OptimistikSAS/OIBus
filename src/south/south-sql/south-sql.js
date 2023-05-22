@@ -447,13 +447,14 @@ export default class SouthSQL extends SouthConnector {
 
     const adaptedQuery = this.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?')
 
-    let connectionString = `Driver=${this.odbcDriverPath};SERVER=${this.host};TrustServerCertificate=${this.selfSigned ? 'yes' : 'no'};`
-    connectionString += `Database=${this.database};UID=${this.username};PWD=${await this.encryptionService.decryptText(this.password)}`
+    let connectionString = `Driver=${this.odbcDriverPath};SERVER=${this.host},${this.port};TrustServerCertificate=${this.selfSigned ? 'yes' : 'no'};`
+    connectionString += `Database=${this.database};UID=${this.username}`
+    this.logger.debug(`Connecting with ODBC: ${`${connectionString};PWD=<secret>`}`)
     let connection = null
     let data = []
     try {
       const connectionConfig = {
-        connectionString,
+        connectionString: `${connectionString};PWD=${await this.encryptionService.decryptText(this.password)}`,
         connectionTimeout: this.connectionTimeout,
         loginTimeout: this.connectionTimeout,
       }
