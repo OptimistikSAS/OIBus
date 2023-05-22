@@ -484,7 +484,8 @@ describe('SouthSQL', () => {
     const expectedConfig = {
       connectionTimeout: south.connectionTimeout,
       loginTimeout: south.connectionTimeout,
-      connectionString: 'Driver=/odbc/driver/path;SERVER=192.168.0.11;TrustServerCertificate=no;Database=oibus;UID=oibus_user;PWD=popopopopopopopopo',
+      connectionString: 'Driver=/odbc/driver/path;SERVER=192.168.0.11,1433;'
+          + 'TrustServerCertificate=no;Database=oibus;UID=oibus_user;PWD=popopopopopopopopo',
     }
 
     const expectedQuery = 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > ? AND created_at <= ?'
