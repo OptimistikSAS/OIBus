@@ -10,6 +10,7 @@ import { createReadStream } from 'node:fs';
 import path from 'node:path';
 import FormData from 'form-data';
 import https from 'node:https';
+import { HandlesFile, HandlesValues } from '../north-interface';
 
 /**
  * Class NorthOIConnect - Send files through a POST Multipart HTTP request and values as JSON payload
@@ -18,7 +19,7 @@ import https from 'node:https';
  *  -files endpoint: /engine/addFile
  *  -values endpoint: /engine/addValues
  */
-export default class NorthOIConnect extends NorthConnector {
+export default class NorthOIConnect extends NorthConnector implements HandlesFile, HandlesValues {
   static category = manifest.category;
 
   private proxyAgent: any | undefined;
@@ -53,7 +54,7 @@ export default class NorthOIConnect extends NorthConnector {
   /**
    * Handle values by sending them to the specified endpoint
    */
-  override async handleValues(values: Array<any>): Promise<void> {
+  async handleValues(values: Array<any>): Promise<void> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     };
@@ -100,7 +101,7 @@ export default class NorthOIConnect extends NorthConnector {
   /**
    * Handle the file by sending it to the specified endpoint
    */
-  override async handleFile(filePath: string): Promise<void> {
+  async handleFile(filePath: string): Promise<void> {
     const headers: Record<string, string> = {};
     switch (this.configuration.settings.authentication.type) {
       case 'basic':

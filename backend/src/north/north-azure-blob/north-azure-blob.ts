@@ -10,8 +10,9 @@ import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import * as process from 'process';
+import { HandlesFile } from '../north-interface';
 
-export default class NorthAzureBlob extends NorthConnector {
+export default class NorthAzureBlob extends NorthConnector implements HandlesFile {
   static category = manifest.category;
 
   constructor(
@@ -28,7 +29,7 @@ export default class NorthAzureBlob extends NorthConnector {
   /**
    * Handle the file by uploading it to Azure Blob Storage.
    */
-  override async handleFile(filePath: string): Promise<void> {
+  async handleFile(filePath: string): Promise<void> {
     this.logger.info(`Uploading file "${filePath}" to Azure Blob Storage`);
 
     let blobServiceClient: BlobServiceClient | null = null;

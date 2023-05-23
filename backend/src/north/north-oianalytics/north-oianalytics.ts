@@ -12,12 +12,13 @@ import FormData from 'form-data';
 import path from 'node:path';
 import fetch from 'node-fetch';
 import https from 'node:https';
+import { HandlesFile, HandlesValues } from '../north-interface';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
  * OIAnalytics endpoints are set in this connector
  */
-export default class NorthOIAnalytics extends NorthConnector {
+export default class NorthOIAnalytics extends NorthConnector implements HandlesFile, HandlesValues {
   static category = manifest.category;
 
   private proxyAgent: any | undefined;
@@ -52,7 +53,7 @@ export default class NorthOIAnalytics extends NorthConnector {
   /**
    * Handle values by sending them to OIAnalytics
    */
-  override async handleValues(values: Array<any>): Promise<void> {
+  async handleValues(values: Array<any>): Promise<void> {
     // Remove empty values
     const cleanedValues = values
       .filter(
@@ -110,7 +111,7 @@ export default class NorthOIAnalytics extends NorthConnector {
   /**
    * Handle the file by sending it to OIAnalytics.
    */
-  override async handleFile(filePath: string): Promise<void> {
+  async handleFile(filePath: string): Promise<void> {
     const headers: Record<string, string> = {};
     switch (this.configuration.settings.authentication.type) {
       case 'basic':

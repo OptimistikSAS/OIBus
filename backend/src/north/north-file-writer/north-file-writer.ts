@@ -9,11 +9,12 @@ import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
+import { HandlesFile, HandlesValues } from '../north-interface';
 
 /**
  * Class NorthFileWriter - Write file in an output folder. Values are stored in JSON files
  */
-export default class NorthFileWriter extends NorthConnector {
+export default class NorthFileWriter extends NorthConnector implements HandlesFile, HandlesValues {
   static category = manifest.category;
 
   constructor(
@@ -27,7 +28,7 @@ export default class NorthFileWriter extends NorthConnector {
     super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder, manifest);
   }
 
-  override async handleValues(values: Array<any>): Promise<void> {
+  async handleValues(values: Array<any>): Promise<void> {
     const fileName = `${this.configuration.settings.prefix}${DateTime.now().toUTC().toMillis()}${this.configuration.settings.suffix}.json`;
     const cleanedValues = values.map(value => ({
       timestamp: value.timestamp,
@@ -40,7 +41,7 @@ export default class NorthFileWriter extends NorthConnector {
     this.logger.debug(`File "${fileName}" created in "${path.resolve(this.configuration.settings.outputFolder)}" output folder`);
   }
 
-  override async handleFile(filePath: string): Promise<void> {
+  async handleFile(filePath: string): Promise<void> {
     const extension = path.extname(filePath);
     let fileName = path.basename(filePath, extension);
     fileName = `${this.configuration.settings.prefix}${fileName}${this.configuration.settings.suffix}${extension}`;
