@@ -11,11 +11,12 @@ import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
+import { HandlesFile } from '../north-interface';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
  */
-export default class NorthAmazonS3 extends NorthConnector {
+export default class NorthAmazonS3 extends NorthConnector implements HandlesFile {
   static category = manifest.category;
 
   private proxyAgent: any | undefined;

@@ -12,6 +12,7 @@ import RepositoryService from '../service/repository.service';
 import ValueCacheServiceMock from '../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../tests/__mocks__/file-cache-service.mock';
 import { EventEmitter } from 'node:events';
+import { HandlesFile, HandlesValues } from './north-interface';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -87,7 +88,6 @@ const nowDateString = '2020-02-02T02:02:02.222Z';
 const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 
 let configuration: NorthConnectorDTO;
-let north: NorthConnector;
 const manifest: NorthConnectorManifest = {
   name: 'north',
   description: 'My North Connector test',
@@ -99,6 +99,12 @@ const manifest: NorthConnectorManifest = {
   settings: [],
   schema: {} as unknown
 } as NorthConnectorManifest;
+
+class TestNorth extends NorthConnector implements HandlesFile, HandlesValues {
+  async handleValues(values: Array<any>): Promise<void> {}
+  async handleFile(filePath: string): Promise<void> {}
+}
+let north: TestNorth;
 
 describe('NorthConnector enabled', () => {
   beforeEach(async () => {
@@ -132,7 +138,7 @@ describe('NorthConnector enabled', () => {
         retentionDuration: 720
       }
     };
-    north = new NorthConnector(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder', manifest);
+    north = new TestNorth(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder', manifest);
     await north.start();
   });
 
@@ -369,11 +375,6 @@ describe('NorthConnector enabled', () => {
     expect(logger.error).toHaveBeenCalledWith(`Error while sending 2 values (3). oibus error 2`);
   });
 
-  it('should call default handle values', async () => {
-    await north.handleValues([]);
-    expect(logger.warn).toHaveBeenCalledWith('handleValues method must be override');
-  });
-
   it('should handle files properly', async () => {
     jest.clearAllMocks();
     north.handleFile = jest
@@ -403,11 +404,6 @@ describe('NorthConnector enabled', () => {
     expect(logger.error).toHaveBeenCalledWith(`Error while handling file "file.csv" (2). oibus error`);
     await north.handleFilesWrapper();
     expect(logger.error).toHaveBeenCalledWith(`Error while handling file "file.csv" (3). oibus error 2`);
-  });
-
-  it('should call default handle file', async () => {
-    await north.handleFile('file path');
-    expect(logger.warn).toHaveBeenCalledWith('handleFile method must be override');
   });
 });
 
@@ -446,7 +442,7 @@ describe('NorthConnector disabled', () => {
 
     manifest.modes.files = false;
     manifest.modes.points = false;
-    north = new NorthConnector(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder', manifest);
+    north = new TestNorth(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder', manifest);
   });
 
   afterEach(() => {
