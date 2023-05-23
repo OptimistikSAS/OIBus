@@ -222,6 +222,7 @@ export default class NorthConnector {
         arrayValues.push(...array);
       }
       try {
+        // @ts-ignore
         await this.handleValues(arrayValues);
         await this.valueCacheService.removeSentValues(this.valuesBeingSent);
         const currentMetrics = this.cacheService.metrics;
@@ -243,9 +244,9 @@ export default class NorthConnector {
     }
   }
 
-  async handleValues(values: Array<any>): Promise<void> {
-    this.logger.warn('handleValues method must be override');
-  }
+  // async handleValues(values: Array<any>): Promise<void> {
+  //   this.logger.warn('handleValues method must be override');
+  // }
 
   /**
    * Method called by the Engine to handle an array of values in order for example
@@ -258,6 +259,7 @@ export default class NorthConnector {
     }
     if (this.fileBeingSent) {
       try {
+        // @ts-ignore
         await this.handleFile(this.fileBeingSent);
         this.fileCacheService.removeFileFromQueue();
         await this.archiveService.archiveOrRemoveFile(this.fileBeingSent);
@@ -280,9 +282,9 @@ export default class NorthConnector {
     }
   }
 
-  async handleFile(filePath: string): Promise<void> {
-    this.logger.warn('handleFile method must be override');
-  }
+  // async handleFile(filePath: string): Promise<void> {
+  //   this.logger.warn('handleFile method must be override');
+  // }
 
   /**
    * Create a OIBusError from an unknown error thrown by the handleFile or handleValues connector method
