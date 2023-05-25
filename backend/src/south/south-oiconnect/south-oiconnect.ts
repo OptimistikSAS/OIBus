@@ -15,12 +15,13 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
+import { QueriesHistory } from '../south-interface';
 
 /**
  * Class SouthOIConnect - Retrieve data from REST API
  * The results are parsed through the available parsers
  */
-export default class SouthOIConnect extends SouthConnector {
+export default class SouthOIConnect extends SouthConnector implements QueriesHistory {
   static category = manifest.category;
 
   private readonly tmpFolder: string;
@@ -63,7 +64,7 @@ export default class SouthOIConnect extends SouthConnector {
   /**
    * Retrieve result from a REST API write them into a CSV file and send it to the Engine.
    */
-  override async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
     if (!parsers.get(this.configuration.settings.payloadParser)) {
       throw new Error(`Parser "${this.configuration.settings.payloadParser}" does not exist.`);
     }

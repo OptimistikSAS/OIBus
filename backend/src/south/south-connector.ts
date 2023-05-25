@@ -107,6 +107,7 @@ export default class SouthConnector {
     if (this.manifest.modes.subscription) {
       const items = Array.from(this.itemsByScanModeIds.get('subscription') || new Map(), ([_scanModeId, item]) => item);
       this.logger.debug(`Subscribing to ${items.length} items`);
+      // @ts-ignore
       await this.subscribe(items);
     }
 
@@ -200,6 +201,7 @@ export default class SouthConnector {
     }
     if (this.manifest.modes.lastFile && this.streamMode) {
       try {
+        // @ts-ignore
         await this.fileQuery(items);
       } catch (error) {
         this.logger.error(`Error when calling fileQuery ${error}`);
@@ -207,6 +209,7 @@ export default class SouthConnector {
     }
     if (this.manifest.modes.lastPoint && this.streamMode) {
       try {
+        // @ts-ignore
         await this.lastPointQuery(items);
       } catch (error) {
         this.logger.error(`Error when calling lastPointQuery ${error}`);
@@ -277,6 +280,7 @@ export default class SouthConnector {
 
   private async queryIntervals(intervals: Array<Interval>, items: Array<OibusItemDTO>, southCache: SouthCache) {
     for (const [index, interval] of intervals.entries()) {
+      // @ts-ignore
       const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
 
       if (index !== intervals.length - 1) {
@@ -320,23 +324,6 @@ export default class SouthConnector {
     } else {
       this.logger.trace(`Querying interval: ${JSON.stringify(intervals[0], null, 2)}`);
     }
-  }
-
-  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
-    this.logger.warn('historyQuery method must be override');
-    return '';
-  }
-
-  async fileQuery(items: Array<OibusItemDTO>): Promise<void> {
-    this.logger.warn('fileQuery method must be override');
-  }
-
-  async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
-    this.logger.warn('lastPointQuery method must be override');
-  }
-
-  async subscribe(items: Array<OibusItemDTO>): Promise<void> {
-    this.logger.warn('subscribe method must be override');
   }
 
   /**
