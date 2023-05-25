@@ -10,6 +10,7 @@ import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
+import { QueriesLastPoint } from '../south-interface';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -24,7 +25,7 @@ interface ADSOptions {
 /**
  * Class SouthADS - Provides instruction for TwinCAT ADS client connection
  */
-export default class SouthADS extends SouthConnector {
+export default class SouthADS extends SouthConnector implements QueriesLastPoint {
   static category = manifest.category;
 
   private client: ads.Client | null = null;
@@ -169,7 +170,7 @@ export default class SouthADS extends SouthConnector {
     return [];
   }
 
-  override async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
+  async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
     const timestamp: Instant = DateTime.now().toUTC().toISO() as Instant;
     try {
       const results = await Promise.all(items.map(item => this.readAdsSymbol(item.name, timestamp)));

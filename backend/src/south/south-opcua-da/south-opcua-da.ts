@@ -15,11 +15,12 @@ import { OPCUAClientOptions } from 'node-opcua-client/source/opcua_client';
 import { UserIdentityInfo } from 'node-opcua-client/source/user_identity_info';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { QueriesLastPoint } from '../south-interface';
 
 /**
  * Class SouthOPCUADA - Connect to an OPCUA server in DA (Data Access) mode
  */
-export default class SouthOPCUADA extends SouthConnector {
+export default class SouthOPCUADA extends SouthConnector implements QueriesLastPoint {
   static category = manifest.category;
 
   private clientCertificateManager: OPCUACertificateManager | null = null;
@@ -125,7 +126,7 @@ export default class SouthOPCUADA extends SouthConnector {
     }
   }
 
-  override async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
+  async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
     try {
       if (items.length > 1) {
         this.logger.debug(`Read ${items.length} nodes ` + `[${items[0].settings.nodeId}...${items[items.length - 1].settings.nodeId}]`);

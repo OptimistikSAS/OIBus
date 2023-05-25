@@ -13,6 +13,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
 import { Instant, Timezone } from '../../../../shared/model/types';
+import { QueriesSubscription } from '../south-interface';
 
 interface MessageFormatOption {
   timestampOrigin: 'payload' | 'oibus';
@@ -27,7 +28,7 @@ interface MessageFormatOption {
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
  */
-export default class SouthMQTT extends SouthConnector {
+export default class SouthMQTT extends SouthConnector implements QueriesSubscription {
   static category = manifest.category;
 
   private client: MqttClient | null = null;
@@ -150,7 +151,7 @@ export default class SouthMQTT extends SouthConnector {
     }
   }
 
-  override async subscribe(items: Array<OibusItemDTO>): Promise<void> {
+  async subscribe(items: Array<OibusItemDTO>): Promise<void> {
     if (!this.client) {
       this.logger.error('MQTT client could not subscribe to items: client not set');
       return;

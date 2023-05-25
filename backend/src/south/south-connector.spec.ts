@@ -11,6 +11,8 @@ import ProxyService from '../service/proxy.service';
 import RepositoryService from '../service/repository.service';
 
 import { delay, generateIntervals } from '../service/utils';
+import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
+import { Instant } from '../../../shared/model/types';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -62,7 +64,6 @@ const flushPromises = () => new Promise(jest.requireActual('timers').setImmediat
 const addValues = jest.fn();
 const addFile = jest.fn();
 
-let south: SouthConnector;
 let configuration: SouthConnectorDTO;
 const manifest: SouthConnectorManifest = {
   name: 'south',
@@ -103,6 +104,16 @@ const items: Array<OibusItemDTO> = [
   }
 ];
 
+class TestSouth extends SouthConnector implements QueriesLastPoint, QueriesFile, QueriesSubscription, QueriesHistory {
+  async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {}
+  async fileQuery(items: Array<OibusItemDTO>): Promise<void> {}
+  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+    return '';
+  }
+  async subscribe(items: Array<OibusItemDTO>): Promise<void> {}
+}
+let south: TestSouth;
+
 describe('SouthConnector enabled', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
@@ -135,7 +146,7 @@ describe('SouthConnector enabled', () => {
       },
       settings: {}
     };
-    south = new SouthConnector(
+    south = new TestSouth(
       configuration,
       items,
       addValues,
@@ -210,7 +221,6 @@ describe('SouthConnector enabled', () => {
       cron: '* * * * * *'
     };
     south.addToQueue(scanMode);
-    expect(logger.warn).toHaveBeenCalledWith('subscribe method must be override');
 
     expect(south.run).toHaveBeenCalledWith(scanMode);
     expect(south.run).toHaveBeenCalledTimes(1);
@@ -303,26 +313,6 @@ describe('SouthConnector enabled', () => {
     await flushPromises();
     expect(south.disconnect).toHaveBeenCalledTimes(1);
     expect(logger.debug(`South connector ${configuration.id} stopped`));
-  });
-
-  it('should call default history query', async () => {
-    await south.historyQuery([], nowDateString, nowDateString);
-    expect(logger.warn).toHaveBeenCalledWith('historyQuery method must be override');
-  });
-
-  it('should call default file query', async () => {
-    await south.fileQuery([]);
-    expect(logger.warn).toHaveBeenCalledWith('fileQuery method must be override');
-  });
-
-  it('should call default last point query', async () => {
-    await south.lastPointQuery([]);
-    expect(logger.warn).toHaveBeenCalledWith('lastPointQuery method must be override');
-  });
-
-  it('should call default subscribe query', async () => {
-    await south.subscribe([]);
-    expect(logger.warn).toHaveBeenCalledWith('subscribe method must be override');
   });
 
   it('should add values', async () => {
@@ -499,7 +489,7 @@ describe('SouthConnector disabled', () => {
       },
       settings: {}
     };
-    south = new SouthConnector(
+    south = new TestSouth(
       configuration,
       items,
       addValues,
@@ -547,7 +537,7 @@ describe('SouthConnector enabled without any modes', () => {
       },
       settings: {}
     };
-    south = new SouthConnector(
+    south = new TestSouth(
       configuration,
       items,
       addValues,
@@ -606,7 +596,7 @@ describe('SouthConnector without stream mode', () => {
       },
       settings: {}
     };
-    south = new SouthConnector(
+    south = new TestSouth(
       configuration,
       items,
       addValues,

@@ -18,6 +18,7 @@ import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { ClientConfig } from 'pg';
+import { QueriesHistory } from '../south-interface';
 
 let oracledb: {
   outFormat: any;
@@ -54,7 +55,7 @@ import('odbc')
  * - PostgreSQL
  * - SQLite
  */
-export default class SouthSQL extends SouthConnector {
+export default class SouthSQL extends SouthConnector implements QueriesHistory {
   static category = manifest.category;
 
   private readonly tmpFolder: string;
@@ -98,7 +99,7 @@ export default class SouthSQL extends SouthConnector {
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  override async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
     let updatedStartTime = startTime;
 
     for (const item of items) {
