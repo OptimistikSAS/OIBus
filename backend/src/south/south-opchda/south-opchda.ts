@@ -12,6 +12,7 @@ import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import { DateTime } from 'luxon';
+import { QueriesHistory } from '../south-interface';
 
 // Time to wait before closing the connection by timeout and killing the HDA Agent process
 const DISCONNECTION_TIMEOUT = 10000;
@@ -21,7 +22,7 @@ const DISCONNECTION_TIMEOUT = 10000;
  * This connector communicates with the Agent through a TCP connection thanks to the TCP server created on OIBus
  * and associated to this connector
  */
-export default class SouthOPCHDA extends SouthConnector {
+export default class SouthOPCHDA extends SouthConnector implements QueriesHistory {
   static category = manifest.category;
 
   // Initialized at connection
@@ -110,7 +111,7 @@ export default class SouthOPCHDA extends SouthConnector {
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into the cache and send it to the engine.
    */
-  override async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
     this.historyRead$ = new DeferredPromise();
 
     let maxTimestamp = DateTime.fromISO(startTime).toMillis();

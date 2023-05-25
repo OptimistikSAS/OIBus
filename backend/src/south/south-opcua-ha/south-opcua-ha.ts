@@ -25,6 +25,7 @@ import { OPCUAClientOptions } from 'node-opcua-client/source/opcua_client';
 import { DateTime } from 'luxon';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { QueriesHistory } from '../south-interface';
 
 const AGGREGATE_TYPES = ['raw', 'count', 'max', 'min', 'avg'];
 type AggregateType = (typeof AGGREGATE_TYPES)[number];
@@ -35,7 +36,7 @@ type Resampling = (typeof RESAMPLINGS)[number];
 /**
  * Class SouthOPCUAHA - Connect to an OPCUA server in HA (Historian Access) mode
  */
-export default class SouthOPCUAHA extends SouthConnector {
+export default class SouthOPCUAHA extends SouthConnector implements QueriesHistory {
   static category = manifest.category;
 
   private clientCertificateManager: OPCUACertificateManager | null = null;
@@ -144,7 +145,7 @@ export default class SouthOPCUAHA extends SouthConnector {
   /**
    * Get values from the OPCUA server between startTime and endTime and write them into the cache.
    */
-  override async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
     try {
       let maxTimestamp = DateTime.fromISO(startTime).toMillis();
 

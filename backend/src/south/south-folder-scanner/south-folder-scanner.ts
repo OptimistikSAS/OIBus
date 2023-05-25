@@ -10,13 +10,14 @@ import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
+import { QueriesFile } from '../south-interface';
 
 const FOLDER_SCANNER_TABLE = 'folder_scanner';
 
 /**
  * Class SouthFolderScanner - Retrieve file from a local or remote folder
  */
-export default class SouthFolderScanner extends SouthConnector {
+export default class SouthFolderScanner extends SouthConnector implements QueriesFile {
   static category = manifest.category;
 
   /**
@@ -59,7 +60,7 @@ export default class SouthFolderScanner extends SouthConnector {
   /**
    * Read the raw file and rewrite it to another file in the folder archive
    */
-  override async fileQuery(items: Array<OibusItemDTO>): Promise<void> {
+  async fileQuery(items: Array<OibusItemDTO>): Promise<void> {
     const inputFolder = path.resolve(this.configuration.settings.inputFolder);
     this.logger.trace(`Reading "${inputFolder}" directory`);
     // List files in the inputFolder

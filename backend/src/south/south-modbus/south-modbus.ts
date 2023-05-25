@@ -10,11 +10,12 @@ import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
+import { QueriesLastPoint } from '../south-interface';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
  */
-export default class SouthModbus extends SouthConnector {
+export default class SouthModbus extends SouthConnector implements QueriesLastPoint {
   static category = manifest.category;
 
   private socket: net.Socket | null = null;
@@ -48,7 +49,7 @@ export default class SouthModbus extends SouthConnector {
     );
   }
 
-  override async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
+  async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
     try {
       for (const item of items) {
         await this.modbusFunction(item);
