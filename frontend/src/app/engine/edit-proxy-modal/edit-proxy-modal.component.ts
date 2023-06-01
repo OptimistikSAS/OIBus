@@ -73,9 +73,9 @@ export class EditProxyModalComponent {
 
     let obs: Observable<ProxyDTO>;
     if (this.mode === 'create') {
-      obs = this.proxyService.createProxy(command);
+      obs = this.proxyService.create(command);
     } else {
-      obs = this.proxyService.updateProxy(this.proxy!.id, command).pipe(switchMap(() => this.proxyService.getProxy(this.proxy!.id)));
+      obs = this.proxyService.update(this.proxy!.id, command).pipe(switchMap(() => this.proxyService.get(this.proxy!.id)));
     }
     obs.pipe(this.state.pendingUntilFinalization()).subscribe(proxy => {
       this.modal.close(proxy);

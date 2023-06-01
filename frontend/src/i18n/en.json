@@ -51,6 +51,12 @@
       "B": "B",
       "kB": "kB",
       "MB": "MB"
+    },
+    "unit": {
+      "ms": "ms",
+      "s": "s",
+      "hr": "hr",
+      "MB": "MB"
     }
   },
   "datepicker": {
@@ -79,13 +85,15 @@
     "hours-and-minutes-and-seconds": "{{ hours }}, {{ minutes }}, {{ seconds }}",
     "minutes-and-seconds": "{{ minutes }}, {{ seconds }}"
   },
+  "enabled": "active",
+  "disabled": "paused",
   "enums": {
     "log-levels": {
-      "silent":  "Silent",
+      "silent": "Silent",
       "error": "Error",
-      "warn":  "Warning",
+      "warn": "Warning",
       "info": "Info",
-      "debug":  "Debug",
+      "debug": "Debug",
       "trace": "Trace"
     },
     "categories": {
@@ -122,7 +130,7 @@
     "title": "Sign in",
     "login": "Login",
     "password": "Password",
-    "login-button": "Sumit",
+    "login-button": "Sign in",
     "login-error": "Invalid username or password"
   },
   "user-settings": {
@@ -145,14 +153,23 @@
     }
   },
   "home": {
-    "engine": "Engine",
-    "engine-detail": "Manage log settings, server port, health signal... ",
-    "history-queries": "History Queries",
-    "history-queries-detail": "Retrieve data between a time interval in Historian supported protocols",
-    "north": "North",
-    "north-detail": "Create a connector to send data in a target application or database",
-    "south": "South",
-    "south-detail": "Create a connector to retrieve data from a source"
+    "south": {
+      "title": "South",
+      "name": "Name",
+      "files-count-last-hour": "# files (last hr)",
+      "values-count-last-hour": "# values (last hr)"
+    },
+    "north": {
+      "title": "North",
+      "name": "Name",
+      "files-count-last-hour": "# files (last hr)",
+      "values-count-last-hour": "# values (last hr)"
+    },
+    "history-query": {
+      "title": "History query",
+      "name": "Name",
+      "status": "Status"
+    }
   },
   "about": {
     "official-site": "Official site",
@@ -167,8 +184,9 @@
     "copyright": "(c) Copyright 2019-{{nowYear}} Optimistik, all rights reserved."
   },
   "engine": {
-    "title": "Engine",
+    "title": "Engine configuration",
     "edit": "Edit settings",
+    "edit-title": "Edit engine settings",
     "shutdown": "Shutdown",
     "confirm-shutdown": "Are you sure you want to shutdown OIBus engine?",
     "shutdown-complete": "OIBus shut down",
@@ -179,34 +197,40 @@
     "general-settings": {
       "title": "General settings",
       "name": "Name",
-      "port": "Port"
+      "port": "Port",
+      "log-levels": "Log levels",
+      "console": "Console",
+      "file": "File",
+      "database": "Database",
+      "loki": "Loki"
     },
     "logger": {
       "title": "Logger",
       "console": {
         "title": "Console",
-        "level": "Level"
+        "level": "Console level"
       },
       "file": {
         "title": "File",
-        "level": "Level",
+        "level": "File level",
         "max-file-size": "Max file size",
         "number-of-files": "Number of files"
       },
       "database": {
         "title": "Database",
-        "level": "Level",
+        "level": "Database level",
         "max-number-of-logs": "Max number of logs"
       },
       "loki": {
         "title": "Loki",
-        "level": "Level",
-        "interval": "Interval",
-        "address": "Address",
-        "proxy": "Proxy",
-        "token-address": "Token address",
-        "username": "Username",
-        "password": "Password"
+        "level": "Loki level",
+        "interval": "Loki Interval",
+        "address": "Loki url",
+        "proxy": "Loki proxy",
+        "no-proxy": "No proxy",
+        "token-address": "Loki token url",
+        "username": "Loki username",
+        "password": "Loki password"
       }
     },
     "health-signal": {
@@ -226,14 +250,13 @@
       }
     },
     "proxy": {
-      "list": "Proxy list",
+      "list": "Proxies",
       "title-create": "Create a proxy",
       "title-edit": "Edit proxy",
       "confirm-deletion": "Are you sure you want to delete the proxy {{ name }}? Beforehand, be sure it is not used.",
       "updated": "Proxy {{ name }} successfully updated",
       "created": "Proxy {{ name }} successfully created",
       "deleted": "Proxy {{ name }} deleted",
-      "add": "Add",
       "none": "No proxy",
       "name": "Name",
       "description": "Description",
@@ -242,42 +265,39 @@
       "password": "Password"
     },
     "scan-mode": {
-      "list": "Scan mode list",
+      "list": "Scan mode",
       "title-create": "Create a scan mode",
       "title-edit": "Edit scan mode",
       "confirm-deletion": "Are you sure you want to delete the scan mode {{ name }}? Beforehand, be sure it is not used.",
       "updated": "Scan mode {{ name }} successfully updated",
       "created": "Scan mode {{ name }} successfully created",
       "deleted": "Scan mode {{ name }} deleted",
-      "add": "Add",
       "none": "No scan mode",
       "name": "Name",
       "description": "Description",
       "cron": "Cron"
     },
     "ip-filter": {
-      "list": "IP filter list",
+      "list": "IP filters",
       "title-create": "Create an IP filter",
       "title-edit": "Edit IP filter",
       "confirm-deletion": "Are you sure you want to delete the IP filter {{ address }}? Beforehand, be sure it is not used.",
       "updated": "IP filter {{ address }} successfully updated",
       "created": "IP filter {{ address }} successfully created",
       "deleted": "IP filter {{ address }} deleted",
-      "add": "Add",
       "none": "No IP filter",
       "name": "Name",
       "description": "Description",
       "address": "Address"
     },
     "external-source": {
-      "list": "External source list",
+      "list": "External sources",
       "title-create": "Create an external source",
       "title-edit": "Edit external source",
       "confirm-deletion": "Are you sure you want to delete the external source {{ reference }}? Beforehand, be sure it is not used.",
       "updated": "External source {{ reference }} successfully updated",
       "created": "External source {{ reference }} successfully created",
       "deleted": "External source {{ reference }} deleted",
-      "add": "Add",
       "none": "No external source",
       "name": "Name",
       "description": "Description",
@@ -285,33 +305,43 @@
     }
   },
   "south": {
-    "title": "South connector {{ name }}",
+    "title": "{{ type }} south connector {{ name }}",
     "list": "South list",
     "type-title": "South type",
     "type-error": "You must select a South type",
-    "create-title": "Create a South connector",
-    "edit-title": "Edit South connector",
-    "confirm-deletion": "Are you sure you want to delete the South connector {{ name }}?",
+    "create-title": "Create {{ type }} south connector",
+    "edit-title": "Edit {{ type }} south connector",
+    "confirm-deletion": "Are you sure you want to delete the south connector {{ name }}?",
     "updated": "South connector {{ name }} successfully updated",
     "created": "South connector {{ name }} successfully created",
     "deleted": "South connector {{ name }} deleted",
-    "add": "Add",
+    "search-by-name": "Name",
     "edit": "Edit",
-    "none": "No South connector",
+    "none": "No south connector matches the search",
     "name": "Name",
     "description": "Description",
+    "status": "Status",
     "enabled": "Enabled",
     "history": {
       "settings": "History settings",
       "max-instant-per-item": "Max instant per item",
-      "max-read-interval": "Max read interval (s)",
-      "read-delay": "Read delay (ms)"
+      "max-read-interval": "Max read interval",
+      "read-delay": "Read delay"
     },
     "type": "Type",
     "general-settings": "General settings",
     "specific-settings": "{{ type }} settings",
+    "edit-item-modal": {
+      "create-title": "Add a new item to the south connector",
+      "edit-title": "Edit item"
+    },
     "items": {
       "title": "Items",
+      "export": "Export",
+      "import": "Import",
+      "imported": "Items imported",
+      "search-placeholder": "Enter text to filter items",
+      "save-before-adding-items": "Save connector before you can add new items",
       "name": "Name",
       "confirm-deletion": "Are you sure you want to delete this South connector item?",
       "confirm-delete-all": "Are you sure you want to delete all this South connector items?",
@@ -320,18 +350,16 @@
       "deleted": "South connector item deleted",
       "all-deleted": "South connector items deleted",
       "delete-all": "Delete all",
-      "add": "Add",
       "edit": "Edit",
-      "none": "No South items",
+      "none": "No items has been defined on this connector yet",
+      "none-match": "No items match the search criteria",
       "scan-mode": "Schedule",
-      "export": "Export items",
-      "import": "Import items",
-      "imported": "Items imported",
       "search": {
         "name": "Name"
       }
     },
-    "data": {
+    "monitoring": {
+      "title": "Monitoring",
       "reset-metrics": "Reset metrics",
       "metrics-reset": "Metrics successfully reset",
       "metrics-title": "South metrics",
@@ -346,21 +374,22 @@
     }
   },
   "north": {
-    "title": "North connector {{ name }}",
+    "title": "{{ type }} north connector : {{ name }}",
     "list": "North list",
-    "type-title": "North type",
+    "search-by-name": "Name",
+    "choose-north-type-title": "Choose the type of north",
     "type-error": "You must select a North type",
-    "create-title": "Create a North connector",
-    "edit-title": "Edit North connector",
-    "confirm-deletion": "Are you sure you want to delete the North connector {{ name }}?",
+    "create-title": "Create {{ type }} north connector",
+    "edit-title": "Edit {{ type }} north connector",
+    "confirm-deletion": "Are you sure you want to delete the north connector {{ name }}?",
     "updated": "North connector {{ name }} successfully updated",
     "created": "North connector {{ name }} successfully created",
     "deleted": "North connector {{ name }} deleted",
-    "add": "Add",
     "edit": "Edit",
-    "none": "No North connector",
+    "none": "No north connector matches the search",
     "name": "Name",
     "description": "Description",
+    "status": "Status",
     "enabled": "Enabled",
     "type": "Type",
     "general-settings": "General settings",
@@ -368,17 +397,17 @@
     "cache-settings": {
       "title": "Cache",
       "send-scan-mode": "Send interval",
-      "retry-interval": "Retry interval (ms)",
+      "retry-interval": "Retry interval",
       "retry-count": "Retry count",
       "group-count": "Group count",
       "max-send-count": "Max send count",
-      "max-size": "Max size (MB)",
+      "max-size": "Max size",
       "send-file-immediately": "Send file immediately",
       "explore-cache": "Explore cache",
       "error-files": "Error files",
       "remove-selected-files": "Remove selected files",
       "retry-selected-files": "Retry selected files",
-      "error-files-none":  "No error file",
+      "error-files-none": "No error file",
       "file-date": "Modification date",
       "file-size": "Size",
       "filename": "Filename"
@@ -389,7 +418,7 @@
       "retention-duration": "Retention duration"
     },
     "subscriptions": {
-      "list": "Subscriptions",
+      "title": "Subscriptions",
       "none": "No subscription set. The connector receives data from all south connectors.",
       "add": "Subscribe to a connector",
       "title-creation": "Subscribe to a South connector",
@@ -398,10 +427,10 @@
       "deleted": "The connector is not subscribed to {{ name }} anymore",
       "name": "South connector"
     },
-    "data": {
+    "monitoring": {
+      "title": "Monitoring",
       "reset-metrics": "Reset metrics",
       "metrics-reset": "Metrics successfully reset",
-      "metrics-title": "North metrics",
       "metrics-start": "Metrics started on {{ start }}",
       "number-of-values": "Number of values",
       "number-of-files": "Number of files",
@@ -410,13 +439,16 @@
       "last-value": "Last value retrieved",
       "last-run-start": "Last run",
       "last-run-duration": "Last run duration"
+    },
+    "cache": {
+      "title": "Cache content for connector {{ name }}"
     }
   },
   "logs": {
     "title": "Logs",
     "search": {
       "start": "Start",
-      "end":"End",
+      "end": "End",
       "message-content": "Message",
       "scope": "Scope",
       "levels": "Levels"
@@ -428,8 +460,9 @@
     "none": "No log found"
   },
   "history-query": {
-    "list": "History query list",
+    "list": "History queries",
     "title": "History query {{ name }}",
+    "search-by-name": "Name",
     "confirm-deletion": "Are you sure you want to delete the History query {{ name }}?",
     "updated": "History query {{ name }} successfully updated",
     "created": "History query {{ name }} successfully created",

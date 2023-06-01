@@ -8,11 +8,12 @@ import { TranslateModule } from '@ngx-translate/core';
 import { IpFilterService } from '../../services/ip-filter.service';
 import { IpFilterDTO } from '../../../../../shared/model/ip-filter.model';
 import { EditIpFilterModalComponent } from '../edit-ip-filter-modal/edit-ip-filter-modal.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 
 @Component({
   selector: 'oib-ip-filter-list',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule],
+  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
   templateUrl: './ip-filter-list.component.html',
   styleUrls: ['./ip-filter-list.component.scss']
 })
@@ -27,7 +28,7 @@ export class IpFilterListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.ipFilterService.getIpFilters().subscribe(ipFilterList => {
+    this.ipFilterService.list().subscribe(ipFilterList => {
       this.ipFilters = ipFilterList;
     });
   }
@@ -35,7 +36,7 @@ export class IpFilterListComponent implements OnInit {
   /**
    * Open a modal to edit an IP filter
    */
-  openEditIpFilterModal(ipFilter: IpFilterDTO) {
+  editIpFilter(ipFilter: IpFilterDTO) {
     const modalRef = this.modalService.open(EditIpFilterModalComponent);
     const component: EditIpFilterModalComponent = modalRef.componentInstance;
     component.prepareForEdition(ipFilter);
@@ -45,7 +46,7 @@ export class IpFilterListComponent implements OnInit {
   /**
    * Open a modal to create an IP filter
    */
-  openCreationIpFilterModal() {
+  addIpFilter() {
     const modalRef = this.modalService.open(EditIpFilterModalComponent);
     const component: EditIpFilterModalComponent = modalRef.componentInstance;
     component.prepareForCreation();
@@ -57,7 +58,7 @@ export class IpFilterListComponent implements OnInit {
    */
   private refreshAfterEditIpFilterModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
     modalRef.result.subscribe((ipFilter: IpFilterDTO) => {
-      this.ipFilterService.getIpFilters().subscribe(ipFilters => {
+      this.ipFilterService.list().subscribe(ipFilters => {
         this.ipFilters = ipFilters;
       });
       this.notificationService.success(`engine.ip-filter.${mode}`, {
@@ -77,11 +78,11 @@ export class IpFilterListComponent implements OnInit {
       })
       .pipe(
         switchMap(() => {
-          return this.ipFilterService.deleteIpFilter(ipFilter.id);
+          return this.ipFilterService.delete(ipFilter.id);
         })
       )
       .subscribe(() => {
-        this.ipFilterService.getIpFilters().subscribe(ipFilters => {
+        this.ipFilterService.list().subscribe(ipFilters => {
           this.ipFilters = ipFilters;
         });
         this.notificationService.success('engine.ip-filter.deleted', {

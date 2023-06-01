@@ -5,15 +5,17 @@ import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
-import { SouthConnectorDTO, OibusItemCommandDTO, OibusItemDTO, OibusItemManifest } from '../../../../../shared/model/south-connector.model';
+import { OibusItemCommandDTO, OibusItemDTO, OibusItemManifest, SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { NgForOf, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
-import { createInput } from '../../shared/utils';
+import { createInput, getRowSettings } from '../../shared/utils';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { Timezone } from '../../../../../shared/model/types';
 import { inMemoryTypeahead } from '../../shared/typeahead';
+import { OibFormControl } from '../../../../../shared/model/form.model';
+import { FormComponent } from '../../shared/form/form.component';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -22,6 +24,7 @@ declare namespace Intl {
 
   function supportedValuesOf(input: Key): string[];
 }
+
 @Component({
   selector: 'oib-edit-south-item-modal',
   templateUrl: './edit-south-item-modal.component.html',
@@ -36,7 +39,8 @@ declare namespace Intl {
     NgIf,
     OibCodeBlockComponent,
     OibScanModeComponent,
-    NgbTypeahead
+    NgbTypeahead,
+    FormComponent
   ],
   standalone: true
 })
@@ -44,9 +48,14 @@ export class EditSouthItemModalComponent {
   mode: 'create' | 'edit' = 'create';
   state = new ObservableState();
   southConnector: SouthConnectorDTO | null = null;
-  southItemSchema: OibusItemManifest | null = null;
-  item: OibusItemDTO | null = null;
+  subscriptionOnly = false;
+  acceptSubscription = false;
+
   scanModes: Array<ScanModeDTO> = [];
+  southItemSchema: Array<Array<OibFormControl>> = [];
+
+  item: OibusItemDTO | null = null;
+
   form = this.fb.group({
     name: ['', Validators.required],
     scanMode: [null as ScanModeDTO | null, Validators.required],
@@ -64,14 +73,16 @@ export class EditSouthItemModalComponent {
   private createSettingsInputs() {
     const inputsToSubscribeTo: Set<string> = new Set();
     const settingsForm = this.form.controls.settings;
-    this.southItemSchema!.settings.forEach(row => {
-      createInput(row, settingsForm);
-      if (row.conditionalDisplay) {
-        Object.entries(row.conditionalDisplay).forEach(([key]) => {
-          // Keep only one occurrence of each input to subscribe to
-          inputsToSubscribeTo.add(key);
-        });
-      }
+    this.southItemSchema.forEach(row => {
+      row.forEach(setting => {
+        createInput(setting, settingsForm);
+        if (setting.conditionalDisplay) {
+          Object.entries(setting.conditionalDisplay).forEach(([key]) => {
+            // Keep only one occurrence of each input to subscribe to
+            inputsToSubscribeTo.add(key);
+          });
+        }
+      });
     });
     // Each input that must be monitored is subscribed
     inputsToSubscribeTo.forEach(input => {
@@ -84,7 +95,7 @@ export class EditSouthItemModalComponent {
       });
     });
 
-    if (this.southItemSchema!.scanMode.subscriptionOnly) {
+    if (this.subscriptionOnly) {
       this.form.controls.scanMode.disable();
     } else {
       this.form.controls.scanMode.enable();
@@ -92,18 +103,20 @@ export class EditSouthItemModalComponent {
   }
 
   private disableInputs(input: string, inputValue: string | number | boolean, settingsForm: FormGroup) {
-    this.southItemSchema!.settings.forEach(row => {
-      if (row.conditionalDisplay) {
-        Object.entries(row.conditionalDisplay).forEach(([key, values]) => {
-          if (key === input) {
-            if (!values.includes(inputValue)) {
-              settingsForm.controls[row.key].disable();
-            } else {
-              settingsForm.controls[row.key].enable();
+    this.southItemSchema.forEach(row => {
+      row.forEach(setting => {
+        if (setting.conditionalDisplay) {
+          Object.entries(setting.conditionalDisplay).forEach(([key, values]) => {
+            if (key === input) {
+              if (!values.includes(inputValue)) {
+                settingsForm.controls[setting.key].disable();
+              } else {
+                settingsForm.controls[setting.key].enable();
+              }
             }
-          }
-        });
-      }
+          });
+        }
+      });
     });
   }
 
@@ -113,9 +126,10 @@ export class EditSouthItemModalComponent {
   prepareForCreation(southConnector: SouthConnectorDTO, southItemSchema: OibusItemManifest, scanModes: Array<ScanModeDTO>) {
     this.mode = 'create';
     this.southConnector = southConnector;
-    this.southItemSchema = southItemSchema;
+    this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
+    this.acceptSubscription = southItemSchema.scanMode.acceptSubscription;
+    this.southItemSchema = getRowSettings(southItemSchema.settings, null);
     this.scanModes = scanModes;
-
     this.createSettingsInputs();
   }
 
@@ -131,14 +145,8 @@ export class EditSouthItemModalComponent {
     this.mode = 'edit';
     this.item = southItem;
     this.southConnector = southConnector;
-    this.southItemSchema = southItemSchema;
+    this.southItemSchema = getRowSettings(southItemSchema.settings, southItem.settings);
     this.scanModes = scanModes;
-
-    this.southItemSchema.settings.forEach(element => {
-      if (this.item?.settings) {
-        element.currentValue = this.item.settings[element.key];
-      }
-    });
 
     this.form.patchValue({
       name: southItem.name,
@@ -160,13 +168,8 @@ export class EditSouthItemModalComponent {
     this.item.name = `${southItem.name}-copy`;
     this.mode = 'create';
     this.southConnector = southConnector;
-    this.southItemSchema = southItemSchema;
+    this.southItemSchema = getRowSettings(southItemSchema.settings, southItem.settings);
     this.scanModes = scanModes;
-    this.southItemSchema.settings.forEach(element => {
-      if (this.item?.settings) {
-        element.currentValue = this.item.settings[element.key];
-      }
-    });
 
     this.form.patchValue({
       name: this.item.name,
@@ -194,11 +197,11 @@ export class EditSouthItemModalComponent {
 
     let obs: Observable<OibusItemDTO>;
     if (this.mode === 'create') {
-      obs = this.southConnectorService.createSouthItem(this.southConnector!.id, command);
+      obs = this.southConnectorService.createItem(this.southConnector!.id, command);
     } else {
       obs = this.southConnectorService
-        .updateSouthItem(this.southConnector!.id, this.item!.id, command)
-        .pipe(switchMap(() => this.southConnectorService.getSouthConnectorItem(this.southConnector!.id, this.item!.id)));
+        .updateItem(this.southConnector!.id, this.item!.id, command)
+        .pipe(switchMap(() => this.southConnectorService.getItems(this.southConnector!.id, this.item!.id)));
     }
     obs.pipe(this.state.pendingUntilFinalization()).subscribe(southItem => {
       this.modal.close(southItem);

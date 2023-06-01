@@ -151,6 +151,11 @@ export default class SouthConnectorController {
     }
   }
 
+  async listSouthItems(ctx: KoaContext<void, Array<OibusItemDTO>>): Promise<void> {
+    const southItems = ctx.app.repositoryService.southItemRepository.listSouthItems(ctx.params.southId);
+    ctx.ok(southItems);
+  }
+
   async searchSouthItems(ctx: KoaContext<void, Page<OibusItemDTO>>): Promise<void> {
     const searchParams: OibusItemSearchParam = {
       page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,

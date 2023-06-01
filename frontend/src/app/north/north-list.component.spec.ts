@@ -56,22 +56,26 @@ describe('NorthListComponent', () => {
       ]
     });
 
-    northConnectorService.getNorthConnectors.and.returnValue(of(northConnectors));
+    northConnectorService.list.and.returnValue(of(northConnectors));
 
     tester = new NorthListComponentTester();
     tester.detectChanges();
   });
 
-  it('should display title', () => {
+  it('should display the north  list', () => {
     expect(tester.title).toContainText('North list');
     expect(tester.northList.length).toBe(2);
     expect(tester.northList[0].elements('td')[0]).toContainText(northConnectors[0].name);
     expect(tester.northList[0].elements('td')[1]).toContainText(northConnectors[0].type);
-    expect(tester.northList[0].elements('td')[2]).toContainText(northConnectors[0].description);
-    expect(tester.northList[0].elements('td')[3].elements('button').length).toBe(4);
+    expect(tester.northList[0].elements('td')[2]).toContainText('active');
+    expect(tester.northList[0].elements('td')[3]).toContainText(northConnectors[0].description);
+    expect(tester.northList[0].elements('td')[4].elements('a').length).toBe(3);
+    expect(tester.northList[0].elements('td')[4].elements('button').length).toBe(1);
     expect(tester.northList[1].elements('td')[0]).toContainText(northConnectors[1].name);
     expect(tester.northList[1].elements('td')[1]).toContainText(northConnectors[1].type);
-    expect(tester.northList[1].elements('td')[2]).toContainText(northConnectors[1].description);
-    expect(tester.northList[1].elements('td')[3].elements('button').length).toBe(4);
+    expect(tester.northList[1].elements('td')[2]).toContainText('active');
+    expect(tester.northList[1].elements('td')[3]).toContainText(northConnectors[1].description);
+    expect(tester.northList[1].elements('td')[4].elements('a').length).toBe(3);
+    expect(tester.northList[1].elements('td')[4].elements('button').length).toBe(1);
   });
 });

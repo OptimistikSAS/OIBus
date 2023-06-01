@@ -1,0 +1,45 @@
+<div class="oib-padded-container" *ngIf="southConnector && southItemSchema">
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <div class="oib-header-container">
+        <h1 id="title" translate="south.title" [translateParams]="{ name: southConnector.name, type: southConnector.type }">
+          <span class="ms-2">
+            <button class="btn btn-primary" id="edit-link" routerLink="edit">
+              <i class="fa fa-pencil"></i>
+            </button>
+          </span>
+        </h1>
+      </div>
+
+      <!-- South metrics -->
+      <oib-south-metrics [southConnector]="southConnector"></oib-south-metrics>
+
+      <!-- Specific settings -->
+      <oib-box>
+        <ng-template oibBoxTitle>
+          <span translate="south.specific-settings" [translateParams]="{ type: southConnector.type }" id="specific-settings-title"></span>
+        </ng-template>
+
+        <table class="table table-sm table-hover oib-table mt-3">
+          <tbody class="south-settings">
+            <tr>
+              <td translate="south.status"></td>
+              <td>{{ southConnector.enabled | enabled }}</td>
+            </tr>
+            <tr *ngFor="let setting of settings">
+              <td style="width: 33%">{{setting.label}}</td>
+              <td>{{setting.currentValue}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </oib-box>
+
+      <!-- Items -->
+      <oib-south-items
+        [southConnector]="southConnector"
+        [southConnectorItemSchema]="southItemSchema"
+        [scanModes]="scanModes"
+      ></oib-south-items>
+    </div>
+  </div>
+</div>

@@ -28,7 +28,7 @@ describe('HistoryQueryService', () => {
 
   it('should get all History queries', () => {
     let expectedHistoryQueries: Array<HistoryQueryDTO> = [];
-    service.getHistoryQueries().subscribe(historyQueries => (expectedHistoryQueries = historyQueries));
+    service.list().subscribe(historyQueries => (expectedHistoryQueries = historyQueries));
 
     http.expectOne('/api/history-queries').flush([{ name: 'History query 1' }, { name: 'History query 2' }]);
 
@@ -39,7 +39,7 @@ describe('HistoryQueryService', () => {
     let expectedHistoryQuery: HistoryQueryDTO | null = null;
     const historyQuery = { id: 'id1' } as HistoryQueryDTO;
 
-    service.getHistoryQuery('id1').subscribe(c => (expectedHistoryQuery = c));
+    service.get('id1').subscribe(c => (expectedHistoryQuery = c));
 
     http.expectOne({ url: '/api/history-queries/id1', method: 'GET' }).flush(historyQuery);
     expect(expectedHistoryQuery!).toEqual(historyQuery);
@@ -56,7 +56,7 @@ describe('HistoryQueryService', () => {
       northId: null
     };
 
-    service.createHistoryQuery(command).subscribe(() => (done = true));
+    service.create(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -95,7 +95,7 @@ describe('HistoryQueryService', () => {
       }
     };
 
-    service.updateHistoryQuery('id1', command).subscribe(() => (done = true));
+    service.update('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);

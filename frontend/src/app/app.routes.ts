@@ -5,14 +5,14 @@ import { AboutComponent } from './about/about.component';
 import { EditEngineComponent } from './engine/edit-engine/edit-engine.component';
 import { SouthListComponent } from './south/south-list.component';
 import { NorthListComponent } from './north/north-list.component';
-import { EngineComponent } from './engine/engine.component';
-import { SouthDisplayComponent } from './south/south-display/south-display.component';
+import { EngineDetailComponent } from './engine/engine-detail.component';
+import { SouthDetailComponent } from './south/south-detail/south-detail.component';
 import { EditSouthComponent } from './south/edit-south/edit-south.component';
-import { NorthDisplayComponent } from './north/north-display/north-display.component';
+import { NorthDetailComponent } from './north/north-detail/north-detail.component';
 import { EditNorthComponent } from './north/edit-north/edit-north.component';
 import { EditHistoryQueryComponent } from './history-query/edit-history-query/edit-history-query.component';
 import { HistoryQueryListComponent } from './history-query/history-query-list.component';
-import { HistoryQueryDisplayComponent } from './history-query/history-query-display/history-query-display.component';
+import { HistoryQueryDetailComponent } from './history-query/history-query-detail/history-query-detail.component';
 import { LoginComponent } from './auth/login/login.component';
 import { AuthenticationGuard } from './auth/authentication.guard';
 import { ExploreCacheComponent } from './north/explore-cache/explore-cache.component';
@@ -30,7 +30,7 @@ export const ROUTES: Routes = [
       },
       {
         path: 'engine',
-        component: EngineComponent
+        component: EngineDetailComponent
       },
       {
         path: 'engine/edit',
@@ -54,7 +54,7 @@ export const ROUTES: Routes = [
       },
       {
         path: 'north/:northId',
-        component: NorthDisplayComponent
+        component: NorthDetailComponent
       },
       {
         path: 'south',
@@ -70,7 +70,7 @@ export const ROUTES: Routes = [
       },
       {
         path: 'south/:southId',
-        component: SouthDisplayComponent
+        component: SouthDetailComponent
       },
       {
         path: 'engine/edit',
@@ -86,7 +86,7 @@ export const ROUTES: Routes = [
       },
       {
         path: 'history-queries/:historyQueryId',
-        component: HistoryQueryDisplayComponent
+        component: HistoryQueryDetailComponent
       },
       {
         path: 'logs',

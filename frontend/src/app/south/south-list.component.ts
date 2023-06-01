@@ -2,34 +2,70 @@ import { Component, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
-import { switchMap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
 import { NgForOf, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ModalService } from '../shared/modal.service';
-import { CreateSouthConnectorModalComponent } from './create-south-connector-modal/create-south-connector-modal.component';
+import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal/choose-south-connector-type-modal.component';
+import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
+import { FormControlValidationDirective } from '../shared/form-control-validation.directive';
+import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
+import { createPageFromArray, Page } from '../../../../shared/model/types';
+import { emptyPage } from '../shared/test-utils';
+import { PaginationComponent } from '../shared/pagination/pagination.component';
+
+const PAGE_SIZE = 15;
 
 @Component({
   selector: 'oib-south-list',
   standalone: true,
-  imports: [TranslateModule, RouterLink, NgIf, NgForOf],
+  imports: [
+    TranslateModule,
+    RouterLink,
+    NgIf,
+    NgForOf,
+    EnabledEnumPipe,
+    FormControlValidationDirective,
+    FormsModule,
+    LoadingSpinnerComponent,
+    ReactiveFormsModule,
+    PaginationComponent
+  ],
   templateUrl: './south-list.component.html',
   styleUrls: ['./south-list.component.scss']
 })
 export class SouthListComponent implements OnInit {
-  southList: Array<SouthConnectorDTO> = [];
+  allSouths: Array<SouthConnectorDTO> | null = null;
+  private filteredSouths: Array<SouthConnectorDTO> = [];
+  displayedSouths: Page<SouthConnectorDTO> = emptyPage();
+
+  searchForm = this.fb.group({
+    name: [null as string | null]
+  });
 
   constructor(
     private confirmationService: ConfirmationService,
     private notificationService: NotificationService,
     private modalService: ModalService,
-    private southConnectorService: SouthConnectorService
+    private southConnectorService: SouthConnectorService,
+    private fb: NonNullableFormBuilder
   ) {}
 
   ngOnInit() {
-    this.southConnectorService.getSouthConnectors().subscribe(connectors => {
-      this.southList = connectors;
+    this.southConnectorService.list().subscribe(souths => {
+      this.allSouths = souths;
+      this.filteredSouths = this.filter(souths);
+      this.changePage(0);
+    });
+
+    this.searchForm.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
+      if (this.allSouths) {
+        this.filteredSouths = this.filter(this.allSouths);
+        this.changePage(0);
+      }
     });
   }
 
@@ -44,13 +80,17 @@ export class SouthListComponent implements OnInit {
       })
       .pipe(
         switchMap(() => {
-          return this.southConnectorService.deleteSouthConnector(south.id);
+          return this.southConnectorService.delete(south.id);
         })
       )
       .subscribe(() => {
-        this.southConnectorService.getSouthConnectors().subscribe(southList => {
-          this.southList = southList;
-        });
+        this.southConnectorService
+          .list()
+          .pipe(tap(() => (this.allSouths = null)))
+          .subscribe(southList => {
+            this.allSouths = southList;
+            this.changePage(0);
+          });
         this.notificationService.success('south.deleted', {
           name: south.name
         });
@@ -60,8 +100,27 @@ export class SouthListComponent implements OnInit {
   /**
    * Open a modal to create a South connector
    */
-  openCreationSouthModal() {
-    const modalRef = this.modalService.open(CreateSouthConnectorModalComponent);
+  createSouth() {
+    const modalRef = this.modalService.open(ChooseSouthConnectorTypeModalComponent, { size: 'xl' });
     modalRef.result.subscribe();
+  }
+
+  changePage(pageNumber: number) {
+    this.displayedSouths = this.createPage(pageNumber);
+  }
+
+  private createPage(pageNumber: number): Page<SouthConnectorDTO> {
+    return createPageFromArray(this.filteredSouths, PAGE_SIZE, pageNumber);
+  }
+
+  filter(souths: Array<SouthConnectorDTO>): Array<SouthConnectorDTO> {
+    const formValue = this.searchForm.value;
+    let filteredItems = souths;
+
+    if (formValue.name) {
+      filteredItems = filteredItems.filter(item => item.name.toLowerCase().includes(formValue.name!.toLowerCase()));
+    }
+
+    return filteredItems;
   }
 }

@@ -17,28 +17,43 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { ProxyService } from '../../services/proxy.service';
 import { createInput, getRowSettings } from '../../shared/utils';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { SouthItemsComponent } from '../south-items/south-items.component';
 
 @Component({
   selector: 'oib-edit-south',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule, ...formDirectives, RouterLink, SaveButtonComponent, FormComponent, BackNavigationDirective],
+  imports: [
+    NgIf,
+    NgForOf,
+    TranslateModule,
+    ...formDirectives,
+    RouterLink,
+    SaveButtonComponent,
+    FormComponent,
+    BackNavigationDirective,
+    BoxComponent,
+    BoxTitleDirective,
+    SouthItemsComponent
+  ],
   templateUrl: './edit-south.component.html',
   styleUrls: ['./edit-south.component.scss']
 })
 export class EditSouthComponent implements OnInit {
   mode: 'create' | 'edit' = 'create';
   southConnector: SouthConnectorDTO | null = null;
+  southType = '';
   state = new ObservableState();
+
   loading = true;
   southSettingsSchema: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
   proxies: Array<ProxyDTO> = [];
-  southType = '';
   manifest: SouthConnectorManifest | null = null;
   southForm = this.fb.group({
     name: ['', Validators.required],
     description: '',
-    enabled: false,
+    enabled: true,
     history: this.fb.group({
       maxInstantPerItem: false,
       maxReadInterval: 0,
@@ -58,7 +73,7 @@ export class EditSouthComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    combineLatest([this.proxyService.getProxies(), this.scanModeService.getScanModes(), this.route.paramMap, this.route.queryParamMap])
+    combineLatest([this.proxyService.list(), this.scanModeService.list(), this.route.paramMap, this.route.queryParamMap])
       .pipe(
         switchMap(([proxies, scanModes, params, queryParams]) => {
           this.proxies = proxies;
@@ -74,7 +89,7 @@ export class EditSouthComponent implements OnInit {
           }
 
           if (paramSouthId) {
-            return this.southConnectorService.getSouthConnector(paramSouthId).pipe(this.state.pendingUntilFinalization());
+            return this.southConnectorService.get(paramSouthId).pipe(this.state.pendingUntilFinalization());
           }
           // otherwise, we are creating one
           return of(null);
@@ -152,17 +167,21 @@ export class EditSouthComponent implements OnInit {
     let createOrUpdate: Observable<SouthConnectorDTO>;
     // if we are editing
     if (this.mode === 'edit') {
-      createOrUpdate = this.southConnectorService.updateSouthConnector(this.southConnector!.id, command).pipe(
+      createOrUpdate = this.southConnectorService.update(this.southConnector!.id, command).pipe(
         tap(() => this.notificationService.success('south.updated', { name: command.name })),
-        switchMap(() => this.southConnectorService.getSouthConnector(this.southConnector!.id))
+        switchMap(() => this.southConnectorService.get(this.southConnector!.id))
       );
     } else {
       createOrUpdate = this.southConnectorService
-        .createSouthConnector(command)
+        .create(command)
         .pipe(tap(() => this.notificationService.success('south.created', { name: command.name })));
     }
     createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(southConnector => {
-      this.router.navigate(['/south', southConnector.id]);
+      if (this.mode === 'create') {
+        this.router.navigate(['/south', southConnector.id, 'edit']);
+      } else {
+        this.router.navigate(['south']);
+      }
     });
   }
 

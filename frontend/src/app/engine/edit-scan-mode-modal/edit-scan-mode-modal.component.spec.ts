@@ -92,7 +92,7 @@ describe('EditScanModeModalComponent', () => {
       const createdScanMode = {
         id: 'id1'
       } as ScanModeDTO;
-      scanModeService.createScanMode.and.returnValue(of(createdScanMode));
+      scanModeService.create.and.returnValue(of(createdScanMode));
 
       tester.save.click();
 
@@ -102,7 +102,7 @@ describe('EditScanModeModalComponent', () => {
         cron: '* * * * * *'
       };
 
-      expect(scanModeService.createScanMode).toHaveBeenCalledWith(expectedCommand);
+      expect(scanModeService.create).toHaveBeenCalledWith(expectedCommand);
       expect(fakeActiveModal.close).toHaveBeenCalledWith(createdScanMode);
     }));
 
@@ -121,7 +121,7 @@ describe('EditScanModeModalComponent', () => {
     };
 
     beforeEach(() => {
-      scanModeService.getScanMode.and.returnValue(of(scanModeToUpdate));
+      scanModeService.get.and.returnValue(of(scanModeToUpdate));
 
       tester.componentInstance.prepareForEdition(scanModeToUpdate);
       tester.detectChanges();
@@ -142,7 +142,7 @@ describe('EditScanModeModalComponent', () => {
     });
 
     it('should save if valid', fakeAsync(() => {
-      scanModeService.updateScanMode.and.returnValue(of(undefined));
+      scanModeService.update.and.returnValue(of(undefined));
 
       tester.name.fillWith('Scan Mode 1 (updated)');
       tester.description.fillWith('A longer and updated description of my Scan Mode');
@@ -155,8 +155,8 @@ describe('EditScanModeModalComponent', () => {
         cron: scanModeToUpdate.cron
       };
 
-      expect(scanModeService.updateScanMode).toHaveBeenCalledWith('id1', expectedCommand);
-      expect(scanModeService.getScanMode).toHaveBeenCalledWith('id1');
+      expect(scanModeService.update).toHaveBeenCalledWith('id1', expectedCommand);
+      expect(scanModeService.get).toHaveBeenCalledWith('id1');
       expect(fakeActiveModal.close).toHaveBeenCalledWith(scanModeToUpdate);
     }));
 

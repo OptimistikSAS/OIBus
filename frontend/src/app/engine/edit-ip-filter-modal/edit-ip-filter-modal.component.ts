@@ -64,11 +64,9 @@ export class EditIpFilterModalComponent {
 
     let obs: Observable<IpFilterDTO>;
     if (this.mode === 'create') {
-      obs = this.ipFilterService.createIpFilter(command);
+      obs = this.ipFilterService.create(command);
     } else {
-      obs = this.ipFilterService
-        .updateIpFilter(this.ipFilter!.id, command)
-        .pipe(switchMap(() => this.ipFilterService.getIpFilter(this.ipFilter!.id)));
+      obs = this.ipFilterService.update(this.ipFilter!.id, command).pipe(switchMap(() => this.ipFilterService.get(this.ipFilter!.id)));
     }
     obs.pipe(this.state.pendingUntilFinalization()).subscribe(ipFilter => {
       this.modal.close(ipFilter);

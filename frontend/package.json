@@ -7,6 +7,7 @@
     "build": "ng build --no-progress",
     "watch": "ng build --watch --configuration development",
     "test": "ng test --browsers=ChromeHeadless --code-coverage --no-progress --no-watch",
+    "format:all": "prettier --write \"src/**/*.+(ts|js|json|html|scss)\"",
     "lint": "ng lint"
   },
   "private": true,

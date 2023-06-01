@@ -30,7 +30,7 @@ class EditNorthComponentTester extends ComponentTester<EditNorthComponent> {
   }
 
   get description() {
-    return this.textarea('#north-description');
+    return this.input('#north-description');
   }
 
   get specificTitle() {
@@ -47,39 +47,43 @@ describe('EditNorthComponent', () => {
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let proxyService: jasmine.SpyObj<ProxyService>;
 
+  beforeEach(() => {
+    northConnectorService = createMock(NorthConnectorService);
+    scanModeService = createMock(ScanModeService);
+    proxyService = createMock(ProxyService);
+
+    TestBed.configureTestingModule({
+      imports: [EditNorthComponent],
+      providers: [
+        provideTestingI18n(),
+        provideRouter([]),
+        provideHttpClient(),
+        { provide: NorthConnectorService, useValue: northConnectorService },
+        { provide: ScanModeService, useValue: scanModeService },
+        { provide: ProxyService, useValue: proxyService }
+      ]
+    });
+
+    scanModeService.list.and.returnValue(of([]));
+    proxyService.list.and.returnValue(of([]));
+  });
+
   describe('create mode', () => {
     beforeEach(() => {
-      northConnectorService = createMock(NorthConnectorService);
-      scanModeService = createMock(ScanModeService);
-      proxyService = createMock(ProxyService);
-
-      TestBed.configureTestingModule({
-        imports: [EditNorthComponent],
-        providers: [
-          provideTestingI18n(),
-          provideRouter([]),
-          provideHttpClient(),
-          { provide: NorthConnectorService, useValue: northConnectorService },
-          { provide: ScanModeService, useValue: scanModeService },
-          { provide: ProxyService, useValue: proxyService }
-        ]
-      });
-
-      scanModeService.getScanModes.and.returnValue(of([]));
-      proxyService.getProxies.and.returnValue(of([]));
+      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ queryParams: { type: 'OIAnalytics' } }) });
 
       tester = new EditNorthComponentTester();
       tester.detectChanges();
     });
 
     it('should display general settings', () => {
-      expect(tester.title).toContainText('Create a North connector');
-      expect(tester.enabled).not.toBeChecked();
+      expect(tester.title).toContainText('Create OIAnalytics north connector');
+      expect(tester.enabled).toBeChecked();
       expect(tester.description).toHaveValue('');
       expect(tester.specificForm).toBeDefined();
 
-      expect(scanModeService.getScanModes).toHaveBeenCalledTimes(1);
-      expect(proxyService.getProxies).toHaveBeenCalledTimes(1);
+      expect(scanModeService.list).toHaveBeenCalledTimes(1);
+      expect(proxyService.list).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -107,35 +111,7 @@ describe('EditNorthComponent', () => {
     };
 
     beforeEach(() => {
-      northConnectorService = createMock(NorthConnectorService);
-      scanModeService = createMock(ScanModeService);
-      proxyService = createMock(ProxyService);
-
-      TestBed.configureTestingModule({
-        imports: [EditNorthComponent],
-        providers: [
-          provideTestingI18n(),
-          provideRouter([]),
-          provideHttpClient(),
-          { provide: NorthConnectorService, useValue: northConnectorService },
-          { provide: ScanModeService, useValue: scanModeService },
-          { provide: ProxyService, useValue: proxyService },
-          {
-            provide: ActivatedRoute,
-            useValue: stubRoute({
-              params: {
-                northId: 'id1'
-              },
-              queryParams: {
-                type: 'SQL'
-              }
-            })
-          }
-        ]
-      });
-
-      scanModeService.getScanModes.and.returnValue(of([]));
-      proxyService.getProxies.and.returnValue(of([]));
+      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { northId: 'id1' } }) });
 
       northConnectorService.getNorthConnector.and.returnValue(of(northConnector));
       northConnectorService.getNorthConnectorTypeManifest.and.returnValue(
@@ -156,7 +132,7 @@ describe('EditNorthComponent', () => {
     });
     it('should display general settings', () => {
       expect(northConnectorService.getNorthConnector).toHaveBeenCalledWith('id1');
-      expect(tester.title).toContainText('Edit North connector');
+      expect(tester.title).toContainText('Edit Console north connector');
       expect(tester.enabled).toBeChecked();
       expect(tester.description).toHaveValue('My North connector description');
       expect(tester.specificForm).toBeDefined();

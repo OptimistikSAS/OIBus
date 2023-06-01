@@ -21,6 +21,27 @@ export default class SouthItemRepository {
   }
 
   /**
+   * Retrieve all items associated to a South connector
+   */
+  listSouthItems(southId: string): Array<OibusItemDTO> {
+    const whereClause = `WHERE connector_id = ?`;
+    const queryParams = [southId];
+    const query =
+      `SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEM_TABLE} ${whereClause}`;
+
+    return this.database
+      .prepare(query)
+      .all(...queryParams)
+      .map((result: any) => ({
+        id: result.id,
+        name: result.name,
+        connectorId: result.connectorId,
+        scanModeId: result.scanModeId,
+        settings: JSON.parse(result.settings)
+      }));
+  }
+
+  /**
    * Search South items (point, query, folder...) associated to a South connector
    */
   searchSouthItems(southId: string, searchParams: OibusItemSearchParam): Page<OibusItemDTO> {

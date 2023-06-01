@@ -15,40 +15,9 @@ $fa-font-path: '../fonts';
   --menu-height: 35px;
 }
 
-.oi-details {
-  background-color: $mediumGrey;
-  padding: 0.375rem 0.75rem;
-  font-weight: normal;
-  color: #000000;
-  line-height: 1.3;
-  border-radius: 0.25rem;
-  margin-bottom: 10px;
-  border: 1px solid #ced4da;
-
-  hr {
-    margin-top: 3px;
-    margin-bottom: 5px;
-  }
-
-  &.oi-clickable {
-    &:hover {
-      background-color: $selectedColor;
-    }
-  }
-
-  .oi-title {
-    font-weight: bold;
-    font-size: 1rem;
-  }
-}
-
-.oi-header-container {
-  height: 60px;
-}
-
-.oi-padded-container {
-  padding-left: 20px;
-  padding-right: 20px;
+.oib-padded-container {
+  padding-left: 2rem;
+  padding-right: 2rem;
 
   h1 {
     font-size: 24px;
@@ -57,19 +26,242 @@ $fa-font-path: '../fonts';
   }
 }
 
-.oi-search-form {
-  background-color: $gray-200;
-  border-bottom: 2px solid $gray-300;
-  border-top: 2px solid $gray-300;
+.oib-header-container {
+  height: 4rem;
+}
+
+.oib-search-form {
+  background-color: $veryLightGrey;
+  border-radius: 1rem;
+}
+
+.oib-grey-container {
+  background-color: $lightGrey;
+  border-radius: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid $mediumGrey;
+}
+
+.oib-table {
+  thead {
+    color: white;
+    background-color: $darkGrey;
+
+    &.light {
+      color: $darkGrey;
+      background-color: white;
+    }
+
+    th {
+      padding-left: 1rem;
+      border-style: none;
+    }
+
+    th:first-child {
+      border-top-left-radius: 10px;
+    }
+
+    th:last-child {
+      border-top-right-radius: 10px;
+    }
+
+    .light {
+      background-color: $white;
+    }
+  }
+
+  tbody {
+    td {
+      padding-left: 1rem;
+    }
+
+    tr {
+      .btn {
+        color: $blue;
+      }
+
+      &:hover {
+        .btn {
+          color: $darkGrey;
+
+          &:hover {
+            color: $yellow;
+          }
+        }
+      }
+    }
+
+    tr:nth-child(even) {
+      background-color: $white;
+
+      &:hover {
+        background-color: $mediumGrey;
+      }
+    }
+
+    tr:nth-child(odd) {
+      background-color: $veryLightGrey;
+
+      &:hover {
+        background-color: $mediumGrey;
+      }
+    }
+  }
+}
+
+.oib-box-title {
+  background-color: $darkGrey;
+  color: $white;
+  padding: 0.3rem 0.75rem;
+  font-weight: bold;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+
+  .btn-primary {
+    margin-right: 0.75rem;
+  }
+
+  .btn-link {
+    color: $white;
+    padding: 0 0.75rem;
+
+    &:hover {
+      color: $yellow;
+    }
+  }
+}
+
+.oib-box-content {
+  padding: 0.3rem 0.75rem;
+}
+
+// override of some bootstrap styles to better fit Optimistik branding
+.btn-primary {
+  border-radius: 0.5rem;
+  border: none;
+  color: $white;
+  background-color: $electricBlue;
+
+  &:focus:not(hover) {
+    background-color: $electricBlue;
+    color: $white;
+  }
+
+  &:hover {
+    border-radius: 0.5rem;
+    border: none;
+    background-color: $yellow !important;
+    color: $darkGrey;
+  }
+}
+
+.btn-cancel {
+  @extend .btn-primary;
+  background-color: $blue !important;
+
+  &:hover {
+    background-color: $yellow;
+  }
+}
+
+.btn-danger {
+  @extend .btn-primary;
+  background-color: $red;
 }
 
 .form-group {
   margin-bottom: 1rem;
 }
 
+// override inputs and other form controls components
+input.form-control {
+  border-radius: 1rem;
+  background-color: $veryLightGrey;
+  border: none;
+}
+
+// override text area
+textarea.form-control {
+  border-radius: 1rem;
+  background-color: $veryLightGrey;
+  border: none;
+}
+
+// when embedded in search form or box title or modal body we don't want input to be grey as the search form
+// is already colored
+.oib-search-form {
+  input.form-control {
+    background-color: $white !important;
+  }
+  .form-select {
+    background-color: $white !important;
+  }
+}
+
+.oib-box-title {
+  input.form-control {
+    background-color: $white !important;
+  }
+}
+
+.input-group-text {
+  border-radius: 1rem;
+  border: none;
+}
+
+.form-select {
+  border-radius: 1rem;
+  background-color: $veryLightGrey;
+  border: none;
+}
+
+// this is a customization of bootstrap switch to match Optimistik color scheme
+.form-switch {
+  &.padded {
+    padding-top: 2.3rem;
+  }
+
+  .form-check-input {
+    border: none;
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='4' fill='rgba(40,60,69,1.0)'/></svg>") !important;
+
+    &:not(checked) {
+      background-color: $blue;
+    }
+
+    &:focus:checked &:checked {
+      background-color: $yellow;
+    }
+  }
+}
+
+.form-switch .form-check-input:checked {
+  border: none;
+  background-color: $yellow;
+}
+
+label {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: black;
+}
+
+label.col-form-label {
+  font-size: 0.9rem; // .col-form-label is bigger than our default labels
+}
+
 label.form-check-label {
   font-size: 1rem;
   font-weight: normal;
+}
+
+// customization of modal colors
+.modal-body {
+  background-color: $white !important;
+}
+
+.modal-footer {
+  background-color: $white !important;
 }
 
 // This targets the errors that appear inside the val-errors component.
@@ -118,27 +310,6 @@ val-errors > div {
   }
 }
 
-.btn-primary {
-  color: #fff;
-  &:hover {
-    color: #fff;
-    background-color: $orange;
-  }
-
-  &:focus {
-    color: #fff;
-  }
-}
-
-.btn-cancel {
-  @extend .btn-primary;
-
-  &:hover {
-    color: #fff;
-    background-color: $red;
-  }
-}
-
 .btn-group {
   .btn:not(:last-child) {
     border-right-color: white;
@@ -149,29 +320,32 @@ val-errors > div {
   }
 }
 
-label {
-  font-size: 0.9rem;
-  font-weight: bold;
-  color: black;
+// override of bootstrap page styles
+.page-item {
+  border: none;
+  padding-left: 0.7rem;
 }
 
-label.col-form-label {
-  font-size: 0.9rem; // .col-form-label is bigger than our default labels
+.page-link {
+  color: $darkGrey;
+  background-color: $veryLightGrey;
+  border: none;
+  border-radius: 0.3rem;
+
+  &:hover {
+    color: $white;
+    background-color: $yellow;
+  }
 }
 
-label.form-check-label {
-  padding-top: 0.2rem;
-  font-size: 1rem;
-  font-weight: normal;
+.page-item.disabled {
+  .page-link {
+    background-color: $veryLightGrey;
+  }
 }
 
-label.custom-control-label {
-  font-size: 1rem;
-  font-weight: normal;
+.page-item.active {
+  .page-link {
+    background-color: $electricBlue;
+  }
 }
-
-// class that we can add to a custom-switch when it needs to be on the same row as other form controls
-.switch-form-control {
-  padding-top: 0.375rem;
-}
-

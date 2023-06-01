@@ -8,11 +8,12 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ExternalSourceDTO } from '../../../../../shared/model/external-sources.model';
 import { ExternalSourceService } from '../../services/external-source.service';
 import { EditExternalSourceModalComponent } from '../edit-external-source-modal/edit-external-source-modal.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 
 @Component({
   selector: 'oib-external-source-list',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule],
+  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
   templateUrl: './external-source-list.component.html',
   styleUrls: ['./external-source-list.component.scss']
 })
@@ -27,7 +28,7 @@ export class ExternalSourceListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.externalSourceService.getExternalSources().subscribe(externalSources => {
+    this.externalSourceService.list().subscribe(externalSources => {
       this.externalSources = externalSources;
     });
   }
@@ -35,7 +36,7 @@ export class ExternalSourceListComponent implements OnInit {
   /**
    * Open a modal to edit an external source
    */
-  openEditExternalSourceModal(externalSource: ExternalSourceDTO) {
+  editExternalSource(externalSource: ExternalSourceDTO) {
     const modalRef = this.modalService.open(EditExternalSourceModalComponent);
     const component: EditExternalSourceModalComponent = modalRef.componentInstance;
     component.prepareForEdition(externalSource);
@@ -45,7 +46,7 @@ export class ExternalSourceListComponent implements OnInit {
   /**
    * Open a modal to create an external source
    */
-  openCreationExternalSourceModal() {
+  addExternalSource() {
     const modalRef = this.modalService.open(EditExternalSourceModalComponent);
     const component: EditExternalSourceModalComponent = modalRef.componentInstance;
     component.prepareForCreation();
@@ -57,7 +58,7 @@ export class ExternalSourceListComponent implements OnInit {
    */
   private refreshAfterEditExternalSourceModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
     modalRef.result.subscribe((ipFilter: ExternalSourceDTO) => {
-      this.externalSourceService.getExternalSources().subscribe(externalSources => {
+      this.externalSourceService.list().subscribe(externalSources => {
         this.externalSources = externalSources;
       });
       this.notificationService.success(`engine.external-source.${mode}`, {
@@ -77,11 +78,11 @@ export class ExternalSourceListComponent implements OnInit {
       })
       .pipe(
         switchMap(() => {
-          return this.externalSourceService.deleteExternalSource(externalSource.id);
+          return this.externalSourceService.delete(externalSource.id);
         })
       )
       .subscribe(() => {
-        this.externalSourceService.getExternalSources().subscribe(externalSources => {
+        this.externalSourceService.list().subscribe(externalSources => {
           this.externalSources = externalSources;
         });
         this.notificationService.success('engine.external-source.deleted', {
