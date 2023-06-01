@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgForOf, NgIf } from '@angular/common';
-import { switchMap } from 'rxjs';
+import { switchMap, tap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -8,11 +8,12 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { EditScanModeModalComponent } from '../edit-scan-mode-modal/edit-scan-mode-modal.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 
 @Component({
   selector: 'oib-scan-mode-list',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule],
+  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
   templateUrl: './scan-mode-list.component.html',
   styleUrls: ['./scan-mode-list.component.scss']
 })
@@ -27,15 +28,15 @@ export class ScanModeListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.scanModeService.getScanModes().subscribe(scanModeList => {
-      this.scanModes = scanModeList.filter(scanMode => scanMode.id !== 'subscription');
+    this.scanModeService.list().subscribe(scanModes => {
+      this.scanModes = this.excludeSubscriptionScanModes(scanModes);
     });
   }
 
   /**
    * Open a modal to edit a scan mode
    */
-  openEditScanModeModal(scanMode: ScanModeDTO) {
+  editScanMode(scanMode: ScanModeDTO) {
     const modalRef = this.modalService.open(EditScanModeModalComponent);
     const component: EditScanModeModalComponent = modalRef.componentInstance;
     component.prepareForEdition(scanMode);
@@ -45,7 +46,7 @@ export class ScanModeListComponent implements OnInit {
   /**
    * Open a modal to create a scan mode
    */
-  openCreationScanModeModal() {
+  addScanMode() {
     const modalRef = this.modalService.open(EditScanModeModalComponent);
     const component: EditScanModeModalComponent = modalRef.componentInstance;
     component.prepareForCreation();
@@ -56,14 +57,18 @@ export class ScanModeListComponent implements OnInit {
    * Refresh the scan mode list when the scan mode is edited
    */
   private refreshAfterEditScanModeModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
-    modalRef.result.subscribe((scanMode: ScanModeDTO) => {
-      this.scanModeService.getScanModes().subscribe(scanModes => {
-        this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
+    modalRef.result
+      .pipe(
+        tap(scanMode =>
+          this.notificationService.success(`engine.scan-mode.${mode}`, {
+            name: scanMode.name
+          })
+        ),
+        switchMap(() => this.scanModeService.list())
+      )
+      .subscribe(scanModes => {
+        this.scanModes = this.excludeSubscriptionScanModes(scanModes);
       });
-      this.notificationService.success(`engine.scan-mode.${mode}`, {
-        name: scanMode.name
-      });
-    });
   }
 
   /**
@@ -77,16 +82,21 @@ export class ScanModeListComponent implements OnInit {
       })
       .pipe(
         switchMap(() => {
-          return this.scanModeService.deleteScanMode(scanMode.id);
-        })
+          return this.scanModeService.delete(scanMode.id);
+        }),
+        tap(() =>
+          this.notificationService.success('engine.scan-mode.deleted', {
+            name: scanMode.name
+          })
+        ),
+        switchMap(() => this.scanModeService.list())
       )
-      .subscribe(() => {
-        this.scanModeService.getScanModes().subscribe(scanModes => {
-          this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
-        });
-        this.notificationService.success('engine.scan-mode.deleted', {
-          name: scanMode.name
-        });
+      .subscribe(scanModes => {
+        this.scanModes = this.excludeSubscriptionScanModes(scanModes);
       });
+  }
+
+  excludeSubscriptionScanModes(scanModes: Array<ScanModeDTO>): Array<ScanModeDTO> {
+    return scanModes.filter(scanMode => scanMode.id !== 'subscription');
   }
 }

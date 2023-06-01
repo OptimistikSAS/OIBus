@@ -1,0 +1,82 @@
+<oib-box>
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center">
+        <span translate="south.items.title"></span>
+        <input
+          class="ms-4 form form-control"
+          style="width: 20rem"
+          [formControl]="searchControl"
+          [placeholder]="'south.items.search-placeholder' | translate"
+          type="text"
+        />
+      </div>
+      <div class="ms-3">
+        <button type="button" class="btn btn-primary btn-sm" (click)="addItem()">
+          <span class="fa fa-plus"></span>
+        </button>
+        <button type="button" class="btn btn-primary btn-sm" (click)="exportItems()" translate="south.items.export"></button>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          (click)="fileInput.click()"
+          (drop)="onImportDrop($event)"
+          (dragover)="onImportDragOver($event)"
+          id="import-button"
+        >
+          <span translate="south.items.import"></span>
+        </button>
+        <button type="button" class="btn btn-danger btn-sm" (click)="deleteAllItems()" translate="south.items.delete-all"></button>
+      </div>
+    </div>
+  </ng-template>
+  <input #fileInput (change)="onImportClick($event)" id="file" type="file" accept=".csv" class="d-none" />
+
+  <div class="mt-3" *ngIf="southConnector?.id; else saveBefore">
+    <ng-container *ngIf="displayedItems.content.length > 0; else empty">
+      <table class="mt-2 table table-sm table-hover oib-table">
+        <thead class="light">
+          <tr>
+            <th translate="south.items.name"></th>
+            <th translate="south.items.scan-mode"></th>
+            <th *ngFor="let setting of displaySettings">{{ setting.label }}</th>
+            <th style="width: 3%"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of displayedItems.content" class="south-item">
+            <td>{{ item.name }}</td>
+            <td>{{ getScanMode(item.scanModeId)?.name }}</td>
+            <td *ngFor="let setting of displaySettings">{{ item.settings[setting.key] }}</td>
+            <td class="text-nowrap action-buttons">
+              <div class="pull-right">
+                <!-- Edit button -->
+                <button type="button" class="btn btn-link edit-south-item px-1 py-0" (click)="editItem(item)">
+                  <span class="fa fa-pencil"></span>
+                </button>
+                <!-- Duplicate button -->
+                <button type="button" class="btn btn-link duplicate-south-item px-1 py-0" (click)="duplicateItem(item)">
+                  <span class="fa fa-copy"></span>
+                </button>
+                <!-- Delete button -->
+                <button type="button" class="btn btn-link delete-south-item px-1 py-0" (click)="deleteItem(item)">
+                  <span class="fa fa-trash"></span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </ng-container>
+    <ng-template #empty>
+      <div class="oib-grey-container" translate="south.items.none-match" *ngIf="allItems.length !== 0"></div>
+      <div class="oib-grey-container" translate="south.items.none" *ngIf="allItems.length === 0"></div>
+    </ng-template>
+  </div>
+
+  <ng-template #saveBefore>
+    <div class="alert alert-warning text-center">
+      <span translate="south.items.save-before-adding-items"></span>
+    </div>
+  </ng-template>
+</oib-box>

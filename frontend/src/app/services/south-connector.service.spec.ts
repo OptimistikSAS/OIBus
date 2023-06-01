@@ -33,7 +33,7 @@ describe('SouthConnectorService', () => {
 
   it('should get all South connector types', () => {
     let expectedSouthConnectorTypes: Array<SouthType> = [];
-    service.getSouthConnectorTypes().subscribe(types => (expectedSouthConnectorTypes = types));
+    service.getAvailableTypes().subscribe(types => (expectedSouthConnectorTypes = types));
 
     http.expectOne('/api/south-types').flush([
       { category: 'Database', type: 'SQL', description: 'SQL description' },
@@ -54,7 +54,7 @@ describe('SouthConnectorService', () => {
 
   it('should get all South connectors', () => {
     let expectedSouthConnectors: Array<SouthConnectorDTO> = [];
-    service.getSouthConnectors().subscribe(southConnectors => (expectedSouthConnectors = southConnectors));
+    service.list().subscribe(southConnectors => (expectedSouthConnectors = southConnectors));
 
     http.expectOne('/api/south').flush([{ name: 'South connector 1' }, { name: 'South connector 2' }]);
 
@@ -65,7 +65,7 @@ describe('SouthConnectorService', () => {
     let expectedSouthConnector: SouthConnectorDTO | null = null;
     const southConnector = { id: 'id1' } as SouthConnectorDTO;
 
-    service.getSouthConnector('id1').subscribe(c => (expectedSouthConnector = c));
+    service.get('id1').subscribe(c => (expectedSouthConnector = c));
 
     http.expectOne({ url: '/api/south/id1', method: 'GET' }).flush(southConnector);
     expect(expectedSouthConnector!).toEqual(southConnector);
@@ -75,7 +75,7 @@ describe('SouthConnectorService', () => {
     let expectedSouthConnectorType: object | null = null;
     const southConnectorSchema = {};
 
-    service.getSouthConnectorSchema('SQL').subscribe(c => (expectedSouthConnectorType = c));
+    service.getSchema('SQL').subscribe(c => (expectedSouthConnectorType = c));
 
     http.expectOne({ url: '/api/south-type/SQL', method: 'GET' }).flush(southConnectorSchema);
     expect(expectedSouthConnectorType!).toEqual(southConnectorSchema);
@@ -96,7 +96,7 @@ describe('SouthConnectorService', () => {
       settings: {}
     };
 
-    service.createSouthConnector(command).subscribe(() => (done = true));
+    service.create(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/south' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -118,7 +118,7 @@ describe('SouthConnectorService', () => {
       settings: {}
     };
 
-    service.updateSouthConnector('id1', command).subscribe(() => (done = true));
+    service.update('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -127,7 +127,7 @@ describe('SouthConnectorService', () => {
 
   it('should delete a South connector', () => {
     let done = false;
-    service.deleteSouthConnector('id1').subscribe(() => (done = true));
+    service.delete('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/south/id1' });
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -139,7 +139,7 @@ describe('SouthConnectorService', () => {
       { id: 'southItemId', name: 'MySouthItem', connectorId: 'id1', scanModeId: 'scanModeId', settings: {} }
     ]);
 
-    service.searchSouthItems('id1', { page: 0, name: null }).subscribe(c => (expectedSouthConnectorItems = c));
+    service.searchItems('id1', { page: 0, name: null }).subscribe(c => (expectedSouthConnectorItems = c));
 
     http.expectOne({ url: '/api/south/id1/items?page=0', method: 'GET' }).flush(southConnectorItems);
     expect(expectedSouthConnectorItems!).toEqual(southConnectorItems);
@@ -149,7 +149,7 @@ describe('SouthConnectorService', () => {
     let expectedSouthConnectorItem: object | null = null;
     const southConnectorItem = { id: 'southItemId1' };
 
-    service.getSouthConnectorItem('id1', 'southItemId1').subscribe(c => (expectedSouthConnectorItem = c));
+    service.getItems('id1', 'southItemId1').subscribe(c => (expectedSouthConnectorItem = c));
 
     http.expectOne({ url: '/api/south/id1/items/southItemId1', method: 'GET' }).flush(southConnectorItem);
     expect(expectedSouthConnectorItem!).toEqual(southConnectorItem);
@@ -163,7 +163,7 @@ describe('SouthConnectorService', () => {
       settings: {}
     };
 
-    service.createSouthItem('id1', command).subscribe(() => (done = true));
+    service.createItem('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -178,7 +178,7 @@ describe('SouthConnectorService', () => {
       settings: {}
     };
 
-    service.updateSouthItem('id1', 'southItemId1', command).subscribe(() => (done = true));
+    service.updateItem('id1', 'southItemId1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1/items/southItemId1' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -187,7 +187,7 @@ describe('SouthConnectorService', () => {
 
   it('should delete a South connector item', () => {
     let done = false;
-    service.deleteSouthItem('id1', 'southItemId1').subscribe(() => (done = true));
+    service.deleteItem('id1', 'southItemId1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/south/id1/items/southItemId1' });
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -195,7 +195,7 @@ describe('SouthConnectorService', () => {
 
   it('should delete all South connector items', () => {
     let done = false;
-    service.deleteAllSouthItems('id1').subscribe(() => (done = true));
+    service.deleteAllItems('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/south/id1/items/all' });
     testRequest.flush(null);
     expect(done).toBe(true);

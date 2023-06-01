@@ -86,7 +86,7 @@ describe('CreateHistoryQueryModalComponent', () => {
     });
     tester = new CreateHistoryQueryModalComponentTester();
 
-    historyQueryService.createHistoryQuery.and.returnValue(of({ id: 'historyId' } as HistoryQueryDTO));
+    historyQueryService.create.and.returnValue(of({ id: 'historyId' } as HistoryQueryDTO));
     northConnectorService.getNorthConnectorTypes.and.returnValue(
       of([
         { category: 'database', type: 'MongoDB', description: 'MongoDB description', modes: { files: false, points: true } },
@@ -94,7 +94,7 @@ describe('CreateHistoryQueryModalComponent', () => {
       ])
     );
 
-    southConnectorService.getSouthConnectorTypes.and.returnValue(
+    southConnectorService.getAvailableTypes.and.returnValue(
       of([
         {
           category: 'database',
@@ -120,8 +120,8 @@ describe('CreateHistoryQueryModalComponent', () => {
 
   describe('with no existing connector', () => {
     beforeEach(() => {
-      northConnectorService.getNorthConnectors.and.returnValue(of([]));
-      southConnectorService.getSouthConnectors.and.returnValue(of([]));
+      northConnectorService.list.and.returnValue(of([]));
+      southConnectorService.list.and.returnValue(of([]));
       tester.detectChanges();
     });
 
@@ -209,9 +209,9 @@ describe('CreateHistoryQueryModalComponent', () => {
     ];
 
     beforeEach(() => {
-      northConnectorService.getNorthConnectors.and.returnValue(of(northConnectors));
+      northConnectorService.list.and.returnValue(of(northConnectors));
 
-      southConnectorService.getSouthConnectors.and.returnValue(of(southConnectors));
+      southConnectorService.list.and.returnValue(of(southConnectors));
       tester.detectChanges();
     });
 

@@ -67,11 +67,9 @@ export class EditScanModeModalComponent {
 
     let obs: Observable<ScanModeDTO>;
     if (this.mode === 'create') {
-      obs = this.scanModeService.createScanMode(command);
+      obs = this.scanModeService.create(command);
     } else {
-      obs = this.scanModeService
-        .updateScanMode(this.scanMode!.id, command)
-        .pipe(switchMap(() => this.scanModeService.getScanMode(this.scanMode!.id)));
+      obs = this.scanModeService.update(this.scanMode!.id, command).pipe(switchMap(() => this.scanModeService.get(this.scanMode!.id)));
     }
     obs.pipe(this.state.pendingUntilFinalization()).subscribe(scanMode => {
       this.modal.close(scanMode);

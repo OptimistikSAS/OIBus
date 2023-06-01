@@ -36,7 +36,7 @@ export class NorthConnectorService {
   /**
    * Get the North connectors
    */
-  getNorthConnectors(): Observable<Array<NorthConnectorDTO>> {
+  list(): Observable<Array<NorthConnectorDTO>> {
     return this.http.get<Array<NorthConnectorDTO>>(`/api/north`);
   }
 

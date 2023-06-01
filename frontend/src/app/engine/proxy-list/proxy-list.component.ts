@@ -8,11 +8,12 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { ProxyService } from '../../services/proxy.service';
 import { NotificationService } from '../../shared/notification.service';
 import { TranslateModule } from '@ngx-translate/core';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 
 @Component({
   selector: 'oib-proxy-list',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule],
+  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
   templateUrl: './proxy-list.component.html',
   styleUrls: ['./proxy-list.component.scss']
 })
@@ -27,7 +28,7 @@ export class ProxyListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.proxyService.getProxies().subscribe(proxyList => {
+    this.proxyService.list().subscribe(proxyList => {
       this.proxies = proxyList;
     });
   }
@@ -45,7 +46,7 @@ export class ProxyListComponent implements OnInit {
   /**
    * Open a modal to create a proxy
    */
-  openCreationProxyModal() {
+  addProxy() {
     const modalRef = this.modalService.open(EditProxyModalComponent);
     const component: EditProxyModalComponent = modalRef.componentInstance;
     component.prepareForCreation();
@@ -57,7 +58,7 @@ export class ProxyListComponent implements OnInit {
    */
   private refreshAfterEditProxyModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
     modalRef.result.subscribe((proxy: ProxyDTO) => {
-      this.proxyService.getProxies().subscribe(proxies => {
+      this.proxyService.list().subscribe(proxies => {
         this.proxies = proxies;
       });
       this.notificationService.success(`engine.proxy.${mode}`, {
@@ -77,11 +78,11 @@ export class ProxyListComponent implements OnInit {
       })
       .pipe(
         switchMap(() => {
-          return this.proxyService.deleteProxy(proxy.id);
+          return this.proxyService.delete(proxy.id);
         })
       )
       .subscribe(() => {
-        this.proxyService.getProxies().subscribe(proxies => {
+        this.proxyService.list().subscribe(proxies => {
           this.proxies = proxies;
         });
         this.notificationService.success('engine.proxy.deleted', {

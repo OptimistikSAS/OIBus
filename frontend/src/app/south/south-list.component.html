@@ -1,66 +1,82 @@
-<div class="oi-padded-container">
+<div class="oib-padded-container">
   <div class="d-flex justify-content-between">
-    <div class="oi-header-container">
+    <div class="oib-header-container">
       <h1>
         <span translate="south.list"></span>
-        <span class="ms-2">
-          <button class="btn btn-primary" id="create-modal" (click)="openCreationSouthModal()">
-            <span class="fa fa-plus me-2"></span>
-            <span translate="south.add"></span>
+        <span class="ms-4">
+          <button class="btn btn-primary" id="create-south-button" (click)="createSouth()">
+            <span class="fa fa-plus"></span>
           </button>
         </span>
       </h1>
     </div>
+    <!-- only display it if there is more than 1 page -->
+    <oib-pagination
+      *ngIf="displayedSouths.totalPages > 1"
+      class="d-flex justify-content-end"
+      [page]="displayedSouths"
+      (pageChanged)="changePage($event)"
+    ></oib-pagination>
   </div>
-  <div class="row justify-content-center">
-    <div class="col-md-10 col-lg-8">
-      <!-- the south list -->
-      <div *ngIf="southList.length !== 0; else emptySouth">
-        <table class="mt-2 table table-sm table-hover">
-          <thead class="table-light">
-            <tr>
-              <th translate="south.name"></th>
-              <th translate="south.type"></th>
-              <th translate="south.description"></th>
-              <th style="width: 3%"></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let south of southList">
-              <td>
-                <span>{{ south.name }}</span>
-                <span *ngIf="south.enabled" class="fa fa-play text-muted ms-2"></span>
-                <span *ngIf="!south.enabled" class="fa fa-pause text-muted ms-2"></span>
-              </td>
-              <td>{{ south.type }}</td>
-              <td>{{ south.description }}</td>
-              <td class="text-nowrap action-buttons">
-                <div class="pull-right">
-                  <!-- Display button -->
-                  <button class="btn btn-link display-south px-1 py-0" id="display-link" [routerLink]="[south.id]">
-                    <span class="fa fa-info-circle"></span>
-                  </button>
-                  <!-- Edit button -->
-                  <button class="btn btn-link edit-south px-1 py-0" id="edit-link" [routerLink]="[south.id, 'edit']">
-                    <span class="fa fa-pencil"></span>
-                  </button>
-                  <!-- Duplicate button -->
-                  <button class="btn btn-link duplicate-south px-1 py-0" routerLink="create" [queryParams]="{ duplicate: south.id }">
-                    <span class="fa fa-copy"></span>
-                  </button>
-                  <!-- Delete button -->
-                  <button type="button" class="btn btn-link delete-south px-1 py-0" (click)="deleteSouth(south)">
-                    <span class="fa fa-trash"></span>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+
+  <form class="px-3 mb-4 d-none d-lg-block oib-search-form" id="search-form" [formGroup]="searchForm">
+    <div class="row gx-2 py-3">
+      <label class="col-auto col-form-label"><i class="fa fa-search fa-lg"></i></label>
+      <label for="name" class="col-auto col-form-label" translate="south.search-by-name"></label>
+      <div class="col-2">
+        <input type="text" class="form-control" id="name" formControlName="name" />
       </div>
-      <ng-template #emptySouth>
-        <div class="oi-details empty" id="no-proxy" translate="south.none"></div>
-      </ng-template>
     </div>
-  </div>
+  </form>
+
+  <!-- the loading spinner when south are not yet loaded -->
+  <oib-loading-spinner *ngIf="!allSouths"></oib-loading-spinner>
+
+  <!-- the list of south or a caption if empty -->
+  <ng-container *ngIf="allSouths">
+    <div *ngIf="displayedSouths.content.length !== 0; else empty">
+      <table class="mt-2 table table-sm table-hover oib-table">
+        <thead>
+          <tr>
+            <th translate="south.name"></th>
+            <th translate="south.type"></th>
+            <th translate="south.status"></th>
+            <th translate="south.description"></th>
+            <th style="width: 3%"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let south of displayedSouths.content">
+            <td>{{ south.name }}</td>
+            <td>{{ south.type }}</td>
+            <td>{{ south.enabled | enabled }}</td>
+            <td>{{ south.description }}</td>
+            <td class="text-nowrap action-buttons">
+              <div class="pull-right">
+                <!-- Display button -->
+                <a class="btn btn-link display-south px-1 py-0" id="display-link" [routerLink]="[south.id]">
+                  <span class="fa fa-search"></span>
+                </a>
+                <!-- Edit button -->
+                <a class="btn btn-link edit-south px-1 py-0" id="edit-link" [routerLink]="[south.id, 'edit']">
+                  <span class="fa fa-pencil"></span>
+                </a>
+                <!-- Duplicate button -->
+                <a class="btn btn-link duplicate-south px-1 py-0" routerLink="create" [queryParams]="{ duplicate: south.id }">
+                  <span class="fa fa-copy"></span>
+                </a>
+                <!-- Delete button -->
+                <button type="button" class="btn btn-link delete-south px-1 py-0" (click)="deleteSouth(south)">
+                  <span class="fa fa-trash"></span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <ng-template #empty>
+      <div class="oib-grey-container empty" translate="south.none"></div>
+    </ng-template>
+  </ng-container>
 </div>

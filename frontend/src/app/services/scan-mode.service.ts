@@ -15,7 +15,7 @@ export class ScanModeService {
   /**
    * Get the scan modes
    */
-  getScanModes(): Observable<Array<ScanModeDTO>> {
+  list(): Observable<Array<ScanModeDTO>> {
     return this.http.get<Array<ScanModeDTO>>(`/api/scan-modes`);
   }
 
@@ -23,7 +23,7 @@ export class ScanModeService {
    * Get one scan mode
    * @param scanModeId - the ID of the scan mode
    */
-  getScanMode(scanModeId: string): Observable<ScanModeDTO> {
+  get(scanModeId: string): Observable<ScanModeDTO> {
     return this.http.get<ScanModeDTO>(`/api/scan-modes/${scanModeId}`);
   }
 
@@ -31,7 +31,7 @@ export class ScanModeService {
    * Create a new scan mode
    * @param command - the new scan mode
    */
-  createScanMode(command: ScanModeCommandDTO): Observable<ScanModeDTO> {
+  create(command: ScanModeCommandDTO): Observable<ScanModeDTO> {
     return this.http.post<ScanModeDTO>(`/api/scan-modes`, command);
   }
 
@@ -40,7 +40,7 @@ export class ScanModeService {
    * @param scanModeId - the ID of the scan mode
    * @param command - the new values of the selected scan mode
    */
-  updateScanMode(scanModeId: string, command: ScanModeCommandDTO) {
+  update(scanModeId: string, command: ScanModeCommandDTO) {
     return this.http.put<void>(`/api/scan-modes/${scanModeId}`, command);
   }
 
@@ -48,7 +48,7 @@ export class ScanModeService {
    * Delete the selected scan mode
    * @param scanModeId - the ID of the scan mode to delete
    */
-  deleteScanMode(scanModeId: string) {
+  delete(scanModeId: string) {
     return this.http.delete<void>(`/api/scan-modes/${scanModeId}`);
   }
 }

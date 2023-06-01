@@ -64,11 +64,11 @@ export class EditExternalSourceModalComponent {
 
     let obs: Observable<ExternalSourceDTO>;
     if (this.mode === 'create') {
-      obs = this.externalSourceService.createExternalSource(command);
+      obs = this.externalSourceService.create(command);
     } else {
       obs = this.externalSourceService
-        .updateExternalSource(this.externalSource!.id, command)
-        .pipe(switchMap(() => this.externalSourceService.getExternalSource(this.externalSource!.id)));
+        .update(this.externalSource!.id, command)
+        .pipe(switchMap(() => this.externalSourceService.get(this.externalSource!.id)));
     }
     obs.pipe(this.state.pendingUntilFinalization()).subscribe(externalSource => {
       this.modal.close(externalSource);

@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgForOf, NgIf } from '@angular/common';
-import { combineLatest, switchMap } from 'rxjs';
+import { combineLatest, switchMap, tap } from 'rxjs';
 import { Modal, ModalService } from '../../shared/modal.service';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -11,11 +11,12 @@ import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.m
 import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { CreateNorthSubscriptionModalComponent } from '../create-north-subscription-modal/create-north-subscription-modal.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 
 @Component({
   selector: 'oib-north-subscriptions',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule],
+  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
   templateUrl: './north-subscriptions.component.html',
   styleUrls: ['./north-subscriptions.component.scss']
 })
@@ -36,7 +37,7 @@ export class NorthSubscriptionsComponent implements OnInit {
   ngOnInit() {
     combineLatest([
       this.northConnectorService.getNorthConnectorSubscriptions(this.northConnector!.id),
-      this.southConnectorService.getSouthConnectors()
+      this.southConnectorService.list()
     ]).subscribe(([subscriptions, southConnectors]) => {
       this.northSubscriptions = subscriptions;
       this.southConnectors = southConnectors;
@@ -46,7 +47,7 @@ export class NorthSubscriptionsComponent implements OnInit {
   /**
    * Open a modal to create a scan mode
    */
-  openCreationScanModeModal() {
+  addSubscription() {
     const modalRef = this.modalService.open(CreateNorthSubscriptionModalComponent);
     const component: CreateNorthSubscriptionModalComponent = modalRef.componentInstance;
     component.prepareForCreation(this.northConnector!.id, this.southConnectors);
@@ -57,20 +58,22 @@ export class NorthSubscriptionsComponent implements OnInit {
    * Refresh the scan mode list when the scan mode is edited
    */
   private refreshAfterEditScanModeModalClosed(modalRef: Modal<any>) {
-    modalRef.result.subscribe((southConnector: SouthConnectorDTO) => {
-      this.northConnectorService.getNorthConnectorSubscriptions(this.northConnector!.id).subscribe(subscriptions => {
-        this.northSubscriptions = subscriptions;
-      });
-      this.notificationService.success(`north.subscriptions.created`, {
-        south: southConnector.name
-      });
-    });
+    modalRef.result
+      .pipe(
+        tap(southConnector =>
+          this.notificationService.success(`north.subscriptions.created`, {
+            south: southConnector.name
+          })
+        ),
+        switchMap(() => this.northConnectorService.getNorthConnectorSubscriptions(this.northConnector!.id))
+      )
+      .subscribe(subscriptions => (this.northSubscriptions = subscriptions));
   }
 
   /**
-   * Delete a scan mode by its ID
+   * Remove a subscription from the connector
    */
-  deleteScanMode(southConnectorId: string) {
+  deleteSubscription(southConnectorId: string) {
     const southConnector = this.southConnectors.find(south => south.id === southConnectorId);
     if (!southConnector) return;
     this.confirmationService
@@ -81,15 +84,16 @@ export class NorthSubscriptionsComponent implements OnInit {
       .pipe(
         switchMap(() => {
           return this.northConnectorService.deleteNorthConnectorSubscription(this.northConnector!.id, southConnector.id);
-        })
+        }),
+        tap(() =>
+          this.notificationService.success('north.subscriptions.deleted', {
+            name: southConnector.name
+          })
+        ),
+        switchMap(() => this.northConnectorService.getNorthConnectorSubscriptions(this.northConnector!.id))
       )
-      .subscribe(() => {
-        this.northConnectorService.getNorthConnectorSubscriptions(this.northConnector!.id).subscribe(subscriptions => {
-          this.northSubscriptions = subscriptions;
-        });
-        this.notificationService.success('north.subscriptions.deleted', {
-          name: southConnector.name
-        });
+      .subscribe(subscriptions => {
+        this.northSubscriptions = subscriptions;
       });
   }
 

@@ -86,7 +86,7 @@ describe('EditIpFilterModalComponent', () => {
       const createdProxy = {
         id: 'id1'
       } as IpFilterDTO;
-      ipFilterService.createIpFilter.and.returnValue(of(createdProxy));
+      ipFilterService.create.and.returnValue(of(createdProxy));
 
       tester.save.click();
 
@@ -95,7 +95,7 @@ describe('EditIpFilterModalComponent', () => {
         description: 'desc'
       };
 
-      expect(ipFilterService.createIpFilter).toHaveBeenCalledWith(expectedCommand);
+      expect(ipFilterService.create).toHaveBeenCalledWith(expectedCommand);
       expect(fakeActiveModal.close).toHaveBeenCalledWith(createdProxy);
     }));
 
@@ -113,7 +113,7 @@ describe('EditIpFilterModalComponent', () => {
     };
 
     beforeEach(() => {
-      ipFilterService.getIpFilter.and.returnValue(of(ipFilterToUpdate));
+      ipFilterService.get.and.returnValue(of(ipFilterToUpdate));
 
       tester.componentInstance.prepareForEdition(ipFilterToUpdate);
       tester.detectChanges();
@@ -134,7 +134,7 @@ describe('EditIpFilterModalComponent', () => {
     });
 
     it('should save if valid', fakeAsync(() => {
-      ipFilterService.updateIpFilter.and.returnValue(of(undefined));
+      ipFilterService.update.and.returnValue(of(undefined));
 
       tester.address.fillWith('192.168.0.1');
       tester.description.fillWith('A longer and updated description of my IP filter');
@@ -146,8 +146,8 @@ describe('EditIpFilterModalComponent', () => {
         description: 'A longer and updated description of my IP filter'
       };
 
-      expect(ipFilterService.updateIpFilter).toHaveBeenCalledWith('id1', expectedCommand);
-      expect(ipFilterService.getIpFilter).toHaveBeenCalledWith('id1');
+      expect(ipFilterService.update).toHaveBeenCalledWith('id1', expectedCommand);
+      expect(ipFilterService.get).toHaveBeenCalledWith('id1');
       expect(fakeActiveModal.close).toHaveBeenCalledWith(ipFilterToUpdate);
     }));
 

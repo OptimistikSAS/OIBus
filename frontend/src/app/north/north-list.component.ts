@@ -1,35 +1,60 @@
 import { Component, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { switchMap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
 import { ModalService } from '../shared/modal.service';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../services/north-connector.service';
-import { CreateNorthConnectorModalComponent } from './create-north-connector-modal/create-north-connector-modal.component';
+import { ChooseNorthConnectorTypeModalComponent } from './choose-north-connector-type-modal/choose-north-connector-type-modal.component';
 import { RouterLink } from '@angular/router';
 import { NgForOf, NgIf } from '@angular/common';
+import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
+import { NonNullableFormBuilder } from '@angular/forms';
+import { formDirectives } from '../shared/form-directives';
+import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
+import { createPageFromArray, Page } from '../../../../shared/model/types';
+import { emptyPage } from '../shared/test-utils';
+import { PaginationComponent } from '../shared/pagination/pagination.component';
+
+const PAGE_SIZE = 15;
 
 @Component({
   selector: 'oib-north-list',
   standalone: true,
-  imports: [TranslateModule, RouterLink, NgIf, NgForOf],
+  imports: [TranslateModule, RouterLink, NgIf, NgForOf, LoadingSpinnerComponent, ...formDirectives, EnabledEnumPipe, PaginationComponent],
   templateUrl: './north-list.component.html',
   styleUrls: ['./north-list.component.scss']
 })
 export class NorthListComponent implements OnInit {
-  northList: Array<NorthConnectorDTO> = [];
+  allNorths: Array<NorthConnectorDTO> | null = null;
+  private filteredNorths: Array<NorthConnectorDTO> = [];
+  displayedNorths: Page<NorthConnectorDTO> = emptyPage();
+
+  searchForm = this.fb.group({
+    name: [null as string | null]
+  });
 
   constructor(
     private confirmationService: ConfirmationService,
     private notificationService: NotificationService,
     private modalService: ModalService,
-    private northConnectorService: NorthConnectorService
+    private northConnectorService: NorthConnectorService,
+    private fb: NonNullableFormBuilder
   ) {}
 
   ngOnInit() {
-    this.northConnectorService.getNorthConnectors().subscribe(connectors => {
-      this.northList = connectors;
+    this.northConnectorService.list().subscribe(norths => {
+      this.allNorths = norths;
+      this.filteredNorths = this.filter(norths);
+      this.changePage(0);
+    });
+
+    this.searchForm.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
+      if (this.allNorths) {
+        this.filteredNorths = this.filter(this.allNorths);
+        this.changePage(0);
+      }
     });
   }
 
@@ -48,9 +73,13 @@ export class NorthListComponent implements OnInit {
         })
       )
       .subscribe(() => {
-        this.northConnectorService.getNorthConnectors().subscribe(northList => {
-          this.northList = northList;
-        });
+        this.northConnectorService
+          .list()
+          .pipe(tap(() => (this.allNorths = null)))
+          .subscribe(norths => {
+            this.allNorths = norths;
+            this.changePage(0);
+          });
         this.notificationService.success('north.deleted', {
           name: north.name
         });
@@ -60,8 +89,27 @@ export class NorthListComponent implements OnInit {
   /**
    * Open a modal to create a North connector
    */
-  openCreationNorthModal() {
-    const modalRef = this.modalService.open(CreateNorthConnectorModalComponent);
+  createNorth() {
+    const modalRef = this.modalService.open(ChooseNorthConnectorTypeModalComponent, { size: 'xl' });
     modalRef.result.subscribe();
+  }
+
+  changePage(pageNumber: number) {
+    this.displayedNorths = this.createPage(pageNumber);
+  }
+
+  private createPage(pageNumber: number): Page<NorthConnectorDTO> {
+    return createPageFromArray(this.filteredNorths, PAGE_SIZE, pageNumber);
+  }
+
+  filter(norths: Array<NorthConnectorDTO>): Array<NorthConnectorDTO> {
+    const formValue = this.searchForm.value;
+    let filteredItems = norths;
+
+    if (formValue.name) {
+      filteredItems = filteredItems.filter(item => item.name.toLowerCase().includes(formValue.name!.toLowerCase()));
+    }
+
+    return filteredItems;
   }
 }

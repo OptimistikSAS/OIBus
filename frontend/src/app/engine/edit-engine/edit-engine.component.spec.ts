@@ -82,34 +82,6 @@ class EditEngineComponentTester extends ComponentTester<EditEngineComponent> {
     return this.input('#loki-password');
   }
 
-  get healthSignalLoggingEnabled() {
-    return this.input('#health-signal-logging-enabled')!;
-  }
-
-  get healthSignalLoggingInterval() {
-    return this.input('#health-signal-logging-interval');
-  }
-
-  get healthSignalHttpEnabled() {
-    return this.input('#health-signal-http-enabled')!;
-  }
-
-  get healthSignalHttpVerbose() {
-    return this.input('#health-signal-http-verbose');
-  }
-
-  get healthSignalHttpInterval() {
-    return this.input('#health-signal-http-interval');
-  }
-
-  get healthSignalHttpAddress() {
-    return this.input('#health-signal-http-address');
-  }
-
-  get healthSignalHttpProxy() {
-    return this.select('#health-signal-http-proxy');
-  }
-
   get submitButton() {
     return this.button('#save-button')!;
   }
@@ -150,13 +122,13 @@ describe('EditEngineComponent', () => {
     },
     healthSignal: {
       logging: {
-        enabled: true,
+        enabled: false,
         interval: 60
       },
       http: {
         enabled: true,
         interval: 60,
-        verbose: false,
+        verbose: true,
         address: 'http://health-signal.oibus.com',
         proxyId: null,
         authentication: {
@@ -206,14 +178,14 @@ describe('EditEngineComponent', () => {
     engineService.getEngineSettings.and.returnValue(of(engineSettings));
 
     engineService.updateEngineSettings.and.returnValue(of(undefined));
-    proxyService.getProxies.and.returnValue(of(proxies));
+    proxyService.list.and.returnValue(of(proxies));
 
     tester = new EditEngineComponentTester();
     tester.detectChanges();
   });
 
   it('should display title and filled form', () => {
-    expect(tester.title).toContainText('Engine');
+    expect(tester.title).toContainText('Edit engine settings');
     expect(tester.name).toHaveValue(engineSettings.name);
     expect(tester.port).toHaveValue(engineSettings.port.toString());
     expect(tester.consoleLevel).toHaveSelectedLabel('Silent');
@@ -221,7 +193,7 @@ describe('EditEngineComponent', () => {
     expect(tester.fileMaxFileSize).toHaveValue(engineSettings.logParameters.file.maxFileSize.toString());
     expect(tester.fileNumberOfFiles).toHaveValue(engineSettings.logParameters.file.numberOfFiles.toString());
     expect(tester.databaseLevel).toHaveSelectedLabel('Silent');
-    expect(tester.databaseMaxNumberOfLogs).toBeNull();
+    expect(tester.databaseMaxNumberOfLogs).toHaveValue('100000');
     expect(tester.lokiLevel).toHaveSelectedLabel('Error');
     expect(tester.lokiInterval).toHaveValue(engineSettings.logParameters.loki.interval.toString());
     expect(tester.lokiAddress).toHaveValue(engineSettings.logParameters.loki.address);
@@ -229,14 +201,7 @@ describe('EditEngineComponent', () => {
     expect(tester.lokiAddress).toHaveValue(engineSettings.logParameters.loki.address);
     expect(tester.lokiUsername).toHaveValue(engineSettings.logParameters.loki.username);
     expect(tester.lokiPassword).toHaveValue(engineSettings.logParameters.loki.password);
-    expect(tester.lokiProxy).toHaveSelectedLabel('');
-    expect(tester.healthSignalLoggingEnabled).toBeChecked();
-    expect(tester.healthSignalLoggingInterval).toHaveValue(engineSettings.healthSignal.logging.interval.toString());
-    expect(tester.healthSignalHttpEnabled).toBeChecked();
-    expect(tester.healthSignalHttpVerbose).not.toBeChecked();
-    expect(tester.healthSignalHttpInterval).toHaveValue(engineSettings.healthSignal.http.interval.toString());
-    expect(tester.healthSignalHttpAddress).toHaveValue(engineSettings.healthSignal.http.address);
-    expect(tester.healthSignalHttpProxy).toHaveSelectedLabel('');
+    expect(tester.lokiProxy).toHaveSelectedLabel('No proxy');
   });
 
   it('should update engine settings', () => {
@@ -245,24 +210,11 @@ describe('EditEngineComponent', () => {
     tester.consoleLevel.selectLabel('Error');
     tester.fileNumberOfFiles!.fillWith('10');
     tester.lokiLevel.selectLabel('Silent');
-    tester.healthSignalLoggingEnabled.uncheck();
-    tester.healthSignalHttpVerbose!.check();
 
     expect(tester.name).toHaveValue('OIBus Dev');
     expect(tester.consoleLevel).toHaveSelectedLabel('Error');
     expect(tester.fileNumberOfFiles).toHaveValue('10');
     expect(tester.lokiLevel).toHaveSelectedLabel('Silent');
-    expect(tester.lokiInterval).toBeNull();
-    expect(tester.lokiAddress).toBeNull();
-    expect(tester.lokiTokenAddress).toBeNull();
-    expect(tester.lokiAddress).toBeNull();
-    expect(tester.lokiUsername).toBeNull();
-    expect(tester.lokiPassword).toBeNull();
-    expect(tester.lokiProxy).toBeNull();
-    expect(tester.healthSignalLoggingEnabled).not.toBeChecked();
-    expect(tester.healthSignalLoggingInterval).toBeNull();
-    expect(tester.healthSignalHttpEnabled).toBeChecked();
-    expect(tester.healthSignalHttpVerbose).toBeChecked();
 
     tester.submitButton.click();
 

@@ -107,7 +107,7 @@ describe('EditSouthItemModalComponent', () => {
 
     it('should have an empty form', () => {
       expect(tester.name).toHaveValue('');
-      expect(tester.scanMode).toHaveSelectedIndex(-1);
+      expect(tester.scanMode).toHaveSelectedIndex(0);
     });
 
     it('should not save if invalid', () => {
@@ -128,7 +128,7 @@ describe('EditSouthItemModalComponent', () => {
         id: 'id1',
         connectorId: 'southId1'
       } as OibusItemDTO;
-      southConnectorService.createSouthItem.and.returnValue(of(createdSouthItem));
+      southConnectorService.createItem.and.returnValue(of(createdSouthItem));
 
       tester.save.click();
 
@@ -138,7 +138,7 @@ describe('EditSouthItemModalComponent', () => {
         settings: {}
       };
 
-      expect(southConnectorService.createSouthItem).toHaveBeenCalledWith('southId1', expectedCommand);
+      expect(southConnectorService.createItem).toHaveBeenCalledWith('southId1', expectedCommand);
       expect(fakeActiveModal.close).toHaveBeenCalledWith(createdSouthItem);
     }));
 
@@ -174,7 +174,7 @@ describe('EditSouthItemModalComponent', () => {
         id: 'id1',
         connectorId: 'southId1'
       } as OibusItemDTO;
-      southConnectorService.createSouthItem.and.returnValue(of(createdSouthItem));
+      southConnectorService.createItem.and.returnValue(of(createdSouthItem));
 
       tester.save.click();
 
@@ -184,7 +184,7 @@ describe('EditSouthItemModalComponent', () => {
         settings: {}
       };
 
-      expect(southConnectorService.createSouthItem).toHaveBeenCalledWith('southId1', expectedCommand);
+      expect(southConnectorService.createItem).toHaveBeenCalledWith('southId1', expectedCommand);
       expect(fakeActiveModal.close).toHaveBeenCalledWith(createdSouthItem);
     }));
   });
@@ -199,8 +199,8 @@ describe('EditSouthItemModalComponent', () => {
     };
 
     beforeEach(() => {
-      southConnectorService.getSouthConnectorItem.and.returnValue(of(southItem));
-      southConnectorService.updateSouthItem.and.returnValue(of(undefined));
+      southConnectorService.getItems.and.returnValue(of(southItem));
+      southConnectorService.updateItem.and.returnValue(of(undefined));
 
       tester.componentInstance.prepareForEdition(southConnector, southItemSchema, scanModes, southItem);
       tester.detectChanges();
@@ -230,8 +230,8 @@ describe('EditSouthItemModalComponent', () => {
         settings: {}
       };
 
-      expect(southConnectorService.updateSouthItem).toHaveBeenCalledWith('southId1', 'id1', expectedCommand);
-      expect(southConnectorService.getSouthConnectorItem).toHaveBeenCalledWith('southId1', 'id1');
+      expect(southConnectorService.updateItem).toHaveBeenCalledWith('southId1', 'id1', expectedCommand);
+      expect(southConnectorService.getItems).toHaveBeenCalledWith('southId1', 'id1');
       expect(fakeActiveModal.close).toHaveBeenCalledWith(southItem);
     }));
 

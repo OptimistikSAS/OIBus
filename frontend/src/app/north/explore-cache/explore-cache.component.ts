@@ -8,10 +8,8 @@ import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.m
 import { of, switchMap } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatetimePipe } from '../../shared/datetime.pipe';
-import { LogLevelsEnumPipe } from '../../shared/log-levels-enum.pipe';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { FileSizePipe } from '../../shared/file-size.pipe';
-import { SubNavbarComponent } from '../sub-navbar/sub-navbar.component';
 import { ErrorFilesComponent } from './error-files/error-files.component';
 
 @Component({
@@ -24,11 +22,9 @@ import { ErrorFilesComponent } from './error-files/error-files.component';
     SaveButtonComponent,
     NgForOf,
     DatetimePipe,
-    LogLevelsEnumPipe,
     NgIf,
     PaginationComponent,
     FileSizePipe,
-    SubNavbarComponent,
     RouterLink,
     ErrorFilesComponent
   ],

@@ -1,147 +1,165 @@
-<div class="oi-padded-container">
-  <div class="d-flex justify-content-between">
-    <div class="oi-header-container">
-      <h1 *ngIf="northConnector" translate="north.edit-title"></h1>
-      <h1 *ngIf="!northConnector" translate="north.create-title"></h1>
-    </div>
-  </div>
-
+<div class="oib-padded-container">
   <div class="row justify-content-center">
     <div class="col-md-10 col-lg-8">
+      <h1 [translate]="'north.' + mode + '-title'" [translateParams]="{ type: northType }"></h1>
       <form [formGroup]="northForm" (ngSubmit)="save()" id="north-form" class="mt-3">
         <!-- General settings -->
-        <h2 translate="north.general-settings"></h2>
-        <div class="row mb-3">
-          <!-- Name -->
-          <div class="col-4">
-            <div class="form-group">
-              <label for="north-name" translate="north.name"></label>
-              <input formControlName="name" id="north-name" class="form-control" />
-              <val-errors controlName="name"> </val-errors>
+        <oib-box boxTitle="north.general-settings">
+          <div class="row">
+            <!-- Name -->
+            <div class="col-4">
+              <div class="form-group">
+                <label class="form-label" for="north-name" translate="north.name"></label>
+                <input formControlName="name" id="north-name" class="form-control" />
+                <val-errors controlName="name"></val-errors>
+              </div>
             </div>
-          </div>
 
-          <!-- Enabled -->
-          <div class="col-4">
-            <div class="form-group">
-              <label for="north-enabled" translate="north.enabled"></label>
-              <div class="form-check form-switch">
-                <input formControlName="enabled" id="north-enabled" type="checkbox" class="form-check-input" />
+            <!-- Description -->
+            <div class="col-5">
+              <div class="form-group">
+                <label class="form-label" for="north-description" translate="north.description"></label>
+                <input formControlName="description" id="north-description" class="form-control" />
+              </div>
+            </div>
+
+            <!-- Enabled -->
+            <div class="col-3">
+              <div class="form-group">
+                <div class="form-check form-switch padded">
+                  <input formControlName="enabled" id="north-enabled" type="checkbox" class="form-check-input" />
+                  <label class="form-check-label" for="north-enabled" translate="north.enabled"></label>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="row mb-3">
-          <!-- Description -->
-          <div class="form-group">
-            <label class="form-label" for="north-description" translate="north.description"></label>
-            <textarea formControlName="description" id="north-description" class="form-control"></textarea>
-          </div>
-        </div>
+        </oib-box>
 
         <!-- Specific settings -->
-        <h2 translate="north.specific-settings" [translateParams]="{ type: northType }" id="specific-settings-title"></h2>
+        <oib-box>
+          <ng-template oibBoxTitle>
+            <span translate="north.specific-settings" [translateParams]="{ type: northType }" id="specific-settings-title"></span>
+          </ng-template>
 
-        <oib-form
-          *ngIf="northSettingsSchema.length > 0"
-          formGroupName="settings"
-          [form]="northForm.controls.settings"
-          [settingsSchema]="northSettingsSchema"
-          [scanModes]="scanModes"
-          [proxies]="proxies"
-        ></oib-form>
+          <oib-form
+            *ngIf="northSettingsSchema.length > 0"
+            formGroupName="settings"
+            [form]="northForm.controls.settings"
+            [settingsSchema]="northSettingsSchema"
+            [scanModes]="scanModes"
+            [proxies]="proxies"
+          ></oib-form>
+        </oib-box>
+
         <!-- Cache settings -->
-        <h2 translate="north.cache-settings.title" id="cache-settings-title"></h2>
-        <div class="row mb-3" formGroupName="caching">
-          <div class="col-4">
-            <div class="form-group">
-              <oib-scan-mode
-                key="cache-scan-mode"
-                formControlName="scanMode"
-                [scanModes]="scanModes"
-                [label]="'north.cache-settings.send-scan-mode' | translate "
-              ></oib-scan-mode>
-              <val-errors controlName="scanMode"> </val-errors>
+        <oib-box boxTitle="north.cache-settings.title">
+          <div formGroupName="caching">
+            <div class="row">
+              <!-- Scan mode -->
+              <div class="col-3">
+                <div class="form-group">
+                  <oib-scan-mode
+                    key="cache-scan-mode"
+                    formControlName="scanMode"
+                    [scanModes]="scanModes"
+                    [label]="'north.cache-settings.send-scan-mode' | translate "
+                  ></oib-scan-mode>
+                  <val-errors controlName="scanMode"></val-errors>
+                </div>
+              </div>
+              <!-- Retry interval -->
+              <div class="col-3">
+                <div class="form-group">
+                  <label class="form-label" for="retry-interval" translate="north.cache-settings.retry-interval"></label>
+                  <div class="input-group">
+                    <input type="number" formControlName="retryInterval" id="retry-interval" class="form-control" />
+                    <span class="input-group-text" translate="common.unit.ms"></span>
+                  </div>
+                  <val-errors controlName="retryInterval"></val-errors>
+                </div>
+              </div>
+              <!-- Retry count -->
+              <div class="col-3">
+                <div class="form-group">
+                  <label class="form-label" for="retry-count" translate="north.cache-settings.retry-count"></label>
+                  <input type="number" formControlName="retryCount" id="retry-count" class="form-control" />
+                  <val-errors controlName="retryCount"></val-errors>
+                </div>
+              </div>
+              <!-- Max size -->
+              <div class="col-3">
+                <div class="form-group">
+                  <label class="form-label" for="maxSize" translate="north.cache-settings.max-size"></label>
+                  <div class="input-group">
+                    <input type="number" formControlName="maxSize" id="maxSize" class="form-control" />
+                    <span class="input-group-text" translate="common.unit.MB"></span>
+                  </div>
+                  <val-errors controlName="maxSize"></val-errors>
+                </div>
+              </div>
             </div>
-          </div>
-          <!-- Retry interval -->
-          <div class="col-4">
-            <div class="form-group">
-              <label for="retry-interval" translate="north.cache-settings.retry-interval"></label>
-              <input type="number" formControlName="retryInterval" id="retry-interval" class="form-control" />
-              <val-errors controlName="retryInterval"> </val-errors>
+            <div class="row" *ngIf="manifest?.modes?.points">
+              <!-- Group count -->
+              <div class="col-4">
+                <div class="form-group">
+                  <label class="form-label" for="group-count" translate="north.cache-settings.group-count"></label>
+                  <input type="number" formControlName="groupCount" id="group-count" class="form-control" />
+                  <val-errors controlName="groupCount"></val-errors>
+                </div>
+              </div>
+              <!-- Max send count -->
+              <div class="col-4">
+                <div class="form-group">
+                  <label class="form-label" for="max-send-count" translate="north.cache-settings.max-send-count"></label>
+                  <input type="number" formControlName="maxSendCount" id="max-send-count" class="form-control" />
+                  <val-errors controlName="maxSendCount"></val-errors>
+                </div>
+              </div>
             </div>
-          </div>
-          <!-- Retry count -->
-          <div class="col-4">
-            <div class="form-group">
-              <label for="retry-count" translate="north.cache-settings.retry-count"></label>
-              <input type="number" formControlName="retryCount" id="retry-count" class="form-control" />
-              <val-errors controlName="retryCount"> </val-errors>
-            </div>
-          </div>
-        </div>
-        <div class="row mb-3" formGroupName="caching" *ngIf="manifest?.modes?.points">
-          <!-- Group count -->
-          <div class="col-4">
-            <div class="form-group">
-              <label for="group-count" translate="north.cache-settings.group-count"></label>
-              <input type="number" formControlName="groupCount" id="group-count" class="form-control" />
-              <val-errors controlName="groupCount"> </val-errors>
-            </div>
-          </div>
-          <!-- Max send count -->
-          <div class="col-4">
-            <div class="form-group">
-              <label for="max-send-count" translate="north.cache-settings.max-send-count"></label>
-              <input type="number" formControlName="maxSendCount" id="max-send-count" class="form-control" />
-              <val-errors controlName="maxSendCount"> </val-errors>
-            </div>
-          </div>
-        </div>
-        <div class="row mb-3" formGroupName="caching" *ngIf="manifest?.modes?.files">
-          <!-- Send file immediately -->
-          <div class="col-4">
-            <div class="form-group">
-              <label for="send-file-immediately" translate="north.cache-settings.send-file-immediately"></label>
-              <div class="form-check form-switch">
-                <input formControlName="sendFileImmediately" id="send-file-immediately" type="checkbox" class="form-check-input" />
+            <div class="row" *ngIf="manifest?.modes?.files">
+              <!-- Send file immediately -->
+              <div class="col-4">
+                <div class="form-group">
+                  <div class="form-check form-switch">
+                    <input formControlName="sendFileImmediately" id="send-file-immediately" type="checkbox" class="form-check-input" />
+                    <label
+                      class="form-check-label"
+                      for="send-file-immediately"
+                      translate="north.cache-settings.send-file-immediately"
+                    ></label>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-        <div class="row mb-3" formGroupName="caching">
-          <!-- Timeout -->
-          <div class="col-4">
-            <div class="form-group">
-              <label for="maxSize" translate="north.cache-settings.max-size"></label>
-              <input type="number" formControlName="maxSize" id="maxSize" class="form-control" />
-              <val-errors controlName="maxSize"> </val-errors>
-            </div>
-          </div>
-        </div>
+        </oib-box>
+
         <!-- Archive settings -->
-        <h2 translate="north.archive-settings.title" id="archive-settings-title"></h2>
-        <div class="row mb-3" formGroupName="archive">
-          <!-- Archive Enabled -->
-          <div class="col-4">
-            <div class="form-group">
-              <label for="archive-enabled" translate="north.archive-settings.enabled"></label>
-              <div class="form-check form-switch">
-                <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
+        <oib-box boxTitle="north.archive-settings.title">
+          <div class="row" formGroupName="archive">
+            <!-- Archive Enabled -->
+            <div class="col-4">
+              <div class="form-group">
+                <div class="form-check form-switch padded">
+                  <label class="form-check-label" for="archive-enabled" translate="north.archive-settings.enabled"></label>
+                  <input formControlName="enabled" id="archive-enabled" type="checkbox" class="form-check-input" />
+                </div>
+              </div>
+            </div>
+            <!-- Retention duration -->
+            <div class="col-4">
+              <div class="form-group">
+                <label class="form-label" for="archive-retention-duration" translate="north.archive-settings.retention-duration"></label>
+                <div class="input-group">
+                  <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
+                  <span class="input-group-text" translate="common.unit.hr"></span>
+                </div>
               </div>
             </div>
           </div>
-          <!-- Retention duration -->
-          <div class="col-4">
-            <div class="form-group">
-              <label for="archive-retention-duration" translate="north.archive-settings.retention-duration"></label>
-              <input type="number" formControlName="retentionDuration" id="archive-retention-duration" class="form-control" />
-            </div>
-          </div>
-        </div>
+        </oib-box>
       </form>
-      <div id="actions" class="mb-2 mt-3 d-flex justify-content-end">
+      <div id="actions" class="d-flex justify-content-end">
         <div class="btn-group">
           <oib-save-button form="north-form" [state]="state"></oib-save-button>
           <button

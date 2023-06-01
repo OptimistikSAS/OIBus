@@ -102,7 +102,7 @@ describe('EditProxyModalComponent', () => {
       const createdProxy = {
         id: 'id1'
       } as ProxyDTO;
-      proxyService.createProxy.and.returnValue(of(createdProxy));
+      proxyService.create.and.returnValue(of(createdProxy));
 
       tester.save.click();
 
@@ -114,7 +114,7 @@ describe('EditProxyModalComponent', () => {
         password: ''
       };
 
-      expect(proxyService.createProxy).toHaveBeenCalledWith(expectedCommand);
+      expect(proxyService.create).toHaveBeenCalledWith(expectedCommand);
       expect(fakeActiveModal.close).toHaveBeenCalledWith(createdProxy);
     }));
 
@@ -135,7 +135,7 @@ describe('EditProxyModalComponent', () => {
     };
 
     beforeEach(() => {
-      proxyService.getProxy.and.returnValue(of(proxyToUpdate));
+      proxyService.get.and.returnValue(of(proxyToUpdate));
 
       tester.componentInstance.prepareForEdition(proxyToUpdate);
       tester.detectChanges();
@@ -156,7 +156,7 @@ describe('EditProxyModalComponent', () => {
     });
 
     it('should save if valid', fakeAsync(() => {
-      proxyService.updateProxy.and.returnValue(of(undefined));
+      proxyService.update.and.returnValue(of(undefined));
 
       tester.name.fillWith('Proxy 1 (updated)');
       tester.description.fillWith('A longer and updated description of my Proxy');
@@ -171,8 +171,8 @@ describe('EditProxyModalComponent', () => {
         password: proxyToUpdate.password
       };
 
-      expect(proxyService.updateProxy).toHaveBeenCalledWith('id1', expectedCommand);
-      expect(proxyService.getProxy).toHaveBeenCalledWith('id1');
+      expect(proxyService.update).toHaveBeenCalledWith('id1', expectedCommand);
+      expect(proxyService.get).toHaveBeenCalledWith('id1');
       expect(fakeActiveModal.close).toHaveBeenCalledWith(proxyToUpdate);
     }));
 

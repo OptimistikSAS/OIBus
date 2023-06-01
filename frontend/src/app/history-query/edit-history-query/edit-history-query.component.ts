@@ -99,12 +99,12 @@ export class EditHistoryQueryComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    combineLatest([this.proxyService.getProxies(), this.scanModeService.getScanModes(), this.route.paramMap])
+    combineLatest([this.proxyService.list(), this.scanModeService.list(), this.route.paramMap])
       .pipe(
         switchMap(([proxies, scanModes, params]) => {
           this.proxies = proxies;
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
-          return this.historyQueryService.getHistoryQuery(params.get('historyQueryId') || '').pipe(this.state.pendingUntilFinalization());
+          return this.historyQueryService.get(params.get('historyQueryId') || '').pipe(this.state.pendingUntilFinalization());
         }),
         switchMap(historyQuery => {
           this.historyQuery = historyQuery;
@@ -235,10 +235,10 @@ export class EditHistoryQueryComponent implements OnInit {
       }
     };
     this.historyQueryService
-      .updateHistoryQuery(this.historyQuery!.id, command)
+      .update(this.historyQuery!.id, command)
       .pipe(
         tap(() => this.notificationService.success('history-query.updated', { name: command.name })),
-        switchMap(() => this.historyQueryService.getHistoryQuery(this.historyQuery!.id))
+        switchMap(() => this.historyQueryService.get(this.historyQuery!.id))
       )
       .pipe(this.state.pendingUntilFinalization())
       .subscribe(historyQuery => {

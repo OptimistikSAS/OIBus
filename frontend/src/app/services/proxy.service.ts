@@ -15,7 +15,7 @@ export class ProxyService {
   /**
    * Get the proxies
    */
-  getProxies(): Observable<Array<ProxyDTO>> {
+  list(): Observable<Array<ProxyDTO>> {
     return this.http.get<Array<ProxyDTO>>(`/api/proxies`);
   }
 
@@ -23,7 +23,7 @@ export class ProxyService {
    * Get one proxy
    * @param proxyId - the ID of the proxy
    */
-  getProxy(proxyId: string): Observable<ProxyDTO> {
+  get(proxyId: string): Observable<ProxyDTO> {
     return this.http.get<ProxyDTO>(`/api/proxies/${proxyId}`);
   }
 
@@ -31,7 +31,7 @@ export class ProxyService {
    * Create a new proxy
    * @param command - the new proxy
    */
-  createProxy(command: ProxyCommandDTO): Observable<ProxyDTO> {
+  create(command: ProxyCommandDTO): Observable<ProxyDTO> {
     return this.http.post<ProxyDTO>(`/api/proxies`, command);
   }
 
@@ -40,7 +40,7 @@ export class ProxyService {
    * @param proxyId - the ID of the proxy
    * @param command - the new values of the selected proxy
    */
-  updateProxy(proxyId: string, command: ProxyCommandDTO): Observable<void> {
+  update(proxyId: string, command: ProxyCommandDTO): Observable<void> {
     return this.http.put<void>(`/api/proxies/${proxyId}`, command);
   }
 
@@ -48,7 +48,7 @@ export class ProxyService {
    * Delete the selected proxy
    * @param proxyId - the ID of the proxy to delete
    */
-  deleteProxy(proxyId: string): Observable<void> {
+  delete(proxyId: string): Observable<void> {
     return this.http.delete<void>(`/api/proxies/${proxyId}`);
   }
 }

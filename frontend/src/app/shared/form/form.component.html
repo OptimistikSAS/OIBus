@@ -3,7 +3,7 @@
     <ng-container *ngFor="let settings of row">
       <div *ngIf="!this.form?.get(settings.key)?.disabled" [class]="settings.class || 'col'">
         <div class="form-group">
-          <label *ngIf="settings.label && settings.type !== 'OibCheckbox'" [for]="settings.type + '-' + settings.key"
+          <label class="form-label" *ngIf="settings.label && settings.type !== 'OibCheckbox'" [for]="settings.type + '-' + settings.key"
             >{{ settings.label }}</label
           >
           <input
@@ -37,11 +37,12 @@
             [id]="settings.type + '-' + settings.key"
             class="form-select mb-2 mr-sm-2"
           >
+            <option [ngValue]="null"></option>
             <option *ngFor="let option of settings.options" [ngValue]="option">{{ option }}</option>
           </select>
-          <div class="form-check form-switch" *ngIf="settings.type === 'OibCheckbox'">
+          <div class="form-check form-switch padded" *ngIf="settings.type === 'OibCheckbox'">
             <input [formControlName]="settings.key" [id]="settings.type + '-' + settings.key" type="checkbox" class="form-check-input" />
-            <label *ngIf="settings.label" [for]="settings.type + '-' + settings.key">{{ settings.label }}</label>
+            <label class="form-check-label" *ngIf="settings.label" [for]="settings.type + '-' + settings.key">{{ settings.label }}</label>
           </div>
           <input
             *ngIf="settings.type === 'OibSecret'"

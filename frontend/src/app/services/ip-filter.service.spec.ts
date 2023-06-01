@@ -21,7 +21,7 @@ describe('IpFilterService', () => {
 
   it('should get all IP filters', () => {
     let expectedIpFilters: Array<IpFilterDTO> = [];
-    service.getIpFilters().subscribe(ipFilters => (expectedIpFilters = ipFilters));
+    service.list().subscribe(ipFilters => (expectedIpFilters = ipFilters));
 
     http.expectOne('/api/ip-filters').flush([{ name: 'IP filter 1' }, { name: 'IP filter 2' }]);
 
@@ -32,7 +32,7 @@ describe('IpFilterService', () => {
     let expectedIpFilter: IpFilterDTO | null = null;
     const ipFilter = { id: 'id1' } as IpFilterDTO;
 
-    service.getIpFilter('id1').subscribe(c => (expectedIpFilter = c));
+    service.get('id1').subscribe(c => (expectedIpFilter = c));
 
     http.expectOne({ url: '/api/ip-filters/id1', method: 'GET' }).flush(ipFilter);
     expect(expectedIpFilter!).toEqual(ipFilter);
@@ -45,7 +45,7 @@ describe('IpFilterService', () => {
       description: 'a test ip filter'
     };
 
-    service.createIpFilter(command).subscribe(() => (done = true));
+    service.create(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/ip-filters' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -59,7 +59,7 @@ describe('IpFilterService', () => {
       description: 'a test ip filter'
     };
 
-    service.updateIpFilter('id1', command).subscribe(() => (done = true));
+    service.update('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/ip-filters/id1' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -68,7 +68,7 @@ describe('IpFilterService', () => {
 
   it('should delete an IP filter', () => {
     let done = false;
-    service.deleteIpFilter('id1').subscribe(() => (done = true));
+    service.delete('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/ip-filters/id1' });
     testRequest.flush(null);
     expect(done).toBe(true);

@@ -45,7 +45,7 @@ describe('SouthListComponent', () => {
       type: 'Generic',
       name: 'South Connector 2',
       description: 'My second South connector description',
-      enabled: true,
+      enabled: false,
       history: {
         maxInstantPerItem: false,
         maxReadInterval: 0,
@@ -68,7 +68,7 @@ describe('SouthListComponent', () => {
       ]
     });
 
-    southConnectorService.getSouthConnectors.and.returnValue(of(southConnectors));
+    southConnectorService.list.and.returnValue(of(southConnectors));
 
     tester = new SouthListComponentTester();
     tester.detectChanges();
@@ -79,11 +79,15 @@ describe('SouthListComponent', () => {
     expect(tester.southList.length).toBe(2);
     expect(tester.southList[0].elements('td')[0]).toContainText(southConnectors[0].name);
     expect(tester.southList[0].elements('td')[1]).toContainText(southConnectors[0].type);
-    expect(tester.southList[0].elements('td')[2]).toContainText(southConnectors[0].description);
-    expect(tester.southList[0].elements('td')[3].elements('button').length).toBe(4);
+    expect(tester.southList[0].elements('td')[2]).toContainText('active');
+    expect(tester.southList[0].elements('td')[3]).toContainText(southConnectors[0].description);
+    expect(tester.southList[0].elements('td')[4].elements('button').length).toBe(1);
+    expect(tester.southList[0].elements('td')[4].elements('a').length).toBe(3);
     expect(tester.southList[1].elements('td')[0]).toContainText(southConnectors[1].name);
     expect(tester.southList[1].elements('td')[1]).toContainText(southConnectors[1].type);
-    expect(tester.southList[1].elements('td')[2]).toContainText(southConnectors[1].description);
-    expect(tester.southList[1].elements('td')[3].elements('button').length).toBe(4);
+    expect(tester.southList[1].elements('td')[2]).toContainText('paused');
+    expect(tester.southList[1].elements('td')[3]).toContainText(southConnectors[1].description);
+    expect(tester.southList[1].elements('td')[4].elements('button').length).toBe(1);
+    expect(tester.southList[1].elements('td')[4].elements('a').length).toBe(3);
   });
 });

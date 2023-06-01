@@ -1,0 +1,50 @@
+<oib-box>
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between">
+      <span translate="north.monitoring.title" id="title"></span>
+      <button class="ms-3 btn btn-primary btn-sm" (click)="resetMetrics()" translate="north.monitoring.reset-metrics"></button>
+    </div>
+  </ng-template>
+
+  <div *ngIf="connectorMetrics" class="mt-3">
+    <table class="table table-sm table-hover oib-table">
+      <tbody>
+        <!-- number of values for point connectors -->
+        <tr *ngIf="connectorMetrics.numberOfValues !== null">
+          <td style="width: 33%" translate="north.monitoring.number-of-values"></td>
+          <td>{{ connectorMetrics.numberOfValues }}</td>
+        </tr>
+        <!-- number of files for file connectors -->
+        <tr *ngIf="connectorMetrics.numberOfFiles !== null">
+          <td translate="north.monitoring.number-of-files"></td>
+          <td>{{ connectorMetrics.numberOfFiles }}</td>
+        </tr>
+        <!-- last connection -->
+        <tr *ngIf="connectorMetrics.lastConnection !== null">
+          <td translate="north.monitoring.last-connection"></td>
+          <td>{{ connectorMetrics.lastConnection | datetime:'mediumWithSeconds' }}</td>
+        </tr>
+        <!-- last value -->
+        <tr>
+          <td translate="north.monitoring.last-value"></td>
+          <td>{{ connectorMetrics.lastValue }}</td>
+        </tr>
+        <!-- last file -->
+        <tr>
+          <td translate="north.monitoring.last-file"></td>
+          <td>{{ connectorMetrics.lastFile }}</td>
+        </tr>
+        <!-- last run -->
+        <tr *ngIf="connectorMetrics.lastRunStart !== null">
+          <td translate="north.monitoring.last-run-start"></td>
+          <td>{{ connectorMetrics.lastRunStart | datetime:'mediumWithSeconds' }}</td>
+        </tr>
+        <!-- last duration -->
+        <tr *ngIf="connectorMetrics.lastRunDuration !== null">
+          <td translate="north.monitoring.last-run-duration"></td>
+          <td>{{ connectorMetrics.lastRunDuration | duration:'short' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</oib-box>

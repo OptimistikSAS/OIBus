@@ -1,13 +1,18 @@
-<h2 translate="engine.ip-filter.list">
-  <button class="btn btn-primary pull-right" id="add-ip-filter" (click)="openCreationIpFilterModal()">
-    <span class="fa fa-plus me-2"></span>
-    <span translate="engine.ip-filter.add"></span>
-  </button>
-</h2>
+<oib-box>
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between align-items-center">
+      <span translate="engine.ip-filter.list" id="title"></span>
+      <button type="button" class="btn btn-primary btn-sm" (click)="addIpFilter()">
+        <span class="fa fa-plus" id="add-ip-filter"></span>
+      </button>
+    </div>
+  </ng-template>
+</oib-box>
+
 <!-- the IP filter list -->
 <div *ngIf="ipFilters.length !== 0; else emptyIpFilters">
-  <table class="mt-2 table table-sm table-hover">
-    <thead class="table-light">
+  <table class="mt-2 table table-sm table-hover oib-table">
+    <thead class="light">
       <tr>
         <th translate="engine.ip-filter.address"></th>
         <th translate="engine.ip-filter.description"></th>
@@ -21,11 +26,7 @@
         <td class="text-nowrap action-buttons">
           <div class="pull-right">
             <!-- Edit button -->
-            <button
-              type="button"
-              class="btn btn-link edit-ip-filter fa fa-pencil px-1 py-0"
-              (click)="openEditIpFilterModal(ipFilter)"
-            ></button>
+            <button type="button" class="btn btn-link edit-ip-filter fa fa-pencil px-1 py-0" (click)="editIpFilter(ipFilter)"></button>
             <!-- Delete button -->
             <button type="button" class="btn btn-link delete-ip-filter fa fa-trash px-1 py-0" (click)="deleteIpFilter(ipFilter)"></button>
           </div>
@@ -35,5 +36,5 @@
   </table>
 </div>
 <ng-template #emptyIpFilters>
-  <div class="oi-details empty" id="no-ip-filter" translate="engine.ip-filter.none"></div>
+  <div class="oib-grey-container" id="no-ip-filter" translate="engine.ip-filter.none"></div>
 </ng-template>

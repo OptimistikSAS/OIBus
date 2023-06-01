@@ -18,6 +18,7 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { createInput, getRowSettings } from '../../shared/utils';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 
 @Component({
   selector: 'oib-edit-north',
@@ -31,7 +32,9 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
     SaveButtonComponent,
     FormComponent,
     OibScanModeComponent,
-    BackNavigationDirective
+    BackNavigationDirective,
+    BoxComponent,
+    BoxTitleDirective
   ],
   templateUrl: './edit-north.component.html',
   styleUrls: ['./edit-north.component.scss']
@@ -39,17 +42,17 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
 export class EditNorthComponent implements OnInit {
   mode: 'create' | 'edit' = 'create';
   northConnector: NorthConnectorDTO | null = null;
+  northType = '';
   state = new ObservableState();
   loading = true;
   northSettingsSchema: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
   proxies: Array<ProxyDTO> = [];
-  northType = '';
   manifest: NorthConnectorManifest | null = null;
   northForm = this.fb.group({
     name: ['', Validators.required],
     description: '',
-    enabled: false,
+    enabled: true,
     settings: this.fb.record({}),
     caching: this.fb.group({
       scanMode: [null as ScanModeDTO | null, Validators.required],
@@ -77,7 +80,7 @@ export class EditNorthComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    combineLatest([this.proxyService.getProxies(), this.scanModeService.getScanModes(), this.route.paramMap, this.route.queryParamMap])
+    combineLatest([this.proxyService.list(), this.scanModeService.list(), this.route.paramMap, this.route.queryParamMap])
       .pipe(
         switchMap(([proxies, scanModes, params, queryParams]) => {
           this.proxies = proxies;

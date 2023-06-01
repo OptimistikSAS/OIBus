@@ -21,7 +21,7 @@ describe('ScanModeService', () => {
 
   it('should get all scan modes', () => {
     let expectedScanModes: Array<ScanModeDTO> = [];
-    service.getScanModes().subscribe(scanModes => (expectedScanModes = scanModes));
+    service.list().subscribe(scanModes => (expectedScanModes = scanModes));
 
     http.expectOne('/api/scan-modes').flush([{ name: 'Scan Mode 1' }, { name: 'Scan Mode 2' }]);
 
@@ -32,7 +32,7 @@ describe('ScanModeService', () => {
     let expectedScanMode: ScanModeDTO | null = null;
     const scanMode = { id: 'id1' } as ScanModeDTO;
 
-    service.getScanMode('id1').subscribe(c => (expectedScanMode = c));
+    service.get('id1').subscribe(c => (expectedScanMode = c));
 
     http.expectOne({ url: '/api/scan-modes/id1', method: 'GET' }).flush(scanMode);
     expect(expectedScanMode!).toEqual(scanMode);
@@ -46,7 +46,7 @@ describe('ScanModeService', () => {
       cron: '* * * * * *'
     };
 
-    service.createScanMode(command).subscribe(() => (done = true));
+    service.create(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/scan-modes' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -61,7 +61,7 @@ describe('ScanModeService', () => {
       cron: '* * * * * *'
     };
 
-    service.updateScanMode('id1', command).subscribe(() => (done = true));
+    service.update('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/scan-modes/id1' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -70,7 +70,7 @@ describe('ScanModeService', () => {
 
   it('should delete a scan mode', () => {
     let done = false;
-    service.deleteScanMode('id1').subscribe(() => (done = true));
+    service.delete('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/scan-modes/id1' });
     testRequest.flush(null);
     expect(done).toBe(true);
