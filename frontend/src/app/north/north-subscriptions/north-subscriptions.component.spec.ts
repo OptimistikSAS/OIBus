@@ -29,7 +29,7 @@ class NorthSubscriptionsComponentTester extends ComponentTester<TestComponent> {
   }
 
   get title() {
-    return this.element('h2')!;
+    return this.element('#title')!;
   }
 
   get addSubscription() {
@@ -39,6 +39,7 @@ class NorthSubscriptionsComponentTester extends ComponentTester<TestComponent> {
   get noSubscriptions() {
     return this.element('#no-subscription');
   }
+
   get subscriptions() {
     return this.elements('tbody tr');
   }
@@ -75,7 +76,7 @@ describe('NorthSubscriptionsComponent', () => {
       ]
     });
 
-    southService.getSouthConnectors.and.returnValue(of(southConnectors));
+    southService.list.and.returnValue(of(southConnectors));
     northService.getNorthConnectorSubscriptions.and.returnValue(of(northSubscriptions));
 
     tester = new NorthSubscriptionsComponentTester();

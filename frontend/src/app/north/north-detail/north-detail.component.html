@@ -1,0 +1,85 @@
+<div class="oib-padded-container" *ngIf="northConnector">
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <div class="oib-header-container">
+        <h1 id="title" translate="north.title" [translateParams]="{ name: northConnector.name, type: northConnector.type }">
+          <span class="ms-3">
+            <button class="btn btn-primary" id="edit-link" routerLink="edit">
+              <i class="fa fa-pencil"></i>
+            </button>
+          </span>
+        </h1>
+      </div>
+
+      <ng-container *ngIf="manifest">
+        <!-- North metrics -->
+        <oib-north-metrics [northConnector]="northConnector"></oib-north-metrics>
+
+        <!-- Specific settings -->
+        <oib-box>
+          <ng-template oibBoxTitle>
+            <span translate="north.specific-settings" [translateParams]="{ type: northConnector.type }" id="specific-settings-title"></span>
+          </ng-template>
+
+          <table class="table table-sm table-hover oib-table mt-3">
+            <tbody class="north-settings">
+              <tr>
+                <td translate="north.status"></td>
+                <td>{{ northConnector.enabled | enabled }}</td>
+              </tr>
+              <tr *ngFor="let setting of settings">
+                <td style="width: 33%">{{setting.label}}</td>
+                <td>{{setting.currentValue}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </oib-box>
+
+        <oib-box>
+          <ng-template oibBoxTitle>
+            <div class="d-flex justify-content-between">
+              <span translate="north.cache-settings.title"></span>
+              <a
+                class="ms-3 btn btn-primary btn-sm"
+                [routerLink]="['/north', northConnector.id, 'cache']"
+                translate="north.cache-settings.explore-cache"
+              ></a>
+            </div>
+          </ng-template>
+
+          <table class="table table-sm table-hover oib-table mt-3">
+            <tbody>
+              <tr>
+                <td translate="north.cache-settings.send-scan-mode" style="width: 33%"></td>
+                <td>{{ getScanMode(northConnector.caching.scanModeId) }}</td>
+              </tr>
+              <tr>
+                <td translate="north.cache-settings.max-size"></td>
+                <td>{{ northConnector.caching.maxSize | number }} MB</td>
+              </tr>
+              <tr>
+                <td translate="north.cache-settings.retry-interval"></td>
+                <td>{{ northConnector.caching.retryInterval | duration }}</td>
+              </tr>
+              <tr>
+                <td translate="north.cache-settings.retry-count"></td>
+                <td>{{ northConnector.caching.retryCount | number }}</td>
+              </tr>
+              <tr>
+                <td translate="north.cache-settings.group-count"></td>
+                <td>{{ northConnector.caching.groupCount | number }}</td>
+              </tr>
+              <tr>
+                <td translate="north.cache-settings.max-send-count"></td>
+                <td>{{ northConnector.caching.maxSendCount | number }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </oib-box>
+
+        <!-- subscription -->
+        <oib-north-subscriptions [northConnector]="northConnector"></oib-north-subscriptions>
+      </ng-container>
+    </div>
+  </div>
+</div>

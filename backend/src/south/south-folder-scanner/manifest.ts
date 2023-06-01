@@ -17,17 +17,27 @@ const manifest: SouthConnectorManifest = {
       label: 'Input folder',
       defaultValue: './input/',
       newRow: true,
-      class: 'col-8',
+      class: 'col-12',
       validators: [{ key: 'required' }],
+      readDisplay: true
+    },
+    {
+      key: 'minAge',
+      type: 'OibNumber',
+      label: 'Minimum Age (ms)',
+      defaultValue: 1000,
+      newRow: true,
+      class: 'col-3',
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       readDisplay: true
     },
     {
       key: 'preserveFiles',
       type: 'OibCheckbox',
-      label: 'Preserve File?',
+      label: 'Preserve file',
       defaultValue: true,
       newRow: false,
-      class: 'col-2',
+      class: 'col-3',
       validators: [{ key: 'required' }],
       readDisplay: true
     },
@@ -37,28 +47,18 @@ const manifest: SouthConnectorManifest = {
       label: 'Ignore modified date',
       defaultValue: false,
       newRow: false,
-      class: 'col-2',
+      class: 'col-3',
       conditionalDisplay: { preserveFiles: [true] },
       validators: [{ key: 'required' }],
       readDisplay: false
     },
     {
-      key: 'minAge',
-      type: 'OibNumber',
-      label: 'Minimum Age (ms)',
-      defaultValue: 1000,
-      newRow: true,
-      class: 'col-4',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      readDisplay: true
-    },
-    {
       key: 'compression',
       type: 'OibCheckbox',
-      label: 'Compress File?',
+      label: 'Compress file',
       defaultValue: false,
-      newRow: true,
-      class: 'col-4',
+      newRow: false,
+      class: 'col-3',
       validators: [{ key: 'required' }],
       readDisplay: true
     }

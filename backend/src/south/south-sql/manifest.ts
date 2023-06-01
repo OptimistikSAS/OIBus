@@ -97,7 +97,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'encryption',
       type: 'OibCheckbox',
-      label: 'Encryption?',
+      label: 'Use encryption',
       defaultValue: false,
       newRow: true,
       conditionalDisplay: { driver: ['mssql'] },
@@ -133,12 +133,14 @@ const manifest: SouthConnectorManifest = {
         label: 'Query',
         contentType: 'sql',
         defaultValue: 'SELECT * FROM Table WHERE timestamp > @StartTime',
-        class: 'col-4 text-nowrap',
+        class: 'col-12 text-nowrap',
         validators: [{ key: 'required' }],
         readDisplay: true
       },
       {
         key: 'datetimeType',
+        newRow: true,
+        class: 'col-3',
         type: 'OibSelect',
         options: ['number', 'isostring'],
         defaultValue: 'isostring',
@@ -146,30 +148,8 @@ const manifest: SouthConnectorManifest = {
         readDisplay: false
       },
       {
-        key: 'requestTimeout',
-        type: 'OibNumber',
-        label: 'Request timeout (ms)',
-        defaultValue: 1000,
-        validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60000 } }],
-        readDisplay: false
-      },
-      {
-        key: 'filename',
-        type: 'OibText',
-        label: 'Filename',
-        defaultValue: 'sql-@CurrentDate.csv',
-        readDisplay: true
-      },
-      {
-        key: 'delimiter',
-        type: 'OibSelect',
-        options: [',', ';', '|'],
-        label: 'Delimiter',
-        defaultValue: ',',
-        readDisplay: false
-      },
-      {
         key: 'timeField',
+        class: 'col-3',
         type: 'OibText',
         label: 'Time field',
         defaultValue: 'timestamp',
@@ -177,12 +157,41 @@ const manifest: SouthConnectorManifest = {
       },
       {
         key: 'timezone',
+        class: 'col-3',
         type: 'OibTimezone',
         label: 'Timezone',
         readDisplay: false
       },
       {
+        key: 'requestTimeout',
+        type: 'OibNumber',
+        class: 'col-3',
+        label: 'Request timeout (ms)',
+        defaultValue: 1000,
+        validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60000 } }],
+        readDisplay: false
+      },
+      {
+        key: 'filename',
+        class: 'col-4',
+        newRow: true,
+        type: 'OibText',
+        label: 'Filename',
+        defaultValue: 'sql-@CurrentDate.csv',
+        readDisplay: true
+      },
+      {
+        key: 'delimiter',
+        class: 'col-4',
+        type: 'OibSelect',
+        options: [',', ';', '|'],
+        label: 'Delimiter',
+        defaultValue: ',',
+        readDisplay: false
+      },
+      {
         key: 'dateFormat',
+        class: 'col-4',
         type: 'OibText',
         label: 'Date format',
         defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',

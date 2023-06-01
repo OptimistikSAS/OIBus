@@ -15,7 +15,7 @@ export class IpFilterService {
   /**
    * Get the IP filters
    */
-  getIpFilters(): Observable<Array<IpFilterDTO>> {
+  list(): Observable<Array<IpFilterDTO>> {
     return this.http.get<Array<IpFilterDTO>>(`/api/ip-filters`);
   }
 
@@ -23,7 +23,7 @@ export class IpFilterService {
    * Get one IP filter
    * @param ipFilterId - the ID of the IP filter
    */
-  getIpFilter(ipFilterId: string): Observable<IpFilterDTO> {
+  get(ipFilterId: string): Observable<IpFilterDTO> {
     return this.http.get<IpFilterDTO>(`/api/ip-filters/${ipFilterId}`);
   }
 
@@ -31,7 +31,7 @@ export class IpFilterService {
    * Create a new IP filter
    * @param command - the new IP filter
    */
-  createIpFilter(command: IpFilterCommandDTO): Observable<IpFilterDTO> {
+  create(command: IpFilterCommandDTO): Observable<IpFilterDTO> {
     return this.http.post<IpFilterDTO>(`/api/ip-filters`, command);
   }
 
@@ -40,7 +40,7 @@ export class IpFilterService {
    * @param ipFilterId - the ID of the IP filter
    * @param command - the new values of the selected proxy
    */
-  updateIpFilter(ipFilterId: string, command: IpFilterCommandDTO) {
+  update(ipFilterId: string, command: IpFilterCommandDTO) {
     return this.http.put<void>(`/api/ip-filters/${ipFilterId}`, command);
   }
 
@@ -48,7 +48,7 @@ export class IpFilterService {
    * Delete the selected proxy
    * @param ipFilterId - the ID of the IP filter to delete
    */
-  deleteIpFilter(ipFilterId: string) {
+  delete(ipFilterId: string) {
     return this.http.delete<void>(`/api/ip-filters/${ipFilterId}`);
   }
 }

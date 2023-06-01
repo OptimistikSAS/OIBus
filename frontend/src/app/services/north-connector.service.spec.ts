@@ -50,7 +50,7 @@ describe('NorthConnectorService', () => {
 
   it('should get all North connectors', () => {
     let expectedNorthConnectors: Array<NorthConnectorDTO> = [];
-    service.getNorthConnectors().subscribe(northConnectors => (expectedNorthConnectors = northConnectors));
+    service.list().subscribe(northConnectors => (expectedNorthConnectors = northConnectors));
 
     http.expectOne('/api/north').flush([{ name: 'North connector 1' }, { name: 'North connector 2' }]);
 

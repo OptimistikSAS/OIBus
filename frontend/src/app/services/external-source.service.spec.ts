@@ -21,7 +21,7 @@ describe('ExternalSourceService', () => {
 
   it('should get all external sources', () => {
     let expectedExternalSources: Array<ExternalSourceDTO> = [];
-    service.getExternalSources().subscribe(externalSources => (expectedExternalSources = externalSources));
+    service.list().subscribe(externalSources => (expectedExternalSources = externalSources));
 
     http.expectOne('/api/external-sources').flush([{ name: 'Proxy 1' }, { name: 'Proxy 2' }]);
 
@@ -32,7 +32,7 @@ describe('ExternalSourceService', () => {
     let expectedExternalSource: ExternalSourceDTO | null = null;
     const externalSource = { id: 'id1' } as ExternalSourceDTO;
 
-    service.getExternalSource('id1').subscribe(c => (expectedExternalSource = c));
+    service.get('id1').subscribe(c => (expectedExternalSource = c));
 
     http.expectOne({ url: '/api/external-sources/id1', method: 'GET' }).flush(externalSource);
     expect(expectedExternalSource!).toEqual(externalSource);
@@ -45,7 +45,7 @@ describe('ExternalSourceService', () => {
       description: 'a test external source'
     };
 
-    service.createExternalSource(command).subscribe(() => (done = true));
+    service.create(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/external-sources' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -59,7 +59,7 @@ describe('ExternalSourceService', () => {
       description: 'a test external source'
     };
 
-    service.updateExternalSource('id1', command).subscribe(() => (done = true));
+    service.update('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/external-sources/id1' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -68,7 +68,7 @@ describe('ExternalSourceService', () => {
 
   it('should delete an external source', () => {
     let done = false;
-    service.deleteExternalSource('id1').subscribe(() => (done = true));
+    service.delete('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/external-sources/id1' });
     testRequest.flush(null);
     expect(done).toBe(true);

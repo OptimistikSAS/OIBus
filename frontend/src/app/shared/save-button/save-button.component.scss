@@ -1,0 +1,18 @@
+@import '../../../common';
+
+.oib-save-button {
+  border: none;
+  color: white;
+  background-color: $electricBlue;
+  border-radius: 5px 0 0 5px;
+
+  &:hover {
+    background-color: $yellow;
+    color: $darkGrey;
+  }
+
+  &:focus {
+    background-color: $electricBlue;
+    color: white;
+  }
+}

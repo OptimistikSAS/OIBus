@@ -5,7 +5,7 @@ import { PageLoader } from '../shared/page-loader.service';
 import { NonNullableFormBuilder } from '@angular/forms';
 import { LogDTO, LogSearchParam } from '../../../../shared/model/logs.model';
 import { DateTime } from 'luxon';
-import { Instant, Page } from '../../../../shared/model//types';
+import { Instant, Page } from '../../../../shared/model/types';
 import { ascendingDates } from '../shared/validators';
 import { LOG_LEVELS, LogLevel } from '../../../../shared/model/engine.model';
 import { catchError, EMPTY, exhaustMap, map, Subscription, switchMap, timer } from 'rxjs';

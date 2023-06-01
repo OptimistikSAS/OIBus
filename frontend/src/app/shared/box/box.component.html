@@ -1,0 +1,13 @@
+<div class="box">
+  <div class="oib-box-title d-flex">
+    <div class="flex-grow-1 title-container">
+      <ng-container *ngIf="titleTemplateRef; else stringTitle">
+        <ng-container *ngTemplateOutlet="titleTemplateRef"></ng-container>
+      </ng-container>
+      <ng-template #stringTitle>{{ boxTitle | translate }}</ng-template>
+    </div>
+  </div>
+  <div class="oib-box-content">
+    <ng-content></ng-content>
+  </div>
+</div>

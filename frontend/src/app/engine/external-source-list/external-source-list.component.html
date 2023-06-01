@@ -1,13 +1,18 @@
-<h2 translate="engine.external-source.list">
-  <button class="btn btn-primary pull-right" id="add-external-source" (click)="openCreationExternalSourceModal()">
-    <span class="fa fa-plus me-2"></span>
-    <span translate="engine.external-source.add"></span>
-  </button>
-</h2>
+<oib-box>
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between align-items-center">
+      <span translate="engine.external-source.list" id="title"></span>
+      <button type="button" class="btn btn-primary btn-sm" (click)="addExternalSource()">
+        <span class="fa fa-plus" id="add-external-source"></span>
+      </button>
+    </div>
+  </ng-template>
+</oib-box>
+
 <!-- the External Source list -->
 <div *ngIf="externalSources.length !== 0; else emptyExternalSources">
   <table class="mt-2 table table-sm table-hover">
-    <thead class="table-light">
+    <thead class="light">
       <tr>
         <th translate="engine.external-source.reference"></th>
         <th translate="engine.external-source.description"></th>
@@ -24,7 +29,7 @@
             <button
               type="button"
               class="btn btn-link edit-external-source fa fa-pencil px-1 py-0"
-              (click)="openEditExternalSourceModal(externalSource)"
+              (click)="editExternalSource(externalSource)"
             ></button>
             <!-- Delete button -->
             <button
@@ -39,5 +44,5 @@
   </table>
 </div>
 <ng-template #emptyExternalSources>
-  <div class="oi-details empty" id="no-external-source" translate="engine.external-source.none"></div>
+  <div class="oib-grey-container" id="no-external-source" translate="engine.external-source.none"></div>
 </ng-template>

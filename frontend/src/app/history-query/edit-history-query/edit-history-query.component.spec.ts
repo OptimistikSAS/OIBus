@@ -129,10 +129,10 @@ describe('EditHistoryQueryComponent', () => {
       ]
     });
 
-    scanModeService.getScanModes.and.returnValue(of([]));
-    proxyService.getProxies.and.returnValue(of([]));
+    scanModeService.list.and.returnValue(of([]));
+    proxyService.list.and.returnValue(of([]));
 
-    historyQueryService.getHistoryQuery.and.returnValue(of(historyQuery));
+    historyQueryService.get.and.returnValue(of(historyQuery));
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(
       of({
         category: 'debug',
@@ -174,7 +174,7 @@ describe('EditHistoryQueryComponent', () => {
   });
 
   it('should display general settings', () => {
-    expect(historyQueryService.getHistoryQuery).toHaveBeenCalledWith('id1');
+    expect(historyQueryService.get).toHaveBeenCalledWith('id1');
     expect(tester.title).toContainText('Edit history query Test');
     expect(tester.enabled).toBeChecked();
     expect(tester.description).toHaveValue('My History query description');

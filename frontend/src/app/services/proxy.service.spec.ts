@@ -21,7 +21,7 @@ describe('ProxyService', () => {
 
   it('should get all proxies', () => {
     let expectedProxies: Array<ProxyDTO> = [];
-    service.getProxies().subscribe(proxies => (expectedProxies = proxies));
+    service.list().subscribe(proxies => (expectedProxies = proxies));
 
     http.expectOne('/api/proxies').flush([{ name: 'Proxy 1' }, { name: 'Proxy 2' }]);
 
@@ -32,7 +32,7 @@ describe('ProxyService', () => {
     let expectedProxy: ProxyDTO | null = null;
     const proxy = { id: 'id1' } as ProxyDTO;
 
-    service.getProxy('id1').subscribe(c => (expectedProxy = c));
+    service.get('id1').subscribe(c => (expectedProxy = c));
 
     http.expectOne({ url: '/api/proxies/id1', method: 'GET' }).flush(proxy);
     expect(expectedProxy!).toEqual(proxy);
@@ -48,7 +48,7 @@ describe('ProxyService', () => {
       password: 'a password'
     };
 
-    service.createProxy(command).subscribe(() => (done = true));
+    service.create(command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/proxies' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -65,7 +65,7 @@ describe('ProxyService', () => {
       password: 'a password'
     };
 
-    service.updateProxy('id1', command).subscribe(() => (done = true));
+    service.update('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/proxies/id1' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -74,7 +74,7 @@ describe('ProxyService', () => {
 
   it('should delete a proxy', () => {
     let done = false;
-    service.deleteProxy('id1').subscribe(() => (done = true));
+    service.delete('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/proxies/id1' });
     testRequest.flush(null);
     expect(done).toBe(true);

@@ -92,7 +92,7 @@ describe('EditExternalSourceModalComponent', () => {
       const createdExternalSource = {
         id: 'id1'
       } as ExternalSourceDTO;
-      externalSourceService.createExternalSource.and.returnValue(of(createdExternalSource));
+      externalSourceService.create.and.returnValue(of(createdExternalSource));
 
       tester.save.click();
 
@@ -101,7 +101,7 @@ describe('EditExternalSourceModalComponent', () => {
         description: 'desc'
       };
 
-      expect(externalSourceService.createExternalSource).toHaveBeenCalledWith(expectedCommand);
+      expect(externalSourceService.create).toHaveBeenCalledWith(expectedCommand);
       expect(fakeActiveModal.close).toHaveBeenCalledWith(createdExternalSource);
     }));
 
@@ -119,7 +119,7 @@ describe('EditExternalSourceModalComponent', () => {
     };
 
     beforeEach(() => {
-      externalSourceService.getExternalSource.and.returnValue(of(externalSourceToUpdate));
+      externalSourceService.get.and.returnValue(of(externalSourceToUpdate));
 
       tester.componentInstance.prepareForEdition(externalSourceToUpdate);
       tester.detectChanges();
@@ -140,7 +140,7 @@ describe('EditExternalSourceModalComponent', () => {
     });
 
     it('should save if valid', fakeAsync(() => {
-      externalSourceService.updateExternalSource.and.returnValue(of(undefined));
+      externalSourceService.update.and.returnValue(of(undefined));
 
       tester.reference.fillWith('External source 1 (updated)');
       tester.description.fillWith('A longer and updated description of my external source');
@@ -152,8 +152,8 @@ describe('EditExternalSourceModalComponent', () => {
         description: 'A longer and updated description of my external source'
       };
 
-      expect(externalSourceService.updateExternalSource).toHaveBeenCalledWith('id1', expectedCommand);
-      expect(externalSourceService.getExternalSource).toHaveBeenCalledWith('id1');
+      expect(externalSourceService.update).toHaveBeenCalledWith('id1', expectedCommand);
+      expect(externalSourceService.get).toHaveBeenCalledWith('id1');
       expect(fakeActiveModal.close).toHaveBeenCalledWith(externalSourceToUpdate);
     }));
 

@@ -7,10 +7,8 @@ import { NgForOf, NgIf } from '@angular/common';
 import { NorthCacheFiles, NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
 import { RouterLink } from '@angular/router';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
-import { LogLevelsEnumPipe } from '../../../shared/log-levels-enum.pipe';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
-import { SubNavbarComponent } from '../../sub-navbar/sub-navbar.component';
 
 @Component({
   selector: 'oib-error-files',
@@ -22,11 +20,9 @@ import { SubNavbarComponent } from '../../sub-navbar/sub-navbar.component';
     SaveButtonComponent,
     NgForOf,
     DatetimePipe,
-    LogLevelsEnumPipe,
     NgIf,
     PaginationComponent,
     FileSizePipe,
-    SubNavbarComponent,
     RouterLink
   ],
   standalone: true

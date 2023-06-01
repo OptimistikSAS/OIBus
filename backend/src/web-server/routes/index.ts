@@ -126,6 +126,7 @@ router.post('/api/south', (ctx: KoaContext<any, any>) => southConnectorControlle
 router.put('/api/south/:id', (ctx: KoaContext<any, any>) => southConnectorController.updateSouthConnector(ctx));
 router.delete('/api/south/:id', (ctx: KoaContext<any, any>) => southConnectorController.deleteSouthConnector(ctx));
 router.get('/api/south/:southId/items', (ctx: KoaContext<any, any>) => southConnectorController.searchSouthItems(ctx));
+router.get('/api/south/:southId/items/all', (ctx: KoaContext<any, any>) => southConnectorController.listSouthItems(ctx));
 router.post('/api/south/:southId/items', (ctx: KoaContext<any, any>) => southConnectorController.createSouthItem(ctx));
 router.post('/api/south/:southId/items/upload', upload.single('file'), (ctx: KoaContext<any, any>) =>
   southConnectorController.uploadSouthItems(ctx)

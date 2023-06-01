@@ -1,13 +1,18 @@
-<h2 translate="engine.scan-mode.list">
-  <button class="btn btn-primary pull-right" id="add-scan-mode" (click)="openCreationScanModeModal()">
-    <span class="fa fa-plus me-2"></span>
-    <span translate="engine.scan-mode.add"></span>
-  </button>
-</h2>
+<oib-box>
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between align-items-center">
+      <span translate="engine.scan-mode.list" id="title"></span>
+      <button type="button" class="btn btn-primary btn-sm" (click)="addScanMode()" id="add-scan-mode">
+        <span class="fa fa-plus"></span>
+      </button>
+    </div>
+  </ng-template>
+</oib-box>
+
 <!-- the scan mode list -->
 <div *ngIf="scanModes.length !== 0; else emptyScanModes">
-  <table class="mt-2 table table-sm table-hover">
-    <thead class="table-light">
+  <table class="mt-2 table table-sm table-hover oib-table">
+    <thead class="light">
       <tr>
         <th translate="engine.scan-mode.name"></th>
         <th translate="engine.scan-mode.description"></th>
@@ -23,11 +28,7 @@
         <td class="text-nowrap action-buttons">
           <div class="pull-right">
             <!-- Edit button -->
-            <button
-              type="button"
-              class="btn btn-link edit-scan-mode fa fa-pencil px-1 py-0"
-              (click)="openEditScanModeModal(scanMode)"
-            ></button>
+            <button type="button" class="btn btn-link edit-scan-mode fa fa-pencil px-1 py-0" (click)="editScanMode(scanMode)"></button>
             <!-- Delete button -->
             <button type="button" class="btn btn-link delete-scan-mode fa fa-trash px-1 py-0" (click)="deleteScanMode(scanMode)"></button>
           </div>
@@ -37,5 +38,5 @@
   </table>
 </div>
 <ng-template #emptyScanModes>
-  <div class="oi-details empty" id="no-scan-mode" translate="engine.scan-mode.none"></div>
+  <div class="oib-grey-container" id="no-scan-mode" translate="engine.scan-mode.none"></div>
 </ng-template>

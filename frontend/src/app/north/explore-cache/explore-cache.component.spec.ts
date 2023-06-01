@@ -71,7 +71,7 @@ describe('ExploreCacheComponent', () => {
   });
 
   it('should have a title and error list component', () => {
-    expect(tester.title).toContainText('North connector North Connector');
+    expect(tester.title).toContainText('Cache content for connector North Connector');
     expect(tester.errorFiles).toBeDefined();
   });
 });

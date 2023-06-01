@@ -4,7 +4,7 @@ import { EditSouthComponent } from './edit-south.component';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { of } from 'rxjs';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { provideTestingI18n } from '../../../i18n/mock-i18n';
 import { FormComponent } from '../../shared/form/form.component';
 import { ProxyService } from '../../services/proxy.service';
@@ -34,7 +34,7 @@ class EditSouthComponentTester extends ComponentTester<EditSouthComponent> {
   }
 
   get description() {
-    return this.textarea('#south-description');
+    return this.input('#south-description');
   }
 
   get specificTitle() {
@@ -51,60 +51,65 @@ describe('EditSouthComponent', () => {
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let proxyService: jasmine.SpyObj<ProxyService>;
 
-  describe('create mode', () => {
-    beforeEach(() => {
-      southConnectorService = createMock(SouthConnectorService);
-      scanModeService = createMock(ScanModeService);
-      proxyService = createMock(ProxyService);
+  beforeEach(() => {
+    southConnectorService = createMock(SouthConnectorService);
+    scanModeService = createMock(ScanModeService);
+    proxyService = createMock(ProxyService);
 
-      TestBed.configureTestingModule({
-        imports: [EditSouthComponent],
-        providers: [
-          provideTestingI18n(),
-          provideRouter([]),
-          provideHttpClient(),
-          { provide: SouthConnectorService, useValue: southConnectorService },
-          { provide: ScanModeService, useValue: scanModeService },
-          { provide: ProxyService, useValue: proxyService }
-        ]
-      });
+    TestBed.configureTestingModule({
+      imports: [EditSouthComponent],
+      providers: [
+        provideTestingI18n(),
+        provideHttpClient(),
+        { provide: SouthConnectorService, useValue: southConnectorService },
+        { provide: ScanModeService, useValue: scanModeService },
+        { provide: ProxyService, useValue: proxyService }
+      ]
+    });
 
-      scanModeService.getScanModes.and.returnValue(of([]));
-      proxyService.getProxies.and.returnValue(of([]));
-      southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
-        of({
-          category: 'database',
-          name: 'SQL',
-          description: 'SQL description',
-          modes: {
-            subscription: false,
-            lastPoint: false,
-            lastFile: false,
-            history: true
-          },
-          items: {
-            scanMode: { subscriptionOnly: false, acceptSubscription: true },
-            settings: [],
-            schema: {} as unknown
-          },
+    scanModeService.list.and.returnValue(of([]));
+    proxyService.list.and.returnValue(of([]));
+
+    southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
+      of({
+        category: 'database',
+        name: 'SQL',
+        description: 'SQL description',
+        modes: {
+          subscription: false,
+          lastPoint: false,
+          lastFile: false,
+          history: true
+        },
+        items: {
+          scanMode: { subscriptionOnly: false, acceptSubscription: true },
           settings: [],
           schema: {} as unknown
-        } as SouthConnectorManifest)
-      );
+        },
+        settings: [],
+        schema: {} as unknown
+      } as SouthConnectorManifest)
+    );
+    southConnectorService.listItems.and.returnValue(of([]));
+  });
+
+  describe('create mode', () => {
+    beforeEach(() => {
+      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ queryParams: { type: 'SQL' } }) });
 
       tester = new EditSouthComponentTester();
       tester.detectChanges();
     });
 
     it('should display general settings', () => {
-      expect(tester.title).toContainText('Create a South connector');
-      expect(tester.enabled).not.toBeChecked();
+      expect(tester.title).toContainText('Create SQL south connector');
+      expect(tester.enabled).toBeChecked();
       expect(tester.maxInstant).not.toBeChecked();
       expect(tester.description).toHaveValue('');
       expect(tester.specificForm).toBeDefined();
 
-      expect(scanModeService.getScanModes).toHaveBeenCalledTimes(1);
-      expect(proxyService.getProxies).toHaveBeenCalledTimes(1);
+      expect(scanModeService.list).toHaveBeenCalledTimes(1);
+      expect(proxyService.list).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -124,65 +129,17 @@ describe('EditSouthComponent', () => {
     };
 
     beforeEach(() => {
-      southConnectorService = createMock(SouthConnectorService);
-      scanModeService = createMock(ScanModeService);
-      proxyService = createMock(ProxyService);
+      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { southId: 'id1' }, queryParams: { type: 'SQL' } }) });
 
-      TestBed.configureTestingModule({
-        imports: [EditSouthComponent],
-        providers: [
-          provideTestingI18n(),
-          provideRouter([]),
-          provideHttpClient(),
-          { provide: SouthConnectorService, useValue: southConnectorService },
-          { provide: ScanModeService, useValue: scanModeService },
-          { provide: ProxyService, useValue: proxyService },
-          {
-            provide: ActivatedRoute,
-            useValue: stubRoute({
-              params: {
-                southId: 'id1'
-              },
-              queryParams: {
-                type: 'SQL'
-              }
-            })
-          },
-          { provide: SouthConnectorService, useValue: southConnectorService }
-        ]
-      });
-
-      scanModeService.getScanModes.and.returnValue(of([]));
-      proxyService.getProxies.and.returnValue(of([]));
-
-      southConnectorService.getSouthConnector.and.returnValue(of(southConnector));
-      southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
-        of({
-          category: 'database',
-          name: 'SQL',
-          description: 'SQL description',
-          modes: {
-            subscription: false,
-            lastPoint: false,
-            lastFile: false,
-            history: true
-          },
-          items: {
-            scanMode: { subscriptionOnly: false, acceptSubscription: true },
-            settings: [],
-            schema: {} as unknown
-          },
-          settings: [],
-          schema: {} as unknown
-        } as SouthConnectorManifest)
-      );
+      southConnectorService.get.and.returnValue(of(southConnector));
       tester = new EditSouthComponentTester();
       tester.detectChanges();
     });
+
     it('should display general settings', () => {
       tester.maxInstant.check();
-      expect(southConnectorService.getSouthConnector).toHaveBeenCalledWith('id1');
-      expect(tester.title).toContainText('Edit South connector');
+      expect(southConnectorService.get).toHaveBeenCalledWith('id1');
+      expect(tester.title).toContainText('Edit SQL south connector');
       expect(tester.enabled).toBeChecked();
       expect(tester.maxInstant).toBeChecked();
 

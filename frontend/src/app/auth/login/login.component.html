@@ -1,4 +1,4 @@
-<div class="oi-padded-container">
+<div class="oib-padded-container">
   <h1 class="visually-hidden" translate="login.title"></h1>
 
   <div class="row">
@@ -6,7 +6,6 @@
       <div class="border rounded bg-light p-5">
         <img src="/assets/oibus_white.svg" alt="" class="img-fluid mb-5" />
         <form [formGroup]="form" (ngSubmit)="login()">
-          <h2 translate="login.title"></h2>
           <div [ngbCollapse]="!loginError" class="alert alert-danger" translate="login.login-error"></div>
           <div class="form-group">
             <label class="form-label" for="login" translate="login.login"></label>

@@ -1,90 +1,41 @@
 <div class="modal-header">
-  <h4 class="modal-title" [translate]="'engine.external-source.title-' + mode"></h4>
+  <h4 class="modal-title" [translate]="'south.edit-item-modal.' + mode + '-title'"></h4>
 </div>
 <div class="modal-body" *ngIf="southItemSchema">
   <form [formGroup]="form" (ngSubmit)="save()" id="form">
-    <!-- Name -->
-    <div class="form-group">
-      <label class="form-label" for="name" translate="south.items.name"></label>
-      <input formControlName="name" id="name" class="form-control" />
-      <val-errors controlName="name"></val-errors>
-    </div>
-
-    <div class="form-group">
-      <oib-scan-mode
-        [scanModes]="scanModes"
-        *ngIf="!southItemSchema.scanMode.subscriptionOnly"
-        key="item-scan-mode"
-        [label]="'scan-mode.label' | translate"
-        formControlName="scanMode"
-        [acceptSubscription]="southItemSchema.scanMode.acceptSubscription"
-        [subscriptionOnly]="southItemSchema.scanMode.subscriptionOnly"
-      ></oib-scan-mode>
-      <val-errors controlName="scanMode"></val-errors>
-    </div>
-
-    <div formGroupName="settings">
-      <ng-container *ngFor="let settings of southItemSchema.settings">
+    <div class="row">
+      <div class="col-3">
+        <!-- Name -->
         <div class="form-group">
-          <label *ngIf="settings.label && settings.type !== 'OibCheckbox'" [for]="settings.type + '-' + settings.key">
-            {{ settings.label }}
-          </label>
-          <input
-            *ngIf="settings.type === 'OibText'"
-            [formControlName]="settings.key"
-            [id]="settings.type + '-' + settings.key"
-            class="form-control"
-          />
-          <textarea
-            *ngIf="settings.type === 'OibTextArea'"
-            [formControlName]="settings.key"
-            [id]="settings.type + '-' + settings.key"
-            class="form-control"
-          ></textarea>
-          <oib-code-block
-            *ngIf="settings.type === 'OibCodeBlock'"
-            [key]="settings.key"
-            [formControlName]="settings.key"
-            [contentType]="settings.contentType"
-          ></oib-code-block>
-          <input
-            *ngIf="settings.type === 'OibNumber'"
-            type="number"
-            [formControlName]="settings.key"
-            [id]="settings.type + '-' + settings.key"
-            class="form-control"
-          />
-          <select
-            *ngIf="settings.type === 'OibSelect'"
-            [formControlName]="settings.key"
-            [id]="settings.type + '-' + settings.key"
-            class="form-select mb-2 mr-sm-2"
-          >
-            <option *ngFor="let option of settings.options" [ngValue]="option">{{ option }}</option>
-          </select>
-          <div class="form-check form-switch" *ngIf="settings.type === 'OibCheckbox'">
-            <input [formControlName]="settings.key" [id]="settings.type + '-' + settings.key" type="checkbox" class="form-check-input" />
-            <label *ngIf="settings.label" [for]="settings.type + '-' + settings.key">{{ settings.label }}</label>
-          </div>
-          <input
-            *ngIf="settings.type === 'OibSecret'"
-            type="password"
-            [formControlName]="settings.key"
-            [id]="settings.type + '-' + settings.key"
-            class="form-control"
-          />
-          <input
-            *ngIf="settings.type === 'OibTimezone'"
-            [id]="settings.type + '-' + settings.key"
-            class="form-control"
-            [formControlName]="settings.key"
-            [ngbTypeahead]="timezoneTypeahead"
-            [editable]="false"
-          />
-          <val-errors [controlName]="settings.key"></val-errors>
+          <label class="form-label" for="name" translate="south.items.name"></label>
+          <input formControlName="name" id="name" class="form-control" />
+          <val-errors controlName="name"></val-errors>
         </div>
-      </ng-container>
+      </div>
+
+      <div class="col-3">
+        <div class="form-group">
+          <oib-scan-mode
+            [scanModes]="scanModes"
+            *ngIf="!subscriptionOnly"
+            key="item-scan-mode"
+            [label]="'scan-mode.label' | translate"
+            formControlName="scanMode"
+            [acceptSubscription]="acceptSubscription"
+            [subscriptionOnly]="subscriptionOnly"
+          ></oib-scan-mode>
+          <val-errors controlName="scanMode"></val-errors>
+        </div>
+      </div>
     </div>
+
+    <oib-form
+      *ngIf="southItemSchema.length > 0"
+      formGroupName="settings"
+      [form]="form.controls.settings"
+      [settingsSchema]="southItemSchema"
+      [scanModes]="scanModes"
+    ></oib-form>
   </form>
 </div>
 <div class="modal-footer">

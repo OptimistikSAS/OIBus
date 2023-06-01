@@ -1,0 +1,87 @@
+<div class="oib-padded-container" *ngIf="engineSettings">
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <div class="oib-header-container d-flex justify-content-between">
+        <h1 translate="engine.title"></h1>
+        <div>
+          <a type="button" class="btn btn-primary me-2" translate="engine.edit" routerLink="edit"></a>
+          <button
+            (click)="restart()"
+            type="button"
+            [disabled]="(shuttingDown.isPending | async) || (restarting.isPending | async)"
+            class="btn btn-danger me-2"
+            id="restart"
+          >
+            <span
+              *ngIf="restarting.isPending | async"
+              class="spinner-border spinner-border-sm me-1"
+              role="status"
+              aria-hidden="true"
+            ></span>
+            <span *ngIf="(restarting.isPending | async) === false" class="fa fa-rotate-right me-1" role="status" aria-hidden="true"></span>
+            <span translate="engine.restart"></span>
+          </button>
+
+          <button
+            type="button"
+            [disabled]="(shuttingDown.isPending | async) || (restarting.isPending | async)"
+            class="btn btn-danger"
+            id="shutdown"
+            (click)="shutdown()"
+          >
+            <span
+              *ngIf="shuttingDown.isPending | async"
+              class="spinner-border spinner-border-sm me-1"
+              role="status"
+              aria-hidden="true"
+            ></span>
+            <span *ngIf="(shuttingDown.isPending | async) === false" class="fa fa-stop me-1" role="status" aria-hidden="true"></span>
+            <span translate="engine.shutdown"></span>
+          </button>
+        </div>
+      </div>
+
+      <oib-box boxTitle="engine.general-settings.title">
+        <table class="table table-sm table-hover oib-table mt-3">
+          <tbody class="general-settings">
+            <tr>
+              <td translate="engine.general-settings.name"></td>
+              <td>{{ engineSettings.name }}</td>
+            </tr>
+            <tr>
+              <td translate="engine.general-settings.port"></td>
+              <td>{{ engineSettings.port }}</td>
+            </tr>
+            <tr>
+              <td translate="engine.general-settings.log-levels"></td>
+              <td>
+                <span translate="engine.general-settings.console"></span>:<span>{{ engineSettings.logParameters.console.level }}</span>
+                <span class="ms-2" translate="engine.general-settings.file"></span>:<span
+                  >{{ engineSettings.logParameters.file.level }}</span
+                >
+                <span class="ms-2" translate="engine.general-settings.database"></span>:<span
+                  >{{ engineSettings.logParameters.database.level }}</span
+                >
+                <span class="ms-2" translate="engine.general-settings.loki"></span>:<span
+                  >{{ engineSettings.logParameters.loki.level }}</span
+                >
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </oib-box>
+
+      <oib-scan-mode-list></oib-scan-mode-list>
+
+      <div class="mt-2">
+        <oib-proxy-list></oib-proxy-list>
+      </div>
+      <div class="mt-2">
+        <oib-ip-filter-list></oib-ip-filter-list>
+      </div>
+      <div class="mt-2">
+        <oib-external-source-list></oib-external-source-list>
+      </div>
+    </div>
+  </div>
+</div>

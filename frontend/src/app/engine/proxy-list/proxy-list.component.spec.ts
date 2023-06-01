@@ -2,10 +2,12 @@ import { TestBed } from '@angular/core/testing';
 
 import { ProxyListComponent } from './proxy-list.component';
 import { provideTestingI18n } from '../../../i18n/mock-i18n';
-import { ComponentTester, createMock } from 'ngx-speculoos';
+import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { ProxyService } from '../../services/proxy.service';
 import { of } from 'rxjs';
 import { ProxyDTO } from '../../../../../shared/model/proxy.model';
+import { ConfirmationService } from '../../shared/confirmation.service';
+import { NotificationService } from '../../shared/notification.service';
 
 class ProxyListComponentTester extends ComponentTester<ProxyListComponent> {
   constructor() {
@@ -13,16 +15,25 @@ class ProxyListComponentTester extends ComponentTester<ProxyListComponent> {
   }
 
   get title() {
-    return this.element('h2')!;
+    return this.element('#title')!;
   }
 
   get addProxy() {
     return this.button('#add-proxy')!;
   }
 
+  get deleteButtons() {
+    return this.elements('.delete-proxy') as Array<TestButton>;
+  }
+
+  get editButtons() {
+    return this.elements('.edit-proxy') as Array<TestButton>;
+  }
+
   get noProxy() {
     return this.element('#no-proxy');
   }
+
   get proxies() {
     return this.elements('tbody tr');
   }
@@ -31,20 +42,27 @@ class ProxyListComponentTester extends ComponentTester<ProxyListComponent> {
 describe('ProxyListComponent', () => {
   let tester: ProxyListComponentTester;
   let proxyService: jasmine.SpyObj<ProxyService>;
+  let confirmationService: jasmine.SpyObj<ConfirmationService>;
+  let notificationService: jasmine.SpyObj<NotificationService>;
+
+  let proxies: Array<ProxyDTO>;
 
   beforeEach(() => {
     proxyService = createMock(ProxyService);
+    confirmationService = createMock(ConfirmationService);
+    notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
       imports: [ProxyListComponent],
-      providers: [provideTestingI18n(), { provide: ProxyService, useValue: proxyService }]
+      providers: [
+        provideTestingI18n(),
+        { provide: ProxyService, useValue: proxyService },
+        { provide: ConfirmationService, useValue: confirmationService },
+        { provide: NotificationService, useValue: notificationService }
+      ]
     });
 
-    tester = new ProxyListComponentTester();
-  });
-
-  it('should display a list of proxies', () => {
-    const proxies: Array<ProxyDTO> = [
+    proxies = [
       {
         id: 'id1',
         name: 'proxy1',
@@ -63,24 +81,31 @@ describe('ProxyListComponent', () => {
       }
     ];
 
-    proxyService.getProxies.and.returnValue(of(proxies));
-    tester.detectChanges();
-
-    expect(tester.title).toContainText('Proxy list');
-    expect(tester.proxies.length).toEqual(2);
-    expect(tester.proxies[0].elements('td').length).toEqual(4);
-    expect(tester.proxies[1].elements('td')[0]).toContainText('proxy2');
-    expect(tester.proxies[1].elements('td')[1]).toContainText('My Proxy 2');
-    expect(tester.proxies[1].elements('td')[2]).toContainText('http://localhost');
+    tester = new ProxyListComponentTester();
   });
 
-  it('should display an empty list', () => {
-    const proxies: Array<ProxyDTO> = [];
+  describe('with proxy', () => {
+    beforeEach(() => {
+      proxyService.list.and.returnValue(of(proxies));
+      tester.detectChanges();
+    });
 
-    proxyService.getProxies.and.returnValue(of(proxies));
-    tester.detectChanges();
+    it('should display a list of proxies', () => {
+      expect(tester.title).toContainText('Proxies');
+      expect(tester.proxies.length).toEqual(2);
+      expect(tester.proxies[0].elements('td').length).toEqual(4);
+      expect(tester.proxies[1].elements('td')[0]).toContainText('proxy2');
+      expect(tester.proxies[1].elements('td')[1]).toContainText('My Proxy 2');
+      expect(tester.proxies[1].elements('td')[2]).toContainText('http://localhost');
+    });
+  });
 
-    expect(tester.title).toContainText('Proxy list');
-    expect(tester.noProxy).toContainText('No proxy');
+  describe('with no proxy', () => {
+    it('should display an empty list', () => {
+      const proxies: Array<ProxyDTO> = [];
+      proxyService.list.and.returnValue(of(proxies));
+      tester.detectChanges();
+      expect(tester.noProxy).toContainText('No proxy');
+    });
   });
 });

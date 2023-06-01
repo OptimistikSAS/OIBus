@@ -17,7 +17,7 @@ export class HistoryQueryService {
   /**
    * Get History queries
    */
-  getHistoryQueries(): Observable<Array<HistoryQueryDTO>> {
+  list(): Observable<Array<HistoryQueryDTO>> {
     return this.http.get<Array<HistoryQueryDTO>>(`/api/history-queries`);
   }
 
@@ -25,7 +25,7 @@ export class HistoryQueryService {
    * Get one History query
    * @param historyQueryId - the ID of the History query
    */
-  getHistoryQuery(historyQueryId: string): Observable<HistoryQueryDTO> {
+  get(historyQueryId: string): Observable<HistoryQueryDTO> {
     return this.http.get<HistoryQueryDTO>(`/api/history-queries/${historyQueryId}`);
   }
 
@@ -33,7 +33,7 @@ export class HistoryQueryService {
    * Create a new History query
    * @param command - the new History query
    */
-  createHistoryQuery(command: HistoryQueryCreateCommandDTO): Observable<HistoryQueryDTO> {
+  create(command: HistoryQueryCreateCommandDTO): Observable<HistoryQueryDTO> {
     return this.http.post<HistoryQueryDTO>(`/api/history-queries`, command);
   }
 
@@ -42,7 +42,7 @@ export class HistoryQueryService {
    * @param historyQueryId - the ID of the History query
    * @param command - the new values of the selected History query
    */
-  updateHistoryQuery(historyQueryId: string, command: HistoryQueryCommandDTO) {
+  update(historyQueryId: string, command: HistoryQueryCommandDTO) {
     return this.http.put<void>(`/api/history-queries/${historyQueryId}`, command);
   }
 

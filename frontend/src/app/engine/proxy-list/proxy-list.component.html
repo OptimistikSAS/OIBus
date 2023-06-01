@@ -1,13 +1,18 @@
-<h2 translate="engine.proxy.list">
-  <button class="btn btn-primary pull-right" id="add-proxy" (click)="openCreationProxyModal()">
-    <span class="fa fa-plus me-2"></span>
-    <span translate="engine.proxy.add"></span>
-  </button>
-</h2>
+<oib-box>
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between align-items-center">
+      <span translate="engine.proxy.list" id="title"></span>
+      <button type="button" class="btn btn-primary btn-sm" (click)="addProxy()" id="add-proxy">
+        <span class="fa fa-plus"></span>
+      </button>
+    </div>
+  </ng-template>
+</oib-box>
+
 <!-- the proxy list -->
 <div *ngIf="proxies.length !== 0; else emptyProxies">
-  <table class="mt-2 table table-sm table-hover">
-    <thead class="table-light">
+  <table class="mt-2 table table-sm table-hover oib-table">
+    <thead class="light">
       <tr>
         <th translate="engine.proxy.name"></th>
         <th translate="engine.proxy.description"></th>
@@ -33,5 +38,5 @@
   </table>
 </div>
 <ng-template #emptyProxies>
-  <div class="oi-details empty" id="no-proxy" translate="engine.proxy.none"></div>
+  <div class="oib-grey-container" id="no-proxy" translate="engine.proxy.none"></div>
 </ng-template>
