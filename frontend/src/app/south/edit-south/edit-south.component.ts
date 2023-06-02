@@ -5,7 +5,7 @@ import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorManifest } f
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
-import { FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -15,7 +15,7 @@ import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { ProxyService } from '../../services/proxy.service';
-import { createInput, getRowSettings } from '../../shared/utils';
+import { createInput, disableInputs, getRowSettings } from '../../shared/utils';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { SouthItemsComponent } from '../south-items/south-items.component';
@@ -132,35 +132,17 @@ export class EditSouthComponent implements OnInit {
         // Each input that must be monitored is subscribed
         inputsToSubscribeTo.forEach(input => {
           // Check once with initialized value
-          this.disableInputs(input, settingsForm.controls[input].value as string | number | boolean, settingsForm);
+          disableInputs(manifest.settings, input, settingsForm.controls[input].value, settingsForm);
           // Check on value changes
           settingsForm.controls[input].valueChanges.subscribe(inputValue => {
             // When a value of such an input changes, check if its inputValue implies to disable another input
-            this.disableInputs(input, inputValue as string | number | boolean, settingsForm);
+            disableInputs(manifest.settings, input, inputValue, settingsForm);
           });
         });
 
         this.manifest = manifest;
         this.loading = false;
       });
-  }
-
-  private disableInputs(input: string, inputValue: string | number | boolean, settingsForm: FormGroup) {
-    this.southSettingsSchema.forEach(row => {
-      row.forEach(settings => {
-        if (settings.conditionalDisplay) {
-          Object.entries(settings.conditionalDisplay).forEach(([key, values]) => {
-            if (key === input) {
-              if (!values.includes(inputValue)) {
-                settingsForm.controls[settings.key].disable();
-              } else {
-                settingsForm.controls[settings.key].enable();
-              }
-            }
-          });
-        }
-      });
-    });
   }
 
   createOrUpdateSouthConnector(command: SouthConnectorCommandDTO): void {

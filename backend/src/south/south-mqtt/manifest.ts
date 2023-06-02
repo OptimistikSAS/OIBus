@@ -39,32 +39,17 @@ const manifest: SouthConnectorManifest = {
       label: 'Persistent',
       defaultValue: false,
       newRow: false,
-      conditionalDisplay: { qos: [2] },
+      conditionalDisplay: { qos: ['2'] },
       validators: [{ key: 'required' }],
       readDisplay: true
     },
-    { key: 'authentication', type: 'OibAuthentication', label: 'User authentication', newRow: true, authTypes: ['none', 'basic'] },
-    {
-      key: 'certFile',
-      type: 'OibText',
-      label: 'Cert File',
-      defaultValue: '',
-      newRow: true,
-      readDisplay: false
-    },
-    {
-      key: 'keyFile',
-      type: 'OibText',
-      label: 'Key File',
-      defaultValue: '',
-      newRow: false,
-      readDisplay: false
-    },
+    { key: 'authentication', type: 'OibAuthentication', label: 'Authentication', newRow: true, authTypes: ['none', 'basic', 'cert'] },
     {
       key: 'caFile',
       type: 'OibText',
       label: 'CA File',
       defaultValue: '',
+      conditionalDisplay: { authentication: ['cert'] },
       newRow: false,
       readDisplay: false
     },

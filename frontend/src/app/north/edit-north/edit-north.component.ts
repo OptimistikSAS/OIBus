@@ -3,7 +3,7 @@ import { NgForOf, NgIf } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
-import { FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -16,7 +16,7 @@ import { ProxyService } from '../../services/proxy.service';
 import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
-import { createInput, getRowSettings } from '../../shared/utils';
+import { createInput, disableInputs, getRowSettings } from '../../shared/utils';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 
@@ -155,34 +155,16 @@ export class EditNorthComponent implements OnInit {
         // Each input that must be monitored is subscribed
         inputsToSubscribeTo.forEach(input => {
           // Check once with initialized value
-          this.disableInputs(input, settingsForm.controls[input].value as string | number | boolean, settingsForm);
+          disableInputs(manifest.settings, input, settingsForm.controls[input].value, settingsForm);
           // Check on value changes
           settingsForm.controls[input].valueChanges.subscribe(inputValue => {
             // When a value of such an input changes, check if its inputValue implies to disable another input
-            this.disableInputs(input, inputValue as string | number | boolean, settingsForm);
+            disableInputs(manifest.settings, input, inputValue, settingsForm);
           });
         });
 
         this.loading = false;
       });
-  }
-
-  private disableInputs(input: string, inputValue: string | number | boolean, settingsForm: FormGroup) {
-    this.northSettingsSchema.forEach(row => {
-      row.forEach(settings => {
-        if (settings.conditionalDisplay) {
-          Object.entries(settings.conditionalDisplay).forEach(([key, values]) => {
-            if (key === input) {
-              if (!values.includes(inputValue)) {
-                settingsForm.controls[settings.key].disable();
-              } else {
-                settingsForm.controls[settings.key].enable();
-              }
-            }
-          });
-        }
-      });
-    });
   }
 
   createOrUpdateNorthConnector(command: NorthConnectorCommandDTO): void {
