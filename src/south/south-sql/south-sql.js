@@ -179,6 +179,9 @@ export default class SouthSQL extends SouthConnector {
       case 'odbc':
         result = await this.getDataFromOdbc(updatedStartTime, endTime)
         break
+      case 'ip21':
+        result = await this.getDataFromIp21(updatedStartTime, endTime)
+        break
       default:
         throw new Error(`SQL driver "${this.driver}" not supported for South "${this.name}".`)
     }
@@ -455,6 +458,52 @@ export default class SouthSQL extends SouthConnector {
     try {
       const connectionConfig = {
         connectionString: `${connectionString};PWD=${await this.encryptionService.decryptText(this.password)}`,
+        connectionTimeout: this.connectionTimeout,
+        loginTimeout: this.connectionTimeout,
+      }
+      connection = await odbc.connect(connectionConfig)
+
+      const startDateTime = DateTime.fromJSDate(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
+      const endDateTime = DateTime.fromJSDate(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
+      const params = generateReplacementParameters(this.query, startDateTime, endDateTime)
+      data = await connection.query(adaptedQuery, params)
+    } catch (error) {
+      if (error.odbcErrors?.length > 0) {
+        error.odbcErrors.forEach((odbcError) => {
+          this.logger.error(odbcError.message)
+        })
+      }
+      if (connection) {
+        await connection.close()
+      }
+      throw error
+    }
+    if (connection) {
+      await connection.close()
+    }
+    return data
+  }
+
+  /**
+   * Apply the SQL query to the target IP21 database with AspenTech SQLplus driver.
+   * @param {Date} startTime - The start time
+   * @param {Date} endTime - The end time
+   * @returns {Promise<Object[]>} - The SQL results
+   */
+  async getDataFromIp21(startTime, endTime) {
+    if (!odbc) {
+      throw new Error('odbc library not loaded.')
+    }
+
+    const adaptedQuery = this.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?')
+
+    const connectionString = `Driver=AspenTech SQLplus;HOST=${this.host};PORT=${this.port}`
+    this.logger.debug(`Connecting with ODBC: ${connectionString}`)
+    let connection = null
+    let data = []
+    try {
+      const connectionConfig = {
+        connectionString: `${connectionString}`,
         connectionTimeout: this.connectionTimeout,
         loginTimeout: this.connectionTimeout,
       }
