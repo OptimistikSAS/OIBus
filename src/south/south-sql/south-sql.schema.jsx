@@ -83,7 +83,7 @@ schema.form = {
     type: 'OibText',
     label: 'Username',
     defaultValue: '',
-    valid: notEmpty(),
+    valid: optional(),
     help: <div>(Preferably with only readonly access to the database)</div>,
     md: 3,
   },
