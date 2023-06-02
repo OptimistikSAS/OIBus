@@ -35,7 +35,7 @@ schema.form = {
   driver: {
     type: 'OibSelect',
     md: 2,
-    options: ['mssql', 'mysql', 'postgresql', 'oracle', 'sqlite', 'odbc'],
+    options: ['mssql', 'mysql', 'postgresql', 'oracle', 'sqlite', 'odbc', 'ip21'],
     label: 'SQL Driver',
     defaultValue: 'mssql',
     help: <div>Driver SQL</div>,
@@ -304,11 +304,11 @@ schema.withDriver = (driver) => {
   schema.form.odbcDriverPath.hidden = driver !== 'odbc'
   schema.form.selfSigned.hidden = driver !== 'odbc'
   schema.form.databasePath.hidden = driver !== 'sqlite'
-  schema.form.database.hidden = driver === 'sqlite'
+  schema.form.database.hidden = (driver === 'sqlite' || driver === 'ip21')
   schema.form.host.hidden = driver === 'sqlite'
   schema.form.port.hidden = driver === 'sqlite'
-  schema.form.username.hidden = driver === 'sqlite'
-  schema.form.password.hidden = driver === 'sqlite'
+  schema.form.username.hidden = (driver === 'sqlite' || driver === 'ip21')
+  schema.form.password.hidden = (driver === 'sqlite' || driver === 'ip21')
   schema.form.requestTimeout.hidden = driver === 'sqlite'
   schema.form.connectionTimeout.hidden = driver === 'sqlite'
   return schema
