@@ -1,5 +1,5 @@
 import { ConnectorFormValidator, OibFormControl } from '../../../../shared/model/form.model';
-import { FormControl, FormControlOptions, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { ScanModeDTO } from '../../../../shared/model/scan-mode.model';
 import { ProxyDTO } from '../../../../shared/model/proxy.model';
 import { Authentication, AuthenticationType } from '../../../../shared/model/engine.model';
@@ -7,8 +7,8 @@ import { Authentication, AuthenticationType } from '../../../../shared/model/eng
 /**
  * Create the validators associated to an input from the settings schema
  */
-export const getValidators = (validators: Array<ConnectorFormValidator>): FormControlOptions => {
-  const formValidators: Array<ValidatorFn> = validators.map(validator => {
+export const getValidators = (validators: Array<ConnectorFormValidator>): Array<ValidatorFn> => {
+  return validators.map(validator => {
     switch (validator.key) {
       case 'required':
         return Validators.required;
@@ -26,12 +26,10 @@ export const getValidators = (validators: Array<ConnectorFormValidator>): FormCo
         return Validators.nullValidator;
     }
   });
-
-  return { validators: formValidators };
 };
 
 export const createAuthenticationForm = (value: Authentication) => {
-  switch (value?.type) {
+  switch (value.type) {
     case 'basic':
       return {
         type: 'basic' as AuthenticationType | null,
@@ -152,14 +150,17 @@ export const createInput = (value: OibFormControl, form: FormGroup, scanModes: A
       break;
     case 'OibScanMode':
       const scanMode = scanModes.find(element => element.id === value.currentValue?.id);
-      form.addControl(value.key, new FormControl(scanMode, getValidators(value.validators ?? [])));
+      form.addControl(value.key, new FormControl(scanMode, getValidators(value.validators || [])));
       break;
     case 'OibProxy':
       const proxy = proxies.find(element => element.id === value.currentValue);
       form.addControl(value.key, new FormControl(proxy?.id, getValidators(value.validators || [])));
       break;
     case 'OibAuthentication':
-      form.addControl(value.key, new FormControl(createAuthenticationForm(value.currentValue!), getValidators(value.validators || [])));
+      form.addControl(
+        value.key,
+        new FormControl(createAuthenticationForm(value.currentValue || { type: 'none' }), getValidators(value.validators || []))
+      );
       break;
   }
 };
@@ -184,6 +185,13 @@ export function byIdComparisonFn(o1: { id: string } | null, o2: { id: string } |
   return (!o1 && !o2) || (o1 && o2 && o1.id === o2.id);
 }
 
+/**
+ *
+ * @param manifestSettings - List of settings from the manifest to check the conditional display
+ * @param input - The name of the input that has changed
+ * @param inputValue - The value of the input that has changed
+ * @param settingsForm - The form with controls to disable
+ */
 export function disableInputs(manifestSettings: Array<OibFormControl>, input: string, inputValue: any, settingsForm: FormGroup) {
   manifestSettings.forEach(settings => {
     if (settings.conditionalDisplay) {
