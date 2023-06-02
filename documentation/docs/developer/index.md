@@ -8,7 +8,7 @@ sidebar_position: 1
 ## Steps to try out the application
 - Clone the repository : `git clone `
 - Run command `npm install` in project root
-- Run command `npm run build:web-client`. It will create a `build/web-client` folder for the frontend bundle. If you edit
+- Run command `npm run internal:build:web-client`. It will create a `build/web-client` folder for the frontend bundle. If you edit
 the frontend and want to auto-recompile the bundle, you can instead use the command `npm run watch:web-client`.
 - Run command `npm start` (this will start both the backend and frontend)
 - Open up in the browser the following url: `http://localhost:2223`. The port is specified in the `default-config.json`
