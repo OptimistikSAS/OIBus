@@ -1,7 +1,7 @@
 <div class="modal-header">
   <h4 class="modal-title" [translate]="'south.edit-item-modal.' + mode + '-title'"></h4>
 </div>
-<div class="modal-body" *ngIf="southItemSchema">
+<div class="modal-body" *ngIf="southItemRows">
   <form [formGroup]="form" (ngSubmit)="save()" id="form">
     <div class="row">
       <div class="col-3">
@@ -30,10 +30,10 @@
     </div>
 
     <oib-form
-      *ngIf="southItemSchema.length > 0"
+      *ngIf="southItemRows.length > 0"
       formGroupName="settings"
       [form]="form.controls.settings"
-      [settingsSchema]="southItemSchema"
+      [settingsSchema]="southItemRows"
       [scanModes]="scanModes"
     ></oib-form>
   </form>
