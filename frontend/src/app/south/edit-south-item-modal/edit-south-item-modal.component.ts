@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -10,7 +10,7 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { NgForOf, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
-import { createInput, getRowSettings } from '../../shared/utils';
+import { createInput, disableInputs, getRowSettings } from '../../shared/utils';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { Timezone } from '../../../../../shared/model/types';
 import { inMemoryTypeahead } from '../../shared/typeahead';
@@ -52,7 +52,8 @@ export class EditSouthItemModalComponent {
   acceptSubscription = false;
 
   scanModes: Array<ScanModeDTO> = [];
-  southItemSchema: Array<Array<OibFormControl>> = [];
+  southItemSchema: OibusItemManifest | null = null;
+  southItemRows: Array<Array<OibFormControl>> = [];
 
   item: OibusItemDTO | null = null;
 
@@ -73,7 +74,7 @@ export class EditSouthItemModalComponent {
   private createSettingsInputs() {
     const inputsToSubscribeTo: Set<string> = new Set();
     const settingsForm = this.form.controls.settings;
-    this.southItemSchema.forEach(row => {
+    this.southItemRows.forEach(row => {
       row.forEach(setting => {
         createInput(setting, settingsForm);
         if (setting.conditionalDisplay) {
@@ -87,11 +88,11 @@ export class EditSouthItemModalComponent {
     // Each input that must be monitored is subscribed
     inputsToSubscribeTo.forEach(input => {
       // Check once with initialized value
-      this.disableInputs(input, settingsForm.controls[input].value as string | number | boolean, settingsForm);
+      disableInputs(this.southItemSchema!.settings, input, settingsForm.controls[input].value, settingsForm);
       // Check on value changes
       settingsForm.controls[input].valueChanges.subscribe(inputValue => {
         // When a value of such an input changes, check if its inputValue implies to disable another input
-        this.disableInputs(input, inputValue as string | number | boolean, settingsForm);
+        disableInputs(this.southItemSchema!.settings, input, inputValue, settingsForm);
       });
     });
 
@@ -102,24 +103,6 @@ export class EditSouthItemModalComponent {
     }
   }
 
-  private disableInputs(input: string, inputValue: string | number | boolean, settingsForm: FormGroup) {
-    this.southItemSchema.forEach(row => {
-      row.forEach(setting => {
-        if (setting.conditionalDisplay) {
-          Object.entries(setting.conditionalDisplay).forEach(([key, values]) => {
-            if (key === input) {
-              if (!values.includes(inputValue)) {
-                settingsForm.controls[setting.key].disable();
-              } else {
-                settingsForm.controls[setting.key].enable();
-              }
-            }
-          });
-        }
-      });
-    });
-  }
-
   /**
    * Prepares the component for creation.
    */
@@ -128,7 +111,8 @@ export class EditSouthItemModalComponent {
     this.southConnector = southConnector;
     this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
     this.acceptSubscription = southItemSchema.scanMode.acceptSubscription;
-    this.southItemSchema = getRowSettings(southItemSchema.settings, null);
+    this.southItemRows = getRowSettings(southItemSchema.settings, null);
+    this.southItemSchema = southItemSchema;
     this.scanModes = scanModes;
     this.createSettingsInputs();
   }
@@ -145,7 +129,8 @@ export class EditSouthItemModalComponent {
     this.mode = 'edit';
     this.item = southItem;
     this.southConnector = southConnector;
-    this.southItemSchema = getRowSettings(southItemSchema.settings, southItem.settings);
+    this.southItemRows = getRowSettings(southItemSchema.settings, southItem.settings);
+    this.southItemSchema = southItemSchema;
     this.scanModes = scanModes;
 
     this.form.patchValue({
@@ -168,7 +153,7 @@ export class EditSouthItemModalComponent {
     this.item.name = `${southItem.name}-copy`;
     this.mode = 'create';
     this.southConnector = southConnector;
-    this.southItemSchema = getRowSettings(southItemSchema.settings, southItem.settings);
+    this.southItemRows = getRowSettings(southItemSchema.settings, southItem.settings);
     this.scanModes = scanModes;
 
     this.form.patchValue({

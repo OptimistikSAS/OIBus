@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -9,11 +9,12 @@ import { OibusItemCommandDTO, OibusItemDTO, OibusItemManifest } from '../../../.
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 import { NgForOf, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
-import { createInput } from '../../shared/utils';
+import { createInput, disableInputs, getRowSettings } from '../../shared/utils';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { Timezone } from '../../../../../shared/model/types';
 import { inMemoryTypeahead } from '../../shared/typeahead';
+import { OibFormControl } from '../../../../../shared/model/form.model';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -45,6 +46,7 @@ export class EditHistoryQueryItemModalComponent {
   state = new ObservableState();
   historyQuery: HistoryQueryDTO | null = null;
   southItemSchema: OibusItemManifest | null = null;
+  southItemRows: Array<Array<OibFormControl>> = [];
   item: OibusItemDTO | null = null;
   form = this.fb.group({
     name: ['', Validators.required],
@@ -62,40 +64,26 @@ export class EditHistoryQueryItemModalComponent {
   private createSettingsInputs() {
     const inputsToSubscribeTo: Set<string> = new Set();
     const settingsForm = this.form.controls.settings;
-    this.southItemSchema!.settings.forEach(row => {
-      createInput(row, settingsForm);
-      if (row.conditionalDisplay) {
-        Object.entries(row.conditionalDisplay).forEach(([key]) => {
-          // Keep only one occurrence of each input to subscribe to
-          inputsToSubscribeTo.add(key);
-        });
-      }
+    this.southItemRows.forEach(row => {
+      row.forEach(setting => {
+        createInput(setting, settingsForm);
+        if (setting.conditionalDisplay) {
+          Object.entries(setting.conditionalDisplay).forEach(([key]) => {
+            // Keep only one occurrence of each input to subscribe to
+            inputsToSubscribeTo.add(key);
+          });
+        }
+      });
     });
     // Each input that must be monitored is subscribed
     inputsToSubscribeTo.forEach(input => {
       // Check once with initialized value
-      this.disableInputs(input, settingsForm.controls[input].value as string | number | boolean, settingsForm);
+      disableInputs(this.southItemSchema!.settings, input, settingsForm.controls[input].value, settingsForm);
       // Check on value changes
       settingsForm.controls[input].valueChanges.subscribe(inputValue => {
         // When a value of such an input changes, check if its inputValue implies to disable another input
-        this.disableInputs(input, inputValue as string | number | boolean, settingsForm);
+        disableInputs(this.southItemSchema!.settings, input, inputValue, settingsForm);
       });
-    });
-  }
-
-  private disableInputs(input: string, inputValue: string | number | boolean, settingsForm: FormGroup) {
-    this.southItemSchema!.settings.forEach(row => {
-      if (row.conditionalDisplay) {
-        Object.entries(row.conditionalDisplay).forEach(([key, values]) => {
-          if (key === input) {
-            if (!values.includes(inputValue)) {
-              settingsForm.controls[row.key].disable();
-            } else {
-              settingsForm.controls[row.key].enable();
-            }
-          }
-        });
-      }
     });
   }
 
@@ -106,6 +94,7 @@ export class EditHistoryQueryItemModalComponent {
     this.mode = 'create';
     this.historyQuery = historyQuery;
     this.southItemSchema = southItemSchema;
+    this.southItemRows = getRowSettings(southItemSchema.settings, null);
     this.createSettingsInputs();
   }
 
@@ -118,7 +107,7 @@ export class EditHistoryQueryItemModalComponent {
     this.mode = 'create';
     this.historyQuery = historyQuery;
     this.southItemSchema = southItemSchema;
-
+    this.southItemRows = getRowSettings(southItemSchema.settings, null);
     this.southItemSchema.settings.forEach(element => {
       if (this.item?.settings) {
         element.currentValue = this.item.settings[element.key];

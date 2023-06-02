@@ -16,7 +16,7 @@ import { ProxyService } from '../../services/proxy.service';
 import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
-import { createInput, getRowSettings } from '../../shared/utils';
+import { createInput, disableInputs, getRowSettings } from '../../shared/utils';
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 import { SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
@@ -141,8 +141,8 @@ export class EditHistoryQueryComponent implements OnInit {
         this.northSettingsSchema = northRowList;
         this.southSettingsSchema = southRowList;
 
-        this.monitorInputs(this.historyQueryForm.controls.north.controls.settings, this.northSettingsSchema);
-        this.monitorInputs(this.historyQueryForm.controls.south.controls.settings, this.southSettingsSchema);
+        this.monitorInputs(this.historyQueryForm.controls.north.controls.settings, this.northSettingsSchema, this.northManifest);
+        this.monitorInputs(this.historyQueryForm.controls.south.controls.settings, this.southSettingsSchema, this.southManifest);
 
         this.loading = false;
       });
@@ -151,7 +151,11 @@ export class EditHistoryQueryComponent implements OnInit {
   /**
    * Monitor inputs on values changes to adapt the South or North form settings appropriately
    */
-  private monitorInputs(settingsForm: FormGroup, settingsSchema: Array<Array<OibFormControl>>) {
+  private monitorInputs(
+    settingsForm: FormGroup,
+    settingsSchema: Array<Array<OibFormControl>>,
+    manifest: NorthConnectorManifest | SouthConnectorManifest
+  ) {
     const southInputsToSubscribeTo: Set<string> = new Set();
     settingsSchema.forEach(row => {
       row.forEach(settings => {
@@ -167,34 +171,11 @@ export class EditHistoryQueryComponent implements OnInit {
     // Each input that must be monitored is subscribed
     southInputsToSubscribeTo.forEach(input => {
       // Check once with initialized value
-      this.disableInputs(input, settingsForm.controls[input].value as string | number | boolean, settingsForm, settingsSchema);
+      disableInputs(manifest.settings, input, settingsForm.controls[input].value, settingsForm);
       // Check on value changes
       settingsForm.controls[input].valueChanges.subscribe(inputValue => {
         // When a value of such an input changes, check if its inputValue implies to disable another input
-        this.disableInputs(input, inputValue as string | number | boolean, settingsForm, settingsSchema);
-      });
-    });
-  }
-
-  private disableInputs(
-    input: string,
-    inputValue: string | number | boolean,
-    settingsForm: FormGroup,
-    settingsSchema: Array<Array<OibFormControl>>
-  ) {
-    settingsSchema.forEach(row => {
-      row.forEach(settings => {
-        if (settings.conditionalDisplay) {
-          Object.entries(settings.conditionalDisplay).forEach(([key, values]) => {
-            if (key === input) {
-              if (!values.includes(inputValue)) {
-                settingsForm.controls[settings.key].disable();
-              } else {
-                settingsForm.controls[settings.key].enable();
-              }
-            }
-          });
-        }
+        disableInputs(manifest.settings, input, inputValue, settingsForm);
       });
     });
   }

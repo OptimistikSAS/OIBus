@@ -183,3 +183,29 @@ export const getRowSettings = (settings: Array<OibFormControl>, settingsValues: 
 export function byIdComparisonFn(o1: { id: string } | null, o2: { id: string } | null) {
   return (!o1 && !o2) || (o1 && o2 && o1.id === o2.id);
 }
+
+export function disableInputs(manifestSettings: Array<OibFormControl>, input: string, inputValue: any, settingsForm: FormGroup) {
+  manifestSettings.forEach(settings => {
+    if (settings.conditionalDisplay) {
+      Object.entries(settings.conditionalDisplay).forEach(([key, values]) => {
+        if (key === input) {
+          const foundSettings = manifestSettings.find(s => s.key === key);
+          if (!foundSettings) return;
+          if (foundSettings.type === 'OibAuthentication') {
+            if (!values.includes(inputValue.type)) {
+              settingsForm.controls[settings.key].disable();
+            } else {
+              settingsForm.controls[settings.key].enable();
+            }
+          } else {
+            if (!values.includes(inputValue)) {
+              settingsForm.controls[settings.key].disable();
+            } else {
+              settingsForm.controls[settings.key].enable();
+            }
+          }
+        }
+      });
+    }
+  });
+}
