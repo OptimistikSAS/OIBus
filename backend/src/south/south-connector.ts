@@ -20,6 +20,7 @@ import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
 import CacheService from '../service/cache.service';
 import { PassThrough } from 'node:stream';
+import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
 
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
@@ -65,8 +66,7 @@ export default class SouthConnector {
     private readonly repositoryService: RepositoryService,
     protected logger: pino.Logger,
     protected readonly baseFolder: string,
-    private readonly streamMode: boolean,
-    private manifest: SouthConnectorManifest
+    private readonly streamMode: boolean
   ) {
     items
       .filter(item => item.scanModeId)
@@ -79,7 +79,7 @@ export default class SouthConnector {
 
     this.cacheService = new CacheService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
 
-    if (this.manifest.modes.history) {
+    if (this.queriesHistory()) {
       this.cacheService.createCacheHistoryTable();
     }
 
@@ -104,10 +104,9 @@ export default class SouthConnector {
     if (!this.streamMode) {
       return;
     }
-    if (this.manifest.modes.subscription) {
+    if (this.queriesSubscription()) {
       const items = Array.from(this.itemsByScanModeIds.get('subscription') || new Map(), ([_scanModeId, item]) => item);
       this.logger.debug(`Subscribing to ${items.length} items`);
-      // @ts-ignore
       await this.subscribe(items);
     }
 
@@ -182,7 +181,7 @@ export default class SouthConnector {
     const runStart = DateTime.now();
     this.cacheService.updateMetrics({ ...this.cacheService.metrics, lastRunStart: runStart.toUTC().toISO() });
 
-    if (this.manifest.modes.history) {
+    if (this.queriesHistory()) {
       try {
         // By default, retrieve the last hour. If the scan mode has already run, and retrieve a data, the max instant will
         // be retrieved from the South cache inside the history query handler
@@ -199,17 +198,15 @@ export default class SouthConnector {
         this.logger.error(`Error when calling historyQuery ${error}`);
       }
     }
-    if (this.manifest.modes.lastFile && this.streamMode) {
+    if (this.queriesFile() && this.streamMode) {
       try {
-        // @ts-ignore
         await this.fileQuery(items);
       } catch (error) {
         this.logger.error(`Error when calling fileQuery ${error}`);
       }
     }
-    if (this.manifest.modes.lastPoint && this.streamMode) {
+    if (this.queriesLastPoint() && this.streamMode) {
       try {
-        // @ts-ignore
         await this.lastPointQuery(items);
       } catch (error) {
         this.logger.error(`Error when calling lastPointQuery ${error}`);
@@ -465,5 +462,21 @@ export default class SouthConnector {
 
   resetMetrics(): void {
     this.cacheService.resetMetrics();
+  }
+
+  queriesFile(): this is QueriesFile {
+    return 'fileQuery' in this;
+  }
+
+  queriesLastPoint(): this is QueriesLastPoint {
+    return 'lastPointQuery' in this;
+  }
+
+  queriesHistory(): this is QueriesHistory {
+    return 'historyQuery' in this;
+  }
+
+  queriesSubscription(): this is QueriesSubscription {
+    return 'subscribe' in this;
   }
 }

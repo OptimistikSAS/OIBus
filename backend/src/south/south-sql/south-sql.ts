@@ -81,8 +81,7 @@ export default class SouthSQL extends SouthConnector implements QueriesHistory {
       repositoryService,
       logger,
       baseFolder,
-      streamMode,
-      manifest
+      streamMode
     );
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }

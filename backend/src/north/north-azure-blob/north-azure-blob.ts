@@ -23,7 +23,7 @@ export default class NorthAzureBlob extends NorthConnector implements HandlesFil
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder, manifest);
+    super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder);
   }
 
   /**

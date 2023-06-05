@@ -113,6 +113,7 @@ class TestSouth extends SouthConnector implements QueriesLastPoint, QueriesFile,
   async subscribe(items: Array<OibusItemDTO>): Promise<void> {}
 }
 let south: TestSouth;
+let basicSouth: SouthConnector;
 
 describe('SouthConnector enabled', () => {
   beforeEach(async () => {
@@ -156,8 +157,7 @@ describe('SouthConnector enabled', () => {
       repositoryService,
       logger,
       'baseFolder',
-      true,
-      manifest
+      true
     );
     await south.start();
   });
@@ -489,7 +489,7 @@ describe('SouthConnector disabled', () => {
       },
       settings: {}
     };
-    south = new TestSouth(
+    basicSouth = new SouthConnector(
       configuration,
       items,
       addValues,
@@ -499,82 +499,14 @@ describe('SouthConnector disabled', () => {
       repositoryService,
       logger,
       'baseFolder',
-      true,
-      manifest
+      true
     );
-    south.subscribe = jest.fn();
-    await south.start();
+    await basicSouth.start();
   });
 
   it('should be properly initialized ', async () => {
     expect(logger.trace(`South connector ${configuration.name} not enabled`));
     expect(createCacheHistoryTableMock).not.toHaveBeenCalled();
-    expect(createCacheHistoryTableMock).not.toHaveBeenCalled();
-    expect(south.subscribe).not.toHaveBeenCalled();
-  });
-});
-
-describe('SouthConnector enabled without any modes', () => {
-  beforeEach(async () => {
-    jest.resetAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-
-    manifest.modes.history = false;
-    manifest.modes.subscription = false;
-    manifest.modes.lastPoint = false;
-    manifest.modes.lastFile = false;
-
-    configuration = {
-      id: 'southId',
-      name: 'south',
-      type: 'test',
-      description: 'my test connector',
-      enabled: true,
-      history: {
-        maxInstantPerItem: false,
-        maxReadInterval: 3600,
-        readDelay: 0
-      },
-      settings: {}
-    };
-    south = new TestSouth(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true,
-      manifest
-    );
-    south.subscribe = jest.fn();
-    south.lastPointQuery = jest.fn();
-    south.fileQuery = jest.fn();
-    south.historyQueryHandler = jest.fn();
-    await south.start();
-  });
-
-  it('should be properly initialized ', async () => {
-    expect(logger.trace(`South connector ${configuration.name} not enabled`));
-    expect(createCacheHistoryTableMock).not.toHaveBeenCalled();
-    expect(createCacheHistoryTableMock).not.toHaveBeenCalled();
-    expect(south.subscribe).not.toHaveBeenCalled();
-  });
-
-  it('should not run any method', async () => {
-    const scanMode = {
-      id: 'id1',
-      name: 'my scan mode',
-      description: 'my description',
-      cron: '* * * * * *'
-    };
-    await south.run(scanMode);
-    expect(south.lastPointQuery).not.toHaveBeenCalled();
-    expect(south.fileQuery).not.toHaveBeenCalled();
-    expect(south.historyQueryHandler).not.toHaveBeenCalled();
   });
 });
 
@@ -606,8 +538,7 @@ describe('SouthConnector without stream mode', () => {
       repositoryService,
       logger,
       'baseFolder',
-      false,
-      manifest
+      false
     );
 
     await south.start();

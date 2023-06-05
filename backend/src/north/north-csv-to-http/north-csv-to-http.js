@@ -32,7 +32,6 @@ export default class NorthCsvToHttp extends NorthConnector {
       configuration,
       proxyService,
       logger,
-      manifest,
     )
 
     const {

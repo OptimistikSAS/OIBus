@@ -53,8 +53,7 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
       repositoryService,
       logger,
       baseFolder,
-      streamMode,
-      manifest
+      streamMode
     );
   }
 

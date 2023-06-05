@@ -44,8 +44,7 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
       repositoryService,
       logger,
       baseFolder,
-      streamMode,
-      manifest
+      streamMode
     );
   }
 

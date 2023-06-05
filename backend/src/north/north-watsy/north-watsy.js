@@ -43,7 +43,6 @@ export default class NorthWATSY extends NorthConnector {
       configuration,
       proxyService,
       logger,
-      manifest,
     )
 
     const {

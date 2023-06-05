@@ -66,8 +66,7 @@ export default class SouthOPCUAHA extends SouthConnector implements QueriesHisto
       repositoryService,
       logger,
       baseFolder,
-      streamMode,
-      manifest
+      streamMode
     );
   }
 
