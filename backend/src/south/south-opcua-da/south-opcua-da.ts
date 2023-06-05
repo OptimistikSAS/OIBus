@@ -50,8 +50,7 @@ export default class SouthOPCUADA extends SouthConnector implements QueriesLastP
       repositoryService,
       logger,
       baseFolder,
-      streamMode,
-      manifest
+      streamMode
     );
   }
 

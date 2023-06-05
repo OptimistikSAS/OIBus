@@ -3,7 +3,7 @@ import PinoLogger from '../tests/__mocks__/logger.mock';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
 
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../shared/model/north-connector.model';
+import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
@@ -88,17 +88,6 @@ const nowDateString = '2020-02-02T02:02:02.222Z';
 const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 
 let configuration: NorthConnectorDTO;
-const manifest: NorthConnectorManifest = {
-  name: 'north',
-  description: 'My North Connector test',
-  category: 'test',
-  modes: {
-    files: true,
-    points: true
-  },
-  settings: [],
-  schema: {} as unknown
-} as NorthConnectorManifest;
 
 class TestNorth extends NorthConnector implements HandlesFile, HandlesValues {
   async handleValues(values: Array<any>): Promise<void> {}
@@ -138,7 +127,7 @@ describe('NorthConnector enabled', () => {
         retentionDuration: 720
       }
     };
-    north = new TestNorth(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder', manifest);
+    north = new TestNorth(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
 
@@ -440,9 +429,7 @@ describe('NorthConnector disabled', () => {
       }
     };
 
-    manifest.modes.files = false;
-    manifest.modes.points = false;
-    north = new TestNorth(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder', manifest);
+    north = new TestNorth(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
   });
 
   afterEach(() => {
@@ -450,11 +437,12 @@ describe('NorthConnector disabled', () => {
   });
 
   it('should not call handle values and handle file', async () => {
-    north.handleValuesWrapper = jest.fn();
-    north.handleFilesWrapper = jest.fn();
-    await north.run('scan');
-    expect(north.handleValuesWrapper).not.toHaveBeenCalled();
-    expect(north.handleFilesWrapper).not.toHaveBeenCalled();
+    const basicNorth = new NorthConnector(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+    basicNorth.handleValuesWrapper = jest.fn();
+    basicNorth.handleFilesWrapper = jest.fn();
+    await basicNorth.run('scan');
+    expect(basicNorth.handleValuesWrapper).not.toHaveBeenCalled();
+    expect(basicNorth.handleFilesWrapper).not.toHaveBeenCalled();
   });
 
   it('should not call handle values if no values in queue', async () => {

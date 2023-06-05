@@ -53,7 +53,6 @@ export default class NorthInfluxDB extends NorthConnector {
       configuration,
       proxyService,
       logger,
-      manifest,
     )
 
     const {

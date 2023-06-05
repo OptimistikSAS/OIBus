@@ -73,8 +73,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
       repositoryService,
       logger,
       baseFolder,
-      streamMode,
-      manifest
+      streamMode
     );
   }
 

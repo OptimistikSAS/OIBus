@@ -28,7 +28,6 @@ export default class NorthMQTT extends NorthConnector {
       configuration,
       proxyService,
       logger,
-      manifest,
     )
 
     const {

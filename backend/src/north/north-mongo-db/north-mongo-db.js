@@ -28,7 +28,6 @@ export default class NorthMongoDB extends NorthConnector {
       configuration,
       proxyService,
       logger,
-      manifest,
     )
 
     const {

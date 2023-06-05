@@ -47,8 +47,7 @@ export default class SouthOIConnect extends SouthConnector implements QueriesHis
       repositoryService,
       logger,
       baseFolder,
-      streamMode,
-      manifest
+      streamMode
     );
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
