@@ -1,6 +1,6 @@
 import ArchiveService from '../service/cache/archive.service';
 
-import { NorthCacheFiles, NorthConnectorDTO, NorthConnectorManifest } from '../../../shared/model/north-connector.model';
+import { NorthCacheFiles, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import ProxyService from '../service/proxy.service';
@@ -17,6 +17,7 @@ import CacheService from '../service/cache.service';
 import path from 'node:path';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
+import { HandlesFile, HandlesValues } from './north-interface';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -46,7 +47,6 @@ export default class NorthConnector {
   protected repositoryService: RepositoryService;
   protected logger: pino.Logger;
   private readonly baseFolder: string;
-  private manifest: NorthConnectorManifest;
   private subscribedTo: Array<SubscriptionDTO> = [];
 
   private fileBeingSent: string | null = null;
@@ -65,8 +65,7 @@ export default class NorthConnector {
     proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string,
-    manifest: NorthConnectorManifest
+    baseFolder: string
   ) {
     this.configuration = configuration;
     this.encryptionService = encryptionService;
@@ -74,7 +73,6 @@ export default class NorthConnector {
     this.repositoryService = repositoryService;
     this.logger = logger;
     this.baseFolder = baseFolder;
-    this.manifest = manifest;
 
     this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.configuration.archive);
     this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.configuration.caching);
@@ -187,11 +185,11 @@ export default class NorthConnector {
     const runStart = DateTime.now();
     this.cacheService.updateMetrics({ ...this.cacheService.metrics, lastRunStart: runStart.toUTC().toISO() });
 
-    if (this.manifest.modes.points && (flag === 'scan' || flag === 'value-trigger')) {
+    if (this.handlesValues() && (flag === 'scan' || flag === 'value-trigger')) {
       await this.handleValuesWrapper();
     }
 
-    if (this.manifest.modes.files && (flag === 'scan' || flag === 'file-trigger')) {
+    if (this.handlesFile() && (flag === 'scan' || flag === 'file-trigger')) {
       await this.handleFilesWrapper();
     }
 
@@ -244,10 +242,6 @@ export default class NorthConnector {
     }
   }
 
-  // async handleValues(values: Array<any>): Promise<void> {
-  //   this.logger.warn('handleValues method must be override');
-  // }
-
   /**
    * Method called by the Engine to handle an array of values in order for example
    * to send them to a third party application.
@@ -281,10 +275,6 @@ export default class NorthConnector {
       }
     }
   }
-
-  // async handleFile(filePath: string): Promise<void> {
-  //   this.logger.warn('handleFile method must be override');
-  // }
 
   /**
    * Create a OIBusError from an unknown error thrown by the handleFile or handleValues connector method
@@ -430,5 +420,13 @@ export default class NorthConnector {
 
   resetMetrics(): void {
     this.cacheService.resetMetrics();
+  }
+
+  handlesFile(): this is HandlesFile {
+    return 'handleFile' in this;
+  }
+
+  handlesValues(): this is HandlesValues {
+    return 'handleValues' in this;
   }
 }

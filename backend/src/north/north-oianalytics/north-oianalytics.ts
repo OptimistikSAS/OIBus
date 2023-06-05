@@ -31,7 +31,7 @@ export default class NorthOIAnalytics extends NorthConnector implements HandlesF
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder, manifest);
+    super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder);
   }
 
   /**

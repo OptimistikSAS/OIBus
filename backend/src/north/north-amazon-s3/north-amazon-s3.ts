@@ -30,7 +30,7 @@ export default class NorthAmazonS3 extends NorthConnector implements HandlesFile
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder, manifest);
+    super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder);
   }
 
   /**

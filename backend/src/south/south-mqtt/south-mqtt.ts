@@ -55,8 +55,7 @@ export default class SouthMQTT extends SouthConnector implements QueriesSubscrip
       repositoryService,
       logger,
       baseFolder,
-      streamMode,
-      manifest
+      streamMode
     );
   }
 

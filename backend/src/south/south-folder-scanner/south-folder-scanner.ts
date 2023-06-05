@@ -45,8 +45,7 @@ export default class SouthFolderScanner extends SouthConnector implements Querie
       repositoryService,
       logger,
       baseFolder,
-      streamMode,
-      manifest
+      streamMode
     );
 
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true

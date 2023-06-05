@@ -25,7 +25,7 @@ export default class NorthFileWriter extends NorthConnector implements HandlesFi
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder, manifest);
+    super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder);
   }
 
   async handleValues(values: Array<any>): Promise<void> {
