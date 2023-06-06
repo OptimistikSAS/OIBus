@@ -1,4 +1,5 @@
 import Stream from 'node:stream';
+import fs from 'node:fs/promises';
 
 import mqtt from 'mqtt';
 
@@ -79,45 +80,42 @@ const mqttStream = new CustomStream();
 mqttStream.subscribe = jest.fn();
 
 let south: SouthMQTT;
-const configuration: SouthConnectorDTO = {
-  id: 'southId',
-  name: 'south',
-  type: 'test',
-  description: 'my test connector',
-  enabled: true,
-  history: {
-    maxInstantPerItem: true,
-    maxReadInterval: 3600,
-    readDelay: 0
-  },
-  settings: {
-    url: 'mqtt://localhost:1883',
-    qos: 1,
-    persistent: true,
-    authentication: {
-      type: 'none'
-    },
-    connectTimeout: 1000,
-    keepalive: true,
-    reconnectPeriod: 1000,
-    keyFile: '',
-    certFile: '',
-    caFile: '',
-    rejectUnauthorized: false,
-    dataArrayPath: null,
-    pointIdPath: 'name',
-    qualityPath: 'quality',
-    valuePath: 'value',
-    timestampOrigin: 'oibus',
-    timestampPath: 'timestamp',
-    timestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-    timestampTimezone: 'Europe/Paris'
-  }
-};
 
-describe('SouthMQTT', () => {
+describe('SouthMQTT without authentication', () => {
+  const configuration: SouthConnectorDTO = {
+    id: 'southId',
+    name: 'south',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
+    },
+    settings: {
+      url: 'mqtt://localhost:1883',
+      qos: 1,
+      persistent: true,
+      authentication: {
+        type: 'none'
+      },
+      connectTimeout: 1000,
+      reconnectPeriod: 1000,
+      caPath: '',
+      rejectUnauthorized: false,
+      dataArrayPath: null,
+      pointIdPath: 'name',
+      qualityPath: 'quality',
+      valuePath: 'value',
+      timestampOrigin: 'oibus',
+      timestampPath: 'timestamp',
+      timestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+      timestampTimezone: 'Europe/Paris'
+    }
+  };
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     jest.useFakeTimers();
 
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
@@ -131,7 +129,7 @@ describe('SouthMQTT', () => {
       proxyService,
       repositoryService,
       logger,
-      'baseFolde',
+      'baseFolder',
       true
     );
   });
@@ -143,14 +141,9 @@ describe('SouthMQTT', () => {
     const expectedOptions = {
       clean: !configuration.settings.persistent,
       clientId: configuration.id,
-      username: '',
-      password: '',
       rejectUnauthorized: false,
       connectTimeout: 1000,
-      reconnectPeriod: 1000,
-      ca: '',
-      cert: '',
-      key: ''
+      reconnectPeriod: 1000
     };
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
     mqttStream.emit('connect');
@@ -167,5 +160,222 @@ describe('SouthMQTT', () => {
     await south.disconnect();
 
     expect(logger.info).not.toHaveBeenCalledWith('Disconnecting from mqtt://localhost:1883...');
+  });
+});
+
+describe('SouthMQTT with Basic Auth', () => {
+  const configuration: SouthConnectorDTO = {
+    id: 'southId',
+    name: 'south',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
+    },
+    settings: {
+      url: 'mqtt://localhost:1883',
+      qos: 0,
+      persistent: true,
+      authentication: {
+        type: 'basic',
+        username: 'username',
+        password: 'pass'
+      },
+      connectTimeout: 1000,
+      reconnectPeriod: 1000,
+      caPath: '',
+      rejectUnauthorized: false,
+      dataArrayPath: null,
+      pointIdPath: 'name',
+      qualityPath: 'quality',
+      valuePath: 'value',
+      timestampOrigin: 'oibus',
+      timestampPath: 'timestamp',
+      timestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+      timestampTimezone: 'Europe/Paris'
+    }
+  };
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+
+    (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
+
+    south = new SouthMQTT(
+      configuration,
+      items,
+      addValues,
+      addFile,
+      encryptionService,
+      proxyService,
+      repositoryService,
+      logger,
+      'baseFolder',
+      true
+    );
+  });
+
+  it('should properly connect', async () => {
+    await south.start();
+    south.subscribe = jest.fn();
+    south.handleMessage = jest.fn();
+    const expectedOptions = {
+      clientId: configuration.id,
+      rejectUnauthorized: false,
+      username: 'username',
+      password: 'pass',
+      connectTimeout: 1000,
+      reconnectPeriod: 1000
+    };
+    expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
+  });
+});
+
+describe('SouthMQTT with Cert', () => {
+  const configuration: SouthConnectorDTO = {
+    id: 'southId',
+    name: 'south',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
+    },
+    settings: {
+      url: 'mqtt://localhost:1883',
+      qos: 0,
+      persistent: true,
+      authentication: {
+        type: 'cert',
+        certPath: 'myCert',
+        keyPath: 'myKey'
+      },
+      connectTimeout: 1000,
+      reconnectPeriod: 1000,
+      caPath: 'myCa',
+      rejectUnauthorized: false,
+      dataArrayPath: null,
+      pointIdPath: 'name',
+      qualityPath: 'quality',
+      valuePath: 'value',
+      timestampOrigin: 'oibus',
+      timestampPath: 'timestamp',
+      timestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+      timestampTimezone: 'Europe/Paris'
+    }
+  };
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+
+    (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
+
+    south = new SouthMQTT(
+      configuration,
+      items,
+      addValues,
+      addFile,
+      encryptionService,
+      proxyService,
+      repositoryService,
+      logger,
+      'baseFolder',
+      true
+    );
+  });
+
+  it('should properly connect', async () => {
+    (fs.readFile as jest.Mock).mockReturnValueOnce('myCert').mockReturnValueOnce('myKey').mockReturnValueOnce('myCa');
+    await south.start();
+    south.subscribe = jest.fn();
+    south.handleMessage = jest.fn();
+    const expectedOptions = {
+      clientId: configuration.id,
+      rejectUnauthorized: false,
+      cert: 'myCert',
+      key: 'myKey',
+      ca: 'myCa',
+      connectTimeout: 1000,
+      reconnectPeriod: 1000
+    };
+    expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
+  });
+});
+
+describe('SouthMQTT without Cert', () => {
+  const configuration: SouthConnectorDTO = {
+    id: 'southId',
+    name: 'south',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
+    },
+    settings: {
+      url: 'mqtt://localhost:1883',
+      qos: 0,
+      persistent: true,
+      authentication: {
+        type: 'cert',
+        certPath: '',
+        keyPath: ''
+      },
+      connectTimeout: 1000,
+      reconnectPeriod: 1000,
+      caPath: '',
+      rejectUnauthorized: false,
+      dataArrayPath: null,
+      pointIdPath: 'name',
+      qualityPath: 'quality',
+      valuePath: 'value',
+      timestampOrigin: 'oibus',
+      timestampPath: 'timestamp',
+      timestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+      timestampTimezone: 'Europe/Paris'
+    }
+  };
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+
+    (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
+
+    south = new SouthMQTT(
+      configuration,
+      items,
+      addValues,
+      addFile,
+      encryptionService,
+      proxyService,
+      repositoryService,
+      logger,
+      'baseFolder',
+      true
+    );
+  });
+
+  it('should properly connect', async () => {
+    (fs.readFile as jest.Mock).mockReturnValueOnce('myCert').mockReturnValueOnce('myKey').mockReturnValueOnce('myCa');
+    await south.start();
+    south.subscribe = jest.fn();
+    south.handleMessage = jest.fn();
+    const expectedOptions = {
+      clientId: configuration.id,
+      rejectUnauthorized: false,
+      cert: '',
+      key: '',
+      ca: '',
+      connectTimeout: 1000,
+      reconnectPeriod: 1000
+    };
+    expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
   });
 });
