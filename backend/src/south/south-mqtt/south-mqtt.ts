@@ -60,23 +60,32 @@ export default class SouthMQTT extends SouthConnector {
   }
 
   override async connect(): Promise<void> {
-    this.logger.info(`Connecting to ${this.configuration.settings.url}`);
+    this.logger.info(`Connecting to "${this.configuration.settings.url}"`);
 
     const options: IClientOptions = {
-      username: this.configuration.settings.authentication.type === 'basic' ? this.configuration.settings.authentication.username : '',
-      password:
-        this.configuration.settings.authentication.type === 'basic'
-          ? Buffer.from(await this.encryptionService.decryptText(this.configuration.settings.authentication.password)).toString()
-          : '',
-      key: this.configuration.settings.keyFile ? await fs.readFile(path.resolve(this.configuration.settings.keyFile)) : '',
-      cert: this.configuration.settings.certFile ? await fs.readFile(path.resolve(this.configuration.settings.certFile)) : '',
-      ca: this.configuration.settings.caFile ? await fs.readFile(path.resolve(this.configuration.settings.caFile)) : '',
       rejectUnauthorized: this.configuration.settings.rejectUnauthorized,
       reconnectPeriod: this.configuration.settings.reconnectPeriod,
       connectTimeout: this.configuration.settings.connectTimeout,
-      clientId: this.configuration.id,
-      clean: !this.configuration.settings.persistent
+      clientId: this.configuration.id
     };
+    if (this.configuration.settings.authentication.type === 'basic') {
+      options.username = this.configuration.settings.authentication.username;
+      options.password = Buffer.from(
+        await this.encryptionService.decryptText(this.configuration.settings.authentication.password)
+      ).toString();
+    } else if (this.configuration.settings.authentication.type === 'cert') {
+      options.cert = this.configuration.settings.authentication.certPath
+        ? await fs.readFile(path.resolve(this.configuration.settings.authentication.certPath))
+        : '';
+      options.key = this.configuration.settings.authentication.keyPath
+        ? await fs.readFile(path.resolve(this.configuration.settings.authentication.keyPath))
+        : '';
+      options.ca = this.configuration.settings.caPath ? await fs.readFile(path.resolve(this.configuration.settings.caPath)) : '';
+    }
+    if (this.configuration.settings.qos === 1 || this.configuration.settings.qos === 2) {
+      options.clean = !this.configuration.settings.persistent;
+    }
+
     this.client = mqtt.connect(this.configuration.settings.url, options);
     this.client.on('connect', async () => {
       this.logger.info(`Connected to ${this.configuration.settings.url}`);
