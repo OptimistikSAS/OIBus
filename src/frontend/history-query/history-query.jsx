@@ -7,6 +7,10 @@ import { ConfigContext } from '../context/config-context.jsx'
 import NewHistoryQueryRow from './new-history-query-row.jsx'
 import apis from '../service/apis.js'
 
+const HISTORY_QUERY_CAPABLE_SOUTH_CONNECTORS = [
+  'OPCUA_HA', 'OPCHDA', 'SQL',
+]
+
 const HistoryQuery = () => {
   const { newConfig } = React.useContext(ConfigContext)
   const [queries, setQueries] = React.useState([])
@@ -181,6 +185,8 @@ const HistoryQuery = () => {
     { name: 'period', value: startTime && endTime ? `${startTime} -> ${endTime}` : 'Dates not specified' },
   ])
 
+  const filteredSouthHandlers = southConnectors.filter((southConnector) => HISTORY_QUERY_CAPABLE_SOUTH_CONNECTORS.includes(southConnector.type))
+
   return tableRows ? (
     <Col md="8" className="m-5">
       {tableRows.length ? (
@@ -199,11 +205,11 @@ const HistoryQuery = () => {
             There is no history query yet, create one by using the form below.
           </h6>
         )}
-      {northConnectors.length > 0 && southConnectors.length > 0
+      {northConnectors.length > 0 && filteredSouthHandlers.length > 0
       && (
       <NewHistoryQueryRow
         northHandlers={northConnectors}
-        southHandlers={southConnectors}
+        southHandlers={filteredSouthHandlers}
         addQuery={addHistoryQuery}
         queriesNumber={historyQueries.length}
       />
