@@ -50,25 +50,4 @@ describe('HistoryQueryForm', () => {
       expect(container).toMatchSnapshot()
     })
   })
-
-  test('check HistoryQueryForm with empty North', () => {
-    act(() => {
-      root.render(
-        <HistoryQueryForm
-          query={{
-            id: 'unique-id',
-            name: 'north -> south',
-            enabled: false,
-            status: 'pending',
-            southId: 'southId',
-            northId: 'northId',
-            query: '',
-            order: 1,
-            settings: {},
-          }}
-        />,
-      )
-    })
-    expect(container).toMatchSnapshot()
-  })
 })

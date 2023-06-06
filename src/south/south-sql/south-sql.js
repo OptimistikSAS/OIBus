@@ -226,7 +226,7 @@ export default class SouthSQL extends SouthConnector {
         this.logger.debug(`No update for lastCompletedAt. Last value: ${this.lastCompletedAt[scanMode].toISOString()}.`)
       }
     } else {
-      this.logger.debug(`No result found between ${startTime.toISOString()} and ${endTime.toISOString()}.`)
+      this.logger.debug('No result found.')
     }
   }
 
@@ -513,6 +513,7 @@ export default class SouthSQL extends SouthConnector {
       const endDateTime = DateTime.fromJSDate(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
       const params = generateReplacementParameters(this.query, startDateTime, endDateTime)
       data = await connection.query(adaptedQuery, params)
+      this.logger.debug(`Found data in IP21: ${JSON.stringify(data)}`)
     } catch (error) {
       if (error.odbcErrors?.length > 0) {
         error.odbcErrors.forEach((odbcError) => {
