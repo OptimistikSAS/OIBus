@@ -329,3 +329,30 @@ describe('SouthFolderScanner with preserve file ignore modified date', () => {
     expect(await south.checkAge('myFile2')).toEqual(true);
   });
 });
+
+describe('SouthFolderScanner test connection', () => {
+  beforeEach(async () => {
+    jest.resetAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    database.prepare.mockImplementation(() => ({
+      run: jest.fn()
+    }));
+    south = new SouthFolderScanner(
+      configuration,
+      items,
+      addValues,
+      addFile,
+      encryptionService,
+      proxyService,
+      repositoryService,
+      logger,
+      'baseFolder',
+      true
+    );
+  });
+
+  // TODO: change this test once the method is implemented
+  it('should not be able to connect', async () => {
+    expect(await south.testConnection({})).toBe(false);
+  });
+});
