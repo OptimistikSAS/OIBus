@@ -89,6 +89,11 @@ export default class SouthOPCUAHA extends SouthConnector implements QueriesHisto
     await this.connectToOpcuaServer();
   }
 
+  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
+    this.logger.trace(`Testing connection`);
+    return false;
+  }
+
   /**
    * Connect to OPCUA_HA server with retry.
    */

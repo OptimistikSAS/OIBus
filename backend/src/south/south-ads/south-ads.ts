@@ -243,6 +243,11 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
     }
   }
 
+  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
+    this.logger.trace(`Testing connection`);
+    return false;
+  }
+
   /**
    * Connect the ADS client to the ADS server with the already provided connection options
    */

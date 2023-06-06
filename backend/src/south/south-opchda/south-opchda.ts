@@ -87,6 +87,11 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
     }
   }
 
+  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
+    this.logger.trace(`Testing connection`);
+    return false;
+  }
+
   async runTcpServer(): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
