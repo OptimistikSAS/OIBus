@@ -60,6 +60,11 @@ export default class SouthOIConnect extends SouthConnector implements QueriesHis
     await super.start();
   }
 
+  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
+    this.logger.trace(`Testing connection`);
+    return false;
+  }
+
   /**
    * Retrieve result from a REST API write them into a CSV file and send it to the Engine.
    */

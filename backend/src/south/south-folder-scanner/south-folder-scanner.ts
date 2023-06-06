@@ -56,6 +56,11 @@ export default class SouthFolderScanner extends SouthConnector implements Querie
     }
   }
 
+  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
+    this.logger.info(`Testing connection`);
+    return false;
+  }
+
   /**
    * Read the raw file and rewrite it to another file in the folder archive
    */

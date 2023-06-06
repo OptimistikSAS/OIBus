@@ -48,6 +48,11 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
     );
   }
 
+  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
+    this.logger.trace(`Testing connection`);
+    return false;
+  }
+
   async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
     try {
       for (const item of items) {
