@@ -1,18 +1,13 @@
 import React from 'react'
-import { Button, Form, Col, Row } from 'reactstrap'
+import { Button, Col, Form, Row } from 'reactstrap'
 import PropTypes from 'prop-types'
 import { OibSelect } from '../components/oib-form/index.js'
 import SouthSchemas from '../south/south-types.jsx'
 
-const HISTORY_QUERY_CAPABLE_SOUTH_CONNECTORS = [
-  'OPCUA_HA', 'OPCHDA', 'SQL',
-]
-
 const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
-  const filteredSouthHandlers = southHandlers.filter((southConnector) => HISTORY_QUERY_CAPABLE_SOUTH_CONNECTORS.includes(southConnector.type))
-  const [south, setSouth] = React.useState(filteredSouthHandlers[0])
+  const [south, setSouth] = React.useState(southHandlers[0])
   const [north, setNorth] = React.useState(northHandlers[0])
-  const southSchema = south.type === 'SQL'
+  const southSchema = south?.type === 'SQL'
     ? SouthSchemas.SQL.withDriver(south.settings.driver)
     : SouthSchemas[south.type]
 
@@ -51,7 +46,7 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
   const handleChange = (attributeName, value) => {
     switch (attributeName) {
       case 'southHandler':
-        setSouth(filteredSouthHandlers.find((handler) => handler.id === value))
+        setSouth(southHandlers.find((handler) => handler.id === value))
         break
       case 'northHandler':
       default:
@@ -68,9 +63,9 @@ const NewHistoryQueryRow = ({ northHandlers, southHandlers, addQuery }) => {
             label="South Handler"
             value={south.id}
             name="southHandler"
-            options={filteredSouthHandlers.map((handler) => handler.id)}
-            optionsLabel={filteredSouthHandlers.map((handler) => handler.name)}
-            defaultValue={filteredSouthHandlers[0].id}
+            options={southHandlers.map((handler) => handler.id)}
+            optionsLabel={southHandlers.map((handler) => handler.name)}
+            defaultValue={southHandlers[0].id}
             onChange={handleChange}
           />
         </Col>
