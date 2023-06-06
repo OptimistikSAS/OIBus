@@ -101,14 +101,8 @@ export default class HistoryQueryEngine extends BaseEngine {
 
     this.logger.trace(`Add file "${filePath}" to cache from South "${this.historyQuery.south.name}".`)
 
-    const timestamp = new Date().getTime()
-    // When compressed file is received the name looks like filename.txt.gz
-    const filenameInfo = path.parse(filePath)
-    const cacheFilename = `${filenameInfo.name}-${timestamp}${filenameInfo.ext}`
-    const cachePath = path.join(this.cacheFolder, cacheFilename)
-
     try {
-      await this.historyQuery.north.cacheFile(cachePath)
+      await this.historyQuery.north.cacheFile(filePath)
       try {
         await fs.unlink(filePath)
       } catch (unlinkError) {
