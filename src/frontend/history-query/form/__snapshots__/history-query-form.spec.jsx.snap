@@ -185,7 +185,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
               >
                 <label
                   class="form-label"
-                  for="startDate"
+                  for="startTimeDate"
                 >
                   From date
                 </label>
@@ -195,7 +195,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
               >
                 <input
                   class="oi-form-input form-control"
-                  id="startDate"
+                  id="startTimeDate"
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="date"
@@ -207,7 +207,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
               >
                 <input
                   class="oi-form-input form-control"
-                  id="startTime"
+                  id="startTimeTime"
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="time"
@@ -237,7 +237,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
               >
                 <label
                   class="form-label"
-                  for="endDate"
+                  for="endTimeDate"
                 >
                   To date
                 </label>
@@ -247,7 +247,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
               >
                 <input
                   class="oi-form-input form-control"
-                  id="endDate"
+                  id="endTimeDate"
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="date"
@@ -259,7 +259,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> Conso
               >
                 <input
                   class="oi-form-input form-control"
-                  id="endTime"
+                  id="endTimeTime"
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="time"
@@ -595,7 +595,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
               >
                 <label
                   class="form-label"
-                  for="startDate"
+                  for="startTimeDate"
                 >
                   From date
                 </label>
@@ -605,7 +605,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
               >
                 <input
                   class="oi-form-input form-control"
-                  id="startDate"
+                  id="startTimeDate"
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="date"
@@ -617,7 +617,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
               >
                 <input
                   class="oi-form-input form-control"
-                  id="startTime"
+                  id="startTimeTime"
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="time"
@@ -647,7 +647,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
               >
                 <label
                   class="form-label"
-                  for="endDate"
+                  for="endTimeDate"
                 >
                   To date
                 </label>
@@ -657,7 +657,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
               >
                 <input
                   class="oi-form-input form-control"
-                  id="endDate"
+                  id="endTimeDate"
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="date"
@@ -669,7 +669,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with data: MSSQL South -> OIAna
               >
                 <input
                   class="oi-form-input form-control"
-                  id="endTime"
+                  id="endTimeTime"
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="time"
@@ -1004,7 +1004,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty North 1`] = `
               >
                 <label
                   class="form-label"
-                  for="startDate"
+                  for="startTimeDate"
                 >
                   From date
                 </label>
@@ -1014,11 +1014,11 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty North 1`] = `
               >
                 <input
                   class="oi-form-input form-control"
-                  id="startDate"
+                  id="startTimeDate"
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="date"
-                  value=""
+                  value="2023-06-06"
                 />
               </div>
               <div
@@ -1026,11 +1026,11 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty North 1`] = `
               >
                 <input
                   class="oi-form-input form-control"
-                  id="startTime"
+                  id="startTimeTime"
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="time"
-                  value=""
+                  value="08:58"
                 />
               </div>
               <div
@@ -1056,7 +1056,7 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty North 1`] = `
               >
                 <label
                   class="form-label"
-                  for="endDate"
+                  for="endTimeDate"
                 >
                   To date
                 </label>
@@ -1066,11 +1066,11 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty North 1`] = `
               >
                 <input
                   class="oi-form-input form-control"
-                  id="endDate"
+                  id="endTimeDate"
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="date"
-                  value=""
+                  value="2023-06-06"
                 />
               </div>
               <div
@@ -1078,11 +1078,11 @@ exports[`HistoryQueryForm check HistoryQueryForm with empty North 1`] = `
               >
                 <input
                   class="oi-form-input form-control"
-                  id="endTime"
+                  id="endTimeTime"
                   placeholder="yyyy-mm-ddThh:mm:ss+hh:mm"
                   required=""
                   type="time"
-                  value=""
+                  value="08:58"
                 />
               </div>
               <div

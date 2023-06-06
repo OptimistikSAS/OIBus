@@ -66,13 +66,13 @@ export default class HistoryQuery {
     this.overwriteConnectorsSettings()
 
     await this.north.start(
-      path.resolve(this.cacheFolder, `north-${this.north.id}`),
+      this.cacheFolder,
       this.engine.oibusName,
     )
     await this.north.connect()
 
     await this.south.start(
-      path.resolve(this.cacheFolder, `south-${this.south.id}`),
+      this.cacheFolder,
       this.engine.oibusName,
     )
     await this.south.connect()
