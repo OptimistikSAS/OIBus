@@ -100,6 +100,11 @@ export default class SouthMQTT extends SouthConnector implements QueriesSubscrip
     });
   }
 
+  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
+    this.logger.trace(`Testing connection`);
+    return false;
+  }
+
   async handleMessage(topic: string, message: Buffer): Promise<void> {
     try {
       const parsedMessage = JSON.parse(message.toString());

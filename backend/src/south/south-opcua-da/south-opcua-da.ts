@@ -73,6 +73,11 @@ export default class SouthOPCUADA extends SouthConnector implements QueriesLastP
     await this.connectToOpcuaServer();
   }
 
+  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
+    this.logger.trace(`Testing connection`);
+    return false;
+  }
+
   /**
    * Connect to OPCUA_DA server with retry.
    */
