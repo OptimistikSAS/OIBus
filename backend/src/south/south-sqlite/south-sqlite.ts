@@ -71,11 +71,12 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
     for (const item of items) {
       logQuery(item.settings.query, updatedStartTime, endTime, this.logger);
 
+      const startRequest = DateTime.now().toMillis();
       const result: Array<any> = await this.getDataFromSqlite(item, updatedStartTime, endTime);
-
-      this.logger.info(`Found ${result.length} results`);
+      const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
+        this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
         await writeResults(
           result,
           item.settings,
@@ -86,9 +87,9 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
           this.logger
         );
 
-        updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeField, this.configuration.settings.timezone);
+        updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeField, item.settings.timezone);
       } else {
-        this.logger.debug(`No result found between ${startTime} and ${endTime}`);
+        this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
     }
     return updatedStartTime;
@@ -98,13 +99,10 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
    * Apply the SQL query to the target SQLite database
    */
   async getDataFromSqlite(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
-    const adaptedQuery = item.settings.query;
-
-    let database = null;
-    let data = [];
+    this.logger.debug(`Opening ${path.resolve(this.configuration.settings.databasePath)} SQLite database`);
+    const database = db(path.resolve(this.configuration.settings.databasePath));
     try {
-      database = db(this.configuration.settings.databasePath);
-      const stmt = database.prepare(adaptedQuery);
+      const stmt = database.prepare(item.settings.query);
       const preparedParameters: Record<string, number | string> = {};
       // TODO: format date
       if (item.settings.query.indexOf('@StartTime') !== -1) {
@@ -114,16 +112,12 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
         preparedParameters.EndTime = item.settings.datetimeType === 'isostring' ? endTime : DateTime.fromISO(endTime).toMillis();
       }
 
-      data = stmt.all(preparedParameters);
+      const data = stmt.all(preparedParameters);
+      database.close();
+      return data;
     } catch (error) {
-      if (database) {
-        database.close();
-      }
+      database.close();
       throw error;
     }
-    if (database) {
-      database.close();
-    }
-    return data;
   }
 }

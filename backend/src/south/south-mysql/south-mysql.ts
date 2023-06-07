@@ -11,6 +11,7 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
+import { DateTime } from 'luxon';
 
 /**
  * Class SouthMySQL - Retrieve data from MySQL / MariaDB databases and send them to the cache as CSV files.
@@ -69,10 +70,12 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
     for (const item of items) {
       logQuery(item.settings.query, updatedStartTime, endTime, this.logger);
 
+      const startRequest = DateTime.now().toMillis();
       const result: Array<any> = await this.getDataFromMySQL(item, updatedStartTime, endTime);
-      this.logger.info(`Found ${result.length} results`);
+      const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
+        this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
         await writeResults(
           result,
           item.settings,
@@ -85,7 +88,7 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
 
         updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeField, this.configuration.settings.timezone);
       } else {
-        this.logger.debug(`No result found between ${startTime} and ${endTime}`);
+        this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
     }
     return updatedStartTime;
@@ -101,38 +104,32 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
       host: this.configuration.settings.host,
       port: this.configuration.settings.port,
       user: this.configuration.settings.username,
-      password: await this.encryptionService.decryptText(this.configuration.settings.password),
+      password: this.configuration.settings.password ? await this.encryptionService.decryptText(this.configuration.settings.password) : '',
       database: this.configuration.settings.database,
       connectTimeout: this.configuration.settings.connectionTimeout,
       timezone: 'Z'
     };
 
-    let connection = null;
-    let data: Array<any> = [];
+    let connection;
     try {
       connection = await mysql.createConnection(config);
 
       // TODO: format date
       const params = generateReplacementParameters(item.settings.query, startTime, endTime);
-      const [rows] = await connection.execute(
+      const [data] = await connection.execute(
         {
           sql: adaptedQuery,
           timeout: this.configuration.settings.requestTimeout
         },
         params
       );
-      // @ts-ignore
-      data = rows;
+      await connection.end();
+      return data as Array<any>;
     } catch (error) {
       if (connection) {
         await connection.end();
       }
       throw error;
     }
-    if (connection) {
-      await connection.end();
-    }
-
-    return data;
   }
 }

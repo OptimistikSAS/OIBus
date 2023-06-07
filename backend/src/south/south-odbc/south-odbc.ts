@@ -11,17 +11,7 @@ import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
-
-let odbc: { connect: (arg0: { connectionString: string; connectionTimeout: any; loginTimeout: any }) => any } | null = null;
-// @ts-ignore
-// eslint-disable-next-line import/no-unresolved
-import('odbc')
-  .then(obj => {
-    odbc = obj;
-  })
-  .catch(() => {
-    console.error('Could not load odbc');
-  });
+import odbc from 'odbc';
 
 /**
  * Class SouthODBC - Retrieve data from SQL databases with ODBC driver and send them to the cache as CSV files.
@@ -80,10 +70,12 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory 
     for (const item of items) {
       logQuery(item.settings.query, updatedStartTime, endTime, this.logger);
 
+      const startRequest = DateTime.now().toMillis();
       const result: Array<any> = await this.getDataFromOdbc(item, updatedStartTime, endTime);
-      this.logger.info(`Found ${result.length} results`);
+      const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
+        this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
         await writeResults(
           result,
           item.settings,
@@ -96,7 +88,7 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory 
 
         updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeField, this.configuration.settings.timezone);
       } else {
-        this.logger.debug(`No result found between ${startTime} and ${endTime}`);
+        this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
     }
     return updatedStartTime;
@@ -106,24 +98,31 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory 
    * Apply the SQL query to the target ODBC database
    */
   async getDataFromOdbc(item: OibusItemDTO, startTime: Instant, endTime: Instant) {
-    if (!odbc) {
-      throw new Error('odbc library not loaded.');
-    }
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?');
 
-    let connectionString = `Driver=${this.configuration.settings.odbcDriverPath};SERVER=${
-      this.configuration.settings.host
-    };TrustServerCertificate=${this.configuration.settings.selfSigned ? 'yes' : 'no'};`;
-    connectionString += `Database=${this.configuration.settings.database};UID=${
-      this.configuration.settings.username
-    };PWD=${await this.encryptionService.decryptText(this.configuration.settings.password)}`;
-    let connection = null;
-    let data = [];
+    let connectionString = `Driver=${this.configuration.settings.driverPath};SERVER=${this.configuration.settings.host};PORT=${this.configuration.settings.port};`;
+    if (this.configuration.settings.trustServerCertificate) {
+      connectionString += `TrustServerCertificate=yes;`;
+    }
+    if (this.configuration.settings.database) {
+      connectionString += `Database=${this.configuration.settings.database};`;
+    }
+    if (this.configuration.settings.username) {
+      connectionString += `UID=${this.configuration.settings.username};`;
+    }
+
+    if (this.configuration.settings.username && this.configuration.settings.password) {
+      this.logger.debug(`Connecting with connection string ${connectionString}PWD=<secret>;`);
+      connectionString += `PWD=${await this.encryptionService.decryptText(this.configuration.settings.password)};`;
+    } else {
+      this.logger.debug(`Connecting with connection string ${connectionString}`);
+    }
+
+    let connection;
     try {
       const connectionConfig = {
         connectionString,
-        connectionTimeout: this.configuration.settings.connectionTimeout,
-        loginTimeout: this.configuration.settings.connectionTimeout
+        connectionTimeout: this.configuration.settings.connectionTimeout
       };
       connection = await odbc.connect(connectionConfig);
 
@@ -131,11 +130,13 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory 
       const startDateTime = DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
       const endDateTime = DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
       const params = generateReplacementParameters(item.settings.query, startDateTime, endDateTime);
-      data = await connection.query(adaptedQuery, params);
+      const data = await connection.query(adaptedQuery, params);
+      await connection.close();
+      return data;
     } catch (error: any) {
       if (error.odbcErrors?.length > 0) {
         error.odbcErrors.forEach((odbcError: any) => {
-          this.logger.error(odbcError.message);
+          this.logger.error(`Error from ODBC driver: ${odbcError.message}`);
         });
       }
       if (connection) {
@@ -143,9 +144,5 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory 
       }
       throw error;
     }
-    if (connection) {
-      await connection.close();
-    }
-    return data;
   }
 }

@@ -11,6 +11,7 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
+import { DateTime } from 'luxon';
 
 /**
  * Class SouthMSSQL - Retrieve data from MSSQL databases and send them to the cache as CSV files.
@@ -68,9 +69,13 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
 
     for (const item of items) {
       logQuery(item.settings.query, updatedStartTime, endTime, this.logger);
+
+      const startRequest = DateTime.now().toMillis();
       const result: Array<any> = await this.getDataFromMSSQL(item, updatedStartTime, endTime);
+      const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
+        this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
         await writeResults(
           result,
           item.settings,
@@ -83,7 +88,7 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
 
         updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeField, this.configuration.settings.timezone);
       } else {
-        this.logger.debug(`No result found between ${startTime} and ${endTime}`);
+        this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
     }
     return updatedStartTime;
@@ -117,17 +122,19 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
     const request = pool.request();
     // TODO: fix date format
     if (item.settings.query.indexOf('@StartTime') !== -1) {
-      request.input('StartTime', mssql.DateTimeOffset, startTime);
+      request.input('StartTime', startTime);
     }
     if (item.settings.query.indexOf('@EndTime') !== -1) {
-      request.input('EndTime', mssql.DateTimeOffset, endTime);
+      request.input('EndTime', endTime);
     }
-    const result = await request.query(adaptedQuery);
-    await pool.close();
-
-    // @ts-ignore
-    const [first] = result.recordsets;
-    this.logger.info(`Found ${first.length} results`);
-    return first;
+    try {
+      const result = await request.query(adaptedQuery);
+      const [first] = result.recordsets as Array<any>;
+      await pool.close();
+      return first;
+    } catch (error) {
+      await pool.close();
+      throw error;
+    }
   }
 }

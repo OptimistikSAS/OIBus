@@ -69,6 +69,14 @@ const manifest: SouthConnectorManifest = {
       readDisplay: true
     },
     {
+      key: 'trustServerCertificate',
+      type: 'OibCheckbox',
+      label: 'Trust server certificate',
+      defaultValue: false,
+      validators: [{ key: 'required' }],
+      readDisplay: false
+    },
+    {
       key: 'connectionTimeout',
       type: 'OibNumber',
       label: 'Connection timeout (ms)',
@@ -81,9 +89,8 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'requestTimeout',
       type: 'OibNumber',
-      label: 'Connection timeout (ms)',
+      label: 'Request timeout (ms)',
       defaultValue: 1000,
-      newRow: true,
       class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
       readDisplay: false
@@ -92,12 +99,9 @@ const manifest: SouthConnectorManifest = {
       key: 'compression',
       type: 'OibCheckbox',
       label: 'Compress File?',
-      readDisplay: false
-    },
-    {
-      key: 'trustServerCertificate',
-      type: 'OibCheckbox',
-      label: 'Trust server certificate',
+      defaultValue: false,
+      newRow: true,
+      validators: [{ key: 'required' }],
       readDisplay: false
     }
   ],

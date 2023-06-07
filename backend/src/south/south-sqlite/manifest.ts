@@ -25,7 +25,10 @@ const manifest: SouthConnectorManifest = {
       key: 'compression',
       type: 'OibCheckbox',
       label: 'Compress File?',
-      readDisplay: false
+      defaultValue: false,
+      validators: [{ key: 'required' }],
+      readDisplay: false,
+      newRow: true
     }
   ],
   items: {

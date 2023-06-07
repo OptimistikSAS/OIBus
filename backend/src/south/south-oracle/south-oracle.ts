@@ -11,20 +11,8 @@ import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 
-let oracledb: {
-  outFormat: any;
-  OUT_FORMAT_OBJECT: any;
-  getConnection: (arg0: { user: any; password: string; connectString: string }) => any;
-} | null = null;
-// @ts-ignore
-// eslint-disable-next-line import/no-unresolved
-import('oracledb')
-  .then(obj => {
-    oracledb = obj;
-  })
-  .catch(() => {
-    console.error('Could not load oracledb');
-  });
+import oracledb from 'oracledb';
+import { DateTime } from 'luxon';
 
 /**
  * Class SouthOracle - Retrieve data from Oracle databases and send them to the cache as CSV files.
@@ -83,10 +71,12 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
     for (const item of items) {
       logQuery(item.settings.query, updatedStartTime, endTime, this.logger);
 
+      const startRequest = DateTime.now().toMillis();
       const result: Array<any> = await this.getDataFromOracle(item, updatedStartTime, endTime);
-      this.logger.info(`Found ${result.length} results`);
+      const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
+        this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
         await writeResults(
           result,
           item.settings,
@@ -97,9 +87,9 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
           this.logger
         );
 
-        updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeField, this.configuration.settings.timezone);
+        updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeField, item.settings.timezone);
       } else {
-        this.logger.debug(`No result found between ${startTime} and ${endTime}`);
+        this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
     }
     return updatedStartTime;
@@ -109,20 +99,15 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
    * Apply the SQL query to the target Oracle database
    */
   async getDataFromOracle(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
-    if (!oracledb) {
-      throw new Error('oracledb library not loaded');
-    }
-
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, ':date1').replace(/@EndTime/g, ':date2');
 
     const config = {
       user: this.configuration.settings.username,
-      password: await this.encryptionService.decryptText(this.configuration.settings.password),
+      password: this.configuration.settings.password ? await this.encryptionService.decryptText(this.configuration.settings.password) : '',
       connectString: `${this.configuration.settings.host}:${this.configuration.settings.port}/${this.configuration.settings.database}`
     };
 
     let connection = null;
-    let data = [];
     try {
       process.env.ORA_SDTZ = 'UTC';
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
@@ -131,17 +116,13 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
       // TODO: format date
       const params = generateReplacementParameters(item.settings.query, startTime, endTime);
       const { rows } = await connection.execute(adaptedQuery, params);
-      data = rows;
+      await connection.close();
+      return rows || [];
     } catch (error) {
       if (connection) {
         await connection.close();
       }
       throw error;
     }
-    if (connection) {
-      await connection.close();
-    }
-
-    return data;
   }
 }
