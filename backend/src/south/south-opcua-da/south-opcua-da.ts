@@ -21,7 +21,7 @@ import { QueriesLastPoint } from '../south-interface';
  * Class SouthOPCUADA - Connect to an OPCUA server in DA (Data Access) mode
  */
 export default class SouthOPCUADA extends SouthConnector implements QueriesLastPoint {
-  static category = manifest.category;
+  static type = manifest.id;
 
   private clientCertificateManager: OPCUACertificateManager | null = null;
   private session: ClientSession | null = null;

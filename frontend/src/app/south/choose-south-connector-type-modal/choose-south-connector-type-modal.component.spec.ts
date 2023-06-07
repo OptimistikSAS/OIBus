@@ -49,14 +49,16 @@ describe('CreateSouthConnectorModalComponent', () => {
     southConnectorService.getAvailableTypes.and.returnValue(
       of([
         {
+          id: 'mssql',
           category: 'database',
-          type: 'SQL',
+          name: 'SQL',
           description: 'SQL description',
           modes: { lastFile: false, lastPoint: false, subscription: true, history: true }
         },
         {
+          id: 'mqtt',
           category: 'iot',
-          type: 'MQTT',
+          name: 'MQTT',
           description: 'MQTT description',
           modes: { lastFile: false, lastPoint: false, subscription: true, history: true }
         }
@@ -74,7 +76,7 @@ describe('CreateSouthConnectorModalComponent', () => {
 
     expect(fakeActiveModal.close).toHaveBeenCalled();
     expect(fakeActiveModal.close).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/south', 'create'], { queryParams: { type: 'SQL' } });
+    expect(router.navigate).toHaveBeenCalledWith(['/south', 'create'], { queryParams: { type: 'mssql' } });
   });
 
   it('should cancel', () => {

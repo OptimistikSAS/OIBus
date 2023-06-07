@@ -1,9 +1,10 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
-  name: 'FileWriter',
+  id: 'file-writer',
+  name: 'File Writer',
   category: 'file',
-  description: 'FileWriter description',
+  description: 'Write files and values into an output folder',
   modes: {
     files: true,
     points: true

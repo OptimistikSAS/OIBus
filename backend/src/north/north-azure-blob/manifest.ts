@@ -1,9 +1,10 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
-  name: 'AzureBlob',
+  id: 'azure-blob',
+  name: 'Azure Blob',
   category: 'file',
-  description: 'Azure Blob description',
+  description: 'Store files in Azure Blob',
   modes: {
     files: true,
     points: false

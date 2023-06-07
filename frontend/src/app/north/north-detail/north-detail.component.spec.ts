@@ -52,6 +52,7 @@ describe('NorthDetailComponent', () => {
   };
 
   const manifest: NorthConnectorManifest = {
+    id: 'oianalytics',
     name: 'OIAnalytics',
     category: 'oi',
     description: 'OIAnalytics description',

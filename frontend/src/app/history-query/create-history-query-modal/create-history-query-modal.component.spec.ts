@@ -89,28 +89,31 @@ describe('CreateHistoryQueryModalComponent', () => {
     historyQueryService.create.and.returnValue(of({ id: 'historyId' } as HistoryQueryDTO));
     northConnectorService.getNorthConnectorTypes.and.returnValue(
       of([
-        { category: 'database', type: 'MongoDB', description: 'MongoDB description', modes: { files: false, points: true } },
-        { category: 'iot', type: 'MQTT', description: 'MQTT description', modes: { files: false, points: true } }
+        { id: 'mongodb', category: 'database', name: 'MongoDB', description: 'MongoDB description', modes: { files: false, points: true } },
+        { id: 'mqtt', category: 'iot', name: 'MQTT', description: 'MQTT description', modes: { files: false, points: true } }
       ])
     );
 
     southConnectorService.getAvailableTypes.and.returnValue(
       of([
         {
+          id: 'mssql',
           category: 'database',
-          type: 'SQL',
+          name: 'SQL',
           description: 'SQL description',
           modes: { lastFile: false, lastPoint: false, subscription: true, history: true }
         },
         {
+          id: 'opcua-ha',
           category: 'iot',
-          type: 'OPCUA_HA',
+          name: 'OPCUA_HA',
           description: 'OPCUA description',
           modes: { lastFile: false, lastPoint: false, subscription: false, history: true }
         },
         {
+          id: 'mqtt',
           category: 'iot',
-          type: 'MQTT',
+          name: 'MQTT',
           description: 'MQTT description',
           modes: { lastFile: false, lastPoint: false, subscription: true, history: false }
         }
@@ -156,20 +159,20 @@ describe('CreateHistoryQueryModalComponent', () => {
         name: 'myNorthConnector1',
         description: 'a test north connector',
         enabled: true,
-        type: 'Test'
+        type: 'test'
       } as NorthConnectorDTO,
       {
         id: 'id2',
         name: 'myNorthConnector2',
         description: 'a test north connector',
         enabled: true,
-        type: 'Test'
+        type: 'test'
       } as NorthConnectorDTO
     ];
     const southConnectors: Array<SouthConnectorDTO> = [
       {
         id: 'id1',
-        type: 'SQL',
+        type: 'mssql',
         name: 'South Connector1 ',
         description: 'My first South connector description',
         enabled: true,
@@ -182,7 +185,7 @@ describe('CreateHistoryQueryModalComponent', () => {
       },
       {
         id: 'id2',
-        type: 'OPCUA_HA',
+        type: 'opcua-ha',
         name: 'South Connector 2',
         description: 'My second South connector description',
         enabled: true,
@@ -195,7 +198,7 @@ describe('CreateHistoryQueryModalComponent', () => {
       },
       {
         id: 'id3',
-        type: 'MQTT',
+        type: 'mqtt',
         name: 'South Connector 3',
         description: 'My third South connector description',
         enabled: true,
@@ -227,8 +230,8 @@ describe('CreateHistoryQueryModalComponent', () => {
       expect(tester.southIdSelect!.optionLabels.length).toBe(2);
       expect(tester.northIdSelect!.optionLabels.length).toBe(2);
 
-      tester.southIdSelect!.selectLabel('South Connector1 (SQL)');
-      tester.northIdSelect!.selectLabel('myNorthConnector2 (Test)');
+      tester.southIdSelect!.selectLabel('South Connector1 (mssql)');
+      tester.northIdSelect!.selectLabel('myNorthConnector2 (test)');
       tester.name.fillWith('test');
       tester.description.fillWith('my description');
       tester.createButton.click();

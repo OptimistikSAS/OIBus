@@ -42,7 +42,7 @@ describe('north service', () => {
         id: 'northId',
         name: 'myNorth',
         description: 'my test connector',
-        type: 'Console',
+        type: 'console',
         enabled: false,
         caching: {} as NorthCacheSettingsDTO,
         archive: {
@@ -55,5 +55,33 @@ describe('north service', () => {
       logger
     );
     expect(connector).toBeDefined();
+  });
+
+  it('should not create North connector not installed', () => {
+    let connector;
+    let error;
+    try {
+      connector = service.createNorth(
+        {
+          id: 'northId',
+          name: 'myNorth',
+          description: 'my test connector',
+          type: 'another',
+          enabled: false,
+          caching: {} as NorthCacheSettingsDTO,
+          archive: {
+            enabled: false,
+            retentionDuration: 0
+          },
+          settings: { verbose: true }
+        },
+        'myBaseFolder',
+        logger
+      );
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error('North connector of type another not installed'));
+    expect(connector).not.toBeDefined();
   });
 });

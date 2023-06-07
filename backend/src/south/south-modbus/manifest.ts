@@ -1,9 +1,10 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
+  id: 'modbus',
   name: 'Modbus',
   category: 'iot',
-  description: 'Modbus description',
+  description: 'Access Modbus registers on a PLC',
   modes: {
     subscription: false,
     lastPoint: true,

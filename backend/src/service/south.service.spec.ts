@@ -6,6 +6,7 @@ import RepositoryService from './repository.service';
 import pino from 'pino';
 import ProxyService from './proxy.service';
 import SouthService from './south.service';
+import { NorthCacheSettingsDTO } from '../../../shared/model/north-connector.model';
 
 jest.mock('../repository/proxy.repository');
 jest.mock('./encryption.service');
@@ -46,7 +47,7 @@ describe('south service', () => {
         id: 'southId',
         name: 'mySouth',
         description: 'my test connector',
-        type: 'FolderScanner',
+        type: 'folder-scanner',
         enabled: false,
         history: {
           maxInstantPerItem: true,
@@ -63,5 +64,37 @@ describe('south service', () => {
       logger
     );
     expect(connector).toBeDefined();
+  });
+
+  it('should not create South connector not installed', () => {
+    let connector;
+    let error;
+    try {
+      connector = service.createSouth(
+        {
+          id: 'southId',
+          name: 'mySouth',
+          description: 'my test connector',
+          type: 'another',
+          enabled: false,
+          history: {
+            maxInstantPerItem: true,
+            maxReadInterval: 3600,
+            readDelay: 0
+          },
+          settings: { verbose: true }
+        },
+        [],
+        jest.fn(),
+        jest.fn(),
+        'myBaseFolder',
+        true,
+        logger
+      );
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error('South connector of type another not installed'));
+    expect(connector).not.toBeDefined();
   });
 });

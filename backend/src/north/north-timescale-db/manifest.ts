@@ -1,6 +1,7 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
+  id: 'timescaledb',
   name: 'TimescaleDB',
   category: 'database',
   description: 'TimescaleDB description',

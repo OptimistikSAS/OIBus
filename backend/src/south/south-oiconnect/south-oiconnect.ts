@@ -6,8 +6,8 @@ import https from 'https';
 
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
-import { parsers, httpGetWithBody, formatQueryParams, generateCSV } from './utils';
-import { replaceFilenameWithVariable, compress, createFolder } from '../../service/utils';
+import { parsers, httpGetWithBody, formatQueryParams } from './utils';
+import { replaceFilenameWithVariable, compress, createFolder, generateCSV } from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
@@ -22,7 +22,7 @@ import { QueriesHistory } from '../south-interface';
  * The results are parsed through the available parsers
  */
 export default class SouthOIConnect extends SouthConnector implements QueriesHistory {
-  static category = manifest.category;
+  static type = manifest.id;
 
   private readonly tmpFolder: string;
   constructor(

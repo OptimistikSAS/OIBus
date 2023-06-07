@@ -116,6 +116,7 @@ describe('EditNorthComponent', () => {
       northConnectorService.getNorthConnector.and.returnValue(of(northConnector));
       northConnectorService.getNorthConnectorTypeManifest.and.returnValue(
         of({
+          id: 'console',
           category: 'debug',
           name: 'Console',
           description: 'Console description',

@@ -2,8 +2,9 @@ import { OibFormControl } from './form.model';
 import { Instant } from './types';
 
 export interface SouthType {
+  id: string;
   category: string;
-  type: string;
+  name: string;
   description: string;
   modes: {
     subscription: boolean;
@@ -78,6 +79,7 @@ export interface OibusItemManifest {
 }
 
 export interface SouthConnectorManifest {
+  id: string;
   category: string;
   name: string;
   description: string;

@@ -1,9 +1,10 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
+  id: 'ads',
   name: 'ADS',
   category: 'iot',
-  description: 'ADS description',
+  description: 'The ADS protocol (Automation Device Specification) is a transport layer within TwinCAT systems, developed by Beckhoff.',
   modes: {
     subscription: false,
     lastPoint: true,

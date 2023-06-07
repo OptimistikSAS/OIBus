@@ -72,6 +72,7 @@ describe('EditSouthComponent', () => {
 
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
       of({
+        id: 'mssql',
         category: 'database',
         name: 'SQL',
         description: 'SQL description',

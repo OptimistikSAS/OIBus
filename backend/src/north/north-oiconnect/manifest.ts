@@ -1,9 +1,10 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
+  id: 'oiconnect',
   name: 'OIConnect',
   category: 'oi',
-  description: 'OIConnect description',
+  description: 'Send files and values to REST API HTTP endpoints',
   modes: {
     files: true,
     points: true

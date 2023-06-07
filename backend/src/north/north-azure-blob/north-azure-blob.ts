@@ -13,7 +13,7 @@ import * as process from 'process';
 import { HandlesFile } from '../north-interface';
 
 export default class NorthAzureBlob extends NorthConnector implements HandlesFile {
-  static category = manifest.category;
+  static type = manifest.id;
 
   constructor(
     configuration: NorthConnectorDTO,

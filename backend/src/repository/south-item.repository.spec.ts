@@ -33,6 +33,46 @@ describe('South item repository', () => {
     expect(run).toHaveBeenCalledTimes(1);
   });
 
+  it('should properly list south items', () => {
+    const expectedValue: Array<OibusItemDTO> = [
+      {
+        id: 'id1',
+        name: 'my south scan',
+        connectorId: 'south1',
+        scanModeId: 'scanMode1',
+        settings: {}
+      },
+      {
+        id: 'id2',
+        name: 'my second south scan',
+        connectorId: 'south1',
+        scanModeId: 'scan1',
+        settings: {}
+      }
+    ];
+    all.mockReturnValueOnce([
+      {
+        id: 'id1',
+        name: 'my south scan',
+        connectorId: 'south1',
+        scanModeId: 'scanMode1',
+        settings: JSON.stringify({})
+      },
+      {
+        id: 'id2',
+        name: 'my second south scan',
+        connectorId: 'south1',
+        scanModeId: 'scan1',
+        settings: JSON.stringify({})
+      }
+    ]);
+    const southItems = repository.listSouthItems('southId');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_item WHERE connector_id = ?;'
+    );
+    expect(southItems).toEqual(expectedValue);
+  });
+
   it('should properly search south items', () => {
     const expectedValue: Page<OibusItemDTO> = {
       content: [
@@ -73,7 +113,7 @@ describe('South item repository', () => {
       }
     ]);
     get.mockReturnValueOnce({ count: 2 });
-    const southScans = repository.searchSouthItems('southId', {
+    const southItems = repository.searchSouthItems('southId', {
       page: 0,
       name: 'my item'
     });
@@ -81,7 +121,7 @@ describe('South item repository', () => {
       'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_item WHERE ' +
         "connector_id = ? AND name like '%' || ? || '%' LIMIT 50 OFFSET 0;"
     );
-    expect(southScans).toEqual(expectedValue);
+    expect(southItems).toEqual(expectedValue);
   });
 
   it('should properly get south items by South ID', () => {
@@ -117,11 +157,11 @@ describe('South item repository', () => {
         settings: JSON.stringify({})
       }
     ]);
-    const southScans = repository.getSouthItems('southId');
+    const southItems = repository.getSouthItems('southId');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_item WHERE connector_id = ?;'
     );
-    expect(southScans).toEqual(expectedValue);
+    expect(southItems).toEqual(expectedValue);
   });
 
   it('should properly get a south item', () => {

@@ -26,7 +26,7 @@ interface ADSOptions {
  * Class SouthADS - Provides instruction for TwinCAT ADS client connection
  */
 export default class SouthADS extends SouthConnector implements QueriesLastPoint {
-  static category = manifest.category;
+  static type = manifest.id;
 
   private client: ads.Client | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
@@ -34,8 +34,8 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
   constructor(
     configuration: SouthConnectorDTO,
     items: Array<OibusItemDTO>,
-    engineAddValuesCallback: () => Promise<void>,
-    engineAddFileCallback: () => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
+    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     proxyService: ProxyService,
     repositoryService: RepositoryService,

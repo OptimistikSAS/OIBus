@@ -29,7 +29,7 @@ interface MessageFormatOption {
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
  */
 export default class SouthMQTT extends SouthConnector implements QueriesSubscription {
-  static category = manifest.category;
+  static type = manifest.id;
 
   private client: MqttClient | null = null;
   private mqttItems: Array<OibusItemDTO> = [];

@@ -38,7 +38,8 @@ describe('SouthDetailComponent', () => {
   let notificationService: jasmine.SpyObj<NotificationService>;
 
   const manifest: SouthConnectorManifest = {
-    category: '',
+    id: 'mssql',
+    category: 'database',
     name: 'SQL',
     description: 'SQL',
     settings: [],

@@ -135,6 +135,7 @@ describe('EditHistoryQueryComponent', () => {
     historyQueryService.get.and.returnValue(of(historyQuery));
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(
       of({
+        id: 'console',
         category: 'debug',
         name: 'Console',
         description: 'Console description',
@@ -148,6 +149,7 @@ describe('EditHistoryQueryComponent', () => {
     );
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
       of({
+        id: 'sql',
         category: 'database',
         name: 'SQL',
         description: 'SQL description',

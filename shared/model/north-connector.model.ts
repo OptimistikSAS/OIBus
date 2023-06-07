@@ -17,8 +17,9 @@ export interface NorthArchiveSettings {
 }
 
 export interface NorthType {
+  id: string;
   category: string;
-  type: string;
+  name: string;
   description: string;
   modes: {
     files: boolean;
@@ -54,6 +55,7 @@ export interface NorthConnectorCommandDTO {
 }
 
 export interface NorthConnectorManifest {
+  id: string;
   category: string;
   name: string;
   description: string;

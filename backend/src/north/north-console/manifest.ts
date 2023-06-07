@@ -1,9 +1,10 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
+  id: 'console',
   name: 'Console',
   category: 'debug',
-  description: 'Console description',
+  description: 'Display filename or values in Console (used for debug)',
   modes: {
     files: true,
     points: true

@@ -15,7 +15,7 @@ import { HandlesFile, HandlesValues } from '../north-interface';
  * Class NorthFileWriter - Write file in an output folder. Values are stored in JSON files
  */
 export default class NorthFileWriter extends NorthConnector implements HandlesFile, HandlesValues {
-  static category = manifest.category;
+  static type = manifest.id;
 
   constructor(
     configuration: NorthConnectorDTO,

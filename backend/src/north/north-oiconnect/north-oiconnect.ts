@@ -20,7 +20,7 @@ import { HandlesFile, HandlesValues } from '../north-interface';
  *  -values endpoint: /engine/addValues
  */
 export default class NorthOIConnect extends NorthConnector implements HandlesFile, HandlesValues {
-  static category = manifest.category;
+  static type = manifest.id;
 
   private proxyAgent: any | undefined;
 

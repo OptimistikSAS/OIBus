@@ -1,6 +1,7 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
+  id: 'csv-to-http',
   name: 'CsvToHttp',
   category: 'api',
   description: 'CsvToHttp description',

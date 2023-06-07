@@ -23,7 +23,7 @@ const DISCONNECTION_TIMEOUT = 10000;
  * and associated to this connector
  */
 export default class SouthOPCHDA extends SouthConnector implements QueriesHistory {
-  static category = manifest.category;
+  static type = manifest.id;
 
   // Initialized at connection
   private tcpServer: TcpServer | null = null;

@@ -22,7 +22,7 @@ const historyQueryController = new HistoryQueryConnectorController(validator, hi
 const southConnector: SouthConnectorDTO = {
   id: 'southId',
   name: 'name',
-  type: 'OPCUA_HA',
+  type: 'opcua-ha',
   description: 'description',
   enabled: true,
   history: {
@@ -52,7 +52,7 @@ const northArchiveSettings: NorthArchiveSettings = {
 const northConnector: NorthConnectorDTO = {
   id: 'northId',
   name: 'name',
-  type: 'Console',
+  type: 'console',
   description: 'description',
   enabled: true,
   settings: {
@@ -73,8 +73,8 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   },
   startTime: 'startTime',
   endTime: 'endTime',
-  southType: 'OPCUA_HA',
-  northType: 'Console',
+  southType: 'opcua-ha',
+  northType: 'console',
   southSettings: {
     key: 'value'
   },
@@ -87,8 +87,8 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
 const historyQueryCreateCommand: HistoryQueryCreateCommandDTO = {
   name: 'name',
   description: 'description',
-  southType: 'OPCUA_HA',
-  northType: 'Console',
+  southType: 'opcua-ha',
+  northType: 'console',
   southId: null,
   northId: null
 };
@@ -130,12 +130,12 @@ describe('History query controller', () => {
     expect(ctx.app.encryptionService.filterSecrets).toHaveBeenNthCalledWith(
       1,
       historyQuery.southSettings,
-      southManifests.find(south => south.name === historyQuery.southType)!.settings
+      southManifests.find(manifest => manifest.id === historyQuery.southType)!.settings
     );
     expect(ctx.app.encryptionService.filterSecrets).toHaveBeenNthCalledWith(
       2,
       historyQuery.northSettings,
-      northManifests.find(north => north.name === historyQuery.northType)!.settings
+      northManifests.find(manifest => manifest.id === historyQuery.northType)!.settings
     );
     expect(ctx.ok).toHaveBeenCalledWith([historyQuery]);
   });
@@ -174,12 +174,12 @@ describe('History query controller', () => {
     expect(ctx.app.encryptionService.filterSecrets).toHaveBeenNthCalledWith(
       1,
       historyQuery.southSettings,
-      southManifests.find(south => south.name === historyQuery.southType)!.settings
+      southManifests.find(manifest => manifest.id === historyQuery.southType)!.settings
     );
     expect(ctx.app.encryptionService.filterSecrets).toHaveBeenNthCalledWith(
       2,
       historyQuery.northSettings,
-      northManifests.find(north => north.name === historyQuery.northType)!.settings
+      northManifests.find(manifest => manifest.id === historyQuery.northType)!.settings
     );
     expect(ctx.ok).toHaveBeenCalledWith(historyQuery);
   });
@@ -214,8 +214,8 @@ describe('History query controller', () => {
 
     await historyQueryController.createHistoryQuery(ctx);
 
-    const southManifest = southManifests.find(manifest => manifest.name === 'OPCUA_HA')!;
-    const northManifest = northManifests.find(manifest => manifest.name === 'Console')!;
+    const southManifest = southManifests.find(manifest => manifest.id === 'opcua-ha')!;
+    const northManifest = northManifests.find(manifest => manifest.id === 'console')!;
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, {});
     expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, {});
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith({}, null, southManifest.settings);
@@ -232,8 +232,8 @@ describe('History query controller', () => {
         },
         startTime: '',
         endTime: '',
-        southType: 'OPCUA_HA',
-        northType: 'Console',
+        southType: 'opcua-ha',
+        northType: 'console',
         southSettings: {},
         northSettings: {},
         caching: {
@@ -275,8 +275,8 @@ describe('History query controller', () => {
 
     await historyQueryController.createHistoryQuery(ctx);
 
-    const southManifest = southManifests.find(manifest => manifest.name === 'OPCUA_HA')!;
-    const northManifest = northManifests.find(manifest => manifest.name === 'Console')!;
+    const southManifest = southManifests.find(manifest => manifest.id === 'opcua-ha')!;
+    const northManifest = northManifests.find(manifest => manifest.id === 'console')!;
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, northConnector.settings);
     expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, southConnector.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(southConnector.settings, null, southManifest.settings);
@@ -293,8 +293,8 @@ describe('History query controller', () => {
         },
         startTime: '',
         endTime: '',
-        southType: 'OPCUA_HA',
-        northType: 'Console',
+        southType: 'opcua-ha',
+        northType: 'console',
         southSettings: southConnector.settings,
         northSettings: northConnector.settings,
         caching: northCacheSettings,
@@ -398,7 +398,7 @@ describe('History query controller', () => {
     });
 
     await historyQueryController.createHistoryQuery(ctx);
-    const southManifest = southManifests.find(manifest => manifest.name === 'OPCUA_HA')!;
+    const southManifest = southManifests.find(manifest => manifest.id === 'opcua-ha')!;
 
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, {});
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
@@ -418,8 +418,8 @@ describe('History query controller', () => {
 
     await historyQueryController.updateHistoryQuery(ctx);
 
-    const southManifest = southManifests.find(manifest => manifest.name === 'OPCUA_HA')!;
-    const northManifest = northManifests.find(manifest => manifest.name === 'Console')!;
+    const southManifest = southManifests.find(manifest => manifest.id === 'opcua-ha')!;
+    const northManifest = northManifests.find(manifest => manifest.id === 'console')!;
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQueryCommand.southSettings);
     expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, historyQueryCommand.northSettings);
     expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('id');
@@ -479,7 +479,7 @@ describe('History query controller', () => {
     });
 
     await historyQueryController.updateHistoryQuery(ctx);
-    const southManifest = southManifests.find(manifest => manifest.name === 'OPCUA_HA')!;
+    const southManifest = southManifests.find(manifest => manifest.id === 'opcua-ha')!;
 
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQueryCommand.southSettings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
@@ -583,7 +583,7 @@ describe('History query controller', () => {
 
     await historyQueryController.createHistoryQueryItem(ctx);
 
-    const southManifest = southManifests.find(manifest => manifest.name === 'OPCUA_HA')!;
+    const southManifest = southManifests.find(manifest => manifest.id === 'opcua-ha')!;
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.items.settings, oibusItemCommand.settings);
     expect(ctx.app.reloadService.onCreateHistoryItem).toHaveBeenCalledWith('historyId', oibusItemCommand);
     expect(ctx.created).toHaveBeenCalledWith(oibusItem);
@@ -599,7 +599,7 @@ describe('History query controller', () => {
     });
     await historyQueryController.createHistoryQueryItem(ctx);
 
-    const southManifest = southManifests.find(manifest => manifest.name === 'OPCUA_HA')!;
+    const southManifest = southManifests.find(manifest => manifest.id === 'opcua-ha')!;
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.items.settings, undefined);
     expect(ctx.app.reloadService.onCreateHistoryItem).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith('bad body');
@@ -644,7 +644,7 @@ describe('History query controller', () => {
 
     await historyQueryController.createHistoryQueryItem(ctx);
 
-    const southManifest = southManifests.find(manifest => manifest.name === 'OPCUA_HA')!;
+    const southManifest = southManifests.find(manifest => manifest.id === 'opcua-ha')!;
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.items.settings, oibusItemCommand.settings);
     expect(ctx.app.reloadService.onCreateHistoryItem).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
@@ -662,7 +662,7 @@ describe('History query controller', () => {
 
     expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
     expect(ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem).toHaveBeenCalledWith('id');
-    const southManifest = southManifests.find(manifest => manifest.name === 'OPCUA_HA')!;
+    const southManifest = southManifests.find(manifest => manifest.id === 'opcua-ha')!;
 
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.items.settings, oibusItemCommand.settings);
     expect(ctx.app.reloadService.onUpdateHistoryItemsSettings).toHaveBeenCalledWith('historyId', oibusItem, oibusItemCommand);
@@ -680,7 +680,7 @@ describe('History query controller', () => {
     });
     await historyQueryController.updateHistoryQueryItem(ctx);
 
-    const southManifest = southManifests.find(manifest => manifest.name === 'OPCUA_HA')!;
+    const southManifest = southManifests.find(manifest => manifest.id === 'opcua-ha')!;
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.items.settings, undefined);
     expect(ctx.app.reloadService.onUpdateHistoryItemsSettings).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith('bad body');
@@ -749,7 +749,7 @@ describe('History query controller', () => {
 
     await historyQueryController.updateHistoryQueryItem(ctx);
 
-    const southManifest = southManifests.find(manifest => manifest.name === 'OPCUA_HA')!;
+    const southManifest = southManifests.find(manifest => manifest.id === 'opcua-ha')!;
     expect(ctx.app.repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
     expect(ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem).toHaveBeenCalledWith('id');
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.items.settings, oibusItemCommand.settings);

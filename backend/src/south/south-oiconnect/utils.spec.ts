@@ -2,11 +2,8 @@ import http from 'node:http';
 import https from 'node:https';
 import Stream from 'node:stream';
 
-import csv from 'papaparse';
-
 import * as utils from './utils';
 
-jest.mock('papaparse', () => ({ unparse: jest.fn() }));
 jest.mock('node:http', () => ({ request: jest.fn() }));
 jest.mock('node:https', () => ({ request: jest.fn() }));
 
@@ -16,19 +13,6 @@ describe('South connector Rest API utils', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-  });
-
-  it('should call csv unparse', () => {
-    const entryList = [
-      {
-        value: 'val1',
-        timestamp: new Date('2020-01-01T00:00:00.000Z')
-      }
-    ];
-
-    utils.generateCSV(entryList, ';');
-
-    expect(csv.unparse).toHaveBeenCalledWith(entryList, { header: true, delimiter: ';' });
   });
 
   it('should correctly return void string when there is no query params', () => {

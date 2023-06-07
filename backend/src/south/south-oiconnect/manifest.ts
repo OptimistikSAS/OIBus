@@ -1,9 +1,10 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
+  id: 'oiconnect',
   name: 'OIConnect',
   category: 'api',
-  description: 'OIConnect description',
+  description: 'REST API connector to fetch data from HTTP endpoints',
   modes: {
     subscription: false,
     lastPoint: false,

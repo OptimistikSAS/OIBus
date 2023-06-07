@@ -4,30 +4,40 @@ import pino from 'pino';
 import RepositoryService from './repository.service';
 
 // South imports
-import FolderScanner from '../south/south-folder-scanner/south-folder-scanner';
-import OPCUA_HA from '../south/south-opcua-ha/south-opcua-ha';
-import OPCUA_DA from '../south/south-opcua-da/south-opcua-da';
-import MQTT from '../south/south-mqtt/south-mqtt';
-import SQL from '../south/south-sql/south-sql';
-import ADS from '../south/south-ads/south-ads';
-import Modbus from '../south/south-modbus/south-modbus';
-import OIConnect from '../south/south-oiconnect/south-oiconnect';
-import OPCHDA from '../south/south-opchda/south-opchda';
+import SouthFolderScanner from '../south/south-folder-scanner/south-folder-scanner';
+import SouthOPCUAHA from '../south/south-opcua-ha/south-opcua-ha';
+import SouthOPCUADA from '../south/south-opcua-da/south-opcua-da';
+import SouthOPCHDA from '../south/south-opchda/south-opchda';
+import SouthMQTT from '../south/south-mqtt/south-mqtt';
+import SouthMSSQL from '../south/south-mssql/south-mssql';
+import SouthMySQL from '../south/south-mysql/south-mysql';
+import SouthODBC from '../south/south-odbc/south-odbc';
+import SouthOracle from '../south/south-oracle/south-oracle';
+import SouthPostgreSQL from '../south/south-postgresql/south-postgresql';
+import SouthSQLite from '../south/south-sqlite/south-sqlite';
+import SouthADS from '../south/south-ads/south-ads';
+import SouthModbus from '../south/south-modbus/south-modbus';
+import SouthOIConnect from '../south/south-oiconnect/south-oiconnect';
 
 import { SouthConnectorDTO, OibusItemDTO } from '../../../shared/model/south-connector.model';
 import SouthConnector from '../south/south-connector';
 
-const southList = {
-  FolderScanner,
-  MQTT,
-  OPCUA_HA,
-  OPCUA_DA,
-  OPCHDA,
-  SQL,
-  ADS,
-  Modbus,
-  OIConnect
-};
+const southList: Array<typeof SouthConnector> = [
+  SouthFolderScanner,
+  SouthMQTT,
+  SouthOPCUAHA,
+  SouthOPCUADA,
+  SouthOPCHDA,
+  SouthMSSQL,
+  SouthMySQL,
+  SouthODBC,
+  SouthOracle,
+  SouthPostgreSQL,
+  SouthSQLite,
+  SouthADS,
+  SouthModbus,
+  SouthOIConnect
+];
 
 export default class SouthService {
   constructor(
@@ -48,8 +58,11 @@ export default class SouthService {
     streamMode: boolean,
     logger: pino.Logger
   ): SouthConnector {
-    // @ts-ignore
-    return new southList[settings.type](
+    const SouthConnector = southList.find(connector => connector.type === settings.type);
+    if (!SouthConnector) {
+      throw Error(`South connector of type ${settings.type} not installed`);
+    }
+    return new SouthConnector(
       settings,
       items,
       addValues,

@@ -66,6 +66,7 @@ const addFile = jest.fn();
 
 let configuration: SouthConnectorDTO;
 const manifest: SouthConnectorManifest = {
+  id: 'south',
   name: 'south',
   description: 'My South Connector test',
   category: 'test',
