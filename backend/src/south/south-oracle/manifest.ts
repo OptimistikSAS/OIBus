@@ -25,7 +25,7 @@ const manifest: SouthConnectorManifest = {
       key: 'port',
       type: 'OibNumber',
       label: 'Port',
-      defaultValue: 1433,
+      defaultValue: 1521,
       newRow: false,
       class: 'col-2',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
@@ -64,10 +64,22 @@ const manifest: SouthConnectorManifest = {
       readDisplay: false
     },
     {
+      key: 'requestTimeout',
+      type: 'OibNumber',
+      label: 'Request timeout (ms)',
+      defaultValue: 1000,
+      class: 'col-4',
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60000 } }],
+      readDisplay: false
+    },
+    {
       key: 'compression',
       type: 'OibCheckbox',
       label: 'Compress File?',
-      readDisplay: false
+      defaultValue: false,
+      validators: [{ key: 'required' }],
+      readDisplay: false,
+      newRow: true
     }
   ],
   items: {
@@ -109,15 +121,6 @@ const manifest: SouthConnectorManifest = {
         class: 'col-3',
         type: 'OibTimezone',
         label: 'Timezone',
-        readDisplay: false
-      },
-      {
-        key: 'requestTimeout',
-        type: 'OibNumber',
-        class: 'col-3',
-        label: 'Request timeout (ms)',
-        defaultValue: 1000,
-        validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60000 } }],
         readDisplay: false
       },
       {

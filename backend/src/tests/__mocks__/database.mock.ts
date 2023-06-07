@@ -8,6 +8,7 @@ export const all = jest.fn();
 export default jest.fn().mockImplementation(() => {
   return {
     prepare: jest.fn(),
-    transaction: jest.fn()
+    transaction: jest.fn(),
+    close: jest.fn()
   };
 });
