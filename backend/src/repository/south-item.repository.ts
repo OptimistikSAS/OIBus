@@ -24,10 +24,8 @@ export default class SouthItemRepository {
    * Retrieve all items associated to a South connector
    */
   listSouthItems(southId: string): Array<OibusItemDTO> {
-    const whereClause = `WHERE connector_id = ?`;
     const queryParams = [southId];
-    const query =
-      `SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEM_TABLE} ${whereClause}`;
+    const query = `SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEM_TABLE} WHERE connector_id = ?;`;
 
     return this.database
       .prepare(query)

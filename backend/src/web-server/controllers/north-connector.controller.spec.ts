@@ -1,4 +1,4 @@
-import NorthConnectorController from './north-connector.controller';
+import NorthConnectorController, { northManifests } from './north-connector.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from '../../validators/joi.validator';
 import mqttManifest from '../../north/north-mqtt/manifest';
@@ -8,80 +8,6 @@ jest.mock('../../validators/joi.validator');
 const ctx = new KoaContextMock();
 const validator = new JoiValidator();
 const northConnectorController = new NorthConnectorController(validator);
-const manifestList = [
-  {
-    category: 'file',
-    type: 'AzureBlob',
-    description: 'Azure Blob description',
-    modes: { files: true, points: false }
-  },
-  {
-    category: 'api',
-    type: 'WATSY',
-    description: 'WATSY description',
-    modes: { files: false, points: true }
-  },
-  {
-    category: 'oi',
-    type: 'OIConnect',
-    description: 'OIConnect description',
-    modes: { files: true, points: true }
-  },
-  {
-    category: 'database',
-    type: 'TimescaleDB',
-    description: 'TimescaleDB description',
-    modes: { files: false, points: true }
-  },
-  {
-    category: 'oi',
-    type: 'OIAnalytics',
-    description: 'OIAnalytics description',
-    modes: { files: true, points: true }
-  },
-  {
-    category: 'iot',
-    type: 'MQTT',
-    description: 'MQTT description',
-    modes: { files: false, points: true }
-  },
-  {
-    category: 'database',
-    type: 'MongoDB',
-    description: 'MongoDB description',
-    modes: { files: false, points: true }
-  },
-  {
-    category: 'database',
-    type: 'InfluxDB',
-    description: 'InfluxDB description',
-    modes: { files: false, points: true }
-  },
-  {
-    category: 'file',
-    type: 'FileWriter',
-    description: 'FileWriter description',
-    modes: { files: true, points: true }
-  },
-  {
-    category: 'api',
-    type: 'CsvToHttp',
-    description: 'CsvToHttp description',
-    modes: { files: true, points: false }
-  },
-  {
-    category: 'debug',
-    type: 'Console',
-    description: 'Console description',
-    modes: { files: true, points: true }
-  },
-  {
-    category: 'file',
-    type: 'AWS3',
-    description: 'AWS description',
-    modes: { files: true, points: false }
-  }
-];
 
 const northCacheSettings = {
   scanModeId: 'scanModeId',
@@ -97,7 +23,7 @@ const northArchiveSettings = {
 };
 const northConnectorCommand = {
   name: 'name',
-  type: 'MQTT',
+  type: 'mqtt',
   description: 'description',
   enabled: true,
   settings: {
@@ -119,11 +45,19 @@ describe('North connector controller', () => {
   it('getNorthConnectorTypes() should return North connector types', async () => {
     await northConnectorController.getNorthConnectorTypes(ctx);
 
-    expect(ctx.ok).toHaveBeenCalledWith(manifestList);
+    expect(ctx.ok).toHaveBeenCalledWith(
+      northManifests.map(manifest => ({
+        category: manifest.category,
+        id: manifest.id,
+        name: manifest.name,
+        description: manifest.description,
+        modes: manifest.modes
+      }))
+    );
   });
 
   it('getNorthConnectorManifest() should return North connector manifest', async () => {
-    ctx.params.id = 'MQTT';
+    ctx.params.id = 'mqtt';
 
     await northConnectorController.getNorthConnectorManifest(ctx);
 

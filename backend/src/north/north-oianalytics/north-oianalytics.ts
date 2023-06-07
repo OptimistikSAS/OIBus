@@ -19,7 +19,7 @@ import { HandlesFile, HandlesValues } from '../north-interface';
  * OIAnalytics endpoints are set in this connector
  */
 export default class NorthOIAnalytics extends NorthConnector implements HandlesFile, HandlesValues {
-  static category = manifest.category;
+  static type = manifest.id;
 
   private proxyAgent: any | undefined;
 

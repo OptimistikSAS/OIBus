@@ -81,7 +81,7 @@ export class CreateHistoryQueryModalComponent implements OnInit {
       });
       this.southList = southList.filter(south => {
         // Keep only South with history mode supported
-        const southType = southTypes.find(manifest => manifest.type === south.type);
+        const southType = southTypes.find(manifest => manifest.id === south.type);
         return southType && southType.modes.history;
       });
       if (this.southList.length === 0) {

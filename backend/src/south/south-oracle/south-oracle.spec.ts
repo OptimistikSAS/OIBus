@@ -1,9 +1,8 @@
 import path from 'node:path';
 // eslint-disable-next-line import/no-unresolved
 
-import SouthSQL from './south-sql';
-import * as utils from './utils';
-import * as mainUtils from '../../service/utils';
+import SouthOracle from './south-oracle';
+import * as utils from '../../service/utils';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import pino from 'pino';
 
@@ -15,32 +14,9 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import ProxyService from '../../service/proxy.service';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 
-const mockDatabase = {
-  prepare: jest.fn(),
-  close: jest.fn()
-};
-jest.mock('odbc');
 jest.mock('oracledb');
-jest.mock('better-sqlite3', () => () => mockDatabase);
-jest.mock('pg', () => ({
-  Client: jest.fn(),
-  types: jest.fn()
-}));
-jest.mock('./utils', () => ({
-  generateCSV: jest.fn(),
-  getMostRecentDate: jest.fn(),
-  generateReplacementParameters: jest.fn()
-}));
-jest.mock('../../service/utils', () => ({
-  replaceFilenameWithVariable: jest.fn(),
-  compress: jest.fn(),
-  createFolder: jest.fn()
-}));
-
-// Mock node-fetch
-jest.mock('node-fetch');
-jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
+
 const database = new DatabaseMock();
 jest.mock(
   '../../service/cache.service',
@@ -95,7 +71,7 @@ const items: Array<OibusItemDTO> = [
 ];
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
-let south: SouthSQL;
+let south: SouthOracle;
 const configuration: SouthConnectorDTO = {
   id: 'southId',
   name: 'south',
@@ -159,9 +135,9 @@ describe('SouthSQL', () => {
     (utils.getMostRecentDate as jest.Mock).mockReturnValue(new Date(nowDateString));
     (utils.generateReplacementParameters as jest.Mock).mockReturnValue([new Date(nowDateString), new Date(nowDateString)]);
 
-    (mainUtils.replaceFilenameWithVariable as jest.Mock).mockReturnValue('myFile');
+    (utils.replaceFilenameWithVariable as jest.Mock).mockReturnValue('myFile');
 
-    south = new SouthSQL(
+    south = new SouthOracle(
       configuration,
       items,
       addValues,
@@ -177,6 +153,6 @@ describe('SouthSQL', () => {
 
   it('should log error if temp folder creation fails', async () => {
     await south.start();
-    expect(mainUtils.createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp'));
+    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp'));
   });
 });

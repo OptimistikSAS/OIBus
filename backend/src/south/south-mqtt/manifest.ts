@@ -1,9 +1,10 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
+  id: 'mqtt',
   name: 'MQTT',
   category: 'iot',
-  description: 'MQTT description',
+  description: 'Subscribe to MQTT broker topics',
   modes: {
     subscription: true,
     lastPoint: false,

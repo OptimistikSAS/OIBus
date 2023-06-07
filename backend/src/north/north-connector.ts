@@ -37,16 +37,12 @@ import { HandlesFile, HandlesValues } from './north-interface';
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
 export default class NorthConnector {
-  protected configuration: NorthConnectorDTO;
+  public static type: string;
+
   private archiveService: ArchiveService;
   private valueCacheService: ValueCacheService;
   private fileCacheService: FileCacheService;
-  protected encryptionService: EncryptionService;
-  protected proxyService: ProxyService;
   protected cacheService: CacheService;
-  protected repositoryService: RepositoryService;
-  protected logger: pino.Logger;
-  private readonly baseFolder: string;
   private subscribedTo: Array<SubscriptionDTO> = [];
 
   private fileBeingSent: string | null = null;
@@ -60,20 +56,13 @@ export default class NorthConnector {
   private runProgress$: DeferredPromise | null = null;
 
   constructor(
-    configuration: NorthConnectorDTO,
-    encryptionService: EncryptionService,
-    proxyService: ProxyService,
-    repositoryService: RepositoryService,
-    logger: pino.Logger,
-    baseFolder: string
+    protected configuration: NorthConnectorDTO,
+    protected readonly encryptionService: EncryptionService,
+    protected readonly proxyService: ProxyService,
+    private readonly repositoryService: RepositoryService,
+    protected logger: pino.Logger,
+    protected readonly baseFolder: string
   ) {
-    this.configuration = configuration;
-    this.encryptionService = encryptionService;
-    this.proxyService = proxyService;
-    this.repositoryService = repositoryService;
-    this.logger = logger;
-    this.baseFolder = baseFolder;
-
     this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.configuration.archive);
     this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.configuration.caching);
     this.fileCacheService = new FileCacheService(this.logger, this.baseFolder, this.configuration.caching);

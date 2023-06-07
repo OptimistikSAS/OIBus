@@ -1,6 +1,7 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
+  id: 'watsy',
   name: 'WATSY',
   category: 'api',
   description: 'WATSY description',

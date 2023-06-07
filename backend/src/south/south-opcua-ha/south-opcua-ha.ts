@@ -37,7 +37,7 @@ type Resampling = (typeof RESAMPLINGS)[number];
  * Class SouthOPCUAHA - Connect to an OPCUA server in HA (Historian Access) mode
  */
 export default class SouthOPCUAHA extends SouthConnector implements QueriesHistory {
-  static category = manifest.category;
+  static type = manifest.id;
 
   private clientCertificateManager: OPCUACertificateManager | null = null;
   private session: ClientSession | null = null;

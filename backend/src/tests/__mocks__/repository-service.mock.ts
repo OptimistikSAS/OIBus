@@ -18,6 +18,7 @@ export default jest.fn().mockImplementation(() => ({
   },
   southItemRepository: {
     searchSouthItems: jest.fn(),
+    listSouthItems: jest.fn(),
     getSouthItem: jest.fn(),
     getSouthItems: jest.fn(),
     createSouthItem: jest.fn(),

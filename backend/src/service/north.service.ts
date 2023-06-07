@@ -11,14 +11,14 @@ import NorthAmazonS3 from '../north/north-amazon-s3/north-amazon-s3';
 import NorthFileWriter from '../north/north-file-writer/north-file-writer';
 import NorthOIConnect from '../north/north-oiconnect/north-oiconnect';
 
-const northList = {
-  Console: NorthConsole,
-  OIAnalytics: NorthOIAnalytics,
-  OIConnect: NorthOIConnect,
-  AzureBlob: NorthAzureBlob,
-  AWS3: NorthAmazonS3,
-  FileWriter: NorthFileWriter
-};
+const northList: Array<typeof NorthConnector> = [
+  NorthConsole,
+  NorthOIAnalytics,
+  NorthOIConnect,
+  NorthAzureBlob,
+  NorthAmazonS3,
+  NorthFileWriter
+];
 
 export default class NorthService {
   constructor(
@@ -31,8 +31,12 @@ export default class NorthService {
    * Return the North connector
    */
   createNorth(settings: NorthConnectorDTO, baseFolder: string, logger: pino.Logger): NorthConnector {
-    // @ts-ignore
-    return new northList[settings.type](settings, this.encryptionService, this.proxyService, this.repositoryService, logger, baseFolder);
+    const NorthConnector = northList.find(connector => connector.type === settings.type);
+    if (!NorthConnector) {
+      throw Error(`North connector of type ${settings.type} not installed`);
+    }
+
+    return new NorthConnector(settings, this.encryptionService, this.proxyService, this.repositoryService, logger, baseFolder);
   }
 
   /**

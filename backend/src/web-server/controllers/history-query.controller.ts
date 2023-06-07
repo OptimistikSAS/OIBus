@@ -30,8 +30,8 @@ export default class HistoryQueryController extends AbstractController {
     const historyQueries = ctx.app.repositoryService.historyQueryRepository.getHistoryQueries();
     ctx.ok(
       historyQueries.map(historyQuery => {
-        const southManifest = this.southManifests.find(south => south.name === historyQuery.southType);
-        const northManifest = this.northManifests.find(north => north.name === historyQuery.northType);
+        const southManifest = this.southManifests.find(manifest => manifest.id === historyQuery.southType);
+        const northManifest = this.northManifests.find(manifest => manifest.id === historyQuery.northType);
         if (southManifest && northManifest) {
           historyQuery.southSettings = ctx.app.encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings);
           historyQuery.northSettings = ctx.app.encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings);
@@ -47,8 +47,8 @@ export default class HistoryQueryController extends AbstractController {
     if (!historyQuery) {
       return ctx.notFound();
     }
-    const southManifest = this.southManifests.find(south => south.name === historyQuery.southType);
-    const northManifest = this.northManifests.find(north => north.name === historyQuery.northType);
+    const southManifest = this.southManifests.find(manifest => manifest.id === historyQuery.southType);
+    const northManifest = this.northManifests.find(manifest => manifest.id === historyQuery.northType);
     if (southManifest && northManifest) {
       historyQuery.southSettings = ctx.app.encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings);
       historyQuery.northSettings = ctx.app.encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings);
@@ -95,7 +95,7 @@ export default class HistoryQueryController extends AbstractController {
     let southManifest: SouthConnectorManifest | undefined;
     let southItems: Array<OibusItemDTO> = [];
     if (ctx.request.body.southType) {
-      southManifest = this.southManifests.find(south => south.name === ctx.request.body!.southType);
+      southManifest = this.southManifests.find(manifest => manifest.id === ctx.request.body!.southType);
       command.southType = ctx.request.body.southType;
     } else if (ctx.request.body.southId) {
       const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.request.body.southId);
@@ -106,7 +106,7 @@ export default class HistoryQueryController extends AbstractController {
       command.southType = southConnector.type;
       command.history = southConnector.history;
       southItems = ctx.app.repositoryService.southItemRepository.getSouthItems(ctx.request.body.southId);
-      southManifest = this.southManifests.find(south => south.name === southConnector.type);
+      southManifest = this.southManifests.find(manifest => manifest.id === southConnector.type);
     }
     if (!southManifest) {
       return ctx.throw(404, 'South manifest not found');
@@ -114,7 +114,7 @@ export default class HistoryQueryController extends AbstractController {
 
     let northManifest: NorthConnectorManifest | undefined;
     if (ctx.request.body.northType) {
-      northManifest = this.northManifests.find(north => north.name === ctx.request.body!.northType);
+      northManifest = this.northManifests.find(manifest => manifest.id === ctx.request.body!.northType);
       command.northType = ctx.request.body.northType;
     } else if (ctx.request.body.northId) {
       const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.request.body.northId);
@@ -125,7 +125,7 @@ export default class HistoryQueryController extends AbstractController {
       command.caching = northConnector.caching;
       command.archive = northConnector.archive;
       command.northType = northConnector.type;
-      northManifest = this.northManifests.find(north => north.name === northConnector.type);
+      northManifest = this.northManifests.find(manifest => manifest.id === northConnector.type);
     }
     if (!northManifest) {
       return ctx.throw(404, 'North manifest not found');
@@ -149,12 +149,12 @@ export default class HistoryQueryController extends AbstractController {
     if (!historyQuery) {
       return ctx.notFound();
     }
-    const southManifest = this.southManifests.find(south => south.name === historyQuery.southType);
+    const southManifest = this.southManifests.find(manifest => manifest.id === historyQuery.southType);
     if (!southManifest) {
       return ctx.throw(404, 'South manifest not found');
     }
 
-    const northManifest = this.northManifests.find(north => north.name === historyQuery.northType);
+    const northManifest = this.northManifests.find(manifest => manifest.id === historyQuery.northType);
     if (!northManifest) {
       return ctx.throw(404, 'North manifest not found');
     }
@@ -212,13 +212,13 @@ export default class HistoryQueryController extends AbstractController {
         return ctx.throw(404, 'History query not found');
       }
 
-      const manifest = this.southManifests.find(south => south.name === historyQuery.southType);
-      if (!manifest) {
+      const southManifest = this.southManifests.find(manifest => manifest.id === historyQuery.southType);
+      if (!southManifest) {
         return ctx.throw(404, 'South manifest not found');
       }
 
       const command: OibusItemCommandDTO = ctx.request.body!;
-      await this.validator.validateSettings(manifest.items.settings, command?.settings);
+      await this.validator.validateSettings(southManifest.items.settings, command?.settings);
 
       const historyQueryItem = await ctx.app.reloadService.onCreateHistoryItem(ctx.params.historyQueryId, command);
       ctx.created(historyQueryItem);
@@ -234,15 +234,15 @@ export default class HistoryQueryController extends AbstractController {
         return ctx.throw(404, 'History query not found');
       }
 
-      const manifest = this.southManifests.find(south => south.name === historyQuery.southType);
-      if (!manifest) {
+      const southManifest = this.southManifests.find(manifest => manifest.id === historyQuery.southType);
+      if (!southManifest) {
         return ctx.throw(404, 'History query South manifest not found');
       }
 
       const historyQueryItem = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem(ctx.params.id);
       if (historyQueryItem) {
         const command: OibusItemCommandDTO = ctx.request.body!;
-        await this.validator.validateSettings(manifest.items.settings, command?.settings);
+        await this.validator.validateSettings(southManifest.items.settings, command?.settings);
         await ctx.app.reloadService.onUpdateHistoryItemsSettings(ctx.params.historyQueryId, historyQueryItem, command);
         ctx.noContent();
       } else {
@@ -287,8 +287,8 @@ export default class HistoryQueryController extends AbstractController {
       return ctx.throw(404, 'History query not found');
     }
 
-    const manifest = southManifests.find(south => south.name === historyQuery.southType);
-    if (!manifest) {
+    const southManifest = southManifests.find(manifest => manifest.id === historyQuery.southType);
+    if (!southManifest) {
       return ctx.throw(404, 'History query South manifest not found');
     }
 
@@ -313,7 +313,7 @@ export default class HistoryQueryController extends AbstractController {
       });
       // Check if item settings match the item schema, throw an error otherwise
       for (const item of items) {
-        await this.validator.validateSettings(manifest.items.settings, item.settings);
+        await this.validator.validateSettings(southManifest.items.settings, item.settings);
       }
     } catch (error: any) {
       return ctx.badRequest(error.message);

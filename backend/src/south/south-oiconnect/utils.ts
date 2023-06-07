@@ -1,8 +1,6 @@
 import https from 'node:https';
 import http from 'node:http';
 
-import csv from 'papaparse';
-
 import oiaTimeValues from './formatters/oia-time-values';
 import slims from './formatters/slims';
 import { Instant } from '../../../../shared/model/types';
@@ -66,15 +64,4 @@ const formatQueryParams = (startTime: Instant, endTime: Instant, queryParams: Ar
   return queryParamsString;
 };
 
-/**
- * Generate CSV file from the values
- */
-const generateCSV = (results: Array<any>, delimiter: string): string => {
-  const options = {
-    header: true,
-    delimiter
-  };
-  return csv.unparse(results, options);
-};
-
-export { parsers, httpGetWithBody, formatQueryParams, generateCSV };
+export { parsers, httpGetWithBody, formatQueryParams };

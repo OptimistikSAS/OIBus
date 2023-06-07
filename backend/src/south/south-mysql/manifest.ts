@@ -1,9 +1,10 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
-  name: 'SQL',
+  id: 'mysql',
+  name: 'MySQL',
   category: 'database',
-  description: 'SQL description',
+  description: 'Request MySQL / MariaDB databases with SQL queries',
   modes: {
     subscription: false,
     lastPoint: false,
@@ -12,41 +13,11 @@ const manifest: SouthConnectorManifest = {
   },
   settings: [
     {
-      key: 'driver',
-      type: 'OibSelect',
-      options: ['mssql', 'mysql', 'postgresql', 'oracle', 'sqlite', 'odbc'],
-      label: 'SQL Driver',
-      defaultValue: 'mssql',
-      newRow: true,
-      validators: [{ key: 'required' }],
-      readDisplay: true
-    },
-    {
-      key: 'databasePath',
-      type: 'OibText',
-      label: 'Database path',
-      defaultValue: './test.db',
-      newRow: true,
-      conditionalDisplay: { driver: ['sqlite'] },
-      validators: [{ key: 'required' }],
-      readDisplay: true
-    },
-    {
-      key: 'odbcDriverPath',
-      type: 'OibText',
-      label: 'ODBC Driver Path',
-      newRow: true,
-      conditionalDisplay: { driver: ['odbc'] },
-      validators: [{ key: 'required' }],
-      readDisplay: true
-    },
-    {
       key: 'host',
       type: 'OibText',
       label: 'Host',
       defaultValue: 'localhost',
       newRow: true,
-      conditionalDisplay: { driver: ['mssql', 'mysql', 'postgresql', 'oracle'] },
       validators: [{ key: 'required' }],
       readDisplay: true
     },
@@ -57,7 +28,6 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 1433,
       newRow: false,
       class: 'col-2',
-      conditionalDisplay: { driver: ['mssql', 'mysql', 'postgresql', 'oracle'] },
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       readDisplay: true
     },
@@ -67,7 +37,6 @@ const manifest: SouthConnectorManifest = {
       label: 'Database',
       defaultValue: 'db',
       newRow: true,
-      conditionalDisplay: { driver: ['mssql', 'mysql', 'postgresql', 'oracle'] },
       validators: [{ key: 'required' }],
       readDisplay: true
     },
@@ -75,7 +44,6 @@ const manifest: SouthConnectorManifest = {
       key: 'username',
       type: 'OibText',
       label: 'Username',
-      conditionalDisplay: { driver: ['mssql', 'mysql', 'postgresql', 'oracle'] },
       readDisplay: true
     },
     {
@@ -83,25 +51,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibSecret',
       label: 'Password',
       newRow: false,
-      conditionalDisplay: { driver: ['mssql', 'mysql', 'postgresql', 'oracle'] },
       readDisplay: false
-    },
-    {
-      key: 'domain',
-      type: 'OibText',
-      label: 'Domain',
-      newRow: false,
-      conditionalDisplay: { driver: ['mssql'] },
-      readDisplay: true
-    },
-    {
-      key: 'encryption',
-      type: 'OibCheckbox',
-      label: 'Use encryption',
-      defaultValue: false,
-      newRow: true,
-      conditionalDisplay: { driver: ['mssql'] },
-      readDisplay: true
     },
     {
       key: 'connectionTimeout',
@@ -110,7 +60,6 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 1000,
       newRow: true,
       class: 'col-4',
-      conditionalDisplay: { driver: ['mssql', 'mysql', 'postgresql', 'oracle'] },
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
       readDisplay: false
     },

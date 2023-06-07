@@ -1,6 +1,7 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
+  id: 'mqtt',
   name: 'MQTT',
   category: 'iot',
   description: 'MQTT description',

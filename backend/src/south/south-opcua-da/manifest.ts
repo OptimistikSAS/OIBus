@@ -1,9 +1,10 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
-  name: 'OPCUA_DA',
+  id: 'opcua-da',
+  name: 'OPCUA DA',
   category: 'iot',
-  description: 'OPCUA_DA description',
+  description: 'Request data from OPCUA server on Data Access (DA) mode',
   modes: {
     subscription: false,
     lastPoint: true,
