@@ -1,6 +1,7 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
+  id: 'influxdb',
   name: 'InfluxDB',
   category: 'database',
   description: 'InfluxDB description',

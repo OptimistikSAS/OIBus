@@ -73,6 +73,7 @@
     "node-opcua-certificate-manager": "2.99.0",
     "node-opcua-client": "2.102.0",
     "object-path": "0.11.8",
+    "oracledb": "6.0.0",
     "papaparse": "5.4.1",
     "pg": "8.10.0",
     "pino": "8.12.0",
@@ -125,8 +126,7 @@
     "typescript": "4.9.5"
   },
   "optionalDependencies": {
-    "odbc": "2.4.7",
-    "oracledb": "5.5.0"
+    "odbc": "2.4.7"
   },
   "pkg": {
     "scripts": [

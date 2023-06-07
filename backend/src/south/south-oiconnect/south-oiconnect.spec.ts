@@ -15,16 +15,11 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import path from 'node:path';
 
 jest.mock('./utils', () => ({
-  generateCSV: jest.fn(),
   formatQueryParams: jest.fn(),
   parsers: new Map(),
   httpGetWithBody: jest.fn()
 }));
-jest.mock('../../service/utils', () => ({
-  replaceFilenameWithVariable: jest.fn(),
-  compress: jest.fn(),
-  createFolder: jest.fn()
-}));
+jest.mock('../../service/utils');
 
 // Mock node-fetch
 jest.mock('node-fetch');
@@ -220,7 +215,7 @@ describe('SouthRest', () => {
     await south.connect();
 
     await south.historyQuery(items, '2020-01-01T00:00:00.000Z', '2021-01-01T00:00:00.000Z');
-    expect(utils.generateCSV).toHaveBeenCalledWith(endpointResult, ',');
+    expect(mainUtils.generateCSV).toHaveBeenCalledWith(endpointResult, ',');
   });
 
   it('should return empty results', async () => {

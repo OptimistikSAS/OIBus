@@ -14,7 +14,7 @@ import { HandlesFile, HandlesValues } from '../north-interface';
  * Class Console - display values and file path into the console
  */
 export default class NorthConsole extends NorthConnector implements HandlesFile, HandlesValues {
-  static category = manifest.category;
+  static type = manifest.id;
 
   constructor(
     configuration: NorthConnectorDTO,

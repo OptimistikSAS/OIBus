@@ -48,8 +48,8 @@ describe('CreateNorthConnectorModalComponent', () => {
 
     northConnectorService.getNorthConnectorTypes.and.returnValue(
       of([
-        { category: 'database', type: 'MongoDB', description: 'MongoDB description', modes: { files: false, points: true } },
-        { category: 'iot', type: 'MQTT', description: 'MQTT description', modes: { files: false, points: true } }
+        { id: 'mongodb', category: 'database', name: 'MongoDB', description: 'MongoDB description', modes: { files: false, points: true } },
+        { id: 'mqtt', category: 'iot', name: 'MQTT', description: 'MQTT description', modes: { files: false, points: true } }
       ])
     );
 
@@ -64,7 +64,7 @@ describe('CreateNorthConnectorModalComponent', () => {
 
     expect(fakeActiveModal.close).toHaveBeenCalled();
     expect(fakeActiveModal.close).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/north', 'create'], { queryParams: { type: 'MongoDB' } });
+    expect(router.navigate).toHaveBeenCalledWith(['/north', 'create'], { queryParams: { type: 'mongodb' } });
   });
 
   it('should cancel', () => {

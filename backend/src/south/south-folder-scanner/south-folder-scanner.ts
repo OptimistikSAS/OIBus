@@ -18,7 +18,7 @@ const FOLDER_SCANNER_TABLE = 'folder_scanner';
  * Class SouthFolderScanner - Retrieve file from a local or remote folder
  */
 export default class SouthFolderScanner extends SouthConnector implements QueriesFile {
-  static category = manifest.category;
+  static type = manifest.id;
 
   /**
    * Constructor for SouthFolderScanner
@@ -26,8 +26,8 @@ export default class SouthFolderScanner extends SouthConnector implements Querie
   constructor(
     configuration: SouthConnectorDTO,
     items: Array<OibusItemDTO>,
-    engineAddValuesCallback: () => Promise<void>,
-    engineAddFileCallback: () => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
+    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     proxyService: ProxyService,
     repositoryService: RepositoryService,

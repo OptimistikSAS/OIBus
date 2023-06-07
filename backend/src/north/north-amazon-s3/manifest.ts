@@ -1,9 +1,10 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
-  name: 'AWS3',
+  id: 'aws-s3',
+  name: 'AWS S3',
   category: 'file',
-  description: 'AWS description',
+  description: 'Store files into AWS S3 bucket',
   modes: {
     files: true,
     points: false

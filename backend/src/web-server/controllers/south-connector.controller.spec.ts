@@ -1,4 +1,4 @@
-import SouthConnectorController from './south-connector.controller';
+import SouthConnectorController, { southManifests } from './south-connector.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from '../../validators/joi.validator';
 import mqttManifest from '../../south/south-mqtt/manifest';
@@ -12,111 +12,10 @@ jest.mock('node:fs/promises');
 const ctx = new KoaContextMock();
 const validator = new JoiValidator();
 const southConnectorController = new SouthConnectorController(validator);
-const manifestList = [
-  {
-    category: 'database',
-    type: 'SQL',
-    description: 'SQL description',
-    modes: {
-      subscription: false,
-      lastPoint: false,
-      lastFile: false,
-      history: true
-    }
-  },
-  {
-    category: 'api',
-    type: 'OIConnect',
-    description: 'OIConnect description',
-    modes: {
-      subscription: false,
-      lastPoint: false,
-      lastFile: false,
-      history: true
-    }
-  },
-  {
-    category: 'iot',
-    type: 'OPCUA_HA',
-    description: 'OPCUA_HA description',
-    modes: {
-      subscription: false,
-      lastPoint: false,
-      lastFile: false,
-      history: true
-    }
-  },
-  {
-    category: 'iot',
-    type: 'OPCUA_DA',
-    description: 'OPCUA_DA description',
-    modes: {
-      subscription: false,
-      lastPoint: true,
-      lastFile: false,
-      history: false
-    }
-  },
-  {
-    category: 'iot',
-    type: 'OPCHDA',
-    description: 'OPCHDA description',
-    modes: {
-      subscription: false,
-      lastPoint: false,
-      lastFile: false,
-      history: true
-    }
-  },
-  {
-    category: 'iot',
-    type: 'MQTT',
-    description: 'MQTT description',
-    modes: {
-      subscription: true,
-      lastPoint: false,
-      lastFile: false,
-      history: false
-    }
-  },
-  {
-    category: 'iot',
-    type: 'Modbus',
-    description: 'Modbus description',
-    modes: {
-      subscription: false,
-      lastPoint: true,
-      lastFile: false,
-      history: false
-    }
-  },
-  {
-    category: 'file',
-    type: 'FolderScanner',
-    description: 'FolderScanner description',
-    modes: {
-      subscription: false,
-      lastPoint: false,
-      lastFile: true,
-      history: false
-    }
-  },
-  {
-    category: 'iot',
-    type: 'ADS',
-    description: 'ADS description',
-    modes: {
-      subscription: false,
-      lastPoint: true,
-      lastFile: false,
-      history: false
-    }
-  }
-];
 
 const southConnectorCommand = {
   name: 'name',
-  type: 'MQTT',
+  type: 'mqtt',
   description: 'description',
   enabled: true,
   settings: {
@@ -155,11 +54,19 @@ describe('South connector controller', () => {
   it('getSouthConnectorTypes() should return South connector types', async () => {
     await southConnectorController.getSouthConnectorTypes(ctx);
 
-    expect(ctx.ok).toHaveBeenCalledWith(manifestList);
+    expect(ctx.ok).toHaveBeenCalledWith(
+      southManifests.map(manifest => ({
+        category: manifest.category,
+        id: manifest.id,
+        name: manifest.name,
+        description: manifest.description,
+        modes: manifest.modes
+      }))
+    );
   });
 
   it('getSouthConnectorManifest() should return South connector manifest', async () => {
-    ctx.params.id = 'MQTT';
+    ctx.params.id = 'mqtt';
 
     await southConnectorController.getSouthConnectorManifest(ctx);
 
@@ -402,6 +309,15 @@ describe('South connector controller', () => {
 
     expect(ctx.app.reloadService.onDeleteSouth).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
+  });
+
+  it('listSouthItems() should return all South items', async () => {
+    ctx.params.southId = 'id';
+    ctx.app.repositoryService.southItemRepository.listSouthItems.mockReturnValue([oibusItem]);
+
+    await southConnectorController.listSouthItems(ctx);
+    expect(ctx.app.repositoryService.southItemRepository.listSouthItems).toHaveBeenCalledWith('id');
+    expect(ctx.ok).toHaveBeenCalledWith([oibusItem]);
   });
 
   it('searchSouthItems() should return South items', async () => {

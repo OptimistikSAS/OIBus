@@ -16,7 +16,7 @@ import { QueriesLastPoint } from '../south-interface';
  * Class SouthModbus - Provides instruction for Modbus client connection
  */
 export default class SouthModbus extends SouthConnector implements QueriesLastPoint {
-  static category = manifest.category;
+  static type = manifest.id;
 
   private socket: net.Socket | null = null;
   private client: ModbusTCPClient | null = null;
@@ -25,8 +25,8 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
   constructor(
     configuration: SouthConnectorDTO,
     items: Array<OibusItemDTO>,
-    engineAddValuesCallback: () => Promise<void>,
-    engineAddFileCallback: () => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
+    engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     proxyService: ProxyService,
     repositoryService: RepositoryService,

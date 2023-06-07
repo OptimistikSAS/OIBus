@@ -1,9 +1,10 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
+  id: 'oianalytics',
   name: 'OIAnalytics',
   category: 'oi',
-  description: 'OIAnalytics description',
+  description: 'Send files and values to OIAnalytics application',
   modes: {
     files: true,
     points: true

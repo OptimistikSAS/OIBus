@@ -1,9 +1,10 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
-  name: 'FolderScanner',
+  id: 'folder-scanner',
+  name: 'Folder Scanner',
   category: 'file',
-  description: 'FolderScanner description',
+  description: 'Read files from a local or remote folder',
   modes: {
     subscription: false,
     lastPoint: false,

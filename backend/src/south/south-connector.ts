@@ -3,13 +3,7 @@ import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
 import { delay, generateIntervals } from '../service/utils';
 
-import {
-  OibusItemCommandDTO,
-  OibusItemDTO,
-  SouthCache,
-  SouthConnectorDTO,
-  SouthConnectorManifest
-} from '../../../shared/model/south-connector.model';
+import { OibusItemCommandDTO, OibusItemDTO, SouthCache, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { Instant, Interval } from '../../../shared/model/types';
 import pino from 'pino';
@@ -44,6 +38,7 @@ import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } fr
  * and should not be taken care at the South level.
  */
 export default class SouthConnector {
+  public static type: string;
   protected itemsByScanModeIds: Map<string, Map<string, OibusItemDTO>> = new Map<string, Map<string, OibusItemDTO>>();
   private taskJobQueue: Array<ScanModeDTO> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();

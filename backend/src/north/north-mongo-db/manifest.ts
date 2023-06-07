@@ -1,6 +1,7 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 
 const manifest: NorthConnectorManifest = {
+  id: 'mongodb',
   name: 'MongoDB',
   category: 'database',
   description: 'MongoDB description',
