@@ -13,7 +13,7 @@ const manifest: SouthConnectorManifest = {
   },
   settings: [
     {
-      key: 'odbcDriverPath',
+      key: 'driverPath',
       type: 'OibText',
       label: 'ODBC Driver Path',
       newRow: true,
@@ -72,16 +72,21 @@ const manifest: SouthConnectorManifest = {
       readDisplay: false
     },
     {
-      key: 'selfSigned',
+      key: 'trustServerCertificate',
       type: 'OibCheckbox',
       label: 'Accept self-signed certificate',
+      defaultValue: false,
+      validators: [{ key: 'required' }],
       readDisplay: false
     },
     {
       key: 'compression',
       type: 'OibCheckbox',
       label: 'Compress File',
-      readDisplay: false
+      defaultValue: false,
+      validators: [{ key: 'required' }],
+      readDisplay: false,
+      newRow: true
     }
   ],
   items: {
