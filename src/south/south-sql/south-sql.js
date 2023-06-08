@@ -509,11 +509,12 @@ export default class SouthSQL extends SouthConnector {
       }
       connection = await odbc.connect(connectionConfig)
 
-      const startDateTime = DateTime.fromJSDate(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
-      const endDateTime = DateTime.fromJSDate(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
+      // Format datetime into ip21 format (29-NOV-23 21:03:59.123)
+      const startDateTime = DateTime.fromJSDate(startTime).toFormat('dd-MMM-yy HH:mm:ss.SSS').toUpperCase()
+      const endDateTime = DateTime.fromJSDate(endTime).toFormat('dd-MMM-yy HH:mm:ss.SSS').toUpperCase()
       const params = generateReplacementParameters(this.query, startDateTime, endDateTime)
       data = await connection.query(adaptedQuery, params)
-      this.logger.debug(`Found data in IP21: ${JSON.stringify(data)}`)
+      this.logger.debug(`Found ${data?.length} data IP21`)
     } catch (error) {
       if (error.odbcErrors?.length > 0) {
         error.odbcErrors.forEach((odbcError) => {
