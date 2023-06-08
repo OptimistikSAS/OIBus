@@ -418,10 +418,10 @@ export default class SouthSQL extends SouthConnector {
       const stmt = database.prepare(adaptedQuery)
       const preparedParameters = {}
       if (this.query.indexOf('@StartTime') !== -1) {
-        preparedParameters.StartTime = startTime.getTime()
+        preparedParameters.StartTime = DateTime.fromJSDate(startTime, { zone: this.timezone }).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
       }
       if (this.query.indexOf('@EndTime') !== -1) {
-        preparedParameters.EndTime = endTime.getTime()
+        preparedParameters.EndTime = DateTime.fromJSDate(endTime, { zone: this.timezone }).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
       }
 
       data = stmt.all(preparedParameters)
@@ -513,7 +513,7 @@ export default class SouthSQL extends SouthConnector {
       const endDateTime = DateTime.fromJSDate(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
       const params = generateReplacementParameters(this.query, startDateTime, endDateTime)
       data = await connection.query(adaptedQuery, params)
-      this.logger.debug(`Found data in IP21: ${JSON.stringify(data)}`)
+      this.logger.debug(`Found ${data?.length} data IP21.`)
     } catch (error) {
       if (error.odbcErrors?.length > 0) {
         error.odbcErrors.forEach((odbcError) => {
