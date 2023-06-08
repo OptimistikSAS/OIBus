@@ -110,6 +110,11 @@
       "bearer": "Bearer",
       "api-key": "API key",
       "cert": "Certificate"
+    },
+    "datetime-types": {
+      "string": "String",
+      "number": "Number",
+      "datetime": "Date object"
     }
   },
   "nav": {
@@ -544,5 +549,14 @@
     "token": "Bearer token",
     "cert-path": "Certificate path",
     "key-path": "Private key path"
+  },
+  "datetime": {
+    "title": "Datetime",
+    "type": "Type",
+    "example": "Example from {{ baseString }}: ",
+    "format": "Format",
+    "locale": "Locale",
+    "timezone": "Timezone",
+    "field": "Field"
   }
 }

@@ -99,33 +99,23 @@ const manifest: SouthConnectorManifest = {
         readDisplay: true
       },
       {
-        key: 'datetimeType',
-        newRow: true,
-        class: 'col-3',
-        type: 'OibSelect',
-        options: ['number', 'isostring'],
-        defaultValue: 'isostring',
+        key: 'dateTimeFormat',
+        type: 'OibDateTimeFormat',
         label: 'Datetime type',
-        readDisplay: false
-      },
-      {
-        key: 'timeField',
-        class: 'col-3',
-        type: 'OibText',
-        label: 'Time field',
-        defaultValue: 'timestamp',
-        readDisplay: true
-      },
-      {
-        key: 'timezone',
-        class: 'col-3',
-        type: 'OibTimezone',
-        label: 'Timezone',
+        defaultValue: {
+          type: 'string',
+          format: 'yyyy-MM-dd HH:mm:ss.SSS',
+          timezone: 'UTC',
+          locale: 'en-US',
+          field: 'timestamp'
+        },
+        class: 'col',
+        newRow: true,
         readDisplay: false
       },
       {
         key: 'filename',
-        class: 'col-4',
+        class: 'col-8',
         newRow: true,
         type: 'OibText',
         label: 'Filename',
@@ -139,14 +129,6 @@ const manifest: SouthConnectorManifest = {
         options: [',', ';', '|'],
         label: 'Delimiter',
         defaultValue: ',',
-        readDisplay: false
-      },
-      {
-        key: 'dateFormat',
-        class: 'col-4',
-        type: 'OibText',
-        label: 'Date format',
-        defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
         readDisplay: false
       }
     ]
