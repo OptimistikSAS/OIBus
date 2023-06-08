@@ -6,7 +6,7 @@ import path from 'node:path';
 import minimist from 'minimist';
 import { DateTime } from 'luxon';
 
-import { Instant, Interval, Timezone } from '../../../shared/model/types';
+import { DateTimeFormat, Instant, Interval, Timezone } from '../../../shared/model/types';
 import csv from 'papaparse';
 import pino from 'pino';
 
@@ -275,21 +275,15 @@ export const logQuery = (query: string, startTime: Instant, endTime: Instant, lo
   logger.info(log);
 };
 
-export const convertDateTime = (
-  dateTime: Instant,
-  dateTimeType: 'Number' | 'String' | 'Datetime',
-  timezone: string,
-  dateFormat: string,
-  locale = 'en-US'
-): string | number | DateTime => {
-  switch (dateTimeType) {
-    case 'Datetime':
-      return DateTime.fromISO(dateTime, { zone: timezone });
-    case 'Number':
-      return DateTime.fromISO(dateTime, { zone: timezone }).toMillis();
-    case 'String':
-      return DateTime.fromISO(dateTime, { zone: timezone }).toFormat(dateFormat, { locale });
-    default:
-      return dateTime;
+export const convertDateTime = (dateTime: Instant, dateTimeFormat: DateTimeFormat): string | number | DateTime => {
+  switch (dateTimeFormat.type) {
+    case 'datetime':
+      return DateTime.fromISO(dateTime, { zone: dateTimeFormat.timezone });
+    case 'number':
+      return DateTime.fromISO(dateTime, { zone: dateTimeFormat.timezone }).toMillis();
+    case 'string':
+      return DateTime.fromISO(dateTime, { zone: dateTimeFormat.timezone }).toFormat(dateTimeFormat.format, {
+        locale: dateTimeFormat.locale
+      });
   }
 };

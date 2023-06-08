@@ -1,0 +1,42 @@
+<div class="mx-3 mb-2">
+  <div class="text-muted" id="example">
+    <span translate="datetime.example" [translateParams]="{baseString: BASE_EXAMPLE}"></span>
+    <strong class="ms-1">{{ example }}</strong>
+  </div>
+  <div class="row">
+    <div class="col">
+      <label [for]="'oib-datetime-type-input-' + key"> {{ 'datetime.type' | translate }} </label>
+      <select [formControl]="datetimeFormatCtrl.controls.type" [id]="'oib-datetime-type-input-' + key" class="form-select mb-2 mr-sm-2">
+        <option *ngFor="let type of datetimeTypes" [ngValue]="type">{{ type | datetimeTypesEnum }}</option>
+      </select>
+    </div>
+    <div class="col">
+      <label [for]="'oib-datetime-timezone-input-' + key"> {{ 'datetime.timezone' | translate }} </label>
+      <input
+        [id]="'oib-datetime-timezone-input-' + key"
+        class="form-control"
+        [formControl]="datetimeFormatCtrl.controls.timezone"
+        [ngbTypeahead]="timezoneTypeahead"
+        [editable]="false"
+      />
+    </div>
+  </div>
+
+  <div *ngIf="datetimeFormatCtrl.controls.type.value === 'string'" class="row">
+    <div class="col">
+      <label [for]="'oib-datetime-format-input-' + key"> {{ 'datetime.format' | translate }} </label>
+      <input [formControl]="datetimeFormatCtrl.controls.format" [id]="'oib-datetime-format-input-' + key" class="form-control" />
+    </div>
+    <div class="col">
+      <label [for]="'oib-datetime-locale-input-' + key"> {{ 'datetime.locale' | translate }} </label>
+      <input [formControl]="datetimeFormatCtrl.controls.locale" [id]="'oib-datetime-locale-input-' + key" class="form-control" />
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-4">
+      <label [for]="'oib-datetime-field-input-' + key"> {{ 'datetime.field' | translate }} </label>
+      <input [formControl]="datetimeFormatCtrl.controls.field" [id]="'oib-datetime-field-input-' + key" class="form-control" />
+    </div>
+  </div>
+</div>

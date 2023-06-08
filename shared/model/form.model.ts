@@ -1,5 +1,6 @@
 import { ScanModeDTO } from './scan-mode.model';
 import { Authentication, AuthenticationType } from './engine.model';
+import { DateTimeFormat } from './types';
 
 export const CONNECTOR_FORM_TYPES = [
   'OibText',
@@ -13,6 +14,7 @@ export const CONNECTOR_FORM_TYPES = [
   'OibScanMode',
   'OibTimezone',
   'OibProxy',
+  'OibDateTimeFormat',
   'OibAuthentication'
 ] as const;
 export type ConnectorFormType = typeof CONNECTOR_FORM_TYPES[number];
@@ -137,6 +139,10 @@ export interface OibAuthenticationFormControl extends BaseOibFormControl<Authent
   authTypes: Array<AuthenticationType>;
 }
 
+export interface OibDateTimeFormatFormControl extends BaseOibFormControl<DateTimeFormat> {
+  type: 'OibDateTimeFormat';
+}
+
 export type OibFormControl =
   | OibTextFormControl
   | OibTextAreaFormControl
@@ -148,4 +154,5 @@ export type OibFormControl =
   | OibScanModeFormControl
   | OibTimezoneFormControl
   | OibProxyFormControl
+  | OibDateTimeFormatFormControl
   | OibAuthenticationFormControl;
