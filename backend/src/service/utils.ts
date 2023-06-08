@@ -274,3 +274,22 @@ export const logQuery = (query: string, startTime: Instant, endTime: Instant, lo
   }
   logger.info(log);
 };
+
+export const convertDateTime = (
+  dateTime: Instant,
+  dateTimeType: 'Number' | 'String' | 'Datetime',
+  timezone: string,
+  dateFormat: string,
+  locale = 'en-US'
+): string | number | DateTime => {
+  switch (dateTimeType) {
+    case 'Datetime':
+      return DateTime.fromISO(dateTime, { zone: timezone });
+    case 'Number':
+      return DateTime.fromISO(dateTime, { zone: timezone }).toMillis();
+    case 'String':
+      return DateTime.fromISO(dateTime, { zone: timezone }).toFormat(dateFormat, { locale });
+    default:
+      return dateTime;
+  }
+};

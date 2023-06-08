@@ -617,4 +617,179 @@ describe('Service utils', () => {
       });
     });
   });
+
+  fdescribe('convertDateTime', () => {
+    it('should return DateTime type with correct timezone', () => {
+      // From Zulu string
+      const zuluString = '2020-02-02T02:02:02.222Z';
+      const expectedResult1 = DateTime.fromISO(zuluString, { zone: 'Asia/Tokyo' });
+      const result1 = utils.convertDateTime(zuluString, 'Datetime', 'Asia/Tokyo', '');
+      expect(result1).toEqual(expectedResult1);
+      expect((result1 as DateTime).toISO()).toEqual('2020-02-02T11:02:02.222+09:00');
+
+      // From string without timezone
+      const noTimezoneString = '2020-02-02T02:02:02.222';
+      const expectedResult2 = DateTime.fromISO(noTimezoneString, { zone: 'Asia/Tokyo' });
+      const result2 = utils.convertDateTime(noTimezoneString, 'Datetime', 'Asia/Tokyo', '');
+      expect(result2).toEqual(expectedResult2);
+      expect((result2 as DateTime).toISO()).toEqual('2020-02-02T02:02:02.222+09:00');
+
+      // From string with a timezone
+      const timezoneString = '2020-02-02T02:02:02.222+09:00';
+      const expectedResult3 = DateTime.fromISO(timezoneString, { zone: 'Asia/Tokyo' });
+      const result3 = utils.convertDateTime(timezoneString, 'Datetime', 'Asia/Tokyo', '');
+      expect(result3).toEqual(expectedResult3);
+      expect((result3 as DateTime).toISO()).toEqual('2020-02-02T02:02:02.222+09:00');
+
+      // From string with another timezone
+      const anotherTimezoneString = '2020-02-02T02:02:02.222+01:00';
+      const expectedResult4 = DateTime.fromISO(anotherTimezoneString, { zone: 'Asia/Tokyo' });
+      const result4 = utils.convertDateTime(anotherTimezoneString, 'Datetime', 'Asia/Tokyo', '');
+      expect(result4).toEqual(expectedResult4);
+      expect((result4 as DateTime).toISO()).toEqual('2020-02-02T10:02:02.222+09:00');
+    });
+
+    it('should return Number of ms with correct timezone', () => {
+      // From Zulu string
+      const zuluString = '2020-02-02T02:02:02.222Z';
+      const expectedResult1 = DateTime.fromISO(zuluString, { zone: 'Asia/Tokyo' }).toMillis();
+      const result1 = utils.convertDateTime(zuluString, 'Number', 'Asia/Tokyo', '');
+      expect(result1).toEqual(expectedResult1);
+      // The date was converted from a zulu string, so we retrieve the zulu string
+      expect(DateTime.fromMillis(result1 as number, { zone: 'UTC' }).toISO()).toEqual('2020-02-02T02:02:02.222Z');
+
+      // From string without timezone
+      const noTimezoneString = '2020-02-02T02:02:02.222';
+      const expectedResult2 = DateTime.fromISO(noTimezoneString, { zone: 'Asia/Tokyo' }).toMillis();
+      const result2 = utils.convertDateTime(noTimezoneString, 'Number', 'Asia/Tokyo', '');
+      expect(result2).toEqual(expectedResult2);
+      // The date was created from a string specified at Asia/Tokyo time, so when converting at UTC, we observe a -9 offset
+      expect(DateTime.fromMillis(result2 as number, { zone: 'UTC' }).toISO()).toEqual('2020-02-01T17:02:02.222Z');
+
+      // From string with a timezone
+      const timezoneString = '2020-02-02T02:02:02.222+09:00';
+      const expectedResult3 = DateTime.fromISO(timezoneString, { zone: 'Asia/Tokyo' }).toMillis();
+      const result3 = utils.convertDateTime(timezoneString, 'Number', 'Asia/Tokyo', '');
+      expect(result3).toEqual(expectedResult3);
+      // The date was created from a string specified at Asia/Tokyo time, so when converting at UTC, we observe a -9 offset
+      expect(DateTime.fromMillis(result3 as number, { zone: 'UTC' }).toISO()).toEqual('2020-02-01T17:02:02.222Z');
+
+      // From string with another timezone
+      const anotherTimezoneString = '2020-02-02T02:02:02.222+01:00';
+      const expectedResult4 = DateTime.fromISO(anotherTimezoneString, { zone: 'Asia/Tokyo' }).toMillis();
+      const result4 = utils.convertDateTime(anotherTimezoneString, 'Number', 'Asia/Tokyo', '');
+      expect(result4).toEqual(expectedResult4);
+      // The date was created from a string specified at Europe/Paris time, converted to Asia/Tokyo time (but the number of ms is unchanged)
+      // So when converting at UTC, we observe a -1 offset
+      expect(DateTime.fromMillis(result4 as number, { zone: 'UTC' }).toISO()).toEqual('2020-02-02T01:02:02.222Z');
+    });
+
+    it('should return a formatted String with correct timezone', () => {
+      const format = 'yyyy-MM-dd HH:mm:ss.SSS';
+      // From Zulu string
+      const zuluString = '2020-02-02T02:02:02.222Z';
+      const expectedResult1 = DateTime.fromISO(zuluString, { zone: 'Asia/Tokyo' }).toFormat(format);
+      const result1 = utils.convertDateTime(zuluString, 'String', 'Asia/Tokyo', format);
+      expect(result1).toEqual(expectedResult1);
+      // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
+      expect(result1).toEqual('2020-02-02 11:02:02.222');
+
+      // From string without timezone
+      const noTimezoneString = '2020-02-02T02:02:02.222';
+      const expectedResult2 = DateTime.fromISO(noTimezoneString, { zone: 'Asia/Tokyo' }).toFormat(format);
+      const result2 = utils.convertDateTime(noTimezoneString, 'String', 'Asia/Tokyo', format);
+      expect(result2).toEqual(expectedResult2);
+      // The date was created from a string specified at Asia/Tokyo time, so when converting at UTC, we observe a -9 offset
+      expect(result2).toEqual('2020-02-02 02:02:02.222');
+
+      // From string with a timezone
+      const timezoneString = '2020-02-02T02:02:02.222+09:00';
+      const expectedResult3 = DateTime.fromISO(timezoneString, { zone: 'Asia/Tokyo' }).toFormat(format);
+      const result3 = utils.convertDateTime(timezoneString, 'String', 'Asia/Tokyo', format);
+      expect(result3).toEqual(expectedResult3);
+      // The date was created from a string specified at Asia/Tokyo time, so when converting at UTC, we observe a -9 offset
+      expect(result3).toEqual('2020-02-02 02:02:02.222');
+
+      // From string with another timezone
+      const anotherTimezoneString = '2020-02-02T02:02:02.222+01:00';
+      const expectedResult4 = DateTime.fromISO(anotherTimezoneString, { zone: 'Asia/Tokyo' }).toFormat(format);
+      const result4 = utils.convertDateTime(anotherTimezoneString, 'String', 'Asia/Tokyo', format);
+      expect(result4).toEqual(expectedResult4);
+      // The date was created from a string specified at Europe/Paris time, converted to Asia/Tokyo time, so the converter output the string
+      // with an offset of +8
+      expect(result4).toEqual('2020-02-02 10:02:02.222');
+    });
+
+    it('should return a formatted String with correct timezone for locale en-US', () => {
+      const format = 'dd-MMM-yy HH:mm:ss'; // format with localized month
+      // From Zulu string
+      const zuluString = '2020-02-02T02:02:02.222Z';
+      const expectedResult1 = DateTime.fromISO(zuluString, { zone: 'Asia/Tokyo' }).toFormat(format);
+      const result1 = utils.convertDateTime(zuluString, 'String', 'Asia/Tokyo', format);
+      expect(result1).toEqual(expectedResult1);
+      // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
+      expect(result1).toEqual('02-Feb-20 11:02:02');
+
+      // From string without timezone
+      const noTimezoneString = '2020-02-02T02:02:02.222';
+      const expectedResult2 = DateTime.fromISO(noTimezoneString, { zone: 'Asia/Tokyo' }).toFormat(format);
+      const result2 = utils.convertDateTime(noTimezoneString, 'String', 'Asia/Tokyo', format);
+      expect(result2).toEqual(expectedResult2);
+      // The date was created from a string specified at Asia/Tokyo time, so when converting at UTC, we observe a -9 offset
+      expect(result2).toEqual('02-Feb-20 02:02:02');
+
+      // From string with a timezone
+      const timezoneString = '2020-02-02T02:02:02.222+09:00';
+      const expectedResult3 = DateTime.fromISO(timezoneString, { zone: 'Asia/Tokyo' }).toFormat(format);
+      const result3 = utils.convertDateTime(timezoneString, 'String', 'Asia/Tokyo', format);
+      expect(result3).toEqual(expectedResult3);
+      // The date was created from a string specified at Asia/Tokyo time, so when converting at UTC, we observe a -9 offset
+      expect(result3).toEqual('02-Feb-20 02:02:02');
+
+      // From string with another timezone
+      const anotherTimezoneString = '2020-02-02T02:02:02.222+01:00';
+      const expectedResult4 = DateTime.fromISO(anotherTimezoneString, { zone: 'Asia/Tokyo' }).toFormat(format);
+      const result4 = utils.convertDateTime(anotherTimezoneString, 'String', 'Asia/Tokyo', format);
+      expect(result4).toEqual(expectedResult4);
+      // The date was created from a string specified at Europe/Paris time, converted to Asia/Tokyo time, so the converter output the string
+      // with an offset of +8
+      expect(result4).toEqual('02-Feb-20 10:02:02');
+    });
+
+    it('should return a formatted String with correct timezone for locale fr-FR', () => {
+      const format = 'dd-MMM-yy HH:mm:ss'; // format with localized month
+      // From Zulu string
+      const zuluString = '2020-02-02T02:02:02.222Z';
+      const expectedResult1 = DateTime.fromISO(zuluString, { zone: 'Asia/Tokyo' }).toFormat(format, { locale: 'fr-FR' });
+      const result1 = utils.convertDateTime(zuluString, 'String', 'Asia/Tokyo', format, 'fr-FR');
+      expect(result1).toEqual(expectedResult1);
+      // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
+      expect(result1).toEqual('02-févr.-20 11:02:02');
+
+      // From string without timezone
+      const noTimezoneString = '2020-02-02T02:02:02.222';
+      const expectedResult2 = DateTime.fromISO(noTimezoneString, { zone: 'Asia/Tokyo' }).toFormat(format, { locale: 'fr-FR' });
+      const result2 = utils.convertDateTime(noTimezoneString, 'String', 'Asia/Tokyo', format, 'fr-FR');
+      expect(result2).toEqual(expectedResult2);
+      // The date was created from a string specified at Asia/Tokyo time, so when converting at UTC, we observe a -9 offset
+      expect(result2).toEqual('02-févr.-20 02:02:02');
+
+      // From string with a timezone
+      const timezoneString = '2020-02-02T02:02:02.222+09:00';
+      const expectedResult3 = DateTime.fromISO(timezoneString, { zone: 'Asia/Tokyo' }).toFormat(format, { locale: 'fr-FR' });
+      const result3 = utils.convertDateTime(timezoneString, 'String', 'Asia/Tokyo', format, 'fr-FR');
+      expect(result3).toEqual(expectedResult3);
+      // The date was created from a string specified at Asia/Tokyo time, so when converting at UTC, we observe a -9 offset
+      expect(result3).toEqual('02-févr.-20 02:02:02');
+
+      // From string with another timezone
+      const anotherTimezoneString = '2020-02-02T02:02:02.222+01:00';
+      const expectedResult4 = DateTime.fromISO(anotherTimezoneString, { zone: 'Asia/Tokyo' }).toFormat(format, { locale: 'fr-FR' });
+      const result4 = utils.convertDateTime(anotherTimezoneString, 'String', 'Asia/Tokyo', format, 'fr-FR');
+      expect(result4).toEqual(expectedResult4);
+      // The date was created from a string specified at Europe/Paris time, converted to Asia/Tokyo time, so the converter output the string
+      // with an offset of +8
+      expect(result4).toEqual('02-févr.-20 10:02:02');
+    });
+  });
 });
