@@ -156,6 +156,12 @@ export const createInput = (value: OibFormControl, form: FormGroup, scanModes: A
       const proxy = proxies.find(element => element.id === value.currentValue);
       form.addControl(value.key, new FormControl(proxy?.id, getValidators(value.validators || [])));
       break;
+    case 'OibDateTimeFormat':
+      form.addControl(
+        value.key,
+        new FormControl(value.currentValue || value.defaultValue || { type: 'datetime' }, getValidators(value.validators || []))
+      );
+      break;
     case 'OibAuthentication':
       form.addControl(
         value.key,

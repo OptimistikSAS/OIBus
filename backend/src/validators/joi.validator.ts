@@ -3,6 +3,7 @@ import {
   OibAuthenticationFormControl,
   OibCheckboxFormControl,
   OibCodeBlockFormControl,
+  OibDateTimeFormatFormControl,
   OibFormControl,
   OibNumberFormControl,
   OibProxyFormControl,
@@ -57,6 +58,8 @@ export default class JoiValidator {
         return this.generateTextJoiSchema(oibFormControl);
       case 'OibProxy':
         return this.generateTextJoiSchema(oibFormControl);
+      case 'OibDateTimeFormat':
+        return this.generateDatetimeFormatJoiSchema(oibFormControl);
       case 'OibAuthentication':
         return this.generateAuthenticationJoiSchema(oibFormControl);
     }
@@ -154,6 +157,21 @@ export default class JoiValidator {
     schema = schema.falsy(0).truthy(1);
     schema = this.handleConditionalDisplay(formControl, schema) as Joi.BooleanSchema;
 
+    return {
+      [formControl.key]: schema
+    };
+  }
+
+  private generateDatetimeFormatJoiSchema(formControl: OibDateTimeFormatFormControl): Record<string, AnySchema> {
+    let schema = Joi.object({
+      type: Joi.string().required().valid('number', 'string', 'datetime'),
+      timezone: Joi.string().required(),
+      field: Joi.string().required(),
+      format: Joi.optional(),
+      locale: Joi.optional()
+    }).required();
+
+    schema = this.handleConditionalDisplay(formControl, schema) as Joi.ObjectSchema;
     return {
       [formControl.key]: schema
     };

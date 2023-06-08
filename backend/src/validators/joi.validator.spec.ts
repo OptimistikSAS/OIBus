@@ -101,6 +101,11 @@ describe('Joi validator', () => {
         subscriptionOnly: false
       },
       {
+        key: 'datetimeFormat',
+        type: 'OibDateTimeFormat',
+        label: 'OibDateTimeFormat'
+      },
+      {
         key: 'authentication',
         type: 'OibAuthentication',
         label: 'OibAuthentication',
@@ -121,6 +126,13 @@ describe('Joi validator', () => {
       timezone: Joi.string().allow(null, ''),
       scanMode: Joi.string().allow(null, ''),
       proxy: Joi.string().allow(null, ''),
+      datetimeFormat: Joi.object({
+        type: Joi.string().required().valid('number', 'string', 'datetime'),
+        timezone: Joi.string().required(),
+        field: Joi.string().required(),
+        format: Joi.optional(),
+        locale: Joi.optional()
+      }).required(),
       authentication: Joi.object({
         type: Joi.string().required().valid('none', 'basic', 'cert'),
         username: Joi.optional(),
