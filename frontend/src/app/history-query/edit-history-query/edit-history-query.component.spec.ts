@@ -29,10 +29,6 @@ class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryCo
     return this.input('#history-query-name');
   }
 
-  get enabled() {
-    return this.input('#history-query-enabled');
-  }
-
   get description() {
     return this.textarea('#history-query-description');
   }
@@ -177,7 +173,6 @@ describe('EditHistoryQueryComponent', () => {
   it('should display general settings', () => {
     expect(historyQueryService.get).toHaveBeenCalledWith('id1');
     expect(tester.title).toContainText('Edit history query Test');
-    expect(tester.enabled).toBeChecked();
     expect(tester.description).toHaveValue('My History query description');
     expect(tester.specificForm).toBeDefined();
     expect(tester.northSpecificTitle).toContainText('Console settings');

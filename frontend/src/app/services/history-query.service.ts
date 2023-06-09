@@ -131,4 +131,12 @@ export class HistoryQueryService {
     formData.set('file', file);
     return this.http.post<void>(`/api/history-queries/${historyQueryId}/items/upload`, formData);
   }
+
+  startHistoryQuery(historyQueryId: string): Observable<void> {
+    return this.http.put<void>(`/api/history-queries/${historyQueryId}/start`, null);
+  }
+
+  stopHistoryQuery(historyQueryId: string): Observable<void> {
+    return this.http.put<void>(`/api/history-queries/${historyQueryId}/stop`, null);
+  }
 }

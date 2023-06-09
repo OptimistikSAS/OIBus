@@ -188,15 +188,23 @@ export default class ReloadService {
         scanModeId: null
       });
     }
-    await this.historyEngine.startHistoryQuery(historyQuery);
     return historyQuery;
   }
 
   async onUpdateHistoryQuerySettings(historyId: string, command: HistoryQueryCommandDTO): Promise<void> {
-    await this.historyEngine.stopHistoryQuery(historyId, true);
+    await this.historyEngine.stopHistoryQuery(historyId, true); // Reset cache to start the history from scratch when changing the settings
     this.repositoryService.historyQueryRepository.updateHistoryQuery(historyId, command);
+  }
+
+  async onStartHistoryQuery(historyId: string): Promise<void> {
+    this.repositoryService.historyQueryRepository.startHistoryQuery(historyId);
     const settings = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId);
     await this.historyEngine.startHistoryQuery(settings!);
+  }
+
+  async onStopHistoryQuery(historyId: string): Promise<void> {
+    await this.historyEngine.stopHistoryQuery(historyId);
+    this.repositoryService.historyQueryRepository.stopHistoryQuery(historyId);
   }
 
   async onDeleteHistoryQuery(historyId: string): Promise<void> {
@@ -206,11 +214,9 @@ export default class ReloadService {
   }
 
   async onCreateHistoryItem(historyId: string, command: OibusItemCommandDTO): Promise<OibusItemDTO> {
-    const historyItem = this.repositoryService.historyQueryItemRepository.createHistoryItem(historyId, command);
     await this.historyEngine.stopHistoryQuery(historyId, true);
+    const historyItem = this.repositoryService.historyQueryItemRepository.createHistoryItem(historyId, command);
     await this.historyEngine.addItemToHistoryQuery(historyId, historyItem);
-    const settings = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId);
-    await this.historyEngine.startHistoryQuery(settings!);
     return historyItem;
   }
 
@@ -219,17 +225,17 @@ export default class ReloadService {
     this.repositoryService.historyQueryItemRepository.updateHistoryItem(item.id, command);
     const historyItem = this.repositoryService.historyQueryItemRepository.getHistoryItem(item.id);
     await this.historyEngine.updateItemInHistoryQuery(historyId, historyItem);
-    const settings = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId);
-    await this.historyEngine.startHistoryQuery(settings!);
   }
 
   async onDeleteHistoryItem(historyId: string, itemId: string): Promise<void> {
+    await this.historyEngine.stopHistoryQuery(historyId, true);
     const item = this.repositoryService.historyQueryItemRepository.getHistoryItem(itemId);
     this.repositoryService.historyQueryItemRepository.deleteHistoryItem(itemId);
     await this.historyEngine.deleteItemFromHistoryQuery(historyId, item);
   }
 
   async onDeleteAllHistoryItems(historyId: string): Promise<void> {
+    await this.historyEngine.stopHistoryQuery(historyId, true);
     await this.historyEngine.deleteAllItemsFromHistoryQuery(historyId);
     this.repositoryService.historyQueryItemRepository.deleteAllItems(historyId);
   }
@@ -241,7 +247,6 @@ export default class ReloadService {
   ): Promise<void> {
     await this.historyEngine.stopHistoryQuery(historyQuery.id);
     this.repositoryService.historyQueryItemRepository.createAndUpdateItems(historyQuery.id, itemsToAdd, itemsToUpdate);
-    await this.historyEngine.startHistoryQuery(historyQuery);
   }
 
   async getErrorFiles(northId: string, start: Instant, end: Instant, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
