@@ -353,6 +353,7 @@ describe('SouthFolderScanner test connection', () => {
 
   // TODO: change this test once the method is implemented
   it('should not be able to connect', async () => {
-    expect(await south.testConnection({})).toBe(false);
+    await expect(SouthFolderScanner.testConnection({}, logger)).rejects.toThrow('TODO: method needs to be implemented');
+    expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
   });
 });

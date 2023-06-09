@@ -143,9 +143,8 @@ describe('SouthOracle with authentication', () => {
 
   it('should test connection with oracle', async () => {
     // TODO
-    const result = await south.testConnection({});
+    await expect(SouthOracle.testConnection({}, logger)).rejects.toThrow('TODO: method needs to be implemented');
     expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
-    expect(result).toBeFalsy();
   });
 
   it('should properly run historyQuery', async () => {
