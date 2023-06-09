@@ -60,10 +60,11 @@ const config = {
             position: 'left',
             label: 'Developer',
           },
-          // {
-          //   type: 'localeDropdown',
-          //   position: 'right',
-          // },
+          {
+            type: 'docsVersionDropdown',
+            position: 'right',
+            dropdownActiveClassDisabled: true,
+          },
           {
             href: 'https://github.com/OptimistikSAS/OIBus',
             label: 'GitHub',
