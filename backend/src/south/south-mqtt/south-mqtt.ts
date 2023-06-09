@@ -13,7 +13,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
 import { Instant, Timezone } from '../../../../shared/model/types';
-import { QueriesSubscription } from '../south-interface';
+import { QueriesSubscription, TestsConnection } from '../south-interface';
 
 interface MessageFormatOption {
   timestampOrigin: 'payload' | 'oibus';
@@ -28,7 +28,7 @@ interface MessageFormatOption {
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
  */
-export default class SouthMQTT extends SouthConnector implements QueriesSubscription {
+export default class SouthMQTT extends SouthConnector implements QueriesSubscription, TestsConnection {
   static type = manifest.id;
 
   private client: MqttClient | null = null;
@@ -100,9 +100,10 @@ export default class SouthMQTT extends SouthConnector implements QueriesSubscrip
     });
   }
 
-  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
-    this.logger.trace(`Testing connection`);
-    return false;
+  // TODO: method needs to be implemented
+  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
+    logger.trace(`Testing connection`);
+    throw new Error('TODO: method needs to be implemented');
   }
 
   async handleMessage(topic: string, message: Buffer): Promise<void> {

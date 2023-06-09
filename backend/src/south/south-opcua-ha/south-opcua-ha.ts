@@ -25,7 +25,7 @@ import { OPCUAClientOptions } from 'node-opcua-client/source/opcua_client';
 import { DateTime } from 'luxon';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { QueriesHistory } from '../south-interface';
+import { QueriesHistory, TestsConnection } from '../south-interface';
 
 const AGGREGATE_TYPES = ['raw', 'count', 'max', 'min', 'avg'];
 type AggregateType = (typeof AGGREGATE_TYPES)[number];
@@ -36,7 +36,7 @@ type Resampling = (typeof RESAMPLINGS)[number];
 /**
  * Class SouthOPCUAHA - Connect to an OPCUA server in HA (Historian Access) mode
  */
-export default class SouthOPCUAHA extends SouthConnector implements QueriesHistory {
+export default class SouthOPCUAHA extends SouthConnector implements QueriesHistory, TestsConnection {
   static type = manifest.id;
 
   private clientCertificateManager: OPCUACertificateManager | null = null;
@@ -89,9 +89,10 @@ export default class SouthOPCUAHA extends SouthConnector implements QueriesHisto
     await this.connectToOpcuaServer();
   }
 
-  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
-    this.logger.trace(`Testing connection`);
-    return false;
+  // TODO: method needs to be implemented
+  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
+    logger.trace(`Testing connection`);
+    throw new Error('TODO: method needs to be implemented');
   }
 
   /**

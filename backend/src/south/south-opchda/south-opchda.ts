@@ -12,7 +12,7 @@ import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import { DateTime } from 'luxon';
-import { QueriesHistory } from '../south-interface';
+import { QueriesHistory, TestsConnection } from '../south-interface';
 
 // Time to wait before closing the connection by timeout and killing the HDA Agent process
 const DISCONNECTION_TIMEOUT = 10000;
@@ -22,7 +22,7 @@ const DISCONNECTION_TIMEOUT = 10000;
  * This connector communicates with the Agent through a TCP connection thanks to the TCP server created on OIBus
  * and associated to this connector
  */
-export default class SouthOPCHDA extends SouthConnector implements QueriesHistory {
+export default class SouthOPCHDA extends SouthConnector implements QueriesHistory, TestsConnection {
   static type = manifest.id;
 
   // Initialized at connection
@@ -87,9 +87,10 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
     }
   }
 
-  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
-    this.logger.trace(`Testing connection`);
-    return false;
+  // TODO: method needs to be implemented
+  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
+    logger.trace(`Testing connection`);
+    throw new Error('TODO: method needs to be implemented');
   }
 
   async runTcpServer(): Promise<void> {
