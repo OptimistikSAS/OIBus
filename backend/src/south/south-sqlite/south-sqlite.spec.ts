@@ -136,9 +136,8 @@ describe('SouthSQLite', () => {
 
   it('should test connection with sqlite', async () => {
     // TODO
-    const result = await south.testConnection({});
+    await expect(SouthSQLite.testConnection({}, logger)).rejects.toThrow('TODO: method needs to be implemented');
     expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
-    expect(result).toBeFalsy();
   });
 
   it('should properly run historyQuery', async () => {
