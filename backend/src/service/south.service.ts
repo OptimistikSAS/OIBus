@@ -77,6 +77,19 @@ export default class SouthService {
   }
 
   /**
+   * Retrieve south class
+   * @param type SouthConnector type ID
+   */
+  getSouthClass(type: string): typeof SouthConnector {
+    const SouthConnectorClass = southList.find(connector => connector.type === type);
+    if (!SouthConnectorClass) {
+      throw Error(`South connector of type ${type} not installed`);
+    }
+
+    return SouthConnectorClass;
+  }
+
+  /**
    * Retrieve a south connector from the config
    */
   getSouth(southId: string): SouthConnectorDTO | null {
