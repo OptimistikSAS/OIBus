@@ -120,11 +120,6 @@ export default class SouthConnector {
     }
   }
 
-  async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
-    this.logger.warn('testConnection method must be override');
-    return false;
-  }
-
   isEnabled(): boolean {
     return this.configuration.enabled;
   }

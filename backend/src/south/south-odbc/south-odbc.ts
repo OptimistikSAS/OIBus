@@ -10,7 +10,7 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { QueriesHistory } from '../south-interface';
+import { QueriesHistory, TestsConnection } from '../south-interface';
 
 let odbc: any | null = null;
 // @ts-ignore
@@ -25,7 +25,7 @@ import('odbc')
 /**
  * Class SouthODBC - Retrieve data from SQL databases with ODBC driver and send them to the cache as CSV files.
  */
-export default class SouthODBC extends SouthConnector implements QueriesHistory {
+export default class SouthODBC extends SouthConnector implements QueriesHistory, TestsConnection {
   static type = manifest.id;
 
   private readonly tmpFolder: string;
@@ -64,9 +64,10 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory 
     await super.start();
   }
 
-  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
-    this.logger.trace(`Testing connection`);
-    return false;
+  // TODO: method needs to be implemented
+  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
+    logger.trace(`Testing connection`);
+    throw new Error('TODO: method needs to be implemented');
   }
 
   /**

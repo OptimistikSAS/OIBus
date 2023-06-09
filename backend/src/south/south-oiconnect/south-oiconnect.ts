@@ -15,13 +15,13 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { QueriesHistory } from '../south-interface';
+import { QueriesHistory, TestsConnection } from '../south-interface';
 
 /**
  * Class SouthOIConnect - Retrieve data from REST API
  * The results are parsed through the available parsers
  */
-export default class SouthOIConnect extends SouthConnector implements QueriesHistory {
+export default class SouthOIConnect extends SouthConnector implements QueriesHistory, TestsConnection {
   static type = manifest.id;
 
   private readonly tmpFolder: string;
@@ -60,9 +60,10 @@ export default class SouthOIConnect extends SouthConnector implements QueriesHis
     await super.start();
   }
 
-  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
-    this.logger.trace(`Testing connection`);
-    return false;
+  // TODO: method needs to be implemented
+  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
+    logger.trace(`Testing connection`);
+    throw new Error('TODO: method needs to be implemented');
   }
 
   /**
