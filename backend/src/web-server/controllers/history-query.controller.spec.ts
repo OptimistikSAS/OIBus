@@ -65,14 +65,13 @@ const northConnector: NorthConnectorDTO = {
 const historyQueryCommand: HistoryQueryCommandDTO = {
   name: 'name',
   description: 'description',
-  enabled: true,
   history: {
     maxInstantPerItem: true,
     maxReadInterval: 3600,
     readDelay: 0
   },
-  startTime: 'startTime',
-  endTime: 'endTime',
+  startTime: '2020-02-01T02:02:59.999Z',
+  endTime: '2020-02-02T02:02:59.999Z',
   southType: 'opcua-ha',
   northType: 'console',
   southSettings: {
@@ -116,9 +115,12 @@ const page = {
   totalElements: 1,
   totalPages: 1
 };
+const nowDateString = '2020-02-02T02:02:02.222Z';
+
 describe('History query controller', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
   });
 
   it('getHistoryQueries() should return history queries', async () => {
@@ -224,14 +226,13 @@ describe('History query controller', () => {
       {
         name: 'name',
         description: 'description',
-        enabled: false,
         history: {
           maxInstantPerItem: false,
           maxReadInterval: 0,
           readDelay: 200
         },
-        startTime: '',
-        endTime: '',
+        startTime: '2020-02-01T02:02:59.999Z',
+        endTime: '2020-02-02T02:02:59.999Z',
         southType: 'opcua-ha',
         northType: 'console',
         southSettings: {},
@@ -285,14 +286,13 @@ describe('History query controller', () => {
       {
         name: 'name',
         description: 'description',
-        enabled: false,
         history: {
           maxInstantPerItem: true,
           maxReadInterval: 3600,
           readDelay: 0
         },
-        startTime: '',
-        endTime: '',
+        startTime: '2020-02-01T02:02:59.999Z',
+        endTime: '2020-02-02T02:02:59.999Z',
         southType: 'opcua-ha',
         northType: 'console',
         southSettings: southConnector.settings,
@@ -404,6 +404,78 @@ describe('History query controller', () => {
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateSouth).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+  });
+
+  it('startHistoryQuery() should enable History query', async () => {
+    ctx.params.enable = true;
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+
+    await historyQueryController.startHistoryQuery(ctx);
+
+    expect(ctx.app.reloadService.onStartHistoryQuery).toHaveBeenCalledTimes(1);
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+  });
+
+  it('startHistoryQuery() should throw badRequest if fail to enable', async () => {
+    ctx.params.enable = true;
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+
+    ctx.app.reloadService.onStartHistoryQuery.mockImplementation(() => {
+      throw new Error('bad');
+    });
+
+    await historyQueryController.startHistoryQuery(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalled();
+  });
+
+  it('startHistoryQuery() should return not found if history not found', async () => {
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
+
+    await historyQueryController.startHistoryQuery(ctx);
+
+    expect(ctx.app.reloadService.onStartHistoryQuery).not.toHaveBeenCalled();
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+  });
+
+  it('stopHistoryQuery() should enable History query', async () => {
+    ctx.params.enable = true;
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+
+    await historyQueryController.stopHistoryQuery(ctx);
+
+    expect(ctx.app.reloadService.onStopHistoryQuery).toHaveBeenCalledTimes(1);
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+  });
+
+  it('stopHistoryQuery() should throw badRequest if fail to enable', async () => {
+    ctx.params.enable = true;
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+
+    ctx.app.reloadService.onStopHistoryQuery.mockImplementation(() => {
+      throw new Error('bad');
+    });
+
+    await historyQueryController.stopHistoryQuery(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalled();
+  });
+
+  it('stopHistoryQuery() should return not found if history not found', async () => {
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
+
+    await historyQueryController.stopHistoryQuery(ctx);
+
+    expect(ctx.app.reloadService.onStopHistoryQuery).not.toHaveBeenCalled();
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
   });
 
   it('updateHistoryQuery() should update History Query', async () => {

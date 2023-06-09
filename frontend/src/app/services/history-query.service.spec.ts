@@ -68,7 +68,6 @@ describe('HistoryQueryService', () => {
     const command: HistoryQueryCommandDTO = {
       name: 'myHistoryQuery',
       description: 'a test history query',
-      enabled: true,
       history: {
         maxInstantPerItem: false,
         maxReadInterval: 0,
@@ -210,5 +209,25 @@ describe('HistoryQueryService', () => {
     testRequest.flush(true);
 
     expect(actualImportation).toBe(true);
+  });
+
+  it('should start a History query', () => {
+    let done = false;
+
+    service.startHistoryQuery('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/start' });
+    expect(testRequest.request.body).toEqual(null);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should stop a History query', () => {
+    let done = false;
+
+    service.stopHistoryQuery('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/stop' });
+    expect(testRequest.request.body).toEqual(null);
+    testRequest.flush(null);
+    expect(done).toBe(true);
   });
 });

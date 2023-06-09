@@ -57,7 +57,6 @@ export class EditHistoryQueryComponent implements OnInit {
   historyQueryForm = this.fb.group({
     name: ['', Validators.required],
     description: '',
-    enabled: false,
     start: null as Instant | null,
     end: null as Instant | null,
     history: this.fb.group({
@@ -111,7 +110,6 @@ export class EditHistoryQueryComponent implements OnInit {
           this.historyQueryForm.patchValue({
             name: historyQuery.name,
             description: historyQuery.description,
-            enabled: historyQuery.enabled,
             start: historyQuery.startTime,
             end: historyQuery.endTime,
             history: historyQuery.history,
@@ -189,7 +187,6 @@ export class EditHistoryQueryComponent implements OnInit {
     const command: HistoryQueryCommandDTO = {
       name: formValue.name!,
       description: formValue.description!,
-      enabled: formValue.enabled!,
       startTime: formValue.start!,
       endTime: formValue.end!,
       northType: this.historyQuery.northType,

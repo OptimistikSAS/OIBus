@@ -23,4 +23,8 @@ export default class HistoryQueryService {
   getItems(historyQueryId: string): Array<OibusItemDTO> {
     return this.repositoryService.historyQueryItemRepository.getHistoryItems(historyQueryId);
   }
+
+  stopHistoryQuery(historyQueryId: string): void {
+    return this.repositoryService.historyQueryRepository.stopHistoryQuery(historyQueryId);
+  }
 }
