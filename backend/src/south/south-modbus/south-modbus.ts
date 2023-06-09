@@ -10,12 +10,12 @@ import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
-import { QueriesLastPoint } from '../south-interface';
+import { QueriesLastPoint, TestsConnection } from '../south-interface';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
  */
-export default class SouthModbus extends SouthConnector implements QueriesLastPoint {
+export default class SouthModbus extends SouthConnector implements QueriesLastPoint, TestsConnection {
   static type = manifest.id;
 
   private socket: net.Socket | null = null;
@@ -46,11 +46,6 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
       baseFolder,
       streamMode
     );
-  }
-
-  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
-    this.logger.trace(`Testing connection`);
-    return false;
   }
 
   async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
@@ -197,6 +192,12 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.configuration.settings.retryInterval);
       });
     });
+  }
+
+  // TODO: method needs to be implemented
+  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
+    logger.trace(`Testing connection`);
+    throw new Error('TODO: method needs to be implemented');
   }
 
   /**

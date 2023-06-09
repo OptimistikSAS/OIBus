@@ -15,12 +15,12 @@ import { OPCUAClientOptions } from 'node-opcua-client/source/opcua_client';
 import { UserIdentityInfo } from 'node-opcua-client/source/user_identity_info';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { QueriesLastPoint } from '../south-interface';
+import { QueriesLastPoint, TestsConnection } from '../south-interface';
 
 /**
  * Class SouthOPCUADA - Connect to an OPCUA server in DA (Data Access) mode
  */
-export default class SouthOPCUADA extends SouthConnector implements QueriesLastPoint {
+export default class SouthOPCUADA extends SouthConnector implements QueriesLastPoint, TestsConnection {
   static type = manifest.id;
 
   private clientCertificateManager: OPCUACertificateManager | null = null;
@@ -73,9 +73,10 @@ export default class SouthOPCUADA extends SouthConnector implements QueriesLastP
     await this.connectToOpcuaServer();
   }
 
-  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
-    this.logger.trace(`Testing connection`);
-    return false;
+  // TODO: method needs to be implemented
+  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
+    logger.trace(`Testing connection`);
+    throw new Error('TODO: method needs to be implemented');
   }
 
   /**

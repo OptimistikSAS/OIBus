@@ -10,14 +10,14 @@ import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
-import { QueriesFile } from '../south-interface';
+import { QueriesFile, TestsConnection } from '../south-interface';
 
 const FOLDER_SCANNER_TABLE = 'folder_scanner';
 
 /**
  * Class SouthFolderScanner - Retrieve file from a local or remote folder
  */
-export default class SouthFolderScanner extends SouthConnector implements QueriesFile {
+export default class SouthFolderScanner extends SouthConnector implements QueriesFile, TestsConnection {
   static type = manifest.id;
 
   /**
@@ -56,9 +56,10 @@ export default class SouthFolderScanner extends SouthConnector implements Querie
     }
   }
 
-  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
-    this.logger.info(`Testing connection`);
-    return false;
+  // TODO: method needs to be implemented
+  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
+    logger.trace(`Testing connection`);
+    throw new Error('TODO: method needs to be implemented');
   }
 
   /**

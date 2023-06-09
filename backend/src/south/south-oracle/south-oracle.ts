@@ -9,7 +9,7 @@ import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
-import { QueriesHistory } from '../south-interface';
+import { QueriesHistory, TestsConnection } from '../south-interface';
 
 let oracledb: {
   outFormat: any;
@@ -29,7 +29,7 @@ import { DateTime } from 'luxon';
 /**
  * Class SouthOracle - Retrieve data from Oracle databases and send them to the cache as CSV files.
  */
-export default class SouthOracle extends SouthConnector implements QueriesHistory {
+export default class SouthOracle extends SouthConnector implements QueriesHistory, TestsConnection {
   static type = manifest.id;
 
   private readonly tmpFolder: string;
@@ -68,9 +68,10 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
     await super.start();
   }
 
-  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
-    this.logger.trace(`Testing connection`);
-    return false;
+  // TODO: method needs to be implemented
+  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
+    logger.trace(`Testing connection`);
+    throw new Error('TODO: method needs to be implemented');
   }
 
   /**

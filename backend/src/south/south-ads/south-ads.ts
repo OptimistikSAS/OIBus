@@ -10,7 +10,7 @@ import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { QueriesLastPoint } from '../south-interface';
+import { QueriesLastPoint, TestsConnection } from '../south-interface';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -25,7 +25,7 @@ interface ADSOptions {
 /**
  * Class SouthADS - Provides instruction for TwinCAT ADS client connection
  */
-export default class SouthADS extends SouthConnector implements QueriesLastPoint {
+export default class SouthADS extends SouthConnector implements QueriesLastPoint, TestsConnection {
   static type = manifest.id;
 
   private client: ads.Client | null = null;
@@ -243,9 +243,10 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
     }
   }
 
-  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
-    this.logger.trace(`Testing connection`);
-    return false;
+  // TODO: method needs to be implemented
+  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
+    logger.trace(`Testing connection`);
+    throw new Error('TODO: method needs to be implemented');
   }
 
   /**

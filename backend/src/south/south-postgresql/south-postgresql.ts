@@ -11,13 +11,13 @@ import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
-import { QueriesHistory } from '../south-interface';
+import { QueriesHistory, TestsConnection } from '../south-interface';
 import { DateTime } from 'luxon';
 
 /**
  * Class SouthPostgreSQL - Retrieve data from PostgreSQL databases and send them to the cache as CSV files.
  */
-export default class SouthPostgreSQL extends SouthConnector implements QueriesHistory {
+export default class SouthPostgreSQL extends SouthConnector implements QueriesHistory, TestsConnection {
   static type = manifest.id;
 
   private readonly tmpFolder: string;
@@ -56,9 +56,10 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
     await super.start();
   }
 
-  override async testConnection(settings: SouthConnectorDTO['settings']): Promise<boolean> {
-    this.logger.trace(`Testing connection`);
-    return false;
+  // TODO: method needs to be implemented
+  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
+    logger.trace(`Testing connection`);
+    throw new Error('TODO: method needs to be implemented');
   }
 
   /**
