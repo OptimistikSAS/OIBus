@@ -97,6 +97,24 @@ export default class SouthConnectorController {
     }
   }
 
+  async testSouthConnection(ctx: KoaContext<SouthConnectorDTO, void>): Promise<void> {
+    try {
+      const manifest = ctx.request.body ? southManifests.find(southManifest => southManifest.id === ctx.request.body!.type) : null;
+      if (!manifest) {
+        return ctx.throw(404, 'South manifest not found');
+      }
+
+      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
+
+      ctx.request.body!.name = `${ctx.request.body!.type}:test-connection`;
+      await ctx.app.reloadService.oibusEngine.testSouth(ctx.request.body!);
+
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
   async createSouthConnector(ctx: KoaContext<SouthConnectorCommandDTO, void>): Promise<void> {
     try {
       const manifest = ctx.request.body ? southManifests.find(southManifest => southManifest.id === ctx.request.body!.type) : null;
