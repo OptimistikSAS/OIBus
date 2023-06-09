@@ -151,9 +151,8 @@ describe('SouthMSSQL with authentication', () => {
 
   it('should test connection with mssql', async () => {
     // TODO
-    const result = await south.testConnection({});
+    await expect(SouthMSSQL.testConnection({}, logger)).rejects.toThrow('TODO: method needs to be implemented');
     expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
-    expect(result).toBeFalsy();
   });
 
   it('should properly run historyQuery', async () => {
