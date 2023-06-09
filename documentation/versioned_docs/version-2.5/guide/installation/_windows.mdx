@@ -1,0 +1,65 @@
+import DownloadButton from '@site/src/components/DownloadButton';
+
+<DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/latest/download/OIBus-setup-win32x64.exe'>
+  Download OIBus Windows installer (x64)
+</DownloadButton>
+
+## Installation
+### With the Windows Installer
+1. Run the Windows Installer, you should see the following welcome screen:
+
+![Installer welcome screen](@site/static/img/guide/installation/1.png)
+
+2. Accept the EUPL license and the OPCHDA license.
+
+3. Choose the path where you want to install the binaries.
+
+![Installer binaries path](@site/static/img/guide/installation/2.png)
+
+4. Choose the path where you want to store the cache, logs and configuration files
+
+![Installer data folder path](@site/static/img/guide/installation/3.png)
+
+5. The next step offers you to tune the following OIBus settings:
+- The OIBus name (default `OIBus`)
+- The admin name (default `admin`)
+- The port to use (default `2223`)
+
+![Installer settings](@site/static/img/guide/installation/4.png)
+
+6. Validate the settings and wait for the installer to extract and copy the files in the appropriate folder.
+
+![Installer validation step](@site/static/img/guide/installation/5.png)
+
+7. The final screen confirms the installation. You can click on the link at the bottom to directly access OIBus from its
+web interface.
+
+![Installer final step](@site/static/img/guide/installation/6.png)
+
+:::caution Browser support
+
+Note that Internet Explorer is not supported.
+
+:::
+
+
+## Update
+### With the Windows Installer
+In case of OIBus update, you can use the OIBus Windows Installer and specify the already existing executable and
+config path. You can choose to keep the existing configuration file or overwrite it.
+
+During the update, OIBus service will be stopped briefly.
+
+The configuration file `oibus.json` will be updated to its latest version during the first startup.
+
+### With binaries
+Alternatively, you can download the [zip file
+](https://github.com/OptimistikSAS/OIBus/releases/latest/download/OIBus-win32x64.zip) containing the OIBus executable
+and other dependencies.
+
+1. Go to the Windows service manager.
+2. Stop the OIBus service.
+3. Copy and paste the content of the zip file into the OIBus executable folder. Overwrite all existing files.
+4. Start the OIBus service.
+
+The configuration file `oibus.json` will be updated to its latest version during the first startup.
