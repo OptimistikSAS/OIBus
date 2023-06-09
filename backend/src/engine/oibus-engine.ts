@@ -13,6 +13,7 @@ import { OibusItemCommandDTO, OibusItemDTO, SouthConnectorDTO } from '../../../s
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
+import { TestsConnection } from '../south/south-interface';
 
 const CACHE_FOLDER = './cache/data-stream';
 
@@ -121,6 +122,22 @@ export default class OIBusEngine extends BaseEngine {
       this.logger.trace(`South connector ${settings.name} not enabled`);
     }
     this.southConnectors.set(settings.id, south);
+  }
+
+  /**
+   * Tests a SouthConnector based on the settings
+   * @throws {Error} Error with a message specifying wrong settings
+   */
+  async testSouth(settings: SouthConnectorDTO): Promise<void> {
+    const SouthConnectorClass = this.southService.getSouthClass(settings.type);
+
+    if (!('testConnection' in SouthConnectorClass)) {
+      throw new Error('Connector does not have testConnection method');
+    }
+    const TestClass = SouthConnectorClass as typeof SouthConnector & typeof TestsConnection;
+    const testLogger = this.logger.child({ scope: `south:${settings.name}` });
+
+    await TestClass.testConnection(settings, testLogger);
   }
 
   async startNorth(northId: string, settings: NorthConnectorDTO): Promise<void> {

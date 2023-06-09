@@ -121,6 +121,7 @@ router.get('/api/south-types', (ctx: KoaContext<any, any>) => southConnectorCont
 router.get('/api/south-types/:id', (ctx: KoaContext<any, any>) => southConnectorController.getSouthConnectorManifest(ctx));
 
 router.get('/api/south', (ctx: KoaContext<any, any>) => southConnectorController.getSouthConnectors(ctx));
+router.get('/api/south/test-connection', (ctx: KoaContext<any, any>) => southConnectorController.testSouthConnection(ctx));
 router.get('/api/south/:id', (ctx: KoaContext<any, any>) => southConnectorController.getSouthConnector(ctx));
 router.post('/api/south', (ctx: KoaContext<any, any>) => southConnectorController.createSouthConnector(ctx));
 router.put('/api/south/:id', (ctx: KoaContext<any, any>) => southConnectorController.updateSouthConnector(ctx));
