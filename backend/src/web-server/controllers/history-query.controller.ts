@@ -15,6 +15,7 @@ import fs from 'node:fs/promises';
 import { southManifests } from './south-connector.controller';
 import AbstractController from './abstract.controller';
 import Joi from 'joi';
+import { DateTime } from 'luxon';
 
 export default class HistoryQueryController extends AbstractController {
   constructor(
@@ -62,12 +63,12 @@ export default class HistoryQueryController extends AbstractController {
     if (!ctx.request.body) {
       return ctx.badRequest();
     }
+    const now = DateTime.now().endOf('minute');
     const command: HistoryQueryCommandDTO = {
       name: ctx.request.body.name,
       description: ctx.request.body.description,
-      enabled: false,
-      startTime: '',
-      endTime: '',
+      startTime: now.minus({ days: 1 }).toUTC().toISO()!,
+      endTime: now.toUTC().toISO()!,
       southType: '',
       northType: '',
       southSettings: {},
@@ -176,6 +177,34 @@ export default class HistoryQueryController extends AbstractController {
         northManifest.settings
       );
       await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, command);
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  };
+
+  startHistoryQuery = async (ctx: KoaContext<void, void>) => {
+    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id);
+    if (!historyQuery) {
+      return ctx.notFound();
+    }
+
+    try {
+      await ctx.app.reloadService.onStartHistoryQuery(ctx.params.id);
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  };
+
+  stopHistoryQuery = async (ctx: KoaContext<void, void>) => {
+    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id);
+    if (!historyQuery) {
+      return ctx.notFound();
+    }
+
+    try {
+      await ctx.app.reloadService.onStopHistoryQuery(ctx.params.id);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);

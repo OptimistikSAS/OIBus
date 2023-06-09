@@ -26,7 +26,6 @@ export interface HistoryQueryDTO {
 export interface HistoryQueryCommandDTO {
   name: string;
   description: string;
-  enabled: boolean;
   startTime: string;
   endTime: string;
   southType: string;

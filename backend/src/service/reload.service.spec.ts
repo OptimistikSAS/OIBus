@@ -256,8 +256,6 @@ describe('reload service', () => {
     expect(repositoryService.historyQueryItemRepository.createHistoryItem).toHaveBeenCalledWith('historyId', command);
     expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith('historyId', true);
     expect(historyQueryEngine.addItemToHistoryQuery).toHaveBeenCalledWith('historyId', historyItem);
-    expect(repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
-    expect(historyQueryEngine.startHistoryQuery).toHaveBeenCalledWith({ id: 'historyId' });
     expect(result).toEqual(historyItem);
   });
 
@@ -271,8 +269,19 @@ describe('reload service', () => {
     expect(repositoryService.historyQueryItemRepository.updateHistoryItem).toHaveBeenCalledWith('historyItemId', command);
     expect(repositoryService.historyQueryItemRepository.getHistoryItem).toHaveBeenCalledWith('historyItemId');
     expect(historyQueryEngine.updateItemInHistoryQuery).toHaveBeenCalledWith('historyId', historyItem);
+  });
+
+  it('should start history query', async () => {
+    (repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValueOnce({ id: 'historyId' });
+    await service.onStartHistoryQuery('historyId');
     expect(repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(repositoryService.historyQueryRepository.startHistoryQuery).toHaveBeenCalledWith('historyId');
     expect(historyQueryEngine.startHistoryQuery).toHaveBeenCalledWith({ id: 'historyId' });
+  });
+
+  it('should stop history query', async () => {
+    await service.onStopHistoryQuery('historyId');
+    expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith('historyId');
   });
 
   it('should delete history item', async () => {
@@ -328,6 +337,5 @@ describe('reload service', () => {
     await service.onCreateOrUpdateHistoryQueryItems({ id: 'historyId' } as HistoryQueryDTO, [], []);
     expect(repositoryService.historyQueryItemRepository.createAndUpdateItems).toHaveBeenCalledWith('historyId', [], []);
     expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith('historyId');
-    expect(historyQueryEngine.startHistoryQuery).toHaveBeenCalledWith({ id: 'historyId' } as HistoryQueryDTO);
   });
 });

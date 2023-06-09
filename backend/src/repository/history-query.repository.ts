@@ -90,32 +90,30 @@ export default class HistoryQueryRepository {
       `history_read_delay, start_time, end_time, south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
       `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_send_file_immediately, caching_max_size, archive_enabled, ` +
       `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-    const insertResult = this.database
-      .prepare(insertQuery)
-      .run(
-        id,
-        command.name,
-        command.description,
-        +command.enabled,
-        +command.history.maxInstantPerItem,
-        command.history.maxReadInterval,
-        command.history.readDelay,
-        command.startTime,
-        command.endTime,
-        command.southType,
-        command.northType,
-        JSON.stringify(command.southSettings),
-        JSON.stringify(command.northSettings),
-        command.caching.scanModeId,
-        command.caching.groupCount,
-        command.caching.retryInterval,
-        command.caching.retryCount,
-        command.caching.maxSendCount,
-        +command.caching.sendFileImmediately,
-        command.caching.maxSize,
-        +command.archive.enabled,
-        command.archive.retentionDuration
-      );
+    const insertResult = this.database.prepare(insertQuery).run(
+      id,
+      command.name,
+      command.description,
+      0, // disabled by default at creation
+      +command.history.maxInstantPerItem,
+      command.history.maxReadInterval,
+      command.history.readDelay,
+      command.startTime,
+      command.endTime,
+      command.southType,
+      command.northType,
+      JSON.stringify(command.southSettings),
+      JSON.stringify(command.northSettings),
+      command.caching.scanModeId,
+      command.caching.groupCount,
+      command.caching.retryInterval,
+      command.caching.retryCount,
+      command.caching.maxSendCount,
+      +command.caching.sendFileImmediately,
+      command.caching.maxSize,
+      +command.archive.enabled,
+      command.archive.retentionDuration
+    );
 
     const query =
       `SELECT id, name, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
@@ -130,12 +128,22 @@ export default class HistoryQueryRepository {
     return this.toHistoryQueryDTO(result);
   }
 
+  startHistoryQuery(id: string) {
+    const query = `UPDATE ${HISTORY_QUERIES_TABLE} SET enabled = ? WHERE id = ?;`;
+    this.database.prepare(query).run(1, id);
+  }
+
+  stopHistoryQuery(id: string) {
+    const query = `UPDATE ${HISTORY_QUERIES_TABLE} SET enabled = ? WHERE id = ?;`;
+    this.database.prepare(query).run(0, id);
+  }
+
   /**
    * Update a History query by its ID
    */
   updateHistoryQuery(id: string, command: HistoryQueryCommandDTO): void {
     const query =
-      `UPDATE ${HISTORY_QUERIES_TABLE} SET name = ?, description = ?, enabled = ?, history_max_instant_per_item = ?, ` +
+      `UPDATE ${HISTORY_QUERIES_TABLE} SET name = ?, description = ?, history_max_instant_per_item = ?, ` +
       `history_max_read_interval = ?, history_read_delay = ?, start_time = ?, ` +
       `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
       `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
@@ -146,7 +154,6 @@ export default class HistoryQueryRepository {
       .run(
         command.name,
         command.description,
-        +command.enabled,
         +command.history.maxInstantPerItem,
         command.history.maxReadInterval,
         command.history.readDelay,

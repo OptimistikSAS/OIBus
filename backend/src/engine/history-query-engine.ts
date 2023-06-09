@@ -88,6 +88,7 @@ export default class HistoryQueryEngine extends BaseEngine {
     if (!historyQuery) {
       return;
     }
+    this.historyQueryService.stopHistoryQuery(historyId);
 
     await historyQuery.stop(resetCache);
     this.historyQueries.delete(historyId);

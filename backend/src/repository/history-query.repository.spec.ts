@@ -250,7 +250,6 @@ describe('History Query repository', () => {
     const command: HistoryQueryCommandDTO = {
       name: 'historyQuery1',
       description: 'My history query',
-      enabled: true,
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
@@ -281,7 +280,7 @@ describe('History Query repository', () => {
       id: 'id1',
       name: 'historyQuery1',
       description: 'My history query',
-      enabled: true,
+      enabled: false,
       maxInstantPerItem: true,
       maxReadInterval: 3600,
       readDelay: 0,
@@ -316,7 +315,7 @@ describe('History Query repository', () => {
       '123456',
       command.name,
       command.description,
-      +command.enabled,
+      0,
       +command.history.maxInstantPerItem,
       command.history.maxReadInterval,
       command.history.readDelay,
@@ -352,7 +351,6 @@ describe('History Query repository', () => {
     const command: HistoryQueryCommandDTO = {
       name: 'historyQuery1',
       description: 'My history query',
-      enabled: true,
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
@@ -380,7 +378,7 @@ describe('History Query repository', () => {
     };
     repository.updateHistoryQuery('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
-      `UPDATE history_queries SET name = ?, description = ?, enabled = ?, history_max_instant_per_item = ?, ` +
+      `UPDATE history_queries SET name = ?, description = ?, history_max_instant_per_item = ?, ` +
         `history_max_read_interval = ?, history_read_delay = ?, start_time = ?, ` +
         `end_time = ?, south_type = ?, north_type = ?, south_settings = ?, north_settings = ?,` +
         `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
@@ -390,7 +388,6 @@ describe('History Query repository', () => {
     expect(run).toHaveBeenCalledWith(
       command.name,
       command.description,
-      +command.enabled,
       +command.history.maxInstantPerItem,
       command.history.maxReadInterval,
       command.history.readDelay,
@@ -411,6 +408,18 @@ describe('History Query repository', () => {
       command.archive.retentionDuration,
       'id1'
     );
+  });
+
+  it('should start a history query', () => {
+    repository.startHistoryQuery('id1');
+    expect(database.prepare).toHaveBeenCalledWith(`UPDATE history_queries SET enabled = ? WHERE id = ?;`);
+    expect(run).toHaveBeenCalledWith(1, 'id1');
+  });
+
+  it('should stop a history query', () => {
+    repository.stopHistoryQuery('id1');
+    expect(database.prepare).toHaveBeenCalledWith(`UPDATE history_queries SET enabled = ? WHERE id = ?;`);
+    expect(run).toHaveBeenCalledWith(0, 'id1');
   });
 
   it('should delete a history query', () => {
