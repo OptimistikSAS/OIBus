@@ -55,11 +55,19 @@ export class HistoryQueryService {
   }
 
   /**
+   * Retrieve all South items
+   * @param southId - the ID of the South connector
+   */
+  listItems(southId: string): Observable<Array<OibusItemDTO>> {
+    return this.http.get<Array<OibusItemDTO>>(`/api/history-queries/${southId}/items/all`);
+  }
+
+  /**
    * Retrieve the South items from search params
    * @param historyQueryId - the ID of the South connector
    * @param searchParams - The search params
    */
-  searchHistoryQueryItems(historyQueryId: string, searchParams: OibusItemSearchParam): Observable<Page<OibusItemDTO>> {
+  searchItems(historyQueryId: string, searchParams: OibusItemSearchParam): Observable<Page<OibusItemDTO>> {
     const params: { [key: string]: string | string[] } = {
       page: `${searchParams.page || 0}`
     };
@@ -74,7 +82,7 @@ export class HistoryQueryService {
    * @param historyQueryId - the ID of the History query
    * @param itemId - the ID of the History query item
    */
-  getSouthConnectorItem(historyQueryId: string, itemId: string): Observable<OibusItemDTO> {
+  getItem(historyQueryId: string, itemId: string): Observable<OibusItemDTO> {
     return this.http.get<OibusItemDTO>(`/api/history-queries/${historyQueryId}/items/${itemId}`);
   }
 
@@ -83,7 +91,7 @@ export class HistoryQueryService {
    * @param historyQueryId - the ID of the History query
    * @param command - The values of the History query item to create
    */
-  createSouthItem(historyQueryId: string, command: OibusItemCommandDTO): Observable<OibusItemDTO> {
+  createItem(historyQueryId: string, command: OibusItemCommandDTO): Observable<OibusItemDTO> {
     return this.http.post<OibusItemDTO>(`/api/history-queries/${historyQueryId}/items`, command);
   }
 
@@ -93,7 +101,7 @@ export class HistoryQueryService {
    * @param itemId - the ID of the History query item
    * @param command - the new values of the selected History query item
    */
-  updateSouthItem(historyQueryId: string, itemId: string, command: OibusItemCommandDTO) {
+  updateItem(historyQueryId: string, itemId: string, command: OibusItemCommandDTO) {
     return this.http.put<void>(`/api/history-queries/${historyQueryId}/items/${itemId}`, command);
   }
 
@@ -102,7 +110,7 @@ export class HistoryQueryService {
    * @param historyQueryId - the ID of the History query
    * @param itemId - the ID of the History query item to delete
    */
-  deleteSouthItem(historyQueryId: string, itemId: string) {
+  deleteItem(historyQueryId: string, itemId: string) {
     return this.http.delete<void>(`/api/history-queries/${historyQueryId}/items/${itemId}`);
   }
 

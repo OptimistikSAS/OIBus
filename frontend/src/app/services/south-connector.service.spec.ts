@@ -149,7 +149,7 @@ describe('SouthConnectorService', () => {
     let expectedSouthConnectorItem: object | null = null;
     const southConnectorItem = { id: 'southItemId1' };
 
-    service.getItems('id1', 'southItemId1').subscribe(c => (expectedSouthConnectorItem = c));
+    service.getItem('id1', 'southItemId1').subscribe(c => (expectedSouthConnectorItem = c));
 
     http.expectOne({ url: '/api/south/id1/items/southItemId1', method: 'GET' }).flush(southConnectorItem);
     expect(expectedSouthConnectorItem!).toEqual(southConnectorItem);

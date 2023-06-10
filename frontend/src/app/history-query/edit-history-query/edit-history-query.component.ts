@@ -24,6 +24,9 @@ import { HistoryQueryService } from '../../services/history-query.service';
 import { Instant } from '../../../../../shared/model/types';
 import { DatetimepickerComponent } from '../../shared/datetimepicker/datetimepicker.component';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { SouthItemsComponent } from '../../south/south-items/south-items.component';
+import { HistoryQueryItemsComponent } from '../history-query-items/history-query-items.component';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -38,7 +41,11 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
     FormComponent,
     OibScanModeComponent,
     DatetimepickerComponent,
-    BackNavigationDirective
+    BackNavigationDirective,
+    BoxComponent,
+    BoxTitleDirective,
+    SouthItemsComponent,
+    HistoryQueryItemsComponent
   ],
   templateUrl: './edit-history-query.component.html',
   styleUrls: ['./edit-history-query.component.scss']

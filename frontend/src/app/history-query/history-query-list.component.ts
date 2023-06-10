@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
 import { ModalService } from '../shared/modal.service';
@@ -38,7 +38,7 @@ const PAGE_SIZE = 20;
   styleUrls: ['./history-query-list.component.scss']
 })
 export class HistoryQueryListComponent implements OnInit {
-  allHistoryQueries: Array<HistoryQueryDTO> = [];
+  allHistoryQueries: Array<HistoryQueryDTO> | null = null;
   filteredHistoryQueries: Array<HistoryQueryDTO> = [];
   displayedHistoryQueries: Page<HistoryQueryDTO> = emptyPage();
 
@@ -82,9 +82,13 @@ export class HistoryQueryListComponent implements OnInit {
         })
       )
       .subscribe(() => {
-        this.historyQueryService.list().subscribe(queries => {
-          this.allHistoryQueries = queries;
-        });
+        this.historyQueryService
+          .list()
+          .pipe(tap(() => (this.allHistoryQueries = null)))
+          .subscribe(queries => {
+            this.allHistoryQueries = queries;
+            this.changePage(0);
+          });
         this.notificationService.success('history-query.deleted', {
           name: historyQuery.name
         });

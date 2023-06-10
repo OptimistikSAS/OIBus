@@ -186,7 +186,7 @@ export class EditSouthItemModalComponent {
     } else {
       obs = this.southConnectorService
         .updateItem(this.southConnector!.id, this.item!.id, command)
-        .pipe(switchMap(() => this.southConnectorService.getItems(this.southConnector!.id, this.item!.id)));
+        .pipe(switchMap(() => this.southConnectorService.getItem(this.southConnector!.id, this.item!.id)));
     }
     obs.pipe(this.state.pendingUntilFinalization()).subscribe(southItem => {
       this.modal.close(southItem);

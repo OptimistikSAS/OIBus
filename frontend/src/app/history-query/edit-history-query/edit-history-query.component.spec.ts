@@ -30,7 +30,7 @@ class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryCo
   }
 
   get description() {
-    return this.textarea('#history-query-description');
+    return this.input('#history-query-description');
   }
 
   get startTime() {
@@ -165,6 +165,18 @@ describe('EditHistoryQueryComponent', () => {
         },
         schema: {} as unknown
       } as SouthConnectorManifest)
+    );
+    historyQueryService.listItems.and.returnValue(
+      of([
+        {
+          id: 'id1',
+          name: 'item1',
+          connectorId: 'southId',
+          settings: {
+            query: 'sql'
+          }
+        }
+      ])
     );
     tester = new EditHistoryQueryComponentTester();
     tester.detectChanges();

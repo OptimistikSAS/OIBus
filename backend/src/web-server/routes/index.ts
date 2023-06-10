@@ -146,6 +146,8 @@ router.get('/api/history-queries/:historyQueryId/items', (ctx: KoaContext<any, a
   historyQueryController.searchHistoryQueryItems(ctx)
 );
 router.get('/api/history-queries/:historyQueryId/items/export', (ctx: KoaContext<any, any>) => historyQueryController.exportItems(ctx));
+router.get('/api/history-queries/:historyQueryId/items/all', (ctx: KoaContext<any, any>) => historyQueryController.listItems(ctx));
+
 router.get('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext<any, any>) =>
   historyQueryController.getHistoryQueryItem(ctx)
 );
