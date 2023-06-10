@@ -115,7 +115,7 @@ describe('HistoryQueryService', () => {
       { id: 'itemId', name: 'MySouthItem', connectorId: 'id1', scanModeId: 'scanModeId', settings: {} }
     ]);
 
-    service.searchHistoryQueryItems('id1', { page: 0, name: null }).subscribe(c => (expectedItems = c));
+    service.searchItems('id1', { page: 0, name: null }).subscribe(c => (expectedItems = c));
 
     http.expectOne({ url: '/api/history-queries/id1/items?page=0', method: 'GET' }).flush(southConnectorItems);
     expect(expectedItems!).toEqual(southConnectorItems);
@@ -125,7 +125,7 @@ describe('HistoryQueryService', () => {
     let expectedItem: object | null = null;
     const southConnectorItem = { id: 'itemId1' };
 
-    service.getSouthConnectorItem('id1', 'itemId1').subscribe(c => (expectedItem = c));
+    service.getItem('id1', 'itemId1').subscribe(c => (expectedItem = c));
 
     http.expectOne({ url: '/api/history-queries/id1/items/itemId1', method: 'GET' }).flush(southConnectorItem);
     expect(expectedItem!).toEqual(southConnectorItem);
@@ -139,7 +139,7 @@ describe('HistoryQueryService', () => {
       settings: {}
     };
 
-    service.createSouthItem('id1', command).subscribe(() => (done = true));
+    service.createItem('id1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries/id1/items' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -154,7 +154,7 @@ describe('HistoryQueryService', () => {
       settings: {}
     };
 
-    service.updateSouthItem('id1', 'itemId1', command).subscribe(() => (done = true));
+    service.updateItem('id1', 'itemId1', command).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/items/itemId1' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
@@ -163,7 +163,7 @@ describe('HistoryQueryService', () => {
 
   it('should delete a History query item', () => {
     let done = false;
-    service.deleteSouthItem('id1', 'itemId1').subscribe(() => (done = true));
+    service.deleteItem('id1', 'itemId1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-queries/id1/items/itemId1' });
     testRequest.flush(null);
     expect(done).toBe(true);

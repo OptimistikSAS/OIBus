@@ -64,11 +64,13 @@ describe('HistoryQueryListComponent', () => {
     expect(tester.historyQueryList.length).toBe(2);
     expect(tester.historyQueryList[0].elements('td')[0]).toContainText(historyQueries[0].name);
     expect(tester.historyQueryList[0].elements('td')[1]).toContainText(historyQueries[0].description);
-    expect(tester.historyQueryList[0].elements('td')[2].elements('button').length).toBe(1);
-    expect(tester.historyQueryList[0].elements('td')[2].elements('a').length).toBe(2);
+    expect(tester.historyQueryList[0].elements('td')[2]).toContainText('active');
+    expect(tester.historyQueryList[0].elements('td')[3].elements('button').length).toBe(1);
+    expect(tester.historyQueryList[0].elements('td')[3].elements('a').length).toBe(2);
     expect(tester.historyQueryList[1].elements('td')[0]).toContainText(historyQueries[1].name);
     expect(tester.historyQueryList[1].elements('td')[1]).toContainText(historyQueries[1].description);
-    expect(tester.historyQueryList[1].elements('td')[2].elements('button').length).toBe(1);
-    expect(tester.historyQueryList[1].elements('td')[2].elements('a').length).toBe(2);
+    expect(tester.historyQueryList[1].elements('td')[2]).toContainText('paused');
+    expect(tester.historyQueryList[1].elements('td')[3].elements('button').length).toBe(1);
+    expect(tester.historyQueryList[1].elements('td')[3].elements('a').length).toBe(2);
   });
 });

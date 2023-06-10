@@ -36,10 +36,11 @@
   <ng-container *ngIf="allHistoryQueries">
     <div *ngIf="displayedHistoryQueries.content.length !== 0; else empty">
       <table class="mt-2 table table-sm table-hover oib-table">
-        <thead class="table-light">
+        <thead>
           <tr>
-            <th translate="south.name"></th>
-            <th translate="south.description"></th>
+            <th translate="history-query.name"></th>
+            <th translate="history-query.description"></th>
+            <th translate="history-query.enabled"></th>
             <th style="width: 3%"></th>
           </tr>
         </thead>
@@ -47,18 +48,19 @@
           <tr *ngFor="let query of displayedHistoryQueries.content">
             <td>{{ query.name }}</td>
             <td>{{ query.description }}</td>
+            <td>{{ query.enabled | enabled }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Display button -->
-                <a class="btn btn-link display-south px-1 py-0" id="display-link" [routerLink]="[query.id]">
+                <a class="btn btn-link display-history-query px-1 py-0" id="display-link" [routerLink]="[query.id]">
                   <span class="fa fa-search"></span>
                 </a>
                 <!-- Edit button -->
-                <a class="btn btn-link edit-south px-1 py-0" id="edit-link" [routerLink]="[query.id, 'edit']">
+                <a class="btn btn-link edit-history-query px-1 py-0" id="edit-link" [routerLink]="[query.id, 'edit']">
                   <span class="fa fa-pencil"></span>
                 </a>
                 <!-- Delete button -->
-                <button type="button" class="btn btn-link delete-south px-1 py-0" (click)="deleteHistoryQuery(query)">
+                <button type="button" class="btn btn-link delete-history-query px-1 py-0" (click)="deleteHistoryQuery(query)">
                   <span class="fa fa-trash"></span>
                 </button>
               </div>

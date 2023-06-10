@@ -225,6 +225,11 @@ export default class HistoryQueryController extends AbstractController {
     ctx.ok(southItems);
   }
 
+  async listItems(ctx: KoaContext<void, Array<OibusItemDTO>>): Promise<void> {
+    const items = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems(ctx.params.historyQueryId);
+    ctx.ok(items);
+  }
+
   async getHistoryQueryItem(ctx: KoaContext<void, OibusItemDTO>): Promise<void> {
     const southItem = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem(ctx.params.id);
     if (southItem) {

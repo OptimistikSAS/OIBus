@@ -117,7 +117,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
         id: 'id1',
         connectorId: 'southId1'
       } as OibusItemDTO;
-      historyQueryService.createSouthItem.and.returnValue(of(createdSouthItem));
+      historyQueryService.createItem.and.returnValue(of(createdSouthItem));
 
       tester.save.click();
 
@@ -127,7 +127,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
         settings: {}
       };
 
-      expect(historyQueryService.createSouthItem).toHaveBeenCalledWith('historyId', expectedCommand);
+      expect(historyQueryService.createItem).toHaveBeenCalledWith('historyId', expectedCommand);
       expect(fakeActiveModal.close).toHaveBeenCalledWith(createdSouthItem);
     }));
 
@@ -161,7 +161,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
         id: 'id1',
         connectorId: 'historyId'
       } as OibusItemDTO;
-      historyQueryService.createSouthItem.and.returnValue(of(createdSouthItem));
+      historyQueryService.createItem.and.returnValue(of(createdSouthItem));
 
       tester.save.click();
 
@@ -171,7 +171,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
         settings: {}
       };
 
-      expect(historyQueryService.createSouthItem).toHaveBeenCalledWith('historyId', expectedCommand);
+      expect(historyQueryService.createItem).toHaveBeenCalledWith('historyId', expectedCommand);
       expect(fakeActiveModal.close).toHaveBeenCalledWith(createdSouthItem);
     }));
   });
@@ -185,8 +185,8 @@ describe('EditHistoryQueryItemModalComponent', () => {
     };
 
     beforeEach(() => {
-      historyQueryService.getSouthConnectorItem.and.returnValue(of(southItem));
-      historyQueryService.updateSouthItem.and.returnValue(of(undefined));
+      historyQueryService.getItem.and.returnValue(of(southItem));
+      historyQueryService.updateItem.and.returnValue(of(undefined));
 
       tester.componentInstance.prepareForEdition(historyQuery, southItemSchema, southItem);
       tester.detectChanges();
@@ -215,8 +215,8 @@ describe('EditHistoryQueryItemModalComponent', () => {
         settings: {}
       };
 
-      expect(historyQueryService.updateSouthItem).toHaveBeenCalledWith('historyId', 'id1', expectedCommand);
-      expect(historyQueryService.getSouthConnectorItem).toHaveBeenCalledWith('historyId', 'id1');
+      expect(historyQueryService.updateItem).toHaveBeenCalledWith('historyId', 'id1', expectedCommand);
+      expect(historyQueryService.getItem).toHaveBeenCalledWith('historyId', 'id1');
       expect(fakeActiveModal.close).toHaveBeenCalledWith(southItem);
     }));
 
