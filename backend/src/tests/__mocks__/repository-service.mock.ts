@@ -39,6 +39,7 @@ export default jest.fn().mockImplementation(() => ({
   historyQueryItemRepository: {
     getHistoryItem: jest.fn(),
     getHistoryItems: jest.fn(),
+    list: jest.fn(),
     createHistoryItem: jest.fn(),
     updateHistoryItem: jest.fn(),
     deleteHistoryItem: jest.fn(),

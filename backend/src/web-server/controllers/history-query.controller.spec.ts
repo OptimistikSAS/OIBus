@@ -625,6 +625,15 @@ describe('History query controller', () => {
     expect(ctx.ok).toHaveBeenCalledWith(page);
   });
 
+  it('listItems() should return all items', async () => {
+    ctx.params.historyQueryId = 'id';
+    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems.mockReturnValue([oibusItem]);
+
+    await historyQueryController.listItems(ctx);
+    expect(ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems).toHaveBeenCalledWith('id');
+    expect(ctx.ok).toHaveBeenCalledWith([oibusItem]);
+  });
+
   it('getHistoryItem() should return item', async () => {
     ctx.params.id = 'id';
     ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem.mockReturnValue(oibusItem);

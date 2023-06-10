@@ -120,7 +120,7 @@ export class SouthConnectorService {
    * @param southId - the ID of the South connector
    * @param southItemId - the ID of the South connector item
    */
-  getItems(southId: string, southItemId: string): Observable<OibusItemDTO> {
+  getItem(southId: string, southItemId: string): Observable<OibusItemDTO> {
     return this.http.get<OibusItemDTO>(`/api/south/${southId}/items/${southItemId}`);
   }
 

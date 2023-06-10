@@ -191,7 +191,7 @@ describe('EditSouthItemModalComponent', () => {
     };
 
     beforeEach(() => {
-      southConnectorService.getItems.and.returnValue(of(southItem));
+      southConnectorService.getItem.and.returnValue(of(southItem));
       southConnectorService.updateItem.and.returnValue(of(undefined));
 
       tester.componentInstance.prepareForEdition(southConnector, southItemSchema, scanModes, southItem);
@@ -223,7 +223,7 @@ describe('EditSouthItemModalComponent', () => {
       };
 
       expect(southConnectorService.updateItem).toHaveBeenCalledWith('southId1', 'id1', expectedCommand);
-      expect(southConnectorService.getItems).toHaveBeenCalledWith('southId1', 'id1');
+      expect(southConnectorService.getItem).toHaveBeenCalledWith('southId1', 'id1');
       expect(fakeActiveModal.close).toHaveBeenCalledWith(southItem);
     }));
 
