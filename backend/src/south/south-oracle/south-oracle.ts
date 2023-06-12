@@ -16,6 +16,7 @@ let oracledb: {
   OUT_FORMAT_OBJECT: any;
   getConnection: (arg0: { user: any; password: string; connectString: string }) => any;
 } | null = null;
+// @ts-ignore
 import('oracledb')
   .then(obj => {
     oracledb = obj;
