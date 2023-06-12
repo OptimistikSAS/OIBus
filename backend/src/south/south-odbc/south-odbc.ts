@@ -13,6 +13,7 @@ import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 
 let odbc: any | null = null;
+// @ts-ignore
 import('odbc')
   .then(obj => {
     odbc = obj;
