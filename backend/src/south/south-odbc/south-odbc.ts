@@ -11,7 +11,15 @@ import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
-import odbc from 'odbc';
+
+let odbc: any | null = null;
+import('odbc')
+  .then(obj => {
+    odbc = obj;
+  })
+  .catch(() => {
+    console.error('Could not load odbc');
+  });
 
 /**
  * Class SouthODBC - Retrieve data from SQL databases with ODBC driver and send them to the cache as CSV files.
@@ -98,6 +106,10 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory 
    * Apply the SQL query to the target ODBC database
    */
   async getDataFromOdbc(item: OibusItemDTO, startTime: Instant, endTime: Instant) {
+    if (!odbc) {
+      throw new Error('odbc library not loaded');
+    }
+
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?');
 
     let connectionString = `Driver=${this.configuration.settings.driverPath};SERVER=${this.configuration.settings.host};PORT=${this.configuration.settings.port};`;
