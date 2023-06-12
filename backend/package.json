@@ -73,8 +73,6 @@
     "node-opcua-certificate-manager": "2.99.0",
     "node-opcua-client": "2.102.0",
     "object-path": "0.11.8",
-    "odbc": "2.4.7",
-    "oracledb": "6.0.0",
     "papaparse": "5.4.1",
     "pg": "8.10.0",
     "pino": "8.12.0",
@@ -85,6 +83,10 @@
     "selfsigned": "2.1.1",
     "sprintf-js": "1.1.2",
     "thread-stream": "2.3.0"
+  },
+  "optionalDependencies": {
+    "odbc": "2.4.7",
+    "oracledb": "6.0.0"
   },
   "devDependencies": {
     "@types/basic-auth": "1.1.3",

@@ -11,7 +11,18 @@ import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 
-import oracledb from 'oracledb';
+let oracledb: {
+  outFormat: any;
+  OUT_FORMAT_OBJECT: any;
+  getConnection: (arg0: { user: any; password: string; connectString: string }) => any;
+} | null = null;
+import('oracledb')
+  .then(obj => {
+    oracledb = obj;
+  })
+  .catch(() => {
+    console.error('Could not load oracledb');
+  });
 import { DateTime } from 'luxon';
 
 /**
@@ -99,6 +110,9 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
    * Apply the SQL query to the target Oracle database
    */
   async getDataFromOracle(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
+    if (!oracledb) {
+      throw new Error('oracledb library not loaded');
+    }
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, ':date1').replace(/@EndTime/g, ':date2');
 
     const config = {
