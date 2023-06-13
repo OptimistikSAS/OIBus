@@ -244,4 +244,26 @@ describe('SouthConnectorService', () => {
 
     expect(actualImportation).toBe(true);
   });
+
+  it('should test a South connector connection', () => {
+    let done = false;
+    const command: SouthConnectorCommandDTO = {
+      name: 'mySouthConnector',
+      description: 'a test south connector',
+      enabled: true,
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 0,
+        readDelay: 200
+      },
+      type: 'Test',
+      settings: {}
+    };
+
+    service.testConnection(command).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/test-connection' });
+    expect(testRequest.request.body).toEqual(command);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
 });

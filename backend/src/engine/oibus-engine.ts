@@ -9,7 +9,12 @@ import SouthService from '../service/south.service';
 import { createFolder } from '../service/utils';
 import path from 'node:path';
 
-import { OibusItemCommandDTO, OibusItemDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
+import {
+  OibusItemCommandDTO,
+  OibusItemDTO,
+  SouthConnectorCommandDTO,
+  SouthConnectorDTO
+} from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
@@ -128,7 +133,7 @@ export default class OIBusEngine extends BaseEngine {
    * Tests a SouthConnector based on the settings
    * @throws {Error} Error with a message specifying wrong settings
    */
-  async testSouth(settings: SouthConnectorDTO): Promise<void> {
+  async testSouth(settings: SouthConnectorCommandDTO): Promise<void> {
     const SouthConnectorClass = this.southService.getSouthClass(settings.type);
 
     if (!('testConnection' in SouthConnectorClass)) {

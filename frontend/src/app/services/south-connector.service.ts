@@ -177,4 +177,8 @@ export class SouthConnectorService {
     formData.set('file', file);
     return this.http.post<void>(`/api/south/${southId}/items/upload`, formData);
   }
+
+  testConnection(settings: SouthConnectorCommandDTO): Observable<void> {
+    return this.http.put<void>(`/api/south/test-connection`, settings);
+  }
 }

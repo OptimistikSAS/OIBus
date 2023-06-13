@@ -97,4 +97,18 @@ describe('south service', () => {
     expect(error).toEqual(new Error('South connector of type another not installed'));
     expect(connector).not.toBeDefined();
   });
+
+  it('should get South type', () => {
+    expect(service.getSouthClass('mqtt')).toBeDefined();
+  });
+
+  it('should throw an error if South type not found', () => {
+    let error;
+    try {
+      service.getSouthClass('bad type');
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error(`South connector of type bad type not installed`));
+  });
 });
