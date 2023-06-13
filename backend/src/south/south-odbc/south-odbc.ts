@@ -14,6 +14,7 @@ import { QueriesHistory, TestsConnection } from '../south-interface';
 
 let odbc: any | null = null;
 // @ts-ignore
+// eslint-disable-next-line import/no-unresolved
 import('odbc')
   .then(obj => {
     odbc = obj;

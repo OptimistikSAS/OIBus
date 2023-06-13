@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // @ts-ignore
 import ads from 'ads-client';
 import SouthADS from './south-ads';

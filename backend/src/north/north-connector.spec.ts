@@ -90,8 +90,8 @@ const flushPromises = () => new Promise(jest.requireActual('timers').setImmediat
 let configuration: NorthConnectorDTO;
 
 class TestNorth extends NorthConnector implements HandlesFile, HandlesValues {
-  async handleValues(values: Array<any>): Promise<void> {}
-  async handleFile(filePath: string): Promise<void> {}
+  async handleValues(): Promise<void> {}
+  async handleFile(): Promise<void> {}
 }
 let north: TestNorth;
 

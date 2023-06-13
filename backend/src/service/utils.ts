@@ -8,7 +8,6 @@ import { DateTime } from 'luxon';
 
 import { Instant, Interval, Timezone } from '../../../shared/model/types';
 import csv from 'papaparse';
-import { OibusItemDTO } from '../../../shared/model/south-connector.model';
 import pino from 'pino';
 
 const COMPRESSION_LEVEL = 9;

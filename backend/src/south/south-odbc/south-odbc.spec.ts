@@ -2,8 +2,10 @@ import path from 'node:path';
 
 import SouthODBC from './south-odbc';
 import * as utils from '../../service/utils';
+import { generateReplacementParameters } from '../../service/utils';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import pino from 'pino';
+// eslint-disable-next-line import/no-unresolved
 import odbc from 'odbc';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 import EncryptionService from '../../service/encryption.service';
@@ -12,7 +14,6 @@ import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import ProxyService from '../../service/proxy.service';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
-import { generateReplacementParameters } from '../../service/utils';
 import { DateTime } from 'luxon';
 
 jest.mock('../../service/utils');

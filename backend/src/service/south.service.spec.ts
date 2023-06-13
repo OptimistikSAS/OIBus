@@ -6,7 +6,6 @@ import RepositoryService from './repository.service';
 import pino from 'pino';
 import ProxyService from './proxy.service';
 import SouthService from './south.service';
-import { NorthCacheSettingsDTO } from '../../../shared/model/north-connector.model';
 
 jest.mock('../repository/proxy.repository');
 jest.mock('./encryption.service');
