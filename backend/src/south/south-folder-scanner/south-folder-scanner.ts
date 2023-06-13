@@ -56,10 +56,23 @@ export default class SouthFolderScanner extends SouthConnector implements Querie
     }
   }
 
-  // TODO: method needs to be implemented
   static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
     logger.trace(`Testing connection`);
-    throw new Error('TODO: method needs to be implemented');
+    const inputFolder = path.resolve(settings.inputFolder);
+
+    try {
+      await fs.access(inputFolder, fs.constants.F_OK);
+    } catch (error: any) {
+      logger.trace(`Access error on '${inputFolder}': ${error.message}`);
+      throw new Error(`Folder '${inputFolder}' does not exist`);
+    }
+
+    try {
+      await fs.access(inputFolder, fs.constants.R_OK | fs.constants.W_OK);
+    } catch (error: any) {
+      logger.trace(`Access error on '${inputFolder}': ${error.message}`);
+      throw new Error(`No read/write access on folder`);
+    }
   }
 
   /**
