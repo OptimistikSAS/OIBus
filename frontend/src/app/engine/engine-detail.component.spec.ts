@@ -110,7 +110,7 @@ describe('EngineDetailComponent', () => {
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService }
       ]
-    }).compileComponents();
+    });
 
     engineService.getEngineSettings.and.returnValue(of(engineSettings));
 
