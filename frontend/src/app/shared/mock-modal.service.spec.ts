@@ -1,4 +1,4 @@
-import { Injectable, NgModule, Type } from '@angular/core';
+import { Injectable, Type } from '@angular/core';
 import { Modal, ModalOptions, ModalService } from './modal.service';
 import { of, throwError } from 'rxjs';
 
@@ -49,15 +49,12 @@ export class MockModalService<T> {
 }
 
 /**
- * Module that can be imported in unit tests to mock modals.
+ * Providers that can be used in unit tests to mock modals.
  * It replaces ModalService by a MockModalService, that you can inject to emulate a closed or dismissed modal.
- * Import the module to your testing module to use it
+ * Add the providers to your testing module to use it
  * ```
- * imports: [MockModalModule]
+ * providers: [provideModalTesting()]
  * ```
  * It will replace the `ModalService` with the mock one, that you can manually control.
  */
-@NgModule({
-  providers: [MockModalService, { provide: ModalService, useExisting: MockModalService }]
-})
-export class MockModalModule {}
+export const provideModalTesting = () => [MockModalService, { provide: ModalService, useExisting: MockModalService }];

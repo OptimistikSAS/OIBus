@@ -6,7 +6,7 @@ import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
-import { MockModalModule, MockModalService } from '../../shared/mock-modal.service.spec';
+import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.spec';
 import { EditScanModeModalComponent } from '../edit-scan-mode-modal/edit-scan-mode-modal.component';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -55,9 +55,9 @@ describe('ScanModeListComponent', () => {
     notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
-      imports: [ScanModeListComponent, MockModalModule],
       providers: [
         provideI18nTesting(),
+        provideModalTesting(),
         { provide: ScanModeService, useValue: scanModeService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService }

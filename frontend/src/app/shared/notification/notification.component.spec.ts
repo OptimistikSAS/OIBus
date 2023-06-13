@@ -3,7 +3,6 @@ import { ComponentTester } from 'ngx-speculoos';
 
 import { NotificationService } from '../notification.service';
 import { NotificationComponent } from './notification.component';
-import { NgbToastModule } from '@ng-bootstrap/ng-bootstrap';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 class NotificationComponentTester extends ComponentTester<NotificationComponent> {
@@ -22,7 +21,6 @@ describe('NotificationComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [NotificationComponent, NgbToastModule],
       providers: [provideI18nTesting()]
     });
     tester = new NotificationComponentTester();

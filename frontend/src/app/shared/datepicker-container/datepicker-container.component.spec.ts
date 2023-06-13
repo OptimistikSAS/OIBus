@@ -1,4 +1,4 @@
-import { ReactiveFormsModule, UntypedFormControl } from '@angular/forms';
+import { UntypedFormControl } from '@angular/forms';
 import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { NgbDatepicker, NgbInputDatepicker } from '@ng-bootstrap/ng-bootstrap';
@@ -47,7 +47,6 @@ describe('DatepickerContainerComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, TestComponent],
       providers: [noAnimation]
     });
 

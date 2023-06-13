@@ -6,7 +6,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
-import { formDirectives } from '../../shared/form-directives';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { User } from '../../../../../shared/model/user.model';
 
@@ -52,7 +51,6 @@ describe('ChangePasswordModalComponent', () => {
     userSettingsService = createMock(UserSettingsService);
 
     TestBed.configureTestingModule({
-      imports: [...formDirectives, ChangePasswordModalComponent],
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: activeModal },

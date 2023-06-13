@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
 import { provideRouter } from '@angular/router';
 import { ComponentTester, createMock } from 'ngx-speculoos';
-import { NavbarComponent } from './navbar/navbar.component';
 import { provideI18nTesting } from '../i18n/mock-i18n';
 import { WindowService } from './shared/window.service';
 import { CurrentUserService } from './shared/current-user.service';
@@ -44,7 +43,6 @@ describe('AppComponent', () => {
     engineService = createMock(EngineService);
 
     TestBed.configureTestingModule({
-      imports: [AppComponent, NavbarComponent],
       providers: [
         provideRouter([]),
         provideI18nTesting(),

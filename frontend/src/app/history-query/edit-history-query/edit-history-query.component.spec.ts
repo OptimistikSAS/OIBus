@@ -108,7 +108,6 @@ describe('EditHistoryQueryComponent', () => {
     proxyService = createMock(ProxyService);
 
     TestBed.configureTestingModule({
-      imports: [EditHistoryQueryComponent],
       providers: [
         provideI18nTesting(),
         provideRouter([]),

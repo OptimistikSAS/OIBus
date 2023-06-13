@@ -64,7 +64,6 @@ describe('HistoryQueryDisplayComponent', () => {
     historyQueryService = createMock(HistoryQueryService);
     scanModeService = createMock(ScanModeService);
     TestBed.configureTestingModule({
-      imports: [HistoryQueryDetailComponent],
       providers: [
         provideI18nTesting(),
         provideRouter([]),

@@ -45,7 +45,6 @@ describe('LoginComponent', () => {
     requestedUrlService.getRequestedUrl.and.returnValue('/about');
 
     TestBed.configureTestingModule({
-      imports: [LoginComponent, DefaultValidationErrorsComponent],
       providers: [
         provideHttpClient(),
         provideI18nTesting(),

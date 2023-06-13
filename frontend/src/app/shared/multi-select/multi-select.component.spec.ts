@@ -2,7 +2,7 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 
 import { MultiSelectComponent } from './multi-select.component';
 import { Component } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import { ComponentTester, TestButton } from 'ngx-speculoos';
 import { MultiSelectOptionDirective } from './multi-select-option.directive';
 import { noAnimation } from '../test-utils';
@@ -83,7 +83,6 @@ describe('MultiSelectComponent', () => {
   describe('without compareWith', () => {
     beforeEach(() => {
       TestBed.configureTestingModule({
-        imports: [ReactiveFormsModule, MultiSelectComponent, MultiSelectOptionDirective],
         providers: [noAnimation]
       });
 
@@ -205,7 +204,6 @@ describe('MultiSelectComponent', () => {
       );
 
       TestBed.configureTestingModule({
-        imports: [ReactiveFormsModule, MultiSelectComponent, MultiSelectOptionDirective],
         providers: [noAnimation]
       });
 

@@ -1,11 +1,10 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 
 import { PaginationComponent } from './pagination.component';
-import { NgbPagination, NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { Component } from '@angular/core';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { ActivatedRoute, Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
 import { emptyPage, toPage } from '../test-utils';
 import { Page } from '../../../../../shared/model/types';
 
@@ -44,9 +43,7 @@ describe('PaginationComponent', () => {
 
   describe('without routing', () => {
     beforeEach(() => {
-      TestBed.configureTestingModule({
-        imports: [NgbPaginationModule, RouterTestingModule, PaginationComponent, TestComponent]
-      });
+      TestBed.configureTestingModule({});
 
       tester = new TestComponentTester();
     });
@@ -89,7 +86,6 @@ describe('PaginationComponent', () => {
       router = createMock(Router);
 
       TestBed.configureTestingModule({
-        imports: [NgbPaginationModule, PaginationComponent, TestComponent],
         providers: [
           { provide: ActivatedRoute, useValue: route },
           { provide: Router, useValue: router }

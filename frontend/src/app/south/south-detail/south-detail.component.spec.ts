@@ -86,7 +86,6 @@ describe('SouthDetailComponent', () => {
     notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
-      imports: [SouthDetailComponent],
       providers: [
         provideI18nTesting(),
         provideRouter([]),

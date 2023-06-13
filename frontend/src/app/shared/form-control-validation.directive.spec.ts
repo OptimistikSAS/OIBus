@@ -42,9 +42,7 @@ describe('FormControlValidationDirective', () => {
   let tester: FormComponentTester;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      imports: [FormComponent, ReactiveFormsModule]
-    });
+    TestBed.configureTestingModule({});
 
     tester = new FormComponentTester();
     tester.detectChanges();

@@ -53,7 +53,6 @@ describe('EditNorthComponent', () => {
     proxyService = createMock(ProxyService);
 
     TestBed.configureTestingModule({
-      imports: [EditNorthComponent],
       providers: [
         provideI18nTesting(),
         provideRouter([]),

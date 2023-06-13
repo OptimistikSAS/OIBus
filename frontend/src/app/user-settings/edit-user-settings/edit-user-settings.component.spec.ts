@@ -3,7 +3,7 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { EditUserSettingsComponent } from './edit-user-settings.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { of } from 'rxjs';
-import { MockModalModule, MockModalService } from '../../shared/mock-modal.service.spec';
+import { MockModalService, provideModalTesting } from '../../shared/mock-modal.service.spec';
 import { ChangePasswordModalComponent } from '../change-password-modal/change-password-modal.component';
 import { User, UserCommandDTO } from '../../../../../shared/model/user.model';
 import { TestTypeahead } from '../../shared/typeahead.test-utils';
@@ -12,7 +12,6 @@ import { WindowService } from '../../shared/window.service';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../../shared/typeahead';
-import { formDirectives } from '../../shared/form-directives';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 class EditUserSettingsComponentTester extends ComponentTester<EditUserSettingsComponent> {
@@ -59,9 +58,9 @@ describe('EditUserSettingsComponent', () => {
     currentUserService = createMock(CurrentUserService);
 
     TestBed.configureTestingModule({
-      imports: [EditUserSettingsComponent, MockModalModule, ChangePasswordModalComponent, ...formDirectives],
       providers: [
         provideI18nTesting(),
+        provideModalTesting(),
         { provide: UserSettingsService, useValue: userSettingsService },
         { provide: WindowService, useValue: windowService },
         { provide: CurrentUserService, useValue: currentUserService }

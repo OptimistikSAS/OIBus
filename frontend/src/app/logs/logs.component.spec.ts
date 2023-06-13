@@ -58,7 +58,6 @@ describe('LogsComponent', () => {
     logService = createMock(LogService);
 
     TestBed.configureTestingModule({
-      imports: [LogsComponent],
       providers: [
         provideI18nTesting(),
         provideRouter([]),
