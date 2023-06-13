@@ -7,7 +7,7 @@ import { CurrentUserService } from '../../shared/current-user.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideTestingI18n } from '../../../i18n/mock-i18n';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
-import { AuthenticationGuard } from '../authentication.guard';
+import { RequestedUrlService } from '../authentication.guard';
 
 class LoginComponentTester extends ComponentTester<LoginComponent> {
   constructor() {
@@ -41,8 +41,8 @@ describe('LoginComponent', () => {
     currentUserService = createMock(CurrentUserService);
     router = createMock(Router);
 
-    const authenticationGuard = jasmine.createSpyObj<AuthenticationGuard>('AuthenticationGuard', ['getRequestedUrl']);
-    authenticationGuard.getRequestedUrl.and.returnValue('/about');
+    const requestedUrlService = createMock(RequestedUrlService);
+    requestedUrlService.getRequestedUrl.and.returnValue('/about');
 
     TestBed.configureTestingModule({
       imports: [LoginComponent, DefaultValidationErrorsComponent],
@@ -51,7 +51,7 @@ describe('LoginComponent', () => {
         provideTestingI18n(),
         { provide: Router, useValue: router },
         { provide: CurrentUserService, useValue: currentUserService },
-        { provide: AuthenticationGuard, useValue: authenticationGuard }
+        { provide: RequestedUrlService, useValue: requestedUrlService }
       ]
     });
 
