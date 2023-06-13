@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { AboutComponent } from './about.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
-import { provideTestingI18n } from '../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { EngineService } from '../services/engine.service';
 import { of } from 'rxjs';
 
@@ -60,7 +60,7 @@ describe('AboutComponent', () => {
 
     TestBed.configureTestingModule({
       imports: [AboutComponent],
-      providers: [provideTestingI18n(), { provide: EngineService, useValue: engineService }]
+      providers: [provideI18nTesting(), { provide: EngineService, useValue: engineService }]
     });
 
     tester = new AboutComponentTester();

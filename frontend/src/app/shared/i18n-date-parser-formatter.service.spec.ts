@@ -2,17 +2,17 @@ import { TestBed } from '@angular/core/testing';
 
 import { I18nDateParserFormatterService } from './i18n-date-parser-formatter.service';
 import { NgbDateAdapter, NgbDateParserFormatter, NgbTimeAdapter } from '@ng-bootstrap/ng-bootstrap';
-import { MockI18nModule } from '../../i18n/mock-i18n.spec';
 import { IsoDateAdapterService } from './iso-date-adapter.service';
 import { IsoTimeAdapterService } from './iso-time-adapter.service';
+import { provideI18nTesting } from '../../i18n/mock-i18n';
 
 describe('I18nDateParserFormatterService', () => {
   let service: NgbDateParserFormatter;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [MockI18nModule],
       providers: [
+        provideI18nTesting(),
         { provide: NgbDateAdapter, useClass: IsoDateAdapterService },
         { provide: NgbDateParserFormatter, useClass: I18nDateParserFormatterService },
         { provide: NgbTimeAdapter, useClass: IsoTimeAdapterService }

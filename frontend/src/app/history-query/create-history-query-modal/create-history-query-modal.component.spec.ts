@@ -3,7 +3,6 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
 import { of } from 'rxjs';
 import { Router } from '@angular/router';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -12,6 +11,7 @@ import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
 import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 class CreateHistoryQueryModalComponentTester extends ComponentTester<CreateHistoryQueryModalComponent> {
   constructor() {
@@ -75,8 +75,9 @@ describe('CreateHistoryQueryModalComponent', () => {
     router = createMock(Router);
 
     TestBed.configureTestingModule({
-      imports: [MockI18nModule, HttpClientTestingModule, CreateHistoryQueryModalComponent],
+      imports: [HttpClientTestingModule, CreateHistoryQueryModalComponent],
       providers: [
+        provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: SouthConnectorService, useValue: southConnectorService },

@@ -2,14 +2,14 @@ import { DurationPipe } from './duration.pipe';
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { LOCALE_ID } from '@angular/core';
-import { MockI18nModule } from '../../i18n/mock-i18n.spec';
+import { provideI18nTesting } from '../../i18n/mock-i18n';
 
 describe('DurationPipe', () => {
   let pipe: DurationPipe;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [MockI18nModule]
+      providers: [provideI18nTesting()]
     });
 
     pipe = new DurationPipe(TestBed.inject(TranslateService), TestBed.inject(LOCALE_ID));

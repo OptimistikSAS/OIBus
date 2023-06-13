@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { NorthListComponent } from './north-list.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
-import { provideTestingI18n } from '../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { NorthConnectorService } from '../services/north-connector.service';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
@@ -49,7 +49,7 @@ describe('NorthListComponent', () => {
     TestBed.configureTestingModule({
       imports: [NorthListComponent],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         provideRouter([]),
         provideHttpClient(),
         { provide: NorthConnectorService, useValue: northConnectorService }

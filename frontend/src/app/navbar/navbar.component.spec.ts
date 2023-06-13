@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { NavbarComponent } from './navbar.component';
 import { provideRouter } from '@angular/router';
 import { ComponentTester, createMock } from 'ngx-speculoos';
-import { provideTestingI18n } from '../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { CurrentUserService } from '../shared/current-user.service';
 import { of } from 'rxjs';
 import { User } from '../../../../shared/model/user.model';
@@ -43,7 +43,7 @@ describe('NavbarComponent', () => {
       imports: [NavbarComponent],
       providers: [
         provideRouter([]),
-        provideTestingI18n(),
+        provideI18nTesting(),
         { provide: CurrentUserService, useValue: currentUserService },
         { provide: EngineService, useValue: engineService }
       ]

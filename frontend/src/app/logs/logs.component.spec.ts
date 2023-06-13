@@ -2,7 +2,7 @@ import { discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/te
 
 import { LogsComponent } from './logs.component';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
-import { provideTestingI18n } from '../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { LogService } from '../services/log.service';
@@ -60,7 +60,7 @@ describe('LogsComponent', () => {
     TestBed.configureTestingModule({
       imports: [LogsComponent],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         provideRouter([]),
         provideHttpClient(),
         { provide: LogService, useValue: logService },

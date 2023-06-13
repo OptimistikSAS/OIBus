@@ -4,7 +4,7 @@ import { NorthDetailComponent } from './north-detail.component';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
-import { provideTestingI18n } from '../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
@@ -85,7 +85,7 @@ describe('NorthDetailComponent', () => {
     TestBed.configureTestingModule({
       imports: [NorthDetailComponent],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         provideRouter([]),
         provideHttpClient(),
         {

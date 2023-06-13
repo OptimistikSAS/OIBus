@@ -5,7 +5,7 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { EngineSettingsDTO } from '../../../../shared/model/engine.model';
 import { of, Subject } from 'rxjs';
 import { EngineService } from '../services/engine.service';
-import { provideTestingI18n } from '../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { ProxyListComponent } from './proxy-list/proxy-list.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
@@ -115,7 +115,7 @@ describe('EngineDetailComponent', () => {
     TestBed.configureTestingModule({
       imports: [EngineDetailComponent, ProxyListComponent],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         provideRouter([]),
         provideHttpClient(),
         { provide: EngineService, useValue: engineService },

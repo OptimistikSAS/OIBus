@@ -3,12 +3,12 @@ import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { ComponentTester } from 'ngx-speculoos';
 import { BoxComponent, BoxTitleDirective } from './box.component';
-import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
   template: `<oib-box [boxTitle]="title"> This is the content </oib-box>`,
   standalone: true,
-  imports: [MockI18nModule, BoxComponent, BoxTitleDirective]
+  imports: [BoxComponent, BoxTitleDirective]
 })
 class TestComponent {
   title = 'common.yes';
@@ -33,7 +33,8 @@ describe('BoxComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [BoxComponent, MockI18nModule, BoxTitleDirective, TestComponent]
+      imports: [BoxComponent, BoxTitleDirective, TestComponent],
+      providers: [provideI18nTesting()]
     });
   });
 

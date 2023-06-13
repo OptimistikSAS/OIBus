@@ -3,11 +3,11 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { MockI18nModule } from '../../../../i18n/mock-i18n.spec';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { of } from 'rxjs';
 import { NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
 import { Component } from '@angular/core';
+import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 
 @Component({
   template: `<oib-error-files [northConnector]="northConnector"></oib-error-files>`,
@@ -39,8 +39,8 @@ describe('ErrorFilesComponent', () => {
     northConnectorService = createMock(NorthConnectorService);
 
     TestBed.configureTestingModule({
-      imports: [MockI18nModule, ReactiveFormsModule, HttpClientTestingModule, TestComponent],
-      providers: [{ provide: NorthConnectorService, useValue: northConnectorService }]
+      imports: [ReactiveFormsModule, HttpClientTestingModule, TestComponent],
+      providers: [provideI18nTesting(), { provide: NorthConnectorService, useValue: northConnectorService }]
     });
 
     tester = new ErrorFilesComponentTester();

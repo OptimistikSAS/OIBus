@@ -5,10 +5,10 @@ import { fakeAsync, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
-import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { ScanModeCommandDTO, ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 class EditScanModeModalComponentTester extends ComponentTester<EditScanModeModalComponent> {
   constructor() {
@@ -50,8 +50,9 @@ describe('EditScanModeModalComponent', () => {
     scanModeService = createMock(ScanModeService);
 
     TestBed.configureTestingModule({
-      imports: [MockI18nModule, ReactiveFormsModule, HttpClientTestingModule, EditScanModeModalComponent, DefaultValidationErrorsComponent],
+      imports: [ReactiveFormsModule, HttpClientTestingModule, EditScanModeModalComponent, DefaultValidationErrorsComponent],
       providers: [
+        provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },
         { provide: ScanModeService, useValue: scanModeService }
       ]

@@ -15,7 +15,7 @@ export class CustomMissingTranslationHandler implements MissingTranslationHandle
  * Returns the necessary providers for i18n from ngx-translate to use in a test.
  * Uses the EN locale and a custom missing translation handler that throws an error.
  */
-export const provideTestingI18n = () => {
+export const provideI18nTesting = () => {
   return [
     importProvidersFrom(
       TranslateModule.forRoot({

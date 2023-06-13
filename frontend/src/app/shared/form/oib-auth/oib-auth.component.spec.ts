@@ -6,7 +6,7 @@ import { OibAuthenticationFormControl } from '../../../../../../shared/model/for
 import { formDirectives } from '../../form-directives';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup, FormRecord } from '@angular/forms';
-import { MockI18nModule } from '../../../../i18n/mock-i18n.spec';
+import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 
 @Component({
   template: `<form [formGroup]="form">
@@ -78,7 +78,7 @@ describe('OibAuthComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [OibAuthComponent, MockI18nModule]
+      providers: [provideI18nTesting()]
     });
 
     tester = new OibFormComponentTester();

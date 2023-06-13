@@ -2,12 +2,11 @@ import { TestBed } from '@angular/core/testing';
 
 import { ComponentTester } from 'ngx-speculoos';
 import { SouthMetricsComponent } from './south-metrics.component';
-import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
 import { Component } from '@angular/core';
 import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { provideTestingI18n } from '../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
   template: `<oib-south-metrics [southConnector]="southConnector"></oib-south-metrics>`,
@@ -38,9 +37,9 @@ describe('SouthMetricsComponent', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      imports: [MockI18nModule, SouthMetricsComponent],
+      imports: [SouthMetricsComponent],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: NotificationService, useValue: notificationService }
       ]

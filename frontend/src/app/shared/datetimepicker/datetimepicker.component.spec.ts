@@ -5,26 +5,18 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { ComponentTester } from 'ngx-speculoos';
 import { TestDatetimepicker } from './datetimepicker.test-utils';
 import { noAnimation } from '../test-utils';
-import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
 import { formDirectives } from '../form-directives';
 import { DatetimepickerComponent } from './datetimepicker.component';
 import { provideDatepicker } from '../datepicker.providers';
 import { DatepickerContainerComponent } from '../datepicker-container/datepicker-container.component';
 import { NgbInputDatepicker, NgbTimepicker } from '@ng-bootstrap/ng-bootstrap';
 import { NgTemplateOutlet } from '@angular/common';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
   template: '',
   standalone: true,
-  imports: [
-    DatetimepickerComponent,
-    DatepickerContainerComponent,
-    NgTemplateOutlet,
-    NgbInputDatepicker,
-    NgbTimepicker,
-    ...formDirectives,
-    MockI18nModule
-  ],
+  imports: [DatetimepickerComponent, DatepickerContainerComponent, NgTemplateOutlet, NgbInputDatepicker, NgbTimepicker, ...formDirectives],
   providers: [noAnimation, provideDatepicker()]
 })
 class TestComponent {
@@ -59,7 +51,7 @@ describe('DatetimepickerComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [TestComponent]
+      providers: [provideI18nTesting()]
     });
   });
 

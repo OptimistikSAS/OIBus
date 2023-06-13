@@ -3,7 +3,7 @@ import { AppComponent } from './app.component';
 import { provideRouter } from '@angular/router';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NavbarComponent } from './navbar/navbar.component';
-import { provideTestingI18n } from '../i18n/mock-i18n';
+import { provideI18nTesting } from '../i18n/mock-i18n';
 import { WindowService } from './shared/window.service';
 import { CurrentUserService } from './shared/current-user.service';
 import { User } from '../../../shared/model/user.model';
@@ -47,7 +47,7 @@ describe('AppComponent', () => {
       imports: [AppComponent, NavbarComponent],
       providers: [
         provideRouter([]),
-        provideTestingI18n(),
+        provideI18nTesting(),
         { provide: WindowService, useValue: windowService },
         { provide: CurrentUserService, useValue: currentUserService },
         { provide: EngineService, useValue: engineService }
