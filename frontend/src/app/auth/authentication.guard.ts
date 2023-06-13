@@ -1,7 +1,22 @@
-import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { inject, Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, CanActivateChildFn, Router, RouterStateSnapshot } from '@angular/router';
+import { of } from 'rxjs';
 import { WindowService } from '../shared/window.service';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class RequestedUrlService {
+  private requestedUrl: string | null = null;
+
+  getRequestedUrl(): string {
+    return this.requestedUrl ?? '/';
+  }
+
+  setRequestedUrl(url: string): void {
+    this.requestedUrl = url;
+  }
+}
 
 /**
  * An authentication guard that checks if the ID token is present, except when authentication is disabled, which only happens
@@ -9,32 +24,15 @@ import { WindowService } from '../shared/window.service';
  * The guard is currently only a CanActivateChild guard, but could also implement CanActivate using the same strategy if
  * needed.
  */
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthenticationGuard {
-  private requestedUrl: string | null = null;
+export const authenticationGuard: CanActivateChildFn = (childRoute: ActivatedRouteSnapshot, routerState: RouterStateSnapshot) => {
+  const windowService = inject(WindowService);
+  const router = inject(Router);
+  const requestedUrlService = inject(RequestedUrlService);
 
-  constructor(private router: Router, private windowService: WindowService) {}
+  const allowed = !!windowService.getStorageItem('oibus-token');
 
-  canActivateChild(childRoute: ActivatedRouteSnapshot, routerState: RouterStateSnapshot): Observable<boolean | UrlTree> {
-    return this.canNavigate(routerState.url);
+  if (!allowed) {
+    requestedUrlService.setRequestedUrl(routerState.url);
   }
-
-  getRequestedUrl(): string {
-    return this.requestedUrl ?? '/';
-  }
-
-  private canNavigate(requestedUrl: string): Observable<boolean | UrlTree> {
-    const allowed = this.isTokenPresent();
-    if (!allowed) {
-      this.requestedUrl = requestedUrl;
-    }
-    return of(allowed || this.router.createUrlTree(['/login'], { queryParams: { auto: true } }));
-  }
-
-  private isTokenPresent(): boolean {
-    const token = this.windowService.getStorageItem('oibus-token');
-    return !!token;
-  }
-}
+  return of(allowed || router.createUrlTree(['/login'], { queryParams: { auto: true } }));
+};

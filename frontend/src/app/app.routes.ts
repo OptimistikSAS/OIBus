@@ -14,7 +14,7 @@ import { EditHistoryQueryComponent } from './history-query/edit-history-query/ed
 import { HistoryQueryListComponent } from './history-query/history-query-list.component';
 import { HistoryQueryDetailComponent } from './history-query/history-query-detail/history-query-detail.component';
 import { LoginComponent } from './auth/login/login.component';
-import { AuthenticationGuard } from './auth/authentication.guard';
+import { authenticationGuard } from './auth/authentication.guard';
 import { ExploreCacheComponent } from './north/explore-cache/explore-cache.component';
 import { EditUserSettingsComponent } from './user-settings/edit-user-settings/edit-user-settings.component';
 
@@ -22,7 +22,7 @@ export const ROUTES: Routes = [
   { path: 'login', component: LoginComponent },
   {
     path: '',
-    canActivateChild: [AuthenticationGuard],
+    canActivateChild: [authenticationGuard],
     children: [
       {
         path: '',

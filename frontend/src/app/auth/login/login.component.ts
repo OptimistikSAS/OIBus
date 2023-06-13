@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { AuthenticationGuard } from '../authentication.guard';
+import { RequestedUrlService } from '../authentication.guard';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { formDirectives } from '../../shared/form-directives';
 import { CurrentUserService } from '../../shared/current-user.service';
@@ -29,7 +29,7 @@ export class LoginComponent {
     private fb: FormBuilder,
     private currentUserService: CurrentUserService,
     private router: Router,
-    private authenticationGuard: AuthenticationGuard,
+    private requestedUrlService: RequestedUrlService,
     private windowService: WindowService
   ) {}
 
@@ -41,7 +41,7 @@ export class LoginComponent {
     this.loginError = false;
     this.currentUserService.loginWithPassword(this.form.value.login, this.form.value.password).subscribe({
       next: () => {
-        this.router.navigateByUrl(this.authenticationGuard.getRequestedUrl()).then(() => {
+        this.router.navigateByUrl(this.requestedUrlService.getRequestedUrl()).then(() => {
           this.windowService.reload();
         });
       },
