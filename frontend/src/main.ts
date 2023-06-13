@@ -3,19 +3,12 @@ import { provideRouter } from '@angular/router';
 import { AppComponent } from './app/app.component';
 import { ROUTES } from './app/app.routes';
 import { provideI18n } from './i18n/i18n';
-import { importProvidersFrom } from '@angular/core';
-import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
-import { AuthenticationInterceptor } from './app/auth/authentication.interceptor';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { authenticationInterceptor } from './app/auth/authentication.interceptor';
 import { provideDatepicker } from './app/shared/datepicker.providers';
 
 bootstrapApplication(AppComponent, {
-  providers: [
-    provideRouter(ROUTES),
-    provideI18n(),
-    provideDatepicker(),
-    importProvidersFrom(HttpClientModule),
-    { provide: HTTP_INTERCEPTORS, useClass: AuthenticationInterceptor, multi: true }
-  ]
+  providers: [provideRouter(ROUTES), provideI18n(), provideDatepicker(), provideHttpClient(withInterceptors([authenticationInterceptor]))]
 })
   /* eslint-disable-next-line no-console */
   .catch(err => console.error(err));

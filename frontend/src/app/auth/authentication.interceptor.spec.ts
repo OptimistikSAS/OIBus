@@ -1,11 +1,11 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HTTP_INTERCEPTORS, HttpClient } from '@angular/common/http';
-import { AuthenticationInterceptor } from './authentication.interceptor';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { authenticationInterceptor } from './authentication.interceptor';
 import { TestBed } from '@angular/core/testing';
 import { WindowService } from '../shared/window.service';
 import { createMock } from 'ngx-speculoos';
 
-describe('AuthenticationInterceptor', () => {
+describe('authenticationInterceptor', () => {
   let http: HttpTestingController;
   let httpClient: HttpClient;
 
@@ -16,10 +16,10 @@ describe('AuthenticationInterceptor', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: HTTP_INTERCEPTORS, useClass: AuthenticationInterceptor, multi: true },
+        provideHttpClient(withInterceptors([authenticationInterceptor])),
+        provideHttpClientTesting(),
         { provide: WindowService, useValue: windowService }
-      ],
-      imports: [HttpClientTestingModule]
+      ]
     });
 
     http = TestBed.inject(HttpTestingController);
