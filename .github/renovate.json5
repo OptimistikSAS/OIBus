@@ -1,0 +1,26 @@
+{
+  "extends": [
+    "config:base",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "baseBranches": ["main", "story-angular"],
+  "labels": ["dependencies"],
+  "lockFileMaintenance": { "enabled": true },
+  "schedule": [
+    "before 3am on Monday"
+  ],
+  "packageRules": [
+    // allow patch updates for TypeScript
+    // but we'll handle minor and major updates ourselves
+    // as it is related to Angular
+    {
+      "packageNames": ["typescript"],
+      "major": {
+        "enabled": false
+      },
+      "minor": {
+        "enabled": false
+      }
+    }
+  ]
+}
