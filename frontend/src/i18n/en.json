@@ -115,6 +115,19 @@
       "string": "String",
       "number": "Number",
       "datetime": "Date object"
+    },
+    "serialization-types": {
+      "file": "File"
+    },
+    "csv-character": {
+      "DOT": "Dot .",
+      "SEMI_COLON": "Semi colon ;",
+      "COLON": "Colon :",
+      "COMMA": "Comma ,",
+      "SLASH": "Slash /",
+      "TAB": "Tab",
+      "NON_BREAKING_SPACE": "Space",
+      "PIPE": "Pipe |"
     }
   },
   "nav": {
@@ -558,5 +571,12 @@
     "locale": "Locale",
     "timezone": "Timezone",
     "field": "Field"
+  },
+  "serialization": {
+    "title": "Serialization",
+    "type": "Type",
+    "filename": "Filename",
+    "delimiter": "Delimiter",
+    "fields": "Fields"
   }
 }

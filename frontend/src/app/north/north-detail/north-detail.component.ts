@@ -7,7 +7,7 @@ import { OibFormControl } from '../../../../../shared/model/form.model';
 import { PageLoader } from '../../shared/page-loader.service';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { getRowSettings } from '../../shared/utils';
+import { checkInputValue, getRowSettings } from '../../shared/utils';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
@@ -89,7 +89,7 @@ export class NorthDetailComponent implements OnInit {
       settings.type !== 'OibSecret' &&
       (!settings.conditionalDisplay ||
         Object.entries(settings.conditionalDisplay).every(([key, values]) => {
-          return this.northConnector && values.includes(this.northConnector.settings[key]);
+          return this.northConnector && checkInputValue(values, this.northConnector.settings[key]);
         }))
     );
   }

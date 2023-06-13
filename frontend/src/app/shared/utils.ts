@@ -162,6 +162,15 @@ export const createInput = (value: OibFormControl, form: FormGroup, scanModes: A
         new FormControl(value.currentValue || value.defaultValue || { type: 'datetime' }, getValidators(value.validators || []))
       );
       break;
+    case 'OibSerialization':
+      form.addControl(
+        value.key,
+        new FormControl(
+          value.currentValue || value.defaultValue || { type: 'file', filename: 'file.csv', delimiter: ',' },
+          getValidators(value.validators || [])
+        )
+      );
+      break;
     case 'OibAuthentication':
       form.addControl(
         value.key,
@@ -187,9 +196,9 @@ export const getRowSettings = (settings: Array<OibFormControl>, settingsValues: 
   return rowList;
 };
 
-export function byIdComparisonFn(o1: { id: string } | null, o2: { id: string } | null) {
+export const byIdComparisonFn = (o1: { id: string } | null, o2: { id: string } | null) => {
   return (!o1 && !o2) || (o1 && o2 && o1.id === o2.id);
-}
+};
 
 /**
  *
@@ -198,7 +207,7 @@ export function byIdComparisonFn(o1: { id: string } | null, o2: { id: string } |
  * @param inputValue - The value of the input that has changed
  * @param settingsForm - The form with controls to disable
  */
-export function disableInputs(manifestSettings: Array<OibFormControl>, input: string, inputValue: any, settingsForm: FormGroup) {
+export const disableInputs = (manifestSettings: Array<OibFormControl>, input: string, inputValue: any, settingsForm: FormGroup) => {
   manifestSettings.forEach(settings => {
     if (settings.conditionalDisplay) {
       Object.entries(settings.conditionalDisplay).forEach(([key, values]) => {
@@ -206,13 +215,13 @@ export function disableInputs(manifestSettings: Array<OibFormControl>, input: st
           const foundSettings = manifestSettings.find(s => s.key === key);
           if (!foundSettings) return;
           if (foundSettings.type === 'OibAuthentication') {
-            if (!values.includes(inputValue.type)) {
+            if (!checkInputValue(values, inputValue.type)) {
               settingsForm.controls[settings.key].disable();
             } else {
               settingsForm.controls[settings.key].enable();
             }
           } else {
-            if (!values.includes(inputValue)) {
+            if (!checkInputValue(values, inputValue)) {
               settingsForm.controls[settings.key].disable();
             } else {
               settingsForm.controls[settings.key].enable();
@@ -222,4 +231,11 @@ export function disableInputs(manifestSettings: Array<OibFormControl>, input: st
       });
     }
   });
-}
+};
+
+export const checkInputValue = (acceptedValues: Array<string | number | boolean> | string, inputValue: any): boolean => {
+  if (Array.isArray(acceptedValues)) {
+    return acceptedValues.includes(inputValue);
+  }
+  return new RegExp(acceptedValues).test(inputValue);
+};

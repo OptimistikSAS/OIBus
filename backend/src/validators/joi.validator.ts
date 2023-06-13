@@ -10,6 +10,7 @@ import {
   OibScanModeFormControl,
   OibSecretFormControl,
   OibSelectFormControl,
+  OibSerializationFormControl,
   OibTextAreaFormControl,
   OibTextFormControl,
   OibTimezoneFormControl
@@ -62,6 +63,8 @@ export default class JoiValidator {
         return this.generateDatetimeFormatJoiSchema(oibFormControl);
       case 'OibAuthentication':
         return this.generateAuthenticationJoiSchema(oibFormControl);
+      case 'OibSerialization':
+        return this.generateSerializationJoiSchema(oibFormControl);
     }
   }
 
@@ -177,6 +180,19 @@ export default class JoiValidator {
     };
   }
 
+  private generateSerializationJoiSchema(formControl: OibSerializationFormControl): Record<string, AnySchema> {
+    let schema = Joi.object({
+      type: Joi.string().required().valid('file'),
+      filename: Joi.string().optional(),
+      delimiter: Joi.string().optional()
+    }).required();
+
+    schema = this.handleConditionalDisplay(formControl, schema) as Joi.ObjectSchema;
+    return {
+      [formControl.key]: schema
+    };
+  }
+
   private generateAuthenticationJoiSchema(formControl: OibAuthenticationFormControl): Record<string, AnySchema> {
     let schema = Joi.object({
       type: Joi.string()
@@ -201,7 +217,7 @@ export default class JoiValidator {
     if (Object.prototype.hasOwnProperty.call(formControl, 'conditionalDisplay')) {
       Object.entries(formControl.conditionalDisplay!).forEach(([key, value]) => {
         schema = schema.when(key, {
-          is: Joi.any().valid(...value),
+          is: Array.isArray(value) ? Joi.any().valid(...value) : Joi.string().pattern(new RegExp(value)),
           then: schema.required(),
           otherwise: schema.optional()
         });

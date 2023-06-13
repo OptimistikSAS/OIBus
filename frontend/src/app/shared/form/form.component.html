@@ -72,6 +72,12 @@
             [key]="settings.key"
             [formControlName]="settings.key"
           ></oib-datetime-format>
+          <oib-serialization
+            *ngIf="settings.type === 'OibSerialization'"
+            [label]="settings.label"
+            [key]="settings.key"
+            [formControlName]="settings.key"
+          ></oib-serialization>
           <oib-auth
             *ngIf="settings.type === 'OibAuthentication'"
             [key]="settings.key"

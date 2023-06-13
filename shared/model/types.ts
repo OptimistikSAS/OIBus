@@ -74,3 +74,24 @@ export interface NumberDateTimeFormat extends BaseDateTimeFormat {
 }
 
 export type DateTimeFormat = StringDateTimeFormat | ObjectDateTimeFormat | NumberDateTimeFormat;
+
+export const ALL_CSV_CHARACTERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const;
+
+export type CsvCharacter = typeof ALL_CSV_CHARACTERS[number];
+
+// TODO: custom serialization with parser / transformer
+// TODO: HTTP Payload (OIConnect south)
+export const SERIALIZATION_TYPES = ['file'];
+export type SerializationType = typeof SERIALIZATION_TYPES[number];
+
+interface BaseSerializationFormat {
+  type: SerializationType;
+}
+
+export interface FileSerializationFormat extends BaseSerializationFormat {
+  type: 'file';
+  filename: string;
+  delimiter: CsvCharacter;
+}
+
+export type Serialization = FileSerializationFormat;
