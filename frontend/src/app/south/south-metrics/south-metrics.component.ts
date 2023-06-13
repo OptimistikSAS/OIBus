@@ -18,7 +18,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
   standalone: true
 })
 export class SouthMetricsComponent implements OnInit, OnDestroy {
-  @Input() southConnector!: SouthConnectorDTO;
+  @Input({ required: true }) southConnector!: SouthConnectorDTO;
 
   connectorMetrics: ConnectorMetrics | null = null;
   connectorStream: EventSource | null = null;
