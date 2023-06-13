@@ -44,8 +44,8 @@ const PAGE_SIZE = 20;
 })
 export class SouthItemsComponent implements OnInit {
   @Input() southConnector: SouthConnectorDTO | null = null;
-  @Input() southConnectorItemSchema!: OibusItemManifest;
-  @Input() scanModes!: Array<ScanModeDTO>;
+  @Input({ required: true }) southConnectorItemSchema!: OibusItemManifest;
+  @Input({ required: true }) scanModes!: Array<ScanModeDTO>;
 
   allItems: Array<OibusItemDTO> = [];
   private filteredItems: Array<OibusItemDTO> = [];
