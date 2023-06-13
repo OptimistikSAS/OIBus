@@ -103,8 +103,7 @@
           "options": {
             "lintFilePatterns": [
               "src/**/*.ts",
-              "src/**/*.html",
-              "cypress/**/*.ts"
+              "src/**/*.html"
             ],
             "maxWarnings": 0
           }
