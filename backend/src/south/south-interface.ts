@@ -1,5 +1,5 @@
 import pino from 'pino';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
+import { OibusItemDTO, SouthConnectorCommandDTO } from '../../../shared/model/south-connector.model';
 import { Instant } from '../../../shared/model/types';
 
 export interface QueriesFile {
@@ -22,7 +22,7 @@ export abstract class TestsConnection {
   /**
    * @throws {Error} Error with a message specifying wrong settings
    */
-  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
+  static async testConnection(settings: SouthConnectorCommandDTO['settings'], logger: pino.Logger): Promise<void> {
     logger.warn('testConnection method must be override');
   }
 }

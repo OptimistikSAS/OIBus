@@ -758,4 +758,64 @@ describe('South connector controller', () => {
     expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
     expect(ctx.app.reloadService.onCreateOrUpdateSouthItems).toHaveBeenCalledTimes(1);
   });
+
+  it('testSouthConnection() should update South connector', async () => {
+    ctx.request.body = {
+      ...southConnectorCommand
+    };
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
+
+    await southConnectorController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, southConnectorCommand.settings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      southConnectorCommand.settings,
+      null,
+      mqttManifest.settings
+    );
+    expect(ctx.app.reloadService.oibusEngine.testSouth).toHaveBeenCalledWith({ ...southConnectorCommand, name: 'mqtt:test-connection' });
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('testSouthConnection() should throw 404 when manifest not found', async () => {
+    ctx.request.body = {
+      ...southConnectorCommand,
+      type: 'invalid'
+    };
+
+    await southConnectorController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.oibusEngine.testSouth).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+  });
+
+  it('testSouthConnection() should return 404 when body is null', async () => {
+    ctx.request.body = null;
+
+    await southConnectorController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.oibusEngine.testSouth).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+  });
+
+  it('testSouthConnection() should return bad request when validation fails', async () => {
+    ctx.request.body = {
+      ...southConnectorCommand
+    };
+    const validationError = new Error('invalid body');
+    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
+      throw validationError;
+    });
+
+    await southConnectorController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, southConnectorCommand.settings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.oibusEngine.testSouth).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+  });
 });
