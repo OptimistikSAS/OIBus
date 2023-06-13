@@ -334,26 +334,35 @@ describe('SouthFolderScanner test connection', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-    database.prepare.mockImplementation(() => ({
-      run: jest.fn()
-    }));
-    south = new SouthFolderScanner(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
   });
 
-  // TODO: change this test once the method is implemented
-  it('should not be able to connect', async () => {
-    await expect(SouthFolderScanner.testConnection({}, logger)).rejects.toThrow('TODO: method needs to be implemented');
-    expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
+  const settings = { ...configuration.settings };
+
+  it('Folder does not exist', async () => {
+    const errorMessage = 'Folder does not exist';
+    (fs.access as jest.Mock).mockImplementationOnce(() => {
+      throw new Error(errorMessage);
+    });
+
+    const test = SouthFolderScanner.testConnection(settings, logger);
+    const folderRegex = new RegExp(`Folder '.*(${settings.inputFolder}).*' does not exist`);
+    await expect(test).rejects.toThrowError(folderRegex);
+
+    const accessRegex = new RegExp(`Access error on '.*(${settings.inputFolder}).*': ${errorMessage}`);
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([['Testing connection'], [expect.stringMatching(accessRegex)]]);
+  });
+
+  it('No read/write access', async () => {
+    const errorMessage = 'No read/write access';
+    (fs.access as jest.Mock)
+      .mockImplementationOnce(() => Promise.resolve())
+      .mockImplementationOnce(() => {
+        throw new Error(errorMessage);
+      });
+
+    await expect(SouthFolderScanner.testConnection(settings, logger)).rejects.toThrowError('No read/write access on folder');
+
+    const accessRegex = new RegExp(`Access error on '.*(${settings.inputFolder}).*': ${errorMessage}`);
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([['Testing connection'], [expect.stringMatching(accessRegex)]]);
   });
 });
