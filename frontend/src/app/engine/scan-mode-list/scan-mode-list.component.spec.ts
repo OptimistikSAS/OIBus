@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { ScanModeListComponent } from './scan-mode-list.component';
-import { provideTestingI18n } from '../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { ScanModeService } from '../../services/scan-mode.service';
@@ -57,7 +57,7 @@ describe('ScanModeListComponent', () => {
     TestBed.configureTestingModule({
       imports: [ScanModeListComponent, MockModalModule],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         { provide: ScanModeService, useValue: scanModeService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService }

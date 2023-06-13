@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { HistoryQueryListComponent } from './history-query-list.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
-import { provideTestingI18n } from '../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
@@ -47,7 +47,7 @@ describe('HistoryQueryListComponent', () => {
     TestBed.configureTestingModule({
       imports: [HistoryQueryListComponent],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         provideRouter([]),
         provideHttpClient(),
         { provide: HistoryQueryService, useValue: historyQueryService }

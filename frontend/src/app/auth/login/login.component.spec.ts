@@ -5,7 +5,7 @@ import { of, throwError } from 'rxjs';
 import { Router } from '@angular/router';
 import { CurrentUserService } from '../../shared/current-user.service';
 import { provideHttpClient } from '@angular/common/http';
-import { provideTestingI18n } from '../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { RequestedUrlService } from '../authentication.guard';
 
@@ -48,7 +48,7 @@ describe('LoginComponent', () => {
       imports: [LoginComponent, DefaultValidationErrorsComponent],
       providers: [
         provideHttpClient(),
-        provideTestingI18n(),
+        provideI18nTesting(),
         { provide: Router, useValue: router },
         { provide: CurrentUserService, useValue: currentUserService },
         { provide: RequestedUrlService, useValue: requestedUrlService }

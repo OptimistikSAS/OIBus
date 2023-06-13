@@ -5,10 +5,10 @@ import { fakeAsync, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
-import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ExternalSourceService } from '../../services/external-source.service';
 import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../../../../shared/model/external-sources.model';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 class EditExternalSourceModalComponentTester extends ComponentTester<EditExternalSourceModalComponent> {
   constructor() {
@@ -46,14 +46,9 @@ describe('EditExternalSourceModalComponent', () => {
     externalSourceService = createMock(ExternalSourceService);
 
     TestBed.configureTestingModule({
-      imports: [
-        MockI18nModule,
-        ReactiveFormsModule,
-        HttpClientTestingModule,
-        EditExternalSourceModalComponent,
-        DefaultValidationErrorsComponent
-      ],
+      imports: [ReactiveFormsModule, HttpClientTestingModule, EditExternalSourceModalComponent, DefaultValidationErrorsComponent],
       providers: [
+        provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },
         { provide: ExternalSourceService, useValue: externalSourceService }
       ]

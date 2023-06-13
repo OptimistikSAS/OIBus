@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { IpFilterListComponent } from './ip-filter-list.component';
-import { provideTestingI18n } from '../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { IpFilterService } from '../../services/ip-filter.service';
@@ -55,7 +55,7 @@ describe('IpFilterListComponent', () => {
     TestBed.configureTestingModule({
       imports: [IpFilterListComponent],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         { provide: IpFilterService, useValue: ipFilterService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService }

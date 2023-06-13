@@ -3,12 +3,12 @@ import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { of } from 'rxjs';
 import { Router } from '@angular/router';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
-class CreateSouthConnectorModalComponentTester extends ComponentTester<ChooseSouthConnectorTypeModalComponent> {
+class ChooseSouthConnectorTypeModalComponentTester extends ComponentTester<ChooseSouthConnectorTypeModalComponent> {
   constructor() {
     super(ChooseSouthConnectorTypeModalComponent);
   }
@@ -26,8 +26,8 @@ class CreateSouthConnectorModalComponentTester extends ComponentTester<ChooseSou
   }
 }
 
-describe('CreateSouthConnectorModalComponent', () => {
-  let tester: CreateSouthConnectorModalComponentTester;
+describe('ChooseSouthConnectorTypeModalComponent', () => {
+  let tester: ChooseSouthConnectorTypeModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let router: jasmine.SpyObj<Router>;
@@ -38,8 +38,9 @@ describe('CreateSouthConnectorModalComponent', () => {
     router = createMock(Router);
 
     TestBed.configureTestingModule({
-      imports: [MockI18nModule, HttpClientTestingModule, ChooseSouthConnectorTypeModalComponent],
+      imports: [HttpClientTestingModule, ChooseSouthConnectorTypeModalComponent],
       providers: [
+        provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: Router, useValue: router }
@@ -65,7 +66,7 @@ describe('CreateSouthConnectorModalComponent', () => {
       ])
     );
 
-    tester = new CreateSouthConnectorModalComponentTester();
+    tester = new ChooseSouthConnectorTypeModalComponentTester();
     tester.detectChanges();
   });
 

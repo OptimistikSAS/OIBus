@@ -5,8 +5,8 @@ import { Component } from '@angular/core';
 import { FormGroup, ReactiveFormsModule, UntypedFormBuilder, Validators } from '@angular/forms';
 import { ComponentTester } from 'ngx-speculoos';
 import { ValdemortModule } from 'ngx-valdemort';
-import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
 import { TranslateModule } from '@ngx-translate/core';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
   template: `
@@ -54,7 +54,8 @@ describe('DefaultValidationErrorsComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [MockI18nModule, ValdemortModule, ReactiveFormsModule, DefaultValidationErrorsComponent, TestComponent]
+      imports: [ValdemortModule, ReactiveFormsModule, DefaultValidationErrorsComponent, TestComponent],
+      providers: [provideI18nTesting()]
     });
 
     tester = new TestComponentTester();

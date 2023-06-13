@@ -3,12 +3,12 @@ import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
 import { of } from 'rxjs';
 import { Router } from '@angular/router';
 import { NorthConnectorService } from '../../services/north-connector.service';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
-class CreateNorthConnectorModalComponentTester extends ComponentTester<ChooseNorthConnectorTypeModalComponent> {
+class ChooseNorthConnectorTypeModalComponentTester extends ComponentTester<ChooseNorthConnectorTypeModalComponent> {
   constructor() {
     super(ChooseNorthConnectorTypeModalComponent);
   }
@@ -26,8 +26,8 @@ class CreateNorthConnectorModalComponentTester extends ComponentTester<ChooseNor
   }
 }
 
-describe('CreateNorthConnectorModalComponent', () => {
-  let tester: CreateNorthConnectorModalComponentTester;
+describe('ChooseNorthConnectorTypeModal', () => {
+  let tester: ChooseNorthConnectorTypeModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let router: jasmine.SpyObj<Router>;
@@ -38,8 +38,9 @@ describe('CreateNorthConnectorModalComponent', () => {
     router = createMock(Router);
 
     TestBed.configureTestingModule({
-      imports: [MockI18nModule, HttpClientTestingModule, ChooseNorthConnectorTypeModalComponent],
+      imports: [HttpClientTestingModule, ChooseNorthConnectorTypeModalComponent],
       providers: [
+        provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: Router, useValue: router }
@@ -53,7 +54,7 @@ describe('CreateNorthConnectorModalComponent', () => {
       ])
     );
 
-    tester = new CreateNorthConnectorModalComponentTester();
+    tester = new ChooseNorthConnectorTypeModalComponentTester();
     tester.detectChanges();
   });
 

@@ -2,8 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { ConfirmationModalComponent } from './confirmation-modal/confirmation-modal.component';
 import { ConfirmationOptions, ConfirmationService } from './confirmation.service';
 import { MockModalModule, MockModalService } from './mock-modal.service.spec';
-import { MockI18nModule } from '../../i18n/mock-i18n.spec';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { provideI18nTesting } from '../../i18n/mock-i18n';
 
 describe('ConfirmationService', () => {
   let confirmationService: ConfirmationService;
@@ -13,7 +13,8 @@ describe('ConfirmationService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [MockI18nModule, MockModalModule, ConfirmationModalComponent]
+      imports: [MockModalModule, ConfirmationModalComponent],
+      providers: [provideI18nTesting()]
     });
     mockModalService = TestBed.inject(MockModalService);
     confirmationService = TestBed.inject(ConfirmationService);

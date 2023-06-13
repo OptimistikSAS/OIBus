@@ -2,12 +2,11 @@ import { TestBed } from '@angular/core/testing';
 
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NorthMetricsComponent } from './north-metrics.component';
-import { MockI18nModule } from '../../../../i18n/mock-i18n.spec';
 import { Component } from '@angular/core';
 import { NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { NotificationService } from '../../../shared/notification.service';
-import { provideTestingI18n } from '../../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 
 @Component({
   template: `<oib-north-metrics [northConnector]="northConnector"></oib-north-metrics>`,
@@ -41,9 +40,8 @@ describe('NorthMetricsComponent', () => {
     notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
-      imports: [MockI18nModule, NorthMetricsComponent],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: NotificationService, useValue: notificationService }
       ]

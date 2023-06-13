@@ -7,7 +7,7 @@ import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.m
 import { By } from '@angular/platform-browser';
 import { ErrorFilesComponent } from './error-files/error-files.component';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { provideTestingI18n } from '../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideHttpClient } from '@angular/common/http';
 
 class ExploreCacheComponentTester extends ComponentTester<ExploreCacheComponent> {
@@ -50,7 +50,7 @@ describe('ExploreCacheComponent', () => {
     TestBed.configureTestingModule({
       imports: [ExploreCacheComponent, ErrorFilesComponent],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         provideRouter([]),
         provideHttpClient(),
         {

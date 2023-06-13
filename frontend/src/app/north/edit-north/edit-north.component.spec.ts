@@ -4,7 +4,7 @@ import { EditNorthComponent } from './edit-north.component';
 import { ComponentTester, createMock, stubRoute } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { provideTestingI18n } from '../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { FormComponent } from '../../shared/form/form.component';
 import { ProxyService } from '../../services/proxy.service';
 import { ScanModeService } from '../../services/scan-mode.service';
@@ -55,7 +55,7 @@ describe('EditNorthComponent', () => {
     TestBed.configureTestingModule({
       imports: [EditNorthComponent],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         provideRouter([]),
         provideHttpClient(),
         { provide: NorthConnectorService, useValue: northConnectorService },

@@ -2,9 +2,9 @@ import { Component } from '@angular/core';
 import { ObservableState, SaveButtonComponent } from './save-button.component';
 import { ComponentTester } from 'ngx-speculoos';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
 import { delay, of } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
   template: `
@@ -50,7 +50,8 @@ describe('SaveButton', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [MockI18nModule, ReactiveFormsModule, SaveButtonComponent, TestComponent]
+      imports: [ReactiveFormsModule, SaveButtonComponent, TestComponent],
+      providers: [provideI18nTesting()]
     });
 
     tester = new TestComponentTester();

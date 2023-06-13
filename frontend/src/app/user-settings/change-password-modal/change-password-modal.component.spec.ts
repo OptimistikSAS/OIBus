@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { UserSettingsService } from '../../services/user-settings.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { formDirectives } from '../../shared/form-directives';
-import { provideTestingI18n } from '../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { User } from '../../../../../shared/model/user.model';
 
 class ChangePasswordModalComponentTester extends ComponentTester<ChangePasswordModalComponent> {
@@ -54,7 +54,7 @@ describe('ChangePasswordModalComponent', () => {
     TestBed.configureTestingModule({
       imports: [...formDirectives, ChangePasswordModalComponent],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         { provide: NgbActiveModal, useValue: activeModal },
         { provide: UserSettingsService, useValue: userSettingsService }
       ]

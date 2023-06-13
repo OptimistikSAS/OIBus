@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { NgbDatepicker, NgbInputDatepicker } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentTester } from 'ngx-speculoos';
-import { MockI18nModule } from '../../../i18n/mock-i18n.spec';
 import { noAnimation } from '../test-utils';
 import { DatepickerContainerComponent } from './datepicker-container.component';
 import { formDirectives } from '../form-directives';
@@ -48,7 +47,7 @@ describe('DatepickerContainerComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, MockI18nModule, TestComponent],
+      imports: [ReactiveFormsModule, TestComponent],
       providers: [noAnimation]
     });
 

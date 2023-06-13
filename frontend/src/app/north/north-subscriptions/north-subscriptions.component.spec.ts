@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { NorthSubscriptionsComponent } from './north-subscriptions.component';
-import { provideTestingI18n } from '../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { of } from 'rxjs';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -70,7 +70,7 @@ describe('NorthSubscriptionsComponent', () => {
     TestBed.configureTestingModule({
       imports: [TestComponent],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         { provide: NorthConnectorService, useValue: northService },
         { provide: SouthConnectorService, useValue: southService }
       ]

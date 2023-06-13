@@ -6,7 +6,7 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
-import { provideTestingI18n } from '../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -88,7 +88,7 @@ describe('SouthDetailComponent', () => {
     TestBed.configureTestingModule({
       imports: [SouthDetailComponent],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         provideRouter([]),
         provideHttpClient(),
         {

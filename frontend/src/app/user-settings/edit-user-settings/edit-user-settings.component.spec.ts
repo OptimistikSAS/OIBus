@@ -13,7 +13,7 @@ import { CurrentUserService } from '../../shared/current-user.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../../shared/typeahead';
 import { formDirectives } from '../../shared/form-directives';
-import { provideTestingI18n } from '../../../i18n/mock-i18n';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 class EditUserSettingsComponentTester extends ComponentTester<EditUserSettingsComponent> {
   constructor() {
@@ -61,7 +61,7 @@ describe('EditUserSettingsComponent', () => {
     TestBed.configureTestingModule({
       imports: [EditUserSettingsComponent, MockModalModule, ChangePasswordModalComponent, ...formDirectives],
       providers: [
-        provideTestingI18n(),
+        provideI18nTesting(),
         { provide: UserSettingsService, useValue: userSettingsService },
         { provide: WindowService, useValue: windowService },
         { provide: CurrentUserService, useValue: currentUserService }
