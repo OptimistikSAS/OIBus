@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanActivateChild, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
+import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { WindowService } from '../shared/window.service';
 
@@ -12,7 +12,7 @@ import { WindowService } from '../shared/window.service';
 @Injectable({
   providedIn: 'root'
 })
-export class AuthenticationGuard implements CanActivateChild {
+export class AuthenticationGuard  {
   private requestedUrl: string | null = null;
 
   constructor(private router: Router, private windowService: WindowService) {}
