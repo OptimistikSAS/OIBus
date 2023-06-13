@@ -64,7 +64,9 @@ describe('Scan mode validator', () => {
     if (dataProvider.isValid) {
       await expect(validator.validate(scanModeSchema, dataProvider.dto)).resolves.not.toThrow();
     } else {
-      await expect(validator.validate(scanModeSchema, dataProvider.dto)).rejects.toThrowError(new Error(dataProvider.errorMessage as string));
+      await expect(validator.validate(scanModeSchema, dataProvider.dto)).rejects.toThrowError(
+        new Error(dataProvider.errorMessage as string)
+      );
     }
   });
 });

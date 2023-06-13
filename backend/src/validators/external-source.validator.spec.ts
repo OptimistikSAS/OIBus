@@ -58,7 +58,9 @@ describe('External source validator', () => {
     if (dataProvider.isValid) {
       await expect(validator.validate(externalSourceSchema, dataProvider.dto)).resolves.not.toThrow();
     } else {
-      await expect(validator.validate(externalSourceSchema, dataProvider.dto)).rejects.toThrowError(new Error(dataProvider.errorMessage as string));
+      await expect(validator.validate(externalSourceSchema, dataProvider.dto)).rejects.toThrowError(
+        new Error(dataProvider.errorMessage as string)
+      );
     }
   });
 });

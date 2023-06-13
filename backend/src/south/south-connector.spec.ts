@@ -3,7 +3,7 @@ import PinoLogger from '../tests/__mocks__/logger.mock';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
 
-import { SouthConnectorDTO, SouthConnectorManifest, OibusItemDTO } from '../../../shared/model/south-connector.model';
+import { OibusItemDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
@@ -106,12 +106,12 @@ const items: Array<OibusItemDTO> = [
 ];
 
 class TestSouth extends SouthConnector implements QueriesLastPoint, QueriesFile, QueriesSubscription, QueriesHistory {
-  async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {}
-  async fileQuery(items: Array<OibusItemDTO>): Promise<void> {}
-  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async lastPointQuery(): Promise<void> {}
+  async fileQuery(): Promise<void> {}
+  async historyQuery(): Promise<Instant> {
     return '';
   }
-  async subscribe(items: Array<OibusItemDTO>): Promise<void> {}
+  async subscribe(): Promise<void> {}
 }
 let south: TestSouth;
 let basicSouth: SouthConnector;

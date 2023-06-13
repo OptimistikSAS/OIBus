@@ -7,7 +7,6 @@ import minimist from 'minimist';
 
 import { DateTime } from 'luxon';
 import * as utils from './utils';
-import { logQuery } from './utils';
 import csv from 'papaparse';
 import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/logger.mock';

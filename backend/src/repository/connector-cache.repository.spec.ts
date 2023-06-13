@@ -1,7 +1,7 @@
 import SqliteDatabaseMock, { all, get, run } from '../tests/__mocks__/database.mock';
 import { SouthCache } from '../../../shared/model/south-connector.model';
 import { Database } from 'better-sqlite3';
-import ConnectorCacheRepository, { METRICS_TABLE } from './connector-cache.repository';
+import ConnectorCacheRepository from './connector-cache.repository';
 import { ConnectorMetrics } from '../../../shared/model/engine.model';
 
 jest.mock('../tests/__mocks__/database.mock');
