@@ -106,6 +106,11 @@ describe('Joi validator', () => {
         label: 'OibDateTimeFormat'
       },
       {
+        key: 'serialization',
+        type: 'OibSerialization',
+        label: 'OibSerialization'
+      },
+      {
         key: 'authentication',
         type: 'OibAuthentication',
         label: 'OibAuthentication',
@@ -132,6 +137,11 @@ describe('Joi validator', () => {
         field: Joi.string().required(),
         format: Joi.optional(),
         locale: Joi.optional()
+      }).required(),
+      serialization: Joi.object({
+        type: Joi.string().required().valid('file'),
+        filename: Joi.string().optional(),
+        delimiter: Joi.string().optional()
       }).required(),
       authentication: Joi.object({
         type: Joi.string().required().valid('none', 'basic', 'cert'),
@@ -247,6 +257,17 @@ describe('Joi validator', () => {
         type: 'OibText',
         label: 'Database path',
         conditionalDisplay: { driver: ['SQLite'] }
+      },
+      {
+        key: 'query',
+        type: 'OibText',
+        label: 'Query'
+      },
+      {
+        key: 'serialization',
+        type: 'OibSerialization',
+        label: 'Input binding (@StartTime or @EndTime)',
+        conditionalDisplay: { query: '@StartTime|@EndTime' }
       }
     ];
 
@@ -260,6 +281,27 @@ describe('Joi validator', () => {
           is: Joi.any().valid('SQLite'),
           then: Joi.string().allow(null, '').required(),
           otherwise: Joi.string().allow(null, '').optional()
+        }),
+      query: Joi.string().allow(null, ''),
+      serialization: Joi.object({
+        type: Joi.string().required().valid('file'),
+        filename: Joi.string().optional(),
+        delimiter: Joi.string().optional()
+      })
+        .required()
+
+        .when('query', {
+          is: Joi.string().pattern(new RegExp('@StartTime|@EndTime')),
+          then: Joi.object({
+            type: Joi.string().required().valid('file'),
+            filename: Joi.string().optional(),
+            delimiter: Joi.string().optional()
+          }).required(),
+          otherwise: Joi.object({
+            type: Joi.string().required().valid('file'),
+            filename: Joi.string().optional(),
+            delimiter: Joi.string().optional()
+          }).optional()
         })
     });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());

@@ -7,7 +7,7 @@ import { OibFormControl } from '../../../../../shared/model/form.model';
 import { PageLoader } from '../../shared/page-loader.service';
 import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { getRowSettings } from '../../shared/utils';
+import { checkInputValue, getRowSettings } from '../../shared/utils';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
@@ -127,7 +127,7 @@ export class HistoryQueryDetailComponent implements OnInit {
       formSettings.readDisplay &&
       (!formSettings.conditionalDisplay ||
         Object.entries(formSettings.conditionalDisplay).every(([key, values]) => {
-          return values && values.includes(settingsValues[key]);
+          return values && checkInputValue(values, settingsValues[key]);
         }))
     );
   }
