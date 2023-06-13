@@ -328,6 +328,10 @@
       "max-read-interval": "Max read interval",
       "read-delay": "Read delay"
     },
+    "test-connection": {
+      "success": "Connection successfully tested",
+      "failure": "Connection failed: {{ error }}"
+    },
     "type": "Type",
     "general-settings": "General settings",
     "specific-settings": "{{ type }} settings",

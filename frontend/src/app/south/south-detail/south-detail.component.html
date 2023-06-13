@@ -17,7 +17,20 @@
       <!-- Specific settings -->
       <oib-box>
         <ng-template oibBoxTitle>
-          <span translate="south.specific-settings" [translateParams]="{ type: southConnector.type }" id="specific-settings-title"></span>
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <span
+                translate="south.specific-settings"
+                [translateParams]="{ type: southConnector.type }"
+                id="specific-settings-title"
+              ></span>
+            </div>
+            <div>
+              <button type="button" class="btn btn-primary btn-sm" id="test-connection" (click)="testConnection()">
+                <span class="fa fa-link"></span>
+              </button>
+            </div>
+          </div>
         </ng-template>
 
         <table class="table table-sm table-hover oib-table mt-3">

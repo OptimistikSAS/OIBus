@@ -8,7 +8,7 @@ import { formDirectives } from '../../shared/form-directives';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
+import { catchError, combineLatest, Observable, of, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
@@ -167,7 +167,7 @@ export class EditSouthComponent implements OnInit {
     });
   }
 
-  save() {
+  submit(value: 'save' | 'test') {
     if (!this.southForm.valid) {
       return;
     }
@@ -185,6 +185,20 @@ export class EditSouthComponent implements OnInit {
       },
       settings: formValue.settings!
     };
-    this.createOrUpdateSouthConnector(command);
+    if (value === 'save') {
+      this.createOrUpdateSouthConnector(command);
+    } else {
+      this.southConnectorService
+        .testConnection(command)
+        .pipe(
+          catchError(httpError => {
+            this.notificationService.error('south.test-connection.failure', { error: httpError.error.message });
+            throw httpError;
+          })
+        )
+        .subscribe(() => {
+          this.notificationService.success('south.test-connection.success');
+        });
+    }
   }
 }

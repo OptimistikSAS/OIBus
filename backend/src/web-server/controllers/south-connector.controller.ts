@@ -97,7 +97,7 @@ export default class SouthConnectorController {
     }
   }
 
-  async testSouthConnection(ctx: KoaContext<SouthConnectorDTO, void>): Promise<void> {
+  async testSouthConnection(ctx: KoaContext<SouthConnectorCommandDTO, void>): Promise<void> {
     try {
       const manifest = ctx.request.body ? southManifests.find(southManifest => southManifest.id === ctx.request.body!.type) : null;
       if (!manifest) {
@@ -106,8 +106,11 @@ export default class SouthConnectorController {
 
       await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
 
-      ctx.request.body!.name = `${ctx.request.body!.type}:test-connection`;
-      await ctx.app.reloadService.oibusEngine.testSouth(ctx.request.body!);
+      const command: SouthConnectorCommandDTO = ctx.request.body!;
+      // TODO: replace with existing secrets if existing
+      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, null, manifest.settings);
+      ctx.request.body!.name = `${ctx.request.body!.type}:test-connection`; // TODO: replace with existing name if existing
+      await ctx.app.reloadService.oibusEngine.testSouth(command);
 
       ctx.noContent();
     } catch (error: any) {

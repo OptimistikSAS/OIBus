@@ -31,6 +31,7 @@ export default jest.fn().mockImplementation(() => ({
     removeErrorFiles: jest.fn(),
     retryErrorFiles: jest.fn(),
     removeAllErrorFiles: jest.fn(),
-    retryAllErrorFiles: jest.fn()
+    retryAllErrorFiles: jest.fn(),
+    testSouth: jest.fn()
   }
 }));
