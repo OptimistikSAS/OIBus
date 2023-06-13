@@ -14,6 +14,10 @@ import { ExternalSourceListComponent } from './external-source-list/external-sou
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
+import { ProxyService } from '../services/proxy.service';
+import { ScanModeService } from '../services/scan-mode.service';
+import { IpFilterService } from '../services/ip-filter.service';
+import { ExternalSourceService } from '../services/external-source.service';
 
 class EngineComponentTester extends ComponentTester<EngineDetailComponent> {
   constructor() {
@@ -64,6 +68,10 @@ class EngineComponentTester extends ComponentTester<EngineDetailComponent> {
 describe('EngineDetailComponent', () => {
   let tester: EngineComponentTester;
   let engineService: jasmine.SpyObj<EngineService>;
+  let proxyService: jasmine.SpyObj<ProxyService>;
+  let scanModeService: jasmine.SpyObj<ScanModeService>;
+  let ipFilterService: jasmine.SpyObj<IpFilterService>;
+  let externalSourceService: jasmine.SpyObj<ExternalSourceService>;
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
@@ -97,6 +105,10 @@ describe('EngineDetailComponent', () => {
 
   beforeEach(() => {
     engineService = createMock(EngineService);
+    proxyService = createMock(ProxyService);
+    scanModeService = createMock(ScanModeService);
+    ipFilterService = createMock(IpFilterService);
+    externalSourceService = createMock(ExternalSourceService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
 
@@ -107,12 +119,20 @@ describe('EngineDetailComponent', () => {
         provideRouter([]),
         provideHttpClient(),
         { provide: EngineService, useValue: engineService },
+        { provide: ProxyService, useValue: proxyService },
+        { provide: ScanModeService, useValue: scanModeService },
+        { provide: IpFilterService, useValue: ipFilterService },
+        { provide: ExternalSourceService, useValue: externalSourceService },
         { provide: ConfirmationService, useValue: confirmationService },
         { provide: NotificationService, useValue: notificationService }
       ]
     });
 
     engineService.getEngineSettings.and.returnValue(of(engineSettings));
+    proxyService.list.and.returnValue(of([]));
+    scanModeService.list.and.returnValue(of([]));
+    ipFilterService.list.and.returnValue(of([]));
+    externalSourceService.list.and.returnValue(of([]));
 
     tester = new EngineComponentTester();
     tester.detectChanges();

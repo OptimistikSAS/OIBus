@@ -8,6 +8,7 @@ import { provideTestingI18n } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
+import { ScanModeService } from '../../services/scan-mode.service';
 
 class HistoryQueryDisplayComponentTester extends ComponentTester<HistoryQueryDetailComponent> {
   constructor() {
@@ -26,6 +27,7 @@ class HistoryQueryDisplayComponentTester extends ComponentTester<HistoryQueryDet
 describe('HistoryQueryDisplayComponent', () => {
   let tester: HistoryQueryDisplayComponentTester;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
+  let scanModeService: jasmine.SpyObj<ScanModeService>;
 
   const historyQuery: HistoryQueryDTO = {
     id: 'id1',
@@ -60,6 +62,7 @@ describe('HistoryQueryDisplayComponent', () => {
 
   beforeEach(() => {
     historyQueryService = createMock(HistoryQueryService);
+    scanModeService = createMock(ScanModeService);
     TestBed.configureTestingModule({
       imports: [HistoryQueryDetailComponent],
       providers: [
@@ -74,11 +77,13 @@ describe('HistoryQueryDisplayComponent', () => {
             }
           })
         },
-        { provide: HistoryQueryService, useValue: historyQueryService }
+        { provide: HistoryQueryService, useValue: historyQueryService },
+        { provide: ScanModeService, useValue: scanModeService }
       ]
     });
 
     historyQueryService.get.and.returnValue(of(historyQuery));
+    scanModeService.list.and.returnValue(of([]));
     tester = new HistoryQueryDisplayComponentTester();
     tester.detectChanges();
   });

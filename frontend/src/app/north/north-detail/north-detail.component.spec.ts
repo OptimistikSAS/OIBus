@@ -8,6 +8,7 @@ import { provideTestingI18n } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { ScanModeService } from '../../services/scan-mode.service';
 
 class NorthDetailComponentTester extends ComponentTester<NorthDetailComponent> {
   constructor() {
@@ -26,6 +27,7 @@ class NorthDetailComponentTester extends ComponentTester<NorthDetailComponent> {
 describe('NorthDetailComponent', () => {
   let tester: NorthDetailComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
+  let scanModeService: jasmine.SpyObj<ScanModeService>;
 
   const northConnector: NorthConnectorDTO = {
     id: 'id1',
@@ -79,6 +81,7 @@ describe('NorthDetailComponent', () => {
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
+    scanModeService = createMock(ScanModeService);
     TestBed.configureTestingModule({
       imports: [NorthDetailComponent],
       providers: [
@@ -93,12 +96,14 @@ describe('NorthDetailComponent', () => {
             }
           })
         },
-        { provide: NorthConnectorService, useValue: northConnectorService }
+        { provide: NorthConnectorService, useValue: northConnectorService },
+        { provide: ScanModeService, useValue: scanModeService }
       ]
     });
 
     northConnectorService.getNorthConnector.and.returnValue(of(northConnector));
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(of(manifest));
+    scanModeService.list.and.returnValue(of([]));
 
     tester = new NorthDetailComponentTester();
     tester.detectChanges();
