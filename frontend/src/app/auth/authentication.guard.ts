@@ -12,7 +12,7 @@ import { WindowService } from '../shared/window.service';
 @Injectable({
   providedIn: 'root'
 })
-export class AuthenticationGuard  {
+export class AuthenticationGuard {
   private requestedUrl: string | null = null;
 
   constructor(private router: Router, private windowService: WindowService) {}
