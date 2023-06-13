@@ -2,8 +2,6 @@ import { EditExternalSourceModalComponent } from './edit-external-source-modal.c
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { ExternalSourceService } from '../../services/external-source.service';
@@ -46,7 +44,6 @@ describe('EditExternalSourceModalComponent', () => {
     externalSourceService = createMock(ExternalSourceService);
 
     TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, HttpClientTestingModule, EditExternalSourceModalComponent, DefaultValidationErrorsComponent],
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },

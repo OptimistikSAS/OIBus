@@ -2,12 +2,10 @@ import { EditSouthItemModalComponent } from './edit-south-item-modal.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { SouthConnectorDTO, OibusItemCommandDTO, OibusItemDTO, OibusItemManifest } from '../../../../../shared/model/south-connector.model';
+import { OibusItemCommandDTO, OibusItemDTO, OibusItemManifest, SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
@@ -81,7 +79,6 @@ describe('EditSouthItemModalComponent', () => {
     southConnectorService = createMock(SouthConnectorService);
 
     TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, HttpClientTestingModule, EditSouthItemModalComponent, DefaultValidationErrorsComponent],
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },

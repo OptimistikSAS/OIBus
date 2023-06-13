@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { EngineService } from './engine.service';
 import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../shared/model/engine.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('EngineService', () => {
   let http: HttpTestingController;
@@ -10,8 +11,7 @@ describe('EngineService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [EngineService]
+      providers: [provideHttpClient(), provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(EngineService);

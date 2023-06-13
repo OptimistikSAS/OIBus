@@ -2,8 +2,6 @@ import { EditProxyModalComponent } from './edit-proxy-modal.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { ProxyService } from '../../services/proxy.service';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
@@ -58,7 +56,6 @@ describe('EditProxyModalComponent', () => {
     proxyService = createMock(ProxyService);
 
     TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, HttpClientTestingModule, EditProxyModalComponent, DefaultValidationErrorsComponent],
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },

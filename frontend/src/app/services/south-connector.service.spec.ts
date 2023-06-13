@@ -1,18 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SouthConnectorService } from './south-connector.service';
 import {
+  OibusItemCommandDTO,
+  OibusItemDTO,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorManifest,
-  OibusItemCommandDTO,
-  OibusItemDTO,
   SouthType
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
 import { toPage } from '../shared/test-utils';
 import { DownloadService } from './download.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('SouthConnectorService', () => {
   let http: HttpTestingController;
@@ -21,8 +22,7 @@ describe('SouthConnectorService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [SouthConnectorService]
+      providers: [provideHttpClient(), provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(SouthConnectorService);

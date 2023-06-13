@@ -2,7 +2,6 @@ import { ChooseNorthConnectorTypeModalComponent } from './choose-north-connector
 import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { Router } from '@angular/router';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -38,7 +37,6 @@ describe('ChooseNorthConnectorTypeModal', () => {
     router = createMock(Router);
 
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule, ChooseNorthConnectorTypeModalComponent],
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },

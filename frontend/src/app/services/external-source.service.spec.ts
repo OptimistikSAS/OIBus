@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExternalSourceService } from './external-source.service';
 import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../../../shared/model/external-sources.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ExternalSourceService', () => {
   let http: HttpTestingController;
@@ -10,8 +11,7 @@ describe('ExternalSourceService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [ExternalSourceService]
+      providers: [provideHttpClient(), provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(ExternalSourceService);

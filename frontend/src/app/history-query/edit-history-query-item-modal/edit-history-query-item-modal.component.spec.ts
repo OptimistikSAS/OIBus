@@ -2,8 +2,6 @@ import { EditHistoryQueryItemModalComponent } from './edit-history-query-item-mo
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { OibusItemCommandDTO, OibusItemDTO, OibusItemManifest } from '../../../../../shared/model/south-connector.model';
@@ -80,7 +78,6 @@ describe('EditHistoryQueryItemModalComponent', () => {
     historyQueryService = createMock(HistoryQueryService);
 
     TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, HttpClientTestingModule, EditHistoryQueryItemModalComponent, DefaultValidationErrorsComponent],
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },

@@ -2,8 +2,6 @@ import { CreateNorthSubscriptionModalComponent } from './create-north-subscripti
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -47,7 +45,6 @@ describe('CreateNorthSubscriptionModalComponent', () => {
     northConnectorService = createMock(NorthConnectorService);
 
     TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, HttpClientTestingModule, CreateNorthSubscriptionModalComponent, DefaultValidationErrorsComponent],
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },

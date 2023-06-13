@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { HistoryQueryService } from './history-query.service';
 import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
@@ -8,6 +8,7 @@ import { toPage } from '../shared/test-utils';
 import { Page } from '../../../../shared/model/types';
 import { OibusItemCommandDTO, OibusItemDTO } from '../../../../shared/model/south-connector.model';
 import { DownloadService } from './download.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('HistoryQueryService', () => {
   let http: HttpTestingController;
@@ -16,8 +17,7 @@ describe('HistoryQueryService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [HistoryQueryService]
+      providers: [provideHttpClient(), provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(HistoryQueryService);
