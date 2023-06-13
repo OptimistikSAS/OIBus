@@ -10,7 +10,7 @@ import { PaginationComponent } from '../../shared/pagination/pagination.componen
 import { PageLoader } from '../../shared/page-loader.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { getRowSettings } from '../../shared/utils';
+import { checkInputValue, getRowSettings } from '../../shared/utils';
 import { SouthMetricsComponent } from '../south-metrics/south-metrics.component';
 import { NorthMetricsComponent } from '../../north/north-detail/north-metrics/north-metrics.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
@@ -92,7 +92,7 @@ export class SouthDetailComponent implements OnInit {
       settings.readDisplay &&
       (!settings.conditionalDisplay ||
         Object.entries(settings.conditionalDisplay).every(([key, values]) => {
-          return this.southConnector && values.includes(this.southConnector.settings[key]);
+          return this.southConnector && checkInputValue(values, this.southConnector.settings[key]);
         }))
     );
   }

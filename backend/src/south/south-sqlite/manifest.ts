@@ -50,7 +50,7 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'dateTimeFormat',
         type: 'OibDateTimeFormat',
-        label: 'Datetime type',
+        label: 'Input binding (@StartTime or @EndTime)',
         defaultValue: {
           type: 'string',
           format: 'yyyy-MM-dd HH:mm:ss.SSS',
@@ -58,26 +58,22 @@ const manifest: SouthConnectorManifest = {
           locale: 'en-US',
           field: 'timestamp'
         },
+        conditionalDisplay: { query: '@StartTime|@EndTime' },
         class: 'col',
         newRow: true,
         readDisplay: false
       },
       {
-        key: 'filename',
-        class: 'col-4',
+        key: 'serialization',
+        type: 'OibSerialization',
+        label: 'Serialization',
+        defaultValue: {
+          type: 'file',
+          filename: 'sql-@CurrentDate.csv',
+          delimiter: 'COMMA'
+        },
+        class: 'col',
         newRow: true,
-        type: 'OibText',
-        label: 'Filename',
-        defaultValue: 'sql-@CurrentDate.csv',
-        readDisplay: true
-      },
-      {
-        key: 'delimiter',
-        class: 'col-4',
-        type: 'OibSelect',
-        options: [',', ';', '|'],
-        label: 'Delimiter',
-        defaultValue: ',',
         readDisplay: false
       }
     ]

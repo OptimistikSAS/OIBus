@@ -1,0 +1,25 @@
+<div class="mx-3 mb-2">
+  <div class="row">
+    <div class="col">
+      <label [for]="'oib-serialization-type-input-' + key"> {{ 'serialization.type' | translate }} </label>
+      <select [formControl]="serializationCtrl.controls.type" [id]="'oib-serialization-type-input-' + key" class="form-select mb-2 mr-sm-2">
+        <option *ngFor="let type of serializationTypes" [ngValue]="type">{{ type | serializationsEnum }}</option>
+      </select>
+    </div>
+    <div class="col">
+      <label [for]="'oib-serialization-filename-input-' + key">{{ 'serialization.filename' | translate }} </label>
+      <input [id]="'oib-serialization-filename-input-' + key" class="form-control" [formControl]="serializationCtrl.controls.filename" />
+    </div>
+    <div class="col">
+      <label [for]="'oib-serialization-delimiter-input-' + key">{{ 'serialization.delimiter' | translate }} </label>
+      <select
+        [formControl]="serializationCtrl.controls.delimiter"
+        [id]="'oib-serialization-delimiter-input-' + key"
+        class="form-select mb-2 mr-sm-2"
+      >
+        <option *ngFor="let delimiter of csvDelimiters" [ngValue]="delimiter">{{ delimiter | csvCharacterEnum }}</option>
+      </select>
+    </div>
+  </div>
+  <div class="row"></div>
+</div>

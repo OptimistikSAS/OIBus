@@ -1,6 +1,6 @@
 import { ScanModeDTO } from './scan-mode.model';
 import { Authentication, AuthenticationType } from './engine.model';
-import { DateTimeFormat } from './types';
+import { DateTimeFormat, Serialization } from './types';
 
 export const CONNECTOR_FORM_TYPES = [
   'OibText',
@@ -15,6 +15,7 @@ export const CONNECTOR_FORM_TYPES = [
   'OibTimezone',
   'OibProxy',
   'OibDateTimeFormat',
+  'OibSerialization',
   'OibAuthentication'
 ] as const;
 export type ConnectorFormType = typeof CONNECTOR_FORM_TYPES[number];
@@ -83,7 +84,7 @@ export interface BaseOibFormControl<T> {
   class?: string | null;
   conditionalDisplay?: {
     // Each key refers to another OibFormControl which values must include this OibFormControl value to display this field in a form
-    [key: string]: Array<string | number | boolean>;
+    [key: string]: Array<string | number | boolean> | string;
   } | null;
   // readDisplay is used to display the settings value in display mode
   readDisplay?: boolean | null;
@@ -143,6 +144,10 @@ export interface OibDateTimeFormatFormControl extends BaseOibFormControl<DateTim
   type: 'OibDateTimeFormat';
 }
 
+export interface OibSerializationFormControl extends BaseOibFormControl<Serialization> {
+  type: 'OibSerialization';
+}
+
 export type OibFormControl =
   | OibTextFormControl
   | OibTextAreaFormControl
@@ -155,4 +160,5 @@ export type OibFormControl =
   | OibTimezoneFormControl
   | OibProxyFormControl
   | OibDateTimeFormatFormControl
+  | OibSerializationFormControl
   | OibAuthenticationFormControl;
