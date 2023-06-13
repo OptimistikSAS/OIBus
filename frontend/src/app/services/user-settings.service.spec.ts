@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 
 import { UserSettingsService } from './user-settings.service';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangePasswordCommand, User, UserCommandDTO } from '../../../../shared/model/user.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('UserSettingsService', () => {
   let http: HttpTestingController;
@@ -10,7 +11,7 @@ describe('UserSettingsService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule]
+      providers: [provideHttpClient(), provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
 

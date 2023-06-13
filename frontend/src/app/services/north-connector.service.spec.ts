@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { NorthConnectorService } from './north-connector.service';
 import {
@@ -11,6 +11,7 @@ import {
   NorthType
 } from '../../../../shared/model/north-connector.model';
 import { SubscriptionDTO } from '../../../../shared/model/subscription.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('NorthConnectorService', () => {
   let http: HttpTestingController;
@@ -18,8 +19,7 @@ describe('NorthConnectorService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [NorthConnectorService]
+      providers: [provideHttpClient(), provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(NorthConnectorService);

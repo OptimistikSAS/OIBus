@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ScanModeService } from './scan-mode.service';
 import { ScanModeCommandDTO, ScanModeDTO } from '../../../../shared/model/scan-mode.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ScanModeService', () => {
   let http: HttpTestingController;
@@ -10,8 +11,7 @@ describe('ScanModeService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [ScanModeService]
+      providers: [provideHttpClient(), provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(ScanModeService);

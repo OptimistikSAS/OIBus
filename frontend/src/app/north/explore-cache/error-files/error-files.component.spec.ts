@@ -1,8 +1,6 @@
 import { ErrorFilesComponent } from './error-files.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { TestBed } from '@angular/core/testing';
-import { ReactiveFormsModule } from '@angular/forms';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { of } from 'rxjs';
 import { NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
@@ -39,7 +37,6 @@ describe('ErrorFilesComponent', () => {
     northConnectorService = createMock(NorthConnectorService);
 
     TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, HttpClientTestingModule, TestComponent],
       providers: [provideI18nTesting(), { provide: NorthConnectorService, useValue: northConnectorService }]
     });
 

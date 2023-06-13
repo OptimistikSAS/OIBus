@@ -2,7 +2,6 @@ import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector
 import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { of } from 'rxjs';
 import { Router } from '@angular/router';
@@ -38,7 +37,6 @@ describe('ChooseSouthConnectorTypeModalComponent', () => {
     router = createMock(Router);
 
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule, ChooseSouthConnectorTypeModalComponent],
       providers: [
         provideI18nTesting(),
         { provide: NgbActiveModal, useValue: fakeActiveModal },

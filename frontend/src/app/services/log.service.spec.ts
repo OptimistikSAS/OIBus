@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Page } from '../../../../shared/model/types';
 import { toPage } from '../shared/test-utils';
 import { LogService } from './log.service';
 import { LogDTO } from '../../../../shared/model/logs.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('LogService', () => {
   let http: HttpTestingController;
@@ -12,8 +13,7 @@ describe('LogService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [LogService]
+      providers: [provideHttpClient(), provideHttpClientTesting()]
     });
     http = TestBed.inject(HttpTestingController);
     service = TestBed.inject(LogService);
