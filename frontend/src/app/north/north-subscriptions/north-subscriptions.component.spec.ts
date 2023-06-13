@@ -68,7 +68,6 @@ describe('NorthSubscriptionsComponent', () => {
     southService = createMock(SouthConnectorService);
 
     TestBed.configureTestingModule({
-      imports: [TestComponent],
       providers: [
         provideI18nTesting(),
         { provide: NorthConnectorService, useValue: northService },

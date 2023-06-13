@@ -53,7 +53,6 @@ describe('IpFilterListComponent', () => {
     notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
-      imports: [IpFilterListComponent],
       providers: [
         provideI18nTesting(),
         { provide: IpFilterService, useValue: ipFilterService },

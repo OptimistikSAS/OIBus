@@ -53,7 +53,6 @@ describe('ExternalSourceListComponent', () => {
     notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
-      imports: [ExternalSourceListComponent],
       providers: [
         provideI18nTesting(),
         { provide: ExternalSourceService, useValue: externalSourceService },

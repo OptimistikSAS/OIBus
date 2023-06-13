@@ -40,7 +40,6 @@ describe('NavbarComponent', () => {
     engineService = createMock(EngineService);
 
     TestBed.configureTestingModule({
-      imports: [NavbarComponent],
       providers: [
         provideRouter([]),
         provideI18nTesting(),

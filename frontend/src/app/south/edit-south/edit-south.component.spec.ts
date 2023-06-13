@@ -57,7 +57,6 @@ describe('EditSouthComponent', () => {
     proxyService = createMock(ProxyService);
 
     TestBed.configureTestingModule({
-      imports: [EditSouthComponent],
       providers: [
         provideI18nTesting(),
         provideHttpClient(),

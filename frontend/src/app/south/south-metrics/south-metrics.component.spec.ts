@@ -37,7 +37,6 @@ describe('SouthMetricsComponent', () => {
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      imports: [SouthMetricsComponent],
       providers: [
         provideI18nTesting(),
         { provide: SouthConnectorService, useValue: southConnectorService },

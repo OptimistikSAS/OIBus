@@ -47,7 +47,6 @@ describe('NorthListComponent', () => {
     northConnectorService = createMock(NorthConnectorService);
 
     TestBed.configureTestingModule({
-      imports: [NorthListComponent],
       providers: [
         provideI18nTesting(),
         provideRouter([]),

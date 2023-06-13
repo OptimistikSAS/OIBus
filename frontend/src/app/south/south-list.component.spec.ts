@@ -59,7 +59,6 @@ describe('SouthListComponent', () => {
     southConnectorService = createMock(SouthConnectorService);
 
     TestBed.configureTestingModule({
-      imports: [SouthListComponent],
       providers: [
         provideI18nTesting(),
         provideRouter([]),

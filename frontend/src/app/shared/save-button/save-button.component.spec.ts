@@ -50,7 +50,6 @@ describe('SaveButton', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [ReactiveFormsModule, SaveButtonComponent, TestComponent],
       providers: [provideI18nTesting()]
     });
 

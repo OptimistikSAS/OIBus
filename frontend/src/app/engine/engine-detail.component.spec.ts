@@ -113,7 +113,6 @@ describe('EngineDetailComponent', () => {
     notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
-      imports: [EngineDetailComponent, ProxyListComponent],
       providers: [
         provideI18nTesting(),
         provideRouter([]),

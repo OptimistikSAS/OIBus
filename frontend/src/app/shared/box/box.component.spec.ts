@@ -33,7 +33,6 @@ describe('BoxComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [BoxComponent, BoxTitleDirective, TestComponent],
       providers: [provideI18nTesting()]
     });
   });

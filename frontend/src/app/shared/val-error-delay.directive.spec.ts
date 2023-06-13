@@ -27,9 +27,7 @@ describe('ValErrorAnimationDirective', () => {
   let tester: TestComponentTester;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      imports: [TestComponent]
-    });
+    TestBed.configureTestingModule({});
 
     tester = new TestComponentTester();
     tester.detectChanges();

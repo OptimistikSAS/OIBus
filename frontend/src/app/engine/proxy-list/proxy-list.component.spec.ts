@@ -53,7 +53,6 @@ describe('ProxyListComponent', () => {
     notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
-      imports: [ProxyListComponent],
       providers: [
         provideI18nTesting(),
         { provide: ProxyService, useValue: proxyService },

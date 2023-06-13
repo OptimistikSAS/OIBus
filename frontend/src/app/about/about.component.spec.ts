@@ -59,7 +59,6 @@ describe('AboutComponent', () => {
     engineService = createMock(EngineService);
 
     TestBed.configureTestingModule({
-      imports: [AboutComponent],
       providers: [provideI18nTesting(), { provide: EngineService, useValue: engineService }]
     });
 

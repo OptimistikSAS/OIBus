@@ -41,7 +41,6 @@ describe('HomeComponent', () => {
     historyQueryService = createMock(HistoryQueryService);
 
     TestBed.configureTestingModule({
-      imports: [HomeComponent],
       providers: [
         provideI18nTesting(),
         provideRouter([]),

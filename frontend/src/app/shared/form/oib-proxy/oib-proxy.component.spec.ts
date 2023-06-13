@@ -42,7 +42,6 @@ describe('OibProxyComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [OibProxyComponent],
       providers: [provideI18nTesting()]
     });
 

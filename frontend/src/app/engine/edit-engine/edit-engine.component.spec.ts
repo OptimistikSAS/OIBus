@@ -11,7 +11,6 @@ import { ProxyService } from '../../services/proxy.service';
 import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { of } from 'rxjs';
 import { NotificationService } from '../../shared/notification.service';
-import { SaveButtonComponent } from '../../shared/save-button/save-button.component';
 
 class EditEngineComponentTester extends ComponentTester<EditEngineComponent> {
   constructor() {
@@ -164,7 +163,6 @@ describe('EditEngineComponent', () => {
     notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
-      imports: [EditEngineComponent, SaveButtonComponent],
       providers: [
         provideHttpClient(),
         provideRouter([]),

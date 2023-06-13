@@ -48,7 +48,6 @@ describe('ExploreCacheComponent', () => {
     northConnectorService = createMock(NorthConnectorService);
 
     TestBed.configureTestingModule({
-      imports: [ExploreCacheComponent, ErrorFilesComponent],
       providers: [
         provideI18nTesting(),
         provideRouter([]),

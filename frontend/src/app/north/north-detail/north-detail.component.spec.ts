@@ -83,7 +83,6 @@ describe('NorthDetailComponent', () => {
     northConnectorService = createMock(NorthConnectorService);
     scanModeService = createMock(ScanModeService);
     TestBed.configureTestingModule({
-      imports: [NorthDetailComponent],
       providers: [
         provideI18nTesting(),
         provideRouter([]),

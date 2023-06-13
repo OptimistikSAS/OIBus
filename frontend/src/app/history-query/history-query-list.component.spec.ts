@@ -45,7 +45,6 @@ describe('HistoryQueryListComponent', () => {
     historyQueryService = createMock(HistoryQueryService);
 
     TestBed.configureTestingModule({
-      imports: [HistoryQueryListComponent],
       providers: [
         provideI18nTesting(),
         provideRouter([]),

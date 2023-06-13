@@ -7,7 +7,6 @@ import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { FormControl, FormGroup, FormRecord } from '@angular/forms';
 import { OibFormControl } from '../../../../../shared/model/form.model';
-import { OibCodeBlockComponent } from './oib-code-block/oib-code-block.component';
 import { formDirectives } from '../form-directives';
 
 @Component({
@@ -145,9 +144,7 @@ describe('FormComponent', () => {
   let tester: FormComponentTester;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({
-      imports: [FormComponent, OibCodeBlockComponent]
-    });
+    TestBed.configureTestingModule({});
 
     tester = new FormComponentTester();
     tester.detectChanges();

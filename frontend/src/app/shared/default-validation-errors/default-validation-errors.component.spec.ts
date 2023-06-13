@@ -54,7 +54,6 @@ describe('DefaultValidationErrorsComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [ValdemortModule, ReactiveFormsModule, DefaultValidationErrorsComponent, TestComponent],
       providers: [provideI18nTesting()]
     });
 
