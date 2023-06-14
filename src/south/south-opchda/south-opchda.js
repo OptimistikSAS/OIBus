@@ -369,8 +369,10 @@ export default class SouthOPCHDA extends SouthConnector {
       if (this.reconnectTimeout) {
         clearTimeout(this.reconnectTimeout)
       }
-      await this.disconnect()
-      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.retryInterval)
+      if (message.Request !== 'Stop') {
+        await this.disconnect()
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.retryInterval)
+      }
     }
   }
 
