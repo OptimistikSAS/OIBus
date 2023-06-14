@@ -205,7 +205,13 @@ export default class NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async cacheValues(values) {
-    await this.valueCache.cacheValues(values)
+    const chunkSize = this.cacheSettings.maxSendCount || 10000
+    for (let i = 0; i < values.length; i += chunkSize) {
+      const chunk = values.slice(i, i + chunkSize)
+
+      // eslint-disable-next-line no-await-in-loop
+      await this.valueCache.cacheValues(chunk)
+    }
   }
 
   /**
