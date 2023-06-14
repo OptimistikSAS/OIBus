@@ -106,29 +106,24 @@ const manifest: SouthConnectorManifest = {
           type: 'string',
           format: 'yyyy-MM-dd HH:mm:ss.SSS',
           timezone: 'UTC',
-          locale: 'en-US',
-          field: 'timestamp'
+          locale: 'en-US'
         },
         class: 'col',
         newRow: true,
         readDisplay: false
       },
       {
-        key: 'filename',
-        class: 'col-8',
+        key: 'serialization',
+        type: 'OibSerialization',
+        label: 'Serialization',
+        defaultValue: {
+          type: 'file',
+          filename: 'sql-@CurrentDate.csv',
+          delimiter: 'COMMA',
+          datetimeSerialization: []
+        },
+        class: 'col',
         newRow: true,
-        type: 'OibText',
-        label: 'Filename',
-        defaultValue: 'sql-@CurrentDate.csv',
-        readDisplay: true
-      },
-      {
-        key: 'delimiter',
-        class: 'col-4',
-        type: 'OibSelect',
-        options: [',', ';', '|'],
-        label: 'Delimiter',
-        defaultValue: ',',
         readDisplay: false
       }
     ]

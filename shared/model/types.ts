@@ -56,7 +56,6 @@ export type DateTimeType = typeof DATE_TIME_TYPES[number];
 interface BaseDateTimeFormat {
   type: DateTimeType;
   timezone: string;
-  field: string;
 }
 
 export interface StringDateTimeFormat extends BaseDateTimeFormat {
@@ -84,8 +83,15 @@ export type CsvCharacter = typeof ALL_CSV_CHARACTERS[number];
 export const SERIALIZATION_TYPES = ['file'];
 export type SerializationType = typeof SERIALIZATION_TYPES[number];
 
+export interface DateTimeSerialization {
+  field: string;
+  useAsReference: boolean;
+  datetimeFormat: DateTimeFormat;
+}
+
 interface BaseSerializationFormat {
   type: SerializationType;
+  datetimeSerialization: Array<DateTimeSerialization>;
 }
 
 export interface FileSerializationFormat extends BaseSerializationFormat {

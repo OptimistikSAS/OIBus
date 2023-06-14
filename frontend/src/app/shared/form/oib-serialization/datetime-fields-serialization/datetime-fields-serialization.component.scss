@@ -1,0 +1,12 @@
+.data-list-header {
+  background-color: #e9ecef;
+  border-bottom: 2px solid #dee2e6;
+  border-top: 2px solid #dee2e6;
+}
+
+.component-drop-list {
+  min-height: 2rem;
+  &.empty {
+    background-color: #e9ecef;
+  }
+}

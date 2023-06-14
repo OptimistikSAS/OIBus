@@ -6,7 +6,7 @@ import { OibSerializationFormControl } from '../../../../../../shared/model/form
 import { formDirectives } from '../../form-directives';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup, FormRecord } from '@angular/forms';
-import { MockI18nModule } from '../../../../i18n/mock-i18n.spec';
+import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 
 @Component({
   template: `<form [formGroup]="form">
@@ -57,7 +57,7 @@ describe('OibSerialization', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [OibSerializationComponent, MockI18nModule]
+      providers: [provideI18nTesting()]
     });
 
     tester = new OibFormComponentTester();

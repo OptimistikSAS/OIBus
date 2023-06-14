@@ -29,6 +29,7 @@ declare namespace Intl {
 export class OibDatetimeFormatComponent implements ControlValueAccessor {
   @Input() label = '';
   @Input() key = '';
+  @Input() displayExample = true;
 
   readonly datetimeTypes = DATE_TIME_TYPES;
   readonly BASE_EXAMPLE = '2023-11-29T21:03:59.123Z';
@@ -42,8 +43,7 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
     type: 'string' as DateTimeType,
     format: 'yyyy-MM-dd HH:mm:ss.SSS',
     timezone: 'UTC',
-    locale: 'en-US',
-    field: 'timestamp'
+    locale: 'en-US'
   });
   disabled = false;
   example: DateTime | number | string = DateTime.fromISO(this.BASE_EXAMPLE, { zone: 'UTC' }).toFormat('yyyy-MM-dd HH:mm:ss.SSS', {
@@ -75,8 +75,7 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
             type: 'string',
             format: newValue.format!,
             timezone: newValue.timezone!,
-            locale: newValue.locale!,
-            field: newValue.field!
+            locale: newValue.locale!
           });
           this.example = DateTime.fromISO(this.BASE_EXAMPLE, { zone: newValue.timezone! }).toFormat(newValue.format!, {
             locale: newValue.locale!
@@ -84,12 +83,12 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
           break;
 
         case 'number':
-          this.onChange({ type: 'number', timezone: newValue.timezone!, field: newValue.field! });
+          this.onChange({ type: 'number', timezone: newValue.timezone! });
           this.example = DateTime.fromISO(this.BASE_EXAMPLE, { zone: newValue.timezone! }).toMillis();
           break;
 
         case 'datetime':
-          this.onChange({ type: 'datetime', timezone: newValue.timezone!, field: newValue.field! });
+          this.onChange({ type: 'datetime', timezone: newValue.timezone! });
           this.example = DateTime.fromISO(this.BASE_EXAMPLE, { zone: newValue.timezone! });
           break;
       }
@@ -120,15 +119,14 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
           type: 'string',
           format: value.format,
           timezone: value.timezone,
-          locale: value.locale,
-          field: value.field
+          locale: value.locale
         });
         break;
       case 'number':
-        this.datetimeFormatCtrl.patchValue({ type: 'number', timezone: value.timezone, field: value.field });
+        this.datetimeFormatCtrl.patchValue({ type: 'number', timezone: value.timezone });
         break;
       case 'datetime':
-        this.datetimeFormatCtrl.patchValue({ type: 'datetime', timezone: value.timezone, field: value.field });
+        this.datetimeFormatCtrl.patchValue({ type: 'datetime', timezone: value.timezone });
         break;
     }
   }

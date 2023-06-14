@@ -169,7 +169,6 @@ export default class JoiValidator {
     let schema = Joi.object({
       type: Joi.string().required().valid('number', 'string', 'datetime'),
       timezone: Joi.string().required(),
-      field: Joi.string().required(),
       format: Joi.optional(),
       locale: Joi.optional()
     }).required();

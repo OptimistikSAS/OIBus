@@ -134,7 +134,6 @@ describe('Joi validator', () => {
       datetimeFormat: Joi.object({
         type: Joi.string().required().valid('number', 'string', 'datetime'),
         timezone: Joi.string().required(),
-        field: Joi.string().required(),
         format: Joi.optional(),
         locale: Joi.optional()
       }).required(),
@@ -289,7 +288,6 @@ describe('Joi validator', () => {
         delimiter: Joi.string().optional()
       })
         .required()
-
         .when('query', {
           is: Joi.string().pattern(new RegExp('@StartTime|@EndTime')),
           then: Joi.object({

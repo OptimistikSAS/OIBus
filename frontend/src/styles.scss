@@ -42,6 +42,13 @@ $fa-font-path: '../fonts';
   border: 1px solid $mediumGrey;
 }
 
+.oib-inner-form {
+  @extend .mb-3;
+  padding: 15px;
+  border: 1px solid #d1d5da;
+  border-radius: 6px;
+}
+
 .oib-table {
   thead {
     color: white;
