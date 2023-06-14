@@ -1,4 +1,5 @@
 import path from 'node:path';
+import fs from 'node:fs/promises';
 
 import db from 'better-sqlite3';
 
@@ -56,10 +57,24 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
     await super.start();
   }
 
-  // TODO: method needs to be implemented
   static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
     logger.trace(`Testing connection`);
-    throw new Error('TODO: method needs to be implemented');
+    const dbPath = path.resolve(settings.databasePath);
+    const dbFolder = path.dirname(dbPath);
+
+    try {
+      await fs.access(dbFolder, fs.constants.F_OK);
+    } catch (error: any) {
+      logger.trace(`Access error on '${dbFolder}': ${error.message}`);
+      throw new Error(`Folder '${dbFolder}' does not exist`);
+    }
+
+    try {
+      await fs.access(dbFolder, fs.constants.R_OK | fs.constants.W_OK);
+    } catch (error: any) {
+      logger.trace(`Access error on '${dbFolder}': ${error.message}`);
+      throw new Error(`No read/write access on folder`);
+    }
   }
 
   /**
