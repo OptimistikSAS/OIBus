@@ -153,19 +153,15 @@ export default class ValueCacheService {
     // Reset timeout to null to set the buffer timeout again on the next send values
     this.bufferTimeout = null
 
-    const copiedBufferFiles = this.bufferFiles
-    const valuesInBufferFiles = []
-
-    copiedBufferFiles.forEach((values, key) => {
-      valuesInBufferFiles.push({ key, values })
+    const fileInBuffer = []
+    let valuesToFlush = []
+    this.bufferFiles.forEach((values, key) => {
+      fileInBuffer.push(key)
+      valuesToFlush = [...valuesToFlush, ...values]
     })
     const tmpFileName = `${nanoid()}.queue.tmp`
 
     try {
-      const valuesToFlush = valuesInBufferFiles.reduce((prev, { values }) => {
-        prev.push(...values)
-        return prev
-      }, [])
       // Save the buffer to be sent and immediately clear it
       if (valuesToFlush.length === 0) {
         this.logger.trace(`Nothing to flush (${flag}).`)
@@ -181,7 +177,7 @@ export default class ValueCacheService {
       this.logger.trace(`Flush ${valuesToFlush.length} values (${flag}) into "${path.resolve(this.valueFolder, tmpFileName)}".`)
 
       // Once compacted, remove values from queue.
-      await valuesInBufferFiles.reduce((promise, { key }) => promise.then(
+      await fileInBuffer.reduce((promise, key) => promise.then(
         async () => {
           this.bufferFiles.delete(key)
           await fs.unlink(path.resolve(this.valueFolder, key))
@@ -211,32 +207,30 @@ export default class ValueCacheService {
    * @returns {Promise<void>} - The result promise
    */
   async compactQueueCache(cacheQueue) {
-    const valuesInQueue = []
+    const fileInBuffer = []
+    let valuesInQueue = []
 
     cacheQueue.forEach((values, key) => {
-      valuesInQueue.push({ key, values })
+      fileInBuffer.push(key)
+      valuesInQueue = [...valuesInQueue, ...values]
     })
     const compactFileName = `${nanoid()}.compact.tmp`
     this.logger.trace(`Max group count reach. Compacting queue into "${compactFileName}".`)
     try {
-      const compactValues = valuesInQueue.reduce((prev, { values }) => {
-        prev.push(...values)
-        return prev
-      }, [])
       // Store the values in a tmp file
       await fs.writeFile(
         path.resolve(this.valueFolder, compactFileName),
-        JSON.stringify(compactValues),
+        JSON.stringify(valuesInQueue),
         { encoding: 'utf8', flag: 'w' },
       )
       this.compactedQueue.push({
         fileName: compactFileName,
         createdAt: new Date().getTime(),
-        numberOfValues: compactValues.length,
+        numberOfValues: valuesInQueue.length,
       })
 
       // Once compacted, remove values from queue.
-      await valuesInQueue.reduce((promise, { key }) => promise.then(
+      await fileInBuffer.reduce((promise, key) => promise.then(
         async () => this.deleteKeyFromCache(key),
       ), Promise.resolve())
     } catch (error) {
@@ -294,10 +288,11 @@ export default class ValueCacheService {
     }
 
     // Transform the values to send into an array of values objects to handle them in the North connector
-    const listOfValuesToSend = this.valuesBeingSent.reduce((prev, { values }) => {
-      prev.push(...values)
-      return prev
-    }, [])
+    let listOfValuesToSend = []
+    this.valuesBeingSent.forEach(({ values }) => {
+      listOfValuesToSend = [...listOfValuesToSend, ...values]
+    })
+
     this.logger.debug(`Handling ${listOfValuesToSend.length} values.`)
     try {
       await this.northSendValuesCallback(listOfValuesToSend)

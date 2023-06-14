@@ -126,7 +126,7 @@ export default class SouthOPCUAHA extends SouthConnector {
    * @return {Promise<void>} The resolved promise
    */
   formatAndSendValues = async (dataValues, nodesToRead, opcStartTime, scanMode) => {
-    const values = []
+    let values = []
     let maxTimestamp = opcStartTime.getTime()
     dataValues.forEach((dataValue, i) => {
       // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
@@ -139,7 +139,7 @@ export default class SouthOPCUAHA extends SouthConnector {
       if (newerValues.length < dataValue.length) {
         this.logger.debug(`Received ${newerValues.length} new values for ${nodesToRead[i].pointId} among ${dataValue.length} values retrieved.`)
       }
-      values.push(...newerValues.map((opcuaValue) => {
+      values = [...values, ...newerValues.map((opcuaValue) => {
         const selectedTimestamp = opcuaValue.sourceTimestamp ?? opcuaValue.serverTimestamp
         const selectedTime = selectedTimestamp.getTime()
         maxTimestamp = selectedTime > maxTimestamp ? selectedTime : maxTimestamp
@@ -151,7 +151,7 @@ export default class SouthOPCUAHA extends SouthConnector {
             quality: JSON.stringify(opcuaValue.statusCode),
           },
         }
-      }))
+      })]
     })
     if (values.length > 0) {
       await this.addValues(values)
@@ -284,7 +284,7 @@ export default class SouthOPCUAHA extends SouthConnector {
             this.logger.trace(`Result for node "${node.nodeId}" (number ${i}) contains `
               + `${result.historyData.dataValues.length} values and has status code `
               + `${JSON.stringify(result.statusCode.value)}, continuation point is ${result.continuationPoint}.`)
-            dataValues[i].push(...result.historyData.dataValues)
+            dataValues[i] = [...dataValues[i], ...result.historyData.dataValues]
           }
 
           // Reason of statusCode not equal to zero could be there is no data for the requested data and interval
