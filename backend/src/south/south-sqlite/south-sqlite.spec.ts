@@ -1,4 +1,5 @@
 import path from 'node:path';
+import fs from 'node:fs/promises';
 
 import SouthSQLite from './south-sqlite';
 import * as utils from '../../service/utils';
@@ -14,6 +15,7 @@ import ProxyService from '../../service/proxy.service';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 
 jest.mock('../../service/utils');
+jest.mock('node:fs/promises');
 const mockDatabase = new DatabaseMock();
 jest.mock('better-sqlite3', () => () => mockDatabase);
 
@@ -86,27 +88,27 @@ const items: Array<OibusItemDTO> = [
     scanModeId: 'scanModeId2'
   }
 ];
+const configuration: SouthConnectorDTO = {
+  id: 'southId',
+  name: 'south',
+  type: 'sqlite',
+  description: 'my test connector',
+  enabled: true,
+  history: {
+    maxInstantPerItem: true,
+    maxReadInterval: 3600,
+    readDelay: 0
+  },
+  settings: {
+    databasePath: './database.db',
+    compression: false
+  }
+};
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 let south: SouthSQLite;
 
 describe('SouthSQLite', () => {
-  const configuration: SouthConnectorDTO = {
-    id: 'southId',
-    name: 'south',
-    type: 'sqlite',
-    description: 'my test connector',
-    enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0
-    },
-    settings: {
-      databasePath: './database.db',
-      compression: false
-    }
-  };
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
@@ -132,12 +134,6 @@ describe('SouthSQLite', () => {
   it('should create temp folder', async () => {
     await south.start();
     expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp'));
-  });
-
-  it('should test connection with sqlite', async () => {
-    // TODO
-    await expect(SouthSQLite.testConnection({}, logger)).rejects.toThrow('TODO: method needs to be implemented');
-    expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
   });
 
   it('should properly run historyQuery', async () => {
@@ -191,5 +187,44 @@ describe('SouthSQLite', () => {
     }
 
     expect(error).toEqual(new Error('query error'));
+  });
+});
+
+describe('SouthSQLite test connection', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+  });
+
+  const settings = { ...configuration.settings };
+  const dbPath = path.resolve(settings.databasePath);
+  const dbFolder = path.dirname(dbPath).replace(/\\/g, '\\\\');
+
+  it('Folder does not exist', async () => {
+    const errorMessage = 'Folder does not exist';
+    (fs.access as jest.Mock).mockImplementationOnce(() => {
+      throw new Error(errorMessage);
+    });
+
+    const test = SouthSQLite.testConnection(settings, logger);
+    const folderRegex = new RegExp(`Folder '${dbFolder}' does not exist`);
+    await expect(test).rejects.toThrowError(folderRegex);
+
+    const accessRegex = new RegExp(`Access error on '${dbFolder}': ${errorMessage}`);
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([['Testing connection'], [expect.stringMatching(accessRegex)]]);
+  });
+
+  it('No read/write access', async () => {
+    const errorMessage = 'No read/write access';
+    (fs.access as jest.Mock)
+      .mockImplementationOnce(() => Promise.resolve())
+      .mockImplementationOnce(() => {
+        throw new Error(errorMessage);
+      });
+
+    await expect(SouthSQLite.testConnection(settings, logger)).rejects.toThrowError('No read/write access on folder');
+
+    const accessRegex = new RegExp(`Access error on '${dbFolder}': ${errorMessage}`);
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([['Testing connection'], [expect.stringMatching(accessRegex)]]);
   });
 });
