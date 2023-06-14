@@ -1,0 +1,52 @@
+<div class="data-list-header align-items-center ps-2 py-1 d-flex">
+  <span>
+    <b>{{ 'serialization.fields.list' | translate }}</b>
+  </span>
+  <button type="button" [disabled]="editedElement" class="btn btn-link ms-2 py-0 add-field-button" (click)="editNewElement()">
+    <span class="fa fa-plus-circle"></span>&ngsp;
+    <span translate="serialization.fields.add"></span>
+  </button>
+</div>
+
+<div class="row mt-1 px-2">
+  <div class="col-2"><label class="form-label" translate="serialization.fields.field"></label></div>
+  <div class="col-2"><label class="form-label" translate="serialization.fields.use-as-reference"></label></div>
+  <div class="col-2">
+    <label class="form-label" translate="serialization.fields.type"></label>
+  </div>
+</div>
+<div>
+  <div class="component-drop-list" [class.empty]="dateTimeSerializationsIncludingNew.length === 0">
+    <div *ngIf="dateTimeSerializationsIncludingNew.length === 0" class="p-2" translate="serialization.fields.no-field"></div>
+    <div
+      *ngFor="let fieldToSerialize of dateTimeSerializationsIncludingNew; index as index; last as last"
+      class="border-top"
+      [class.border-bottom]="last"
+    >
+      <oib-edit-datetime-serialization
+        *ngIf="isEdited(fieldToSerialize); else displayFieldToSerialize"
+        class="my-1"
+        [dateTimeSerialization]="fieldToSerialize"
+        [existingDateTimeSerializations]="dateTimeSerializations"
+        (saved)="save($event)"
+        (cancelled)="cancelEdition()"
+      >
+      </oib-edit-datetime-serialization>
+      <ng-template #displayFieldToSerialize>
+        <div class="row form-data px-2 field-display">
+          <div class="col-2">{{ fieldToSerialize.field }}</div>
+          <div class="col-2">{{ fieldToSerialize.useAsReference }}</div>
+          <div class="col-2">{{ fieldToSerialize.datetimeFormat.type | datetimeTypesEnum }}</div>
+          <div class="col-2 text-end text-nowrap">
+            <button type="button" [disabled]="editDisabled" class="btn btn-link px-1 py-0 edit-button" (click)="edit(fieldToSerialize)">
+              <span class="fa fa-pencil"></span>
+            </button>
+            <button type="button" [disabled]="editDisabled" class="btn btn-link px-1 py-0 delete-button" (click)="remove(index)">
+              <span class="fa fa-trash"></span>
+            </button>
+          </div>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

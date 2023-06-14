@@ -9,23 +9,14 @@ import {
   CsvCharacter,
   Serialization,
   SERIALIZATION_TYPES,
-  SerializationType,
-  Timezone
+  SerializationType
 } from '../../../../../../shared/model/types';
 import { DatetimeTypesEnumPipe } from '../../datetime-types-enum.pipe';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { Observable } from 'rxjs';
-import { inMemoryTypeahead } from '../../typeahead';
 import { SerializationsEnumPipe } from '../../serialization-types-enum.pipe';
 import { CsvCharacterEnumPipe } from '../../csv-character-enum.pipe';
+import { DatetimeFieldsSerializationComponent } from './datetime-fields-serialization/datetime-fields-serialization.component';
 
-// TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
-// eslint-disable-next-line @typescript-eslint/no-namespace
-declare namespace Intl {
-  type Key = 'calendar' | 'collation' | 'currency' | 'numberingSystem' | 'timeZone' | 'unit';
-
-  function supportedValuesOf(input: Key): string[];
-}
 @Component({
   selector: 'oib-serialization',
   standalone: true,
@@ -38,7 +29,8 @@ declare namespace Intl {
     DatetimeTypesEnumPipe,
     NgbTypeahead,
     SerializationsEnumPipe,
-    CsvCharacterEnumPipe
+    CsvCharacterEnumPipe,
+    DatetimeFieldsSerializationComponent
   ],
   templateUrl: './oib-serialization.component.html',
   styleUrls: ['./oib-serialization.component.scss'],
@@ -50,11 +42,6 @@ export class OibSerializationComponent implements ControlValueAccessor {
 
   readonly serializationTypes = SERIALIZATION_TYPES;
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
-  private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
-  timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
-    () => ['UTC', ...this.timezones],
-    timezone => timezone
-  );
 
   serializationCtrl = this.fb.group({
     type: 'file' as SerializationType,
@@ -86,7 +73,8 @@ export class OibSerializationComponent implements ControlValueAccessor {
           this.onChange({
             type: 'file',
             filename: newValue.filename!,
-            delimiter: newValue.delimiter!
+            delimiter: newValue.delimiter!,
+            datetimeSerialization: []
           });
           break;
       }

@@ -574,9 +574,19 @@
   },
   "serialization": {
     "title": "Serialization",
-    "type": "Type",
     "filename": "Filename",
     "delimiter": "Delimiter",
-    "fields": "Fields"
+    "type": "Type",
+    "fields": {
+      "title": "Datetime fields to serialize",
+      "list": "Fields",
+      "field": "Field name",
+      "type": "Type",
+      "origin-format": "Origin format",
+      "use-as-reference": "Reference",
+      "no-field": "No fields to serialize",
+      "add": "Add a datetime field",
+      "unique-field": "Specify each field only once"
+    }
   }
 }
