@@ -1,12 +1,13 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { formDirectives } from '../../form-directives';
 import { NgForOf, NgIf } from '@angular/common';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthTypesEnumPipe } from '../../auth-types-enum.pipe';
 import {
   ALL_CSV_CHARACTERS,
   CsvCharacter,
+  DateTimeSerialization,
   Serialization,
   SERIALIZATION_TYPES,
   SerializationType
@@ -16,6 +17,7 @@ import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { SerializationsEnumPipe } from '../../serialization-types-enum.pipe';
 import { CsvCharacterEnumPipe } from '../../csv-character-enum.pipe';
 import { DatetimeFieldsSerializationComponent } from './datetime-fields-serialization/datetime-fields-serialization.component';
+import { OibDatetimeFormatComponent } from '../oib-datetime-format/oib-datetime-format.component';
 
 @Component({
   selector: 'oib-serialization',
@@ -30,7 +32,8 @@ import { DatetimeFieldsSerializationComponent } from './datetime-fields-serializ
     NgbTypeahead,
     SerializationsEnumPipe,
     CsvCharacterEnumPipe,
-    DatetimeFieldsSerializationComponent
+    DatetimeFieldsSerializationComponent,
+    OibDatetimeFormatComponent
   ],
   templateUrl: './oib-serialization.component.html',
   styleUrls: ['./oib-serialization.component.scss'],
@@ -46,7 +49,8 @@ export class OibSerializationComponent implements ControlValueAccessor {
   serializationCtrl = this.fb.group({
     type: 'file' as SerializationType,
     filename: '',
-    delimiter: 'COMMA' as CsvCharacter
+    delimiter: 'COMMA' as CsvCharacter,
+    datetimeSerialization: [[] as Array<DateTimeSerialization>, Validators.required]
   });
   disabled = false;
 
@@ -68,13 +72,14 @@ export class OibSerializationComponent implements ControlValueAccessor {
     });
 
     this.serializationCtrl.valueChanges.subscribe(newValue => {
+      console.log('newValue', newValue);
       switch (newValue.type) {
         case 'file':
           this.onChange({
             type: 'file',
             filename: newValue.filename!,
             delimiter: newValue.delimiter!,
-            datetimeSerialization: []
+            datetimeSerialization: newValue.datetimeSerialization!
           });
           break;
       }
@@ -104,7 +109,8 @@ export class OibSerializationComponent implements ControlValueAccessor {
         this.serializationCtrl.patchValue({
           type: 'file',
           filename: value.filename,
-          delimiter: value.delimiter
+          delimiter: value.delimiter,
+          datetimeSerialization: value.datetimeSerialization
         });
         break;
     }

@@ -140,7 +140,21 @@ describe('Joi validator', () => {
       serialization: Joi.object({
         type: Joi.string().required().valid('file'),
         filename: Joi.string().optional(),
-        delimiter: Joi.string().optional()
+        delimiter: Joi.string().optional(),
+        datetimeSerialization: Joi.array()
+          .items(
+            Joi.object({
+              field: Joi.string().required(),
+              useAsReference: Joi.boolean().required(),
+              datetimeFormat: Joi.object({
+                type: Joi.string().required().valid('number', 'string', 'datetime'),
+                timezone: Joi.string().required(),
+                format: Joi.optional(),
+                locale: Joi.optional()
+              })
+            })
+          )
+          .required()
       }).required(),
       authentication: Joi.object({
         type: Joi.string().required().valid('none', 'basic', 'cert'),
@@ -272,6 +286,25 @@ describe('Joi validator', () => {
 
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
+    const serializationSchema = Joi.object({
+      type: Joi.string().required().valid('file'),
+      filename: Joi.string().optional(),
+      delimiter: Joi.string().optional(),
+      datetimeSerialization: Joi.array()
+        .items(
+          Joi.object({
+            field: Joi.string().required(),
+            useAsReference: Joi.boolean().required(),
+            datetimeFormat: Joi.object({
+              type: Joi.string().required().valid('number', 'string', 'datetime'),
+              timezone: Joi.string().required(),
+              format: Joi.optional(),
+              locale: Joi.optional()
+            })
+          })
+        )
+        .required()
+    });
     const expectedSchema = Joi.object({
       driver: Joi.string().required().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle', 'SQLite'),
       databasePath: Joi.string()
@@ -282,25 +315,11 @@ describe('Joi validator', () => {
           otherwise: Joi.string().allow(null, '').optional()
         }),
       query: Joi.string().allow(null, ''),
-      serialization: Joi.object({
-        type: Joi.string().required().valid('file'),
-        filename: Joi.string().optional(),
-        delimiter: Joi.string().optional()
+      serialization: serializationSchema.required().when('query', {
+        is: Joi.string().pattern(new RegExp('@StartTime|@EndTime')),
+        then: serializationSchema.required(),
+        otherwise: serializationSchema.optional()
       })
-        .required()
-        .when('query', {
-          is: Joi.string().pattern(new RegExp('@StartTime|@EndTime')),
-          then: Joi.object({
-            type: Joi.string().required().valid('file'),
-            filename: Joi.string().optional(),
-            delimiter: Joi.string().optional()
-          }).required(),
-          otherwise: Joi.object({
-            type: Joi.string().required().valid('file'),
-            filename: Joi.string().optional(),
-            delimiter: Joi.string().optional()
-          }).optional()
-        })
     });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
   });
