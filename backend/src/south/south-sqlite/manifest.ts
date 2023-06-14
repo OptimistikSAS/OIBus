@@ -48,21 +48,6 @@ const manifest: SouthConnectorManifest = {
         readDisplay: true
       },
       {
-        key: 'dateTimeFormat',
-        type: 'OibDateTimeFormat',
-        label: 'Input binding (@StartTime or @EndTime)',
-        defaultValue: {
-          type: 'string',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          timezone: 'UTC',
-          locale: 'en-US'
-        },
-        conditionalDisplay: { query: '@StartTime|@EndTime' },
-        class: 'col',
-        newRow: true,
-        readDisplay: false
-      },
-      {
         key: 'serialization',
         type: 'OibSerialization',
         label: 'Serialization',

@@ -38,8 +38,8 @@ export class DatetimeFieldsSerializationComponent {
     element: DateTimeSerialization;
   } | null = null;
 
-  private onChange: (elements: Array<DateTimeSerialization>) => void = () => {};
-  private onTouched: () => void = () => {};
+  onChange: (elements: Array<DateTimeSerialization>) => void = () => {};
+  onTouched: () => void = () => {};
 
   registerOnChange(fn: any) {
     this.onChange = fn;
@@ -161,12 +161,13 @@ export class DatetimeFieldsSerializationComponent {
     return (this.editedElement && this.editedElement.isNew) || false;
   }
 
-  private propagateChange() {
+  propagateChange() {
+    console.log('this.dateTimeSerializations', this.dateTimeSerializations);
     this.onChange(this.dateTimeSerializations);
     this.onTouched();
   }
 
-  private recomputeElementsIncludingNew() {
+  recomputeElementsIncludingNew() {
     this.dateTimeSerializationsIncludingNew = this.editedElement?.isNew
       ? [...this.dateTimeSerializations, this.editedElement.element]
       : this.dateTimeSerializations;
