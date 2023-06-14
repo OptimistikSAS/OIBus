@@ -623,8 +623,7 @@ describe('Service utils', () => {
     it('should return DateTime type with correct timezone', () => {
       const dateTimeFormat: DateTimeFormat = {
         type: 'datetime',
-        timezone: 'Asia/Tokyo',
-        field: 'timestamp'
+        timezone: 'Asia/Tokyo'
       };
       // From Zulu string
       const zuluString = '2020-02-02T02:02:02.222Z';
@@ -658,8 +657,7 @@ describe('Service utils', () => {
     it('should return Number of ms with correct timezone', () => {
       const dateTimeFormat: DateTimeFormat = {
         type: 'number',
-        timezone: 'Asia/Tokyo',
-        field: 'timestamp'
+        timezone: 'Asia/Tokyo'
       };
       // From Zulu string
       const zuluString = '2020-02-02T02:02:02.222Z';
@@ -700,8 +698,7 @@ describe('Service utils', () => {
         type: 'string',
         timezone: 'Asia/Tokyo',
         format: 'yyyy-MM-dd HH:mm:ss.SSS',
-        locale: 'en-US',
-        field: 'timestamp'
+        locale: 'en-US'
       };
       // From Zulu string
       const zuluString = '2020-02-02T02:02:02.222Z';
@@ -742,8 +739,7 @@ describe('Service utils', () => {
         type: 'string',
         timezone: 'Asia/Tokyo',
         format: 'dd-MMM-yy HH:mm:ss', // format with localized month
-        locale: 'en-US',
-        field: 'timestamp'
+        locale: 'en-US'
       };
       // From Zulu string
       const zuluString = '2020-02-02T02:02:02.222Z';
@@ -784,8 +780,7 @@ describe('Service utils', () => {
         type: 'string',
         timezone: 'Asia/Tokyo',
         format: 'dd-MMM-yy HH:mm:ss', // format with localized month
-        locale: 'fr-FR',
-        field: 'timestamp'
+        locale: 'fr-FR'
       };
       // From Zulu string
       const zuluString = '2020-02-02T02:02:02.222Z';

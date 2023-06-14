@@ -6,7 +6,7 @@ import { OibDateTimeFormatFormControl } from '../../../../../../shared/model/for
 import { formDirectives } from '../../form-directives';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup, FormRecord } from '@angular/forms';
-import { MockI18nModule } from '../../../../i18n/mock-i18n.spec';
+import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 
 @Component({
   template: `<form [formGroup]="form">
@@ -55,10 +55,6 @@ class OibFormComponentTester extends ComponentTester<TestComponent> {
     return this.input('#oib-datetime-locale-input-myOibDateTimeFormat')!;
   }
 
-  get oibFormInputField() {
-    return this.input('#oib-datetime-field-input-myOibDateTimeFormat')!;
-  }
-
   get example() {
     return this.element('#example')!;
   }
@@ -69,7 +65,7 @@ describe('OibDatetimeFormatComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [OibDatetimeFormatComponent, MockI18nModule]
+      providers: [provideI18nTesting()]
     });
 
     tester = new OibFormComponentTester();
@@ -81,7 +77,6 @@ describe('OibDatetimeFormatComponent', () => {
     expect(tester.oibFormInputTimezone).not.toBeNull();
     expect(tester.oibFormInputFormat).not.toBeNull();
     expect(tester.oibFormInputLocale).not.toBeNull();
-    expect(tester.oibFormInputField).not.toBeNull();
 
     tester.oibFormInputFormat.fillWith('yyyy-MM-dd HH:mm:ss.SSS');
     expect(tester.example).toContainText('Example from 2023-11-29T21:03:59.123Z: 2023-11-29 21:03:59.123');
@@ -92,7 +87,6 @@ describe('OibDatetimeFormatComponent', () => {
     expect(tester.oibFormInputTimezone).not.toBeNull();
     expect(tester.oibFormInputFormat).toBeNull();
     expect(tester.oibFormInputLocale).toBeNull();
-    expect(tester.oibFormInputField).not.toBeNull();
 
     expect(tester.example).toContainText('Example from 2023-11-29T21:03:59.123Z: 1701291839123');
   });

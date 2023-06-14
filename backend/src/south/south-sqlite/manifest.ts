@@ -55,8 +55,7 @@ const manifest: SouthConnectorManifest = {
           type: 'string',
           format: 'yyyy-MM-dd HH:mm:ss.SSS',
           timezone: 'UTC',
-          locale: 'en-US',
-          field: 'timestamp'
+          locale: 'en-US'
         },
         conditionalDisplay: { query: '@StartTime|@EndTime' },
         class: 'col',
@@ -70,7 +69,8 @@ const manifest: SouthConnectorManifest = {
         defaultValue: {
           type: 'file',
           filename: 'sql-@CurrentDate.csv',
-          delimiter: 'COMMA'
+          delimiter: 'COMMA',
+          datetimeSerialization: []
         },
         class: 'col',
         newRow: true,
