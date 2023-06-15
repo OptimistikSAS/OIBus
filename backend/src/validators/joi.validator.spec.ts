@@ -132,8 +132,9 @@ describe('Joi validator', () => {
       scanMode: Joi.string().allow(null, ''),
       proxy: Joi.string().allow(null, ''),
       datetimeFormat: Joi.object({
-        type: Joi.string().required().valid('number', 'string', 'datetime'),
-        timezone: Joi.string().required(),
+        type: Joi.string().required(),
+        timezone: Joi.string().optional(),
+        dateObjectType: Joi.string().optional(),
         format: Joi.optional(),
         locale: Joi.optional()
       }).required(),
@@ -141,14 +142,16 @@ describe('Joi validator', () => {
         type: Joi.string().required().valid('file'),
         filename: Joi.string().optional(),
         delimiter: Joi.string().optional(),
+        compression: Joi.boolean().optional(),
         datetimeSerialization: Joi.array()
           .items(
             Joi.object({
               field: Joi.string().required(),
               useAsReference: Joi.boolean().required(),
               datetimeFormat: Joi.object({
-                type: Joi.string().required().valid('number', 'string', 'datetime'),
-                timezone: Joi.string().required(),
+                type: Joi.string().required(),
+                timezone: Joi.string().optional(),
+                dateObjectType: Joi.string().optional(),
                 format: Joi.optional(),
                 locale: Joi.optional()
               })
@@ -290,14 +293,16 @@ describe('Joi validator', () => {
       type: Joi.string().required().valid('file'),
       filename: Joi.string().optional(),
       delimiter: Joi.string().optional(),
+      compression: Joi.boolean().optional(),
       datetimeSerialization: Joi.array()
         .items(
           Joi.object({
             field: Joi.string().required(),
             useAsReference: Joi.boolean().required(),
             datetimeFormat: Joi.object({
-              type: Joi.string().required().valid('number', 'string', 'datetime'),
-              timezone: Joi.string().required(),
+              type: Joi.string().required(),
+              timezone: Joi.string().optional(),
+              dateObjectType: Joi.string().optional(),
               format: Joi.optional(),
               locale: Joi.optional()
             })

@@ -20,15 +20,6 @@ const manifest: SouthConnectorManifest = {
       newRow: true,
       validators: [{ key: 'required' }],
       readDisplay: true
-    },
-    {
-      key: 'compression',
-      type: 'OibCheckbox',
-      label: 'Compress File?',
-      defaultValue: false,
-      validators: [{ key: 'required' }],
-      readDisplay: false,
-      newRow: true
     }
   ],
   items: {
@@ -55,6 +46,7 @@ const manifest: SouthConnectorManifest = {
           type: 'file',
           filename: 'sql-@CurrentDate.csv',
           delimiter: 'COMMA',
+          compression: true,
           datetimeSerialization: []
         },
         class: 'col',

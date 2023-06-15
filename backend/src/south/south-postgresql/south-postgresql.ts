@@ -4,13 +4,20 @@ import { ClientConfig } from 'pg';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { createFolder, generateReplacementParameters, getMostRecentDate, logQuery, writeResults } from '../../service/utils';
+import {
+  convertDateTimeFromISO,
+  createFolder,
+  generateReplacementParameters,
+  getMaxInstant,
+  logQuery,
+  serializeResults
+} from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { Instant } from '../../../../shared/model/types';
+import { DateTimeSerialization, Instant, Serialization } from '../../../../shared/model/types';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { DateTime } from 'luxon';
 
@@ -70,25 +77,21 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
     let updatedStartTime = startTime;
 
     for (const item of items) {
-      logQuery(item.settings.query, updatedStartTime, endTime, this.logger);
-
       const startRequest = DateTime.now().toMillis();
       const result: Array<any> = await this.getDataFromPostgreSQL(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
-        await writeResults(
+        updatedStartTime = getMaxInstant(result, updatedStartTime, item.settings.serialization.datetimeSerialization);
+        await serializeResults(
           result,
-          item.settings,
-          this.configuration.settings.compression,
+          item.settings.serialization as Serialization,
           this.configuration.name,
           this.tmpFolder,
-          this.addFile,
+          this.addFile.bind(this),
           this.logger
         );
-
-        updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeField, item.settings.timezone);
       } else {
         this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
@@ -112,13 +115,19 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
       connectionTimeoutMillis: this.configuration.settings.connectionTimeout
     };
 
+    const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
+      (serialization: DateTimeSerialization) => serialization.useAsReference
+    );
+    const postgresqlStartTime = this.formatDatetimeVariables(startTime, datetimeSerialization);
+    const postgresqlEndTime = this.formatDatetimeVariables(endTime, datetimeSerialization);
+    logQuery(item.settings.query, postgresqlStartTime, postgresqlEndTime, this.logger);
+
     pg.types.setTypeParser(1114, str => new Date(`${str}Z`));
     let connection;
     try {
       connection = new pg.Client(config);
       await connection.connect();
-      // TODO: date format
-      const params = generateReplacementParameters(item.settings.query, startTime, endTime);
+      const params = generateReplacementParameters(item.settings.query, postgresqlStartTime, postgresqlEndTime);
       const { rows } = await connection.query(adaptedQuery, params);
       await connection.end();
       return rows;
@@ -129,4 +138,11 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
       throw error;
     }
   }
+
+  formatDatetimeVariables = (datetime: Instant, serialization: DateTimeSerialization | null): string | number | DateTime => {
+    if (!serialization) {
+      return datetime;
+    }
+    return convertDateTimeFromISO(datetime, serialization.datetimeFormat);
+  };
 }

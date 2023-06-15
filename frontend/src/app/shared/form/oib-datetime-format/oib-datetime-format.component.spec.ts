@@ -27,7 +27,7 @@ class TestComponent {
   form = new FormGroup({
     settings: new FormRecord({
       myOibDateTimeFormat: new FormControl({
-        type: new FormControl('number'),
+        type: new FormControl('unix-epoch-ms'),
         timezone: new FormControl('UTC'),
         field: new FormControl('timestamp')
       })
@@ -73,21 +73,30 @@ describe('OibDatetimeFormatComponent', () => {
   });
 
   it('should have a select input', () => {
-    tester.oibFormInputDatetimeType.selectLabel('String');
+    tester.oibFormInputDatetimeType.selectLabel('Custom format');
     expect(tester.oibFormInputTimezone).not.toBeNull();
     expect(tester.oibFormInputFormat).not.toBeNull();
     expect(tester.oibFormInputLocale).not.toBeNull();
 
     tester.oibFormInputFormat.fillWith('yyyy-MM-dd HH:mm:ss.SSS');
-    expect(tester.example).toContainText('Example from 2023-11-29T21:03:59.123Z: 2023-11-29 21:03:59.123');
+    expect(tester.example).toContainText('Example with 2023-11-29T21:03:59.123Z: 2023-11-29 21:03:59.123');
   });
 
   it('should change value to Number', () => {
-    tester.oibFormInputDatetimeType.selectLabel('Number');
-    expect(tester.oibFormInputTimezone).not.toBeNull();
+    tester.oibFormInputDatetimeType.selectLabel('UNIX Epoch (ms)');
+    expect(tester.oibFormInputTimezone).toBeNull();
     expect(tester.oibFormInputFormat).toBeNull();
     expect(tester.oibFormInputLocale).toBeNull();
 
-    expect(tester.example).toContainText('Example from 2023-11-29T21:03:59.123Z: 1701291839123');
+    expect(tester.example).toContainText('Example with 2023-11-29T21:03:59.123Z: 1701291839123');
+  });
+
+  it('should change value to Number', () => {
+    tester.oibFormInputDatetimeType.selectLabel('UNIX Epoch (s)');
+    expect(tester.oibFormInputTimezone).toBeNull();
+    expect(tester.oibFormInputFormat).toBeNull();
+    expect(tester.oibFormInputLocale).toBeNull();
+
+    expect(tester.example).toContainText('Example with 2023-11-29T21:03:59.123Z: 1701291839');
   });
 });

@@ -28,6 +28,7 @@
         class="my-1"
         [dateTimeSerialization]="fieldToSerialize"
         [existingDateTimeSerializations]="dateTimeSerializations"
+        [dateObjectTypes]="dateObjectTypes"
         (saved)="save($event)"
         (cancelled)="cancelEdition()"
       >

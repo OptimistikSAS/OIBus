@@ -94,15 +94,6 @@ const manifest: SouthConnectorManifest = {
       class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
       readDisplay: false
-    },
-    {
-      key: 'compression',
-      type: 'OibCheckbox',
-      label: 'Compress File?',
-      defaultValue: false,
-      newRow: true,
-      validators: [{ key: 'required' }],
-      readDisplay: false
     }
   ],
   items: {
@@ -122,20 +113,6 @@ const manifest: SouthConnectorManifest = {
         readDisplay: true
       },
       {
-        key: 'dateTimeFormat',
-        type: 'OibDateTimeFormat',
-        label: 'Datetime type',
-        defaultValue: {
-          type: 'string',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          timezone: 'UTC',
-          locale: 'en-US'
-        },
-        class: 'col',
-        newRow: true,
-        readDisplay: false
-      },
-      {
         key: 'serialization',
         type: 'OibSerialization',
         label: 'Serialization',
@@ -143,8 +120,10 @@ const manifest: SouthConnectorManifest = {
           type: 'file',
           filename: 'sql-@CurrentDate.csv',
           delimiter: 'COMMA',
+          compression: true,
           datetimeSerialization: []
         },
+        allowedDateObjectTypes: ['Date', 'DateTime', 'DateTime2', 'DateTimeOffset', 'SmallDateTime'],
         class: 'col',
         newRow: true,
         readDisplay: false

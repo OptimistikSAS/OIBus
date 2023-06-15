@@ -112,9 +112,11 @@
       "cert": "Certificate"
     },
     "datetime-types": {
-      "string": "String",
-      "number": "Number",
-      "datetime": "Date object"
+      "iso-8601-string": "ISO 8601",
+      "specific-string": "Custom format",
+      "unix-epoch": "UNIX Epoch (s)",
+      "unix-epoch-ms": "UNIX Epoch (ms)",
+      "date-object": "Date object"
     },
     "serialization-types": {
       "file": "File"
@@ -566,7 +568,8 @@
   "datetime": {
     "title": "Datetime",
     "type": "Type",
-    "example": "Example from {{ baseString }}: ",
+    "object-type": "Date object type",
+    "example": "Example with {{ baseString }}: ",
     "format": "Format",
     "locale": "Locale",
     "timezone": "Timezone",
@@ -576,6 +579,7 @@
     "title": "Serialization",
     "filename": "Filename",
     "delimiter": "Delimiter",
+    "compression": "Compress (gz)",
     "type": "Type",
     "fields": {
       "title": "Datetime fields to serialize",
