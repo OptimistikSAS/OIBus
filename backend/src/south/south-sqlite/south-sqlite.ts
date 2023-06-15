@@ -4,13 +4,13 @@ import db from 'better-sqlite3';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { createFolder, getMostRecentDate, logQuery, writeResults } from '../../service/utils';
+import { convertDateTimeFromISO, createFolder, getMaxInstant, logQuery, serializeResults } from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { Instant } from '../../../../shared/model/types';
+import { DateTimeSerialization, Instant, Serialization } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 
@@ -70,25 +70,21 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
     let updatedStartTime = startTime;
 
     for (const item of items) {
-      logQuery(item.settings.query, updatedStartTime, endTime, this.logger);
-
       const startRequest = DateTime.now().toMillis();
       const result: Array<any> = await this.getDataFromSqlite(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
-        await writeResults(
+        updatedStartTime = getMaxInstant(result, updatedStartTime, item.settings.serialization.datetimeSerialization);
+        await serializeResults(
           result,
-          item.settings,
-          this.configuration.settings.compression,
+          item.settings.serialization as Serialization,
           this.configuration.name,
           this.tmpFolder,
-          this.addFile,
+          this.addFile.bind(this),
           this.logger
         );
-
-        updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeField, item.settings.timezone);
       } else {
         this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
@@ -102,15 +98,22 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
   async getDataFromSqlite(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
     this.logger.debug(`Opening ${path.resolve(this.configuration.settings.databasePath)} SQLite database`);
     const database = db(path.resolve(this.configuration.settings.databasePath));
+
+    const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
+      (serialization: DateTimeSerialization) => serialization.useAsReference
+    );
+    const sqliteStartTime = this.formatDatetimeVariables(startTime, datetimeSerialization);
+    const sqliteEndTime = this.formatDatetimeVariables(endTime, datetimeSerialization);
+    logQuery(item.settings.query, sqliteStartTime, sqliteEndTime, this.logger);
+
     try {
       const stmt = database.prepare(item.settings.query);
       const preparedParameters: Record<string, number | string> = {};
-      // TODO: format date
       if (item.settings.query.indexOf('@StartTime') !== -1) {
-        preparedParameters.StartTime = item.settings.datetimeType === 'isostring' ? startTime : DateTime.fromISO(startTime).toMillis();
+        preparedParameters.StartTime = sqliteStartTime;
       }
       if (item.settings.query.indexOf('@EndTime') !== -1) {
-        preparedParameters.EndTime = item.settings.datetimeType === 'isostring' ? endTime : DateTime.fromISO(endTime).toMillis();
+        preparedParameters.EndTime = sqliteEndTime;
       }
 
       const data = stmt.all(preparedParameters);
@@ -121,4 +124,11 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
       throw error;
     }
   }
+
+  formatDatetimeVariables = (datetime: Instant, serialization: DateTimeSerialization | null): string | number => {
+    if (!serialization) {
+      return datetime;
+    }
+    return convertDateTimeFromISO(datetime, serialization.datetimeFormat) as string | number;
+  };
 }

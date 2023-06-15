@@ -2,22 +2,29 @@ import path from 'node:path';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { createFolder, generateReplacementParameters, getMostRecentDate, logQuery, writeResults } from '../../service/utils';
+import {
+  convertDateTimeFromISO,
+  createFolder,
+  generateReplacementParameters,
+  getMaxInstant,
+  logQuery,
+  serializeResults
+} from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { Instant } from '../../../../shared/model/types';
+import { DateTimeSerialization, Instant, Serialization } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 
 let odbc: any | null = null;
 // @ts-ignore
-// eslint-disable-next-line import/no-unresolved
 import('odbc')
   .then(obj => {
-    odbc = obj;
+    odbc = obj.default;
+    console.info('odbc library loaded');
   })
   .catch(() => {
     console.error('Could not load odbc');
@@ -79,25 +86,21 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
     let updatedStartTime = startTime;
 
     for (const item of items) {
-      logQuery(item.settings.query, updatedStartTime, endTime, this.logger);
-
       const startRequest = DateTime.now().toMillis();
       const result: Array<any> = await this.getDataFromOdbc(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
-        await writeResults(
+        updatedStartTime = getMaxInstant(result, updatedStartTime, item.settings.serialization.datetimeSerialization);
+        await serializeResults(
           result,
-          item.settings,
-          this.configuration.settings.compression,
+          item.settings.serialization as Serialization,
           this.configuration.name,
           this.tmpFolder,
-          this.addFile,
+          this.addFile.bind(this),
           this.logger
         );
-
-        updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeField, this.configuration.settings.timezone);
       } else {
         this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
@@ -112,8 +115,6 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
     if (!odbc) {
       throw new Error('odbc library not loaded');
     }
-
-    const adaptedQuery = item.settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?');
 
     let connectionString = `Driver=${this.configuration.settings.driverPath};SERVER=${this.configuration.settings.host};PORT=${this.configuration.settings.port};`;
     if (this.configuration.settings.trustServerCertificate) {
@@ -133,6 +134,14 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
       this.logger.debug(`Connecting with connection string ${connectionString}`);
     }
 
+    const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
+      (serialization: DateTimeSerialization) => serialization.useAsReference
+    );
+    const odbcStartTime = this.formatDatetimeVariables(startTime, datetimeSerialization);
+    const odbcEndTime = this.formatDatetimeVariables(endTime, datetimeSerialization);
+
+    logQuery(item.settings.query, odbcStartTime, odbcEndTime, this.logger);
+
     let connection;
     try {
       const connectionConfig = {
@@ -141,11 +150,8 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
       };
       connection = await odbc.connect(connectionConfig);
 
-      // TODO: fix date format
-      const startDateTime = DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
-      const endDateTime = DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
-      const params = generateReplacementParameters(item.settings.query, startDateTime, endDateTime);
-      const data = await connection.query(adaptedQuery, params);
+      const params = generateReplacementParameters(item.settings.query, odbcStartTime, odbcEndTime);
+      const data = await connection.query(item.settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'), params);
       await connection.close();
       return data;
     } catch (error: any) {
@@ -160,4 +166,11 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
       throw error;
     }
   }
+
+  formatDatetimeVariables = (datetime: Instant, serialization: DateTimeSerialization | null): string | number | DateTime => {
+    if (!serialization) {
+      return datetime;
+    }
+    return convertDateTimeFromISO(datetime, serialization.datetimeFormat);
+  };
 }

@@ -50,29 +50,45 @@ export interface Interval {
   end: Instant;
 }
 
-export const DATE_TIME_TYPES = ['string', 'datetime', 'number'];
+export const DATE_TIME_TYPES = ['specific-string', 'iso-8601-string', 'date-object', 'unix-epoch', 'unix-epoch-ms'];
 export type DateTimeType = typeof DATE_TIME_TYPES[number];
 
 interface BaseDateTimeFormat {
   type: DateTimeType;
-  timezone: string;
 }
 
 export interface StringDateTimeFormat extends BaseDateTimeFormat {
-  type: 'string';
+  type: 'specific-string';
   format: string;
   locale: string;
+  timezone: string;
 }
 
-export interface ObjectDateTimeFormat extends BaseDateTimeFormat {
-  type: 'datetime';
+export interface Iso8601StringDateTimeFormat extends BaseDateTimeFormat {
+  type: 'iso-8601-string';
+  timezone: string;
 }
 
-export interface NumberDateTimeFormat extends BaseDateTimeFormat {
-  type: 'number';
+export interface DateObjectDateTimeFormat extends BaseDateTimeFormat {
+  type: 'date-object';
+  timezone: string;
+  dateObjectType: string | null;
 }
 
-export type DateTimeFormat = StringDateTimeFormat | ObjectDateTimeFormat | NumberDateTimeFormat;
+export interface UnixEpochDateTimeFormat extends BaseDateTimeFormat {
+  type: 'unix-epoch';
+}
+
+export interface UnixEpochMsDateTimeFormat extends BaseDateTimeFormat {
+  type: 'unix-epoch-ms';
+}
+
+export type DateTimeFormat =
+  | Iso8601StringDateTimeFormat
+  | DateObjectDateTimeFormat
+  | StringDateTimeFormat
+  | UnixEpochDateTimeFormat
+  | UnixEpochMsDateTimeFormat;
 
 export const ALL_CSV_CHARACTERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const;
 
@@ -97,6 +113,7 @@ interface BaseSerializationFormat {
 export interface FileSerializationFormat extends BaseSerializationFormat {
   type: 'file';
   filename: string;
+  compression: boolean;
   delimiter: CsvCharacter;
 }
 

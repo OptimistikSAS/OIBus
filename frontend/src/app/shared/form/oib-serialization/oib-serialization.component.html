@@ -1,24 +1,35 @@
 <div class="mx-3 mb-2" [formGroup]="serializationCtrl">
   <div class="row">
-    <div class="col">
+    <div class="col-2">
       <label [for]="'oib-serialization-type-input-' + key"> {{ 'serialization.type' | translate }} </label>
       <select formControlName="type" [id]="'oib-serialization-type-input-' + key" class="form-select mb-2 mr-sm-2">
         <option *ngFor="let type of serializationTypes" [ngValue]="type">{{ type | serializationsEnum }}</option>
       </select>
     </div>
-    <div class="col">
+    <div class="col-4">
       <label [for]="'oib-serialization-filename-input-' + key">{{ 'serialization.filename' | translate }} </label>
       <input [id]="'oib-serialization-filename-input-' + key" class="form-control" formControlName="filename" />
     </div>
-    <div class="col">
+    <div class="col-3">
       <label [for]="'oib-serialization-delimiter-input-' + key">{{ 'serialization.delimiter' | translate }} </label>
       <select formControlName="delimiter" [id]="'oib-serialization-delimiter-input-' + key" class="form-select mb-2 mr-sm-2">
         <option *ngFor="let delimiter of csvDelimiters" [ngValue]="delimiter">{{ delimiter | csvCharacterEnum }}</option>
       </select>
     </div>
+    <div class="col-3">
+      <div class="form-check form-switch padded">
+        <input formControlName="compression" [id]="'oib-serialization-compression-input-' + key" type="checkbox" class="form-check-input" />
+        <label class="form-check-label" [for]="'oib-serialization-compression-input-' + key"
+          >{{ 'serialization.compression' | translate }}</label
+        >
+      </div>
+    </div>
   </div>
   <div class="row">
     <label>{{ 'serialization.fields.title' | translate }}</label>
-    <oib-datetime-fields-serialization formControlName="datetimeSerialization"></oib-datetime-fields-serialization>
+    <oib-datetime-fields-serialization
+      [dateObjectTypes]="dateObjectTypes"
+      formControlName="datetimeSerialization"
+    ></oib-datetime-fields-serialization>
   </div>
 </div>

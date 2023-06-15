@@ -77,6 +77,7 @@
             [label]="settings.label"
             [key]="settings.key"
             [formControlName]="settings.key"
+            [dateObjectTypes]="settings.allowedDateObjectTypes || []"
           ></oib-serialization>
           <oib-auth
             *ngIf="settings.type === 'OibAuthentication'"

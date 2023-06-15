@@ -19,15 +19,14 @@ class TestComponent {
       field: 'field1',
       useAsReference: false,
       datetimeFormat: {
-        type: 'number',
-        timezone: 'Europe/Paris'
+        type: 'unix-epoch-ms'
       }
     },
     {
       field: 'field2',
       useAsReference: true,
       datetimeFormat: {
-        type: 'string',
+        type: 'specific-string',
         timezone: 'Europe/Paris',
         format: 'yyyy-MM-dd HH:mm:ss.SSS',
         locale: 'en-US'
@@ -86,7 +85,7 @@ describe('DatetimeFieldsSerializationComponent', () => {
 
     expect(tester.displayFields[0]).toContainText('field1');
     expect(tester.displayFields[0]).toContainText('false');
-    expect(tester.displayFields[0]).toContainText('Number');
+    expect(tester.displayFields[0]).toContainText('UNIX Epoch (ms)');
   });
 
   it('should edit component', () => {
@@ -113,7 +112,7 @@ describe('DatetimeFieldsSerializationComponent', () => {
       field: '',
       useAsReference: false,
       datetimeFormat: {
-        type: 'string',
+        type: 'specific-string',
         timezone: 'Europe/Paris',
         format: 'yyyy-MM-dd HH:mm:ss.SSS',
         locale: 'en-US'
@@ -124,8 +123,7 @@ describe('DatetimeFieldsSerializationComponent', () => {
       field: 'field1',
       useAsReference: false,
       datetimeFormat: {
-        type: 'number',
-        timezone: 'Europe/Paris'
+        type: 'unix-epoch-ms'
       }
     });
     tester.detectChanges();

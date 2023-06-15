@@ -1,4 +1,4 @@
-import { Component, forwardRef } from '@angular/core';
+import { Component, forwardRef, Input } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { DateTimeSerialization } from '../../../../../../../shared/model/types';
 import { formDirectives } from '../../../form-directives';
@@ -22,6 +22,8 @@ import { EditDatetimeSerializationComponent } from '../edit-datetime-serializati
   standalone: true
 })
 export class DatetimeFieldsSerializationComponent {
+  @Input() dateObjectTypes: Array<string> = [];
+
   dateTimeSerializations: Array<DateTimeSerialization> = [];
   dateTimeSerializationsIncludingNew: Array<DateTimeSerialization> = [];
 
@@ -85,7 +87,7 @@ export class DatetimeFieldsSerializationComponent {
         field: '',
         useAsReference: false,
         datetimeFormat: {
-          type: 'string',
+          type: 'specific-string',
           timezone: 'Europe/Paris',
           format: 'yyyy-MM-dd HH:mm:ss.SSS',
           locale: 'en-US'
@@ -162,7 +164,6 @@ export class DatetimeFieldsSerializationComponent {
   }
 
   propagateChange() {
-    console.log('this.dateTimeSerializations', this.dateTimeSerializations);
     this.onChange(this.dateTimeSerializations);
     this.onTouched();
   }

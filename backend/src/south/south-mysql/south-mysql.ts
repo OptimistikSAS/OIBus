@@ -3,13 +3,20 @@ import mysql from 'mysql2/promise';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { createFolder, generateReplacementParameters, getMostRecentDate, logQuery, writeResults } from '../../service/utils';
+import {
+  convertDateTimeFromISO,
+  createFolder,
+  generateReplacementParameters,
+  getMaxInstant,
+  logQuery,
+  serializeResults
+} from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { Instant } from '../../../../shared/model/types';
+import { DateTimeSerialization, Instant, Serialization } from '../../../../shared/model/types';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { DateTime } from 'luxon';
 
@@ -69,25 +76,21 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
     let updatedStartTime = startTime;
 
     for (const item of items) {
-      logQuery(item.settings.query, updatedStartTime, endTime, this.logger);
-
       const startRequest = DateTime.now().toMillis();
       const result: Array<any> = await this.getDataFromMySQL(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
-        await writeResults(
+        updatedStartTime = getMaxInstant(result, updatedStartTime, item.settings.serialization.datetimeSerialization);
+        await serializeResults(
           result,
-          item.settings,
-          this.configuration.settings.compression,
+          item.settings.serialization as Serialization,
           this.configuration.name,
           this.tmpFolder,
-          this.addFile,
+          this.addFile.bind(this),
           this.logger
         );
-
-        updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeField, this.configuration.settings.timezone);
       } else {
         this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
@@ -99,8 +102,6 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
    * Apply the SQL query to the target MySQL / MariaDB database
    */
   async getDataFromMySQL(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
-    const adaptedQuery = item.settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?');
-
     const config = {
       host: this.configuration.settings.host,
       port: this.configuration.settings.port,
@@ -111,15 +112,20 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
       timezone: 'Z'
     };
 
+    const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
+      (serialization: DateTimeSerialization) => serialization.useAsReference
+    );
+    const mysqlStartTime = this.formatDatetimeVariables(startTime, datetimeSerialization);
+    const mysqlEndTime = this.formatDatetimeVariables(endTime, datetimeSerialization);
+    logQuery(item.settings.query, mysqlStartTime, mysqlEndTime, this.logger);
+
     let connection;
     try {
       connection = await mysql.createConnection(config);
-
-      // TODO: format date
-      const params = generateReplacementParameters(item.settings.query, startTime, endTime);
+      const params = generateReplacementParameters(item.settings.query, mysqlStartTime, mysqlEndTime);
       const [data] = await connection.execute(
         {
-          sql: adaptedQuery,
+          sql: item.settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'),
           timeout: this.configuration.settings.requestTimeout
         },
         params
@@ -133,4 +139,11 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
       throw error;
     }
   }
+
+  formatDatetimeVariables = (datetime: Instant, serialization: DateTimeSerialization | null): string | number | DateTime => {
+    if (!serialization) {
+      return datetime;
+    }
+    return convertDateTimeFromISO(datetime, serialization.datetimeFormat);
+  };
 }
