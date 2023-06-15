@@ -146,6 +146,7 @@ export interface OibDateTimeFormatFormControl extends BaseOibFormControl<DateTim
 
 export interface OibSerializationFormControl extends BaseOibFormControl<Serialization> {
   type: 'OibSerialization';
+  allowedDateObjectTypes?: Array<string>;
 }
 
 export type OibFormControl =

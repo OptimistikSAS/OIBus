@@ -2,13 +2,20 @@ import path from 'node:path';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { createFolder, generateReplacementParameters, getMostRecentDate, logQuery, writeResults } from '../../service/utils';
+import {
+  convertDateTimeFromISO,
+  createFolder,
+  generateReplacementParameters,
+  getMaxInstant,
+  logQuery,
+  serializeResults
+} from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { Instant } from '../../../../shared/model/types';
+import { DateTimeSerialization, Instant, Serialization } from '../../../../shared/model/types';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 
 let oracledb: {
@@ -20,6 +27,7 @@ let oracledb: {
 import('oracledb')
   .then(obj => {
     oracledb = obj;
+    console.info('oracledb library loaded');
   })
   .catch(() => {
     console.error('Could not load oracledb');
@@ -82,25 +90,21 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
     let updatedStartTime = startTime;
 
     for (const item of items) {
-      logQuery(item.settings.query, updatedStartTime, endTime, this.logger);
-
       const startRequest = DateTime.now().toMillis();
       const result: Array<any> = await this.getDataFromOracle(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
-        await writeResults(
+        updatedStartTime = getMaxInstant(result, updatedStartTime, item.settings.serialization.datetimeSerialization);
+        await serializeResults(
           result,
-          item.settings,
-          this.configuration.settings.compression,
+          item.settings.serialization as Serialization,
           this.configuration.name,
           this.tmpFolder,
-          this.addFile,
+          this.addFile.bind(this),
           this.logger
         );
-
-        updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeField, item.settings.timezone);
       } else {
         this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
@@ -115,7 +119,6 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
     if (!oracledb) {
       throw new Error('oracledb library not loaded');
     }
-    const adaptedQuery = item.settings.query.replace(/@StartTime/g, ':date1').replace(/@EndTime/g, ':date2');
 
     const config = {
       user: this.configuration.settings.username,
@@ -123,15 +126,25 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
       connectString: `${this.configuration.settings.host}:${this.configuration.settings.port}/${this.configuration.settings.database}`
     };
 
+    const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
+      (serialization: DateTimeSerialization) => serialization.useAsReference
+    );
+    const oracleStartTime = this.formatDatetimeVariables(startTime, datetimeSerialization);
+    const oracleEndTime = this.formatDatetimeVariables(endTime, datetimeSerialization);
+    logQuery(item.settings.query, oracleStartTime, oracleEndTime, this.logger);
+
     let connection = null;
     try {
       process.env.ORA_SDTZ = 'UTC';
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
       connection = await oracledb.getConnection(config);
       connection.callTimeout = this.configuration.settings.requestTimeout;
-      // TODO: format date
-      const params = generateReplacementParameters(item.settings.query, startTime, endTime);
-      const { rows } = await connection.execute(adaptedQuery, params);
+
+      const params = generateReplacementParameters(item.settings.query, oracleStartTime, oracleEndTime);
+      const { rows } = await connection.execute(
+        item.settings.query.replace(/@StartTime/g, ':date1').replace(/@EndTime/g, ':date2'),
+        params
+      );
       await connection.close();
       return rows || [];
     } catch (error) {
@@ -141,4 +154,11 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
       throw error;
     }
   }
+
+  formatDatetimeVariables = (datetime: Instant, serialization: DateTimeSerialization | null): string | number | DateTime => {
+    if (!serialization) {
+      return datetime;
+    }
+    return convertDateTimeFromISO(datetime, serialization.datetimeFormat);
+  };
 }

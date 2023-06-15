@@ -3,13 +3,13 @@ import mssql, { config } from 'mssql';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { createFolder, getMostRecentDate, logQuery, writeResults } from '../../service/utils';
+import { createFolder, getMaxInstant, logQuery, serializeResults } from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { Instant } from '../../../../shared/model/types';
+import { DateTimeSerialization, Instant, Serialization } from '../../../../shared/model/types';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { DateTime } from 'luxon';
 
@@ -69,25 +69,21 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
     let updatedStartTime = startTime;
 
     for (const item of items) {
-      logQuery(item.settings.query, updatedStartTime, endTime, this.logger);
-
       const startRequest = DateTime.now().toMillis();
       const result: Array<any> = await this.getDataFromMSSQL(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
-        await writeResults(
+        updatedStartTime = getMaxInstant(result, updatedStartTime, item.settings.serialization.datetimeSerialization);
+        await serializeResults(
           result,
-          item.settings,
-          this.configuration.settings.compression,
+          item.settings.serialization as Serialization,
           this.configuration.name,
           this.tmpFolder,
-          this.addFile,
+          this.addFile.bind(this),
           this.logger
         );
-
-        updatedStartTime = getMostRecentDate(result, updatedStartTime, item.settings.timeField, this.configuration.settings.timezone);
       } else {
         this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
@@ -99,8 +95,6 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
    * Apply the SQL query to the target MSSQL database
    */
   async getDataFromMSSQL(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
-    const adaptedQuery = item.settings.query;
-
     const config: config = {
       user: this.configuration.settings.username,
       password: this.configuration.settings.password ? await this.encryptionService.decryptText(this.configuration.settings.password) : '',
@@ -119,17 +113,23 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
       config.domain = this.configuration.settings.domain;
     }
 
+    const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
+      (serialization: DateTimeSerialization) => serialization.useAsReference
+    );
+    const mssqlStartTime = this.formatDatetimeVariables(startTime, datetimeSerialization);
+    const mssqlEndTime = this.formatDatetimeVariables(endTime, datetimeSerialization);
+    logQuery(item.settings.query, mssqlStartTime.datetime, mssqlEndTime.datetime, this.logger);
+
     const pool = await new mssql.ConnectionPool(config).connect();
     const request = pool.request();
-    // TODO: fix date format
     if (item.settings.query.indexOf('@StartTime') !== -1) {
-      request.input('StartTime', startTime);
+      request.input('StartTime', mssqlStartTime.mssqlType, mssqlStartTime.datetime);
     }
     if (item.settings.query.indexOf('@EndTime') !== -1) {
-      request.input('EndTime', endTime);
+      request.input('EndTime', mssqlEndTime.mssqlType, mssqlEndTime.datetime);
     }
     try {
-      const result = await request.query(adaptedQuery);
+      const result = await request.query(item.settings.query);
       const [first] = result.recordsets as Array<any>;
       await pool.close();
       return first;
@@ -138,4 +138,46 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
       throw error;
     }
   }
+
+  formatDatetimeVariables = (
+    datetime: Instant,
+    serialization: DateTimeSerialization | null
+  ): { datetime: string | number | DateTime; mssqlType: any } => {
+    if (!serialization) {
+      return { datetime, mssqlType: mssql.TYPES.VarChar };
+    }
+
+    switch (serialization.datetimeFormat.type) {
+      case 'unix-epoch':
+        return { datetime: Math.floor(DateTime.fromISO(datetime).toMillis() / 1000), mssqlType: mssql.TYPES.BigInt };
+      case 'unix-epoch-ms':
+        return { datetime: DateTime.fromISO(datetime).toMillis(), mssqlType: mssql.TYPES.BigInt };
+      case 'specific-string':
+        return {
+          datetime: DateTime.fromISO(datetime, { zone: serialization.datetimeFormat.timezone }).toFormat(
+            serialization.datetimeFormat.format,
+            {
+              locale: serialization.datetimeFormat.locale
+            }
+          ),
+          mssqlType: mssql.TYPES.VarChar
+        };
+      case 'iso-8601-string':
+        return { datetime, mssqlType: mssql.TYPES.VarChar };
+      case 'date-object':
+        switch (serialization.datetimeFormat.dateObjectType) {
+          case 'Date':
+            return { datetime: DateTime.fromISO(datetime), mssqlType: mssql.TYPES.Date };
+          case 'DateTime2':
+            return { datetime: DateTime.fromISO(datetime), mssqlType: mssql.TYPES.DateTime2 };
+          case 'DateTimeOffset':
+            return { datetime: DateTime.fromISO(datetime), mssqlType: mssql.TYPES.DateTimeOffset };
+          case 'SmallDateTime':
+            return { datetime: DateTime.fromISO(datetime), mssqlType: mssql.TYPES.SmallDateTime };
+          case 'DateTime':
+          default:
+            return { datetime: DateTime.fromISO(datetime), mssqlType: mssql.TYPES.DateTime };
+        }
+    }
+  };
 }

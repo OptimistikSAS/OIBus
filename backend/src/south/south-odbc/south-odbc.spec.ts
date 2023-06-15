@@ -48,12 +48,20 @@ const items: Array<OibusItemDTO> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      datetimeType: 'number',
-      timeField: 'timestamp',
-      timezone: 'Europe/Paris',
-      filename: 'sql-@CurrentDate.csv',
-      delimiter: ';',
-      dateFormat: 'yyyy-MM-dd HH:mm:ss.SSS'
+      serialization: {
+        type: 'file',
+        filename: 'sql-@CurrentDate.csv',
+        delimiter: 'COMMA',
+        compression: true,
+        datetimeSerialization: [
+          { field: 'aaa', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          {
+            field: 'timestamp',
+            useAsReference: true,
+            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          }
+        ]
+      }
     },
     scanModeId: 'scanModeId1'
   },
@@ -63,12 +71,20 @@ const items: Array<OibusItemDTO> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      datetimeType: 'number',
-      timeField: 'timestamp',
-      timezone: 'Europe/Paris',
-      filename: 'sql-@CurrentDate.csv',
-      delimiter: ';',
-      dateFormat: 'yyyy-MM-dd HH:mm:ss.SSS'
+      serialization: {
+        type: 'file',
+        filename: 'sql-@CurrentDate.csv',
+        delimiter: 'COMMA',
+        compression: true,
+        datetimeSerialization: [
+          { field: 'aaa', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          {
+            field: 'timestamp',
+            useAsReference: true,
+            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          }
+        ]
+      }
     },
     scanModeId: 'scanModeId1'
   },
@@ -78,12 +94,20 @@ const items: Array<OibusItemDTO> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      datetimeType: 'number',
-      timeField: 'timestamp',
-      timezone: 'Europe/Paris',
-      filename: 'sql-@CurrentDate.csv',
-      delimiter: ';',
-      dateFormat: 'yyyy-MM-dd HH:mm:ss.SSS'
+      serialization: {
+        type: 'file',
+        filename: 'sql-@CurrentDate.csv',
+        delimiter: 'COMMA',
+        compression: true,
+        datetimeSerialization: [
+          { field: 'aaa', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          {
+            field: 'timestamp',
+            useAsReference: true,
+            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          }
+        ]
+      }
     },
     scanModeId: 'scanModeId2'
   }
@@ -120,7 +144,7 @@ describe('SouthODBC with authentication', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    (utils.getMostRecentDate as jest.Mock).mockReturnValue(new Date(nowDateString));
+    (utils.getMaxInstant as jest.Mock).mockReturnValue(new Date(nowDateString));
     (utils.generateReplacementParameters as jest.Mock).mockReturnValue([new Date(nowDateString), new Date(nowDateString)]);
     (utils.replaceFilenameWithVariable as jest.Mock).mockReturnValue('myFile');
 
@@ -156,13 +180,11 @@ describe('SouthODBC with authentication', () => {
       .mockReturnValueOnce([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }])
       .mockReturnValue([]);
 
-    (utils.getMostRecentDate as jest.Mock).mockReturnValue('2020-03-01T00:00:00.000Z');
+    (utils.getMaxInstant as jest.Mock).mockReturnValue('2020-03-01T00:00:00.000Z');
 
     await south.historyQuery(items, startTime, nowDateString);
-    expect(utils.writeResults).toHaveBeenCalledTimes(1);
-    expect(utils.getMostRecentDate).toHaveBeenCalledTimes(1);
-    expect(utils.logQuery).toHaveBeenCalledTimes(3);
-    expect(utils.logQuery).toHaveBeenCalledWith(items[0].settings.query, startTime, nowDateString, logger);
+    expect(utils.serializeResults).toHaveBeenCalledTimes(1);
+    expect(utils.getMaxInstant).toHaveBeenCalledTimes(1);
     expect(south.getDataFromOdbc).toHaveBeenCalledTimes(3);
     expect(south.getDataFromOdbc).toHaveBeenCalledWith(items[0], startTime, nowDateString);
     expect(south.getDataFromOdbc).toHaveBeenCalledWith(items[1], '2020-03-01T00:00:00.000Z', nowDateString);
@@ -183,8 +205,18 @@ describe('SouthODBC with authentication', () => {
       query: jest.fn().mockReturnValue([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }])
     };
     (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
+    (utils.convertDateTimeFromISO as jest.Mock)
+      .mockReturnValueOnce(DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'))
+      .mockReturnValueOnce(DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'));
 
     const result = await south.getDataFromOdbc(items[0], startTime, endTime);
+
+    expect(utils.logQuery).toHaveBeenCalledWith(
+      items[0].settings.query,
+      DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+      DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+      logger
+    );
 
     let expectedConnectionString = `Driver=${configuration.settings.driverPath};SERVER=${configuration.settings.host};PORT=${configuration.settings.port};`;
     expectedConnectionString += `TrustServerCertificate=yes;Database=${configuration.settings.database};UID=${configuration.settings.username};`;
@@ -275,8 +307,7 @@ describe('SouthODBC without authentication', () => {
       username: '',
       password: '',
       connectionTimeout: 1000,
-      trustServerCertificate: false,
-      compression: false
+      trustServerCertificate: false
     }
   };
   beforeEach(async () => {
@@ -340,5 +371,10 @@ describe('SouthODBC without authentication', () => {
       connectionTimeout: configuration.settings.connectionTimeout
     });
     expect(error).toEqual(new Error('connection error'));
+  });
+
+  it('should keep iso string format if serialization is not found', () => {
+    const result = south.formatDatetimeVariables(nowDateString, null);
+    expect(result).toEqual(nowDateString);
   });
 });

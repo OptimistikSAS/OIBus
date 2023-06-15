@@ -6,7 +6,7 @@ import path from 'node:path';
 import minimist from 'minimist';
 import { DateTime } from 'luxon';
 
-import { DateTimeFormat, Instant, Interval, Timezone } from '../../../shared/model/types';
+import { DateTimeFormat, DateTimeSerialization, Instant, Interval, Serialization } from '../../../shared/model/types';
 import csv from 'papaparse';
 import pino from 'pino';
 
@@ -73,7 +73,7 @@ export const createFolder = async (folder: string): Promise<void> => {
  */
 export const replaceFilenameWithVariable = (filename: string, queryPart: number, connectorName: string): string =>
   filename
-    .replace('@CurrentDate', DateTime.local().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
+    .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
     .replace('@ConnectorName', connectorName)
     .replace('@QueryPart', `${queryPart}`);
 
@@ -158,28 +158,48 @@ export const generateCSV = (result: Array<any>, delimiter: string): string => {
 /**
  * Parse an entry list and get the most recent date
  */
-export const getMostRecentDate = (entryList: Array<any>, startTime: Instant, timeColumn: string, timezone: Timezone): Instant => {
-  let newLastCompletedAt = startTime;
+export const getMaxInstant = (entryList: Array<any>, startTime: Instant, datetimeSerialization: Array<DateTimeSerialization>): Instant => {
+  if (datetimeSerialization.length === 0) return startTime;
+  let maxInstant = DateTime.fromISO(startTime);
   entryList.forEach(entry => {
-    if (entry[timeColumn]) {
-      let entryDate;
-      if (entry[timeColumn] instanceof Date) {
-        entryDate = entry[timeColumn];
-      } else if (typeof entry[timeColumn] === 'number') {
-        entryDate = DateTime.fromMillis(entry[timeColumn], { zone: timezone }).setZone('utc').toJSDate();
-      } else if (DateTime.fromISO(entry[timeColumn], { zone: timezone }).isValid) {
-        entryDate = DateTime.fromISO(entry[timeColumn], { zone: timezone }).setZone('utc').toJSDate();
-      } else if (DateTime.fromSQL(entry[timeColumn], { zone: timezone }).isValid) {
-        entryDate = DateTime.fromSQL(entry[timeColumn], { zone: timezone }).setZone('utc').toJSDate();
+    for (const serialization of datetimeSerialization) {
+      if (!entry[serialization.field]) {
+        continue;
       }
-      if (entryDate > new Date(newLastCompletedAt)) {
-        newLastCompletedAt = DateTime.fromMillis(entryDate.setMilliseconds(entryDate.getMilliseconds() + 1))
-          .toUTC()
-          .toISO() as Instant;
+
+      let entryDate: DateTime;
+      switch (serialization.datetimeFormat.type) {
+        case 'unix-epoch':
+          entryDate = DateTime.fromMillis(parseInt(entry[serialization.field], 10) * 1000);
+          break;
+        case 'unix-epoch-ms':
+          entryDate = DateTime.fromMillis(parseInt(entry[serialization.field], 10));
+          break;
+        case 'iso-8601-string':
+          entryDate = DateTime.fromISO(entry[serialization.field]);
+          break;
+        case 'specific-string':
+          entryDate = DateTime.fromFormat(entry[serialization.field], serialization.datetimeFormat.format, {
+            zone: serialization.datetimeFormat.timezone,
+            locale: serialization.datetimeFormat.locale,
+            setZone: true
+          });
+          break;
+        case 'date-object':
+          entryDate = DateTime.fromJSDate(entry[serialization.field]).setZone(serialization.datetimeFormat.timezone, {
+            keepLocalTime: true
+          });
+          break;
+      }
+
+      if (serialization.useAsReference) {
+        if (entryDate > maxInstant) {
+          maxInstant = entryDate;
+        }
       }
     }
   });
-  return newLastCompletedAt;
+  return maxInstant.toUTC().toISO()!;
 };
 
 /**
@@ -201,7 +221,11 @@ const getOccurrences = (str: string, keyword: string, value: any): Array<{ index
 /**
  * Generate replacements parameters
  */
-export const generateReplacementParameters = (query: string, startTime: Instant, endTime: Instant) => {
+export const generateReplacementParameters = (
+  query: string,
+  startTime: string | number | DateTime,
+  endTime: string | number | DateTime
+) => {
   const startTimeOccurrences = getOccurrences(query, '@StartTime', startTime);
   const endTimeOccurrences = getOccurrences(query, '@EndTime', endTime);
   const occurrences = startTimeOccurrences.concat(endTimeOccurrences);
@@ -209,22 +233,20 @@ export const generateReplacementParameters = (query: string, startTime: Instant,
   return occurrences.map(occurrence => occurrence.value);
 };
 
-export const writeResults = async (
+export const serializeResults = async (
   data: Array<any>,
-  settings: any,
-  compression: boolean,
+  settings: Serialization,
   connectorName: string,
   tmpFolder: string,
   addFileFn: (filePath: string) => Promise<void>,
   logger: pino.Logger
 ): Promise<void> => {
   const csvContent = generateCSV(data, settings.delimiter);
-  const filename = replaceFilenameWithVariable(settings.filename, 0, connectorName);
-  const filePath = path.join(tmpFolder, filename);
-  logger.debug(`Writing CSV file at "${filePath}"`);
+  const filePath = path.join(tmpFolder, replaceFilenameWithVariable(settings.filename, 0, connectorName));
+  logger.debug(`Writing ${csvContent.length} bytes into file at "${filePath}"`);
   await fs.writeFile(filePath, csvContent);
 
-  if (compression) {
+  if (settings.compression) {
     // Compress and send the compressed file
     const gzipPath = `${filePath}.gz`;
     await compress(filePath, gzipPath);
@@ -259,7 +281,12 @@ export const writeResults = async (
 /**
  * Log the executed query with replacements values for query variables
  */
-export const logQuery = (query: string, startTime: Instant, endTime: Instant, logger: pino.Logger): void => {
+export const logQuery = (
+  query: string,
+  startTime: string | number | DateTime,
+  endTime: string | number | DateTime,
+  logger: pino.Logger
+): void => {
   const startTimeLog = query.indexOf('@StartTime') !== -1 ? `@StartTime = ${startTime}` : '';
   const endTimeLog = query.indexOf('@EndTime') !== -1 ? `@EndTime = ${endTime}` : '';
   let log = `Sending "${query}"`;
@@ -275,15 +302,19 @@ export const logQuery = (query: string, startTime: Instant, endTime: Instant, lo
   logger.info(log);
 };
 
-export const convertDateTime = (dateTime: Instant, dateTimeFormat: DateTimeFormat): string | number | DateTime => {
+export const convertDateTimeFromISO = (dateTime: Instant, dateTimeFormat: DateTimeFormat): string | number | DateTime => {
   switch (dateTimeFormat.type) {
-    case 'datetime':
-      return DateTime.fromISO(dateTime, { zone: dateTimeFormat.timezone });
-    case 'number':
-      return DateTime.fromISO(dateTime, { zone: dateTimeFormat.timezone }).toMillis();
-    case 'string':
+    case 'unix-epoch':
+      return Math.floor(DateTime.fromISO(dateTime).toMillis() / 1000);
+    case 'unix-epoch-ms':
+      return DateTime.fromISO(dateTime).toMillis();
+    case 'specific-string':
       return DateTime.fromISO(dateTime, { zone: dateTimeFormat.timezone }).toFormat(dateTimeFormat.format, {
         locale: dateTimeFormat.locale
       });
+    case 'iso-8601-string':
+      return dateTime;
+    case 'date-object':
+      return DateTime.fromISO(dateTime);
   }
 };

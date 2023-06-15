@@ -30,6 +30,7 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
   @Input() label = '';
   @Input() key = '';
   @Input() displayExample = true;
+  @Input() dateObjectTypes: Array<string> = [];
 
   readonly datetimeTypes = DATE_TIME_TYPES;
   readonly BASE_EXAMPLE = '2023-11-29T21:03:59.123Z';
@@ -40,10 +41,11 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
   );
 
   datetimeFormatCtrl = this.fb.group({
-    type: 'string' as DateTimeType,
+    type: 'specific-string' as DateTimeType,
     format: 'yyyy-MM-dd HH:mm:ss.SSS',
     timezone: 'UTC',
-    locale: 'en-US'
+    locale: 'en-US',
+    dateObjectType: (this.dateObjectTypes.length > 0 ? this.dateObjectTypes[0] : null) as string | null
   });
   disabled = false;
   example: DateTime | number | string = DateTime.fromISO(this.BASE_EXAMPLE, { zone: 'UTC' }).toFormat('yyyy-MM-dd HH:mm:ss.SSS', {
@@ -56,23 +58,38 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
   constructor(private fb: NonNullableFormBuilder) {
     this.datetimeFormatCtrl.controls.type.valueChanges.subscribe(newValue => {
       switch (newValue) {
-        case 'string':
+        case 'specific-string':
           this.datetimeFormatCtrl.controls.format.enable();
           this.datetimeFormatCtrl.controls.locale.enable();
+          this.datetimeFormatCtrl.controls.timezone.enable();
+          this.datetimeFormatCtrl.controls.dateObjectType.disable();
           break;
-        case 'number':
-        case 'datetime':
+        case 'iso-8601-string':
           this.datetimeFormatCtrl.controls.format.disable();
           this.datetimeFormatCtrl.controls.locale.disable();
+          this.datetimeFormatCtrl.controls.timezone.enable();
+          this.datetimeFormatCtrl.controls.dateObjectType.disable();
+          break;
+        case 'date-object':
+          this.datetimeFormatCtrl.controls.format.disable();
+          this.datetimeFormatCtrl.controls.locale.disable();
+          this.datetimeFormatCtrl.controls.timezone.enable();
+          this.datetimeFormatCtrl.controls.dateObjectType.enable();
+          break;
+        default:
+          this.datetimeFormatCtrl.controls.format.disable();
+          this.datetimeFormatCtrl.controls.locale.disable();
+          this.datetimeFormatCtrl.controls.timezone.disable();
+          this.datetimeFormatCtrl.controls.dateObjectType.disable();
           break;
       }
     });
 
     this.datetimeFormatCtrl.valueChanges.subscribe(newValue => {
       switch (newValue.type) {
-        case 'string':
+        case 'specific-string':
           this.onChange({
-            type: 'string',
+            type: 'specific-string',
             format: newValue.format!,
             timezone: newValue.timezone!,
             locale: newValue.locale!
@@ -82,14 +99,24 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
           });
           break;
 
-        case 'number':
-          this.onChange({ type: 'number', timezone: newValue.timezone! });
-          this.example = DateTime.fromISO(this.BASE_EXAMPLE, { zone: newValue.timezone! }).toMillis();
+        case 'iso-8601-string':
+          this.onChange({ type: 'iso-8601-string', timezone: newValue.timezone! });
+          this.example = DateTime.fromISO(this.BASE_EXAMPLE, { zone: newValue.timezone! }).toISO()!;
           break;
 
-        case 'datetime':
-          this.onChange({ type: 'datetime', timezone: newValue.timezone! });
-          this.example = DateTime.fromISO(this.BASE_EXAMPLE, { zone: newValue.timezone! });
+        case 'unix-epoch':
+          this.onChange({ type: 'unix-epoch' });
+          this.example = Math.floor(DateTime.fromISO(this.BASE_EXAMPLE).toMillis() / 1000);
+          break;
+
+        case 'unix-epoch-ms':
+          this.onChange({ type: 'unix-epoch-ms' });
+          this.example = DateTime.fromISO(this.BASE_EXAMPLE).toMillis();
+          break;
+
+        case 'date-object':
+          this.onChange({ type: 'date-object', timezone: newValue.timezone!, dateObjectType: newValue.dateObjectType! });
+          this.example = DateTime.fromISO(this.BASE_EXAMPLE).toMillis();
           break;
       }
     });
@@ -114,19 +141,27 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
 
   writeValue(value: DateTimeFormat): void {
     switch (value.type) {
-      case 'string':
+      case 'specific-string':
         this.datetimeFormatCtrl.patchValue({
-          type: 'string',
+          type: 'specific-string',
           format: value.format,
           timezone: value.timezone,
           locale: value.locale
         });
         break;
-      case 'number':
-        this.datetimeFormatCtrl.patchValue({ type: 'number', timezone: value.timezone });
+      case 'iso-8601-string':
+        this.datetimeFormatCtrl.patchValue({
+          type: 'iso-8601-string',
+          timezone: value.timezone
+        });
         break;
-      case 'datetime':
-        this.datetimeFormatCtrl.patchValue({ type: 'datetime', timezone: value.timezone });
+      case 'date-object':
+        this.datetimeFormatCtrl.patchValue({ type: value.type, timezone: value.timezone, dateObjectType: value.dateObjectType });
+        break;
+      case 'unix-epoch':
+      case 'unix-epoch-ms':
+      default:
+        this.datetimeFormatCtrl.patchValue({ type: value.type });
         break;
     }
   }

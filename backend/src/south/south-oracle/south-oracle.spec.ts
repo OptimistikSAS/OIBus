@@ -14,6 +14,8 @@ import ProxyService from '../../service/proxy.service';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import oracledb from 'oracledb';
 import { generateReplacementParameters } from '../../service/utils';
+import mssql from 'mssql';
+import { DateTime } from 'luxon';
 
 jest.mock('oracledb');
 jest.mock('../../service/utils');
@@ -47,12 +49,20 @@ const items: Array<OibusItemDTO> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      datetimeType: 'number',
-      timeField: 'timestamp',
-      timezone: 'Europe/Paris',
-      filename: 'sql-@CurrentDate.csv',
-      delimiter: ';',
-      dateFormat: 'yyyy-MM-dd HH:mm:ss.SSS'
+      serialization: {
+        type: 'file',
+        filename: 'sql-@CurrentDate.csv',
+        delimiter: 'COMMA',
+        compression: true,
+        datetimeSerialization: [
+          { field: 'aaa', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          {
+            field: 'timestamp',
+            useAsReference: true,
+            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          }
+        ]
+      }
     },
     scanModeId: 'scanModeId1'
   },
@@ -62,12 +72,20 @@ const items: Array<OibusItemDTO> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      datetimeType: 'number',
-      timeField: 'timestamp',
-      timezone: 'Europe/Paris',
-      filename: 'sql-@CurrentDate.csv',
-      delimiter: ';',
-      dateFormat: 'yyyy-MM-dd HH:mm:ss.SSS'
+      serialization: {
+        type: 'file',
+        filename: 'sql-@CurrentDate.csv',
+        delimiter: 'COMMA',
+        compression: true,
+        datetimeSerialization: [
+          { field: 'aaa', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          {
+            field: 'timestamp',
+            useAsReference: true,
+            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          }
+        ]
+      }
     },
     scanModeId: 'scanModeId1'
   },
@@ -77,12 +95,20 @@ const items: Array<OibusItemDTO> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      datetimeType: 'number',
-      timeField: 'timestamp',
-      timezone: 'Europe/Paris',
-      filename: 'sql-@CurrentDate.csv',
-      delimiter: ';',
-      dateFormat: 'yyyy-MM-dd HH:mm:ss.SSS'
+      serialization: {
+        type: 'file',
+        filename: 'sql-@CurrentDate.csv',
+        delimiter: 'COMMA',
+        compression: true,
+        datetimeSerialization: [
+          { field: 'aaa', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          {
+            field: 'timestamp',
+            useAsReference: true,
+            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          }
+        ]
+      }
     },
     scanModeId: 'scanModeId2'
   }
@@ -118,7 +144,7 @@ describe('SouthOracle with authentication', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    (utils.getMostRecentDate as jest.Mock).mockReturnValue(new Date(nowDateString));
+    (utils.getMaxInstant as jest.Mock).mockReturnValue(new Date(nowDateString));
     (utils.generateReplacementParameters as jest.Mock).mockReturnValue([new Date(nowDateString), new Date(nowDateString)]);
     (utils.replaceFilenameWithVariable as jest.Mock).mockReturnValue('myFile');
 
@@ -154,13 +180,11 @@ describe('SouthOracle with authentication', () => {
       .mockReturnValueOnce([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }])
       .mockReturnValue([]);
 
-    (utils.getMostRecentDate as jest.Mock).mockReturnValue('2020-03-01T00:00:00.000Z');
+    (utils.getMaxInstant as jest.Mock).mockReturnValue('2020-03-01T00:00:00.000Z');
 
     await south.historyQuery(items, startTime, nowDateString);
-    expect(utils.writeResults).toHaveBeenCalledTimes(1);
-    expect(utils.getMostRecentDate).toHaveBeenCalledTimes(1);
-    expect(utils.logQuery).toHaveBeenCalledTimes(3);
-    expect(utils.logQuery).toHaveBeenCalledWith(items[0].settings.query, startTime, nowDateString, logger);
+    expect(utils.serializeResults).toHaveBeenCalledTimes(1);
+    expect(utils.getMaxInstant).toHaveBeenCalledTimes(1);
     expect(south.getDataFromOracle).toHaveBeenCalledTimes(3);
     expect(south.getDataFromOracle).toHaveBeenCalledWith(items[0], startTime, nowDateString);
     expect(south.getDataFromOracle).toHaveBeenCalledWith(items[1], '2020-03-01T00:00:00.000Z', nowDateString);
@@ -175,7 +199,10 @@ describe('SouthOracle with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (generateReplacementParameters as jest.Mock).mockReturnValue({ startTime, endTime });
+    (generateReplacementParameters as jest.Mock).mockReturnValue({
+      startTime: DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+      endTime: DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
+    });
     const oracleConnection = {
       callTimeout: items[0].settings.requestTimeout,
       close: jest.fn(),
@@ -187,20 +214,34 @@ describe('SouthOracle with authentication', () => {
         .mockReturnValue({ rows: null })
     };
     (oracledb.getConnection as jest.Mock).mockReturnValue(oracleConnection);
+    (utils.convertDateTimeFromISO as jest.Mock)
+      .mockReturnValueOnce(DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'))
+      .mockReturnValueOnce(DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'));
 
     const result = await south.getDataFromOracle(items[0], startTime, endTime);
+
+    expect(utils.logQuery).toHaveBeenCalledWith(
+      items[0].settings.query,
+      DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+      DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+      logger
+    );
 
     expect(oracledb.getConnection).toHaveBeenCalledWith({
       user: 'username',
       password: 'password',
       connectString: `${configuration.settings.host}:${configuration.settings.port}/${configuration.settings.database}`
     });
-    expect(generateReplacementParameters).toHaveBeenCalledWith(items[0].settings.query, startTime, endTime);
+    expect(generateReplacementParameters).toHaveBeenCalledWith(
+      items[0].settings.query,
+      DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+      DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
+    );
     expect(oracleConnection.execute).toHaveBeenCalledWith(
       items[0].settings.query.replace(/@StartTime/g, ':date1').replace(/@EndTime/g, ':date2'),
       {
-        startTime,
-        endTime
+        startTime: DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+        endTime: DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
       }
     );
     expect(oracleConnection.close).toHaveBeenCalledTimes(1);
@@ -306,5 +347,10 @@ describe('SouthOracle without authentication', () => {
       connectString: `${configuration.settings.host}:${configuration.settings.port}/${configuration.settings.database}`
     });
     expect(error).toEqual(new Error('connection error'));
+  });
+
+  it('should keep iso string format if serialization is not found', () => {
+    const result = south.formatDatetimeVariables(nowDateString, null);
+    expect(result).toEqual(nowDateString);
   });
 });

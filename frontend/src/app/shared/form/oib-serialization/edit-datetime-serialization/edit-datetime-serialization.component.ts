@@ -24,11 +24,12 @@ export class EditDatetimeSerializationComponent implements OnInit {
   form = this.fb.group({
     field: [null as string | null, Validators.required],
     useAsReference: false as boolean | null,
-    datetimeFormat: { type: 'datetime' } as DateTimeFormat
+    datetimeFormat: { type: 'iso-8601-string', timezone: 'Europe/Paris' } as DateTimeFormat
   });
 
   @Input({ required: true }) dateTimeSerialization!: DateTimeSerialization;
   @Input({ required: true }) existingDateTimeSerializations!: Array<DateTimeSerialization>;
+  @Input() dateObjectTypes: Array<string> = [];
 
   @Output() readonly saved = new EventEmitter<DateTimeSerialization>();
   @Output() readonly cancelled = new EventEmitter<void>();

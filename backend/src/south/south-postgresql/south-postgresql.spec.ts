@@ -14,6 +14,7 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import ProxyService from '../../service/proxy.service';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import pg from 'pg';
+import { DateTime } from 'luxon';
 
 jest.mock('pg');
 
@@ -48,12 +49,20 @@ const items: Array<OibusItemDTO> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      datetimeType: 'number',
-      timeField: 'timestamp',
-      timezone: 'Europe/Paris',
-      filename: 'sql-@CurrentDate.csv',
-      delimiter: ';',
-      dateFormat: 'yyyy-MM-dd HH:mm:ss.SSS'
+      serialization: {
+        type: 'file',
+        filename: 'sql-@CurrentDate.csv',
+        delimiter: 'COMMA',
+        compression: true,
+        datetimeSerialization: [
+          { field: 'aaa', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          {
+            field: 'timestamp',
+            useAsReference: true,
+            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          }
+        ]
+      }
     },
     scanModeId: 'scanModeId1'
   },
@@ -63,12 +72,20 @@ const items: Array<OibusItemDTO> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      datetimeType: 'number',
-      timeField: 'timestamp',
-      timezone: 'Europe/Paris',
-      filename: 'sql-@CurrentDate.csv',
-      delimiter: ';',
-      dateFormat: 'yyyy-MM-dd HH:mm:ss.SSS'
+      serialization: {
+        type: 'file',
+        filename: 'sql-@CurrentDate.csv',
+        delimiter: 'COMMA',
+        compression: true,
+        datetimeSerialization: [
+          { field: 'aaa', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          {
+            field: 'timestamp',
+            useAsReference: true,
+            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          }
+        ]
+      }
     },
     scanModeId: 'scanModeId1'
   },
@@ -78,12 +95,20 @@ const items: Array<OibusItemDTO> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      datetimeType: 'number',
-      timeField: 'timestamp',
-      timezone: 'Europe/Paris',
-      filename: 'sql-@CurrentDate.csv',
-      delimiter: ';',
-      dateFormat: 'yyyy-MM-dd HH:mm:ss.SSS'
+      serialization: {
+        type: 'file',
+        filename: 'sql-@CurrentDate.csv',
+        delimiter: 'COMMA',
+        compression: true,
+        datetimeSerialization: [
+          { field: 'aaa', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          {
+            field: 'timestamp',
+            useAsReference: true,
+            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          }
+        ]
+      }
     },
     scanModeId: 'scanModeId2'
   }
@@ -119,7 +144,7 @@ describe('SouthPostgreSQL with authentication', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    (utils.getMostRecentDate as jest.Mock).mockReturnValue(new Date(nowDateString));
+    (utils.getMaxInstant as jest.Mock).mockReturnValue(new Date(nowDateString));
     (utils.generateReplacementParameters as jest.Mock).mockReturnValue([new Date(nowDateString), new Date(nowDateString)]);
     (utils.replaceFilenameWithVariable as jest.Mock).mockReturnValue('myFile');
 
@@ -155,13 +180,11 @@ describe('SouthPostgreSQL with authentication', () => {
       .mockReturnValueOnce([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }])
       .mockReturnValue([]);
 
-    (utils.getMostRecentDate as jest.Mock).mockReturnValue('2020-03-01T00:00:00.000Z');
+    (utils.getMaxInstant as jest.Mock).mockReturnValue('2020-03-01T00:00:00.000Z');
 
     await south.historyQuery(items, startTime, nowDateString);
-    expect(utils.writeResults).toHaveBeenCalledTimes(1);
-    expect(utils.getMostRecentDate).toHaveBeenCalledTimes(1);
-    expect(utils.logQuery).toHaveBeenCalledTimes(3);
-    expect(utils.logQuery).toHaveBeenCalledWith(items[0].settings.query, startTime, nowDateString, logger);
+    expect(utils.serializeResults).toHaveBeenCalledTimes(1);
+    expect(utils.getMaxInstant).toHaveBeenCalledTimes(1);
     expect(south.getDataFromPostgreSQL).toHaveBeenCalledTimes(3);
     expect(south.getDataFromPostgreSQL).toHaveBeenCalledWith(items[0], startTime, nowDateString);
     expect(south.getDataFromPostgreSQL).toHaveBeenCalledWith(items[1], '2020-03-01T00:00:00.000Z', nowDateString);
@@ -177,7 +200,10 @@ describe('SouthPostgreSQL with authentication', () => {
     const endTime = '2022-01-01T00:00:00.000Z';
 
     pg.types.setTypeParser = jest.fn();
-    (generateReplacementParameters as jest.Mock).mockReturnValue({ startTime, endTime });
+    (generateReplacementParameters as jest.Mock).mockReturnValue({
+      startTime: DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+      endTime: DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
+    });
     const client = {
       connect: jest.fn(),
       query: jest.fn(() => ({
@@ -186,9 +212,18 @@ describe('SouthPostgreSQL with authentication', () => {
       end: jest.fn()
     };
     (pg.Client as unknown as jest.Mock).mockReturnValue(client);
+    (utils.convertDateTimeFromISO as jest.Mock)
+      .mockReturnValueOnce(DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'))
+      .mockReturnValueOnce(DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'));
 
     const result = await south.getDataFromPostgreSQL(items[0], startTime, endTime);
 
+    expect(utils.logQuery).toHaveBeenCalledWith(
+      items[0].settings.query,
+      DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+      DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+      logger
+    );
     expect(pg.types.setTypeParser).toHaveBeenCalledWith(1114, expect.any(Function));
     expect(pg.Client).toHaveBeenCalledWith({
       host: configuration.settings.host,
@@ -201,11 +236,15 @@ describe('SouthPostgreSQL with authentication', () => {
     });
     expect(client.connect).toBeCalledTimes(1);
     expect(client.query).toHaveBeenCalledWith(items[0].settings.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2'), {
-      startTime,
-      endTime
+      startTime: DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+      endTime: DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
     });
     expect(client.end).toHaveBeenCalledTimes(1);
-    expect(generateReplacementParameters).toHaveBeenCalledWith(items[0].settings.query, startTime, endTime);
+    expect(generateReplacementParameters).toHaveBeenCalledWith(
+      items[0].settings.query,
+      DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+      DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
+    );
 
     expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
   });
@@ -303,5 +342,10 @@ describe('SouthPostgreSQL without authentication', () => {
     }
 
     expect(error).toEqual(new Error('connection error'));
+  });
+
+  it('should keep iso string format if serialization is not found', () => {
+    const result = south.formatDatetimeVariables(nowDateString, null);
+    expect(result).toEqual(nowDateString);
   });
 });

@@ -42,6 +42,7 @@ import { OibDatetimeFormatComponent } from '../oib-datetime-format/oib-datetime-
 export class OibSerializationComponent implements ControlValueAccessor {
   @Input() label = '';
   @Input() key = '';
+  @Input() dateObjectTypes: Array<string> = [];
 
   readonly serializationTypes = SERIALIZATION_TYPES;
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
@@ -50,6 +51,7 @@ export class OibSerializationComponent implements ControlValueAccessor {
     type: 'file' as SerializationType,
     filename: '',
     delimiter: 'COMMA' as CsvCharacter,
+    compression: false,
     datetimeSerialization: [[] as Array<DateTimeSerialization>, Validators.required]
   });
   disabled = false;
@@ -63,22 +65,24 @@ export class OibSerializationComponent implements ControlValueAccessor {
         case 'file':
           this.serializationCtrl.controls.filename.enable();
           this.serializationCtrl.controls.delimiter.enable();
+          this.serializationCtrl.controls.compression.enable();
           break;
         default:
           this.serializationCtrl.controls.filename.disable();
           this.serializationCtrl.controls.delimiter.disable();
+          this.serializationCtrl.controls.compression.disable();
           break;
       }
     });
 
     this.serializationCtrl.valueChanges.subscribe(newValue => {
-      console.log('newValue', newValue);
       switch (newValue.type) {
         case 'file':
           this.onChange({
             type: 'file',
             filename: newValue.filename!,
             delimiter: newValue.delimiter!,
+            compression: newValue.compression!,
             datetimeSerialization: newValue.datetimeSerialization!
           });
           break;
@@ -110,6 +114,7 @@ export class OibSerializationComponent implements ControlValueAccessor {
           type: 'file',
           filename: value.filename,
           delimiter: value.delimiter,
+          compression: value.compression,
           datetimeSerialization: value.datetimeSerialization
         });
         break;

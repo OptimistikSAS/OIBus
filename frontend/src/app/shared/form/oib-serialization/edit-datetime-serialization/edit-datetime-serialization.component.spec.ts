@@ -27,8 +27,7 @@ class TestComponent {
     field: 'field1',
     useAsReference: false,
     datetimeFormat: {
-      type: 'number',
-      timezone: 'Europe/Paris'
+      type: 'unix-epoch-ms'
     }
   };
   existingDateTimeSerializations: Array<DateTimeSerialization> = [
@@ -36,15 +35,14 @@ class TestComponent {
       field: 'existing',
       useAsReference: false,
       datetimeFormat: {
-        type: 'number',
-        timezone: 'Europe/Paris'
+        type: 'unix-epoch-ms'
       }
     }
   ];
   form = new FormGroup({
     field: new FormControl(null as string | null, Validators.required),
     useAsReference: new FormControl(false as boolean | null),
-    datetimeFormat: new FormControl({ type: 'datetime' } as DateTimeFormat)
+    datetimeFormat: new FormControl({ type: 'unix-epoch-ms' } as DateTimeFormat)
   });
   savedInput: DateTimeSerialization | null = null;
   cancelled = false;
@@ -122,8 +120,7 @@ describe('EditDatetimeSerializationComponent', () => {
       field: 'Field 2',
       useAsReference: false,
       datetimeFormat: {
-        type: 'number',
-        timezone: 'Europe/Paris'
+        type: 'unix-epoch-ms'
       }
     });
   }));
