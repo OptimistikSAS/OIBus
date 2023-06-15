@@ -17,7 +17,8 @@ let oracledb = null
 // eslint-disable-next-line import/no-unresolved
 import('oracledb')
   .then((obj) => {
-    oracledb = obj
+    oracledb = obj.default
+    console.info('oracledb loaded')
   })
   .catch(() => {
     console.error('Could not load oracledb')
@@ -27,6 +28,7 @@ let odbc = null
 import('odbc')
   .then((obj) => {
     odbc = obj
+    console.info('odbc loaded')
   })
   .catch(() => {
     console.error('Could not load odbc')
