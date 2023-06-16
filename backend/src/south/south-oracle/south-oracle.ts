@@ -106,7 +106,7 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
-              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField);
+              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField.datetimeFormat);
               if (datetimeField.useAsReference) {
                 if (entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
@@ -149,8 +149,8 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
     const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
       (serialization: DateTimeSerialization) => serialization.useAsReference
     );
-    const oracleStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization);
-    const oracleEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization);
+    const oracleStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization.datetimeFormat);
+    const oracleEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization.datetimeFormat);
     logQuery(item.settings.query, oracleStartTime, oracleEndTime, this.logger);
 
     let connection;

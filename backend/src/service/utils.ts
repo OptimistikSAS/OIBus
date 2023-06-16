@@ -6,7 +6,7 @@ import path from 'node:path';
 import minimist from 'minimist';
 import { DateTime } from 'luxon';
 
-import { CsvCharacter, DateTimeFormat, DateTimeSerialization, Instant, Interval, Serialization } from '../../../shared/model/types';
+import { CsvCharacter, DateTimeFormat, Instant, Interval, Serialization } from '../../../shared/model/types';
 import pino from 'pino';
 import csv from 'papaparse';
 
