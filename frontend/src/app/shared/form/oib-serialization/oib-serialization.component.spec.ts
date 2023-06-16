@@ -65,7 +65,7 @@ class OibFormComponentTester extends ComponentTester<TestComponent> {
   }
 }
 
-describe('OibSerialization', () => {
+describe('OibSerialization with csv', () => {
   let tester: OibFormComponentTester;
 
   beforeEach(() => {
@@ -77,10 +77,30 @@ describe('OibSerialization', () => {
     tester.detectChanges();
   });
 
-  it('should have a select input', () => {
+  it('should display CSV file input fields', () => {
     tester.oibFormInputSerializationType.selectLabel('CSV File');
     expect(tester.oibFormInputFilename).not.toBeNull();
     expect(tester.oibFormInputDelimiter).not.toBeNull();
     expect(tester.oibFormInputCompression).not.toBeNull();
+  });
+});
+
+describe('OibSerialization with OIBus values', () => {
+  let tester: OibFormComponentTester;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideI18nTesting()]
+    });
+
+    tester = new OibFormComponentTester();
+    tester.detectChanges();
+  });
+
+  it('should have hide other fields than OIBus values', () => {
+    tester.oibFormInputSerializationType.selectLabel('OIBus values');
+    expect(tester.oibFormInputFilename).toBeNull();
+    expect(tester.oibFormInputDelimiter).toBeNull();
+    expect(tester.oibFormInputCompression).toBeNull();
   });
 });

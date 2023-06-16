@@ -1,20 +1,34 @@
 import slims from './slims';
 import { DateTime } from 'luxon';
+import { OibusItemDTO } from '../../../../../shared/model/south-connector.model';
+
+const item: OibusItemDTO = {
+  id: 'id1',
+  name: 'item1',
+  connectorId: 'southId',
+  settings: {
+    payloadParser: 'raw',
+    serialization: {
+      dateTimeOutputFormat: { type: 'iso-8601-string' }
+    }
+  },
+  scanModeId: 'scanModeId1'
+};
 
 describe('slims formatter', () => {
   it('should reject if no entries', () => {
     try {
-      slims(null as any);
+      slims(item, null as any);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect SLIMS values to be an array.'));
     }
     try {
-      slims({} as any);
+      slims(item, {} as any);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect SLIMS values to be an array.'));
     }
     try {
-      slims({ entities: 1 } as any);
+      slims(item, { entities: 1 } as any);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect SLIMS values to be an array.'));
     }
@@ -108,8 +122,8 @@ describe('slims formatter', () => {
       }
     ];
 
-    const result = slims(slimsResults);
-    expect(result).toEqual({ httpResults: expectedResult, latestDateRetrieved: '2021-01-01T00:00:00.001Z' });
+    const result = slims(item, slimsResults);
+    expect(result).toEqual({ formattedResult: expectedResult, maxInstant: '2021-01-01T00:00:00.000Z' });
   });
 
   it('should throw error on parsing', () => {
@@ -117,7 +131,7 @@ describe('slims formatter', () => {
       entities: [{ columns: [] }]
     };
     try {
-      slims(slimsResultsWithoutPid);
+      slims(item, slimsResultsWithoutPid);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect rslt_cf_pid to have a value.'));
     }
@@ -135,7 +149,7 @@ describe('slims formatter', () => {
       ]
     };
     try {
-      slims(slimsResultsWithoutPidValue);
+      slims(item, slimsResultsWithoutPidValue);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect rslt_cf_pid to have a value.'));
     }
@@ -153,7 +167,7 @@ describe('slims formatter', () => {
       ]
     };
     try {
-      slims(slimsResultsWithoutTestName);
+      slims(item, slimsResultsWithoutTestName);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect test_name to have a value.'));
     }
@@ -175,7 +189,7 @@ describe('slims formatter', () => {
       ]
     };
     try {
-      slims(slimsResultsWithoutTestNameValue);
+      slims(item, slimsResultsWithoutTestNameValue);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect test_name to have a value.'));
     }
@@ -197,7 +211,7 @@ describe('slims formatter', () => {
       ]
     };
     try {
-      slims(slimsResultsWithoutTestValue);
+      slims(item, slimsResultsWithoutTestValue);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect rslt_value to have a unit and a value.'));
     }
@@ -224,7 +238,7 @@ describe('slims formatter', () => {
       ]
     };
     try {
-      slims(slimsResultsWithEmptyTestValue);
+      slims(item, slimsResultsWithEmptyTestValue);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect rslt_value to have a unit and a value.'));
     }
@@ -251,7 +265,7 @@ describe('slims formatter', () => {
       ]
     };
     try {
-      slims(slimsResultsWithoutSamplingDateAndTime);
+      slims(item, slimsResultsWithoutSamplingDateAndTime);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect rslt_cf_samplingDateAndTime to have a value.'));
     }
@@ -282,7 +296,7 @@ describe('slims formatter', () => {
       ]
     };
     try {
-      slims(slimsResultsWithoutSamplingDateAndTimeValue);
+      slims(item, slimsResultsWithoutSamplingDateAndTimeValue);
     } catch (error) {
       expect(error).toEqual(new Error('Bad data: expect rslt_cf_samplingDateAndTime to have a value.'));
     }

@@ -294,6 +294,8 @@ describe('Service utils', () => {
 
   describe('persistResults', () => {
     const logger: pino.Logger = new PinoLogger();
+    const addFile = jest.fn();
+    const addValues = jest.fn();
     const dataToWrite = [{ data1: 1 }, { data2: 2 }];
 
     describe('without compression', () => {
@@ -302,7 +304,6 @@ describe('Service utils', () => {
         (csv.unparse as jest.Mock).mockReturnValue('csv content');
       });
       it('should properly write results without compression', async () => {
-        const addFile = jest.fn();
         await utils.persistResults(
           dataToWrite,
           {
@@ -318,6 +319,7 @@ describe('Service utils', () => {
           'connectorName',
           'myTmpFolder',
           addFile,
+          addValues,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
@@ -330,7 +332,6 @@ describe('Service utils', () => {
         (fs.unlink as jest.Mock).mockImplementation(() => {
           throw new Error('unlink error');
         });
-        const addFile = jest.fn();
         await utils.persistResults(
           dataToWrite,
           {
@@ -346,6 +347,7 @@ describe('Service utils', () => {
           'connectorName',
           'myTmpFolder',
           addFile,
+          addValues,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
@@ -382,8 +384,7 @@ describe('Service utils', () => {
         (zlib.createGzip as jest.Mock).mockReturnValue({});
       });
 
-      it('should properly write and compress results', async () => {
-        const addFile = jest.fn();
+      it('should properly persists results into file', async () => {
         await utils.persistResults(
           dataToWrite,
           {
@@ -399,6 +400,7 @@ describe('Service utils', () => {
           'connectorName',
           'myTmpFolder',
           addFile,
+          addValues,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');
@@ -408,11 +410,29 @@ describe('Service utils', () => {
         expect(fs.unlink).toHaveBeenCalledTimes(2);
       });
 
-      it('should properly write and compress results and log unlink errors', async () => {
+      it('should properly persists results into values', async () => {
+        await utils.persistResults(
+          dataToWrite,
+          {
+            type: 'oibus-values',
+            outputDateTimeFormat: {
+              type: 'iso-8601-string'
+            },
+            datetimeSerialization: []
+          },
+          'connectorName',
+          'myTmpFolder',
+          addFile,
+          addValues,
+          logger
+        );
+        expect(addValues).toHaveBeenCalledWith(dataToWrite);
+      });
+
+      it('should properly persists results into file and log unlink errors', async () => {
         (fs.unlink as jest.Mock).mockImplementation(() => {
           throw new Error('unlink error');
         });
-        const addFile = jest.fn();
         await utils.persistResults(
           dataToWrite,
           {
@@ -428,6 +448,7 @@ describe('Service utils', () => {
           'connectorName',
           'myTmpFolder',
           addFile,
+          addValues,
           logger
         );
         const filePath = path.join('myTmpFolder', 'myFilename.csv');

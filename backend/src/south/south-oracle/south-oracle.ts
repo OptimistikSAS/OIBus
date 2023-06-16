@@ -123,6 +123,7 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
           this.configuration.name,
           this.tmpFolder,
           this.addFile.bind(this),
+          this.addValues.bind(this),
           this.logger
         );
       } else {

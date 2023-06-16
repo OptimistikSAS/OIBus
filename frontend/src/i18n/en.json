@@ -119,7 +119,8 @@
       "date-object": "Date object"
     },
     "serialization-types": {
-      "csv": "CSV File"
+      "csv": "CSV File",
+      "oibus-values": "OIBus values"
     },
     "csv-character": {
       "DOT": "Dot .",

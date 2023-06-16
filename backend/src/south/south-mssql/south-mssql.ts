@@ -102,6 +102,7 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
           this.configuration.name,
           this.tmpFolder,
           this.addFile.bind(this),
+          this.addValues.bind(this),
           this.logger
         );
       } else {

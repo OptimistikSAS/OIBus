@@ -1,5 +1,7 @@
 import { Instant } from '../../../../../shared/model/types';
 import { DateTime } from 'luxon';
+import { OibusItemDTO } from '../../../../../shared/model/south-connector.model';
+import { convertDateTimeFromInstant } from '../../../service/utils';
 
 interface OIATimeValues {
   type: string;
@@ -68,27 +70,28 @@ const checkDataFormat = (resultElement: OIATimeValues) => {
  * Return the formatted results flattened for easier access
  * (into csv files for example) and the latestDateRetrieved in ISO String format
  */
-const format = (httpResult: Array<OIATimeValues>): { httpResults: Array<any>; latestDateRetrieved: Instant } => {
+export default (item: OibusItemDTO, httpResult: Array<OIATimeValues>): { formattedResult: Array<any>; maxInstant: Instant } => {
   if (!Array.isArray(httpResult)) {
     throw Error('Bad data: expect OIAnalytics time values to be an array');
   }
   const formattedData: Array<any> = [];
-  let latestDateRetrieved = DateTime.fromMillis(0).toUTC().toISO();
+  let maxInstant = DateTime.fromMillis(0).toUTC().toISO()!;
   httpResult.forEach(element => {
     checkDataFormat(element);
+
     element.values.forEach((currentValue: any, index: number) => {
+      const resultInstant = DateTime.fromISO(element.timestamps[index]).toUTC().toISO()!;
+
       formattedData.push({
         pointId: element.data!.reference,
         unit: element.unit!.label,
-        timestamp: element.timestamps[index],
+        timestamp: convertDateTimeFromInstant(resultInstant, item.settings.serialization.outputDateTimeFormat),
         value: currentValue
       });
-      if ((DateTime.fromISO(element.timestamps[index]).toUTC().toISO() as Instant) > (latestDateRetrieved as Instant)) {
-        latestDateRetrieved = DateTime.fromISO(element.timestamps[index]).toUTC().toISO();
+      if (resultInstant > maxInstant) {
+        maxInstant = resultInstant;
       }
     });
   });
-  return { httpResults: formattedData, latestDateRetrieved: latestDateRetrieved as Instant };
+  return { formattedResult: formattedData, maxInstant };
 };
-
-export default format;
