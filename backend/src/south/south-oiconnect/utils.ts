@@ -5,11 +5,15 @@ import oiaTimeValues from './formatters/oia-time-values';
 import slims from './formatters/slims';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
+import { OibusItemDTO } from '../../../../shared/model/south-connector.model';
 
-const parsers = new Map<string, (httpResults: any) => any>();
-parsers.set('Raw', (httpResults: any) => ({ httpResults, latestDateRetrieved: new Date().toISOString() }));
-parsers.set('OIAnalytics time values', oiaTimeValues);
-parsers.set('SLIMS', slims);
+const parsers = new Map<string, (item: OibusItemDTO, httpResults: any) => { formattedResult: Array<any>; maxInstant: Instant }>();
+parsers.set('raw', (item: OibusItemDTO, httpResults: Array<any>) => ({
+  formattedResult: httpResults as Array<any>,
+  maxInstant: DateTime.now().toUTC().toISO()!
+}));
+parsers.set('oianalytics-time-values', oiaTimeValues);
+parsers.set('slims', slims);
 
 /**
  * Some API such as SLIMS uses a body with GET. It's not standard and requires a specific implementation
@@ -39,7 +43,7 @@ const httpGetWithBody = (body: string, options: any): Promise<void> =>
     req.end();
   });
 
-const formatQueryParams = (startTime: Instant, endTime: Instant, queryParams: Array<any>, variableDateFormat: 'ISO' | 'number'): string => {
+const formatQueryParams = (startTime: any, endTime: any, queryParams: Array<any>): string => {
   if (queryParams.length === 0) {
     return '';
   }
@@ -48,10 +52,10 @@ const formatQueryParams = (startTime: Instant, endTime: Instant, queryParams: Ar
     let value;
     switch (queryParam.queryParamValue) {
       case '@StartTime':
-        value = variableDateFormat === 'ISO' ? DateTime.fromISO(startTime).toUTC().toISO() : DateTime.fromISO(startTime).toMillis();
+        value = startTime;
         break;
       case '@EndTime':
-        value = variableDateFormat === 'ISO' ? DateTime.fromISO(endTime).toUTC().toISO() : DateTime.fromISO(endTime).toMillis();
+        value = endTime;
         break;
       default:
         value = queryParam.queryParamValue;

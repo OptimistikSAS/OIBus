@@ -13,6 +13,7 @@ import ProxyService from '../../service/proxy.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import path from 'node:path';
+import https from 'node:https';
 
 jest.mock('./utils', () => ({
   formatQueryParams: jest.fn(),
@@ -24,7 +25,6 @@ jest.mock('../../service/utils');
 // Mock node-fetch
 jest.mock('node-fetch');
 jest.mock('node:fs/promises');
-jest.mock('../../service/utils');
 const database = new DatabaseMock();
 jest.mock(
   '../../service/cache.service',
@@ -55,7 +55,26 @@ const items: Array<OibusItemDTO> = [
     name: 'item1',
     connectorId: 'southId',
     settings: {
-      nodeId: 'ns=3;s=Random'
+      requestMethod: 'POST',
+      endpoint: '/api/my/endpoint',
+      payloadParser: 'raw',
+      requestTimeout: 3000,
+      body: 'my body',
+      serialization: {
+        type: 'file',
+        filename: 'sql-@CurrentDate.csv',
+        delimiter: 'COMMA',
+        compression: true,
+        dateTimeOutputFormat: { type: 'iso-8601-string' },
+        datetimeSerialization: [
+          { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          {
+            field: 'timestamp',
+            useAsReference: true,
+            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          }
+        ]
+      }
     },
     scanModeId: 'scanModeId1'
   },
@@ -64,7 +83,26 @@ const items: Array<OibusItemDTO> = [
     name: 'item2',
     connectorId: 'southId',
     settings: {
-      nodeId: 'ns=3;s=Counter'
+      requestMethod: 'GET',
+      endpoint: '/api/my/endpoint',
+      payloadParser: 'raw',
+      requestTimeout: 3000,
+      body: '',
+      serialization: {
+        type: 'file',
+        filename: 'sql-@CurrentDate.csv',
+        delimiter: 'COMMA',
+        compression: true,
+        dateTimeOutputFormat: { type: 'iso-8601-string' },
+        datetimeSerialization: [
+          { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          {
+            field: 'timestamp',
+            useAsReference: true,
+            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          }
+        ]
+      }
     },
     scanModeId: 'scanModeId1'
   },
@@ -73,7 +111,26 @@ const items: Array<OibusItemDTO> = [
     name: 'item3',
     connectorId: 'southId',
     settings: {
-      nodeId: 'ns=3;s=Triangle'
+      requestMethod: 'GET',
+      endpoint: '/api/my/endpoint',
+      payloadParser: 'raw',
+      requestTimeout: 3000,
+      body: 'my body',
+      serialization: {
+        type: 'file',
+        filename: 'sql-@CurrentDate.csv',
+        delimiter: 'COMMA',
+        compression: true,
+        dateTimeOutputFormat: { type: 'iso-8601-string' },
+        datetimeSerialization: [
+          { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          {
+            field: 'timestamp',
+            useAsReference: true,
+            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          }
+        ]
+      }
     },
     scanModeId: 'scanModeId2'
   }
@@ -81,64 +138,29 @@ const items: Array<OibusItemDTO> = [
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 let south: SouthOIConnect;
-const configuration: SouthConnectorDTO = {
-  id: 'southId',
-  name: 'south',
-  type: 'test',
-  description: 'my test connector',
-  enabled: true,
-  history: {
-    maxInstantPerItem: true,
-    maxReadInterval: 3600,
-    readDelay: 0
-  },
-  settings: {
-    port: 4200,
-    connectionTimeout: 1000,
-    requestTimeout: 1000,
-    host: 'localhost',
-    protocol: 'http',
-    compression: false,
-    requestMethod: 'GET',
-    endpoint: '/api/oianalytics/data/values/query',
-    delimiter: ',',
-    dateFormat: 'YYYY-MM-DD HH:mm:ss.SSS',
-    fileName: 'rast-api-results_@CurrentDate.csv',
-    timeColumn: 'timestamp',
-    timezone: 'Europe/Paris',
-    variableDateFormat: 'ISO',
-    authentication: {
-      username: 'user',
-      password: 'password',
-      type: 'basic'
-    },
-    queryParams: [
-      {
-        queryParamKey: 'from',
-        queryParamValue: '@StartTime'
-      },
-      {
-        queryParamKey: 'to',
-        queryParamValue: '@EndTime'
-      },
-      {
-        queryParamKey: 'aggregation',
-        queryParamValue: 'RAW_VALUES'
-      },
-      {
-        queryParamKey: 'data-reference',
-        queryParamValue: 'SP_003_X'
-      }
-    ],
-    acceptSelfSigned: false,
-    convertToCsv: true,
-    payloadParser: 'Raw'
-  }
-};
 
-describe('SouthRest', () => {
+describe('SouthOIConnect with Basic auth', () => {
+  const configuration: SouthConnectorDTO = {
+    id: 'southId',
+    name: 'south',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
+    },
+    settings: {
+      url: 'http://localhost',
+      port: 4200,
+      acceptSelfSigned: false,
+      requestMethod: 'GET',
+      authentication: { type: 'basic', username: 'username', password: 'password' }
+    }
+  };
   beforeEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
@@ -159,85 +181,282 @@ describe('SouthRest', () => {
     );
   });
 
+  it('should test connection with odbc', async () => {
+    // TODO
+    await expect(SouthOIConnect.testConnection({}, logger)).rejects.toThrow('TODO: method needs to be implemented');
+    expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
+  });
+
   it('should log error if temp folder creation fails', async () => {
     await south.start();
     expect(mainUtils.createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp'));
   });
 
-  it('should fail to scan', async () => {
-    utils.parsers.set(
-      'Raw',
-      jest.fn(results => ({ httpResults: results, latestDateRetrieved: '2020-01-01T00:00:00.000Z' }))
-    );
-    (fetch as unknown as jest.Mock).mockReturnValue(Promise.resolve({ ok: false, status: 400, statusText: 'statusText' }));
-    await south.start();
+  it('should properly run historyQuery', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    south.queryData = jest
+      .fn()
+      .mockReturnValueOnce([
+        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+      ])
+      .mockReturnValue([]);
+    const rawMethod = jest
+      .fn()
+      .mockImplementationOnce((item: OibusItemDTO, httpResults: Array<any>) => ({
+        formattedResult: httpResults,
+        maxInstant: '2020-03-01T00:00:00.000Z'
+      }))
+      .mockImplementation(() => ({
+        formattedResult: [],
+        maxInstant: '2020-03-01T00:00:00.000Z'
+      }));
+    utils.parsers.set('raw', rawMethod);
 
-    await expect(south.historyQuery(items, '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z')).rejects.toThrowError(
+    await south.historyQuery(items, startTime, nowDateString);
+    expect(mainUtils.persistResults).toHaveBeenCalledTimes(1);
+    expect(south.queryData).toHaveBeenCalledTimes(3);
+    expect(rawMethod).toHaveBeenCalledTimes(3);
+    expect(south.queryData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
+    expect(south.queryData).toHaveBeenCalledWith(items[1], '2020-03-01T00:00:00.000Z', nowDateString);
+    expect(south.queryData).toHaveBeenCalledWith(items[2], '2020-03-01T00:00:00.000Z', nowDateString);
+    expect(logger.info).toHaveBeenCalledWith(`Found 2 results for item ${items[0].name} in 0 ms`);
+    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${items[1].name}. Request done in 0 ms`);
+    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${items[2].name}. Request done in 0 ms`);
+  });
+
+  it('should fail to scan', async () => {
+    (fetch as unknown as jest.Mock).mockReturnValue(Promise.resolve({ ok: false, status: 400, statusText: 'statusText' }));
+
+    await expect(south.queryData(items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z')).rejects.toThrowError(
       'HTTP request failed with status code 400 and message: statusText'
     );
 
     expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:4200/api/oianalytics/data/values/query' +
+      'http://localhost:4200/api/my/endpoint' +
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
-      { agent: null, headers: { authorization: 'Basic dXNlcjp1bmRlZmluZWQ=' }, method: 'GET', timeout: 1000 }
+      {
+        agent: null,
+        headers: { 'Content-Length': 7, 'Content-Type': 'application/json', authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+        method: 'POST',
+        timeout: 3000,
+        body: 'my body'
+      }
     );
     expect(logger.info).toHaveBeenCalledWith(
-      'Requesting data with GET ' +
-        'method: "http://localhost:4200/api/oianalytics/data/values/query' +
+      'Requesting data with POST ' +
+        'method: "http://localhost:4200/api/my/endpoint' +
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X"'
     );
   });
+});
 
-  xit('should successfully scan http endpoint', async () => {
-    utils.parsers.set(
-      'Raw',
-      jest.fn(results => ({ httpResults: results, latestDateRetrieved: new Date('2020-01-01T00:00:00.000Z') }))
-    );
-    const endpointResult = [
-      {
-        value: 'val1',
-        timestamp: new Date('2020-01-01T00:00:00.000Z')
+describe('SouthOIConnect with Bearer auth', () => {
+  const configuration: SouthConnectorDTO = {
+    id: 'southId',
+    name: 'south',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
+    },
+    settings: {
+      url: 'http://localhost',
+      port: 4200,
+      acceptSelfSigned: true,
+      requestMethod: 'GET',
+      authentication: {
+        type: 'bearer',
+        token: 'my token'
       }
-    ];
-    (fetch as unknown as jest.Mock).mockReturnValue(
-      Promise.resolve({
-        ok: true,
-        status: 200,
-        statusText: 'statusText',
-        json: () =>
-          new Promise(resolve => {
-            resolve(endpointResult);
-          })
-      })
-    );
-    await south.start();
-    await south.connect();
+    }
+  };
 
-    await south.historyQuery(items, '2020-01-01T00:00:00.000Z', '2021-01-01T00:00:00.000Z');
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    (utils.formatQueryParams as jest.Mock).mockReturnValue(
+      '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
+    );
+
+    south = new SouthOIConnect(
+      configuration,
+      items,
+      addValues,
+      addFile,
+      encryptionService,
+      proxyService,
+      repositoryService,
+      logger,
+      'baseFolder',
+      true
+    );
   });
 
-  it('should return empty results', async () => {
-    utils.parsers.set(
-      'Raw',
-      jest.fn(() => ({ httpResults: [], latestDateRetrieved: new Date() }))
-    );
-    const endpointResult: Array<any> = [];
-    (fetch as unknown as jest.Mock).mockReturnValue(
-      Promise.resolve({
-        ok: true,
-        status: 200,
-        statusText: 'statusText',
-        json: () =>
-          new Promise(resolve => {
-            resolve(endpointResult);
-          })
-      })
-    );
-    await south.start();
-    await south.connect();
+  it('should fetch data', async () => {
+    (fetch as unknown as jest.Mock).mockReturnValue(Promise.resolve({ ok: true, status: 200, json: () => ['some data'] }));
 
-    await south.historyQuery(items, '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    const result = await south.queryData(items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
 
-    expect(logger.debug).toHaveBeenCalledWith('No result found between 2019-10-03T13:36:38.590Z and 2019-10-03T15:36:38.590Z');
+    expect(result).toEqual(['some data']);
+
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost:4200/api/my/endpoint' +
+        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
+      {
+        agent: expect.any(https.Agent),
+        headers: { 'Content-Length': 7, 'Content-Type': 'application/json', authorization: 'Bearer my token' },
+        method: 'POST',
+        timeout: 3000,
+        body: 'my body'
+      }
+    );
+    expect(logger.info).toHaveBeenCalledWith(
+      'Requesting data with POST ' +
+        'method: "http://localhost:4200/api/my/endpoint' +
+        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X"'
+    );
+  });
+});
+
+describe('SouthOIConnect with API-Key auth', () => {
+  const configuration: SouthConnectorDTO = {
+    id: 'southId',
+    name: 'south',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
+    },
+    settings: {
+      url: 'http://localhost',
+      port: 4200,
+      acceptSelfSigned: true,
+      requestMethod: 'GET',
+      authentication: {
+        type: 'api-key',
+        key: 'myKey',
+        secret: 'mySecret'
+      }
+    }
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    (utils.formatQueryParams as jest.Mock).mockReturnValue(
+      '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
+    );
+
+    south = new SouthOIConnect(
+      configuration,
+      items,
+      addValues,
+      addFile,
+      encryptionService,
+      proxyService,
+      repositoryService,
+      logger,
+      'baseFolder',
+      true
+    );
+  });
+
+  it('should fetch data with GET method and body', async () => {
+    (utils.httpGetWithBody as unknown as jest.Mock).mockReturnValue(Promise.resolve(['some data']));
+
+    const result = await south.queryData(items[2], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+
+    expect(result).toEqual(['some data']);
+
+    expect(utils.httpGetWithBody).toHaveBeenCalledWith('my body', {
+      agent: expect.any(https.Agent),
+      headers: {
+        'Content-Length': 7,
+        'Content-Type': 'application/json',
+        myKey: 'mySecret'
+      },
+      host: 'http://localhost',
+      method: 'GET',
+      path: '/api/my/endpoint',
+      port: 4200,
+      timeout: 3000
+    });
+    expect(logger.info).toHaveBeenCalledWith('Requesting data with GET method and body on: "http://localhost:4200/api/my/endpoint"');
+  });
+});
+
+describe('SouthOIConnect without auth', () => {
+  const configuration: SouthConnectorDTO = {
+    id: 'southId',
+    name: 'south',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
+    },
+    settings: {
+      url: 'http://localhost',
+      port: 4200,
+      acceptSelfSigned: false,
+      authentication: {
+        type: 'none'
+      }
+    }
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    (utils.formatQueryParams as jest.Mock).mockReturnValue(
+      '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
+    );
+
+    south = new SouthOIConnect(
+      configuration,
+      items,
+      addValues,
+      addFile,
+      encryptionService,
+      proxyService,
+      repositoryService,
+      logger,
+      'baseFolder',
+      true
+    );
+  });
+
+  it('should fetch data with GET and Body', async () => {
+    (utils.httpGetWithBody as unknown as jest.Mock).mockReturnValue(Promise.resolve(['some data']));
+
+    const result = await south.queryData(items[2], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+
+    expect(result).toEqual(['some data']);
+
+    expect(utils.httpGetWithBody).toHaveBeenCalledWith('my body', {
+      agent: null,
+      headers: {
+        'Content-Length': 7,
+        'Content-Type': 'application/json'
+      },
+      host: 'http://localhost',
+      method: 'GET',
+      path: '/api/my/endpoint',
+      port: 4200,
+      timeout: 3000
+    });
+    expect(logger.info).toHaveBeenCalledWith('Requesting data with GET method and body on: "http://localhost:4200/api/my/endpoint"');
   });
 });

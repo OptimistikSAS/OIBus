@@ -1,5 +1,7 @@
 import { Instant } from '../../../../../shared/model/types';
 import { DateTime } from 'luxon';
+import { OibusItemDTO } from '../../../../../shared/model/south-connector.model';
+import { convertDateTimeFromInstant } from '../../../service/utils';
 
 interface SlimsColumn {
   name: string;
@@ -20,12 +22,12 @@ interface SlimsResults {
  * Return the formatted results flattened for easier access
  * (into csv files for example) and the latestDateRetrieved in ISO String format
  */
-const format = (httpResult: SlimsResults): { httpResults: Array<any>; latestDateRetrieved: Instant } => {
+export default (item: OibusItemDTO, httpResult: SlimsResults): { formattedResult: Array<any>; maxInstant: Instant } => {
   if (!httpResult?.entities || !Array.isArray(httpResult.entities)) {
     throw new Error('Bad data: expect SLIMS values to be an array.');
   }
   const formattedData: Array<any> = [];
-  let latestDateRetrieved: Instant = DateTime.fromMillis(0).toUTC().toISO() as Instant;
+  let maxInstant = DateTime.fromMillis(0).toUTC().toISO()!;
   httpResult.entities.forEach(element => {
     const rsltCfPid = element.columns.find(column => column.name === 'rslt_cf_pid');
     if (!rsltCfPid?.value) {
@@ -43,18 +45,18 @@ const format = (httpResult: SlimsResults): { httpResults: Array<any>; latestDate
     if (!rsltCfSamplingDateAndTime?.value) {
       throw new Error('Bad data: expect rslt_cf_samplingDateAndTime to have a value.');
     }
+    const resultInstant = DateTime.fromMillis(rsltCfSamplingDateAndTime.value).toUTC().toISO()!;
     formattedData.push({
       pointId: `${rsltCfPid.value}-${testName.value}`,
       unit: rsltValue.unit || 'Ø',
-      timestamp: DateTime.fromMillis(rsltCfSamplingDateAndTime.value).toUTC().toISO(),
+      timestamp: convertDateTimeFromInstant(resultInstant, item.settings.serialization.outputDateTimeFormat),
       value: rsltValue.value
     });
-    if ((DateTime.fromMillis(rsltCfSamplingDateAndTime.value).toUTC().toISO() as Instant) > (latestDateRetrieved as Instant)) {
-      latestDateRetrieved = DateTime.fromMillis(rsltCfSamplingDateAndTime.value).toUTC().toISO() as Instant;
+    if (resultInstant > maxInstant) {
+      maxInstant = resultInstant;
     }
   });
   // increment the latest date retrieved to avoid loop in history query from slims
-  return { httpResults: formattedData, latestDateRetrieved: DateTime.fromISO(latestDateRetrieved).plus(1).toUTC().toISO() as Instant };
+  // TODO: check increment
+  return { formattedResult: formattedData, maxInstant: maxInstant };
 };
-
-export default format;

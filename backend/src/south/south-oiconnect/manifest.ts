@@ -30,31 +30,20 @@ const manifest: SouthConnectorManifest = {
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }]
     },
     {
-      key: 'requestMethod',
-      type: 'OibSelect',
-      options: ['GET', 'POST', 'PUT', 'PATCH'],
-      label: 'HTTP Method',
-      defaultValue: 'GET',
-      newRow: false,
-      validators: [{ key: 'required' }]
-    },
-    {
       key: 'acceptSelfSigned',
       type: 'OibCheckbox',
       label: 'Accept rejected certificates?',
       defaultValue: false,
       newRow: false,
       validators: [{ key: 'required' }],
-      class: 'col-2'
+      class: 'col-4'
     },
     {
-      key: 'connectionTimeout',
-      type: 'OibNumber',
-      label: 'Connection timeout (ms)',
-      defaultValue: 1000,
+      key: 'authentication',
+      type: 'OibAuthentication',
+      label: 'Authentication',
       newRow: true,
-      class: 'col-2',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }]
+      authTypes: ['none', 'basic', 'bearer', 'api-key']
     }
   ],
   items: {
@@ -64,31 +53,38 @@ const manifest: SouthConnectorManifest = {
     },
     settings: [
       {
-        key: 'requestTimeout',
-        type: 'OibNumber',
-        label: 'Request timeout (ms)',
-        defaultValue: 1000,
+        key: 'requestMethod',
+        type: 'OibSelect',
+        options: ['GET', 'POST', 'PUT', 'PATCH'],
+        label: 'HTTP Method',
+        defaultValue: 'GET',
         newRow: false,
-        class: 'col-2',
-        validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60_000 } }]
-      },
-      {
-        key: 'maxReadInterval',
-        type: 'OibNumber',
-        label: 'Max read interval (s)',
-        defaultValue: 0,
-        newRow: true,
-        class: 'col-2',
         validators: [{ key: 'required' }]
       },
       {
-        key: 'readIntervalDelay',
+        key: 'endpoint',
+        type: 'OibText',
+        label: 'Endpoint',
+        defaultValue: '/endpoint',
+        validators: [{ key: 'required' }]
+      },
+      {
+        key: 'payloadParser',
+        type: 'OibSelect',
+        label: 'Payload parser',
+        options: ['raw', 'oianalytics-time-values', 'slims'],
+        defaultValue: 'raw',
+        class: 'col-4',
+        newRow: true,
+        validators: [{ key: 'required' }]
+      },
+      {
+        key: 'requestTimeout',
         type: 'OibNumber',
-        label: 'Read interval delay (ms)',
-        defaultValue: 200,
-        newRow: false,
+        label: 'Request timeout (ms)',
+        defaultValue: 3000,
         class: 'col-2',
-        validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }]
+        validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60_000 } }]
       },
       {
         key: 'body',
@@ -96,57 +92,15 @@ const manifest: SouthConnectorManifest = {
         label: 'Body',
         contentType: 'json',
         defaultValue: '',
-        newRow: false
+        newRow: true
       },
       {
-        key: 'variableDateFormat',
-        type: 'OibSelect',
-        label: 'Variable Date Format',
-        options: ['ISO', 'number'],
-        defaultValue: 'ISO',
+        key: 'serialization',
+        type: 'OibSerialization',
+        label: 'Serialization',
+        class: 'col',
         newRow: true,
-        validators: [{ key: 'required' }]
-      },
-      {
-        key: 'payloadParser',
-        type: 'OibSelect',
-        label: 'Payload parser',
-        options: ['Raw', 'OIAnalytics time values', 'SLIMS'],
-        defaultValue: 'Raw',
-        newRow: true,
-        validators: [{ key: 'required' }]
-      },
-      {
-        key: 'convertToCsv',
-        type: 'OibCheckbox',
-        label: 'Convert payload into CSV?',
-        defaultValue: true,
-        newRow: true,
-        validators: [{ key: 'required' }]
-      },
-      {
-        key: 'delimiter',
-        type: 'OibSelect',
-        options: [',', ';', '|'],
-        label: 'Delimiter',
-        defaultValue: ',',
-        newRow: false,
-        validators: [{ key: 'required' }]
-      },
-      {
-        key: 'filename',
-        type: 'OibText',
-        label: 'Filename',
-        defaultValue: '@ConnectorName-results_@CurrentDate-@QueryPart.csv',
-        validators: [{ key: 'required' }]
-      },
-      {
-        key: 'compression',
-        type: 'OibCheckbox',
-        label: 'Compress File?',
-        defaultValue: false,
-        newRow: false,
-        validators: [{ key: 'required' }]
+        readDisplay: false
       }
     ]
   }

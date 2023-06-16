@@ -94,6 +94,15 @@ export class OibSerializationComponent implements ControlValueAccessor {
             datetimeSerialization: newValue.datetimeSerialization!
           });
           break;
+        case 'oibus-values':
+          this.onChange({
+            type: 'oibus-values',
+            outputDateTimeFormat: {
+              type: 'iso-8601-string'
+            },
+            datetimeSerialization: newValue.datetimeSerialization!
+          });
+          break;
       }
     });
   }
@@ -124,6 +133,15 @@ export class OibSerializationComponent implements ControlValueAccessor {
           delimiter: value.delimiter,
           compression: value.compression,
           outputDateTimeFormat: value.outputDateTimeFormat,
+          datetimeSerialization: value.datetimeSerialization
+        });
+        break;
+      case 'oibus-values':
+        this.serializationCtrl.patchValue({
+          type: 'oibus-value',
+          outputDateTimeFormat: {
+            type: 'iso-8601-string'
+          },
           datetimeSerialization: value.datetimeSerialization
         });
         break;

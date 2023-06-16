@@ -6,13 +6,13 @@ import https from 'https';
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import { formatQueryParams, httpGetWithBody, parsers } from './utils';
-import { createFolder } from '../../service/utils';
+import { convertDateTimeFromInstant, createFolder, persistResults } from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { Instant } from '../../../../shared/model/types';
+import { DateTimeSerialization, Instant, Serialization } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 
@@ -69,86 +69,46 @@ export default class SouthOIConnect extends SouthConnector implements QueriesHis
    * Retrieve result from a REST API write them into a CSV file and send it to the Engine.
    */
   async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
-    if (!parsers.get(this.configuration.settings.payloadParser)) {
-      throw new Error(`Parser "${this.configuration.settings.payloadParser}" does not exist.`);
-    }
-    this.logger.debug(`Read from ${startTime} to ${endTime}`);
-    const results = await this.getDataFromRestApi(startTime, endTime);
-
     let updatedStartTime = startTime;
-    if (results) {
-      let formattedResults = null;
-      try {
-        // Use a formatter to format the retrieved data before converting it into CSV or adding values
-        const { httpResults, latestDateRetrieved } = parsers.get(this.configuration.settings.payloadParser)!(results);
-        formattedResults = httpResults;
-        if (latestDateRetrieved > updatedStartTime) {
-          updatedStartTime = latestDateRetrieved;
-        }
-      } catch (parsingError) {
-        this.logger.trace(`Parsing error with the results: ${results}`);
-        throw new Error(`Could not format the results with parser "${this.configuration.settings.payloadParser}". Error: ${parsingError}`);
-      }
-      this.logger.info(`Found and parsed ${formattedResults.length} results`);
 
-      if (formattedResults.length > 0) {
-        // TODO
-        // if (this.configuration.settings.convertToCsv) {
-        //   const fileName = replaceFilenameWithVariable(this.configuration.settings.filename, 0, this.configuration.name);
-        //   const filePath = path.join(this.tmpFolder, fileName);
-        //
-        //   this.logger.debug(`Converting HTTP payload to CSV file ${filePath}`);
-        //   const csvContent = generateCSV(formattedResults, this.configuration.settings.delimiter);
-        //
-        //   this.logger.debug(`Writing CSV file "${filePath}"`);
-        //   await fs.writeFile(filePath, csvContent);
-        //
-        //   if (this.configuration.settings.compression) {
-        //     // Compress and send the compressed file
-        //     const gzipPath = `${filePath}.gz`;
-        //     await compress(filePath, gzipPath);
-        //
-        //     try {
-        //       await fs.unlink(filePath);
-        //       this.logger.info(`File ${filePath} compressed and deleted`);
-        //     } catch (unlinkError) {
-        //       this.logger.error(unlinkError);
-        //     }
-        //
-        //     this.logger.debug(`Sending compressed file "${gzipPath}" to Engine`);
-        //     await this.addFile(gzipPath);
-        //     try {
-        //       await fs.unlink(gzipPath);
-        //       this.logger.trace(`File ${gzipPath} deleted`);
-        //     } catch (unlinkError) {
-        //       this.logger.error(unlinkError);
-        //     }
-        //   } else {
-        //     this.logger.debug(`Sending file "${filePath}" to Engine`);
-        //     await this.addFile(filePath);
-        //     try {
-        //       await fs.unlink(filePath);
-        //       this.logger.trace(`File ${filePath} deleted`);
-        //     } catch (unlinkError) {
-        //       this.logger.error(unlinkError);
-        //     }
-        //   }
-        // } else {
-        //   await this.addValues(formattedResults);
-        // }
+    for (const item of items) {
+      const startRequest = DateTime.now().toMillis();
+      const result: Array<any> = await this.queryData(item, updatedStartTime, endTime);
+      const requestDuration = DateTime.now().toMillis() - startRequest;
+
+      const { formattedResult, maxInstant } = parsers.get(item.settings.payloadParser)!(item, result);
+
+      if (maxInstant > updatedStartTime) {
+        updatedStartTime = maxInstant;
+      }
+      if (formattedResult.length > 0) {
+        this.logger.info(`Found ${formattedResult.length} results for item ${item.name} in ${requestDuration} ms`);
+
+        await persistResults(
+          formattedResult,
+          item.settings.serialization as Serialization,
+          this.configuration.name,
+          this.tmpFolder,
+          this.addFile.bind(this),
+          this.addValues.bind(this),
+          this.logger
+        );
       } else {
-        this.logger.debug(`No result found between ${startTime} and ${endTime}`);
+        this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
     }
     return updatedStartTime;
   }
 
-  async getDataFromRestApi(startTime: Instant, endTime: Instant): Promise<any> {
+  async queryData(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<any> {
     const headers: Record<string, string> = {};
     switch (this.configuration.settings.authentication.type) {
       case 'basic': {
-        const decryptedPassword = await this.encryptionService.decryptText(this.configuration.settings.authentication.password);
-        const basic = Buffer.from(`${this.configuration.settings.authentication.username}:${decryptedPassword}`).toString('base64');
+        const basic = Buffer.from(
+          `${this.configuration.settings.authentication.username}:${await this.encryptionService.decryptText(
+            this.configuration.settings.authentication.password
+          )}`
+        ).toString('base64');
         headers.authorization = `Basic ${basic}`;
         break;
       }
@@ -166,68 +126,53 @@ export default class SouthOIConnect extends SouthConnector implements QueriesHis
         break;
     }
 
+    const referenceTimestampField = item.settings.serialization.datetimeSerialization.find(
+      (serialization: DateTimeSerialization) => serialization.useAsReference
+    );
+    const apiStartTime = convertDateTimeFromInstant(startTime, referenceTimestampField.datetimeFormat);
+    const apiEndTime = convertDateTimeFromInstant(endTime, referenceTimestampField.datetimeFormat);
+
     // Some API such as SLIMS uses a body with GET. It's not standard and requires a specific implementation
-    if (this.configuration.settings.requestMethod === 'GET' && this.configuration.settings.body) {
-      const bodyToSend = this.configuration.settings.body
-        .replace(
-          /@StartTime/g,
-          this.configuration.settings.variableDateFormat === 'ISO'
-            ? DateTime.fromISO(startTime).toUTC().toISO()
-            : DateTime.fromISO(startTime).toMillis()
-        )
-        .replace(
-          /@EndTime/g,
-          this.configuration.settings.variableDateFormat === 'ISO'
-            ? DateTime.fromISO(endTime).toUTC().toISO()
-            : DateTime.fromISO(endTime).toMillis()
-        );
-      headers['content-type'] = 'application/json';
-      headers['content-length'] = bodyToSend.length;
+    if (item.settings.requestMethod === 'GET' && item.settings.body) {
+      const bodyToSend = item.settings.body.replace(/@StartTime/g, apiStartTime).replace(/@EndTime/g, apiEndTime);
+      headers['Content-Type'] = 'application/json';
+      headers['Content-Length'] = bodyToSend.length;
       const requestOptions = {
-        method: this.configuration.settings.requestMethod,
+        method: item.settings.requestMethod,
         agent: this.configuration.settings.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
-        timeout: this.configuration.settings.connectionTimeout,
-        host: this.configuration.settings.host,
+        timeout: item.settings.requestTimeout,
+        host: this.configuration.settings.url,
         port: this.configuration.settings.port,
-        protocol: `${this.configuration.settings.protocol}:`,
-        path: this.configuration.settings.endpoint,
+        path: item.settings.endpoint,
         headers
       };
 
-      this.logger.info(`Requesting data with ${this.configuration.settings.requestMethod} method: "${requestOptions.host}"`);
+      this.logger.info(
+        `Requesting data with GET method and body on: "${requestOptions.host}:${requestOptions.port}${requestOptions.path}"`
+      );
 
       return httpGetWithBody(bodyToSend, requestOptions);
     }
 
     const fetchOptions: Record<string, any> = {
-      method: this.configuration.settings.requestMethod,
+      method: item.settings.requestMethod,
       headers,
       agent: this.configuration.settings.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
-      timeout: this.configuration.settings.connectionTimeout
+      timeout: item.settings.requestTimeout
     };
-    const requestUrl = `${this.configuration.settings.protocol}://${this.configuration.settings.host}:${this.configuration.settings.port}${
-      this.configuration.settings.endpoint
-    }${formatQueryParams(startTime, endTime, this.configuration.settings.queryParams, this.configuration.settings.variableDateFormat)}`;
+    const requestUrl = `${this.configuration.settings.url}:${this.configuration.settings.port}${item.settings.endpoint}${formatQueryParams(
+      startTime,
+      endTime,
+      item.settings.queryParams
+    )}`;
 
-    if (this.configuration.settings.body) {
-      fetchOptions.body = this.configuration.settings.body
-        .replace(
-          /@StartTime/g,
-          this.configuration.settings.variableDateFormat === 'ISO'
-            ? DateTime.fromISO(startTime).toUTC().toISO()
-            : DateTime.fromISO(startTime).toMillis()
-        )
-        .replace(
-          /@EndTime/g,
-          this.configuration.settings.variableDateFormat === 'ISO'
-            ? DateTime.fromISO(endTime).toUTC().toISO()
-            : DateTime.fromISO(endTime).toMillis()
-        );
+    if (item.settings.body) {
+      fetchOptions.body = item.settings.body.replace(/@StartTime/g, apiStartTime).replace(/@EndTime/g, apiEndTime);
       fetchOptions.headers['Content-Type'] = 'application/json';
       fetchOptions.headers['Content-Length'] = fetchOptions.body.length;
     }
 
-    this.logger.info(`Requesting data with ${this.configuration.settings.requestMethod} method: "${requestUrl}"`);
+    this.logger.info(`Requesting data with ${item.settings.requestMethod} method: "${requestUrl}"`);
 
     const response = await fetch(requestUrl, fetchOptions);
     if (!response.ok) {
