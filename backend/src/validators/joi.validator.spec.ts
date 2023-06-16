@@ -139,10 +139,17 @@ describe('Joi validator', () => {
         locale: Joi.optional()
       }).required(),
       serialization: Joi.object({
-        type: Joi.string().required().valid('file'),
+        type: Joi.string().required().valid('csv'),
         filename: Joi.string().optional(),
         delimiter: Joi.string().optional(),
         compression: Joi.boolean().optional(),
+        outputDateTimeFormat: Joi.object({
+          type: Joi.string().required(),
+          timezone: Joi.string().optional(),
+          dateObjectType: Joi.string().optional(),
+          format: Joi.optional(),
+          locale: Joi.optional()
+        }),
         datetimeSerialization: Joi.array()
           .items(
             Joi.object({
@@ -290,10 +297,17 @@ describe('Joi validator', () => {
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
     const serializationSchema = Joi.object({
-      type: Joi.string().required().valid('file'),
+      type: Joi.string().required().valid('csv'),
       filename: Joi.string().optional(),
       delimiter: Joi.string().optional(),
       compression: Joi.boolean().optional(),
+      outputDateTimeFormat: Joi.object({
+        type: Joi.string().required(),
+        timezone: Joi.string().optional(),
+        dateObjectType: Joi.string().optional(),
+        format: Joi.optional(),
+        locale: Joi.optional()
+      }),
       datetimeSerialization: Joi.array()
         .items(
           Joi.object({

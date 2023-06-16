@@ -86,7 +86,7 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
-              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField);
+              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField.datetimeFormat);
               if (datetimeField.useAsReference) {
                 if (entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
@@ -122,8 +122,8 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
     const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
       (serialization: DateTimeSerialization) => serialization.useAsReference
     );
-    const sqliteStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization);
-    const sqliteEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization);
+    const sqliteStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization.datetimeFormat);
+    const sqliteEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization.datetimeFormat);
     logQuery(item.settings.query, sqliteStartTime, sqliteEndTime, this.logger);
 
     try {

@@ -102,7 +102,7 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
-              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField);
+              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField.datetimeFormat);
               if (datetimeField.useAsReference) {
                 if (entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
@@ -157,8 +157,8 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
     const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
       (serialization: DateTimeSerialization) => serialization.useAsReference
     );
-    const odbcStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization);
-    const odbcEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization);
+    const odbcStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization.datetimeFormat);
+    const odbcEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization.datetimeFormat);
 
     logQuery(item.settings.query, odbcStartTime, odbcEndTime, this.logger);
 

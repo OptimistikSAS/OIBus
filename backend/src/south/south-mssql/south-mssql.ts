@@ -85,7 +85,7 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
-              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField);
+              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField.datetimeFormat);
               if (datetimeField.useAsReference) {
                 if (entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
@@ -177,7 +177,7 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
           case 'DateTime2':
             return DateTime.fromISO(datetime, { zone: dateTimeFormat.timezone }).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
           case 'DateTimeOffset':
-            return DateTime.fromISO(datetime).toFormat('yyyy-MM-dd HH:mm:ss.SSS ZZ');
+            return DateTime.fromISO(datetime, { zone: dateTimeFormat.timezone }).toFormat('yyyy-MM-dd HH:mm:ss.SSS ZZ');
           case 'SmallDateTime':
             return DateTime.fromISO(datetime, { zone: dateTimeFormat.timezone }).toFormat('yyyy-MM-dd HH:mm:ss');
           case 'DateTime':
