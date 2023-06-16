@@ -110,6 +110,7 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
           this.configuration.name,
           this.tmpFolder,
           this.addFile.bind(this),
+          this.addValues.bind(this),
           this.logger
         );
       } else {

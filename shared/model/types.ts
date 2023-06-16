@@ -95,7 +95,7 @@ export type CsvCharacter = typeof ALL_CSV_CHARACTERS[number];
 
 // TODO: custom serialization with parser / transformer
 // TODO: HTTP Payload (OIConnect south)
-export const SERIALIZATION_TYPES = ['csv'];
+export const SERIALIZATION_TYPES = ['csv', 'oibus-values'];
 export type SerializationType = typeof SERIALIZATION_TYPES[number];
 
 export interface DateTimeSerialization {
@@ -117,4 +117,8 @@ export interface FileSerializationFormat extends BaseSerializationFormat {
   delimiter: CsvCharacter;
 }
 
-export type Serialization = FileSerializationFormat;
+export interface OIBusValuesSerializationFormat extends BaseSerializationFormat {
+  type: 'oibus-values';
+}
+
+export type Serialization = FileSerializationFormat | OIBusValuesSerializationFormat;

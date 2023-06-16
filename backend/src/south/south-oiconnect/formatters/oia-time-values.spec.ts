@@ -1,27 +1,41 @@
 import oiaTimeValues from './oia-time-values';
+import { OibusItemDTO } from '../../../../../shared/model/south-connector.model';
+
+const item: OibusItemDTO = {
+  id: 'id1',
+  name: 'item1',
+  connectorId: 'southId',
+  settings: {
+    payloadParser: 'raw',
+    serialization: {
+      dateTimeOutputFormat: { type: 'iso-8601-string' }
+    }
+  },
+  scanModeId: 'scanModeId1'
+};
 
 describe('oia time values formatter', () => {
   it('should reject bad data', () => {
     try {
-      oiaTimeValues({} as any);
+      oiaTimeValues(item, {} as any);
     } catch (error) {
       expect(error).toEqual(Error('Bad data: expect OIAnalytics time values to be an array'));
     }
 
     try {
-      oiaTimeValues([{}] as any);
+      oiaTimeValues(item, [{}] as any);
     } catch (error) {
       expect(error).toEqual(Error('Bad data: expect data.reference field'));
     }
 
     try {
-      oiaTimeValues([{ data: { reference: 'dataReference' } }] as any);
+      oiaTimeValues(item, [{ data: { reference: 'dataReference' } }] as any);
     } catch (error) {
       expect(error).toEqual(Error('Bad data: expect unit.label field'));
     }
 
     try {
-      oiaTimeValues([
+      oiaTimeValues(item, [
         {
           data: { reference: 'dataReference' },
           unit: { label: 'g/L' }
@@ -32,7 +46,7 @@ describe('oia time values formatter', () => {
     }
 
     try {
-      oiaTimeValues([
+      oiaTimeValues(item, [
         {
           data: { reference: 'dataReference' },
           unit: { label: 'g/L' },
@@ -72,39 +86,39 @@ describe('oia time values formatter', () => {
       }
     ];
 
-    expect(oiaTimeValues(oiaData)).toEqual({
-      httpResults: [
+    expect(oiaTimeValues(item, oiaData)).toEqual({
+      formattedResult: [
         {
           pointId: 'ref1',
-          timestamp: '2022-01-01T00:00:00Z',
+          timestamp: '2022-01-01T00:00:00.000Z',
           unit: '%',
           value: 63
         },
         {
           pointId: 'ref1',
-          timestamp: '2022-01-01T00:10:00Z',
+          timestamp: '2022-01-01T00:10:00.000Z',
           unit: '%',
           value: 84
         },
         {
           pointId: 'ref2',
-          timestamp: '2022-01-01T00:00:00Z',
+          timestamp: '2022-01-01T00:00:00.000Z',
           unit: 'pH',
           value: 7
         },
         {
           pointId: 'ref2',
-          timestamp: '2022-01-01T00:10:00Z',
+          timestamp: '2022-01-01T00:10:00.000Z',
           unit: 'pH',
           value: 8
         }
       ],
-      latestDateRetrieved: '2022-01-01T00:10:00.000Z'
+      maxInstant: '2022-01-01T00:10:00.000Z'
     });
 
-    expect(oiaTimeValues([])).toEqual({ httpResults: [], latestDateRetrieved: '1970-01-01T00:00:00.000Z' });
+    expect(oiaTimeValues(item, [])).toEqual({ formattedResult: [], maxInstant: '1970-01-01T00:00:00.000Z' });
     expect(
-      oiaTimeValues([
+      oiaTimeValues(item, [
         {
           type: 'time-values',
           unit: { id: '2', label: '%' },
@@ -118,6 +132,6 @@ describe('oia time values formatter', () => {
           values: []
         }
       ])
-    ).toEqual({ httpResults: [], latestDateRetrieved: '1970-01-01T00:00:00.000Z' });
+    ).toEqual({ formattedResult: [], maxInstant: '1970-01-01T00:00:00.000Z' });
   });
 });

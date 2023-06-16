@@ -15,17 +15,17 @@
           <option *ngFor="let type of serializationTypes" [ngValue]="type">{{ type | serializationsEnum }}</option>
         </select>
       </div>
-      <div class="col-4">
+      <div class="col-4" *ngIf="serializationCtrl.controls.type.value === 'csv'">
         <label class="form-label" [for]="'oib-serialization-filename-input-' + key">{{ 'serialization.filename' | translate }} </label>
         <input [id]="'oib-serialization-filename-input-' + key" class="form-control" formControlName="filename" />
       </div>
-      <div class="col-3">
+      <div class="col-3" *ngIf="serializationCtrl.controls.type.value === 'csv'">
         <label class="form-label" [for]="'oib-serialization-delimiter-input-' + key">{{ 'serialization.delimiter' | translate }} </label>
         <select formControlName="delimiter" [id]="'oib-serialization-delimiter-input-' + key" class="form-select mb-2 mr-sm-2">
           <option *ngFor="let delimiter of csvDelimiters" [ngValue]="delimiter">{{ delimiter | csvCharacterEnum }}</option>
         </select>
       </div>
-      <div class="col-3">
+      <div class="col-3" *ngIf="serializationCtrl.controls.type.value === 'csv'">
         <div class="form-check form-switch padded">
           <input
             formControlName="compression"
@@ -39,7 +39,7 @@
         </div>
       </div>
     </div>
-    <div class="row">
+    <div class="row" *ngIf="serializationCtrl.controls.type.value === 'csv'">
       <label class="form-label">{{ 'serialization.output.date-time-format' | translate }}</label>
 
       <oib-datetime-format formControlName="outputDateTimeFormat" key="datetimeFormat" [displayExample]="true"></oib-datetime-format>

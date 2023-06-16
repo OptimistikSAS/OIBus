@@ -193,9 +193,13 @@ export const persistResults = async (
   connectorName: string,
   baseFolder: string,
   addFileFn: (filePath: string) => Promise<void>,
+  addValueFn: (values: Array<any>) => Promise<void>,
   logger: pino.Logger
 ): Promise<void> => {
   switch (serializationSettings.type) {
+    case 'oibus-values':
+      await addValueFn(data);
+      break;
     case 'csv':
       const options = {
         header: true,
