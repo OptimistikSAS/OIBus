@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.5.10](https://github.com/OptimistikSAS/OIBus/compare/v2.5.9...v2.5.10) (2023-06-16)
+
+
+### Bug Fixes
+
+* **south-sql:** Fix oracle library loading ([1dfed23](https://github.com/OptimistikSAS/OIBus/commit/1dfed23c02315d20b84097433fb07d6c93a9aa24))
+
 ### [2.5.9](https://github.com/OptimistikSAS/OIBus/compare/v2.5.8...v2.5.9) (2023-06-14)
 
 
