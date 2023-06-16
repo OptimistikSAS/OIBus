@@ -198,33 +198,67 @@ describe('SouthSQLite test connection', () => {
 
   const settings = { ...configuration.settings };
   const dbPath = path.resolve(settings.databasePath);
-  const dbFolder = path.dirname(dbPath).replace(/\\/g, '\\\\');
 
-  it('Folder does not exist', async () => {
-    const errorMessage = 'Folder does not exist';
+  it('Database is reachable and has tables', async () => {
+    const result = [{ tbl_name: 'logs', columns: 'data(INTEGER), timestamp(datetime)' }];
+    all.mockReturnValue(result);
+    (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
+
+    const test = SouthSQLite.testConnection(settings, logger);
+    await expect(test).resolves.not.toThrow();
+
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([
+      ['Testing connection'],
+      ['Testing if SQLite file exists'],
+      ['Testing connection to SQLite system table']
+    ]);
+
+    const tables = result.map((row: any) => `${row.tbl_name}: [${row.columns}]`).join(',\n');
+    expect(logger.info).toHaveBeenCalledWith('Database is live with tables (table:[columns]):\n%s', tables);
+  });
+
+  it('Database file does not exist', async () => {
+    const errorMessage = 'File does not exist';
     (fs.access as jest.Mock).mockImplementationOnce(() => {
       throw new Error(errorMessage);
     });
 
     const test = SouthSQLite.testConnection(settings, logger);
-    const folderRegex = new RegExp(`Folder '${dbFolder}' does not exist`);
-    await expect(test).rejects.toThrowError(folderRegex);
+    await expect(test).rejects.toThrowError(`File '${dbPath}' does not exist`);
 
-    const accessRegex = new RegExp(`Access error on '${dbFolder}': ${errorMessage}`);
-    expect((logger.trace as jest.Mock).mock.calls).toEqual([['Testing connection'], [expect.stringMatching(accessRegex)]]);
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([['Testing connection'], ['Testing if SQLite file exists']]);
+    expect(logger.error as jest.Mock).toBeCalledWith(`Access error on '${dbPath}': ${errorMessage}`);
   });
 
-  it('No read/write access', async () => {
-    const errorMessage = 'No read/write access';
-    (fs.access as jest.Mock)
-      .mockImplementationOnce(() => Promise.resolve())
-      .mockImplementationOnce(() => {
-        throw new Error(errorMessage);
-      });
+  it('Database connection error', async () => {
+    const errorMessage = `Can't query database`;
+    (mockDatabase.prepare as jest.Mock).mockImplementationOnce(() => {
+      throw new Error(errorMessage);
+    });
 
-    await expect(SouthSQLite.testConnection(settings, logger)).rejects.toThrowError('No read/write access on folder');
+    const test = SouthSQLite.testConnection(settings, logger);
+    await expect(test).rejects.toThrowError('Error testing database connection, check logs');
 
-    const accessRegex = new RegExp(`Access error on '${dbFolder}': ${errorMessage}`);
-    expect((logger.trace as jest.Mock).mock.calls).toEqual([['Testing connection'], [expect.stringMatching(accessRegex)]]);
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([
+      ['Testing connection'],
+      ['Testing if SQLite file exists'],
+      ['Testing connection to SQLite system table']
+    ]);
+    expect(logger.error as jest.Mock).toHaveBeenCalledWith(`Unable to query system table: ${errorMessage}`);
+  });
+
+  it('Database has no tables', async () => {
+    all.mockReturnValue([]);
+    (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
+
+    const test = SouthSQLite.testConnection(settings, logger);
+    await expect(test).rejects.toThrowError('Database has no tables');
+
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([
+      ['Testing connection'],
+      ['Testing if SQLite file exists'],
+      ['Testing connection to SQLite system table']
+    ]);
+    expect(logger.warn as jest.Mock).toHaveBeenCalledWith(`Database '${dbPath}' has no tables`);
   });
 });

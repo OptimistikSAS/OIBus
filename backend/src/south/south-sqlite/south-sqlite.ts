@@ -59,22 +59,45 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
 
   static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
     logger.trace(`Testing connection`);
+
+    logger.trace(`Testing if SQLite file exists`);
     const dbPath = path.resolve(settings.databasePath);
-    const dbFolder = path.dirname(dbPath);
 
     try {
-      await fs.access(dbFolder, fs.constants.F_OK);
+      await fs.access(dbPath, fs.constants.F_OK);
     } catch (error: any) {
-      logger.trace(`Access error on '${dbFolder}': ${error.message}`);
-      throw new Error(`Folder '${dbFolder}' does not exist`);
+      logger.error(`Access error on '${dbPath}': ${error.message}`);
+      throw new Error(`File '${dbPath}' does not exist`);
     }
 
+    logger.trace('Testing connection to SQLite system table');
+    const database = db(dbPath);
+    let result;
+
     try {
-      await fs.access(dbFolder, fs.constants.R_OK | fs.constants.W_OK);
+      result = database
+        .prepare(
+          `SELECT tbl_name,
+                    (SELECT group_concat(name || '(' || type || ')', ', ')
+                    FROM PRAGMA_TABLE_INFO(tbl_name)) AS columns
+            FROM sqlite_master
+            WHERE type = 'table'`
+        )
+        .all();
     } catch (error: any) {
-      logger.trace(`Access error on '${dbFolder}': ${error.message}`);
-      throw new Error(`No read/write access on folder`);
+      logger.error(`Unable to query system table: ${error.message}`);
+      throw new Error('Error testing database connection, check logs');
     }
+    database.close();
+
+    if (result.length === 0) {
+      logger.warn(`Database '${dbPath}' has no tables`);
+      throw new Error('Database has no tables');
+    }
+
+    const tables = result.map((row: any) => `${row.tbl_name}: [${row.columns}]`).join(',\n');
+
+    logger.info('Database is live with tables (table:[columns]):\n%s', tables);
   }
 
   /**
