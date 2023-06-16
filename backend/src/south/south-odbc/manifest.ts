@@ -100,13 +100,6 @@ const manifest: SouthConnectorManifest = {
         key: 'serialization',
         type: 'OibSerialization',
         label: 'Serialization',
-        defaultValue: {
-          type: 'file',
-          filename: 'sql-@CurrentDate.csv',
-          delimiter: 'COMMA',
-          compression: true,
-          datetimeSerialization: []
-        },
         class: 'col',
         newRow: true,
         readDisplay: false

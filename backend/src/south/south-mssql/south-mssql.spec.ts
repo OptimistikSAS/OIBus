@@ -52,8 +52,9 @@ const items: Array<OibusItemDTO> = [
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
+        dateTimeOutputFormat: { type: 'iso-8601-string' },
         datetimeSerialization: [
-          { field: 'aaa', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
           {
             field: 'timestamp',
             useAsReference: true,
@@ -75,8 +76,9 @@ const items: Array<OibusItemDTO> = [
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
+        dateTimeOutputFormat: { type: 'iso-8601-string' },
         datetimeSerialization: [
-          { field: 'aaa', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
           {
             field: 'timestamp',
             useAsReference: true,
@@ -98,8 +100,9 @@ const items: Array<OibusItemDTO> = [
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
+        dateTimeOutputFormat: { type: 'iso-8601-string' },
         datetimeSerialization: [
-          { field: 'aaa', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+          { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
           {
             field: 'timestamp',
             useAsReference: true,
@@ -151,9 +154,6 @@ describe('SouthMSSQL with authentication', () => {
 
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect } as unknown as ConnectionPool));
 
-    (utils.getMaxInstant as jest.Mock).mockReturnValue(DateTime.fromISO(nowDateString));
-    (utils.replaceFilenameWithVariable as jest.Mock).mockReturnValue('myFile');
-
     south = new SouthMSSQL(
       configuration,
       items,
@@ -181,20 +181,25 @@ describe('SouthMSSQL with authentication', () => {
 
   it('should properly run historyQuery', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
-    south.getDataFromMSSQL = jest
+    south.queryData = jest
       .fn()
-      .mockReturnValueOnce([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }])
+      .mockReturnValueOnce([
+        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+      ])
       .mockReturnValue([]);
-
-    (utils.getMaxInstant as jest.Mock).mockReturnValue('2020-03-01T00:00:00.000Z');
+    (utils.convertDateTimeFromInstant as jest.Mock)
+      .mockReturnValueOnce('2020-02-01 00:00:00.000')
+      .mockReturnValueOnce('2020-03-01 00:00:00.000')
+      .mockReturnValue(startTime);
+    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
 
     await south.historyQuery(items, startTime, nowDateString);
-    expect(utils.serializeResults).toHaveBeenCalledTimes(1);
-    expect(utils.getMaxInstant).toHaveBeenCalledTimes(1);
-    expect(south.getDataFromMSSQL).toHaveBeenCalledTimes(3);
-    expect(south.getDataFromMSSQL).toHaveBeenCalledWith(items[0], '2020-01-01T00:00:00.000Z', '2020-02-02T02:02:02.222Z');
-    expect(south.getDataFromMSSQL).toHaveBeenCalledWith(items[1], '2020-03-01T00:00:00.000Z', '2020-02-02T02:02:02.222Z');
-    expect(south.getDataFromMSSQL).toHaveBeenCalledWith(items[2], '2020-03-01T00:00:00.000Z', '2020-02-02T02:02:02.222Z');
+    expect(utils.persistResults).toHaveBeenCalledTimes(1);
+    expect(south.queryData).toHaveBeenCalledTimes(3);
+    expect(south.queryData).toHaveBeenCalledWith(items[0], '2020-01-01T00:00:00.000Z', '2020-02-02T02:02:02.222Z');
+    expect(south.queryData).toHaveBeenCalledWith(items[1], '2020-03-01T00:00:00.000Z', '2020-02-02T02:02:02.222Z');
+    expect(south.queryData).toHaveBeenCalledWith(items[2], '2020-03-01T00:00:00.000Z', '2020-02-02T02:02:02.222Z');
 
     expect(logger.info).toHaveBeenCalledWith(`Found 2 results for item ${items[0].name} in 0 ms`);
     expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${items[1].name}. Request done in 0 ms`);
@@ -205,10 +210,28 @@ describe('SouthMSSQL with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    const result = await south.getDataFromMSSQL(items[0], startTime, endTime);
+    (utils.convertDateTimeFromInstant as jest.Mock)
+      .mockReturnValueOnce('2020-01-01 00:00:00.000')
+      .mockReturnValueOnce('2022-01-01 00:00:00.000')
+      .mockReturnValue(startTime);
 
+    const result = await south.queryData(items[0], startTime, endTime);
+
+    expect(utils.convertDateTimeFromInstant).toHaveBeenCalledTimes(2);
+    expect(utils.convertDateTimeFromInstant).toHaveBeenCalledWith(startTime, {
+      format: 'yyyy-MM-dd HH:mm:ss.SSS',
+      locale: 'en-US',
+      timezone: 'Europe/Paris',
+      type: 'specific-string'
+    });
+    expect(utils.convertDateTimeFromInstant).toHaveBeenCalledWith(endTime, {
+      format: 'yyyy-MM-dd HH:mm:ss.SSS',
+      locale: 'en-US',
+      timezone: 'Europe/Paris',
+      type: 'specific-string'
+    });
     // startTime and endTime has been converted according to item 0 serialization settings
-    expect(utils.logQuery).toHaveBeenCalledWith(items[0].settings.query, '2020-01-01 01:00:00.000', '2022-01-01 01:00:00.000', logger);
+    expect(utils.logQuery).toHaveBeenCalledWith(items[0].settings.query, '2020-01-01 00:00:00.000', '2022-01-01 00:00:00.000', logger);
 
     expect(mssql.ConnectionPool).toHaveBeenCalledWith({
       user: configuration.settings.username,
@@ -224,8 +247,8 @@ describe('SouthMSSQL with authentication', () => {
       },
       domain: configuration.settings.domain
     });
-    expect(input).toHaveBeenCalledWith('StartTime', mssql.TYPES.VarChar, '2020-01-01 01:00:00.000');
-    expect(input).toHaveBeenCalledWith('EndTime', mssql.TYPES.VarChar, '2022-01-01 01:00:00.000');
+    expect(input).toHaveBeenCalledWith('StartTime', '2020-01-01 00:00:00.000');
+    expect(input).toHaveBeenCalledWith('EndTime', '2022-01-01 00:00:00.000');
     expect(query).toHaveBeenCalledWith(items[0].settings.query);
     expect(close).toHaveBeenCalledTimes(1);
 
@@ -285,7 +308,7 @@ describe('SouthMSSQL without authentication', () => {
     });
     let error;
     try {
-      await south.getDataFromMSSQL(items[1], startTime, endTime);
+      await south.queryData(items[1], startTime, endTime);
     } catch (err) {
       error = err;
     }
@@ -311,105 +334,78 @@ describe('SouthMSSQL without authentication', () => {
 
   it('should keep iso string format if serialization is not found', () => {
     const result = south.formatDatetimeVariables(nowDateString, null);
-    expect(result).toEqual({ datetime: nowDateString, mssqlType: mssql.TYPES.VarChar });
+    expect(result).toEqual(nowDateString);
   });
 
   it('should format iso string to unix epoch ms', () => {
+    (utils.convertDateTimeFromInstant as jest.Mock).mockReturnValueOnce(DateTime.fromISO(nowDateString).toMillis());
+
     const result = south.formatDatetimeVariables(nowDateString, {
-      field: 'timestamp',
-      useAsReference: true,
-      datetimeFormat: {
-        type: 'unix-epoch-ms'
-      }
+      type: 'unix-epoch-ms'
     });
-    expect(result).toEqual({ datetime: DateTime.fromISO(nowDateString).toMillis(), mssqlType: mssql.TYPES.BigInt });
+    expect(result).toEqual(DateTime.fromISO(nowDateString).toMillis());
   });
 
   it('should format iso string to unix epoch', () => {
+    (utils.convertDateTimeFromInstant as jest.Mock).mockReturnValueOnce(Math.floor(DateTime.fromISO(nowDateString).toMillis() / 1000));
+
     const result = south.formatDatetimeVariables(nowDateString, {
-      field: 'timestamp',
-      useAsReference: true,
-      datetimeFormat: {
-        type: 'unix-epoch'
-      }
+      type: 'unix-epoch'
     });
-    expect(result).toEqual({ datetime: Math.floor(DateTime.fromISO(nowDateString).toMillis() / 1000), mssqlType: mssql.TYPES.BigInt });
+    expect(result).toEqual(Math.floor(DateTime.fromISO(nowDateString).toMillis() / 1000));
   });
 
-  it('should format iso string to unix epoch', () => {
+  it('should format iso string to iso string', () => {
+    (utils.convertDateTimeFromInstant as jest.Mock).mockReturnValueOnce(nowDateString);
+
     const result = south.formatDatetimeVariables(nowDateString, {
-      field: 'timestamp',
-      useAsReference: true,
-      datetimeFormat: {
-        type: 'iso-8601-string',
-        timezone: 'Europe/Paris'
-      }
+      type: 'iso-8601-string'
     });
-    expect(result).toEqual({ datetime: nowDateString, mssqlType: mssql.TYPES.VarChar });
+    expect(result).toEqual(nowDateString);
   });
 
   it('should format iso string to Date date-object epoch', () => {
     const result = south.formatDatetimeVariables(nowDateString, {
-      field: 'timestamp',
-      useAsReference: true,
-      datetimeFormat: {
-        type: 'date-object',
-        dateObjectType: 'Date',
-        timezone: 'Europe/Paris'
-      }
+      type: 'date-object',
+      dateObjectType: 'Date',
+      timezone: 'Europe/Paris'
     });
-    expect(result).toEqual({ datetime: DateTime.fromISO(nowDateString), mssqlType: mssql.TYPES.Date });
+    expect(result).toEqual('2020-02-02');
   });
 
   it('should format iso string to DateTime2 date-object epoch', () => {
     const result = south.formatDatetimeVariables(nowDateString, {
-      field: 'timestamp',
-      useAsReference: true,
-      datetimeFormat: {
-        type: 'date-object',
-        dateObjectType: 'DateTime2',
-        timezone: 'Europe/Paris'
-      }
+      type: 'date-object',
+      dateObjectType: 'DateTime2',
+      timezone: 'Europe/Paris'
     });
-    expect(result).toEqual({ datetime: DateTime.fromISO(nowDateString), mssqlType: mssql.TYPES.DateTime2 });
+    expect(result).toEqual('2020-02-02 03:02:02.222');
   });
 
   it('should format iso string to DateTimeOffset date-object epoch', () => {
     const result = south.formatDatetimeVariables(nowDateString, {
-      field: 'timestamp',
-      useAsReference: true,
-      datetimeFormat: {
-        type: 'date-object',
-        dateObjectType: 'DateTimeOffset',
-        timezone: 'Europe/Paris'
-      }
+      type: 'date-object',
+      dateObjectType: 'DateTimeOffset',
+      timezone: 'Europe/Paris'
     });
-    expect(result).toEqual({ datetime: DateTime.fromISO(nowDateString), mssqlType: mssql.TYPES.DateTimeOffset });
+    expect(result).toEqual('2020-02-02 03:02:02.222 +01:00');
   });
 
   it('should format iso string to SmallDateTime date-object epoch', () => {
     const result = south.formatDatetimeVariables(nowDateString, {
-      field: 'timestamp',
-      useAsReference: true,
-      datetimeFormat: {
-        type: 'date-object',
-        dateObjectType: 'SmallDateTime',
-        timezone: 'Europe/Paris'
-      }
+      type: 'date-object',
+      dateObjectType: 'SmallDateTime',
+      timezone: 'Europe/Paris'
     });
-    expect(result).toEqual({ datetime: DateTime.fromISO(nowDateString), mssqlType: mssql.TYPES.SmallDateTime });
+    expect(result).toEqual('2020-02-02 03:02:02');
   });
 
   it('should format iso string to DateTime date-object epoch', () => {
     const result = south.formatDatetimeVariables(nowDateString, {
-      field: 'timestamp',
-      useAsReference: true,
-      datetimeFormat: {
-        type: 'date-object',
-        dateObjectType: 'DateTime',
-        timezone: 'Europe/Paris'
-      }
+      type: 'date-object',
+      dateObjectType: 'DateTime',
+      timezone: 'Europe/Paris'
     });
-    expect(result).toEqual({ datetime: DateTime.fromISO(nowDateString), mssqlType: mssql.TYPES.DateTime });
+    expect(result).toEqual('2020-02-02 03:02:02.222');
   });
 });

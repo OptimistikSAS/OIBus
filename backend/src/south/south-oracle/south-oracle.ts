@@ -3,12 +3,12 @@ import path from 'node:path';
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
 import {
-  convertDateTimeFromISO,
+  convertDateTimeFromInstant,
+  convertDateTimeToInstant,
   createFolder,
   generateReplacementParameters,
-  getMaxInstant,
   logQuery,
-  serializeResults
+  persistResults
 } from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
@@ -17,6 +17,7 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { DateTimeSerialization, Instant, Serialization } from '../../../../shared/model/types';
 import { QueriesHistory, TestsConnection } from '../south-interface';
+import { DateTime } from 'luxon';
 
 let oracledb: {
   outFormat: any;
@@ -32,7 +33,6 @@ import('oracledb')
   .catch(() => {
     console.error('Could not load oracledb');
   });
-import { DateTime } from 'luxon';
 
 /**
  * Class SouthOracle - Retrieve data from Oracle databases and send them to the cache as CSV files.
@@ -91,14 +91,34 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.getDataFromOracle(item, updatedStartTime, endTime);
+      const result: Array<any> = await this.queryData(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
-        updatedStartTime = getMaxInstant(result, updatedStartTime, item.settings.serialization.datetimeSerialization);
-        await serializeResults(
-          result,
+
+        const formattedResult = result.map(entry => {
+          const formattedEntry: Record<string, any> = {};
+          Object.entries(entry).forEach(([key, value]) => {
+            const datetimeField = item.settings.serialization.datetimeSerialization.find(
+              (element: DateTimeSerialization) => element.field === key
+            );
+            if (!datetimeField) {
+              formattedEntry[key] = value;
+            } else {
+              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField);
+              if (datetimeField.useAsReference) {
+                if (entryDate > updatedStartTime) {
+                  updatedStartTime = entryDate;
+                }
+              }
+              formattedEntry[key] = convertDateTimeFromInstant(entryDate, item.settings.serialization.dateTimeOutputFormat);
+            }
+          });
+          return formattedEntry;
+        });
+        await persistResults(
+          formattedResult,
           item.settings.serialization as Serialization,
           this.configuration.name,
           this.tmpFolder,
@@ -115,7 +135,7 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
   /**
    * Apply the SQL query to the target Oracle database
    */
-  async getDataFromOracle(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
+  async queryData(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
     if (!oracledb) {
       throw new Error('oracledb library not loaded');
     }
@@ -129,11 +149,11 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
     const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
       (serialization: DateTimeSerialization) => serialization.useAsReference
     );
-    const oracleStartTime = this.formatDatetimeVariables(startTime, datetimeSerialization);
-    const oracleEndTime = this.formatDatetimeVariables(endTime, datetimeSerialization);
+    const oracleStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization);
+    const oracleEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization);
     logQuery(item.settings.query, oracleStartTime, oracleEndTime, this.logger);
 
-    let connection = null;
+    let connection;
     try {
       process.env.ORA_SDTZ = 'UTC';
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
@@ -154,11 +174,4 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
       throw error;
     }
   }
-
-  formatDatetimeVariables = (datetime: Instant, serialization: DateTimeSerialization | null): string | number | DateTime => {
-    if (!serialization) {
-      return datetime;
-    }
-    return convertDateTimeFromISO(datetime, serialization.datetimeFormat);
-  };
 }

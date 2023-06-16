@@ -7,6 +7,7 @@ import { AuthTypesEnumPipe } from '../../auth-types-enum.pipe';
 import {
   ALL_CSV_CHARACTERS,
   CsvCharacter,
+  DateTimeFormat,
   DateTimeSerialization,
   Serialization,
   SERIALIZATION_TYPES,
@@ -48,11 +49,17 @@ export class OibSerializationComponent implements ControlValueAccessor {
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
 
   serializationCtrl = this.fb.group({
-    type: 'file' as SerializationType,
+    type: 'csv' as SerializationType,
     filename: '',
     delimiter: 'COMMA' as CsvCharacter,
     compression: false,
-    datetimeSerialization: [[] as Array<DateTimeSerialization>, Validators.required]
+    datetimeSerialization: [[] as Array<DateTimeSerialization>, Validators.required],
+    outputDateTimeFormat: {
+      type: 'specific-string',
+      timezone: 'Europe/Paris',
+      format: 'yyyy-MM-dd HH:mm:ss.SSS',
+      locale: 'en-US'
+    } as DateTimeFormat | null
   });
   disabled = false;
 
@@ -62,7 +69,7 @@ export class OibSerializationComponent implements ControlValueAccessor {
   constructor(private fb: NonNullableFormBuilder) {
     this.serializationCtrl.controls.type.valueChanges.subscribe(newValue => {
       switch (newValue) {
-        case 'file':
+        case 'csv':
           this.serializationCtrl.controls.filename.enable();
           this.serializationCtrl.controls.delimiter.enable();
           this.serializationCtrl.controls.compression.enable();
@@ -77,12 +84,13 @@ export class OibSerializationComponent implements ControlValueAccessor {
 
     this.serializationCtrl.valueChanges.subscribe(newValue => {
       switch (newValue.type) {
-        case 'file':
+        case 'csv':
           this.onChange({
-            type: 'file',
+            type: 'csv',
             filename: newValue.filename!,
             delimiter: newValue.delimiter!,
             compression: newValue.compression!,
+            outputDateTimeFormat: newValue.outputDateTimeFormat!,
             datetimeSerialization: newValue.datetimeSerialization!
           });
           break;
@@ -109,12 +117,13 @@ export class OibSerializationComponent implements ControlValueAccessor {
 
   writeValue(value: Serialization): void {
     switch (value.type) {
-      case 'file':
+      case 'csv':
         this.serializationCtrl.patchValue({
-          type: 'file',
+          type: 'csv',
           filename: value.filename,
           delimiter: value.delimiter,
           compression: value.compression,
+          outputDateTimeFormat: value.outputDateTimeFormat,
           datetimeSerialization: value.datetimeSerialization
         });
         break;
