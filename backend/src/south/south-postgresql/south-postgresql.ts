@@ -93,7 +93,7 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
-              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField);
+              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField.datetimeFormat);
               if (datetimeField.useAsReference) {
                 if (entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
@@ -138,8 +138,8 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
     const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
       (serialization: DateTimeSerialization) => serialization.useAsReference
     );
-    const postgresqlStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization);
-    const postgresqlEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization);
+    const postgresqlStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization.datetimeFormat);
+    const postgresqlEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization.datetimeFormat);
     logQuery(item.settings.query, postgresqlStartTime, postgresqlEndTime, this.logger);
 
     let connection;

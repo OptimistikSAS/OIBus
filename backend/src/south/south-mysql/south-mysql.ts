@@ -92,7 +92,7 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
-              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField);
+              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField.datetimeFormat);
               if (datetimeField.useAsReference) {
                 if (entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
@@ -135,8 +135,8 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
     const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
       (serialization: DateTimeSerialization) => serialization.useAsReference
     );
-    const mysqlStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization);
-    const mysqlEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization);
+    const mysqlStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization.datetimeFormat);
+    const mysqlEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization.datetimeFormat);
     logQuery(item.settings.query, mysqlStartTime, mysqlEndTime, this.logger);
 
     let connection;
