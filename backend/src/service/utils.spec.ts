@@ -7,10 +7,11 @@ import minimist from 'minimist';
 
 import { DateTime } from 'luxon';
 import * as utils from './utils';
+import { convertDateTimeToInstant, convertDelimiter } from './utils';
 import csv from 'papaparse';
 import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/logger.mock';
-import { DateTimeFormat, DateTimeSerialization } from '../../../shared/model/types';
+import { DateTimeFormat } from '../../../shared/model/types';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -76,25 +77,6 @@ describe('Service utils', () => {
       ];
       const results = utils.generateIntervals(startTime1, endTime2, 3600);
       expect(results).toEqual(expectedIntervals);
-    });
-  });
-
-  describe('replaceFilenameWithVariable', () => {
-    beforeEach(() => {
-      jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-      jest.clearAllMocks();
-    });
-
-    it('should properly name file with variables in the name', () => {
-      expect(utils.replaceFilenameWithVariable('myFileName.csv', 0, 'south')).toEqual('myFileName.csv');
-      expect(utils.replaceFilenameWithVariable('myFileName-@QueryPart.csv', 0, 'south')).toEqual('myFileName-0.csv');
-      expect(utils.replaceFilenameWithVariable('myFileName-@ConnectorName-@QueryPart.csv', 0, 'south')).toEqual('myFileName-south-0.csv');
-      expect(utils.replaceFilenameWithVariable('myFileName-@ConnectorName-@CurrentDate.csv', 0, 'south')).toEqual(
-        `myFileName-south-${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`
-      );
-      expect(utils.replaceFilenameWithVariable('myFileName-@ConnectorName-@QueryPart-@CurrentDate.csv', 17, 'south')).toEqual(
-        `myFileName-south-17-${DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS')}.csv`
-      );
     });
   });
 
@@ -263,145 +245,6 @@ describe('Service utils', () => {
     });
   });
 
-  describe('getMaxInstant', () => {
-    describe('with unix epoch ms serialization', () => {
-      const datetimeSerialization: DateTimeSerialization = {
-        field: 'timestamp',
-        useAsReference: true,
-        datetimeFormat: {
-          type: 'unix-epoch-ms'
-        }
-      };
-
-      it('should get most recent date with Date of type number', () => {
-        const startTime = '2020-01-01T00:00:00.000Z';
-        const entryList = [
-          {
-            value: 'val1',
-            timestamp: DateTime.fromISO('2020-01-01T00:00:00.000Z').toMillis()
-          },
-          {
-            value: 'val2',
-            timestamp: DateTime.fromISO('2022-01-01T00:00:00.000Z').toMillis()
-          },
-          {
-            value: 'val3',
-            timestamp: DateTime.fromISO('2021-01-01T00:00:00.000Z').toMillis()
-          }
-        ];
-
-        const mostRecentDate = utils.getMaxInstant(entryList, startTime, [datetimeSerialization]);
-        expect(mostRecentDate).toEqual('2022-01-01T00:00:00.000Z');
-      });
-    });
-
-    describe('with iso string serialization', () => {
-      const datetimeSerialization: DateTimeSerialization = {
-        field: 'timestamp',
-        useAsReference: true,
-        datetimeFormat: {
-          type: 'iso-8601-string',
-          timezone: 'Europe/Paris'
-        }
-      };
-
-      it('should get most recent date with Date of ISO string type', () => {
-        const startTime = '2020-01-01T00:00:00.000Z';
-        const entryList = [
-          {
-            value: 'val1',
-            timestamp: '2020-01-01T00:00:00.000+06:00'
-          },
-          {
-            value: 'val2',
-            timestamp: '2022-01-01T00:00:00.000+06:00'
-          },
-          {
-            value: 'val3',
-            timestamp: '2021-01-01T00:00:00.000+06:00'
-          }
-        ];
-        const mostRecentDate = utils.getMaxInstant(entryList, startTime, [datetimeSerialization]);
-        expect(mostRecentDate).toEqual('2021-12-31T18:00:00.000Z');
-      });
-
-      it('should keep startTime as most recent date if no timeColumn', () => {
-        datetimeSerialization.field = 'another field';
-        const startTime = '2020-01-01T00:00:00.000Z';
-        const entryList = [
-          {
-            value: 'val1',
-            timestamp: '2020-01-01 00:00:00.000'
-          },
-          {
-            value: 'val2',
-            timestamp: '2021-01-01 00:00:00.000'
-          },
-          {
-            value: 'val3',
-            timestamp: '2020-02-01 00:00:00.000'
-          }
-        ];
-
-        const mostRecentDate = utils.getMaxInstant(entryList, startTime, [datetimeSerialization]);
-        expect(mostRecentDate).toEqual(startTime);
-      });
-
-      it('should not parse Date if not in correct type', () => {
-        datetimeSerialization.field = 'timestamp';
-
-        const startTime = '2020-01-01T00:00:00.000Z';
-        const entryList = [
-          {
-            value: 'val1',
-            timestamp: undefined
-          },
-          {
-            value: 'val2',
-            timestamp: 'abc'
-          }
-        ];
-
-        const mostRecentDate = utils.getMaxInstant(entryList, startTime, [datetimeSerialization]);
-        expect(mostRecentDate).toEqual(startTime);
-      });
-    });
-
-    describe('with string serialization', () => {
-      const datetimeSerialization: DateTimeSerialization = {
-        field: 'timestamp',
-        useAsReference: true,
-        datetimeFormat: {
-          type: 'specific-string',
-          timezone: 'Europe/Paris',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          locale: 'en-US'
-        }
-      };
-
-      it('should get most recent date with Date of SQL string type', () => {
-        const startTime = '2020-01-01T00:00:00.000Z';
-        const entryList = [
-          {
-            value: 'val1',
-            timestamp: '2020-01-01 00:00:00.000'
-          },
-          {
-            value: 'val2',
-            timestamp: '2021-01-01 00:00:00.000'
-          },
-          {
-            value: 'val3',
-            timestamp: '2020-02-01 00:00:00.000'
-          }
-        ];
-
-        const mostRecentDate = utils.getMaxInstant(entryList, startTime, [datetimeSerialization]);
-        expect(mostRecentDate).toEqual('2020-12-31T23:00:00.000Z');
-      });
-    });
-  });
-
   describe('generateReplacementParameters', () => {
     it('should generate replacement parameters', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
@@ -411,37 +254,6 @@ describe('Service utils', () => {
       const expectedResult = [startTime, endTime, startTime];
       const result = utils.generateReplacementParameters(query, startTime, endTime);
       expect(result).toEqual(expectedResult);
-    });
-  });
-
-  describe('generateCSV', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it('should call csv unparse with correctly formatted dates', () => {
-      const entryList = [
-        {
-          value: 'val1',
-          timestamp: new Date('2020-01-01T00:00:00.000Z')
-        },
-        {
-          value: 'val2',
-          timestamp: '2021-01-01 00:00:00.000'
-        },
-        {
-          value: 'val3',
-          timestamp: new Date('2020-01-01T00:00:00.000Z').getTime()
-        },
-        {
-          value: 'val4',
-          timestamp: undefined
-        }
-      ];
-
-      utils.generateCSV(entryList, ';');
-
-      expect(csv.unparse).toHaveBeenCalledWith(entryList, { header: true, delimiter: ';' });
     });
   });
 
@@ -473,20 +285,6 @@ describe('Service utils', () => {
       expect(logger.info).toHaveBeenCalledWith(`Sending "${query}" with @StartTime = 1577836800000 @EndTime = 1672531200000`);
     });
 
-    it('should properly log a query with date variables', () => {
-      const query = 'SELECT * FROM logs WHERE timestamp > @StartTime AND timestamp < @EndTime';
-      utils.logQuery(
-        query,
-        DateTime.fromISO('2020-01-01T00:00:00.000Z').setZone('Europe/Paris'),
-        DateTime.fromISO('2023-01-01T00:00:00.000Z').setZone('Europe/Paris'),
-        logger
-      );
-
-      expect(logger.info).toHaveBeenCalledWith(
-        `Sending "${query}" with @StartTime = 2020-01-01T01:00:00.000+01:00 @EndTime = 2023-01-01T01:00:00.000+01:00`
-      );
-    });
-
     it('should properly log a query without variable', () => {
       const query = 'SELECT * FROM logs';
       utils.logQuery(query, '2020-01-01T00:00:00.000Z', '2023-01-01T00:00:00.000Z', logger);
@@ -495,7 +293,7 @@ describe('Service utils', () => {
     });
   });
 
-  describe('serializeResults', () => {
+  describe('persistResults', () => {
     const logger: pino.Logger = new PinoLogger();
     const dataToWrite = [{ data1: 1 }, { data2: 2 }];
 
@@ -506,13 +304,16 @@ describe('Service utils', () => {
       });
       it('should properly write results without compression', async () => {
         const addFile = jest.fn();
-        await utils.serializeResults(
+        await utils.persistResults(
           dataToWrite,
           {
-            type: 'file',
+            type: 'csv',
             delimiter: 'SEMI_COLON',
             filename: 'myFilename.csv',
             compression: false,
+            outputDateTimeFormat: {
+              type: 'iso-8601-string'
+            },
             datetimeSerialization: []
           },
           'connectorName',
@@ -524,6 +325,35 @@ describe('Service utils', () => {
         expect(addFile).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledWith(filePath);
         expect(fs.unlink).toHaveBeenCalledTimes(1);
+      });
+
+      it('should properly write results without compression and log unlink errors', async () => {
+        (fs.unlink as jest.Mock).mockImplementation(() => {
+          throw new Error('unlink error');
+        });
+        const addFile = jest.fn();
+        await utils.persistResults(
+          dataToWrite,
+          {
+            type: 'csv',
+            delimiter: 'SEMI_COLON',
+            filename: 'myFilename.csv',
+            compression: false,
+            outputDateTimeFormat: {
+              type: 'iso-8601-string'
+            },
+            datetimeSerialization: []
+          },
+          'connectorName',
+          'myTmpFolder',
+          addFile,
+          logger
+        );
+        const filePath = path.join('myTmpFolder', 'myFilename.csv');
+        expect(addFile).toHaveBeenCalledWith(filePath);
+        expect(fs.unlink).toHaveBeenCalledWith(filePath);
+        expect(fs.unlink).toHaveBeenCalledTimes(1);
+        expect(logger.error).toHaveBeenCalledWith(`Error when deleting file "${filePath}" after caching it. ${new Error('unlink error')}`);
       });
     });
 
@@ -555,13 +385,16 @@ describe('Service utils', () => {
 
       it('should properly write and compress results', async () => {
         const addFile = jest.fn();
-        await utils.serializeResults(
+        await utils.persistResults(
           dataToWrite,
           {
-            type: 'file',
+            type: 'csv',
             delimiter: 'SEMI_COLON',
             filename: 'myFilename.csv',
             compression: true,
+            outputDateTimeFormat: {
+              type: 'iso-8601-string'
+            },
             datetimeSerialization: []
           },
           'connectorName',
@@ -581,13 +414,16 @@ describe('Service utils', () => {
           throw new Error('unlink error');
         });
         const addFile = jest.fn();
-        await utils.serializeResults(
+        await utils.persistResults(
           dataToWrite,
           {
-            type: 'file',
+            type: 'csv',
             delimiter: 'SEMI_COLON',
             filename: 'myFilename.csv',
             compression: true,
+            outputDateTimeFormat: {
+              type: 'iso-8601-string'
+            },
             datetimeSerialization: []
           },
           'connectorName',
@@ -609,20 +445,39 @@ describe('Service utils', () => {
     });
   });
 
-  describe('convertDateTimeFromISO', () => {
+  describe('convertDateTimeFromInstant', () => {
     const testInstant = '2020-02-02T02:02:02.222Z';
-    it('should return Number of ms with correct timezone', () => {
+    it('should return ISO String if no dateTimeFormat specified', () => {
+      const result = utils.convertDateTimeFromInstant(testInstant, null);
+      expect(result).toEqual('2020-02-02T02:02:02.222Z');
+    });
+
+    it('should return Number of ms', () => {
       const dateTimeFormat: DateTimeFormat = {
         type: 'unix-epoch-ms'
       };
-      const expectedResult1 = DateTime.fromISO(testInstant).toMillis();
-      const result1 = utils.convertDateTimeFromISO(testInstant, dateTimeFormat);
-      expect(result1).toEqual(expectedResult1);
+      const expectedResult = DateTime.fromISO(testInstant).toMillis();
+      const result = utils.convertDateTimeFromInstant(testInstant, dateTimeFormat);
+      expect(result).toEqual(expectedResult);
       expect(
-        DateTime.fromMillis(result1 as number)
+        DateTime.fromMillis(result as number)
           .toUTC()
           .toISO()
       ).toEqual('2020-02-02T02:02:02.222Z');
+    });
+
+    it('should return Number of seconds', () => {
+      const dateTimeFormat: DateTimeFormat = {
+        type: 'unix-epoch'
+      };
+      const expectedResult = Math.floor(DateTime.fromISO(testInstant).toMillis() / 1000);
+      const result = utils.convertDateTimeFromInstant(testInstant, dateTimeFormat);
+      expect(result).toEqual(expectedResult);
+      expect(
+        DateTime.fromMillis((result as number) * 1000)
+          .toUTC()
+          .toISO()
+      ).toEqual('2020-02-02T02:02:02.000Z');
     });
 
     it('should return a formatted String with correct timezone', () => {
@@ -632,11 +487,19 @@ describe('Service utils', () => {
         format: 'yyyy-MM-dd HH:mm:ss.SSS',
         locale: 'en-US'
       };
-      const expectedResult1 = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format);
-      const result1 = utils.convertDateTimeFromISO(testInstant, dateTimeFormat);
-      expect(result1).toEqual(expectedResult1);
+      const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format);
+      const result = utils.convertDateTimeFromInstant(testInstant, dateTimeFormat);
+      expect(result).toEqual(expectedResult);
       // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
-      expect(result1).toEqual('2020-02-02 11:02:02.222');
+      expect(result).toEqual('2020-02-02 11:02:02.222');
+    });
+
+    it('should return a formatted ISO String', () => {
+      const dateTimeFormat: DateTimeFormat = {
+        type: 'iso-8601-string'
+      };
+      const result = utils.convertDateTimeFromInstant(testInstant, dateTimeFormat);
+      expect(result).toEqual(testInstant);
     });
 
     it('should return a formatted String with correct timezone for locale en-US', () => {
@@ -647,11 +510,11 @@ describe('Service utils', () => {
         locale: 'en-US'
       };
       // From Zulu string
-      const expectedResult1 = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format);
-      const result1 = utils.convertDateTimeFromISO(testInstant, dateTimeFormat);
-      expect(result1).toEqual(expectedResult1);
+      const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format);
+      const result = utils.convertDateTimeFromInstant(testInstant, dateTimeFormat);
+      expect(result).toEqual(expectedResult);
       // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
-      expect(result1).toEqual('02-Feb-20 11:02:02');
+      expect(result).toEqual('02-Feb-20 11:02:02');
     });
 
     it('should return a formatted String with correct timezone for locale fr-FR', () => {
@@ -661,13 +524,123 @@ describe('Service utils', () => {
         format: 'dd-MMM-yy HH:mm:ss', // format with localized month
         locale: 'fr-FR'
       };
-      const expectedResult1 = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format, {
+      const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format, {
         locale: dateTimeFormat.locale
       });
-      const result1 = utils.convertDateTimeFromISO(testInstant, dateTimeFormat);
-      expect(result1).toEqual(expectedResult1);
+      const result = utils.convertDateTimeFromInstant(testInstant, dateTimeFormat);
+      expect(result).toEqual(expectedResult);
       // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
-      expect(result1).toEqual('02-févr.-20 11:02:02');
+      expect(result).toEqual('02-févr.-20 11:02:02');
+    });
+
+    it('should return an ISO String from Date with correct timezone', () => {
+      const dateTimeFormat: DateTimeFormat = {
+        type: 'date-object',
+        timezone: 'Asia/Tokyo',
+        dateObjectType: null
+      };
+      // From Zulu string
+      const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toISO()!;
+      const result = utils.convertDateTimeFromInstant(testInstant, dateTimeFormat);
+      expect(result).toEqual(expectedResult);
+      // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
+      expect(result).toEqual('2020-02-02T11:02:02.222+09:00');
+    });
+  });
+
+  describe('convertDelimiter', () => {
+    it('should convert to csv delimiter', () => {
+      expect(utils.convertDelimiter('NON_BREAKING_SPACE')).toEqual(' ');
+      expect(utils.convertDelimiter('COLON')).toEqual(':');
+      expect(utils.convertDelimiter('COMMA')).toEqual(',');
+      expect(utils.convertDelimiter('DOT')).toEqual('.');
+      expect(utils.convertDelimiter('SLASH')).toEqual('/');
+      expect(utils.convertDelimiter('PIPE')).toEqual('|');
+      expect(utils.convertDelimiter('SEMI_COLON')).toEqual(';');
+      expect(utils.convertDelimiter('TAB')).toEqual(' ');
+    });
+  });
+
+  describe('convertDateTimeToInstant', () => {
+    const testInstant = '2020-02-02T02:02:02.222Z';
+    it('should return ISO String if no dateTimeFormat specified', () => {
+      const result = utils.convertDateTimeToInstant(testInstant, null);
+      expect(result).toEqual('2020-02-02T02:02:02.222Z');
+    });
+
+    it('should return ISO String from unix-epoch', () => {
+      const result = utils.convertDateTimeToInstant(Math.floor(DateTime.fromISO(testInstant).toMillis() / 1000), { type: 'unix-epoch' });
+      expect(result).toEqual('2020-02-02T02:02:02.000Z');
+    });
+
+    it('should return ISO String from unix-epoch-ms', () => {
+      const result = utils.convertDateTimeToInstant(DateTime.fromISO(testInstant).toMillis(), { type: 'unix-epoch-ms' });
+      expect(result).toEqual('2020-02-02T02:02:02.222Z');
+    });
+
+    it('should return ISO string from specific string with correct timezone', () => {
+      const dateTimeFormat: DateTimeFormat = {
+        type: 'specific-string',
+        timezone: 'Asia/Tokyo',
+        format: 'yyyy-MM-dd HH:mm:ss.SSS',
+        locale: 'en-US'
+      };
+      const result = utils.convertDateTimeToInstant(
+        DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format),
+        dateTimeFormat
+      );
+      // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
+      expect(result).toEqual('2020-02-02T02:02:02.222Z');
+    });
+
+    it('should return a formatted ISO String', () => {
+      const dateTimeFormat: DateTimeFormat = {
+        type: 'iso-8601-string'
+      };
+      const result = utils.convertDateTimeToInstant(testInstant, dateTimeFormat);
+      expect(result).toEqual(testInstant);
+    });
+
+    it('should return a formatted String with correct timezone for locale en-US', () => {
+      const dateTimeFormat: DateTimeFormat = {
+        type: 'specific-string',
+        timezone: 'Asia/Tokyo',
+        format: 'dd-MMM-yy HH:mm:ss', // format with localized month
+        locale: 'en-US'
+      };
+      const result = utils.convertDateTimeToInstant(
+        DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format),
+        dateTimeFormat
+      );
+      expect(result).toEqual('2020-02-02T02:02:02.000Z');
+    });
+
+    it('should return a formatted String with correct timezone for locale fr-FR', () => {
+      const dateTimeFormat: DateTimeFormat = {
+        type: 'specific-string',
+        timezone: 'Asia/Tokyo',
+        format: 'dd-MMM-yy HH:mm:ss', // format with localized month
+        locale: 'fr-FR'
+      };
+      const result = utils.convertDateTimeToInstant(
+        DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format, {
+          locale: dateTimeFormat.locale
+        }),
+        dateTimeFormat
+      );
+      expect(result).toEqual('2020-02-02T02:02:02.000Z');
+    });
+
+    it('should return an ISO String from Date with correct timezone', () => {
+      const dateTimeFormat: DateTimeFormat = {
+        type: 'date-object',
+        timezone: 'Asia/Tokyo',
+        dateObjectType: null
+      };
+      // From Zulu string
+      const result = utils.convertDateTimeToInstant(new Date(testInstant), dateTimeFormat);
+      // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
+      expect(result).toEqual('2020-02-02T02:02:02.222Z');
     });
   });
 });

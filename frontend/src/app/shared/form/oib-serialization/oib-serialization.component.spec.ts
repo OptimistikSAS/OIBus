@@ -5,8 +5,9 @@ import { Component } from '@angular/core';
 import { OibSerializationFormControl } from '../../../../../../shared/model/form.model';
 import { formDirectives } from '../../form-directives';
 import { ComponentTester } from 'ngx-speculoos';
-import { FormControl, FormGroup, FormRecord } from '@angular/forms';
+import { FormControl, FormGroup, FormRecord, Validators } from '@angular/forms';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { DateTimeSerialization } from '../../../../../../shared/model/types';
 
 @Component({
   template: `<form [formGroup]="form">
@@ -29,7 +30,15 @@ class TestComponent {
       myOibSerialization: new FormControl({
         type: new FormControl('file'),
         filename: new FormControl('UTC'),
-        delimiter: new FormControl('DOT')
+        delimiter: new FormControl('DOT'),
+        compression: new FormControl(false),
+        outputDateTimeFormat: new FormControl({
+          type: 'specific-string',
+          timezone: 'Europe/Paris',
+          format: 'yyyy-MM-dd HH:mm:ss.SSS',
+          locale: 'en-US'
+        }),
+        datetimeSerialization: new FormControl([[] as Array<DateTimeSerialization>, Validators.required])
       })
     })
   });
@@ -50,6 +59,10 @@ class OibFormComponentTester extends ComponentTester<TestComponent> {
   get oibFormInputDelimiter() {
     return this.select('#oib-serialization-delimiter-input-myOibSerialization')!;
   }
+
+  get oibFormInputCompression() {
+    return this.input('#oib-serialization-compression-input-myOibSerialization')!;
+  }
 }
 
 describe('OibSerialization', () => {
@@ -65,8 +78,9 @@ describe('OibSerialization', () => {
   });
 
   it('should have a select input', () => {
-    tester.oibFormInputSerializationType.selectLabel('File');
+    tester.oibFormInputSerializationType.selectLabel('CSV File');
     expect(tester.oibFormInputFilename).not.toBeNull();
     expect(tester.oibFormInputDelimiter).not.toBeNull();
+    expect(tester.oibFormInputCompression).not.toBeNull();
   });
 });

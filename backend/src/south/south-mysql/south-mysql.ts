@@ -4,12 +4,12 @@ import mysql from 'mysql2/promise';
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
 import {
-  convertDateTimeFromISO,
+  convertDateTimeFromInstant,
+  convertDateTimeToInstant,
   createFolder,
   generateReplacementParameters,
-  getMaxInstant,
   logQuery,
-  serializeResults
+  persistResults
 } from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
@@ -77,14 +77,34 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.getDataFromMySQL(item, updatedStartTime, endTime);
+      const result: Array<any> = await this.queryData(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
-        updatedStartTime = getMaxInstant(result, updatedStartTime, item.settings.serialization.datetimeSerialization);
-        await serializeResults(
-          result,
+
+        const formattedResult = result.map(entry => {
+          const formattedEntry: Record<string, any> = {};
+          Object.entries(entry).forEach(([key, value]) => {
+            const datetimeField = item.settings.serialization.datetimeSerialization.find(
+              (element: DateTimeSerialization) => element.field === key
+            );
+            if (!datetimeField) {
+              formattedEntry[key] = value;
+            } else {
+              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField);
+              if (datetimeField.useAsReference) {
+                if (entryDate > updatedStartTime) {
+                  updatedStartTime = entryDate;
+                }
+              }
+              formattedEntry[key] = convertDateTimeFromInstant(entryDate, item.settings.serialization.dateTimeOutputFormat);
+            }
+          });
+          return formattedEntry;
+        });
+        await persistResults(
+          formattedResult,
           item.settings.serialization as Serialization,
           this.configuration.name,
           this.tmpFolder,
@@ -101,7 +121,7 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
   /**
    * Apply the SQL query to the target MySQL / MariaDB database
    */
-  async getDataFromMySQL(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
+  async queryData(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
     const config = {
       host: this.configuration.settings.host,
       port: this.configuration.settings.port,
@@ -115,8 +135,8 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
     const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
       (serialization: DateTimeSerialization) => serialization.useAsReference
     );
-    const mysqlStartTime = this.formatDatetimeVariables(startTime, datetimeSerialization);
-    const mysqlEndTime = this.formatDatetimeVariables(endTime, datetimeSerialization);
+    const mysqlStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization);
+    const mysqlEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization);
     logQuery(item.settings.query, mysqlStartTime, mysqlEndTime, this.logger);
 
     let connection;
@@ -139,11 +159,4 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
       throw error;
     }
   }
-
-  formatDatetimeVariables = (datetime: Instant, serialization: DateTimeSerialization | null): string | number | DateTime => {
-    if (!serialization) {
-      return datetime;
-    }
-    return convertDateTimeFromISO(datetime, serialization.datetimeFormat);
-  };
 }

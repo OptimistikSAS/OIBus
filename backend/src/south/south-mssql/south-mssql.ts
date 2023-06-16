@@ -3,13 +3,13 @@ import mssql, { config } from 'mssql';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { createFolder, getMaxInstant, logQuery, serializeResults } from '../../service/utils';
+import { convertDateTimeFromInstant, convertDateTimeToInstant, createFolder, logQuery, persistResults } from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { DateTimeSerialization, Instant, Serialization } from '../../../../shared/model/types';
+import { DateTimeFormat, DateTimeSerialization, Instant, Serialization } from '../../../../shared/model/types';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { DateTime } from 'luxon';
 
@@ -70,14 +70,34 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.getDataFromMSSQL(item, updatedStartTime, endTime);
+      const result: Array<any> = await this.queryData(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
-        updatedStartTime = getMaxInstant(result, updatedStartTime, item.settings.serialization.datetimeSerialization);
-        await serializeResults(
-          result,
+
+        const formattedResult = result.map(entry => {
+          const formattedEntry: Record<string, any> = {};
+          Object.entries(entry).forEach(([key, value]) => {
+            const datetimeField = item.settings.serialization.datetimeSerialization.find(
+              (element: DateTimeSerialization) => element.field === key
+            );
+            if (!datetimeField) {
+              formattedEntry[key] = value;
+            } else {
+              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField);
+              if (datetimeField.useAsReference) {
+                if (entryDate > updatedStartTime) {
+                  updatedStartTime = entryDate;
+                }
+              }
+              formattedEntry[key] = convertDateTimeFromInstant(entryDate, item.settings.serialization.dateTimeOutputFormat);
+            }
+          });
+          return formattedEntry;
+        });
+        await persistResults(
+          formattedResult,
           item.settings.serialization as Serialization,
           this.configuration.name,
           this.tmpFolder,
@@ -94,7 +114,7 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
   /**
    * Apply the SQL query to the target MSSQL database
    */
-  async getDataFromMSSQL(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
+  async queryData(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
     const config: config = {
       user: this.configuration.settings.username,
       password: this.configuration.settings.password ? await this.encryptionService.decryptText(this.configuration.settings.password) : '',
@@ -113,20 +133,20 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
       config.domain = this.configuration.settings.domain;
     }
 
-    const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
+    const referenceTimestampField = item.settings.serialization.datetimeSerialization.find(
       (serialization: DateTimeSerialization) => serialization.useAsReference
     );
-    const mssqlStartTime = this.formatDatetimeVariables(startTime, datetimeSerialization);
-    const mssqlEndTime = this.formatDatetimeVariables(endTime, datetimeSerialization);
-    logQuery(item.settings.query, mssqlStartTime.datetime, mssqlEndTime.datetime, this.logger);
+    const mssqlStartTime = this.formatDatetimeVariables(startTime, referenceTimestampField.datetimeFormat);
+    const mssqlEndTime = this.formatDatetimeVariables(endTime, referenceTimestampField.datetimeFormat);
+    logQuery(item.settings.query, mssqlStartTime, mssqlEndTime, this.logger);
 
     const pool = await new mssql.ConnectionPool(config).connect();
     const request = pool.request();
     if (item.settings.query.indexOf('@StartTime') !== -1) {
-      request.input('StartTime', mssqlStartTime.mssqlType, mssqlStartTime.datetime);
+      request.input('StartTime', mssqlStartTime);
     }
     if (item.settings.query.indexOf('@EndTime') !== -1) {
-      request.input('EndTime', mssqlEndTime.mssqlType, mssqlEndTime.datetime);
+      request.input('EndTime', mssqlEndTime);
     }
     try {
       const result = await request.query(item.settings.query);
@@ -139,44 +159,30 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
     }
   }
 
-  formatDatetimeVariables = (
-    datetime: Instant,
-    serialization: DateTimeSerialization | null
-  ): { datetime: string | number | DateTime; mssqlType: any } => {
-    if (!serialization) {
-      return { datetime, mssqlType: mssql.TYPES.VarChar };
+  formatDatetimeVariables = (datetime: Instant, dateTimeFormat: DateTimeFormat | null): string | number => {
+    if (!dateTimeFormat) {
+      return datetime;
     }
 
-    switch (serialization.datetimeFormat.type) {
+    switch (dateTimeFormat.type) {
       case 'unix-epoch':
-        return { datetime: Math.floor(DateTime.fromISO(datetime).toMillis() / 1000), mssqlType: mssql.TYPES.BigInt };
       case 'unix-epoch-ms':
-        return { datetime: DateTime.fromISO(datetime).toMillis(), mssqlType: mssql.TYPES.BigInt };
       case 'specific-string':
-        return {
-          datetime: DateTime.fromISO(datetime, { zone: serialization.datetimeFormat.timezone }).toFormat(
-            serialization.datetimeFormat.format,
-            {
-              locale: serialization.datetimeFormat.locale
-            }
-          ),
-          mssqlType: mssql.TYPES.VarChar
-        };
       case 'iso-8601-string':
-        return { datetime, mssqlType: mssql.TYPES.VarChar };
+        return convertDateTimeFromInstant(datetime, dateTimeFormat);
       case 'date-object':
-        switch (serialization.datetimeFormat.dateObjectType) {
+        switch (dateTimeFormat.dateObjectType) {
           case 'Date':
-            return { datetime: DateTime.fromISO(datetime), mssqlType: mssql.TYPES.Date };
+            return DateTime.fromISO(datetime, { zone: dateTimeFormat.timezone }).toFormat('yyyy-MM-dd');
           case 'DateTime2':
-            return { datetime: DateTime.fromISO(datetime), mssqlType: mssql.TYPES.DateTime2 };
+            return DateTime.fromISO(datetime, { zone: dateTimeFormat.timezone }).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
           case 'DateTimeOffset':
-            return { datetime: DateTime.fromISO(datetime), mssqlType: mssql.TYPES.DateTimeOffset };
+            return DateTime.fromISO(datetime).toFormat('yyyy-MM-dd HH:mm:ss.SSS ZZ');
           case 'SmallDateTime':
-            return { datetime: DateTime.fromISO(datetime), mssqlType: mssql.TYPES.SmallDateTime };
+            return DateTime.fromISO(datetime, { zone: dateTimeFormat.timezone }).toFormat('yyyy-MM-dd HH:mm:ss');
           case 'DateTime':
           default:
-            return { datetime: DateTime.fromISO(datetime), mssqlType: mssql.TYPES.DateTime };
+            return DateTime.fromISO(datetime, { zone: dateTimeFormat.timezone }).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
         }
     }
   };

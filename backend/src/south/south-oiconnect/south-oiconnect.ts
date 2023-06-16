@@ -1,4 +1,3 @@
-import fs from 'node:fs/promises';
 import path from 'node:path';
 
 import fetch from 'node-fetch';
@@ -6,8 +5,8 @@ import https from 'https';
 
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
-import { parsers, httpGetWithBody, formatQueryParams } from './utils';
-import { replaceFilenameWithVariable, compress, createFolder, generateCSV } from '../../service/utils';
+import { formatQueryParams, httpGetWithBody, parsers } from './utils';
+import { createFolder } from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
@@ -93,49 +92,50 @@ export default class SouthOIConnect extends SouthConnector implements QueriesHis
       this.logger.info(`Found and parsed ${formattedResults.length} results`);
 
       if (formattedResults.length > 0) {
-        if (this.configuration.settings.convertToCsv) {
-          const fileName = replaceFilenameWithVariable(this.configuration.settings.filename, 0, this.configuration.name);
-          const filePath = path.join(this.tmpFolder, fileName);
-
-          this.logger.debug(`Converting HTTP payload to CSV file ${filePath}`);
-          const csvContent = generateCSV(formattedResults, this.configuration.settings.delimiter);
-
-          this.logger.debug(`Writing CSV file "${filePath}"`);
-          await fs.writeFile(filePath, csvContent);
-
-          if (this.configuration.settings.compression) {
-            // Compress and send the compressed file
-            const gzipPath = `${filePath}.gz`;
-            await compress(filePath, gzipPath);
-
-            try {
-              await fs.unlink(filePath);
-              this.logger.info(`File ${filePath} compressed and deleted`);
-            } catch (unlinkError) {
-              this.logger.error(unlinkError);
-            }
-
-            this.logger.debug(`Sending compressed file "${gzipPath}" to Engine`);
-            await this.addFile(gzipPath);
-            try {
-              await fs.unlink(gzipPath);
-              this.logger.trace(`File ${gzipPath} deleted`);
-            } catch (unlinkError) {
-              this.logger.error(unlinkError);
-            }
-          } else {
-            this.logger.debug(`Sending file "${filePath}" to Engine`);
-            await this.addFile(filePath);
-            try {
-              await fs.unlink(filePath);
-              this.logger.trace(`File ${filePath} deleted`);
-            } catch (unlinkError) {
-              this.logger.error(unlinkError);
-            }
-          }
-        } else {
-          await this.addValues(formattedResults);
-        }
+        // TODO
+        // if (this.configuration.settings.convertToCsv) {
+        //   const fileName = replaceFilenameWithVariable(this.configuration.settings.filename, 0, this.configuration.name);
+        //   const filePath = path.join(this.tmpFolder, fileName);
+        //
+        //   this.logger.debug(`Converting HTTP payload to CSV file ${filePath}`);
+        //   const csvContent = generateCSV(formattedResults, this.configuration.settings.delimiter);
+        //
+        //   this.logger.debug(`Writing CSV file "${filePath}"`);
+        //   await fs.writeFile(filePath, csvContent);
+        //
+        //   if (this.configuration.settings.compression) {
+        //     // Compress and send the compressed file
+        //     const gzipPath = `${filePath}.gz`;
+        //     await compress(filePath, gzipPath);
+        //
+        //     try {
+        //       await fs.unlink(filePath);
+        //       this.logger.info(`File ${filePath} compressed and deleted`);
+        //     } catch (unlinkError) {
+        //       this.logger.error(unlinkError);
+        //     }
+        //
+        //     this.logger.debug(`Sending compressed file "${gzipPath}" to Engine`);
+        //     await this.addFile(gzipPath);
+        //     try {
+        //       await fs.unlink(gzipPath);
+        //       this.logger.trace(`File ${gzipPath} deleted`);
+        //     } catch (unlinkError) {
+        //       this.logger.error(unlinkError);
+        //     }
+        //   } else {
+        //     this.logger.debug(`Sending file "${filePath}" to Engine`);
+        //     await this.addFile(filePath);
+        //     try {
+        //       await fs.unlink(filePath);
+        //       this.logger.trace(`File ${filePath} deleted`);
+        //     } catch (unlinkError) {
+        //       this.logger.error(unlinkError);
+        //     }
+        //   }
+        // } else {
+        //   await this.addValues(formattedResults);
+        // }
       } else {
         this.logger.debug(`No result found between ${startTime} and ${endTime}`);
       }

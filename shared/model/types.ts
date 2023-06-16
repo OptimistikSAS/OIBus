@@ -66,7 +66,6 @@ export interface StringDateTimeFormat extends BaseDateTimeFormat {
 
 export interface Iso8601StringDateTimeFormat extends BaseDateTimeFormat {
   type: 'iso-8601-string';
-  timezone: string;
 }
 
 export interface DateObjectDateTimeFormat extends BaseDateTimeFormat {
@@ -96,7 +95,7 @@ export type CsvCharacter = typeof ALL_CSV_CHARACTERS[number];
 
 // TODO: custom serialization with parser / transformer
 // TODO: HTTP Payload (OIConnect south)
-export const SERIALIZATION_TYPES = ['file'];
+export const SERIALIZATION_TYPES = ['csv'];
 export type SerializationType = typeof SERIALIZATION_TYPES[number];
 
 export interface DateTimeSerialization {
@@ -107,11 +106,12 @@ export interface DateTimeSerialization {
 
 interface BaseSerializationFormat {
   type: SerializationType;
+  outputDateTimeFormat: DateTimeFormat;
   datetimeSerialization: Array<DateTimeSerialization>;
 }
 
 export interface FileSerializationFormat extends BaseSerializationFormat {
-  type: 'file';
+  type: 'csv';
   filename: string;
   compression: boolean;
   delimiter: CsvCharacter;

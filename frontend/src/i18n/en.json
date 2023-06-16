@@ -119,7 +119,7 @@
       "date-object": "Date object"
     },
     "serialization-types": {
-      "file": "File"
+      "csv": "CSV File"
     },
     "csv-character": {
       "DOT": "Dot .",
@@ -582,7 +582,7 @@
     "compression": "Compress (gz)",
     "type": "Type",
     "fields": {
-      "title": "Datetime fields to serialize",
+      "title": "Datetime fields",
       "list": "Fields",
       "field": "Field name",
       "type": "Type",
@@ -591,6 +591,10 @@
       "no-field": "No fields to serialize",
       "add": "Add a datetime field",
       "unique-field": "Specify each field only once"
+    },
+    "output": {
+      "title": "Output format",
+      "date-time-format": "Date time format"
     }
   }
 }
