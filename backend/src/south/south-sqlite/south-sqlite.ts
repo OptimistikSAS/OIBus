@@ -4,7 +4,7 @@ import db from 'better-sqlite3';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { convertDateTimeFromISO, createFolder, getMaxInstant, logQuery, serializeResults } from '../../service/utils';
+import { convertDateTimeFromInstant, convertDateTimeToInstant, createFolder, logQuery, persistResults } from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
@@ -71,14 +71,34 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
 
     for (const item of items) {
       const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.getDataFromSqlite(item, updatedStartTime, endTime);
+      const result: Array<any> = await this.queryData(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.length > 0) {
         this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
-        updatedStartTime = getMaxInstant(result, updatedStartTime, item.settings.serialization.datetimeSerialization);
-        await serializeResults(
-          result,
+
+        const formattedResult = result.map(entry => {
+          const formattedEntry: Record<string, any> = {};
+          Object.entries(entry).forEach(([key, value]) => {
+            const datetimeField = item.settings.serialization.datetimeSerialization.find(
+              (element: DateTimeSerialization) => element.field === key
+            );
+            if (!datetimeField) {
+              formattedEntry[key] = value;
+            } else {
+              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField);
+              if (datetimeField.useAsReference) {
+                if (entryDate > updatedStartTime) {
+                  updatedStartTime = entryDate;
+                }
+              }
+              formattedEntry[key] = convertDateTimeFromInstant(entryDate, item.settings.serialization.dateTimeOutputFormat);
+            }
+          });
+          return formattedEntry;
+        });
+        await persistResults(
+          formattedResult,
           item.settings.serialization as Serialization,
           this.configuration.name,
           this.tmpFolder,
@@ -95,15 +115,15 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
   /**
    * Apply the SQL query to the target SQLite database
    */
-  async getDataFromSqlite(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
+  async queryData(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
     this.logger.debug(`Opening ${path.resolve(this.configuration.settings.databasePath)} SQLite database`);
     const database = db(path.resolve(this.configuration.settings.databasePath));
 
     const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
       (serialization: DateTimeSerialization) => serialization.useAsReference
     );
-    const sqliteStartTime = this.formatDatetimeVariables(startTime, datetimeSerialization);
-    const sqliteEndTime = this.formatDatetimeVariables(endTime, datetimeSerialization);
+    const sqliteStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization);
+    const sqliteEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization);
     logQuery(item.settings.query, sqliteStartTime, sqliteEndTime, this.logger);
 
     try {
@@ -124,11 +144,4 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
       throw error;
     }
   }
-
-  formatDatetimeVariables = (datetime: Instant, serialization: DateTimeSerialization | null): string | number => {
-    if (!serialization) {
-      return datetime;
-    }
-    return convertDateTimeFromISO(datetime, serialization.datetimeFormat) as string | number;
-  };
 }

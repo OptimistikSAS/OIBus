@@ -32,7 +32,7 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
   @Input() displayExample = true;
   @Input() dateObjectTypes: Array<string> = [];
 
-  readonly datetimeTypes = DATE_TIME_TYPES;
+  readonly datetimeTypes = this.dateObjectTypes.length === 0 ? DATE_TIME_TYPES.filter(type => type !== 'date-object') : DATE_TIME_TYPES;
   readonly BASE_EXAMPLE = '2023-11-29T21:03:59.123Z';
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
   timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
@@ -67,7 +67,7 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
         case 'iso-8601-string':
           this.datetimeFormatCtrl.controls.format.disable();
           this.datetimeFormatCtrl.controls.locale.disable();
-          this.datetimeFormatCtrl.controls.timezone.enable();
+          this.datetimeFormatCtrl.controls.timezone.disable();
           this.datetimeFormatCtrl.controls.dateObjectType.disable();
           break;
         case 'date-object':
@@ -100,7 +100,7 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
           break;
 
         case 'iso-8601-string':
-          this.onChange({ type: 'iso-8601-string', timezone: newValue.timezone! });
+          this.onChange({ type: 'iso-8601-string' });
           this.example = DateTime.fromISO(this.BASE_EXAMPLE, { zone: newValue.timezone! }).toISO()!;
           break;
 
@@ -151,8 +151,7 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
         break;
       case 'iso-8601-string':
         this.datetimeFormatCtrl.patchValue({
-          type: 'iso-8601-string',
-          timezone: value.timezone
+          type: 'iso-8601-string'
         });
         break;
       case 'date-object':
