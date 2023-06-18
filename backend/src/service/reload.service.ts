@@ -83,9 +83,6 @@ export default class ReloadService {
     if (!oldSettings || oldSettings.port !== newSettings.port) {
       await this.webServerChangePortCallback(newSettings.port);
     }
-    if (!oldSettings || JSON.stringify(oldSettings.healthSignal) !== JSON.stringify(newSettings.healthSignal)) {
-      await this.healthSignalService.setSettings(newSettings.healthSignal);
-    }
   }
 
   async onCreateSouth(command: SouthConnectorCommandDTO): Promise<SouthConnectorDTO> {

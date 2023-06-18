@@ -41,29 +41,6 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
       password: Joi.string().required().allow(''),
       proxyId: Joi.string().required().allow(null, '')
     })
-  }),
-  healthSignal: Joi.object({
-    logging: Joi.object({
-      enabled: Joi.boolean().required().falsy(0).truthy(1),
-      interval: Joi.number().integer().required().min(10)
-    }),
-    http: Joi.object({
-      enabled: Joi.boolean().required().falsy(0).truthy(1),
-      interval: Joi.number().integer().required().min(10),
-      verbose: Joi.boolean().required().falsy(0).truthy(1),
-      address: Joi.string().required().allow(''),
-      proxyId: Joi.string().required().allow(null, ''),
-      authentication: Joi.object({
-        type: Joi.string().required().allow('none', 'basic', 'bearer', 'api-key'),
-        username: Joi.optional(),
-        password: Joi.optional(),
-        token: Joi.optional(),
-        key: Joi.optional(),
-        secret: Joi.optional(),
-        certPath: Joi.optional(),
-        keyPath: Joi.optional()
-      }).required()
-    })
   })
 });
 const ipFilterSchema: Joi.ObjectSchema = Joi.object({

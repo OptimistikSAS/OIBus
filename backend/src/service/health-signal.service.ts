@@ -1,136 +1,94 @@
-// import { addAuthenticationToHeaders, httpSend } from './http-request-static-functions';
 import pino from 'pino';
+import { HealthSignalContent } from '../../../shared/model/engine.model';
+import os from 'node:os';
+import process from 'node:process';
 
-import { HealthSignalDTO } from '../../../shared/model/engine.model';
-import ProxyService from './proxy.service';
-import EncryptionService from './encryption.service';
-import fetch from 'node-fetch';
-
+export const HEALTH_SIGNAL_INTERVAL = 60_000_000; // 10 minutes
 /**
  * Class HealthSignal - sends health signal to a remote host or into the logs
  */
 export default class HealthSignalService {
-  private httpSignalInterval: NodeJS.Timeout | null = null;
   private logSignalInterval: NodeJS.Timeout | null = null;
+  private oibusMetrics: HealthSignalContent;
+  constructor(private _logger: pino.Logger) {
+    const processCpuUsage = process.cpuUsage();
+    const processUptime = Math.floor(process.uptime());
+    const cpuUsagePercentage = (100 * (processCpuUsage.user + processCpuUsage.system)) / processUptime;
+    const memoryUsage = process.memoryUsage();
 
-  constructor(
-    private _settings: HealthSignalDTO,
-    private readonly proxyService: ProxyService,
-    private readonly encryptionService: EncryptionService,
-    private _logger: pino.Logger
-  ) {
+    this.oibusMetrics = {
+      processCpuUsage: cpuUsagePercentage,
+      processUptime: processUptime,
+      freeMemory: os.freemem(),
+      totalMemory: os.totalmem(),
+      minRss: memoryUsage.rss,
+      currentRss: memoryUsage.rss,
+      maxRss: memoryUsage.rss,
+      minHeapTotal: memoryUsage.heapTotal,
+      currentHeapTotal: memoryUsage.heapTotal,
+      maxHeapTotal: memoryUsage.heapTotal,
+      minHeapUsed: memoryUsage.heapUsed,
+      currentHeapUsed: memoryUsage.heapUsed,
+      maxHeapUsed: memoryUsage.heapUsed,
+      minExternal: memoryUsage.external,
+      currentExternal: memoryUsage.external,
+      maxExternal: memoryUsage.external,
+      minArrayBuffers: memoryUsage.arrayBuffers,
+      currentArrayBuffers: memoryUsage.arrayBuffers,
+      maxArrayBuffers: memoryUsage.arrayBuffers
+    };
     this.initTimers();
   }
 
   private initTimers() {
-    this.httpSignalInterval = null;
-    this.logSignalInterval = null;
-
-    if (this._settings.http.enabled) {
-      this._logger.debug(`Initializing HTTP health signal timer every ${this._settings.http.interval}s.`);
-      this.httpSignalInterval = setInterval(this.prepareAndSendHttpSignal.bind(this), this._settings.http.interval * 1000);
-    }
-    if (this._settings.logging.enabled) {
-      this._logger.debug(`Initializing logging health signal timer every ${this._settings.logging.interval}s.`);
-      this.logSignalInterval = setInterval(this.sendLoggingSignal.bind(this), this._settings.logging.interval * 1000);
-    }
+    this.sendLoggingSignal();
+    this.logSignalInterval = setInterval(this.sendLoggingSignal.bind(this), HEALTH_SIGNAL_INTERVAL);
   }
 
   setLogger(value: pino.Logger) {
     this._logger = value;
   }
 
-  async setSettings(value: HealthSignalDTO): Promise<void> {
-    this._settings = value;
-    await this.stop();
-    this.initTimers();
-  }
-
-  async prepareAndSendHttpSignal(): Promise<void> {
-    const healthStatus = this.prepareStatus(this._settings.http.verbose);
-    await this.sendHttpSignal(JSON.stringify(healthStatus));
-  }
-
-  /**
-   * Callback to send the health signal with http.
-   */
-  async sendHttpSignal(data: string): Promise<void> {
-    try {
-      const proxyAgent = this._settings.http.proxyId ? await this.proxyService.createProxyAgent(this._settings.http.proxyId) : null;
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-
-      switch (this._settings.http.authentication.type) {
-        case 'basic': {
-          const decryptedPassword = await this.encryptionService.decryptText(this._settings.http.authentication.password);
-          const basic = Buffer.from(`${this._settings.http.authentication.username}:${decryptedPassword}`).toString('base64');
-          headers.authorization = `Basic ${basic}`;
-          break;
-        }
-        case 'api-key':
-          headers[this._settings.http.authentication.key] = await this.encryptionService.decryptText(
-            this._settings.http.authentication.secret
-          );
-          break;
-
-        case 'bearer':
-          headers.authorization = `Bearer ${await this.encryptionService.decryptText(this._settings.http.authentication.token)}`;
-          break;
-        default:
-          break;
-      }
-
-      await fetch(this._settings.http.address, {
-        method: 'POST',
-        headers,
-        body: data,
-        timeout: 10_000,
-        agent: proxyAgent
-      });
-
-      this._logger.trace(`Health signal successfully sent to "${this._settings.http.address}".`);
-    } catch (error) {
-      this._logger.error(error);
-    }
-  }
-
   /**
    * Log the health signal (info level)
    */
   sendLoggingSignal(): void {
-    const healthStatus = this.prepareStatus(true);
-    this._logger.info(JSON.stringify(healthStatus));
-  }
+    const processCpuUsage = process.cpuUsage();
+    const processUptime = Math.floor(process.uptime());
+    const cpuUsagePercentage = (100 * (processCpuUsage.user + processCpuUsage.system)) / processUptime;
+    const memoryUsage = process.memoryUsage();
 
-  /**
-   * Retrieve status information from the engine
-   */
-  prepareStatus(verbose: boolean): { status: string; verbose: boolean; id: string } {
-    let status = { status: 'TODO', verbose: false, id: 'id1' };
-    if (verbose) {
-      status = { ...status, verbose: true };
-    }
-    return status;
-  }
-
-  /**
-   * Log and forward a healthSignal request.
-   */
-  async forwardRequest(data: any): Promise<void> {
-    const stringData = JSON.stringify(data);
-    this._logger.info(stringData);
-    if (this._settings.http.enabled) {
-      this._logger.trace(`Forwarding health signal to "${this._settings.http.address}".`);
-      await this.sendHttpSignal(stringData);
-    }
+    const healthSignal = {
+      processCpuUsage: cpuUsagePercentage,
+      processUptime: processUptime,
+      freeMemory: os.freemem(),
+      totalMemory: os.totalmem(),
+      minRss: this.oibusMetrics.minRss > memoryUsage.rss ? memoryUsage.rss : this.oibusMetrics.minRss,
+      currentRss: memoryUsage.rss,
+      maxRss: this.oibusMetrics.maxRss < memoryUsage.rss ? memoryUsage.rss : this.oibusMetrics.maxRss,
+      minHeapTotal: this.oibusMetrics.minHeapTotal > memoryUsage.heapTotal ? memoryUsage.heapTotal : this.oibusMetrics.minHeapTotal,
+      currentHeapTotal: memoryUsage.heapTotal,
+      maxHeapTotal: this.oibusMetrics.maxHeapTotal < memoryUsage.heapTotal ? memoryUsage.heapTotal : this.oibusMetrics.maxHeapTotal,
+      minHeapUsed: this.oibusMetrics.minHeapUsed > memoryUsage.heapUsed ? memoryUsage.heapUsed : this.oibusMetrics.minHeapUsed,
+      currentHeapUsed: memoryUsage.heapUsed,
+      maxHeapUsed: this.oibusMetrics.maxHeapUsed < memoryUsage.heapUsed ? memoryUsage.heapUsed : this.oibusMetrics.maxHeapUsed,
+      minExternal: this.oibusMetrics.minExternal > memoryUsage.external ? memoryUsage.external : this.oibusMetrics.minExternal,
+      currentExternal: memoryUsage.external,
+      maxExternal: this.oibusMetrics.maxExternal < memoryUsage.external ? memoryUsage.external : this.oibusMetrics.maxExternal,
+      minArrayBuffers:
+        this.oibusMetrics.minArrayBuffers > memoryUsage.arrayBuffers ? memoryUsage.arrayBuffers : this.oibusMetrics.minArrayBuffers,
+      currentArrayBuffers: memoryUsage.arrayBuffers,
+      maxArrayBuffers:
+        this.oibusMetrics.maxArrayBuffers < memoryUsage.arrayBuffers ? memoryUsage.arrayBuffers : this.oibusMetrics.maxArrayBuffers
+    };
+    this.oibusMetrics = healthSignal;
+    this._logger.info(JSON.stringify(healthSignal));
   }
 
   /**
    * Stop the timers for sending health signal.
    */
   stop(): void {
-    if (this.httpSignalInterval) {
-      clearInterval(this.httpSignalInterval);
-    }
     if (this.logSignalInterval) {
       clearInterval(this.logSignalInterval);
     }

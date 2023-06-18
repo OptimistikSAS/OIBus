@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { FormControl, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NgForOf, NgIf } from '@angular/common';
 import { EngineService } from '../../services/engine.service';
@@ -10,7 +10,6 @@ import { EngineSettingsCommandDTO, LOG_LEVELS, LogLevel } from '../../../../../s
 import { NotificationService } from '../../shared/notification.service';
 import { formDirectives } from '../../shared/form-directives';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { createAuthenticationForm, getAuthenticationDTOFromForm } from '../../shared/utils';
 import { OibAuthComponent } from '../../shared/form/oib-auth/oib-auth.component';
 import { BoxComponent } from '../../shared/box/box.component';
 
@@ -51,20 +50,6 @@ export class EditEngineComponent implements OnInit {
         username: null as string | null,
         password: null as string | null
       })
-    }),
-    healthSignal: this.fb.group({
-      logging: this.fb.group({
-        enabled: false,
-        interval: [null as number | null, Validators.min(10)]
-      }),
-      http: this.fb.group({
-        enabled: false,
-        interval: [null as number | null, Validators.min(10)],
-        verbose: false,
-        address: ['', Validators.pattern(/http.*/)],
-        proxyId: null as string | null,
-        authentication: new FormControl(createAuthenticationForm({ type: 'none' }))
-      })
     })
   });
 
@@ -83,17 +68,7 @@ export class EditEngineComponent implements OnInit {
       this.proxies = proxyList;
     });
     this.engineService.getEngineSettings().subscribe(settings => {
-      const formValue = {
-        ...settings,
-        healthSignal: {
-          ...settings.healthSignal,
-          http: {
-            ...settings.healthSignal.http,
-            authentication: createAuthenticationForm(settings.healthSignal.http.authentication)
-          }
-        }
-      };
-      this.engineForm.patchValue(formValue);
+      this.engineForm.patchValue(settings);
     });
   }
 
@@ -127,20 +102,6 @@ export class EditEngineComponent implements OnInit {
           username: formValue.logParameters!.loki!.username!,
           password: formValue.logParameters!.loki!.password!,
           proxyId: formValue.logParameters!.loki!.proxyId!
-        }
-      },
-      healthSignal: {
-        logging: {
-          enabled: formValue.healthSignal!.logging!.enabled!,
-          interval: formValue.healthSignal!.logging!.interval!
-        },
-        http: {
-          enabled: formValue.healthSignal!.http!.enabled!,
-          interval: formValue.healthSignal!.http!.interval!,
-          verbose: formValue.healthSignal!.http!.verbose!,
-          address: formValue.healthSignal!.http!.address!,
-          proxyId: formValue.healthSignal!.http!.proxyId!,
-          authentication: getAuthenticationDTOFromForm(formValue.healthSignal!.http!.authentication!)
         }
       }
     };

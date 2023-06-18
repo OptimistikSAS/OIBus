@@ -30,24 +30,6 @@ const defaultEngineSettings: EngineSettingsCommandDTO = {
       password: '',
       proxyId: null
     }
-  },
-  healthSignal: {
-    logging: {
-      enabled: true,
-      interval: 60
-    },
-    http: {
-      enabled: false,
-      interval: 60,
-      verbose: false,
-      address: '',
-      proxyId: null,
-      authentication: {
-        type: 'basic',
-        username: '',
-        password: ''
-      }
-    }
   }
 };
 
@@ -63,11 +45,7 @@ export default class EngineRepository {
       'log_console_level TEXT, log_file_level TEXT, log_file_max_file_size INTEGER, log_file_number_of_files INTEGER, ' +
       'log_database_level TEXT, log_database_max_number_of_logs INTEGER, log_loki_level TEXT, log_loki_interval INTEGER, ' +
       'log_loki_address TEXT, log_loki_token_address TEXT, log_loki_proxy_id TEXT, log_loki_username TEXT, log_loki_password TEXT, ' +
-      'health_signal_log_enabled INTEGER, health_signal_log_interval INTEGER, health_signal_http_enabled INTEGER, ' +
-      'health_signal_http_interval INTEGER, health_signal_http_verbose INTEGER, health_signal_http_address TEXT, ' +
-      'health_signal_http_proxy_id TEXT, health_signal_http_authentication TEXT, ' +
-      `FOREIGN KEY(log_loki_proxy_id) REFERENCES ${PROXY_TABLE}(id), ` +
-      `FOREIGN KEY(health_signal_http_proxy_id) REFERENCES ${PROXY_TABLE}(id));`;
+      `FOREIGN KEY(log_loki_proxy_id) REFERENCES ${PROXY_TABLE}(id));`;
     this.database.prepare(query).run();
 
     this.createEngineSettings(defaultEngineSettings);
@@ -95,15 +73,7 @@ export default class EngineRepository {
       'log_loki_token_address AS lokiLogTokenAddress, ' +
       'log_loki_proxy_id AS lokiLogProxyId, ' +
       'log_loki_username AS lokiLogUsername, ' +
-      'log_loki_password AS lokiLogPassword, ' +
-      'health_signal_log_enabled AS healthSignalLogEnabled, ' +
-      'health_signal_log_interval AS healthSignalLogInterval, ' +
-      'health_signal_http_enabled AS healthSignalHttpEnabled, ' +
-      'health_signal_http_interval AS healthSignalHttpInterval, ' +
-      'health_signal_http_verbose AS healthSignalHttpVerbose, ' +
-      'health_signal_http_address AS healthSignalHttpAddress, ' +
-      'health_signal_http_proxy_id AS healthSignalHttpProxyId, ' +
-      'health_signal_http_authentication AS healthSignalHttpAuthentication ' +
+      'log_loki_password AS lokiLogPassword ' +
       `FROM ${ENGINE_TABLE};`;
     const results: Array<any> = this.database.prepare(query).all();
 
@@ -134,20 +104,6 @@ export default class EngineRepository {
             username: results[0].lokiLogUsername,
             password: results[0].lokiLogPassword
           }
-        },
-        healthSignal: {
-          logging: {
-            enabled: results[0].healthSignalLogEnabled === 1,
-            interval: results[0].healthSignalLogInterval
-          },
-          http: {
-            enabled: results[0].healthSignalHttpEnabled === 1,
-            interval: results[0].healthSignalHttpInterval,
-            verbose: results[0].healthSignalHttpVerbose === 1,
-            address: results[0].healthSignalHttpAddress,
-            proxyId: results[0].healthSignalHttpProxyId,
-            authentication: JSON.parse(Buffer.from(results[0].healthSignalHttpAuthentication, 'base64').toString())
-          }
         }
       };
     } else {
@@ -173,15 +129,7 @@ export default class EngineRepository {
       'log_loki_token_address = ?, ' +
       'log_loki_proxy_id = ?, ' +
       'log_loki_username = ?, ' +
-      'log_loki_password = ?, ' +
-      'health_signal_log_enabled = ?, ' +
-      'health_signal_log_interval = ?, ' +
-      'health_signal_http_enabled = ?, ' +
-      'health_signal_http_interval = ?, ' +
-      'health_signal_http_verbose = ?, ' +
-      'health_signal_http_address = ?, ' +
-      'health_signal_http_proxy_id = ?, ' +
-      'health_signal_http_authentication = ? ' +
+      'log_loki_password = ? ' +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINE_TABLE});`;
 
     this.database
@@ -201,15 +149,7 @@ export default class EngineRepository {
         command.logParameters.loki.tokenAddress,
         command.logParameters.loki.proxyId,
         command.logParameters.loki.username,
-        command.logParameters.loki.password,
-        +command.healthSignal.logging.enabled,
-        command.healthSignal.logging.interval,
-        +command.healthSignal.http.enabled,
-        command.healthSignal.http.interval,
-        +command.healthSignal.http.verbose,
-        command.healthSignal.http.address,
-        command.healthSignal.http.proxyId,
-        Buffer.from(JSON.stringify(command.healthSignal.http.authentication)).toString('base64')
+        command.logParameters.loki.password
       );
   }
 
@@ -221,7 +161,7 @@ export default class EngineRepository {
       return;
     }
 
-    const query = `INSERT INTO ${ENGINE_TABLE} VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
+    const query = `INSERT INTO ${ENGINE_TABLE} VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
     this.database
       .prepare(query)
       .run(
@@ -240,15 +180,7 @@ export default class EngineRepository {
         command.logParameters.loki.tokenAddress,
         command.logParameters.loki.proxyId,
         command.logParameters.loki.username,
-        command.logParameters.loki.password,
-        +command.healthSignal.logging.enabled,
-        command.healthSignal.logging.interval,
-        +command.healthSignal.http.enabled,
-        command.healthSignal.http.interval,
-        +command.healthSignal.http.verbose,
-        command.healthSignal.http.address,
-        command.healthSignal.http.proxyId,
-        Buffer.from(JSON.stringify(command.healthSignal.http.authentication)).toString('base64')
+        command.logParameters.loki.password
       );
   }
 }

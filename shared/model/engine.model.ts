@@ -89,34 +89,6 @@ export interface LogSettings {
 }
 
 /**
- * Log settings for Health Signal
- */
-interface HealthSignalLoggingDTO {
-  enabled: boolean;
-  interval: number;
-}
-
-/**
- * HTTP settings for Health Signal
- */
-interface HealthSignalHTTPDTO {
-  enabled: boolean;
-  interval: number;
-  verbose: boolean;
-  address: string;
-  proxyId: string | null;
-  authentication: Authentication;
-}
-
-/**
- * DTO for health signal settings
- */
-export interface HealthSignalDTO {
-  logging: HealthSignalLoggingDTO;
-  http: HealthSignalHTTPDTO;
-}
-
-/**
  * Engine settings DTO
  */
 export interface EngineSettingsDTO {
@@ -124,7 +96,6 @@ export interface EngineSettingsDTO {
   name: string;
   port: number;
   logParameters: LogSettings;
-  healthSignal: HealthSignalDTO;
 }
 
 export interface CryptoSettings {
@@ -140,7 +111,6 @@ export interface EngineSettingsCommandDTO {
   name: string;
   port: number;
   logParameters: LogSettings;
-  healthSignal: HealthSignalDTO;
 }
 
 export interface OIBusError {
@@ -167,4 +137,26 @@ export interface ConnectorMetrics {
   lastConnection: Instant | null;
   lastRunStart: Instant | null;
   lastRunDuration: number | null;
+}
+
+export interface HealthSignalContent {
+  processCpuUsage: number;
+  processUptime: number;
+  freeMemory: number;
+  totalMemory: number;
+  minRss: number;
+  currentRss: number;
+  maxRss: number;
+  minHeapTotal: number;
+  currentHeapTotal: number;
+  maxHeapTotal: number;
+  minHeapUsed: number;
+  currentHeapUsed: number;
+  maxHeapUsed: number;
+  minExternal: number;
+  currentExternal: number;
+  maxExternal: number;
+  minArrayBuffers: number;
+  currentArrayBuffers: number;
+  maxArrayBuffers: number;
 }
