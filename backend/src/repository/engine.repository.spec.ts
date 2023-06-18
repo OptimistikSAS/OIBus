@@ -30,10 +30,7 @@ describe('Empty engine repository', () => {
         'log_console_level TEXT, log_file_level TEXT, log_file_max_file_size INTEGER, log_file_number_of_files INTEGER, ' +
         'log_database_level TEXT, log_database_max_number_of_logs INTEGER, log_loki_level TEXT, log_loki_interval INTEGER, ' +
         'log_loki_address TEXT, log_loki_token_address TEXT, log_loki_proxy_id TEXT, log_loki_username TEXT, ' +
-        'log_loki_password TEXT, health_signal_log_enabled INTEGER, health_signal_log_interval INTEGER, ' +
-        'health_signal_http_enabled INTEGER, health_signal_http_interval INTEGER, health_signal_http_verbose INTEGER, ' +
-        'health_signal_http_address TEXT, health_signal_http_proxy_id TEXT, health_signal_http_authentication TEXT, ' +
-        'FOREIGN KEY(log_loki_proxy_id) REFERENCES proxy(id), FOREIGN KEY(health_signal_http_proxy_id) REFERENCES proxy(id));'
+        'log_loki_password TEXT, FOREIGN KEY(log_loki_proxy_id) REFERENCES proxy(id));'
     );
 
     const command: EngineSettingsCommandDTO = {
@@ -61,30 +58,12 @@ describe('Empty engine repository', () => {
           password: '',
           proxyId: null
         }
-      },
-      healthSignal: {
-        logging: {
-          enabled: true,
-          interval: 60
-        },
-        http: {
-          enabled: false,
-          interval: 60,
-          verbose: false,
-          address: '',
-          proxyId: null,
-          authentication: {
-            type: 'basic',
-            username: '',
-            password: ''
-          }
-        }
       }
     };
 
     repository.createEngineSettings(command);
     expect(generateRandomId).toHaveBeenCalledWith();
-    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO engine VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);');
+    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO engine VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);');
     expect(run).toHaveBeenCalledWith(
       '123456',
       command.name,
@@ -101,15 +80,7 @@ describe('Empty engine repository', () => {
       command.logParameters.loki.tokenAddress,
       command.logParameters.loki.proxyId,
       command.logParameters.loki.username,
-      command.logParameters.loki.password,
-      +command.healthSignal.logging.enabled,
-      command.healthSignal.logging.interval,
-      +command.healthSignal.http.enabled,
-      command.healthSignal.http.interval,
-      +command.healthSignal.http.verbose,
-      command.healthSignal.http.address,
-      command.healthSignal.http.proxyId,
-      Buffer.from(JSON.stringify(command.healthSignal.http.authentication)).toString('base64')
+      command.logParameters.loki.password
     );
 
     expect(run).toHaveBeenCalledTimes(3);
@@ -141,22 +112,6 @@ describe('Empty engine repository', () => {
           password: '',
           proxyId: ''
         }
-      },
-      healthSignal: {
-        logging: {
-          enabled: true,
-          interval: 60
-        },
-        http: {
-          enabled: false,
-          interval: 60,
-          verbose: false,
-          address: '',
-          proxyId: null,
-          authentication: {
-            type: 'none'
-          }
-        }
       }
     };
     repository.updateEngineSettings(command);
@@ -164,9 +119,7 @@ describe('Empty engine repository', () => {
       'UPDATE engine SET name = ?, port = ?, log_console_level = ?, log_file_level = ?, log_file_max_file_size = ?, ' +
         'log_file_number_of_files = ?, log_database_level = ?, log_database_max_number_of_logs = ?, log_loki_level = ?, ' +
         'log_loki_interval = ?, log_loki_address = ?, log_loki_token_address = ?, log_loki_proxy_id = ?, log_loki_username = ?, ' +
-        'log_loki_password = ?, health_signal_log_enabled = ?, health_signal_log_interval = ?, health_signal_http_enabled = ?, ' +
-        'health_signal_http_interval = ?, health_signal_http_verbose = ?, health_signal_http_address = ?, ' +
-        'health_signal_http_proxy_id = ?, health_signal_http_authentication = ? WHERE rowid=(SELECT MIN(rowid) FROM engine);'
+        'log_loki_password = ? WHERE rowid=(SELECT MIN(rowid) FROM engine);'
     );
     expect(run).toHaveBeenCalledWith(
       command.name,
@@ -183,15 +136,7 @@ describe('Empty engine repository', () => {
       command.logParameters.loki.tokenAddress,
       command.logParameters.loki.proxyId,
       command.logParameters.loki.username,
-      command.logParameters.loki.password,
-      +command.healthSignal.logging.enabled,
-      command.healthSignal.logging.interval,
-      +command.healthSignal.http.enabled,
-      command.healthSignal.http.interval,
-      +command.healthSignal.http.verbose,
-      command.healthSignal.http.address,
-      command.healthSignal.http.proxyId,
-      Buffer.from(JSON.stringify(command.healthSignal.http.authentication)).toString('base64')
+      command.logParameters.loki.password
     );
   });
 });
@@ -213,15 +158,7 @@ describe('Non-empty Engine repository', () => {
     lokiLogTokenAddress: '',
     lokiLogProxyId: null,
     lokiLogUsername: '',
-    lokiLogPassword: '',
-    healthSignalLogEnabled: 1,
-    healthSignalLogInterval: 60,
-    healthSignalHttpEnabled: 0,
-    healthSignalHttpInterval: 60,
-    healthSignalHttpVerbose: 0,
-    healthSignalHttpAddress: '',
-    healthSignalHttpProxyId: null,
-    healthSignalHttpAuthentication: Buffer.from(JSON.stringify({ type: 'basic', username: 'user', password: 'pass' })).toString('base64')
+    lokiLogPassword: ''
   };
   beforeEach(() => {
     jest.clearAllMocks();
@@ -241,10 +178,7 @@ describe('Non-empty Engine repository', () => {
         'log_console_level TEXT, log_file_level TEXT, log_file_max_file_size INTEGER, log_file_number_of_files INTEGER, ' +
         'log_database_level TEXT, log_database_max_number_of_logs INTEGER, log_loki_level TEXT, log_loki_interval INTEGER, ' +
         'log_loki_address TEXT, log_loki_token_address TEXT, log_loki_proxy_id TEXT, log_loki_username TEXT, ' +
-        'log_loki_password TEXT, health_signal_log_enabled INTEGER, health_signal_log_interval INTEGER, ' +
-        'health_signal_http_enabled INTEGER, health_signal_http_interval INTEGER, health_signal_http_verbose INTEGER, ' +
-        'health_signal_http_address TEXT, health_signal_http_proxy_id TEXT, health_signal_http_authentication TEXT, ' +
-        'FOREIGN KEY(log_loki_proxy_id) REFERENCES proxy(id), FOREIGN KEY(health_signal_http_proxy_id) REFERENCES proxy(id));'
+        'log_loki_password TEXT, FOREIGN KEY(log_loki_proxy_id) REFERENCES proxy(id));'
     );
     expect(generateRandomId).not.toHaveBeenCalled();
     expect(run).toHaveBeenCalledTimes(1);
@@ -277,20 +211,6 @@ describe('Non-empty Engine repository', () => {
           password: '',
           proxyId: null
         }
-      },
-      healthSignal: {
-        logging: {
-          enabled: true,
-          interval: 60
-        },
-        http: {
-          enabled: false,
-          interval: 60,
-          verbose: false,
-          address: '',
-          proxyId: null,
-          authentication: { type: 'basic', username: 'user', password: 'pass' }
-        }
       }
     };
     const externalSource = repository.getEngineSettings();
@@ -300,12 +220,7 @@ describe('Non-empty Engine repository', () => {
         'log_database_level AS databaseLogLevel, log_database_max_number_of_logs AS databaseLogMaxNumberOfLogs, ' +
         'log_loki_level AS lokiLogLevel, log_loki_interval AS lokiLogInterval, log_loki_address AS lokiLogAddress, ' +
         'log_loki_token_address AS lokiLogTokenAddress, log_loki_proxy_id AS lokiLogProxyId, ' +
-        'log_loki_username AS lokiLogUsername, log_loki_password AS lokiLogPassword, ' +
-        'health_signal_log_enabled AS healthSignalLogEnabled, health_signal_log_interval AS healthSignalLogInterval, ' +
-        'health_signal_http_enabled AS healthSignalHttpEnabled, health_signal_http_interval AS healthSignalHttpInterval, ' +
-        'health_signal_http_verbose AS healthSignalHttpVerbose, health_signal_http_address AS healthSignalHttpAddress, ' +
-        'health_signal_http_proxy_id AS healthSignalHttpProxyId, ' +
-        'health_signal_http_authentication AS healthSignalHttpAuthentication FROM engine;'
+        'log_loki_username AS lokiLogUsername, log_loki_password AS lokiLogPassword FROM engine;'
     );
     expect(all).toHaveBeenCalledTimes(2);
     expect(externalSource).toEqual(expectedValue);
@@ -336,22 +251,6 @@ describe('Non-empty Engine repository', () => {
           username: '',
           password: '',
           proxyId: ''
-        }
-      },
-      healthSignal: {
-        logging: {
-          enabled: true,
-          interval: 60
-        },
-        http: {
-          enabled: false,
-          interval: 60,
-          verbose: false,
-          address: '',
-          proxyId: null,
-          authentication: {
-            type: 'none'
-          }
         }
       }
     };
