@@ -32,14 +32,6 @@ class EngineComponentTester extends ComponentTester<EngineDetailComponent> {
     return this.elements('tbody.general-settings tr');
   }
 
-  get healthSignalHttpEnabled() {
-    return this.element('#health-http')!;
-  }
-
-  get editButton() {
-    return this.button('#edit-link')!;
-  }
-
   get proxyList() {
     return this.element(ProxyListComponent);
   }
@@ -91,14 +83,6 @@ describe('EngineDetailComponent', () => {
       },
       loki: {
         level: 'error'
-      }
-    },
-    healthSignal: {
-      logging: {
-        enabled: true
-      },
-      http: {
-        enabled: true
       }
     }
   } as EngineSettingsDTO;

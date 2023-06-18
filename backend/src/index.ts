@@ -67,12 +67,6 @@ const LOG_DB_NAME = 'journal.db';
   await loggerService.start(oibusSettings.id, oibusSettings.name, oibusSettings.logParameters);
 
   const proxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
-  const healthSignalService = new HealthSignalService(
-    oibusSettings.healthSignal,
-    proxyService,
-    encryptionService,
-    loggerService.createChildLogger('health')
-  );
 
   const northService = new NorthService(proxyService, encryptionService, repositoryService);
   const southService = new SouthService(proxyService, encryptionService, repositoryService);
@@ -91,6 +85,7 @@ const LOG_DB_NAME = 'journal.db';
   const oibusService = new OIBusService(engine, historyQueryEngine);
   await engine.start();
   await historyQueryEngine.start();
+  const healthSignalService = new HealthSignalService(loggerService.createChildLogger('health'));
 
   const reloadService = new ReloadService(
     loggerService,
@@ -131,5 +126,6 @@ const LOG_DB_NAME = 'journal.db';
     });
   });
 
-  console.info('OIBus fully started');
+  loggerService.logger!.info(`OIBus fully started: ${JSON.stringify(oibusService.getOIBusInfo())}`);
+  console.info(`OIBus fully started: ${JSON.stringify(oibusService.getOIBusInfo())}`);
 })();

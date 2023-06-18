@@ -118,24 +118,6 @@ describe('EditEngineComponent', () => {
         password: 'pass',
         proxyId: null
       }
-    },
-    healthSignal: {
-      logging: {
-        enabled: false,
-        interval: 60
-      },
-      http: {
-        enabled: true,
-        interval: 60,
-        verbose: true,
-        address: 'http://health-signal.oibus.com',
-        proxyId: null,
-        authentication: {
-          type: 'basic',
-          username: 'oibus',
-          password: 'pass'
-        }
-      }
     }
   };
   const proxies: Array<ProxyDTO> = [
@@ -222,8 +204,6 @@ describe('EditEngineComponent', () => {
     expectedSettings.logParameters.console.level = 'error';
     expectedSettings.logParameters.file.numberOfFiles = 10;
     expectedSettings.logParameters.loki.level = 'silent';
-    expectedSettings.healthSignal.logging.enabled = false;
-    expectedSettings.healthSignal.http.verbose = true;
 
     expect(engineService.updateEngineSettings).toHaveBeenCalledWith({
       name: 'OIBus Dev',
@@ -249,24 +229,6 @@ describe('EditEngineComponent', () => {
           username: 'oibus',
           password: 'pass',
           proxyId: null
-        }
-      },
-      healthSignal: {
-        logging: {
-          enabled: false,
-          interval: 60
-        },
-        http: {
-          enabled: true,
-          interval: 60,
-          verbose: true,
-          address: 'http://health-signal.oibus.com',
-          proxyId: null,
-          authentication: {
-            type: 'basic',
-            username: 'oibus',
-            password: 'pass'
-          }
         }
       }
     });

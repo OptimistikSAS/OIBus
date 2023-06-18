@@ -5,11 +5,11 @@ import multer from '@koa/multer';
 import {
   engineSchema,
   externalSourceSchema,
+  historyQuerySchema,
   ipFilterSchema,
   logSchema,
   proxySchema,
   scanModeSchema,
-  historyQuerySchema,
   userSchema
 } from '../../engine/oibus-validation-schema';
 
@@ -26,7 +26,6 @@ import HistoryQueryController from '../controllers/history-query.controller';
 import SubscriptionController from '../controllers/subscription.controller';
 import JoiValidator from '../../validators/joi.validator';
 import { KoaContext } from '../koa';
-import HealthSignalController from '../controllers/health-signal.controller';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
@@ -39,7 +38,6 @@ const southConnectorController = new SouthConnectorController(joiValidator);
 const historyQueryController = new HistoryQueryController(joiValidator, historyQuerySchema, southManifests, northManifests);
 const userController = new UserController(joiValidator, userSchema);
 const logController = new LogController(joiValidator, logSchema);
-const healthSignalController = new HealthSignalController(joiValidator, logSchema);
 const subscriptionController = new SubscriptionController();
 
 const router = new Router();
@@ -82,7 +80,6 @@ router.put('/api/restart', (ctx: KoaContext<any, any>) => oibusController.restar
 router.put('/api/shutdown', (ctx: KoaContext<any, any>) => oibusController.shutdown(ctx));
 router.post('/api/add-values', (ctx: KoaContext<any, any>) => oibusController.addValues(ctx));
 router.post('/api/add-file', upload.single('file'), (ctx: KoaContext<any, any>) => oibusController.addFile(ctx));
-router.post('/api/health-signal', (ctx: KoaContext<any, any>) => healthSignalController.healthSignal(ctx));
 router.get('/api/info', (ctx: KoaContext<any, any>) => oibusController.getOIBusInfo(ctx));
 
 router.get('/api/ip-filters', (ctx: KoaContext<any, any>) => ipFilterController.getIpFilters(ctx));
