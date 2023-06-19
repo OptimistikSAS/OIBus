@@ -145,7 +145,7 @@ export default class OIBusEngine extends BaseEngine {
     const TestClass = SouthConnectorClass as typeof SouthConnector & typeof TestsConnection;
     const testLogger = this.logger.child({ scope: `south:${settings.name}` });
 
-    await TestClass.testConnection(settings.settings, testLogger);
+    await TestClass.testConnection(settings.settings, testLogger, this.encryptionService);
   }
 
   async startNorth(northId: string, settings: NorthConnectorDTO): Promise<void> {

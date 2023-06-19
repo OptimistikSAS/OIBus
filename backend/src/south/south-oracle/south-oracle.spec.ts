@@ -169,7 +169,7 @@ describe('SouthOracle with authentication', () => {
 
   it('should test connection with oracle', async () => {
     // TODO
-    await expect(SouthOracle.testConnection({}, logger)).rejects.toThrow('TODO: method needs to be implemented');
+    await expect(SouthOracle.testConnection({}, logger, encryptionService)).rejects.toThrow('TODO: method needs to be implemented');
     expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
   });
 

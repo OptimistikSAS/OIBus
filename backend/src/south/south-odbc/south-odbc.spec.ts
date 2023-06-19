@@ -169,7 +169,7 @@ describe('SouthODBC with authentication', () => {
 
   it('should test connection with odbc', async () => {
     // TODO
-    await expect(SouthODBC.testConnection({}, logger)).rejects.toThrow('TODO: method needs to be implemented');
+    await expect(SouthODBC.testConnection({}, logger, encryptionService)).rejects.toThrow('TODO: method needs to be implemented');
     expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
   });
 

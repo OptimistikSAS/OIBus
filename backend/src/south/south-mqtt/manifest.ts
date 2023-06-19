@@ -64,15 +64,6 @@ const manifest: SouthConnectorManifest = {
       validators: [{ key: 'required' }]
     },
     {
-      key: 'keepAlive',
-      type: 'OibNumber',
-      label: 'Keep Alive Interval (ms)',
-      defaultValue: 60000,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      newRow: true,
-      readDisplay: false
-    },
-    {
       key: 'reconnectPeriod',
       type: 'OibNumber',
       label: 'Reconnect period (ms)',

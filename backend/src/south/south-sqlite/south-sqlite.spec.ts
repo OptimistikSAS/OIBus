@@ -244,11 +244,10 @@ describe('SouthSQLite test connection', () => {
     all.mockReturnValue(result);
     (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
 
-    const test = SouthSQLite.testConnection(settings, logger);
+    const test = SouthSQLite.testConnection(settings, logger, encryptionService);
     await expect(test).resolves.not.toThrow();
 
     expect((logger.trace as jest.Mock).mock.calls).toEqual([
-      ['Testing connection'],
       ['Testing if SQLite file exists'],
       ['Testing connection to SQLite system table']
     ]);
@@ -263,10 +262,10 @@ describe('SouthSQLite test connection', () => {
       throw new Error(errorMessage);
     });
 
-    const test = SouthSQLite.testConnection(settings, logger);
+    const test = SouthSQLite.testConnection(settings, logger, encryptionService);
     await expect(test).rejects.toThrowError(`File '${dbPath}' does not exist`);
 
-    expect((logger.trace as jest.Mock).mock.calls).toEqual([['Testing connection'], ['Testing if SQLite file exists']]);
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([['Testing if SQLite file exists']]);
     expect(logger.error as jest.Mock).toBeCalledWith(`Access error on '${dbPath}': ${errorMessage}`);
   });
 
@@ -276,11 +275,10 @@ describe('SouthSQLite test connection', () => {
       throw new Error(errorMessage);
     });
 
-    const test = SouthSQLite.testConnection(settings, logger);
+    const test = SouthSQLite.testConnection(settings, logger, encryptionService);
     await expect(test).rejects.toThrowError('Error testing database connection, check logs');
 
     expect((logger.trace as jest.Mock).mock.calls).toEqual([
-      ['Testing connection'],
       ['Testing if SQLite file exists'],
       ['Testing connection to SQLite system table']
     ]);
@@ -291,11 +289,10 @@ describe('SouthSQLite test connection', () => {
     all.mockReturnValue([]);
     (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
 
-    const test = SouthSQLite.testConnection(settings, logger);
+    const test = SouthSQLite.testConnection(settings, logger, encryptionService);
     await expect(test).rejects.toThrowError('Database has no tables');
 
     expect((logger.trace as jest.Mock).mock.calls).toEqual([
-      ['Testing connection'],
       ['Testing if SQLite file exists'],
       ['Testing connection to SQLite system table']
     ]);

@@ -100,10 +100,42 @@ export default class SouthMQTT extends SouthConnector implements QueriesSubscrip
     });
   }
 
-  // TODO: method needs to be implemented
-  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
-    logger.trace(`Testing connection`);
-    throw new Error('TODO: method needs to be implemented');
+  static async testConnection(
+    settings: SouthConnectorDTO['settings'],
+    logger: pino.Logger,
+    encryptionService: EncryptionService
+  ): Promise<void> {
+    const options: IClientOptions = {
+      rejectUnauthorized: settings.rejectUnauthorized,
+      reconnectPeriod: settings.reconnectPeriod,
+      connectTimeout: settings.connectTimeout,
+      clientId: 'oibus-test'
+    };
+    if (settings.authentication.type === 'basic') {
+      options.username = settings.authentication.username;
+      options.password = Buffer.from(await encryptionService.decryptText(settings.authentication.password)).toString();
+    } else if (settings.authentication.type === 'cert') {
+      options.cert = settings.authentication.certPath ? await fs.readFile(path.resolve(settings.authentication.certPath)) : '';
+      options.key = settings.authentication.keyPath ? await fs.readFile(path.resolve(settings.authentication.keyPath)) : '';
+      options.ca = settings.caPath ? await fs.readFile(path.resolve(settings.caPath)) : '';
+    }
+    if (settings.qos === 1 || settings.qos === 2) {
+      options.clean = !settings.persistent;
+    }
+
+    return new Promise((resolve, reject) => {
+      const client = mqtt.connect(settings.url, options);
+      client.on('connect', async () => {
+        logger.info(`Connection test to ${settings.url} successful`);
+        client.end(true);
+        logger.debug(`Disconnected from ${settings.url}`);
+        resolve();
+      });
+      client.on('error', error => {
+        logger.error(`MQTT connection error ${error}`);
+        reject(`MQTT connection error ${error}`);
+      });
+    });
   }
 
   async handleMessage(topic: string, message: Buffer): Promise<void> {
@@ -280,7 +312,7 @@ export default class SouthMQTT extends SouthConnector implements QueriesSubscrip
   override async disconnect(): Promise<void> {
     if (this.client) {
       this.client.end(true);
-      this.logger.info(`Disconnecting from ${this.configuration.settings.url}...`);
+      this.logger.info(`Disconnected from ${this.configuration.settings.url}...`);
     }
     await super.disconnect();
   }

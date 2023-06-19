@@ -167,7 +167,7 @@ describe('SouthMySQL with authentication', () => {
 
   it('should test connection with oracle', async () => {
     // TODO
-    await expect(SouthMySQL.testConnection({}, logger)).rejects.toThrow('TODO: method needs to be implemented');
+    await expect(SouthMySQL.testConnection({}, logger, encryptionService)).rejects.toThrow('TODO: method needs to be implemented');
     expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
   });
 

@@ -33,7 +33,7 @@ jest.mock(
 
 const addValues = jest.fn();
 const addFile = jest.fn();
-
+const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
 const logger: pino.Logger = new PinoLogger();
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
@@ -75,9 +75,8 @@ class CustomStream extends Stream {
   }
 
   subscribe() {}
+  end() {}
 }
-const mqttStream = new CustomStream();
-mqttStream.subscribe = jest.fn();
 
 let south: SouthMQTT;
 
@@ -114,6 +113,9 @@ describe('SouthMQTT without authentication', () => {
       timestampTimezone: 'Europe/Paris'
     }
   };
+  const mqttStream = new CustomStream();
+  mqttStream.subscribe = jest.fn();
+  mqttStream.end = jest.fn();
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
@@ -156,6 +158,23 @@ describe('SouthMQTT without authentication', () => {
     expect(south.handleMessage).toHaveBeenCalledWith('myTopic', 'myMessage');
   });
 
+  it('should properly test connection', async () => {
+    SouthMQTT.testConnection(configuration.settings, logger, encryptionService);
+    mqttStream.emit('connect');
+
+    const expectedOptions = {
+      clientId: 'oibus-test',
+      rejectUnauthorized: false,
+      clean: false,
+      connectTimeout: 1000,
+      reconnectPeriod: 1000
+    };
+    expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
+    expect(mqttStream.end).toHaveBeenCalledTimes(1);
+    expect(logger.info).toHaveBeenCalledWith(`Connection test to ${configuration.settings.url} successful`);
+    expect(logger.debug).toHaveBeenCalledWith(`Disconnected from ${configuration.settings.url}`);
+  });
+
   it('should properly disconnect', async () => {
     await south.disconnect();
 
@@ -164,6 +183,9 @@ describe('SouthMQTT without authentication', () => {
 });
 
 describe('SouthMQTT with Basic Auth', () => {
+  const mqttStream = new CustomStream();
+  mqttStream.subscribe = jest.fn();
+  mqttStream.end = jest.fn();
   const configuration: SouthConnectorDTO = {
     id: 'southId',
     name: 'south',
@@ -232,9 +254,32 @@ describe('SouthMQTT with Basic Auth', () => {
     };
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
   });
+
+  it('should properly test connection', async () => {
+    SouthMQTT.testConnection(configuration.settings, logger, encryptionService);
+
+    await flushPromises();
+    mqttStream.emit('connect');
+
+    const expectedOptions = {
+      clientId: 'oibus-test',
+      rejectUnauthorized: false,
+      username: 'username',
+      password: 'pass',
+      connectTimeout: 1000,
+      reconnectPeriod: 1000
+    };
+    expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
+    expect(mqttStream.end).toHaveBeenCalledTimes(1);
+    expect(logger.info).toHaveBeenCalledWith(`Connection test to ${configuration.settings.url} successful`);
+    expect(logger.debug).toHaveBeenCalledWith(`Disconnected from ${configuration.settings.url}`);
+  });
 });
 
 describe('SouthMQTT with Cert', () => {
+  const mqttStream = new CustomStream();
+  mqttStream.subscribe = jest.fn();
+  mqttStream.end = jest.fn();
   const configuration: SouthConnectorDTO = {
     id: 'southId',
     name: 'south',
@@ -304,10 +349,39 @@ describe('SouthMQTT with Cert', () => {
       reconnectPeriod: 1000
     };
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
+
+    await south.disconnect();
+    expect(mqttStream.end).toHaveBeenCalledTimes(1);
+  });
+
+  it('should properly test connection', async () => {
+    (fs.readFile as jest.Mock).mockReturnValueOnce('myCert').mockReturnValueOnce('myKey').mockReturnValueOnce('myCa');
+
+    SouthMQTT.testConnection(configuration.settings, logger, encryptionService).then(() => {});
+    await flushPromises();
+
+    mqttStream.emit('connect');
+
+    const expectedOptions = {
+      clientId: 'oibus-test',
+      cert: 'myCert',
+      key: 'myKey',
+      ca: 'myCa',
+      rejectUnauthorized: false,
+      connectTimeout: 1000,
+      reconnectPeriod: 1000
+    };
+    expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
+    expect(mqttStream.end).toHaveBeenCalledTimes(1);
+    expect(logger.info).toHaveBeenCalledWith(`Connection test to ${configuration.settings.url} successful`);
+    expect(logger.debug).toHaveBeenCalledWith(`Disconnected from ${configuration.settings.url}`);
   });
 });
 
 describe('SouthMQTT without Cert', () => {
+  const mqttStream = new CustomStream();
+  mqttStream.subscribe = jest.fn();
+  mqttStream.end = jest.fn();
   const configuration: SouthConnectorDTO = {
     id: 'southId',
     name: 'south',
@@ -363,7 +437,6 @@ describe('SouthMQTT without Cert', () => {
   });
 
   it('should properly connect', async () => {
-    (fs.readFile as jest.Mock).mockReturnValueOnce('myCert').mockReturnValueOnce('myKey').mockReturnValueOnce('myCa');
     await south.start();
     south.subscribe = jest.fn();
     south.handleMessage = jest.fn();
@@ -377,5 +450,43 @@ describe('SouthMQTT without Cert', () => {
       reconnectPeriod: 1000
     };
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
+  });
+
+  it('should properly test connection', async () => {
+    SouthMQTT.testConnection(configuration.settings, logger, encryptionService);
+    mqttStream.emit('connect');
+
+    const expectedOptions = {
+      clientId: 'oibus-test',
+      rejectUnauthorized: false,
+      cert: '',
+      key: '',
+      ca: '',
+      connectTimeout: 1000,
+      reconnectPeriod: 1000
+    };
+    expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
+    expect(mqttStream.end).toHaveBeenCalledTimes(1);
+    expect(logger.info).toHaveBeenCalledWith(`Connection test to ${configuration.settings.url} successful`);
+    expect(logger.debug).toHaveBeenCalledWith(`Disconnected from ${configuration.settings.url}`);
+  });
+
+  it('should properly fail test connection', async () => {
+    SouthMQTT.testConnection(configuration.settings, logger, encryptionService).catch(() => {});
+
+    mqttStream.emit('error', new Error('connection error'));
+
+    const expectedOptions = {
+      clientId: 'oibus-test',
+      rejectUnauthorized: false,
+      cert: '',
+      key: '',
+      ca: '',
+      connectTimeout: 1000,
+      reconnectPeriod: 1000
+    };
+    expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
+    expect(mqttStream.end).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith(`MQTT connection error ${new Error('connection error')}`);
   });
 });
