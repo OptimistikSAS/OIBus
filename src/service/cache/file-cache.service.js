@@ -292,6 +292,10 @@ export default class FileCacheService {
     // Move cache file into the archive folder
     try {
       await fs.rename(filePathInCache, errorPath)
+      const indexToRemove = this.filesQueue.findIndex((queueFile) => queueFile === this.fileBeingSent)
+      if (indexToRemove > -1) {
+        this.filesQueue.splice(indexToRemove, 1)
+      }
       this.logger.info(`File "${filePathInCache}" moved to "${errorPath}".`)
     } catch (renameError) {
       this.logger.error(renameError)
