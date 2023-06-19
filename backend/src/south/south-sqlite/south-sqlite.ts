@@ -120,9 +120,7 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField = item.settings.serialization.datetimeSerialization.find(
-              (element: DateTimeSerialization) => element.field === key
-            );
+            const datetimeField = item.settings.dateTimeFields.find((element: DateTimeSerialization) => element.field === key);
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
@@ -160,9 +158,7 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
     this.logger.debug(`Opening ${path.resolve(this.configuration.settings.databasePath)} SQLite database`);
     const database = db(path.resolve(this.configuration.settings.databasePath));
 
-    const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
-      (serialization: DateTimeSerialization) => serialization.useAsReference
-    );
+    const datetimeSerialization = item.settings.dateTimeFields.find((serialization: DateTimeSerialization) => serialization.useAsReference);
     const sqliteStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization.datetimeFormat);
     const sqliteEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization.datetimeFormat);
     logQuery(item.settings.query, sqliteStartTime, sqliteEndTime, this.logger);

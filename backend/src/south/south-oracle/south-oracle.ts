@@ -104,9 +104,7 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField = item.settings.serialization.datetimeSerialization.find(
-              (element: DateTimeSerialization) => element.field === key
-            );
+            const datetimeField = item.settings.dateTimeFields.find((element: DateTimeSerialization) => element.field === key);
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
@@ -151,9 +149,7 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
       connectString: `${this.configuration.settings.host}:${this.configuration.settings.port}/${this.configuration.settings.database}`
     };
 
-    const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
-      (serialization: DateTimeSerialization) => serialization.useAsReference
-    );
+    const datetimeSerialization = item.settings.dateTimeFields.find((serialization: DateTimeSerialization) => serialization.useAsReference);
     const oracleStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization.datetimeFormat);
     const oracleEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization.datetimeFormat);
     logQuery(item.settings.query, oracleStartTime, oracleEndTime, this.logger);

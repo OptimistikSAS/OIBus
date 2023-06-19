@@ -100,9 +100,7 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField = item.settings.serialization.datetimeSerialization.find(
-              (element: DateTimeSerialization) => element.field === key
-            );
+            const datetimeField = item.settings.dateTimeFields.find((element: DateTimeSerialization) => element.field === key);
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
@@ -159,9 +157,7 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
       this.logger.debug(`Connecting with connection string ${connectionString}`);
     }
 
-    const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
-      (serialization: DateTimeSerialization) => serialization.useAsReference
-    );
+    const datetimeSerialization = item.settings.dateTimeFields.find((serialization: DateTimeSerialization) => serialization.useAsReference);
     const odbcStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization.datetimeFormat);
     const odbcEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization.datetimeFormat);
 

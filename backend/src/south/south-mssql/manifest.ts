@@ -113,10 +113,18 @@ const manifest: SouthConnectorManifest = {
         readDisplay: true
       },
       {
+        key: 'dateTimeFields',
+        type: 'OibDateTimeFields',
+        label: 'Date time fields',
+        allowedDateObjectTypes: ['Date', 'DateTime', 'DateTime2', 'DateTimeOffset', 'SmallDateTime'],
+        class: 'col',
+        newRow: true,
+        readDisplay: false
+      },
+      {
         key: 'serialization',
         type: 'OibSerialization',
         label: 'Serialization',
-        allowedDateObjectTypes: ['Date', 'DateTime', 'DateTime2', 'DateTimeOffset', 'SmallDateTime'],
         class: 'col',
         newRow: true,
         readDisplay: false

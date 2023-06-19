@@ -3,7 +3,7 @@ import {
   OibAuthenticationFormControl,
   OibCheckboxFormControl,
   OibCodeBlockFormControl,
-  OibDateTimeFormatFormControl,
+  OibDateTimeFieldsFormControl,
   OibFormControl,
   OibNumberFormControl,
   OibProxyFormControl,
@@ -59,8 +59,8 @@ export default class JoiValidator {
         return this.generateTextJoiSchema(oibFormControl);
       case 'OibProxy':
         return this.generateTextJoiSchema(oibFormControl);
-      case 'OibDateTimeFormat':
-        return this.generateDatetimeFormatJoiSchema(oibFormControl);
+      case 'OibDateTimeFields':
+        return this.generateDateTimeFieldsJoiSchema(oibFormControl);
       case 'OibAuthentication':
         return this.generateAuthenticationJoiSchema(oibFormControl);
       case 'OibSerialization':
@@ -165,16 +165,24 @@ export default class JoiValidator {
     };
   }
 
-  private generateDatetimeFormatJoiSchema(formControl: OibDateTimeFormatFormControl): Record<string, AnySchema> {
-    let schema = Joi.object({
-      type: Joi.string().required(),
-      timezone: Joi.string().optional(),
-      dateObjectType: Joi.string().optional(),
-      format: Joi.optional(),
-      locale: Joi.optional()
-    }).required();
+  private generateDateTimeFieldsJoiSchema(formControl: OibDateTimeFieldsFormControl): Record<string, AnySchema> {
+    let schema = Joi.array()
+      .items(
+        Joi.object({
+          field: Joi.string().required(),
+          useAsReference: Joi.boolean().required(),
+          datetimeFormat: Joi.object({
+            type: Joi.string().required(),
+            timezone: Joi.string().optional(),
+            dateObjectType: Joi.string().optional(),
+            format: Joi.optional(),
+            locale: Joi.optional()
+          })
+        })
+      )
+      .required();
 
-    schema = this.handleConditionalDisplay(formControl, schema) as Joi.ObjectSchema;
+    schema = this.handleConditionalDisplay(formControl, schema) as Joi.ArraySchema;
     return {
       [formControl.key]: schema
     };
@@ -182,7 +190,7 @@ export default class JoiValidator {
 
   private generateSerializationJoiSchema(formControl: OibSerializationFormControl): Record<string, AnySchema> {
     let schema = Joi.object({
-      type: Joi.string().required().valid('csv'),
+      type: Joi.string().required(),
       filename: Joi.string().optional(),
       delimiter: Joi.string().optional(),
       compression: Joi.boolean().optional(),
@@ -192,22 +200,7 @@ export default class JoiValidator {
         dateObjectType: Joi.string().optional(),
         format: Joi.optional(),
         locale: Joi.optional()
-      }),
-      datetimeSerialization: Joi.array()
-        .items(
-          Joi.object({
-            field: Joi.string().required(),
-            useAsReference: Joi.boolean().required(),
-            datetimeFormat: Joi.object({
-              type: Joi.string().required(),
-              timezone: Joi.string().optional(),
-              dateObjectType: Joi.string().optional(),
-              format: Joi.optional(),
-              locale: Joi.optional()
-            })
-          })
-        )
-        .required()
+      })
     }).required();
 
     schema = this.handleConditionalDisplay(formControl, schema) as Joi.ObjectSchema;
