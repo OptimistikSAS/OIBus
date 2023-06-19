@@ -450,7 +450,9 @@ export default class SouthSQL extends SouthConnector {
       throw new Error('odbc library not loaded.')
     }
 
-    const adaptedQuery = this.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?')
+    const adaptedQuery = this.query
+      .replace(/@StartTime/g, DateTime.fromJSDate(startTime, { zone: this.timezone }).toFormat(this.dateFormat, { locale: 'en-US' }).toUpperCase())
+      .replace(/@EndTime/g, DateTime.fromJSDate(endTime, { zone: this.timezone }).toFormat(this.dateFormat, { locale: 'en-US' }).toUpperCase())
 
     let connectionString = `Driver=${this.odbcDriverPath};SERVER=${this.host},${this.port};TrustServerCertificate=${this.selfSigned ? 'yes' : 'no'};`
     connectionString += `Database=${this.database};UID=${this.username}`
@@ -463,12 +465,10 @@ export default class SouthSQL extends SouthConnector {
         connectionTimeout: this.connectionTimeout,
         loginTimeout: this.connectionTimeout,
       }
+      this.logger.debug(`Executing query ${adaptedQuery}`)
       connection = await odbc.connect(connectionConfig)
 
-      const startDateTime = DateTime.fromJSDate(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
-      const endDateTime = DateTime.fromJSDate(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
-      const params = generateReplacementParameters(this.query, startDateTime, endDateTime)
-      data = await connection.query(adaptedQuery, params)
+      data = await connection.query(adaptedQuery)
     } catch (error) {
       if (error.odbcErrors?.length > 0) {
         error.odbcErrors.forEach((odbcError) => {
@@ -497,7 +497,9 @@ export default class SouthSQL extends SouthConnector {
       throw new Error('odbc library not loaded.')
     }
 
-    const adaptedQuery = this.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?')
+    const adaptedQuery = this.query
+      .replace(/@StartTime/g, DateTime.fromJSDate(startTime, { zone: this.timezone }).toFormat(this.dateFormat, { locale: 'en-US' }).toUpperCase())
+      .replace(/@EndTime/g, DateTime.fromJSDate(endTime, { zone: this.timezone }).toFormat(this.dateFormat, { locale: 'en-US' }).toUpperCase())
 
     const connectionString = `Driver=AspenTech SQLplus;HOST=${this.host};PORT=${this.port}`
     this.logger.debug(`Connecting with ODBC: ${connectionString}`)
@@ -511,11 +513,8 @@ export default class SouthSQL extends SouthConnector {
       }
       connection = await odbc.connect(connectionConfig)
 
-      // Format datetime into ip21 format (29-NOV-23 21:03:59.123)
-      const startDateTime = DateTime.fromJSDate(startTime).toFormat('dd-MMM-yy HH:mm:ss.SSS').toUpperCase()
-      const endDateTime = DateTime.fromJSDate(endTime).toFormat('dd-MMM-yy HH:mm:ss.SSS').toUpperCase()
-      const params = generateReplacementParameters(this.query, startDateTime, endDateTime)
-      data = await connection.query(adaptedQuery, params)
+      this.logger.debug(`Executing query ${adaptedQuery}`)
+      data = await connection.query(adaptedQuery)
       this.logger.debug(`Found ${data?.length} data IP21`)
     } catch (error) {
       if (error.odbcErrors?.length > 0) {
