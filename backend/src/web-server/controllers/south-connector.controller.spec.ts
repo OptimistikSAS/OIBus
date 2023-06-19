@@ -759,21 +759,23 @@ describe('South connector controller', () => {
     expect(ctx.app.reloadService.onCreateOrUpdateSouthItems).toHaveBeenCalledTimes(1);
   });
 
-  it('testSouthConnection() should update South connector', async () => {
+  it('testSouthConnection() should test South connector settings on connector update', async () => {
     ctx.request.body = {
       ...southConnectorCommand
     };
+    ctx.params.id = 'id1';
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
 
     await southConnectorController.testSouthConnection(ctx);
 
     expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
-      null,
+      southConnector.settings,
       mqttManifest.settings
     );
-    expect(ctx.app.reloadService.oibusEngine.testSouth).toHaveBeenCalledWith({ ...southConnectorCommand, name: 'mqtt:test-connection' });
+    expect(ctx.app.reloadService.oibusEngine.testSouth).toHaveBeenCalledWith({ ...southConnectorCommand, name: 'name' });
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
@@ -789,6 +791,41 @@ describe('South connector controller', () => {
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.oibusEngine.testSouth).not.toHaveBeenCalled();
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+  });
+
+  it('testSouthConnection() should return 404 when south connector is not found', async () => {
+    ctx.request.body = {
+      ...southConnectorCommand
+    };
+    ctx.params.id = 'id1';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+
+    await southConnectorController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.oibusEngine.testSouth).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it('testSouthConnection() should test connector on connector creation', async () => {
+    ctx.request.body = {
+      ...southConnectorCommand
+    };
+    ctx.params.id = 'create';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
+
+    await southConnectorController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).toHaveBeenCalledTimes(1);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      southConnectorCommand.settings,
+      null,
+      mqttManifest.settings
+    );
+    expect(ctx.app.reloadService.oibusEngine.testSouth).toHaveBeenCalledWith({ ...southConnectorCommand, name: 'mqtt:test-connection' });
+    expect(ctx.notFound).not.toHaveBeenCalled();
   });
 
   it('testSouthConnection() should return 404 when body is null', async () => {

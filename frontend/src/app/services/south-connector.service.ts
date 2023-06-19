@@ -178,7 +178,7 @@ export class SouthConnectorService {
     return this.http.post<void>(`/api/south/${southId}/items/upload`, formData);
   }
 
-  testConnection(settings: SouthConnectorCommandDTO): Observable<void> {
-    return this.http.put<void>(`/api/south/test-connection`, settings);
+  testConnection(southId: string, settings: SouthConnectorCommandDTO): Observable<void> {
+    return this.http.put<void>(`/api/south/${southId}/test-connection`, settings);
   }
 }

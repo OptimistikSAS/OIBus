@@ -103,13 +103,22 @@ export default class SouthConnectorController {
       if (!manifest) {
         return ctx.throw(404, 'South manifest not found');
       }
-
+      let southConnector: SouthConnectorDTO | null = null;
+      if (ctx.params.id !== 'create') {
+        southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
+        if (!southConnector) {
+          return ctx.notFound();
+        }
+      }
       await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
 
       const command: SouthConnectorCommandDTO = ctx.request.body!;
-      // TODO: replace with existing secrets if existing
-      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, null, manifest.settings);
-      ctx.request.body!.name = `${ctx.request.body!.type}:test-connection`; // TODO: replace with existing name if existing
+      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
+        command.settings,
+        southConnector?.settings || null,
+        manifest.settings
+      );
+      ctx.request.body!.name = southConnector ? southConnector.name : `${ctx.request.body!.type}:test-connection`;
       await ctx.app.reloadService.oibusEngine.testSouth(command);
 
       ctx.noContent();
@@ -156,6 +165,7 @@ export default class SouthConnectorController {
         southConnector.settings,
         manifest.settings
       );
+
       await ctx.app.reloadService.onUpdateSouthSettings(ctx.params.id, command);
       ctx.noContent();
     } catch (error: any) {
