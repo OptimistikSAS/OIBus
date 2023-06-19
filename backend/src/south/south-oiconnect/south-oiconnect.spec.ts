@@ -183,7 +183,7 @@ describe('SouthOIConnect with Basic auth', () => {
 
   it('should test connection with odbc', async () => {
     // TODO
-    await expect(SouthOIConnect.testConnection({}, logger)).rejects.toThrow('TODO: method needs to be implemented');
+    await expect(SouthOIConnect.testConnection({}, logger, encryptionService)).rejects.toThrow('TODO: method needs to be implemented');
     expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
   });
 

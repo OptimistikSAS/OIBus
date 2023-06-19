@@ -322,7 +322,7 @@ describe('OIBusEngine', () => {
 
     await engine.testSouth(southConnectorCommand);
     expect(logger.child).toHaveBeenCalledWith({ scope: `south:name` });
-    expect(SouthMQTT.testConnection).toHaveBeenCalledWith(southConnectorCommand.settings, logger);
+    expect(SouthMQTT.testConnection).toHaveBeenCalledWith(southConnectorCommand.settings, logger, encryptionService);
   });
 
   it('should throw error when test south connector of unknown type', async () => {

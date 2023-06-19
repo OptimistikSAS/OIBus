@@ -344,12 +344,12 @@ describe('SouthFolderScanner test connection', () => {
       throw new Error(errorMessage);
     });
 
-    const test = SouthFolderScanner.testConnection(settings, logger);
+    const test = SouthFolderScanner.testConnection(settings, logger, encryptionService);
     const folderRegex = new RegExp(`Folder '.*(${settings.inputFolder}).*' does not exist`);
     await expect(test).rejects.toThrowError(folderRegex);
 
     const accessRegex = new RegExp(`Access error on '.*(${settings.inputFolder}).*': ${errorMessage}`);
-    expect((logger.trace as jest.Mock).mock.calls).toEqual([['Testing connection'], [expect.stringMatching(accessRegex)]]);
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[expect.stringMatching(accessRegex)]]);
   });
 
   it('No read/write access', async () => {
@@ -360,9 +360,11 @@ describe('SouthFolderScanner test connection', () => {
         throw new Error(errorMessage);
       });
 
-    await expect(SouthFolderScanner.testConnection(settings, logger)).rejects.toThrowError('No read/write access on folder');
+    await expect(SouthFolderScanner.testConnection(settings, logger, encryptionService)).rejects.toThrowError(
+      'No read/write access on folder'
+    );
 
     const accessRegex = new RegExp(`Access error on '.*(${settings.inputFolder}).*': ${errorMessage}`);
-    expect((logger.trace as jest.Mock).mock.calls).toEqual([['Testing connection'], [expect.stringMatching(accessRegex)]]);
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[expect.stringMatching(accessRegex)]]);
   });
 });
