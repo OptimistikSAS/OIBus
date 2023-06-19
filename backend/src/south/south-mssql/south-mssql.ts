@@ -83,9 +83,7 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField = item.settings.serialization.datetimeSerialization.find(
-              (element: DateTimeSerialization) => element.field === key
-            );
+            const datetimeField = item.settings.dateTimeFields.find((element: DateTimeSerialization) => element.field === key);
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
@@ -138,7 +136,7 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
       config.domain = this.configuration.settings.domain;
     }
 
-    const referenceTimestampField = item.settings.serialization.datetimeSerialization.find(
+    const referenceTimestampField = item.settings.dateTimeFields.find(
       (serialization: DateTimeSerialization) => serialization.useAsReference
     );
     const mssqlStartTime = this.formatDatetimeVariables(startTime, referenceTimestampField.datetimeFormat);

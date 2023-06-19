@@ -13,8 +13,8 @@ import { Observable } from 'rxjs';
 import { inMemoryTypeahead } from '../typeahead';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
-import { OibDatetimeFormatComponent } from './oib-datetime-format/oib-datetime-format.component';
 import { OibSerializationComponent } from './oib-serialization/oib-serialization.component';
+import { DatetimeFieldsSerializationComponent } from './oib-datetime-fields-serialization/datetime-fields-serialization.component';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -35,8 +35,8 @@ declare namespace Intl {
     OibAuthComponent,
     NgbTypeahead,
     TranslateModule,
-    OibDatetimeFormatComponent,
-    OibSerializationComponent
+    OibSerializationComponent,
+    DatetimeFieldsSerializationComponent
   ],
   templateUrl: './form.component.html',
   styleUrls: ['./form.component.scss'],

@@ -313,8 +313,7 @@ describe('Service utils', () => {
             compression: false,
             outputDateTimeFormat: {
               type: 'iso-8601-string'
-            },
-            datetimeSerialization: []
+            }
           },
           'connectorName',
           'myTmpFolder',
@@ -341,8 +340,7 @@ describe('Service utils', () => {
             compression: false,
             outputDateTimeFormat: {
               type: 'iso-8601-string'
-            },
-            datetimeSerialization: []
+            }
           },
           'connectorName',
           'myTmpFolder',
@@ -394,8 +392,7 @@ describe('Service utils', () => {
             compression: true,
             outputDateTimeFormat: {
               type: 'iso-8601-string'
-            },
-            datetimeSerialization: []
+            }
           },
           'connectorName',
           'myTmpFolder',
@@ -417,8 +414,7 @@ describe('Service utils', () => {
             type: 'oibus-values',
             outputDateTimeFormat: {
               type: 'iso-8601-string'
-            },
-            datetimeSerialization: []
+            }
           },
           'connectorName',
           'myTmpFolder',
@@ -442,8 +438,7 @@ describe('Service utils', () => {
             compression: true,
             outputDateTimeFormat: {
               type: 'iso-8601-string'
-            },
-            datetimeSerialization: []
+            }
           },
           'connectorName',
           'myTmpFolder',

@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 
 import { OibDatetimeFormatComponent } from './oib-datetime-format.component';
 import { Component } from '@angular/core';
-import { OibDateTimeFormatFormControl } from '../../../../../../shared/model/form.model';
 import { formDirectives } from '../../form-directives';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup, FormRecord } from '@angular/forms';
@@ -11,19 +10,13 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 @Component({
   template: `<form [formGroup]="form">
     <div formGroupName="settings">
-      <oib-datetime-format [key]="settings.key" [label]="settings.label" [formControlName]="settings.key"></oib-datetime-format>
+      <oib-datetime-format key="myOibDateTimeFormat" label="Select field" formControlName="myOibDateTimeFormat"></oib-datetime-format>
     </div>
   </form>`,
   standalone: true,
   imports: [OibDatetimeFormatComponent, ...formDirectives]
 })
 class TestComponent {
-  settings: OibDateTimeFormatFormControl = {
-    key: 'myOibDateTimeFormat',
-    type: 'OibDateTimeFormat',
-    label: 'Select field'
-  } as OibDateTimeFormatFormControl;
-
   form = new FormGroup({
     settings: new FormRecord({
       myOibDateTimeFormat: new FormControl({

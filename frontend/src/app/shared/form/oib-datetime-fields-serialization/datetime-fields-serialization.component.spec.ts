@@ -3,10 +3,10 @@ import { Component } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { DatetimeFieldsSerializationComponent } from './datetime-fields-serialization.component';
 import { TestBed } from '@angular/core/testing';
-import { DateTimeSerialization } from '../../../../../../../shared/model/types';
-import { EditDatetimeSerializationComponent } from '../edit-datetime-serialization/edit-datetime-serialization.component';
-import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
-import { formDirectives } from '../../../form-directives';
+import { DateTimeSerialization } from '../../../../../../shared/model/types';
+import { EditDatetimeSerializationComponent } from './edit-datetime-serialization/edit-datetime-serialization.component';
+import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { formDirectives } from '../../form-directives';
 
 @Component({
   template: '<oib-datetime-fields-serialization [formControl]="control"></oib-datetime-fields-serialization>',

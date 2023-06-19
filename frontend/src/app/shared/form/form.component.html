@@ -66,19 +66,19 @@
             [formControlName]="settings.key"
             [proxies]="proxies"
           ></oib-proxy>
-          <oib-datetime-format
-            *ngIf="settings.type === 'OibDateTimeFormat'"
-            [label]="settings.label"
-            [key]="settings.key"
-            [formControlName]="settings.key"
-          ></oib-datetime-format>
           <oib-serialization
             *ngIf="settings.type === 'OibSerialization'"
             [label]="settings.label"
             [key]="settings.key"
             [formControlName]="settings.key"
-            [dateObjectTypes]="settings.allowedDateObjectTypes || []"
           ></oib-serialization>
+          <oib-datetime-fields-serialization
+            *ngIf="settings.type === 'OibDateTimeFields'"
+            [label]="settings.label"
+            [key]="settings.key"
+            formControlName="dateTimeFields"
+            [dateObjectTypes]="settings.allowedDateObjectTypes || []"
+          ></oib-datetime-fields-serialization>
           <oib-auth
             *ngIf="settings.type === 'OibAuthentication'"
             [key]="settings.key"

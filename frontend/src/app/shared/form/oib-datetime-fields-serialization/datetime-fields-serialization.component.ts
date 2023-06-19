@@ -1,11 +1,11 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { DateTimeSerialization } from '../../../../../../../shared/model/types';
-import { formDirectives } from '../../../form-directives';
+import { DateTimeSerialization } from '../../../../../../shared/model/types';
+import { formDirectives } from '../../form-directives';
 import { NgForOf, NgIf } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { DatetimeTypesEnumPipe } from '../../../datetime-types-enum.pipe';
-import { EditDatetimeSerializationComponent } from '../edit-datetime-serialization/edit-datetime-serialization.component';
+import { DatetimeTypesEnumPipe } from '../../datetime-types-enum.pipe';
+import { EditDatetimeSerializationComponent } from './edit-datetime-serialization/edit-datetime-serialization.component';
 
 @Component({
   selector: 'oib-datetime-fields-serialization',
@@ -22,6 +22,8 @@ import { EditDatetimeSerializationComponent } from '../edit-datetime-serializati
   standalone: true
 })
 export class DatetimeFieldsSerializationComponent {
+  @Input() label = '';
+  @Input() key = '';
   @Input() dateObjectTypes: Array<string> = [];
 
   dateTimeSerializations: Array<DateTimeSerialization> = [];
