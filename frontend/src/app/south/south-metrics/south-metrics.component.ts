@@ -1,8 +1,8 @@
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { ConnectorMetrics } from '../../../../../shared/model/engine.model';
-import { NgIf } from '@angular/common';
+import { JsonPipe, NgIf } from '@angular/common';
 import { WindowService } from '../../shared/window.service';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
@@ -14,11 +14,12 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
   selector: 'oib-south-metrics',
   templateUrl: './south-metrics.component.html',
   styleUrls: ['./south-metrics.component.scss'],
-  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective],
+  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe],
   standalone: true
 })
 export class SouthMetricsComponent implements OnInit, OnDestroy {
   @Input({ required: true }) southConnector!: SouthConnectorDTO;
+  @Input({ required: true }) manifest!: SouthConnectorManifest;
 
   connectorMetrics: ConnectorMetrics | null = null;
   connectorStream: EventSource | null = null;

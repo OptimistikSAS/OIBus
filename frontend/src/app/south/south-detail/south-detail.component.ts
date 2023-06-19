@@ -1,7 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { OibusItemManifest, SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
+import {
+  OibusItemManifest,
+  SouthConnectorCommandDTO,
+  SouthConnectorDTO,
+  SouthConnectorManifest
+} from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, of, switchMap } from 'rxjs';
@@ -44,6 +49,7 @@ export class SouthDetailComponent implements OnInit {
   settings: Array<OibFormControl> = [];
   southItemSchema: OibusItemManifest | null = null;
   scanModes: Array<ScanModeDTO> = [];
+  manifest: SouthConnectorManifest | null = null;
 
   constructor(
     private southConnectorService: SouthConnectorService,
@@ -80,6 +86,7 @@ export class SouthDetailComponent implements OnInit {
         if (!manifest) {
           return;
         }
+        this.manifest = manifest;
         this.southItemSchema = manifest.items;
         this.settings = getRowSettings(manifest.settings, this.southConnector?.settings)
           .flat()

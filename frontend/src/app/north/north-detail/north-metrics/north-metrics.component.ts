@@ -1,11 +1,11 @@
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ConnectorMetrics } from '../../../../../../shared/model/engine.model';
-import { NgIf } from '@angular/common';
+import { JsonPipe, NgIf } from '@angular/common';
 import { WindowService } from '../../../shared/window.service';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { DurationPipe } from '../../../shared/duration.pipe';
-import { NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { NotificationService } from '../../../shared/notification.service';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
@@ -14,11 +14,12 @@ import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.compone
   selector: 'oib-north-metrics',
   templateUrl: './north-metrics.component.html',
   styleUrls: ['./north-metrics.component.scss'],
-  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective],
+  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe],
   standalone: true
 })
 export class NorthMetricsComponent implements OnInit, OnDestroy {
   @Input({ required: true }) northConnector!: NorthConnectorDTO;
+  @Input({ required: true }) manifest!: NorthConnectorManifest;
 
   connectorMetrics: ConnectorMetrics | null = null;
   connectorStream: EventSource | null = null;

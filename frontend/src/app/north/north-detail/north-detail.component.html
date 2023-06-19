@@ -13,7 +13,7 @@
 
       <ng-container *ngIf="manifest">
         <!-- North metrics -->
-        <oib-north-metrics [northConnector]="northConnector"></oib-north-metrics>
+        <oib-north-metrics [manifest]="manifest" [northConnector]="northConnector"></oib-north-metrics>
 
         <!-- Specific settings -->
         <oib-box>

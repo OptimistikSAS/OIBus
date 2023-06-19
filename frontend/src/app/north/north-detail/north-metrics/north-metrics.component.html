@@ -10,12 +10,12 @@
     <table class="table table-sm table-hover oib-table">
       <tbody>
         <!-- number of values for point connectors -->
-        <tr *ngIf="connectorMetrics.numberOfValues !== null">
+        <tr *ngIf="manifest.modes.points">
           <td style="width: 33%" translate="north.monitoring.number-of-values"></td>
           <td>{{ connectorMetrics.numberOfValues }}</td>
         </tr>
         <!-- number of files for file connectors -->
-        <tr *ngIf="connectorMetrics.numberOfFiles !== null">
+        <tr *ngIf="manifest.modes.files">
           <td translate="north.monitoring.number-of-files"></td>
           <td>{{ connectorMetrics.numberOfFiles }}</td>
         </tr>
@@ -25,12 +25,12 @@
           <td>{{ connectorMetrics.lastConnection | datetime:'mediumWithSeconds' }}</td>
         </tr>
         <!-- last value -->
-        <tr>
+        <tr *ngIf="manifest.modes.points">
           <td translate="north.monitoring.last-value"></td>
-          <td>{{ connectorMetrics.lastValue }}</td>
+          <td>{{ connectorMetrics.lastValue | json }}</td>
         </tr>
         <!-- last file -->
-        <tr>
+        <tr *ngIf="manifest.modes.files">
           <td translate="north.monitoring.last-file"></td>
           <td>{{ connectorMetrics.lastFile }}</td>
         </tr>
