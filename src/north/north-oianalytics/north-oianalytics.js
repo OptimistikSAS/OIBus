@@ -130,7 +130,7 @@ export default class NorthOIAnalytics extends NorthConnector {
       return true
     }
     // Otherwise, check the HTTP status code
-    const retry = [400, 500].includes(error.statusCode)
+    const retry = [400, 401, 403, 500, 502, 503, 504].includes(error.statusCode)
     this.logger.trace(`Should retry ${retry} because of error status code: ${error.statusCode}.`)
     return retry
   }
