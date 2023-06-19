@@ -57,9 +57,11 @@ export default class SouthSQLite extends SouthConnector implements QueriesHistor
     await super.start();
   }
 
-  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
-    logger.trace(`Testing connection`);
-
+  static async testConnection(
+    settings: SouthConnectorDTO['settings'],
+    logger: pino.Logger,
+    _encryptionService: EncryptionService
+  ): Promise<void> {
     logger.trace(`Testing if SQLite file exists`);
     const dbPath = path.resolve(settings.databasePath);
 

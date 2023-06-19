@@ -88,7 +88,11 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
   }
 
   // TODO: method needs to be implemented
-  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
+  static async testConnection(
+    settings: SouthConnectorDTO['settings'],
+    logger: pino.Logger,
+    _encryptionService: EncryptionService
+  ): Promise<void> {
     logger.trace(`Testing connection`);
     throw new Error('TODO: method needs to be implemented');
   }

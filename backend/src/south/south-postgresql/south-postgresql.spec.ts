@@ -170,7 +170,7 @@ describe('SouthPostgreSQL with authentication', () => {
 
   it('should test connection with postgresql', async () => {
     // TODO
-    await expect(SouthPostgreSQL.testConnection({}, logger)).rejects.toThrow('TODO: method needs to be implemented');
+    await expect(SouthPostgreSQL.testConnection({}, logger, encryptionService)).rejects.toThrow('TODO: method needs to be implemented');
     expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
   });
 
