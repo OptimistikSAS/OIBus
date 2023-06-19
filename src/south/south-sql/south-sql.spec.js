@@ -467,13 +467,13 @@ describe('SouthSQL', () => {
     const startTime = new Date('2019-10-03T13:36:36.360Z')
     const endTime = new Date('2019-10-03T13:40:40.400Z')
     utils.generateReplacementParameters.mockReturnValueOnce([startTime, endTime])
-    const valueTimestamp = new Date('2019-10-03T13:38:38.380Z')
+    // const valueTimestamp = new Date('2019-10-03T13:38:38.380Z')
     const connection = {
-      query: jest.fn((_adaptedQuery, params) => (
-        params[0] < valueTimestamp ? [{
+      query: jest.fn((_adaptedQuery) => (
+        [{
           value: 75.2,
           timestamp: '2019-10-03 15:38:38.380',
-        }] : []
+        }]
       )),
       close: jest.fn(),
     }
@@ -488,14 +488,12 @@ describe('SouthSQL', () => {
           + 'TrustServerCertificate=no;Database=oibus;UID=oibus_user;PWD=popopopopopopopopo',
     }
 
-    const expectedQuery = 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test WHERE created_at > ? AND created_at <= ?'
-    const expectedExecuteParams = [
-      new Date('2019-10-03T13:36:36.360Z'),
-      new Date('2019-10-03T13:40:40.400Z'),
-    ]
+    const expectedQuery = 'SELECT created_at AS timestamp, value1 AS temperature FROM oibus_test '
+        + 'WHERE created_at > 2019-10-03 15:36:36.360 AND created_at <= 2019-10-03 15:40:40.400'
+
     expect(odbc.connect).toHaveBeenCalledWith(expectedConfig)
     expect(connection.query).toBeCalledTimes(1)
-    expect(connection.query).toBeCalledWith(expectedQuery, expectedExecuteParams)
+    expect(connection.query).toBeCalledWith(expectedQuery)
     expect(connection.close).toBeCalledTimes(1)
   })
 
