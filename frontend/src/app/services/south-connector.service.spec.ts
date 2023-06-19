@@ -260,8 +260,8 @@ describe('SouthConnectorService', () => {
       settings: {}
     };
 
-    service.testConnection(command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/test-connection' });
+    service.testConnection('id1', command).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1/test-connection' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
     expect(done).toBe(true);

@@ -2,7 +2,7 @@ import PinoLogger from '../tests/__mocks__/logger.mock';
 import SouthServiceMock from '../tests/__mocks__/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/north-service.mock';
 
-import { OibusItemDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
+import { OibusItemDTO, SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 
 import SouthService from '../service/south.service';
@@ -15,7 +15,9 @@ import RepositoryService from '../service/repository.service';
 import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
 import ProxyService from '../service/proxy.service';
 import OIBusEngine from './oibus-engine';
+import SouthMQTT from '../south/south-mqtt/south-mqtt';
 
+jest.mock('../south/south-mqtt/south-mqtt');
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');
 jest.mock('../service/repository.service');
@@ -60,20 +62,20 @@ describe('OIBusEngine', () => {
       name: 'myNorthConnector1',
       description: 'a test north connector',
       enabled: true,
-      type: 'Test'
+      type: 'oianalytics'
     } as NorthConnectorDTO,
     {
       id: 'id2',
       name: 'myNorthConnector2',
       description: 'a test north connector',
       enabled: false,
-      type: 'Test'
+      type: 'oiconnect'
     } as NorthConnectorDTO
   ];
   const southConnectors: Array<SouthConnectorDTO> = [
     {
       id: 'id1',
-      type: 'SQL',
+      type: 'sqlite',
       name: 'South Connector1 ',
       description: 'My first South connector description',
       enabled: true,
@@ -86,7 +88,7 @@ describe('OIBusEngine', () => {
     },
     {
       id: 'id2',
-      type: 'OPCUA_HA',
+      type: 'opcua-ha',
       name: 'South Connector 2',
       description: 'My second South connector description',
       enabled: false,
@@ -297,5 +299,75 @@ describe('OIBusEngine', () => {
     await engine.stop();
     expect(createdSouth.stop).toHaveBeenCalledTimes(2);
     expect(createdNorth.stop).toHaveBeenCalledTimes(2);
+  });
+
+  it('should properly test south connector', async () => {
+    const southConnectorCommand: SouthConnectorCommandDTO = {
+      name: 'name',
+      type: 'mqtt',
+      description: 'description',
+      enabled: true,
+      settings: {
+        field: 'value'
+      },
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 1000,
+        readDelay: 100
+      }
+    };
+    (southService.getSouthClass as jest.Mock).mockReturnValue(SouthMQTT);
+
+    (logger.child as jest.Mock).mockReturnValue(logger);
+
+    await engine.testSouth(southConnectorCommand);
+    expect(logger.child).toHaveBeenCalledWith({ scope: `south:name` });
+    expect(SouthMQTT.testConnection).toHaveBeenCalledWith(southConnectorCommand.settings, logger);
+  });
+
+  it('should throw error when test south connector of unknown type', async () => {
+    const southConnectorCommand: SouthConnectorCommandDTO = {
+      name: 'name',
+      type: 'bad type',
+      description: 'description',
+      enabled: true,
+      settings: {
+        field: 'value'
+      },
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 1000,
+        readDelay: 100
+      }
+    };
+    (southService.getSouthClass as jest.Mock).mockReturnValue(null);
+
+    await expect(engine.testSouth(southConnectorCommand)).rejects.toThrowError('Unknown South connector type bad type');
+    expect(logger.child).not.toHaveBeenCalled();
+    expect(SouthMQTT.testConnection).not.toHaveBeenCalled();
+  });
+
+  it('should throw error when test south connector does not have test method', async () => {
+    const southConnectorCommand: SouthConnectorCommandDTO = {
+      name: 'name',
+      type: 'bad connector',
+      description: 'description',
+      enabled: true,
+      settings: {
+        field: 'value'
+      },
+      history: {
+        maxInstantPerItem: false,
+        maxReadInterval: 1000,
+        readDelay: 100
+      }
+    };
+    (southService.getSouthClass as jest.Mock).mockReturnValue({});
+
+    await expect(engine.testSouth(southConnectorCommand)).rejects.toThrowError(
+      'South connector of type bad connector does not have testConnection method'
+    );
+    expect(logger.child).not.toHaveBeenCalled();
+    expect(SouthMQTT.testConnection).not.toHaveBeenCalled();
   });
 });
