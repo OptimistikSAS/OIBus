@@ -53,6 +53,7 @@ export default class ValueCacheService {
     this.sendingValues$ = null
     this.valuesBeingSent = null
     this.cacheSize = 0
+    this.flushInProgress = false
 
     this.valueFolder = path.resolve(this.baseFolder, VALUE_FOLDER)
     this.errorFolder = path.resolve(this.baseFolder, ERROR_FOLDER)
@@ -147,6 +148,11 @@ export default class ValueCacheService {
    * @returns {Promise<void>} - The result promise
    */
   async flush(flag = 'time-flush') {
+    if (this.flushInProgress) {
+      return
+    }
+    this.flushInProgress = true
+
     if (flag === 'max-flush') {
       clearTimeout(this.bufferTimeout)
     }
@@ -165,6 +171,7 @@ export default class ValueCacheService {
       // Save the buffer to be sent and immediately clear it
       if (valuesToFlush.length === 0) {
         this.logger.trace(`Nothing to flush (${flag}).`)
+        this.flushInProgress = false
         return
       }
       // Store the values in a tmp file
@@ -195,7 +202,7 @@ export default class ValueCacheService {
       const copiedQueue = this.queue
       await this.compactQueueCache(copiedQueue)
     }
-
+    this.flushInProgress = false
     if (groupCount >= this.settings.groupCount) {
       await this.sendValuesWrapper('group-count')
     }
