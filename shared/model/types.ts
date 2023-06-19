@@ -107,7 +107,6 @@ export interface DateTimeSerialization {
 interface BaseSerializationFormat {
   type: SerializationType;
   outputDateTimeFormat: DateTimeFormat;
-  datetimeSerialization: Array<DateTimeSerialization>;
 }
 
 export interface FileSerializationFormat extends BaseSerializationFormat {

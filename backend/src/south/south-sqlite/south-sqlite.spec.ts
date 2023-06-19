@@ -50,20 +50,20 @@ const items: Array<OibusItemDTO> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table WHERE timestamp > @StartTime and timestamp < @EndTime',
+      dateTimeFields: [
+        { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+        {
+          field: 'timestamp',
+          useAsReference: true,
+          datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+        }
+      ],
       serialization: {
         type: 'file',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' },
-        datetimeSerialization: [
-          { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
-          {
-            field: 'timestamp',
-            useAsReference: true,
-            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
-          }
-        ]
+        dateTimeOutputFormat: { type: 'iso-8601-string' }
       }
     },
     scanModeId: 'scanModeId1'
@@ -74,20 +74,20 @@ const items: Array<OibusItemDTO> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
+      dateTimeFields: [
+        { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+        {
+          field: 'timestamp',
+          useAsReference: true,
+          datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+        }
+      ],
       serialization: {
         type: 'file',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' },
-        datetimeSerialization: [
-          { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
-          {
-            field: 'timestamp',
-            useAsReference: true,
-            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
-          }
-        ]
+        dateTimeOutputFormat: { type: 'iso-8601-string' }
       }
     },
     scanModeId: 'scanModeId1'
@@ -98,20 +98,20 @@ const items: Array<OibusItemDTO> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
+      dateTimeFields: [
+        { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
+        {
+          field: 'timestamp',
+          useAsReference: true,
+          datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+        }
+      ],
       serialization: {
         type: 'file',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' },
-        datetimeSerialization: [
-          { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
-          {
-            field: 'timestamp',
-            useAsReference: true,
-            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
-          }
-        ]
+        dateTimeOutputFormat: { type: 'iso-8601-string' }
       }
     },
     scanModeId: 'scanModeId2'

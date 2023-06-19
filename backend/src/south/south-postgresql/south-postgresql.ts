@@ -91,9 +91,7 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField = item.settings.serialization.datetimeSerialization.find(
-              (element: DateTimeSerialization) => element.field === key
-            );
+            const datetimeField = item.settings.dateTimeFields.find((element: DateTimeSerialization) => element.field === key);
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
@@ -140,9 +138,7 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
       connectionTimeoutMillis: this.configuration.settings.connectionTimeout
     };
 
-    const datetimeSerialization = item.settings.serialization.datetimeSerialization.find(
-      (serialization: DateTimeSerialization) => serialization.useAsReference
-    );
+    const datetimeSerialization = item.settings.dateTimeFields.find((serialization: DateTimeSerialization) => serialization.useAsReference);
     const postgresqlStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization.datetimeFormat);
     const postgresqlEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization.datetimeFormat);
     logQuery(item.settings.query, postgresqlStartTime, postgresqlEndTime, this.logger);

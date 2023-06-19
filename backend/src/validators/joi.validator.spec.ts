@@ -101,8 +101,8 @@ describe('Joi validator', () => {
         subscriptionOnly: false
       },
       {
-        key: 'datetimeFormat',
-        type: 'OibDateTimeFormat',
+        key: 'dateTimeFields',
+        type: 'OibDateTimeFields',
         label: 'OibDateTimeFormat'
       },
       {
@@ -131,15 +131,23 @@ describe('Joi validator', () => {
       timezone: Joi.string().allow(null, ''),
       scanMode: Joi.string().allow(null, ''),
       proxy: Joi.string().allow(null, ''),
-      datetimeFormat: Joi.object({
-        type: Joi.string().required(),
-        timezone: Joi.string().optional(),
-        dateObjectType: Joi.string().optional(),
-        format: Joi.optional(),
-        locale: Joi.optional()
-      }).required(),
+      dateTimeFields: Joi.array()
+        .items(
+          Joi.object({
+            field: Joi.string().required(),
+            useAsReference: Joi.boolean().required(),
+            datetimeFormat: Joi.object({
+              type: Joi.string().required(),
+              timezone: Joi.string().optional(),
+              dateObjectType: Joi.string().optional(),
+              format: Joi.optional(),
+              locale: Joi.optional()
+            })
+          })
+        )
+        .required(),
       serialization: Joi.object({
-        type: Joi.string().required().valid('csv'),
+        type: Joi.string().required(),
         filename: Joi.string().optional(),
         delimiter: Joi.string().optional(),
         compression: Joi.boolean().optional(),
@@ -149,22 +157,7 @@ describe('Joi validator', () => {
           dateObjectType: Joi.string().optional(),
           format: Joi.optional(),
           locale: Joi.optional()
-        }),
-        datetimeSerialization: Joi.array()
-          .items(
-            Joi.object({
-              field: Joi.string().required(),
-              useAsReference: Joi.boolean().required(),
-              datetimeFormat: Joi.object({
-                type: Joi.string().required(),
-                timezone: Joi.string().optional(),
-                dateObjectType: Joi.string().optional(),
-                format: Joi.optional(),
-                locale: Joi.optional()
-              })
-            })
-          )
-          .required()
+        })
       }).required(),
       authentication: Joi.object({
         type: Joi.string().required().valid('none', 'basic', 'cert'),
@@ -297,7 +290,7 @@ describe('Joi validator', () => {
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
     const serializationSchema = Joi.object({
-      type: Joi.string().required().valid('csv'),
+      type: Joi.string().required(),
       filename: Joi.string().optional(),
       delimiter: Joi.string().optional(),
       compression: Joi.boolean().optional(),
@@ -307,22 +300,7 @@ describe('Joi validator', () => {
         dateObjectType: Joi.string().optional(),
         format: Joi.optional(),
         locale: Joi.optional()
-      }),
-      datetimeSerialization: Joi.array()
-        .items(
-          Joi.object({
-            field: Joi.string().required(),
-            useAsReference: Joi.boolean().required(),
-            datetimeFormat: Joi.object({
-              type: Joi.string().required(),
-              timezone: Joi.string().optional(),
-              dateObjectType: Joi.string().optional(),
-              format: Joi.optional(),
-              locale: Joi.optional()
-            })
-          })
-        )
-        .required()
+      })
     });
     const expectedSchema = Joi.object({
       driver: Joi.string().required().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle', 'SQLite'),

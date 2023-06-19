@@ -1,14 +1,13 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { formDirectives } from '../../form-directives';
 import { NgForOf, NgIf } from '@angular/common';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthTypesEnumPipe } from '../../auth-types-enum.pipe';
 import {
   ALL_CSV_CHARACTERS,
   CsvCharacter,
   DateTimeFormat,
-  DateTimeSerialization,
   Serialization,
   SERIALIZATION_TYPES,
   SerializationType
@@ -17,7 +16,6 @@ import { DatetimeTypesEnumPipe } from '../../datetime-types-enum.pipe';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { SerializationsEnumPipe } from '../../serialization-types-enum.pipe';
 import { CsvCharacterEnumPipe } from '../../csv-character-enum.pipe';
-import { DatetimeFieldsSerializationComponent } from './datetime-fields-serialization/datetime-fields-serialization.component';
 import { OibDatetimeFormatComponent } from '../oib-datetime-format/oib-datetime-format.component';
 
 @Component({
@@ -33,7 +31,6 @@ import { OibDatetimeFormatComponent } from '../oib-datetime-format/oib-datetime-
     NgbTypeahead,
     SerializationsEnumPipe,
     CsvCharacterEnumPipe,
-    DatetimeFieldsSerializationComponent,
     OibDatetimeFormatComponent
   ],
   templateUrl: './oib-serialization.component.html',
@@ -43,7 +40,6 @@ import { OibDatetimeFormatComponent } from '../oib-datetime-format/oib-datetime-
 export class OibSerializationComponent implements ControlValueAccessor {
   @Input() label = '';
   @Input() key = '';
-  @Input() dateObjectTypes: Array<string> = [];
 
   readonly serializationTypes = SERIALIZATION_TYPES;
   readonly csvDelimiters = ALL_CSV_CHARACTERS;
@@ -53,7 +49,6 @@ export class OibSerializationComponent implements ControlValueAccessor {
     filename: '',
     delimiter: 'COMMA' as CsvCharacter,
     compression: false,
-    datetimeSerialization: [[] as Array<DateTimeSerialization>, Validators.required],
     outputDateTimeFormat: {
       type: 'specific-string',
       timezone: 'Europe/Paris',
@@ -90,8 +85,7 @@ export class OibSerializationComponent implements ControlValueAccessor {
             filename: newValue.filename!,
             delimiter: newValue.delimiter!,
             compression: newValue.compression!,
-            outputDateTimeFormat: newValue.outputDateTimeFormat!,
-            datetimeSerialization: newValue.datetimeSerialization!
+            outputDateTimeFormat: newValue.outputDateTimeFormat!
           });
           break;
         case 'oibus-values':
@@ -99,8 +93,7 @@ export class OibSerializationComponent implements ControlValueAccessor {
             type: 'oibus-values',
             outputDateTimeFormat: {
               type: 'iso-8601-string'
-            },
-            datetimeSerialization: newValue.datetimeSerialization!
+            }
           });
           break;
       }
@@ -132,8 +125,7 @@ export class OibSerializationComponent implements ControlValueAccessor {
           filename: value.filename,
           delimiter: value.delimiter,
           compression: value.compression,
-          outputDateTimeFormat: value.outputDateTimeFormat,
-          datetimeSerialization: value.datetimeSerialization
+          outputDateTimeFormat: value.outputDateTimeFormat
         });
         break;
       case 'oibus-values':
@@ -141,8 +133,7 @@ export class OibSerializationComponent implements ControlValueAccessor {
           type: 'oibus-value',
           outputDateTimeFormat: {
             type: 'iso-8601-string'
-          },
-          datetimeSerialization: value.datetimeSerialization
+          }
         });
         break;
     }
