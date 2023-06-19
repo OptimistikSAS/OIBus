@@ -136,8 +136,11 @@ export default class OIBusEngine extends BaseEngine {
   async testSouth(settings: SouthConnectorCommandDTO): Promise<void> {
     const SouthConnectorClass = this.southService.getSouthClass(settings.type);
 
+    if (!SouthConnectorClass) {
+      throw new Error(`Unknown South connector type ${settings.type}`);
+    }
     if (!('testConnection' in SouthConnectorClass)) {
-      throw new Error('Connector does not have testConnection method');
+      throw new Error(`South connector of type ${settings.type} does not have testConnection method`);
     }
     const TestClass = SouthConnectorClass as typeof SouthConnector & typeof TestsConnection;
     const testLogger = this.logger.child({ scope: `south:${settings.name}` });

@@ -116,7 +116,7 @@ export class SouthDetailComponent implements OnInit {
     };
 
     this.southConnectorService
-      .testConnection(command)
+      .testConnection(this.southConnector!.id, command)
       .pipe(
         catchError(httpError => {
           this.notificationService.error('south.test-connection.failure', { error: httpError.error.message });

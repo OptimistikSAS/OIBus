@@ -189,7 +189,7 @@ export class EditSouthComponent implements OnInit {
       this.createOrUpdateSouthConnector(command);
     } else {
       this.southConnectorService
-        .testConnection(command)
+        .testConnection(this.southConnector?.id || 'create', command)
         .pipe(
           catchError(httpError => {
             this.notificationService.error('south.test-connection.failure', { error: httpError.error.message });
