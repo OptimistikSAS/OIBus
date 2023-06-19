@@ -3,12 +3,15 @@ import fsSync from 'node:fs'
 import fetch from 'node-fetch'
 
 import * as httpRequestStaticFunctions from './http-request-static-functions.js'
+import { filesExists } from './utils.js'
 
 jest.mock('node:fs')
 
 // Mock node-fetch
 jest.mock('node-fetch')
 const { Response } = jest.requireActual('node-fetch')
+
+jest.mock('./utils.js')
 
 describe('HTTP request static functions', () => {
   beforeEach(() => {
@@ -240,6 +243,7 @@ describe('HTTP request static functions', () => {
     }
     fsSync.createReadStream.mockReturnValueOnce(myReadStream)
 
+    filesExists.mockReturnValue(true)
     await httpRequestStaticFunctions.httpSend(requestUrl, method, headers, data, timeout, null)
 
     const expectedFetchOptions = {

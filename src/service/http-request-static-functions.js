@@ -6,6 +6,7 @@ import FormData from 'form-data'
 import ProxyAgent from 'proxy-agent'
 import fetch from 'node-fetch'
 import https from 'node:https'
+import { filesExists } from './utils.js'
 
 /**
  * Create a proxy agent to use wih HTTP requests
@@ -82,6 +83,9 @@ const httpSend = async (
   if (Object.prototype.hasOwnProperty.call(headers, 'Content-Type')) {
     body = data
   } else {
+    if (!await filesExists(data)) {
+      return
+    }
     readStream = createReadStream(data)
     body = new FormData()
 
