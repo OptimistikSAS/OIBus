@@ -12,12 +12,12 @@
         <!-- number of values for point connectors -->
         <tr *ngIf="manifest.modes.points">
           <td style="width: 33%" translate="north.monitoring.number-of-values"></td>
-          <td>{{ connectorMetrics.numberOfValues }}</td>
+          <td>{{ connectorMetrics.numberOfValuesSent }}</td>
         </tr>
         <!-- number of files for file connectors -->
         <tr *ngIf="manifest.modes.files">
           <td translate="north.monitoring.number-of-files"></td>
-          <td>{{ connectorMetrics.numberOfFiles }}</td>
+          <td>{{ connectorMetrics.numberOfFilesSent }}</td>
         </tr>
         <!-- last connection -->
         <tr *ngIf="connectorMetrics.lastConnection !== null">
@@ -27,12 +27,12 @@
         <!-- last value -->
         <tr *ngIf="manifest.modes.points">
           <td translate="north.monitoring.last-value"></td>
-          <td>{{ connectorMetrics.lastValue | json }}</td>
+          <td>{{ connectorMetrics.lastValueSent | json }}</td>
         </tr>
         <!-- last file -->
         <tr *ngIf="manifest.modes.files">
           <td translate="north.monitoring.last-file"></td>
-          <td>{{ connectorMetrics.lastFile }}</td>
+          <td>{{ connectorMetrics.lastFileSent }}</td>
         </tr>
         <!-- last run -->
         <tr *ngIf="connectorMetrics.lastRunStart !== null">

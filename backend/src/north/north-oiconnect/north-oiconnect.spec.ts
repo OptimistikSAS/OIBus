@@ -14,7 +14,6 @@ import fetch from 'node-fetch';
 import https from 'node:https';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
-import CacheServiceMock from '../../tests/__mocks__/cache-service.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -37,11 +36,22 @@ jest.mock(
       return new FileCacheServiceMock();
     }
 );
+const resetMetrics = jest.fn();
 jest.mock(
-  '../../service/cache.service',
+  '../../service/north-connector-metrics.service',
   () =>
     function () {
-      return new CacheServiceMock();
+      return {
+        updateMetrics: jest.fn(),
+        get stream() {
+          return { stream: 'myStream' };
+        },
+        resetMetrics,
+        metrics: {
+          numberOfValuesSent: 1,
+          numberOfFilesSent: 1
+        }
+      };
     }
 );
 

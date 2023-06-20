@@ -9,6 +9,9 @@ import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
+import HistoryMetricsService from '../service/history-metrics.service';
+import HistoryQueryService from '../service/history-query.service';
+import { PassThrough } from 'node:stream';
 
 const FINISH_INTERVAL = 5000;
 
@@ -17,16 +20,19 @@ export default class HistoryQuery {
   private north: NorthConnector | null = null;
   private south: SouthConnector | null = null;
   private finishInterval: NodeJS.Timeout | null = null;
+  private _metricsService: HistoryMetricsService;
 
   constructor(
     private readonly historyConfiguration: HistoryQueryDTO,
     private readonly southService: SouthService,
     private readonly northService: NorthService,
+    private readonly historyService: HistoryQueryService,
     private items: Array<OibusItemDTO>,
     private logger: pino.Logger,
     baseFolder: string
   ) {
     this.baseFolder = baseFolder;
+    this._metricsService = new HistoryMetricsService(historyConfiguration.id);
   }
 
   /**
@@ -77,6 +83,18 @@ export default class HistoryQuery {
         `Could not instantiate North type ${this.historyConfiguration.northType} for History Query ${this.historyConfiguration.name} (${this.historyConfiguration.id})`
       );
     }
+
+    this.south.getMetricsDataStream().on('data', data => {
+      // Remove the 'data: ' start of the string
+      const southMetrics = JSON.parse(Buffer.from(data).toString().slice(6));
+      this._metricsService.updateMetrics({ ...this._metricsService.metrics, south: southMetrics });
+    });
+
+    this.north.getMetricsDataStream().on('data', data => {
+      // Remove the 'data: ' start of the string
+      const northMetrics = JSON.parse(Buffer.from(data).toString().slice(6));
+      this._metricsService.updateMetrics({ ...this._metricsService.metrics, north: northMetrics });
+    });
 
     await this.north.init();
     if (!this.historyConfiguration.enabled) {
@@ -150,14 +168,19 @@ export default class HistoryQuery {
         await this.north.resetCache();
       }
     }
+    this.historyService.stopHistoryQuery(this.historyConfiguration.id);
   }
 
   /**
    * Finish HistoryQuery.
    */
   async finish(): Promise<void> {
-    this.logger.info(`Finish "${this.historyConfiguration.name}" (${this.historyConfiguration.id})`);
-    await this.stop();
+    if (!this.north || !this.south || ((await this.north.isCacheEmpty()) && !this.south.historyIsRunning)) {
+      this.logger.info(`Finish "${this.historyConfiguration.name}" (${this.historyConfiguration.id})`);
+      await this.stop();
+    } else {
+      this.logger.debug(`History query "${this.historyConfiguration.name}" is still running`);
+    }
   }
 
   async addItem(item: OibusItemDTO): Promise<void> {
@@ -193,5 +216,9 @@ export default class HistoryQuery {
 
   setLogger(value: pino.Logger) {
     this.logger = value;
+  }
+
+  getMetricsDataStream(): PassThrough {
+    return this._metricsService.stream;
   }
 }

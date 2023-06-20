@@ -184,13 +184,13 @@ export default class HistoryQueryController extends AbstractController {
   };
 
   startHistoryQuery = async (ctx: KoaContext<void, void>) => {
-    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id);
+    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
     if (!historyQuery) {
       return ctx.notFound();
     }
 
     try {
-      await ctx.app.reloadService.onStartHistoryQuery(ctx.params.id);
+      await ctx.app.reloadService.onStartHistoryQuery(ctx.params.historyQueryId);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
@@ -198,13 +198,13 @@ export default class HistoryQueryController extends AbstractController {
   };
 
   stopHistoryQuery = async (ctx: KoaContext<void, void>) => {
-    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id);
+    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
     if (!historyQuery) {
       return ctx.notFound();
     }
 
     try {
-      await ctx.app.reloadService.onStopHistoryQuery(ctx.params.id);
+      await ctx.app.reloadService.onStopHistoryQuery(ctx.params.historyQueryId);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);

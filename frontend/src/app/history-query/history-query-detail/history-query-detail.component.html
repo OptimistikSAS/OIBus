@@ -8,11 +8,19 @@
               <i class="fa fa-pencil"></i>
               {{ 'history-query.edit' | translate }}
             </button>
+            <button class="btn btn-primary pull-right me-2" id="history-query-enabled" (click)="toggleHistoryQuery(!historyQuery.enabled)">
+              <i [class]="historyQuery.enabled ?  'fa fa-pause' : 'fa fa-play'"></i>
+            </button>
           </span>
         </h1>
       </div>
 
-      <!-- TODO: metrics here -->
+      <oib-history-metrics
+        [historyQuery]="historyQuery"
+        [northManifest]="northManifest"
+        [southManifest]="southManifest"
+      ></oib-history-metrics>
+
       <!-- Cache-->
       <oib-box>
         <ng-template oibBoxTitle>

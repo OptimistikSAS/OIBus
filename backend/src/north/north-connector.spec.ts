@@ -60,7 +60,7 @@ jest.mock('../service/cache/archive.service');
 
 const resetMetrics = jest.fn();
 jest.mock(
-  '../service/cache.service',
+  '../service/north-connector-metrics.service',
   () =>
     function () {
       return {
@@ -70,8 +70,8 @@ jest.mock(
         },
         resetMetrics,
         metrics: {
-          numberOfValues: 1,
-          numberOfFiles: 1
+          numberOfValuesSent: 1,
+          numberOfFilesSent: 1
         }
       };
     }

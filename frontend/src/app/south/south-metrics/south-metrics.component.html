@@ -10,14 +10,14 @@
     <table class="table table-sm table-hover oib-table">
       <tbody>
         <!-- number of values for point connectors -->
-        <tr *ngIf="connectorMetrics.numberOfValues !== null">
+        <tr *ngIf="connectorMetrics.numberOfValuesRetrieved !== null">
           <td style="width: 33%" translate="south.monitoring.number-of-values"></td>
-          <td>{{ connectorMetrics.numberOfValues }}</td>
+          <td>{{ connectorMetrics.numberOfValuesRetrieved }}</td>
         </tr>
         <!-- number of files for file connectors -->
-        <tr *ngIf="connectorMetrics.numberOfFiles !== null">
+        <tr *ngIf="connectorMetrics.numberOfFilesRetrieved !== null">
           <td translate="south.monitoring.number-of-files"></td>
-          <td>{{ connectorMetrics.numberOfFiles }}</td>
+          <td>{{ connectorMetrics.numberOfFilesRetrieved }}</td>
         </tr>
         <!-- last connection -->
         <tr *ngIf="connectorMetrics.lastConnection !== null">
@@ -27,12 +27,12 @@
         <!-- last value -->
         <tr>
           <td translate="south.monitoring.last-value"></td>
-          <td>{{ connectorMetrics.lastValue | json }}</td>
+          <td>{{ connectorMetrics.lastValueRetrieved | json }}</td>
         </tr>
         <!-- last file -->
         <tr>
           <td translate="south.monitoring.last-file"></td>
-          <td>{{ connectorMetrics.lastFile }}</td>
+          <td>{{ connectorMetrics.lastFileRetrieved }}</td>
         </tr>
         <!-- last run -->
         <tr *ngIf="connectorMetrics.lastRunStart !== null">

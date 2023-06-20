@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { ConnectorMetrics } from '../../../../../../shared/model/engine.model';
+import { NorthConnectorMetrics } from '../../../../../../shared/model/engine.model';
 import { JsonPipe, NgIf } from '@angular/common';
 import { WindowService } from '../../../shared/window.service';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
@@ -21,7 +21,7 @@ export class NorthMetricsComponent implements OnInit, OnDestroy {
   @Input({ required: true }) northConnector!: NorthConnectorDTO;
   @Input({ required: true }) manifest!: NorthConnectorManifest;
 
-  connectorMetrics: ConnectorMetrics | null = null;
+  connectorMetrics: NorthConnectorMetrics | null = null;
   connectorStream: EventSource | null = null;
 
   constructor(
