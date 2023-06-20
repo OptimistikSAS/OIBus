@@ -1,0 +1,90 @@
+<oib-box>
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between">
+      <span translate="history-query.monitoring.title" id="title"></span>
+    </div>
+  </ng-template>
+
+  <div *ngIf="historyMetrics" class="mt-3">
+    <h5 translate="history-query.monitoring.north.title"></h5>
+    <table class="table table-sm table-hover oib-table">
+      <tbody>
+        <!-- number of values for point connectors -->
+        <tr *ngIf="northManifest.modes.points">
+          <td style="width: 33%" translate="history-query.monitoring.north.number-of-values"></td>
+          <td>{{ historyMetrics.north.numberOfValuesSent }}</td>
+        </tr>
+        <!-- number of files for file connectors -->
+        <tr *ngIf="northManifest.modes.files">
+          <td translate="history-query.monitoring.north.number-of-files"></td>
+          <td>{{ historyMetrics.north.numberOfFilesSent }}</td>
+        </tr>
+        <!-- last connection -->
+        <tr *ngIf="historyMetrics.north.lastConnection !== null">
+          <td translate="history-query.monitoring.north.last-connection"></td>
+          <td>{{ historyMetrics.north.lastConnection | datetime:'mediumWithSeconds' }}</td>
+        </tr>
+        <!-- last value -->
+        <tr *ngIf="northManifest.modes.points">
+          <td translate="history-query.monitoring.north.last-value"></td>
+          <td>{{ historyMetrics.north.lastValueSent | json }}</td>
+        </tr>
+        <!-- last file -->
+        <tr *ngIf="northManifest.modes.files">
+          <td translate="history-query.monitoring.north.last-file"></td>
+          <td>{{ historyMetrics.north.lastFileSent }}</td>
+        </tr>
+        <!-- last run -->
+        <tr *ngIf="historyMetrics.north.lastRunStart !== null">
+          <td translate="history-query.monitoring.north.last-run-start"></td>
+          <td>{{ historyMetrics.north.lastRunStart | datetime:'mediumWithSeconds' }}</td>
+        </tr>
+        <!-- last duration -->
+        <tr *ngIf="historyMetrics.north.lastRunDuration !== null">
+          <td translate="history-query.monitoring.north.last-run-duration"></td>
+          <td>{{ historyMetrics.north.lastRunDuration | duration:'short' }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <h5 translate="history-query.monitoring.south.title"></h5>
+    <table class="table table-sm table-hover oib-table">
+      <tbody>
+        <!-- number of values for point connectors -->
+        <tr>
+          <td style="width: 33%" translate="history-query.monitoring.south.number-of-values"></td>
+          <td>{{ historyMetrics.south.numberOfValuesRetrieved }}</td>
+        </tr>
+        <!-- number of files for file connectors -->
+        <tr>
+          <td translate="history-query.monitoring.south.number-of-files"></td>
+          <td>{{ historyMetrics.south.numberOfFilesRetrieved }}</td>
+        </tr>
+        <!-- last connection -->
+        <tr *ngIf="historyMetrics.south.lastConnection !== null">
+          <td translate="history-query.monitoring.south.last-connection"></td>
+          <td>{{ historyMetrics.south.lastConnection | datetime:'mediumWithSeconds' }}</td>
+        </tr>
+        <!-- last value -->
+        <tr>
+          <td translate="history-query.monitoring.south.last-value"></td>
+          <td>{{ historyMetrics.south.lastValueRetrieved | json }}</td>
+        </tr>
+        <!-- last file -->
+        <tr>
+          <td translate="history-query.monitoring.south.last-file"></td>
+          <td>{{ historyMetrics.south.lastFileRetrieved }}</td>
+        </tr>
+        <!-- last run -->
+        <tr *ngIf="historyMetrics.south.lastRunStart !== null">
+          <td translate="history-query.monitoring.south.last-run-start"></td>
+          <td>{{ historyMetrics.south.lastRunStart | datetime:'mediumWithSeconds' }}</td>
+        </tr>
+        <!-- last duration -->
+        <tr *ngIf="historyMetrics.south.lastRunDuration !== null">
+          <td translate="history-query.monitoring.south.last-run-duration"></td>
+          <td>{{ historyMetrics.south.lastRunDuration | duration:'short' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</oib-box>

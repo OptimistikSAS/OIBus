@@ -31,15 +31,31 @@ jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 const database = new DatabaseMock();
 jest.mock(
-  '../../service/cache.service',
+  '../../service/south-cache.service',
   () =>
     function () {
       return {
-        createCacheHistoryTable: jest.fn(),
+        createSouthCacheScanModeTable: jest.fn(),
         southCacheRepository: {
           database
+        }
+      };
+    }
+);
+
+jest.mock(
+  '../../service/south-connector-metrics.service',
+  () =>
+    function () {
+      return {
+        updateMetrics: jest.fn(),
+        get stream() {
+          return { stream: 'myStream' };
         },
-        updateMetrics: jest.fn()
+        metrics: {
+          numberOfValuesRetrieved: 1,
+          numberOfFilesRetrieved: 1
+        }
       };
     }
 );

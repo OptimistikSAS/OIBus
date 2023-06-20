@@ -24,25 +24,34 @@ const createCacheHistoryTableMock = jest.fn();
 const getSouthCacheMock = jest.fn();
 const createOrUpdateCacheScanModeMock = jest.fn();
 const resetCacheMock = jest.fn();
-const updateMetricsMock = jest.fn();
-const resetMetrics = jest.fn();
 jest.mock(
-  '../service/cache.service',
+  '../service/south-cache.service',
   () =>
     function () {
       return {
-        createCacheHistoryTable: createCacheHistoryTableMock,
-        getSouthCache: getSouthCacheMock,
+        createSouthCacheScanModeTable: createCacheHistoryTableMock,
+        getSouthCacheScanMode: getSouthCacheMock,
         createOrUpdateCacheScanMode: createOrUpdateCacheScanModeMock,
-        resetCache: resetCacheMock,
+        resetCacheScanMode: resetCacheMock
+      };
+    }
+);
+
+const updateMetricsMock = jest.fn();
+const resetMetrics = jest.fn();
+jest.mock(
+  '../service/south-connector-metrics.service',
+  () =>
+    function () {
+      return {
         updateMetrics: updateMetricsMock,
         resetMetrics,
         get stream() {
           return { stream: 'myStream' };
         },
         metrics: {
-          numberOfValues: 1,
-          numberOfFiles: 1
+          numberOfValuesRetrieved: 1,
+          numberOfFilesRetrieved: 1
         }
       };
     }
