@@ -484,7 +484,7 @@ schema.form = {
     newRow: false,
     md: 2,
     label: 'Logging Level',
-    options: ['trace', 'debug', 'info', 'warning', 'error'],
+    options: ['trace', 'debug', 'info', 'warn', 'error'],
     defaultValue: 'debug',
     help: <div>Logging level for the HDA agent</div>,
   },
