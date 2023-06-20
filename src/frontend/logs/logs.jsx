@@ -216,11 +216,11 @@ const Log = () => {
                 } = item
                 const date = new Date(timestamp)
                 return (
-                  <tr key={id} className={`oi-log ${selectStyle(level)}`}>
-                    <td style={{ width: 120 }}>{`${date.toLocaleDateString()}-${date.toLocaleTimeString()}`}</td>
-                    <td>{level}</td>
-                    <td>{scope}</td>
-                    <td>{source}</td>
+                  <tr key={id} className="oi-log">
+                    <td className={`${selectStyle(level)}`} style={{ width: 120 }}>{`${date.toLocaleDateString()}-${date.toLocaleTimeString()}`}</td>
+                    <td className={`${selectStyle(level)}`} style={{ width: 50 }}>{level}</td>
+                    <td className={`${selectStyle(level)}`} style={{ width: 150 }}>{scope}</td>
+                    <td className={`${selectStyle(level)}`} style={{ width: 150 }}>{source}</td>
                     <td>{message}</td>
                   </tr>
                 )
