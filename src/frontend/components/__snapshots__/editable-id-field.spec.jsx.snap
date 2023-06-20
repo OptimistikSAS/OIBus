@@ -11,6 +11,22 @@ exports[`EditableIdField check EditableIdField editing = false 1`] = `
 exports[`EditableIdField check EditableIdField editing = true 1`] = `
 <div>
   <div>
+    <div
+      class="mb-3"
+      style="margin-bottom: 0px; display: inline-block;"
+    >
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="id"
+        name="id"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+    </div>
     <svg
       class="oi-icon mx-2"
       fill="currentColor"
@@ -33,6 +49,22 @@ exports[`EditableIdField check EditableIdField editing = true 1`] = `
 exports[`EditableIdField check editing done 1`] = `
 <div>
   <div>
+    <div
+      class="mb-3"
+      style="margin-bottom: 0px; display: inline-block;"
+    >
+      <input
+        aria-invalid="false"
+        class="oi-form-input form-control"
+        id="id"
+        name="id"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      />
+    </div>
     <svg
       class="oi-icon mx-2"
       fill="currentColor"
@@ -55,6 +87,24 @@ exports[`EditableIdField check editing done 1`] = `
 exports[`EditableIdField check editing done with error 1`] = `
 <div>
   <div>
+    <div
+      class="mb-3"
+      style="margin-bottom: 0px; display: inline-block;"
+    >
+      <input
+        aria-invalid="true"
+        class="oi-form-input is-invalid form-control"
+        id="id"
+        name="id"
+        type="text"
+        value=""
+      />
+      <div
+        class="invalid-feedback"
+      >
+        error
+      </div>
+    </div>
     <svg
       class="oi-icon mx-2"
       fill="currentColor"

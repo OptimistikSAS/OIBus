@@ -265,7 +265,29 @@ exports[`SouthForm check SouthForm with empty south 1`] = `
       >
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.0.settings.username"
+            >
+              Username
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.0.settings.username"
+              name="south.0.settings.username"
+              type="text"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
         <div
           class="col-md-4"
         />
@@ -275,13 +297,100 @@ exports[`SouthForm check SouthForm with empty south 1`] = `
       >
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.0.settings.certFile"
+            >
+              Cert File
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.0.settings.certFile"
+              name="south.0.settings.certFile"
+              type="text"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Server certificate (used for MQTTS protocol)
+              </div>
+            </small>
+          </div>
+        </div>
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.0.settings.keyFile"
+            >
+              Key File
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.0.settings.keyFile"
+              name="south.0.settings.keyFile"
+              type="text"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                MQTT client private key
+              </div>
+            </small>
+          </div>
+        </div>
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.0.settings.caFile"
+            >
+              CA File
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.0.settings.caFile"
+              name="south.0.settings.caFile"
+              type="text"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+            <small
+              class="form-text text-muted"
+            >
+              <div>
+                Certificate Authority file (if empty we consider the Cert File as a self-signed certificate)
+              </div>
+            </small>
+          </div>
+        </div>
       </div>
       <div
         class="row"
@@ -454,20 +563,112 @@ exports[`SouthForm check SouthForm with empty south 1`] = `
       >
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.0.settings.dataArrayPath"
+            >
+              Data array path
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.0.settings.dataArrayPath"
+              name="south.0.settings.dataArrayPath"
+              type="text"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
       </div>
       <div
         class="row"
       >
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.0.settings.valuePath"
+            >
+              Value path
+            </label>
+            <input
+              aria-invalid="true"
+              class="oi-form-input is-invalid form-control"
+              id="south.0.settings.valuePath"
+              name="south.0.settings.valuePath"
+              type="text"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            >
+              Value should not be empty
+            </div>
+          </div>
+        </div>
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.0.settings.pointIdPath"
+            >
+              Point ID path
+            </label>
+            <input
+              aria-invalid="false"
+              class="oi-form-input form-control"
+              id="south.0.settings.pointIdPath"
+              name="south.0.settings.pointIdPath"
+              type="text"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            />
+          </div>
+        </div>
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.0.settings.qualityPath"
+            >
+              Quality path
+            </label>
+            <input
+              aria-invalid="true"
+              class="oi-form-input is-invalid form-control"
+              id="south.0.settings.qualityPath"
+              name="south.0.settings.qualityPath"
+              type="text"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            >
+              Value should not be empty
+            </div>
+          </div>
+        </div>
       </div>
       <div
         class="row"
@@ -560,10 +761,58 @@ exports[`SouthForm check SouthForm with empty south 1`] = `
         />
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.0.settings.timestampPath"
+            >
+              Timestamp path
+            </label>
+            <input
+              aria-invalid="true"
+              class="oi-form-input is-invalid form-control"
+              id="south.0.settings.timestampPath"
+              name="south.0.settings.timestampPath"
+              type="text"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            >
+              Value should not be empty
+            </div>
+          </div>
+        </div>
         <div
           class="col-md-4"
-        />
+        >
+          <div
+            class="mb-3"
+          >
+            <label
+              class="form-label"
+              for="south.0.settings.timestampFormat"
+            >
+              Timestamp format
+            </label>
+            <input
+              aria-invalid="true"
+              class="oi-form-input is-invalid form-control"
+              id="south.0.settings.timestampFormat"
+              name="south.0.settings.timestampFormat"
+              type="text"
+              value=""
+            />
+            <div
+              class="invalid-feedback"
+            >
+              Value should not be empty
+            </div>
+          </div>
+        </div>
         <div
           class="col-md-2"
         />
