@@ -65,18 +65,33 @@ describe('EditNorthComponent', () => {
 
     scanModeService.list.and.returnValue(of([]));
     proxyService.list.and.returnValue(of([]));
+
+    northConnectorService.getNorthConnectorTypeManifest.and.returnValue(
+      of({
+        id: 'console',
+        category: 'debug',
+        name: 'Console',
+        description: 'Console description',
+        modes: {
+          files: true,
+          points: true
+        },
+        settings: [],
+        schema: {} as unknown
+      } as NorthConnectorManifest)
+    );
   });
 
   describe('create mode', () => {
     beforeEach(() => {
-      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ queryParams: { type: 'OIAnalytics' } }) });
+      TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ queryParams: { type: 'console' } }) });
 
       tester = new EditNorthComponentTester();
       tester.detectChanges();
     });
 
     it('should display general settings', () => {
-      expect(tester.title).toContainText('Create OIAnalytics north connector');
+      expect(tester.title).toContainText('Create Console north connector');
       expect(tester.enabled).toBeChecked();
       expect(tester.description).toHaveValue('');
       expect(tester.specificForm).toBeDefined();
@@ -113,20 +128,6 @@ describe('EditNorthComponent', () => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { northId: 'id1' } }) });
 
       northConnectorService.getNorthConnector.and.returnValue(of(northConnector));
-      northConnectorService.getNorthConnectorTypeManifest.and.returnValue(
-        of({
-          id: 'console',
-          category: 'debug',
-          name: 'Console',
-          description: 'Console description',
-          modes: {
-            files: true,
-            points: true
-          },
-          settings: [],
-          schema: {} as unknown
-        } as NorthConnectorManifest)
-      );
       tester = new EditNorthComponentTester();
       tester.detectChanges();
     });

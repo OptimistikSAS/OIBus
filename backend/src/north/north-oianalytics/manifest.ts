@@ -15,8 +15,19 @@ const manifest: NorthConnectorManifest = {
       type: 'OibText',
       label: 'Host',
       validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }],
+      defaultValue: 'https://instance_name.oianalytics.fr',
       readDisplay: true
     },
+    {
+      key: 'authentication',
+      type: 'OibAuthentication',
+      label: 'Authentication',
+      newRow: true,
+      authTypes: ['none', 'basic'],
+      defaultValue: { type: 'basic', password: '', username: '' }
+    },
+    { key: 'timeout', type: 'OibNumber', label: 'Timeout', newRow: true, defaultValue: 30_000 },
+    { key: 'proxy', type: 'OibProxy', label: 'Proxy' },
     {
       key: 'acceptUnauthorized',
       type: 'OibCheckbox',
@@ -24,10 +35,7 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }],
       defaultValue: false,
       readDisplay: true
-    },
-    { key: 'timeout', type: 'OibNumber', label: 'Timeout', newRow: true },
-    { key: 'proxy', type: 'OibProxy', label: 'Proxy', newRow: true },
-    { key: 'authentication', type: 'OibAuthentication', label: 'Authentication', newRow: true, authTypes: ['none', 'basic'] }
+    }
   ]
 };
 export default manifest;
