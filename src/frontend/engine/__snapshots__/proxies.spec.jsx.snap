@@ -507,7 +507,24 @@ exports[`Proxies check Proxies 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="engine.proxies.2.username"
+                  name="engine.proxies.2.username"
+                  type="text"
+                  value=""
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             />
@@ -1044,7 +1061,24 @@ exports[`Proxies check add line to proxies 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="engine.proxies.2.username"
+                  name="engine.proxies.2.username"
+                  type="text"
+                  value=""
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             />
@@ -1581,7 +1615,24 @@ exports[`Proxies check change first host 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="engine.proxies.2.username"
+                  name="engine.proxies.2.username"
+                  type="text"
+                  value=""
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             />
@@ -2118,7 +2169,24 @@ exports[`Proxies check change first name 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="engine.proxies.2.username"
+                  name="engine.proxies.2.username"
+                  type="text"
+                  value=""
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             />
@@ -2655,7 +2723,24 @@ exports[`Proxies check change first password 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="engine.proxies.2.username"
+                  name="engine.proxies.2.username"
+                  type="text"
+                  value=""
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             />
@@ -3192,7 +3277,24 @@ exports[`Proxies check change first port 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="engine.proxies.2.username"
+                  name="engine.proxies.2.username"
+                  type="text"
+                  value=""
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             />
@@ -3729,7 +3831,24 @@ exports[`Proxies check change first protocol 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="engine.proxies.2.username"
+                  name="engine.proxies.2.username"
+                  type="text"
+                  value=""
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             />
@@ -4266,7 +4385,24 @@ exports[`Proxies check change first username 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="engine.proxies.2.username"
+                  name="engine.proxies.2.username"
+                  type="text"
+                  value=""
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             />
@@ -4803,7 +4939,24 @@ exports[`Proxies check delete first proxie 1`] = `
             </td>
             <td
               class="align-top"
-            />
+            >
+              <div
+                class="mb-3"
+                style="margin-bottom: 0px;"
+              >
+                <input
+                  aria-invalid="false"
+                  class="oi-form-input form-control"
+                  id="engine.proxies.2.username"
+                  name="engine.proxies.2.username"
+                  type="text"
+                  value=""
+                />
+                <div
+                  class="invalid-feedback"
+                />
+              </div>
+            </td>
             <td
               class="align-top"
             />
