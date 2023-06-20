@@ -13,9 +13,26 @@ import { createFolder } from '../service/utils';
 
 import pino from 'pino';
 import path from 'node:path';
+import HistoryServiceMock from '../tests/__mocks__/history-service.mock';
+import HistoryQueryService from '../service/history-query.service';
+import Stream from 'node:stream';
 
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');
+const updateMetrics = jest.fn();
+jest.mock(
+  '../service/history-metrics.service',
+  () =>
+    function () {
+      return {
+        updateMetrics,
+        metrics: { status: 'my status' },
+        get stream() {
+          return { stream: 'myStream' };
+        }
+      };
+    }
+);
 jest.mock('../service/utils');
 
 const logger: pino.Logger = new PinoLogger();
@@ -23,6 +40,7 @@ const anotherLogger: pino.Logger = new PinoLogger();
 
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
+const historyService: HistoryQueryService = new HistoryServiceMock();
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 
@@ -46,6 +64,7 @@ const items: Array<OibusItemDTO> = [
   }
 ];
 
+const southStream = new Stream();
 const createdSouth = {
   start: jest.fn(),
   stop: jest.fn(),
@@ -54,8 +73,12 @@ const createdSouth = {
   addItem: jest.fn(),
   deleteItem: jest.fn(),
   deleteAllItems: jest.fn(),
-  resetCache: jest.fn()
+  resetCache: jest.fn(),
+  getMetricsDataStream: jest.fn(() => southStream),
+  historyIsRunning: false
 };
+
+const northStream = new Stream();
 const createdNorth = {
   start: jest.fn(),
   stop: jest.fn(),
@@ -63,12 +86,14 @@ const createdNorth = {
   connect: jest.fn(),
   cacheValues: jest.fn(),
   cacheFile: jest.fn(),
-  resetCache: jest.fn()
+  resetCache: jest.fn(),
+  isCacheEmpty: jest.fn(),
+  getMetricsDataStream: jest.fn(() => northStream)
 };
 
 describe('HistoryQuery enabled', () => {
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
@@ -104,7 +129,15 @@ describe('HistoryQuery enabled', () => {
         retentionDuration: 0
       }
     };
-    historyQuery = new HistoryQuery(configuration, southService, northService, items, logger, path.resolve('baseFolder', configuration.id));
+    historyQuery = new HistoryQuery(
+      configuration,
+      southService,
+      northService,
+      historyService,
+      items,
+      logger,
+      path.resolve('baseFolder', configuration.id)
+    );
   });
 
   it('should be properly initialized', async () => {
@@ -115,6 +148,12 @@ describe('HistoryQuery enabled', () => {
     expect(createdNorth.start).toHaveBeenCalledTimes(1);
     expect(createdNorth.connect).toHaveBeenCalledTimes(1);
     expect(historyQuery.runSouthConnector).toHaveBeenCalledTimes(1);
+
+    northStream.emit('data', `data: ${JSON.stringify({})}`);
+    southStream.emit('data', `data: ${JSON.stringify({})}`);
+    expect(updateMetrics).toHaveBeenCalledTimes(2);
+    expect(updateMetrics).toHaveBeenCalledWith({ status: 'my status', south: {} });
+    expect(updateMetrics).toHaveBeenCalledWith({ status: 'my status', north: {} });
   });
 
   it('should manage error when no south found', async () => {
@@ -215,13 +254,25 @@ describe('HistoryQuery enabled', () => {
     await historyQuery.stop(true);
     expect(createdNorth.resetCache).toHaveBeenCalledTimes(1);
     expect(createdSouth.resetCache).toHaveBeenCalledTimes(1);
+    expect(logger.debug).not.toHaveBeenCalled();
   });
 
-  it('should properly finish', async () => {
+  it('should properly finish and not stop', async () => {
     historyQuery.stop = jest.fn();
+    createdSouth.historyIsRunning = true;
+    createdNorth.isCacheEmpty.mockReturnValueOnce(false).mockReturnValue(true);
+
+    await historyQuery.start();
+
     await historyQuery.finish();
 
-    expect(historyQuery.stop).toHaveBeenCalledTimes(1);
+    expect(logger.debug).toHaveBeenCalledWith(`History query "${configuration.name}" is still running`);
+
+    await historyQuery.finish();
+    expect(logger.debug).toHaveBeenCalledTimes(2);
+
+    createdSouth.historyIsRunning = false;
+    await historyQuery.finish();
     expect(logger.info).toHaveBeenCalledWith(`Finish "${configuration.name}" (${configuration.id})`);
   });
 
@@ -260,6 +311,7 @@ describe('HistoryQuery enabled', () => {
 
   it('should properly delete items', async () => {
     historyQuery.runSouthConnector = jest.fn();
+    await historyQuery.deleteItems();
 
     await historyQuery.start();
     await historyQuery.deleteItems();
@@ -298,7 +350,7 @@ describe('HistoryQuery enabled', () => {
 
 describe('HistoryQuery disabled', () => {
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
@@ -334,7 +386,7 @@ describe('HistoryQuery disabled', () => {
         retentionDuration: 0
       }
     };
-    historyQuery = new HistoryQuery(configuration, southService, northService, items, logger, 'baseFolder');
+    historyQuery = new HistoryQuery(configuration, southService, northService, historyService, items, logger, 'baseFolder');
   });
 
   it('should be properly initialized', async () => {
@@ -370,5 +422,9 @@ describe('HistoryQuery disabled', () => {
     expect(createdSouth.resetCache).not.toHaveBeenCalled();
     expect(createdNorth.stop).not.toHaveBeenCalled();
     expect(createdNorth.resetCache).not.toHaveBeenCalled();
+  });
+
+  it('should get stream', () => {
+    expect(historyQuery.getMetricsDataStream()).toEqual({ stream: 'myStream' });
   });
 });

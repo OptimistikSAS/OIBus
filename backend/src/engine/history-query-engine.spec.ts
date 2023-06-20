@@ -17,6 +17,7 @@ import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import ProxyService from '../service/proxy.service';
 import HistoryQueryEngine from './history-query-engine';
 import HistoryQueryService from '../service/history-query.service';
+import { PassThrough } from 'node:stream';
 
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');
@@ -107,6 +108,9 @@ describe('HistoryQueryEngine', () => {
     expect(historyQueryService.getItems as jest.Mock).toHaveBeenCalledTimes(1);
     expect(historyQueryService.getItems as jest.Mock).toHaveBeenCalledWith(configuration.id);
     expect(logger.child).toHaveBeenCalledWith({ scope: `history:${configuration.name}` });
+
+    expect(engine.getHistoryDataStream('bad id')).toEqual(null);
+    expect(engine.getHistoryDataStream(configuration.id)).toEqual(expect.any(PassThrough));
 
     await engine.stop();
     await engine.stopHistoryQuery('anotherId');

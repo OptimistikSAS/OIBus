@@ -11,7 +11,7 @@ import { NorthCacheSettingsDTO } from '../../../shared/model/north-connector.mod
 
 jest.mock('../repository/proxy.repository');
 jest.mock('./encryption.service');
-jest.mock('./cache.service');
+jest.mock('./north-connector-metrics.service');
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryRepository: RepositoryService = new RepositoryServiceMock('', '');

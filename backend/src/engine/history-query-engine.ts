@@ -11,6 +11,7 @@ import { createFolder } from '../service/utils';
 
 import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import { OibusItemDTO } from '../../../shared/model/south-connector.model';
+import { PassThrough } from 'node:stream';
 
 const CACHE_FOLDER = './cache/history-query';
 
@@ -57,6 +58,7 @@ export default class HistoryQueryEngine extends BaseEngine {
       settings,
       this.southService,
       this.northService,
+      this.historyQueryService,
       items,
       this.logger.child({ scope: `history:${settings.name}` }),
       baseFolder
@@ -88,7 +90,6 @@ export default class HistoryQueryEngine extends BaseEngine {
     if (!historyQuery) {
       return;
     }
-    this.historyQueryService.stopHistoryQuery(historyId);
 
     await historyQuery.stop(resetCache);
     this.historyQueries.delete(historyId);
@@ -103,5 +104,9 @@ export default class HistoryQueryEngine extends BaseEngine {
         historyQuery.setLogger(this.logger.child({ scope: `south:${settings.name}` }));
       }
     }
+  }
+
+  getHistoryDataStream(historyId: string): PassThrough | null {
+    return this.historyQueries.get(historyId)?.getMetricsDataStream() || null;
   }
 }

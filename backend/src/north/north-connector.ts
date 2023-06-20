@@ -13,11 +13,11 @@ import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import DeferredPromise from '../service/deferred-promise';
 import { OIBusError } from '../../../shared/model/engine.model';
 import { SubscriptionDTO } from '../../../shared/model/subscription.model';
-import CacheService from '../service/cache.service';
 import path from 'node:path';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
 import { HandlesFile, HandlesValues } from './north-interface';
+import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -42,7 +42,7 @@ export default class NorthConnector {
   private archiveService: ArchiveService;
   private valueCacheService: ValueCacheService;
   private fileCacheService: FileCacheService;
-  protected cacheService: CacheService;
+  protected metricsService: NorthConnectorMetricsService;
   private subscribedTo: Array<SubscriptionDTO> = [];
 
   private fileBeingSent: string | null = null;
@@ -66,7 +66,7 @@ export default class NorthConnector {
     this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.configuration.archive);
     this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.configuration.caching);
     this.fileCacheService = new FileCacheService(this.logger, this.baseFolder, this.configuration.caching);
-    this.cacheService = new CacheService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
+    this.metricsService = new NorthConnectorMetricsService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
 
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
@@ -119,7 +119,7 @@ export default class NorthConnector {
    * North connector implementation to allow connection to a third party application for example.
    */
   async connect(): Promise<void> {
-    this.cacheService.updateMetrics({ ...this.cacheService.metrics, lastConnection: DateTime.now().toUTC().toISO() });
+    this.metricsService.updateMetrics({ ...this.metricsService.metrics, lastConnection: DateTime.now().toUTC().toISO() });
 
     const scanMode = this.repositoryService.scanModeRepository.getScanMode(this.configuration.caching.scanModeId);
     if (scanMode) {
@@ -172,7 +172,7 @@ export default class NorthConnector {
     this.logger.trace(`North run triggered with flag ${flag}`);
 
     const runStart = DateTime.now();
-    this.cacheService.updateMetrics({ ...this.cacheService.metrics, lastRunStart: runStart.toUTC().toISO() });
+    this.metricsService.updateMetrics({ ...this.metricsService.metrics, lastRunStart: runStart.toUTC().toISO() });
 
     if (this.handlesValues() && (flag === 'scan' || flag === 'value-trigger')) {
       await this.handleValuesWrapper();
@@ -183,8 +183,8 @@ export default class NorthConnector {
     }
 
     // TODO: update cache size here
-    this.cacheService.updateMetrics({
-      ...this.cacheService.metrics,
+    this.metricsService.updateMetrics({
+      ...this.metricsService.metrics,
       lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
     });
 
@@ -212,11 +212,11 @@ export default class NorthConnector {
         // @ts-ignore
         await this.handleValues(arrayValues);
         await this.valueCacheService.removeSentValues(this.valuesBeingSent);
-        const currentMetrics = this.cacheService.metrics;
-        this.cacheService.updateMetrics({
+        const currentMetrics = this.metricsService.metrics;
+        this.metricsService.updateMetrics({
           ...currentMetrics,
-          numberOfValues: currentMetrics.numberOfValues + arrayValues.length,
-          lastValue: arrayValues[arrayValues.length - 1]
+          numberOfValuesSent: currentMetrics.numberOfValuesSent + arrayValues.length,
+          lastValueSent: arrayValues[arrayValues.length - 1]
         });
         this.valuesBeingSent = new Map();
       } catch (error) {
@@ -246,11 +246,11 @@ export default class NorthConnector {
         await this.handleFile(this.fileBeingSent);
         this.fileCacheService.removeFileFromQueue();
         await this.archiveService.archiveOrRemoveFile(this.fileBeingSent);
-        const currentMetrics = this.cacheService.metrics;
-        this.cacheService.updateMetrics({
+        const currentMetrics = this.metricsService.metrics;
+        this.metricsService.updateMetrics({
           ...currentMetrics,
-          numberOfFiles: currentMetrics.numberOfValues + 1,
-          lastFile: this.fileBeingSent
+          numberOfFilesSent: currentMetrics.numberOfFilesSent + 1,
+          lastFileSent: this.fileBeingSent
         });
         this.fileBeingSent = null;
       } catch (error) {
@@ -404,11 +404,11 @@ export default class NorthConnector {
   }
 
   getMetricsDataStream(): PassThrough {
-    return this.cacheService.stream;
+    return this.metricsService.stream;
   }
 
   resetMetrics(): void {
-    this.cacheService.resetMetrics();
+    this.metricsService.resetMetrics();
   }
 
   handlesFile(): this is HandlesFile {

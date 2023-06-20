@@ -22,19 +22,34 @@ jest.mock('../../service/utils');
 
 const database = new DatabaseMock();
 jest.mock(
-  '../../service/cache.service',
+  '../../service/south-cache.service',
   () =>
     function () {
       return {
-        createCacheHistoryTable: jest.fn(),
+        createSouthCacheScanModeTable: jest.fn(),
         southCacheRepository: {
           database
-        },
-        updateMetrics: jest.fn()
+        }
       };
     }
 );
 
+jest.mock(
+  '../../service/south-connector-metrics.service',
+  () =>
+    function () {
+      return {
+        updateMetrics: jest.fn(),
+        get stream() {
+          return { stream: 'myStream' };
+        },
+        metrics: {
+          numberOfValuesRetrieved: 1,
+          numberOfFilesRetrieved: 1
+        }
+      };
+    }
+);
 const addValues = jest.fn();
 const addFile = jest.fn();
 

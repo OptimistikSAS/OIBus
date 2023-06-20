@@ -31,20 +31,10 @@ const sse = () => {
       // this.engine.statusService.forceDataUpdate();
       return next();
     }
-    if (ctx.path.startsWith('/sse/history-engine/')) {
-      console.warn('TODO: send status for history engine');
-      // createSocket(ctx);
-      // ctx.body = this.historyQueryEngine.statusService.getDataStream();
-      // this.historyQueryEngine.statusService.forceDataUpdate();
-      return next();
-    }
-    if (ctx.path.startsWith('/sse/history-query/')) {
-      console.warn('TODO: send status for history query');
-
-      // createSocket(ctx);
-      // ctx.body = this.historyQueryEngine.historyQuery.statusService.getDataStream();
-      // this.historyQueryEngine.historyQuery.statusService.forceDataUpdate();
-      return next();
+    if (ctx.path.startsWith('/sse/history-queries/')) {
+      const splitString = ctx.path.split('/');
+      ctx.body = ctx.app.reloadService.historyEngine.getHistoryDataStream(splitString[3]);
+      return ctx.ok();
     }
     return next();
   };

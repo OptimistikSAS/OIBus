@@ -12,9 +12,10 @@ import ProxyService from '../service/proxy.service';
 import RepositoryService from '../service/repository.service';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
-import CacheService from '../service/cache.service';
+import SouthCacheService from '../service/south-cache.service';
 import { PassThrough } from 'node:stream';
 import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
+import SouthConnectorMetricsService from '../service/south-connector-metrics.service';
 
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
@@ -46,7 +47,9 @@ export default class SouthConnector {
   private stopping = false;
   private runProgress$: DeferredPromise | null = null;
 
-  protected cacheService: CacheService;
+  protected cacheService: SouthCacheService;
+  private _metricsService: SouthConnectorMetricsService;
+  historyIsRunning = false;
 
   /**
    * Constructor for SouthConnector
@@ -72,10 +75,11 @@ export default class SouthConnector {
         this.itemsByScanModeIds.get(item.scanModeId!)!.set(item.id, item);
       });
 
-    this.cacheService = new CacheService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
+    this.cacheService = new SouthCacheService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
+    this._metricsService = new SouthConnectorMetricsService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
 
     if (this.queriesHistory()) {
-      this.cacheService.createCacheHistoryTable();
+      this.cacheService.createSouthCacheScanModeTable();
     }
 
     if (this.streamMode) {
@@ -95,7 +99,7 @@ export default class SouthConnector {
   }
 
   async connect(): Promise<void> {
-    this.cacheService.updateMetrics({ ...this.cacheService.metrics, lastConnection: DateTime.now().toUTC().toISO() });
+    this._metricsService.updateMetrics({ ...this._metricsService.metrics, lastConnection: DateTime.now().toUTC().toISO() });
     if (!this.streamMode) {
       return;
     }
@@ -174,7 +178,7 @@ export default class SouthConnector {
     this.createDeferredPromise();
 
     const runStart = DateTime.now();
-    this.cacheService.updateMetrics({ ...this.cacheService.metrics, lastRunStart: runStart.toUTC().toISO() });
+    this._metricsService.updateMetrics({ ...this._metricsService.metrics, lastRunStart: runStart.toUTC().toISO() });
 
     if (this.queriesHistory()) {
       try {
@@ -190,6 +194,7 @@ export default class SouthConnector {
           scanMode.id
         );
       } catch (error) {
+        this.historyIsRunning = false;
         this.logger.error(`Error when calling historyQuery ${error}`);
       }
     }
@@ -208,8 +213,8 @@ export default class SouthConnector {
       }
     }
 
-    this.cacheService.updateMetrics({
-      ...this.cacheService.metrics,
+    this._metricsService.updateMetrics({
+      ...this._metricsService.metrics,
       lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
     });
     this.resolveDeferredPromise();
@@ -241,36 +246,56 @@ export default class SouthConnector {
   }
 
   async historyQueryHandler(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant, scanModeId: string): Promise<void> {
+    this.historyIsRunning = true;
     if (this.configuration.history.maxInstantPerItem) {
       for (const [index, item] of items.entries()) {
         if (this.stopping) {
           this.logger.debug(`Connector is stopping. Exiting history query at item ${item.name}`);
+          this._metricsService.updateMetrics({
+            ...this._metricsService.metrics,
+            historyMetrics: { running: false }
+          });
+          this.historyIsRunning = false;
           return;
         }
 
-        const southCache = this.cacheService.getSouthCache(scanModeId, item.id, startTime);
+        const southCache = this.cacheService.getSouthCacheScanMode(scanModeId, item.id, startTime);
         // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
         // requests. For example only one hour if maxReadInterval is 3600 (in s)
         const intervals = generateIntervals(southCache.maxInstant, endTime, this.configuration.history.maxReadInterval);
         this.logIntervals(intervals);
-
-        await this.queryIntervals(intervals, [item], southCache);
+        await this.queryIntervals(intervals, [item], southCache, startTime);
         if (index !== items.length) {
           await delay(this.configuration.history.readDelay);
         }
       }
     } else {
-      const southCache = this.cacheService.getSouthCache(scanModeId, 'all', startTime);
+      const southCache = this.cacheService.getSouthCacheScanMode(scanModeId, 'all', startTime);
       // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
       // requests. For example only one hour if maxReadInterval is 3600 (in s)
       const intervals = generateIntervals(southCache.maxInstant, endTime, this.configuration.history.maxReadInterval);
       this.logIntervals(intervals);
 
-      await this.queryIntervals(intervals, items, southCache);
+      await this.queryIntervals(intervals, items, southCache, startTime);
     }
+    this._metricsService.updateMetrics({
+      ...this._metricsService.metrics,
+      historyMetrics: { running: false }
+    });
+    this.historyIsRunning = false;
   }
 
-  private async queryIntervals(intervals: Array<Interval>, items: Array<OibusItemDTO>, southCache: SouthCache) {
+  private async queryIntervals(intervals: Array<Interval>, items: Array<OibusItemDTO>, southCache: SouthCache, startTime: Instant) {
+    this._metricsService.updateMetrics({
+      ...this._metricsService.metrics,
+      historyMetrics: {
+        running: true,
+        intervalProgress:
+          1 -
+          (DateTime.fromISO(intervals[intervals.length - 1].end).toMillis() - DateTime.fromISO(intervals[0].start).toMillis()) /
+            (DateTime.fromISO(intervals[intervals.length - 1].end).toMillis() - DateTime.fromISO(startTime).toMillis())
+      }
+    });
     for (const [index, interval] of intervals.entries()) {
       // @ts-ignore
       const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
@@ -281,6 +306,16 @@ export default class SouthConnector {
           itemId: southCache.itemId,
           maxInstant: lastInstantRetrieved,
           intervalIndex: index + southCache.intervalIndex
+        });
+        this._metricsService.updateMetrics({
+          ...this._metricsService.metrics,
+          historyMetrics: {
+            running: true,
+            intervalProgress:
+              1 -
+              (DateTime.fromISO(intervals[intervals.length - 1].end).toMillis() - DateTime.fromISO(interval.start).toMillis()) /
+                (DateTime.fromISO(intervals[intervals.length - 1].end).toMillis() - DateTime.fromISO(startTime).toMillis())
+          }
         });
         if (this.stopping) {
           this.logger.debug(`Connector is stopping. Exiting history query at interval ${index}: [${interval.start}, ${interval.end}]`);
@@ -325,11 +360,11 @@ export default class SouthConnector {
     if (values.length > 0) {
       this.logger.debug(`Add ${values.length} values to cache from South "${this.configuration.name}"`);
       await this.engineAddValuesCallback(this.configuration.id, values);
-      const currentMetrics = this.cacheService.metrics;
-      this.cacheService.updateMetrics({
+      const currentMetrics = this._metricsService.metrics;
+      this._metricsService.updateMetrics({
         ...currentMetrics,
-        numberOfValues: currentMetrics.numberOfValues + values.length,
-        lastValue: values[values.length - 1]
+        numberOfValuesRetrieved: currentMetrics.numberOfValuesRetrieved + values.length,
+        lastValueRetrieved: values[values.length - 1]
       });
     }
   }
@@ -340,11 +375,11 @@ export default class SouthConnector {
   async addFile(filePath: string): Promise<void> {
     this.logger.debug(`Add file "${filePath}" to cache from South "${this.configuration.name}"`);
     await this.engineAddFileCallback(this.configuration.id, filePath);
-    const currentMetrics = this.cacheService.metrics;
-    this.cacheService.updateMetrics({
+    const currentMetrics = this._metricsService.metrics;
+    this._metricsService.updateMetrics({
       ...currentMetrics,
-      numberOfFiles: currentMetrics.numberOfFiles + 1,
-      lastFile: filePath
+      numberOfFilesRetrieved: currentMetrics.numberOfFilesRetrieved + 1,
+      lastFileRetrieved: filePath
     });
   }
 
@@ -448,15 +483,15 @@ export default class SouthConnector {
   }
 
   async resetCache(): Promise<void> {
-    this.cacheService.resetCache();
+    this.cacheService.resetCacheScanMode();
   }
 
   getMetricsDataStream(): PassThrough {
-    return this.cacheService.stream;
+    return this._metricsService.stream;
   }
 
   resetMetrics(): void {
-    this.cacheService.resetMetrics();
+    this._metricsService.resetMetrics();
   }
 
   queriesFile(): this is QueriesFile {

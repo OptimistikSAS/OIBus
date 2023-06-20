@@ -9,7 +9,6 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import CacheServiceMock from '../../tests/__mocks__/cache-service.mock';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import ProxyService from '../../service/proxy.service';
@@ -36,11 +35,22 @@ jest.mock(
       return new FileCacheServiceMock();
     }
 );
+const resetMetrics = jest.fn();
 jest.mock(
-  '../../service/cache.service',
+  '../../service/north-connector-metrics.service',
   () =>
     function () {
-      return new CacheServiceMock();
+      return {
+        updateMetrics: jest.fn(),
+        get stream() {
+          return { stream: 'myStream' };
+        },
+        resetMetrics,
+        metrics: {
+          numberOfValuesSent: 1,
+          numberOfFilesSent: 1
+        }
+      };
     }
 );
 

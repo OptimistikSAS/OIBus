@@ -128,15 +128,33 @@ export interface OIBusInfo {
   architecture: string;
 }
 
-export interface ConnectorMetrics {
+export interface BaseConnectorMetrics {
   metricsStart: Instant;
-  numberOfValues: number;
-  numberOfFiles: number;
-  lastValue: any | null;
-  lastFile: string | null;
   lastConnection: Instant | null;
   lastRunStart: Instant | null;
   lastRunDuration: number | null;
+}
+
+export interface NorthConnectorMetrics extends BaseConnectorMetrics {
+  numberOfValuesSent: number;
+  numberOfFilesSent: number;
+  lastValueSent: any | null;
+  lastFileSent: string | null;
+}
+
+export interface SouthHistoryMetrics {}
+
+export interface SouthConnectorMetrics extends BaseConnectorMetrics {
+  numberOfValuesRetrieved: number;
+  numberOfFilesRetrieved: number;
+  lastValueRetrieved: any | null;
+  lastFileRetrieved: string | null;
+  historyMetrics: SouthHistoryMetrics;
+}
+
+export interface HistoryMetrics {
+  north: NorthConnectorMetrics;
+  south: SouthConnectorMetrics;
 }
 
 export interface HealthSignalContent {

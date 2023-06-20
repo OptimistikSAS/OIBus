@@ -389,8 +389,8 @@
       "metrics-reset": "Metrics successfully reset",
       "metrics-title": "South metrics",
       "metrics-start": "Metrics started on {{ start }}",
-      "number-of-values": "Number of values",
-      "number-of-files": "Number of files",
+      "number-of-values": "Number of values retrieved",
+      "number-of-files": "Number of files retrieved",
       "last-connection": "Last connection",
       "last-file": "Last file retrieved",
       "last-value": "Last value retrieved",
@@ -457,11 +457,11 @@
       "reset-metrics": "Reset metrics",
       "metrics-reset": "Metrics successfully reset",
       "metrics-start": "Metrics started on {{ start }}",
-      "number-of-values": "Number of values",
-      "number-of-files": "Number of files",
+      "number-of-values": "Number of values sent",
+      "number-of-files": "Number of files sent",
       "last-connection": "Last connection",
-      "last-file": "Last file retrieved",
-      "last-value": "Last value retrieved",
+      "last-file": "Last file sent",
+      "last-value": "Last value sent",
       "last-run-start": "Last run",
       "last-run-duration": "Last run duration"
     },
@@ -503,6 +503,8 @@
     "name": "Name",
     "description": "Description",
     "enabled": "Enabled",
+    "started": "History query {{ name }} started",
+    "stopped": "History query {{ name }} stopped",
     "start": "Start",
     "end": "End",
     "modal": {
@@ -548,6 +550,36 @@
       "search": {
         "name": "Name"
       }
+    },
+    "monitoring": {
+      "title": "Monitoring",
+      "north": {
+        "title": "North metrics",
+        "reset-metrics": "Reset metrics",
+        "metrics-reset": "Metrics successfully reset",
+        "metrics-start": "Metrics started on {{ start }}",
+        "number-of-values": "Number of values sent",
+        "number-of-files": "Number of files sent",
+        "last-connection": "Last connection",
+        "last-file": "Last file sent",
+        "last-value": "Last value sent",
+        "last-run-start": "Last run",
+        "last-run-duration": "Last run duration"
+      },
+      "south": {
+        "title": "South metrics",
+        "reset-metrics": "Reset metrics",
+        "metrics-reset": "Metrics successfully reset",
+        "metrics-start": "Metrics started on {{ start }}",
+        "number-of-values": "Number of values retrieved",
+        "number-of-files": "Number of files retrieved",
+        "last-connection": "Last connection",
+        "last-file": "Last file retrieved",
+        "last-value": "Last value retrieved",
+        "last-run-start": "Last run",
+        "last-run-duration": "Last run duration"
+      }
+
     }
   },
   "scan-mode": {
