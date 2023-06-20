@@ -34,16 +34,16 @@ export class EditEngineComponent implements OnInit {
       }),
       file: this.fb.group({
         level: ['info' as LogLevel, Validators.required],
-        maxFileSize: [null as number | null, Validators.min(1)],
-        numberOfFiles: [null as number | null, Validators.min(1)]
+        maxFileSize: [null as number | null, [Validators.required, Validators.min(1)]],
+        numberOfFiles: [null as number | null, [Validators.required, Validators.min(1)]]
       }),
       database: this.fb.group({
         level: ['info' as LogLevel, Validators.required],
-        maxNumberOfLogs: [null as number | null, [Validators.min(100_000)]]
+        maxNumberOfLogs: [null as number | null, [Validators.required, Validators.min(100_000)]]
       }),
       loki: this.fb.group({
         level: ['silent' as LogLevel, Validators.required],
-        interval: [null as number | null, Validators.min(10)],
+        interval: [null as number | null, [Validators.required, Validators.min(10)]],
         address: ['', Validators.pattern(/http.*/)],
         tokenAddress: ['', Validators.pattern(/http.*/)],
         proxyId: null as string | null,
