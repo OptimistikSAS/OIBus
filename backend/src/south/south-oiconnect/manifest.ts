@@ -93,14 +93,6 @@ const manifest: SouthConnectorManifest = {
         contentType: 'json',
         defaultValue: '',
         newRow: true
-      },
-      {
-        key: 'serialization',
-        type: 'OibSerialization',
-        label: 'Serialization',
-        class: 'col',
-        newRow: true,
-        readDisplay: false
       }
     ]
   }

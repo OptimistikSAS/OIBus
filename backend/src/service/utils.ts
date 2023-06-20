@@ -269,23 +269,20 @@ export const logQuery = (query: string, startTime: string | number, endTime: str
   logger.info(log);
 };
 
-export const convertDateTimeFromInstant = (dateTime: Instant, dateTimeFormat: DateTimeFormat | null): string | number => {
-  if (!dateTimeFormat) {
-    return dateTime;
-  }
+export const formatInstant = (instant: Instant, dateTimeFormat: DateTimeFormat): string | number => {
   switch (dateTimeFormat.type) {
     case 'unix-epoch':
-      return Math.floor(DateTime.fromISO(dateTime).toMillis() / 1000);
+      return Math.floor(DateTime.fromISO(instant).toMillis() / 1000);
     case 'unix-epoch-ms':
-      return DateTime.fromISO(dateTime).toMillis();
+      return DateTime.fromISO(instant).toMillis();
     case 'specific-string':
-      return DateTime.fromISO(dateTime, { zone: dateTimeFormat.timezone }).toFormat(dateTimeFormat.format, {
+      return DateTime.fromISO(instant, { zone: dateTimeFormat.timezone }).toFormat(dateTimeFormat.format, {
         locale: dateTimeFormat.locale
       });
     case 'iso-8601-string':
-      return dateTime;
+      return instant;
     case 'date-object':
-      return DateTime.fromISO(dateTime).setZone(dateTimeFormat.timezone).toISO()!;
+      return DateTime.fromISO(instant).setZone(dateTimeFormat.timezone).toISO()!;
   }
 };
 

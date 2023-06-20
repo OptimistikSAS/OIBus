@@ -145,11 +145,8 @@ describe('EditHistoryQueryItemModalComponent', () => {
       settings: {}
     };
 
-    beforeEach(() => {
+    it('should save if valid', () => {
       tester.componentInstance.prepareForCopy(historyQuery, southItemSchema, item);
-    });
-
-    it('should save if valid', fakeAsync(() => {
       tester.detectChanges();
       expect(tester.name).toHaveValue('myName-copy');
 
@@ -173,7 +170,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
       expect(historyQueryService.createItem).toHaveBeenCalledWith('historyId', expectedCommand);
       expect(fakeActiveModal.close).toHaveBeenCalledWith(createdSouthItem);
-    }));
+    });
   });
 
   describe('edit mode', () => {

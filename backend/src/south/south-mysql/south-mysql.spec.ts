@@ -188,7 +188,7 @@ describe('SouthMySQL with authentication', () => {
         { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
       ])
       .mockReturnValue([]);
-    (utils.convertDateTimeFromInstant as jest.Mock)
+    (utils.formatInstant as jest.Mock)
       .mockReturnValueOnce('2020-02-01 00:00:00.000')
       .mockReturnValueOnce('2020-03-01 00:00:00.000')
       .mockReturnValue(startTime);
@@ -209,7 +209,7 @@ describe('SouthMySQL with authentication', () => {
   it('should get data from MySQL', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
-    (utils.convertDateTimeFromInstant as jest.Mock).mockReturnValueOnce(startTime).mockReturnValueOnce(endTime);
+    (utils.formatInstant as jest.Mock).mockReturnValueOnce(startTime).mockReturnValueOnce(endTime);
 
     (generateReplacementParameters as jest.Mock).mockReturnValue({ startTime, endTime });
     const mysqlConnection = {

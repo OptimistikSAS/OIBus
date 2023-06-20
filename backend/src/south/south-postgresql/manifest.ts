@@ -56,20 +56,22 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'connectionTimeout',
       type: 'OibNumber',
-      label: 'Connection timeout (ms)',
+      label: 'Connection timeout',
       defaultValue: 1000,
       newRow: true,
       class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
+      unitLabel: 'ms',
       readDisplay: false
     },
     {
       key: 'requestTimeout',
       type: 'OibNumber',
-      label: 'Request timeout (ms)',
+      label: 'Request timeout',
       defaultValue: 1000,
       class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60000 } }],
+      unitLabel: 'ms',
       readDisplay: false
     }
   ],
@@ -93,17 +95,62 @@ const manifest: SouthConnectorManifest = {
         key: 'dateTimeFields',
         type: 'OibDateTimeFields',
         label: 'Date time fields',
+        allowedDateObjectTypes: ['timestamp', 'timestamptz'],
         class: 'col',
         newRow: true,
         readDisplay: false
       },
       {
         key: 'serialization',
-        type: 'OibSerialization',
+        type: 'FormGroup',
         label: 'Serialization',
         class: 'col',
         newRow: true,
-        readDisplay: false
+        readDisplay: false,
+        content: [
+          {
+            key: 'type',
+            type: 'OibSelect',
+            label: 'Type',
+            options: ['csv', 'json'],
+            defaultValue: 'csv',
+            newRow: true,
+            readDisplay: false
+          },
+          {
+            key: 'filename',
+            type: 'OibText',
+            label: 'Filename',
+            defaultValue: 'sql.csv',
+            newRow: false,
+            readDisplay: false
+          },
+          {
+            key: 'delimiter',
+            type: 'OibSelect',
+            label: 'Delimiter',
+            options: [',', ';'],
+            defaultValue: ',',
+            newRow: false,
+            readDisplay: false
+          },
+          {
+            key: 'outputDateTimeFormat',
+            type: 'OibText',
+            label: 'Output date time format',
+            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+            newRow: false,
+            readDisplay: false
+          },
+          {
+            key: 'outputTimezone',
+            type: 'OibTimezone',
+            label: 'Timezone',
+            defaultValue: 'Europe/Paris',
+            newRow: false,
+            readDisplay: false
+          }
+        ]
       }
     ]
   }

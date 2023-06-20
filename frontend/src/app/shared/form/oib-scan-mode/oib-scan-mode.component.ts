@@ -19,9 +19,9 @@ export class OibScanModeComponent implements ControlValueAccessor {
   @Input() scanModes: Array<ScanModeDTO> = [];
   @Input() acceptSubscription = false;
   @Input() subscriptionOnly = false;
-  scanModeInputCtrl = this.fb.control(null as ScanModeDTO | null);
+  scanModeInputCtrl = this.fb.control(null as string | null);
   disabled = false;
-  onChange: (value: ScanModeDTO) => void = () => {};
+  onChange: (value: string) => void = () => {};
   onTouched = () => {};
 
   constructor(private fb: NonNullableFormBuilder) {
@@ -47,7 +47,7 @@ export class OibScanModeComponent implements ControlValueAccessor {
     }
   }
 
-  writeValue(value: ScanModeDTO): void {
+  writeValue(value: string): void {
     this.scanModeInputCtrl.setValue(value);
   }
 }

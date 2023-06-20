@@ -51,13 +51,13 @@ describe('EditSouthItemModalComponent', () => {
       maxReadInterval: 0,
       readDelay: 200
     },
-    settings: {}
+    settings: []
   };
 
   const southItemSchema: OibusItemManifest = {
     scanMode: { subscriptionOnly: false, acceptSubscription: true },
     settings: [],
-    schema: {} as unknown
+    schema: []
   } as OibusItemManifest;
   const scanModes: Array<ScanModeDTO> = [
     {
@@ -149,11 +149,8 @@ describe('EditSouthItemModalComponent', () => {
       settings: {}
     };
 
-    beforeEach(() => {
+    it('should duplicate item', () => {
       tester.componentInstance.prepareForCopy(southConnector, southItemSchema, scanModes, southItem);
-    });
-
-    it('should save if valid', fakeAsync(() => {
       tester.detectChanges();
       expect(tester.name).toHaveValue('myName-copy');
 
@@ -178,7 +175,7 @@ describe('EditSouthItemModalComponent', () => {
 
       expect(southConnectorService.createItem).toHaveBeenCalledWith('southId1', expectedCommand);
       expect(fakeActiveModal.close).toHaveBeenCalledWith(createdSouthItem);
-    }));
+    });
   });
 
   describe('edit mode', () => {

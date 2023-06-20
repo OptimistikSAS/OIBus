@@ -9,6 +9,7 @@ class JoiValidatorExtend extends JoiValidator {
     return super.generateJoiSchema(settings);
   }
 }
+
 const extendedValidator = new JoiValidatorExtend();
 
 describe('Joi validator', () => {
@@ -103,12 +104,8 @@ describe('Joi validator', () => {
       {
         key: 'dateTimeFields',
         type: 'OibDateTimeFields',
-        label: 'OibDateTimeFormat'
-      },
-      {
-        key: 'serialization',
-        type: 'OibSerialization',
-        label: 'OibSerialization'
+        label: 'OibDateTimeFormat',
+        allowedDateObjectTypes: []
       },
       {
         key: 'authentication',
@@ -146,19 +143,6 @@ describe('Joi validator', () => {
           })
         )
         .required(),
-      serialization: Joi.object({
-        type: Joi.string().required(),
-        filename: Joi.string().optional(),
-        delimiter: Joi.string().optional(),
-        compression: Joi.boolean().optional(),
-        outputDateTimeFormat: Joi.object({
-          type: Joi.string().required(),
-          timezone: Joi.string().optional(),
-          dateObjectType: Joi.string().optional(),
-          format: Joi.optional(),
-          locale: Joi.optional()
-        })
-      }).required(),
       authentication: Joi.object({
         type: Joi.string().required().valid('none', 'basic', 'cert'),
         username: Joi.optional(),
@@ -272,36 +256,17 @@ describe('Joi validator', () => {
         key: 'databasePath',
         type: 'OibText',
         label: 'Database path',
-        conditionalDisplay: { driver: ['SQLite'] }
+        conditionalDisplay: { field: 'driver', values: ['SQLite'] }
       },
       {
         key: 'query',
         type: 'OibText',
         label: 'Query'
-      },
-      {
-        key: 'serialization',
-        type: 'OibSerialization',
-        label: 'Input binding (@StartTime or @EndTime)',
-        conditionalDisplay: { query: '@StartTime|@EndTime' }
       }
     ];
 
     const generatedSchema = extendedValidator.generateJoiSchema(settings);
 
-    const serializationSchema = Joi.object({
-      type: Joi.string().required(),
-      filename: Joi.string().optional(),
-      delimiter: Joi.string().optional(),
-      compression: Joi.boolean().optional(),
-      outputDateTimeFormat: Joi.object({
-        type: Joi.string().required(),
-        timezone: Joi.string().optional(),
-        dateObjectType: Joi.string().optional(),
-        format: Joi.optional(),
-        locale: Joi.optional()
-      })
-    });
     const expectedSchema = Joi.object({
       driver: Joi.string().required().valid('MSSQL', 'MySQL', 'PostgreSQL', 'Oracle', 'SQLite'),
       databasePath: Joi.string()
@@ -311,12 +276,7 @@ describe('Joi validator', () => {
           then: Joi.string().allow(null, '').required(),
           otherwise: Joi.string().allow(null, '').optional()
         }),
-      query: Joi.string().allow(null, ''),
-      serialization: serializationSchema.required().when('query', {
-        is: Joi.string().pattern(new RegExp('@StartTime|@EndTime')),
-        then: serializationSchema.required(),
-        otherwise: serializationSchema.optional()
-      })
+      query: Joi.string().allow(null, '')
     });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
   });

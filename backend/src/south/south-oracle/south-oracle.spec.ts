@@ -197,7 +197,7 @@ describe('SouthOracle with authentication', () => {
         { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
       ])
       .mockReturnValue([]);
-    (utils.convertDateTimeFromInstant as jest.Mock)
+    (utils.formatInstant as jest.Mock)
       .mockReturnValueOnce('2020-02-01 00:00:00.000')
       .mockReturnValueOnce('2020-03-01 00:00:00.000')
       .mockReturnValue(startTime);
@@ -234,7 +234,7 @@ describe('SouthOracle with authentication', () => {
         .mockReturnValue({ rows: null })
     };
     (oracledb.getConnection as jest.Mock).mockReturnValue(oracleConnection);
-    (utils.convertDateTimeFromInstant as jest.Mock)
+    (utils.formatInstant as jest.Mock)
       .mockReturnValueOnce(DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'))
       .mockReturnValueOnce(DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'));
 

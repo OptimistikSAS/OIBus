@@ -10,12 +10,10 @@ import {
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, of, switchMap } from 'rxjs';
-import { OibFormControl } from '../../../../../shared/model/form.model';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { PageLoader } from '../../shared/page-loader.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { checkInputValue, getRowSettings } from '../../shared/utils';
 import { SouthMetricsComponent } from '../south-metrics/south-metrics.component';
 import { NorthMetricsComponent } from '../../north/north-detail/north-metrics/north-metrics.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
@@ -46,7 +44,7 @@ import { NotificationService } from '../../shared/notification.service';
 })
 export class SouthDetailComponent implements OnInit {
   southConnector: SouthConnectorDTO | null = null;
-  settings: Array<OibFormControl> = [];
+  displayedSettings: Array<{ key: string; value: string }> = [];
   southItemSchema: OibusItemManifest | null = null;
   scanModes: Array<ScanModeDTO> = [];
   manifest: SouthConnectorManifest | null = null;
@@ -88,20 +86,15 @@ export class SouthDetailComponent implements OnInit {
         }
         this.manifest = manifest;
         this.southItemSchema = manifest.items;
-        this.settings = getRowSettings(manifest.settings, this.southConnector?.settings)
-          .flat()
-          .filter(setting => this.shouldDisplayInput(setting));
+        this.displayedSettings = manifest.settings
+          .filter(setting => setting.readDisplay)
+          .map(setting => {
+            return {
+              key: setting.label,
+              value: this.southConnector!.settings[setting.key]
+            };
+          });
       });
-  }
-
-  shouldDisplayInput(settings: OibFormControl) {
-    return (
-      settings.readDisplay &&
-      (!settings.conditionalDisplay ||
-        Object.entries(settings.conditionalDisplay).every(([key, values]) => {
-          return this.southConnector && checkInputValue(values, this.southConnector.settings[key]);
-        }))
-    );
   }
 
   getScanMode(scanModeId: string | undefined) {

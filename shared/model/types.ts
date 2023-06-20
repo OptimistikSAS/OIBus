@@ -7,7 +7,7 @@ export type Timezone = string;
 export const DEFAULT_TZ: Timezone = 'Europe/Paris';
 
 export const LANGUAGES = ['fr', 'en'];
-export type Language = typeof LANGUAGES[number];
+export type Language = (typeof LANGUAGES)[number];
 
 export interface Page<T> {
   /**
@@ -51,7 +51,7 @@ export interface Interval {
 }
 
 export const DATE_TIME_TYPES = ['specific-string', 'iso-8601-string', 'date-object', 'unix-epoch', 'unix-epoch-ms'];
-export type DateTimeType = typeof DATE_TIME_TYPES[number];
+export type DateTimeType = (typeof DATE_TIME_TYPES)[number];
 
 interface BaseDateTimeFormat {
   type: DateTimeType;
@@ -91,14 +91,14 @@ export type DateTimeFormat =
 
 export const ALL_CSV_CHARACTERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const;
 
-export type CsvCharacter = typeof ALL_CSV_CHARACTERS[number];
+export type CsvCharacter = (typeof ALL_CSV_CHARACTERS)[number];
 
 // TODO: custom serialization with parser / transformer
 // TODO: HTTP Payload (OIConnect south)
 export const SERIALIZATION_TYPES = ['csv', 'oibus-values'];
-export type SerializationType = typeof SERIALIZATION_TYPES[number];
+export type SerializationType = (typeof SERIALIZATION_TYPES)[number];
 
-export interface DateTimeSerialization {
+export interface DateTimeField {
   field: string;
   useAsReference: boolean;
   datetimeFormat: DateTimeFormat;
@@ -106,7 +106,8 @@ export interface DateTimeSerialization {
 
 interface BaseSerializationFormat {
   type: SerializationType;
-  outputDateTimeFormat: DateTimeFormat;
+  outputDateTimeFormat: string;
+  outputTimezone: Timezone;
 }
 
 export interface FileSerializationFormat extends BaseSerializationFormat {

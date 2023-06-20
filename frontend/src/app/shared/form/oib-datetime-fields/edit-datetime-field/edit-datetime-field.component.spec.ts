@@ -1,36 +1,37 @@
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { ComponentTester } from 'ngx-speculoos';
-import { DateTimeFormat, DateTimeSerialization } from '../../../../../../../shared/model/types';
+import { DateTimeFormat, DateTimeField } from '../../../../../../../shared/model/types';
 import { OibDatetimeFormatComponent } from '../../oib-datetime-format/oib-datetime-format.component';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { formDirectives } from '../../../form-directives';
-import { EditDatetimeSerializationComponent } from './edit-datetime-serialization.component';
+import { EditDatetimeFieldComponent } from './edit-datetime-field.component';
 import { DefaultValidationErrorsComponent } from '../../../default-validation-errors/default-validation-errors.component';
 
 @Component({
-  template: `<form [formGroup]="form">
-    <oib-edit-datetime-serialization
-      [dateTimeSerialization]="dateTimeSerialization"
-      [existingDateTimeSerializations]="existingDateTimeSerializations"
+  template: ` <form [formGroup]="form">
+    <oib-edit-datetime-field
+      [dateTimeField]="dateTimeField"
+      [dateObjectTypes]="dateObjectTypes"
+      [existingDateTimeFields]="existingDateTimeFields"
       (saved)="savedInput = $event"
       (cancelled)="cancelled = true"
     >
-    </oib-edit-datetime-serialization>
+    </oib-edit-datetime-field>
   </form>`,
   standalone: true,
-  imports: [EditDatetimeSerializationComponent, ...formDirectives]
+  imports: [EditDatetimeFieldComponent, ...formDirectives]
 })
 class TestComponent {
-  dateTimeSerialization: DateTimeSerialization = {
+  dateTimeField: DateTimeField = {
     field: 'field1',
     useAsReference: false,
     datetimeFormat: {
       type: 'unix-epoch-ms'
     }
   };
-  existingDateTimeSerializations: Array<DateTimeSerialization> = [
+  existingDateTimeFields: Array<DateTimeField> = [
     {
       field: 'existing',
       useAsReference: false,
@@ -39,12 +40,13 @@ class TestComponent {
       }
     }
   ];
+  dateObjectTypes: Array<string> = [];
   form = new FormGroup({
     field: new FormControl(null as string | null, Validators.required),
     useAsReference: new FormControl(false as boolean | null),
     datetimeFormat: new FormControl({ type: 'unix-epoch-ms' } as DateTimeFormat)
   });
-  savedInput: DateTimeSerialization | null = null;
+  savedInput: DateTimeField | null = null;
   cancelled = false;
 }
 
@@ -78,7 +80,7 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 }
 
-describe('EditDatetimeSerializationComponent', () => {
+describe('EditDatetimeFieldComponent', () => {
   let tester: TestComponentTester;
 
   beforeEach(() => {

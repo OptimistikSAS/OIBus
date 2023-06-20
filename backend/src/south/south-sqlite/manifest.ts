@@ -42,14 +42,7 @@ const manifest: SouthConnectorManifest = {
         key: 'dateTimeFields',
         type: 'OibDateTimeFields',
         label: 'Date time fields',
-        class: 'col',
-        newRow: true,
-        readDisplay: false
-      },
-      {
-        key: 'serialization',
-        type: 'OibSerialization',
-        label: 'Serialization',
+        allowedDateObjectTypes: [],
         class: 'col',
         newRow: true,
         readDisplay: false

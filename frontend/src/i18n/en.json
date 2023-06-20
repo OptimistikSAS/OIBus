@@ -604,14 +604,7 @@
     "format": "Format",
     "locale": "Locale",
     "timezone": "Timezone",
-    "field": "Field"
-  },
-  "serialization": {
-    "title": "Serialization",
-    "filename": "Filename",
-    "delimiter": "Delimiter",
-    "compression": "Compress (gz)",
-    "type": "Type",
+    "field": "Field",
     "fields": {
       "title": "Datetime fields",
       "list": "Fields",
@@ -619,10 +612,17 @@
       "type": "Type",
       "origin-format": "Origin format",
       "use-as-reference": "Reference",
-      "no-field": "No fields to serialize",
+      "no-field": "No datetime fields",
       "add": "Add a datetime field",
       "unique-field": "Specify each field only once"
-    },
+    }
+  },
+  "serialization": {
+    "title": "Serialization",
+    "filename": "Filename",
+    "delimiter": "Delimiter",
+    "compression": "Compress (gz)",
+    "type": "Type",
     "output": {
       "title": "Output format",
       "date-time-format": "Date time format"

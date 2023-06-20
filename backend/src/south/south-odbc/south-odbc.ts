@@ -2,13 +2,13 @@ import path from 'node:path';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { convertDateTimeFromInstant, convertDateTimeToInstant, createFolder, logQuery, persistResults } from '../../service/utils';
+import { formatInstant, convertDateTimeToInstant, createFolder, logQuery, persistResults } from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { DateTimeSerialization, Instant, Serialization } from '../../../../shared/model/types';
+import { DateTimeField, Instant, Serialization } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 
@@ -93,7 +93,7 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField = item.settings.dateTimeFields.find((element: DateTimeSerialization) => element.field === key);
+            const datetimeField = item.settings.dateTimeFields.find((element: DateTimeField) => element.field === key);
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
@@ -103,7 +103,7 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
                   updatedStartTime = entryDate;
                 }
               }
-              formattedEntry[key] = convertDateTimeFromInstant(entryDate, item.settings.serialization.dateTimeOutputFormat);
+              formattedEntry[key] = formatInstant(entryDate, item.settings.serialization.dateTimeOutputFormat);
             }
           });
           return formattedEntry;
@@ -150,6 +150,12 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
       this.logger.debug(`Connecting with connection string ${connectionString}`);
     }
 
+    const datetimeSerialization = item.settings.dateTimeFields.find((serialization: DateTimeField) => serialization.useAsReference);
+    const odbcStartTime = formatInstant(startTime, datetimeSerialization.datetimeFormat);
+    const odbcEndTime = formatInstant(endTime, datetimeSerialization.datetimeFormat);
+
+    logQuery(item.settings.query, odbcStartTime, odbcEndTime, this.logger);
+
     let connection;
     try {
       const connectionConfig = {
@@ -158,11 +164,9 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
       };
       connection = await odbc.connect(connectionConfig);
 
-      const datetimeSerialization = item.settings.dateTimeFields.find(
-        (serialization: DateTimeSerialization) => serialization.useAsReference
-      );
-      const odbcStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization.datetimeFormat);
-      const odbcEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization.datetimeFormat);
+      const datetimeSerialization = item.settings.dateTimeFields.find((dateTimeField: DateTimeField) => dateTimeField.useAsReference);
+      const odbcStartTime = formatInstant(startTime, datetimeSerialization.datetimeFormat);
+      const odbcEndTime = formatInstant(endTime, datetimeSerialization.datetimeFormat);
       const adaptedQuery = item.settings.query.replace(/@StartTime/g, odbcStartTime).replace(/@EndTime/g, odbcEndTime);
       logQuery(adaptedQuery, odbcStartTime, odbcEndTime, this.logger);
       const data = await connection.query(adaptedQuery);

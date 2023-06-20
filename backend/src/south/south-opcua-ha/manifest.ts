@@ -2,9 +2,9 @@ import { SouthConnectorManifest } from '../../../../shared/model/south-connector
 
 const manifest: SouthConnectorManifest = {
   id: 'opcua-ha',
-  name: 'OPCUA HA',
+  name: 'OPC UA HA',
   category: 'iot',
-  description: 'Request data from OPCUA server on Historical Access (HA) mode',
+  description: 'Request data from OPC UA server on Historical Access (HA) mode',
   modes: {
     subscription: false,
     lastPoint: false,
@@ -76,7 +76,7 @@ const manifest: SouthConnectorManifest = {
         'PubSub_Aes256_CTR'
       ],
       defaultValue: 'None',
-      conditionalDisplay: { securityMode: ['Sign', 'SignAndEncrypt'] },
+      conditionalDisplay: { field: 'securityMode', values: ['Sign', 'SignAndEncrypt'] },
       newRow: false,
       readDisplay: true
     },

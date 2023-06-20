@@ -3,10 +3,10 @@ import { NgForOf, NgIf } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
-import { FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { combineLatest, switchMap, tap } from 'rxjs';
+import { combineLatest, of, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
@@ -16,7 +16,7 @@ import { ProxyService } from '../../services/proxy.service';
 import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
-import { createInput, disableInputs, getRowSettings } from '../../shared/utils';
+import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 import { SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
@@ -53,44 +53,39 @@ import { HistoryQueryItemsComponent } from '../history-query-items/history-query
 export class EditHistoryQueryComponent implements OnInit {
   historyQuery: HistoryQueryDTO | null = null;
   state = new ObservableState();
-  loading = true;
-  northSettingsSchema: Array<Array<OibFormControl>> = [];
-  southSettingsSchema: Array<Array<OibFormControl>> = [];
+  northSettingsControls: Array<Array<OibFormControl>> = [];
+  southSettingsControls: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
   proxies: Array<ProxyDTO> = [];
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
 
-  historyQueryForm = this.fb.group({
-    name: ['', Validators.required],
-    description: '',
-    start: null as Instant | null,
-    end: null as Instant | null,
-    history: this.fb.group({
-      maxInstantPerItem: false,
-      maxReadInterval: 0,
-      readDelay: 200
-    }),
-    caching: this.fb.group({
-      scanMode: [null as ScanModeDTO | null, Validators.required],
-      retryInterval: [5000 as number | null, Validators.required],
-      retryCount: [3 as number | null, Validators.required],
-      groupCount: [1000 as number | null, Validators.required],
-      maxSendCount: [10_000 as number | null, Validators.required],
-      sendFileImmediately: true,
-      maxSize: [0, Validators.required]
-    }),
-    archive: this.fb.group({
-      enabled: [false, Validators.required],
-      retentionDuration: [720, Validators.required]
-    }),
-    north: this.fb.group({
-      settings: this.fb.record({})
-    }),
-    south: this.fb.group({
-      settings: this.fb.record({})
-    })
-  });
+  historyQueryForm: FormGroup<{
+    name: FormControl<string>;
+    description: FormControl<string>;
+    start: FormControl<Instant | null>;
+    end: FormControl<Instant | null>;
+    history: FormGroup<{
+      maxInstantPerItem: FormControl<boolean>;
+      maxReadInterval: FormControl<number>;
+      readDelay: FormControl<number>;
+    }>;
+    caching: FormGroup<{
+      scanModeId: FormControl<string | null>;
+      retryInterval: FormControl<number>;
+      retryCount: FormControl<number>;
+      groupCount: FormControl<number>;
+      maxSendCount: FormControl<number>;
+      sendFileImmediately: FormControl<boolean>;
+      maxSize: FormControl<number>;
+    }>;
+    archive: FormGroup<{
+      enabled: FormControl<boolean>;
+      retentionDuration: FormControl<number>;
+    }>;
+    northSettings: FormGroup;
+    southSettings: FormGroup;
+  }> | null = null;
 
   constructor(
     private historyQueryService: HistoryQueryService,
@@ -114,83 +109,59 @@ export class EditHistoryQueryComponent implements OnInit {
         }),
         switchMap(historyQuery => {
           this.historyQuery = historyQuery;
-          this.historyQueryForm.patchValue({
-            name: historyQuery.name,
-            description: historyQuery.description,
-            start: historyQuery.startTime,
-            end: historyQuery.endTime,
-            history: historyQuery.history,
-            caching: {
-              scanMode: this.scanModes.find(scanMode => scanMode.id === historyQuery.caching.scanModeId),
-              groupCount: historyQuery.caching.groupCount,
-              retryCount: historyQuery.caching.retryCount,
-              retryInterval: historyQuery.caching.retryInterval,
-              maxSendCount: historyQuery.caching.maxSendCount,
-              sendFileImmediately: historyQuery.caching.sendFileImmediately,
-              maxSize: historyQuery.caching.maxSize
-            },
-            archive: historyQuery.archive
-          });
+
           return combineLatest([
+            of(historyQuery),
             this.northConnectorService.getNorthConnectorTypeManifest(historyQuery.northType),
             this.southConnectorService.getSouthConnectorTypeManifest(historyQuery.southType)
           ]);
         })
       )
-      .subscribe(([northManifest, southManifest]) => {
-        const northRowList = getRowSettings(northManifest.settings, this.historyQuery!.northSettings);
-        const southRowList = getRowSettings(southManifest.settings, this.historyQuery!.southSettings);
-
+      .subscribe(([historyQuery, northManifest, southManifest]) => {
         this.northManifest = northManifest;
         this.southManifest = southManifest;
-        this.northSettingsSchema = northRowList;
-        this.southSettingsSchema = southRowList;
+        this.northSettingsControls = groupFormControlsByRow(northManifest.settings);
+        this.southSettingsControls = groupFormControlsByRow(southManifest.settings);
 
-        this.monitorInputs(this.historyQueryForm.controls.north.controls.settings, this.northSettingsSchema, this.northManifest);
-        this.monitorInputs(this.historyQueryForm.controls.south.controls.settings, this.southSettingsSchema, this.southManifest);
+        this.historyQueryForm = this.fb.group({
+          name: ['', Validators.required],
+          description: '',
+          start: null as Instant | null,
+          end: null as Instant | null,
+          history: this.fb.group({
+            maxInstantPerItem: false,
+            maxReadInterval: 0,
+            readDelay: 200
+          }),
+          caching: this.fb.group({
+            scanModeId: this.fb.control<string | null>(null, Validators.required),
+            retryInterval: [5000, Validators.required],
+            retryCount: [3, Validators.required],
+            groupCount: [1000, Validators.required],
+            maxSendCount: [10_000, Validators.required],
+            sendFileImmediately: true,
+            maxSize: [0, Validators.required]
+          }),
+          archive: this.fb.group({
+            enabled: [false, Validators.required],
+            retentionDuration: [720, Validators.required]
+          }),
+          northSettings: createFormGroup(northManifest.settings, this.fb),
+          southSettings: createFormGroup(southManifest.settings, this.fb)
+        });
 
-        this.loading = false;
-      });
-  }
-
-  /**
-   * Monitor inputs on values changes to adapt the South or North form settings appropriately
-   */
-  private monitorInputs(
-    settingsForm: FormGroup,
-    settingsSchema: Array<Array<OibFormControl>>,
-    manifest: NorthConnectorManifest | SouthConnectorManifest
-  ) {
-    const southInputsToSubscribeTo: Set<string> = new Set();
-    settingsSchema.forEach(row => {
-      row.forEach(settings => {
-        createInput(settings, settingsForm);
-        if (settings.conditionalDisplay) {
-          Object.entries(settings.conditionalDisplay).forEach(([key]) => {
-            // Keep only one occurrence of each input to subscribe to
-            southInputsToSubscribeTo.add(key);
-          });
+        if (historyQuery) {
+          this.historyQueryForm.patchValue(historyQuery);
         }
       });
-    });
-    // Each input that must be monitored is subscribed
-    southInputsToSubscribeTo.forEach(input => {
-      // Check once with initialized value
-      disableInputs(manifest.settings, input, settingsForm.controls[input].value, settingsForm);
-      // Check on value changes
-      settingsForm.controls[input].valueChanges.subscribe(inputValue => {
-        // When a value of such an input changes, check if its inputValue implies to disable another input
-        disableInputs(manifest.settings, input, inputValue, settingsForm);
-      });
-    });
   }
 
   save() {
-    if (!this.historyQueryForm.valid || !this.historyQuery) {
+    if (!this.historyQueryForm!.valid || !this.historyQuery) {
       return;
     }
 
-    const formValue = this.historyQueryForm.value;
+    const formValue = this.historyQueryForm!.value;
     const command: HistoryQueryCommandDTO = {
       name: formValue.name!,
       description: formValue.description!,
@@ -198,15 +169,15 @@ export class EditHistoryQueryComponent implements OnInit {
       endTime: formValue.end!,
       northType: this.historyQuery.northType,
       southType: this.historyQuery.southType,
-      southSettings: formValue.south!.settings!,
-      northSettings: formValue.north!.settings!,
+      southSettings: formValue.southSettings,
+      northSettings: formValue.northSettings,
       history: {
         maxInstantPerItem: formValue.history!.maxInstantPerItem!,
         maxReadInterval: formValue.history!.maxReadInterval!,
         readDelay: formValue.history!.readDelay!
       },
       caching: {
-        scanModeId: formValue.caching!.scanMode!.id,
+        scanModeId: formValue.caching!.scanModeId!,
         retryInterval: formValue.caching!.retryInterval!,
         retryCount: formValue.caching!.retryCount!,
         groupCount: formValue.caching!.groupCount!,

@@ -3,13 +3,13 @@ import mssql, { config } from 'mssql';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { convertDateTimeFromInstant, convertDateTimeToInstant, createFolder, logQuery, persistResults } from '../../service/utils';
+import { formatInstant, convertDateTimeToInstant, createFolder, logQuery, persistResults } from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { DateTimeFormat, DateTimeSerialization, Instant, Serialization } from '../../../../shared/model/types';
+import { DateTimeFormat, DateTimeField, Instant, Serialization } from '../../../../shared/model/types';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { DateTime } from 'luxon';
 
@@ -20,6 +20,7 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
   static type = manifest.id;
 
   private readonly tmpFolder: string;
+
   constructor(
     configuration: SouthConnectorDTO,
     items: Array<OibusItemDTO>,
@@ -83,18 +84,17 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField = item.settings.dateTimeFields.find((element: DateTimeSerialization) => element.field === key);
+            const datetimeField: DateTimeField = item.settings.dateTimeFields.find((element: DateTimeField) => element.field === key);
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
               const entryDate = convertDateTimeToInstant(value, datetimeField.datetimeFormat);
-
               if (datetimeField.useAsReference) {
                 if (entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
                 }
               }
-              formattedEntry[key] = convertDateTimeFromInstant(entryDate, item.settings.serialization.dateTimeOutputFormat);
+              formattedEntry[key] = formatInstant(entryDate, item.settings.serialization.dateTimeOutputFormat);
             }
           });
           return formattedEntry;
@@ -137,8 +137,8 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
       config.domain = this.configuration.settings.domain;
     }
 
-    const referenceTimestampField: DateTimeSerialization = item.settings.dateTimeFields.find(
-      (serialization: DateTimeSerialization) => serialization.useAsReference
+    const referenceTimestampField: DateTimeField = item.settings.dateTimeFields.find(
+      (dateTimeField: DateTimeField) => dateTimeField.useAsReference
     );
     const mssqlStartTime = this.formatDatetimeVariables(startTime, referenceTimestampField.datetimeFormat);
     const mssqlEndTime = this.formatDatetimeVariables(endTime, referenceTimestampField.datetimeFormat);
@@ -173,7 +173,7 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
       case 'unix-epoch-ms':
       case 'specific-string':
       case 'iso-8601-string':
-        return convertDateTimeFromInstant(datetime, dateTimeFormat);
+        return formatInstant(datetime, dateTimeFormat);
       case 'date-object':
         switch (dateTimeFormat.dateObjectType) {
           case 'Date':

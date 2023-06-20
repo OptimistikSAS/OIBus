@@ -3,11 +3,9 @@ import { DecimalPipe, NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, of, switchMap, tap } from 'rxjs';
-import { OibFormControl } from '../../../../../shared/model/form.model';
 import { PageLoader } from '../../shared/page-loader.service';
 import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { checkInputValue, getRowSettings } from '../../shared/utils';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
@@ -48,8 +46,8 @@ import { HistoryMetricsComponent } from './history-metrics/history-metrics.compo
 })
 export class HistoryQueryDetailComponent implements OnInit {
   historyQuery: HistoryQueryDTO | null = null;
-  northSettingsSchema: Array<Array<OibFormControl>> = [];
-  southSettingsSchema: Array<Array<OibFormControl>> = [];
+  northDisplayedSettings: Array<{ key: string; value: string }> = [];
+  southDisplayedSettings: Array<{ key: string; value: string }> = [];
 
   scanModes: Array<ScanModeDTO> = [];
   searchParams: OibusItemSearchParam | null = null;
@@ -105,21 +103,26 @@ export class HistoryQueryDetailComponent implements OnInit {
         }
 
         this.northManifest = northManifest;
-        this.northSettingsSchema = getRowSettings(northManifest.settings, this.historyQuery!.northSettings);
-        this.southSettingsSchema = getRowSettings(southManifest.settings, this.historyQuery!.southSettings);
+        this.northDisplayedSettings = northManifest.settings
+          .filter(setting => setting.readDisplay)
+          .map(setting => {
+            return {
+              key: setting.label,
+              value: this.historyQuery!.northSettings[setting.key]
+            };
+          });
+
         this.southManifest = southManifest;
+        this.southDisplayedSettings = southManifest.settings
+          .filter(setting => setting.readDisplay)
+          .map(setting => {
+            return {
+              key: setting.label,
+              value: this.historyQuery!.southSettings[setting.key]
+            };
+          });
         this.historyQueryItems = historyItems;
       });
-  }
-
-  shouldDisplayInput(formSettings: OibFormControl, settingsValues: any) {
-    return (
-      formSettings.readDisplay &&
-      (!formSettings.conditionalDisplay ||
-        Object.entries(formSettings.conditionalDisplay).every(([key, values]) => {
-          return values && checkInputValue(values, settingsValues[key]);
-        }))
-    );
   }
 
   getScanMode(scanModeId: string) {

@@ -4,7 +4,7 @@ import mysql from 'mysql2/promise';
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
 import {
-  convertDateTimeFromInstant,
+  formatInstant,
   convertDateTimeToInstant,
   createFolder,
   generateReplacementParameters,
@@ -16,7 +16,7 @@ import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { DateTimeSerialization, Instant, Serialization } from '../../../../shared/model/types';
+import { DateTimeField, Instant, Serialization } from '../../../../shared/model/types';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { DateTime } from 'luxon';
 
@@ -27,6 +27,7 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
   static type = manifest.id;
 
   private readonly tmpFolder: string;
+
   constructor(
     configuration: SouthConnectorDTO,
     items: Array<OibusItemDTO>,
@@ -159,17 +160,17 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField = item.settings.dateTimeFields.find((element: DateTimeSerialization) => element.field === key);
+            const datetimeField: DateTimeField = item.settings.dateTimeFields.find((element: DateTimeField) => element.field === key);
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
-              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField.datetimeFormat);
+              const entryDate = convertDateTimeToInstant(value, datetimeField.datetimeFormat);
               if (datetimeField.useAsReference) {
                 if (entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
                 }
               }
-              formattedEntry[key] = convertDateTimeFromInstant(entryDate, item.settings.serialization.dateTimeOutputFormat);
+              formattedEntry[key] = formatInstant(entryDate, item.settings.serialization.dateTimeOutputFormat);
             }
           });
           return formattedEntry;
@@ -186,6 +187,9 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
       } else {
         this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
+    }
+    if (updatedStartTime !== startTime) {
+      this.logger.debug(`Next start time updated from ${startTime} to ${updatedStartTime}`);
     }
     return updatedStartTime;
   }
@@ -204,9 +208,9 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
       timezone: 'Z'
     };
 
-    const datetimeSerialization = item.settings.dateTimeFields.find((serialization: DateTimeSerialization) => serialization.useAsReference);
-    const mysqlStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization.datetimeFormat);
-    const mysqlEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization.datetimeFormat);
+    const datetimeSerialization = item.settings.dateTimeFields.find((serialization: DateTimeField) => serialization.useAsReference);
+    const mysqlStartTime = formatInstant(startTime, datetimeSerialization.datetimeFormat);
+    const mysqlEndTime = formatInstant(endTime, datetimeSerialization.datetimeFormat);
     logQuery(item.settings.query, mysqlStartTime, mysqlEndTime, this.logger);
 
     let connection;

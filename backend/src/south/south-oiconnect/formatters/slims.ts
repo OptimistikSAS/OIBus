@@ -1,7 +1,7 @@
 import { Instant } from '../../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { OibusItemDTO } from '../../../../../shared/model/south-connector.model';
-import { convertDateTimeFromInstant } from '../../../service/utils';
+import { formatInstant } from '../../../service/utils';
 
 interface SlimsColumn {
   name: string;
@@ -49,7 +49,7 @@ export default (item: OibusItemDTO, httpResult: SlimsResults): { formattedResult
     formattedData.push({
       pointId: `${rsltCfPid.value}-${testName.value}`,
       unit: rsltValue.unit || 'Ø',
-      timestamp: convertDateTimeFromInstant(resultInstant, item.settings.serialization.outputDateTimeFormat),
+      timestamp: formatInstant(resultInstant, { type: 'iso-8601-string' }),
       value: rsltValue.value
     });
     if (resultInstant > maxInstant) {

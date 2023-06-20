@@ -64,15 +64,15 @@
         <ng-template oibBoxTitle>
           <span
             translate="history-query.north.specific-settings"
-            [translateParams]="{ type: historyQuery.northType }"
+            [translateParams]="{ type: northManifest.name }"
             id="north-specific-settings-title"
           ></span>
         </ng-template>
         <table class="table table-sm table-hover oib-table mt-3">
           <tbody class="north-settings">
-            <tr *ngFor="let setting of northManifest.settings">
-              <td style="width: 33%">{{setting.label}}</td>
-              <td>{{setting.currentValue}}</td>
+            <tr *ngFor="let setting of northDisplayedSettings">
+              <td style="width: 33%">{{ setting.key }}</td>
+              <td>{{ setting.value }}</td>
             </tr>
           </tbody>
         </table>
@@ -83,15 +83,15 @@
         <ng-template oibBoxTitle>
           <span
             translate="history-query.south.specific-settings"
-            [translateParams]="{ type: historyQuery.southType }"
+            [translateParams]="{ type: southManifest.name }"
             id="south-specific-settings-title"
           ></span>
         </ng-template>
         <table class="table table-sm table-hover oib-table mt-3">
           <tbody class="south-settings">
-            <tr *ngFor="let setting of southManifest.settings">
-              <td style="width: 33%">{{setting.label}}</td>
-              <td>{{setting.currentValue}}</td>
+            <tr *ngFor="let setting of southDisplayedSettings">
+              <td style="width: 33%">{{ setting.key }}</td>
+              <td>{{ setting.value }}</td>
             </tr>
           </tbody>
         </table>
