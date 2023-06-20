@@ -1,7 +1,7 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { formDirectives } from '../../form-directives';
 import { NgForOf, NgIf } from '@angular/common';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder, Validators } from '@angular/forms';
 
 import { Authentication, AuthenticationType } from '../../../../../../shared/model/engine.model';
 import { TranslateModule } from '@ngx-translate/core';
@@ -28,6 +28,12 @@ export class OibAuthComponent implements ControlValueAccessor {
 
   constructor(private fb: NonNullableFormBuilder) {
     this.authCtrl.controls.type.valueChanges.subscribe(newValue => {
+      this.authCtrl.controls.username.removeValidators(Validators.required);
+      this.authCtrl.controls.password.removeValidators(Validators.required);
+      this.authCtrl.controls.token.removeValidators(Validators.required);
+      this.authCtrl.controls.secret.removeValidators(Validators.required);
+      this.authCtrl.controls.certPath.removeValidators(Validators.required);
+
       switch (newValue) {
         case 'none':
           this.authCtrl.controls.username.disable();
@@ -47,6 +53,8 @@ export class OibAuthComponent implements ControlValueAccessor {
           this.authCtrl.controls.secret.disable();
           this.authCtrl.controls.certPath.disable();
           this.authCtrl.controls.keyPath.disable();
+          this.authCtrl.controls.username.addValidators(Validators.required);
+          this.authCtrl.controls.password.addValidators(Validators.required);
           break;
 
         case 'bearer':
@@ -57,6 +65,7 @@ export class OibAuthComponent implements ControlValueAccessor {
           this.authCtrl.controls.secret.disable();
           this.authCtrl.controls.certPath.disable();
           this.authCtrl.controls.keyPath.disable();
+          this.authCtrl.controls.token.addValidators(Validators.required);
           break;
 
         case 'api-key':
@@ -67,6 +76,8 @@ export class OibAuthComponent implements ControlValueAccessor {
           this.authCtrl.controls.secret.enable();
           this.authCtrl.controls.certPath.disable();
           this.authCtrl.controls.keyPath.disable();
+          this.authCtrl.controls.key.addValidators(Validators.required);
+          this.authCtrl.controls.secret.addValidators(Validators.required);
           break;
 
         case 'cert':
@@ -77,9 +88,11 @@ export class OibAuthComponent implements ControlValueAccessor {
           this.authCtrl.controls.secret.disable();
           this.authCtrl.controls.certPath.enable();
           this.authCtrl.controls.keyPath.enable();
+          this.authCtrl.controls.keyPath.addValidators(Validators.required);
           break;
       }
     });
+    this.authCtrl.updateValueAndValidity();
 
     this.authCtrl.valueChanges.subscribe(newValue => {
       switch (newValue.type) {

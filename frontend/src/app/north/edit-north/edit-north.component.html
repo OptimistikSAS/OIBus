@@ -1,7 +1,7 @@
 <div class="oib-padded-container">
   <div class="row justify-content-center">
-    <div class="col-md-10 col-lg-8">
-      <h1 [translate]="'north.' + mode + '-title'" [translateParams]="{ type: northType }"></h1>
+    <div class="col-md-10 col-lg-8" *ngIf="manifest">
+      <h1 [translate]="'north.' + mode + '-title'" [translateParams]="{ type: manifest.name }"></h1>
       <form [formGroup]="northForm" (ngSubmit)="save()" id="north-form" class="mt-3">
         <!-- General settings -->
         <oib-box boxTitle="north.general-settings">
@@ -38,7 +38,7 @@
         <!-- Specific settings -->
         <oib-box>
           <ng-template oibBoxTitle>
-            <span translate="north.specific-settings" [translateParams]="{ type: northType }" id="specific-settings-title"></span>
+            <span translate="north.specific-settings" [translateParams]="{ type: manifest.name }" id="specific-settings-title"></span>
           </ng-template>
 
           <oib-form
@@ -98,7 +98,7 @@
                 </div>
               </div>
             </div>
-            <div class="row" *ngIf="manifest?.modes?.points">
+            <div class="row" *ngIf="manifest.modes?.points">
               <!-- Group count -->
               <div class="col-4">
                 <div class="form-group">
@@ -116,7 +116,7 @@
                 </div>
               </div>
             </div>
-            <div class="row" *ngIf="manifest?.modes?.files">
+            <div class="row" *ngIf="manifest.modes?.files">
               <!-- Send file immediately -->
               <div class="col-4">
                 <div class="form-group">

@@ -171,7 +171,10 @@ export const createInput = (value: OibFormControl, form: FormGroup, scanModes: A
     case 'OibAuthentication':
       form.addControl(
         value.key,
-        new FormControl(createAuthenticationForm(value.currentValue || { type: 'none' }), getValidators(value.validators || []))
+        new FormControl(
+          createAuthenticationForm(value.currentValue || value.defaultValue || { type: 'none' }),
+          getValidators(value.validators || [])
+        )
       );
       break;
   }
