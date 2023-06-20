@@ -1,20 +1,20 @@
 import { ComponentTester } from 'ngx-speculoos';
 import { Component } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { DatetimeFieldsSerializationComponent } from './datetime-fields-serialization.component';
+import { DatetimeFieldsComponent } from './datetime-fields.component';
 import { TestBed } from '@angular/core/testing';
-import { DateTimeSerialization } from '../../../../../../shared/model/types';
-import { EditDatetimeSerializationComponent } from './edit-datetime-serialization/edit-datetime-serialization.component';
+import { DateTimeField } from '../../../../../../shared/model/types';
+import { EditDatetimeFieldComponent } from './edit-datetime-field/edit-datetime-field.component';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { formDirectives } from '../../form-directives';
 
 @Component({
-  template: '<oib-datetime-fields-serialization [formControl]="control"></oib-datetime-fields-serialization>',
+  template: '<oib-datetime-fields [dateObjectTypes]="[]" [formControl]="control"></oib-datetime-fields>',
   standalone: true,
-  imports: [DatetimeFieldsSerializationComponent, ...formDirectives]
+  imports: [DatetimeFieldsComponent, ...formDirectives]
 })
 class TestComponent {
-  control = new FormControl<Array<DateTimeSerialization>>([
+  control = new FormControl<Array<DateTimeField>>([
     {
       field: 'field1',
       useAsReference: false,
@@ -44,8 +44,8 @@ class TestComponentTester extends ComponentTester<TestComponent> {
     return this.button('.add-field-button')!;
   }
 
-  get editComponent(): EditDatetimeSerializationComponent {
-    return this.component(EditDatetimeSerializationComponent)!;
+  get editComponent(): EditDatetimeFieldComponent {
+    return this.component(EditDatetimeFieldComponent)!;
   }
 
   get displayFields() {
@@ -60,12 +60,12 @@ class TestComponentTester extends ComponentTester<TestComponent> {
     return this.elements<HTMLButtonElement>('.delete-button');
   }
 
-  get DatetimeFieldsSerializationComponent(): DatetimeFieldsSerializationComponent {
-    return this.component(DatetimeFieldsSerializationComponent);
+  get DatetimeFieldsComponent(): DatetimeFieldsComponent {
+    return this.component(DatetimeFieldsComponent);
   }
 }
 
-describe('DatetimeFieldsSerializationComponent', () => {
+describe('DatetimeFieldsComponent', () => {
   let tester: TestComponentTester;
 
   beforeEach(() => {
@@ -108,7 +108,7 @@ describe('DatetimeFieldsSerializationComponent', () => {
       expect(b.disabled).toBeTrue();
     });
 
-    expect(tester.editComponent.dateTimeSerialization).toEqual({
+    expect(tester.editComponent.dateTimeField).toEqual({
       field: '',
       useAsReference: false,
       datetimeFormat: {

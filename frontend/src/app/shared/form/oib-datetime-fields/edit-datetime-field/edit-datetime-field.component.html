@@ -2,24 +2,24 @@
   <div class="row gx-2">
     <div class="col-md-3">
       <div class="form-group">
-        <label class="form-label" for="field" translate="serialization.fields.field"></label>
+        <label class="form-label" for="field" translate="datetime.fields.field"></label>
         <input formControlName="field" class="form-control" id="field" />
         <val-errors controlName="field">
           <ng-template valError="uniqueField">
-            <span translate="serialization.fields.unique-field"></span>
+            <span translate="datetime.fields.unique-field"></span>
           </ng-template>
         </val-errors>
       </div>
       <div class="form-check form-switch padded">
         <input formControlName="useAsReference" id="use-as-reference" type="checkbox" class="form-check-input" />
-        <label class="form-check-label" for="use-as-reference">{{ 'serialization.fields.use-as-reference' | translate }}</label>
+        <label class="form-check-label" for="use-as-reference" translate="datetime.fields.use-as-reference"></label>
       </div>
     </div>
 
     <div class="col">
       <oib-datetime-format
         formControlName="datetimeFormat"
-        [label]="'serialization.fields.origin-format' | translate"
+        [label]="'datetime.fields.origin-format' | translate"
         key="datetimeFormat"
         [displayExample]="true"
         [dateObjectTypes]="dateObjectTypes"

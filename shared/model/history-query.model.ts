@@ -13,8 +13,8 @@ export interface HistoryQueryDTO {
   endTime: string;
   southType: string;
   northType: string;
-  southSettings: object;
-  northSettings: object;
+  southSettings: any;
+  northSettings: any;
   history: SouthConnectorHistorySettings;
   caching: NorthCacheSettingsDTO;
   archive: NorthArchiveSettings;

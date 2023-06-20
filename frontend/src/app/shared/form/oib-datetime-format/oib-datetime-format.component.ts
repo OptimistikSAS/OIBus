@@ -1,4 +1,4 @@
-import { Component, forwardRef, Input } from '@angular/core';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { formDirectives } from '../../form-directives';
 import { NgForOf, NgIf } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder } from '@angular/forms';
@@ -18,6 +18,7 @@ declare namespace Intl {
 
   function supportedValuesOf(input: Key): string[];
 }
+
 @Component({
   selector: 'oib-datetime-format',
   standalone: true,
@@ -26,13 +27,13 @@ declare namespace Intl {
   styleUrls: ['./oib-datetime-format.component.scss'],
   providers: [{ provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => OibDatetimeFormatComponent), multi: true }]
 })
-export class OibDatetimeFormatComponent implements ControlValueAccessor {
+export class OibDatetimeFormatComponent implements ControlValueAccessor, OnInit {
   @Input() label = '';
   @Input() key = '';
   @Input() displayExample = true;
-  @Input() dateObjectTypes: Array<string> = [];
+  @Input({ required: true }) dateObjectTypes!: Array<string>;
 
-  readonly datetimeTypes = this.dateObjectTypes.length === 0 ? DATE_TIME_TYPES.filter(type => type !== 'date-object') : DATE_TIME_TYPES;
+  datetimeTypes: Array<DateTimeType> = [];
   readonly BASE_EXAMPLE = '2023-11-29T21:03:59.123Z';
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
   timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
@@ -45,7 +46,7 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
     format: 'yyyy-MM-dd HH:mm:ss.SSS',
     timezone: 'UTC',
     locale: 'en-US',
-    dateObjectType: (this.dateObjectTypes.length > 0 ? this.dateObjectTypes[0] : null) as string | null
+    dateObjectType: null as string | null
   });
   disabled = false;
   example: DateTime | number | string = DateTime.fromISO(this.BASE_EXAMPLE, { zone: 'UTC' }).toFormat('yyyy-MM-dd HH:mm:ss.SSS', {
@@ -122,6 +123,11 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
     });
   }
 
+  ngOnInit() {
+    this.datetimeTypes = this.dateObjectTypes.length === 0 ? DATE_TIME_TYPES.filter(type => type !== 'date-object') : DATE_TIME_TYPES;
+    this.datetimeFormatCtrl.controls.dateObjectType.setValue(this.dateObjectTypes.length > 0 ? this.dateObjectTypes[0] : null);
+  }
+
   registerOnChange(fn: any): void {
     this.onChange = fn;
   }
@@ -140,6 +146,9 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
   }
 
   writeValue(value: DateTimeFormat): void {
+    if (!value) {
+      return;
+    }
     switch (value.type) {
       case 'specific-string':
         this.datetimeFormatCtrl.patchValue({
@@ -155,7 +164,11 @@ export class OibDatetimeFormatComponent implements ControlValueAccessor {
         });
         break;
       case 'date-object':
-        this.datetimeFormatCtrl.patchValue({ type: value.type, timezone: value.timezone, dateObjectType: value.dateObjectType });
+        this.datetimeFormatCtrl.patchValue({
+          type: value.type,
+          timezone: value.timezone,
+          dateObjectType: value.dateObjectType
+        });
         break;
       case 'unix-epoch':
       case 'unix-epoch-ms':

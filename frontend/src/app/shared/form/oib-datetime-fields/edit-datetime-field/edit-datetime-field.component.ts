@@ -1,48 +1,48 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { AbstractControl, NonNullableFormBuilder, ValidatorFn, Validators } from '@angular/forms';
-import { DateTimeFormat, DateTimeSerialization } from '../../../../../../../shared/model/types';
+import { DateTimeFormat, DateTimeField } from '../../../../../../../shared/model/types';
 import { formDirectives } from '../../../form-directives';
 import { NgForOf, NgIf } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { DatetimeTypesEnumPipe } from '../../../datetime-types-enum.pipe';
 import { OibDatetimeFormatComponent } from '../../oib-datetime-format/oib-datetime-format.component';
 
-const uniqueTitleValidator = (editedField: DateTimeSerialization, existingComponents: Array<DateTimeSerialization>): ValidatorFn => {
+const uniqueTitleValidator = (editedField: DateTimeField, existingComponents: Array<DateTimeField>): ValidatorFn => {
   return (control: AbstractControl) => {
     return control.value && existingComponents.some(c => c !== editedField && c.field === control.value) ? { uniqueField: true } : null;
   };
 };
 
 @Component({
-  selector: 'oib-edit-datetime-serialization',
-  templateUrl: './edit-datetime-serialization.component.html',
-  styleUrls: ['./edit-datetime-serialization.component.scss'],
+  selector: 'oib-edit-datetime-field',
+  templateUrl: './edit-datetime-field.component.html',
+  styleUrls: ['./edit-datetime-field.component.scss'],
   imports: [...formDirectives, NgIf, NgForOf, TranslateModule, DatetimeTypesEnumPipe, OibDatetimeFormatComponent],
   standalone: true
 })
-export class EditDatetimeSerializationComponent implements OnInit {
+export class EditDatetimeFieldComponent implements OnInit {
   form = this.fb.group({
     field: [null as string | null, Validators.required],
     useAsReference: false as boolean | null,
     datetimeFormat: { type: 'iso-8601-string', timezone: 'Europe/Paris' } as DateTimeFormat
   });
 
-  @Input({ required: true }) dateTimeSerialization!: DateTimeSerialization;
-  @Input({ required: true }) existingDateTimeSerializations!: Array<DateTimeSerialization>;
-  @Input() dateObjectTypes: Array<string> = [];
+  @Input({ required: true }) dateTimeField!: DateTimeField;
+  @Input({ required: true }) existingDateTimeFields!: Array<DateTimeField>;
+  @Input({ required: true }) dateObjectTypes!: Array<string>;
 
-  @Output() readonly saved = new EventEmitter<DateTimeSerialization>();
+  @Output() readonly saved = new EventEmitter<DateTimeField>();
   @Output() readonly cancelled = new EventEmitter<void>();
 
   constructor(private fb: NonNullableFormBuilder) {}
 
   ngOnInit() {
-    this.form.get('field')!.addValidators(uniqueTitleValidator(this.dateTimeSerialization, this.existingDateTimeSerializations));
+    this.form.get('field')!.addValidators(uniqueTitleValidator(this.dateTimeField, this.existingDateTimeFields));
 
     this.form.setValue({
-      field: this.dateTimeSerialization.field,
-      useAsReference: this.dateTimeSerialization.useAsReference,
-      datetimeFormat: this.dateTimeSerialization.datetimeFormat
+      field: this.dateTimeField.field,
+      useAsReference: this.dateTimeField.useAsReference,
+      datetimeFormat: this.dateTimeField.datetimeFormat
     });
   }
 

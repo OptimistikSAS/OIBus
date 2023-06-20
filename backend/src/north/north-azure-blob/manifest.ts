@@ -41,7 +41,7 @@ const manifest: NorthConnectorManifest = {
       type: 'OibSecret',
       label: 'Shared Access Signature Token',
       newRow: true,
-      conditionalDisplay: { authentication: ['sasToken'] },
+      conditionalDisplay: { field: 'authentication', values: ['sasToken'] },
       readDisplay: true
     },
     {
@@ -49,7 +49,7 @@ const manifest: NorthConnectorManifest = {
       type: 'OibSecret',
       label: 'Access Key',
       newRow: true,
-      conditionalDisplay: { authentication: ['accessKey'] },
+      conditionalDisplay: { field: 'authentication', values: ['accessKey'] },
       readDisplay: true
     },
     {
@@ -57,7 +57,7 @@ const manifest: NorthConnectorManifest = {
       type: 'OibText',
       label: 'Tenant ID',
       newRow: true,
-      conditionalDisplay: { authentication: ['aad'] },
+      conditionalDisplay: { field: 'authentication', values: ['aad'] },
       readDisplay: true
     },
     {
@@ -66,7 +66,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Client ID',
       newRow: false,
       validators: [{ key: 'required' }],
-      conditionalDisplay: { authentication: ['aad'] },
+      conditionalDisplay: { field: 'authentication', values: ['aad'] },
       readDisplay: true
     },
     {
@@ -75,7 +75,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Client Secret',
       newRow: false,
       validators: [{ key: 'required' }],
-      conditionalDisplay: { authentication: ['aad'] },
+      conditionalDisplay: { field: 'authentication', values: ['aad'] },
       readDisplay: true
     }
   ]

@@ -1,5 +1,5 @@
-import { ConnectorFormValidator, OibFormControl } from '../../../../shared/model/form.model';
-import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { FormComponentValidator, OibFormControl } from '../../../../shared/model/form.model';
+import { FormControl, FormGroup, NonNullableFormBuilder, ValidatorFn, Validators } from '@angular/forms';
 import { ScanModeDTO } from '../../../../shared/model/scan-mode.model';
 import { ProxyDTO } from '../../../../shared/model/proxy.model';
 import { Authentication, AuthenticationType } from '../../../../shared/model/engine.model';
@@ -7,7 +7,7 @@ import { Authentication, AuthenticationType } from '../../../../shared/model/eng
 /**
  * Create the validators associated to an input from the settings schema
  */
-export const getValidators = (validators: Array<ConnectorFormValidator>): Array<ValidatorFn> => {
+export const getValidators = (validators: Array<FormComponentValidator>): Array<ValidatorFn> => {
   return validators.map(validator => {
     switch (validator.key) {
       case 'required':
@@ -131,7 +131,23 @@ export const getAuthenticationDTOFromForm = (
   }
 };
 
-export const createInput = (value: OibFormControl, form: FormGroup, scanModes: Array<ScanModeDTO> = [], proxies: Array<ProxyDTO> = []) => {
+export const createFormGroup = (formDescription: Array<OibFormControl>, fb: NonNullableFormBuilder): FormGroup => {
+  const formGroup = fb.group({});
+
+  formDescription.forEach(setting => {
+    const formControl = createFormControl(setting, fb);
+    formGroup.addControl(setting.key, formControl);
+  });
+  handleConditionalDisplay(formGroup, formDescription);
+  return formGroup;
+};
+
+export const createFormControl = (
+  value: OibFormControl,
+  fb: NonNullableFormBuilder,
+  scanModes: Array<ScanModeDTO> = [],
+  proxies: Array<ProxyDTO> = []
+): FormControl | FormGroup => {
   switch (value.type) {
     case 'OibText':
     case 'OibNumber':
@@ -140,53 +156,31 @@ export const createInput = (value: OibFormControl, form: FormGroup, scanModes: A
     case 'OibCodeBlock':
     case 'OibTextArea':
     case 'OibTimezone':
-      form.addControl(value.key, new FormControl(value.currentValue ?? value.defaultValue, getValidators(value.validators || [])));
-      break;
+      return fb.control(value.defaultValue, getValidators(value.validators || []));
     case 'OibCheckbox':
-      form.addControl(
-        value.key,
-        new FormControl(value.currentValue ?? (value.defaultValue || false), getValidators(value.validators || []))
-      );
-      break;
+      return fb.control(value.defaultValue || false, getValidators(value.validators || []));
     case 'OibScanMode':
-      const scanMode = scanModes.find(element => element.id === value.currentValue?.id);
-      form.addControl(value.key, new FormControl(scanMode, getValidators(value.validators || [])));
-      break;
+      return fb.control(null, getValidators(value.validators || []));
     case 'OibProxy':
-      const proxy = proxies.find(element => element.id === value.currentValue);
-      form.addControl(value.key, new FormControl(proxy?.id, getValidators(value.validators || [])));
-      break;
+      return fb.control(null, getValidators(value.validators || []));
     case 'OibDateTimeFields':
-      form.addControl(value.key, new FormControl(value.currentValue || value.defaultValue || [], getValidators(value.validators || [])));
-      break;
-    case 'OibSerialization':
-      form.addControl(
-        value.key,
-        new FormControl(
-          value.currentValue || value.defaultValue || { type: 'csv', filename: 'file.csv', delimiter: ',' },
-          getValidators(value.validators || [])
-        )
-      );
-      break;
+      return fb.control(value.defaultValue || [], getValidators(value.validators || []));
     case 'OibAuthentication':
-      form.addControl(
-        value.key,
-        new FormControl(
-          createAuthenticationForm(value.currentValue || value.defaultValue || { type: 'none' }),
-          getValidators(value.validators || [])
-        )
-      );
-      break;
+      return fb.control(createAuthenticationForm(value.defaultValue || { type: 'none' }), getValidators(value.validators || []));
+    case 'FormGroup':
+      const formGroup = fb.group({});
+      value.content.forEach(item => {
+        const formControl = createFormControl(item, fb, scanModes, proxies);
+        formGroup.addControl(item.key, formControl);
+      });
+      return formGroup;
   }
 };
 
-export const getRowSettings = (settings: Array<OibFormControl>, settingsValues: any): Array<Array<OibFormControl>> => {
+export const groupFormControlsByRow = (settings: Array<OibFormControl>): Array<Array<OibFormControl>> => {
   const rowList: Array<Array<OibFormControl>> = [];
   // Create rows from the manifest so settings can be put together on the same row
   settings.forEach(element => {
-    if (settingsValues) {
-      element.currentValue = settingsValues[element.key];
-    }
     if (element.newRow || rowList.length === 0) {
       rowList.push([element]);
     } else {
@@ -196,46 +190,25 @@ export const getRowSettings = (settings: Array<OibFormControl>, settingsValues: 
   return rowList;
 };
 
-export const byIdComparisonFn = (o1: { id: string } | null, o2: { id: string } | null) => {
+export const byIdComparisonFn = (o1: any, o2: any) => {
   return (!o1 && !o2) || (o1 && o2 && o1.id === o2.id);
 };
 
 /**
- *
- * @param manifestSettings - List of settings from the manifest to check the conditional display
- * @param input - The name of the input that has changed
- * @param inputValue - The value of the input that has changed
- * @param settingsForm - The form with controls to disable
+ * Go through the form description to create the correct value change subscriptions to hide fields
  */
-export const disableInputs = (manifestSettings: Array<OibFormControl>, input: string, inputValue: any, settingsForm: FormGroup) => {
-  manifestSettings.forEach(settings => {
-    if (settings.conditionalDisplay) {
-      Object.entries(settings.conditionalDisplay).forEach(([key, values]) => {
-        if (key === input) {
-          const foundSettings = manifestSettings.find(s => s.key === key);
-          if (!foundSettings) return;
-          if (foundSettings.type === 'OibAuthentication') {
-            if (!checkInputValue(values, inputValue.type)) {
-              settingsForm.controls[settings.key].disable();
-            } else {
-              settingsForm.controls[settings.key].enable();
-            }
-          } else {
-            if (!checkInputValue(values, inputValue)) {
-              settingsForm.controls[settings.key].disable();
-            } else {
-              settingsForm.controls[settings.key].enable();
-            }
-          }
+export const handleConditionalDisplay = (formGroup: FormGroup, formDescription: Array<OibFormControl>) => {
+  formDescription.forEach(formControl => {
+    const control = formGroup.controls[formControl.key];
+    if (formControl.conditionalDisplay) {
+      const correspondingControl = formGroup.controls[formControl.conditionalDisplay.field];
+      correspondingControl.valueChanges.subscribe(newVal => {
+        if (formControl.conditionalDisplay!.values.includes(newVal)) {
+          control.enable();
+        } else {
+          control.disable();
         }
       });
     }
   });
-};
-
-export const checkInputValue = (acceptedValues: Array<string | number | boolean> | string, inputValue: any): boolean => {
-  if (Array.isArray(acceptedValues)) {
-    return acceptedValues.includes(inputValue);
-  }
-  return new RegExp(acceptedValues).test(inputValue);
 };

@@ -40,7 +40,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Persistent',
       defaultValue: false,
       newRow: false,
-      conditionalDisplay: { qos: ['2'] },
+      conditionalDisplay: { field: 'qos', values: ['2'] },
       validators: [{ key: 'required' }],
       readDisplay: true
     },
@@ -50,7 +50,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibText',
       label: 'CA File',
       defaultValue: '',
-      conditionalDisplay: { authentication: ['cert'] },
+      conditionalDisplay: { field: 'authentication', values: ['cert'] },
       newRow: false,
       readDisplay: false
     },
@@ -127,7 +127,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibText',
       label: 'Timestamp path',
       defaultValue: 'timestamp',
-      conditionalDisplay: { timestampOrigin: ['payload'] },
+      conditionalDisplay: { field: 'timestampOrigin', values: ['payload'] },
       newRow: false,
       readDisplay: false
     },
@@ -136,7 +136,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibText',
       label: 'Timestamp format',
       defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
-      conditionalDisplay: { timestampOrigin: ['payload'] },
+      conditionalDisplay: { field: 'timestampOrigin', values: ['payload'] },
       newRow: false,
       readDisplay: false
     },
@@ -145,7 +145,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibTimezone',
       label: 'Timezone',
       defaultValue: 'Europe/Paris',
-      conditionalDisplay: { timestampOrigin: ['payload'] },
+      conditionalDisplay: { field: 'timestampOrigin', values: ['payload'] },
       newRow: false,
       readDisplay: false
     }

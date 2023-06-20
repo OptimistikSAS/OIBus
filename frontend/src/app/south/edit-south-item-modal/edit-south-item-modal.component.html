@@ -1,7 +1,7 @@
 <div class="modal-header">
   <h4 class="modal-title" [translate]="'south.edit-item-modal.' + mode + '-title'"></h4>
 </div>
-<div class="modal-body" *ngIf="southItemRows">
+<div class="modal-body" *ngIf="southItemRows && form">
   <form [formGroup]="form" (ngSubmit)="save()" id="form">
     <div class="row">
       <div class="col-3">
@@ -20,11 +20,11 @@
             *ngIf="!subscriptionOnly"
             key="item-scan-mode"
             [label]="'scan-mode.label' | translate"
-            formControlName="scanMode"
+            formControlName="scanModeId"
             [acceptSubscription]="acceptSubscription"
             [subscriptionOnly]="subscriptionOnly"
           ></oib-scan-mode>
-          <val-errors controlName="scanMode"></val-errors>
+          <val-errors controlName="scanModeId"></val-errors>
         </div>
       </div>
     </div>
@@ -32,7 +32,7 @@
     <oib-form
       *ngIf="southItemRows.length > 0"
       formGroupName="settings"
-      [form]="form.controls.settings"
+      [formGroup]="form.controls.settings"
       [settingsSchema]="southItemRows"
       [scanModes]="scanModes"
     ></oib-form>

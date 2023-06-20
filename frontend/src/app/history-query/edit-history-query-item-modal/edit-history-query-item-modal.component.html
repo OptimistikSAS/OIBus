@@ -1,7 +1,7 @@
 <div class="modal-header">
   <h4 class="modal-title" [translate]="'engine.external-source.title-' + mode"></h4>
 </div>
-<div class="modal-body" *ngIf="southItemSchema">
+<div class="modal-body" *ngIf="southItemSchema && form">
   <form [formGroup]="form" (ngSubmit)="save()" id="form">
     <!-- Name -->
     <div class="form-group">
@@ -13,7 +13,7 @@
     <oib-form
       *ngIf="southItemRows.length > 0"
       formGroupName="settings"
-      [form]="form.controls.settings"
+      [formGroup]="form.controls.settings"
       [settingsSchema]="southItemRows"
       [scanModes]="[]"
     ></oib-form>

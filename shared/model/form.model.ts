@@ -1,8 +1,8 @@
 import { ScanModeDTO } from './scan-mode.model';
 import { Authentication, AuthenticationType } from './engine.model';
-import { DateTimeSerialization, Serialization } from './types';
+import { DateTimeField } from './types';
 
-export const CONNECTOR_FORM_TYPES = [
+export const FORM_COMPONENT_TYPES = [
   'OibText',
   'OibNumber',
   'OibSelect',
@@ -14,17 +14,17 @@ export const CONNECTOR_FORM_TYPES = [
   'OibScanMode',
   'OibTimezone',
   'OibProxy',
-  'OibSerialization',
   'OibDateTimeFields',
-  'OibAuthentication'
+  'OibAuthentication',
+  'FormGroup'
 ] as const;
-export type ConnectorFormType = typeof CONNECTOR_FORM_TYPES[number];
+export type FormComponentType = (typeof FORM_COMPONENT_TYPES)[number];
 
-export const CONNECTOR_FORM_VALIDATOR_TYPES = ['required', 'min', 'max', 'pattern', 'minLength', 'maxLength'] as const;
-export type ConnectorFormValidatorType = typeof CONNECTOR_FORM_VALIDATOR_TYPES[number];
+export const FORM_COMPONENT_VALIDATOR_TYPES = ['required', 'min', 'max', 'pattern', 'minLength', 'maxLength'] as const;
+export type FormComponentValidatorType = (typeof FORM_COMPONENT_VALIDATOR_TYPES)[number];
 
 interface Validator {
-  key: ConnectorFormValidatorType;
+  key: FormComponentValidatorType;
 }
 
 interface RequiredValidator extends Validator {
@@ -66,7 +66,7 @@ interface MaxLengthValidator extends Validator {
   };
 }
 
-export type ConnectorFormValidator =
+export type FormComponentValidator =
   | RequiredValidator
   | MinValidator
   | MaxValidator
@@ -76,19 +76,20 @@ export type ConnectorFormValidator =
 
 export interface BaseOibFormControl<T> {
   key: string;
-  type: ConnectorFormType;
+  type: FormComponentType;
   label: string;
-  defaultValue?: T | null;
-  currentValue?: T | null;
+  defaultValue?: T;
+  unitLabel?: string; // on optional unit label to indicate which unit is used
   newRow?: boolean;
-  class?: string | null;
-  conditionalDisplay?: {
-    // Each key refers to another OibFormControl which values must include this OibFormControl value to display this field in a form
-    [key: string]: Array<string | number | boolean> | string;
-  } | null;
-  // readDisplay is used to display the settings value in display mode
-  readDisplay?: boolean | null;
-  validators?: Array<ConnectorFormValidator> | null;
+  class?: string;
+  conditionalDisplay?: DisplayCondition;
+  readDisplay?: boolean; // readDisplay is used to display the settings value in display mode
+  validators?: Array<FormComponentValidator>;
+}
+
+export interface DisplayCondition {
+  field: string;
+  values: Array<string | number | boolean>;
 }
 
 export interface OibTextFormControl extends BaseOibFormControl<string> {
@@ -140,13 +141,14 @@ export interface OibAuthenticationFormControl extends BaseOibFormControl<Authent
   authTypes: Array<AuthenticationType>;
 }
 
-export interface OibDateTimeFieldsFormControl extends BaseOibFormControl<Array<DateTimeSerialization>> {
+export interface OibDateTimeFieldsFormControl extends BaseOibFormControl<Array<DateTimeField>> {
   type: 'OibDateTimeFields';
-  allowedDateObjectTypes?: Array<string>;
+  allowedDateObjectTypes: Array<string>;
 }
 
-export interface OibSerializationFormControl extends BaseOibFormControl<Serialization> {
-  type: 'OibSerialization';
+export interface OibFormGroup extends BaseOibFormControl<void> {
+  type: 'FormGroup';
+  content: Array<OibFormControl>;
 }
 
 export type OibFormControl =
@@ -161,5 +163,5 @@ export type OibFormControl =
   | OibTimezoneFormControl
   | OibProxyFormControl
   | OibDateTimeFieldsFormControl
-  | OibSerializationFormControl
-  | OibAuthenticationFormControl;
+  | OibAuthenticationFormControl
+  | OibFormGroup;

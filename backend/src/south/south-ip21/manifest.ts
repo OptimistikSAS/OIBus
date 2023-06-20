@@ -62,17 +62,61 @@ const manifest: SouthConnectorManifest = {
         key: 'dateTimeFields',
         type: 'OibDateTimeFields',
         label: 'Date time fields',
+        allowedDateObjectTypes: [],
         class: 'col',
         newRow: true,
         readDisplay: false
       },
       {
         key: 'serialization',
-        type: 'OibSerialization',
+        type: 'FormGroup',
         label: 'Serialization',
         class: 'col',
         newRow: true,
-        readDisplay: false
+        readDisplay: false,
+        content: [
+          {
+            key: 'type',
+            type: 'OibSelect',
+            label: 'Type',
+            options: ['csv', 'json'],
+            defaultValue: 'csv',
+            newRow: true,
+            readDisplay: false
+          },
+          {
+            key: 'filename',
+            type: 'OibText',
+            label: 'Filename',
+            defaultValue: 'sql.csv',
+            newRow: false,
+            readDisplay: false
+          },
+          {
+            key: 'delimiter',
+            type: 'OibSelect',
+            label: 'Delimiter',
+            options: [',', ';'],
+            newRow: false,
+            readDisplay: false
+          },
+          {
+            key: 'outputDateTimeFormat',
+            type: 'OibText',
+            label: 'Output date time format',
+            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+            newRow: false,
+            readDisplay: false
+          },
+          {
+            key: 'outputTimezone',
+            type: 'OibTimezone',
+            label: 'Timezone',
+            defaultValue: 'Europe/Paris',
+            newRow: false,
+            readDisplay: false
+          }
+        ]
       }
     ]
   }

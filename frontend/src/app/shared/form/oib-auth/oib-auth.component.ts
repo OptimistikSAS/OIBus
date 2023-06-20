@@ -6,7 +6,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, NonNullableFormBuilder, Valida
 import { Authentication, AuthenticationType } from '../../../../../../shared/model/engine.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthTypesEnumPipe } from '../../auth-types-enum.pipe';
-import { createAuthenticationForm } from '../../utils';
+import { createAuthenticationForm } from '../../form-utils';
 
 @Component({
   selector: 'oib-auth',

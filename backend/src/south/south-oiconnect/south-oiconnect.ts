@@ -6,13 +6,13 @@ import https from 'https';
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import { formatQueryParams, httpGetWithBody, parsers } from './utils';
-import { convertDateTimeFromInstant, createFolder, persistResults } from '../../service/utils';
+import { formatInstant, createFolder, persistResults } from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { DateTimeSerialization, Instant, Serialization } from '../../../../shared/model/types';
+import { DateTimeField, Instant, Serialization } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 
@@ -131,10 +131,10 @@ export default class SouthOIConnect extends SouthConnector implements QueriesHis
     }
 
     const referenceTimestampField = item.settings.serialization.datetimeSerialization.find(
-      (serialization: DateTimeSerialization) => serialization.useAsReference
+      (serialization: DateTimeField) => serialization.useAsReference
     );
-    const apiStartTime = convertDateTimeFromInstant(startTime, referenceTimestampField.datetimeFormat);
-    const apiEndTime = convertDateTimeFromInstant(endTime, referenceTimestampField.datetimeFormat);
+    const apiStartTime = formatInstant(startTime, referenceTimestampField.datetimeFormat);
+    const apiEndTime = formatInstant(endTime, referenceTimestampField.datetimeFormat);
 
     // Some API such as SLIMS uses a body with GET. It's not standard and requires a specific implementation
     if (item.settings.requestMethod === 'GET' && item.settings.body) {

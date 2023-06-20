@@ -12,7 +12,7 @@ import { formDirectives } from '../form-directives';
 @Component({
   template: ` <form [formGroup]="form">
     <div formGroupName="settings">
-      <oib-form [scanModes]="scanModes" [proxies]="proxies" [settingsSchema]="schema" [form]="form.controls.settings"></oib-form>
+      <oib-form [scanModes]="scanModes" [proxies]="proxies" [settingsSchema]="schema" [formGroup]="form.controls.settings"></oib-form>
     </div>
   </form>`,
   standalone: true,
@@ -41,9 +41,6 @@ class TestComponent {
         newRow: true,
         class: 'col-8',
         defaultValue: 'option2',
-        currentValue: null,
-        validators: null,
-        conditionalDisplay: null,
         readDisplay: true
       },
       {
@@ -52,10 +49,6 @@ class TestComponent {
         label: 'Text field',
         newRow: false,
         class: 'col-4',
-        defaultValue: null,
-        currentValue: null,
-        validators: null,
-        conditionalDisplay: null,
         readDisplay: true
       }
     ],
@@ -67,9 +60,7 @@ class TestComponent {
         newRow: true,
         class: 'col-3',
         defaultValue: 2223,
-        currentValue: 2224,
         validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-        conditionalDisplay: null,
         readDisplay: true
       },
       {
@@ -78,10 +69,8 @@ class TestComponent {
         label: 'Text area field',
         newRow: false,
         class: 'col-3',
-        defaultValue: null,
-        currentValue: null,
         validators: [{ key: 'required' }],
-        conditionalDisplay: { myOibNumberField: [2225] },
+        conditionalDisplay: { field: 'myOibNumberField', values: [2225] },
         readDisplay: true
       },
       {
@@ -90,10 +79,6 @@ class TestComponent {
         label: 'Secret field',
         newRow: false,
         class: 'col-3',
-        defaultValue: null,
-        currentValue: 'pass',
-        validators: null,
-        conditionalDisplay: null,
         readDisplay: true
       },
       {
@@ -102,10 +87,6 @@ class TestComponent {
         label: 'Checkbox field',
         defaultValue: false,
         newRow: true,
-        class: null,
-        currentValue: true,
-        validators: null,
-        conditionalDisplay: null,
         readDisplay: true
       }
     ]

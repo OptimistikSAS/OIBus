@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -9,7 +9,7 @@ import { OibusItemCommandDTO, OibusItemDTO, OibusItemManifest } from '../../../.
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 import { NgForOf, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
-import { createInput, disableInputs, getRowSettings } from '../../shared/utils';
+import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { Timezone } from '../../../../../shared/model/types';
@@ -24,6 +24,7 @@ declare namespace Intl {
 
   function supportedValuesOf(input: Key): string[];
 }
+
 @Component({
   selector: 'oib-edit-history-query-item-modal',
   templateUrl: './edit-history-query-item-modal.component.html',
@@ -50,13 +51,14 @@ export class EditHistoryQueryItemModalComponent {
 
   southItemSchema: OibusItemManifest | null = null;
   southItemRows: Array<Array<OibFormControl>> = [];
+  subscriptionOnly = false;
 
   item: OibusItemDTO | null = null;
 
-  form = this.fb.group({
-    name: ['', Validators.required],
-    settings: this.fb.record({})
-  });
+  form: FormGroup<{
+    name: FormControl<string>;
+    settings: FormGroup;
+  }> | null = null;
 
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
   timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
@@ -64,32 +66,18 @@ export class EditHistoryQueryItemModalComponent {
     timezone => timezone
   );
 
-  constructor(private modal: NgbActiveModal, private fb: FormBuilder, private historyQueryService: HistoryQueryService) {}
+  constructor(private modal: NgbActiveModal, private fb: NonNullableFormBuilder, private historyQueryService: HistoryQueryService) {}
 
-  private createSettingsInputs() {
-    const inputsToSubscribeTo: Set<string> = new Set();
-    const settingsForm = this.form.controls.settings;
-    this.southItemRows.forEach(row => {
-      row.forEach(setting => {
-        createInput(setting, settingsForm);
-        if (setting.conditionalDisplay) {
-          Object.entries(setting.conditionalDisplay).forEach(([key]) => {
-            // Keep only one occurrence of each input to subscribe to
-            inputsToSubscribeTo.add(key);
-          });
-        }
-      });
+  private createForm(item: OibusItemDTO | null) {
+    this.form = this.fb.group({
+      name: ['', Validators.required],
+      settings: createFormGroup(this.southItemSchema!.settings, this.fb)
     });
-    // Each input that must be monitored is subscribed
-    inputsToSubscribeTo.forEach(input => {
-      // Check once with initialized value
-      disableInputs(this.southItemSchema!.settings, input, settingsForm.controls[input].value, settingsForm);
-      // Check on value changes
-      settingsForm.controls[input].valueChanges.subscribe(inputValue => {
-        // When a value of such an input changes, check if its inputValue implies to disable another input
-        disableInputs(this.southItemSchema!.settings, input, inputValue, settingsForm);
-      });
-    });
+
+    // if we have an item we initialize the values
+    if (item) {
+      this.form.patchValue(item);
+    }
   }
 
   /**
@@ -99,8 +87,8 @@ export class EditHistoryQueryItemModalComponent {
     this.mode = 'create';
     this.historyQuery = historyQuery;
     this.southItemSchema = southItemSchema;
-    this.southItemRows = getRowSettings(southItemSchema.settings, null);
-    this.createSettingsInputs();
+    this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
+    this.createForm(null);
   }
 
   /**
@@ -112,17 +100,8 @@ export class EditHistoryQueryItemModalComponent {
     this.mode = 'create';
     this.historyQuery = historyQuery;
     this.southItemSchema = southItemSchema;
-    this.southItemRows = getRowSettings(southItemSchema.settings, null);
-    this.southItemSchema.settings.forEach(element => {
-      if (this.item?.settings) {
-        element.currentValue = this.item.settings[element.key];
-      }
-    });
-
-    this.form.patchValue({
-      name: this.item.name
-    });
-    this.createSettingsInputs();
+    this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
+    this.createForm(this.item);
   }
 
   /**
@@ -133,18 +112,8 @@ export class EditHistoryQueryItemModalComponent {
     this.item = item;
     this.historyQuery = historyQuery;
     this.southItemSchema = southItemSchema;
-    this.southItemRows = getRowSettings(southItemSchema.settings, null);
-
-    this.southItemSchema.settings.forEach(element => {
-      if (this.item?.settings) {
-        element.currentValue = this.item.settings[element.key];
-      }
-    });
-
-    this.form.patchValue({
-      name: this.item.name
-    });
-    this.createSettingsInputs();
+    this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
+    this.createForm(item);
   }
 
   cancel() {
@@ -152,11 +121,11 @@ export class EditHistoryQueryItemModalComponent {
   }
 
   save() {
-    if (!this.form.valid) {
+    if (!this.form!.valid) {
       return;
     }
 
-    const formValue = this.form.value;
+    const formValue = this.form!.value;
 
     const command: OibusItemCommandDTO = {
       name: formValue.name!,

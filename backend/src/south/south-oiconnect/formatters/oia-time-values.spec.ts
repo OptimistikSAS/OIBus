@@ -6,10 +6,7 @@ const item: OibusItemDTO = {
   name: 'item1',
   connectorId: 'southId',
   settings: {
-    payloadParser: 'raw',
-    serialization: {
-      dateTimeOutputFormat: { type: 'iso-8601-string' }
-    }
+    payloadParser: 'raw'
   },
   scanModeId: 'scanModeId1'
 };

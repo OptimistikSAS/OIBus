@@ -10,7 +10,12 @@ import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 @Component({
   template: `<form [formGroup]="form">
     <div formGroupName="settings">
-      <oib-datetime-format key="myOibDateTimeFormat" label="Select field" formControlName="myOibDateTimeFormat"></oib-datetime-format>
+      <oib-datetime-format
+        [dateObjectTypes]="[]"
+        key="myOibDateTimeFormat"
+        label="Select field"
+        formControlName="myOibDateTimeFormat"
+      ></oib-datetime-format>
     </div>
   </form>`,
   standalone: true,

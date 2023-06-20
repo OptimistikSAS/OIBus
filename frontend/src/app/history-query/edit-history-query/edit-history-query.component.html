@@ -1,4 +1,4 @@
-<div class="oib-padded-container" *ngIf="historyQuery && southManifest && northManifest">
+<div class="oib-padded-container" *ngIf="historyQuery && southManifest && northManifest && historyQueryForm">
   <div class="row justify-content-center">
     <div class="col-md-10 col-lg-8">
       <h1 translate="history-query.edit-title" [translateParams]="{ name: historyQuery.name }"></h1>
@@ -53,11 +53,11 @@
               <div class="form-group">
                 <oib-scan-mode
                   key="cache-scan-mode"
-                  formControlName="scanMode"
+                  formControlName="scanModeId"
                   [scanModes]="scanModes"
                   [label]="'north.cache-settings.send-scan-mode' | translate "
                 ></oib-scan-mode>
-                <val-errors controlName="scanMode"></val-errors>
+                <val-errors controlName="scanModeId"></val-errors>
               </div>
             </div>
             <!-- Retry interval -->
@@ -91,7 +91,7 @@
               </div>
             </div>
           </div>
-          <div class="row" *ngIf="northManifest?.modes?.points">
+          <div class="row" *ngIf="northManifest.modes?.points">
             <!-- Group count -->
             <div class="col-4">
               <div class="form-group">
@@ -109,7 +109,7 @@
               </div>
             </div>
           </div>
-          <div class="row" *ngIf="northManifest?.modes?.files">
+          <div class="row" *ngIf="northManifest.modes?.files">
             <!-- Send file immediately -->
             <div class="col-4">
               <div class="form-group">
@@ -152,40 +152,40 @@
         </oib-box>
 
         <!-- North settings -->
-        <oib-box formGroupName="north">
+        <oib-box>
           <ng-template oibBoxTitle>
             <span
               translate="north.specific-settings"
-              [translateParams]="{ type: historyQuery.northType }"
+              [translateParams]="{ type: northManifest.name}"
               id="north-specific-settings-title"
             ></span>
           </ng-template>
 
           <oib-form
-            *ngIf="northSettingsSchema.length > 0"
-            formGroupName="settings"
-            [form]="historyQueryForm.controls.north.controls.settings"
-            [settingsSchema]="northSettingsSchema"
+            *ngIf="northSettingsControls.length > 0"
+            formGroupName="northSettings"
+            [formGroup]="historyQueryForm.controls.northSettings"
+            [settingsSchema]="northSettingsControls"
             [scanModes]="scanModes"
             [proxies]="proxies"
           ></oib-form>
         </oib-box>
 
         <!-- South settings -->
-        <oib-box formGroupName="south">
+        <oib-box>
           <ng-template oibBoxTitle>
             <span
               translate="history-query.south.specific-settings"
-              [translateParams]="{ type: historyQuery.southType }"
+              [translateParams]="{ type: southManifest.name }"
               id="south-specific-settings-title"
             ></span>
           </ng-template>
 
           <oib-form
-            *ngIf="southSettingsSchema.length > 0"
-            formGroupName="settings"
-            [form]="historyQueryForm.controls.south.controls.settings"
-            [settingsSchema]="southSettingsSchema"
+            *ngIf="southSettingsControls.length > 0"
+            formGroupName="southSettings"
+            [formGroup]="historyQueryForm.controls.southSettings"
+            [settingsSchema]="southSettingsControls"
             [scanModes]="scanModes"
             [proxies]="proxies"
           ></oib-form>

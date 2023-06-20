@@ -49,7 +49,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: false,
       newRow: false,
       class: 'col-3',
-      conditionalDisplay: { preserveFiles: [true] },
+      conditionalDisplay: { field: 'preserveFiles', values: [true] },
       validators: [{ key: 'required' }],
       readDisplay: false
     },

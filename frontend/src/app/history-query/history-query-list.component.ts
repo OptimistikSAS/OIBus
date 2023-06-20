@@ -70,7 +70,7 @@ export class HistoryQueryListComponent implements OnInit {
     });
   }
 
-  deleteHistoryQuery(historyQuery: HistoryQueryDTO) {
+  delete(historyQuery: HistoryQueryDTO) {
     this.confirmationService
       .confirm({
         messageKey: 'history-query.confirm-deletion',
@@ -98,7 +98,7 @@ export class HistoryQueryListComponent implements OnInit {
   createHistoryQuery() {
     const modalRef = this.modalService.open(CreateHistoryQueryModalComponent);
     modalRef.result.subscribe(historyQuery => {
-      this.router.navigate(['history-queries', historyQuery.id]);
+      this.router.navigate(['history-queries', historyQuery.id, 'edit']);
     });
   }
 

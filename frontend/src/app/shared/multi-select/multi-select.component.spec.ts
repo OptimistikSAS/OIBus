@@ -8,7 +8,7 @@ import { MultiSelectOptionDirective } from './multi-select-option.directive';
 import { noAnimation } from '../test-utils';
 import { formDirectives } from '../form-directives';
 import { NgForOf } from '@angular/common';
-import { byIdComparisonFn } from '../utils';
+import { byIdComparisonFn } from '../form-utils';
 
 interface User {
   id: number;

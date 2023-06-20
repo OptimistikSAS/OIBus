@@ -311,9 +311,8 @@ describe('Service utils', () => {
             delimiter: 'SEMI_COLON',
             filename: 'myFilename.csv',
             compression: false,
-            outputDateTimeFormat: {
-              type: 'iso-8601-string'
-            }
+            outputDateTimeFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
+            outputTimezone: 'UTC'
           },
           'connectorName',
           'myTmpFolder',
@@ -338,9 +337,8 @@ describe('Service utils', () => {
             delimiter: 'SEMI_COLON',
             filename: 'myFilename.csv',
             compression: false,
-            outputDateTimeFormat: {
-              type: 'iso-8601-string'
-            }
+            outputDateTimeFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
+            outputTimezone: 'UTC'
           },
           'connectorName',
           'myTmpFolder',
@@ -390,9 +388,8 @@ describe('Service utils', () => {
             delimiter: 'SEMI_COLON',
             filename: 'myFilename.csv',
             compression: true,
-            outputDateTimeFormat: {
-              type: 'iso-8601-string'
-            }
+            outputDateTimeFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
+            outputTimezone: 'UTC'
           },
           'connectorName',
           'myTmpFolder',
@@ -412,9 +409,8 @@ describe('Service utils', () => {
           dataToWrite,
           {
             type: 'oibus-values',
-            outputDateTimeFormat: {
-              type: 'iso-8601-string'
-            }
+            outputDateTimeFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
+            outputTimezone: 'UTC'
           },
           'connectorName',
           'myTmpFolder',
@@ -436,9 +432,8 @@ describe('Service utils', () => {
             delimiter: 'SEMI_COLON',
             filename: 'myFilename.csv',
             compression: true,
-            outputDateTimeFormat: {
-              type: 'iso-8601-string'
-            }
+            outputDateTimeFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
+            outputTimezone: 'UTC'
           },
           'connectorName',
           'myTmpFolder',
@@ -462,17 +457,13 @@ describe('Service utils', () => {
 
   describe('convertDateTimeFromInstant', () => {
     const testInstant = '2020-02-02T02:02:02.222Z';
-    it('should return ISO String if no dateTimeFormat specified', () => {
-      const result = utils.convertDateTimeFromInstant(testInstant, null);
-      expect(result).toEqual('2020-02-02T02:02:02.222Z');
-    });
 
     it('should return Number of ms', () => {
       const dateTimeFormat: DateTimeFormat = {
         type: 'unix-epoch-ms'
       };
       const expectedResult = DateTime.fromISO(testInstant).toMillis();
-      const result = utils.convertDateTimeFromInstant(testInstant, dateTimeFormat);
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(expectedResult);
       expect(
         DateTime.fromMillis(result as number)
@@ -486,7 +477,7 @@ describe('Service utils', () => {
         type: 'unix-epoch'
       };
       const expectedResult = Math.floor(DateTime.fromISO(testInstant).toMillis() / 1000);
-      const result = utils.convertDateTimeFromInstant(testInstant, dateTimeFormat);
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(expectedResult);
       expect(
         DateTime.fromMillis((result as number) * 1000)
@@ -503,7 +494,7 @@ describe('Service utils', () => {
         locale: 'en-US'
       };
       const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format);
-      const result = utils.convertDateTimeFromInstant(testInstant, dateTimeFormat);
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(expectedResult);
       // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
       expect(result).toEqual('2020-02-02 11:02:02.222');
@@ -513,7 +504,7 @@ describe('Service utils', () => {
       const dateTimeFormat: DateTimeFormat = {
         type: 'iso-8601-string'
       };
-      const result = utils.convertDateTimeFromInstant(testInstant, dateTimeFormat);
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(testInstant);
     });
 
@@ -526,7 +517,7 @@ describe('Service utils', () => {
       };
       // From Zulu string
       const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format);
-      const result = utils.convertDateTimeFromInstant(testInstant, dateTimeFormat);
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(expectedResult);
       // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
       expect(result).toEqual('02-Feb-20 11:02:02');
@@ -542,7 +533,7 @@ describe('Service utils', () => {
       const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format, {
         locale: dateTimeFormat.locale
       });
-      const result = utils.convertDateTimeFromInstant(testInstant, dateTimeFormat);
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(expectedResult);
       // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
       expect(result).toEqual('02-févr.-20 11:02:02');
@@ -556,7 +547,7 @@ describe('Service utils', () => {
       };
       // From Zulu string
       const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toISO()!;
-      const result = utils.convertDateTimeFromInstant(testInstant, dateTimeFormat);
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(expectedResult);
       // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
       expect(result).toEqual('2020-02-02T11:02:02.222+09:00');

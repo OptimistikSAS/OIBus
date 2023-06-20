@@ -5,7 +5,7 @@ import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorManifest } f
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
-import { NonNullableFormBuilder, Validators } from '@angular/forms';
+import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { catchError, combineLatest, Observable, of, switchMap, tap } from 'rxjs';
@@ -15,7 +15,7 @@ import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { ProxyService } from '../../services/proxy.service';
-import { createInput, disableInputs, getRowSettings } from '../../shared/utils';
+import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { SouthItemsComponent } from '../south-items/south-items.component';
@@ -45,22 +45,21 @@ export class EditSouthComponent implements OnInit {
   southType = '';
   state = new ObservableState();
 
-  loading = true;
-  southSettingsSchema: Array<Array<OibFormControl>> = [];
+  southSettingsControls: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
   proxies: Array<ProxyDTO> = [];
   manifest: SouthConnectorManifest | null = null;
-  southForm = this.fb.group({
-    name: ['', Validators.required],
-    description: '',
-    enabled: true,
-    history: this.fb.group({
-      maxInstantPerItem: false,
-      maxReadInterval: 0,
-      readDelay: 200
-    }),
-    settings: this.fb.record({})
-  });
+  southForm: FormGroup<{
+    name: FormControl<string>;
+    description: FormControl<string>;
+    enabled: FormControl<boolean>;
+    history: FormGroup<{
+      maxInstantPerItem: FormControl<boolean>;
+      maxReadInterval: FormControl<number>;
+      readDelay: FormControl<number>;
+    }>;
+    settings: FormGroup;
+  }> | null = null;
 
   constructor(
     private southConnectorService: SouthConnectorService,
@@ -98,50 +97,35 @@ export class EditSouthComponent implements OnInit {
           this.southConnector = southConnector;
           if (southConnector) {
             this.southType = southConnector.type;
-            this.southForm.patchValue({
-              name: southConnector.name,
-              description: southConnector.description,
-              enabled: southConnector.enabled,
-              history: southConnector.history
-            });
           }
-          // If a south connector is not retrieved, the types are needed to create a new connector
-          return this.southConnectorService.getSouthConnectorTypeManifest(this.southType);
+          return combineLatest([of(southConnector), this.southConnectorService.getSouthConnectorTypeManifest(this.southType)]);
         })
       )
-      .subscribe(manifest => {
+      .subscribe(([southConnector, manifest]) => {
         if (!manifest) {
-          this.loading = false;
           return;
         }
-        this.southSettingsSchema = getRowSettings(manifest.settings, this.southConnector?.settings);
-        const inputsToSubscribeTo: Set<string> = new Set();
-        const settingsForm = this.southForm.controls.settings;
-        this.southSettingsSchema.forEach(row => {
-          row.forEach(settings => {
-            createInput(settings, settingsForm);
-            if (settings.conditionalDisplay) {
-              Object.entries(settings.conditionalDisplay).forEach(([key]) => {
-                // Keep only one occurrence of each input to subscribe to
-                inputsToSubscribeTo.add(key);
-              });
-            }
-          });
+
+        this.southSettingsControls = groupFormControlsByRow(manifest.settings);
+
+        this.southForm = this.fb.group({
+          name: ['', Validators.required],
+          description: '',
+          enabled: true as boolean,
+          history: this.fb.group({
+            maxInstantPerItem: false,
+            maxReadInterval: 0,
+            readDelay: 200
+          }),
+          settings: createFormGroup(manifest.settings, this.fb)
         });
 
-        // Each input that must be monitored is subscribed
-        inputsToSubscribeTo.forEach(input => {
-          // Check once with initialized value
-          disableInputs(manifest.settings, input, settingsForm.controls[input].value, settingsForm);
-          // Check on value changes
-          settingsForm.controls[input].valueChanges.subscribe(inputValue => {
-            // When a value of such an input changes, check if its inputValue implies to disable another input
-            disableInputs(manifest.settings, input, inputValue, settingsForm);
-          });
-        });
+        // if we have a south connector we initialize the values
+        if (southConnector) {
+          this.southForm.patchValue(southConnector);
+        }
 
         this.manifest = manifest;
-        this.loading = false;
       });
   }
 
@@ -168,11 +152,11 @@ export class EditSouthComponent implements OnInit {
   }
 
   submit(value: 'save' | 'test') {
-    if (!this.southForm.valid) {
+    if (!this.southForm!.valid) {
       return;
     }
 
-    const formValue = this.southForm.value;
+    const formValue = this.southForm!.value;
     const command: SouthConnectorCommandDTO = {
       name: formValue.name!,
       type: this.southType,

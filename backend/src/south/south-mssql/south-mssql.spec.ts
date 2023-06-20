@@ -204,7 +204,7 @@ describe('SouthMSSQL with authentication', () => {
         { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
       ])
       .mockReturnValue([]);
-    (utils.convertDateTimeFromInstant as jest.Mock)
+    (utils.formatInstant as jest.Mock)
       .mockReturnValueOnce('2020-02-01 00:00:00.000')
       .mockReturnValueOnce('2020-03-01 00:00:00.000')
       .mockReturnValue(startTime);
@@ -226,21 +226,21 @@ describe('SouthMSSQL with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (utils.convertDateTimeFromInstant as jest.Mock)
+    (utils.formatInstant as jest.Mock)
       .mockReturnValueOnce('2020-01-01 00:00:00.000')
       .mockReturnValueOnce('2022-01-01 00:00:00.000')
       .mockReturnValue(startTime);
 
     const result = await south.queryData(items[0], startTime, endTime);
 
-    expect(utils.convertDateTimeFromInstant).toHaveBeenCalledTimes(2);
-    expect(utils.convertDateTimeFromInstant).toHaveBeenCalledWith(startTime, {
+    expect(utils.formatInstant).toHaveBeenCalledTimes(2);
+    expect(utils.formatInstant).toHaveBeenCalledWith(startTime, {
       format: 'yyyy-MM-dd HH:mm:ss.SSS',
       locale: 'en-US',
       timezone: 'Europe/Paris',
       type: 'specific-string'
     });
-    expect(utils.convertDateTimeFromInstant).toHaveBeenCalledWith(endTime, {
+    expect(utils.formatInstant).toHaveBeenCalledWith(endTime, {
       format: 'yyyy-MM-dd HH:mm:ss.SSS',
       locale: 'en-US',
       timezone: 'Europe/Paris',
@@ -354,7 +354,7 @@ describe('SouthMSSQL without authentication', () => {
   });
 
   it('should format iso string to unix epoch ms', () => {
-    (utils.convertDateTimeFromInstant as jest.Mock).mockReturnValueOnce(DateTime.fromISO(nowDateString).toMillis());
+    (utils.formatInstant as jest.Mock).mockReturnValueOnce(DateTime.fromISO(nowDateString).toMillis());
 
     const result = south.formatDatetimeVariables(nowDateString, {
       type: 'unix-epoch-ms'
@@ -363,7 +363,7 @@ describe('SouthMSSQL without authentication', () => {
   });
 
   it('should format iso string to unix epoch', () => {
-    (utils.convertDateTimeFromInstant as jest.Mock).mockReturnValueOnce(Math.floor(DateTime.fromISO(nowDateString).toMillis() / 1000));
+    (utils.formatInstant as jest.Mock).mockReturnValueOnce(Math.floor(DateTime.fromISO(nowDateString).toMillis() / 1000));
 
     const result = south.formatDatetimeVariables(nowDateString, {
       type: 'unix-epoch'
@@ -372,7 +372,7 @@ describe('SouthMSSQL without authentication', () => {
   });
 
   it('should format iso string to iso string', () => {
-    (utils.convertDateTimeFromInstant as jest.Mock).mockReturnValueOnce(nowDateString);
+    (utils.formatInstant as jest.Mock).mockReturnValueOnce(nowDateString);
 
     const result = south.formatDatetimeVariables(nowDateString, {
       type: 'iso-8601-string'

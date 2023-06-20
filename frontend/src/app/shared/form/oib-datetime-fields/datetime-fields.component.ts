@@ -1,33 +1,33 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { DateTimeSerialization } from '../../../../../../shared/model/types';
+import { DateTimeField } from '../../../../../../shared/model/types';
 import { formDirectives } from '../../form-directives';
 import { NgForOf, NgIf } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { DatetimeTypesEnumPipe } from '../../datetime-types-enum.pipe';
-import { EditDatetimeSerializationComponent } from './edit-datetime-serialization/edit-datetime-serialization.component';
+import { EditDatetimeFieldComponent } from './edit-datetime-field/edit-datetime-field.component';
 
 @Component({
-  selector: 'oib-datetime-fields-serialization',
-  templateUrl: './datetime-fields-serialization.component.html',
-  styleUrls: ['./datetime-fields-serialization.component.scss'],
-  imports: [...formDirectives, NgIf, NgForOf, TranslateModule, DatetimeTypesEnumPipe, EditDatetimeSerializationComponent],
+  selector: 'oib-datetime-fields',
+  templateUrl: './datetime-fields.component.html',
+  styleUrls: ['./datetime-fields.component.scss'],
+  imports: [...formDirectives, NgIf, NgForOf, TranslateModule, DatetimeTypesEnumPipe, EditDatetimeFieldComponent],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DatetimeFieldsSerializationComponent),
+      useExisting: forwardRef(() => DatetimeFieldsComponent),
       multi: true
     }
   ],
   standalone: true
 })
-export class DatetimeFieldsSerializationComponent {
+export class DatetimeFieldsComponent {
   @Input() label = '';
   @Input() key = '';
-  @Input() dateObjectTypes: Array<string> = [];
+  @Input({ required: true }) dateObjectTypes!: Array<string>;
 
-  dateTimeSerializations: Array<DateTimeSerialization> = [];
-  dateTimeSerializationsIncludingNew: Array<DateTimeSerialization> = [];
+  dateTimeFields: Array<DateTimeField> = [];
+  dateTimeFieldsIncludingNew: Array<DateTimeField> = [];
 
   disabled = false;
 
@@ -39,10 +39,10 @@ export class DatetimeFieldsSerializationComponent {
    */
   editedElement: {
     isNew: boolean;
-    element: DateTimeSerialization;
+    element: DateTimeField;
   } | null = null;
 
-  onChange: (elements: Array<DateTimeSerialization>) => void = () => {};
+  onChange: (elements: Array<DateTimeField>) => void = () => {};
   onTouched: () => void = () => {};
 
   registerOnChange(fn: any) {
@@ -61,8 +61,8 @@ export class DatetimeFieldsSerializationComponent {
     }
   }
 
-  writeValue(obj: Array<DateTimeSerialization>): void {
-    this.dateTimeSerializations = obj || [];
+  writeValue(obj: Array<DateTimeField>): void {
+    this.dateTimeFields = obj || [];
     this.editedElement = null;
     this.recomputeElementsIncludingNew();
   }
@@ -72,9 +72,9 @@ export class DatetimeFieldsSerializationComponent {
    * index
    */
   remove(index: number) {
-    const newElements = [...this.dateTimeSerializations];
+    const newElements = [...this.dateTimeFields];
     newElements.splice(index, 1);
-    this.dateTimeSerializations = newElements;
+    this.dateTimeFields = newElements;
     this.recomputeElementsIncludingNew();
     this.propagateChange();
   }
@@ -102,7 +102,7 @@ export class DatetimeFieldsSerializationComponent {
   /**
    * Method that should be called when the "Edit" button of an element is clicked. It sets a value for `editedElement`.
    */
-  edit(element: DateTimeSerialization) {
+  edit(element: DateTimeField) {
     this.editedElement = {
       isNew: false,
       element
@@ -115,17 +115,17 @@ export class DatetimeFieldsSerializationComponent {
    * edited/created element in the array.
    * @param element: the element that has been created/edited by the edit component
    */
-  save(element: DateTimeSerialization) {
+  save(element: DateTimeField) {
     if (!this.editedElement) {
       return;
     }
     if (this.editedElement.isNew) {
-      this.dateTimeSerializations = [...this.dateTimeSerializations, element];
+      this.dateTimeFields = [...this.dateTimeFields, element];
     } else {
-      const index = this.dateTimeSerializations.indexOf(this.editedElement.element);
-      const newElements = [...this.dateTimeSerializations];
+      const index = this.dateTimeFields.indexOf(this.editedElement.element);
+      const newElements = [...this.dateTimeFields];
       newElements.splice(index, 1, element);
-      this.dateTimeSerializations = newElements;
+      this.dateTimeFields = newElements;
     }
     this.editedElement = null;
     this.recomputeElementsIncludingNew();
@@ -153,7 +153,7 @@ export class DatetimeFieldsSerializationComponent {
    * Tells if the given element is the edited one. Should be used to decide, in each row, if it should just be
    * displayed or if the edit component should be displayed
    */
-  isEdited(element: DateTimeSerialization): boolean {
+  isEdited(element: DateTimeField): boolean {
     return (this.editedElement && this.editedElement.element === element) || false;
   }
 
@@ -166,13 +166,13 @@ export class DatetimeFieldsSerializationComponent {
   }
 
   propagateChange() {
-    this.onChange(this.dateTimeSerializations);
+    this.onChange(this.dateTimeFields);
     this.onTouched();
   }
 
   recomputeElementsIncludingNew() {
-    this.dateTimeSerializationsIncludingNew = this.editedElement?.isNew
-      ? [...this.dateTimeSerializations, this.editedElement.element]
-      : this.dateTimeSerializations;
+    this.dateTimeFieldsIncludingNew = this.editedElement?.isNew
+      ? [...this.dateTimeFields, this.editedElement.element]
+      : this.dateTimeFields;
   }
 }
