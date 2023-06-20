@@ -55,7 +55,11 @@
               <div class="col-4">
                 <div class="form-group">
                   <label class="form-label" for="file-max-file-size" translate="engine.logger.file.max-file-size"></label>
-                  <input type="number" formControlName="maxFileSize" id="file-max-file-size" class="form-control" />
+                  <div class="input-group">
+                    <input type="number" formControlName="maxFileSize" id="file-max-file-size" class="form-control" />
+                    <span class="input-group-text" translate="common.unit.MB"></span>
+                  </div>
+                  <val-errors controlName="maxFileSize"></val-errors>
                 </div>
               </div>
               <!-- Number of files -->
@@ -63,6 +67,7 @@
                 <div class="form-group">
                   <label class="form-label" for="file-number-of-files" translate="engine.logger.file.number-of-files"></label>
                   <input type="number" formControlName="numberOfFiles" id="file-number-of-files" class="form-control" />
+                  <val-errors controlName="numberOfFiles"></val-errors>
                 </div>
               </div>
             </div>
@@ -84,6 +89,7 @@
                 <div class="form-group">
                   <label class="form-label" for="database-max-number-of-logs" translate="engine.logger.database.max-number-of-logs"></label>
                   <input type="number" formControlName="maxNumberOfLogs" id="database-max-number-of-logs" class="form-control" />
+                  <val-errors controlName="maxNumberOfLogs"></val-errors>
                 </div>
               </div>
             </div>
@@ -105,7 +111,11 @@
                 <div class="col-4">
                   <div class="form-group">
                     <label class="form-label" for="loki-interval" translate="engine.logger.loki.interval"></label>
-                    <input type="number" formControlName="interval" id="loki-interval" class="form-control" />
+                    <div class="input-group">
+                      <input type="number" formControlName="interval" id="loki-interval" class="form-control" />
+                      <span class="input-group-text" translate="common.unit.s"></span>
+                    </div>
+                    <val-errors controlName="interval"></val-errors>
                   </div>
                 </div>
               </div>
@@ -116,6 +126,7 @@
                   <div class="form-group">
                     <label class="form-label" for="loki-address" translate="engine.logger.loki.address"></label>
                     <input formControlName="address" id="loki-address" class="form-control" />
+                    <val-errors controlName="address"></val-errors>
                   </div>
                 </div>
                 <!-- Proxy -->
@@ -133,6 +144,7 @@
                   <div class="form-group">
                     <label class="form-label" for="loki-token-address" translate="engine.logger.loki.token-address"></label>
                     <input formControlName="tokenAddress" id="loki-token-address" class="form-control" />
+                    <val-errors controlName="tokenAddress"></val-errors>
                   </div>
                 </div>
               </div>
@@ -142,12 +154,14 @@
                   <div class="form-group">
                     <label class="form-label" for="loki-username" translate="engine.logger.loki.username"></label>
                     <input formControlName="username" id="loki-username" class="form-control" />
+                    <val-errors controlName="username"></val-errors>
                   </div>
                 </div>
                 <div class="col-4">
                   <div class="form-group">
                     <label class="form-label" for="loki-password" translate="engine.logger.loki.password"></label>
                     <input type="password" formControlName="password" id="loki-password" class="form-control" />
+                    <val-errors controlName="password"></val-errors>
                   </div>
                 </div>
               </div>
