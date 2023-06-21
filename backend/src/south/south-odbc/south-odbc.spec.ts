@@ -2,7 +2,6 @@ import path from 'node:path';
 
 import SouthODBC from './south-odbc';
 import * as utils from '../../service/utils';
-import { generateReplacementParameters } from '../../service/utils';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import pino from 'pino';
 // eslint-disable-next-line import/no-unresolved
@@ -161,8 +160,6 @@ describe('SouthODBC with authentication', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    (utils.generateReplacementParameters as jest.Mock).mockReturnValue([new Date(nowDateString), new Date(nowDateString)]);
-
     south = new SouthODBC(
       configuration,
       items,
@@ -219,7 +216,6 @@ describe('SouthODBC with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (generateReplacementParameters as jest.Mock).mockReturnValue({ startTime, endTime });
     const odbcConnection = {
       close: jest.fn(),
       query: jest.fn().mockReturnValue([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }])
@@ -245,15 +241,7 @@ describe('SouthODBC with authentication', () => {
       connectionTimeout: configuration.settings.connectionTimeout
     });
     expect(logger.debug).toHaveBeenCalledWith(`Connecting with connection string ${expectedConnectionString}PWD=<secret>;`);
-    expect(generateReplacementParameters).toHaveBeenCalledWith(
-      items[0].settings.query,
-      DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
-      DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
-    );
-    expect(odbcConnection.query).toHaveBeenCalledWith(items[0].settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'), {
-      startTime,
-      endTime
-    });
+    expect(odbcConnection.query).toHaveBeenCalledWith(items[0].settings.query);
     expect(odbcConnection.close).toHaveBeenCalledTimes(1);
 
     expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
@@ -263,7 +251,6 @@ describe('SouthODBC with authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (generateReplacementParameters as jest.Mock).mockReturnValue({ startTime, endTime });
     const odbcConnection = {
       close: jest.fn(),
       query: jest
@@ -286,10 +273,7 @@ describe('SouthODBC with authentication', () => {
       error = err;
     }
 
-    expect(odbcConnection.query).toHaveBeenCalledWith(items[0].settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'), {
-      startTime,
-      endTime
-    });
+    expect(odbcConnection.query).toHaveBeenCalledWith(items[0].settings.query);
     expect(error).toEqual(new Error('query error'));
     expect(odbcConnection.close).toHaveBeenCalledTimes(1);
 
@@ -352,7 +336,6 @@ describe('SouthODBC without authentication', () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     const endTime = '2022-01-01T00:00:00.000Z';
 
-    (generateReplacementParameters as jest.Mock).mockReturnValue({ startTime, endTime });
     const odbcConnection = {
       close: jest.fn(),
       query: jest.fn().mockReturnValue([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }])

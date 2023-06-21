@@ -2,14 +2,7 @@ import path from 'node:path';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import {
-  convertDateTimeFromInstant,
-  convertDateTimeToInstant,
-  createFolder,
-  generateReplacementParameters,
-  logQuery,
-  persistResults
-} from '../../service/utils';
+import { convertDateTimeFromInstant, convertDateTimeToInstant, createFolder, logQuery, persistResults } from '../../service/utils';
 import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
@@ -157,12 +150,6 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
       this.logger.debug(`Connecting with connection string ${connectionString}`);
     }
 
-    const datetimeSerialization = item.settings.dateTimeFields.find((serialization: DateTimeSerialization) => serialization.useAsReference);
-    const odbcStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization.datetimeFormat);
-    const odbcEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization.datetimeFormat);
-
-    logQuery(item.settings.query, odbcStartTime, odbcEndTime, this.logger);
-
     let connection;
     try {
       const connectionConfig = {
@@ -171,8 +158,14 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
       };
       connection = await odbc.connect(connectionConfig);
 
-      const params = generateReplacementParameters(item.settings.query, odbcStartTime, odbcEndTime);
-      const data = await connection.query(item.settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'), params);
+      const datetimeSerialization = item.settings.dateTimeFields.find(
+        (serialization: DateTimeSerialization) => serialization.useAsReference
+      );
+      const odbcStartTime = convertDateTimeFromInstant(startTime, datetimeSerialization.datetimeFormat);
+      const odbcEndTime = convertDateTimeFromInstant(endTime, datetimeSerialization.datetimeFormat);
+      const adaptedQuery = item.settings.query.replace(/@StartTime/g, odbcStartTime).replace(/@EndTime/g, odbcEndTime);
+      logQuery(adaptedQuery, odbcStartTime, odbcEndTime, this.logger);
+      const data = await connection.query(adaptedQuery);
       await connection.close();
       return data;
     } catch (error: any) {

@@ -72,6 +72,15 @@ const manifest: SouthConnectorManifest = {
       readDisplay: false
     },
     {
+      key: 'requestTimeout',
+      type: 'OibNumber',
+      label: 'Request timeout (ms)',
+      defaultValue: 1000,
+      class: 'col-4',
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
+      readDisplay: false
+    },
+    {
       key: 'trustServerCertificate',
       type: 'OibCheckbox',
       label: 'Accept self-signed certificate',

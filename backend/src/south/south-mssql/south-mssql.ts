@@ -87,7 +87,8 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
-              const entryDate = convertDateTimeToInstant(entry[datetimeField.field], datetimeField.datetimeFormat);
+              const entryDate = convertDateTimeToInstant(value, datetimeField.datetimeFormat);
+
               if (datetimeField.useAsReference) {
                 if (entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
@@ -136,7 +137,7 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
       config.domain = this.configuration.settings.domain;
     }
 
-    const referenceTimestampField = item.settings.dateTimeFields.find(
+    const referenceTimestampField: DateTimeSerialization = item.settings.dateTimeFields.find(
       (serialization: DateTimeSerialization) => serialization.useAsReference
     );
     const mssqlStartTime = this.formatDatetimeVariables(startTime, referenceTimestampField.datetimeFormat);
