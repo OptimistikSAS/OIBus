@@ -361,7 +361,7 @@ describe('NorthOIAnalytics', () => {
     await north.start();
 
     const filePath = '/path/to/file/example.file';
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve({ ok: false, status: 400, statusText: 'statusText' }));
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve({ ok: false, status: 501, statusText: 'statusText' }));
 
     const expectedFetchOptions = {
       method: 'POST',
@@ -384,7 +384,7 @@ describe('NorthOIAnalytics', () => {
     }
 
     expect(err).toEqual({
-      message: `Error 400: statusText`,
+      message: `Error 501: statusText`,
       retry: false
     });
 
