@@ -13,6 +13,7 @@ import path from 'node:path';
 import fetch from 'node-fetch';
 import https from 'node:https';
 import { HandlesFile, HandlesValues } from '../north-interface';
+import { filesExists } from '../../service/utils';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -126,6 +127,9 @@ export default class NorthOIAnalytics extends NorthConnector implements HandlesF
 
       default:
         break;
+    }
+    if (!(await filesExists(filePath))) {
+      throw new Error(`File ${filePath} does not exist`);
     }
     const readStream = createReadStream(filePath);
     // Remove timestamp from the file path

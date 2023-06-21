@@ -11,6 +11,7 @@ import path from 'node:path';
 import FormData from 'form-data';
 import https from 'node:https';
 import { HandlesFile, HandlesValues } from '../north-interface';
+import { filesExists } from '../../service/utils';
 
 /**
  * Class NorthOIConnect - Send files through a POST Multipart HTTP request and values as JSON payload
@@ -117,7 +118,9 @@ export default class NorthOIConnect extends NorthConnector implements HandlesFil
       default:
         break;
     }
-
+    if (!(await filesExists(filePath))) {
+      throw new Error(`File ${filePath} does not exist`);
+    }
     const readStream = createReadStream(filePath);
     // Remove timestamp from the file path
     const { name, ext } = path.parse(filePath);

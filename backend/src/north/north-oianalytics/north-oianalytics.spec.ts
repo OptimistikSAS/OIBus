@@ -12,11 +12,14 @@ import { NorthConnectorDTO } from '../../../../shared/model/north-connector.mode
 
 import fetch from 'node-fetch';
 import https from 'node:https';
+import * as utils from '../../service/utils';
+
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
+jest.mock('../../service/utils');
 
 jest.mock('node-fetch');
 const { Response } = jest.requireActual('node-fetch');
@@ -111,6 +114,7 @@ describe('NorthOIAnalytics', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
+    (utils.filesExists as jest.Mock).mockReturnValue(true);
     proxyService.createProxyAgent = jest.fn().mockReturnValue(proxy);
     north = new NorthOIAnalytics(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
     await north.start();
@@ -335,6 +339,19 @@ describe('NorthOIAnalytics', () => {
       `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
       expectedFetchOptions
     );
+  });
+
+  it('should properly throw error when file does not exist', async () => {
+    const filePath = '/path/to/file/example.file';
+
+    (utils.filesExists as jest.Mock).mockReturnValueOnce(false);
+    let err;
+    try {
+      await north.handleFile(filePath);
+    } catch (error) {
+      err = error;
+    }
+    expect(err).toEqual(new Error(`File ${filePath} does not exist`));
   });
 
   it('should properly throw fetch error with files', async () => {
