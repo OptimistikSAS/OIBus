@@ -393,8 +393,10 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
       if (this.reconnectTimeout) {
         clearTimeout(this.reconnectTimeout);
       }
-      await this.disconnect();
-      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.configuration.settings.retryInterval);
+      if (message.Request !== 'Stop') {
+        await this.disconnect();
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.configuration.settings.retryInterval);
+      }
     }
   }
 
