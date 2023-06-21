@@ -79,7 +79,12 @@
                 <span translate="south.specific-settings" [translateParams]="{ type: southType }" id="specific-settings-title"></span>
               </div>
               <div>
-                <button type="button" class="btn btn-primary btn-sm" id="test-connection" (click)="submit('test')">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  id="test-connection"
+                  (click)="southForm.markAllAsTouched(); submit('test')"
+                >
                   <span class="fa fa-link"></span>
                 </button>
               </div>
