@@ -125,19 +125,15 @@ export default class ValueCacheService {
     // Reset timeout to null to set the buffer timeout again on the next send values
     this.bufferTimeout = undefined;
 
-    const valuesInBufferFiles: Array<{ key: string; values: Array<any> }> = [];
-    for (const [key, values] of this.bufferFiles.entries()) {
-      valuesInBufferFiles.push({ key, values });
-    }
-    const valuesToFlush = [];
-    for (const { values } of valuesInBufferFiles) {
-      // Copy value one by one to avoid Maximum call stack size exceeded error
-      for (const value of values) {
-        valuesToFlush.push(value);
-      }
-    }
+    const fileInBuffer: Array<string> = [];
+    let valuesToFlush: Array<any> = [];
 
+    for (const [key, values] of this.bufferFiles.entries()) {
+      fileInBuffer.push(key);
+      valuesToFlush = [...valuesToFlush, ...values];
+    }
     const tmpFileName = `${generateRandomId()}.queue.tmp`;
+
     // Save the buffer to be sent and immediately clear it
     if (valuesToFlush.length === 0) {
       this._logger.trace(`Nothing to flush (${flag})`);
@@ -155,7 +151,7 @@ export default class ValueCacheService {
 
     this.queue.set(tmpFileName, valuesToFlush);
     // Once compacted, remove values from queue.
-    for (const { key } of valuesInBufferFiles) {
+    for (const key of fileInBuffer) {
       this.bufferFiles.delete(key);
       try {
         await fs.unlink(path.resolve(this.valueFolder, key));
@@ -186,31 +182,26 @@ export default class ValueCacheService {
    * Take values from the queue and store them in a compact file
    */
   async compactQueueCache(cacheQueue: Map<string, any>): Promise<void> {
-    const valuesInQueue: Array<{ key: string; values: Array<any> }> = [];
+    const fileInBuffer: Array<string> = [];
+    let valuesInQueue: Array<any> = [];
 
     cacheQueue.forEach((values, key) => {
-      valuesInQueue.push({ key, values });
+      fileInBuffer.push(key);
+      valuesInQueue = [...valuesInQueue, ...values];
     });
     const compactFilename = `${generateRandomId()}.compact.tmp`;
     this._logger.trace(`Max group count reach. Compacting queue into "${compactFilename}"`);
     try {
-      const compactValues = [];
-      for (const { values } of valuesInQueue) {
-        // Copy value one by one to avoid Maximum call stack size exceeded error
-        for (const value of values) {
-          compactValues.push(value);
-        }
-      }
       // Store the values in a tmp file
-      await fs.writeFile(path.resolve(this.valueFolder, compactFilename), JSON.stringify(compactValues), { encoding: 'utf8', flag: 'w' });
+      await fs.writeFile(path.resolve(this.valueFolder, compactFilename), JSON.stringify(valuesInQueue), { encoding: 'utf8', flag: 'w' });
       this.compactedQueue.push({
         filename: compactFilename,
         createdAt: new Date().getTime(),
-        numberOfValues: compactValues.length
+        numberOfValues: valuesInQueue.length
       });
 
       // Once compacted, remove values from queue.
-      for (const { key } of valuesInQueue) {
+      for (const key of fileInBuffer) {
         await this.deleteKeyFromCache(key);
       }
     } catch (error) {
