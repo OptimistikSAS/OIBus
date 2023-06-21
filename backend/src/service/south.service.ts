@@ -21,6 +21,7 @@ import SouthOIConnect from '../south/south-oiconnect/south-oiconnect';
 
 import { SouthConnectorDTO, OibusItemDTO } from '../../../shared/model/south-connector.model';
 import SouthConnector from '../south/south-connector';
+import SouthIP21 from '../south/south-ip21/south-ip21';
 
 const southList: Array<typeof SouthConnector> = [
   SouthFolderScanner,
@@ -36,7 +37,8 @@ const southList: Array<typeof SouthConnector> = [
   SouthSQLite,
   SouthADS,
   SouthModbus,
-  SouthOIConnect
+  SouthOIConnect,
+  SouthIP21
 ];
 
 export default class SouthService {

@@ -15,6 +15,7 @@ import postgresqlManifest from '../../south/south-postgresql/manifest';
 import oracleManifest from '../../south/south-oracle/manifest';
 import odbcManifest from '../../south/south-odbc/manifest';
 import sqliteManifest from '../../south/south-sqlite/manifest';
+import ip21Manifest from '../../south/south-ip21/manifest';
 import {
   OibusItemCommandDTO,
   OibusItemDTO,
@@ -42,7 +43,8 @@ export const southManifests = [
   postgresqlManifest,
   oracleManifest,
   odbcManifest,
-  sqliteManifest
+  sqliteManifest,
+  ip21Manifest
 ];
 
 export default class SouthConnectorController {

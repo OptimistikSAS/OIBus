@@ -1,10 +1,10 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
-  id: 'odbc',
-  name: 'ODBC',
+  id: 'ip21',
+  name: 'IP21',
   category: 'database',
-  description: 'Request SQL databases with an ODBC driver and SQL queries',
+  description: 'Request AspenTech IP21 databases with the AspenTech SQL plus ODBC driver',
   modes: {
     subscription: false,
     lastPoint: false,
@@ -12,14 +12,6 @@ const manifest: SouthConnectorManifest = {
     history: true
   },
   settings: [
-    {
-      key: 'driverPath',
-      type: 'OibText',
-      label: 'ODBC Driver Path',
-      newRow: true,
-      validators: [{ key: 'required' }],
-      readDisplay: true
-    },
     {
       key: 'host',
       type: 'OibText',
@@ -40,28 +32,6 @@ const manifest: SouthConnectorManifest = {
       readDisplay: true
     },
     {
-      key: 'database',
-      type: 'OibText',
-      label: 'Database',
-      defaultValue: 'db',
-      newRow: true,
-      validators: [{ key: 'required' }],
-      readDisplay: true
-    },
-    {
-      key: 'username',
-      type: 'OibText',
-      label: 'Username',
-      readDisplay: true
-    },
-    {
-      key: 'password',
-      type: 'OibSecret',
-      label: 'Password',
-      newRow: false,
-      readDisplay: false
-    },
-    {
       key: 'connectionTimeout',
       type: 'OibNumber',
       label: 'Connection timeout (ms)',
@@ -69,14 +39,6 @@ const manifest: SouthConnectorManifest = {
       newRow: true,
       class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
-      readDisplay: false
-    },
-    {
-      key: 'trustServerCertificate',
-      type: 'OibCheckbox',
-      label: 'Accept self-signed certificate',
-      defaultValue: false,
-      validators: [{ key: 'required' }],
       readDisplay: false
     }
   ],
