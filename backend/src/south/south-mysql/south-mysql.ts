@@ -62,14 +62,83 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
     await super.start();
   }
 
-  // TODO: method needs to be implemented
   static async testConnection(
     settings: SouthConnectorDTO['settings'],
     logger: pino.Logger,
-    _encryptionService: EncryptionService
+    encryptionService: EncryptionService
   ): Promise<void> {
-    logger.trace(`Testing connection`);
-    throw new Error('TODO: method needs to be implemented');
+    const config: mysql.ConnectionOptions = {
+      host: settings.host,
+      port: settings.port,
+      user: settings.username,
+      password: settings.password ? await encryptionService.decryptText(settings.password) : '',
+      database: settings.database,
+      connectTimeout: settings.connectionTimeout,
+      timezone: 'Z'
+    };
+    let connection;
+    logger.trace(`Testing if MYSQL connection settings are correct`);
+    try {
+      connection = await mysql.createConnection(config);
+      logger.trace(`Pinging the database`);
+      await connection.ping();
+    } catch (error: any) {
+      logger.error(`Unable to connect to database: ${error.message}`);
+      if (connection) {
+        await connection.end();
+      }
+
+      switch (error.code) {
+        case 'ETIMEDOUT':
+        case 'ECONNREFUSED':
+          throw new Error('Please check host and port');
+
+        case 'ER_ACCESS_DENIED_ERROR':
+          throw new Error('Please check username and password');
+
+        case 'ER_DBACCESS_DENIED_ERROR':
+          throw new Error(`User '${settings.username}' does not have access to database '${settings.database}'`);
+
+        case 'ER_BAD_DB_ERROR':
+          throw new Error(`Database '${settings.database}' does not exist`);
+
+        default:
+          throw new Error('Please check logs');
+      }
+    }
+
+    logger.trace(`Testing system table query`);
+
+    let tables;
+    try {
+      [tables] = await connection.execute<mysql.RowDataPacket[]>(`
+        SELECT TABLES.TABLE_NAME AS table_name,
+              (SELECT GROUP_CONCAT(CONCAT(COLUMN_NAME, '(', DATA_TYPE, ')') SEPARATOR ', ')
+              FROM information_schema.COLUMNS
+              WHERE TABLE_SCHEMA = DATABASE()
+                AND TABLE_NAME = TABLES.TABLE_NAME
+              GROUP BY TABLE_SCHEMA) AS 'columns'
+        FROM information_schema.TABLES AS TABLES
+        WHERE table_schema = DATABASE()
+        AND table_type = 'BASE TABLE'
+      `);
+    } catch (error: any) {
+      await connection.end();
+
+      logger.error(`Unable to read tables in database '${settings.database}': ${error.message}`);
+      throw new Error(`Unable to read tables in database '${settings.database}', check logs`);
+    }
+
+    await connection.end();
+
+    if (tables.length === 0) {
+      logger.warn(`Database '${settings.database}' has no tables`);
+      throw new Error('Database has no tables');
+    }
+
+    const tablesString = tables.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
+
+    logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
   }
 
   /**
