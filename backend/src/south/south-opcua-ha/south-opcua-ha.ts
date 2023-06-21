@@ -174,7 +174,7 @@ export default class SouthOPCUAHA extends SouthConnector implements QueriesHisto
         }
       });
 
-      const dataByItems: Array<any> = [];
+      let dataByItems: Array<any> = [];
       for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
         for (const [resampling, resampledItems] of aggregatedItems.entries()) {
           const logs: Map<string, { description: string; affectedNodes: Array<string> }> = new Map();
@@ -230,7 +230,8 @@ export default class SouthOPCUAHA extends SouthConnector implements QueriesHisto
                           `${result.historyData.dataValues.length} values and has status code ` +
                           `${JSON.stringify(result.statusCode.value)}, continuation point is ${result.continuationPoint}`
                       );
-                      dataByItems.push(
+                      dataByItems = [
+                        ...dataByItems,
                         ...result.historyData.dataValues
                           .filter((dataValue: any) => {
                             // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
@@ -252,7 +253,7 @@ export default class SouthOPCUAHA extends SouthConnector implements QueriesHisto
                               }
                             };
                           })
-                      );
+                      ];
                     }
                     // Reason of statusCode not equal to zero could be there is no data for the requested data and interval
                     if (result.statusCode.value !== StatusCodes.Good) {
