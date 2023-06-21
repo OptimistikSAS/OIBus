@@ -294,8 +294,12 @@ export default class NorthConnector {
    * and send them to a third party application.
    */
   async cacheValues(values: Array<any>): Promise<void> {
-    this.logger.trace(`Caching ${values.length} values in North connector "${this.configuration.name}"...`);
-    await this.valueCacheService.cacheValues(values);
+    const chunkSize = this.configuration.caching.maxSendCount;
+    for (let i = 0; i < values.length; i += chunkSize) {
+      const chunk = values.slice(i, i + chunkSize);
+      this.logger.trace(`Caching ${chunk.length} values in North connector "${this.configuration.name}"...`);
+      await this.valueCacheService.cacheValues(chunk);
+    }
   }
 
   /**
