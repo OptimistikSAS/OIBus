@@ -27,7 +27,7 @@ let oracledb: {
 // @ts-ignore
 import('oracledb')
   .then(obj => {
-    oracledb = obj;
+    oracledb = obj.default;
     console.info('oracledb library loaded');
   })
   .catch(() => {
