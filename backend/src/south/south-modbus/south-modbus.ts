@@ -11,6 +11,7 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { QueriesLastPoint, TestsConnection } from '../south-interface';
+import { DateTime } from 'luxon';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
@@ -55,7 +56,7 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
       }
     } catch (error: any) {
       if (error.err === 'Offline') {
-        this.logger.error('Modbus server offline.');
+        this.logger.error(`Modbus server ${this.configuration.settings.host}:${this.configuration.settings.port} offline`);
         await this.disconnect();
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.configuration.settings.retryInterval);
       } else {
@@ -89,12 +90,13 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
       default:
         throw new Error(`Wrong Modbus type "${item.settings.modbusType}" for point ${item.name}`);
     }
-    const formattedData = {
-      pointId: item.name,
-      timestamp: new Date().toISOString(),
-      data: { value: JSON.stringify(value) }
-    };
-    await this.addValues([formattedData]);
+    await this.addValues([
+      {
+        pointId: item.name,
+        timestamp: DateTime.now().toUTC().toISO(),
+        data: { value: JSON.stringify(value) }
+      }
+    ]);
   }
 
   /**
@@ -102,7 +104,7 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
    */
   async readCoil(address: number): Promise<number> {
     if (!this.client) {
-      throw new Error('Modbus client undefined');
+      throw new Error('Read coil error: Modbus client not set');
     }
     const { response } = await this.client.readCoils(address, 1);
     return parseInt(response.body.valuesAsArray[0].toString());
@@ -113,7 +115,7 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
    */
   async readDiscreteInputRegister(address: number): Promise<number> {
     if (!this.client) {
-      throw new Error('Modbus client undefined');
+      throw new Error('Read discrete input error: Modbus client not set');
     }
     const { response } = await this.client.readDiscreteInputs(address, 1);
     return parseInt(response.body.valuesAsArray[0].toString());
@@ -124,7 +126,7 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
    */
   async readInputRegister(address: number, multiplier: number, dataType: string): Promise<number> {
     if (!this.client) {
-      throw new Error('Modbus client undefined');
+      throw new Error('Read input error: Modbus client not set');
     }
     const numberOfWords = this.getNumberOfWords(dataType);
     const { response } = await this.client.readInputRegisters(address, numberOfWords);
@@ -136,7 +138,7 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
    */
   async readHoldingRegister(address: number, multiplier: number, dataType: string): Promise<number> {
     if (!this.client) {
-      throw new Error('Modbus client undefined');
+      throw new Error('Read holding error: Modbus client not set');
     }
     const numberOfWords = this.getNumberOfWords(dataType);
     const { response } = await this.client.readHoldingRegisters(address, numberOfWords);
@@ -214,6 +216,7 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
     this.socket?.end();
     this.socket = null;
     this.client = null;
+    this.reconnectTimeout = null;
     await super.disconnect();
   }
 
