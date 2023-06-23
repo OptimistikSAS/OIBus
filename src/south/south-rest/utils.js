@@ -76,6 +76,20 @@ const formatQueryParams = (startTime, endTime, queryParams, variableDateFormat) 
   return queryParamsString
 }
 
+const formatQueryString = (startTime, endTime, queryString, variableDateFormat) => {
+  const queryParamsString = '?'
+  queryString
+    .replace(
+      /@StartTime/g,
+      variableDateFormat === 'ISO' ? new Date(startTime).toISOString() : new Date(startTime).getTime(),
+    )
+    .replace(
+      /@EndTime/g,
+      variableDateFormat === 'ISO' ? new Date(endTime).toISOString() : new Date(endTime).getTime(),
+    )
+  return queryParamsString
+}
+
 /**
  * Generate CSV file from the values.
  * @param {Object[]} results - The HTTP query result
@@ -90,4 +104,4 @@ const generateCSV = (results, delimiter) => {
   return csv.unparse(results, options)
 }
 
-export { parsers, httpGetWithBody, formatQueryParams, generateCSV }
+export { parsers, httpGetWithBody, formatQueryParams, generateCSV, formatQueryString }

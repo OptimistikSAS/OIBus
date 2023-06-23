@@ -134,6 +134,15 @@ schema.form = {
       </>
     ),
   },
+  queryString: {
+    md: 12,
+    newRow: false,
+    type: 'OibTextArea',
+    label: 'Query string',
+    defaultValue: '',
+    valid: optional(),
+    help: <div>Available variables: @StartTime, @EndTime. See Query Settings help section.</div>,
+  },
   queryParams: {
     type: 'OibTable',
     rows: {

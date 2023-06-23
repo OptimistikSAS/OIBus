@@ -7,7 +7,7 @@ import humanizeDuration from 'humanize-duration'
 
 import manifest from './manifest.js'
 import SouthConnector from '../south-connector.js'
-import { parsers, httpGetWithBody, formatQueryParams, generateCSV } from './utils.js'
+import { parsers, httpGetWithBody, formatQueryParams, generateCSV, formatQueryString } from './utils.js'
 import { replaceFilenameWithVariable, compress } from '../../service/utils.js'
 
 /**
@@ -50,6 +50,7 @@ export default class SouthRest extends SouthConnector {
       protocol,
       endpoint,
       queryParams,
+      queryString,
       body,
       authentication,
       connectionTimeout,
@@ -71,6 +72,7 @@ export default class SouthRest extends SouthConnector {
     this.protocol = protocol
     this.endpoint = endpoint
     this.queryParams = queryParams
+    this.queryString = queryString
     this.body = body
     this.authentication = authentication
     this.connectionTimeout = connectionTimeout
@@ -261,7 +263,8 @@ export default class SouthRest extends SouthConnector {
       timeout: this.connectionTimeout,
     }
     const requestUrl = `${this.protocol}://${this.host}:${this.port}${this.endpoint}${
-      formatQueryParams(startTime, endTime, this.queryParams, this.variableDateFormat)}`
+      this.queryString ? formatQueryString(startTime, endTime, this.queryString, this.variableDateFormat)
+        : formatQueryParams(startTime, endTime, this.queryParams, this.variableDateFormat)}`
 
     if (this.body) {
       fetchOptions.body = this.body
