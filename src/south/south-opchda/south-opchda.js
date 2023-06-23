@@ -435,7 +435,7 @@ export default class SouthOPCHDA extends SouthConnector {
               return
             }
 
-            this.logger.trace(`Received ${messageObject.Content.Points.length} values for scan mode "${messageObject.Content.Group}".`)
+            this.logger.debug(`Received ${messageObject.Content.Points.length} values for scan mode "${messageObject.Content.Group}".`)
 
             const associatedScanGroup = this.scanGroups.find((scanGroup) => scanGroup.name === messageObject.Content.Group)
 

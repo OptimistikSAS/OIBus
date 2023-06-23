@@ -507,7 +507,7 @@ describe('South OPCHDA', () => {
 
     await south.handleTcpHdaAgentMessages(JSON.stringify(receivedMessage))
 
-    expect(south.logger.trace).toHaveBeenCalledWith(`Received ${receivedMessage.Content.Points.length} values `
+    expect(south.logger.debug).toHaveBeenCalledWith(`Received ${receivedMessage.Content.Points.length} values `
         + `for scan mode "${receivedMessage.Content.Group}".`)
     expect(south.logger.error).toHaveBeenCalledTimes(1)
     expect(south.logger.error).toHaveBeenCalledWith(`Point: "badPoint" is invalid: ${JSON.stringify({
