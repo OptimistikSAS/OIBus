@@ -65,8 +65,8 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
     dataType: string,
     valueToParse: any,
     timestamp: Instant,
-    subItems: Array<any>,
-    enumInfo: Array<string>
+    subItems: Array<any> = [],
+    enumInfo: Array<{ name: string; value: number }> = []
   ): Array<any> {
     let valueToAdd = null;
     /**
@@ -124,7 +124,7 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
         return parsedValues.reduce((concatenatedResults: Array<any>, result: Array<any>) => [...concatenatedResults, ...result], []);
       }
       default:
-        if (subItems?.length > 0) {
+        if (subItems.length > 0) {
           // It is an ADS structure object (as json)
           const structure = this.configuration.settings.structureFiltering.find((element: any) => element.name === dataType);
           if (structure) {
@@ -145,7 +145,7 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
           this.logger.debug(
             `Data Structure ${dataType} not parsed for data ${itemName}. To parse it, please specify it in the connector settings`
           );
-        } else if (enumInfo?.length > 0) {
+        } else if (enumInfo.length > 0) {
           // It is an ADS Enum object
           if (this.configuration.settings.enumAsText === 'Text') {
             valueToAdd = valueToParse.name;
@@ -170,12 +170,12 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
   }
 
   async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
-    const timestamp: Instant = DateTime.now().toUTC().toISO() as Instant;
+    const timestamp = DateTime.now().toUTC().toISO()!;
     try {
       const results = await Promise.all(items.map(item => this.readAdsSymbol(item.name, timestamp)));
       await this.addValues(results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], []));
     } catch (error: any) {
-      if (error.message?.startsWith('Client is not connected')) {
+      if (error.message.startsWith('Client is not connected')) {
         this.logger.error('ADS client disconnected. Reconnecting');
         await this.disconnect();
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.configuration.settings.retryInterval);
@@ -290,7 +290,7 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
     try {
       await this.disconnectAdsClient();
     } catch (error) {
-      this.logger.error('ADS disconnect error');
+      this.logger.error(`ADS disconnect error. ${error}`);
     }
     this.logger.info(`ADS client disconnected from ${this.configuration.settings.netId}:${this.configuration.settings.port}`);
     this.client = null;
