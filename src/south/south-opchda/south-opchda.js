@@ -87,7 +87,9 @@ export default class SouthOPCHDA extends SouthConnector {
   async connect() {
     if (process.platform === 'win32') {
       await this.runTcpServer()
+      // Wait for Initialize message from OPCHDA Agent to
       await this.connection$.promise
+      this.connection$ = null
       await super.connect()
     } else {
       this.logger.error(`OIBus OPCHDA Agent only supported on Windows: ${process.platform}.`)
@@ -99,16 +101,16 @@ export default class SouthOPCHDA extends SouthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async runTcpServer() {
-    return new Promise((resolve, reject) => {
+    this.connection$ = new DeferredPromise()
+    return new Promise((resolve) => {
       try {
         this.tcpServer = new TcpServer(this.tcpPort, this.handleTcpHdaAgentMessages.bind(this), this.logger)
         this.tcpServer.start(() => {
           this.launchAgent(this.agentFilename, this.tcpPort, this.logLevel)
-          this.connection$ = new DeferredPromise()
           resolve()
         })
       } catch (error) {
-        reject(error)
+        this.connection$.reject(error)
       }
     })
   }
@@ -145,6 +147,11 @@ export default class SouthOPCHDA extends SouthConnector {
     if (this.historyReadTimeout) {
       clearTimeout(this.historyReadTimeout)
     }
+
+    if (this.connection$) {
+      this.connection$.reject('Disconnection')
+    }
+    this.connection$ = null
 
     if (this.agentConnected) { // TCP connection with the HDA Agent was previously established
       // In this case, we ask the HDA Agent to stop and disconnect gracefully
@@ -410,7 +417,9 @@ export default class SouthOPCHDA extends SouthConnector {
         case 'Initialize': // The HDA Agent is connected and ready to read values
           this.logger.info('HDA Agent initialized.')
           // resolve the connection promise to resolve the connect method
-          this.connection$.resolve()
+          if (this.connection$) {
+            this.connection$.resolve()
+          }
           break
         case 'Read': // Receive the values for the requested scan group (Content.Group) after a read request from historyQuery
           {

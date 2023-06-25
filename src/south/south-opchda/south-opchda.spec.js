@@ -124,17 +124,6 @@ describe('South OPCHDA', () => {
     )
   })
 
-  it('should reject on launch Agent error', async () => {
-    south.launchAgent = jest.fn(() => {
-      throw new Error('launch agent error')
-    })
-    try {
-      await south.runTcpServer()
-    } catch (err) {
-      expect(err).toEqual(new Error('launch agent error'))
-    }
-  })
-
   it('should properly run history query', async () => {
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
 
@@ -263,6 +252,7 @@ describe('South OPCHDA', () => {
     south.disconnectionTimeout = jest.fn()
     south.sendStopMessage = jest.fn()
     south.disconnection$ = { promise: jest.fn() }
+    south.connection$ = { reject: jest.fn() }
 
     const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
     await south.disconnect()
