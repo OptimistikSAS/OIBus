@@ -243,7 +243,7 @@ export default class SouthRest extends SouthConnector {
         timeout: this.connectionTimeout,
         host: this.host,
         port: this.port,
-        protocol: `${this.protocol}:`,
+        protocol: this.protocol,
         path: this.endpoint,
         headers,
       }

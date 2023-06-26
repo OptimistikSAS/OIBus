@@ -323,7 +323,7 @@ describe('SouthRest', () => {
         method: 'GET',
         path: '/api/oianalytics/data/values/query',
         port: 4200,
-        protocol: 'http:',
+        protocol: 'http',
         timeout: 1000,
       },
     )
@@ -350,7 +350,7 @@ describe('SouthRest', () => {
         method: 'GET',
         path: '/api/oianalytics/data/values/query',
         port: 4200,
-        protocol: 'http:',
+        protocol: 'http',
         timeout: 1000,
       },
     )
@@ -378,7 +378,7 @@ describe('SouthRest', () => {
         method: 'GET',
         path: '/api/oianalytics/data/values/query',
         port: 4200,
-        protocol: 'http:',
+        protocol: 'http',
         timeout: 1000,
       },
     )
