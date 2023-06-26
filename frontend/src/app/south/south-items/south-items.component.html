@@ -4,21 +4,20 @@
       <div class="d-flex align-items-center">
         <span translate="south.items.title"></span>
         <input
-          class="ms-4 form form-control"
-          style="width: 20rem"
+          class="ms-4 form form-control oib-box-input-header"
           [formControl]="searchControl"
           [placeholder]="'south.items.search-placeholder' | translate"
           type="text"
         />
       </div>
       <div class="ms-3">
-        <button type="button" class="btn btn-primary btn-sm" (click)="addItem()">
+        <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addItem()">
           <span class="fa fa-plus"></span>
         </button>
-        <button type="button" class="btn btn-primary btn-sm" (click)="exportItems()" translate="south.items.export"></button>
+        <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="exportItems()" translate="south.items.export"></button>
         <button
           type="button"
-          class="btn btn-primary btn-sm"
+          class="btn btn-primary btn-sm oib-box-btn"
           (click)="fileInput.click()"
           (drop)="onImportDrop($event)"
           (dragover)="onImportDragOver($event)"
@@ -26,15 +25,20 @@
         >
           <span translate="south.items.import"></span>
         </button>
-        <button type="button" class="btn btn-danger btn-sm" (click)="deleteAllItems()" translate="south.items.delete-all"></button>
+        <button
+          type="button"
+          class="btn btn-danger btn-sm oib-box-btn"
+          (click)="deleteAllItems()"
+          translate="south.items.delete-all"
+        ></button>
       </div>
     </div>
   </ng-template>
   <input #fileInput (change)="onImportClick($event)" id="file" type="file" accept=".csv" class="d-none" />
 
-  <div class="mt-3" *ngIf="southConnector?.id; else saveBefore">
+  <div class="mb-3" *ngIf="southConnector?.id; else saveBefore">
     <ng-container *ngIf="displayedItems.content.length > 0; else empty">
-      <table class="mt-2 table table-sm table-hover oib-table">
+      <table class="mb-2 table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
             <th translate="south.items.name"></th>

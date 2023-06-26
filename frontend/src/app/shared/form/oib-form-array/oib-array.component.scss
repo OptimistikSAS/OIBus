@@ -1,11 +1,13 @@
 .data-list-header {
   background-color: #e9ecef;
-  border-bottom: 2px solid #dee2e6;
-  border-top: 2px solid #dee2e6;
+  border-bottom: 0px;
+  border-top: 0px;
+  border-radius: 1rem;
 }
 
 .component-drop-list {
   min-height: 2rem;
+  border-radius: 1rem;
   &.empty {
     background-color: #e9ecef;
   }

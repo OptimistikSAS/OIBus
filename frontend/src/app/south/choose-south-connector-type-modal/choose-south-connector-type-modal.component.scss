@@ -1,5 +1,21 @@
 @import '../../../common';
 
+.modal-content-list {
+  background-color: $veryLightGrey;
+  border-radius: 1rem;
+  margin: 0.5rem;
+  width: 100%;
+  height:90%;
+  color: $darkGrey;
+}
+
+.modal-container-list:hover {
+  .modal-content-list {
+    background-color: $yellow;
+    color: $darkGrey;
+  }
+}
+
 .module-button {
   border: none;
   width: 100%;
@@ -18,17 +34,17 @@
 }
 
 .category-image {
-  height: 40px;
+  height: 3rem;
+  transform: translate(0%,30%);
 }
 
 .image-block {
-  height: 100%;
   text-align: center;
   color: $white;
   border-radius: 12px;
   background-color: $darkGrey;
-  width: 50px;
-  min-height: 30px;
+  width: 5rem;
+  height: 5rem;
 }
 
 h5 {
@@ -37,6 +53,11 @@ h5 {
 
 h6 {
   font-size: 1.75rem;
+}
+
+h1 {
+  text-transform: capitalize;
+  color: $darkGrey;
 }
 
 p {

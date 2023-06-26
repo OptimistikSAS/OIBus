@@ -16,13 +16,32 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 })
 export class ChooseNorthConnectorTypeModalComponent implements OnInit {
   northTypes: Array<NorthType> = [];
+  groupedNorthTypes: { category: string; types: NorthType[] }[] = [];
 
   constructor(private modal: NgbActiveModal, private northConnectorService: NorthConnectorService, private router: Router) {}
 
   ngOnInit() {
     this.northConnectorService.getNorthConnectorTypes().subscribe(types => {
       this.northTypes = types;
+      this.groupNorthTypes();
     });
+  }
+
+  groupNorthTypes() {
+    const groupedTypes: { [key: string]: NorthType[] } = {};
+
+    for (const northType of this.northTypes) {
+      if (groupedTypes[northType.category]) {
+        groupedTypes[northType.category].push(northType);
+      } else {
+        groupedTypes[northType.category] = [northType];
+      }
+    }
+
+    this.groupedNorthTypes = Object.keys(groupedTypes).map(category => ({
+      category,
+      types: groupedTypes[category]
+    }));
   }
 
   selectType(type: string) {

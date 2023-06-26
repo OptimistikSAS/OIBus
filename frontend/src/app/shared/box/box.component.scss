@@ -1,3 +1,13 @@
 :host {
   display: block;
 }
+
+.oib-box-content {
+  padding: 0.3rem 0.75rem; /* Default padding */
+}
+
+.oib-box-content.has-table,
+.oib-box-content.has-empty-div,
+.oib-box-content.has-alert-warning {
+  padding: 0; /* Remove padding for table, empty div, and alert-warning */
+}

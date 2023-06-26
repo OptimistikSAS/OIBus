@@ -3,21 +3,26 @@
 </div>
 <div class="modal-body">
   <div class="row">
-    <div class="col-lg-4 col-md-6" *ngFor="let southType of southTypes">
-      <button class="btn d-flex align-items-center category-button" (click)="selectType(southType.id)">
-        <div class="image-block">
-          <img
-            class="category-image"
-            [src]="'/assets/' + southType.category + '.svg'"
-            [alt]="'enums.categories.' + southType.category | translate"
-          />
-        </div>
-        <div class="ms-5 text-start">
-          <h6 class="mb-0">{{ southType.name }}</h6>
-          <p class="mb-0">{{ southType.description }}</p>
-        </div>
-      </button>
-    </div>
+    <ng-container *ngFor="let group of groupedSouthTypes">
+      <div class="col-lg-12 col-md-12">
+        <h1 class="mt-2">{{ 'enums.categories.' + group.category | translate }}</h1>
+      </div>
+      <div class="col-lg-4 col-md-4 modal-container-list" *ngFor="let southType of group.types">
+        <button class="btn d-flex align-items-center category-button modal-content-list" (click)="selectType(southType.id)">
+          <div class="image-block col-2">
+            <img
+              class="category-image"
+              [src]="'/assets/' + southType.category + '.svg'"
+              [alt]="'enums.categories.' + southType.category | translate"
+            />
+          </div>
+          <div class="ms-3 text-start">
+            <h6 class="mb-0">{{ southType.name }}</h6>
+            <p class="mb-0">{{ southType.description }}</p>
+          </div>
+        </button>
+      </div>
+    </ng-container>
   </div>
 </div>
 <div class="modal-footer">
