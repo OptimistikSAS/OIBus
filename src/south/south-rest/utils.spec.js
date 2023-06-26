@@ -84,7 +84,7 @@ describe('South connector Rest API utils', () => {
       }
     })
     const expectedResult = { data: 'myValue' }
-    const result = await utils.httpGetWithBody('body', { protocol: 'http:' })
+    const result = await utils.httpGetWithBody('body', { protocol: 'http' })
     expect(result).toEqual(expectedResult)
     expect(onMock).toHaveBeenCalledTimes(1)
     expect(writeMock).toHaveBeenCalledTimes(1)
@@ -109,7 +109,7 @@ describe('South connector Rest API utils', () => {
       }
     })
     const expectedResult = { data: 'myValue' }
-    const result = await utils.httpGetWithBody('body', { protocol: 'https:' })
+    const result = await utils.httpGetWithBody('body', { protocol: 'https' })
     expect(result).toEqual(expectedResult)
     expect(onMock).toHaveBeenCalledTimes(1)
     expect(writeMock).toHaveBeenCalledTimes(1)
@@ -131,7 +131,7 @@ describe('South connector Rest API utils', () => {
         end: jest.fn(),
       }
     })
-    await expect(utils.httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrowError('Unexpected token s in JSON at position 0')
+    await expect(utils.httpGetWithBody('body', { protocol: 'https' })).rejects.toThrowError('Unexpected token s in JSON at position 0')
   })
 
   it('should call raw parser', () => {

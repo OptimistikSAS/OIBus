@@ -35,7 +35,7 @@ schema.form = {
   driver: {
     type: 'OibSelect',
     md: 2,
-    options: ['mssql', 'mysql', 'postgresql', 'oracle', 'sqlite', 'odbc', 'ip21'],
+    options: ['mssql', 'mysql', 'postgresql', 'oracle', 'sqlite', 'odbc'],
     label: 'SQL Driver',
     defaultValue: 'mssql',
     help: <div>Driver SQL</div>,

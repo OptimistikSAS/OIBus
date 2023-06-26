@@ -34,7 +34,7 @@ const httpGetWithBody = (body, options) => new Promise((resolve, reject) => {
     })
   }
 
-  const req = (options.protocol === 'https:' ? https : http).request(options, callback)
+  const req = (options.protocol === 'https' ? https : http).request(options, callback)
   req.on('error', (e) => {
     reject(e)
   })
