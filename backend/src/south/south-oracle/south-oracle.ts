@@ -76,14 +76,83 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
     await super.start();
   }
 
-  // TODO: method needs to be implemented
   static async testConnection(
     settings: SouthConnectorDTO['settings'],
     logger: pino.Logger,
-    _encryptionService: EncryptionService
+    encryptionService: EncryptionService
   ): Promise<void> {
-    logger.trace(`Testing connection`);
-    throw new Error('TODO: method needs to be implemented');
+    if (!oracledb) {
+      throw new Error('oracledb library not loaded');
+    }
+
+    const config: Parameters<typeof oracledb.getConnection>[0] = {
+      user: settings.username,
+      password: settings.password ? await encryptionService.decryptText(settings.password) : '',
+      connectString: `${settings.host}:${settings.port}/${settings.database}`
+    };
+
+    let connection;
+    logger.trace(`Testing if Oracle connection settings are correct`);
+    try {
+      connection = await oracledb.getConnection(config);
+      logger.trace(`Pinging the database`);
+      await connection.ping();
+    } catch (error: any) {
+      logger.error(`Unable to connect to database: ${error.message}`);
+      if (connection) {
+        await connection.close();
+      }
+
+      switch (error.code) {
+        case 'NJS-515':
+        case 'NJS-503':
+          throw new Error('Please check host and port');
+
+        case 'ORA-01017':
+          throw new Error('Please check username and password');
+
+        case 'NJS-518':
+          throw new Error(`Cannot connect to database '${settings.database}'. Service is not registered`);
+
+        default:
+          throw new Error('Please check logs');
+      }
+    }
+
+    logger.trace(`Testing system table query`);
+
+    let tables;
+    try {
+      oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
+      const { rows } = await connection.execute(`
+              SELECT TABLES.TABLE_NAME AS "table_name",
+                    (
+                      SELECT LISTAGG(column_name || '(' || data_type || ')', ', ')
+                              WITHIN GROUP (ORDER BY TABLE_NAME)
+                      FROM USER_TAB_COLUMNS
+                      WHERE TABLE_NAME = TABLES.TABLE_NAME
+                    ) AS "columns"
+              FROM ALL_TABLES TABLES
+              WHERE OWNER = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')
+      `);
+      tables = rows;
+    } catch (error: any) {
+      await connection.close();
+
+      logger.error(`Unable to read tables in database '${settings.database}': ${error.message}`);
+      throw new Error(`Unable to read tables in database '${settings.database}', check logs`);
+    }
+
+    await connection.close();
+
+    if (tables.length === 0) {
+      logger.warn(`No tables in the '${settings.username}' schema`);
+      throw new Error(`No tables in the '${settings.username}' schema`);
+    }
+
+    const tablesString = tables.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
+
+    logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
   }
 
   /**
