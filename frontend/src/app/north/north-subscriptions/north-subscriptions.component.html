@@ -1,13 +1,13 @@
-<oib-box>
+<oib-box-table>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between">
       <span translate="north.subscriptions.title" id="title"></span>
-      <button class="btn btn-primary btn-sm" (click)="addSubscription()" translate="north.subscriptions.add"></button>
+      <button class="btn btn-primary btn-sm btnBox" (click)="addSubscription()" translate="north.subscriptions.add"></button>
     </div>
   </ng-template>
 
-  <div class="mt-3" *ngIf="northSubscriptions.length !== 0; else emptySubscriptions">
-    <table class="mt-2 table table-sm table-hover">
+  <div class="mb-3" *ngIf="northSubscriptions.length !== 0; else emptySubscriptions">
+    <table class="mb-2 table table-sm table-hover">
       <thead class="table-light">
         <tr>
           <th translate="north.subscriptions.name"></th>
@@ -32,6 +32,6 @@
     </table>
   </div>
   <ng-template #emptySubscriptions>
-    <div class="mt-3 oib-grey-container empty" id="no-subscription" translate="north.subscriptions.none"></div>
+    <div class="mb-3 oib-grey-container" id="no-subscription" translate="north.subscriptions.none"></div>
   </ng-template>
-</oib-box>
+</oib-box-table>

@@ -11,9 +11,9 @@ import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component
 import { NotificationService } from '../shared/notification.service';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { switchMap } from 'rxjs';
-import { BoxComponent } from '../shared/box/box.component';
 import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
 import { ObservableState } from '../shared/save-button/save-button.component';
+import { BoxTableComponent } from '../shared/box-table/box-table.component';
 
 @Component({
   selector: 'oib-engine-detail',
@@ -26,10 +26,11 @@ import { ObservableState } from '../shared/save-button/save-button.component';
     ScanModeListComponent,
     ExternalSourceListComponent,
     IpFilterListComponent,
-    BoxComponent,
+
     EnabledEnumPipe,
     NgForOf,
-    AsyncPipe
+    AsyncPipe,
+    BoxTableComponent
   ],
   templateUrl: './engine-detail.component.html',
   styleUrls: ['./engine-detail.component.scss']

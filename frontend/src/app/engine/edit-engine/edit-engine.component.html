@@ -45,7 +45,7 @@
               <!-- Level -->
               <div class="col-4">
                 <div class="form-group">
-                  <label for="file-level" translate="engine.logger.file.level"></label>
+                  <label class="form-label" for="file-level" translate="engine.logger.file.level"></label>
                   <select formControlName="level" class="form-select mb-2 mr-sm-2" id="file-level">
                     <option *ngFor="let level of logLevels" [ngValue]="level">{{ 'enums.log-levels.' + level | translate }}</option>
                   </select>

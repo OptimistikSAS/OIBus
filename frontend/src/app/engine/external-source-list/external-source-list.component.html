@@ -1,13 +1,13 @@
-<oib-box>
+<oib-box-table>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <span translate="engine.external-source.list" id="title"></span>
-      <button type="button" class="btn btn-primary btn-sm" (click)="addExternalSource()">
+      <button type="button" class="btn btn-primary btn-sm btnBox" (click)="addExternalSource()">
         <span class="fa fa-plus" id="add-external-source"></span>
       </button>
     </div>
   </ng-template>
-</oib-box>
+</oib-box-table>
 
 <!-- the External Source list -->
 <div *ngIf="externalSources.length !== 0; else emptyExternalSources">

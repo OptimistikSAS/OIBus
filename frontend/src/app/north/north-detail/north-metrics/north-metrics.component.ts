@@ -8,13 +8,13 @@ import { DurationPipe } from '../../../shared/duration.pipe';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../../services/north-connector.service';
 import { NotificationService } from '../../../shared/notification.service';
-import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
+import { BoxTableComponent, BoxTitleDirective } from '../../../shared/box-table/box-table.component';
 
 @Component({
   selector: 'oib-north-metrics',
   templateUrl: './north-metrics.component.html',
   styleUrls: ['./north-metrics.component.scss'],
-  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe],
+  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxTableComponent, BoxTitleDirective, JsonPipe],
   standalone: true
 })
 export class NorthMetricsComponent implements OnInit, OnDestroy {

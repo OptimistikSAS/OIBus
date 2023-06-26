@@ -10,7 +10,7 @@ import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
 import { NorthMetricsComponent } from './north-metrics/north-metrics.component';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { BoxTableComponent, BoxTitleDirective } from '../../shared/box-table/box-table.component';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 
@@ -26,7 +26,7 @@ import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
     DecimalPipe,
     NorthSubscriptionsComponent,
     NorthMetricsComponent,
-    BoxComponent,
+    BoxTableComponent,
     BoxTitleDirective,
     DurationPipe,
     EnabledEnumPipe

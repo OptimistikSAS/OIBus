@@ -8,13 +8,13 @@ import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { BoxTableComponent, BoxTitleDirective } from '../../shared/box-table/box-table.component';
 
 @Component({
   selector: 'oib-south-metrics',
   templateUrl: './south-metrics.component.html',
   styleUrls: ['./south-metrics.component.scss'],
-  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe],
+  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxTableComponent, BoxTitleDirective, JsonPipe],
   standalone: true
 })
 export class SouthMetricsComponent implements OnInit, OnDestroy {

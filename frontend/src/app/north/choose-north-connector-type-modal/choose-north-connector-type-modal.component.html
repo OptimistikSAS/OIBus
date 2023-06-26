@@ -3,9 +3,9 @@
 </div>
 <div class="modal-body">
   <div class="row">
-    <div class="col-lg-4 col-md-6" *ngFor="let northType of northTypes">
-      <button class="btn d-flex align-items-center category-button" (click)="selectType(northType.id)">
-        <div class="image-block">
+    <div class="col-lg-4 col-md-4 modal-container-list" *ngFor="let northType of northTypes">
+      <button class="btn d-flex align-items-center category-button modal-content-list" (click)="selectType(northType.id)">
+        <div class="image-block col-2">
           <img
             class="category-image"
             [src]="'/assets/' + northType.category + '.svg'"

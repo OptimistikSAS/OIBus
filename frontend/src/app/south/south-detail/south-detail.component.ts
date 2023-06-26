@@ -16,7 +16,7 @@ import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { SouthMetricsComponent } from '../south-metrics/south-metrics.component';
 import { NorthMetricsComponent } from '../../north/north-detail/north-metrics/north-metrics.component';
-import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { BoxTableComponent, BoxTitleDirective } from '../../shared/box-table/box-table.component';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { SouthItemsComponent } from '../south-items/south-items.component';
 import { NotificationService } from '../../shared/notification.service';
@@ -33,7 +33,7 @@ import { NotificationService } from '../../shared/notification.service';
     PaginationComponent,
     SouthMetricsComponent,
     NorthMetricsComponent,
-    BoxComponent,
+    BoxTableComponent,
     BoxTitleDirective,
     EnabledEnumPipe,
     SouthItemsComponent
