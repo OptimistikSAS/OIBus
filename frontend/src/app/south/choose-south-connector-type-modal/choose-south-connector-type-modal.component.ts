@@ -16,13 +16,32 @@ import { NgForOf } from '@angular/common';
 })
 export class ChooseSouthConnectorTypeModalComponent implements OnInit {
   southTypes: Array<SouthType> = [];
+  groupedSouthTypes: { category: string; types: SouthType[] }[] = [];
 
   constructor(private modal: NgbActiveModal, private southConnectorService: SouthConnectorService, private router: Router) {}
 
   ngOnInit() {
     this.southConnectorService.getAvailableTypes().subscribe(types => {
       this.southTypes = types;
+      this.groupSouthTypes();
     });
+  }
+
+  groupSouthTypes() {
+    const groupedTypes: { [key: string]: SouthType[] } = {};
+
+    for (const southType of this.southTypes) {
+      if (groupedTypes[southType.category]) {
+        groupedTypes[southType.category].push(southType);
+      } else {
+        groupedTypes[southType.category] = [southType];
+      }
+    }
+
+    this.groupedSouthTypes = Object.keys(groupedTypes).map(category => ({
+      category,
+      types: groupedTypes[category]
+    }));
   }
 
   selectType(type: string) {

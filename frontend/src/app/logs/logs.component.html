@@ -52,8 +52,8 @@
           <oib-pagination [page]="logs" [navigate]="true"></oib-pagination>
         </div>
       </div>
-      <div *ngIf="logs.totalElements !== 0; else empty">
-        <table class="table table-sm table-hover oib-table">
+      <div class="table-container" *ngIf="logs.totalElements !== 0; else empty">
+        <table class="table table-sm table-hover oib-table-logs">
           <thead>
             <tr>
               <th translate="logs.date"></th>
@@ -65,7 +65,9 @@
           <tbody>
             <tr class="data" *ngFor="let log of logs.content">
               <td class="text-nowrap">{{ log.timestamp | datetime:'mediumWithSeconds'}}</td>
-              <td>{{ log.level | logLevelsEnum }}</td>
+              <td>
+                <span [class]="'level-badge ' + log.level.toLowerCase()">{{ log.level | logLevelsEnum }}</span>
+              </td>
               <td>{{ log.scope }}</td>
               <td class="text-break">{{ log.message }}</td>
             </tr>

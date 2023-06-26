@@ -2,7 +2,7 @@
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <span translate="engine.ip-filter.list" id="title"></span>
-      <button type="button" class="btn btn-primary btn-sm" (click)="addIpFilter()">
+      <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addIpFilter()">
         <span class="fa fa-plus" id="add-ip-filter"></span>
       </button>
     </div>
@@ -11,7 +11,7 @@
 
 <!-- the IP filter list -->
 <div *ngIf="ipFilters.length !== 0; else emptyIpFilters">
-  <table class="mt-2 table table-sm table-hover oib-table">
+  <table class="mb-2 table table-sm table-hover oib-table">
     <thead class="light">
       <tr>
         <th translate="engine.ip-filter.address"></th>

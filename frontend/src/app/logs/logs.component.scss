@@ -1,0 +1,126 @@
+@import 'src/common.scss';
+
+.level-badge {
+  display: inline-block;
+  padding: 0.25rem 0.8rem;
+  border-radius: 10rem;
+  font-weight: bold;
+  text-align: center;
+}
+
+.level-badge.error {
+  background-color: #E24D42;
+  color: $lightGrey;
+}
+
+.level-badge.warn {
+  background-color: #EAB837;
+  color: $darkGrey;
+}
+
+.level-badge.info {
+  background-color: #7CB26C;
+  color: $lightGrey;
+}
+
+.level-badge.debug {
+  background-color: #2478BE;
+  color: $lightGrey;
+}
+
+.level-badge.trace {
+  background-color: #72CDDE;
+  color: $lightGrey;
+}
+
+// changes of the default display
+.oib-table-logs {
+  // table header
+  thead {
+    color: white;
+    background-color: $darkGrey;
+    // alternative case
+    &.light {
+      color: $darkGrey;
+      background-color: white;
+    }
+    // case of table header
+    th {
+      padding-left: 1rem;
+      border-style: none;
+    }
+    // first case of the first line
+    th:first-child {
+      border-top-left-radius: 1rem;
+      width: 11rem;
+    }
+    // last case of the first line
+    th:last-child {
+      border-top-right-radius: 1rem;
+    }
+    // alternative case if oib-box-title is on top of table
+    .light {
+      background-color: $white;
+    }
+  }
+  // body of the table
+  tbody {
+    padding: 0;
+    // case of table
+    td {
+      padding-left: 1rem;
+      border-bottom-width: 0px;
+      vertical-align: middle;
+    }
+    // line
+    tr {
+      max-width: 155rem;
+      // color of button in table in line
+      .btn {
+        color: $blue;
+      }
+      // hover settings
+      &:hover {
+        // color of button in line when hover the line
+        .btn {
+          color: $darkGrey;
+          // color of button when hover it
+          &:hover {
+            color: $yellow;
+          }
+        }
+      }
+      td:first-child {
+        width: 11rem;
+      }
+      td:nth-child(2) {
+        width: 2rem;
+      }
+      td:nth-child(3) {
+        width: 6rem;
+      }
+      td:last-child {
+        text-align: right;
+        padding-right: 1em;
+        overflow-wrap: break-word;
+        max-width: 12rem; //idk why but with a little max-width the table isn't broken
+      }
+    }
+    // customised colours on the lines (one out of two)
+    tr:nth-child(even) {
+      background-color: $white;
+      // changes color when hover
+      &:hover {
+        background-color: $mediumGrey;
+      }
+    }
+    // customised colours on the lines (one out of two)
+    tr:nth-child(odd) {
+      background-color: $veryLightGrey;
+      // changes color when hover
+      &:hover {
+        background-color: $mediumGrey;
+      }
+    }
+  }
+}

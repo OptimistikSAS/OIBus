@@ -4,8 +4,7 @@
       <div class="d-flex align-items-center">
         <span translate="south.items.title"></span>
         <input
-          class="ms-4 form form-control"
-          style="width: 20rem"
+          class="ms-4 form form-control oib-box-input-header"
           [formControl]="searchControl"
           [placeholder]="'south.items.search-placeholder' | translate"
           type="text"
@@ -32,9 +31,9 @@
   </ng-template>
   <input #fileInput (change)="onImportClick($event)" id="file" type="file" accept=".csv" class="d-none" />
 
-  <div class="mt-3" *ngIf="historyQuery?.id; else saveBefore">
+  <div *ngIf="historyQuery?.id; else saveBefore">
     <ng-container *ngIf="displayedItems.content.length > 0; else empty">
-      <table class="mt-2 table table-sm table-hover oib-table">
+      <table class="table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
             <th translate="south.items.name"></th>

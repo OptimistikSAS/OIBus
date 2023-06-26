@@ -20,7 +20,7 @@
           <span translate="north.specific-settings" [translateParams]="{ type: manifest.name }" id="specific-settings-title"></span>
         </ng-template>
 
-        <table class="table table-sm table-hover oib-table mt-3">
+        <table class="table table-sm table-hover oib-table mb-3">
           <tbody class="north-settings">
             <tr>
               <td translate="north.status"></td>
@@ -39,14 +39,14 @@
           <div class="d-flex justify-content-between">
             <span translate="north.cache-settings.title"></span>
             <a
-              class="ms-3 btn btn-primary btn-sm"
+              class="ms-3 btn btn-primary btn-sm oib-box-btn"
               [routerLink]="['/north', northConnector.id, 'cache']"
               translate="north.cache-settings.explore-cache"
             ></a>
           </div>
         </ng-template>
 
-        <table class="table table-sm table-hover oib-table mt-3">
+        <table class="table table-sm table-hover oib-table mb-3">
           <tbody>
             <tr>
               <td translate="north.cache-settings.send-scan-mode" style="width: 33%"></td>
