@@ -79,7 +79,7 @@ export interface BaseOibFormControl<T> {
   type: FormComponentType;
   label: string;
   defaultValue?: T;
-  unitLabel?: string; // on optional unit label to indicate which unit is used
+  unitLabel?: string; // an optional unit label to indicate which unit is used
   newRow?: boolean;
   class?: string;
   conditionalDisplay?: DisplayCondition;
