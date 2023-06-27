@@ -63,14 +63,80 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
     await super.start();
   }
 
-  // TODO: method needs to be implemented
   static async testConnection(
     settings: SouthConnectorDTO['settings'],
     logger: pino.Logger,
-    _encryptionService: EncryptionService
+    encryptionService: EncryptionService
   ): Promise<void> {
-    logger.trace(`Testing connection`);
-    throw new Error('TODO: method needs to be implemented');
+    const config: ClientConfig = {
+      host: settings.host,
+      port: settings.port,
+      user: settings.username,
+      password: settings.password ? await encryptionService.decryptText(settings.password) : '',
+      database: settings.database,
+      query_timeout: settings.requestTimeout,
+      connectionTimeoutMillis: settings.connectionTimeout
+    };
+    let connection;
+    logger.trace(`Testing if PostgreSQL connection settings are correct`);
+    try {
+      connection = new pg.Client(config);
+      await connection.connect();
+    } catch (error: any) {
+      logger.error(`Unable to connect to database: ${error.message}`);
+      if (connection) {
+        await connection.end();
+      }
+
+      if (/(timeout expired)|(^(connect ECONNREFUSED).*)/.test(error.message)) {
+        throw new Error('Please check host and port');
+      }
+
+      switch (error.message) {
+        case `password authentication failed for user "${settings.username}"`:
+          throw new Error('Please check username and password');
+
+        case `database "${settings.database}" does not exist`:
+          throw new Error(`Database '${settings.database}' does not exist`);
+
+        default:
+          throw new Error('Please check logs');
+      }
+    }
+
+    logger.trace(`Testing system table query`);
+
+    let tables;
+    try {
+      const { rows } = await connection.query(`
+          SELECT TABLES.table_name,
+                (
+                  SELECT string_agg(column_name || '(' || data_type || ')', ', ' ORDER BY table_name)
+                  FROM information_schema.columns
+                  WHERE table_name = TABLES.table_name
+                ) columns
+          FROM information_schema.tables TABLES
+          WHERE table_type = 'BASE TABLE'
+          AND table_schema = current_schema()
+      `);
+      tables = rows;
+    } catch (error: any) {
+      await connection.end();
+
+      logger.error(`Unable to read tables in database '${settings.database}': ${error.message}`);
+      throw new Error(`Unable to read tables in database '${settings.database}', check logs`);
+    }
+
+    await connection.end();
+
+    if (tables.length === 0) {
+      logger.warn(`Database '${settings.database}' has no tables`);
+      throw new Error('Database has no tables');
+    }
+
+    const tablesString = tables.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
+
+    logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
   }
 
   /**

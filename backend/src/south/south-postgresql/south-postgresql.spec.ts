@@ -183,12 +183,6 @@ describe('SouthPostgreSQL with authentication', () => {
     expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp'));
   });
 
-  it('should test connection with postgresql', async () => {
-    // TODO
-    await expect(SouthPostgreSQL.testConnection({}, logger, encryptionService)).rejects.toThrow('TODO: method needs to be implemented');
-    expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
-  });
-
   it('should properly run historyQuery', async () => {
     const startTime = '2020-01-01T00:00:00.000Z';
     south.queryData = jest
@@ -361,5 +355,162 @@ describe('SouthPostgreSQL without authentication', () => {
     }
 
     expect(error).toEqual(new Error('connection error'));
+  });
+});
+
+describe('SouthPostgreSQL test connection', () => {
+  const configuration: SouthConnectorDTO = {
+    id: 'southId',
+    name: 'south',
+    type: 'postgresql',
+    description: 'my test connector',
+    enabled: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
+    },
+    settings: {
+      host: 'localhost',
+      port: 5432,
+      database: 'db',
+      username: 'username',
+      password: 'password',
+      connectionTimeout: 1000,
+      requestTimeout: 1000,
+      compression: false
+    }
+  };
+  const settings = { ...configuration.settings };
+
+  // Error messages handled by the test function
+  // With the expected error messages to throw
+  // Note: The PostgreSQL connect function throws errors with no codes,
+  //       so messages are used to distinguish the cases
+  const ERROR_MESSAGES = {
+    'timeout expired': 'Please check host and port',
+    'connect ECONNREFUSED ::1:1234': 'Please check host and port',
+    'password authentication failed for user "username"': 'Please check username and password',
+    'database "db" does not exist': `Database '${settings.database}' does not exist`,
+    DEFAULT: 'Please check logs' // For exceptions that we aren't explicitly specifying
+  } as const;
+
+  type ErrorMessages = keyof typeof ERROR_MESSAGES;
+
+  class PGError extends Error {
+    constructor(message: ErrorMessages) {
+      super();
+      this.name = 'PGError';
+      this.message = message;
+    }
+  }
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+  });
+
+  it('Database is reachable and has tables', async () => {
+    const result = [{ table_name: 'logs', columns: 'data(INTEGER), timestamp(datetime)' }];
+    const client = {
+      connect: jest.fn(),
+      query: jest.fn(() => ({ rows: result })),
+      end: jest.fn()
+    };
+    (pg.Client as unknown as jest.Mock).mockReturnValue(client);
+
+    const test = SouthPostgreSQL.testConnection(settings, logger, encryptionService);
+    await expect(test).resolves.not.toThrow();
+
+    expect(client.end).toBeCalled();
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([
+      [`Testing if PostgreSQL connection settings are correct`],
+      [`Testing system table query`]
+    ]);
+
+    const tables = result.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
+    expect(logger.info).toHaveBeenCalledWith('Database is live with tables (table:[columns]):\n%s', tables);
+  });
+
+  it('Unable to create connection', async () => {
+    let errorMessage: ErrorMessages;
+
+    for (errorMessage in ERROR_MESSAGES) {
+      (logger.error as jest.Mock).mockClear();
+      (logger.trace as jest.Mock).mockClear();
+      (pg.Client as unknown as jest.Mock).mockImplementationOnce(() => {
+        throw new PGError(errorMessage);
+      });
+
+      const test = SouthPostgreSQL.testConnection(settings, logger, encryptionService);
+      await expect(test).rejects.toThrow(new Error(ERROR_MESSAGES[errorMessage]));
+
+      expect((logger.error as jest.Mock).mock.calls).toEqual([[`Unable to connect to database: ${errorMessage}`]]);
+      expect((logger.trace as jest.Mock).mock.calls).toEqual([[`Testing if PostgreSQL connection settings are correct`]]);
+    }
+  });
+
+  it('System table unreachable', async () => {
+    const errorMessage = 'information_schema.TABLES does not exist';
+    const client = {
+      connect: jest.fn(),
+      query: jest.fn().mockImplementationOnce(() => {
+        throw new Error(errorMessage);
+      }),
+      end: jest.fn()
+    };
+    (pg.Client as unknown as jest.Mock).mockReturnValue(client);
+
+    const test = SouthPostgreSQL.testConnection(settings, logger, encryptionService);
+
+    await expect(test).rejects.toThrow(new Error(`Unable to read tables in database '${settings.database}', check logs`));
+
+    expect(client.end).toBeCalled();
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Unable to read tables in database '${settings.database}': ${errorMessage}`]]);
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([
+      [`Testing if PostgreSQL connection settings are correct`],
+      [`Testing system table query`]
+    ]);
+  });
+
+  it('Database has no tables', async () => {
+    const client = {
+      connect: jest.fn(),
+      query: jest.fn().mockReturnValueOnce({ rows: [] }),
+      end: jest.fn()
+    };
+    (pg.Client as unknown as jest.Mock).mockReturnValue(client);
+
+    const test = SouthPostgreSQL.testConnection(settings, logger, encryptionService);
+
+    await expect(test).rejects.toThrow(new Error('Database has no tables'));
+
+    expect(client.end).toBeCalled();
+    expect((logger.warn as jest.Mock).mock.calls).toEqual([[`Database '${settings.database}' has no tables`]]);
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([
+      [`Testing if PostgreSQL connection settings are correct`],
+      [`Testing system table query`]
+    ]);
+  });
+
+  it('Unable to connect to database without password', async () => {
+    configuration.settings.password = '';
+    let errorMessage: ErrorMessages;
+
+    for (errorMessage in ERROR_MESSAGES) {
+      (logger.error as jest.Mock).mockClear();
+      (logger.trace as jest.Mock).mockClear();
+      const client = {
+        connect: () => {
+          throw new PGError(errorMessage);
+        },
+        query: jest.fn().mockReturnValueOnce([[]]),
+        end: jest.fn()
+      };
+      (pg.Client as unknown as jest.Mock).mockReturnValue(client);
+
+      const test = SouthPostgreSQL.testConnection(configuration.settings, logger, encryptionService);
+      await expect(test).rejects.toThrow(new Error(ERROR_MESSAGES[errorMessage]));
+    }
   });
 });
