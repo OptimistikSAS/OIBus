@@ -7,7 +7,8 @@ import OPCUA_DA from '../../south/south-opcua-da/south-opcua-da.schema.jsx'
 import FolderScanner from '../../south/south-folder-scanner/south-folder-scanner.schema.jsx'
 import SQL from '../../south/south-sql/south-sql.schema.jsx'
 import RestApi from '../../south/south-rest/south-rest.schema.jsx'
+import OdbcRemote from '../../south/south-odbc-remote/south-odbc-remote.schema.jsx'
 
-const SouthSchemas = { ADS, OPCUA_HA, OPCUA_DA, OPCHDA, MQTT, Modbus, FolderScanner, SQL, RestApi }
+const SouthSchemas = { ADS, OPCUA_HA, OPCUA_DA, OPCHDA, MQTT, Modbus, FolderScanner, SQL, RestApi, OdbcRemote }
 
 export default SouthSchemas
