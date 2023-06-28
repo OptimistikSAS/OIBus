@@ -8,7 +8,7 @@ import NewHistoryQueryRow from './new-history-query-row.jsx'
 import apis from '../service/apis.js'
 
 const HISTORY_QUERY_CAPABLE_SOUTH_CONNECTORS = [
-  'OPCUA_HA', 'OPCHDA', 'SQL',
+  'OPCUA_HA', 'OPCHDA', 'SQL', 'OdbcRemote',
 ]
 
 const HistoryQuery = () => {
