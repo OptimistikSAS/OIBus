@@ -56,14 +56,90 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
     await super.start();
   }
 
-  // TODO: method needs to be implemented
   static async testConnection(
     settings: SouthConnectorDTO['settings'],
     logger: pino.Logger,
-    _encryptionService: EncryptionService
+    encryptionService: EncryptionService
   ): Promise<void> {
-    logger.trace(`Testing connection`);
-    throw new Error('TODO: method needs to be implemented');
+    const config: config = {
+      user: settings.username,
+      password: settings.password ? await encryptionService.decryptText(settings.password) : '',
+      server: settings.host,
+      port: settings.port,
+      database: settings.database,
+      connectionTimeout: settings.connectionTimeout,
+      requestTimeout: settings.requestTimeout,
+      options: {
+        encrypt: settings.encryption,
+        trustServerCertificate: settings.trustServerCertificate
+      }
+    };
+    if (settings.domain) {
+      config.domain = settings.domain;
+    }
+
+    let pool;
+    let request;
+
+    logger.trace(`Testing if MSSQL connection settings are correct`);
+
+    try {
+      pool = await new mssql.ConnectionPool(config).connect();
+      request = pool.request();
+    } catch (error: any) {
+      logger.error(`Unable to connect to database: ${error.message}`);
+      if (pool) {
+        await pool.close();
+      }
+
+      switch (error.code) {
+        case 'ETIMEOUT':
+        case 'ESOCKET':
+          throw new Error('Please check host and port. See logs for more info');
+
+        case 'ELOGIN':
+          throw new Error('Please check username, password and database name. See logs for more info');
+
+        default:
+          throw new Error('Please check logs');
+      }
+    }
+
+    logger.trace(`Testing system table query`);
+
+    let tables;
+    try {
+      const {
+        recordsets: [recordset]
+      } = await request.query<Array<any>>(`
+            SELECT TABLES.TABLE_NAME AS table_name,
+                  (
+                    SELECT STRING_AGG(CONCAT(COLUMN_NAME, '(', DATA_TYPE, ')'), ', ')
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_NAME = TABLES.TABLE_NAME
+                    GROUP BY TABLE_NAME
+                  ) AS columns
+            FROM INFORMATION_SCHEMA.TABLES TABLES
+            WHERE TABLE_TYPE = 'BASE TABLE'
+      `);
+      tables = recordset as Array<any>;
+    } catch (error: any) {
+      await pool.close();
+
+      logger.error(`Unable to read tables in database '${settings.database}': ${error.message}`);
+      throw new Error(`Unable to read tables in database '${settings.database}', check logs`);
+    }
+
+    await pool.close();
+
+    if (tables.length === 0) {
+      logger.warn(`Database '${settings.database}' has no tables`);
+      throw new Error('Database has no tables');
+    }
+
+    const tablesString = tables.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
+
+    logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
   }
 
   /**
