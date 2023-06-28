@@ -133,6 +133,10 @@ describe('BaseEngine', () => {
         category: 'API',
         connectorName: 'RestApi',
       },
+      {
+        category: 'DatabaseOut',
+        connectorName: 'OdbcRemote',
+      },
     ]
 
     expect(southList).toEqual(expectedResult)

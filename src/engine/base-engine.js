@@ -23,6 +23,7 @@ import ADS from '../south/south-ads/south-ads.js'
 import Modbus from '../south/south-modbus/south-modbus.js'
 import OPCHDA from '../south/south-opchda/south-opchda.js'
 import RestApi from '../south/south-rest/south-rest.js'
+import OdbcRemote from '../south/south-odbc-remote/south-odbc-remote.js'
 
 import StatusService from '../service/status.service.js'
 import ProxyService from '../service/proxy.service.js'
@@ -51,6 +52,7 @@ const southList = {
   Modbus,
   OPCHDA,
   RestApi,
+  OdbcRemote,
 }
 
 /**
