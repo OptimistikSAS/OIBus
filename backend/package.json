@@ -85,7 +85,7 @@
     "thread-stream": "2.3.0"
   },
   "optionalDependencies": {
-    "odbc": "2.4.7",
+    "odbc": "2.4.8",
     "oracledb": "6.0.0"
   },
   "devDependencies": {
