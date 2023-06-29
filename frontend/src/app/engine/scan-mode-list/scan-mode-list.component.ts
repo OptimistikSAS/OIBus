@@ -8,12 +8,12 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { EditScanModeModalComponent } from '../edit-scan-mode-modal/edit-scan-mode-modal.component';
-import { BoxTableComponent, BoxTitleDirective } from '../../shared/box-table/box-table.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 
 @Component({
   selector: 'oib-scan-mode-list',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule, BoxTableComponent, BoxTitleDirective],
+  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
   templateUrl: './scan-mode-list.component.html',
   styleUrls: ['./scan-mode-list.component.scss']
 })

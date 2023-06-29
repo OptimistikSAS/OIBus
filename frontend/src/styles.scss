@@ -15,11 +15,11 @@ $fa-font-path: '../fonts';
   --menu-height: 35px;
 }
 
-.btnBox {
+.oib-box-btn {
   padding-bottom: 0.2rem;
 }
 
-.boxTable {
+.box {
   .alert-warning {
     border-bottom-right-radius: 1rem;
     border-bottom-left-radius: 1rem;
@@ -49,16 +49,6 @@ $fa-font-path: '../fonts';
 }
 .ngb-dp-weekday.small {
   color: $electricBlue;
-}
-
-// container of the About screen
-#about {
-  border-radius: 1rem;
-}
-
-// container of the login screen
-#login {
-  border-radius: 1rem;
 }
 
 // container of the page + padding
@@ -124,11 +114,11 @@ $fa-font-path: '../fonts';
     }
     // first case of the first line
     th:first-child {
-      border-top-left-radius: 10px;
+      border-top-left-radius: 1rem;
     }
     // last case of the first line
     th:last-child {
-      border-top-right-radius: 10px;
+      border-top-right-radius: 1rem;
     }
     // alternative case if oib-box-title is on top of table
     .light {
@@ -212,16 +202,6 @@ $fa-font-path: '../fonts';
   input.form-control {
     background-color: $white !important;
   }
-}
-
-// container for content under oib-box-title
-.oib-box-content {
-  padding: 0.3rem 0.75rem;
-}
-
-// not use yet (no component) // replace oib-box-content on table
-.oib-table-content {
-  padding: 0px 0px;
 }
 
 // override of some bootstrap styles to better fit Optimistik branding

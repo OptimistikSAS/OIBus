@@ -1,13 +1,13 @@
-<oib-box-table>
+<oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <span translate="engine.ip-filter.list" id="title"></span>
-      <button type="button" class="btn btn-primary btn-sm btnBox" (click)="addIpFilter()">
+      <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addIpFilter()">
         <span class="fa fa-plus" id="add-ip-filter"></span>
       </button>
     </div>
   </ng-template>
-</oib-box-table>
+</oib-box>
 
 <!-- the IP filter list -->
 <div *ngIf="ipFilters.length !== 0; else emptyIpFilters">

@@ -1,13 +1,13 @@
-<oib-box-table>
+<oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <span translate="engine.scan-mode.list" id="title"></span>
-      <button type="button" class="btn btn-primary btn-sm btnBox" (click)="addScanMode()" id="add-scan-mode">
+      <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addScanMode()" id="add-scan-mode">
         <span class="fa fa-plus"></span>
       </button>
     </div>
   </ng-template>
-</oib-box-table>
+</oib-box>
 
 <!-- the scan mode list -->
 <div *ngIf="scanModes.length !== 0; else emptyScanModes">

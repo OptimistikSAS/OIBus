@@ -3,7 +3,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { RouterLink } from '@angular/router';
 import { NgForOf, NgIf, NgOptimizedImage } from '@angular/common';
 //import { BoxComponent } from '../shared/box/box.component';
-import { BoxTableComponent } from '../shared/box-table/box-table.component';
+import { BoxComponent } from '../shared/box/box.component';
 import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
@@ -16,7 +16,7 @@ import { combineLatest } from 'rxjs';
 @Component({
   selector: 'oib-home',
   standalone: true,
-  imports: [TranslateModule, RouterLink, NgOptimizedImage, BoxTableComponent, EnabledEnumPipe, NgForOf, NgIf],
+  imports: [TranslateModule, RouterLink, NgOptimizedImage, BoxComponent, EnabledEnumPipe, NgForOf, NgIf],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })

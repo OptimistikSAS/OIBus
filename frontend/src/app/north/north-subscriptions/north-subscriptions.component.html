@@ -1,8 +1,8 @@
-<oib-box-table>
+<oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between">
       <span translate="north.subscriptions.title" id="title"></span>
-      <button class="btn btn-primary btn-sm btnBox" (click)="addSubscription()" translate="north.subscriptions.add"></button>
+      <button class="btn btn-primary btn-sm oib-box-btn" (click)="addSubscription()" translate="north.subscriptions.add"></button>
     </div>
   </ng-template>
 
@@ -34,4 +34,4 @@
   <ng-template #emptySubscriptions>
     <div class="mb-3 oib-grey-container" id="no-subscription" translate="north.subscriptions.none"></div>
   </ng-template>
-</oib-box-table>
+</oib-box>

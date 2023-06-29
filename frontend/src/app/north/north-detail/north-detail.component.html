@@ -15,7 +15,7 @@
       <oib-north-metrics [manifest]="manifest" [northConnector]="northConnector"></oib-north-metrics>
 
       <!-- Specific settings -->
-      <oib-box-table>
+      <oib-box>
         <ng-template oibBoxTitle>
           <span translate="north.specific-settings" [translateParams]="{ type: manifest.name }" id="specific-settings-title"></span>
         </ng-template>
@@ -32,14 +32,14 @@
             </tr>
           </tbody>
         </table>
-      </oib-box-table>
+      </oib-box>
 
-      <oib-box-table>
+      <oib-box>
         <ng-template oibBoxTitle>
           <div class="d-flex justify-content-between">
             <span translate="north.cache-settings.title"></span>
             <a
-              class="ms-3 btn btn-primary btn-sm btnBox"
+              class="ms-3 btn btn-primary btn-sm oib-box-btn"
               [routerLink]="['/north', northConnector.id, 'cache']"
               translate="north.cache-settings.explore-cache"
             ></a>
@@ -74,7 +74,7 @@
             </tr>
           </tbody>
         </table>
-      </oib-box-table>
+      </oib-box>
 
       <!-- subscription -->
       <oib-north-subscriptions [northConnector]="northConnector"></oib-north-subscriptions>

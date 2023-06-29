@@ -12,7 +12,7 @@ import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-sp
 import { OibusItemDTO, OibusItemManifest, SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 import { EditSouthItemModalComponent } from '../edit-south-item-modal/edit-south-item-modal.component';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
-import { BoxTableComponent, BoxTitleDirective } from '../../shared/box-table/box-table.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
@@ -34,7 +34,7 @@ const PAGE_SIZE = 20;
     FormsModule,
     LoadingSpinnerComponent,
     ReactiveFormsModule,
-    BoxTableComponent,
+    BoxComponent,
     BoxTitleDirective,
     DatetimePipe,
     DurationPipe

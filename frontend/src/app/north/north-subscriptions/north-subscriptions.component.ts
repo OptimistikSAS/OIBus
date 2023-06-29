@@ -11,12 +11,12 @@ import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.m
 import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { CreateNorthSubscriptionModalComponent } from '../create-north-subscription-modal/create-north-subscription-modal.component';
-import { BoxTableComponent, BoxTitleDirective } from '../../shared/box-table/box-table.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 
 @Component({
   selector: 'oib-north-subscriptions',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule, BoxTableComponent, BoxTitleDirective],
+  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
   templateUrl: './north-subscriptions.component.html',
   styleUrls: ['./north-subscriptions.component.scss']
 })

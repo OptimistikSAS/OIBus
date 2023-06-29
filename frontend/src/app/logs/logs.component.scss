@@ -1,0 +1,79 @@
+@import 'src/common.scss';
+
+// changes of the default display
+.oib-table-logs {
+  // table header
+  thead {
+    color: white;
+    background-color: $darkGrey;
+    // alternative case
+    &.light {
+      color: $darkGrey;
+      background-color: white;
+    }
+    // case of table header
+    th {
+      padding-left: 1rem;
+      border-style: none;
+    }
+    // first case of the first line
+    th:first-child {
+      border-top-left-radius: 1rem;
+    }
+    // last case of the first line
+    th:last-child {
+      border-top-right-radius: 1rem;
+    }
+    // alternative case if oib-box-title is on top of table
+    .light {
+      background-color: $white;
+    }
+  }
+  // body of the table
+  tbody {
+    padding: 0;
+    // case of table
+    td {
+      padding-left: 1rem;
+      border-bottom-width: 0px;
+    }
+    // line
+    tr {
+      // color of button in table in line
+      .btn {
+        color: $blue;
+      }
+      // hover settings
+      &:hover {
+        // color of button in line when hover the line
+        .btn {
+          color: $darkGrey;
+          // color of button when hover it
+          &:hover {
+            color: $yellow;
+          }
+        }
+      }
+      td:last-child {
+
+        padding-right: 1em;
+      }
+    }
+    // customised colours on the lines (one out of two)
+    tr:nth-child(even) {
+      background-color: $white;
+      // changes color when hover
+      &:hover {
+        background-color: $mediumGrey;
+      }
+    }
+    // customised colours on the lines (one out of two)
+    tr:nth-child(odd) {
+      background-color: $veryLightGrey;
+      // changes color when hover
+      &:hover {
+        background-color: $mediumGrey;
+      }
+    }
+  }
+}

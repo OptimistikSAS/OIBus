@@ -8,12 +8,12 @@ import { TranslateModule } from '@ngx-translate/core';
 import { IpFilterService } from '../../services/ip-filter.service';
 import { IpFilterDTO } from '../../../../../shared/model/ip-filter.model';
 import { EditIpFilterModalComponent } from '../edit-ip-filter-modal/edit-ip-filter-modal.component';
-import { BoxTableComponent, BoxTitleDirective } from '../../shared/box-table/box-table.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 
 @Component({
   selector: 'oib-ip-filter-list',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule, BoxTableComponent, BoxTitleDirective],
+  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
   templateUrl: './ip-filter-list.component.html',
   styleUrls: ['./ip-filter-list.component.scss']
 })

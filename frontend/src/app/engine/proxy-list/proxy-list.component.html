@@ -1,13 +1,13 @@
-<oib-box-table>
+<oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <span translate="engine.proxy.list" id="title"></span>
-      <button type="button" class="btn btn-primary btn-sm btnBox" (click)="addProxy()" id="add-proxy">
+      <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addProxy()" id="add-proxy">
         <span class="fa fa-plus"></span>
       </button>
     </div>
   </ng-template>
-</oib-box-table>
+</oib-box>
 
 <!-- the proxy list -->
 <div *ngIf="proxies.length !== 0; else emptyProxies">

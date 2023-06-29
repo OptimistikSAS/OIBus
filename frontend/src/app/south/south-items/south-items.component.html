@@ -1,4 +1,4 @@
-<oib-box-table>
+<oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <div class="d-flex align-items-center">
@@ -12,13 +12,13 @@
         />
       </div>
       <div class="ms-3">
-        <button type="button" class="btn btn-primary btn-sm btnBox" (click)="addItem()">
+        <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addItem()">
           <span class="fa fa-plus"></span>
         </button>
-        <button type="button" class="btn btn-primary btn-sm btnBox" (click)="exportItems()" translate="south.items.export"></button>
+        <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="exportItems()" translate="south.items.export"></button>
         <button
           type="button"
-          class="btn btn-primary btn-sm btnBox"
+          class="btn btn-primary btn-sm oib-box-btn"
           (click)="fileInput.click()"
           (drop)="onImportDrop($event)"
           (dragover)="onImportDragOver($event)"
@@ -26,7 +26,7 @@
         >
           <span translate="south.items.import"></span>
         </button>
-        <button type="button" class="btn btn-danger btn-sm btnBox" (click)="deleteAllItems()" translate="south.items.delete-all"></button>
+        <button type="button" class="btn btn-danger btn-sm oib-box-btn" (click)="deleteAllItems()" translate="south.items.delete-all"></button>
       </div>
     </div>
   </ng-template>
@@ -79,4 +79,4 @@
       <span translate="south.items.save-before-adding-items"></span>
     </div>
   </ng-template>
-</oib-box-table>
+</oib-box>

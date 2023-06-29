@@ -8,12 +8,12 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ExternalSourceDTO } from '../../../../../shared/model/external-sources.model';
 import { ExternalSourceService } from '../../services/external-source.service';
 import { EditExternalSourceModalComponent } from '../edit-external-source-modal/edit-external-source-modal.component';
-import { BoxTableComponent, BoxTitleDirective } from '../../shared/box-table/box-table.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 
 @Component({
   selector: 'oib-external-source-list',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule, BoxTableComponent, BoxTitleDirective],
+  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
   templateUrl: './external-source-list.component.html',
   styleUrls: ['./external-source-list.component.scss']
 })

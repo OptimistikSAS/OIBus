@@ -8,12 +8,12 @@ import { ConfirmationService } from '../../shared/confirmation.service';
 import { ProxyService } from '../../services/proxy.service';
 import { NotificationService } from '../../shared/notification.service';
 import { TranslateModule } from '@ngx-translate/core';
-import { BoxTableComponent, BoxTitleDirective } from '../../shared/box-table/box-table.component';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 
 @Component({
   selector: 'oib-proxy-list',
   standalone: true,
-  imports: [NgIf, NgForOf, TranslateModule, BoxTableComponent, BoxTitleDirective],
+  imports: [NgIf, NgForOf, TranslateModule, BoxComponent, BoxTitleDirective],
   templateUrl: './proxy-list.component.html',
   styleUrls: ['./proxy-list.component.scss']
 })

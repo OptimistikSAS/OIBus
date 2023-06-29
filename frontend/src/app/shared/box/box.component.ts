@@ -2,11 +2,12 @@ import {
   AfterContentInit,
   ChangeDetectionStrategy,
   Component,
-  ContentChildren,
+  ContentChild,
   Directive,
+  ElementRef,
   Input,
-  QueryList,
-  TemplateRef
+  TemplateRef,
+  ViewChild
 } from '@angular/core';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgIf, NgTemplateOutlet } from '@angular/common';
@@ -21,8 +22,8 @@ export class BoxTitleDirective {
 }
 
 /**
- * A reusable box component with a title and a content.
- * The title can be simple text, or can be a ng-template.
+ * A reusable box component with a title and content.
+ * The title can be simple text, or an ng-template.
  * The content is always projected content.
  */
 @Component({
@@ -37,9 +38,33 @@ export class BoxComponent implements AfterContentInit {
   @Input() boxTitle = '';
   titleTemplateRef: TemplateRef<void> | null = null;
 
-  @ContentChildren(BoxTitleDirective, { descendants: false }) titleQuery: QueryList<BoxTitleDirective> | undefined;
+  @ViewChild('boxContent', { static: true }) boxContent: ElementRef<any> | undefined;
+  @ContentChild(BoxTitleDirective, { static: true }) titleQuery: BoxTitleDirective | undefined;
 
   ngAfterContentInit(): void {
-    this.titleTemplateRef = this.titleQuery?.first?.templateRef || null;
+    this.titleTemplateRef = this.titleQuery?.templateRef || null;
+    this.checkContent();
+  }
+
+  private checkContent(): void {
+    const contentElement = this.boxContent?.nativeElement;
+
+    if (contentElement) {
+      const tableElement = contentElement.querySelector('table');
+      const alertWarningElement = contentElement.querySelector('.alert-warning');
+      const emptyDivElements = contentElement.querySelectorAll('div:empty');
+
+      if (tableElement) {
+        contentElement.classList.add('has-table');
+      }
+
+      if (alertWarningElement) {
+        contentElement.classList.add('has-alert-warning');
+      }
+
+      if (emptyDivElements) {  //
+        contentElement.classList.add('has-empty-div');
+      }
+    }
   }
 }
