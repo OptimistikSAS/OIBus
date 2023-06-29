@@ -1,5 +1,5 @@
-import path from 'node:path'
-import fs from 'node:fs/promises'
+import path from 'path'
+const fs = require("fs").promises;
 
 import nanoid from 'nanoid'
 
@@ -7,7 +7,7 @@ import ValueCache from './value-cache.service.js'
 
 import { createFolder, dirSize } from '../utils.js'
 
-jest.mock('node:fs/promises')
+jest.mock('fs/promises')
 jest.mock('../utils')
 
 // mocking the nanoid method

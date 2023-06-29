@@ -1,5 +1,5 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
+const fs = require("fs").promises;
+import path from 'path'
 
 import { createFolder, asyncFilter, dirSize } from '../utils.js'
 import DeferredPromise from '../deferred-promise.js'

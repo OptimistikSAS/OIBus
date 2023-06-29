@@ -1,14 +1,14 @@
-import http from 'node:http'
-import https from 'node:https'
-import Stream from 'node:stream'
+import http from 'http'
+import https from 'https'
+import Stream from 'stream'
 
 import csv from 'papaparse'
 
 import * as utils from './utils.js'
 
 jest.mock('papaparse', () => ({ unparse: jest.fn() }))
-jest.mock('node:http', () => ({ request: jest.fn() }))
-jest.mock('node:https', () => ({ request: jest.fn() }))
+jest.mock('http', () => ({ request: jest.fn() }))
+jest.mock('https', () => ({ request: jest.fn() }))
 
 const nowDateString = '2020-02-02T02:02:02.222Z'
 

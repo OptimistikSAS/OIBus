@@ -1,4 +1,4 @@
-import net from 'node:net'
+import net from 'net'
 
 import { client } from 'jsmodbus'
 

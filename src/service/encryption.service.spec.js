@@ -1,16 +1,16 @@
-import fs from 'node:fs/promises'
-import crypto from 'node:crypto'
+import fs from 'fs/promises'
+import crypto from 'crypto'
 
-import path from 'node:path'
+import path from 'path'
 import selfSigned from 'selfsigned'
-import os from 'node:os'
+import os from 'os'
 import EncryptionService from './encryption.service.js'
 
 import * as utils from './utils.js'
 
 jest.mock('./utils')
-jest.mock('node:fs/promises')
-jest.mock('node:crypto')
+jest.mock('fs/promises')
+jest.mock('crypto')
 jest.mock('selfsigned')
 
 const keyFolder = 'myTestKeys'

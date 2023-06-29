@@ -1,16 +1,16 @@
-import path from 'node:path'
-import fs from 'node:fs/promises'
-import fsSync from 'node:fs'
-import zlib from 'node:zlib'
+import path from 'path'
+const fs = require("fs").promises;
+import fsSync from 'fs'
+import zlib from 'zlib'
 
 import minimist from 'minimist'
 
 import { DateTime } from 'luxon'
 import * as utils from './utils.js'
 
-jest.mock('node:zlib')
-jest.mock('node:fs/promises')
-jest.mock('node:fs')
+jest.mock('zlib')
+jest.mock('fs/promises')
+jest.mock('fs')
 jest.mock('minimist')
 
 const nowDateString = '2020-02-02T02:02:02.222Z'

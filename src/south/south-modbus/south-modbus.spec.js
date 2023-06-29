@@ -1,6 +1,6 @@
-import net from 'node:net'
-import path from 'node:path'
-import Stream from 'node:stream'
+import net from 'net'
+import path from 'path'
+import Stream from 'stream'
 
 import Modbus from './south-modbus.js'
 

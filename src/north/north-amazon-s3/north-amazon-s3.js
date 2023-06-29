@@ -1,5 +1,5 @@
-import fs from 'node:fs'
-import path from 'node:path'
+const fs = require("fs").promises;
+import path from 'path'
 
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { NodeHttpHandler } from '@aws-sdk/node-http-handler'

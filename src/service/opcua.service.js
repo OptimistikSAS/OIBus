@@ -1,5 +1,5 @@
-import path from 'node:path'
-import fs from 'node:fs/promises'
+import path from 'path'
+const fs = require("fs").promises;
 import { createFolder } from './utils.js'
 
 const MAX_NUMBER_OF_NODE_TO_LOG = 10

@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process'
+import { spawn } from 'child_process'
 
 import manifest from './manifest.js'
 import SouthConnector from '../south-connector.js'

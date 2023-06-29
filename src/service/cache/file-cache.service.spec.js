@@ -1,11 +1,11 @@
-import path from 'node:path'
-import fs from 'node:fs/promises'
+import path from 'path'
+const fs = require("fs").promises;
 
 import FileCache from './file-cache.service.js'
 
 import { createFolder, asyncFilter, dirSize } from '../utils.js'
 
-jest.mock('node:fs/promises')
+jest.mock('fs/promises')
 
 // Mock logger
 const logger = {

@@ -1,5 +1,5 @@
-import fs from 'node:fs/promises'
-import os from 'node:os'
+const fs = require("fs").promises;
+import os from 'os'
 
 import timexe from 'timexe'
 import humanizeDuration from 'humanize-duration'

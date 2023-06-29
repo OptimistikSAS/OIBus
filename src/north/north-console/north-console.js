@@ -1,4 +1,4 @@
-import fs from 'node:fs/promises'
+const fs = require("fs").promises;
 
 import NorthConnector from '../north-connector.js'
 import manifest from './manifest.js'

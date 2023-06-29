@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-syntax, no-await-in-loop */
 
-import fs from 'node:fs/promises'
-import path from 'node:path'
+const fs = require("fs").promises;
+import path from 'path'
 
 import db from 'better-sqlite3'
 import { nanoid } from 'nanoid'

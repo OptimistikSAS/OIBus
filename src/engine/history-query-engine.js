@@ -1,5 +1,5 @@
-import path from 'node:path'
-import fs from 'node:fs/promises'
+import path from 'path'
+const fs = require("fs").promises;
 
 import humanizeDuration from 'humanize-duration'
 

@@ -1,4 +1,4 @@
-import path from 'node:path'
+import path from 'path'
 
 // North imports
 import OIAnalytics from '../north/north-oianalytics/north-oianalytics.js'

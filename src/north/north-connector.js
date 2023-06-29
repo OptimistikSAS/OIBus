@@ -1,4 +1,4 @@
-import path from 'node:path'
+import path from 'path'
 
 import EncryptionService from '../service/encryption.service.js'
 import CertificateService from '../service/certificate.service.js'

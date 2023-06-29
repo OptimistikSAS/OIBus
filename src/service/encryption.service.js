@@ -1,7 +1,7 @@
-import os from 'node:os'
-import crypto from 'node:crypto'
-import fs from 'node:fs/promises'
-import path from 'node:path'
+import os from 'os'
+import crypto from 'crypto'
+const fs = require("fs").promises
+import path from 'path'
 
 import selfSigned from 'selfsigned'
 

@@ -1,5 +1,5 @@
-import https from 'node:https'
-import http from 'node:http'
+import https from 'https'
+import http from 'http'
 
 import csv from 'papaparse'
 

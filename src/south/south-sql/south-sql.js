@@ -1,5 +1,5 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
+const fs = require("fs").promises;
+import path from 'path'
 
 import db from 'better-sqlite3'
 import mssql from 'mssql'

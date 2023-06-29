@@ -1,5 +1,5 @@
-import cluster from 'node:cluster'
-import path from 'node:path'
+import cluster from 'cluster'
+import path from 'path'
 
 import { version } from '../package.json'
 import migrationService from './migration/migration.service.js'

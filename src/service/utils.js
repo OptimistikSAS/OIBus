@@ -1,7 +1,7 @@
-import fs from 'node:fs/promises'
-import { createReadStream, createWriteStream } from 'node:fs'
-import zlib from 'node:zlib'
-import path from 'node:path'
+const fs = require("fs").promises;
+import { createReadStream, createWriteStream } from 'fs'
+import zlib from 'zlib'
+import path from 'path'
 
 import minimist from 'minimist'
 import { DateTime } from 'luxon'

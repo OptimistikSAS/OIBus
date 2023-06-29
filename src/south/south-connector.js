@@ -1,4 +1,4 @@
-import path from 'node:path'
+import path from 'path'
 
 import EncryptionService from '../service/encryption.service.js'
 import { createConfigDatabase, getConfig, upsertConfig } from '../service/database.service.js'

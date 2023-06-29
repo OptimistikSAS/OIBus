@@ -1,4 +1,4 @@
-import net from 'node:net'
+import net from 'net'
 
 import SocketSession from './socket-session.js'
 

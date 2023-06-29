@@ -1,5 +1,5 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
+const fs = require("fs").promises;
+import path from 'path'
 import defaultConfig from '../config/default-config.json'
 
 import * as utils from './utils.js'

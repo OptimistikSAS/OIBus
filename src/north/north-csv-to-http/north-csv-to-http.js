@@ -1,4 +1,4 @@
-import { createReadStream } from 'node:fs'
+import { createReadStream } from 'fs'
 
 import csv from 'papaparse'
 

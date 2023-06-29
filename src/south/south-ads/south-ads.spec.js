@@ -1,6 +1,6 @@
 import ads from 'ads-client'
 
-import path from 'node:path'
+import path from 'path'
 import ADS from './south-ads.js'
 
 import * as databaseService from '../../service/database.service.js'
@@ -12,7 +12,7 @@ const addValues = jest.fn()
 const addFiles = jest.fn()
 
 // Mock fs
-jest.mock('node:fs/promises')
+jest.mock('fs/promises')
 
 // Mock services
 jest.mock('../../service/database.service')

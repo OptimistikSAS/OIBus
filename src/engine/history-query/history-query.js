@@ -1,4 +1,4 @@
-import path from 'node:path'
+import path from 'path'
 
 import StatusService from '../../service/status.service.js'
 import { createFolder } from '../../service/utils.js'

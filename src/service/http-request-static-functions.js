@@ -1,11 +1,11 @@
-import url from 'node:url'
-import { createReadStream } from 'node:fs'
-import path from 'node:path'
+import url from 'url'
+import { createReadStream } from 'fs'
+import path from 'path'
 
 import FormData from 'form-data'
 import ProxyAgent from 'proxy-agent'
 import fetch from 'node-fetch'
-import https from 'node:https'
+import https from 'https'
 import { filesExists } from './utils.js'
 
 /**
