@@ -1,6 +1,6 @@
 {
   "name": "oibus",
-  "version": "2.5.10-w7",
+  "version": "2.5.10-node-windows7.0",
   "main": "index.js",
   "author": "Optimistik SAS",
   "license": "EUPL",
