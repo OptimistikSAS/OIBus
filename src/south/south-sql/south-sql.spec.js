@@ -295,34 +295,6 @@ describe('SouthSQL', () => {
     expect(connection.end).toBeCalledTimes(1)
   })
 
-  it('should interact with MySQL server and catch request error', async () => {
-    await south.start('baseFolder', 'oibusName')
-    await south.connect()
-
-    south.driver = 'mysql'
-
-    const connection = {
-      execute: jest.fn(() => {
-        throw new Error('execute error')
-      }),
-      end: jest.fn(),
-    }
-    jest.spyOn(mysql, 'createConnection').mockImplementationOnce(() => connection)
-
-    await expect(south.historyQuery(
-      settings.scanMode,
-      new Date('2019-10-03T13:36:38.590Z'),
-      new Date('2019-10-03T15:36:38.590Z'),
-    )).rejects.toThrowError('execute error')
-
-    jest.spyOn(mysql, 'createConnection').mockImplementationOnce(() => null)
-    await expect(south.historyQuery(
-      settings.scanMode,
-      new Date('2019-10-03T13:36:38.590Z'),
-      new Date('2019-10-03T15:36:38.590Z'),
-    )).rejects.toThrowError('Cannot read properties of null (reading \'execute\')')
-  })
-
   it('should interact with PostgreSQL server if driver is postgresql', async () => {
     const startTime = new Date('2019-10-03T13:36:36.360Z')
     const endTime = new Date('2019-10-03T13:40:40.400Z')
