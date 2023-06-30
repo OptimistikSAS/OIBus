@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.5.10-node-windows7.3](https://github.com/OptimistikSAS/OIBus/compare/v2.5.10-node-windows7.2...v2.5.10-node-windows7.3) (2023-06-30)
+
+
+### Bug Fixes
+
+* downgrade to node 16.6.2 ([e650a23](https://github.com/OptimistikSAS/OIBus/commit/e650a237e4f40cfa2e50ac3361069fb165a18167))
+
 ### [2.5.10-node-windows7.2](https://github.com/OptimistikSAS/OIBus/compare/v2.5.10-node-windows7.1...v2.5.10-node-windows7.2) (2023-06-30)
 
 
