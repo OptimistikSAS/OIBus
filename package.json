@@ -1,12 +1,12 @@
 {
   "name": "oibus",
-  "version": "2.5.10",
+  "version": "2.5.10-w7",
   "main": "index.js",
   "author": "Optimistik SAS",
   "license": "EUPL",
   "engines": {
-    "node": ">=v16.20.0",
-    "npm": ">=8.19.4"
+    "node": "=v16.6.2",
+    "npm": ">=7.20.3"
   },
   "scripts": {
     "start": "npm run internal:build:backend -- --sourceMap && npm run start:backend",
