@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { access, constants } from 'node:fs/promises';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
@@ -11,8 +12,9 @@ import pino from 'pino';
 import { DateTimeField, Instant, Serialization } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
+import type odbcNS from 'odbc';
 
-let odbc: any | null = null;
+let odbc: typeof odbcNS | null = null;
 // @ts-ignore
 import('odbc')
   .then(obj => {
@@ -65,14 +67,101 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
     await super.start();
   }
 
-  // TODO: method needs to be implemented
   static async testConnection(
     settings: SouthConnectorDTO['settings'],
     logger: pino.Logger,
-    _encryptionService: EncryptionService
+    encryptionService: EncryptionService
   ): Promise<void> {
-    logger.trace(`Testing connection`);
-    throw new Error('TODO: method needs to be implemented');
+    if (!odbc) {
+      throw new Error('odbc library not loaded');
+    }
+
+    let connection;
+    logger.trace(`Testing if ODBC connection settings are correct`);
+
+    if (/SQLite/i.test(settings.driverPath)) {
+      const dbPath = path.resolve(settings.database);
+
+      try {
+        await access(dbPath, constants.F_OK);
+      } catch (error: any) {
+        logger.error(`Access error on '${dbPath}': ${error.message}`);
+        throw new Error(`File '${dbPath}' does not exist`);
+      }
+    }
+
+    try {
+      const connectionConfig = await SouthODBC.createConnectionConfig(settings, logger, encryptionService);
+      connection = await odbc.connect(connectionConfig);
+    } catch (error: any) {
+      logger.error(`Unable to connect to database: ${error.message}`);
+
+      if (connection) {
+        await connection.close();
+      }
+
+      const { odbcErrors } = error as odbcNS.NodeOdbcError;
+      SouthODBC.logOdbcErrors(logger, odbcErrors);
+
+      if (odbcErrors[0].state === 'IM002') {
+        throw new Error(`Driver '${settings.driverPath}' not found`);
+      }
+
+      const { errorCode, ERROR_CODES } = SouthODBC.parseErrorCodes(settings.driverPath, odbcErrors[0]);
+
+      switch (errorCode) {
+        case ERROR_CODES.HOST:
+        case ERROR_CODES.PORT:
+          throw new Error('Please check host and port');
+
+        case ERROR_CODES.CREDENTIALS:
+          throw new Error('Please check username and password');
+
+        case ERROR_CODES.DB_ACCESS:
+          throw new Error(`User '${settings.username}' does not have access to database '${settings.database}'`);
+
+        default:
+          throw new Error('Please check logs');
+      }
+    }
+
+    logger.trace(`Testing system table query`);
+
+    const tables: { table_name: string; columns: string }[] = [];
+
+    try {
+      const tableMetadata = await connection.tables<any>(settings.database, null, null, 'TABLE');
+      for (const table of tableMetadata) {
+        const columnMetadata = await connection.columns<any>(settings.database, null, table.TABLE_NAME, null);
+        const columns = columnMetadata.map(column => `${column.COLUMN_NAME}(${column.TYPE_NAME})`).join(', ');
+        tables.push({
+          table_name: table.TABLE_NAME,
+          columns
+        });
+      }
+    } catch (error: any) {
+      if (connection) {
+        await connection.close();
+      }
+
+      SouthODBC.logOdbcErrors(logger, error.odbcErrors);
+
+      logger.error(`Unable to read tables in database '${settings.database}': ${error.message}`);
+      throw new Error(`Unable to read tables in database '${settings.database}', check logs`);
+    }
+
+    if (connection) {
+      await connection.close();
+    }
+
+    if (tables.length === 0) {
+      logger.warn(`Database '${settings.database}' has no tables`);
+      throw new Error('Database has no tables');
+    }
+
+    const tablesString = tables.map(row => `${row.table_name}: [${row.columns}]`).join(',\n');
+
+    logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
   }
 
   /**
@@ -132,24 +221,6 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
       throw new Error('odbc library not loaded');
     }
 
-    let connectionString = `Driver=${this.configuration.settings.driverPath};SERVER=${this.configuration.settings.host};PORT=${this.configuration.settings.port};`;
-    if (this.configuration.settings.trustServerCertificate) {
-      connectionString += `TrustServerCertificate=yes;`;
-    }
-    if (this.configuration.settings.database) {
-      connectionString += `Database=${this.configuration.settings.database};`;
-    }
-    if (this.configuration.settings.username) {
-      connectionString += `UID=${this.configuration.settings.username};`;
-    }
-
-    if (this.configuration.settings.username && this.configuration.settings.password) {
-      this.logger.debug(`Connecting with connection string ${connectionString}PWD=<secret>;`);
-      connectionString += `PWD=${await this.encryptionService.decryptText(this.configuration.settings.password)};`;
-    } else {
-      this.logger.debug(`Connecting with connection string ${connectionString}`);
-    }
-
     const datetimeSerialization = item.settings.dateTimeFields.find((serialization: DateTimeField) => serialization.useAsReference);
     const odbcStartTime = formatInstant(startTime, datetimeSerialization.datetimeFormat);
     const odbcEndTime = formatInstant(endTime, datetimeSerialization.datetimeFormat);
@@ -158,10 +229,7 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
 
     let connection;
     try {
-      const connectionConfig = {
-        connectionString,
-        connectionTimeout: this.configuration.settings.connectionTimeout
-      };
+      const connectionConfig = await SouthODBC.createConnectionConfig(this.configuration.settings, this.logger, this.encryptionService);
       connection = await odbc.connect(connectionConfig);
 
       const datetimeSerialization = item.settings.dateTimeFields.find((dateTimeField: DateTimeField) => dateTimeField.useAsReference);
@@ -174,14 +242,119 @@ export default class SouthODBC extends SouthConnector implements QueriesHistory,
       return data;
     } catch (error: any) {
       if (error.odbcErrors?.length > 0) {
-        error.odbcErrors.forEach((odbcError: any) => {
-          this.logger.error(`Error from ODBC driver: ${odbcError.message}`);
-        });
+        SouthODBC.logOdbcErrors(this.logger, error.odbcErrors);
       }
       if (connection) {
         await connection.close();
       }
       throw error;
     }
+  }
+
+  static async createConnectionConfig(
+    settings: SouthConnectorDTO['settings'],
+    logger: pino.Logger,
+    encryptionService: EncryptionService
+  ): Promise<odbcNS.ConnectionParameters> {
+    let connectionString = `Driver=${settings.driverPath};SERVER=${settings.host};PORT=${settings.port};`;
+    if (settings.trustServerCertificate) {
+      connectionString += `TrustServerCertificate=yes;`;
+    }
+    if (settings.database) {
+      connectionString += `Database=${settings.database};`;
+    }
+    if (settings.username) {
+      connectionString += `UID=${settings.username};`;
+    }
+
+    if (settings.username && settings.password) {
+      logger.debug(`Connecting with connection string ${connectionString}PWD=<secret>;`);
+      connectionString += `PWD=${await encryptionService.decryptText(settings.password)};`;
+    } else {
+      logger.debug(`Connecting with connection string ${connectionString}`);
+    }
+
+    const connectionConfig: odbcNS.ConnectionParameters = {
+      connectionString,
+      connectionTimeout: settings.connectionTimeout
+    };
+
+    return connectionConfig;
+  }
+
+  /**
+   * Parse odbc error codes for known drivers
+   */
+  static parseErrorCodes(driverPath: string, odbcError: odbcNS.OdbcError) {
+    let errorCode: number;
+    let ERROR_CODES: {
+      HOST: number;
+      PORT: number;
+      CREDENTIALS: number;
+      DB_ACCESS: number;
+    };
+
+    // MSSQL
+    if (/SQL Server/i.test(driverPath)) {
+      errorCode = odbcError.code;
+      ERROR_CODES = {
+        HOST: 17,
+        PORT: 17,
+        CREDENTIALS: 18456,
+        DB_ACCESS: 4060
+      };
+    }
+    // PostgreSQL
+    else if (/PostgreSQL|psqlODBC/i.test(driverPath)) {
+      const message = odbcError.message;
+      if (/Unknown host|server closed the connection unexpectedly/i.test(message)) errorCode = 1;
+      else if (/Connection refused/i.test(message)) errorCode = 2;
+      else if (/password|user/i.test(message)) errorCode = 3;
+      else if (/database/i.test(message)) errorCode = 4;
+      else errorCode = -1;
+
+      ERROR_CODES = {
+        HOST: 1,
+        PORT: 2,
+        CREDENTIALS: 3,
+        DB_ACCESS: 4
+      };
+    }
+    // Oracle
+    else if (/Oracle/i.test(driverPath)) {
+      errorCode = odbcError.code;
+      // Note: Could not determine host, port and db_access errors codes
+      ERROR_CODES = {
+        HOST: -1,
+        PORT: -1,
+        CREDENTIALS: 1017,
+        DB_ACCESS: -1
+      };
+    }
+    // MySQL
+    else if (/MySQL/i.test(driverPath)) {
+      errorCode = odbcError.code;
+      ERROR_CODES = {
+        HOST: 2005,
+        PORT: 2003,
+        CREDENTIALS: 1045,
+        DB_ACCESS: 1044
+      };
+    }
+    // Other
+    else {
+      throw new Error('Please check logs');
+    }
+
+    return { errorCode, ERROR_CODES };
+  }
+
+  /**
+   * Logs the odbcErrors array
+   */
+  static logOdbcErrors(logger: pino.Logger, odbcErrors: odbcNS.OdbcError[]) {
+    odbcErrors.forEach(odbcError => {
+      logger.error(`Error from ODBC driver: ${odbcError.message}`);
+    });
   }
 }

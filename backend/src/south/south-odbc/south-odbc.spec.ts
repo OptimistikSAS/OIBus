@@ -1,4 +1,5 @@
 import path from 'node:path';
+import fs from 'node:fs/promises';
 
 import SouthODBC from './south-odbc';
 import * as utils from '../../service/utils';
@@ -17,6 +18,7 @@ import { DateTime } from 'luxon';
 
 jest.mock('../../service/utils');
 jest.mock('odbc');
+jest.mock('node:fs/promises');
 
 const database = new DatabaseMock();
 jest.mock(
@@ -177,12 +179,6 @@ describe('SouthODBC with authentication', () => {
   it('should create temp folder', async () => {
     await south.start();
     expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp'));
-  });
-
-  it('should test connection with odbc', async () => {
-    // TODO
-    await expect(SouthODBC.testConnection({}, logger, encryptionService)).rejects.toThrow('TODO: method needs to be implemented');
-    expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
   });
 
   it('should properly run historyQuery', async () => {
@@ -374,5 +370,242 @@ describe('SouthODBC without authentication', () => {
       connectionTimeout: configuration.settings.connectionTimeout
     });
     expect(error).toEqual(new Error('connection error'));
+  });
+});
+
+describe('SouthODBC test connection', () => {
+  const configuration: SouthConnectorDTO = {
+    id: 'southId',
+    name: 'south',
+    type: 'odbc',
+    description: 'my test connector',
+    enabled: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
+    },
+    settings: {
+      driverPath: 'myOdbcDriver',
+      host: 'localhost',
+      port: 1433,
+      database: 'db',
+      username: 'username',
+      password: 'password',
+      connectionTimeout: 1000,
+      trustServerCertificate: true
+    }
+  };
+  const settings = { ...configuration.settings };
+
+  class NodeOdbcError extends Error {
+    public odbcErrors: odbc.OdbcError[];
+    constructor(message: string, odbcErrors: odbc.OdbcError[]) {
+      super();
+      this.name = 'ODBCError';
+      this.message = message;
+      this.odbcErrors = odbcErrors;
+    }
+  }
+
+  // Error types and the messages thrown by the test function
+  const ERROR_TYPE = {
+    HOST: 'Please check host and port',
+    PORT: 'Please check host and port',
+    CREDENTIALS: 'Please check username and password',
+    DB_ACCESS: `User '${settings.username}' does not have access to database '${settings.database}'`,
+    DEFAULT: 'Please check logs'
+  } as const;
+  const connectionErrorMessage = 'Error creating connection';
+
+  /**
+   * Returns the NodeOdbcError driver error with it's expected error thrown by the test function
+   *
+   * @param expectedErrorMessage message thrown by the test function
+   * @param message OdbcError message
+   * @param code OdbcError code
+   */
+  const createOdbcError = (expectedErrorMessage: string, message: string, code: number) => {
+    const driverError = new NodeOdbcError(connectionErrorMessage, [{ code, message, state: '' }]);
+    const expectedError = new Error(expectedErrorMessage);
+
+    return { driverError, expectedError };
+  };
+
+  // Drivers with the errors they are throwing
+  const DRIVER_ERRORS = {
+    'SQL Server': [
+      createOdbcError(ERROR_TYPE.HOST, 'Host unreachable', 17),
+      createOdbcError(ERROR_TYPE.PORT, 'Host:port unreachable', 17),
+      createOdbcError(ERROR_TYPE.CREDENTIALS, 'Bad username or password', 18456),
+      createOdbcError(ERROR_TYPE.DB_ACCESS, 'Unreachable Database', 4060),
+      createOdbcError(ERROR_TYPE.DEFAULT, 'Unexpected error', -1)
+    ],
+    PostgreSQL: [
+      createOdbcError(ERROR_TYPE.HOST, 'Unknown host', 1),
+      createOdbcError(ERROR_TYPE.PORT, 'Connection refused', 1),
+      createOdbcError(ERROR_TYPE.CREDENTIALS, 'Bad username or password', 1),
+      createOdbcError(ERROR_TYPE.DB_ACCESS, 'Unreachable Database', 1),
+      createOdbcError(ERROR_TYPE.DEFAULT, 'Unexpected error', -1)
+    ],
+    // Note: Could not determine host, port and db_access errors codes
+    Oracle: [createOdbcError(ERROR_TYPE.CREDENTIALS, 'Bad username or password', 1017)],
+    MySQL: [
+      createOdbcError(ERROR_TYPE.HOST, 'Unknown host', 2005),
+      createOdbcError(ERROR_TYPE.PORT, 'Host:port unreachable', 2003),
+      createOdbcError(ERROR_TYPE.CREDENTIALS, 'Bad username or password', 1045),
+      createOdbcError(ERROR_TYPE.DB_ACCESS, 'Unreachable Database', 1044),
+      createOdbcError(ERROR_TYPE.DEFAULT, 'Unexpected error', -1)
+    ],
+    myOdbcDriver: [
+      createOdbcError(ERROR_TYPE.DEFAULT, 'Unknown host', 1),
+      createOdbcError(ERROR_TYPE.DEFAULT, 'Host:port unreachable', 2),
+      createOdbcError(ERROR_TYPE.DEFAULT, 'Bad username or password', 3),
+      createOdbcError(ERROR_TYPE.DEFAULT, 'Unreachable Database', 4),
+      createOdbcError(ERROR_TYPE.DEFAULT, 'Unexpected error', -1)
+    ]
+  };
+
+  // Flattens the errors inside DRIVER_ERRORS, keeping the name of the driver
+  const flattenedErrors = Object.entries(DRIVER_ERRORS).flatMap(([driver, errors]) => errors.map(error => ({ driver, error })));
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+  });
+
+  it('Database is reachable and has tables', async () => {
+    const result = [{ table_name: 'logs', columns: 'data(INTEGER), timestamp(datetime)' }];
+    const tablesResult = [{ TABLE_NAME: 'logs' }];
+    const columnsResult = [
+      { COLUMN_NAME: 'data', TYPE_NAME: 'INTEGER' },
+      { COLUMN_NAME: 'timestamp', TYPE_NAME: 'datetime' }
+    ];
+    const odbcConnection = {
+      close: jest.fn(),
+      tables: jest.fn(() => tablesResult),
+      columns: jest.fn(() => columnsResult)
+    };
+    (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
+
+    const test = SouthODBC.testConnection(settings, logger, encryptionService);
+    await expect(test).resolves.not.toThrow();
+
+    expect(odbcConnection.close).toBeCalled();
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([
+      [`Testing if ODBC connection settings are correct`],
+      [`Testing system table query`]
+    ]);
+
+    const tables = result.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
+    expect(logger.info).toHaveBeenCalledWith('Database is live with tables (table:[columns]):\n%s', tables);
+  });
+
+  it.each(flattenedErrors)(
+    'Unable to create connection with $driver, error code $error.driverError.odbcErrors.0.code',
+    async driverTest => {
+      (odbc.connect as jest.Mock).mockImplementationOnce(() => {
+        throw driverTest.error.driverError;
+      });
+      settings.driverPath = driverTest.driver;
+
+      const test = SouthODBC.testConnection(settings, logger, encryptionService);
+      await expect(test).rejects.toThrow(driverTest.error.expectedError);
+
+      expect((logger.error as jest.Mock).mock.calls).toEqual([
+        [`Unable to connect to database: ${connectionErrorMessage}`],
+        [`Error from ODBC driver: ${driverTest.error.driverError.odbcErrors[0].message}`]
+      ]);
+      expect((logger.trace as jest.Mock).mock.calls).toEqual([[`Testing if ODBC connection settings are correct`]]);
+    }
+  );
+
+  it('Unable to create connection with SQLite', async () => {
+    const errorMessage = 'File does not exist';
+    const dbPath = path.resolve(settings.database);
+    (fs.access as jest.Mock).mockImplementationOnce(() => {
+      throw new Error(errorMessage);
+    });
+    settings.driverPath = 'SQLite';
+
+    const test = SouthODBC.testConnection(settings, logger, encryptionService);
+    await expect(test).rejects.toThrowError(`File '${dbPath}' does not exist`);
+
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([['Testing if ODBC connection settings are correct']]);
+    expect(logger.error as jest.Mock).toBeCalledWith(`Access error on '${dbPath}': ${errorMessage}`);
+  });
+
+  it('Could not load driver', async () => {
+    settings.driverPath = 'Unknown driver';
+    const error = new NodeOdbcError(connectionErrorMessage, [{ code: -1, message: 'Driver not found', state: 'IM002' }]);
+    (odbc.connect as jest.Mock).mockImplementation(() => {
+      throw error;
+    });
+
+    const test = SouthODBC.testConnection(settings, logger, encryptionService);
+    await expect(test).rejects.toThrow(new Error(`Driver '${settings.driverPath}' not found`));
+
+    expect((logger.error as jest.Mock).mock.calls).toEqual([
+      [`Unable to connect to database: ${connectionErrorMessage}`],
+      [`Error from ODBC driver: ${error.odbcErrors[0].message}`]
+    ]);
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([[`Testing if ODBC connection settings are correct`]]);
+  });
+
+  it('System table unreachable', async () => {
+    const errorMessage = 'Function unavailable';
+    const odbcConnection = {
+      close: jest.fn(),
+      tables: jest.fn(() => {
+        throw new NodeOdbcError(errorMessage, []);
+      })
+    };
+    (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
+
+    const test = SouthODBC.testConnection(settings, logger, encryptionService);
+    await expect(test).rejects.toThrow(new Error(`Unable to read tables in database '${settings.database}', check logs`));
+
+    expect(odbcConnection.close).toBeCalled();
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Unable to read tables in database '${settings.database}': ${errorMessage}`]]);
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([
+      [`Testing if ODBC connection settings are correct`],
+      [`Testing system table query`]
+    ]);
+  });
+
+  it('Database has no tables', async () => {
+    const odbcConnection = {
+      close: jest.fn(),
+      tables: jest.fn(() => [])
+    };
+    (odbc.connect as jest.Mock).mockReturnValue(odbcConnection);
+
+    const test = SouthODBC.testConnection(settings, logger, encryptionService);
+    await expect(test).rejects.toThrow(new Error('Database has no tables'));
+
+    expect(odbcConnection.close).toBeCalled();
+    expect((logger.warn as jest.Mock).mock.calls).toEqual([[`Database '${settings.database}' has no tables`]]);
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([
+      [`Testing if ODBC connection settings are correct`],
+      [`Testing system table query`]
+    ]);
+  });
+
+  it('Unable to connect to database without password', async () => {
+    const errorMessage = 'Error connecting to database';
+    settings.driverPath = 'myOdbcDriver';
+    settings.password = '';
+    (odbc.connect as jest.Mock).mockImplementationOnce(() => {
+      throw new NodeOdbcError(errorMessage, [{ code: -1, message: errorMessage, state: '' }]);
+    });
+
+    const test = SouthODBC.testConnection(settings, logger, encryptionService);
+    await expect(test).rejects.toThrow(new Error('Please check logs'));
+
+    expect((logger.error as jest.Mock).mock.calls).toEqual([
+      [`Unable to connect to database: ${errorMessage}`],
+      [`Error from ODBC driver: ${errorMessage}`]
+    ]);
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([[`Testing if ODBC connection settings are correct`]]);
   });
 });
