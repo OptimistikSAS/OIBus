@@ -142,6 +142,8 @@ export class EditNorthComponent implements OnInit {
         // if we have a south connector we initialize the values
         if (northConnector) {
           this.northForm.patchValue(northConnector);
+        } else {
+          this.northForm.setValue(this.northForm.getRawValue());
         }
 
         this.manifest = manifest;

@@ -1,36 +1,37 @@
 import { ComponentTester } from 'ngx-speculoos';
 import { Component } from '@angular/core';
 import { FormControl } from '@angular/forms';
-import { DatetimeFieldsComponent } from './datetime-fields.component';
+import { OibArrayComponent } from './oib-array.component';
 import { TestBed } from '@angular/core/testing';
-import { DateTimeField } from '../../../../../../shared/model/types';
-import { EditDatetimeFieldComponent } from './edit-datetime-field/edit-datetime-field.component';
+import { EditElementComponent } from './edit-element/edit-element.component';
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { formDirectives } from '../../form-directives';
+import { buildDateTimeFieldsFormControl } from '../../../../../../shared/model/manifest-factory';
 
 @Component({
-  template: '<oib-datetime-fields [dateObjectTypes]="[]" [formControl]="control"></oib-datetime-fields>',
+  template: '<oib-array [formDescription]="formDescription" [formControl]="control"></oib-array>',
   standalone: true,
-  imports: [DatetimeFieldsComponent, ...formDirectives]
+  imports: [OibArrayComponent, ...formDirectives]
 })
 class TestComponent {
-  control = new FormControl<Array<DateTimeField>>([
+  formDescription = buildDateTimeFieldsFormControl([]).content;
+
+  control = new FormControl<Array<any>>([
     {
-      field: 'field1',
+      fieldName: 'field1',
       useAsReference: false,
-      datetimeFormat: {
-        type: 'unix-epoch-ms'
-      }
+      type: 'unix-epoch-ms',
+      timezone: null,
+      format: null,
+      locale: null
     },
     {
-      field: 'field2',
+      fieldName: 'field2',
       useAsReference: true,
-      datetimeFormat: {
-        type: 'specific-string',
-        timezone: 'Europe/Paris',
-        format: 'yyyy-MM-dd HH:mm:ss.SSS',
-        locale: 'en-US'
-      }
+      type: 'string',
+      timezone: 'Europe/Paris',
+      format: 'yyyy-MM-dd HH:mm:ss.SSS',
+      locale: 'en-US'
     }
   ]);
 }
@@ -41,11 +42,11 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 
   get addField() {
-    return this.button('.add-field-button')!;
+    return this.button('.add-button')!;
   }
 
-  get editComponent(): EditDatetimeFieldComponent {
-    return this.component(EditDatetimeFieldComponent)!;
+  get editComponent(): EditElementComponent {
+    return this.component(EditElementComponent)!;
   }
 
   get displayFields() {
@@ -60,12 +61,12 @@ class TestComponentTester extends ComponentTester<TestComponent> {
     return this.elements<HTMLButtonElement>('.delete-button');
   }
 
-  get DatetimeFieldsComponent(): DatetimeFieldsComponent {
-    return this.component(DatetimeFieldsComponent);
+  get DatetimeFieldsComponent(): OibArrayComponent {
+    return this.component(OibArrayComponent);
   }
 }
 
-describe('DatetimeFieldsComponent', () => {
+describe('ArrayComponent', () => {
   let tester: TestComponentTester;
 
   beforeEach(() => {
@@ -108,15 +109,13 @@ describe('DatetimeFieldsComponent', () => {
       expect(b.disabled).toBeTrue();
     });
 
-    expect(tester.editComponent.dateTimeField).toEqual({
-      field: '',
+    expect(tester.editComponent.element).toEqual({
+      fieldName: '',
       useAsReference: false,
-      datetimeFormat: {
-        type: 'specific-string',
-        timezone: 'Europe/Paris',
-        format: 'yyyy-MM-dd HH:mm:ss.SSS',
-        locale: 'en-US'
-      }
+      type: 'string',
+      timezone: 'UTC',
+      format: 'yyyy-MM-dd HH:mm:ss',
+      locale: 'en-En'
     });
 
     tester.editComponent.saved.emit({

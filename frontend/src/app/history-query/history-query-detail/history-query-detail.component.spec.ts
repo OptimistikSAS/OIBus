@@ -52,7 +52,7 @@ describe('HistoryQueryDisplayComponent', () => {
         type: 'OibText',
         label: 'Database',
         validators: [{ key: 'required' }],
-        readDisplay: true
+        displayInViewMode: true
       }
     ],
     items: {
@@ -64,7 +64,7 @@ describe('HistoryQueryDisplayComponent', () => {
         {
           label: 'query',
           key: 'query',
-          readDisplay: true,
+          displayInViewMode: true,
           type: 'OibText'
         }
       ]
@@ -97,7 +97,7 @@ describe('HistoryQueryDisplayComponent', () => {
             params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' }
           }
         ],
-        readDisplay: true
+        displayInViewMode: true
       }
     ]
   };
@@ -169,6 +169,7 @@ describe('HistoryQueryDisplayComponent', () => {
           id: 'id1',
           name: 'item1',
           connectorId: 'southId',
+          scanModeId: null,
           settings: {
             query: 'sql'
           }

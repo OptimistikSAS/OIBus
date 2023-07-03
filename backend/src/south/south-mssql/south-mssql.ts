@@ -4,26 +4,30 @@ import mssql, { config } from 'mssql';
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
 import { formatInstant, convertDateTimeToInstant, createFolder, logQuery, persistResults } from '../../service/utils';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { DateTimeFormat, DateTimeField, Instant, Serialization } from '../../../../shared/model/types';
+import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { DateTime } from 'luxon';
+import { SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../../shared/model/south-settings.model';
 
 /**
  * Class SouthMSSQL - Retrieve data from MSSQL databases and send them to the cache as CSV files.
  */
-export default class SouthMSSQL extends SouthConnector implements QueriesHistory, TestsConnection {
+export default class SouthMSSQL
+  extends SouthConnector<SouthMSSQLSettings, SouthMSSQLItemSettings>
+  implements QueriesHistory, TestsConnection
+{
   static type = manifest.id;
 
   private readonly tmpFolder: string;
 
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthMSSQLSettings>,
+    items: Array<SouthConnectorItemDTO<SouthMSSQLItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -56,21 +60,17 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
     await super.start();
   }
 
-  static async testConnection(
-    settings: SouthConnectorDTO['settings'],
-    logger: pino.Logger,
-    encryptionService: EncryptionService
-  ): Promise<void> {
+  static async testConnection(settings: SouthMSSQLSettings, logger: pino.Logger, encryptionService: EncryptionService): Promise<void> {
     const config: config = {
-      user: settings.username,
-      password: settings.password ? await encryptionService.decryptText(settings.password) : '',
+      user: settings.username || undefined,
+      password: settings.password ? await encryptionService.decryptText(settings.password) : undefined,
       server: settings.host,
       port: settings.port,
       database: settings.database,
       connectionTimeout: settings.connectionTimeout,
       requestTimeout: settings.requestTimeout,
       options: {
-        encrypt: settings.encryption,
+        encrypt: settings.encryption == null ? undefined : settings.encryption,
         trustServerCertificate: settings.trustServerCertificate
       }
     };
@@ -112,15 +112,13 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
       const {
         recordsets: [recordset]
       } = await request.query<Array<any>>(`
-            SELECT TABLES.TABLE_NAME AS table_name,
-                  (
-                    SELECT STRING_AGG(CONCAT(COLUMN_NAME, '(', DATA_TYPE, ')'), ', ')
-                    FROM INFORMATION_SCHEMA.COLUMNS
-                    WHERE TABLE_NAME = TABLES.TABLE_NAME
-                    GROUP BY TABLE_NAME
-                  ) AS columns
-            FROM INFORMATION_SCHEMA.TABLES TABLES
-            WHERE TABLE_TYPE = 'BASE TABLE'
+        SELECT TABLES.TABLE_NAME     AS table_name,
+               (SELECT STRING_AGG(CONCAT(COLUMN_NAME, '(', DATA_TYPE, ')'), ', ')
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_NAME = TABLES.TABLE_NAME
+                GROUP BY TABLE_NAME) AS columns
+        FROM INFORMATION_SCHEMA.TABLES TABLES
+        WHERE TABLE_TYPE = 'BASE TABLE'
       `);
       tables = recordset as Array<any>;
     } catch (error: any) {
@@ -146,7 +144,7 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(items: Array<SouthConnectorItemDTO<SouthMSSQLItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
     let updatedStartTime = startTime;
 
     for (const item of items) {
@@ -160,25 +158,30 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField: DateTimeField = item.settings.dateTimeFields.find((element: DateTimeField) => element.field === key);
+            const datetimeField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.fieldName === key);
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
-              const entryDate = convertDateTimeToInstant(value, datetimeField.datetimeFormat);
+              const entryDate = convertDateTimeToInstant(value, datetimeField);
               if (datetimeField.useAsReference) {
                 if (entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
                 }
               }
-              formattedEntry[key] = formatInstant(entryDate, item.settings.serialization.dateTimeOutputFormat);
+              formattedEntry[key] = formatInstant(entryDate, {
+                type: 'string',
+                format: item.settings.serialization.outputTimestampFormat,
+                timezone: item.settings.serialization.outputTimezone,
+                locale: 'en-En'
+              });
             }
           });
           return formattedEntry;
         });
         await persistResults(
           formattedResult,
-          item.settings.serialization as Serialization,
-          this.configuration.name,
+          item.settings.serialization,
+          this.connector.name,
           this.tmpFolder,
           this.addFile.bind(this),
           this.addValues.bind(this),
@@ -194,30 +197,28 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
   /**
    * Apply the SQL query to the target MSSQL database
    */
-  async queryData(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
+  async queryData(item: SouthConnectorItemDTO<SouthMSSQLItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
     const config: config = {
-      user: this.configuration.settings.username,
-      password: this.configuration.settings.password ? await this.encryptionService.decryptText(this.configuration.settings.password) : '',
-      server: this.configuration.settings.host,
-      port: this.configuration.settings.port,
-      database: this.configuration.settings.database,
-      connectionTimeout: this.configuration.settings.connectionTimeout,
-      requestTimeout: this.configuration.settings.requestTimeout,
+      user: this.connector.settings.username || undefined,
+      password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : undefined,
+      server: this.connector.settings.host,
+      port: this.connector.settings.port,
+      database: this.connector.settings.database,
+      connectionTimeout: this.connector.settings.connectionTimeout,
+      requestTimeout: this.connector.settings.requestTimeout,
       options: {
-        encrypt: this.configuration.settings.encryption,
-        trustServerCertificate: this.configuration.settings.trustServerCertificate
+        encrypt: this.connector.settings.encryption == null ? undefined : this.connector.settings.encryption,
+        trustServerCertificate: this.connector.settings.trustServerCertificate
       }
     };
     // domain is optional and allow to activate the ntlm authentication on Windows
-    if (this.configuration.settings.domain) {
-      config.domain = this.configuration.settings.domain;
+    if (this.connector.settings.domain) {
+      config.domain = this.connector.settings.domain;
     }
 
-    const referenceTimestampField: DateTimeField = item.settings.dateTimeFields.find(
-      (dateTimeField: DateTimeField) => dateTimeField.useAsReference
-    );
-    const mssqlStartTime = this.formatDatetimeVariables(startTime, referenceTimestampField.datetimeFormat);
-    const mssqlEndTime = this.formatDatetimeVariables(endTime, referenceTimestampField.datetimeFormat);
+    const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference) || null;
+    const mssqlStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);
+    const mssqlEndTime = referenceTimestampField == null ? endTime : formatInstant(endTime, referenceTimestampField);
     logQuery(item.settings.query, mssqlStartTime, mssqlEndTime, this.logger);
 
     const pool = await new mssql.ConnectionPool(config).connect();
@@ -238,32 +239,4 @@ export default class SouthMSSQL extends SouthConnector implements QueriesHistory
       throw error;
     }
   }
-
-  formatDatetimeVariables = (datetime: Instant, dateTimeFormat: DateTimeFormat | null): string | number => {
-    if (!dateTimeFormat) {
-      return datetime;
-    }
-
-    switch (dateTimeFormat.type) {
-      case 'unix-epoch':
-      case 'unix-epoch-ms':
-      case 'specific-string':
-      case 'iso-8601-string':
-        return formatInstant(datetime, dateTimeFormat);
-      case 'date-object':
-        switch (dateTimeFormat.dateObjectType) {
-          case 'Date':
-            return DateTime.fromISO(datetime, { zone: dateTimeFormat.timezone }).toFormat('yyyy-MM-dd');
-          case 'DateTime2':
-            return DateTime.fromISO(datetime, { zone: dateTimeFormat.timezone }).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
-          case 'DateTimeOffset':
-            return DateTime.fromISO(datetime, { zone: dateTimeFormat.timezone }).toFormat('yyyy-MM-dd HH:mm:ss.SSS ZZ');
-          case 'SmallDateTime':
-            return DateTime.fromISO(datetime, { zone: dateTimeFormat.timezone }).toFormat('yyyy-MM-dd HH:mm:ss');
-          case 'DateTime':
-          default:
-            return DateTime.fromISO(datetime, { zone: dateTimeFormat.timezone }).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
-        }
-    }
-  };
 }

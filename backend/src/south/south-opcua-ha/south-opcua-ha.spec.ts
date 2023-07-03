@@ -12,7 +12,8 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import ProxyService from '../../service/proxy.service';
 import { initOpcuaCertificateFolders } from '../../service/opcua.service';
 
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthOPCUAHASettings, SouthOPCUAHASettingsAuthentication } from '../../../../shared/model/south-settings.model';
 
 // Mock node-opcua-client
 jest.mock('node-opcua-client', () => ({
@@ -69,7 +70,7 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'item1',
@@ -100,7 +101,7 @@ const items: Array<OibusItemDTO> = [
 ];
 
 let south: SouthOPCUAHA;
-const configuration: SouthConnectorDTO = {
+const connector: SouthConnectorDTO<SouthOPCUAHASettings> = {
   id: 'southId',
   name: 'south',
   type: 'test',
@@ -114,12 +115,14 @@ const configuration: SouthConnectorDTO = {
   settings: {
     url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
     retryInterval: 10000,
-    maxReadInterval: 3600,
-    readIntervalDelay: 200,
     readTimeout: 180000,
     authentication: {
-      type: 'none'
-    },
+      type: 'none',
+      username: null,
+      password: null,
+      certFilePath: null,
+      keyFilePath: null
+    } as unknown as SouthOPCUAHASettingsAuthentication,
     securityMode: 'None',
     securityPolicy: 'None',
     keepSessionAlive: false
@@ -132,7 +135,7 @@ describe('SouthOPCUAHA', () => {
     jest.useFakeTimers();
 
     south = new SouthOPCUAHA(
-      configuration,
+      connector,
       items,
       addValues,
       addFile,
@@ -175,12 +178,8 @@ describe('SouthOPCUAHA', () => {
 
     await south.start();
 
-    expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(
-      configuration.settings.url,
-      expectedUserIdentity,
-      expectedOptions
-    );
-    expect(logger.info).toHaveBeenCalledWith(`OPCUA_HA ${configuration.name} connected`);
+    expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(connector.settings.url, expectedUserIdentity, expectedOptions);
+    expect(logger.info).toHaveBeenCalledWith(`OPCUA_HA ${connector.name} connected`);
     expect(setTimeoutSpy).not.toHaveBeenCalled();
   });
 
@@ -193,7 +192,7 @@ describe('SouthOPCUAHA', () => {
 
     await south.start();
 
-    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), configuration.settings.retryInterval);
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), connector.settings.retryInterval);
     expect(logger.error).toHaveBeenCalledWith(`Error while connecting to the OPCUA HA server. ${new Error('connection error')}`);
     await south.disconnect();
   });
@@ -204,9 +203,9 @@ describe('SouthOPCUAHA with basic auth', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    configuration.settings.authentication = { type: 'basic', username: 'myUser', password: 'pass' };
+    connector.settings.authentication = { type: 'basic', username: 'myUser', password: 'pass', keyFilePath: '', certFilePath: '' };
     south = new SouthOPCUAHA(
-      configuration,
+      connector,
       items,
       addValues,
       addFile,
@@ -236,18 +235,14 @@ describe('SouthOPCUAHA with basic auth', () => {
     };
     const expectedUserIdentity = {
       type: 1,
-      userName: configuration.settings.authentication.username,
-      password: configuration.settings.authentication.password
+      userName: connector.settings.authentication.username,
+      password: connector.settings.authentication.password
     };
 
     await south.connectToOpcuaServer();
 
-    expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(
-      configuration.settings.url,
-      expectedUserIdentity,
-      expectedOptions
-    );
-    expect(logger.info).toHaveBeenCalledWith(`OPCUA_HA ${configuration.name} connected`);
+    expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(connector.settings.url, expectedUserIdentity, expectedOptions);
+    expect(logger.info).toHaveBeenCalledWith(`OPCUA_HA ${connector.name} connected`);
   });
 });
 
@@ -256,9 +251,9 @@ describe('SouthOPCUAHA with certificate', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    configuration.settings.authentication = { type: 'cert', certPath: 'myCertPath', keyPath: 'myKeyPath' };
+    connector.settings.authentication = { type: 'cert', certFilePath: 'myCertPath', keyFilePath: 'myKeyPath', username: '', password: '' };
     south = new SouthOPCUAHA(
-      configuration,
+      connector,
       items,
       addValues,
       addFile,
@@ -299,12 +294,8 @@ describe('SouthOPCUAHA with certificate', () => {
 
     await south.connectToOpcuaServer();
 
-    expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(
-      configuration.settings.url,
-      expectedUserIdentity,
-      expectedOptions
-    );
-    expect(logger.info).toHaveBeenCalledWith(`OPCUA_HA ${configuration.name} connected`);
+    expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(connector.settings.url, expectedUserIdentity, expectedOptions);
+    expect(logger.info).toHaveBeenCalledWith(`OPCUA_HA ${connector.name} connected`);
     expect(setTimeoutSpy).not.toBeCalled();
   });
 });

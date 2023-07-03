@@ -6,7 +6,7 @@ import DatabaseMock from '../../tests/__mocks__/database.mock';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 
 import pino from 'pino';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import ProxyService from '../../service/proxy.service';
@@ -14,6 +14,7 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import path from 'node:path';
 import https from 'node:https';
+import { SouthOIConnectItemSettings, SouthOIConnectSettings } from '../../../../shared/model/south-settings.model';
 
 jest.mock('./utils', () => ({
   formatQueryParams: jest.fn(),
@@ -62,7 +63,7 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO<SouthOIConnectItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
@@ -73,20 +74,16 @@ const items: Array<OibusItemDTO> = [
       payloadParser: 'raw',
       requestTimeout: 3000,
       body: 'my body',
+      timestampFormat: 'yyyy-MM-dd HH:mm:ss',
+      timezone: 'Europe/Paris',
+      locale: 'en-En',
       serialization: {
-        type: 'file',
+        type: 'csv',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' },
-        datetimeSerialization: [
-          { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
-          {
-            field: 'timestamp',
-            useAsReference: true,
-            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
-          }
-        ]
+        outputTimestampFormat: 'yyyy-MM-dd',
+        outputTimezone: 'Europe/Paris'
       }
     },
     scanModeId: 'scanModeId1'
@@ -101,20 +98,16 @@ const items: Array<OibusItemDTO> = [
       payloadParser: 'raw',
       requestTimeout: 3000,
       body: '',
+      timestampFormat: 'yyyy-MM-dd HH:mm:ss',
+      timezone: 'Europe/Paris',
+      locale: 'en-En',
       serialization: {
-        type: 'file',
+        type: 'csv',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' },
-        datetimeSerialization: [
-          { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
-          {
-            field: 'timestamp',
-            useAsReference: true,
-            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
-          }
-        ]
+        outputTimestampFormat: 'yyyy-MM-dd',
+        outputTimezone: 'Europe/Paris'
       }
     },
     scanModeId: 'scanModeId1'
@@ -129,20 +122,16 @@ const items: Array<OibusItemDTO> = [
       payloadParser: 'raw',
       requestTimeout: 3000,
       body: 'my body',
+      timestampFormat: 'yyyy-MM-dd HH:mm:ss',
+      timezone: 'Europe/Paris',
+      locale: 'en-En',
       serialization: {
-        type: 'file',
+        type: 'csv',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' },
-        datetimeSerialization: [
-          { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
-          {
-            field: 'timestamp',
-            useAsReference: true,
-            datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
-          }
-        ]
+        outputTimestampFormat: 'yyyy-MM-dd',
+        outputTimezone: 'Europe/Paris'
       }
     },
     scanModeId: 'scanModeId2'
@@ -153,7 +142,7 @@ const nowDateString = '2020-02-02T02:02:02.222Z';
 let south: SouthOIConnect;
 
 describe('SouthOIConnect with Basic auth', () => {
-  const configuration: SouthConnectorDTO = {
+  const connector: SouthConnectorDTO<SouthOIConnectSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -168,8 +157,14 @@ describe('SouthOIConnect with Basic auth', () => {
       url: 'http://localhost',
       port: 4200,
       acceptSelfSigned: false,
-      requestMethod: 'GET',
-      authentication: { type: 'basic', username: 'username', password: 'password' }
+      authentication: {
+        type: 'basic',
+        username: 'username',
+        password: 'password',
+        token: '',
+        apiKey: '',
+        apiKeyHeader: ''
+      }
     }
   };
   beforeEach(() => {
@@ -181,7 +176,7 @@ describe('SouthOIConnect with Basic auth', () => {
     );
 
     south = new SouthOIConnect(
-      configuration,
+      connector,
       items,
       addValues,
       addFile,
@@ -196,7 +191,9 @@ describe('SouthOIConnect with Basic auth', () => {
 
   it('should test connection with odbc', async () => {
     // TODO
-    await expect(SouthOIConnect.testConnection({}, logger, encryptionService)).rejects.toThrow('TODO: method needs to be implemented');
+    await expect(SouthOIConnect.testConnection({} as SouthOIConnectSettings, logger, encryptionService)).rejects.toThrow(
+      'TODO: method needs to be implemented'
+    );
     expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
   });
 
@@ -216,7 +213,7 @@ describe('SouthOIConnect with Basic auth', () => {
       .mockReturnValue([]);
     const rawMethod = jest
       .fn()
-      .mockImplementationOnce((item: OibusItemDTO, httpResults: Array<any>) => ({
+      .mockImplementationOnce((item: SouthConnectorItemDTO, httpResults: Array<any>) => ({
         formattedResult: httpResults,
         maxInstant: '2020-03-01T00:00:00.000Z'
       }))
@@ -239,7 +236,13 @@ describe('SouthOIConnect with Basic auth', () => {
   });
 
   it('should fail to scan', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValue(Promise.resolve({ ok: false, status: 400, statusText: 'statusText' }));
+    (fetch as unknown as jest.Mock).mockReturnValue(
+      Promise.resolve({
+        ok: false,
+        status: 400,
+        statusText: 'statusText'
+      })
+    );
 
     await expect(south.queryData(items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z')).rejects.toThrowError(
       'HTTP request failed with status code 400 and message: statusText'
@@ -250,7 +253,7 @@ describe('SouthOIConnect with Basic auth', () => {
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
         agent: null,
-        headers: { 'Content-Length': 7, 'Content-Type': 'application/json', authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+        headers: { 'Content-Type': 'application/json', authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
         method: 'POST',
         timeout: 3000,
         body: 'my body'
@@ -265,7 +268,7 @@ describe('SouthOIConnect with Basic auth', () => {
 });
 
 describe('SouthOIConnect with Bearer auth', () => {
-  const configuration: SouthConnectorDTO = {
+  const configuration: SouthConnectorDTO<SouthOIConnectSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -280,10 +283,13 @@ describe('SouthOIConnect with Bearer auth', () => {
       url: 'http://localhost',
       port: 4200,
       acceptSelfSigned: true,
-      requestMethod: 'GET',
       authentication: {
         type: 'bearer',
-        token: 'my token'
+        token: 'my token',
+        username: '',
+        password: '',
+        apiKeyHeader: '',
+        apiKey: ''
       }
     }
   };
@@ -311,7 +317,13 @@ describe('SouthOIConnect with Bearer auth', () => {
   });
 
   it('should fetch data', async () => {
-    (fetch as unknown as jest.Mock).mockReturnValue(Promise.resolve({ ok: true, status: 200, json: () => ['some data'] }));
+    (fetch as unknown as jest.Mock).mockReturnValue(
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => ['some data']
+      })
+    );
 
     const result = await south.queryData(items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
 
@@ -322,7 +334,7 @@ describe('SouthOIConnect with Bearer auth', () => {
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
         agent: expect.any(https.Agent),
-        headers: { 'Content-Length': 7, 'Content-Type': 'application/json', authorization: 'Bearer my token' },
+        headers: { 'Content-Type': 'application/json', authorization: 'Bearer my token' },
         method: 'POST',
         timeout: 3000,
         body: 'my body'
@@ -337,7 +349,7 @@ describe('SouthOIConnect with Bearer auth', () => {
 });
 
 describe('SouthOIConnect with API-Key auth', () => {
-  const configuration: SouthConnectorDTO = {
+  const configuration: SouthConnectorDTO<SouthOIConnectSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -352,11 +364,13 @@ describe('SouthOIConnect with API-Key auth', () => {
       url: 'http://localhost',
       port: 4200,
       acceptSelfSigned: true,
-      requestMethod: 'GET',
       authentication: {
         type: 'api-key',
-        key: 'myKey',
-        secret: 'mySecret'
+        apiKeyHeader: 'myKey',
+        apiKey: 'mySecret',
+        token: '',
+        username: '',
+        password: ''
       }
     }
   };
@@ -393,7 +407,6 @@ describe('SouthOIConnect with API-Key auth', () => {
     expect(utils.httpGetWithBody).toHaveBeenCalledWith('my body', {
       agent: expect.any(https.Agent),
       headers: {
-        'Content-Length': 7,
         'Content-Type': 'application/json',
         myKey: 'mySecret'
       },
@@ -461,7 +474,6 @@ describe('SouthOIConnect without auth', () => {
     expect(utils.httpGetWithBody).toHaveBeenCalledWith('my body', {
       agent: null,
       headers: {
-        'Content-Length': 7,
         'Content-Type': 'application/json'
       },
       host: 'http://localhost',

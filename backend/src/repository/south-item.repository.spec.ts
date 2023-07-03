@@ -1,7 +1,7 @@
 import SqliteDatabaseMock, { run, get, all } from '../tests/__mocks__/database.mock';
 import { generateRandomId } from '../service/utils';
 import SouthItemRepository from './south-item.repository';
-import { OibusItemCommandDTO, OibusItemDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemCommandDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import { Database } from 'better-sqlite3';
 
@@ -34,7 +34,7 @@ describe('South item repository', () => {
   });
 
   it('should properly list south items', () => {
-    const expectedValue: Array<OibusItemDTO> = [
+    const expectedValue: Array<SouthConnectorItemDTO> = [
       {
         id: 'id1',
         name: 'my south scan',
@@ -74,7 +74,7 @@ describe('South item repository', () => {
   });
 
   it('should properly search south items', () => {
-    const expectedValue: Page<OibusItemDTO> = {
+    const expectedValue: Page<SouthConnectorItemDTO> = {
       content: [
         {
           id: 'id1',
@@ -125,7 +125,7 @@ describe('South item repository', () => {
   });
 
   it('should properly get south items by South ID', () => {
-    const expectedValue: Array<OibusItemDTO> = [
+    const expectedValue: Array<SouthConnectorItemDTO> = [
       {
         id: 'id1',
         name: 'my south scan',
@@ -165,7 +165,7 @@ describe('South item repository', () => {
   });
 
   it('should properly get a south item', () => {
-    const expectedValue: OibusItemDTO = {
+    const expectedValue: SouthConnectorItemDTO = {
       id: 'id1',
       name: 'southScan1',
       connectorId: 'southId',
@@ -201,7 +201,7 @@ describe('South item repository', () => {
     run.mockReturnValueOnce({ lastInsertRowid: 1 });
     get.mockReturnValueOnce({ settings: '{}' });
 
-    const command: OibusItemCommandDTO = {
+    const command: SouthConnectorItemCommandDTO = {
       name: 'southScan1',
       scanModeId: 'scanModeId',
       settings: {}
@@ -220,7 +220,7 @@ describe('South item repository', () => {
   });
 
   it('should update a south item', () => {
-    const command: OibusItemCommandDTO = {
+    const command: SouthConnectorItemCommandDTO = {
       name: 'southScan1',
       scanModeId: 'scanModeId',
       settings: {}
@@ -252,7 +252,7 @@ describe('South item repository', () => {
     (database.transaction as jest.Mock).mockImplementationOnce(callback => {
       return () => callback();
     });
-    const itemToAdd: OibusItemDTO = {
+    const itemToAdd: SouthConnectorItemDTO = {
       id: 'id1',
       name: 'southScan1',
       connectorId: 'southId',
@@ -260,7 +260,7 @@ describe('South item repository', () => {
       settings: {}
     };
 
-    const itemToUpdate: OibusItemDTO = {
+    const itemToUpdate: SouthConnectorItemDTO = {
       id: 'id2',
       name: 'southScan2',
       connectorId: 'southId',

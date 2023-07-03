@@ -1,8 +1,8 @@
 import slims from './slims';
 import { DateTime } from 'luxon';
-import { OibusItemDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../../shared/model/south-connector.model';
 
-const item: OibusItemDTO = {
+const item: SouthConnectorItemDTO = {
   id: 'id1',
   name: 'item1',
   connectorId: 'southId',

@@ -9,7 +9,7 @@ import {
 } from 'node-opcua-client';
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
 
-import { SouthConnectorDTO, OibusItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { Instant } from '../../../../shared/model/types';
 
 import manifest from './manifest';
@@ -26,6 +26,7 @@ import { DateTime } from 'luxon';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { QueriesHistory, TestsConnection } from '../south-interface';
+import { SouthOPCUAHAItemSettings, SouthOPCUAHASettings } from '../../../../shared/model/south-settings.model';
 
 const AGGREGATE_TYPES = ['raw', 'count', 'max', 'min', 'avg'];
 type AggregateType = (typeof AGGREGATE_TYPES)[number];
@@ -36,7 +37,10 @@ type Resampling = (typeof RESAMPLINGS)[number];
 /**
  * Class SouthOPCUAHA - Connect to an OPCUA server in HA (Historian Access) mode
  */
-export default class SouthOPCUAHA extends SouthConnector implements QueriesHistory, TestsConnection {
+export default class SouthOPCUAHA
+  extends SouthConnector<SouthOPCUAHASettings, SouthOPCUAHAItemSettings>
+  implements QueriesHistory, TestsConnection
+{
   static type = manifest.id;
 
   private clientCertificateManager: OPCUACertificateManager | null = null;
@@ -45,8 +49,8 @@ export default class SouthOPCUAHA extends SouthConnector implements QueriesHisto
   private disconnecting = false;
 
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthOPCUAHASettings>,
+    items: Array<SouthConnectorItemDTO<SouthOPCUAHAItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -90,11 +94,7 @@ export default class SouthOPCUAHA extends SouthConnector implements QueriesHisto
   }
 
   // TODO: method needs to be implemented
-  static async testConnection(
-    settings: SouthConnectorDTO['settings'],
-    logger: pino.Logger,
-    _encryptionService: EncryptionService
-  ): Promise<void> {
+  static async testConnection(settings: SouthOPCUAHASettings, logger: pino.Logger, _encryptionService: EncryptionService): Promise<void> {
     logger.trace(`Testing connection`);
     throw new Error('TODO: method needs to be implemented');
   }
@@ -110,27 +110,27 @@ export default class SouthOPCUAHA extends SouthConnector implements QueriesHisto
           initialDelay: 1000,
           maxRetry: 1
         },
-        securityMode: MessageSecurityMode[this.configuration.settings.securityMode],
-        securityPolicy: this.configuration.settings.securityPolicy,
+        securityMode: MessageSecurityMode[this.connector.settings.securityMode],
+        securityPolicy: this.connector.settings.securityPolicy || undefined,
         endpointMustExist: false,
-        keepSessionAlive: this.configuration.settings.keepSessionAlive,
+        keepSessionAlive: this.connector.settings.keepSessionAlive,
         keepPendingSessionsOnDisconnect: false,
-        clientName: this.configuration.id, // the id of the connector
+        clientName: this.connector.id, // the id of the connector
         clientCertificateManager: this.clientCertificateManager!
       };
 
       let userIdentity: UserIdentityInfo;
-      switch (this.configuration.settings.authentication.type) {
+      switch (this.connector.settings.authentication.type) {
         case 'basic':
           userIdentity = {
             type: UserTokenType.UserName,
-            userName: this.configuration.settings.authentication.username,
-            password: await this.encryptionService.decryptText(this.configuration.settings.authentication.password)
+            userName: this.connector.settings.authentication.username,
+            password: await this.encryptionService.decryptText(this.connector.settings.authentication.password)
           };
           break;
         case 'cert':
-          const certContent = await fs.readFile(path.resolve(this.configuration.settings.authentication.certPath));
-          const privateKeyContent = await fs.readFile(path.resolve(this.configuration.settings.authentication.keyPath));
+          const certContent = await fs.readFile(path.resolve(this.connector.settings.authentication.certFilePath));
+          const privateKeyContent = await fs.readFile(path.resolve(this.connector.settings.authentication.keyFilePath));
           userIdentity = {
             type: UserTokenType.Certificate,
             certificateData: certContent,
@@ -140,28 +140,41 @@ export default class SouthOPCUAHA extends SouthConnector implements QueriesHisto
         default:
           userIdentity = { type: UserTokenType.Anonymous };
       }
-      this.logger.debug(`Connecting to OPCUA_DA on ${this.configuration.settings.url}`);
-      this.session = await OPCUAClient.createSession(this.configuration.settings.url, userIdentity, options);
-      this.logger.info(`OPCUA_HA ${this.configuration.name} connected`);
+      this.logger.debug(`Connecting to OPCUA_HA on ${this.connector.settings.url}`);
+      this.session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
+      this.logger.info(`OPCUA_HA ${this.connector.name} connected`);
       await super.connect();
     } catch (error) {
       this.logger.error(`Error while connecting to the OPCUA HA server. ${error}`);
       await this.internalDisconnect();
-      this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.configuration.settings.retryInterval);
+      this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.connector.settings.retryInterval);
     }
   }
 
   /**
    * Get values from the OPCUA server between startTime and endTime and write them into the cache.
    */
-  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemDTO<SouthOPCUAHAItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant> {
     try {
       let maxTimestamp = DateTime.fromISO(startTime).toMillis();
 
       const itemsByAggregates = new Map<AggregateType, Map<Resampling, Array<{ nodeId: string; itemName: string }>>>();
       items.forEach(item => {
         if (!itemsByAggregates.has(item.settings.aggregate)) {
-          itemsByAggregates.set(item.settings.aggregate, new Map<Resampling, Array<{ nodeId: string; itemName: string }>>());
+          itemsByAggregates.set(
+            item.settings.aggregate,
+            new Map<
+              Resampling,
+              Array<{
+                nodeId: string;
+                itemName: string;
+              }>
+            >()
+          );
         }
         if (!itemsByAggregates.get(item.settings.aggregate)!.has(item.settings.resampling)) {
           itemsByAggregates

@@ -9,7 +9,7 @@ import { Modal, ModalService } from '../../shared/modal.service';
 import { FormControlValidationDirective } from '../../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner.component';
-import { OibusItemDTO, OibusItemManifest, SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorItemManifest, SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 import { EditSouthItemModalComponent } from '../edit-south-item-modal/edit-south-item-modal.component';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
@@ -44,12 +44,12 @@ const PAGE_SIZE = 20;
 })
 export class SouthItemsComponent implements OnInit {
   @Input() southConnector: SouthConnectorDTO | null = null;
-  @Input({ required: true }) southConnectorItemSchema!: OibusItemManifest;
+  @Input({ required: true }) southConnectorItemSchema!: SouthConnectorItemManifest;
   @Input({ required: true }) scanModes!: Array<ScanModeDTO>;
 
-  allItems: Array<OibusItemDTO> = [];
-  private filteredItems: Array<OibusItemDTO> = [];
-  displayedItems: Page<OibusItemDTO> = emptyPage();
+  allItems: Array<SouthConnectorItemDTO> = [];
+  private filteredItems: Array<SouthConnectorItemDTO> = [];
+  displayedItems: Page<SouthConnectorItemDTO> = emptyPage();
   displaySettings: Array<OibFormControl> = [];
 
   searchControl = this.fb.control(null as string | null);
@@ -64,7 +64,7 @@ export class SouthItemsComponent implements OnInit {
 
   ngOnInit() {
     this.fetchItemsAndResetPage();
-    this.displaySettings = this.southConnectorItemSchema.settings.filter(setting => setting.readDisplay);
+    this.displaySettings = this.southConnectorItemSchema.settings.filter(setting => setting.displayInViewMode);
 
     // subscribe to changes to search control
     this.searchControl.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
@@ -87,11 +87,11 @@ export class SouthItemsComponent implements OnInit {
     this.displayedItems = this.createPage(pageNumber);
   }
 
-  private createPage(pageNumber: number): Page<OibusItemDTO> {
+  private createPage(pageNumber: number): Page<SouthConnectorItemDTO> {
     return createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber);
   }
 
-  filter(items: Array<OibusItemDTO>): Array<OibusItemDTO> {
+  filter(items: Array<SouthConnectorItemDTO>): Array<SouthConnectorItemDTO> {
     const searchText = this.searchControl.value;
     if (!searchText) {
       return items;
@@ -102,7 +102,7 @@ export class SouthItemsComponent implements OnInit {
   /**
    * Open a modal to edit a South item
    */
-  editItem(southItem: OibusItemDTO) {
+  editItem(southItem: SouthConnectorItemDTO) {
     if (this.southConnector) {
       const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
       const component: EditSouthItemModalComponent = modalRef.componentInstance;
@@ -136,7 +136,7 @@ export class SouthItemsComponent implements OnInit {
   /**
    * Deletes a parser by its ID and refreshes the list
    */
-  deleteItem(item: OibusItemDTO) {
+  deleteItem(item: SouthConnectorItemDTO) {
     if (this.southConnector) {
       this.confirmationService
         .confirm({
@@ -150,7 +150,7 @@ export class SouthItemsComponent implements OnInit {
     }
   }
 
-  duplicateItem(item: OibusItemDTO) {
+  duplicateItem(item: SouthConnectorItemDTO) {
     if (this.southConnector) {
       const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
       const component: EditSouthItemModalComponent = modalRef.componentInstance;
@@ -210,7 +210,7 @@ export class SouthItemsComponent implements OnInit {
     }
   }
 
-  getScanMode(scanModeId: string | undefined): ScanModeDTO | undefined {
+  getScanMode(scanModeId: string | null): ScanModeDTO | undefined {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId);
   }
 }

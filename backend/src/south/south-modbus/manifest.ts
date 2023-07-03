@@ -20,7 +20,7 @@ const manifest: SouthConnectorManifest = {
       newRow: true,
       class: 'col-4',
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'port',
@@ -29,7 +29,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 502,
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'slaveId',
@@ -38,17 +38,18 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 1,
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'retryInterval',
       type: 'OibNumber',
-      label: 'Retry interval (ms)',
+      label: 'Retry interval',
+      unitLabel: 'ms',
       defaultValue: 10000,
       newRow: true,
       class: 'col-2',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60_000 } }],
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'addressOffset',
@@ -59,7 +60,7 @@ const manifest: SouthConnectorManifest = {
       newRow: true,
       class: 'col-4',
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'endianness',
@@ -70,7 +71,7 @@ const manifest: SouthConnectorManifest = {
       newRow: false,
       class: 'col-4',
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'swapBytesInWords',
@@ -80,7 +81,7 @@ const manifest: SouthConnectorManifest = {
       newRow: true,
       class: 'col-4',
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'swapWordsInDWords',
@@ -90,7 +91,7 @@ const manifest: SouthConnectorManifest = {
       newRow: false,
       class: 'col-4',
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     }
   ],
   items: {
@@ -105,7 +106,7 @@ const manifest: SouthConnectorManifest = {
         label: 'Address',
         defaultValue: '',
         validators: [{ key: 'required' }],
-        readDisplay: true
+        displayInViewMode: true
       },
       {
         key: 'modbusType',
@@ -114,7 +115,7 @@ const manifest: SouthConnectorManifest = {
         label: 'Modbus Type',
         defaultValue: 'holdingRegister',
         validators: [{ key: 'required' }],
-        readDisplay: true
+        displayInViewMode: true
       },
       {
         key: 'dataType',
@@ -123,15 +124,15 @@ const manifest: SouthConnectorManifest = {
         label: 'Data Type',
         defaultValue: 'UInt16',
         validators: [{ key: 'required' }],
-        readDisplay: false
+        displayInViewMode: false
       },
       {
         key: 'multiplierCoefficient',
-        type: 'OibText',
+        type: 'OibNumber',
         label: 'Multiplier Coefficient',
-        defaultValue: '1',
+        defaultValue: 1,
         validators: [{ key: 'required' }],
-        readDisplay: false
+        displayInViewMode: false
       }
     ]
   }

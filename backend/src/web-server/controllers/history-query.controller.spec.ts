@@ -520,7 +520,7 @@ describe('History query controller', () => {
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouthSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
   });
 
@@ -535,7 +535,7 @@ describe('History query controller', () => {
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouthSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
     expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
   });
 
@@ -555,7 +555,7 @@ describe('History query controller', () => {
 
     expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQueryCommand.southSettings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouthSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
@@ -570,7 +570,7 @@ describe('History query controller', () => {
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouthSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
 

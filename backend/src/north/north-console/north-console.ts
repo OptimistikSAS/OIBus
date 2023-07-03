@@ -9,15 +9,16 @@ import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import { HandlesFile, HandlesValues } from '../north-interface';
+import { NorthConsoleSettings } from '../../../../shared/model/north-settings.model';
 
 /**
  * Class Console - display values and file path into the console
  */
-export default class NorthConsole extends NorthConnector implements HandlesFile, HandlesValues {
+export default class NorthConsole extends NorthConnector<NorthConsoleSettings> implements HandlesFile, HandlesValues {
   static type = manifest.id;
 
   constructor(
-    configuration: NorthConnectorDTO,
+    configuration: NorthConnectorDTO<NorthConsoleSettings>,
     encryptionService: EncryptionService,
     proxyService: ProxyService,
     repositoryService: RepositoryService,

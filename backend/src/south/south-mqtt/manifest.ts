@@ -22,7 +22,7 @@ const manifest: SouthConnectorManifest = {
         { key: 'required' },
         { key: 'pattern', params: { pattern: '^(mqtt:\\/\\/|mqtts:\\/\\/|tcp:\\/\\/|tls:\\/\\/|ws:\\/\\/|wss:\\/\\/).*' } }
       ],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'qos',
@@ -32,7 +32,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: '1',
       newRow: false,
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'persistent',
@@ -42,75 +42,137 @@ const manifest: SouthConnectorManifest = {
       newRow: false,
       conditionalDisplay: { field: 'qos', values: ['2'] },
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
-    { key: 'authentication', type: 'OibAuthentication', label: 'Authentication', newRow: true, authTypes: ['none', 'basic', 'cert'] },
     {
-      key: 'caFile',
-      type: 'OibText',
-      label: 'CA File',
-      defaultValue: '',
-      conditionalDisplay: { field: 'authentication', values: ['cert'] },
-      newRow: false,
-      readDisplay: false
+      key: 'authentication',
+      type: 'OibFormGroup',
+      label: 'Authentication',
+      class: 'col',
+      newRow: true,
+      displayInViewMode: false,
+      validators: [{ key: 'required' }],
+      content: [
+        {
+          key: 'type',
+          type: 'OibSelect',
+          label: 'Type',
+          options: ['none', 'basic', 'cert'],
+          pipe: 'authentication',
+          validators: [{ key: 'required' }],
+          defaultValue: 'none',
+          newRow: true,
+          displayInViewMode: false
+        },
+        {
+          key: 'username',
+          type: 'OibText',
+          label: 'Username',
+          defaultValue: '',
+          validators: [{ key: 'required' }],
+          conditionalDisplay: { field: 'type', values: ['basic'] },
+          displayInViewMode: false
+        },
+        {
+          key: 'password',
+          type: 'OibSecret',
+          label: 'Password',
+          defaultValue: '',
+          validators: [{ key: 'required' }],
+          conditionalDisplay: { field: 'type', values: ['basic'] },
+          displayInViewMode: false
+        },
+        {
+          key: 'certFilePath',
+          type: 'OibText',
+          label: 'Cert file path',
+          defaultValue: '',
+          conditionalDisplay: { field: 'type', values: ['cert'] },
+          validators: [{ key: 'required' }],
+          newRow: false,
+          displayInViewMode: false
+        },
+        {
+          key: 'keyFilePath',
+          type: 'OibText',
+          label: 'Key file path',
+          defaultValue: '',
+          conditionalDisplay: { field: 'type', values: ['cert'] },
+          newRow: false,
+          displayInViewMode: false
+        },
+        {
+          key: 'caFilePath',
+          type: 'OibText',
+          label: 'CA file path',
+          defaultValue: '',
+          conditionalDisplay: { field: 'type', values: ['cert'] },
+          newRow: false,
+          displayInViewMode: false
+        }
+      ]
     },
     {
       key: 'rejectUnauthorized',
       type: 'OibCheckbox',
       label: 'Reject Unauthorized Connection',
       defaultValue: false,
-      newRow: false,
-      readDisplay: false,
+      newRow: true,
+      displayInViewMode: false,
       validators: [{ key: 'required' }]
     },
     {
       key: 'reconnectPeriod',
       type: 'OibNumber',
-      label: 'Reconnect period (ms)',
+      label: 'Reconnect period',
+      unitLabel: 'ms',
       defaultValue: 1000,
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }],
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'connectTimeout',
       type: 'OibNumber',
-      label: 'Connect Timeout (ms)',
+      label: 'Connect Timeout',
+      unitLabel: 'ms',
       defaultValue: 30000,
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }],
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'dataArrayPath',
       type: 'OibText',
       label: 'Data array path',
       newRow: true,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'valuePath',
       type: 'OibText',
       label: 'Value path',
       defaultValue: 'value',
+      validators: [{ key: 'required' }],
       newRow: false,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'pointIdPath',
       type: 'OibText',
       label: 'Point ID path',
-      defaultValue: '',
+      defaultValue: 'pointId',
+      validators: [{ key: 'required' }],
       newRow: false,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'qualityPath',
       type: 'OibText',
       label: 'Quality path',
-      defaultValue: 'quality',
+      defaultValue: '',
       newRow: false,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'timestampOrigin',
@@ -120,34 +182,37 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 'oibus',
       validators: [{ key: 'required' }],
       newRow: true,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'timestampPath',
       type: 'OibText',
       label: 'Timestamp path',
       defaultValue: 'timestamp',
+      validators: [{ key: 'required' }],
       conditionalDisplay: { field: 'timestampOrigin', values: ['payload'] },
       newRow: false,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'timestampFormat',
       type: 'OibText',
       label: 'Timestamp format',
       defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+      validators: [{ key: 'required' }],
       conditionalDisplay: { field: 'timestampOrigin', values: ['payload'] },
       newRow: false,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'timestampTimezone',
       type: 'OibTimezone',
       label: 'Timezone',
       defaultValue: 'Europe/Paris',
+      validators: [{ key: 'required' }],
       conditionalDisplay: { field: 'timestampOrigin', values: ['payload'] },
       newRow: false,
-      readDisplay: false
+      displayInViewMode: false
     }
   ],
   items: {
@@ -161,7 +226,7 @@ const manifest: SouthConnectorManifest = {
         type: 'OibText',
         label: 'Topic',
         validators: [{ key: 'required' }],
-        readDisplay: true
+        displayInViewMode: true
       }
     ]
   }

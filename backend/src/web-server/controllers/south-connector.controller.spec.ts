@@ -1,9 +1,16 @@
 import SouthConnectorController, { southManifests } from './south-connector.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from '../../validators/joi.validator';
-import mqttManifest from '../../south/south-mqtt/manifest';
+import folderScannerManifest from '../../south/south-folder-scanner/manifest';
 import csv from 'papaparse';
 import fs from 'node:fs/promises';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO
+} from '../../../../shared/model/south-connector.model';
+import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
 
 jest.mock('../../validators/joi.validator');
 jest.mock('papaparse');
@@ -13,33 +20,42 @@ const ctx = new KoaContextMock();
 const validator = new JoiValidator();
 const southConnectorController = new SouthConnectorController(validator);
 
-const southConnectorCommand = {
+const southConnectorCommand: SouthConnectorCommandDTO<SouthFolderScannerSettings> = {
   name: 'name',
-  type: 'mqtt',
+  type: 'folder-scanner',
   description: 'description',
   enabled: true,
   settings: {
-    field: 'value'
+    inputFolder: '/tmp',
+    minAge: 10,
+    ignoreModifiedDate: false,
+    compression: false,
+    preserveFiles: false
+  },
+  history: {
+    maxInstantPerItem: true,
+    maxReadInterval: 0,
+    readDelay: 0
   }
 };
-const southConnector = {
+const southConnector: SouthConnectorDTO<SouthFolderScannerSettings> = {
   id: 'id',
   ...southConnectorCommand
 };
-const oibusItemCommand = {
+const itemCommand: SouthConnectorItemCommandDTO<SouthFolderScannerItemSettings> = {
   name: 'name',
   settings: {
-    field: 'value'
+    regex: '.*'
   },
   scanModeId: 'scanModeId'
 };
-const oibusItem = {
+const item: SouthConnectorItemDTO<SouthFolderScannerItemSettings> = {
   id: 'id',
   connectorId: 'connectorId',
-  ...oibusItemCommand
+  ...itemCommand
 };
 const page = {
-  content: [oibusItem],
+  content: [item],
   size: 10,
   number: 1,
   totalElements: 1,
@@ -66,11 +82,11 @@ describe('South connector controller', () => {
   });
 
   it('getSouthConnectorManifest() should return South connector manifest', async () => {
-    ctx.params.id = 'mqtt';
+    ctx.params.id = 'folder-scanner';
 
     await southConnectorController.getSouthConnectorManifest(ctx);
 
-    expect(ctx.ok).toHaveBeenCalledWith(mqttManifest);
+    expect(ctx.ok).toHaveBeenCalledWith(folderScannerManifest);
   });
 
   it('getSouthConnectorManifest() should return not found', async () => {
@@ -88,7 +104,7 @@ describe('South connector controller', () => {
     await southConnectorController.getSouthConnectors(ctx);
 
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnectors).toHaveBeenCalled();
-    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, mqttManifest.settings);
+    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, folderScannerManifest.settings);
     expect(ctx.ok).toHaveBeenCalledWith([southConnector]);
   });
 
@@ -103,7 +119,7 @@ describe('South connector controller', () => {
     await southConnectorController.getSouthConnectors(ctx);
 
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnectors).toHaveBeenCalled();
-    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, mqttManifest.settings);
+    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, folderScannerManifest.settings);
     expect(ctx.ok).toHaveBeenCalledWith([southConnector, null]);
   });
 
@@ -115,7 +131,7 @@ describe('South connector controller', () => {
     await southConnectorController.getSouthConnector(ctx);
 
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('id');
-    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, mqttManifest.settings);
+    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, folderScannerManifest.settings);
     expect(ctx.ok).toHaveBeenCalledWith(southConnector);
   });
 
@@ -154,11 +170,11 @@ describe('South connector controller', () => {
 
     await southConnectorController.createSouthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, southConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
       null,
-      mqttManifest.settings
+      folderScannerManifest.settings
     );
     expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith(southConnectorCommand);
     expect(ctx.created).toHaveBeenCalledWith(southConnector);
@@ -200,7 +216,7 @@ describe('South connector controller', () => {
 
     await southConnectorController.createSouthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, southConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateSouth).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
@@ -216,14 +232,14 @@ describe('South connector controller', () => {
 
     await southConnectorController.updateSouthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, southConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('id');
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
       southConnector.settings,
-      mqttManifest.settings
+      folderScannerManifest.settings
     );
-    expect(ctx.app.reloadService.onUpdateSouthSettings).toHaveBeenCalledWith('id', southConnectorCommand);
+    expect(ctx.app.reloadService.onUpdateSouth).toHaveBeenCalledWith('id', southConnectorCommand);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
@@ -239,7 +255,7 @@ describe('South connector controller', () => {
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouthSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
   });
 
@@ -252,7 +268,7 @@ describe('South connector controller', () => {
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouthSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
   });
 
@@ -268,10 +284,10 @@ describe('South connector controller', () => {
 
     await southConnectorController.updateSouthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, southConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouthSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 
@@ -284,10 +300,10 @@ describe('South connector controller', () => {
 
     await southConnectorController.updateSouthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, southConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('id');
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateSouthSettings).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
@@ -313,11 +329,11 @@ describe('South connector controller', () => {
 
   it('listSouthItems() should return all South items', async () => {
     ctx.params.southId = 'id';
-    ctx.app.repositoryService.southItemRepository.listSouthItems.mockReturnValue([oibusItem]);
+    ctx.app.repositoryService.southItemRepository.listSouthItems.mockReturnValue([item]);
 
     await southConnectorController.listSouthItems(ctx);
     expect(ctx.app.repositoryService.southItemRepository.listSouthItems).toHaveBeenCalledWith('id');
-    expect(ctx.ok).toHaveBeenCalledWith([oibusItem]);
+    expect(ctx.ok).toHaveBeenCalledWith([item]);
   });
 
   it('searchSouthItems() should return South items', async () => {
@@ -355,12 +371,12 @@ describe('South connector controller', () => {
 
   it('getSouthItem() should return South item', async () => {
     ctx.params.id = 'id';
-    ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(oibusItem);
+    ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(item);
 
     await southConnectorController.getSouthItem(ctx);
 
     expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
-    expect(ctx.ok).toHaveBeenCalledWith(oibusItem);
+    expect(ctx.ok).toHaveBeenCalledWith(item);
   });
 
   it('getSouthItem() should return not found when South item not found', async () => {
@@ -376,21 +392,21 @@ describe('South connector controller', () => {
   it('createSouthItem() should create South item', async () => {
     ctx.params.southId = 'southId';
     ctx.request.body = {
-      ...oibusItemCommand
+      ...itemCommand
     };
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.reloadService.onCreateSouthItem.mockReturnValue(oibusItem);
+    ctx.app.reloadService.onCreateSouthItem.mockReturnValue(item);
 
     await southConnectorController.createSouthItem(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.items.settings, oibusItemCommand.settings);
-    expect(ctx.app.reloadService.onCreateSouthItem).toHaveBeenCalledWith('southId', oibusItemCommand);
-    expect(ctx.created).toHaveBeenCalledWith(oibusItem);
+    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.items.settings, itemCommand.settings);
+    expect(ctx.app.reloadService.onCreateSouthItem).toHaveBeenCalledWith('southId', itemCommand);
+    expect(ctx.created).toHaveBeenCalledWith(item);
   });
 
   it('createSouthItem() should throw 404 when South connector not found', async () => {
     ctx.request.body = {
-      ...oibusItemCommand,
+      ...itemCommand,
       type: 'invalid'
     };
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
@@ -404,7 +420,7 @@ describe('South connector controller', () => {
 
   it('createSouthItem() should throw 404 when manifest not found', async () => {
     ctx.request.body = {
-      ...oibusItemCommand
+      ...itemCommand
     };
     const invalidSouthConnector = {
       ...southConnector,
@@ -436,7 +452,7 @@ describe('South connector controller', () => {
 
   it('createSouthItem() should return bad request when validation fails', async () => {
     ctx.request.body = {
-      ...oibusItemCommand
+      ...itemCommand
     };
     const validationError = new Error('invalid body');
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
@@ -446,7 +462,7 @@ describe('South connector controller', () => {
 
     await southConnectorController.createSouthItem(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.items.settings, oibusItemCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.items.settings, itemCommand.settings);
     expect(ctx.app.reloadService.onCreateSouthItem).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
@@ -454,24 +470,24 @@ describe('South connector controller', () => {
   it('updateSouthItem() should update South item', async () => {
     ctx.params.southId = 'southId';
     ctx.request.body = {
-      ...oibusItemCommand
+      ...itemCommand
     };
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(oibusItem);
+    ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(item);
 
     await southConnectorController.updateSouthItem(ctx);
 
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
     expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.items.settings, oibusItemCommand.settings);
-    expect(ctx.app.reloadService.onUpdateSouthItemsSettings).toHaveBeenCalledWith('southId', oibusItem, oibusItemCommand);
+    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.items.settings, itemCommand.settings);
+    expect(ctx.app.reloadService.onUpdateSouthItemsSettings).toHaveBeenCalledWith('southId', item, itemCommand);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
   it('updateSouthItem() should throw 404 when South connector not found', async () => {
     ctx.params.southId = 'southId';
     ctx.request.body = {
-      ...oibusItemCommand,
+      ...itemCommand,
       type: 'invalid'
     };
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
@@ -488,7 +504,7 @@ describe('South connector controller', () => {
   it('updateSouthItem() should throw 404 when manifest not found', async () => {
     ctx.params.southId = 'southId';
     ctx.request.body = {
-      ...oibusItemCommand
+      ...itemCommand
     };
     const invalidSouthConnector = {
       ...southConnector,
@@ -525,7 +541,7 @@ describe('South connector controller', () => {
     ctx.params.southId = 'southId';
     ctx.request.body = null;
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(oibusItem);
+    ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(item);
     const validationError = new Error('invalid body');
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
       throw validationError;
@@ -543,20 +559,20 @@ describe('South connector controller', () => {
   it('updateSouthItem() should return bad request when validation fails', async () => {
     ctx.params.southId = 'southId';
     ctx.request.body = {
-      ...oibusItemCommand
+      ...itemCommand
     };
     const validationError = new Error('invalid body');
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
       throw validationError;
     });
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(oibusItem);
+    ctx.app.repositoryService.southItemRepository.getSouthItem.mockReturnValue(item);
 
     await southConnectorController.updateSouthItem(ctx);
 
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
     expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.items.settings, oibusItemCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.items.settings, itemCommand.settings);
     expect(ctx.app.reloadService.onUpdateSouthItemsSettings).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
@@ -601,7 +617,7 @@ describe('South connector controller', () => {
 
   it('exportSouthItems() should download a csv file', async () => {
     ctx.params.southId = 'id';
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([oibusItem, oibusItem]);
+    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([item, item]);
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
     await southConnectorController.exportSouthItems(ctx);
@@ -613,13 +629,13 @@ describe('South connector controller', () => {
         id: 'id',
         name: 'name',
         scanModeId: 'scanModeId',
-        settings_field: 'value'
+        settings_regex: '.*'
       },
       {
         id: 'id',
         name: 'name',
         scanModeId: 'scanModeId',
-        settings_field: 'value'
+        settings_regex: '.*'
       }
     ]);
   });
@@ -628,7 +644,7 @@ describe('South connector controller', () => {
     ctx.params.southId = 'id';
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([oibusItem, oibusItem]);
+    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([item, item]);
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (csv.parse as jest.Mock).mockReturnValue({
       data: [
@@ -704,7 +720,7 @@ describe('South connector controller', () => {
     ctx.params.southId = 'id';
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([oibusItem, oibusItem]);
+    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([item, item]);
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (csv.parse as jest.Mock).mockImplementationOnce(() => {
       throw new Error('parsing error');
@@ -726,7 +742,7 @@ describe('South connector controller', () => {
     ctx.params.southId = 'id';
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([oibusItem, oibusItem]);
+    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([item, item]);
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (csv.parse as jest.Mock).mockReturnValue({
       data: [
@@ -769,11 +785,11 @@ describe('South connector controller', () => {
 
     await southConnectorController.testSouthConnection(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, southConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
       southConnector.settings,
-      mqttManifest.settings
+      folderScannerManifest.settings
     );
     expect(ctx.app.reloadService.oibusEngine.testSouth).toHaveBeenCalledWith({ ...southConnectorCommand, name: 'name' });
     expect(ctx.noContent).toHaveBeenCalled();
@@ -822,9 +838,12 @@ describe('South connector controller', () => {
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
       null,
-      mqttManifest.settings
+      folderScannerManifest.settings
     );
-    expect(ctx.app.reloadService.oibusEngine.testSouth).toHaveBeenCalledWith({ ...southConnectorCommand, name: 'mqtt:test-connection' });
+    expect(ctx.app.reloadService.oibusEngine.testSouth).toHaveBeenCalledWith({
+      ...southConnectorCommand,
+      name: 'folder-scanner:test-connection'
+    });
     expect(ctx.notFound).not.toHaveBeenCalled();
   });
 
@@ -850,7 +869,7 @@ describe('South connector controller', () => {
 
     await southConnectorController.testSouthConnection(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, southConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.oibusEngine.testSouth).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);

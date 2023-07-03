@@ -43,14 +43,8 @@ const settings: Array<OibFormControl> = [
   },
   {
     key: 'field3',
-    type: 'OibAuthentication',
-    label: 'Field 3',
-    authTypes: ['none', 'basic']
-  },
-  {
-    key: 'field4',
     type: 'OibText',
-    label: 'Field 4'
+    label: 'Field 3'
   }
 ];
 
@@ -80,7 +74,11 @@ describe('Encryption service with crypto settings', () => {
 
   it('should create certificate if it does not exist', async () => {
     (utils.filesExists as jest.Mock).mockReturnValue(false);
-    (selfSigned.generate as jest.Mock).mockReturnValue({ private: 'myPrivateKey', public: 'myPublicKey', cert: 'myCert' });
+    (selfSigned.generate as jest.Mock).mockReturnValue({
+      private: 'myPrivateKey',
+      public: 'myPublicKey',
+      cert: 'myCert'
+    });
 
     await encryptionService.init();
     expect(selfSigned.generate).toHaveBeenCalledWith(
@@ -204,12 +202,7 @@ describe('Encryption service with crypto settings', () => {
       settings: {
         field1: 'not a secret',
         field2: 'secret',
-        field3: {
-          type: 'basic',
-          username: 'user',
-          password: 'secret'
-        } as unknown,
-        field4: 'not a secret'
+        field3: 'not a secret'
       }
     };
     const connector: SouthConnectorDTO = {
@@ -226,23 +219,8 @@ describe('Encryption service with crypto settings', () => {
       settings: {
         field1: 'not a secret',
         field2: 'secret',
-        field3: {
-          type: 'basic',
-          username: 'user',
-          password: 'pass'
-        } as unknown,
-        field4: 'not a secret'
+        field3: 'not a secret'
       }
-    };
-    const expectedCommand = {
-      field1: 'not a secret',
-      field2: 'encrypted secret',
-      field3: {
-        type: 'basic',
-        username: 'user',
-        password: 'encrypted secret'
-      } as unknown,
-      field4: 'not a secret'
     };
 
     const update = jest.fn(() => 'encrypted secret');
@@ -252,17 +230,12 @@ describe('Encryption service with crypto settings', () => {
       final
     }));
 
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
-    expectedCommand.field3 = { type: 'api-key', key: 'my key', secret: 'encrypted secret' };
-    command.settings.field3 = { type: 'api-key', key: 'my key', secret: 'secret' };
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
+    const expectedCommand = {
+      field1: 'not a secret',
+      field2: 'encrypted secret',
+      field3: 'not a secret'
+    };
 
-    expectedCommand.field3 = { type: 'bearer', token: 'encrypted secret' };
-    command.settings.field3 = { type: 'bearer', token: 'my token' };
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
-
-    expectedCommand.field3 = { type: 'cert', certPath: 'my cert', keyPath: 'my key' };
-    command.settings.field3 = { type: 'cert', certPath: 'my cert', keyPath: 'my key' };
     expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
   });
 
@@ -280,12 +253,7 @@ describe('Encryption service with crypto settings', () => {
       settings: {
         field1: 'not a secret',
         field2: '',
-        field3: {
-          type: 'basic',
-          username: 'user',
-          password: ''
-        },
-        field4: 'not a secret'
+        field3: 'not a secret'
       }
     };
     const connector: SouthConnectorDTO = {
@@ -302,23 +270,13 @@ describe('Encryption service with crypto settings', () => {
       settings: {
         field1: 'not a secret',
         field2: 'encrypted secret',
-        field3: {
-          type: 'basic',
-          username: 'user',
-          password: 'encrypted pass'
-        },
-        field4: 'not a secret'
+        field3: 'not a secret'
       }
     };
     const expectedCommand = {
       field1: 'not a secret',
       field2: 'encrypted secret',
-      field3: {
-        type: 'basic',
-        username: 'user',
-        password: 'encrypted pass'
-      },
-      field4: 'not a secret'
+      field3: 'not a secret'
     };
 
     const update = jest.fn(() => 'encrypted secret');
@@ -329,98 +287,6 @@ describe('Encryption service with crypto settings', () => {
     }));
 
     expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
-  });
-
-  it('should properly keep empty string when secrets not set in auth', async () => {
-    const command: SouthConnectorCommandDTO = {
-      name: 'connector',
-      type: 'any',
-      description: 'my connector',
-      enabled: true,
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0
-      },
-      settings: {
-        field1: 'not a secret',
-        field2: '',
-        field3: {
-          type: 'basic',
-          username: 'user',
-          password: ''
-        },
-        field4: 'not a secret'
-      }
-    };
-    const connector: SouthConnectorDTO = {
-      id: 'id1',
-      name: 'connector',
-      type: 'any',
-      description: 'my connector',
-      enabled: true,
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0
-      },
-      settings: {
-        field1: 'not a secret',
-        field2: 'encrypted secret',
-        field3: {
-          type: 'basic',
-          username: 'user',
-          password: ''
-        } as unknown,
-        field4: 'not a secret'
-      }
-    };
-    const expectedCommand = {
-      field1: 'not a secret',
-      field2: 'encrypted secret',
-      field3: {
-        type: 'basic',
-        username: 'user',
-        password: ''
-      } as unknown,
-      field4: 'not a secret'
-    };
-
-    const update = jest.fn(() => 'encrypted secret');
-    const final = jest.fn(() => '');
-    (crypto.createCipheriv as jest.Mock).mockImplementation(() => ({
-      update,
-      final
-    }));
-
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
-    expectedCommand.field2 = '';
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, null, settings)).toEqual(expectedCommand);
-
-    connector.settings.field3 = { type: 'none' };
-    expectedCommand.field2 = '';
-    connector.settings.field2 = null;
-    expectedCommand.field3 = { type: 'none' };
-    command.settings.field3 = { type: 'none' };
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
-
-    connector.settings.field3 = { type: 'api-key', key: 'my key', secret: '' };
-    expectedCommand.field2 = 'encrypted secret';
-    connector.settings.field2 = 'encrypted secret';
-
-    expectedCommand.field3 = { type: 'api-key', key: 'my key', secret: '' };
-    command.settings.field3 = { type: 'api-key', key: 'my key', secret: '' };
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
-    expectedCommand.field2 = '';
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, null, settings)).toEqual(expectedCommand);
-
-    connector.settings.field3 = { type: 'bearer' };
-    expectedCommand.field2 = 'encrypted secret';
-    expectedCommand.field3 = { type: 'bearer', token: '' };
-    command.settings.field3 = { type: 'bearer' };
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
-    expectedCommand.field2 = '';
-    expect(await encryptionService.encryptConnectorSecrets(command.settings, null, settings)).toEqual(expectedCommand);
   });
 
   it('should properly filter out secret', () => {
@@ -438,57 +304,14 @@ describe('Encryption service with crypto settings', () => {
       settings: {
         field1: 'not a secret',
         field2: 'encrypted secret',
-        field3: {
-          type: 'basic',
-          username: 'user',
-          password: 'secret'
-        } as unknown,
-        field4: 'not a secret'
+        field3: 'not a secret'
       }
     };
 
     expect(encryptionService.filterSecrets(connector.settings, settings)).toEqual({
       field1: 'not a secret',
       field2: '',
-      field3: {
-        type: 'basic',
-        username: 'user',
-        password: ''
-      } as unknown,
-      field4: 'not a secret'
-    });
-
-    connector.settings.field3 = { type: 'api-key', key: 'my key', secret: 'secret' };
-    expect(encryptionService.filterSecrets(connector.settings, settings)).toEqual({
-      field1: 'not a secret',
-      field2: '',
-      field3: {
-        type: 'api-key',
-        key: 'my key',
-        secret: ''
-      } as unknown,
-      field4: 'not a secret'
-    });
-
-    connector.settings.field3 = { type: 'bearer', token: 'secret' };
-    expect(encryptionService.filterSecrets(connector.settings, settings)).toEqual({
-      field1: 'not a secret',
-      field2: '',
-      field3: {
-        type: 'bearer',
-        token: ''
-      } as unknown,
-      field4: 'not a secret'
-    });
-
-    connector.settings.field3 = { type: 'none' };
-    expect(encryptionService.filterSecrets(connector.settings, settings)).toEqual({
-      field1: 'not a secret',
-      field2: '',
-      field3: {
-        type: 'none'
-      } as unknown,
-      field4: 'not a secret'
+      field3: 'not a secret'
     });
   });
 });

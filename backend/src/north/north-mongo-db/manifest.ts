@@ -17,7 +17,7 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }],
       defaultValue: 'http://localhost:8086',
       newRow: true,
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'database',
@@ -25,7 +25,7 @@ const manifest: NorthConnectorManifest = {
       newRow: false,
       label: 'Database',
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'username',
@@ -33,7 +33,7 @@ const manifest: NorthConnectorManifest = {
       label: 'User',
       defaultValue: '',
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'password',

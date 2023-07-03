@@ -74,7 +74,7 @@ describe('NorthDetailComponent', () => {
             params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' }
           }
         ],
-        readDisplay: true
+        displayInViewMode: true
       }
     ]
   };

@@ -9,7 +9,11 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
-import { OibusItemDTO, OibusItemSearchParam, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import {
+  SouthConnectorItemDTO,
+  SouthConnectorItemSearchParam,
+  SouthConnectorManifest
+} from '../../../../../shared/model/south-connector.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
@@ -50,10 +54,10 @@ export class HistoryQueryDetailComponent implements OnInit {
   southDisplayedSettings: Array<{ key: string; value: string }> = [];
 
   scanModes: Array<ScanModeDTO> = [];
-  searchParams: OibusItemSearchParam | null = null;
+  searchParams: SouthConnectorItemSearchParam | null = null;
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
-  historyQueryItems: Array<OibusItemDTO> = [];
+  historyQueryItems: Array<SouthConnectorItemDTO> = [];
   enabled = new FormControl(false);
   importing = false;
   exporting = false;
@@ -104,7 +108,7 @@ export class HistoryQueryDetailComponent implements OnInit {
 
         this.northManifest = northManifest;
         this.northDisplayedSettings = northManifest.settings
-          .filter(setting => setting.readDisplay)
+          .filter(setting => setting.displayInViewMode)
           .map(setting => {
             return {
               key: setting.label,
@@ -114,7 +118,7 @@ export class HistoryQueryDetailComponent implements OnInit {
 
         this.southManifest = southManifest;
         this.southDisplayedSettings = southManifest.settings
-          .filter(setting => setting.readDisplay)
+          .filter(setting => setting.displayInViewMode)
           .map(setting => {
             return {
               key: setting.label,
@@ -129,7 +133,7 @@ export class HistoryQueryDetailComponent implements OnInit {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
   }
 
-  searchItem(searchParams: OibusItemSearchParam) {
+  searchItem(searchParams: SouthConnectorItemSearchParam) {
     this.router.navigate(['.'], { queryParams: { page: 0, name: searchParams.name }, relativeTo: this.route });
   }
 

@@ -100,18 +100,6 @@ describe('Joi validator', () => {
         label: 'OibScanMode',
         acceptSubscription: false,
         subscriptionOnly: false
-      },
-      {
-        key: 'dateTimeFields',
-        type: 'OibDateTimeFields',
-        label: 'OibDateTimeFormat',
-        allowedDateObjectTypes: []
-      },
-      {
-        key: 'authentication',
-        type: 'OibAuthentication',
-        label: 'OibAuthentication',
-        authTypes: ['none', 'basic', 'cert']
       }
     ];
 
@@ -127,32 +115,7 @@ describe('Joi validator', () => {
       checkbox: Joi.boolean().falsy(0).truthy(1),
       timezone: Joi.string().allow(null, ''),
       scanMode: Joi.string().allow(null, ''),
-      proxy: Joi.string().allow(null, ''),
-      dateTimeFields: Joi.array()
-        .items(
-          Joi.object({
-            field: Joi.string().required(),
-            useAsReference: Joi.boolean().required(),
-            datetimeFormat: Joi.object({
-              type: Joi.string().required(),
-              timezone: Joi.string().optional(),
-              dateObjectType: Joi.string().optional(),
-              format: Joi.optional(),
-              locale: Joi.optional()
-            })
-          })
-        )
-        .required(),
-      authentication: Joi.object({
-        type: Joi.string().required().valid('none', 'basic', 'cert'),
-        username: Joi.optional(),
-        password: Joi.optional(),
-        token: Joi.optional(),
-        key: Joi.optional(),
-        secret: Joi.optional(),
-        certPath: Joi.optional(),
-        keyPath: Joi.optional()
-      }).required()
+      proxy: Joi.string().allow(null, '')
     });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
   });
@@ -169,7 +132,7 @@ describe('Joi validator', () => {
           { key: 'maxLength', params: { maxLength: 255 } },
           { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }
         ],
-        readDisplay: true
+        displayInViewMode: true
       }
     ];
 
@@ -190,7 +153,7 @@ describe('Joi validator', () => {
         defaultValue: 1883,
         newRow: false,
         validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-        readDisplay: true
+        displayInViewMode: true
       }
     ];
 
@@ -231,7 +194,7 @@ describe('Joi validator', () => {
         label: 'Verbose',
         newRow: true,
         validators: [{ key: 'required' }],
-        readDisplay: true
+        displayInViewMode: true
       }
     ];
 

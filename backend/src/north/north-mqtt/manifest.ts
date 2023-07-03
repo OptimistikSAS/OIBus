@@ -18,7 +18,7 @@ const manifest: NorthConnectorManifest = {
         { key: 'required' },
         { key: 'pattern', params: { pattern: '^(mqtt:\\/\\/|mqtts:\\/\\/|tcp:\\/\\/|tls:\\/\\/|ws:\\/\\/|wss:\\/\\/).*' } }
       ],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'qos',
@@ -28,7 +28,7 @@ const manifest: NorthConnectorManifest = {
       defaultValue: '1',
       newRow: false,
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'username',
@@ -36,7 +36,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Username',
       defaultValue: '',
       newRow: true,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'password',
@@ -44,7 +44,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Password',
       defaultValue: '',
       newRow: false,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'certFile',
@@ -52,7 +52,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Cert File',
       defaultValue: '',
       newRow: true,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'keyFile',
@@ -60,7 +60,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Key File',
       defaultValue: '',
       newRow: false,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'caFile',
@@ -68,7 +68,7 @@ const manifest: NorthConnectorManifest = {
       label: 'CA File',
       defaultValue: '',
       newRow: false,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'rejectUnauthorized',
@@ -76,7 +76,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Reject Unauthorized Connection',
       defaultValue: false,
       newRow: false,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'regExp',

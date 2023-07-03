@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist"
+  },
+  "files": [
+    "src/index.ts",
+    "src/settings-interface.generator.ts"
+  ],
+  "exclude": [
+    "./**/*.spec.ts",
+  ]
+}

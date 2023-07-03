@@ -1,3 +1,5 @@
+import { OibFormControl } from './form.model';
+
 export type Instant = string;
 export type LocalDate = string;
 export type LocalTime = string;
@@ -50,44 +52,20 @@ export interface Interval {
   end: Instant;
 }
 
-export const DATE_TIME_TYPES = ['specific-string', 'iso-8601-string', 'date-object', 'unix-epoch', 'unix-epoch-ms'];
+export const DATE_TIME_TYPES = [
+  'iso-string',
+  'unix-epoch',
+  'unix-epoch-ms',
+  'string',
+  'Date',
+  'SmallDateTime',
+  'DateTime',
+  'DateTime2',
+  'DateTimeOffset',
+  'timestamp',
+  'timestamptz'
+] as const;
 export type DateTimeType = (typeof DATE_TIME_TYPES)[number];
-
-interface BaseDateTimeFormat {
-  type: DateTimeType;
-}
-
-export interface StringDateTimeFormat extends BaseDateTimeFormat {
-  type: 'specific-string';
-  format: string;
-  locale: string;
-  timezone: string;
-}
-
-export interface Iso8601StringDateTimeFormat extends BaseDateTimeFormat {
-  type: 'iso-8601-string';
-}
-
-export interface DateObjectDateTimeFormat extends BaseDateTimeFormat {
-  type: 'date-object';
-  timezone: string;
-  dateObjectType: string | null;
-}
-
-export interface UnixEpochDateTimeFormat extends BaseDateTimeFormat {
-  type: 'unix-epoch';
-}
-
-export interface UnixEpochMsDateTimeFormat extends BaseDateTimeFormat {
-  type: 'unix-epoch-ms';
-}
-
-export type DateTimeFormat =
-  | Iso8601StringDateTimeFormat
-  | DateObjectDateTimeFormat
-  | StringDateTimeFormat
-  | UnixEpochDateTimeFormat
-  | UnixEpochMsDateTimeFormat;
 
 export const ALL_CSV_CHARACTERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const;
 
@@ -95,30 +73,22 @@ export type CsvCharacter = (typeof ALL_CSV_CHARACTERS)[number];
 
 // TODO: custom serialization with parser / transformer
 // TODO: HTTP Payload (OIConnect south)
-export const SERIALIZATION_TYPES = ['csv', 'oibus-values'];
+export const SERIALIZATION_TYPES = ['csv', 'json'];
 export type SerializationType = (typeof SERIALIZATION_TYPES)[number];
 
-export interface DateTimeField {
-  field: string;
-  useAsReference: boolean;
-  datetimeFormat: DateTimeFormat;
-}
-
-interface BaseSerializationFormat {
+export interface SerializationSettings {
   type: SerializationType;
-  outputDateTimeFormat: string;
+  outputTimestampFormat: string;
   outputTimezone: Timezone;
-}
-
-export interface FileSerializationFormat extends BaseSerializationFormat {
-  type: 'csv';
   filename: string;
   compression: boolean;
   delimiter: CsvCharacter;
 }
 
-export interface OIBusValuesSerializationFormat extends BaseSerializationFormat {
-  type: 'oibus-values';
+export interface ConnectorManifest {
+  id: string;
+  category: string;
+  name: string;
+  description: string;
+  settings: Array<OibFormControl>;
 }
-
-export type Serialization = FileSerializationFormat | OIBusValuesSerializationFormat;

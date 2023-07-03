@@ -1,9 +1,8 @@
 import Joi, { AnySchema } from 'joi';
 import {
-  OibAuthenticationFormControl,
   OibCheckboxFormControl,
   OibCodeBlockFormControl,
-  OibDateTimeFieldsFormControl,
+  OibArrayFormControl,
   OibFormControl,
   OibFormGroup,
   OibNumberFormControl,
@@ -59,12 +58,10 @@ export default class JoiValidator {
         return this.generateTextJoiSchema(oibFormControl);
       case 'OibProxy':
         return this.generateTextJoiSchema(oibFormControl);
-      case 'OibDateTimeFields':
-        return this.generateDateTimeFieldsJoiSchema(oibFormControl);
-      case 'OibAuthentication':
-        return this.generateAuthenticationJoiSchema(oibFormControl);
-      case 'FormGroup':
+      case 'OibFormGroup':
         return this.generateFormGroupJoiSchema(oibFormControl);
+      case 'OibArray':
+        return this.generateFormArrayJoiSchema(oibFormControl);
     }
   }
 
@@ -165,49 +162,6 @@ export default class JoiValidator {
     };
   }
 
-  private generateDateTimeFieldsJoiSchema(formControl: OibDateTimeFieldsFormControl): Record<string, AnySchema> {
-    let schema = Joi.array()
-      .items(
-        Joi.object({
-          field: Joi.string().required(),
-          useAsReference: Joi.boolean().required(),
-          datetimeFormat: Joi.object({
-            type: Joi.string().required(),
-            timezone: Joi.string().optional(),
-            dateObjectType: Joi.string().optional(),
-            format: Joi.optional(),
-            locale: Joi.optional()
-          })
-        })
-      )
-      .required();
-
-    schema = this.handleConditionalDisplay(formControl, schema) as Joi.ArraySchema;
-    return {
-      [formControl.key]: schema
-    };
-  }
-
-  private generateAuthenticationJoiSchema(formControl: OibAuthenticationFormControl): Record<string, AnySchema> {
-    let schema = Joi.object({
-      type: Joi.string()
-        .required()
-        .valid(...formControl.authTypes),
-      username: Joi.optional(),
-      password: Joi.optional(),
-      token: Joi.optional(),
-      key: Joi.optional(),
-      secret: Joi.optional(),
-      certPath: Joi.optional(),
-      keyPath: Joi.optional()
-    }).required();
-
-    schema = this.handleConditionalDisplay(formControl, schema) as Joi.ObjectSchema;
-    return {
-      [formControl.key]: schema
-    };
-  }
-
   private generateFormGroupJoiSchema(formControl: OibFormGroup): Record<string, AnySchema> {
     const subSchema: Record<string, AnySchema> = {};
 
@@ -215,6 +169,14 @@ export default class JoiValidator {
       subSchema[formControl.key] = this.generateJoiSchemaFromOibFormControl(formControl)[formControl.key];
     });
     const schema = Joi.object(subSchema).required();
+
+    return {
+      [formControl.key]: schema
+    };
+  }
+
+  private generateFormArrayJoiSchema(formControl: OibArrayFormControl): Record<string, AnySchema> {
+    const schema = Joi.array().required();
 
     return {
       [formControl.key]: schema

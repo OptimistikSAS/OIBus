@@ -19,11 +19,10 @@ import SouthADS from '../south/south-ads/south-ads';
 import SouthModbus from '../south/south-modbus/south-modbus';
 import SouthOIConnect from '../south/south-oiconnect/south-oiconnect';
 
-import { SouthConnectorDTO, OibusItemDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import SouthConnector from '../south/south-connector';
-import SouthIP21 from '../south/south-ip21/south-ip21';
 
-const southList: Array<typeof SouthConnector> = [
+const southList: Array<typeof SouthConnector<any, any>> = [
   SouthFolderScanner,
   SouthMQTT,
   SouthOPCUAHA,
@@ -37,8 +36,7 @@ const southList: Array<typeof SouthConnector> = [
   SouthSQLite,
   SouthADS,
   SouthModbus,
-  SouthOIConnect,
-  SouthIP21
+  SouthOIConnect
 ];
 
 export default class SouthService {
@@ -53,7 +51,7 @@ export default class SouthService {
    */
   createSouth(
     settings: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    items: Array<SouthConnectorItemDTO>,
     addValues: (southId: string, values: Array<any>) => Promise<void>,
     addFile: (southId: string, filePath: string) => Promise<void>,
     baseFolder: string,
@@ -102,7 +100,7 @@ export default class SouthService {
     return this.repositoryService.southConnectorRepository.getSouthConnectors();
   }
 
-  getSouthItems(southId: string): Array<OibusItemDTO> {
+  getSouthItems(southId: string): Array<SouthConnectorItemDTO> {
     return this.repositoryService.southItemRepository.getSouthItems(southId);
   }
 }

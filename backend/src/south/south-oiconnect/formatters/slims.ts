@@ -1,7 +1,8 @@
 import { Instant } from '../../../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { OibusItemDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../../shared/model/south-connector.model';
 import { formatInstant } from '../../../service/utils';
+import { SouthOIConnectItemSettings } from '../../../../../shared/model/south-settings.model';
 
 interface SlimsColumn {
   name: string;
@@ -22,7 +23,13 @@ interface SlimsResults {
  * Return the formatted results flattened for easier access
  * (into csv files for example) and the latestDateRetrieved in ISO String format
  */
-export default (item: OibusItemDTO, httpResult: SlimsResults): { formattedResult: Array<any>; maxInstant: Instant } => {
+export default (
+  item: SouthConnectorItemDTO<SouthOIConnectItemSettings>,
+  httpResult: SlimsResults
+): {
+  formattedResult: Array<any>;
+  maxInstant: Instant;
+} => {
   if (!httpResult?.entities || !Array.isArray(httpResult.entities)) {
     throw new Error('Bad data: expect SLIMS values to be an array.');
   }
@@ -49,7 +56,7 @@ export default (item: OibusItemDTO, httpResult: SlimsResults): { formattedResult
     formattedData.push({
       pointId: `${rsltCfPid.value}-${testName.value}`,
       unit: rsltValue.unit || 'Ø',
-      timestamp: formatInstant(resultInstant, { type: 'iso-8601-string' }),
+      timestamp: formatInstant(resultInstant, { type: 'iso-string' }),
       value: rsltValue.value
     });
     if (resultInstant > maxInstant) {

@@ -19,7 +19,7 @@ const manifest: NorthConnectorManifest = {
         { key: 'required' },
         { key: 'pattern', params: { pattern: '^(mqtt:\\/\\/|mqtts:\\/\\/|tcp:\\/\\/|tls:\\/\\/|ws:\\/\\/|wss:\\/\\/).*' } }
       ],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'port',
@@ -28,7 +28,7 @@ const manifest: NorthConnectorManifest = {
       defaultValue: 1883,
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'username',
@@ -36,7 +36,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Username',
       defaultValue: '',
       newRow: true,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'password',
@@ -44,7 +44,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Password',
       defaultValue: '',
       newRow: false,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'applicativeHostUrl',
@@ -52,7 +52,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Applicative Host URL',
       defaultValue: '',
       validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'secretKey',

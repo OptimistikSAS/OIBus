@@ -12,7 +12,12 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import ProxyService from '../../service/proxy.service';
 import { initOpcuaCertificateFolders } from '../../service/opcua.service';
 
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import {
+  SouthOPCUADAItemSettings,
+  SouthOPCUADASettings,
+  SouthOPCUADASettingsAuthentication
+} from '../../../../shared/model/south-settings.model';
 
 // Mock node-opcua-client
 jest.mock('node-opcua-client', () => ({
@@ -69,7 +74,7 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO<SouthOPCUADAItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
@@ -101,7 +106,7 @@ const items: Array<OibusItemDTO> = [
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 let south: SouthOPCUADA;
-const configuration: SouthConnectorDTO = {
+const configuration: SouthConnectorDTO<SouthOPCUADASettings> = {
   id: 'southId',
   name: 'south',
   type: 'test',
@@ -115,12 +120,10 @@ const configuration: SouthConnectorDTO = {
   settings: {
     url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
     retryInterval: 10000,
-    maxReadInterval: 3600,
-    readIntervalDelay: 200,
     readTimeout: 180000,
     authentication: {
       type: 'none'
-    },
+    } as unknown as SouthOPCUADASettingsAuthentication,
     securityMode: 'None',
     securityPolicy: 'None',
     keepSessionAlive: false
@@ -205,7 +208,7 @@ describe('SouthOPCUADA with basic auth', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    configuration.settings.authentication = { type: 'basic', username: 'myUser', password: 'pass' };
+    configuration.settings.authentication = { type: 'basic', username: 'myUser', password: 'pass', certFilePath: '', keyFilePath: '' };
     south = new SouthOPCUADA(
       configuration,
       items,
@@ -257,7 +260,13 @@ describe('SouthOPCUADA with certificate', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    configuration.settings.authentication = { type: 'cert', certPath: 'myCertPath', keyPath: 'myKeyPath' };
+    configuration.settings.authentication = {
+      type: 'cert',
+      certFilePath: 'myCertPath',
+      keyFilePath: 'myKeyPath',
+      username: '',
+      password: ''
+    };
     south = new SouthOPCUADA(
       configuration,
       items,

@@ -6,7 +6,7 @@ import path from 'node:path';
 import minimist from 'minimist';
 import { DateTime } from 'luxon';
 
-import { CsvCharacter, DateTimeFormat, Instant, Interval, Serialization } from '../../../shared/model/types';
+import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../../shared/model/types';
 import pino from 'pino';
 import csv from 'papaparse';
 
@@ -189,7 +189,7 @@ export const convertDelimiter = (delimiter: CsvCharacter): string => {
 
 export const persistResults = async (
   data: Array<any>,
-  serializationSettings: Serialization,
+  serializationSettings: SerializationSettings,
   connectorName: string,
   baseFolder: string,
   addFileFn: (filePath: string) => Promise<void>,
@@ -197,7 +197,7 @@ export const persistResults = async (
   logger: pino.Logger
 ): Promise<void> => {
   switch (serializationSettings.type) {
-    case 'oibus-values':
+    case 'json':
       await addValueFn(data);
       break;
     case 'csv':
@@ -269,49 +269,70 @@ export const logQuery = (query: string, startTime: string | number, endTime: str
   logger.info(log);
 };
 
-export const formatInstant = (instant: Instant, dateTimeFormat: DateTimeFormat): string | number => {
-  switch (dateTimeFormat.type) {
+export const formatInstant = (
+  instant: Instant,
+  options: { type: DateTimeType; timezone?: Timezone; format?: string; locale?: string }
+): string | number => {
+  switch (options.type) {
     case 'unix-epoch':
       return Math.floor(DateTime.fromISO(instant).toMillis() / 1000);
     case 'unix-epoch-ms':
       return DateTime.fromISO(instant).toMillis();
-    case 'specific-string':
-      return DateTime.fromISO(instant, { zone: dateTimeFormat.timezone }).toFormat(dateTimeFormat.format, {
-        locale: dateTimeFormat.locale
+    case 'string':
+      return DateTime.fromISO(instant, { zone: options.timezone }).toFormat(options.format!, {
+        locale: options.locale
       });
-    case 'iso-8601-string':
+    case 'iso-string':
       return instant;
-    case 'date-object':
-      return DateTime.fromISO(instant).setZone(dateTimeFormat.timezone).toISO()!;
+    case 'Date':
+      return DateTime.fromISO(instant, { zone: options.timezone }).toFormat('yyyy-MM-dd');
+    case 'SmallDateTime':
+      return DateTime.fromISO(instant, { zone: options.timezone }).toFormat('yyyy-MM-dd HH:mm:ss');
+    case 'DateTime':
+    case 'DateTime2':
+    case 'timestamp':
+      return DateTime.fromISO(instant, { zone: options.timezone }).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
+    case 'DateTimeOffset':
+    case 'timestamptz':
+      return instant;
   }
 };
 
-export const convertDateTimeToInstant = (dateTime: any, dateTimeFormat: DateTimeFormat | null): Instant => {
-  if (!dateTimeFormat) {
+export const convertDateTimeToInstant = (
+  dateTime: any,
+  options: { type: DateTimeType; timezone?: Timezone; format?: string; locale?: string }
+): Instant => {
+  if (!options?.type) {
     return dateTime;
   }
-  switch (dateTimeFormat.type) {
+  switch (options.type) {
     case 'unix-epoch':
       return DateTime.fromMillis(parseInt(dateTime, 10) * 1000)
         .toUTC()
         .toISO()!;
     case 'unix-epoch-ms':
       return DateTime.fromMillis(parseInt(dateTime, 10)).toUTC().toISO()!;
-    case 'iso-8601-string':
+    case 'iso-string':
       return DateTime.fromISO(dateTime).toUTC().toISO()!;
-    case 'specific-string':
-      return DateTime.fromFormat(dateTime, dateTimeFormat.format, {
-        zone: dateTimeFormat.timezone,
-        locale: dateTimeFormat.locale
+    case 'string':
+      return DateTime.fromFormat(dateTime, options.format!, {
+        zone: options.timezone,
+        locale: options.locale
       })
         .toUTC()
         .toISO()!;
-    case 'date-object':
-      // TODO: test datetimeoffset
+    case 'Date':
+    case 'DateTime':
+    case 'DateTime2':
+    case 'SmallDateTime':
+    case 'timestamp':
       return DateTime.fromJSDate(dateTime, {
-        zone: dateTimeFormat.timezone
+        zone: options.timezone
       })
         .toUTC()
         .toISO()!;
+    case 'DateTimeOffset':
+    case 'timestamptz':
+      return DateTime.fromJSDate(dateTime).toISO()!;
   }
 };

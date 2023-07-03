@@ -1,4 +1,5 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
+import { buildDateTimeFieldsFormControl, serialization } from '../../../../shared/model/manifest-factory';
 
 const manifest: SouthConnectorManifest = {
   id: 'sqlite',
@@ -19,7 +20,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: './test.db',
       newRow: true,
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     }
   ],
   items: {
@@ -36,17 +37,10 @@ const manifest: SouthConnectorManifest = {
         defaultValue: 'SELECT * FROM Table WHERE timestamp > @StartTime',
         class: 'col-12 text-nowrap',
         validators: [{ key: 'required' }],
-        readDisplay: true
+        displayInViewMode: true
       },
-      {
-        key: 'dateTimeFields',
-        type: 'OibDateTimeFields',
-        label: 'Date time fields',
-        allowedDateObjectTypes: [],
-        class: 'col',
-        newRow: true,
-        readDisplay: false
-      }
+      buildDateTimeFieldsFormControl(['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms']),
+      serialization
     ]
   }
 };

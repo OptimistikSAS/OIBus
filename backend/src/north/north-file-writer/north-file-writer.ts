@@ -10,15 +10,16 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
 import { HandlesFile, HandlesValues } from '../north-interface';
+import { NorthFileWriterSettings } from '../../../../shared/model/north-settings.model';
 
 /**
  * Class NorthFileWriter - Write file in an output folder. Values are stored in JSON files
  */
-export default class NorthFileWriter extends NorthConnector implements HandlesFile, HandlesValues {
+export default class NorthFileWriter extends NorthConnector<NorthFileWriterSettings> implements HandlesFile, HandlesValues {
   static type = manifest.id;
 
   constructor(
-    configuration: NorthConnectorDTO,
+    configuration: NorthConnectorDTO<NorthFileWriterSettings>,
     encryptionService: EncryptionService,
     proxyService: ProxyService,
     repositoryService: RepositoryService,

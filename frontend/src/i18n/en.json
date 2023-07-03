@@ -112,15 +112,14 @@
       "cert": "Certificate"
     },
     "datetime-types": {
-      "iso-8601-string": "ISO 8601",
-      "specific-string": "Custom format",
+      "iso-string": "ISO 8601",
+      "string": "String",
       "unix-epoch": "UNIX Epoch (s)",
-      "unix-epoch-ms": "UNIX Epoch (ms)",
-      "date-object": "Date object"
+      "unix-epoch-ms": "UNIX Epoch (ms)"
     },
     "serialization-types": {
       "csv": "CSV File",
-      "oibus-values": "OIBus values"
+      "json": "OIBus values"
     },
     "csv-character": {
       "DOT": "Dot .",
@@ -586,46 +585,7 @@
     "label": "Scan mode",
     "subscription": "Subscribe"
   },
-  "authentication": {
-    "title": "Authentication",
-    "username": "Username",
-    "password": "Password",
-    "api-key": "API key",
-    "secret": "Secret",
-    "token": "Bearer token",
-    "cert-path": "Certificate path",
-    "key-path": "Private key path"
-  },
-  "datetime": {
-    "title": "Datetime",
-    "type": "Type",
-    "object-type": "Date object type",
-    "example": "Example with {{ baseString }}: ",
-    "format": "Format",
-    "locale": "Locale",
-    "timezone": "Timezone",
-    "field": "Field",
-    "fields": {
-      "title": "Datetime fields",
-      "list": "Fields",
-      "field": "Field name",
-      "type": "Type",
-      "origin-format": "Origin format",
-      "use-as-reference": "Reference",
-      "no-field": "No datetime fields",
-      "add": "Add a datetime field",
-      "unique-field": "Specify each field only once"
-    }
-  },
-  "serialization": {
-    "title": "Serialization",
-    "filename": "Filename",
-    "delimiter": "Delimiter",
-    "compression": "Compress (gz)",
-    "type": "Type",
-    "output": {
-      "title": "Output format",
-      "date-time-format": "Date time format"
-    }
+  "oib-array": {
+    "no-elements": "No elements has been added"
   }
 }

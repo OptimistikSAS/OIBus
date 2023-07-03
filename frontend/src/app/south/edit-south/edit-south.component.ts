@@ -123,6 +123,9 @@ export class EditSouthComponent implements OnInit {
         // if we have a south connector we initialize the values
         if (southConnector) {
           this.southForm.patchValue(southConnector);
+        } else {
+          // we should provoke all value changes to make sure fields are properly hidden and disabled
+          this.southForm.setValue(this.southForm.getRawValue());
         }
 
         this.manifest = manifest;

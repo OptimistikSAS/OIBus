@@ -3,10 +3,10 @@ import LoggerService from './logger/logger.service';
 
 import { EngineSettingsDTO } from '../../../shared/model/engine.model';
 import {
-  OibusItemCommandDTO,
-  OibusItemDTO,
   SouthConnectorCommandDTO,
-  SouthConnectorDTO
+  SouthConnectorDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO
 } from '../../../shared/model/south-connector.model';
 import { NorthCacheFiles, NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../shared/model/history-query.model';
@@ -86,12 +86,12 @@ export default class ReloadService {
   }
 
   async onCreateSouth(command: SouthConnectorCommandDTO): Promise<SouthConnectorDTO> {
-    const southSettings = this.repositoryService.southConnectorRepository.createSouthConnector(command);
-    await this.oibusEngine.startSouth(southSettings.id, southSettings);
-    return southSettings;
+    const southConnector = this.repositoryService.southConnectorRepository.createSouthConnector(command);
+    await this.oibusEngine.startSouth(southConnector.id, southConnector);
+    return southConnector;
   }
 
-  async onUpdateSouthSettings(southId: string, command: SouthConnectorCommandDTO): Promise<void> {
+  async onUpdateSouth(southId: string, command: SouthConnectorCommandDTO): Promise<void> {
     await this.oibusEngine.stopSouth(southId);
     this.repositoryService.southConnectorRepository.updateSouthConnector(southId, command);
     const settings = this.repositoryService.southConnectorRepository.getSouthConnector(southId);
@@ -108,25 +108,29 @@ export default class ReloadService {
     this.repositoryService.southConnectorRepository.deleteSouthConnector(southId);
   }
 
-  async onCreateSouthItem(southId: string, command: OibusItemCommandDTO): Promise<OibusItemDTO> {
+  async onCreateSouthItem(southId: string, command: SouthConnectorItemCommandDTO): Promise<SouthConnectorItemDTO> {
     const southItem = this.repositoryService.southItemRepository.createSouthItem(southId, command);
     this.oibusEngine.addItemToSouth(southId, southItem);
     return southItem;
   }
 
-  async onUpdateSouthItemsSettings(southId: string, southItem: OibusItemDTO, command: OibusItemCommandDTO): Promise<void> {
+  async onUpdateSouthItemsSettings(
+    southId: string,
+    southItem: SouthConnectorItemDTO,
+    command: SouthConnectorItemCommandDTO
+  ): Promise<void> {
     this.repositoryService.southItemRepository.updateSouthItem(southItem.id, command);
     this.oibusEngine.updateItemInSouth(southId, southItem, command);
   }
 
   async onCreateOrUpdateSouthItems(
-    southSettings: SouthConnectorDTO,
-    itemsToAdd: Array<OibusItemDTO>,
-    itemsToUpdate: Array<OibusItemDTO>
+    southConnector: SouthConnectorDTO,
+    itemsToAdd: Array<SouthConnectorItemDTO>,
+    itemsToUpdate: Array<SouthConnectorItemDTO>
   ): Promise<void> {
-    await this.oibusEngine.stopSouth(southSettings.id);
-    this.repositoryService.southItemRepository.createAndUpdateSouthItems(southSettings.id, itemsToAdd, itemsToUpdate);
-    await this.oibusEngine.startSouth(southSettings.id, southSettings);
+    await this.oibusEngine.stopSouth(southConnector.id);
+    this.repositoryService.southItemRepository.createAndUpdateSouthItems(southConnector.id, itemsToAdd, itemsToUpdate);
+    await this.oibusEngine.startSouth(southConnector.id, southConnector);
   }
 
   async onDeleteSouthItem(itemId: string): Promise<void> {
@@ -179,7 +183,7 @@ export default class ReloadService {
     }
   }
 
-  async onCreateHistoryQuery(command: HistoryQueryCommandDTO, southItems: Array<OibusItemDTO>): Promise<HistoryQueryDTO> {
+  async onCreateHistoryQuery(command: HistoryQueryCommandDTO, southItems: Array<SouthConnectorItemDTO>): Promise<HistoryQueryDTO> {
     const historyQuery = this.repositoryService.historyQueryRepository.createHistoryQuery(command);
     for (const item of southItems) {
       this.repositoryService.historyQueryItemRepository.createHistoryItem(historyQuery.id, {
@@ -213,14 +217,14 @@ export default class ReloadService {
     this.repositoryService.historyQueryRepository.deleteHistoryQuery(historyId);
   }
 
-  async onCreateHistoryItem(historyId: string, command: OibusItemCommandDTO): Promise<OibusItemDTO> {
+  async onCreateHistoryItem(historyId: string, command: SouthConnectorItemCommandDTO): Promise<SouthConnectorItemDTO> {
     await this.historyEngine.stopHistoryQuery(historyId, true);
     const historyItem = this.repositoryService.historyQueryItemRepository.createHistoryItem(historyId, command);
     await this.historyEngine.addItemToHistoryQuery(historyId, historyItem);
     return historyItem;
   }
 
-  async onUpdateHistoryItemsSettings(historyId: string, item: OibusItemDTO, command: OibusItemCommandDTO): Promise<void> {
+  async onUpdateHistoryItemsSettings(historyId: string, item: SouthConnectorItemDTO, command: SouthConnectorItemCommandDTO): Promise<void> {
     await this.historyEngine.stopHistoryQuery(historyId, true);
     this.repositoryService.historyQueryItemRepository.updateHistoryItem(item.id, command);
     const historyItem = this.repositoryService.historyQueryItemRepository.getHistoryItem(item.id);
@@ -242,8 +246,8 @@ export default class ReloadService {
 
   async onCreateOrUpdateHistoryQueryItems(
     historyQuery: HistoryQueryDTO,
-    itemsToAdd: Array<OibusItemDTO>,
-    itemsToUpdate: Array<OibusItemDTO>
+    itemsToAdd: Array<SouthConnectorItemDTO>,
+    itemsToUpdate: Array<SouthConnectorItemDTO>
   ): Promise<void> {
     await this.historyEngine.stopHistoryQuery(historyQuery.id);
     this.repositoryService.historyQueryItemRepository.createAndUpdateItems(historyQuery.id, itemsToAdd, itemsToUpdate);

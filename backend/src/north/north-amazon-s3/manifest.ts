@@ -16,7 +16,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Bucket',
       newRow: true,
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'region',
@@ -24,7 +24,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Region',
       newRow: false,
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'folder',
@@ -32,15 +32,30 @@ const manifest: NorthConnectorManifest = {
       label: 'Folder',
       newRow: false,
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
-    { key: 'authentication', type: 'OibAuthentication', label: 'Authentication', newRow: true, authTypes: ['api-key'] },
     {
-      key: 'proxy',
+      key: 'accessKey',
+      type: 'OibText',
+      label: 'Access key',
+      newRow: true,
+      validators: [{ key: 'required' }],
+      displayInViewMode: true
+    },
+    {
+      key: 'secretKey',
+      type: 'OibSecret',
+      label: 'Secret key',
+      newRow: true,
+      validators: [{ key: 'required' }],
+      displayInViewMode: true
+    },
+    {
+      key: 'proxyId',
       type: 'OibProxy',
       label: 'Proxy',
       newRow: true,
-      readDisplay: false
+      displayInViewMode: false
     }
   ]
 };

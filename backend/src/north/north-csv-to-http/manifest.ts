@@ -16,7 +16,7 @@ const manifest: NorthConnectorManifest = {
       type: 'OibText',
       newRow: true,
       validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'requestMethod',
@@ -51,7 +51,7 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }],
       newRow: true
     },
-    { key: 'proxy', type: 'OibProxy', label: 'Proxy', newRow: true }
+    { key: 'proxyId', type: 'OibProxy', label: 'Proxy', newRow: true }
   ]
 };
 

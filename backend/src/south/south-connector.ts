@@ -3,7 +3,12 @@ import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
 import { delay, generateIntervals } from '../service/utils';
 
-import { OibusItemCommandDTO, OibusItemDTO, SouthCache, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
+import {
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthCache,
+  SouthConnectorDTO
+} from '../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { Instant, Interval } from '../../../shared/model/types';
 import pino from 'pino';
@@ -16,6 +21,7 @@ import SouthCacheService from '../service/south-cache.service';
 import { PassThrough } from 'node:stream';
 import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
 import SouthConnectorMetricsService from '../service/south-connector-metrics.service';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
@@ -38,9 +44,12 @@ import SouthConnectorMetricsService from '../service/south-connector-metrics.ser
  * All other operations (cache, store&forward, communication to North connectors) will be handled by the OIBus engine
  * and should not be taken care at the South level.
  */
-export default class SouthConnector {
+export default class SouthConnector<T extends SouthSettings = any, I extends SouthItemSettings = any> {
   public static type: string;
-  protected itemsByScanModeIds: Map<string, Map<string, OibusItemDTO>> = new Map<string, Map<string, OibusItemDTO>>();
+  protected itemsByScanModeIds: Map<string, Map<string, SouthConnectorItemDTO<I>>> = new Map<
+    string,
+    Map<string, SouthConnectorItemDTO<I>>
+  >();
   private taskJobQueue: Array<ScanModeDTO> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   private taskRunner: EventEmitter = new EventEmitter();
@@ -55,8 +64,8 @@ export default class SouthConnector {
    * Constructor for SouthConnector
    */
   constructor(
-    protected configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    protected connector: SouthConnectorDTO<T>,
+    items: Array<SouthConnectorItemDTO<I>>,
     private engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     private engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     protected readonly encryptionService: EncryptionService,
@@ -70,13 +79,13 @@ export default class SouthConnector {
       .filter(item => item.scanModeId)
       .forEach(item => {
         if (!this.itemsByScanModeIds.get(item.scanModeId!)) {
-          this.itemsByScanModeIds.set(item.scanModeId!, new Map<string, OibusItemDTO>());
+          this.itemsByScanModeIds.set(item.scanModeId!, new Map<string, SouthConnectorItemDTO<I>>());
         }
         this.itemsByScanModeIds.get(item.scanModeId!)!.set(item.id, item);
       });
 
-    this.cacheService = new SouthCacheService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
-    this._metricsService = new SouthConnectorMetricsService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
+    this.cacheService = new SouthCacheService(this.connector.id, path.resolve(this.baseFolder, 'cache.db'));
+    this._metricsService = new SouthConnectorMetricsService(this.connector.id, path.resolve(this.baseFolder, 'cache.db'));
 
     if (this.queriesHistory()) {
       this.cacheService.createSouthCacheScanModeTable();
@@ -94,12 +103,15 @@ export default class SouthConnector {
   }
 
   async start(): Promise<void> {
-    this.logger.trace(`South connector ${this.configuration.name} enabled. Starting services...`);
+    this.logger.trace(`South connector ${this.connector.name} enabled. Starting services...`);
     await this.connect();
   }
 
   async connect(): Promise<void> {
-    this._metricsService.updateMetrics({ ...this._metricsService.metrics, lastConnection: DateTime.now().toUTC().toISO() });
+    this._metricsService.updateMetrics({
+      ...this._metricsService.metrics,
+      lastConnection: DateTime.now().toUTC().toISO()
+    });
     if (!this.streamMode) {
       return;
     }
@@ -125,7 +137,7 @@ export default class SouthConnector {
   }
 
   isEnabled(): boolean {
-    return this.configuration.enabled;
+    return this.connector.enabled;
   }
 
   /**
@@ -245,9 +257,14 @@ export default class SouthConnector {
     }
   }
 
-  async historyQueryHandler(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant, scanModeId: string): Promise<void> {
+  async historyQueryHandler(
+    items: Array<SouthConnectorItemDTO<I>>,
+    startTime: Instant,
+    endTime: Instant,
+    scanModeId: string
+  ): Promise<void> {
     this.historyIsRunning = true;
-    if (this.configuration.history.maxInstantPerItem) {
+    if (this.connector.history.maxInstantPerItem) {
       for (const [index, item] of items.entries()) {
         if (this.stopping) {
           this.logger.debug(`Connector is stopping. Exiting history query at item ${item.name}`);
@@ -262,18 +279,18 @@ export default class SouthConnector {
         const southCache = this.cacheService.getSouthCacheScanMode(scanModeId, item.id, startTime);
         // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
         // requests. For example only one hour if maxReadInterval is 3600 (in s)
-        const intervals = generateIntervals(southCache.maxInstant, endTime, this.configuration.history.maxReadInterval);
+        const intervals = generateIntervals(southCache.maxInstant, endTime, this.connector.history.maxReadInterval);
         this.logIntervals(intervals);
         await this.queryIntervals(intervals, [item], southCache, startTime);
         if (index !== items.length) {
-          await delay(this.configuration.history.readDelay);
+          await delay(this.connector.history.readDelay);
         }
       }
     } else {
       const southCache = this.cacheService.getSouthCacheScanMode(scanModeId, 'all', startTime);
       // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
       // requests. For example only one hour if maxReadInterval is 3600 (in s)
-      const intervals = generateIntervals(southCache.maxInstant, endTime, this.configuration.history.maxReadInterval);
+      const intervals = generateIntervals(southCache.maxInstant, endTime, this.connector.history.maxReadInterval);
       this.logIntervals(intervals);
 
       await this.queryIntervals(intervals, items, southCache, startTime);
@@ -285,7 +302,12 @@ export default class SouthConnector {
     this.historyIsRunning = false;
   }
 
-  private async queryIntervals(intervals: Array<Interval>, items: Array<OibusItemDTO>, southCache: SouthCache, startTime: Instant) {
+  private async queryIntervals(
+    intervals: Array<Interval>,
+    items: Array<SouthConnectorItemDTO<I>>,
+    southCache: SouthCache,
+    startTime: Instant
+  ) {
     this._metricsService.updateMetrics({
       ...this._metricsService.metrics,
       historyMetrics: {
@@ -321,7 +343,7 @@ export default class SouthConnector {
           this.logger.debug(`Connector is stopping. Exiting history query at interval ${index}: [${interval.start}, ${interval.end}]`);
           return;
         }
-        await delay(this.configuration.history.readDelay);
+        await delay(this.connector.history.readDelay);
       } else {
         this.cacheService.createOrUpdateCacheScanMode({
           scanModeId: southCache.scanModeId,
@@ -358,8 +380,8 @@ export default class SouthConnector {
    */
   async addValues(values: Array<any>): Promise<void> {
     if (values.length > 0) {
-      this.logger.debug(`Add ${values.length} values to cache from South "${this.configuration.name}"`);
-      await this.engineAddValuesCallback(this.configuration.id, values);
+      this.logger.debug(`Add ${values.length} values to cache from South "${this.connector.name}"`);
+      await this.engineAddValuesCallback(this.connector.id, values);
       const currentMetrics = this._metricsService.metrics;
       this._metricsService.updateMetrics({
         ...currentMetrics,
@@ -373,8 +395,8 @@ export default class SouthConnector {
    * Add a new file to the Engine.
    */
   async addFile(filePath: string): Promise<void> {
-    this.logger.debug(`Add file "${filePath}" to cache from South "${this.configuration.name}"`);
-    await this.engineAddFileCallback(this.configuration.id, filePath);
+    this.logger.debug(`Add file "${filePath}" to cache from South "${this.connector.name}"`);
+    await this.engineAddFileCallback(this.connector.id, filePath);
     const currentMetrics = this._metricsService.metrics;
     this._metricsService.updateMetrics({
       ...currentMetrics,
@@ -393,7 +415,7 @@ export default class SouthConnector {
     }
     this.cronByScanModeIds.clear();
     this.taskJobQueue = [];
-    this.logger.info(`South connector "${this.configuration.name}" (${this.configuration.id}) disconnected`);
+    this.logger.info(`South connector "${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
   async stop(): Promise<void> {
@@ -402,7 +424,7 @@ export default class SouthConnector {
       cronJob.stop();
     }
     this.cronByScanModeIds.clear();
-    this.logger.info(`Stopping South "${this.configuration.name}" (${this.configuration.id})...`);
+    this.logger.info(`Stopping South "${this.connector.name}" (${this.connector.id})...`);
 
     if (this.runProgress$) {
       this.logger.debug('Waiting for South task to finish');
@@ -413,7 +435,7 @@ export default class SouthConnector {
     this.stopping = false;
   }
 
-  addItem(item: OibusItemDTO): void {
+  addItem(item: SouthConnectorItemDTO<I>): void {
     if (item.scanModeId) {
       const scanMode = this.repositoryService.scanModeRepository.getScanMode(item.scanModeId);
       if (!scanMode) {
@@ -435,7 +457,7 @@ export default class SouthConnector {
     }
   }
 
-  updateItem(oldItem: OibusItemDTO, newItem: OibusItemCommandDTO): void {
+  updateItem(oldItem: SouthConnectorItemDTO<I>, newItem: SouthConnectorItemCommandDTO<I>): void {
     if (newItem.scanModeId) {
       const scanMode = this.repositoryService.scanModeRepository.getScanMode(newItem.scanModeId);
       if (!scanMode) {
@@ -448,7 +470,7 @@ export default class SouthConnector {
     this.addItem(oldItem);
   }
 
-  deleteItem(item: OibusItemDTO) {
+  deleteItem(item: SouthConnectorItemDTO<I>) {
     if (!item.scanModeId) {
       return;
     }

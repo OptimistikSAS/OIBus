@@ -11,8 +11,9 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import ProxyService from '../../service/proxy.service';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
+import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../../shared/model/south-settings.model';
 
 jest.mock('mqtt');
 jest.mock('node:fs/promises');
@@ -55,7 +56,7 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
@@ -70,7 +71,7 @@ const items: Array<OibusItemDTO> = [
     name: 'item2',
     connectorId: 'southId',
     settings: {
-      nodeId: 'my/+/#/topic/with/wildcard/#'
+      topic: 'my/+/#/topic/with/wildcard/#'
     },
     scanModeId: 'scanModeId1'
   },
@@ -79,7 +80,7 @@ const items: Array<OibusItemDTO> = [
     name: 'item3',
     connectorId: 'southId',
     settings: {
-      nodeId: 'my/wrong/topic////'
+      topic: 'my/wrong/topic////'
     },
     scanModeId: 'scanModeId2'
   }
@@ -91,13 +92,14 @@ class CustomStream extends Stream {
   }
 
   subscribe() {}
+
   end() {}
 }
 
 let south: SouthMQTT;
 
 describe('SouthMQTT without authentication', () => {
-  const configuration: SouthConnectorDTO = {
+  const configuration: SouthConnectorDTO<SouthMQTTSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -110,14 +112,18 @@ describe('SouthMQTT without authentication', () => {
     },
     settings: {
       url: 'mqtt://localhost:1883',
-      qos: 1,
+      qos: '1',
       persistent: true,
       authentication: {
-        type: 'none'
+        type: 'none',
+        username: '',
+        password: '',
+        caFilePath: '',
+        certFilePath: '',
+        keyFilePath: ''
       },
       connectTimeout: 1000,
       reconnectPeriod: 1000,
-      caPath: '',
       rejectUnauthorized: false,
       dataArrayPath: null,
       pointIdPath: 'name',
@@ -296,7 +302,7 @@ describe('SouthMQTT with Cert', () => {
   const mqttStream = new CustomStream();
   mqttStream.subscribe = jest.fn();
   mqttStream.end = jest.fn();
-  const configuration: SouthConnectorDTO = {
+  const connector: SouthConnectorDTO<SouthMQTTSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -309,16 +315,18 @@ describe('SouthMQTT with Cert', () => {
     },
     settings: {
       url: 'mqtt://localhost:1883',
-      qos: 0,
+      qos: '0',
       persistent: true,
       authentication: {
         type: 'cert',
-        certPath: 'myCert',
-        keyPath: 'myKey'
+        certFilePath: 'myCert',
+        keyFilePath: 'myKey',
+        caFilePath: 'myCa',
+        username: '',
+        password: ''
       },
       connectTimeout: 1000,
       reconnectPeriod: 1000,
-      caPath: 'myCa',
       rejectUnauthorized: false,
       dataArrayPath: null,
       pointIdPath: 'name',
@@ -337,7 +345,7 @@ describe('SouthMQTT with Cert', () => {
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
     south = new SouthMQTT(
-      configuration,
+      connector,
       items,
       addValues,
       addFile,
@@ -356,7 +364,7 @@ describe('SouthMQTT with Cert', () => {
     south.subscribe = jest.fn();
     south.handleMessage = jest.fn();
     const expectedOptions = {
-      clientId: configuration.id,
+      clientId: connector.id,
       rejectUnauthorized: false,
       cert: 'myCert',
       key: 'myKey',
@@ -364,7 +372,7 @@ describe('SouthMQTT with Cert', () => {
       connectTimeout: 1000,
       reconnectPeriod: 1000
     };
-    expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
+    expect(mqtt.connect).toHaveBeenCalledWith(connector.settings.url, expectedOptions);
 
     await south.disconnect();
     expect(mqttStream.end).toHaveBeenCalledTimes(1);
@@ -373,7 +381,7 @@ describe('SouthMQTT with Cert', () => {
   it('should properly test connection', async () => {
     (fs.readFile as jest.Mock).mockReturnValueOnce('myCert').mockReturnValueOnce('myKey').mockReturnValueOnce('myCa');
 
-    SouthMQTT.testConnection(configuration.settings, logger, encryptionService).then(() => {});
+    SouthMQTT.testConnection(connector.settings, logger, encryptionService).then(() => {});
     await flushPromises();
 
     mqttStream.emit('connect');
@@ -387,10 +395,10 @@ describe('SouthMQTT with Cert', () => {
       connectTimeout: 1000,
       reconnectPeriod: 1000
     };
-    expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
+    expect(mqtt.connect).toHaveBeenCalledWith(connector.settings.url, expectedOptions);
     expect(mqttStream.end).toHaveBeenCalledTimes(1);
-    expect(logger.info).toHaveBeenCalledWith(`Connection test to ${configuration.settings.url} successful`);
-    expect(logger.debug).toHaveBeenCalledWith(`Disconnected from ${configuration.settings.url}`);
+    expect(logger.info).toHaveBeenCalledWith(`Connection test to ${connector.settings.url} successful`);
+    expect(logger.debug).toHaveBeenCalledWith(`Disconnected from ${connector.settings.url}`);
   });
 });
 

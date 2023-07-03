@@ -2,7 +2,7 @@ import PinoLogger from '../tests/__mocks__/logger.mock';
 import SouthServiceMock from '../tests/__mocks__/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/north-service.mock';
 
-import { OibusItemDTO, SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 
 import SouthService from '../service/south.service';
@@ -38,7 +38,7 @@ const nowDateString = '2020-02-02T02:02:02.222Z';
 
 let engine: OIBusEngine;
 
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'item1',

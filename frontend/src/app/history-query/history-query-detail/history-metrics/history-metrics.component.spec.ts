@@ -29,7 +29,7 @@ class TestComponent {
         type: 'OibText',
         label: 'Database',
         validators: [{ key: 'required' }],
-        readDisplay: true
+        displayInViewMode: true
       }
     ],
     items: {
@@ -41,7 +41,7 @@ class TestComponent {
         {
           label: 'query',
           key: 'query',
-          readDisplay: true,
+          displayInViewMode: true,
           type: 'OibText'
         }
       ]
@@ -74,7 +74,7 @@ class TestComponent {
             params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' }
           }
         ],
-        readDisplay: true
+        displayInViewMode: true
       }
     ]
   };
