@@ -3,7 +3,12 @@ import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
 import { delay, generateIntervals } from '../service/utils';
 
-import { OibusItemCommandDTO, OibusItemDTO, SouthCache, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
+import {
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthCache,
+  SouthConnectorDTO
+} from '../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { Instant, Interval } from '../../../shared/model/types';
 import pino from 'pino';
@@ -16,6 +21,7 @@ import SouthCacheService from '../service/south-cache.service';
 import { PassThrough } from 'node:stream';
 import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
 import SouthConnectorMetricsService from '../service/south-connector-metrics.service';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 
 /**
  * Class SouthConnector : provides general attributes and methods for south connectors.
@@ -38,9 +44,12 @@ import SouthConnectorMetricsService from '../service/south-connector-metrics.ser
  * All other operations (cache, store&forward, communication to North connectors) will be handled by the OIBus engine
  * and should not be taken care at the South level.
  */
-export default class SouthConnector {
+export default class SouthConnector<T extends SouthSettings = any, I extends SouthItemSettings = any> {
   public static type: string;
-  protected itemsByScanModeIds: Map<string, Map<string, OibusItemDTO>> = new Map<string, Map<string, OibusItemDTO>>();
+  protected itemsByScanModeIds: Map<string, Map<string, SouthConnectorItemDTO<I>>> = new Map<
+    string,
+    Map<string, SouthConnectorItemDTO<I>>
+  >();
   private taskJobQueue: Array<ScanModeDTO> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   private taskRunner: EventEmitter = new EventEmitter();
@@ -55,8 +64,8 @@ export default class SouthConnector {
    * Constructor for SouthConnector
    */
   constructor(
-    protected configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    protected configuration: SouthConnectorDTO<T>,
+    items: Array<SouthConnectorItemDTO<I>>,
     private engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     private engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     protected readonly encryptionService: EncryptionService,
@@ -70,7 +79,7 @@ export default class SouthConnector {
       .filter(item => item.scanModeId)
       .forEach(item => {
         if (!this.itemsByScanModeIds.get(item.scanModeId!)) {
-          this.itemsByScanModeIds.set(item.scanModeId!, new Map<string, OibusItemDTO>());
+          this.itemsByScanModeIds.set(item.scanModeId!, new Map<string, SouthConnectorItemDTO<I>>());
         }
         this.itemsByScanModeIds.get(item.scanModeId!)!.set(item.id, item);
       });
@@ -99,7 +108,10 @@ export default class SouthConnector {
   }
 
   async connect(): Promise<void> {
-    this._metricsService.updateMetrics({ ...this._metricsService.metrics, lastConnection: DateTime.now().toUTC().toISO() });
+    this._metricsService.updateMetrics({
+      ...this._metricsService.metrics,
+      lastConnection: DateTime.now().toUTC().toISO()
+    });
     if (!this.streamMode) {
       return;
     }
@@ -245,7 +257,12 @@ export default class SouthConnector {
     }
   }
 
-  async historyQueryHandler(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant, scanModeId: string): Promise<void> {
+  async historyQueryHandler(
+    items: Array<SouthConnectorItemDTO<I>>,
+    startTime: Instant,
+    endTime: Instant,
+    scanModeId: string
+  ): Promise<void> {
     this.historyIsRunning = true;
     if (this.configuration.history.maxInstantPerItem) {
       for (const [index, item] of items.entries()) {
@@ -285,7 +302,12 @@ export default class SouthConnector {
     this.historyIsRunning = false;
   }
 
-  private async queryIntervals(intervals: Array<Interval>, items: Array<OibusItemDTO>, southCache: SouthCache, startTime: Instant) {
+  private async queryIntervals(
+    intervals: Array<Interval>,
+    items: Array<SouthConnectorItemDTO<I>>,
+    southCache: SouthCache,
+    startTime: Instant
+  ) {
     this._metricsService.updateMetrics({
       ...this._metricsService.metrics,
       historyMetrics: {
@@ -413,7 +435,7 @@ export default class SouthConnector {
     this.stopping = false;
   }
 
-  addItem(item: OibusItemDTO): void {
+  addItem(item: SouthConnectorItemDTO<I>): void {
     if (item.scanModeId) {
       const scanMode = this.repositoryService.scanModeRepository.getScanMode(item.scanModeId);
       if (!scanMode) {
@@ -435,7 +457,7 @@ export default class SouthConnector {
     }
   }
 
-  updateItem(oldItem: OibusItemDTO, newItem: OibusItemCommandDTO): void {
+  updateItem(oldItem: SouthConnectorItemDTO<I>, newItem: SouthConnectorItemCommandDTO<I>): void {
     if (newItem.scanModeId) {
       const scanMode = this.repositoryService.scanModeRepository.getScanMode(newItem.scanModeId);
       if (!scanMode) {
@@ -448,7 +470,7 @@ export default class SouthConnector {
     this.addItem(oldItem);
   }
 
-  deleteItem(item: OibusItemDTO) {
+  deleteItem(item: SouthConnectorItemDTO<I>) {
     if (!item.scanModeId) {
       return;
     }

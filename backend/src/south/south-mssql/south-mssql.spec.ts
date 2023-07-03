@@ -11,7 +11,7 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import ProxyService from '../../service/proxy.service';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import mssql, { ConnectionPool } from 'mssql';
 import { DateTime } from 'luxon';
 
@@ -56,7 +56,7 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'item1',
@@ -345,14 +345,14 @@ describe('SouthMSSQL without authentication', () => {
   });
 
   it('should keep iso string format if serialization is not found', () => {
-    const result = south.formatDatetimeVariables(nowDateString, null);
+    const result = south.formatTimestampInQuery(nowDateString, null);
     expect(result).toEqual(nowDateString);
   });
 
   it('should format iso string to unix epoch ms', () => {
     (utils.formatInstant as jest.Mock).mockReturnValueOnce(DateTime.fromISO(nowDateString).toMillis());
 
-    const result = south.formatDatetimeVariables(nowDateString, {
+    const result = south.formatTimestampInQuery(nowDateString, {
       type: 'unix-epoch-ms'
     });
     expect(result).toEqual(DateTime.fromISO(nowDateString).toMillis());
@@ -361,7 +361,7 @@ describe('SouthMSSQL without authentication', () => {
   it('should format iso string to unix epoch', () => {
     (utils.formatInstant as jest.Mock).mockReturnValueOnce(Math.floor(DateTime.fromISO(nowDateString).toMillis() / 1000));
 
-    const result = south.formatDatetimeVariables(nowDateString, {
+    const result = south.formatTimestampInQuery(nowDateString, {
       type: 'unix-epoch'
     });
     expect(result).toEqual(Math.floor(DateTime.fromISO(nowDateString).toMillis() / 1000));
@@ -370,14 +370,14 @@ describe('SouthMSSQL without authentication', () => {
   it('should format iso string to iso string', () => {
     (utils.formatInstant as jest.Mock).mockReturnValueOnce(nowDateString);
 
-    const result = south.formatDatetimeVariables(nowDateString, {
+    const result = south.formatTimestampInQuery(nowDateString, {
       type: 'iso-8601-string'
     });
     expect(result).toEqual(nowDateString);
   });
 
   it('should format iso string to Date date-object epoch', () => {
-    const result = south.formatDatetimeVariables(nowDateString, {
+    const result = south.formatTimestampInQuery(nowDateString, {
       type: 'date-object',
       dateObjectType: 'Date',
       timezone: 'Europe/Paris'
@@ -386,7 +386,7 @@ describe('SouthMSSQL without authentication', () => {
   });
 
   it('should format iso string to DateTime2 date-object epoch', () => {
-    const result = south.formatDatetimeVariables(nowDateString, {
+    const result = south.formatTimestampInQuery(nowDateString, {
       type: 'date-object',
       dateObjectType: 'DateTime2',
       timezone: 'Europe/Paris'
@@ -395,7 +395,7 @@ describe('SouthMSSQL without authentication', () => {
   });
 
   it('should format iso string to DateTimeOffset date-object epoch', () => {
-    const result = south.formatDatetimeVariables(nowDateString, {
+    const result = south.formatTimestampInQuery(nowDateString, {
       type: 'date-object',
       dateObjectType: 'DateTimeOffset',
       timezone: 'Europe/Paris'
@@ -404,7 +404,7 @@ describe('SouthMSSQL without authentication', () => {
   });
 
   it('should format iso string to SmallDateTime date-object epoch', () => {
-    const result = south.formatDatetimeVariables(nowDateString, {
+    const result = south.formatTimestampInQuery(nowDateString, {
       type: 'date-object',
       dateObjectType: 'SmallDateTime',
       timezone: 'Europe/Paris'
@@ -413,7 +413,7 @@ describe('SouthMSSQL without authentication', () => {
   });
 
   it('should format iso string to DateTime date-object epoch', () => {
-    const result = south.formatDatetimeVariables(nowDateString, {
+    const result = south.formatTimestampInQuery(nowDateString, {
       type: 'date-object',
       dateObjectType: 'DateTime',
       timezone: 'Europe/Paris'

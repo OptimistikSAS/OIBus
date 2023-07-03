@@ -8,17 +8,18 @@ import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
 import { Instant, Timezone } from '../../../../shared/model/types';
 import { QueriesSubscription, TestsConnection } from '../south-interface';
+import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../../shared/model/south-settings.model';
 
 interface MessageFormatOption {
   timestampOrigin: 'payload' | 'oibus';
   timestampPath: string;
-  timestampFormat: 'string';
+  timestampFormat: string;
   timezone: Timezone;
   valuePath: string;
   pointIdPath: string;
@@ -28,14 +29,18 @@ interface MessageFormatOption {
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
  */
-export default class SouthMQTT extends SouthConnector implements QueriesSubscription, TestsConnection {
+export default class SouthMQTT
+  extends SouthConnector<SouthMQTTSettings, SouthMQTTItemSettings>
+  implements QueriesSubscription, TestsConnection
+{
   static type = manifest.id;
 
   private client: MqttClient | null = null;
-  private mqttItems: Array<OibusItemDTO> = [];
+  private mqttItems: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [];
+
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthMQTTSettings>,
+    items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -74,15 +79,17 @@ export default class SouthMQTT extends SouthConnector implements QueriesSubscrip
         await this.encryptionService.decryptText(this.configuration.settings.authentication.password)
       ).toString();
     } else if (this.configuration.settings.authentication.type === 'cert') {
-      options.cert = this.configuration.settings.authentication.certPath
-        ? await fs.readFile(path.resolve(this.configuration.settings.authentication.certPath))
+      options.cert = this.configuration.settings.authentication.certFilePath
+        ? await fs.readFile(path.resolve(this.configuration.settings.authentication.certFilePath))
         : '';
-      options.key = this.configuration.settings.authentication.keyPath
-        ? await fs.readFile(path.resolve(this.configuration.settings.authentication.keyPath))
+      options.key = this.configuration.settings.authentication.keyFilePath
+        ? await fs.readFile(path.resolve(this.configuration.settings.authentication.keyFilePath))
         : '';
-      options.ca = this.configuration.settings.caPath ? await fs.readFile(path.resolve(this.configuration.settings.caPath)) : '';
+      options.ca = this.configuration.settings.authentication.caFilePath
+        ? await fs.readFile(path.resolve(this.configuration.settings.authentication.caFilePath))
+        : '';
     }
-    if (this.configuration.settings.qos === 1 || this.configuration.settings.qos === 2) {
+    if (this.configuration.settings.qos === '1' || this.configuration.settings.qos === '2') {
       options.clean = !this.configuration.settings.persistent;
     }
 
@@ -100,11 +107,7 @@ export default class SouthMQTT extends SouthConnector implements QueriesSubscrip
     });
   }
 
-  static async testConnection(
-    settings: SouthConnectorDTO['settings'],
-    logger: pino.Logger,
-    encryptionService: EncryptionService
-  ): Promise<void> {
+  static async testConnection(settings: SouthMQTTSettings, logger: pino.Logger, encryptionService: EncryptionService): Promise<void> {
     const options: IClientOptions = {
       rejectUnauthorized: settings.rejectUnauthorized,
       reconnectPeriod: settings.reconnectPeriod,
@@ -115,11 +118,11 @@ export default class SouthMQTT extends SouthConnector implements QueriesSubscrip
       options.username = settings.authentication.username;
       options.password = Buffer.from(await encryptionService.decryptText(settings.authentication.password)).toString();
     } else if (settings.authentication.type === 'cert') {
-      options.cert = settings.authentication.certPath ? await fs.readFile(path.resolve(settings.authentication.certPath)) : '';
-      options.key = settings.authentication.keyPath ? await fs.readFile(path.resolve(settings.authentication.keyPath)) : '';
-      options.ca = settings.caPath ? await fs.readFile(path.resolve(settings.caPath)) : '';
+      options.cert = settings.authentication.certFilePath ? await fs.readFile(path.resolve(settings.authentication.certFilePath)) : '';
+      options.key = settings.authentication.keyFilePath ? await fs.readFile(path.resolve(settings.authentication.keyFilePath)) : '';
+      options.ca = settings.authentication.caFilePath ? await fs.readFile(path.resolve(settings.authentication.caFilePath)) : '';
     }
-    if (settings.qos === 1 || settings.qos === 2) {
+    if (settings.qos === '1' || settings.qos === '2') {
       options.clean = !settings.persistent;
     }
 
@@ -145,7 +148,7 @@ export default class SouthMQTT extends SouthConnector implements QueriesSubscrip
         timestampPath: this.configuration.settings.timestampPath,
         timestampOrigin: this.configuration.settings.timestampOrigin,
         timestampFormat: this.configuration.settings.timestampFormat,
-        timezone: this.configuration.settings.timezone,
+        timezone: this.configuration.settings.timestampTimezone,
         valuePath: this.configuration.settings.valuePath,
         pointIdPath: this.configuration.settings.pointIdPath,
         qualityPath: this.configuration.settings.qualityPath
@@ -188,7 +191,7 @@ export default class SouthMQTT extends SouthConnector implements QueriesSubscrip
     }
   }
 
-  async subscribe(items: Array<OibusItemDTO>): Promise<void> {
+  async subscribe(items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>): Promise<void> {
     if (!this.client) {
       this.logger.error('MQTT client could not subscribe to items: client not set');
       return;
@@ -203,7 +206,7 @@ export default class SouthMQTT extends SouthConnector implements QueriesSubscrip
     this.mqttItems = items;
   }
 
-  formatValue(data: any, topic: string, formatOptions: MessageFormatOption, items: Array<OibusItemDTO>) {
+  formatValue(data: any, topic: string, formatOptions: MessageFormatOption, items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>) {
     const { timestampPath, timestampOrigin, timestampFormat, timezone, valuePath, pointIdPath, qualityPath } = formatOptions;
     const dataPointId = this.getPointId(topic, data, pointIdPath, items);
 
@@ -226,7 +229,12 @@ export default class SouthMQTT extends SouthConnector implements QueriesSubscrip
     };
   }
 
-  getPointId(topic: string, currentData: any, pointIdPath: string, items: Array<OibusItemDTO>): string | null {
+  getPointId(
+    topic: string,
+    currentData: any,
+    pointIdPath: string,
+    items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>
+  ): string | null {
     if (pointIdPath) {
       // if the pointId is in the data
       if (!currentData[pointIdPath]) {
@@ -237,7 +245,7 @@ export default class SouthMQTT extends SouthConnector implements QueriesSubscrip
 
     // else, the pointId is in the topic
     let pointId = null;
-    const matchedPoints: Array<OibusItemDTO> = [];
+    const matchedPoints: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [];
 
     for (const item of items) {
       const matchList = this.wildcardTopic(topic, item.settings.topic);

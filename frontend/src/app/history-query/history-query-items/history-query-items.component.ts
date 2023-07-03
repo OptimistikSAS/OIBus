@@ -8,7 +8,7 @@ import { Modal, ModalService } from '../../shared/modal.service';
 import { FormControlValidationDirective } from '../../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner.component';
-import { OibusItemDTO, OibusItemManifest } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorItemManifest } from '../../../../../shared/model/south-connector.model';
 import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
@@ -45,12 +45,12 @@ const PAGE_SIZE = 20;
 })
 export class HistoryQueryItemsComponent implements OnInit {
   @Input() historyQuery: HistoryQueryDTO | null = null;
-  @Input() southConnectorItemSchema!: OibusItemManifest;
+  @Input() southConnectorItemSchema!: SouthConnectorItemManifest;
   @Input() scanModes!: Array<ScanModeDTO>;
 
-  allItems: Array<OibusItemDTO> = [];
-  private filteredItems: Array<OibusItemDTO> = [];
-  displayedItems: Page<OibusItemDTO> = emptyPage();
+  allItems: Array<SouthConnectorItemDTO> = [];
+  private filteredItems: Array<SouthConnectorItemDTO> = [];
+  displayedItems: Page<SouthConnectorItemDTO> = emptyPage();
   displaySettings: Array<OibFormControl> = [];
 
   searchControl = this.fb.control(null as string | null);
@@ -88,11 +88,11 @@ export class HistoryQueryItemsComponent implements OnInit {
     this.displayedItems = this.createPage(pageNumber);
   }
 
-  private createPage(pageNumber: number): Page<OibusItemDTO> {
+  private createPage(pageNumber: number): Page<SouthConnectorItemDTO> {
     return createPageFromArray(this.filteredItems, PAGE_SIZE, pageNumber);
   }
 
-  filter(items: Array<OibusItemDTO>): Array<OibusItemDTO> {
+  filter(items: Array<SouthConnectorItemDTO>): Array<SouthConnectorItemDTO> {
     const searchText = this.searchControl.value;
     if (!searchText) {
       return items;
@@ -103,7 +103,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   /**
    * Open a modal to edit a South item
    */
-  editItem(southItem: OibusItemDTO) {
+  editItem(southItem: SouthConnectorItemDTO) {
     if (this.historyQuery) {
       const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
       const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
@@ -137,7 +137,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   /**
    * Deletes a parser by its ID and refreshes the list
    */
-  deleteItem(item: OibusItemDTO) {
+  deleteItem(item: SouthConnectorItemDTO) {
     if (this.historyQuery) {
       this.confirmationService
         .confirm({
@@ -151,7 +151,7 @@ export class HistoryQueryItemsComponent implements OnInit {
     }
   }
 
-  duplicateItem(item: OibusItemDTO) {
+  duplicateItem(item: SouthConnectorItemDTO) {
     if (this.historyQuery) {
       const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
       const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;

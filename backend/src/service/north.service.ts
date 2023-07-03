@@ -11,7 +11,7 @@ import NorthAmazonS3 from '../north/north-amazon-s3/north-amazon-s3';
 import NorthFileWriter from '../north/north-file-writer/north-file-writer';
 import NorthOIConnect from '../north/north-oiconnect/north-oiconnect';
 
-const northList: Array<typeof NorthConnector> = [
+const northList: Array<typeof NorthConnector<any>> = [
   NorthConsole,
   NorthOIAnalytics,
   NorthOIConnect,

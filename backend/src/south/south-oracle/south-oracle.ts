@@ -10,14 +10,15 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { DateTimeField, Instant, Serialization } from '../../../../shared/model/types';
+import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { DateTime } from 'luxon';
+import { SouthOracleItemSettings, SouthOracleSettings } from '../../../../shared/model/south-settings.model';
 
 let oracledb: {
   outFormat: any;
@@ -37,13 +38,16 @@ import('oracledb')
 /**
  * Class SouthOracle - Retrieve data from Oracle databases and send them to the cache as CSV files.
  */
-export default class SouthOracle extends SouthConnector implements QueriesHistory, TestsConnection {
+export default class SouthOracle
+  extends SouthConnector<SouthOracleSettings, SouthOracleItemSettings>
+  implements QueriesHistory, TestsConnection
+{
   static type = manifest.id;
 
   private readonly tmpFolder: string;
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthOracleSettings>,
+    items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -76,11 +80,7 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
     await super.start();
   }
 
-  static async testConnection(
-    settings: SouthConnectorDTO['settings'],
-    logger: pino.Logger,
-    encryptionService: EncryptionService
-  ): Promise<void> {
+  static async testConnection(settings: SouthOracleSettings, logger: pino.Logger, encryptionService: EncryptionService): Promise<void> {
     if (!oracledb) {
       throw new Error('oracledb library not loaded');
     }
@@ -159,7 +159,7 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
     let updatedStartTime = startTime;
 
     for (const item of items) {
@@ -173,24 +173,29 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField: DateTimeField = item.settings.dateTimeFields.find((element: DateTimeField) => element.field === key);
+            const datetimeField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.fieldName === key);
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
-              const entryDate = convertDateTimeToInstant(value, datetimeField.datetimeFormat);
+              const entryDate = convertDateTimeToInstant(value, datetimeField);
               if (datetimeField.useAsReference) {
                 if (entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
                 }
               }
-              formattedEntry[key] = formatInstant(entryDate, item.settings.serialization.dateTimeOutputFormat);
+              formattedEntry[key] = formatInstant(entryDate, {
+                type: 'string',
+                format: item.settings.serialization.outputTimestampFormat,
+                timezone: item.settings.serialization.outputTimezone,
+                locale: 'en-En'
+              });
             }
           });
           return formattedEntry;
         });
         await persistResults(
           formattedResult,
-          item.settings.serialization as Serialization,
+          item.settings.serialization,
           this.configuration.name,
           this.tmpFolder,
           this.addFile.bind(this),
@@ -210,7 +215,7 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
   /**
    * Apply the SQL query to the target Oracle database
    */
-  async queryData(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
+  async queryData(item: SouthConnectorItemDTO<SouthOracleItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
     if (!oracledb) {
       throw new Error('oracledb library not loaded');
     }
@@ -221,9 +226,9 @@ export default class SouthOracle extends SouthConnector implements QueriesHistor
       connectString: `${this.configuration.settings.host}:${this.configuration.settings.port}/${this.configuration.settings.database}`
     };
 
-    const datetimeSerialization = item.settings.dateTimeFields.find((serialization: DateTimeField) => serialization.useAsReference);
-    const oracleStartTime = formatInstant(startTime, datetimeSerialization.datetimeFormat);
-    const oracleEndTime = formatInstant(endTime, datetimeSerialization.datetimeFormat);
+    const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference) || null;
+    const oracleStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);
+    const oracleEndTime = referenceTimestampField == null ? endTime : formatInstant(endTime, referenceTimestampField);
     logQuery(item.settings.query, oracleStartTime, oracleEndTime, this.logger);
 
     let connection;

@@ -1,6 +1,6 @@
 import { Instant } from '../../../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { OibusItemDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../../shared/model/south-connector.model';
 import { formatInstant } from '../../../service/utils';
 
 interface OIATimeValues {
@@ -70,7 +70,10 @@ const checkDataFormat = (resultElement: OIATimeValues) => {
  * Return the formatted results flattened for easier access
  * (into csv files for example) and the latestDateRetrieved in ISO String format
  */
-export default (item: OibusItemDTO, httpResult: Array<OIATimeValues>): { formattedResult: Array<any>; maxInstant: Instant } => {
+export default (
+  item: SouthConnectorItemDTO<any>,
+  httpResult: Array<OIATimeValues>
+): { formattedResult: Array<any>; maxInstant: Instant } => {
   if (!Array.isArray(httpResult)) {
     throw Error('Bad data: expect OIAnalytics time values to be an array');
   }
@@ -85,7 +88,7 @@ export default (item: OibusItemDTO, httpResult: Array<OIATimeValues>): { formatt
       formattedData.push({
         pointId: element.data!.reference,
         unit: element.unit!.label,
-        timestamp: formatInstant(resultInstant, { type: 'iso-8601-string' }),
+        timestamp: formatInstant(resultInstant, { type: 'iso-string' }),
         value: currentValue
       });
       if (resultInstant > maxInstant) {

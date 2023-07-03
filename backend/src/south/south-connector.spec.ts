@@ -3,7 +3,7 @@ import PinoLogger from '../tests/__mocks__/logger.mock';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
 
-import { OibusItemDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
@@ -97,7 +97,7 @@ const manifest: SouthConnectorManifest = {
   }
 } as SouthConnectorManifest;
 
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'item1',
@@ -559,7 +559,7 @@ describe('SouthConnector without stream mode', () => {
   });
 
   it('should properly add item', () => {
-    const item: OibusItemDTO = { id: 'id1', scanModeId: 'scanModeId', connectorId: 'southId1', name: 'my item', settings: {} };
+    const item: SouthConnectorItemDTO = { id: 'id1', scanModeId: 'scanModeId', connectorId: 'southId1', name: 'my item', settings: {} };
     south.createCronJob = jest.fn();
 
     (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValueOnce(null).mockReturnValueOnce({
@@ -579,7 +579,7 @@ describe('SouthConnector without stream mode', () => {
   });
 
   it('should properly update item', () => {
-    const item: OibusItemDTO = { id: 'id1', scanModeId: 'scanModeId', connectorId: 'southId1', name: 'my item', settings: {} };
+    const item: SouthConnectorItemDTO = { id: 'id1', scanModeId: 'scanModeId', connectorId: 'southId1', name: 'my item', settings: {} };
     south.addItem = jest.fn();
     south.deleteItem = jest.fn();
 
@@ -600,9 +600,9 @@ describe('SouthConnector without stream mode', () => {
   });
 
   it('should properly delete item', () => {
-    const item1: OibusItemDTO = { id: 'id1', scanModeId: 'scanModeId3', connectorId: 'southId1', name: 'my item', settings: {} };
-    const item2: OibusItemDTO = { id: 'id2', scanModeId: 'scanModeId3', connectorId: 'southId1', name: 'my item', settings: {} };
-    const item3: OibusItemDTO = { id: 'id3', scanModeId: 'scanModeId1', connectorId: 'southId1', name: 'my item', settings: {} };
+    const item1: SouthConnectorItemDTO = { id: 'id1', scanModeId: 'scanModeId3', connectorId: 'southId1', name: 'my item', settings: {} };
+    const item2: SouthConnectorItemDTO = { id: 'id2', scanModeId: 'scanModeId3', connectorId: 'southId1', name: 'my item', settings: {} };
+    const item3: SouthConnectorItemDTO = { id: 'id3', scanModeId: 'scanModeId1', connectorId: 'southId1', name: 'my item', settings: {} };
 
     (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValue({
       id: 'scanModeId3',

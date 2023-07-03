@@ -10,13 +10,12 @@ import { EngineSettingsCommandDTO, LOG_LEVELS, LogLevel } from '../../../../../s
 import { NotificationService } from '../../shared/notification.service';
 import { formDirectives } from '../../shared/form-directives';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { OibAuthComponent } from '../../shared/form/oib-auth/oib-auth.component';
 import { BoxComponent } from '../../shared/box/box.component';
 
 @Component({
   selector: 'oib-edit-engine',
   standalone: true,
-  imports: [TranslateModule, ...formDirectives, RouterLink, NgForOf, NgIf, SaveButtonComponent, OibAuthComponent, BoxComponent],
+  imports: [TranslateModule, ...formDirectives, RouterLink, NgForOf, NgIf, SaveButtonComponent, BoxComponent],
   templateUrl: './edit-engine.component.html',
   styleUrls: ['./edit-engine.component.scss']
 })

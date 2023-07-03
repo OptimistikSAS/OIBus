@@ -12,7 +12,7 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import ProxyService from '../../service/proxy.service';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import mysql from 'mysql2/promise';
 
 jest.mock('mysql2/promise');
@@ -54,7 +54,7 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'item1',

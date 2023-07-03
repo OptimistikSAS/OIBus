@@ -34,9 +34,24 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }],
       readDisplay: true
     },
-    { key: 'authentication', type: 'OibAuthentication', label: 'Authentication', newRow: true, authTypes: ['api-key'] },
     {
-      key: 'proxy',
+      key: 'accessKey',
+      type: 'OibText',
+      label: 'Access key',
+      newRow: true,
+      validators: [{ key: 'required' }],
+      readDisplay: true
+    },
+    {
+      key: 'secretKey',
+      type: 'OibSecret',
+      label: 'Secret key',
+      newRow: true,
+      validators: [{ key: 'required' }],
+      readDisplay: true
+    },
+    {
+      key: 'proxyId',
       type: 'OibProxy',
       label: 'Proxy',
       newRow: true,

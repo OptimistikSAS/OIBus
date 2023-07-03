@@ -6,7 +6,7 @@ import DatabaseMock from '../../tests/__mocks__/database.mock';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 
 import pino from 'pino';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import ProxyService from '../../service/proxy.service';
@@ -62,7 +62,7 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'item1',
@@ -216,7 +216,7 @@ describe('SouthOIConnect with Basic auth', () => {
       .mockReturnValue([]);
     const rawMethod = jest
       .fn()
-      .mockImplementationOnce((item: OibusItemDTO, httpResults: Array<any>) => ({
+      .mockImplementationOnce((item: SouthConnectorItemDTO, httpResults: Array<any>) => ({
         formattedResult: httpResults,
         maxInstant: '2020-03-01T00:00:00.000Z'
       }))

@@ -127,9 +127,9 @@ const manifest: SouthConnectorManifest = {
       },
       {
         key: 'multiplierCoefficient',
-        type: 'OibText',
+        type: 'OibNumber',
         label: 'Multiplier Coefficient',
-        defaultValue: '1',
+        defaultValue: 1,
         validators: [{ key: 'required' }],
         readDisplay: false
       }

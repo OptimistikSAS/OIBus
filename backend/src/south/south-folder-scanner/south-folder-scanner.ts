@@ -5,27 +5,31 @@ import SouthConnector from '../south-connector';
 import { compress } from '../../service/utils';
 import manifest from './manifest';
 
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import { QueriesFile, TestsConnection } from '../south-interface';
+import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
 
 const FOLDER_SCANNER_TABLE = 'folder_scanner';
 
 /**
  * Class SouthFolderScanner - Retrieve file from a local or remote folder
  */
-export default class SouthFolderScanner extends SouthConnector implements QueriesFile, TestsConnection {
+export default class SouthFolderScanner
+  extends SouthConnector<SouthFolderScannerSettings, SouthFolderScannerItemSettings>
+  implements QueriesFile, TestsConnection
+{
   static type = manifest.id;
 
   /**
    * Constructor for SouthFolderScanner
    */
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthFolderScannerSettings>,
+    items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -47,17 +51,22 @@ export default class SouthFolderScanner extends SouthConnector implements Querie
       baseFolder,
       streamMode
     );
-
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
     if (this.configuration.settings.preserveFiles) {
       this.cacheService.cacheRepository.database
-        .prepare(`CREATE TABLE IF NOT EXISTS ${FOLDER_SCANNER_TABLE} (filename TEXT PRIMARY KEY, mtime_ms INTEGER);`)
+        .prepare(
+          `CREATE TABLE IF NOT EXISTS ${FOLDER_SCANNER_TABLE}
+           (
+             filename TEXT PRIMARY KEY,
+             mtime_ms INTEGER
+           );`
+        )
         .run();
     }
   }
 
   static async testConnection(
-    settings: SouthConnectorDTO['settings'],
+    settings: SouthFolderScannerSettings,
     logger: pino.Logger,
     _encryptionService: EncryptionService
   ): Promise<void> {
@@ -81,7 +90,7 @@ export default class SouthFolderScanner extends SouthConnector implements Querie
   /**
    * Read the raw file and rewrite it to another file in the folder archive
    */
-  async fileQuery(items: Array<OibusItemDTO>): Promise<void> {
+  async fileQuery(items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>>): Promise<void> {
     const inputFolder = path.resolve(this.configuration.settings.inputFolder);
     this.logger.trace(`Reading "${inputFolder}" directory`);
     // List files in the inputFolder
@@ -152,15 +161,21 @@ export default class SouthFolderScanner extends SouthConnector implements Querie
   }
 
   getModifiedTime(filename: string): number {
-    const query = `SELECT mtime_ms AS mtimeMs FROM ${FOLDER_SCANNER_TABLE} WHERE filename = ?`;
-    const result: { mtimeMs: string } | null = this.cacheService.cacheRepository.database.prepare(query).get(filename) as {
+    const query = `SELECT mtime_ms AS mtimeMs
+                   FROM ${FOLDER_SCANNER_TABLE}
+                   WHERE filename = ?`;
+    const result: {
+      mtimeMs: string;
+    } | null = this.cacheService.cacheRepository.database.prepare(query).get(filename) as {
       mtimeMs: string;
     } | null;
     return result ? parseFloat(result.mtimeMs) : 0;
   }
 
   updateModifiedTime(filename: string, mtimeMs: number): void {
-    const query = `INSERT INTO ${FOLDER_SCANNER_TABLE} (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`;
+    const query = `INSERT INTO ${FOLDER_SCANNER_TABLE} (filename, mtime_ms)
+                   VALUES (?, ?)
+                   ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`;
     this.cacheService.cacheRepository.database.prepare(query).run(filename, mtimeMs, mtimeMs);
   }
 

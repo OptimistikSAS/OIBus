@@ -2,8 +2,9 @@ import ProxyService from './proxy.service';
 import EncryptionService from './encryption.service';
 import RepositoryService from './repository.service';
 
-import { OibusItemDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
+import { SouthItemSettings } from '../../../shared/model/south-settings.model';
 
 export default class HistoryQueryService {
   constructor(
@@ -20,7 +21,7 @@ export default class HistoryQueryService {
     return this.repositoryService.historyQueryRepository.getHistoryQueries();
   }
 
-  getItems(historyQueryId: string): Array<OibusItemDTO> {
+  getItems<I extends SouthItemSettings>(historyQueryId: string): Array<SouthConnectorItemDTO<I>> {
     return this.repositoryService.historyQueryItemRepository.getHistoryItems(historyQueryId);
   }
 

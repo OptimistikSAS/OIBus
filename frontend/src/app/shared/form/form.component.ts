@@ -7,7 +7,6 @@ import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { OibCodeBlockComponent } from './oib-code-block/oib-code-block.component';
 import { OibProxyComponent } from './oib-proxy/oib-proxy.component';
-import { OibAuthComponent } from './oib-auth/oib-auth.component';
 import { Timezone } from '../../../../../shared/model/types';
 import { Observable } from 'rxjs';
 import { inMemoryTypeahead } from '../typeahead';
@@ -32,7 +31,6 @@ declare namespace Intl {
     NgForOf,
     OibCodeBlockComponent,
     OibProxyComponent,
-    OibAuthComponent,
     NgbTypeahead,
     TranslateModule,
     DatetimeFieldsComponent

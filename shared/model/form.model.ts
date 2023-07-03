@@ -1,6 +1,4 @@
 import { ScanModeDTO } from './scan-mode.model';
-import { Authentication, AuthenticationType } from './engine.model';
-import { DateTimeField } from './types';
 
 export const FORM_COMPONENT_TYPES = [
   'OibText',
@@ -11,12 +9,10 @@ export const FORM_COMPONENT_TYPES = [
   'OibCodeBlock',
   'OibCheckbox',
   'OibScanMode',
-  'OibScanMode',
   'OibTimezone',
   'OibProxy',
-  'OibDateTimeFields',
-  'OibAuthentication',
-  'FormGroup'
+  'OibFormArray',
+  'OibFormGroup'
 ] as const;
 export type FormComponentType = (typeof FORM_COMPONENT_TYPES)[number];
 
@@ -136,18 +132,13 @@ export interface OibProxyFormControl extends BaseOibFormControl<string> {
   type: 'OibProxy';
 }
 
-export interface OibAuthenticationFormControl extends BaseOibFormControl<Authentication> {
-  type: 'OibAuthentication';
-  authTypes: Array<AuthenticationType>;
-}
-
-export interface OibDateTimeFieldsFormControl extends BaseOibFormControl<Array<DateTimeField>> {
-  type: 'OibDateTimeFields';
-  allowedDateObjectTypes: Array<string>;
+export interface OibFormArray extends BaseOibFormControl<void> {
+  type: 'OibFormArray';
+  content: Array<OibFormControl>;
 }
 
 export interface OibFormGroup extends BaseOibFormControl<void> {
-  type: 'FormGroup';
+  type: 'OibFormGroup';
   content: Array<OibFormControl>;
 }
 
@@ -162,6 +153,5 @@ export type OibFormControl =
   | OibScanModeFormControl
   | OibTimezoneFormControl
   | OibProxyFormControl
-  | OibDateTimeFieldsFormControl
-  | OibAuthenticationFormControl
+  | OibFormArray
   | OibFormGroup;

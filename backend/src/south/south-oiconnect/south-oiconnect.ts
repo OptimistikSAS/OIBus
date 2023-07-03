@@ -7,26 +7,31 @@ import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import { formatQueryParams, httpGetWithBody, parsers } from './utils';
 import { formatInstant, createFolder, persistResults } from '../../service/utils';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { DateTimeField, Instant, Serialization } from '../../../../shared/model/types';
+import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
+import { SouthOIConnectItemSettings, SouthOIConnectSettings } from '../../../../shared/model/south-settings.model';
 
 /**
  * Class SouthOIConnect - Retrieve data from REST API
  * The results are parsed through the available parsers
  */
-export default class SouthOIConnect extends SouthConnector implements QueriesHistory, TestsConnection {
+export default class SouthOIConnect
+  extends SouthConnector<SouthOIConnectSettings, SouthOIConnectItemSettings>
+  implements QueriesHistory, TestsConnection
+{
   static type = manifest.id;
 
   private readonly tmpFolder: string;
+
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthOIConnectSettings>,
+    items: Array<SouthConnectorItemDTO<SouthOIConnectItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -60,11 +65,7 @@ export default class SouthOIConnect extends SouthConnector implements QueriesHis
   }
 
   // TODO: method needs to be implemented
-  static async testConnection(
-    settings: SouthConnectorDTO['settings'],
-    logger: pino.Logger,
-    _encryptionService: EncryptionService
-  ): Promise<void> {
+  static async testConnection(settings: SouthOIConnectSettings, logger: pino.Logger, _encryptionService: EncryptionService): Promise<void> {
     logger.trace(`Testing connection`);
     throw new Error('TODO: method needs to be implemented');
   }
@@ -72,7 +73,11 @@ export default class SouthOIConnect extends SouthConnector implements QueriesHis
   /**
    * Retrieve result from a REST API write them into a CSV file and send it to the Engine.
    */
-  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemDTO<SouthOIConnectItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant> {
     let updatedStartTime = startTime;
 
     for (const item of items) {
@@ -90,7 +95,7 @@ export default class SouthOIConnect extends SouthConnector implements QueriesHis
 
         await persistResults(
           formattedResult,
-          item.settings.serialization as Serialization,
+          item.settings.serialization,
           this.configuration.name,
           this.tmpFolder,
           this.addFile.bind(this),
@@ -104,7 +109,7 @@ export default class SouthOIConnect extends SouthConnector implements QueriesHis
     return updatedStartTime;
   }
 
-  async queryData(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<any> {
+  async queryData(item: SouthConnectorItemDTO<SouthOIConnectItemSettings>, startTime: Instant, endTime: Instant): Promise<any> {
     const headers: Record<string, string> = {};
     switch (this.configuration.settings.authentication.type) {
       case 'basic': {
@@ -117,8 +122,8 @@ export default class SouthOIConnect extends SouthConnector implements QueriesHis
         break;
       }
       case 'api-key': {
-        headers[this.configuration.settings.authentication.key] = await this.encryptionService.decryptText(
-          this.configuration.settings.authentication.secret
+        headers[this.configuration.settings.authentication.apiKeyHeader] = await this.encryptionService.decryptText(
+          this.configuration.settings.authentication.apiKey
         );
         break;
       }
@@ -130,17 +135,24 @@ export default class SouthOIConnect extends SouthConnector implements QueriesHis
         break;
     }
 
-    const referenceTimestampField = item.settings.serialization.datetimeSerialization.find(
-      (serialization: DateTimeField) => serialization.useAsReference
-    );
-    const apiStartTime = formatInstant(startTime, referenceTimestampField.datetimeFormat);
-    const apiEndTime = formatInstant(endTime, referenceTimestampField.datetimeFormat);
+    const apiStartTime = formatInstant(startTime, {
+      type: 'string',
+      timezone: item.settings.timezone,
+      format: item.settings.timestampFormat,
+      locale: item.settings.locale
+    });
+    const apiEndTime = formatInstant(endTime, {
+      type: 'string',
+      timezone: item.settings.timezone,
+      format: item.settings.timestampFormat,
+      locale: item.settings.locale
+    });
 
     // Some API such as SLIMS uses a body with GET. It's not standard and requires a specific implementation
     if (item.settings.requestMethod === 'GET' && item.settings.body) {
-      const bodyToSend = item.settings.body.replace(/@StartTime/g, apiStartTime).replace(/@EndTime/g, apiEndTime);
+      const bodyToSend = item.settings.body.replace(/@StartTime/g, `${apiStartTime}`).replace(/@EndTime/g, `${apiEndTime}`);
       headers['Content-Type'] = 'application/json';
-      headers['Content-Length'] = bodyToSend.length;
+      headers['Content-Length'] = `${bodyToSend.length}`;
       const requestOptions = {
         method: item.settings.requestMethod,
         agent: this.configuration.settings.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
@@ -164,14 +176,15 @@ export default class SouthOIConnect extends SouthConnector implements QueriesHis
       agent: this.configuration.settings.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
       timeout: item.settings.requestTimeout
     };
+    // TODO @burgerni look into this
     const requestUrl = `${this.configuration.settings.url}:${this.configuration.settings.port}${item.settings.endpoint}${formatQueryParams(
       startTime,
       endTime,
-      item.settings.queryParams
+      (item.settings as any).queryParams
     )}`;
 
     if (item.settings.body) {
-      fetchOptions.body = item.settings.body.replace(/@StartTime/g, apiStartTime).replace(/@EndTime/g, apiEndTime);
+      fetchOptions.body = item.settings.body.replace(/@StartTime/g, `${apiStartTime}`).replace(/@EndTime/g, `${apiEndTime}`);
       fetchOptions.headers['Content-Type'] = 'application/json';
       fetchOptions.headers['Content-Length'] = fetchOptions.body.length;
     }

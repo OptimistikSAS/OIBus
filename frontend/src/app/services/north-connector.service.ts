@@ -36,16 +36,16 @@ export class NorthConnectorService {
   /**
    * Get the North connectors
    */
-  list(): Observable<Array<NorthConnectorDTO>> {
-    return this.http.get<Array<NorthConnectorDTO>>(`/api/north`);
+  list(): Observable<Array<NorthConnectorDTO<any>>> {
+    return this.http.get<Array<NorthConnectorDTO<any>>>(`/api/north`);
   }
 
   /**
    * Get one North connector
    * @param northId - the ID of the North connector
    */
-  getNorthConnector(northId: string): Observable<NorthConnectorDTO> {
-    return this.http.get<NorthConnectorDTO>(`/api/north/${northId}`);
+  getNorthConnector(northId: string): Observable<NorthConnectorDTO<any>> {
+    return this.http.get<NorthConnectorDTO<any>>(`/api/north/${northId}`);
   }
 
   /**
@@ -60,8 +60,8 @@ export class NorthConnectorService {
    * Create a new North connector
    * @param command - the new North connector
    */
-  createNorthConnector(command: NorthConnectorCommandDTO): Observable<NorthConnectorDTO> {
-    return this.http.post<NorthConnectorDTO>(`/api/north`, command);
+  createNorthConnector(command: NorthConnectorCommandDTO<any>): Observable<NorthConnectorDTO<any>> {
+    return this.http.post<NorthConnectorDTO<any>>(`/api/north`, command);
   }
 
   /**
@@ -69,7 +69,7 @@ export class NorthConnectorService {
    * @param northId - the ID of the North connector
    * @param command - the new values of the selected North connector
    */
-  updateNorthConnector(northId: string, command: NorthConnectorCommandDTO): Observable<void> {
+  updateNorthConnector(northId: string, command: NorthConnectorCommandDTO<any>): Observable<void> {
     return this.http.put<void>(`/api/north/${northId}`, command);
   }
 

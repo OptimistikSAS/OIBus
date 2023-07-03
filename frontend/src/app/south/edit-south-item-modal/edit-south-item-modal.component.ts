@@ -5,7 +5,12 @@ import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
-import { OibusItemCommandDTO, OibusItemDTO, OibusItemManifest, SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
+import {
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorItemManifest,
+  SouthConnectorDTO
+} from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { NgForOf, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
@@ -52,10 +57,10 @@ export class EditSouthItemModalComponent {
   acceptSubscription = false;
 
   scanModes: Array<ScanModeDTO> = [];
-  southItemSchema: OibusItemManifest | null = null;
+  southItemSchema: SouthConnectorItemManifest | null = null;
   southItemRows: Array<Array<OibFormControl>> = [];
 
-  item: OibusItemDTO | null = null;
+  item: SouthConnectorItemDTO | null = null;
 
   form: FormGroup<{
     name: FormControl<string>;
@@ -71,7 +76,7 @@ export class EditSouthItemModalComponent {
 
   constructor(private modal: NgbActiveModal, private fb: NonNullableFormBuilder, private southConnectorService: SouthConnectorService) {}
 
-  private createForm(item: OibusItemDTO | null) {
+  private createForm(item: SouthConnectorItemDTO | null) {
     this.form = this.fb.group({
       name: ['', Validators.required],
       scanModeId: this.fb.control<string | null>(null, Validators.required),
@@ -93,7 +98,7 @@ export class EditSouthItemModalComponent {
   /**
    * Prepares the component for creation.
    */
-  prepareForCreation(southConnector: SouthConnectorDTO, southItemSchema: OibusItemManifest, scanModes: Array<ScanModeDTO>) {
+  prepareForCreation(southConnector: SouthConnectorDTO, southItemSchema: SouthConnectorItemManifest, scanModes: Array<ScanModeDTO>) {
     this.mode = 'create';
     this.southConnector = southConnector;
     this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
@@ -109,9 +114,9 @@ export class EditSouthItemModalComponent {
    */
   prepareForEdition(
     southConnector: SouthConnectorDTO,
-    southItemSchema: OibusItemManifest,
+    southItemSchema: SouthConnectorItemManifest,
     scanModes: Array<ScanModeDTO>,
-    southItem: OibusItemDTO
+    southItem: SouthConnectorItemDTO
   ) {
     this.mode = 'edit';
     this.item = southItem;
@@ -127,11 +132,11 @@ export class EditSouthItemModalComponent {
    */
   prepareForCopy(
     southConnector: SouthConnectorDTO,
-    southItemSchema: OibusItemManifest,
+    southItemSchema: SouthConnectorItemManifest,
     scanModes: Array<ScanModeDTO>,
-    southItem: OibusItemDTO
+    southItem: SouthConnectorItemDTO
   ) {
-    this.item = JSON.parse(JSON.stringify(southItem)) as OibusItemDTO;
+    this.item = JSON.parse(JSON.stringify(southItem)) as SouthConnectorItemDTO;
     this.item.name = `${southItem.name}-copy`;
     this.mode = 'create';
     this.southConnector = southConnector;
@@ -152,13 +157,13 @@ export class EditSouthItemModalComponent {
 
     const formValue = this.form!.value;
 
-    const command: OibusItemCommandDTO = {
+    const command: SouthConnectorItemCommandDTO = {
       name: formValue.name!,
       scanModeId: formValue.scanModeId || 'subscription',
       settings: formValue.settings!
     };
 
-    let obs: Observable<OibusItemDTO>;
+    let obs: Observable<SouthConnectorItemDTO>;
     if (this.mode === 'create') {
       obs = this.southConnectorService.createItem(this.southConnector!.id, command);
     } else {

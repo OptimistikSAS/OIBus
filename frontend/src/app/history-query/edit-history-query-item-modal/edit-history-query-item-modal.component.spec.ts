@@ -4,7 +4,11 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
-import { OibusItemCommandDTO, OibusItemDTO, OibusItemManifest } from '../../../../../shared/model/south-connector.model';
+import {
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorItemManifest
+} from '../../../../../shared/model/south-connector.model';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -36,11 +40,11 @@ describe('EditHistoryQueryItemModalComponent', () => {
   let fakeActiveModal: NgbActiveModal;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
 
-  const southItemSchema: OibusItemManifest = {
+  const southItemSchema: SouthConnectorItemManifest = {
     scanMode: { subscriptionOnly: false, acceptSubscription: true },
     settings: [],
     schema: {} as unknown
-  } as OibusItemManifest;
+  } as SouthConnectorItemManifest;
 
   const historyQuery: HistoryQueryDTO = {
     id: 'historyId',
@@ -116,12 +120,12 @@ describe('EditHistoryQueryItemModalComponent', () => {
       const createdSouthItem = {
         id: 'id1',
         connectorId: 'southId1'
-      } as OibusItemDTO;
+      } as SouthConnectorItemDTO;
       historyQueryService.createItem.and.returnValue(of(createdSouthItem));
 
       tester.save.click();
 
-      const expectedCommand: OibusItemCommandDTO = {
+      const expectedCommand: SouthConnectorItemCommandDTO = {
         name: 'MyName',
         scanModeId: null,
         settings: {}
@@ -138,7 +142,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
   });
 
   describe('copy mode', () => {
-    const item: OibusItemDTO = {
+    const item: SouthConnectorItemDTO = {
       id: 'id1',
       name: 'myName',
       connectorId: 'historyId',
@@ -157,12 +161,12 @@ describe('EditHistoryQueryItemModalComponent', () => {
       const createdSouthItem = {
         id: 'id1',
         connectorId: 'historyId'
-      } as OibusItemDTO;
+      } as SouthConnectorItemDTO;
       historyQueryService.createItem.and.returnValue(of(createdSouthItem));
 
       tester.save.click();
 
-      const expectedCommand: OibusItemCommandDTO = {
+      const expectedCommand: SouthConnectorItemCommandDTO = {
         name: 'MyName-2',
         scanModeId: null,
         settings: {}
@@ -174,7 +178,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
   });
 
   describe('edit mode', () => {
-    const southItem: OibusItemDTO = {
+    const southItem: SouthConnectorItemDTO = {
       id: 'id1',
       name: 'myName',
       connectorId: 'southId1',
@@ -206,7 +210,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
       tester.name.fillWith('South Item 1 (updated)');
       tester.save.click();
 
-      const expectedCommand: OibusItemCommandDTO = {
+      const expectedCommand: SouthConnectorItemCommandDTO = {
         name: 'South Item 1 (updated)',
         scanModeId: null,
         settings: {}

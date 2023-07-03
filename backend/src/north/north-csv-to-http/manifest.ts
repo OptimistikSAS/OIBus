@@ -51,7 +51,7 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }],
       newRow: true
     },
-    { key: 'proxy', type: 'OibProxy', label: 'Proxy', newRow: true }
+    { key: 'proxyId', type: 'OibProxy', label: 'Proxy', newRow: true }
   ]
 };
 

@@ -11,12 +11,13 @@ import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import * as process from 'process';
 import { HandlesFile } from '../north-interface';
+import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
 
-export default class NorthAzureBlob extends NorthConnector implements HandlesFile {
+export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSettings> implements HandlesFile {
   static type = manifest.id;
 
   constructor(
-    configuration: NorthConnectorDTO,
+    configuration: NorthConnectorDTO<NorthAzureBlobSettings>,
     encryptionService: EncryptionService,
     proxyService: ProxyService,
     repositoryService: RepositoryService,

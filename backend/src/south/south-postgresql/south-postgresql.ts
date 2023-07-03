@@ -12,25 +12,29 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { DateTimeField, Instant, Serialization } from '../../../../shared/model/types';
+import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { DateTime } from 'luxon';
+import { SouthPostgreSQLItemSettings, SouthPostgreSQLSettings } from '../../../../shared/model/south-settings.model';
 
 /**
  * Class SouthPostgreSQL - Retrieve data from PostgreSQL databases and send them to the cache as CSV files.
  */
-export default class SouthPostgreSQL extends SouthConnector implements QueriesHistory, TestsConnection {
+export default class SouthPostgreSQL
+  extends SouthConnector<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
+  implements QueriesHistory, TestsConnection
+{
   static type = manifest.id;
 
   private readonly tmpFolder: string;
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthPostgreSQLSettings>,
+    items: Array<SouthConnectorItemDTO<SouthPostgreSQLItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -63,11 +67,7 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
     await super.start();
   }
 
-  static async testConnection(
-    settings: SouthConnectorDTO['settings'],
-    logger: pino.Logger,
-    encryptionService: EncryptionService
-  ): Promise<void> {
+  static async testConnection(settings: SouthPostgreSQLSettings, logger: pino.Logger, encryptionService: EncryptionService): Promise<void> {
     const config: ClientConfig = {
       host: settings.host,
       port: settings.port,
@@ -143,7 +143,11 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemDTO<SouthPostgreSQLItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant> {
     let updatedStartTime = startTime;
 
     for (const item of items) {
@@ -157,20 +161,20 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField: DateTimeField = item.settings.dateTimeFields.find((element: DateTimeField) => element.field === key);
+            const datetimeField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.fieldName === key);
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
-              const entryDate = convertDateTimeToInstant(value, datetimeField.datetimeFormat);
+              const entryDate = convertDateTimeToInstant(value, datetimeField);
               if (datetimeField.useAsReference) {
                 if (entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
                 }
               }
               formattedEntry[key] = formatInstant(entryDate, {
-                type: 'specific-string',
-                format: item.settings.serialization.outputDateTimeFormat,
-                timezone: item.settings.serialization.timezone,
+                type: 'string',
+                format: item.settings.serialization.outputTimestampFormat,
+                timezone: item.settings.serialization.outputTimezone,
                 locale: 'en-En'
               });
             }
@@ -179,7 +183,7 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
         });
         await persistResults(
           formattedResult,
-          item.settings.serialization as Serialization,
+          item.settings.serialization,
           this.configuration.name,
           this.tmpFolder,
           this.addFile.bind(this),
@@ -199,7 +203,7 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
   /**
    * Apply the SQL query to the target PostgreSQL database
    */
-  async queryData(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
+  async queryData(item: SouthConnectorItemDTO<SouthPostgreSQLItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2');
 
     const config: ClientConfig = {
@@ -212,9 +216,9 @@ export default class SouthPostgreSQL extends SouthConnector implements QueriesHi
       connectionTimeoutMillis: this.configuration.settings.connectionTimeout
     };
 
-    const datetimeSerialization = item.settings.dateTimeFields.find((serialization: DateTimeField) => serialization.useAsReference);
-    const postgresqlStartTime = formatInstant(startTime, datetimeSerialization.datetimeFormat);
-    const postgresqlEndTime = formatInstant(endTime, datetimeSerialization.datetimeFormat);
+    const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference);
+    const postgresqlStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);
+    const postgresqlEndTime = referenceTimestampField == null ? endTime : formatInstant(endTime, referenceTimestampField);
     logQuery(item.settings.query, postgresqlStartTime, postgresqlEndTime, this.logger);
 
     let connection;

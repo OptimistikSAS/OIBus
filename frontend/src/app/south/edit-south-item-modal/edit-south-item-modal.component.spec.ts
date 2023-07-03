@@ -5,7 +5,12 @@ import { fakeAsync, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { OibusItemCommandDTO, OibusItemDTO, OibusItemManifest, SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
+import {
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorItemManifest,
+  SouthConnectorDTO
+} from '../../../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
@@ -54,11 +59,11 @@ describe('EditSouthItemModalComponent', () => {
     settings: []
   };
 
-  const southItemSchema: OibusItemManifest = {
+  const southItemSchema: SouthConnectorItemManifest = {
     scanMode: { subscriptionOnly: false, acceptSubscription: true },
     settings: [],
     schema: []
-  } as OibusItemManifest;
+  } as SouthConnectorItemManifest;
   const scanModes: Array<ScanModeDTO> = [
     {
       id: 'scanModeId1',
@@ -119,12 +124,12 @@ describe('EditSouthItemModalComponent', () => {
       const createdSouthItem = {
         id: 'id1',
         connectorId: 'southId1'
-      } as OibusItemDTO;
+      } as SouthConnectorItemDTO;
       southConnectorService.createItem.and.returnValue(of(createdSouthItem));
 
       tester.save.click();
 
-      const expectedCommand: OibusItemCommandDTO = {
+      const expectedCommand: SouthConnectorItemCommandDTO = {
         name: 'MyName',
         scanModeId: 'scanModeId2',
         settings: {}
@@ -141,7 +146,7 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   describe('copy mode', () => {
-    const southItem: OibusItemDTO = {
+    const southItem: SouthConnectorItemDTO = {
       id: 'id1',
       name: 'myName',
       connectorId: 'southId1',
@@ -162,12 +167,12 @@ describe('EditSouthItemModalComponent', () => {
       const createdSouthItem = {
         id: 'id1',
         connectorId: 'southId1'
-      } as OibusItemDTO;
+      } as SouthConnectorItemDTO;
       southConnectorService.createItem.and.returnValue(of(createdSouthItem));
 
       tester.save.click();
 
-      const expectedCommand: OibusItemCommandDTO = {
+      const expectedCommand: SouthConnectorItemCommandDTO = {
         name: 'MyName-2',
         scanModeId: 'scanModeId2',
         settings: {}
@@ -179,7 +184,7 @@ describe('EditSouthItemModalComponent', () => {
   });
 
   describe('edit mode', () => {
-    const southItem: OibusItemDTO = {
+    const southItem: SouthConnectorItemDTO = {
       id: 'id1',
       name: 'myName',
       connectorId: 'southId1',
@@ -213,7 +218,7 @@ describe('EditSouthItemModalComponent', () => {
       tester.scanMode.selectLabel('Subscribe');
       tester.save.click();
 
-      const expectedCommand: OibusItemCommandDTO = {
+      const expectedCommand: SouthConnectorItemCommandDTO = {
         name: 'South Item 1 (updated)',
         scanModeId: 'scanModeId1',
         settings: {}

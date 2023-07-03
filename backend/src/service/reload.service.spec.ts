@@ -15,8 +15,8 @@ import NorthService from './north.service';
 import OIBusEngine from '../engine/oibus-engine';
 import { EngineSettingsDTO, LogSettings } from '../../../shared/model/engine.model';
 import {
-  OibusItemCommandDTO,
-  OibusItemDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
   SouthConnectorCommandDTO,
   SouthConnectorDTO
 } from '../../../shared/model/south-connector.model';
@@ -103,12 +103,12 @@ describe('reload service', () => {
       .mockReturnValueOnce(null)
       .mockReturnValueOnce({ id: 'southId' });
 
-    await service.onUpdateSouthSettings('southId', command as SouthConnectorCommandDTO);
+    await service.onUpdateSouth('southId', command as SouthConnectorCommandDTO);
     expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
     expect(repositoryService.southConnectorRepository.updateSouthConnector).toHaveBeenCalledWith('southId', command);
     expect(oibusEngine.startSouth).not.toHaveBeenCalled();
 
-    await service.onUpdateSouthSettings('southId', command as SouthConnectorCommandDTO);
+    await service.onUpdateSouth('southId', command as SouthConnectorCommandDTO);
     expect(oibusEngine.startSouth).toHaveBeenCalledWith('southId', { id: 'southId' });
   });
 
@@ -133,7 +133,7 @@ describe('reload service', () => {
     const command = {};
     const southItem = { id: 'southItemId', settings: {} };
     (repositoryService.southItemRepository.createSouthItem as jest.Mock).mockReturnValueOnce(southItem);
-    const result = await service.onCreateSouthItem('southId', command as OibusItemCommandDTO);
+    const result = await service.onCreateSouthItem('southId', command as SouthConnectorItemCommandDTO);
     expect(oibusEngine.addItemToSouth).toHaveBeenCalledWith('southId', southItem);
     expect(result).toEqual(southItem);
   });
@@ -141,7 +141,7 @@ describe('reload service', () => {
   it('should update south item', async () => {
     const southItem = { id: 'southItemId', settings: {} };
     const command = {};
-    await service.onUpdateSouthItemsSettings('southId', southItem as OibusItemDTO, command as OibusItemCommandDTO);
+    await service.onUpdateSouthItemsSettings('southId', southItem as SouthConnectorItemDTO, command as SouthConnectorItemCommandDTO);
     expect(repositoryService.southItemRepository.updateSouthItem).toHaveBeenCalledWith('southItemId', command);
     expect(oibusEngine.updateItemInSouth).toHaveBeenCalledWith('southId', southItem, command);
   });
@@ -213,9 +213,9 @@ describe('reload service', () => {
 
   it('should create history query', async () => {
     const command = {};
-    const southItems: Array<OibusItemDTO> = [
-      { id: 'southItemId1', name: 'southItem1', scanModeId: 'scanModeId1', connectorId: 'southId', settings: {} } as OibusItemDTO,
-      { id: 'southItemId2', name: 'southItem2', scanModeId: 'scanModeId1', connectorId: 'southId', settings: {} } as OibusItemDTO
+    const southItems: Array<SouthConnectorItemDTO> = [
+      { id: 'southItemId1', name: 'southItem1', scanModeId: 'scanModeId1', connectorId: 'southId', settings: {} } as SouthConnectorItemDTO,
+      { id: 'southItemId2', name: 'southItem2', scanModeId: 'scanModeId1', connectorId: 'southId', settings: {} } as SouthConnectorItemDTO
     ];
     (repositoryService.historyQueryRepository.createHistoryQuery as jest.Mock).mockReturnValueOnce({ id: 'historyId' });
     const result = await service.onCreateHistoryQuery(command as HistoryQueryCommandDTO, southItems);
@@ -252,7 +252,7 @@ describe('reload service', () => {
     const historyItem = { id: 'southItemId', settings: {} };
     (repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValueOnce({ id: 'historyId' });
     (repositoryService.historyQueryItemRepository.createHistoryItem as jest.Mock).mockReturnValueOnce(historyItem);
-    const result = await service.onCreateHistoryItem('historyId', command as OibusItemCommandDTO);
+    const result = await service.onCreateHistoryItem('historyId', command as SouthConnectorItemCommandDTO);
     expect(repositoryService.historyQueryItemRepository.createHistoryItem).toHaveBeenCalledWith('historyId', command);
     expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith('historyId', true);
     expect(historyQueryEngine.addItemToHistoryQuery).toHaveBeenCalledWith('historyId', historyItem);
@@ -264,7 +264,7 @@ describe('reload service', () => {
     const command = {};
     (repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValueOnce({ id: 'historyId' });
     (repositoryService.historyQueryItemRepository.getHistoryItem as jest.Mock).mockReturnValueOnce(historyItem);
-    await service.onUpdateHistoryItemsSettings('historyId', historyItem as OibusItemDTO, command as OibusItemCommandDTO);
+    await service.onUpdateHistoryItemsSettings('historyId', historyItem as SouthConnectorItemDTO, command as SouthConnectorItemCommandDTO);
     expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith('historyId', true);
     expect(repositoryService.historyQueryItemRepository.updateHistoryItem).toHaveBeenCalledWith('historyItemId', command);
     expect(repositoryService.historyQueryItemRepository.getHistoryItem).toHaveBeenCalledWith('historyItemId');

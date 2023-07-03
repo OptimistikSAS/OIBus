@@ -10,15 +10,17 @@ import { createFolder } from '../service/utils';
 import path from 'node:path';
 
 import {
-  OibusItemCommandDTO,
-  OibusItemDTO,
   SouthConnectorCommandDTO,
-  SouthConnectorDTO
+  SouthConnectorDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO
 } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
 import { TestsConnection } from '../south/south-interface';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 const CACHE_FOLDER = './cache/data-stream';
 
@@ -164,11 +166,11 @@ export default class OIBusEngine extends BaseEngine {
     this.northConnectors.set(settings.id, north);
   }
 
-  addItemToSouth(southId: string, item: OibusItemDTO): void {
+  addItemToSouth(southId: string, item: SouthConnectorItemDTO): void {
     this.southConnectors.get(southId)?.addItem(item);
   }
 
-  deleteItemFromSouth(southId: string, item: OibusItemDTO): void {
+  deleteItemFromSouth(southId: string, item: SouthConnectorItemDTO): void {
     this.southConnectors.get(southId)?.deleteItem(item);
   }
 
@@ -176,7 +178,7 @@ export default class OIBusEngine extends BaseEngine {
     this.southConnectors.get(southId)?.deleteAllItems();
   }
 
-  updateItemInSouth(southId: string, oldItem: OibusItemDTO, newItem: OibusItemCommandDTO): void {
+  updateItemInSouth(southId: string, oldItem: SouthConnectorItemDTO, newItem: SouthConnectorItemCommandDTO): void {
     this.southConnectors.get(southId)?.updateItem(oldItem, newItem);
   }
 

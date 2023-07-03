@@ -2,6 +2,7 @@ import { generateRandomId } from '../service/utils';
 import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { SCAN_MODE_TABLE } from './scan-mode.repository';
 import { Database } from 'better-sqlite3';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 export const NORTH_CONNECTOR_TABLE = 'north_connector';
 
@@ -10,6 +11,7 @@ export const NORTH_CONNECTOR_TABLE = 'north_connector';
  */
 export default class NorthConnectorRepository {
   private readonly database: Database;
+
   constructor(database: Database) {
     this.database = database;
     const query =
@@ -188,7 +190,9 @@ export default class NorthConnectorRepository {
    * Delete a North Connector by its ID
    */
   deleteNorthConnector(id: string): void {
-    const query = `DELETE FROM ${NORTH_CONNECTOR_TABLE} WHERE id = ?;`;
+    const query = `DELETE
+                   FROM ${NORTH_CONNECTOR_TABLE}
+                   WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 }

@@ -44,13 +44,71 @@ const manifest: NorthConnectorManifest = {
       readDisplay: true
     },
     { key: 'timeout', type: 'OibNumber', label: 'Timeout', newRow: true },
-    { key: 'proxy', type: 'OibProxy', label: 'Proxy', newRow: true },
+    { key: 'proxyId', type: 'OibProxy', label: 'Proxy', newRow: true },
     {
       key: 'authentication',
-      type: 'OibAuthentication',
+      type: 'OibFormGroup',
       label: 'Authentication',
+      class: 'col',
       newRow: true,
-      authTypes: ['none', 'basic', 'bearer', 'api-key']
+      readDisplay: false,
+      content: [
+        {
+          key: 'type',
+          type: 'OibSelect',
+          label: 'Type',
+          options: ['none', 'basic', 'bearer', 'api-key'],
+          defaultValue: 'none',
+          newRow: true,
+          readDisplay: false
+        },
+        {
+          key: 'username',
+          type: 'OibText',
+          label: 'Username',
+          defaultValue: '',
+          validators: [{ key: 'required' }],
+          conditionalDisplay: { field: 'type', values: ['basic'] },
+          readDisplay: false
+        },
+        {
+          key: 'password',
+          type: 'OibSecret',
+          label: 'Password',
+          defaultValue: '',
+          validators: [{ key: 'required' }],
+          conditionalDisplay: { field: 'type', values: ['basic'] },
+          readDisplay: false
+        },
+        {
+          key: 'token',
+          type: 'OibSecret',
+          label: 'Token',
+          defaultValue: '',
+          conditionalDisplay: { field: 'type', values: ['bearer'] },
+          validators: [{ key: 'required' }],
+          newRow: false,
+          readDisplay: false
+        },
+        {
+          key: 'apiKeyHeader',
+          type: 'OibSecret',
+          label: 'Api key header',
+          defaultValue: '',
+          conditionalDisplay: { field: 'type', values: ['api-key'] },
+          newRow: false,
+          readDisplay: false
+        },
+        {
+          key: 'apiKey',
+          type: 'OibSecret',
+          label: 'Api key',
+          defaultValue: '',
+          conditionalDisplay: { field: 'type', values: ['api-key'] },
+          newRow: false,
+          readDisplay: false
+        }
+      ]
     }
   ]
 };

@@ -6,7 +6,7 @@ import { HistoryQueryService } from './history-query.service';
 import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
 import { toPage } from '../shared/test-utils';
 import { Page } from '../../../../shared/model/types';
-import { OibusItemCommandDTO, OibusItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemCommandDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { DownloadService } from './download.service';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -110,8 +110,8 @@ describe('HistoryQueryService', () => {
   });
 
   it('should search History query items', () => {
-    let expectedItems: Page<OibusItemDTO> | null = null;
-    const southConnectorItems = toPage<OibusItemDTO>([
+    let expectedItems: Page<SouthConnectorItemDTO> | null = null;
+    const southConnectorItems = toPage<SouthConnectorItemDTO>([
       { id: 'itemId', name: 'MySouthItem', connectorId: 'id1', scanModeId: 'scanModeId', settings: {} }
     ]);
 
@@ -133,7 +133,7 @@ describe('HistoryQueryService', () => {
 
   it('should create a History query item', () => {
     let done = false;
-    const command: OibusItemCommandDTO = {
+    const command: SouthConnectorItemCommandDTO = {
       name: 'myPointId',
       scanModeId: 'scanModeId',
       settings: {}
@@ -148,7 +148,7 @@ describe('HistoryQueryService', () => {
 
   it('should update a History query item', () => {
     let done = false;
-    const command: OibusItemCommandDTO = {
+    const command: SouthConnectorItemCommandDTO = {
       name: 'myPointId',
       scanModeId: 'scanModeId',
       settings: {}

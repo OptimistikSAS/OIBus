@@ -3,7 +3,7 @@ import ads from 'ads-client';
 
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { DateTime } from 'luxon';
 import { Instant } from '../../../../shared/model/types';
 import EncryptionService from '../../service/encryption.service';
@@ -11,6 +11,7 @@ import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { QueriesLastPoint, TestsConnection } from '../south-interface';
+import { SouthADSItemSettings, SouthADSSettings } from '../../../../shared/model/south-settings.model';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -25,15 +26,15 @@ interface ADSOptions {
 /**
  * Class SouthADS - Provides instruction for TwinCAT ADS client connection
  */
-export default class SouthADS extends SouthConnector implements QueriesLastPoint, TestsConnection {
+export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSItemSettings> implements QueriesLastPoint, TestsConnection {
   static type = manifest.id;
 
   private client: ads.Client | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthADSSettings>,
+    items: Array<SouthConnectorItemDTO<SouthADSItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -126,7 +127,8 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
       default:
         if (subItems.length > 0) {
           // It is an ADS structure object (as json)
-          const structure = this.configuration.settings.structureFiltering.find((element: any) => element.name === dataType);
+          // TODO @burgerni look into this
+          const structure = (this.configuration.settings as any).structureFiltering.find((element: any) => element.name === dataType);
           if (structure) {
             const parsedValues = subItems
               .filter(item => structure.fields === '*' || structure.fields.split(',').includes(item.name))
@@ -169,7 +171,7 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
     return [];
   }
 
-  async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
+  async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthADSItemSettings>>): Promise<void> {
     const timestamp = DateTime.now().toUTC().toISO()!;
     try {
       const results = await Promise.all(items.map(item => this.readAdsSymbol(item.name, timestamp)));
@@ -244,11 +246,7 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
   }
 
   // TODO: method needs to be implemented
-  static async testConnection(
-    settings: SouthConnectorDTO['settings'],
-    logger: pino.Logger,
-    _encryptionService: EncryptionService
-  ): Promise<void> {
+  static async testConnection(settings: SouthADSSettings, logger: pino.Logger, _encryptionService: EncryptionService): Promise<void> {
     logger.trace(`Testing connection`);
     throw new Error('TODO: method needs to be implemented');
   }

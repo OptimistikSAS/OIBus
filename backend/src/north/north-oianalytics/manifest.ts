@@ -19,15 +19,22 @@ const manifest: NorthConnectorManifest = {
       readDisplay: true
     },
     {
-      key: 'authentication',
-      type: 'OibAuthentication',
-      label: 'Authentication',
+      key: 'accessKey',
+      type: 'OibText',
+      label: 'Access key',
+      validators: [{ key: 'required' }],
+      readDisplay: true
+    },
+    {
+      key: 'secretKey',
+      type: 'OibSecret',
+      label: 'Secret key',
       newRow: true,
-      authTypes: ['none', 'basic'],
-      defaultValue: { type: 'basic', password: '', username: '' }
+      validators: [{ key: 'required' }],
+      readDisplay: true
     },
     { key: 'timeout', type: 'OibNumber', label: 'Timeout', newRow: true, defaultValue: 30_000 },
-    { key: 'proxy', type: 'OibProxy', label: 'Proxy' },
+    { key: 'proxyId', type: 'OibProxy', label: 'Proxy' },
     {
       key: 'acceptUnauthorized',
       type: 'OibCheckbox',

@@ -11,26 +11,30 @@ import {
   logQuery,
   persistResults
 } from '../../service/utils';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { DateTimeField, Instant, Serialization } from '../../../../shared/model/types';
+import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { DateTime } from 'luxon';
+import { SouthMySQLItemSettings, SouthMySQLSettings } from '../../../../shared/model/south-settings.model';
 
 /**
  * Class SouthMySQL - Retrieve data from MySQL / MariaDB databases and send them to the cache as CSV files.
  */
-export default class SouthMySQL extends SouthConnector implements QueriesHistory, TestsConnection {
+export default class SouthMySQL
+  extends SouthConnector<SouthMySQLSettings, SouthMySQLItemSettings>
+  implements QueriesHistory, TestsConnection
+{
   static type = manifest.id;
 
   private readonly tmpFolder: string;
 
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthMySQLSettings>,
+    items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -63,11 +67,7 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
     await super.start();
   }
 
-  static async testConnection(
-    settings: SouthConnectorDTO['settings'],
-    logger: pino.Logger,
-    encryptionService: EncryptionService
-  ): Promise<void> {
+  static async testConnection(settings: SouthMySQLSettings, logger: pino.Logger, encryptionService: EncryptionService): Promise<void> {
     const config: mysql.ConnectionOptions = {
       host: settings.host,
       port: settings.port,
@@ -114,14 +114,14 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
     try {
       [tables] = await connection.execute<mysql.RowDataPacket[]>(`
         SELECT TABLES.TABLE_NAME AS table_name,
-              (SELECT GROUP_CONCAT(CONCAT(COLUMN_NAME, '(', DATA_TYPE, ')') SEPARATOR ', ')
-              FROM information_schema.COLUMNS
-              WHERE TABLE_SCHEMA = DATABASE()
-                AND TABLE_NAME = TABLES.TABLE_NAME
-              GROUP BY TABLE_SCHEMA) AS 'columns'
+               (SELECT GROUP_CONCAT(CONCAT(COLUMN_NAME, '(', DATA_TYPE, ')') SEPARATOR ', ')
+                FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = TABLES.TABLE_NAME
+                GROUP BY TABLE_SCHEMA) AS 'columns'
         FROM information_schema.TABLES AS TABLES
         WHERE table_schema = DATABASE()
-        AND table_type = 'BASE TABLE'
+          AND table_type = 'BASE TABLE'
       `);
     } catch (error: any) {
       await connection.end();
@@ -146,7 +146,7 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into a CSV file and send it to the engine.
    */
-  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
     let updatedStartTime = startTime;
 
     for (const item of items) {
@@ -160,24 +160,29 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField: DateTimeField = item.settings.dateTimeFields.find((element: DateTimeField) => element.field === key);
+            const datetimeField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.fieldName === key) || null;
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
-              const entryDate = convertDateTimeToInstant(value, datetimeField.datetimeFormat);
+              const entryDate = convertDateTimeToInstant(value, datetimeField);
               if (datetimeField.useAsReference) {
                 if (entryDate > updatedStartTime) {
                   updatedStartTime = entryDate;
                 }
               }
-              formattedEntry[key] = formatInstant(entryDate, item.settings.serialization.dateTimeOutputFormat);
+              formattedEntry[key] = formatInstant(entryDate, {
+                type: 'string',
+                format: item.settings.serialization.outputTimestampFormat,
+                timezone: item.settings.serialization.outputTimezone,
+                locale: 'en-En'
+              });
             }
           });
           return formattedEntry;
         });
         await persistResults(
           formattedResult,
-          item.settings.serialization as Serialization,
+          item.settings.serialization,
           this.configuration.name,
           this.tmpFolder,
           this.addFile.bind(this),
@@ -197,7 +202,7 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
   /**
    * Apply the SQL query to the target MySQL / MariaDB database
    */
-  async queryData(item: OibusItemDTO, startTime: Instant, endTime: Instant): Promise<Array<any>> {
+  async queryData(item: SouthConnectorItemDTO<SouthMySQLItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
     const config = {
       host: this.configuration.settings.host,
       port: this.configuration.settings.port,
@@ -208,9 +213,9 @@ export default class SouthMySQL extends SouthConnector implements QueriesHistory
       timezone: 'Z'
     };
 
-    const datetimeSerialization = item.settings.dateTimeFields.find((serialization: DateTimeField) => serialization.useAsReference);
-    const mysqlStartTime = formatInstant(startTime, datetimeSerialization.datetimeFormat);
-    const mysqlEndTime = formatInstant(endTime, datetimeSerialization.datetimeFormat);
+    const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference) || null;
+    const mysqlStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);
+    const mysqlEndTime = referenceTimestampField == null ? endTime : formatInstant(endTime, referenceTimestampField);
     logQuery(item.settings.query, mysqlStartTime, mysqlEndTime, this.logger);
 
     let connection;

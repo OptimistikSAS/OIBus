@@ -44,15 +44,69 @@ const manifest: SouthConnectorManifest = {
       validators: [{ key: 'required' }],
       readDisplay: true
     },
-    { key: 'authentication', type: 'OibAuthentication', label: 'Authentication', newRow: true, authTypes: ['none', 'basic', 'cert'] },
     {
-      key: 'caFile',
-      type: 'OibText',
-      label: 'CA File',
-      defaultValue: '',
-      conditionalDisplay: { field: 'authentication', values: ['cert'] },
-      newRow: false,
-      readDisplay: false
+      key: 'authentication',
+      type: 'OibFormGroup',
+      label: 'Authentication',
+      class: 'col',
+      newRow: true,
+      readDisplay: false,
+      content: [
+        {
+          key: 'type',
+          type: 'OibSelect',
+          label: 'Type',
+          options: ['none', 'basic', 'cert'],
+          defaultValue: 'none',
+          newRow: true,
+          readDisplay: false
+        },
+        {
+          key: 'username',
+          type: 'OibText',
+          label: 'Username',
+          defaultValue: '',
+          validators: [{ key: 'required' }],
+          conditionalDisplay: { field: 'type', values: ['basic'] },
+          readDisplay: false
+        },
+        {
+          key: 'password',
+          type: 'OibSecret',
+          label: 'Password',
+          defaultValue: '',
+          validators: [{ key: 'required' }],
+          conditionalDisplay: { field: 'type', values: ['basic'] },
+          readDisplay: false
+        },
+        {
+          key: 'certFilePath',
+          type: 'OibText',
+          label: 'Cert file path',
+          defaultValue: '',
+          conditionalDisplay: { field: 'type', values: ['cert'] },
+          validators: [{ key: 'required' }],
+          newRow: false,
+          readDisplay: false
+        },
+        {
+          key: 'keyFilePath',
+          type: 'OibText',
+          label: 'Key file path',
+          defaultValue: '',
+          conditionalDisplay: { field: 'type', values: ['cert'] },
+          newRow: false,
+          readDisplay: false
+        },
+        {
+          key: 'caFilePath',
+          type: 'OibText',
+          label: 'CA file path',
+          defaultValue: '',
+          newRow: false,
+          readDisplay: false
+        }
+      ]
     },
     {
       key: 'rejectUnauthorized',

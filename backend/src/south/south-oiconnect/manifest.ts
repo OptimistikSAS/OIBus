@@ -40,10 +40,68 @@ const manifest: SouthConnectorManifest = {
     },
     {
       key: 'authentication',
-      type: 'OibAuthentication',
+      type: 'OibFormGroup',
       label: 'Authentication',
+      class: 'col',
       newRow: true,
-      authTypes: ['none', 'basic', 'bearer', 'api-key']
+      readDisplay: false,
+      content: [
+        {
+          key: 'type',
+          type: 'OibSelect',
+          label: 'Type',
+          options: ['none', 'basic', 'bearer', 'api-key'],
+          defaultValue: 'none',
+          newRow: true,
+          readDisplay: false
+        },
+        {
+          key: 'username',
+          type: 'OibText',
+          label: 'Username',
+          defaultValue: '',
+          validators: [{ key: 'required' }],
+          conditionalDisplay: { field: 'type', values: ['basic'] },
+          readDisplay: false
+        },
+        {
+          key: 'password',
+          type: 'OibSecret',
+          label: 'Password',
+          defaultValue: '',
+          validators: [{ key: 'required' }],
+          conditionalDisplay: { field: 'type', values: ['basic'] },
+          readDisplay: false
+        },
+        {
+          key: 'token',
+          type: 'OibSecret',
+          label: 'Token',
+          defaultValue: '',
+          conditionalDisplay: { field: 'type', values: ['bearer'] },
+          validators: [{ key: 'required' }],
+          newRow: false,
+          readDisplay: false
+        },
+        {
+          key: 'apiKeyHeader',
+          type: 'OibSecret',
+          label: 'Api key header',
+          defaultValue: '',
+          conditionalDisplay: { field: 'type', values: ['api-key'] },
+          newRow: false,
+          readDisplay: false
+        },
+        {
+          key: 'apiKey',
+          type: 'OibSecret',
+          label: 'Api key',
+          defaultValue: '',
+          conditionalDisplay: { field: 'type', values: ['api-key'] },
+          newRow: false,
+          readDisplay: false
+        }
+      ]
     }
   ],
   items: {
@@ -93,6 +151,89 @@ const manifest: SouthConnectorManifest = {
         contentType: 'json',
         defaultValue: '',
         newRow: true
+      },
+      {
+        key: 'timestampFormat',
+        label: 'Format',
+        type: 'OibText',
+        validators: [{ key: 'required' }],
+        conditionalDisplay: { field: 'type', values: ['string'] },
+        newRow: true
+      },
+      {
+        key: 'timezone',
+        label: 'Timezone',
+        type: 'OibTimezone',
+        validators: [{ key: 'required' }],
+        conditionalDisplay: { field: 'type', values: ['string'] }
+      },
+      {
+        key: 'locale',
+        label: 'Locale',
+        defaultValue: 'en-En',
+        type: 'OibText',
+        validators: [{ key: 'required' }],
+        conditionalDisplay: { field: 'type', values: ['string'] }
+      },
+      {
+        key: 'serialization',
+        type: 'OibFormGroup',
+        label: 'Serialization',
+        class: 'col',
+        newRow: true,
+        readDisplay: false,
+        content: [
+          {
+            key: 'type',
+            type: 'OibSelect',
+            label: 'Type',
+            options: ['csv', 'json'],
+            defaultValue: 'csv',
+            newRow: true,
+            readDisplay: false
+          },
+          {
+            key: 'filename',
+            type: 'OibText',
+            label: 'Filename',
+            defaultValue: 'sql.csv',
+            newRow: false,
+            readDisplay: false
+          },
+          {
+            key: 'delimiter',
+            type: 'OibSelect',
+            label: 'Delimiter',
+            options: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
+            defaultValue: ',',
+            newRow: false,
+            readDisplay: false
+          },
+          {
+            key: 'compression',
+            type: 'OibCheckbox',
+            label: 'Compression',
+            defaultValue: false,
+            newRow: false,
+            readDisplay: false
+          },
+          {
+            key: 'outputTimestampFormat',
+            type: 'OibText',
+            label: 'Output date time format',
+            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
+            newRow: true,
+            readDisplay: false
+          },
+          {
+            key: 'outputTimezone',
+            type: 'OibTimezone',
+            label: 'Timezone',
+            defaultValue: 'Europe/Paris',
+            newRow: false,
+            readDisplay: false
+          }
+        ]
       }
     ]
   }

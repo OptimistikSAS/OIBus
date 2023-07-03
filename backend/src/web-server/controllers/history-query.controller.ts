@@ -3,9 +3,9 @@ import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO, HistoryQueryDTO }
 import JoiValidator from '../../validators/joi.validator';
 
 import {
-  OibusItemCommandDTO,
-  OibusItemDTO,
-  OibusItemSearchParam,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorItemSearchParam,
   SouthConnectorManifest
 } from '../../../../shared/model/south-connector.model';
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
@@ -94,7 +94,7 @@ export default class HistoryQueryController extends AbstractController {
     };
 
     let southManifest: SouthConnectorManifest | undefined;
-    let southItems: Array<OibusItemDTO> = [];
+    let southItems: Array<SouthConnectorItemDTO> = [];
     if (ctx.request.body.southType) {
       southManifest = this.southManifests.find(manifest => manifest.id === ctx.request.body!.southType);
       command.southType = ctx.request.body.southType;
@@ -216,8 +216,8 @@ export default class HistoryQueryController extends AbstractController {
     ctx.noContent();
   };
 
-  async searchHistoryQueryItems(ctx: KoaContext<void, Page<OibusItemDTO>>): Promise<void> {
-    const searchParams: OibusItemSearchParam = {
+  async searchHistoryQueryItems(ctx: KoaContext<void, Page<SouthConnectorItemDTO>>): Promise<void> {
+    const searchParams: SouthConnectorItemSearchParam = {
       page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
       name: (ctx.query.name as string) || null
     };
@@ -225,12 +225,12 @@ export default class HistoryQueryController extends AbstractController {
     ctx.ok(southItems);
   }
 
-  async listItems(ctx: KoaContext<void, Array<OibusItemDTO>>): Promise<void> {
+  async listItems(ctx: KoaContext<void, Array<SouthConnectorItemDTO>>): Promise<void> {
     const items = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems(ctx.params.historyQueryId);
     ctx.ok(items);
   }
 
-  async getHistoryQueryItem(ctx: KoaContext<void, OibusItemDTO>): Promise<void> {
+  async getHistoryQueryItem(ctx: KoaContext<void, SouthConnectorItemDTO>): Promise<void> {
     const southItem = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem(ctx.params.id);
     if (southItem) {
       ctx.ok(southItem);
@@ -239,7 +239,7 @@ export default class HistoryQueryController extends AbstractController {
     }
   }
 
-  async createHistoryQueryItem(ctx: KoaContext<OibusItemCommandDTO, OibusItemDTO>): Promise<void> {
+  async createHistoryQueryItem(ctx: KoaContext<SouthConnectorItemCommandDTO, SouthConnectorItemDTO>): Promise<void> {
     try {
       const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
       if (!historyQuery) {
@@ -251,7 +251,7 @@ export default class HistoryQueryController extends AbstractController {
         return ctx.throw(404, 'South manifest not found');
       }
 
-      const command: OibusItemCommandDTO = ctx.request.body!;
+      const command: SouthConnectorItemCommandDTO = ctx.request.body!;
       await this.validator.validateSettings(southManifest.items.settings, command?.settings);
 
       const historyQueryItem = await ctx.app.reloadService.onCreateHistoryItem(ctx.params.historyQueryId, command);
@@ -261,7 +261,7 @@ export default class HistoryQueryController extends AbstractController {
     }
   }
 
-  async updateHistoryQueryItem(ctx: KoaContext<OibusItemCommandDTO, void>): Promise<void> {
+  async updateHistoryQueryItem(ctx: KoaContext<SouthConnectorItemCommandDTO, void>): Promise<void> {
     try {
       const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
       if (!historyQuery) {
@@ -275,7 +275,7 @@ export default class HistoryQueryController extends AbstractController {
 
       const historyQueryItem = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItem(ctx.params.id);
       if (historyQueryItem) {
-        const command: OibusItemCommandDTO = ctx.request.body!;
+        const command: SouthConnectorItemCommandDTO = ctx.request.body!;
         await this.validator.validateSettings(southManifest.items.settings, command?.settings);
         await ctx.app.reloadService.onUpdateHistoryItemsSettings(ctx.params.historyQueryId, historyQueryItem, command);
         ctx.noContent();

@@ -9,7 +9,7 @@ import {
 } from 'node-opcua-client';
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
 
-import { SouthConnectorDTO, OibusItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { Instant } from '../../../../shared/model/types';
 
 import manifest from './manifest';
@@ -26,6 +26,7 @@ import { DateTime } from 'luxon';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { QueriesHistory, TestsConnection } from '../south-interface';
+import { SouthOPCUAHAItemSettings, SouthOPCUAHASettings } from '../../../../shared/model/south-settings.model';
 
 const AGGREGATE_TYPES = ['raw', 'count', 'max', 'min', 'avg'];
 type AggregateType = (typeof AGGREGATE_TYPES)[number];
@@ -36,7 +37,10 @@ type Resampling = (typeof RESAMPLINGS)[number];
 /**
  * Class SouthOPCUAHA - Connect to an OPCUA server in HA (Historian Access) mode
  */
-export default class SouthOPCUAHA extends SouthConnector implements QueriesHistory, TestsConnection {
+export default class SouthOPCUAHA
+  extends SouthConnector<SouthOPCUAHASettings, SouthOPCUAHAItemSettings>
+  implements QueriesHistory, TestsConnection
+{
   static type = manifest.id;
 
   private clientCertificateManager: OPCUACertificateManager | null = null;
@@ -45,8 +49,8 @@ export default class SouthOPCUAHA extends SouthConnector implements QueriesHisto
   private disconnecting = false;
 
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthOPCUAHASettings>,
+    items: Array<SouthConnectorItemDTO<SouthOPCUAHAItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -90,11 +94,7 @@ export default class SouthOPCUAHA extends SouthConnector implements QueriesHisto
   }
 
   // TODO: method needs to be implemented
-  static async testConnection(
-    settings: SouthConnectorDTO['settings'],
-    logger: pino.Logger,
-    _encryptionService: EncryptionService
-  ): Promise<void> {
+  static async testConnection(settings: SouthOPCUAHASettings, logger: pino.Logger, _encryptionService: EncryptionService): Promise<void> {
     logger.trace(`Testing connection`);
     throw new Error('TODO: method needs to be implemented');
   }
@@ -129,8 +129,8 @@ export default class SouthOPCUAHA extends SouthConnector implements QueriesHisto
           };
           break;
         case 'cert':
-          const certContent = await fs.readFile(path.resolve(this.configuration.settings.authentication.certPath));
-          const privateKeyContent = await fs.readFile(path.resolve(this.configuration.settings.authentication.keyPath));
+          const certContent = await fs.readFile(path.resolve(this.configuration.settings.authentication.certFilePath));
+          const privateKeyContent = await fs.readFile(path.resolve(this.configuration.settings.authentication.keyFilePath));
           userIdentity = {
             type: UserTokenType.Certificate,
             certificateData: certContent,
@@ -154,14 +154,27 @@ export default class SouthOPCUAHA extends SouthConnector implements QueriesHisto
   /**
    * Get values from the OPCUA server between startTime and endTime and write them into the cache.
    */
-  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(
+    items: Array<SouthConnectorItemDTO<SouthOPCUAHAItemSettings>>,
+    startTime: Instant,
+    endTime: Instant
+  ): Promise<Instant> {
     try {
       let maxTimestamp = DateTime.fromISO(startTime).toMillis();
 
       const itemsByAggregates = new Map<AggregateType, Map<Resampling, Array<{ nodeId: string; itemName: string }>>>();
       items.forEach(item => {
         if (!itemsByAggregates.has(item.settings.aggregate)) {
-          itemsByAggregates.set(item.settings.aggregate, new Map<Resampling, Array<{ nodeId: string; itemName: string }>>());
+          itemsByAggregates.set(
+            item.settings.aggregate,
+            new Map<
+              Resampling,
+              Array<{
+                nodeId: string;
+                itemName: string;
+              }>
+            >()
+          );
         }
         if (!itemsByAggregates.get(item.settings.aggregate)!.has(item.settings.resampling)) {
           itemsByAggregates

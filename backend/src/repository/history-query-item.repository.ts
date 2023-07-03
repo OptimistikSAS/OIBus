@@ -1,5 +1,9 @@
 import { generateRandomId } from '../service/utils';
-import { OibusItemCommandDTO, OibusItemDTO, OibusItemSearchParam } from '../../../shared/model/south-connector.model';
+import {
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorItemSearchParam
+} from '../../../shared/model/south-connector.model';
 import { Page } from '../../../shared/model/types';
 import { Database } from 'better-sqlite3';
 import { HISTORY_QUERIES_TABLE } from './history-query.repository';
@@ -21,7 +25,7 @@ export default class HistoryQueryItemRepository {
   /**
    * Search History items (point, query, folder...) associated to a History Query
    */
-  searchHistoryItems(historyId: string, searchParams: OibusItemSearchParam): Page<OibusItemDTO> {
+  searchHistoryItems(historyId: string, searchParams: SouthConnectorItemSearchParam): Page<SouthConnectorItemDTO> {
     let whereClause = `WHERE history_id = ?`;
     const queryParams = [historyId];
 
@@ -32,7 +36,7 @@ export default class HistoryQueryItemRepository {
     const query =
       `SELECT id, name, history_id AS historyId, settings FROM ${HISTORY_ITEM_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
-    const results: Array<OibusItemDTO> = this.database
+    const results: Array<SouthConnectorItemDTO> = this.database
       .prepare(query)
       .all(...queryParams)
       .map((result: any) => ({
@@ -58,7 +62,7 @@ export default class HistoryQueryItemRepository {
   /**
    * Retrieve all History items (point, query, folder...) associated to a History Query
    */
-  getHistoryItems(historyId: string): Array<OibusItemDTO> {
+  getHistoryItems(historyId: string): Array<SouthConnectorItemDTO> {
     const query = `SELECT id, name, settings FROM ${HISTORY_ITEM_TABLE} WHERE history_id = ?;`;
     return this.database
       .prepare(query)
@@ -74,8 +78,10 @@ export default class HistoryQueryItemRepository {
   /**
    * Retrieve a History item by its ID
    */
-  getHistoryItem(id: string): OibusItemDTO {
-    const query = `SELECT id, name, history_id AS historyId, settings FROM ${HISTORY_ITEM_TABLE} WHERE id = ?;`;
+  getHistoryItem(id: string): SouthConnectorItemDTO {
+    const query = `SELECT id, name, history_id AS historyId, settings
+                   FROM ${HISTORY_ITEM_TABLE}
+                   WHERE id = ?;`;
     const result: any = this.database.prepare(query).get(id);
     return {
       id: result.id,
@@ -88,7 +94,7 @@ export default class HistoryQueryItemRepository {
   /**
    * Create a History item with a random generated ID
    */
-  createHistoryItem(historyId: string, command: OibusItemCommandDTO): OibusItemDTO {
+  createHistoryItem(historyId: string, command: SouthConnectorItemCommandDTO): SouthConnectorItemDTO {
     const id = generateRandomId(6);
     const insertQuery = `INSERT INTO ${HISTORY_ITEM_TABLE} (id, name, history_id, settings) ` + `VALUES (?, ?, ?, ?);`;
     const insertResult = this.database.prepare(insertQuery).run(id, command.name, historyId, JSON.stringify(command.settings));
@@ -106,7 +112,7 @@ export default class HistoryQueryItemRepository {
   /**
    * Update a History item by its ID
    */
-  updateHistoryItem(id: string, command: OibusItemCommandDTO): void {
+  updateHistoryItem(id: string, command: SouthConnectorItemCommandDTO): void {
     const query = `UPDATE ${HISTORY_ITEM_TABLE} SET name = ?, settings = ? WHERE id = ?;`;
     this.database.prepare(query).run(command.name, JSON.stringify(command.settings), id);
   }
@@ -115,7 +121,9 @@ export default class HistoryQueryItemRepository {
    * Delete a History item by its ID
    */
   deleteHistoryItem(id: string): void {
-    const query = `DELETE FROM ${HISTORY_ITEM_TABLE} WHERE id = ?;`;
+    const query = `DELETE
+                   FROM ${HISTORY_ITEM_TABLE}
+                   WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
@@ -123,11 +131,13 @@ export default class HistoryQueryItemRepository {
    * Delete History items associated to a history query ID
    */
   deleteAllItems(historyId: string): void {
-    const query = `DELETE FROM ${HISTORY_ITEM_TABLE} WHERE history_id = ?;`;
+    const query = `DELETE
+                   FROM ${HISTORY_ITEM_TABLE}
+                   WHERE history_id = ?;`;
     this.database.prepare(query).run(historyId);
   }
 
-  createAndUpdateItems(historyId: string, itemsToAdd: Array<OibusItemDTO>, itemsToUpdate: Array<OibusItemDTO>): void {
+  createAndUpdateItems(historyId: string, itemsToAdd: Array<SouthConnectorItemDTO>, itemsToUpdate: Array<SouthConnectorItemDTO>): void {
     const insert = this.database.prepare(`INSERT INTO ${HISTORY_ITEM_TABLE} (id, name, history_id, settings) VALUES (?, ?, ?, ?);`);
     const update = this.database.prepare(`UPDATE ${HISTORY_ITEM_TABLE} SET name = ?, settings = ? WHERE id = ?;`);
 

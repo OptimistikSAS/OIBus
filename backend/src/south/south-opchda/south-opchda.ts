@@ -4,7 +4,7 @@ import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import TcpServer from './tcp-server';
 import DeferredPromise from '../../service/deferred-promise';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
@@ -13,6 +13,7 @@ import { Instant } from '../../../../shared/model/types';
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
+import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../../shared/model/south-settings.model';
 
 // Time to wait before closing the connection by timeout and killing the HDA Agent process
 const DISCONNECTION_TIMEOUT = 10000;
@@ -22,7 +23,10 @@ const DISCONNECTION_TIMEOUT = 10000;
  * This connector communicates with the Agent through a TCP connection thanks to the TCP server created on OIBus
  * and associated to this connector
  */
-export default class SouthOPCHDA extends SouthConnector implements QueriesHistory, TestsConnection {
+export default class SouthOPCHDA
+  extends SouthConnector<SouthOPCHDASettings, SouthOPCHDAItemSettings>
+  implements QueriesHistory, TestsConnection
+{
   static type = manifest.id;
 
   // Initialized at connection
@@ -52,8 +56,8 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
   >();
 
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthOPCHDASettings>,
+    items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -88,11 +92,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
   }
 
   // TODO: method needs to be implemented
-  static async testConnection(
-    settings: SouthConnectorDTO['settings'],
-    logger: pino.Logger,
-    _encryptionService: EncryptionService
-  ): Promise<void> {
+  static async testConnection(settings: SouthOPCHDASettings, logger: pino.Logger, _encryptionService: EncryptionService): Promise<void> {
     logger.trace(`Testing connection`);
     throw new Error('TODO: method needs to be implemented');
   }
@@ -120,7 +120,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into the cache and send it to the engine.
    */
-  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
     this.historyRead$ = new DeferredPromise();
 
     let maxTimestamp = DateTime.fromISO(startTime).toMillis();
@@ -295,7 +295,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
   /**
    * Send a TCP initialization message to the HDA agent to set up the OPCHDA communication
    */
-  async sendInitializeMessage(itemsByScanMode: Map<string, Map<string, OibusItemDTO>>): Promise<void> {
+  async sendInitializeMessage(itemsByScanMode: Map<string, Map<string, SouthConnectorItemDTO<SouthOPCHDAItemSettings>>>): Promise<void> {
     this.itemsByGroups = new Map<
       string,
       {

@@ -15,13 +15,12 @@ import postgresqlManifest from '../../south/south-postgresql/manifest';
 import oracleManifest from '../../south/south-oracle/manifest';
 import odbcManifest from '../../south/south-odbc/manifest';
 import sqliteManifest from '../../south/south-sqlite/manifest';
-import ip21Manifest from '../../south/south-ip21/manifest';
 import {
-  OibusItemCommandDTO,
-  OibusItemDTO,
-  OibusItemSearchParam,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorItemSearchParam,
   SouthType
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
@@ -43,8 +42,7 @@ export const southManifests = [
   postgresqlManifest,
   oracleManifest,
   odbcManifest,
-  sqliteManifest,
-  ip21Manifest
+  sqliteManifest
 ];
 
 export default class SouthConnectorController {
@@ -168,7 +166,7 @@ export default class SouthConnectorController {
         manifest.settings
       );
 
-      await ctx.app.reloadService.onUpdateSouthSettings(ctx.params.id, command);
+      await ctx.app.reloadService.onUpdateSouth(ctx.params.id, command);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
@@ -195,13 +193,13 @@ export default class SouthConnectorController {
     }
   }
 
-  async listSouthItems(ctx: KoaContext<void, Array<OibusItemDTO>>): Promise<void> {
+  async listSouthItems(ctx: KoaContext<void, Array<SouthConnectorItemDTO>>): Promise<void> {
     const southItems = ctx.app.repositoryService.southItemRepository.listSouthItems(ctx.params.southId);
     ctx.ok(southItems);
   }
 
-  async searchSouthItems(ctx: KoaContext<void, Page<OibusItemDTO>>): Promise<void> {
-    const searchParams: OibusItemSearchParam = {
+  async searchSouthItems(ctx: KoaContext<void, Page<SouthConnectorItemDTO>>): Promise<void> {
+    const searchParams: SouthConnectorItemSearchParam = {
       page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
       name: (ctx.query.name as string) || null
     };
@@ -277,7 +275,7 @@ export default class SouthConnectorController {
     ctx.noContent();
   }
 
-  async getSouthItem(ctx: KoaContext<void, OibusItemDTO>): Promise<void> {
+  async getSouthItem(ctx: KoaContext<void, SouthConnectorItemDTO>): Promise<void> {
     const southItem = ctx.app.repositoryService.southItemRepository.getSouthItem(ctx.params.id);
     if (southItem) {
       ctx.ok(southItem);
@@ -286,7 +284,7 @@ export default class SouthConnectorController {
     }
   }
 
-  async createSouthItem(ctx: KoaContext<OibusItemCommandDTO, OibusItemDTO>): Promise<void> {
+  async createSouthItem(ctx: KoaContext<SouthConnectorItemCommandDTO, SouthConnectorItemDTO>): Promise<void> {
     try {
       const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
       if (!southConnector) {
@@ -300,7 +298,7 @@ export default class SouthConnectorController {
 
       await this.validator.validateSettings(manifest.items.settings, ctx.request.body?.settings);
 
-      const command: OibusItemCommandDTO = ctx.request.body!;
+      const command: SouthConnectorItemCommandDTO = ctx.request.body!;
       const southItem = await ctx.app.reloadService.onCreateSouthItem(ctx.params.southId, command);
       ctx.created(southItem);
     } catch (error: any) {
@@ -308,7 +306,7 @@ export default class SouthConnectorController {
     }
   }
 
-  async updateSouthItem(ctx: KoaContext<OibusItemCommandDTO, void>): Promise<void> {
+  async updateSouthItem(ctx: KoaContext<SouthConnectorItemCommandDTO, void>): Promise<void> {
     try {
       const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
       if (!southConnector) {
@@ -323,7 +321,7 @@ export default class SouthConnectorController {
       const southItem = ctx.app.repositoryService.southItemRepository.getSouthItem(ctx.params.id);
       if (southItem) {
         await this.validator.validateSettings(manifest.items.settings, ctx.request.body?.settings);
-        const command: OibusItemCommandDTO = ctx.request.body!;
+        const command: SouthConnectorItemCommandDTO = ctx.request.body!;
         await ctx.app.reloadService.onUpdateSouthItemsSettings(ctx.params.southId, southItem, command);
         ctx.noContent();
       } else {

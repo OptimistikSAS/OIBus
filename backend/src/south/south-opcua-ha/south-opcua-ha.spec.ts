@@ -12,7 +12,7 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import ProxyService from '../../service/proxy.service';
 import { initOpcuaCertificateFolders } from '../../service/opcua.service';
 
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 
 // Mock node-opcua-client
 jest.mock('node-opcua-client', () => ({
@@ -69,7 +69,7 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'item1',

@@ -1,5 +1,6 @@
 import { OibFormControl } from './form.model';
 import { Instant } from './types';
+import { SouthSettings, SouthItemSettings } from './south-settings.model';
 
 export interface SouthType {
   id: string;
@@ -23,54 +24,54 @@ export interface SouthConnectorHistorySettings {
 /**
  * DTO for South connectors
  */
-export interface SouthConnectorDTO {
+export interface SouthConnectorDTO<T extends SouthSettings = any> {
   id: string;
   name: string;
   type: string;
   description: string;
   enabled: boolean;
-  settings: any;
+  settings: T;
   history: SouthConnectorHistorySettings;
 }
 
 /**
  * Command DTO for South connector
  */
-export interface SouthConnectorCommandDTO {
+export interface SouthConnectorCommandDTO<T = any> {
   name: string;
   type: string;
   description: string;
   enabled: boolean;
   history: SouthConnectorHistorySettings;
-  settings: any;
+  settings: T;
 }
 
 /**
- * DTO used for South scan (a point/query/regexp and its settings linked to a scan mode)
+ * DTO used for an item to query within a south
  */
-export interface OibusItemDTO {
+export interface SouthConnectorItemDTO<T extends SouthItemSettings = any> {
   id: string;
   name: string;
   connectorId: string;
-  settings: any;
+  settings: T;
   scanModeId?: string;
 }
 
 /**
- * Command DTO used for South scan (a point/query/folder and its settings linked to a scan mode)
+ * Command DTO used to create an SouthConnectorItem
  */
-export interface OibusItemCommandDTO {
+export interface SouthConnectorItemCommandDTO<T extends SouthItemSettings = any> {
   name: string;
-  settings: any;
+  settings: T;
   scanModeId: string | null;
 }
 
-export interface OibusItemSearchParam {
+export interface SouthConnectorItemSearchParam {
   name: string | null;
   page: number;
 }
 
-export interface OibusItemManifest {
+export interface SouthConnectorItemManifest {
   scanMode: {
     acceptSubscription: boolean;
     subscriptionOnly: boolean;
@@ -90,7 +91,7 @@ export interface SouthConnectorManifest {
     history: boolean;
   };
   settings: Array<OibFormControl>;
-  items: OibusItemManifest;
+  items: SouthConnectorItemManifest;
 }
 
 export interface SouthCache {
