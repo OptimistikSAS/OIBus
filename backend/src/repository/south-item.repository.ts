@@ -1,5 +1,9 @@
 import { generateRandomId } from '../service/utils';
-import { OibusItemCommandDTO, OibusItemDTO, OibusItemSearchParam } from '../../../shared/model/south-connector.model';
+import {
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorItemSearchParam
+} from '../../../shared/model/south-connector.model';
 import { SOUTH_CONNECTOR_TABLE } from './south-connector.repository';
 import { SCAN_MODE_TABLE } from './scan-mode.repository';
 import { Page } from '../../../shared/model/types';
@@ -23,7 +27,7 @@ export default class SouthItemRepository {
   /**
    * Retrieve all items associated to a South connector
    */
-  listSouthItems(southId: string): Array<OibusItemDTO> {
+  listSouthItems(southId: string): Array<SouthConnectorItemDTO> {
     const queryParams = [southId];
     const query = `SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEM_TABLE} WHERE connector_id = ?;`;
 
@@ -42,7 +46,7 @@ export default class SouthItemRepository {
   /**
    * Search South items (point, query, folder...) associated to a South connector
    */
-  searchSouthItems(southId: string, searchParams: OibusItemSearchParam): Page<OibusItemDTO> {
+  searchSouthItems(southId: string, searchParams: SouthConnectorItemSearchParam): Page<SouthConnectorItemDTO> {
     let whereClause = `WHERE connector_id = ?`;
     const queryParams = [southId];
 
@@ -80,7 +84,7 @@ export default class SouthItemRepository {
   /**
    * Retrieve all South items (point, query, folder...) associated to a South connector
    */
-  getSouthItems(southId: string): Array<OibusItemDTO> {
+  getSouthItems(southId: string): Array<SouthConnectorItemDTO> {
     const query = `SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEM_TABLE} WHERE connector_id = ?;`;
     return this.database
       .prepare(query)
@@ -97,7 +101,7 @@ export default class SouthItemRepository {
   /**
    * Retrieve a South item by its ID
    */
-  getSouthItem(id: string): OibusItemDTO | null {
+  getSouthItem(id: string): SouthConnectorItemDTO | null {
     const query = `SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEM_TABLE} WHERE id = ?;`;
     const result: any = this.database.prepare(query).get(id);
     if (!result) return null;
@@ -113,7 +117,7 @@ export default class SouthItemRepository {
   /**
    * Create a South item with a random generated ID
    */
-  createSouthItem(southId: string, command: OibusItemCommandDTO): OibusItemDTO {
+  createSouthItem(southId: string, command: SouthConnectorItemCommandDTO): SouthConnectorItemDTO {
     const id = generateRandomId(6);
     const insertQuery = `INSERT INTO ${SOUTH_ITEM_TABLE} (id, name, connector_id, scan_mode_id, settings) ` + `VALUES (?, ?, ?, ?, ?);`;
     const insertResult = this.database
@@ -134,7 +138,7 @@ export default class SouthItemRepository {
   /**
    * Update a South item by its ID
    */
-  updateSouthItem(id: string, command: OibusItemCommandDTO): void {
+  updateSouthItem(id: string, command: SouthConnectorItemCommandDTO): void {
     const query = `UPDATE ${SOUTH_ITEM_TABLE} SET name = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`;
     this.database.prepare(query).run(command.name, command.scanModeId, JSON.stringify(command.settings), id);
   }
@@ -155,7 +159,7 @@ export default class SouthItemRepository {
     this.database.prepare(query).run(southId);
   }
 
-  createAndUpdateSouthItems(southId: string, itemsToAdd: Array<OibusItemDTO>, itemsToUpdate: Array<OibusItemDTO>): void {
+  createAndUpdateSouthItems(southId: string, itemsToAdd: Array<SouthConnectorItemDTO>, itemsToUpdate: Array<SouthConnectorItemDTO>): void {
     const insert = this.database.prepare(
       `INSERT INTO ${SOUTH_ITEM_TABLE} (id, name, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?);`
     );

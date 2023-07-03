@@ -18,6 +18,7 @@ import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
 import { HandlesFile, HandlesValues } from './north-interface';
 import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -36,7 +37,7 @@ import NorthConnectorMetricsService from '../service/north-connector-metrics.ser
  * - **getProxy**: get the proxy handler
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
-export default class NorthConnector {
+export default class NorthConnector<T extends NorthSettings = any> {
   public static type: string;
 
   private archiveService: ArchiveService;
@@ -56,7 +57,7 @@ export default class NorthConnector {
   private runProgress$: DeferredPromise | null = null;
 
   constructor(
-    protected configuration: NorthConnectorDTO,
+    protected configuration: NorthConnectorDTO<T>,
     protected readonly encryptionService: EncryptionService,
     protected readonly proxyService: ProxyService,
     private readonly repositoryService: RepositoryService,

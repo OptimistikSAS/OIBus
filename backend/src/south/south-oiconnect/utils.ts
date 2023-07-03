@@ -5,10 +5,20 @@ import oiaTimeValues from './formatters/oia-time-values';
 import slims from './formatters/slims';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { OibusItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthOIConnectItemSettings } from '../../../../shared/model/south-settings.model';
 
-const parsers = new Map<string, (item: OibusItemDTO, httpResults: any) => { formattedResult: Array<any>; maxInstant: Instant }>();
-parsers.set('raw', (item: OibusItemDTO, httpResults: Array<any>) => ({
+const parsers = new Map<
+  string,
+  (
+    item: SouthConnectorItemDTO<SouthOIConnectItemSettings>,
+    httpResults: any
+  ) => {
+    formattedResult: Array<any>;
+    maxInstant: Instant;
+  }
+>();
+parsers.set('raw', (item: SouthConnectorItemDTO<SouthOIConnectItemSettings>, httpResults: Array<any>) => ({
   formattedResult: httpResults as Array<any>,
   maxInstant: DateTime.now().toUTC().toISO()!
 }));

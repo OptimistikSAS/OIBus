@@ -4,7 +4,7 @@ import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import TcpServer from './tcp-server';
 import DeferredPromise from '../../service/deferred-promise';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
@@ -13,6 +13,7 @@ import { Instant } from '../../../../shared/model/types';
 import { ChildProcessWithoutNullStreams } from 'child_process';
 import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
+import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../../shared/model/south-settings.model';
 
 // Time to wait before closing the connection by timeout and killing the HDA Agent process
 const DISCONNECTION_TIMEOUT = 10000;
@@ -22,7 +23,10 @@ const DISCONNECTION_TIMEOUT = 10000;
  * This connector communicates with the Agent through a TCP connection thanks to the TCP server created on OIBus
  * and associated to this connector
  */
-export default class SouthOPCHDA extends SouthConnector implements QueriesHistory, TestsConnection {
+export default class SouthOPCHDA
+  extends SouthConnector<SouthOPCHDASettings, SouthOPCHDAItemSettings>
+  implements QueriesHistory, TestsConnection
+{
   static type = manifest.id;
 
   // Initialized at connection
@@ -52,8 +56,8 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
   >();
 
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthOPCHDASettings>,
+    items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -88,11 +92,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
   }
 
   // TODO: method needs to be implemented
-  static async testConnection(
-    settings: SouthConnectorDTO['settings'],
-    logger: pino.Logger,
-    _encryptionService: EncryptionService
-  ): Promise<void> {
+  static async testConnection(settings: SouthOPCHDASettings, logger: pino.Logger, _encryptionService: EncryptionService): Promise<void> {
     logger.trace(`Testing connection`);
     throw new Error('TODO: method needs to be implemented');
   }
@@ -100,13 +100,9 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
   async runTcpServer(): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        this.tcpServer = new TcpServer(this.configuration.settings.tcpPort, this.handleTcpHdaAgentMessages.bind(this), this.logger);
+        this.tcpServer = new TcpServer(this.connector.settings.tcpPort, this.handleTcpHdaAgentMessages.bind(this), this.logger);
         this.tcpServer.start(() => {
-          this.launchAgent(
-            this.configuration.settings.agentFilename,
-            this.configuration.settings.tcpPort,
-            this.configuration.settings.logLevel
-          );
+          this.launchAgent(this.connector.settings.agentFilename, this.connector.settings.tcpPort, this.connector.settings.logLevel);
           this.connection$ = new DeferredPromise();
           resolve();
         });
@@ -120,7 +116,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into the cache and send it to the engine.
    */
-  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
     this.historyRead$ = new DeferredPromise();
 
     let maxTimestamp = DateTime.fromISO(startTime).toMillis();
@@ -132,9 +128,9 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
 
     this.historyReadTimeout = setTimeout(() => {
       this.historyRead$?.reject(
-        new Error(`History query has not succeeded in the requested readTimeout: ${this.configuration.settings.readTimeout}s`)
+        new Error(`History query has not succeeded in the requested readTimeout: ${this.connector.settings.readTimeout}s`)
       );
-    }, this.configuration.settings.readTimeout * 1000);
+    }, this.connector.settings.readTimeout * 1000);
     const retrievedTimestamp = await this.historyRead$.promise;
     maxTimestamp = retrievedTimestamp > maxTimestamp ? retrievedTimestamp : maxTimestamp;
 
@@ -285,8 +281,8 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
       Request: 'Connect',
       TransactionId: this.generateTransactionId(),
       Content: {
-        host: this.configuration.settings.host,
-        serverName: this.configuration.settings.serverName
+        host: this.connector.settings.host,
+        serverName: this.connector.settings.serverName
       }
     };
     await this.sendTCPMessageToHdaAgent(message);
@@ -295,7 +291,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
   /**
    * Send a TCP initialization message to the HDA agent to set up the OPCHDA communication
    */
-  async sendInitializeMessage(itemsByScanMode: Map<string, Map<string, OibusItemDTO>>): Promise<void> {
+  async sendInitializeMessage(itemsByScanMode: Map<string, Map<string, SouthConnectorItemDTO<SouthOPCHDAItemSettings>>>): Promise<void> {
     this.itemsByGroups = new Map<
       string,
       {
@@ -340,9 +336,9 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
       TransactionId: this.generateTransactionId(),
       Content: {
         Groups: groups,
-        MaxReturnValues: this.configuration.settings.maxReturnValues,
-        MaxReadInterval: this.configuration.history.maxReadInterval,
-        ReadIntervalDelay: this.configuration.history.readDelay
+        MaxReturnValues: this.connector.settings.maxReturnValues,
+        MaxReadInterval: this.connector.history.maxReadInterval,
+        ReadIntervalDelay: this.connector.history.readDelay
       }
     };
     await this.sendTCPMessageToHdaAgent(message);
@@ -395,7 +391,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
       }
       if (message.Request !== 'Stop') {
         await this.disconnect();
-        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.configuration.settings.retryInterval);
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
       }
     }
   }
@@ -424,10 +420,10 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
             await this.sendInitializeMessage(this.itemsByScanModeIds);
           } else {
             this.logger.error(
-              `Unable to connect to "${this.configuration.settings.serverName}" on ${this.configuration.settings.host}: ${messageObject.Content.Error}, retrying in ${this.configuration.settings.retryInterval}ms`
+              `Unable to connect to "${this.connector.settings.serverName}" on ${this.connector.settings.host}: ${messageObject.Content.Error}, retrying in ${this.connector.settings.retryInterval}ms`
             );
             await this.disconnect();
-            this.reconnectTimeout = setTimeout(this.connect.bind(this), this.configuration.settings.retryInterval);
+            this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
           }
           break;
         case 'Initialize': // The HDA Agent is connected and ready to read values
@@ -441,7 +437,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
               if (messageObject.Content.Disconnected) {
                 this.logger.error('Agent disconnected from OPC HDA server');
                 await this.disconnect();
-                this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), this.configuration.settings.retryInterval);
+                this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), this.connector.settings.retryInterval);
               }
               this.historyRead$?.reject(new Error(messageObject.Content.Error));
               return;

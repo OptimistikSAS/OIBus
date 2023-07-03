@@ -1,52 +1,57 @@
 import { fakeAsync, TestBed } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { ComponentTester } from 'ngx-speculoos';
-import { DateTimeFormat, DateTimeField } from '../../../../../../../shared/model/types';
-import { OibDatetimeFormatComponent } from '../../oib-datetime-format/oib-datetime-format.component';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { provideI18nTesting } from '../../../../../i18n/mock-i18n';
 import { formDirectives } from '../../../form-directives';
-import { EditDatetimeFieldComponent } from './edit-datetime-field.component';
+import { EditElementComponent } from './edit-element.component';
 import { DefaultValidationErrorsComponent } from '../../../default-validation-errors/default-validation-errors.component';
+import { buildDateTimeFieldsFormControl } from '../../../../../../../shared/model/manifest-factory';
 
 @Component({
   template: ` <form [formGroup]="form">
-    <oib-edit-datetime-field
-      [dateTimeField]="dateTimeField"
-      [dateObjectTypes]="dateObjectTypes"
-      [existingDateTimeFields]="existingDateTimeFields"
+    <oib-edit-element
+      [element]="element"
+      [formDescription]="formDescription"
+      [existingElements]="existingElements"
       (saved)="savedInput = $event"
       (cancelled)="cancelled = true"
     >
-    </oib-edit-datetime-field>
+    </oib-edit-element>
   </form>`,
   standalone: true,
-  imports: [EditDatetimeFieldComponent, ...formDirectives]
+  imports: [EditElementComponent, ...formDirectives]
 })
 class TestComponent {
-  dateTimeField: DateTimeField = {
-    field: 'field1',
+  formDescription = buildDateTimeFieldsFormControl([]).content;
+
+  element = {
+    fieldName: 'field1',
     useAsReference: false,
-    datetimeFormat: {
-      type: 'unix-epoch-ms'
-    }
+    type: 'unix-epoch-ms',
+    timezone: null,
+    format: null,
+    locale: null
   };
-  existingDateTimeFields: Array<DateTimeField> = [
+  existingElements = [
     {
-      field: 'existing',
+      fieldName: 'field2',
       useAsReference: false,
-      datetimeFormat: {
-        type: 'unix-epoch-ms'
-      }
+      type: 'unix-epoch',
+      timezone: null,
+      format: null,
+      locale: null
     }
   ];
-  dateObjectTypes: Array<string> = [];
   form = new FormGroup({
-    field: new FormControl(null as string | null, Validators.required),
+    fieldName: new FormControl(null as string | null, Validators.required),
     useAsReference: new FormControl(false as boolean | null),
-    datetimeFormat: new FormControl({ type: 'unix-epoch-ms' } as DateTimeFormat)
+    type: new FormControl('unix-epoch-ms'),
+    timezone: new FormControl(),
+    format: new FormControl(),
+    locale: new FormControl()
   });
-  savedInput: DateTimeField | null = null;
+  savedInput: any | null = null;
   cancelled = false;
 }
 
@@ -56,15 +61,27 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 
   get field() {
-    return this.input('#field')!;
+    return this.input('#OibText-fieldName')!;
+  }
+
+  get type() {
+    return this.select('#OibSelect-type')!;
   }
 
   get useAsReference() {
-    return this.input('#use-as-reference')!;
+    return this.input('#OibCheckbox-useAsReference')!;
   }
 
-  get dateTimeFormat() {
-    return this.component(OibDatetimeFormatComponent)!;
+  get timezone() {
+    return this.input('#OibTimezone-timezone')!;
+  }
+
+  get format() {
+    return this.input('#OibText-format')!;
+  }
+
+  get locale() {
+    return this.input('#OibText-locale')!;
   }
 
   get ok() {
@@ -80,7 +97,7 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 }
 
-describe('EditDatetimeFieldComponent', () => {
+describe('EditElementComponent', () => {
   let tester: TestComponentTester;
 
   beforeEach(() => {
@@ -107,10 +124,6 @@ describe('EditDatetimeFieldComponent', () => {
     expect(tester.componentInstance.savedInput).toBeNull();
     // field is required
     expect(tester.errors.length).toBe(1);
-
-    tester.field.fillWith('existing');
-    // field must be unique
-    expect(tester.errors.length).toBe(1);
   }));
 
   it('should save if valid', fakeAsync(() => {
@@ -119,11 +132,12 @@ describe('EditDatetimeFieldComponent', () => {
     tester.ok.click();
 
     expect(tester.componentInstance.savedInput).toEqual({
-      field: 'Field 2',
+      fieldName: 'Field 2',
       useAsReference: false,
-      datetimeFormat: {
-        type: 'unix-epoch-ms'
-      }
+      type: 'unix-epoch-ms',
+      format: null,
+      timezone: null,
+      locale: null
     });
   }));
 

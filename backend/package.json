@@ -1,6 +1,6 @@
 {
   "name": "oibus",
-  "version": "2.5.5",
+  "version": "3.0.0",
   "main": "index.js",
   "author": "Optimistik SAS",
   "license": "EUPL",
@@ -21,6 +21,7 @@
     "build:win-setup": "rimraf ../build/bin/win/win-setup-release && C:\\\"Program Files (x86)\"\\\"Inno Setup 6\"\\iscc.exe \"../build/deps/win/setup.iss\" \"/DMyAppVersion=\"%npm_package_version% \"/DMyCertFile=\"%PFX_PATH% \"/DMyCertPassword=\"%PFX_PASSWORD% \"/ssigntool=../build/deps/signtool/signtool.exe sign /debug $p\"",
     "start": "tsc --sourceMap --project tsconfig.app.json && npm run start:backend",
     "start:backend": "node ./dist/backend/src/index.js --config ../data-folder",
+    "generate-settings-interface": "tsc -p tsconfig.generator.json && node dist/backend/src/settings-interface.generator.js",
     "test": "jest --config=src/tests/jest-ts.config.js --coverage",
     "test:setup-env": "docker-compose --file src/tests/docker-compose.yml --env-file ./tests/.env.test up -d",
     "test:integration": "jest --config=jest-config.js --testPathPattern='.*\\.test\\.js$'",

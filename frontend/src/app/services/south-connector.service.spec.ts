@@ -3,8 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SouthConnectorService } from './south-connector.service';
 import {
-  OibusItemCommandDTO,
-  OibusItemDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorManifest,
@@ -53,7 +53,7 @@ describe('SouthConnectorService', () => {
   });
 
   it('should get all South connectors', () => {
-    let expectedSouthConnectors: Array<SouthConnectorDTO> = [];
+    let expectedSouthConnectors: Array<SouthConnectorDTO<any>> = [];
     service.list().subscribe(southConnectors => (expectedSouthConnectors = southConnectors));
 
     http.expectOne('/api/south').flush([{ name: 'South connector 1' }, { name: 'South connector 2' }]);
@@ -62,8 +62,8 @@ describe('SouthConnectorService', () => {
   });
 
   it('should get a South connector', () => {
-    let expectedSouthConnector: SouthConnectorDTO | null = null;
-    const southConnector = { id: 'id1' } as SouthConnectorDTO;
+    let expectedSouthConnector: SouthConnectorDTO<any> | null = null;
+    const southConnector = { id: 'id1' } as SouthConnectorDTO<any>;
 
     service.get('id1').subscribe(c => (expectedSouthConnector = c));
 
@@ -83,7 +83,7 @@ describe('SouthConnectorService', () => {
 
   it('should create a South connector', () => {
     let done = false;
-    const command: SouthConnectorCommandDTO = {
+    const command: SouthConnectorCommandDTO<any> = {
       name: 'mySouthConnector',
       description: 'a test south connector',
       enabled: true,
@@ -105,7 +105,7 @@ describe('SouthConnectorService', () => {
 
   it('should update a South connector', () => {
     let done = false;
-    const command: SouthConnectorCommandDTO = {
+    const command: SouthConnectorCommandDTO<any> = {
       name: 'mySouthConnector',
       description: 'a test south connector',
       enabled: true,
@@ -134,8 +134,8 @@ describe('SouthConnectorService', () => {
   });
 
   it('should search South connector items', () => {
-    let expectedSouthConnectorItems: Page<OibusItemDTO> | null = null;
-    const southConnectorItems = toPage<OibusItemDTO>([
+    let expectedSouthConnectorItems: Page<SouthConnectorItemDTO<any>> | null = null;
+    const southConnectorItems = toPage<SouthConnectorItemDTO<any>>([
       { id: 'southItemId', name: 'MySouthItem', connectorId: 'id1', scanModeId: 'scanModeId', settings: {} }
     ]);
 
@@ -157,7 +157,7 @@ describe('SouthConnectorService', () => {
 
   it('should create a South connector item', () => {
     let done = false;
-    const command: OibusItemCommandDTO = {
+    const command: SouthConnectorItemCommandDTO<any> = {
       name: 'myPointId',
       scanModeId: 'scanModeId',
       settings: {}
@@ -172,7 +172,7 @@ describe('SouthConnectorService', () => {
 
   it('should update a South connector item', () => {
     let done = false;
-    const command: OibusItemCommandDTO = {
+    const command: SouthConnectorItemCommandDTO<any> = {
       name: 'myPointId',
       scanModeId: 'scanModeId',
       settings: {}
@@ -247,7 +247,7 @@ describe('SouthConnectorService', () => {
 
   it('should test a South connector connection', () => {
     let done = false;
-    const command: SouthConnectorCommandDTO = {
+    const command: SouthConnectorCommandDTO<any> = {
       name: 'mySouthConnector',
       description: 'a test south connector',
       enabled: true,

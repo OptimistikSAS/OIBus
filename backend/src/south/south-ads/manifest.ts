@@ -19,7 +19,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: '127.0.0.1.1.1',
       newRow: true,
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'port',
@@ -29,14 +29,14 @@ const manifest: SouthConnectorManifest = {
       newRow: false,
       class: 'col-2',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'routerAddress',
       type: 'OibText',
       label: 'Router address',
       newRow: true,
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'routerTcpPort',
@@ -48,14 +48,14 @@ const manifest: SouthConnectorManifest = {
         { key: 'min', params: { min: 1 } },
         { key: 'max', params: { max: 65535 } }
       ],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'clientAmsNetId',
       type: 'OibText',
       label: 'AMS Net ID',
       newRow: true,
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'clientAdsPort',
@@ -67,7 +67,7 @@ const manifest: SouthConnectorManifest = {
         { key: 'min', params: { min: 1 } },
         { key: 'max', params: { max: 65535 } }
       ],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'retryInterval',
@@ -77,7 +77,7 @@ const manifest: SouthConnectorManifest = {
       newRow: true,
       class: 'col-2',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60_000 } }],
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'plcName',
@@ -86,7 +86,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: '',
       newRow: true,
       class: 'col-4',
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'enumAsText',
@@ -97,7 +97,7 @@ const manifest: SouthConnectorManifest = {
       newRow: true,
       class: 'col-4',
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'boolAsText',
@@ -108,7 +108,7 @@ const manifest: SouthConnectorManifest = {
       newRow: false,
       class: 'col-4',
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     }
   ],
   items: {

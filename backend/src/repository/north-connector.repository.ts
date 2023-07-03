@@ -10,6 +10,7 @@ export const NORTH_CONNECTOR_TABLE = 'north_connector';
  */
 export default class NorthConnectorRepository {
   private readonly database: Database;
+
   constructor(database: Database) {
     this.database = database;
     const query =

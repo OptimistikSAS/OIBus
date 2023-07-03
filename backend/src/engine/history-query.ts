@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 
 import { createFolder } from '../service/utils';
@@ -12,13 +12,15 @@ import SouthConnector from '../south/south-connector';
 import HistoryMetricsService from '../service/history-metrics.service';
 import HistoryQueryService from '../service/history-query.service';
 import { PassThrough } from 'node:stream';
+import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
+import { NorthSettings } from '../../../shared/model/north-settings.model';
 
 const FINISH_INTERVAL = 5000;
 
 export default class HistoryQuery {
   protected readonly baseFolder: string;
-  private north: NorthConnector | null = null;
-  private south: SouthConnector | null = null;
+  private north: NorthConnector<any> | null = null;
+  private south: SouthConnector<any, any> | null = null;
   private finishInterval: NodeJS.Timeout | null = null;
   private _metricsService: HistoryMetricsService;
 
@@ -27,7 +29,7 @@ export default class HistoryQuery {
     private readonly southService: SouthService,
     private readonly northService: NorthService,
     private readonly historyService: HistoryQueryService,
-    private items: Array<OibusItemDTO>,
+    private items: Array<SouthConnectorItemDTO<any>>,
     private logger: pino.Logger,
     baseFolder: string
   ) {
@@ -38,8 +40,8 @@ export default class HistoryQuery {
   /**
    * Run history query according to its status
    */
-  async start(): Promise<void> {
-    const southConfiguration: SouthConnectorDTO = {
+  async start<S extends SouthSettings, N extends NorthSettings>(): Promise<void> {
+    const southConfiguration: SouthConnectorDTO<S> = {
       id: this.historyConfiguration.id,
       name: `${this.historyConfiguration.name} (South)`,
       description: '',
@@ -65,7 +67,7 @@ export default class HistoryQuery {
       );
     }
 
-    const northConfiguration: NorthConnectorDTO = {
+    const northConfiguration: NorthConnectorDTO<N> = {
       id: this.historyConfiguration.id,
       name: `${this.historyConfiguration.name} (North)`,
       description: '',
@@ -183,7 +185,7 @@ export default class HistoryQuery {
     }
   }
 
-  async addItem(item: OibusItemDTO): Promise<void> {
+  async addItem<I extends SouthItemSettings>(item: SouthConnectorItemDTO<I>): Promise<void> {
     if (!this.south) {
       return;
     }
@@ -192,7 +194,7 @@ export default class HistoryQuery {
     await this.start();
   }
 
-  async updateItem(item: OibusItemDTO): Promise<void> {
+  async updateItem<I extends SouthItemSettings>(item: SouthConnectorItemDTO<I>): Promise<void> {
     if (!this.south) {
       return;
     }
@@ -200,7 +202,7 @@ export default class HistoryQuery {
     await this.addItem(item);
   }
 
-  deleteItem(item: OibusItemDTO) {
+  deleteItem<I extends SouthItemSettings>(item: SouthConnectorItemDTO<I>) {
     if (!this.south) {
       return;
     }

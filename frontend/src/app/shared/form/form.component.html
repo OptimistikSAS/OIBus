@@ -4,10 +4,11 @@
       <div class="form-group">
         <label
           class="form-label"
-          *ngIf="setting.label && setting.type !== 'OibCheckbox' && setting.type !== 'OibAuthentication'"
+          *ngIf="setting.label && setting.type !== 'OibCheckbox' && setting.type !== 'OibArray'"
           [for]="setting.type + '-' + setting.key"
-          >{{ setting.label }}</label
         >
+          {{ setting.label }}
+        </label>
         <input
           *ngIf="setting.type === 'OibText'"
           [formControlName]="setting.key"
@@ -50,7 +51,7 @@
           class="form-select mb-2 mr-sm-2"
         >
           <option [ngValue]="null"></option>
-          <option *ngFor="let option of setting.options" [ngValue]="option">{{ option }}</option>
+          <option *ngFor="let option of setting.options" [ngValue]="option">{{ transform(option, setting.pipe) }}</option>
         </select>
         <div class="form-check form-switch padded" *ngIf="setting.type === 'OibCheckbox'">
           <input [formControlName]="setting.key" [id]="setting.type + '-' + setting.key" type="checkbox" class="form-check-input" />
@@ -78,30 +79,24 @@
           [formControlName]="setting.key"
           [proxies]="proxies"
         ></oib-proxy>
-        <oib-datetime-fields
-          *ngIf="setting.type === 'OibDateTimeFields'"
+        <oib-array
+          *ngIf="setting.type === 'OibArray'"
+          [formDescription]="setting.content"
           [label]="setting.label"
           [key]="setting.key"
-          formControlName="dateTimeFields"
-          [dateObjectTypes]="setting.allowedDateObjectTypes"
-        ></oib-datetime-fields>
-        <oib-auth
-          *ngIf="setting.type === 'OibAuthentication'"
-          [key]="setting.key"
           [formControlName]="setting.key"
-          [authTypes]="setting.authTypes"
-        ></oib-auth>
-        <val-errors [controlName]="setting.key"></val-errors>
-        <ng-container *ngIf="setting.type === 'FormGroup'">
+        ></oib-array>
+        <ng-container *ngIf="setting.type === 'OibFormGroup'">
           <oib-form
             *ngIf="setting.content.length > 0"
             [formGroupName]="setting.key"
             [formGroup]="getFormGroup(setting)"
-            [settingsSchema]="[setting.content]"
+            [settingsSchema]="getSettingsGroupedByRow(setting.content)"
             [scanModes]="scanModes"
             [proxies]="proxies"
           ></oib-form>
         </ng-container>
+        <val-errors [controlName]="setting.key"></val-errors>
       </div>
     </div>
   </ng-container>

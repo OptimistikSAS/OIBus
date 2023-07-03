@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
 
 import NorthConnector from '../north-connector';
@@ -12,18 +12,19 @@ import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { HandlesFile } from '../north-interface';
+import { NorthAmazonS3Settings } from '../../../../shared/model/north-settings.model';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
  */
-export default class NorthAmazonS3 extends NorthConnector implements HandlesFile {
+export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings> implements HandlesFile {
   static type = manifest.id;
 
   private proxyAgent: any | undefined;
   private s3: S3Client | undefined;
 
   constructor(
-    configuration: NorthConnectorDTO,
+    configuration: NorthConnectorDTO<NorthAmazonS3Settings>,
     encryptionService: EncryptionService,
     proxyService: ProxyService,
     repositoryService: RepositoryService,
@@ -46,8 +47,8 @@ export default class NorthAmazonS3 extends NorthConnector implements HandlesFile
     this.s3 = new S3Client({
       region: this.configuration.settings.region,
       credentials: {
-        accessKeyId: this.configuration.settings.authentication.key,
-        secretAccessKey: await this.encryptionService.decryptText(this.configuration.settings.authentication.secret)
+        accessKeyId: this.configuration.settings.accessKey,
+        secretAccessKey: await this.encryptionService.decryptText(this.configuration.settings.secretKey)
       },
       requestHandler: this.proxyAgent ? new NodeHttpHandler({ httpAgent: this.proxyAgent }) : undefined
     });

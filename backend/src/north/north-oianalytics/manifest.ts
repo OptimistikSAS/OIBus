@@ -14,27 +14,47 @@ const manifest: NorthConnectorManifest = {
       key: 'host',
       type: 'OibText',
       label: 'Host',
-      validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }],
+      validators: [
+        { key: 'required' },
+        {
+          key: 'pattern',
+          params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' }
+        }
+      ],
       defaultValue: 'https://instance_name.oianalytics.fr',
-      readDisplay: true
+      displayInViewMode: true
     },
     {
-      key: 'authentication',
-      type: 'OibAuthentication',
-      label: 'Authentication',
-      newRow: true,
-      authTypes: ['none', 'basic'],
-      defaultValue: { type: 'basic', password: '', username: '' }
+      key: 'accessKey',
+      type: 'OibText',
+      label: 'Access key',
+      validators: [{ key: 'required' }],
+      displayInViewMode: true
     },
-    { key: 'timeout', type: 'OibNumber', label: 'Timeout', newRow: true, defaultValue: 30_000 },
-    { key: 'proxy', type: 'OibProxy', label: 'Proxy' },
+    {
+      key: 'secretKey',
+      type: 'OibSecret',
+      label: 'Secret key',
+      validators: [{ key: 'required' }],
+      displayInViewMode: false
+    },
+    {
+      key: 'timeout',
+      type: 'OibNumber',
+      label: 'Timeout',
+      newRow: true,
+      defaultValue: 30_000,
+      unitLabel: 'ms',
+      validators: [{ key: 'required' }]
+    },
+    { key: 'proxyId', type: 'OibProxy', label: 'Proxy' },
     {
       key: 'acceptUnauthorized',
       type: 'OibCheckbox',
       label: 'Accept unauthorized certificate',
       validators: [{ key: 'required' }],
       defaultValue: false,
-      readDisplay: true
+      displayInViewMode: true
     }
   ]
 };

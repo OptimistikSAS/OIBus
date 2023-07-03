@@ -12,8 +12,13 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import ProxyService from '../../service/proxy.service';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import mysql from 'mysql2/promise';
+import {
+  SouthMySQLItemSettings,
+  SouthMySQLItemSettingsDateTimeFields,
+  SouthMySQLSettings
+} from '../../../../shared/model/south-settings.model';
 
 jest.mock('mysql2/promise');
 jest.mock('../../service/utils');
@@ -54,7 +59,7 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
@@ -62,19 +67,30 @@ const items: Array<OibusItemDTO> = [
     settings: {
       query: 'SELECT * FROM table',
       dateTimeFields: [
-        { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
         {
-          field: 'timestamp',
+          fieldName: 'anotherTimestamp',
+          useAsReference: false,
+          type: 'unix-epoch-ms',
+          timezone: null,
+          format: null,
+          locale: null
+        } as unknown as SouthMySQLItemSettingsDateTimeFields,
+        {
+          fieldName: 'timestamp',
           useAsReference: true,
-          datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          type: 'string',
+          timezone: 'Europe/Paris',
+          format: 'yyyy-MM-dd HH:mm:ss.SSS',
+          locale: 'en-US'
         }
       ],
       serialization: {
-        type: 'file',
+        type: 'csv',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' }
+        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+        outputTimezone: 'Europe/Paris'
       }
     },
     scanModeId: 'scanModeId1'
@@ -86,19 +102,30 @@ const items: Array<OibusItemDTO> = [
     settings: {
       query: 'SELECT * FROM table',
       dateTimeFields: [
-        { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
         {
-          field: 'timestamp',
+          fieldName: 'anotherTimestamp',
+          useAsReference: false,
+          type: 'unix-epoch-ms',
+          timezone: null,
+          format: null,
+          locale: null
+        } as unknown as SouthMySQLItemSettingsDateTimeFields,
+        {
+          fieldName: 'timestamp',
           useAsReference: true,
-          datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          type: 'string',
+          timezone: 'Europe/Paris',
+          format: 'yyyy-MM-dd HH:mm:ss.SSS',
+          locale: 'en-US'
         }
       ],
       serialization: {
-        type: 'file',
+        type: 'csv',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' }
+        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+        outputTimezone: 'Europe/Paris'
       }
     },
     scanModeId: 'scanModeId1'
@@ -110,19 +137,30 @@ const items: Array<OibusItemDTO> = [
     settings: {
       query: 'SELECT * FROM table',
       dateTimeFields: [
-        { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
         {
-          field: 'timestamp',
+          fieldName: 'anotherTimestamp',
+          useAsReference: false,
+          type: 'unix-epoch-ms',
+          timezone: null,
+          format: null,
+          locale: null
+        } as unknown as SouthMySQLItemSettingsDateTimeFields,
+        {
+          fieldName: 'timestamp',
           useAsReference: true,
-          datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          type: 'string',
+          timezone: 'Europe/Paris',
+          format: 'yyyy-MM-dd HH:mm:ss.SSS',
+          locale: 'en-US'
         }
       ],
       serialization: {
-        type: 'file',
+        type: 'csv',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' }
+        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+        outputTimezone: 'Europe/Paris'
       }
     },
     scanModeId: 'scanModeId2'
@@ -133,7 +171,7 @@ const nowDateString = '2020-02-02T02:02:02.222Z';
 let south: SouthMySQL;
 
 describe('SouthMySQL with authentication', () => {
-  const configuration: SouthConnectorDTO = {
+  const connector: SouthConnectorDTO<SouthMySQLSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mysql',
@@ -161,7 +199,7 @@ describe('SouthMySQL with authentication', () => {
     (utils.generateReplacementParameters as jest.Mock).mockReturnValue([new Date(nowDateString), new Date(nowDateString)]);
 
     south = new SouthMySQL(
-      configuration,
+      connector,
       items,
       addValues,
       addFile,
@@ -222,19 +260,19 @@ describe('SouthMySQL with authentication', () => {
 
     expect(utils.logQuery).toHaveBeenCalledWith(items[0].settings.query, startTime, endTime, logger);
     expect(mysql.createConnection).toHaveBeenCalledWith({
-      host: configuration.settings.host,
-      port: configuration.settings.port,
-      user: configuration.settings.username,
-      password: configuration.settings.password,
-      database: configuration.settings.database,
-      connectTimeout: configuration.settings.connectionTimeout,
+      host: connector.settings.host,
+      port: connector.settings.port,
+      user: connector.settings.username,
+      password: connector.settings.password,
+      database: connector.settings.database,
+      connectTimeout: connector.settings.connectionTimeout,
       timezone: 'Z'
     });
     expect(generateReplacementParameters).toHaveBeenCalledWith(items[0].settings.query, startTime, endTime);
     expect(mysqlConnection.execute).toHaveBeenCalledWith(
       {
         sql: items[0].settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'),
-        timeout: configuration.settings.requestTimeout
+        timeout: connector.settings.requestTimeout
       },
       {
         startTime,
@@ -269,7 +307,7 @@ describe('SouthMySQL with authentication', () => {
     expect(mysqlConnection.execute).toHaveBeenCalledWith(
       {
         sql: items[0].settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'),
-        timeout: configuration.settings.requestTimeout
+        timeout: connector.settings.requestTimeout
       },
       {
         startTime,
@@ -282,7 +320,7 @@ describe('SouthMySQL with authentication', () => {
 });
 
 describe('SouthMySQL without authentication', () => {
-  const configuration: SouthConnectorDTO = {
+  const configuration: SouthConnectorDTO<SouthMySQLSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mysql',
@@ -297,8 +335,8 @@ describe('SouthMySQL without authentication', () => {
       host: 'localhost',
       port: 3306,
       database: 'db',
-      username: '',
-      password: '',
+      username: null,
+      password: null,
       connectionTimeout: 1000,
       requestTimeout: 1000
     }
@@ -339,8 +377,8 @@ describe('SouthMySQL without authentication', () => {
     expect(mysql.createConnection).toHaveBeenCalledWith({
       host: configuration.settings.host,
       port: configuration.settings.port,
-      user: configuration.settings.username,
-      password: '',
+      user: undefined,
+      password: undefined,
       database: configuration.settings.database,
       connectTimeout: configuration.settings.connectionTimeout,
       timezone: 'Z'

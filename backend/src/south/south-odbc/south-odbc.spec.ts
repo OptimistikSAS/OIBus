@@ -13,8 +13,13 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import ProxyService from '../../service/proxy.service';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { DateTime } from 'luxon';
+import {
+  SouthODBCItemSettings,
+  SouthODBCItemSettingsDateTimeFields,
+  SouthODBCSettings
+} from '../../../../shared/model/south-settings.model';
 
 jest.mock('../../service/utils');
 jest.mock('odbc');
@@ -57,7 +62,7 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
@@ -65,19 +70,30 @@ const items: Array<OibusItemDTO> = [
     settings: {
       query: 'SELECT * FROM table',
       dateTimeFields: [
-        { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
         {
-          field: 'timestamp',
+          fieldName: 'anotherTimestamp',
+          useAsReference: false,
+          type: 'unix-epoch-ms',
+          timezone: null,
+          format: null,
+          locale: null
+        } as unknown as SouthODBCItemSettingsDateTimeFields,
+        {
+          fieldName: 'timestamp',
           useAsReference: true,
-          datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          type: 'string',
+          timezone: 'Europe/Paris',
+          format: 'yyyy-MM-dd HH:mm:ss.SSS',
+          locale: 'en-US'
         }
       ],
       serialization: {
-        type: 'file',
+        type: 'csv',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' }
+        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+        outputTimezone: 'Europe/Paris'
       }
     },
     scanModeId: 'scanModeId1'
@@ -89,19 +105,30 @@ const items: Array<OibusItemDTO> = [
     settings: {
       query: 'SELECT * FROM table',
       dateTimeFields: [
-        { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
         {
-          field: 'timestamp',
+          fieldName: 'anotherTimestamp',
+          useAsReference: false,
+          type: 'unix-epoch-ms',
+          timezone: null,
+          format: null,
+          locale: null
+        } as unknown as SouthODBCItemSettingsDateTimeFields,
+        {
+          fieldName: 'timestamp',
           useAsReference: true,
-          datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          type: 'string',
+          timezone: 'Europe/Paris',
+          format: 'yyyy-MM-dd HH:mm:ss.SSS',
+          locale: 'en-US'
         }
       ],
       serialization: {
-        type: 'file',
+        type: 'csv',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' }
+        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+        outputTimezone: 'Europe/Paris'
       }
     },
     scanModeId: 'scanModeId1'
@@ -113,19 +140,30 @@ const items: Array<OibusItemDTO> = [
     settings: {
       query: 'SELECT * FROM table',
       dateTimeFields: [
-        { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
         {
-          field: 'timestamp',
+          fieldName: 'anotherTimestamp',
+          useAsReference: false,
+          type: 'unix-epoch-ms',
+          timezone: null,
+          format: null,
+          locale: null
+        } as unknown as SouthODBCItemSettingsDateTimeFields,
+        {
+          fieldName: 'timestamp',
           useAsReference: true,
-          datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          type: 'string',
+          timezone: 'Europe/Paris',
+          format: 'yyyy-MM-dd HH:mm:ss.SSS',
+          locale: 'en-US'
         }
       ],
       serialization: {
-        type: 'file',
+        type: 'csv',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' }
+        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+        outputTimezone: 'Europe/Paris'
       }
     },
     scanModeId: 'scanModeId2'
@@ -136,7 +174,7 @@ const nowDateString = '2020-02-02T02:02:02.222Z';
 let south: SouthODBC;
 
 describe('SouthODBC with authentication', () => {
-  const configuration: SouthConnectorDTO = {
+  const configuration: SouthConnectorDTO<SouthODBCSettings> = {
     id: 'southId',
     name: 'south',
     type: 'odbc',
@@ -288,7 +326,7 @@ describe('SouthODBC with authentication', () => {
 });
 
 describe('SouthODBC without authentication', () => {
-  const configuration: SouthConnectorDTO = {
+  const configuration: SouthConnectorDTO<SouthODBCSettings> = {
     id: 'southId',
     name: 'south',
     type: 'odbc',
@@ -304,8 +342,8 @@ describe('SouthODBC without authentication', () => {
       host: 'localhost',
       port: 1433,
       database: '',
-      username: '',
-      password: '',
+      username: null,
+      password: null,
       connectionTimeout: 1000,
       trustServerCertificate: false
     }

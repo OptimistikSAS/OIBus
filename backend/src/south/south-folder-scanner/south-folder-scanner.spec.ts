@@ -13,7 +13,8 @@ import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import ProxyService from '../../service/proxy.service';
 
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthFolderScannerItemSettings } from '../../../../shared/model/south-settings.model';
 
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
@@ -55,7 +56,7 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
@@ -71,7 +72,8 @@ const items: Array<OibusItemDTO> = [
     connectorId: 'southId',
     settings: {
       regex: '.*.log'
-    }
+    },
+    scanModeId: 'scanModeId1'
   },
   {
     id: 'id2',

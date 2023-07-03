@@ -14,18 +14,19 @@ import fetch from 'node-fetch';
 import https from 'node:https';
 import { HandlesFile, HandlesValues } from '../north-interface';
 import { filesExists } from '../../service/utils';
+import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
  * OIAnalytics endpoints are set in this connector
  */
-export default class NorthOIAnalytics extends NorthConnector implements HandlesFile, HandlesValues {
+export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings> implements HandlesFile, HandlesValues {
   static type = manifest.id;
 
   private proxyAgent: any | undefined;
 
   constructor(
-    configuration: NorthConnectorDTO,
+    configuration: NorthConnectorDTO<NorthOIAnalyticsSettings>,
     encryptionService: EncryptionService,
     proxyService: ProxyService,
     repositoryService: RepositoryService,
@@ -69,20 +70,12 @@ export default class NorthOIAnalytics extends NorthConnector implements HandlesF
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     };
-    switch (this.configuration.settings.authentication.type) {
-      case 'basic':
-        headers.authorization = `Basic ${Buffer.from(
-          `${this.configuration.settings.authentication.username}:${
-            this.configuration.settings.authentication.password
-              ? await this.encryptionService.decryptText(this.configuration.settings.authentication.password)
-              : ''
-          }`
-        ).toString('base64')}`;
-        break;
 
-      default:
-        break;
-    }
+    headers.authorization = `Basic ${Buffer.from(
+      `${this.configuration.settings.accessKey}:${
+        this.configuration.settings.secretKey ? await this.encryptionService.decryptText(this.configuration.settings.secretKey) : ''
+      }`
+    ).toString('base64')}`;
 
     let response;
     const valuesUrl = `${this.configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${this.configuration.name}`;
@@ -114,20 +107,12 @@ export default class NorthOIAnalytics extends NorthConnector implements HandlesF
    */
   async handleFile(filePath: string): Promise<void> {
     const headers: Record<string, string> = {};
-    switch (this.configuration.settings.authentication.type) {
-      case 'basic':
-        headers.authorization = `Basic ${Buffer.from(
-          `${this.configuration.settings.authentication.username}:${
-            this.configuration.settings.authentication.password
-              ? await this.encryptionService.decryptText(this.configuration.settings.authentication.password)
-              : ''
-          }`
-        ).toString('base64')}`;
-        break;
+    headers.authorization = `Basic ${Buffer.from(
+      `${this.configuration.settings.accessKey}:${
+        this.configuration.settings.secretKey ? await this.encryptionService.decryptText(this.configuration.settings.secretKey) : ''
+      }`
+    ).toString('base64')}`;
 
-      default:
-        break;
-    }
     if (!(await filesExists(filePath))) {
       throw new Error(`File ${filePath} does not exist`);
     }

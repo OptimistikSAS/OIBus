@@ -11,11 +11,11 @@ import ProxyService from '../../service/proxy.service';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 import fetch from 'node-fetch';
-import https from 'node:https';
 import * as utils from '../../service/utils';
 
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
+import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -75,7 +75,7 @@ const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
-const configuration: NorthConnectorDTO = {
+const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
   id: 'id',
   name: 'north',
   type: 'test',
@@ -85,11 +85,8 @@ const configuration: NorthConnectorDTO = {
     host: 'https://hostname',
     timeout: 1000,
     acceptUnauthorized: false,
-    authentication: {
-      type: 'basic',
-      username: 'anyuser',
-      password: 'anypass'
-    },
+    accessKey: 'anyUser',
+    secretKey: 'anypass',
     proxyId: 'proxyId'
   },
   caching: {
@@ -165,9 +162,7 @@ describe('NorthOIAnalytics', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(
-          `${configuration.settings.authentication.username}:${configuration.settings.authentication.password}`
-        ).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:${configuration.settings.secretKey}`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify([
@@ -282,9 +277,7 @@ describe('NorthOIAnalytics', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(
-          `${configuration.settings.authentication.username}:${configuration.settings.authentication.password}`
-        ).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:${configuration.settings.secretKey}`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify([
@@ -323,9 +316,7 @@ describe('NorthOIAnalytics', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(
-          `${configuration.settings.authentication.username}:${configuration.settings.authentication.password}`
-        ).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:${configuration.settings.secretKey}`).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
@@ -383,9 +374,7 @@ describe('NorthOIAnalytics', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(
-          `${configuration.settings.authentication.username}:${configuration.settings.authentication.password}`
-        ).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:${configuration.settings.secretKey}`).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
@@ -404,153 +393,6 @@ describe('NorthOIAnalytics', () => {
       message: `Error 501: statusText`,
       retry: false
     });
-
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
-      expectedFetchOptions
-    );
-  });
-});
-
-describe('NorthOIAnalytics without proxy nor password and with acceptUnauthorized', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-
-    configuration.settings.authentication.password = null;
-    configuration.settings.proxyId = null;
-    configuration.settings.acceptUnauthorized = true;
-    north = new NorthOIAnalytics(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
-    await north.start();
-  });
-
-  it('should be properly initialized without proxy', async () => {
-    await north.start();
-    expect(proxyService.createProxyAgent).not.toHaveBeenCalled();
-  });
-
-  it('should properly handle values without password', async () => {
-    await north.start();
-    const values = [
-      {
-        pointId: 'pointId1',
-        timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
-      }
-    ];
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
-
-    const expectedFetchOptions = {
-      method: 'POST',
-      headers: {
-        authorization: `Basic ${Buffer.from(`${configuration.settings.authentication.username}:`).toString('base64')}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify([
-        {
-          timestamp: values[0]!.timestamp,
-          data: values[0]!.data,
-          pointId: values[0]!.pointId
-        }
-      ]),
-      timeout: configuration.settings.timeout * 1000,
-      agent: expect.any(https.Agent)
-    };
-
-    await north.handleValues(values);
-
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
-      expectedFetchOptions
-    );
-  });
-
-  it('should properly handle files without password', async () => {
-    const filePath = '/path/to/file/example.file';
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
-
-    const expectedFetchOptions = {
-      method: 'POST',
-      headers: {
-        authorization: `Basic ${Buffer.from(`${configuration.settings.authentication.username}:`).toString('base64')}`,
-        'content-type': expect.stringContaining('multipart/form-data; boundary=')
-      },
-      body: expect.anything(),
-      timeout: configuration.settings.timeout * 1000,
-      agent: expect.any(https.Agent)
-    };
-
-    await north.handleFile(filePath);
-
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
-      expectedFetchOptions
-    );
-  });
-});
-
-describe('NorthOIAnalytics without authentication', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-
-    configuration.settings.authentication = { type: 'none' };
-    configuration.settings.proxyId = null;
-    configuration.settings.acceptUnauthorized = false;
-    north = new NorthOIAnalytics(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
-    await north.start();
-  });
-
-  it('should properly handle values without auth', async () => {
-    await north.start();
-    const values = [
-      {
-        pointId: 'pointId1',
-        timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
-      }
-    ];
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
-
-    const expectedFetchOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify([
-        {
-          timestamp: values[0]!.timestamp,
-          data: values[0]!.data,
-          pointId: values[0]!.pointId
-        }
-      ]),
-      timeout: configuration.settings.timeout * 1000,
-      agent: undefined
-    };
-
-    await north.handleValues(values);
-
-    expect(fetch).toHaveBeenCalledWith(
-      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
-      expectedFetchOptions
-    );
-  });
-
-  it('should properly handle files without auth', async () => {
-    const filePath = '/path/to/file/example.file';
-    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
-
-    const expectedFetchOptions = {
-      method: 'POST',
-      headers: {
-        'content-type': expect.stringContaining('multipart/form-data; boundary=')
-      },
-      body: expect.anything(),
-      timeout: configuration.settings.timeout * 1000,
-      agent: undefined
-    };
-
-    await north.handleFile(filePath);
 
     expect(fetch).toHaveBeenCalledWith(
       `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,

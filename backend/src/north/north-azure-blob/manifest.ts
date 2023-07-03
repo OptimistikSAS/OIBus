@@ -16,7 +16,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Account',
       newRow: true,
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'container',
@@ -24,7 +24,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Container',
       newRow: false,
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'authentication',
@@ -34,7 +34,7 @@ const manifest: NorthConnectorManifest = {
       defaultValue: 'accessKey',
       newRow: false,
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'sasToken',
@@ -42,7 +42,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Shared Access Signature Token',
       newRow: true,
       conditionalDisplay: { field: 'authentication', values: ['sasToken'] },
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'accessKey',
@@ -50,7 +50,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Access Key',
       newRow: true,
       conditionalDisplay: { field: 'authentication', values: ['accessKey'] },
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'tenantId',
@@ -58,7 +58,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Tenant ID',
       newRow: true,
       conditionalDisplay: { field: 'authentication', values: ['aad'] },
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'clientId',
@@ -67,7 +67,7 @@ const manifest: NorthConnectorManifest = {
       newRow: false,
       validators: [{ key: 'required' }],
       conditionalDisplay: { field: 'authentication', values: ['aad'] },
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'clientSecret',
@@ -76,7 +76,7 @@ const manifest: NorthConnectorManifest = {
       newRow: false,
       validators: [{ key: 'required' }],
       conditionalDisplay: { field: 'authentication', values: ['aad'] },
-      readDisplay: true
+      displayInViewMode: true
     }
   ]
 };

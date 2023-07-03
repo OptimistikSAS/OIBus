@@ -3,7 +3,7 @@ import ads from 'ads-client';
 
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { DateTime } from 'luxon';
 import { Instant } from '../../../../shared/model/types';
 import EncryptionService from '../../service/encryption.service';
@@ -11,6 +11,7 @@ import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { QueriesLastPoint, TestsConnection } from '../south-interface';
+import { SouthADSItemSettings, SouthADSSettings } from '../../../../shared/model/south-settings.model';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -25,15 +26,15 @@ interface ADSOptions {
 /**
  * Class SouthADS - Provides instruction for TwinCAT ADS client connection
  */
-export default class SouthADS extends SouthConnector implements QueriesLastPoint, TestsConnection {
+export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSItemSettings> implements QueriesLastPoint, TestsConnection {
   static type = manifest.id;
 
   private client: ads.Client | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthADSSettings>,
+    items: Array<SouthConnectorItemDTO<SouthADSItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -76,7 +77,7 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
      */
     switch (dataType) {
       case 'BOOL':
-        if (this.configuration.settings.boolAsText === 'Text') {
+        if (this.connector.settings.boolAsText === 'Text') {
           valueToAdd = JSON.stringify(valueToParse);
         } else {
           valueToAdd = valueToParse ? '1' : '0';
@@ -126,7 +127,8 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
       default:
         if (subItems.length > 0) {
           // It is an ADS structure object (as json)
-          const structure = this.configuration.settings.structureFiltering.find((element: any) => element.name === dataType);
+          // TODO @burgerni look into this
+          const structure = (this.connector.settings as any).structureFiltering.find((element: any) => element.name === dataType);
           if (structure) {
             const parsedValues = subItems
               .filter(item => structure.fields === '*' || structure.fields.split(',').includes(item.name))
@@ -147,7 +149,7 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
           );
         } else if (enumInfo.length > 0) {
           // It is an ADS Enum object
-          if (this.configuration.settings.enumAsText === 'Text') {
+          if (this.connector.settings.enumAsText === 'Text') {
             valueToAdd = valueToParse.name;
           } else {
             valueToAdd = JSON.stringify(valueToParse.value);
@@ -169,7 +171,7 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
     return [];
   }
 
-  async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
+  async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthADSItemSettings>>): Promise<void> {
     const timestamp = DateTime.now().toUTC().toISO()!;
     try {
       const results = await Promise.all(items.map(item => this.readAdsSymbol(item.name, timestamp)));
@@ -178,7 +180,7 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
       if (error.message.startsWith('Client is not connected')) {
         this.logger.error('ADS client disconnected. Reconnecting');
         await this.disconnect();
-        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.configuration.settings.retryInterval);
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
       } else {
         throw error;
       }
@@ -191,7 +193,7 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
         .readSymbol(itemName)
         .then((nodeResult: any) => {
           const parsedResult = this.parseValues(
-            `${this.configuration.settings.plcName}${itemName}`,
+            `${this.connector.settings.plcName}${itemName}`,
             nodeResult.symbol?.type,
             nodeResult.value,
             timestamp,
@@ -211,25 +213,25 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
    */
   async connect(): Promise<void> {
     const options: ADSOptions = {
-      targetAmsNetId: this.configuration.settings.netId, // example: 192.168.1.120.1.1
-      targetAdsPort: this.configuration.settings.port, // example: 851
+      targetAmsNetId: this.connector.settings.netId, // example: 192.168.1.120.1.1
+      targetAdsPort: this.connector.settings.port, // example: 851
       autoReconnect: false
     };
-    if (this.configuration.settings.clientAmsNetId) {
+    if (this.connector.settings.clientAmsNetId) {
       // needs to match a route declared in PLC StaticRoutes.xml file. Example: 10.211.55.2.1.1
-      options.localAmsNetId = this.configuration.settings.clientAmsNetId;
+      options.localAmsNetId = this.connector.settings.clientAmsNetId;
     }
-    if (this.configuration.settings.clientAdsPort) {
+    if (this.connector.settings.clientAdsPort) {
       // should be an unused port. Example: 32750
-      options.localAdsPort = this.configuration.settings.clientAdsPort;
+      options.localAdsPort = this.connector.settings.clientAdsPort;
     }
-    if (this.configuration.settings.routerAddress) {
+    if (this.connector.settings.routerAddress) {
       // distant address of the PLC. Example: 10.211.55.3
-      options.routerAddress = this.configuration.settings.routerAddress;
+      options.routerAddress = this.connector.settings.routerAddress;
     }
-    if (this.configuration.settings.routerTcpPort) {
+    if (this.connector.settings.routerTcpPort) {
       // port of the Ams router (must be open on the PLC). Example : 48898 (which is default)
-      options.routerTcpPort = this.configuration.settings.routerTcpPort;
+      options.routerTcpPort = this.connector.settings.routerTcpPort;
     }
 
     this.logger.info(`Connecting to ADS Client with options ${JSON.stringify(options)}`);
@@ -239,16 +241,12 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
     } catch (error) {
       this.logger.error(`ADS connect error: ${JSON.stringify(error)}`);
       await this.disconnect();
-      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.configuration.settings.retryInterval);
+      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
     }
   }
 
   // TODO: method needs to be implemented
-  static async testConnection(
-    settings: SouthConnectorDTO['settings'],
-    logger: pino.Logger,
-    _encryptionService: EncryptionService
-  ): Promise<void> {
+  static async testConnection(settings: SouthADSSettings, logger: pino.Logger, _encryptionService: EncryptionService): Promise<void> {
     logger.trace(`Testing connection`);
     throw new Error('TODO: method needs to be implemented');
   }
@@ -292,7 +290,7 @@ export default class SouthADS extends SouthConnector implements QueriesLastPoint
     } catch (error) {
       this.logger.error(`ADS disconnect error. ${error}`);
     }
-    this.logger.info(`ADS client disconnected from ${this.configuration.settings.netId}:${this.configuration.settings.port}`);
+    this.logger.info(`ADS client disconnected from ${this.connector.settings.netId}:${this.connector.settings.port}`);
     this.client = null;
     await super.disconnect();
   }

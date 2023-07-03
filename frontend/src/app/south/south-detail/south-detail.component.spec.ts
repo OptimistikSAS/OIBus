@@ -52,7 +52,7 @@ describe('SouthDetailComponent', () => {
         {
           label: 'query',
           key: 'query',
-          readDisplay: true,
+          displayInViewMode: true,
           type: 'OibText'
         }
       ]

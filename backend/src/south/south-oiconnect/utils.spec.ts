@@ -3,13 +3,13 @@ import https from 'node:https';
 import Stream from 'node:stream';
 
 import * as utils from './utils';
-import { OibusItemDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 
 jest.mock('node:http', () => ({ request: jest.fn() }));
 jest.mock('node:https', () => ({ request: jest.fn() }));
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
-const item: OibusItemDTO = {
+const item: SouthConnectorItemDTO = {
   id: 'id1',
   name: 'item1',
   connectorId: 'southId',

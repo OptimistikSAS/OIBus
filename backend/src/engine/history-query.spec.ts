@@ -3,7 +3,7 @@ import PinoLogger from '../tests/__mocks__/logger.mock';
 import SouthServiceMock from '../tests/__mocks__/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/north-service.mock';
 
-import { OibusItemDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
 
 import SouthService from '../service/south.service';
@@ -47,7 +47,7 @@ const nowDateString = '2020-02-02T02:02:02.222Z';
 let historyQuery: HistoryQuery;
 let configuration: HistoryQueryDTO;
 
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'item1',

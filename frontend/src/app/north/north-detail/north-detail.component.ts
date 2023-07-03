@@ -75,7 +75,7 @@ export class NorthDetailComponent implements OnInit {
           return;
         }
         this.displayedSettings = manifest.settings
-          .filter(setting => setting.readDisplay)
+          .filter(setting => setting.displayInViewMode)
           .map(setting => {
             return {
               key: setting.label,

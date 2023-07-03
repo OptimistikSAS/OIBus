@@ -5,7 +5,11 @@ import { Observable, switchMap } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
-import { OibusItemCommandDTO, OibusItemDTO, OibusItemManifest } from '../../../../../shared/model/south-connector.model';
+import {
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorItemManifest
+} from '../../../../../shared/model/south-connector.model';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 import { NgForOf, NgIf, NgSwitch, NgSwitchCase } from '@angular/common';
 import { OibCodeBlockComponent } from '../../shared/form/oib-code-block/oib-code-block.component';
@@ -49,11 +53,11 @@ export class EditHistoryQueryItemModalComponent {
   state = new ObservableState();
   historyQuery: HistoryQueryDTO | null = null;
 
-  southItemSchema: OibusItemManifest | null = null;
+  southItemSchema: SouthConnectorItemManifest | null = null;
   southItemRows: Array<Array<OibFormControl>> = [];
   subscriptionOnly = false;
 
-  item: OibusItemDTO | null = null;
+  item: SouthConnectorItemDTO | null = null;
 
   form: FormGroup<{
     name: FormControl<string>;
@@ -68,7 +72,7 @@ export class EditHistoryQueryItemModalComponent {
 
   constructor(private modal: NgbActiveModal, private fb: NonNullableFormBuilder, private historyQueryService: HistoryQueryService) {}
 
-  private createForm(item: OibusItemDTO | null) {
+  private createForm(item: SouthConnectorItemDTO | null) {
     this.form = this.fb.group({
       name: ['', Validators.required],
       settings: createFormGroup(this.southItemSchema!.settings, this.fb)
@@ -83,7 +87,7 @@ export class EditHistoryQueryItemModalComponent {
   /**
    * Prepares the component for creation.
    */
-  prepareForCreation(historyQuery: HistoryQueryDTO, southItemSchema: OibusItemManifest) {
+  prepareForCreation(historyQuery: HistoryQueryDTO, southItemSchema: SouthConnectorItemManifest) {
     this.mode = 'create';
     this.historyQuery = historyQuery;
     this.southItemSchema = southItemSchema;
@@ -94,8 +98,8 @@ export class EditHistoryQueryItemModalComponent {
   /**
    * Prepares the component for edition.
    */
-  prepareForCopy(historyQuery: HistoryQueryDTO, southItemSchema: OibusItemManifest, item: OibusItemDTO) {
-    this.item = JSON.parse(JSON.stringify(item)) as OibusItemDTO;
+  prepareForCopy(historyQuery: HistoryQueryDTO, southItemSchema: SouthConnectorItemManifest, item: SouthConnectorItemDTO) {
+    this.item = JSON.parse(JSON.stringify(item)) as SouthConnectorItemDTO;
     this.item.name = `${item.name}-copy`;
     this.mode = 'create';
     this.historyQuery = historyQuery;
@@ -107,7 +111,7 @@ export class EditHistoryQueryItemModalComponent {
   /**
    * Prepares the component for edition.
    */
-  prepareForEdition(historyQuery: HistoryQueryDTO, southItemSchema: OibusItemManifest, item: OibusItemDTO) {
+  prepareForEdition(historyQuery: HistoryQueryDTO, southItemSchema: SouthConnectorItemManifest, item: SouthConnectorItemDTO) {
     this.mode = 'edit';
     this.item = item;
     this.historyQuery = historyQuery;
@@ -127,13 +131,13 @@ export class EditHistoryQueryItemModalComponent {
 
     const formValue = this.form!.value;
 
-    const command: OibusItemCommandDTO = {
+    const command: SouthConnectorItemCommandDTO = {
       name: formValue.name!,
       scanModeId: null,
       settings: formValue.settings!
     };
 
-    let obs: Observable<OibusItemDTO>;
+    let obs: Observable<SouthConnectorItemDTO>;
     if (this.mode === 'create') {
       obs = this.historyQueryService.createItem(this.historyQuery!.id, command);
     } else {

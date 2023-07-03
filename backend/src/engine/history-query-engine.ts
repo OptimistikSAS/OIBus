@@ -10,7 +10,7 @@ import path from 'node:path';
 import { createFolder } from '../service/utils';
 
 import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
-import { OibusItemDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { PassThrough } from 'node:stream';
 
 const CACHE_FOLDER = './cache/history-query';
@@ -69,11 +69,11 @@ export default class HistoryQueryEngine extends BaseEngine {
     });
   }
 
-  async addItemToHistoryQuery(historyId: string, item: OibusItemDTO): Promise<void> {
+  async addItemToHistoryQuery(historyId: string, item: SouthConnectorItemDTO): Promise<void> {
     await this.historyQueries.get(historyId)?.addItem(item);
   }
 
-  async deleteItemFromHistoryQuery(historyId: string, item: OibusItemDTO): Promise<void> {
+  async deleteItemFromHistoryQuery(historyId: string, item: SouthConnectorItemDTO): Promise<void> {
     await this.historyQueries.get(historyId)?.deleteItem(item);
   }
 
@@ -81,7 +81,7 @@ export default class HistoryQueryEngine extends BaseEngine {
     await this.historyQueries.get(historyId)?.deleteItems();
   }
 
-  async updateItemInHistoryQuery(historyId: string, item: OibusItemDTO): Promise<void> {
+  async updateItemInHistoryQuery(historyId: string, item: SouthConnectorItemDTO): Promise<void> {
     await this.historyQueries.get(historyId)?.updateItem(item);
   }
 

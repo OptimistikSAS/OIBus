@@ -1,4 +1,5 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
+import { buildDateTimeFieldsFormControl, serialization } from '../../../../shared/model/manifest-factory';
 
 const manifest: SouthConnectorManifest = {
   id: 'mssql',
@@ -19,7 +20,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 'localhost',
       newRow: true,
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'port',
@@ -29,7 +30,7 @@ const manifest: SouthConnectorManifest = {
       newRow: false,
       class: 'col-2',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'database',
@@ -38,27 +39,27 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 'db',
       newRow: true,
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'username',
       type: 'OibText',
       label: 'Username',
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'password',
       type: 'OibSecret',
       label: 'Password',
       newRow: false,
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'domain',
       type: 'OibText',
       label: 'Domain',
       newRow: false,
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'encryption',
@@ -66,7 +67,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Use encryption',
       defaultValue: false,
       newRow: true,
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'trustServerCertificate',
@@ -74,7 +75,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Trust server certificate',
       defaultValue: false,
       validators: [{ key: 'required' }],
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'connectionTimeout',
@@ -84,7 +85,7 @@ const manifest: SouthConnectorManifest = {
       newRow: true,
       class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'requestTimeout',
@@ -93,7 +94,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 1000,
       class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
-      readDisplay: false
+      displayInViewMode: false
     }
   ],
   items: {
@@ -110,68 +111,20 @@ const manifest: SouthConnectorManifest = {
         defaultValue: 'SELECT * FROM Table WHERE timestamp > @StartTime',
         class: 'col-12 text-nowrap',
         validators: [{ key: 'required' }],
-        readDisplay: true
+        displayInViewMode: true
       },
-      {
-        key: 'dateTimeFields',
-        type: 'OibDateTimeFields',
-        label: 'Date time fields',
-        allowedDateObjectTypes: ['Date', 'DateTime', 'DateTime2', 'DateTimeOffset', 'SmallDateTime'],
-        class: 'col',
-        newRow: true,
-        readDisplay: false
-      },
-      {
-        key: 'serialization',
-        type: 'FormGroup',
-        label: 'Serialization',
-        class: 'col',
-        newRow: true,
-        readDisplay: false,
-        content: [
-          {
-            key: 'type',
-            type: 'OibSelect',
-            label: 'Type',
-            options: ['csv', 'json'],
-            defaultValue: 'csv',
-            newRow: true,
-            readDisplay: false
-          },
-          {
-            key: 'filename',
-            type: 'OibText',
-            label: 'Filename',
-            defaultValue: 'sql.csv',
-            newRow: false,
-            readDisplay: false
-          },
-          {
-            key: 'delimiter',
-            type: 'OibSelect',
-            label: 'Delimiter',
-            options: [',', ';'],
-            newRow: false,
-            readDisplay: false
-          },
-          {
-            key: 'outputDateTimeFormat',
-            type: 'OibText',
-            label: 'Output date time format',
-            defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
-            newRow: false,
-            readDisplay: false
-          },
-          {
-            key: 'outputTimezone',
-            type: 'OibTimezone',
-            label: 'Timezone',
-            defaultValue: 'Europe/Paris',
-            newRow: false,
-            readDisplay: false
-          }
-        ]
-      }
+      buildDateTimeFieldsFormControl([
+        'string',
+        'Date',
+        'DateTime',
+        'DateTime2',
+        'DateTimeOffset',
+        'SmallDateTime',
+        'iso-string',
+        'unix-epoch',
+        'unix-epoch-ms'
+      ]),
+      serialization
     ]
   }
 };

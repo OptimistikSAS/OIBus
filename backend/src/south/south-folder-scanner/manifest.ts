@@ -20,17 +20,18 @@ const manifest: SouthConnectorManifest = {
       newRow: true,
       class: 'col-12',
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'minAge',
       type: 'OibNumber',
-      label: 'Minimum Age (ms)',
+      label: 'Minimum Age',
+      unitLabel: 'ms',
       defaultValue: 1000,
       newRow: true,
       class: 'col-3',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'preserveFiles',
@@ -40,7 +41,7 @@ const manifest: SouthConnectorManifest = {
       newRow: false,
       class: 'col-3',
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'ignoreModifiedDate',
@@ -51,7 +52,7 @@ const manifest: SouthConnectorManifest = {
       class: 'col-3',
       conditionalDisplay: { field: 'preserveFiles', values: [true] },
       validators: [{ key: 'required' }],
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'compression',
@@ -61,7 +62,7 @@ const manifest: SouthConnectorManifest = {
       newRow: false,
       class: 'col-3',
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     }
   ],
   items: {
@@ -76,7 +77,7 @@ const manifest: SouthConnectorManifest = {
         label: 'RegExp',
         defaultValue: '.txt',
         validators: [{ key: 'required' }],
-        readDisplay: true
+        displayInViewMode: true
       }
     ]
   }

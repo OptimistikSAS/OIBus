@@ -11,12 +11,13 @@ import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import * as process from 'process';
 import { HandlesFile } from '../north-interface';
+import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
 
-export default class NorthAzureBlob extends NorthConnector implements HandlesFile {
+export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSettings> implements HandlesFile {
   static type = manifest.id;
 
   constructor(
-    configuration: NorthConnectorDTO,
+    configuration: NorthConnectorDTO<NorthAzureBlobSettings>,
     encryptionService: EncryptionService,
     proxyService: ProxyService,
     repositoryService: RepositoryService,
@@ -43,8 +44,8 @@ export default class NorthAzureBlob extends NorthConnector implements HandlesFil
       case 'accessKey':
         this.logger.debug(`Initiate Azure blob service client using ${this.configuration.settings.authentication}`);
         const sharedKeyCredential = new StorageSharedKeyCredential(
-          this.configuration.settings.account,
-          this.configuration.settings.accessKey
+          this.configuration.settings.account!,
+          this.configuration.settings.accessKey!
         );
         blobServiceClient = new BlobServiceClient(
           `https://${this.configuration.settings.account}.blob.core.windows.net`,
@@ -53,9 +54,9 @@ export default class NorthAzureBlob extends NorthConnector implements HandlesFil
         break;
       case 'aad':
         this.logger.debug(`Initiate Azure blob service client using ${this.configuration.settings.authentication}`);
-        process.env.AZURE_TENANT_ID = this.configuration.settings.tenantId;
-        process.env.AZURE_CLIENT_ID = this.configuration.settings.clientId;
-        process.env.AZURE_CLIENT_SECRET = this.configuration.settings.clientSecret;
+        process.env.AZURE_TENANT_ID = this.configuration.settings.tenantId!;
+        process.env.AZURE_CLIENT_ID = this.configuration.settings.clientId!;
+        process.env.AZURE_CLIENT_SECRET = this.configuration.settings.clientSecret!;
         const defaultAzureCredential = new DefaultAzureCredential();
         blobServiceClient = new BlobServiceClient(
           `https://${this.configuration.settings.account}.blob.core.windows.net`,

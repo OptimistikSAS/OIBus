@@ -10,7 +10,7 @@ import * as utils from './utils';
 import csv from 'papaparse';
 import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/logger.mock';
-import { DateTimeFormat } from '../../../shared/model/types';
+import { DateTimeType } from '../../../shared/model/types';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -311,7 +311,7 @@ describe('Service utils', () => {
             delimiter: 'SEMI_COLON',
             filename: 'myFilename.csv',
             compression: false,
-            outputDateTimeFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
+            outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
             outputTimezone: 'UTC'
           },
           'connectorName',
@@ -337,7 +337,7 @@ describe('Service utils', () => {
             delimiter: 'SEMI_COLON',
             filename: 'myFilename.csv',
             compression: false,
-            outputDateTimeFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
+            outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
             outputTimezone: 'UTC'
           },
           'connectorName',
@@ -388,7 +388,7 @@ describe('Service utils', () => {
             delimiter: 'SEMI_COLON',
             filename: 'myFilename.csv',
             compression: true,
-            outputDateTimeFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
+            outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
             outputTimezone: 'UTC'
           },
           'connectorName',
@@ -408,8 +408,11 @@ describe('Service utils', () => {
         await utils.persistResults(
           dataToWrite,
           {
-            type: 'oibus-values',
-            outputDateTimeFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
+            type: 'json',
+            filename: '',
+            compression: false,
+            delimiter: 'COMMA',
+            outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
             outputTimezone: 'UTC'
           },
           'connectorName',
@@ -432,7 +435,7 @@ describe('Service utils', () => {
             delimiter: 'SEMI_COLON',
             filename: 'myFilename.csv',
             compression: true,
-            outputDateTimeFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
+            outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
             outputTimezone: 'UTC'
           },
           'connectorName',
@@ -459,8 +462,8 @@ describe('Service utils', () => {
     const testInstant = '2020-02-02T02:02:02.222Z';
 
     it('should return Number of ms', () => {
-      const dateTimeFormat: DateTimeFormat = {
-        type: 'unix-epoch-ms'
+      const dateTimeFormat = {
+        type: 'unix-epoch-ms' as DateTimeType
       };
       const expectedResult = DateTime.fromISO(testInstant).toMillis();
       const result = utils.formatInstant(testInstant, dateTimeFormat);
@@ -473,8 +476,8 @@ describe('Service utils', () => {
     });
 
     it('should return Number of seconds', () => {
-      const dateTimeFormat: DateTimeFormat = {
-        type: 'unix-epoch'
+      const dateTimeFormat = {
+        type: 'unix-epoch' as DateTimeType
       };
       const expectedResult = Math.floor(DateTime.fromISO(testInstant).toMillis() / 1000);
       const result = utils.formatInstant(testInstant, dateTimeFormat);
@@ -487,8 +490,8 @@ describe('Service utils', () => {
     });
 
     it('should return a formatted String with correct timezone', () => {
-      const dateTimeFormat: DateTimeFormat = {
-        type: 'specific-string',
+      const dateTimeFormat = {
+        type: 'string' as DateTimeType,
         timezone: 'Asia/Tokyo',
         format: 'yyyy-MM-dd HH:mm:ss.SSS',
         locale: 'en-US'
@@ -501,16 +504,16 @@ describe('Service utils', () => {
     });
 
     it('should return a formatted ISO String', () => {
-      const dateTimeFormat: DateTimeFormat = {
-        type: 'iso-8601-string'
+      const dateTimeFormat = {
+        type: 'iso-string' as DateTimeType
       };
       const result = utils.formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(testInstant);
     });
 
     it('should return a formatted String with correct timezone for locale en-US', () => {
-      const dateTimeFormat: DateTimeFormat = {
-        type: 'specific-string',
+      const dateTimeFormat = {
+        type: 'string' as DateTimeType,
         timezone: 'Asia/Tokyo',
         format: 'dd-MMM-yy HH:mm:ss', // format with localized month
         locale: 'en-US'
@@ -524,8 +527,8 @@ describe('Service utils', () => {
     });
 
     it('should return a formatted String with correct timezone for locale fr-FR', () => {
-      const dateTimeFormat: DateTimeFormat = {
-        type: 'specific-string',
+      const dateTimeFormat = {
+        type: 'string' as DateTimeType,
         timezone: 'Asia/Tokyo',
         format: 'dd-MMM-yy HH:mm:ss', // format with localized month
         locale: 'fr-FR'
@@ -540,17 +543,14 @@ describe('Service utils', () => {
     });
 
     it('should return an ISO String from Date with correct timezone', () => {
-      const dateTimeFormat: DateTimeFormat = {
-        type: 'date-object',
-        timezone: 'Asia/Tokyo',
-        dateObjectType: null
+      const dateTimeFormat = {
+        type: 'timestamptz' as DateTimeType,
+        timezone: 'Asia/Tokyo'
       };
       // From Zulu string
-      const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toISO()!;
+      const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toUTC().toISO()!;
       const result = utils.formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(expectedResult);
-      // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
-      expect(result).toEqual('2020-02-02T11:02:02.222+09:00');
     });
   });
 
@@ -570,7 +570,7 @@ describe('Service utils', () => {
   describe('convertDateTimeToInstant', () => {
     const testInstant = '2020-02-02T02:02:02.222Z';
     it('should return ISO String if no dateTimeFormat specified', () => {
-      const result = utils.convertDateTimeToInstant(testInstant, null);
+      const result = utils.convertDateTimeToInstant(testInstant, { type: 'iso-string' });
       expect(result).toEqual('2020-02-02T02:02:02.222Z');
     });
 
@@ -585,8 +585,8 @@ describe('Service utils', () => {
     });
 
     it('should return ISO string from specific string with correct timezone', () => {
-      const dateTimeFormat: DateTimeFormat = {
-        type: 'specific-string',
+      const dateTimeFormat = {
+        type: 'string' as DateTimeType,
         timezone: 'Asia/Tokyo',
         format: 'yyyy-MM-dd HH:mm:ss.SSS',
         locale: 'en-US'
@@ -600,16 +600,16 @@ describe('Service utils', () => {
     });
 
     it('should return a formatted ISO String', () => {
-      const dateTimeFormat: DateTimeFormat = {
-        type: 'iso-8601-string'
+      const dateTimeFormat = {
+        type: 'iso-string' as DateTimeType
       };
       const result = utils.convertDateTimeToInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(testInstant);
     });
 
     it('should return a formatted String with correct timezone for locale en-US', () => {
-      const dateTimeFormat: DateTimeFormat = {
-        type: 'specific-string',
+      const dateTimeFormat = {
+        type: 'string' as DateTimeType,
         timezone: 'Asia/Tokyo',
         format: 'dd-MMM-yy HH:mm:ss', // format with localized month
         locale: 'en-US'
@@ -622,8 +622,8 @@ describe('Service utils', () => {
     });
 
     it('should return a formatted String with correct timezone for locale fr-FR', () => {
-      const dateTimeFormat: DateTimeFormat = {
-        type: 'specific-string',
+      const dateTimeFormat = {
+        type: 'string' as DateTimeType,
         timezone: 'Asia/Tokyo',
         format: 'dd-MMM-yy HH:mm:ss', // format with localized month
         locale: 'fr-FR'
@@ -638,10 +638,9 @@ describe('Service utils', () => {
     });
 
     it('should return an ISO String from Date with correct timezone', () => {
-      const dateTimeFormat: DateTimeFormat = {
-        type: 'date-object',
-        timezone: 'Asia/Tokyo',
-        dateObjectType: null
+      const dateTimeFormat = {
+        type: 'timestamp' as DateTimeType,
+        timezone: 'Asia/Tokyo'
       };
       // From Zulu string
       const result = utils.convertDateTimeToInstant(new Date(testInstant), dateTimeFormat);

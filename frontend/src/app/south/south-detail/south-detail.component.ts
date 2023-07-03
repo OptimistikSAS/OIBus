@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-  OibusItemManifest,
+  SouthConnectorItemManifest,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
   SouthConnectorManifest
@@ -45,7 +45,7 @@ import { NotificationService } from '../../shared/notification.service';
 export class SouthDetailComponent implements OnInit {
   southConnector: SouthConnectorDTO | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
-  southItemSchema: OibusItemManifest | null = null;
+  southItemSchema: SouthConnectorItemManifest | null = null;
   scanModes: Array<ScanModeDTO> = [];
   manifest: SouthConnectorManifest | null = null;
 
@@ -87,7 +87,7 @@ export class SouthDetailComponent implements OnInit {
         this.manifest = manifest;
         this.southItemSchema = manifest.items;
         this.displayedSettings = manifest.settings
-          .filter(setting => setting.readDisplay)
+          .filter(setting => setting.displayInViewMode)
           .map(setting => {
             return {
               key: setting.label,

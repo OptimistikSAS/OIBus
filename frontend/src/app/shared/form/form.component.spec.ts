@@ -8,6 +8,7 @@ import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { FormControl, FormGroup, FormRecord } from '@angular/forms';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { formDirectives } from '../form-directives';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
   template: ` <form [formGroup]="form">
@@ -41,7 +42,7 @@ class TestComponent {
         newRow: true,
         class: 'col-8',
         defaultValue: 'option2',
-        readDisplay: true
+        displayInViewMode: true
       },
       {
         key: 'myOibTextField',
@@ -49,7 +50,7 @@ class TestComponent {
         label: 'Text field',
         newRow: false,
         class: 'col-4',
-        readDisplay: true
+        displayInViewMode: true
       }
     ],
     [
@@ -61,7 +62,7 @@ class TestComponent {
         class: 'col-3',
         defaultValue: 2223,
         validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-        readDisplay: true
+        displayInViewMode: true
       },
       {
         key: 'myOibTextAreaField',
@@ -71,7 +72,7 @@ class TestComponent {
         class: 'col-3',
         validators: [{ key: 'required' }],
         conditionalDisplay: { field: 'myOibNumberField', values: [2225] },
-        readDisplay: true
+        displayInViewMode: true
       },
       {
         key: 'myOibSecretField',
@@ -79,7 +80,7 @@ class TestComponent {
         label: 'Secret field',
         newRow: false,
         class: 'col-3',
-        readDisplay: true
+        displayInViewMode: true
       },
       {
         key: 'myOibCheckboxField',
@@ -87,7 +88,7 @@ class TestComponent {
         label: 'Checkbox field',
         defaultValue: false,
         newRow: true,
-        readDisplay: true
+        displayInViewMode: true
       }
     ]
   ];
@@ -105,27 +106,35 @@ class FormComponentTester extends ComponentTester<TestComponent> {
   get oibSelectComponent() {
     return this.select('#OibSelect-myOibSelectField')!;
   }
+
   get oibTextComponent() {
     return this.input('#OibText-myOibTextField')!;
   }
+
   get oibNumberComponent() {
     return this.input('#OibNumber-myOibNumberField')!;
   }
+
   get oibTextAreaComponent() {
     return this.textarea('#OibTextArea-myOibTextAreaField')!;
   }
+
   get oibSecretComponent() {
     return this.input('#OibSecret-myOibSecretField')!;
   }
+
   get oibCheckboxComponent() {
     return this.input('#OibCheckbox-myOibCheckboxField')!;
   }
 }
+
 describe('FormComponent', () => {
   let tester: FormComponentTester;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({
+      providers: [provideI18nTesting()]
+    });
 
     tester = new FormComponentTester();
     tester.detectChanges();

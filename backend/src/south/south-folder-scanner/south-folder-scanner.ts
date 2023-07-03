@@ -5,27 +5,31 @@ import SouthConnector from '../south-connector';
 import { compress } from '../../service/utils';
 import manifest from './manifest';
 
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import { QueriesFile, TestsConnection } from '../south-interface';
+import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
 
 const FOLDER_SCANNER_TABLE = 'folder_scanner';
 
 /**
  * Class SouthFolderScanner - Retrieve file from a local or remote folder
  */
-export default class SouthFolderScanner extends SouthConnector implements QueriesFile, TestsConnection {
+export default class SouthFolderScanner
+  extends SouthConnector<SouthFolderScannerSettings, SouthFolderScannerItemSettings>
+  implements QueriesFile, TestsConnection
+{
   static type = manifest.id;
 
   /**
    * Constructor for SouthFolderScanner
    */
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthFolderScannerSettings>,
+    items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -47,9 +51,8 @@ export default class SouthFolderScanner extends SouthConnector implements Querie
       baseFolder,
       streamMode
     );
-
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
-    if (this.configuration.settings.preserveFiles) {
+    if (this.connector.settings.preserveFiles) {
       this.cacheService.cacheRepository.database
         .prepare(`CREATE TABLE IF NOT EXISTS ${FOLDER_SCANNER_TABLE} (filename TEXT PRIMARY KEY, mtime_ms INTEGER);`)
         .run();
@@ -57,7 +60,7 @@ export default class SouthFolderScanner extends SouthConnector implements Querie
   }
 
   static async testConnection(
-    settings: SouthConnectorDTO['settings'],
+    settings: SouthFolderScannerSettings,
     logger: pino.Logger,
     _encryptionService: EncryptionService
   ): Promise<void> {
@@ -81,8 +84,8 @@ export default class SouthFolderScanner extends SouthConnector implements Querie
   /**
    * Read the raw file and rewrite it to another file in the folder archive
    */
-  async fileQuery(items: Array<OibusItemDTO>): Promise<void> {
-    const inputFolder = path.resolve(this.configuration.settings.inputFolder);
+  async fileQuery(items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>>): Promise<void> {
+    const inputFolder = path.resolve(this.connector.settings.inputFolder);
     this.logger.trace(`Reading "${inputFolder}" directory`);
     // List files in the inputFolder
     const files = await fs.readdir(inputFolder);
@@ -126,21 +129,21 @@ export default class SouthFolderScanner extends SouthConnector implements Querie
    * already sent.
    */
   async checkAge(filename: string): Promise<boolean> {
-    const inputFolder = path.resolve(this.configuration.settings.inputFolder);
+    const inputFolder = path.resolve(this.connector.settings.inputFolder);
 
     const timestamp = new Date().getTime();
     const stats = await fs.stat(path.join(inputFolder, filename));
     this.logger.trace(
-      `Check age condition: mT:${stats.mtimeMs} + mA ${this.configuration.settings.minAge} < ts:${timestamp} ` +
-        `= ${stats.mtimeMs + this.configuration.settings.minAge < timestamp}`
+      `Check age condition: mT:${stats.mtimeMs} + mA ${this.connector.settings.minAge} < ts:${timestamp} ` +
+        `= ${stats.mtimeMs + this.connector.settings.minAge < timestamp}`
     );
 
-    if (stats.mtimeMs + this.configuration.settings.minAge > timestamp) return false;
+    if (stats.mtimeMs + this.connector.settings.minAge > timestamp) return false;
     this.logger.trace(`File "${filename}" matches age`);
 
     // Check if the file was already sent (if preserveFiles is true)
-    if (this.configuration.settings.preserveFiles) {
-      if (this.configuration.settings.ignoreModifiedDate) return true;
+    if (this.connector.settings.preserveFiles) {
+      if (this.connector.settings.ignoreModifiedDate) return true;
       const lastModifiedTime = this.getModifiedTime(filename);
 
       if (stats.mtimeMs <= lastModifiedTime) return false;
@@ -168,10 +171,10 @@ export default class SouthFolderScanner extends SouthConnector implements Querie
    * Send the file to the Engine.
    */
   async sendFile(filename: string): Promise<void> {
-    const filePath = path.resolve(this.configuration.settings.inputFolder, filename);
+    const filePath = path.resolve(this.connector.settings.inputFolder, filename);
     this.logger.debug(`Sending file "${filePath}" to the engine`);
 
-    if (this.configuration.settings.compression) {
+    if (this.connector.settings.compression) {
       try {
         // Compress and send the compressed file
         const gzipPath = `${filePath}.gz`;
@@ -191,7 +194,7 @@ export default class SouthFolderScanner extends SouthConnector implements Querie
     }
 
     // Delete original file if preserveFile is not set
-    if (!this.configuration.settings.preserveFiles) {
+    if (!this.connector.settings.preserveFiles) {
       try {
         await fs.unlink(filePath);
       } catch (unlinkError) {

@@ -12,9 +12,14 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import ProxyService from '../../service/proxy.service';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import oracledb from 'oracledb';
 import { DateTime } from 'luxon';
+import {
+  SouthOracleItemSettings,
+  SouthOracleItemSettingsDateTimeFields,
+  SouthOracleSettings
+} from '../../../../shared/model/south-settings.model';
 
 jest.mock('oracledb');
 jest.mock('../../service/utils');
@@ -56,7 +61,7 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
@@ -64,19 +69,30 @@ const items: Array<OibusItemDTO> = [
     settings: {
       query: 'SELECT * FROM table',
       dateTimeFields: [
-        { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
         {
-          field: 'timestamp',
+          fieldName: 'anotherTimestamp',
+          useAsReference: false,
+          type: 'unix-epoch-ms',
+          timezone: null,
+          format: null,
+          locale: null
+        } as unknown as SouthOracleItemSettingsDateTimeFields,
+        {
+          fieldName: 'timestamp',
           useAsReference: true,
-          datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          type: 'string',
+          timezone: 'Europe/Paris',
+          format: 'yyyy-MM-dd HH:mm:ss.SSS',
+          locale: 'en-US'
         }
       ],
       serialization: {
-        type: 'file',
+        type: 'csv',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' }
+        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+        outputTimezone: 'Europe/Paris'
       }
     },
     scanModeId: 'scanModeId1'
@@ -88,19 +104,30 @@ const items: Array<OibusItemDTO> = [
     settings: {
       query: 'SELECT * FROM table',
       dateTimeFields: [
-        { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
         {
-          field: 'timestamp',
+          fieldName: 'anotherTimestamp',
+          useAsReference: false,
+          type: 'unix-epoch-ms',
+          timezone: null,
+          format: null,
+          locale: null
+        } as unknown as SouthOracleItemSettingsDateTimeFields,
+        {
+          fieldName: 'timestamp',
           useAsReference: true,
-          datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          type: 'string',
+          timezone: 'Europe/Paris',
+          format: 'yyyy-MM-dd HH:mm:ss.SSS',
+          locale: 'en-US'
         }
       ],
       serialization: {
-        type: 'file',
+        type: 'csv',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' }
+        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+        outputTimezone: 'Europe/Paris'
       }
     },
     scanModeId: 'scanModeId1'
@@ -112,19 +139,30 @@ const items: Array<OibusItemDTO> = [
     settings: {
       query: 'SELECT * FROM table',
       dateTimeFields: [
-        { field: 'anotherTimestamp', useAsReference: false, datetimeFormat: { type: 'unix-epoch-ms', timezone: 'Europe/Paris' } },
         {
-          field: 'timestamp',
+          fieldName: 'anotherTimestamp',
+          useAsReference: false,
+          type: 'unix-epoch-ms',
+          timezone: null,
+          format: null,
+          locale: null
+        } as unknown as SouthOracleItemSettingsDateTimeFields,
+        {
+          fieldName: 'timestamp',
           useAsReference: true,
-          datetimeFormat: { type: 'specific-string', timezone: 'Europe/Paris', format: 'yyyy-MM-dd HH:mm:ss.SSS', locale: 'en-US' }
+          type: 'string',
+          timezone: 'Europe/Paris',
+          format: 'yyyy-MM-dd HH:mm:ss.SSS',
+          locale: 'en-US'
         }
       ],
       serialization: {
-        type: 'file',
+        type: 'csv',
         filename: 'sql-@CurrentDate.csv',
         delimiter: 'COMMA',
         compression: true,
-        dateTimeOutputFormat: { type: 'iso-8601-string' }
+        outputTimestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
+        outputTimezone: 'Europe/Paris'
       }
     },
     scanModeId: 'scanModeId2'
@@ -135,7 +173,7 @@ const nowDateString = '2020-02-02T02:02:02.222Z';
 let south: SouthOracle;
 
 describe('SouthOracle with authentication', () => {
-  const configuration: SouthConnectorDTO = {
+  const connector: SouthConnectorDTO<SouthOracleSettings> = {
     id: 'southId',
     name: 'south',
     type: 'oracle',
@@ -153,8 +191,7 @@ describe('SouthOracle with authentication', () => {
       username: 'username',
       password: 'password',
       connectionTimeout: 1000,
-      requestTimeout: 1000,
-      compression: false
+      requestTimeout: 1000
     }
   };
   beforeEach(async () => {
@@ -164,7 +201,7 @@ describe('SouthOracle with authentication', () => {
     (utils.generateReplacementParameters as jest.Mock).mockReturnValue([new Date(nowDateString), new Date(nowDateString)]);
 
     south = new SouthOracle(
-      configuration,
+      connector,
       items,
       addValues,
       addFile,
@@ -218,7 +255,7 @@ describe('SouthOracle with authentication', () => {
       endTime: DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
     });
     const oracleConnection = {
-      callTimeout: items[0].settings.requestTimeout,
+      callTimeout: connector.settings.requestTimeout,
       close: jest.fn(),
       execute: jest
         .fn()
@@ -244,7 +281,7 @@ describe('SouthOracle with authentication', () => {
     expect(oracledb.getConnection).toHaveBeenCalledWith({
       user: 'username',
       password: 'password',
-      connectString: `${configuration.settings.host}:${configuration.settings.port}/${configuration.settings.database}`
+      connectString: `${connector.settings.host}:${connector.settings.port}/${connector.settings.database}`
     });
     expect(generateReplacementParameters).toHaveBeenCalledWith(
       items[0].settings.query,
@@ -272,7 +309,7 @@ describe('SouthOracle with authentication', () => {
 
     (generateReplacementParameters as jest.Mock).mockReturnValue({ startTime, endTime });
     const oracleConnection = {
-      callTimeout: items[0].settings.requestTimeout,
+      callTimeout: connector.settings.requestTimeout,
       close: jest.fn(),
       execute: jest.fn().mockImplementation(() => {
         throw new Error('query error');
@@ -403,6 +440,7 @@ describe('SouthOracle test connection', () => {
 
   class OracleDBError extends Error {
     private code: ErrorCodes;
+
     constructor(message: string, code: ErrorCodes) {
       super();
       this.name = 'SouthOracleError';

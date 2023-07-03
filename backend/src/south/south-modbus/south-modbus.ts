@@ -4,7 +4,7 @@ import { client } from 'jsmodbus';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
@@ -12,11 +12,15 @@ import pino from 'pino';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { QueriesLastPoint, TestsConnection } from '../south-interface';
 import { DateTime } from 'luxon';
+import { SouthModbusItemSettings, SouthModbusSettings } from '../../../../shared/model/south-settings.model';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
  */
-export default class SouthModbus extends SouthConnector implements QueriesLastPoint, TestsConnection {
+export default class SouthModbus
+  extends SouthConnector<SouthModbusSettings, SouthModbusItemSettings>
+  implements QueriesLastPoint, TestsConnection
+{
   static type = manifest.id;
 
   private socket: net.Socket | null = null;
@@ -24,8 +28,8 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    configuration: SouthConnectorDTO<SouthModbusSettings>,
+    items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -49,16 +53,16 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
     );
   }
 
-  async lastPointQuery(items: Array<OibusItemDTO>): Promise<void> {
+  async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>): Promise<void> {
     try {
       for (const item of items) {
         await this.modbusFunction(item);
       }
     } catch (error: any) {
       if (error.err === 'Offline') {
-        this.logger.error(`Modbus server ${this.configuration.settings.host}:${this.configuration.settings.port} offline`);
+        this.logger.error(`Modbus server ${this.connector.settings.host}:${this.connector.settings.port} offline`);
         await this.disconnect();
-        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.configuration.settings.retryInterval);
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
       } else {
         throw new Error(error.err);
       }
@@ -68,8 +72,8 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
   /**
    * Dynamically call the right function based on the given point settings
    */
-  async modbusFunction(item: OibusItemDTO): Promise<void> {
-    const offset = this.configuration.settings.addressOffset === 'Modbus' ? 0 : -1;
+  async modbusFunction(item: SouthConnectorItemDTO<SouthModbusItemSettings>): Promise<void> {
+    const offset = this.connector.settings.addressOffset === 'Modbus' ? 0 : -1;
     const address =
       (item.settings.address.match(/^0x[0-9a-f]+$/i) ? parseInt(item.settings.address, 16) : parseInt(item.settings.address, 10)) + offset;
 
@@ -149,21 +153,21 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
    * Retrieve a value from buffer with appropriate conversion according to the modbus settings
    */
   getValueFromBuffer(buffer: any, multiplier: number, dataType: string): number {
-    const endianness = this.configuration.settings.endianness === 'Big Endian' ? 'BE' : 'LE';
+    const endianness = this.connector.settings.endianness === 'Big Endian' ? 'BE' : 'LE';
     const bufferFunctionName = `read${dataType}${endianness}`;
     if (!['Int16', 'UInt16'].includes(dataType)) {
       buffer.swap32().swap16();
-      if (this.configuration.settings.swapWordsInDWords) {
+      if (this.connector.settings.swapWordsInDWords) {
         buffer.swap16().swap32();
       }
-      if (this.configuration.settings.swapBytesInWords) {
+      if (this.connector.settings.swapBytesInWords) {
         buffer.swap16();
       }
       const bufferValue = buffer[bufferFunctionName]();
       return parseFloat((bufferValue * multiplier).toFixed(5));
     }
 
-    if (this.configuration.settings.swapBytesInWords) {
+    if (this.connector.settings.swapBytesInWords) {
       buffer.swap16();
     }
 
@@ -180,28 +184,30 @@ export default class SouthModbus extends SouthConnector implements QueriesLastPo
         clearTimeout(this.reconnectTimeout);
       }
       this.socket = new net.Socket();
-      this.client = new client.TCP(this.socket, this.configuration.settings.slaveId);
-      this.logger.debug(`Connecting Modbus socket into ${this.configuration.settings.host}:${this.configuration.settings.port}`);
-      this.socket.connect({ host: this.configuration.settings.host, port: this.configuration.settings.port }, async () => {
-        this.logger.info(`Modbus socket connected to ${this.configuration.settings.host}:${this.configuration.settings.port}`);
+      this.client = new client.TCP(this.socket, this.connector.settings.slaveId);
+      this.logger.debug(`Connecting Modbus socket into ${this.connector.settings.host}:${this.connector.settings.port}`);
+      this.socket.connect(
+        {
+          host: this.connector.settings.host,
+          port: this.connector.settings.port
+        },
+        async () => {
+          this.logger.info(`Modbus socket connected to ${this.connector.settings.host}:${this.connector.settings.port}`);
 
-        await super.connect();
-        resolve();
-      });
+          await super.connect();
+          resolve();
+        }
+      );
       this.socket.on('error', async error => {
         this.logger.error(`Modbus socket error: ${error}`);
         await this.disconnect();
-        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.configuration.settings.retryInterval);
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
       });
     });
   }
 
   // TODO: method needs to be implemented
-  static async testConnection(
-    settings: SouthConnectorDTO['settings'],
-    logger: pino.Logger,
-    _encryptionService: EncryptionService
-  ): Promise<void> {
+  static async testConnection(settings: SouthModbusSettings, logger: pino.Logger, _encryptionService: EncryptionService): Promise<void> {
     logger.trace(`Testing connection`);
     throw new Error('TODO: method needs to be implemented');
   }

@@ -1,35 +1,47 @@
-import { Component, forwardRef, Input } from '@angular/core';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
-import { DateTimeField } from '../../../../../../shared/model/types';
 import { formDirectives } from '../../form-directives';
 import { NgForOf, NgIf } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { DatetimeTypesEnumPipe } from '../../datetime-types-enum.pipe';
-import { EditDatetimeFieldComponent } from './edit-datetime-field/edit-datetime-field.component';
+import { EditElementComponent } from './edit-element/edit-element.component';
+import { OibFormControl } from '../../../../../../shared/model/form.model';
+import { PipeProviderService } from '../pipe-provider.service';
 
 @Component({
-  selector: 'oib-datetime-fields',
-  templateUrl: './datetime-fields.component.html',
-  styleUrls: ['./datetime-fields.component.scss'],
-  imports: [...formDirectives, NgIf, NgForOf, TranslateModule, DatetimeTypesEnumPipe, EditDatetimeFieldComponent],
+  selector: 'oib-array',
+  templateUrl: './oib-array.component.html',
+  styleUrls: ['./oib-array.component.scss'],
+  imports: [...formDirectives, NgIf, NgForOf, TranslateModule, EditElementComponent],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DatetimeFieldsComponent),
+      useExisting: forwardRef(() => OibArrayComponent),
       multi: true
     }
   ],
   standalone: true
 })
-export class DatetimeFieldsComponent {
+export class OibArrayComponent implements OnInit {
   @Input() label = '';
   @Input() key = '';
-  @Input({ required: true }) dateObjectTypes!: Array<string>;
+  @Input({ required: true }) formDescription!: Array<OibFormControl>;
 
-  dateTimeFields: Array<DateTimeField> = [];
-  dateTimeFieldsIncludingNew: Array<DateTimeField> = [];
+  elements: Array<any> = [];
+  elementsIncludingNew: Array<any> = [];
+
+  displayedFields: Array<{ key: string; label: string; pipe?: string }> = [];
 
   disabled = false;
+
+  constructor(private pipeProviderService: PipeProviderService) {}
+
+  ngOnInit(): void {
+    this.formDescription.forEach(formControl => {
+      if (formControl.displayInViewMode) {
+        this.displayedFields.push({ key: formControl.key, label: formControl.label, pipe: formControl.pipe });
+      }
+    });
+  }
 
   /**
    * If null, this means no element is being edited or added. If not null, it contains the element being edited,
@@ -39,10 +51,10 @@ export class DatetimeFieldsComponent {
    */
   editedElement: {
     isNew: boolean;
-    element: DateTimeField;
+    element: any;
   } | null = null;
 
-  onChange: (elements: Array<DateTimeField>) => void = () => {};
+  onChange: (elements: Array<any>) => void = () => {};
   onTouched: () => void = () => {};
 
   registerOnChange(fn: any) {
@@ -61,8 +73,8 @@ export class DatetimeFieldsComponent {
     }
   }
 
-  writeValue(obj: Array<DateTimeField>): void {
-    this.dateTimeFields = obj || [];
+  writeValue(obj: Array<any>): void {
+    this.elements = obj || [];
     this.editedElement = null;
     this.recomputeElementsIncludingNew();
   }
@@ -72,9 +84,9 @@ export class DatetimeFieldsComponent {
    * index
    */
   remove(index: number) {
-    const newElements = [...this.dateTimeFields];
+    const newElements = [...this.elements];
     newElements.splice(index, 1);
-    this.dateTimeFields = newElements;
+    this.elements = newElements;
     this.recomputeElementsIncludingNew();
     this.propagateChange();
   }
@@ -85,16 +97,7 @@ export class DatetimeFieldsComponent {
   editNewElement() {
     this.editedElement = {
       isNew: true,
-      element: {
-        field: '',
-        useAsReference: false,
-        datetimeFormat: {
-          type: 'specific-string',
-          timezone: 'Europe/Paris',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          locale: 'en-US'
-        }
-      }
+      element: this.createDefaultValue()
     };
     this.recomputeElementsIncludingNew();
   }
@@ -102,7 +105,7 @@ export class DatetimeFieldsComponent {
   /**
    * Method that should be called when the "Edit" button of an element is clicked. It sets a value for `editedElement`.
    */
-  edit(element: DateTimeField) {
+  edit(element: any) {
     this.editedElement = {
       isNew: false,
       element
@@ -115,17 +118,17 @@ export class DatetimeFieldsComponent {
    * edited/created element in the array.
    * @param element: the element that has been created/edited by the edit component
    */
-  save(element: DateTimeField) {
+  save(element: any) {
     if (!this.editedElement) {
       return;
     }
     if (this.editedElement.isNew) {
-      this.dateTimeFields = [...this.dateTimeFields, element];
+      this.elements = [...this.elements, element];
     } else {
-      const index = this.dateTimeFields.indexOf(this.editedElement.element);
-      const newElements = [...this.dateTimeFields];
+      const index = this.elements.indexOf(this.editedElement.element);
+      const newElements = [...this.elements];
       newElements.splice(index, 1, element);
-      this.dateTimeFields = newElements;
+      this.elements = newElements;
     }
     this.editedElement = null;
     this.recomputeElementsIncludingNew();
@@ -153,7 +156,7 @@ export class DatetimeFieldsComponent {
    * Tells if the given element is the edited one. Should be used to decide, in each row, if it should just be
    * displayed or if the edit component should be displayed
    */
-  isEdited(element: DateTimeField): boolean {
+  isEdited(element: any): boolean {
     return (this.editedElement && this.editedElement.element === element) || false;
   }
 
@@ -166,13 +169,25 @@ export class DatetimeFieldsComponent {
   }
 
   propagateChange() {
-    this.onChange(this.dateTimeFields);
+    this.onChange(this.elements);
     this.onTouched();
   }
 
   recomputeElementsIncludingNew() {
-    this.dateTimeFieldsIncludingNew = this.editedElement?.isNew
-      ? [...this.dateTimeFields, this.editedElement.element]
-      : this.dateTimeFields;
+    this.elementsIncludingNew = this.editedElement?.isNew ? [...this.elements, this.editedElement.element] : this.elements;
+  }
+
+  createDefaultValue(): any {
+    const defaultValue: any = {};
+    this.formDescription.forEach(formControl => (defaultValue[formControl.key] = formControl.defaultValue));
+    return defaultValue;
+  }
+
+  getFieldValue(element: any, field: string, pipeIdentifier: string | undefined): string {
+    const value = element[field];
+    if (value && pipeIdentifier && this.pipeProviderService.validIdentifier(pipeIdentifier)) {
+      return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
+    }
+    return value;
   }
 }

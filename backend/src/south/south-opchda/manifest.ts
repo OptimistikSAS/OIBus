@@ -19,7 +19,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: '\\HdaAgent\\HdaAgent.exe',
       newRow: true,
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'tcpPort',
@@ -28,7 +28,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 2224,
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-      readDisplay: true
+      displayInViewMode: true
     },
     {
       key: 'logLevel',
@@ -38,7 +38,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 'debug',
       newRow: false,
       validators: [{ key: 'required' }],
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'host',
@@ -46,7 +46,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Host',
       newRow: true,
       validators: [{ key: 'required' }],
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'serverName',
@@ -54,7 +54,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Server name',
       newRow: false,
       validators: [{ key: 'required' }],
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'readTimeout',
@@ -63,7 +63,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 180_000,
       newRow: true,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'retryInterval',
@@ -72,7 +72,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 10_000,
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      readDisplay: false
+      displayInViewMode: false
     },
     {
       key: 'maxReturnValues',
@@ -81,7 +81,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 1000,
       newRow: false,
       validators: [{ key: 'required' }],
-      readDisplay: false
+      displayInViewMode: false
     }
   ],
   items: {
@@ -97,7 +97,7 @@ const manifest: SouthConnectorManifest = {
         options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Count'],
         defaultValue: 'Raw',
         validators: [{ key: 'required' }],
-        readDisplay: true
+        displayInViewMode: true
       },
       {
         key: 'resampling',
@@ -105,14 +105,14 @@ const manifest: SouthConnectorManifest = {
         label: 'Resampling',
         options: ['None', 'Second', '10 Seconds', '30 Seconds', 'Minute', 'Hour', 'Day'],
         defaultValue: 'None',
-        readDisplay: true
+        displayInViewMode: true
       },
       {
         key: 'nodeId',
         type: 'OibText',
         label: 'Node ID',
         validators: [{ key: 'required' }],
-        readDisplay: true
+        displayInViewMode: true
       }
     ]
   }

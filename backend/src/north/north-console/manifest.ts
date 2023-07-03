@@ -16,7 +16,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Verbose',
       newRow: true,
       validators: [{ key: 'required' }],
-      readDisplay: true
+      displayInViewMode: true
     }
   ]
 };

@@ -7,9 +7,10 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import ProxyService from '../../service/proxy.service';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import net from 'node:net';
 import Stream from 'node:stream';
+import { SouthModbusSettings } from '../../../../shared/model/south-settings.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node:net');
@@ -67,7 +68,7 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
-const items: Array<OibusItemDTO> = [
+const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'HoldingRegister',
@@ -366,7 +367,7 @@ describe('SouthModbus', () => {
   it('should call readHoldingRegister method', async () => {
     south.addValues = jest.fn();
     configuration.settings.addressOffset = 'JBus';
-    const item: OibusItemDTO = {
+    const item: SouthConnectorItemDTO = {
       id: 'bad',
       connectorId: 'connectorId',
       name: 'Bad Item',
@@ -404,7 +405,9 @@ describe('SouthModbus', () => {
 
   it('should test connection with mssql', async () => {
     // TODO
-    await expect(SouthModbus.testConnection({}, logger, encryptionService)).rejects.toThrow('TODO: method needs to be implemented');
+    await expect(SouthModbus.testConnection({} as SouthModbusSettings, logger, encryptionService)).rejects.toThrow(
+      'TODO: method needs to be implemented'
+    );
     expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
   });
 });
