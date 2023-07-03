@@ -66,7 +66,7 @@ const TopHeader = () => {
           <NavItem className="oi-navitem" active={isActive('about')} tag={Link} to="/about">
             About
           </NavItem>
-          <NavItem className="oi-navname text-muted">
+          <NavItem className="oi-navname ">
             {`version ${oibusInfo.version}`}
           </NavItem>
         </Nav>
