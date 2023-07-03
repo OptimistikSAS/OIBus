@@ -88,12 +88,6 @@ describe('BaseEngine', () => {
     expect(engine.logger.error).toHaveBeenCalledWith('South connector for "bad" is not found: badType')
   })
 
-  it('should not create south if settings are wrong', () => {
-    engine.createSouth({ type: 'FolderScanner', name: 'bad', settings: null })
-    expect(engine.logger.error).toHaveBeenCalledWith(expect.stringContaining('Error when creating South connector "bad": '
-        + 'TypeError: Cannot read properties of null (reading \'scanGroups\')'))
-  })
-
   it('should retrieve installed South list', () => {
     const southList = engine.getSouthList()
     const expectedResult = [

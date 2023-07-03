@@ -66,7 +66,6 @@ jobs:
     strategy:
       matrix:
         config:
-          - { os: 'macos-latest',   platform: 'macos', archiveName: 'oibus-macos.zip', zip: 'zip -r' }
           - { os: 'windows-latest', platform: 'win',   archiveName: 'oibus-win32x64.zip', zip: '7z a -tzip' }
           - { os: 'ubuntu-latest',  platform: 'linux', archiveName: 'oibus-linux.tar.gz', zip: 'tar -czvf' }
     timeout-minutes: 20
