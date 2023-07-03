@@ -1,5 +1,6 @@
-import { readdirSync, readFileSync, openSync, appendFileSync } from 'node:fs';
+import { appendFileSync, openSync, readdirSync } from 'node:fs';
 import { OibFormControl } from '../../shared/model/form.model';
+import { ConnectorManifest } from '../../shared/model/types';
 import { SouthConnectorManifest } from '../../shared/model/south-connector.model';
 
 const SOUTH_SETTINGS_DESTINATION_PATH = '../shared/model/south-settings.model.ts';
@@ -12,26 +13,29 @@ type ConnectorType = 'South' | 'North';
 
 generateSettingsInterfaces();
 
-function generateSettingsInterfaces() {
-  generateSouthSettingsInterfaces();
-  generateNorthSettingsInterfaces();
+async function generateSettingsInterfaces() {
+  // create the destination file
+  openSync(SOUTH_SETTINGS_DESTINATION_PATH, 'w');
+  await generateSettingsInterfacesForConnectorType('South');
+  openSync(NORTH_SETTINGS_DESTINATION_PATH, 'w');
+  await generateSettingsInterfacesForConnectorType('North');
 }
 
 /**
  * This function is used to build the south settings interface from the various manifests in order to
  * enforce type safety when using those settings in the connectors.
- * This function runs an all south manifests and will generate the corresponding typescript interface declaration
+ * This function runs an all manifests and will generate the corresponding typescript interface declaration
  * in shared folder located in the root path of the project
  */
-function generateSouthSettingsInterfaces() {
+async function generateSettingsInterfacesForConnectorType(connectorType: ConnectorType) {
   // gather all manifests
-  const manifests = listFiles('./src/south').filter(file => file.endsWith('manifest.ts'));
+  const manifests = listFiles(`./src/${connectorType.toLowerCase()}`)
+    .filter(file => file.endsWith('manifest.ts'))
+    // transform ./src/south/south-ads/manifest.ts to ./south/south-ads/manifest
+    .map(file => file.replace('./src', '.').replace('.ts', ''));
 
-  // create the destination file
-  openSync(SOUTH_SETTINGS_DESTINATION_PATH, 'w');
-
-  const southSettingsTypesToGenerate: TypeGenerationDescription = {
-    imports: new Set<string>([SCAN_MODE_IMPORT]),
+  const settingsTypesToGenerate: TypeGenerationDescription = {
+    imports: new Set<string>(connectorType === 'South' ? [SCAN_MODE_IMPORT] : []),
     enums: [],
     settingsInterfaces: [],
     settingsSubInterfaces: [],
@@ -39,42 +43,19 @@ function generateSouthSettingsInterfaces() {
     itemSettingsSubInterfaces: []
   };
 
-  manifests.forEach((manifestPath: string) => {
-    generateTypesForManifest(readFileSync(manifestPath, { encoding: 'utf8' }), southSettingsTypesToGenerate, 'South');
-  });
-  buildTypescriptFile(southSettingsTypesToGenerate, SOUTH_SETTINGS_DESTINATION_PATH, 'South');
-}
-
-/**
- * This function is used to build the north settings interface from the various manifests in a similar fashion
- * then the previous functions for south
- */
-function generateNorthSettingsInterfaces() {
-  // gather all manifests
-  const manifests = listFiles('./src/north').filter(file => file.endsWith('manifest.ts'));
-
-  // create the destination file
-  openSync(NORTH_SETTINGS_DESTINATION_PATH, 'w');
-
-  const northSettingsTypesToGenerate: TypeGenerationDescription = {
-    imports: new Set<string>(),
-    enums: [],
-    settingsInterfaces: [],
-    settingsSubInterfaces: [],
-    itemSettingsInterfaces: [],
-    itemSettingsSubInterfaces: []
-  };
-
-  manifests.forEach((manifestPath: string) => {
-    generateTypesForManifest(readFileSync(manifestPath, { encoding: 'utf8' }), northSettingsTypesToGenerate, 'North');
-  });
-  buildTypescriptFile(northSettingsTypesToGenerate, NORTH_SETTINGS_DESTINATION_PATH, 'North');
+  for (const manifestPath of manifests) {
+    // import the manifest
+    const module = await import(manifestPath);
+    generateTypesForManifest(module.default, settingsTypesToGenerate, connectorType);
+  }
+  buildTypescriptFile(settingsTypesToGenerate, connectorType);
 }
 
 /**
  * Create the appropriate typescript file from the types in the given path
  */
-function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, path: string, connectorType: ConnectorType) {
+function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, connectorType: ConnectorType) {
+  const path = connectorType === 'South' ? SOUTH_SETTINGS_DESTINATION_PATH : NORTH_SETTINGS_DESTINATION_PATH;
   typesToGenerate.imports.forEach(importToWrite => {
     appendFileSync(path, `${importToWrite}\n`);
   });
@@ -139,22 +120,21 @@ function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, path: s
   }
 }
 
+function isSouthConnector(manifestObject: ConnectorManifest): manifestObject is SouthConnectorManifest {
+  return (manifestObject as SouthConnectorManifest).items !== undefined;
+}
+
 /**
  * Generate the appropriate types for the given manifest file
- * @param manifestContent the string content the manifest file
+ * @param manifestObject the manifest
  * @param typesToGenerate the objet on which the various types are added
  * @param connectorType the type of connector between north and south
  */
-function generateTypesForManifest(manifestContent: string, typesToGenerate: TypeGenerationDescription, connectorType: ConnectorType): void {
-  // this is not super robust, but we are looking for the index of the second { and the last } to
-  // get the manifest object
-  const firstCurlyBraceIndex = manifestContent.indexOf('{');
-  const secondCurlyBraceIndex = manifestContent.indexOf('{', firstCurlyBraceIndex + 1);
-  const lastCurlyBraceIndex = manifestContent.lastIndexOf('}');
-
-  const subContent = manifestContent.substring(secondCurlyBraceIndex - 1, lastCurlyBraceIndex + 1);
-  const manifestObject: SouthConnectorManifest = eval(`(${subContent})`);
-
+function generateTypesForManifest(
+  manifestObject: ConnectorManifest,
+  typesToGenerate: TypeGenerationDescription,
+  connectorType: ConnectorType
+): void {
   const interfaceName =
     connectorType === 'South' ? buildSouthInterfaceName(manifestObject.id, false) : buildNorthInterfaceName(manifestObject.id);
 
@@ -173,7 +153,7 @@ function generateTypesForManifest(manifestContent: string, typesToGenerate: Type
   const mainSettingsInterface = generateInterface(interfaceName, manifestObject.settings, typesToGenerate);
   typesToGenerate.settingsInterfaces.push(mainSettingsInterface);
 
-  if (connectorType === 'South') {
+  if (isSouthConnector(manifestObject)) {
     const interfaceName = buildSouthInterfaceName(manifestObject.id, true);
 
     // gather recursively all sub interfaces

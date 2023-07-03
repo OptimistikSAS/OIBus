@@ -1,3 +1,5 @@
+import { OibFormControl } from './form.model';
+
 export type Instant = string;
 export type LocalDate = string;
 export type LocalTime = string;
@@ -81,4 +83,12 @@ export interface SerializationSettings {
   filename: string;
   compression: boolean;
   delimiter: CsvCharacter;
+}
+
+export interface ConnectorManifest {
+  id: string;
+  category: string;
+  name: string;
+  description: string;
+  settings: Array<OibFormControl>;
 }
