@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.5.11](https://github.com/OptimistikSAS/OIBus/compare/v2.5.10...v2.5.11) (2023-07-03)
+
+
+### Bug Fixes
+
+* **cache:** fix concurrent access to flush value method ([bd79200](https://github.com/OptimistikSAS/OIBus/commit/bd79200f310f0419c1b9247ca9b27413b5776b54))
+* **cache:** Remove file from queue when file has been moved to error cache ([73cf865](https://github.com/OptimistikSAS/OIBus/commit/73cf865912a20b4db4a67e0807ccbe038950ff38))
+* Correct version color ([aa9ae54](https://github.com/OptimistikSAS/OIBus/commit/aa9ae548340d5634a3aba505c01cc4283d5bea7e))
+* **http:** Check if file exists before creating read stream ([22d4831](https://github.com/OptimistikSAS/OIBus/commit/22d4831a216384be516329f4905b14b53344411a))
+* **ip21:** fix date format ([5201bf3](https://github.com/OptimistikSAS/OIBus/commit/5201bf33253d663cccd654c06c7d9b4a279e113c))
+* **north-oia:** adjust retriable status codes ([c155867](https://github.com/OptimistikSAS/OIBus/commit/c155867fc556481422af6a85c8db03918e0542b8))
+* **opchda:** Update OPCHDA agent to fix ReadRaw items ([de1ea23](https://github.com/OptimistikSAS/OIBus/commit/de1ea23f7cb863f16c64a3a4008357f5d1e35697))
+* **rest:** Fix HTTP(S) protocol ([f3e474b](https://github.com/OptimistikSAS/OIBus/commit/f3e474b7fd3c964285e6d8a7a6f773bead033c9d))
+* **ui:** Fix log color display ([3a21b6c](https://github.com/OptimistikSAS/OIBus/commit/3a21b6cd493c7c5e404186ff1ec569126f11c681))
+* **ui:** Fix removal of text input value ([e97a97c](https://github.com/OptimistikSAS/OIBus/commit/e97a97c5e1a69632de9560215716908da69c00b0))
+
 ### [2.5.10](https://github.com/OptimistikSAS/OIBus/compare/v2.5.9...v2.5.10) (2023-06-16)
 
 
