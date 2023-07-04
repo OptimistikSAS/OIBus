@@ -156,7 +156,8 @@ export default class EncryptionService {
         async () => {
           if (typeof value === 'object') {
             await this.encryptSecrets(value)
-          } else if (['password', 'secretKey', 'token', 'secret'].includes(key) && value.startsWith('{{notEncrypted}}')) {
+          } else if (['password', 'secretKey', 'token', 'secret', 'sasToken', 'accessKey', 'clientSecret'].includes(key)
+              && value.startsWith('{{notEncrypted}}')) {
             configEntry[key] = await this.encryptText(value.replace('{{notEncrypted}}', ''))
           }
         },
