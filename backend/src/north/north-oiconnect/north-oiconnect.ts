@@ -43,12 +43,12 @@ export default class NorthOIConnect extends NorthConnector<NorthOIConnectSetting
   override async start(): Promise<void> {
     await super.start();
 
-    if (this.configuration.settings.proxyId) {
+    if (this.connector.settings.proxyId) {
       this.proxyAgent = await this.proxyService.createProxyAgent(
-        this.configuration.settings.proxyId,
-        this.configuration.settings.acceptUnauthorized
+        this.connector.settings.proxyId,
+        this.connector.settings.acceptUnauthorized
       );
-    } else if (this.configuration.settings.acceptUnauthorized && this.configuration.settings.host.startsWith('https://')) {
+    } else if (this.connector.settings.acceptUnauthorized && this.connector.settings.host.startsWith('https://')) {
       this.proxyAgent = new https.Agent({ rejectUnauthorized: false });
     }
   }
@@ -60,12 +60,12 @@ export default class NorthOIConnect extends NorthConnector<NorthOIConnectSetting
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     };
-    switch (this.configuration.settings.authentication.type) {
+    switch (this.connector.settings.authentication.type) {
       case 'basic':
         headers.authorization = `Basic ${Buffer.from(
-          `${this.configuration.settings.authentication.username}:${
-            this.configuration.settings.authentication.password
-              ? await this.encryptionService.decryptText(this.configuration.settings.authentication.password)
+          `${this.connector.settings.authentication.username}:${
+            this.connector.settings.authentication.password
+              ? await this.encryptionService.decryptText(this.connector.settings.authentication.password)
               : ''
           }`
         ).toString('base64')}`;
@@ -76,13 +76,13 @@ export default class NorthOIConnect extends NorthConnector<NorthOIConnectSetting
     }
 
     let response;
-    const valuesUrl = `${this.configuration.settings.host}${this.configuration.settings.valuesEndpoint}?name=${this.configuration.name}`;
+    const valuesUrl = `${this.connector.settings.host}${this.connector.settings.valuesEndpoint}?name=${this.connector.name}`;
     try {
       response = await fetch(valuesUrl, {
         method: 'POST',
         headers,
         body: JSON.stringify(values),
-        timeout: this.configuration.settings.timeout * 1000,
+        timeout: this.connector.settings.timeout * 1000,
         agent: this.proxyAgent
       });
     } catch (fetchError) {
@@ -105,12 +105,12 @@ export default class NorthOIConnect extends NorthConnector<NorthOIConnectSetting
    */
   async handleFile(filePath: string): Promise<void> {
     const headers: Record<string, string> = {};
-    switch (this.configuration.settings.authentication.type) {
+    switch (this.connector.settings.authentication.type) {
       case 'basic':
         headers.authorization = `Basic ${Buffer.from(
-          `${this.configuration.settings.authentication.username}:${
-            this.configuration.settings.authentication.password
-              ? await this.encryptionService.decryptText(this.configuration.settings.authentication.password)
+          `${this.connector.settings.authentication.username}:${
+            this.connector.settings.authentication.password
+              ? await this.encryptionService.decryptText(this.connector.settings.authentication.password)
               : ''
           }`
         ).toString('base64')}`;
@@ -135,13 +135,13 @@ export default class NorthOIConnect extends NorthConnector<NorthOIConnectSetting
     });
 
     let response;
-    const fileUrl = `${this.configuration.settings.host}${this.configuration.settings.fileEndpoint}?name=${this.configuration.name}`;
+    const fileUrl = `${this.connector.settings.host}${this.connector.settings.fileEndpoint}?name=${this.connector.name}`;
     try {
       response = await fetch(fileUrl, {
         method: 'POST',
         headers,
         body,
-        timeout: this.configuration.settings.timeout * 1000,
+        timeout: this.connector.settings.timeout * 1000,
         agent: this.proxyAgent
       });
       readStream.close();

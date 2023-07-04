@@ -43,6 +43,7 @@ export interface NorthAmazonS3Settings extends BaseNorthSettings {
 export interface NorthAzureBlobSettings extends BaseNorthSettings {
   account: string;
   container: string;
+  path: string;
   authentication: NorthAzureBlobSettingsAuthentication;
   sasToken: string | null;
   accessKey: string | null;

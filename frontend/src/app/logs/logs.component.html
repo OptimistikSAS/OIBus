@@ -53,8 +53,8 @@
         </div>
       </div>
       <div *ngIf="logs.totalElements !== 0; else empty">
-        <table class="table table-sm table-hover">
-          <thead class="table-light">
+        <table class="table table-sm table-hover oib-table">
+          <thead>
             <tr>
               <th translate="logs.date"></th>
               <th translate="logs.level"></th>
@@ -64,10 +64,10 @@
           </thead>
           <tbody>
             <tr class="data" *ngFor="let log of logs.content">
-              <td>{{ log.timestamp | datetime:'mediumWithSeconds'}}</td>
+              <td class="text-nowrap">{{ log.timestamp | datetime:'mediumWithSeconds'}}</td>
               <td>{{ log.level | logLevelsEnum }}</td>
               <td>{{ log.scope }}</td>
-              <td>{{ log.message }}</td>
+              <td class="text-break">{{ log.message }}</td>
             </tr>
           </tbody>
         </table>

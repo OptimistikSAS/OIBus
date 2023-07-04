@@ -172,7 +172,7 @@ export default class SouthFolderScanner
    */
   async sendFile(filename: string): Promise<void> {
     const filePath = path.resolve(this.connector.settings.inputFolder, filename);
-    this.logger.debug(`Sending file "${filePath}" to the engine`);
+    this.logger.info(`Sending file "${filePath}" to the engine`);
 
     if (this.connector.settings.compression) {
       try {

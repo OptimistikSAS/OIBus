@@ -57,17 +57,17 @@ export default class NorthConnector<T extends NorthSettings = any> {
   private runProgress$: DeferredPromise | null = null;
 
   constructor(
-    protected configuration: NorthConnectorDTO<T>,
+    protected connector: NorthConnectorDTO<T>,
     protected readonly encryptionService: EncryptionService,
     protected readonly proxyService: ProxyService,
     private readonly repositoryService: RepositoryService,
     protected logger: pino.Logger,
     protected readonly baseFolder: string
   ) {
-    this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.configuration.archive);
-    this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.configuration.caching);
-    this.fileCacheService = new FileCacheService(this.logger, this.baseFolder, this.configuration.caching);
-    this.metricsService = new NorthConnectorMetricsService(this.configuration.id, path.resolve(this.baseFolder, 'cache.db'));
+    this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.connector.archive);
+    this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.connector.caching);
+    this.fileCacheService = new FileCacheService(this.logger, this.baseFolder, this.connector.caching);
+    this.metricsService = new NorthConnectorMetricsService(this.connector.id, path.resolve(this.baseFolder, 'cache.db'));
 
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
@@ -96,14 +96,14 @@ export default class NorthConnector<T extends NorthSettings = any> {
   }
 
   isEnabled(): boolean {
-    return this.configuration.enabled;
+    return this.connector.enabled;
   }
 
   async init(): Promise<void> {
-    this.subscribedTo = this.repositoryService.subscriptionRepository.getNorthSubscriptions(this.configuration.id);
+    this.subscribedTo = this.repositoryService.subscriptionRepository.getNorthSubscriptions(this.connector.id);
     await this.valueCacheService.start();
     await this.fileCacheService.start();
-    this.logger.trace(`North connector "${this.configuration.name}" enabled. Starting services...`);
+    this.logger.trace(`North connector "${this.connector.name}" enabled. Starting services...`);
     await this.archiveService.start();
   }
 
@@ -122,14 +122,14 @@ export default class NorthConnector<T extends NorthSettings = any> {
   async connect(): Promise<void> {
     this.metricsService.updateMetrics({ ...this.metricsService.metrics, lastConnection: DateTime.now().toUTC().toISO() });
 
-    const scanMode = this.repositoryService.scanModeRepository.getScanMode(this.configuration.caching.scanModeId);
+    const scanMode = this.repositoryService.scanModeRepository.getScanMode(this.connector.caching.scanModeId);
     if (scanMode) {
       this.createCronJob(scanMode);
     } else {
-      this.logger.error(`Scan mode ${this.configuration.caching.scanModeId} not found`);
+      this.logger.error(`Scan mode ${this.connector.caching.scanModeId} not found`);
     }
 
-    this.logger.info(`North connector "${this.configuration.name}" of type ${this.configuration.type} started`);
+    this.logger.info(`North connector "${this.connector.name}" of type ${this.connector.type} started`);
   }
 
   /**
@@ -224,7 +224,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
         const oibusError = this.createOIBusError(error);
         this.valueErrorCount += 1;
         this.logger.error(`Error while sending ${arrayValues.length} values (${this.valueErrorCount}). ${oibusError.message}`);
-        if (this.valueErrorCount > this.configuration.caching.retryCount && !oibusError.retry) {
+        if (this.valueErrorCount > this.connector.caching.retryCount && !oibusError.retry) {
           await this.valueCacheService.manageErroredValues(this.valuesBeingSent!, this.valueErrorCount);
           this.fileBeingSent = null;
         }
@@ -258,7 +258,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
         const oibusError = this.createOIBusError(error);
         this.fileErrorCount += 1;
         this.logger.error(`Error while handling file "${this.fileBeingSent}" (${this.fileErrorCount}). ${oibusError.message}`);
-        if (this.fileErrorCount > this.configuration.caching.retryCount && !oibusError.retry) {
+        if (this.fileErrorCount > this.connector.caching.retryCount && !oibusError.retry) {
           await this.fileCacheService.manageErroredFiles(this.fileBeingSent!, this.fileErrorCount);
           this.fileBeingSent = null;
         }
@@ -295,10 +295,10 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * and send them to a third party application.
    */
   async cacheValues(values: Array<any>): Promise<void> {
-    const chunkSize = this.configuration.caching.maxSendCount;
+    const chunkSize = this.connector.caching.maxSendCount;
     for (let i = 0; i < values.length; i += chunkSize) {
       const chunk = values.slice(i, i + chunkSize);
-      this.logger.trace(`Caching ${chunk.length} values in North connector "${this.configuration.name}"...`);
+      this.logger.trace(`Caching ${chunk.length} values in North connector "${this.connector.name}"...`);
       await this.valueCacheService.cacheValues(chunk);
     }
   }
@@ -307,7 +307,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * Method called by the Engine to cache a file and send them to a third party application.
    */
   async cacheFile(filePath: string): Promise<void> {
-    this.logger.trace(`Caching file "${filePath}" in North connector "${this.configuration.name}"...`);
+    this.logger.trace(`Caching file "${filePath}" in North connector "${this.connector.name}"...`);
     await this.fileCacheService.cacheFile(filePath);
   }
 
@@ -331,14 +331,14 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * North connector implementation to allow disconnecting to a third party application for example.
    */
   async disconnect(): Promise<void> {
-    this.logger.info(`North connector "${this.configuration.name}" (${this.configuration.id}) disconnected`);
+    this.logger.info(`North connector "${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
   /**
    * Stop services and timer
    */
   async stop(): Promise<void> {
-    this.logger.info(`Stopping North "${this.configuration.name}" (${this.configuration.id})...`);
+    this.logger.info(`Stopping North "${this.connector.name}" (${this.connector.id})...`);
 
     if (this.runProgress$) {
       this.logger.debug('Waiting for North task to finish');
@@ -354,7 +354,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
     await this.archiveService.stop();
     await this.valueCacheService.stop();
     await this.disconnect();
-    this.logger.debug(`North connector ${this.configuration.id} stopped`);
+    this.logger.debug(`North connector ${this.connector.id} stopped`);
   }
 
   /**
@@ -368,7 +368,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * Remove error files from file cache.
    */
   async removeErrorFiles(filenames: Array<string>): Promise<void> {
-    this.logger.trace(`Removing ${filenames.length} error files from North connector "${this.configuration.name}"...`);
+    this.logger.trace(`Removing ${filenames.length} error files from North connector "${this.connector.name}"...`);
     await this.fileCacheService.removeFiles(this.fileCacheService.errorFolder, filenames);
   }
 
@@ -376,7 +376,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * Retry error files from file cache.
    */
   async retryErrorFiles(filenames: Array<string>): Promise<void> {
-    this.logger.trace(`Retrying ${filenames.length} error files in North connector "${this.configuration.name}"...`);
+    this.logger.trace(`Retrying ${filenames.length} error files in North connector "${this.connector.name}"...`);
     await this.fileCacheService.retryErrorFiles(filenames);
   }
 
@@ -384,7 +384,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * Remove all error files from file cache.
    */
   async removeAllErrorFiles(): Promise<void> {
-    this.logger.trace(`Removing all error files from North connector "${this.configuration.name}"...`);
+    this.logger.trace(`Removing all error files from North connector "${this.connector.name}"...`);
     await this.fileCacheService.removeAllErrorFiles();
   }
 
@@ -392,7 +392,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * Retry all error files from file cache.
    */
   async retryAllErrorFiles(): Promise<void> {
-    this.logger.trace(`Retrying all error files in North connector "${this.configuration.name}"...`);
+    this.logger.trace(`Retrying all error files in North connector "${this.connector.name}"...`);
     await this.fileCacheService.retryAllErrorFiles();
   }
 
