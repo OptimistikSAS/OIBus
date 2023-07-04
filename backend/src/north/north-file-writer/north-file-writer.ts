@@ -30,7 +30,7 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
   }
 
   async handleValues(values: Array<any>): Promise<void> {
-    const fileName = `${this.configuration.settings.prefix}${DateTime.now().toUTC().toMillis()}${this.configuration.settings.suffix}.json`;
+    const fileName = `${this.connector.settings.prefix}${DateTime.now().toUTC().toMillis()}${this.connector.settings.suffix}.json`;
     const cleanedValues = values.map(value => ({
       timestamp: value.timestamp,
       data: value.data,
@@ -38,15 +38,15 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
     }));
     const data = JSON.stringify(cleanedValues);
 
-    await fs.writeFile(path.join(path.resolve(this.configuration.settings.outputFolder), fileName), data);
-    this.logger.debug(`File "${fileName}" created in "${path.resolve(this.configuration.settings.outputFolder)}" output folder`);
+    await fs.writeFile(path.join(path.resolve(this.connector.settings.outputFolder), fileName), data);
+    this.logger.debug(`File "${fileName}" created in "${path.resolve(this.connector.settings.outputFolder)}" output folder`);
   }
 
   async handleFile(filePath: string): Promise<void> {
     const extension = path.extname(filePath);
     let fileName = path.basename(filePath, extension);
-    fileName = `${this.configuration.settings.prefix}${fileName}${this.configuration.settings.suffix}${extension}`;
-    await fs.copyFile(filePath, path.join(path.resolve(this.configuration.settings.outputFolder), fileName));
+    fileName = `${this.connector.settings.prefix}${fileName}${this.connector.settings.suffix}${extension}`;
+    await fs.copyFile(filePath, path.join(path.resolve(this.connector.settings.outputFolder), fileName));
     this.logger.debug(`File "${filePath}" copied into "${fileName}"`);
   }
 }

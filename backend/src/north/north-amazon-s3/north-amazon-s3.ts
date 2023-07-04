@@ -24,14 +24,14 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   private s3: S3Client | undefined;
 
   constructor(
-    configuration: NorthConnectorDTO<NorthAmazonS3Settings>,
+    connector: NorthConnectorDTO<NorthAmazonS3Settings>,
     encryptionService: EncryptionService,
     proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder);
+    super(connector, encryptionService, proxyService, repositoryService, logger, baseFolder);
   }
 
   /**
@@ -40,15 +40,15 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   async start(): Promise<void> {
     await super.start();
 
-    if (this.configuration.settings.proxyId) {
-      this.proxyAgent = await this.proxyService.createProxyAgent(this.configuration.settings.proxyId);
+    if (this.connector.settings.proxyId) {
+      this.proxyAgent = await this.proxyService.createProxyAgent(this.connector.settings.proxyId);
     }
 
     this.s3 = new S3Client({
-      region: this.configuration.settings.region,
+      region: this.connector.settings.region,
       credentials: {
-        accessKeyId: this.configuration.settings.accessKey,
-        secretAccessKey: await this.encryptionService.decryptText(this.configuration.settings.secretKey)
+        accessKeyId: this.connector.settings.accessKey,
+        secretAccessKey: await this.encryptionService.decryptText(this.connector.settings.secretKey)
       },
       requestHandler: this.proxyAgent ? new NodeHttpHandler({ httpAgent: this.proxyAgent }) : undefined
     });
@@ -59,9 +59,9 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
    */
   async handleFile(filePath: string): Promise<void> {
     const params = {
-      Bucket: this.configuration.settings.bucket,
+      Bucket: this.connector.settings.bucket,
       Body: fs.createReadStream(filePath),
-      Key: `${this.configuration.settings.folder}/${this.getFilenameWithoutTimestamp(filePath)}`
+      Key: `${this.connector.settings.folder}/${this.getFilenameWithoutTimestamp(filePath)}`
     };
 
     await this.s3!.send(new PutObjectCommand(params));

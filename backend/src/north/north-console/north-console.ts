@@ -32,7 +32,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> i
    * Handle values by printing them to the console.
    */
   async handleValues(values: Array<any>): Promise<void> {
-    if (this.configuration.settings.verbose) {
+    if (this.connector.settings.verbose) {
       console.table(values, ['pointId', 'timestamp', 'data']);
     } else {
       process.stdout.write(`North Console sent ${values.length} values.\r\n`);
@@ -43,7 +43,7 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> i
    * Handle the file by displaying its name in the console
    */
   async handleFile(filePath: string): Promise<void> {
-    if (this.configuration.settings.verbose) {
+    if (this.connector.settings.verbose) {
       const stats = await fs.stat(filePath);
       const fileSize = stats.size;
       const data = [

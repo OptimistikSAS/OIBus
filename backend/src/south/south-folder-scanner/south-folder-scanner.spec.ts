@@ -190,17 +190,13 @@ describe('SouthFolderScanner', () => {
     await south.sendFile('myFile1');
 
     expect(south.addFile).toHaveBeenCalledTimes(1);
-    expect(logger.debug).toHaveBeenCalledWith(
-      `Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile1')}" to the engine`
-    );
+    expect(logger.info).toHaveBeenCalledWith(`Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile1')}" to the engine`);
     expect(fs.unlink).toHaveBeenCalledTimes(1);
     expect(logger.error).not.toHaveBeenCalled();
     expect(south.updateModifiedTime).not.toHaveBeenCalled();
 
     await south.sendFile('myFile2');
-    expect(logger.debug).toHaveBeenCalledWith(
-      `Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile2')}" to the engine`
-    );
+    expect(logger.info).toHaveBeenCalledWith(`Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile2')}" to the engine`);
     expect(fs.unlink).toHaveBeenCalledTimes(2);
     expect(logger.error).toHaveBeenCalledWith(
       `Error while removing "${path.resolve(configuration.settings.inputFolder, 'myFile2')}": ${new Error('error')}`
@@ -284,9 +280,7 @@ describe('SouthFolderScanner with preserve file and compression', () => {
     (fs.stat as jest.Mock).mockImplementation(() => ({ mtimeMs }));
     await south.sendFile('myFile1');
 
-    expect(logger.debug).toHaveBeenCalledWith(
-      `Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile1')}" to the engine`
-    );
+    expect(logger.info).toHaveBeenCalledWith(`Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile1')}" to the engine`);
     expect(compress).toHaveBeenCalledWith(
       path.resolve(configuration.settings.inputFolder, 'myFile1'),
       `${path.resolve(configuration.settings.inputFolder, 'myFile1')}.gz`

@@ -15,66 +15,65 @@ import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.
 
 export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSettings> implements HandlesFile {
   static type = manifest.id;
+  private blobClient: BlobServiceClient | null = null;
 
   constructor(
-    configuration: NorthConnectorDTO<NorthAzureBlobSettings>,
+    connector: NorthConnectorDTO<NorthAzureBlobSettings>,
     encryptionService: EncryptionService,
     proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder);
+    super(connector, encryptionService, proxyService, repositoryService, logger, baseFolder);
+  }
+
+  async start(): Promise<void> {
+    this.logger.info(
+      `Connecting to Azure Blob Storage for account ${this.connector.settings.account} and container ${this.connector.settings.container}`
+    );
+    switch (this.connector.settings.authentication) {
+      case 'sasToken':
+        this.logger.debug(`Initiate Azure blob service client using ${this.connector.settings.authentication}`);
+        const decryptedToken = await this.encryptionService.decryptText(this.connector.settings.sasToken!);
+        this.blobClient = new BlobServiceClient(`https://${this.connector.settings.account}.blob.core.windows.net?${decryptedToken}`);
+        break;
+      case 'accessKey':
+        this.logger.debug(`Initiate Azure blob service client using ${this.connector.settings.authentication}`);
+        const decryptedAccessKey = await this.encryptionService.decryptText(this.connector.settings.accessKey!);
+        const sharedKeyCredential = new StorageSharedKeyCredential(this.connector.settings.account!, decryptedAccessKey);
+        this.blobClient = new BlobServiceClient(`https://${this.connector.settings.account}.blob.core.windows.net`, sharedKeyCredential);
+        break;
+      case 'aad':
+        this.logger.debug(`Initiate Azure blob service client using ${this.connector.settings.authentication}`);
+        process.env.AZURE_TENANT_ID = this.connector.settings.tenantId!;
+        process.env.AZURE_CLIENT_ID = this.connector.settings.clientId!;
+        const decryptedClientSecret = await this.encryptionService.decryptText(this.connector.settings.clientSecret!);
+        process.env.AZURE_CLIENT_SECRET = decryptedClientSecret;
+        const defaultAzureCredential = new DefaultAzureCredential();
+        this.blobClient = new BlobServiceClient(`https://${this.connector.settings.account}.blob.core.windows.net`, defaultAzureCredential);
+        break;
+      default:
+        throw new Error(`Authentication "${this.connector.settings.authentication}" not supported for South "${this.connector.name}"`);
+    }
   }
 
   /**
    * Handle the file by uploading it to Azure Blob Storage.
    */
   async handleFile(filePath: string): Promise<void> {
-    this.logger.info(`Uploading file "${filePath}" to Azure Blob Storage`);
+    const container = this.connector.settings.container;
+    const blobPath = this.connector.settings.path ? `${this.connector.settings.path}/` : '';
+    this.logger.info(`Uploading file "${filePath}" to Azure Blob Storage for container ${container} and path ${blobPath}`);
 
-    let blobServiceClient: BlobServiceClient | null = null;
-    switch (this.configuration.settings.authentication) {
-      case 'sasToken':
-        this.logger.debug(`Initiate Azure blob service client using ${this.configuration.settings.authentication}`);
-        blobServiceClient = new BlobServiceClient(
-          `https://${this.configuration.settings.account}.blob.core.windows.net${this.configuration.settings.sasToken}`
-        );
-        break;
-      case 'accessKey':
-        this.logger.debug(`Initiate Azure blob service client using ${this.configuration.settings.authentication}`);
-        const sharedKeyCredential = new StorageSharedKeyCredential(
-          this.configuration.settings.account!,
-          this.configuration.settings.accessKey!
-        );
-        blobServiceClient = new BlobServiceClient(
-          `https://${this.configuration.settings.account}.blob.core.windows.net`,
-          sharedKeyCredential
-        );
-        break;
-      case 'aad':
-        this.logger.debug(`Initiate Azure blob service client using ${this.configuration.settings.authentication}`);
-        process.env.AZURE_TENANT_ID = this.configuration.settings.tenantId!;
-        process.env.AZURE_CLIENT_ID = this.configuration.settings.clientId!;
-        process.env.AZURE_CLIENT_SECRET = this.configuration.settings.clientSecret!;
-        const defaultAzureCredential = new DefaultAzureCredential();
-        blobServiceClient = new BlobServiceClient(
-          `https://${this.configuration.settings.account}.blob.core.windows.net`,
-          defaultAzureCredential
-        );
-        break;
-      default:
-        throw new Error(
-          `Authentication "${this.configuration.settings.authentication}" not supported for South "${this.configuration.name}"`
-        );
-    }
+    const { name, ext } = path.parse(filePath);
+    const filename = name.slice(0, name.lastIndexOf('-'));
 
-    const filenameInfo = path.parse(filePath);
-    const blobName = filenameInfo.name + filenameInfo.ext;
+    const blobName = `${blobPath}${filename}${ext}`;
     const stats = await fs.stat(filePath);
     const content = await fs.readFile(filePath);
 
-    const containerClient = blobServiceClient.getContainerClient(this.configuration.settings.container);
+    const containerClient = this.blobClient!.getContainerClient(container);
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
     const uploadBlobResponse = await blockBlobClient.upload(content, stats.size);
     this.logger.info(`Upload block blob "${blobName}" successfully with requestId: ${uploadBlobResponse.requestId}`);

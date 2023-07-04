@@ -13,6 +13,7 @@ import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { SouthODBCItemSettings, SouthODBCSettings } from '../../../../shared/model/south-settings.model';
+// @ts-ignore
 import type odbcNS from 'odbc';
 
 let odbc: typeof odbcNS | null = null;
@@ -128,9 +129,12 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     const tables: { table_name: string; columns: string }[] = [];
 
     try {
+      // @ts-ignore
       const tableMetadata = await connection.tables<any>(settings.database, null, null, 'TABLE');
       for (const table of tableMetadata) {
+        // @ts-ignore
         const columnMetadata = await connection.columns<any>(settings.database, null, table.TABLE_NAME, null);
+        // @ts-ignore
         const columns = columnMetadata.map(column => `${column.COLUMN_NAME}(${column.TYPE_NAME})`).join(', ');
         tables.push({
           table_name: table.TABLE_NAME,

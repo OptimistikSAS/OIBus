@@ -42,12 +42,12 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   override async start(): Promise<void> {
     await super.start();
 
-    if (this.configuration.settings.proxyId) {
+    if (this.connector.settings.proxyId) {
       this.proxyAgent = await this.proxyService.createProxyAgent(
-        this.configuration.settings.proxyId,
-        this.configuration.settings.acceptUnauthorized
+        this.connector.settings.proxyId,
+        this.connector.settings.acceptUnauthorized
       );
-    } else if (this.configuration.settings.acceptUnauthorized && this.configuration.settings.host.startsWith('https://')) {
+    } else if (this.connector.settings.acceptUnauthorized && this.connector.settings.host.startsWith('https://')) {
       this.proxyAgent = new https.Agent({ rejectUnauthorized: false });
     }
   }
@@ -72,19 +72,19 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     };
 
     headers.authorization = `Basic ${Buffer.from(
-      `${this.configuration.settings.accessKey}:${
-        this.configuration.settings.secretKey ? await this.encryptionService.decryptText(this.configuration.settings.secretKey) : ''
+      `${this.connector.settings.accessKey}:${
+        this.connector.settings.secretKey ? await this.encryptionService.decryptText(this.connector.settings.secretKey) : ''
       }`
     ).toString('base64')}`;
 
     let response;
-    const valuesUrl = `${this.configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${this.configuration.name}`;
+    const valuesUrl = `${this.connector.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${this.connector.name}`;
     try {
       response = await fetch(valuesUrl, {
         method: 'POST',
         headers,
         body: JSON.stringify(cleanedValues),
-        timeout: this.configuration.settings.timeout * 1000,
+        timeout: this.connector.settings.timeout * 1000,
         agent: this.proxyAgent
       });
     } catch (fetchError) {
@@ -108,8 +108,8 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   async handleFile(filePath: string): Promise<void> {
     const headers: Record<string, string> = {};
     headers.authorization = `Basic ${Buffer.from(
-      `${this.configuration.settings.accessKey}:${
-        this.configuration.settings.secretKey ? await this.encryptionService.decryptText(this.configuration.settings.secretKey) : ''
+      `${this.connector.settings.accessKey}:${
+        this.connector.settings.secretKey ? await this.encryptionService.decryptText(this.connector.settings.secretKey) : ''
       }`
     ).toString('base64')}`;
 
@@ -129,13 +129,13 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     });
 
     let response;
-    const fileUrl = `${this.configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${this.configuration.name}`;
+    const fileUrl = `${this.connector.settings.host}/api/oianalytics/file-uploads?dataSourceId=${this.connector.name}`;
     try {
       response = await fetch(fileUrl, {
         method: 'POST',
         headers,
         body,
-        timeout: this.configuration.settings.timeout * 1000,
+        timeout: this.connector.settings.timeout * 1000,
         agent: this.proxyAgent
       });
       readStream.close();

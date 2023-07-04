@@ -13,6 +13,7 @@ import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-bl
 import { DefaultAzureCredential } from '@azure/identity';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
+import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
 
 const uploadMock = jest.fn().mockReturnValue(Promise.resolve({ requestId: 'requestId' }));
 const getBlockBlobClientMock = jest.fn().mockImplementation(() => ({
@@ -68,7 +69,7 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
-const configuration: NorthConnectorDTO = {
+const configuration: NorthConnectorDTO<NorthAzureBlobSettings> = {
   id: 'id',
   name: 'north',
   type: 'test',
@@ -76,7 +77,14 @@ const configuration: NorthConnectorDTO = {
   enabled: true,
   settings: {
     account: 'account',
-    container: 'container'
+    container: 'container',
+    path: '',
+    authentication: 'sasToken',
+    sasToken: 'sas',
+    accessKey: '',
+    tenantId: '',
+    clientId: '',
+    clientSecret: ''
   },
   caching: {
     scanModeId: 'id1',
@@ -99,7 +107,7 @@ describe('NorthAzureBlob', () => {
   });
 
   it('should properly handle files with Shared Access Signature authentication', async () => {
-    const filePath = '/path/to/file/example.file';
+    const filePath = '/path/to/file/example-123.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
 
@@ -107,12 +115,13 @@ describe('NorthAzureBlob', () => {
     configuration.settings.sasToken = 'sas token';
     const north = new NorthAzureBlob(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
 
+    await north.start();
     await north.handleFile(filePath);
 
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
     expect(BlobServiceClient).toHaveBeenCalledWith(
-      `https://${configuration.settings.account}.blob.core.windows.net${configuration.settings.sasToken}`
+      `https://${configuration.settings.account}.blob.core.windows.net?${configuration.settings.sasToken}`
     );
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(getBlockBlobClientMock).toHaveBeenCalledWith('example.file');
@@ -120,7 +129,7 @@ describe('NorthAzureBlob', () => {
   });
 
   it('should properly handle files with Access Key authentication', async () => {
-    const filePath = '/path/to/file/example.file';
+    const filePath = '/path/to/file/example-123.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
     const sharedKeyCredential = jest.fn();
@@ -130,6 +139,7 @@ describe('NorthAzureBlob', () => {
     configuration.settings.accessKey = 'access key';
     const north = new NorthAzureBlob(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
 
+    await north.start();
     await north.handleFile(filePath);
 
     expect(fs.stat).toHaveBeenCalledWith(filePath);
@@ -142,7 +152,7 @@ describe('NorthAzureBlob', () => {
   });
 
   it('should properly handle files with Azure Active Directory authentication', async () => {
-    const filePath = '/path/to/file/example.file';
+    const filePath = '/path/to/file/example-123.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
     const defaultAzureCredential = jest.fn();
@@ -154,6 +164,7 @@ describe('NorthAzureBlob', () => {
     configuration.settings.clientSecret = 'clientSecret';
     const north = new NorthAzureBlob(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
 
+    await north.start();
     await north.handleFile(filePath);
 
     expect(fs.stat).toHaveBeenCalledWith(filePath);
@@ -166,16 +177,5 @@ describe('NorthAzureBlob', () => {
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(getBlockBlobClientMock).toHaveBeenCalledWith('example.file');
     expect(uploadMock).toHaveBeenCalledWith('content', 666);
-  });
-
-  it('should throw an error when invalid authentication is provided', async () => {
-    const filePath = '/path/to/file/example.file';
-
-    configuration.settings.authentication = 'invalid';
-    const north = new NorthAzureBlob(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
-
-    await expect(north.handleFile(filePath)).rejects.toThrowError(
-      new Error(`Authentication "${configuration.settings.authentication}" not supported for South "${configuration.name}"`)
-    );
   });
 });

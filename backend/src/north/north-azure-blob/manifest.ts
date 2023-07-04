@@ -22,8 +22,13 @@ const manifest: NorthConnectorManifest = {
       key: 'container',
       type: 'OibText',
       label: 'Container',
-      newRow: false,
       validators: [{ key: 'required' }],
+      displayInViewMode: true
+    },
+    {
+      key: 'path',
+      type: 'OibText',
+      label: 'Path',
       displayInViewMode: true
     },
     {
@@ -32,7 +37,7 @@ const manifest: NorthConnectorManifest = {
       options: ['sasToken', 'accessKey', 'aad'],
       label: 'Authentication',
       defaultValue: 'accessKey',
-      newRow: false,
+      newRow: true,
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
@@ -40,17 +45,14 @@ const manifest: NorthConnectorManifest = {
       key: 'sasToken',
       type: 'OibSecret',
       label: 'Shared Access Signature Token',
-      newRow: true,
-      conditionalDisplay: { field: 'authentication', values: ['sasToken'] },
-      displayInViewMode: true
+      conditionalDisplay: { field: 'authentication', values: ['sasToken'] }
     },
     {
       key: 'accessKey',
       type: 'OibSecret',
       label: 'Access Key',
       newRow: true,
-      conditionalDisplay: { field: 'authentication', values: ['accessKey'] },
-      displayInViewMode: true
+      conditionalDisplay: { field: 'authentication', values: ['accessKey'] }
     },
     {
       key: 'tenantId',
@@ -75,8 +77,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Client Secret',
       newRow: false,
       validators: [{ key: 'required' }],
-      conditionalDisplay: { field: 'authentication', values: ['aad'] },
-      displayInViewMode: true
+      conditionalDisplay: { field: 'authentication', values: ['aad'] }
     }
   ]
 };
