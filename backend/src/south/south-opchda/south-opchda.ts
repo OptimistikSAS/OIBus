@@ -1,9 +1,8 @@
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import DeferredPromise from '../../service/deferred-promise';
-import { OibusItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
@@ -12,6 +11,7 @@ import { QueriesHistory, TestsConnection } from '../south-interface';
 import { HandlesAgent } from './agent-handler-interface';
 import Agent from './agent';
 import SouthOPCHDATest from './south-opchda-test';
+import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../../shared/model/south-settings.model';
 
 /**
  * Class SouthOPCHDA - Run a HDA agent to connect to an OPCHDA server.
@@ -35,39 +35,34 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
       aggregate: string;
       resampling: string;
       scanMode: string;
-      points: Array<{
-        name: string;
-        nodeId: string;
-      }>;
+      points: string[];
     }
   >();
 
   constructor(
-    configuration: SouthConnectorDTO,
-    items: Array<OibusItemDTO>,
+    connector: SouthConnectorDTO<SouthOPCHDASettings>,
+    items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string,
     streamMode: boolean
   ) {
     super(
-      configuration,
+      connector,
       items,
       engineAddValuesCallback,
       engineAddFileCallback,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       baseFolder,
       streamMode
     );
 
-    this.agent = new Agent(this, configuration.settings, logger);
+    this.agent = new Agent(this, connector.settings, logger);
   }
 
   async connect(): Promise<void> {
@@ -99,7 +94,7 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
    * Get entries from the database between startTime and endTime (if used in the SQL query)
    * and write them into the cache and send it to the engine.
    */
-  async historyQuery(items: Array<OibusItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant> {
+  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
     this.historyRead$ = new DeferredPromise();
 
     let maxTimestamp = DateTime.fromISO(startTime).toMillis();
@@ -111,9 +106,9 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
 
     this.historyReadTimeout = setTimeout(() => {
       this.historyRead$?.reject(
-        new Error(`History query has not succeeded in the requested readTimeout: ${this.configuration.settings.readTimeout}s`)
+        new Error(`History query has not succeeded in the requested readTimeout: ${this.connector.settings.readTimeout}s`)
       );
-    }, this.configuration.settings.readTimeout * 1000);
+    }, this.connector.settings.readTimeout * 1000);
     const retrievedTimestamp = await this.historyRead$.promise;
     maxTimestamp = retrievedTimestamp > maxTimestamp ? retrievedTimestamp : maxTimestamp;
 
@@ -141,11 +136,11 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
   async handleConnectMessage(connected: boolean, error: string): Promise<void> {
     if (!connected) {
       this.logger.error(
-        `Unable to connect to "${this.configuration.settings.serverName}" on ${this.configuration.settings.host}: ${error}, retrying in ${this.configuration.settings.retryInterval}ms`
+        `Unable to connect to "${this.connector.settings.serverName}" on ${this.connector.settings.host}: ${error}, retrying in ${this.connector.settings.retryInterval}ms`
       );
 
       await this.agent.disconnect();
-      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.configuration.settings.retryInterval);
+      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
 
       return;
     }
@@ -158,10 +153,7 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
           aggregate: string;
           resampling: string;
           scanMode: string;
-          points: Array<{
-            name: string;
-            nodeId: string;
-          }>;
+          points: string[];
         }
       >();
       for (const [scanModeId, items] of this.itemsByScanModeIds.entries()) {
@@ -172,7 +164,7 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
               aggregate: item.settings.aggregate,
               resampling: item.settings.resampling,
               scanMode: item.scanModeId!,
-              points: [{ name: item.name, nodeId: item.settings.nodeId }]
+              points: [item.settings.nodeId]
             });
           } else {
             const group = this.itemsByGroups.get(groupName)!;
@@ -180,7 +172,7 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
               aggregate: item.settings.aggregate,
               resampling: item.settings.resampling,
               scanMode: item.scanModeId!,
-              points: [...group.points, { name: item.name, nodeId: item.settings.nodeId }]
+              points: [...group.points, item.settings.nodeId]
             });
           }
         }
@@ -191,7 +183,7 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
         ...item
       }));
 
-      await this.agent.sendInitializeMessage(groups, this.configuration.history.maxReadInterval, this.configuration.history.readDelay);
+      await this.agent.sendInitializeMessage(groups, this.connector.history.maxReadInterval, this.connector.history.readDelay);
     } catch (error) {
       this.logger.error('The message has not been sent. Reinitializing the HDA agent.');
 
@@ -200,7 +192,7 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
       }
 
       await this.disconnect();
-      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.configuration.settings.retryInterval);
+      this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
     }
   }
 
@@ -213,7 +205,7 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
       if (messageObject.Content.Disconnected) {
         this.logger.error('Agent disconnected from OPC HDA server');
         await this.disconnect();
-        this.reconnectTimeout = setTimeout(this.agent.sendConnectMessage, this.configuration.settings.retryInterval);
+        this.reconnectTimeout = setTimeout(this.agent.sendConnectMessage, this.connector.settings.retryInterval);
       }
       this.historyRead$?.reject(new Error(messageObject.Content.Error));
       return;
@@ -247,12 +239,11 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
       this.logger.error(`Point: "${point.ItemId}" is invalid: ${JSON.stringify(point)}`);
       return false;
     }).map((point: any) => {
-      const associatedPointId = associatedGroup.points.find(scanGroupPoint => scanGroupPoint.nodeId === point.ItemId)?.name || point.ItemId;
       maxTimestamp =
         DateTime.fromISO(point.Timestamp).toMillis() > maxTimestamp ? DateTime.fromISO(point.Timestamp).toMillis() : maxTimestamp;
 
       return {
-        pointId: associatedPointId,
+        pointId: point.itemId,
         timestamp: DateTime.fromISO(point.Timestamp).toUTC().toISO(),
         data: { value: point.Value.toString(), quality: JSON.stringify(point.Quality) }
       };
