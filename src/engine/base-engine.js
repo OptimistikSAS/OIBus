@@ -5,6 +5,7 @@ import OIAnalytics from '../north/north-oianalytics/north-oianalytics.js'
 import OIConnect from '../north/north-oiconnect/north-oiconnect.js'
 import FileWriter from '../north/north-file-writer/north-file-writer.js'
 import AmazonS3 from '../north/north-amazon-s3/north-amazon-s3.js'
+import AzureBlob from '../north/north-azure-blob/north-azure-blob.js'
 import InfluxDB from '../north/north-influx-db/north-influx-db.js'
 import TimescaleDB from '../north/north-timescale-db/north-timescale-db.js'
 import MongoDB from '../north/north-mongo-db/north-mongo-db.js'
@@ -32,6 +33,7 @@ const northList = {
   OIConnect,
   FileWriter,
   AmazonS3,
+  AzureBlob,
   InfluxDB,
   TimescaleDB,
   MongoDB,

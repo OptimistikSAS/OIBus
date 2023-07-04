@@ -174,6 +174,10 @@ describe('BaseEngine', () => {
         connectorName: 'AmazonS3',
       },
       {
+        category: 'FileIn',
+        connectorName: 'AzureBlob',
+      },
+      {
         category: 'DatabaseIn',
         connectorName: 'InfluxDB',
       },
