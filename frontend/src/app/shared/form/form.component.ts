@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { NgForOf, NgIf } from '@angular/common';
-import { ControlContainer, FormGroup, FormGroupName } from '@angular/forms';
+import { ControlContainer, FormControl, FormGroup, FormGroupDirective } from '@angular/forms';
 import { formDirectives } from '../form-directives';
 import { OibFormControl, OibFormGroup } from '../../../../../shared/model/form.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
@@ -33,7 +33,7 @@ declare namespace Intl {
   viewProviders: [
     {
       provide: ControlContainer,
-      useExisting: FormGroupName
+      useExisting: FormGroupDirective
     }
   ]
 })
@@ -54,6 +54,10 @@ export class FormComponent {
 
   getFormGroup(setting: OibFormGroup): FormGroup {
     return this.formGroup.controls[setting.key] as FormGroup;
+  }
+
+  getFormControl(key: string): FormControl {
+    return this.formGroup.controls[key] as FormControl;
   }
 
   getSettingsGroupedByRow(content: Array<OibFormControl>): Array<Array<OibFormControl>> {

@@ -176,7 +176,7 @@ export default class OIBusEngine extends BaseEngine {
     this.southConnectors.get(southId)?.deleteAllItems();
   }
 
-  updateItemInSouth(southId: string, oldItem: SouthConnectorItemDTO, newItem: SouthConnectorItemCommandDTO): void {
+  updateItemInSouth(southId: string, oldItem: SouthConnectorItemDTO, newItem: SouthConnectorItemDTO): void {
     this.southConnectors.get(southId)?.updateItem(oldItem, newItem);
   }
 

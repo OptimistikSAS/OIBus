@@ -105,7 +105,7 @@ export const handleConditionalDisplay = (formGroup: FormGroup, formDescription: 
       });
     }
 
-    if (formControl.type === 'OibFormGroup' || formControl.type === 'OibArray') {
+    if (formControl.type === 'OibFormGroup') {
       handleConditionalDisplay(formGroup.controls[formControl.key] as FormGroup, formControl.content);
     }
   });

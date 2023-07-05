@@ -71,7 +71,8 @@ export default class SouthMSSQL
       requestTimeout: settings.requestTimeout,
       options: {
         encrypt: settings.encryption == null ? undefined : settings.encryption,
-        trustServerCertificate: settings.trustServerCertificate
+        trustServerCertificate: settings.trustServerCertificate,
+        useUTC: true
       }
     };
     if (settings.domain) {
@@ -208,7 +209,8 @@ export default class SouthMSSQL
       requestTimeout: this.connector.settings.requestTimeout,
       options: {
         encrypt: this.connector.settings.encryption == null ? undefined : this.connector.settings.encryption,
-        trustServerCertificate: this.connector.settings.trustServerCertificate
+        trustServerCertificate: this.connector.settings.trustServerCertificate,
+        useUTC: true
       }
     };
     // domain is optional and allow to activate the ntlm authentication on Windows
