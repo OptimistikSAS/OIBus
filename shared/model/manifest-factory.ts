@@ -40,7 +40,8 @@ export function buildDateTimeFieldsFormControl(dataTypes: Array<DateTimeType>): 
         defaultValue: 'UTC',
         newRow: true,
         validators: [{ key: 'required' }],
-        conditionalDisplay: { field: 'type', values: ['string'] }
+        displayInViewMode: true,
+        conditionalDisplay: { field: 'type', values: ['string', 'timestamp', 'DateTime', 'DateTime2', 'SmallDateTime', 'Date'] }
       },
       {
         key: 'format',

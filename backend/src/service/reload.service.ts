@@ -120,7 +120,8 @@ export default class ReloadService {
     command: SouthConnectorItemCommandDTO
   ): Promise<void> {
     this.repositoryService.southItemRepository.updateSouthItem(southItem.id, command);
-    this.oibusEngine.updateItemInSouth(southId, southItem, command);
+    const newItem = this.repositoryService.southItemRepository.getSouthItem(southItem.id)!;
+    this.oibusEngine.updateItemInSouth(southId, southItem, newItem);
   }
 
   async onCreateOrUpdateSouthItems(

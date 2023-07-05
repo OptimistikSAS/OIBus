@@ -1,8 +1,6 @@
 <ng-container *ngIf="controlsByRow && form">
   <form [formGroup]="form" (ngSubmit)="ok()" class="oib-inner-form">
-    <ng-container formGroupName="settings">
-      <oib-form [formGroup]="form" [settingsSchema]="controlsByRow"></oib-form>
-    </ng-container>
+    <oib-form [formGroup]="form" [settingsSchema]="controlsByRow"></oib-form>
     <div class="row">
       <div class="col">
         <div class="pull-right">

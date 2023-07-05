@@ -115,7 +115,14 @@
       "iso-string": "ISO 8601",
       "string": "String",
       "unix-epoch": "UNIX Epoch (s)",
-      "unix-epoch-ms": "UNIX Epoch (ms)"
+      "unix-epoch-ms": "UNIX Epoch (ms)",
+      "timestamp": "timestamp",
+      "timestamptz": "timestamptz",
+      "DateTime": "DateTime",
+      "DateTime2": "DateTime2",
+      "SmallDateTime": "SmallDateTime",
+      "Date": "Date",
+      "DateTimeOffset": "DateTimeOffset"
     },
     "serialization-types": {
       "csv": "CSV File",

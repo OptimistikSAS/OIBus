@@ -43,7 +43,7 @@ export interface NorthAmazonS3Settings extends BaseNorthSettings {
 export interface NorthAzureBlobSettings extends BaseNorthSettings {
   account: string;
   container: string;
-  path: string;
+  path: string | null;
   authentication: NorthAzureBlobSettingsAuthentication;
   sasToken: string | null;
   accessKey: string | null;
@@ -118,7 +118,7 @@ export interface NorthMqttSettings extends BaseNorthSettings {
 export interface NorthOIAnalyticsSettings extends BaseNorthSettings {
   host: string;
   accessKey: string;
-  secretKey: string;
+  secretKey: string | null;
   timeout: number;
   proxyId: string | null;
   acceptUnauthorized: boolean;

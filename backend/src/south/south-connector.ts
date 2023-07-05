@@ -457,7 +457,8 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     }
   }
 
-  updateItem(oldItem: SouthConnectorItemDTO<I>, newItem: SouthConnectorItemCommandDTO<I>): void {
+  updateItem(oldItem: SouthConnectorItemDTO<I>, newItem: SouthConnectorItemDTO<I>): void {
+    this.logger.info('Updating item in south connector');
     if (newItem.scanModeId) {
       const scanMode = this.repositoryService.scanModeRepository.getScanMode(newItem.scanModeId);
       if (!scanMode) {
@@ -467,7 +468,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     }
 
     this.deleteItem(oldItem);
-    this.addItem(oldItem);
+    this.addItem(newItem);
   }
 
   deleteItem(item: SouthConnectorItemDTO<I>) {

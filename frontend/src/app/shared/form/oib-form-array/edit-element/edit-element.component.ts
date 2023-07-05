@@ -29,8 +29,8 @@ export class EditElementComponent implements OnInit {
 
   ngOnInit() {
     this.controlsByRow = groupFormControlsByRow(this.formDescription);
-    this.form = this.fb.group({ settings: createFormGroup(this.formDescription, this.fb) });
-    this.form.patchValue({ settings: this.element });
+    this.form = createFormGroup(this.formDescription, this.fb);
+    this.form.patchValue(this.element);
   }
 
   ok() {
@@ -38,9 +38,7 @@ export class EditElementComponent implements OnInit {
       return;
     }
 
-    const formValue = this.form!.getRawValue();
-
-    this.saved.emit(formValue.settings);
+    this.saved.emit(this.form!.value);
   }
 
   cancel() {

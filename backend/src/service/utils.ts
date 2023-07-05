@@ -326,13 +326,9 @@ export const convertDateTimeToInstant = (
     case 'DateTime2':
     case 'SmallDateTime':
     case 'timestamp':
-      return DateTime.fromJSDate(dateTime, {
-        zone: options.timezone
-      })
-        .toUTC()
-        .toISO()!;
+      return DateTime.fromJSDate(dateTime).toUTC().setZone(options.timezone, { keepLocalTime: true }).toUTC().toISO()!;
     case 'DateTimeOffset':
     case 'timestamptz':
-      return DateTime.fromJSDate(dateTime).toISO()!;
+      return DateTime.fromJSDate(dateTime).toUTC().toISO()!;
   }
 };

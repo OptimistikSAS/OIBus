@@ -35,7 +35,6 @@ const manifest: NorthConnectorManifest = {
       key: 'secretKey',
       type: 'OibSecret',
       label: 'Secret key',
-      validators: [{ key: 'required' }],
       displayInViewMode: false
     },
     {
