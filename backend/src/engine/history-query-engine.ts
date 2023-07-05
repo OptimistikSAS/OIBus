@@ -1,6 +1,5 @@
 import BaseEngine from './base-engine';
 import EncryptionService from '../service/encryption.service';
-import ProxyService from '../service/proxy.service';
 import NorthService from '../service/north.service';
 import SouthService from '../service/south.service';
 import pino from 'pino';
@@ -24,13 +23,12 @@ export default class HistoryQueryEngine extends BaseEngine {
 
   constructor(
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     northService: NorthService,
     southService: SouthService,
     private readonly historyQueryService: HistoryQueryService,
     logger: pino.Logger
   ) {
-    super(encryptionService, proxyService, northService, southService, logger, CACHE_FOLDER);
+    super(encryptionService, northService, southService, logger, CACHE_FOLDER);
   }
 
   override async start(): Promise<void> {

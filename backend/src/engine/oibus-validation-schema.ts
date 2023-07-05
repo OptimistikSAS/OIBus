@@ -5,17 +5,12 @@ const scanModeSchema: Joi.ObjectSchema = Joi.object({
   description: Joi.string().required().allow(null, ''),
   cron: Joi.string().required()
 });
-const proxySchema: Joi.ObjectSchema = Joi.object({
-  name: Joi.string().required(),
-  description: Joi.string().required().allow(null, ''),
-  address: Joi.string().required(),
-  username: Joi.string().required().allow(null, ''),
-  password: Joi.string().required().allow(null, '')
-});
+
 const externalSourceSchema: Joi.ObjectSchema = Joi.object({
   reference: Joi.string().required(),
   description: Joi.string().required().allow(null, '')
 });
+
 const engineSchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
   port: Joi.number().required().port(),
@@ -43,10 +38,12 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
     })
   })
 });
+
 const ipFilterSchema: Joi.ObjectSchema = Joi.object({
   address: Joi.string().required(),
   description: Joi.string().required().allow(null, '')
 });
+
 const historyQuerySchema: Joi.ObjectSchema = Joi.object({
   name: Joi.string().required(),
   description: Joi.string().required().allow(null, ''),
@@ -82,4 +79,4 @@ const logSchema: Joi.ObjectSchema = Joi.object({
   )
 });
 
-export { scanModeSchema, proxySchema, externalSourceSchema, engineSchema, ipFilterSchema, userSchema, historyQuerySchema, logSchema };
+export { scanModeSchema, externalSourceSchema, engineSchema, ipFilterSchema, userSchema, historyQuerySchema, logSchema };

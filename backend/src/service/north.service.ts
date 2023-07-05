@@ -1,4 +1,3 @@
-import ProxyService from './proxy.service';
 import EncryptionService from './encryption.service';
 import pino from 'pino';
 import RepositoryService from './repository.service';
@@ -21,11 +20,7 @@ const northList: Array<typeof NorthConnector<any>> = [
 ];
 
 export default class NorthService {
-  constructor(
-    private readonly proxyService: ProxyService,
-    private readonly encryptionService: EncryptionService,
-    private readonly repositoryService: RepositoryService
-  ) {}
+  constructor(private readonly encryptionService: EncryptionService, private readonly repositoryService: RepositoryService) {}
 
   /**
    * Return the North connector
@@ -36,7 +31,7 @@ export default class NorthService {
       throw Error(`North connector of type ${settings.type} not installed`);
     }
 
-    return new NorthConnector(settings, this.encryptionService, this.proxyService, this.repositoryService, logger, baseFolder);
+    return new NorthConnector(settings, this.encryptionService, this.repositoryService, logger, baseFolder);
   }
 
   /**

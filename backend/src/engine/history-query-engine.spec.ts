@@ -11,10 +11,7 @@ import NorthService from '../service/north.service';
 
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
-import RepositoryService from '../service/repository.service';
-import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
-import ProxyService from '../service/proxy.service';
 import HistoryQueryEngine from './history-query-engine';
 import HistoryQueryService from '../service/history-query.service';
 import { PassThrough } from 'node:stream';
@@ -24,7 +21,6 @@ jest.mock('../service/north.service');
 jest.mock('../service/history-query.service');
 jest.mock('../service/repository.service');
 jest.mock('../service/encryption.service');
-jest.mock('../service/proxy.service');
 
 jest.mock('../service/utils');
 
@@ -34,9 +30,7 @@ const anotherLogger: pino.Logger = new PinoLogger();
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
 const historyQueryService: HistoryQueryService = new HistoryQueryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 
@@ -99,7 +93,7 @@ describe('HistoryQueryEngine', () => {
     (historyQueryService.getHistoryQueryList as jest.Mock).mockReturnValue([configuration]);
     (historyQueryService.getHistoryQuery as jest.Mock).mockReturnValue(configuration);
 
-    engine = new HistoryQueryEngine(encryptionService, proxyService, northService, southService, historyQueryService, logger);
+    engine = new HistoryQueryEngine(encryptionService, northService, southService, historyQueryService, logger);
   });
 
   it('it should start connectors and stop all', async () => {

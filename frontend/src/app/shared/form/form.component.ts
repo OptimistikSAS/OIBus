@@ -4,9 +4,7 @@ import { ControlContainer, FormControl, FormGroup, FormGroupName } from '@angula
 import { formDirectives } from '../form-directives';
 import { OibFormControl, OibFormGroup } from '../../../../../shared/model/form.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
-import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { OibCodeBlockComponent } from './oib-code-block/oib-code-block.component';
-import { OibProxyComponent } from './oib-proxy/oib-proxy.component';
 import { Timezone } from '../../../../../shared/model/types';
 import { Observable } from 'rxjs';
 import { inMemoryTypeahead } from '../typeahead';
@@ -27,7 +25,7 @@ declare namespace Intl {
 @Component({
   selector: 'oib-form',
   standalone: true,
-  imports: [...formDirectives, NgIf, NgForOf, OibCodeBlockComponent, OibProxyComponent, NgbTypeahead, TranslateModule, OibArrayComponent],
+  imports: [...formDirectives, NgIf, NgForOf, OibCodeBlockComponent, NgbTypeahead, TranslateModule, OibArrayComponent],
   templateUrl: './form.component.html',
   styleUrls: ['./form.component.scss'],
   viewProviders: [
@@ -40,7 +38,6 @@ declare namespace Intl {
 export class FormComponent {
   @Input() settingsSchema: Array<Array<OibFormControl>> = [];
   @Input() scanModes: Array<ScanModeDTO> = [];
-  @Input() proxies: Array<ProxyDTO> = [];
   @Input({ required: true }) formGroup!: FormGroup;
 
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');

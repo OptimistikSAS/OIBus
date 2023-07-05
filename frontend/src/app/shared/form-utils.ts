@@ -1,7 +1,6 @@
 import { FormComponentValidator, OibFormControl } from '../../../../shared/model/form.model';
 import { FormControl, FormGroup, NonNullableFormBuilder, ValidatorFn, Validators } from '@angular/forms';
 import { ScanModeDTO } from '../../../../shared/model/scan-mode.model';
-import { ProxyDTO } from '../../../../shared/model/proxy.model';
 
 /**
  * Create the validators associated to an input from the settings schema
@@ -41,8 +40,7 @@ export const createFormGroup = (formDescription: Array<OibFormControl>, fb: NonN
 export const createFormControl = (
   value: OibFormControl,
   fb: NonNullableFormBuilder,
-  scanModes: Array<ScanModeDTO> = [],
-  proxies: Array<ProxyDTO> = []
+  scanModes: Array<ScanModeDTO> = []
 ): FormControl | FormGroup => {
   switch (value.type) {
     case 'OibText':
@@ -59,12 +57,10 @@ export const createFormControl = (
       return fb.control(value.defaultValue || false, getValidators(value.validators || []));
     case 'OibScanMode':
       return fb.control(null, getValidators(value.validators || []));
-    case 'OibProxy':
-      return fb.control(null, getValidators(value.validators || []));
     case 'OibFormGroup':
       const formGroup = fb.group({});
       value.content.forEach(item => {
-        const formControl = createFormControl(item, fb, scanModes, proxies);
+        const formControl = createFormControl(item, fb, scanModes);
         formGroup.addControl(item.key, formControl);
       });
       return formGroup;

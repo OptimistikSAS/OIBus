@@ -11,7 +11,6 @@ import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
-import ProxyService from '../../service/proxy.service';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 const sendMock = jest.fn();
@@ -57,7 +56,6 @@ jest.mock(
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
 const configuration: NorthConnectorDTO = {
   id: 'id',
@@ -94,8 +92,6 @@ let north: NorthAmazonS3;
 
 describe('NorthAmazonS3', () => {
   describe('with proxy', () => {
-    const proxy = { aField: 'myProxy' };
-
     beforeEach(async () => {
       jest.resetAllMocks();
       jest.useFakeTimers();
@@ -104,14 +100,8 @@ describe('NorthAmazonS3', () => {
         send: sendMock
       }));
 
-      proxyService.createProxyAgent = jest.fn().mockReturnValue(proxy);
-      north = new NorthAmazonS3(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+      north = new NorthAmazonS3(configuration, encryptionService, repositoryService, logger, 'baseFolder');
       await north.start();
-    });
-
-    it('should be properly initialized with proxy', async () => {
-      await north.start();
-      expect(proxyService.createProxyAgent).toHaveBeenCalledWith('proxyId');
     });
 
     it('should properly handle file', async () => {
@@ -134,26 +124,6 @@ describe('NorthAmazonS3', () => {
       await north.start();
 
       await expect(north.handleFile(filePath)).rejects.toThrowError('test');
-    });
-  });
-
-  describe('without proxy', () => {
-    beforeEach(async () => {
-      jest.resetAllMocks();
-      jest.useFakeTimers();
-
-      (S3Client as jest.Mock).mockImplementation(() => ({
-        send: sendMock
-      }));
-
-      configuration.settings.proxyId = null;
-      north = new NorthAmazonS3(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
-      await north.start();
-    });
-
-    it('should be properly initialized with proxy', async () => {
-      await north.start();
-      expect(proxyService.createProxyAgent).not.toHaveBeenCalled();
     });
   });
 });

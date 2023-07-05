@@ -1,4 +1,3 @@
-import ProxyService from './proxy.service';
 import EncryptionService from './encryption.service';
 import pino from 'pino';
 import RepositoryService from './repository.service';
@@ -40,11 +39,7 @@ const southList: Array<typeof SouthConnector<any, any>> = [
 ];
 
 export default class SouthService {
-  constructor(
-    private readonly proxyService: ProxyService,
-    private readonly encryptionService: EncryptionService,
-    private readonly repositoryService: RepositoryService
-  ) {}
+  constructor(private readonly encryptionService: EncryptionService, private readonly repositoryService: RepositoryService) {}
 
   /**
    * Return the South connector
@@ -68,7 +63,6 @@ export default class SouthService {
       addValues,
       addFile,
       this.encryptionService,
-      this.proxyService,
       this.repositoryService,
       logger,
       baseFolder,

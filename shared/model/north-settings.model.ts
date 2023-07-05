@@ -22,11 +22,11 @@ export type NorthOIConnectSettingsAuthenticationType = (typeof NORTH_O_I_CONNECT
 
 export interface NorthOIConnectSettingsAuthentication {
   type: NorthOIConnectSettingsAuthenticationType;
-  username: string;
-  password: string;
-  token: string;
-  apiKeyHeader: string;
-  apiKey: string;
+  username?: string;
+  password?: string;
+  token?: string;
+  apiKeyHeader?: string | null;
+  apiKey?: string | null;
 }
 
 interface BaseNorthSettings {}
@@ -37,7 +37,10 @@ export interface NorthAmazonS3Settings extends BaseNorthSettings {
   folder: string;
   accessKey: string;
   secretKey: string;
-  proxyId: string | null;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
 }
 
 export interface NorthAzureBlobSettings extends BaseNorthSettings {
@@ -45,11 +48,11 @@ export interface NorthAzureBlobSettings extends BaseNorthSettings {
   container: string;
   path: string | null;
   authentication: NorthAzureBlobSettingsAuthentication;
-  sasToken: string | null;
-  accessKey: string | null;
-  tenantId: string | null;
-  clientId: string;
-  clientSecret: string;
+  sasToken?: string | null;
+  accessKey?: string | null;
+  tenantId?: string | null;
+  clientId?: string;
+  clientSecret?: string;
 }
 
 export interface NorthConsoleSettings extends BaseNorthSettings {
@@ -62,7 +65,10 @@ export interface NorthCsvToHttpSettings extends BaseNorthSettings {
   bodyMaxLength: number;
   acceptUnconvertedRows: boolean | null;
   csvDelimiter: NorthCsvToHttpSettingsCsvDelimiter;
-  proxyId: string | null;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
 }
 
 export interface NorthFileWriterSettings extends BaseNorthSettings {
@@ -120,7 +126,10 @@ export interface NorthOIAnalyticsSettings extends BaseNorthSettings {
   accessKey: string;
   secretKey: string | null;
   timeout: number;
-  proxyId: string | null;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
   acceptUnauthorized: boolean;
 }
 
@@ -130,7 +139,10 @@ export interface NorthOIConnectSettings extends BaseNorthSettings {
   valuesEndpoint: string;
   fileEndpoint: string;
   timeout: number;
-  proxyId: string | null;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
   authentication: NorthOIConnectSettingsAuthentication;
 }
 

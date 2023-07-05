@@ -5,7 +5,6 @@ import NorthConnector from '../north-connector';
 import manifest from './manifest';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { DateTime } from 'luxon';
@@ -21,12 +20,11 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
   constructor(
     configuration: NorthConnectorDTO<NorthFileWriterSettings>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder);
+    super(configuration, encryptionService, repositoryService, logger, baseFolder);
   }
 
   async handleValues(values: Array<any>): Promise<void> {

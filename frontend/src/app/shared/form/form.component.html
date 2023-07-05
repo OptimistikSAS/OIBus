@@ -72,13 +72,6 @@
           [ngbTypeahead]="timezoneTypeahead"
           [editable]="false"
         />
-        <oib-proxy
-          *ngIf="setting.type === 'OibProxy'"
-          [label]="setting.label"
-          [key]="setting.key"
-          [formControlName]="setting.key"
-          [proxies]="proxies"
-        ></oib-proxy>
         <oib-array
           *ngIf="setting.type === 'OibArray'"
           [formDescription]="setting.content"
@@ -93,7 +86,6 @@
             [formGroup]="getFormGroup(setting)"
             [settingsSchema]="getSettingsGroupedByRow(setting.content)"
             [scanModes]="scanModes"
-            [proxies]="proxies"
           ></oib-form>
         </ng-container>
         <val-errors [controlName]="setting.key"></val-errors>

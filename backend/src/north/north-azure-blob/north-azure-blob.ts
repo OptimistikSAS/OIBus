@@ -7,7 +7,6 @@ import NorthConnector from '../north-connector';
 import manifest from '../north-azure-blob/manifest';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import * as process from 'process';
 import { HandlesFile } from '../north-interface';
@@ -20,12 +19,11 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
   constructor(
     connector: NorthConnectorDTO<NorthAzureBlobSettings>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, encryptionService, proxyService, repositoryService, logger, baseFolder);
+    super(connector, encryptionService, repositoryService, logger, baseFolder);
   }
 
   async start(): Promise<void> {

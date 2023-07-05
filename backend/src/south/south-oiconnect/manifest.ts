@@ -183,6 +183,7 @@ const manifest: SouthConnectorManifest = {
         class: 'col',
         newRow: true,
         displayInViewMode: false,
+        validators: [{ key: 'required' }],
         content: [
           {
             key: 'type',
@@ -191,7 +192,8 @@ const manifest: SouthConnectorManifest = {
             options: ['csv', 'json'],
             defaultValue: 'csv',
             newRow: true,
-            displayInViewMode: false
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
           },
           {
             key: 'filename',
@@ -199,7 +201,8 @@ const manifest: SouthConnectorManifest = {
             label: 'Filename',
             defaultValue: 'sql.csv',
             newRow: false,
-            displayInViewMode: false
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
           },
           {
             key: 'delimiter',
@@ -208,7 +211,8 @@ const manifest: SouthConnectorManifest = {
             options: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
             defaultValue: ',',
             newRow: false,
-            displayInViewMode: false
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
           },
           {
             key: 'compression',
@@ -216,7 +220,8 @@ const manifest: SouthConnectorManifest = {
             label: 'Compression',
             defaultValue: false,
             newRow: false,
-            displayInViewMode: false
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
           },
           {
             key: 'outputTimestampFormat',
@@ -224,7 +229,8 @@ const manifest: SouthConnectorManifest = {
             label: 'Output date time format',
             defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
             newRow: true,
-            displayInViewMode: false
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
           },
           {
             key: 'outputTimezone',
@@ -232,7 +238,8 @@ const manifest: SouthConnectorManifest = {
             label: 'Timezone',
             defaultValue: 'Europe/Paris',
             newRow: false,
-            displayInViewMode: false
+            displayInViewMode: false,
+            validators: [{ key: 'required' }]
           }
         ]
       }

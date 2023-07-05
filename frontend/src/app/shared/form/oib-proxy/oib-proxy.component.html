@@ -1,4 +1,0 @@
-<select [formControl]="proxyCtrl" [id]="'oib-proxy-input-' + key" class="form-select mb-2 mr-sm-2">
-  <option [ngValue]="null">{{ 'engine.proxy.none' | translate }}</option>
-  <option *ngFor="let proxy of proxies" [ngValue]="proxy.id">{{ proxy.name }}</option>
-</select>

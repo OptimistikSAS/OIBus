@@ -1,6 +1,5 @@
 import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../../../shared/model/engine.model';
 import { generateRandomId } from '../service/utils';
-import { PROXY_TABLE } from './proxy.repository';
 import { Database } from 'better-sqlite3';
 
 const ENGINE_TABLE = 'engine';
@@ -27,8 +26,7 @@ const defaultEngineSettings: EngineSettingsCommandDTO = {
       address: '',
       tokenAddress: '',
       username: '',
-      password: '',
-      proxyId: null
+      password: ''
     }
   }
 };
@@ -44,8 +42,7 @@ export default class EngineRepository {
       `CREATE TABLE IF NOT EXISTS ${ENGINE_TABLE} (id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, port INTEGER NOT NULL, ` +
       'log_console_level TEXT, log_file_level TEXT, log_file_max_file_size INTEGER, log_file_number_of_files INTEGER, ' +
       'log_database_level TEXT, log_database_max_number_of_logs INTEGER, log_loki_level TEXT, log_loki_interval INTEGER, ' +
-      'log_loki_address TEXT, log_loki_token_address TEXT, log_loki_proxy_id TEXT, log_loki_username TEXT, log_loki_password TEXT, ' +
-      `FOREIGN KEY(log_loki_proxy_id) REFERENCES ${PROXY_TABLE}(id));`;
+      'log_loki_address TEXT, log_loki_token_address TEXT, log_loki_username TEXT, log_loki_password TEXT);';
     this.database.prepare(query).run();
 
     this.createEngineSettings(defaultEngineSettings);
@@ -71,7 +68,6 @@ export default class EngineRepository {
       'log_loki_interval AS lokiLogInterval, ' +
       'log_loki_address AS lokiLogAddress, ' +
       'log_loki_token_address AS lokiLogTokenAddress, ' +
-      'log_loki_proxy_id AS lokiLogProxyId, ' +
       'log_loki_username AS lokiLogUsername, ' +
       'log_loki_password AS lokiLogPassword ' +
       `FROM ${ENGINE_TABLE};`;
@@ -100,7 +96,6 @@ export default class EngineRepository {
             interval: results[0].lokiLogInterval,
             address: results[0].lokiLogAddress,
             tokenAddress: results[0].lokiLogTokenAddress,
-            proxyId: results[0].lokiLogProxyId,
             username: results[0].lokiLogUsername,
             password: results[0].lokiLogPassword
           }
@@ -127,7 +122,6 @@ export default class EngineRepository {
       'log_loki_interval = ?, ' +
       'log_loki_address = ?, ' +
       'log_loki_token_address = ?, ' +
-      'log_loki_proxy_id = ?, ' +
       'log_loki_username = ?, ' +
       'log_loki_password = ? ' +
       `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINE_TABLE});`;
@@ -147,7 +141,6 @@ export default class EngineRepository {
         command.logParameters.loki.interval,
         command.logParameters.loki.address,
         command.logParameters.loki.tokenAddress,
-        command.logParameters.loki.proxyId,
         command.logParameters.loki.username,
         command.logParameters.loki.password
       );
@@ -178,7 +171,6 @@ export default class EngineRepository {
         command.logParameters.loki.interval,
         command.logParameters.loki.address,
         command.logParameters.loki.tokenAddress,
-        command.logParameters.loki.proxyId,
         command.logParameters.loki.username,
         command.logParameters.loki.password
       );

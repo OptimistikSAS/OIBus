@@ -6,7 +6,6 @@ import {
   OibFormControl,
   OibFormGroup,
   OibNumberFormControl,
-  OibProxyFormControl,
   OibScanModeFormControl,
   OibSecretFormControl,
   OibSelectFormControl,
@@ -56,8 +55,6 @@ export default class JoiValidator {
         return this.generateTextJoiSchema(oibFormControl);
       case 'OibTimezone':
         return this.generateTextJoiSchema(oibFormControl);
-      case 'OibProxy':
-        return this.generateTextJoiSchema(oibFormControl);
       case 'OibFormGroup':
         return this.generateFormGroupJoiSchema(oibFormControl);
       case 'OibArray':
@@ -73,7 +70,6 @@ export default class JoiValidator {
       | OibCodeBlockFormControl
       | OibScanModeFormControl
       | OibTimezoneFormControl
-      | OibProxyFormControl
   ): Record<string, AnySchema> {
     let schema = Joi.string();
     let isRequired = false;

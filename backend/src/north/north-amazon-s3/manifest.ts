@@ -1,4 +1,5 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
+import { proxy } from '../../../../shared/model/manifest-factory';
 
 const manifest: NorthConnectorManifest = {
   id: 'aws-s3',
@@ -49,13 +50,7 @@ const manifest: NorthConnectorManifest = {
       newRow: true,
       validators: [{ key: 'required' }]
     },
-    {
-      key: 'proxyId',
-      type: 'OibProxy',
-      label: 'Proxy',
-      newRow: true,
-      displayInViewMode: false
-    }
+    ...proxy
   ]
 };
 

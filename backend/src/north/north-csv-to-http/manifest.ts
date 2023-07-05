@@ -1,4 +1,5 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
+import { proxy } from '../../../../shared/model/manifest-factory';
 
 const manifest: NorthConnectorManifest = {
   id: 'csv-to-http',
@@ -51,7 +52,7 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }],
       newRow: true
     },
-    { key: 'proxyId', type: 'OibProxy', label: 'Proxy', newRow: true }
+    ...proxy
   ]
 };
 

@@ -129,16 +129,6 @@
                     <val-errors controlName="address"></val-errors>
                   </div>
                 </div>
-                <!-- Proxy -->
-                <div class="col-4">
-                  <div class="form-group">
-                    <label class="form-label" for="loki-proxy" translate="engine.logger.loki.proxy"></label>
-                    <select formControlName="proxyId" class="form-select mb-2 mr-sm-2" id="loki-proxy">
-                      <option [ngValue]="null">{{ 'engine.logger.loki.no-proxy' | translate }}</option>
-                      <option *ngFor="let proxy of proxies" [ngValue]="proxy.id">{{ proxy.name }}</option>
-                    </select>
-                  </div>
-                </div>
                 <!-- Token address -->
                 <div class="col-4">
                   <div class="form-group">

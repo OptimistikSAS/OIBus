@@ -7,7 +7,6 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import ProxyService from '../../service/proxy.service';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 import fetch from 'node-fetch';
@@ -16,6 +15,7 @@ import * as utils from '../../service/utils';
 
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
+import { NorthOIConnectSettings } from '../../../../shared/model/north-settings.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -72,10 +72,9 @@ const myReadStream = {
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
-const configuration: NorthConnectorDTO = {
+const configuration: NorthConnectorDTO<NorthOIConnectSettings> = {
   id: 'id',
   name: 'north',
   type: 'test',
@@ -87,7 +86,7 @@ const configuration: NorthConnectorDTO = {
     valuesEndpoint: '/api/values',
     fileEndpoint: '/api/file',
     timeout: 10,
-    proxyId: 'proxyId',
+    useProxy: false,
     authentication: {
       type: 'basic',
       username: 'user',
@@ -111,19 +110,12 @@ const configuration: NorthConnectorDTO = {
 let north: NorthOIConnect;
 
 describe('NorthOIConnect', () => {
-  const proxy = { aField: 'myProxy' };
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (utils.filesExists as jest.Mock).mockReturnValue(true);
-    proxyService.createProxyAgent = jest.fn().mockReturnValue(proxy);
-    north = new NorthOIConnect(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+    north = new NorthOIConnect(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
-  });
-
-  it('should be properly initialized with proxy', async () => {
-    await north.start();
-    expect(proxyService.createProxyAgent).toHaveBeenCalledWith('proxyId', false);
   });
 
   it('should properly handle values', async () => {
@@ -147,7 +139,7 @@ describe('NorthOIConnect', () => {
       },
       body: JSON.stringify(values),
       timeout: configuration.settings.timeout * 1000,
-      agent: proxy
+      agent: undefined
     };
 
     await north.handleValues(values);
@@ -201,7 +193,7 @@ describe('NorthOIConnect', () => {
       },
       body: JSON.stringify(values),
       timeout: configuration.settings.timeout * 1000,
-      agent: proxy
+      agent: undefined
     };
 
     let err;
@@ -233,7 +225,7 @@ describe('NorthOIConnect', () => {
       },
       body: expect.anything(),
       timeout: configuration.settings.timeout * 1000,
-      agent: proxy
+      agent: undefined
     };
 
     await north.handleFile(filePath);
@@ -288,7 +280,7 @@ describe('NorthOIConnect', () => {
       },
       body: expect.anything(),
       timeout: configuration.settings.timeout * 1000,
-      agent: proxy
+      agent: undefined
     };
 
     let err;
@@ -312,16 +304,10 @@ describe('NorthOIConnect without proxy nor password and with acceptUnauthorized'
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    configuration.settings.authentication.password = null;
-    configuration.settings.proxyId = null;
+    configuration.settings.authentication.password = undefined;
     configuration.settings.acceptUnauthorized = true;
-    north = new NorthOIConnect(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+    north = new NorthOIConnect(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
-  });
-
-  it('should be properly initialized without proxy', async () => {
-    await north.start();
-    expect(proxyService.createProxyAgent).not.toHaveBeenCalled();
   });
 
   it('should properly handle values without password', async () => {
@@ -378,10 +364,9 @@ describe('NorthOIConnect without authentication', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     configuration.settings.authentication = { type: 'none' };
-    configuration.settings.proxyId = null;
     configuration.settings.acceptUnauthorized = false;
 
-    north = new NorthOIConnect(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+    north = new NorthOIConnect(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
 

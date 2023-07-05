@@ -6,7 +6,6 @@ import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { FormComponent } from '../../shared/form/form.component';
-import { ProxyService } from '../../services/proxy.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -45,12 +44,10 @@ describe('EditNorthComponent', () => {
   let tester: EditNorthComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
-  let proxyService: jasmine.SpyObj<ProxyService>;
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
     scanModeService = createMock(ScanModeService);
-    proxyService = createMock(ProxyService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -58,13 +55,11 @@ describe('EditNorthComponent', () => {
         provideRouter([]),
         provideHttpClient(),
         { provide: NorthConnectorService, useValue: northConnectorService },
-        { provide: ScanModeService, useValue: scanModeService },
-        { provide: ProxyService, useValue: proxyService }
+        { provide: ScanModeService, useValue: scanModeService }
       ]
     });
 
     scanModeService.list.and.returnValue(of([]));
-    proxyService.list.and.returnValue(of([]));
 
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(
       of({
@@ -97,7 +92,6 @@ describe('EditNorthComponent', () => {
       expect(tester.specificForm).toBeDefined();
 
       expect(scanModeService.list).toHaveBeenCalledTimes(1);
-      expect(proxyService.list).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -135,36 +135,36 @@ export type SouthSQLiteItemSettingsSerializationDelimiter = (typeof SOUTH_S_Q_LI
 
 export interface SouthMQTTSettingsAuthentication {
   type: SouthMQTTSettingsAuthenticationType;
-  username: string;
-  password: string;
-  certFilePath: string;
-  keyFilePath: string;
-  caFilePath: string;
+  username?: string;
+  password?: string;
+  certFilePath?: string;
+  keyFilePath?: string | null;
+  caFilePath?: string | null;
 }
 
 export interface SouthOIConnectSettingsAuthentication {
-  type: SouthOIConnectSettingsAuthenticationType;
-  username: string;
-  password: string;
-  token: string;
-  apiKeyHeader: string;
-  apiKey: string;
+  type: SouthOIConnectSettingsAuthenticationType | null;
+  username?: string;
+  password?: string;
+  token?: string;
+  apiKeyHeader?: string | null;
+  apiKey?: string | null;
 }
 
 export interface SouthOPCUADASettingsAuthentication {
   type: SouthOPCUADASettingsAuthenticationType;
-  username: string;
-  password: string;
-  certFilePath: string;
-  keyFilePath: string;
+  username?: string;
+  password?: string;
+  certFilePath?: string;
+  keyFilePath?: string | null;
 }
 
 export interface SouthOPCUAHASettingsAuthentication {
   type: SouthOPCUAHASettingsAuthenticationType;
-  username: string;
-  password: string;
-  certFilePath: string;
-  keyFilePath: string;
+  username?: string;
+  password?: string;
+  certFilePath?: string;
+  keyFilePath?: string | null;
 }
 
 interface BaseSouthSettings {}
@@ -186,7 +186,7 @@ export interface SouthFolderScannerSettings extends BaseSouthSettings {
   inputFolder: string;
   minAge: number;
   preserveFiles: boolean;
-  ignoreModifiedDate: boolean;
+  ignoreModifiedDate?: boolean;
   compression: boolean;
 }
 
@@ -204,7 +204,7 @@ export interface SouthModbusSettings extends BaseSouthSettings {
 export interface SouthMQTTSettings extends BaseSouthSettings {
   url: string;
   qos: SouthMQTTSettingsQos;
-  persistent: boolean;
+  persistent?: boolean;
   authentication: SouthMQTTSettingsAuthentication;
   rejectUnauthorized: boolean;
   reconnectPeriod: number;
@@ -214,9 +214,9 @@ export interface SouthMQTTSettings extends BaseSouthSettings {
   pointIdPath: string;
   qualityPath: string | null;
   timestampOrigin: SouthMQTTSettingsTimestampOrigin;
-  timestampPath: string;
-  timestampFormat: string;
-  timestampTimezone: Timezone;
+  timestampPath?: string;
+  timestampFormat?: string;
+  timestampTimezone?: Timezone;
 }
 
 export interface SouthMSSQLSettings extends BaseSouthSettings {
@@ -277,7 +277,7 @@ export interface SouthOPCUADASettings extends BaseSouthSettings {
   readTimeout: number;
   retryInterval: number;
   securityMode: SouthOPCUADASettingsSecurityMode;
-  securityPolicy: SouthOPCUADASettingsSecurityPolicy | null;
+  securityPolicy?: SouthOPCUADASettingsSecurityPolicy | null;
   authentication: SouthOPCUADASettingsAuthentication;
 }
 
@@ -287,7 +287,7 @@ export interface SouthOPCUAHASettings extends BaseSouthSettings {
   readTimeout: number;
   retryInterval: number;
   securityMode: SouthOPCUAHASettingsSecurityMode;
-  securityPolicy: SouthOPCUAHASettingsSecurityPolicy | null;
+  securityPolicy?: SouthOPCUAHASettingsSecurityPolicy | null;
   authentication: SouthOPCUAHASettingsAuthentication;
 }
 
@@ -335,9 +335,9 @@ export interface SouthMSSQLItemSettingsDateTimeFields {
   fieldName: string;
   useAsReference: boolean;
   type: SouthMSSQLItemSettingsDateTimeFieldsType;
-  timezone: Timezone;
-  format: string;
-  locale: string;
+  timezone?: Timezone;
+  format?: string;
+  locale?: string;
 }
 
 export interface SouthMSSQLItemSettingsSerialization {
@@ -353,9 +353,9 @@ export interface SouthMySQLItemSettingsDateTimeFields {
   fieldName: string;
   useAsReference: boolean;
   type: SouthMySQLItemSettingsDateTimeFieldsType;
-  timezone: Timezone;
-  format: string;
-  locale: string;
+  timezone?: Timezone;
+  format?: string;
+  locale?: string;
 }
 
 export interface SouthMySQLItemSettingsSerialization {
@@ -371,9 +371,9 @@ export interface SouthODBCItemSettingsDateTimeFields {
   fieldName: string;
   useAsReference: boolean;
   type: SouthODBCItemSettingsDateTimeFieldsType;
-  timezone: Timezone;
-  format: string;
-  locale: string;
+  timezone?: Timezone;
+  format?: string;
+  locale?: string;
 }
 
 export interface SouthODBCItemSettingsSerialization {
@@ -398,9 +398,9 @@ export interface SouthOracleItemSettingsDateTimeFields {
   fieldName: string;
   useAsReference: boolean;
   type: SouthOracleItemSettingsDateTimeFieldsType;
-  timezone: Timezone;
-  format: string;
-  locale: string;
+  timezone?: Timezone;
+  format?: string;
+  locale?: string;
 }
 
 export interface SouthOracleItemSettingsSerialization {
@@ -416,9 +416,9 @@ export interface SouthPostgreSQLItemSettingsDateTimeFields {
   fieldName: string;
   useAsReference: boolean;
   type: SouthPostgreSQLItemSettingsDateTimeFieldsType;
-  timezone: Timezone;
-  format: string;
-  locale: string;
+  timezone?: Timezone;
+  format?: string;
+  locale?: string;
 }
 
 export interface SouthPostgreSQLItemSettingsSerialization {
@@ -434,9 +434,9 @@ export interface SouthSQLiteItemSettingsDateTimeFields {
   fieldName: string;
   useAsReference: boolean;
   type: SouthSQLiteItemSettingsDateTimeFieldsType;
-  timezone: Timezone;
-  format: string;
-  locale: string;
+  timezone?: Timezone;
+  format?: string;
+  locale?: string;
 }
 
 export interface SouthSQLiteItemSettingsSerialization {
@@ -491,10 +491,10 @@ export interface SouthOIConnectItemSettings extends BaseSouthItemSettings {
   endpoint: string;
   payloadParser: SouthOIConnectItemSettingsPayloadParser;
   requestTimeout: number;
-  body: string;
-  timestampFormat: string;
-  timezone: Timezone;
-  locale: string;
+  body: string | null;
+  timestampFormat?: string;
+  timezone?: Timezone;
+  locale?: string;
   serialization: SouthOIConnectItemSettingsSerialization;
 }
 

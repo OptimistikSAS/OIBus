@@ -8,14 +8,12 @@ import {
   historyQuerySchema,
   ipFilterSchema,
   logSchema,
-  proxySchema,
   scanModeSchema,
   userSchema
 } from '../../engine/oibus-validation-schema';
 
 import LogController from '../controllers/log.controller';
 import ScanModeController from '../controllers/scan-mode.controller';
-import ProxyController from '../controllers/proxy.controller';
 import ExternalSourceController from '../controllers/external-source.controller';
 import OibusController from '../controllers/oibus.controller';
 import IpFilterController from '../controllers/ip-filter.controller';
@@ -30,7 +28,6 @@ import { KoaContext } from '../koa';
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
 const externalSourceController = new ExternalSourceController(joiValidator, externalSourceSchema);
-const proxyController = new ProxyController(joiValidator, proxySchema);
 const oibusController = new OibusController(joiValidator, engineSchema);
 const ipFilterController = new IpFilterController(joiValidator, ipFilterSchema);
 const northConnectorController = new NorthConnectorController(joiValidator);
@@ -61,12 +58,6 @@ router.get('/api/scan-modes/:id', (ctx: KoaContext<any, any>) => scanModeControl
 router.post('/api/scan-modes', (ctx: KoaContext<any, any>) => scanModeController.createScanMode(ctx));
 router.put('/api/scan-modes/:id', (ctx: KoaContext<any, any>) => scanModeController.updateScanMode(ctx));
 router.delete('/api/scan-modes/:id', (ctx: KoaContext<any, any>) => scanModeController.deleteScanMode(ctx));
-
-router.get('/api/proxies', (ctx: KoaContext<any, any>) => proxyController.getProxies(ctx));
-router.get('/api/proxies/:id', (ctx: KoaContext<any, any>) => proxyController.getProxy(ctx));
-router.post('/api/proxies', (ctx: KoaContext<any, any>) => proxyController.createProxy(ctx));
-router.put('/api/proxies/:id', (ctx: KoaContext<any, any>) => proxyController.updateProxy(ctx));
-router.delete('/api/proxies/:id', (ctx: KoaContext<any, any>) => proxyController.deleteProxy(ctx));
 
 router.get('/api/external-sources', (ctx: KoaContext<any, any>) => externalSourceController.getExternalSources(ctx));
 router.get('/api/external-sources/:id', (ctx: KoaContext<any, any>) => externalSourceController.getExternalSource(ctx));

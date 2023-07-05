@@ -7,7 +7,6 @@ import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { FormComponent } from '../../shared/form/form.component';
-import { ProxyService } from '../../services/proxy.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
 import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
@@ -49,25 +48,21 @@ describe('EditSouthComponent', () => {
   let tester: EditSouthComponentTester;
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
-  let proxyService: jasmine.SpyObj<ProxyService>;
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
     scanModeService = createMock(ScanModeService);
-    proxyService = createMock(ProxyService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         provideHttpClient(),
         { provide: SouthConnectorService, useValue: southConnectorService },
-        { provide: ScanModeService, useValue: scanModeService },
-        { provide: ProxyService, useValue: proxyService }
+        { provide: ScanModeService, useValue: scanModeService }
       ]
     });
 
     scanModeService.list.and.returnValue(of([]));
-    proxyService.list.and.returnValue(of([]));
 
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(
       of({
@@ -109,7 +104,6 @@ describe('EditSouthComponent', () => {
       expect(tester.specificForm).toBeDefined();
 
       expect(scanModeService.list).toHaveBeenCalledTimes(1);
-      expect(proxyService.list).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -8,11 +8,11 @@ import NorthConnector from '../north-connector';
 import manifest from './manifest';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { HandlesFile } from '../north-interface';
 import { NorthAmazonS3Settings } from '../../../../shared/model/north-settings.model';
+import { createProxyAgent } from '../../service/proxy.service';
 
 /**
  * Class NorthAmazonS3 - sends files to Amazon AWS S3
@@ -26,12 +26,11 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   constructor(
     connector: NorthConnectorDTO<NorthAmazonS3Settings>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(connector, encryptionService, proxyService, repositoryService, logger, baseFolder);
+    super(connector, encryptionService, repositoryService, logger, baseFolder);
   }
 
   /**
@@ -40,8 +39,18 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   async start(): Promise<void> {
     await super.start();
 
-    if (this.connector.settings.proxyId) {
-      this.proxyAgent = await this.proxyService.createProxyAgent(this.connector.settings.proxyId);
+    if (this.connector.settings.useProxy) {
+      this.proxyAgent = createProxyAgent(
+        {
+          url: this.connector.settings.proxyUrl!,
+          username: this.connector.settings.proxyUsername!,
+          password:
+            this.connector.settings.proxyPassword != null
+              ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+              : null
+        },
+        false
+      );
     }
 
     this.s3 = new S3Client({

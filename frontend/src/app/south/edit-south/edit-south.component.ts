@@ -12,9 +12,7 @@ import { catchError, combineLatest, Observable, of, switchMap, tap } from 'rxjs'
 import { FormComponent } from '../../shared/form/form.component';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
-import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { ProxyService } from '../../services/proxy.service';
 import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
@@ -47,7 +45,6 @@ export class EditSouthComponent implements OnInit {
 
   southSettingsControls: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
-  proxies: Array<ProxyDTO> = [];
   manifest: SouthConnectorManifest | null = null;
   southForm: FormGroup<{
     name: FormControl<string>;
@@ -66,16 +63,14 @@ export class EditSouthComponent implements OnInit {
     private fb: NonNullableFormBuilder,
     private notificationService: NotificationService,
     private scanModeService: ScanModeService,
-    private proxyService: ProxyService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
-    combineLatest([this.proxyService.list(), this.scanModeService.list(), this.route.paramMap, this.route.queryParamMap])
+    combineLatest([this.scanModeService.list(), this.route.paramMap, this.route.queryParamMap])
       .pipe(
-        switchMap(([proxies, scanModes, params, queryParams]) => {
-          this.proxies = proxies;
+        switchMap(([scanModes, params, queryParams]) => {
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
           let paramSouthId = params.get('southId');
           this.southType = queryParams.get('type') || '';

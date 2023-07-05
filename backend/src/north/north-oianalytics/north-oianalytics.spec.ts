@@ -7,7 +7,6 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import ProxyService from '../../service/proxy.service';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 import fetch from 'node-fetch';
@@ -72,7 +71,6 @@ const myReadStream = {
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
@@ -87,7 +85,7 @@ const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
     acceptUnauthorized: false,
     accessKey: 'anyUser',
     secretKey: 'anypass',
-    proxyId: 'proxyId'
+    useProxy: false
   },
   caching: {
     scanModeId: 'id1',
@@ -106,20 +104,13 @@ const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
 let north: NorthOIAnalytics;
 
 describe('NorthOIAnalytics', () => {
-  const proxy = { aField: 'myProxy' };
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     (utils.filesExists as jest.Mock).mockReturnValue(true);
-    proxyService.createProxyAgent = jest.fn().mockReturnValue(proxy);
-    north = new NorthOIAnalytics(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+    north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
-  });
-
-  it('should be properly initialized with proxy', async () => {
-    await north.start();
-    expect(proxyService.createProxyAgent).toHaveBeenCalledWith('proxyId', configuration.settings.acceptUnauthorized);
   });
 
   it('should properly handle values', async () => {
@@ -173,7 +164,7 @@ describe('NorthOIAnalytics', () => {
         }
       ]),
       timeout: configuration.settings.timeout * 1000,
-      agent: proxy
+      agent: undefined
     };
 
     await north.handleValues(values);
@@ -288,7 +279,7 @@ describe('NorthOIAnalytics', () => {
         }
       ]),
       timeout: configuration.settings.timeout * 1000,
-      agent: proxy
+      agent: undefined
     };
 
     let err;
@@ -321,7 +312,7 @@ describe('NorthOIAnalytics', () => {
       },
       body: expect.anything(),
       timeout: configuration.settings.timeout * 1000,
-      agent: proxy
+      agent: undefined
     };
 
     await north.handleFile(filePath);
@@ -379,7 +370,7 @@ describe('NorthOIAnalytics', () => {
       },
       body: expect.anything(),
       timeout: configuration.settings.timeout * 1000,
-      agent: proxy
+      agent: undefined
     };
 
     let err;

@@ -3,11 +3,10 @@ import PinoLogger from '../tests/__mocks__/logger.mock';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
 
-import { SouthConnectorItemDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO, SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
-import ProxyService from '../service/proxy.service';
 import RepositoryService from '../service/repository.service';
 
 import { delay, generateIntervals } from '../service/utils';
@@ -56,7 +55,6 @@ jest.mock(
       };
     }
 );
-jest.mock('../service/proxy.service');
 
 jest.mock('../service/utils');
 
@@ -65,7 +63,6 @@ const anotherLogger: pino.Logger = new PinoLogger();
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
@@ -116,12 +113,16 @@ const items: Array<SouthConnectorItemDTO> = [
 
 class TestSouth extends SouthConnector implements QueriesLastPoint, QueriesFile, QueriesSubscription, QueriesHistory {
   async lastPointQuery(): Promise<void> {}
+
   async fileQuery(): Promise<void> {}
+
   async historyQuery(): Promise<Instant> {
     return '';
   }
+
   async subscribe(): Promise<void> {}
 }
+
 let south: TestSouth;
 let basicSouth: SouthConnector;
 
@@ -157,18 +158,7 @@ describe('SouthConnector enabled', () => {
       },
       settings: {}
     };
-    south = new TestSouth(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new TestSouth(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
     await south.start();
   });
 
@@ -505,7 +495,6 @@ describe('SouthConnector disabled', () => {
       addValues,
       addFile,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       'baseFolder',
@@ -538,18 +527,7 @@ describe('SouthConnector without stream mode', () => {
       },
       settings: {}
     };
-    south = new TestSouth(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      false
-    );
+    south = new TestSouth(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', false);
 
     await south.start();
   });
@@ -559,7 +537,13 @@ describe('SouthConnector without stream mode', () => {
   });
 
   it('should properly add item', () => {
-    const item: SouthConnectorItemDTO = { id: 'id1', scanModeId: 'scanModeId', connectorId: 'southId1', name: 'my item', settings: {} };
+    const item: SouthConnectorItemDTO = {
+      id: 'id1',
+      scanModeId: 'scanModeId',
+      connectorId: 'southId1',
+      name: 'my item',
+      settings: {}
+    };
     south.createCronJob = jest.fn();
 
     (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValueOnce(null).mockReturnValueOnce({
@@ -579,7 +563,13 @@ describe('SouthConnector without stream mode', () => {
   });
 
   it('should properly update item', () => {
-    const item: SouthConnectorItemDTO = { id: 'id1', scanModeId: 'scanModeId', connectorId: 'southId1', name: 'my item', settings: {} };
+    const item: SouthConnectorItemDTO = {
+      id: 'id1',
+      scanModeId: 'scanModeId',
+      connectorId: 'southId1',
+      name: 'my item',
+      settings: {}
+    };
     south.addItem = jest.fn();
     south.deleteItem = jest.fn();
 
@@ -589,20 +579,50 @@ describe('SouthConnector without stream mode', () => {
       cron: '* * * * * *'
     });
 
-    south.updateItem(item, { id: 'itemId', scanModeId: 'scanModeId', connectorId: 'id', name: 'my updated item', settings: {} });
+    south.updateItem(item, {
+      id: 'itemId',
+      scanModeId: 'scanModeId',
+      connectorId: 'id',
+      name: 'my updated item',
+      settings: {}
+    });
 
     expect(logger.error).toHaveBeenCalledWith(`Error when creating South item in cron jobs: scan mode ${item.scanModeId} not found`);
 
-    south.updateItem(item, { id: 'itemId', scanModeId: 'scanModeId', connectorId: 'id', name: 'my updated item', settings: {} });
+    south.updateItem(item, {
+      id: 'itemId',
+      scanModeId: 'scanModeId',
+      connectorId: 'id',
+      name: 'my updated item',
+      settings: {}
+    });
 
     expect(south.addItem).toHaveBeenCalledTimes(1);
     expect(south.deleteItem).toHaveBeenCalledTimes(1);
   });
 
   it('should properly delete item', () => {
-    const item1: SouthConnectorItemDTO = { id: 'id1', scanModeId: 'scanModeId3', connectorId: 'southId1', name: 'my item', settings: {} };
-    const item2: SouthConnectorItemDTO = { id: 'id2', scanModeId: 'scanModeId3', connectorId: 'southId1', name: 'my item', settings: {} };
-    const item3: SouthConnectorItemDTO = { id: 'id3', scanModeId: 'scanModeId1', connectorId: 'southId1', name: 'my item', settings: {} };
+    const item1: SouthConnectorItemDTO = {
+      id: 'id1',
+      scanModeId: 'scanModeId3',
+      connectorId: 'southId1',
+      name: 'my item',
+      settings: {}
+    };
+    const item2: SouthConnectorItemDTO = {
+      id: 'id2',
+      scanModeId: 'scanModeId3',
+      connectorId: 'southId1',
+      name: 'my item',
+      settings: {}
+    };
+    const item3: SouthConnectorItemDTO = {
+      id: 'id3',
+      scanModeId: 'scanModeId1',
+      connectorId: 'southId1',
+      name: 'my item',
+      settings: {}
+    };
 
     (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValue({
       id: 'scanModeId3',

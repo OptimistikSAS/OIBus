@@ -1,14 +1,13 @@
-import mqtt, { QoS, IClientOptions, MqttClient } from 'mqtt';
+import mqtt, { IClientOptions, MqttClient, QoS } from 'mqtt';
 import { vsprintf } from 'sprintf-js';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 
-import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
@@ -39,24 +38,22 @@ export default class SouthMQTT
   private mqttItems: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [];
 
   constructor(
-    configuration: SouthConnectorDTO<SouthMQTTSettings>,
+    connector: SouthConnectorDTO<SouthMQTTSettings>,
     items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string,
     streamMode: boolean
   ) {
     super(
-      configuration,
+      connector,
       items,
       engineAddValuesCallback,
       engineAddFileCallback,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       baseFolder,

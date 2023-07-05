@@ -1,6 +1,4 @@
 import path from 'node:path';
-
-import ProxyService from '../service/proxy.service';
 import EncryptionService from '../service/encryption.service';
 import pino from 'pino';
 import NorthService from '../service/north.service';
@@ -15,7 +13,6 @@ export default class BaseEngine {
    */
   constructor(
     protected readonly encryptionService: EncryptionService,
-    protected readonly proxyService: ProxyService,
     protected readonly northService: NorthService,
     protected readonly southService: SouthService,
     protected logger: pino.Logger,

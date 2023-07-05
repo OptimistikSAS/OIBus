@@ -9,7 +9,6 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import ProxyService from '../../service/proxy.service';
 import { initOpcuaCertificateFolders } from '../../service/opcua.service';
 
 import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
@@ -69,7 +68,6 @@ const logger: pino.Logger = new PinoLogger();
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
@@ -134,18 +132,7 @@ describe('SouthOPCUAHA', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    south = new SouthOPCUAHA(
-      connector,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthOPCUAHA(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should be properly initialized', async () => {
@@ -203,19 +190,14 @@ describe('SouthOPCUAHA with basic auth', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    connector.settings.authentication = { type: 'basic', username: 'myUser', password: 'pass', keyFilePath: '', certFilePath: '' };
-    south = new SouthOPCUAHA(
-      connector,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    connector.settings.authentication = {
+      type: 'basic',
+      username: 'myUser',
+      password: 'pass',
+      keyFilePath: '',
+      certFilePath: ''
+    };
+    south = new SouthOPCUAHA(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should properly connect to OPCUA server with basic auth', async () => {
@@ -251,19 +233,14 @@ describe('SouthOPCUAHA with certificate', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    connector.settings.authentication = { type: 'cert', certFilePath: 'myCertPath', keyFilePath: 'myKeyPath', username: '', password: '' };
-    south = new SouthOPCUAHA(
-      connector,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    connector.settings.authentication = {
+      type: 'cert',
+      certFilePath: 'myCertPath',
+      keyFilePath: 'myKeyPath',
+      username: '',
+      password: ''
+    };
+    south = new SouthOPCUAHA(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should properly connect to OPCUA server with basic auth', async () => {
