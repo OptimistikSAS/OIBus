@@ -139,11 +139,14 @@ describe('reload service', () => {
   });
 
   it('should update south item', async () => {
-    const southItem = { id: 'southItemId', settings: {} };
+    const oldSouthItem = { id: 'southItemId', connectorId: 'southId', settings: { field: 'value' } };
+    const newSouthItem = { id: 'southItemId', connectorId: 'southId', settings: { field: 'newValue' } };
+    (repositoryService.southItemRepository.getSouthItem as jest.Mock).mockReturnValueOnce(newSouthItem);
+
     const command = {};
-    await service.onUpdateSouthItemsSettings('southId', southItem as SouthConnectorItemDTO, command as SouthConnectorItemCommandDTO);
+    await service.onUpdateSouthItemsSettings('southId', oldSouthItem as SouthConnectorItemDTO, command as SouthConnectorItemCommandDTO);
     expect(repositoryService.southItemRepository.updateSouthItem).toHaveBeenCalledWith('southItemId', command);
-    expect(oibusEngine.updateItemInSouth).toHaveBeenCalledWith('southId', southItem, command);
+    expect(oibusEngine.updateItemInSouth).toHaveBeenCalledWith('southId', oldSouthItem, newSouthItem);
   });
 
   it('should create or update south items', async () => {

@@ -260,7 +260,7 @@ describe('OIBusEngine', () => {
     expect(createdSouth.deleteItem).not.toHaveBeenCalled();
     engine.deleteAllItemsFromSouth('southId');
     expect(createdSouth.deleteAllItems).not.toHaveBeenCalled();
-    engine.updateItemInSouth('southId', items[0], { name: 'new name', settings: {}, scanModeId: null });
+    engine.updateItemInSouth('southId', items[0], { id: 'itemId', connectorId: 'id', name: 'new name', settings: {}, scanModeId: null });
     expect(createdSouth.updateItem).not.toHaveBeenCalled();
 
     engine.addItemToSouth(southConnectors[1].id, items[0]);
@@ -269,8 +269,20 @@ describe('OIBusEngine', () => {
     expect(createdSouth.deleteItem).toHaveBeenCalledWith(items[0]);
     engine.deleteAllItemsFromSouth(southConnectors[1].id);
     expect(createdSouth.deleteAllItems).toHaveBeenCalled();
-    engine.updateItemInSouth(southConnectors[1].id, items[0], { name: 'new name', settings: {}, scanModeId: null });
-    expect(createdSouth.updateItem).toHaveBeenCalledWith(items[0], { name: 'new name', settings: {}, scanModeId: null });
+    engine.updateItemInSouth(southConnectors[1].id, items[0], {
+      id: 'itemId',
+      connectorId: 'id',
+      name: 'new name',
+      settings: {},
+      scanModeId: null
+    });
+    expect(createdSouth.updateItem).toHaveBeenCalledWith(items[0], {
+      connectorId: 'id',
+      id: 'itemId',
+      name: 'new name',
+      settings: {},
+      scanModeId: null
+    });
 
     createdSouth.getMetricsDataStream.mockReturnValue({ status: 'myStatus' });
     expect(engine.getSouthDataStream('southId')).toEqual(null);

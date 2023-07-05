@@ -29,8 +29,9 @@ export class EditElementComponent implements OnInit {
 
   ngOnInit() {
     this.controlsByRow = groupFormControlsByRow(this.formDescription);
-    this.form = createFormGroup(this.formDescription, this.fb);
-    this.form.patchValue(this.element);
+    // we need to wrap in a sub form group to be able to inject properly into the oib-form
+    this.form = this.fb.group({ wrapper: createFormGroup(this.formDescription, this.fb) });
+    this.form.patchValue({ wrapper: this.element });
   }
 
   ok() {
@@ -38,7 +39,7 @@ export class EditElementComponent implements OnInit {
       return;
     }
 
-    this.saved.emit(this.form!.value);
+    this.saved.emit(this.form!.controls['wrapper'].value);
   }
 
   cancel() {

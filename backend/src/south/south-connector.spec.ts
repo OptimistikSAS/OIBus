@@ -589,11 +589,11 @@ describe('SouthConnector without stream mode', () => {
       cron: '* * * * * *'
     });
 
-    south.updateItem(item, { scanModeId: 'scanModeId', name: 'my updated item', settings: {} });
+    south.updateItem(item, { id: 'itemId', scanModeId: 'scanModeId', connectorId: 'id', name: 'my updated item', settings: {} });
 
     expect(logger.error).toHaveBeenCalledWith(`Error when creating South item in cron jobs: scan mode ${item.scanModeId} not found`);
 
-    south.updateItem(item, { scanModeId: 'scanModeId', name: 'my updated item', settings: {} });
+    south.updateItem(item, { id: 'itemId', scanModeId: 'scanModeId', connectorId: 'id', name: 'my updated item', settings: {} });
 
     expect(south.addItem).toHaveBeenCalledTimes(1);
     expect(south.deleteItem).toHaveBeenCalledTimes(1);

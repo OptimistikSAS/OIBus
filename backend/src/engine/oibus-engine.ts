@@ -9,12 +9,7 @@ import SouthService from '../service/south.service';
 import { createFolder } from '../service/utils';
 import path from 'node:path';
 
-import {
-  SouthConnectorCommandDTO,
-  SouthConnectorDTO,
-  SouthConnectorItemCommandDTO,
-  SouthConnectorItemDTO
-} from '../../../shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
