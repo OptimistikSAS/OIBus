@@ -13,6 +13,7 @@ import OIBusEngine from './engine/oibus-engine';
 import HistoryQueryEngine from './engine/history-query-engine';
 import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
+import migrate from './db/migration-service';
 
 const CACHE_FOLDER = './cache';
 
@@ -37,6 +38,9 @@ const LOG_DB_NAME = 'journal.db';
     path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME),
     path.resolve(CRYPTO_DATABASE)
   );
+
+  // run migrations
+  migrate(path.resolve(CONFIG_DATABASE));
 
   const oibusSettings = repositoryService.engineRepository.getEngineSettings();
   if (!oibusSettings) {
