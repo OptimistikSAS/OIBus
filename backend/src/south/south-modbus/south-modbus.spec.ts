@@ -10,6 +10,7 @@ import ProxyService from '../../service/proxy.service';
 import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import net from 'node:net';
 import Stream from 'node:stream';
+import { client } from 'jsmodbus';
 import { SouthModbusSettings } from '../../../../shared/model/south-settings.model';
 
 jest.mock('node:fs/promises');
@@ -402,12 +403,83 @@ describe('SouthModbus', () => {
     expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt32')).toEqual(50594050);
     expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt16')).toEqual(258);
   });
+});
 
-  it('should test connection with mssql', async () => {
-    // TODO
-    await expect(SouthModbus.testConnection({} as SouthModbusSettings, logger, encryptionService)).rejects.toThrow(
-      'TODO: method needs to be implemented'
-    );
-    expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
+describe('SouthModbus test connection', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+  });
+
+  const settings: SouthModbusSettings = { ...configuration.settings };
+
+  // Error codes handled by the test function
+  // With the expected error messages to throw
+  const ERROR_CODES = {
+    ENOTFOUND: 'Please check host and port',
+    ECONNREFUSED: 'Please check host and port',
+    DEFAULT: 'Please check logs' // For exceptions that we aren't explicitly specifying
+  } as const;
+
+  type ErrorCodes = keyof typeof ERROR_CODES;
+
+  class ModbusError extends Error {
+    private code: ErrorCodes;
+    constructor(message: string, code: ErrorCodes) {
+      super();
+      this.name = 'ModbusError';
+      this.message = message;
+      this.code = code;
+    }
+  }
+
+  it('Connecting to socket successfully', async () => {
+    // Mock node:net Socket constructor and the used function
+    (net.Socket as unknown as jest.Mock).mockReturnValue({
+      connect(_connectionObject: any, callback: any) {
+        callback();
+      },
+      on: jest.fn(),
+      end: jest.fn()
+    });
+
+    const test = SouthModbus.testConnection(settings, logger, encryptionService);
+    await expect(test).resolves.not.toThrow();
+    expect(client.TCP).toBeCalled();
+
+    expect((logger.info as jest.Mock).mock.calls).toEqual([[`Successfully connected to Modbus socket ${settings.host}:${settings.port}`]]);
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([
+      [`Testing Modbus connection`],
+      [`Connecting Modbus socket into ${settings.host}:${settings.port}`],
+      [`Ended connection to Modbus socket ${settings.host}:${settings.port}`]
+    ]);
+  });
+
+  it('Unable to create connection to socket', async () => {
+    let code: ErrorCodes;
+    const errorMessage = 'Error creating connection to socket';
+
+    for (code in ERROR_CODES) {
+      (logger.error as jest.Mock).mockClear();
+      (logger.trace as jest.Mock).mockClear();
+
+      // Mock node:net Socket constructor and the used function
+      (net.Socket as unknown as jest.Mock).mockReturnValueOnce({
+        connect(_connectionObject: any, _callback: any) {
+          throw new ModbusError(errorMessage, code);
+        },
+        on: jest.fn(),
+        end: jest.fn()
+      });
+
+      const test = SouthModbus.testConnection(settings, logger, encryptionService);
+      await expect(test).rejects.toThrow(new Error(ERROR_CODES[code]));
+
+      expect((logger.error as jest.Mock).mock.calls).toEqual([[`Unable to connect to socket: ${errorMessage}`]]);
+      expect((logger.trace as jest.Mock).mock.calls).toEqual([
+        [`Testing Modbus connection`],
+        [`Connecting Modbus socket into ${settings.host}:${settings.port}`]
+      ]);
+    }
   });
 });

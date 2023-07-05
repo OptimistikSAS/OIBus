@@ -206,10 +206,38 @@ export default class SouthModbus
     });
   }
 
-  // TODO: method needs to be implemented
   static async testConnection(settings: SouthModbusSettings, logger: pino.Logger, _encryptionService: EncryptionService): Promise<void> {
-    logger.trace(`Testing connection`);
-    throw new Error('TODO: method needs to be implemented');
+    logger.trace(`Testing Modbus connection`);
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const socket = new net.Socket();
+        new client.TCP(socket, settings.slaveId);
+
+        logger.trace(`Connecting Modbus socket into ${settings.host}:${settings.port}`);
+
+        socket.connect({ host: settings.host, port: settings.port }, async () => {
+          logger.info(`Successfully connected to Modbus socket ${settings.host}:${settings.port}`);
+          socket.end();
+          logger.trace(`Ended connection to Modbus socket ${settings.host}:${settings.port}`);
+          resolve();
+        });
+        socket.on('error', async error => {
+          reject(error);
+        });
+      });
+    } catch (error: any) {
+      logger.error(`Unable to connect to socket: ${error.message}`);
+
+      switch (error.code) {
+        case 'ENOTFOUND':
+        case 'ECONNREFUSED':
+          throw new Error('Please check host and port');
+
+        default:
+          throw new Error('Please check logs');
+      }
+    }
   }
 
   /**
