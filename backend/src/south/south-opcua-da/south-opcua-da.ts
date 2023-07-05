@@ -108,13 +108,13 @@ export default class SouthOPCUADA
         case 'basic':
           userIdentity = {
             type: UserTokenType.UserName,
-            userName: this.connector.settings.authentication.username,
-            password: await this.encryptionService.decryptText(this.connector.settings.authentication.password)
+            userName: this.connector.settings.authentication.username!,
+            password: await this.encryptionService.decryptText(this.connector.settings.authentication.password!)
           };
           break;
         case 'cert':
-          const certContent = await fs.readFile(path.resolve(this.connector.settings.authentication.certFilePath));
-          const privateKeyContent = await fs.readFile(path.resolve(this.connector.settings.authentication.keyFilePath));
+          const certContent = await fs.readFile(path.resolve(this.connector.settings.authentication.certFilePath!));
+          const privateKeyContent = await fs.readFile(path.resolve(this.connector.settings.authentication.keyFilePath!));
           userIdentity = {
             type: UserTokenType.Certificate,
             certificateData: certContent,

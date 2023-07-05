@@ -75,7 +75,7 @@ export default class SouthMQTT
     };
     if (this.connector.settings.authentication.type === 'basic') {
       options.username = this.connector.settings.authentication.username;
-      options.password = Buffer.from(await this.encryptionService.decryptText(this.connector.settings.authentication.password)).toString();
+      options.password = Buffer.from(await this.encryptionService.decryptText(this.connector.settings.authentication.password!)).toString();
     } else if (this.connector.settings.authentication.type === 'cert') {
       options.cert = this.connector.settings.authentication.certFilePath
         ? await fs.readFile(path.resolve(this.connector.settings.authentication.certFilePath))
@@ -114,7 +114,7 @@ export default class SouthMQTT
     };
     if (settings.authentication.type === 'basic') {
       options.username = settings.authentication.username;
-      options.password = Buffer.from(await encryptionService.decryptText(settings.authentication.password)).toString();
+      options.password = Buffer.from(await encryptionService.decryptText(settings.authentication.password!)).toString();
     } else if (settings.authentication.type === 'cert') {
       options.cert = settings.authentication.certFilePath ? await fs.readFile(path.resolve(settings.authentication.certFilePath)) : '';
       options.key = settings.authentication.keyFilePath ? await fs.readFile(path.resolve(settings.authentication.keyFilePath)) : '';
@@ -143,10 +143,10 @@ export default class SouthMQTT
     try {
       const parsedMessage = JSON.parse(message.toString());
       const formatOptions: MessageFormatOption = {
-        timestampPath: this.connector.settings.timestampPath,
+        timestampPath: this.connector.settings.timestampPath!,
         timestampOrigin: this.connector.settings.timestampOrigin,
-        timestampFormat: this.connector.settings.timestampFormat,
-        timezone: this.connector.settings.timestampTimezone,
+        timestampFormat: this.connector.settings.timestampFormat!,
+        timezone: this.connector.settings.timestampTimezone!,
         valuePath: this.connector.settings.valuePath,
         pointIdPath: this.connector.settings.pointIdPath,
         qualityPath: this.connector.settings.qualityPath

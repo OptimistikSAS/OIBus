@@ -115,20 +115,20 @@ export default class SouthOIConnect
       case 'basic': {
         const basic = Buffer.from(
           `${this.connector.settings.authentication.username}:${await this.encryptionService.decryptText(
-            this.connector.settings.authentication.password
+            this.connector.settings.authentication.password!
           )}`
         ).toString('base64');
         headers.authorization = `Basic ${basic}`;
         break;
       }
       case 'api-key': {
-        headers[this.connector.settings.authentication.apiKeyHeader] = await this.encryptionService.decryptText(
-          this.connector.settings.authentication.apiKey
+        headers[this.connector.settings.authentication.apiKeyHeader!] = await this.encryptionService.decryptText(
+          this.connector.settings.authentication.apiKey!
         );
         break;
       }
       case 'bearer': {
-        headers.authorization = `Bearer ${await this.encryptionService.decryptText(this.connector.settings.authentication.token)}`;
+        headers.authorization = `Bearer ${await this.encryptionService.decryptText(this.connector.settings.authentication.token!)}`;
         break;
       }
       default:

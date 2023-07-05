@@ -6,6 +6,7 @@ export function buildDateTimeFieldsFormControl(dataTypes: Array<DateTimeType>): 
     key: 'dateTimeFields',
     type: 'OibArray',
     label: 'Date time fields',
+    validators: [{ key: 'required' }],
     content: [
       {
         key: 'fieldName',

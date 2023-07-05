@@ -74,7 +74,7 @@ function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, connect
   typesToGenerate.settingsSubInterfaces.forEach(interfaceToWrite => {
     appendFileSync(path, `export interface ${interfaceToWrite.name} {\n`);
     interfaceToWrite.attributes.forEach(attribute => {
-      appendFileSync(path, `  ${attribute.key}: ${attribute.type};\n`);
+      writeAttribute(path, attribute);
     });
     appendFileSync(path, '}\n\n');
   });
@@ -84,8 +84,7 @@ function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, connect
   typesToGenerate.settingsInterfaces.forEach(interfaceToWrite => {
     appendFileSync(path, `export interface ${interfaceToWrite.name} extends Base${connectorType}Settings {\n`);
     interfaceToWrite.attributes.forEach(attribute => {
-      const nullable = attribute.nullable ? ' | null' : '';
-      appendFileSync(path, `  ${attribute.key}: ${attribute.type}${nullable};\n`);
+      writeAttribute(path, attribute);
     });
     appendFileSync(path, '}\n\n');
   });
@@ -100,7 +99,7 @@ function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, connect
     typesToGenerate.itemSettingsSubInterfaces.forEach(interfaceToWrite => {
       appendFileSync(path, `export interface ${interfaceToWrite.name} {\n`);
       interfaceToWrite.attributes.forEach(attribute => {
-        appendFileSync(path, `  ${attribute.key}: ${attribute.type};\n`);
+        writeAttribute(path, attribute);
       });
       appendFileSync(path, '}\n\n');
     });
@@ -110,7 +109,7 @@ function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, connect
     typesToGenerate.itemSettingsInterfaces.forEach(interfaceToWrite => {
       appendFileSync(path, `export interface ${interfaceToWrite.name} extends Base${connectorType}ItemSettings {\n`);
       interfaceToWrite.attributes.forEach(attribute => {
-        appendFileSync(path, `  ${attribute.key}: ${attribute.type};\n`);
+        writeAttribute(path, attribute);
       });
       appendFileSync(path, '}\n\n');
     });
@@ -120,6 +119,12 @@ function buildTypescriptFile(typesToGenerate: TypeGenerationDescription, connect
     appendFileSync(path, `export type ${connectorType}ItemSettings =\n`);
     appendFileSync(path, itemTypes);
   }
+}
+
+function writeAttribute(filePath: string, attribute: Attribute) {
+  const nullable = attribute.nullable ? ' | null' : '';
+  const undefinable = attribute.undefinable ? '?' : '';
+  appendFileSync(filePath, `  ${attribute.key}${undefinable}: ${attribute.type}${nullable};\n`);
 }
 
 function isSouthConnector(manifestObject: ConnectorManifest): manifestObject is SouthConnectorManifest {
@@ -183,43 +188,51 @@ function generateInterface(interfaceName: string, settings: Array<OibFormControl
       case 'OibTextArea':
       case 'OibSecret':
       case 'OibCodeBlock':
-        attributes.push({ key: setting.key, type: 'string', nullable: checkIfNullable(setting) });
+        attributes.push({ key: setting.key, type: 'string', ...checkIfNullableOrUndefined(setting) });
         break;
       case 'OibSelect':
         const enumName = `${interfaceName}${capitalizeFirstLetter(setting.key)}`;
         typesToGenerate.enums.push({ name: enumName, values: setting.options });
-        attributes.push({ key: setting.key, type: `${enumName}`, nullable: checkIfNullable(setting) });
+        attributes.push({ key: setting.key, type: `${enumName}`, ...checkIfNullableOrUndefined(setting) });
         break;
       case 'OibCheckbox':
-        attributes.push({ key: setting.key, type: 'boolean', nullable: checkIfNullable(setting) });
+        attributes.push({ key: setting.key, type: 'boolean', ...checkIfNullableOrUndefined(setting) });
         break;
       case 'OibScanMode':
         typesToGenerate.imports.add(SCAN_MODE_IMPORT);
-        attributes.push({ key: setting.key, type: 'ScanMode', nullable: checkIfNullable(setting) });
+        attributes.push({ key: setting.key, type: 'ScanMode', ...checkIfNullableOrUndefined(setting) });
         break;
       case 'OibTimezone':
         typesToGenerate.imports.add(TIMEZONE_IMPORT);
-        attributes.push({ key: setting.key, type: 'Timezone', nullable: checkIfNullable(setting) });
+        attributes.push({ key: setting.key, type: 'Timezone', ...checkIfNullableOrUndefined(setting) });
         break;
       case 'OibProxy':
-        attributes.push({ key: setting.key, type: 'string', nullable: checkIfNullable(setting) });
+        attributes.push({
+          key: setting.key,
+          type: 'string',
+          ...checkIfNullableOrUndefined(setting)
+        });
         break;
       case 'OibArray':
         attributes.push({
           key: setting.key,
           type: `Array<${interfaceName}${capitalizeFirstLetter(setting.key)}>`,
-          nullable: checkIfNullable(setting)
+          ...checkIfNullableOrUndefined(setting)
         });
         break;
       case 'OibFormGroup':
         attributes.push({
           key: setting.key,
           type: `${interfaceName}${capitalizeFirstLetter(setting.key)}`,
-          nullable: checkIfNullable(setting)
+          ...checkIfNullableOrUndefined(setting)
         });
         break;
       case 'OibNumber':
-        attributes.push({ key: setting.key, type: 'number', nullable: checkIfNullable(setting) });
+        attributes.push({
+          key: setting.key,
+          type: 'number',
+          ...checkIfNullableOrUndefined(setting)
+        });
         break;
     }
   });
@@ -229,11 +242,12 @@ function generateInterface(interfaceName: string, settings: Array<OibFormControl
 /**
  * Check if the given OibFormControl is nullable or not
  */
-function checkIfNullable(setting: OibFormControl) {
-  if (!setting.validators) {
-    return true;
-  }
-  return setting.validators.filter(validator => validator.key === 'required').length === 0;
+function checkIfNullableOrUndefined(setting: OibFormControl): { nullable: boolean; undefinable: boolean } {
+  // if the setting has no validators it is nullable
+  const nullable = !setting.validators ? true : setting.validators.filter(validator => validator.key === 'required').length === 0;
+  const undefinable = setting.conditionalDisplay != null;
+
+  return { nullable, undefinable };
 }
 
 /**
@@ -368,6 +382,7 @@ interface Attribute {
   key: string;
   type: string;
   nullable: boolean;
+  undefinable: boolean;
 }
 
 interface Enums {
