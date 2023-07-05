@@ -8,8 +8,6 @@ import NorthService from '../service/north.service';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
-import RepositoryService from '../service/repository.service';
-import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
 import BaseEngine from './base-engine';
 
 jest.mock('../service/south.service');
@@ -25,7 +23,6 @@ const anotherLogger: pino.Logger = new PinoLogger();
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 
