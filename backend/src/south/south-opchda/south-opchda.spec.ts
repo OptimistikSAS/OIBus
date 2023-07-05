@@ -10,7 +10,6 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import ProxyService from '../../service/proxy.service';
 import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 
 class CustomStream extends Stream {
@@ -67,7 +66,6 @@ const logger: pino.Logger = new PinoLogger();
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
@@ -159,18 +157,7 @@ describe('South OPCHDA', () => {
       }
     }));
 
-    south = new SouthOPCHDA(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolde',
-      true
-    );
+    south = new SouthOPCHDA(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolde', true);
   });
 
   afterAll(() => {

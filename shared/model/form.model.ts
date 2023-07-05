@@ -10,7 +10,6 @@ export const FORM_COMPONENT_TYPES = [
   'OibCheckbox',
   'OibScanMode',
   'OibTimezone',
-  'OibProxy',
   'OibArray',
   'OibFormGroup'
 ] as const;
@@ -129,10 +128,6 @@ export interface OibTimezoneFormControl extends BaseOibFormControl<string> {
   type: 'OibTimezone';
 }
 
-export interface OibProxyFormControl extends BaseOibFormControl<string> {
-  type: 'OibProxy';
-}
-
 export interface OibArrayFormControl extends BaseOibFormControl<void> {
   type: 'OibArray';
   content: Array<OibFormControl>;
@@ -153,6 +148,5 @@ export type OibFormControl =
   | OibCheckboxFormControl
   | OibScanModeFormControl
   | OibTimezoneFormControl
-  | OibProxyFormControl
   | OibArrayFormControl
   | OibFormGroup;

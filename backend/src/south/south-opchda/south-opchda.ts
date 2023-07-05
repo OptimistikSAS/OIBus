@@ -4,9 +4,8 @@ import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import TcpServer from './tcp-server';
 import DeferredPromise from '../../service/deferred-promise';
-import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
@@ -56,24 +55,22 @@ export default class SouthOPCHDA
   >();
 
   constructor(
-    configuration: SouthConnectorDTO<SouthOPCHDASettings>,
+    connector: SouthConnectorDTO<SouthOPCHDASettings>,
     items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string,
     streamMode: boolean
   ) {
     super(
-      configuration,
+      connector,
       items,
       engineAddValuesCallback,
       engineAddFileCallback,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       baseFolder,

@@ -9,7 +9,6 @@ import pino from 'pino';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
-import ProxyService from '../../service/proxy.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import path from 'node:path';
@@ -62,7 +61,6 @@ const logger: pino.Logger = new PinoLogger();
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 const items: Array<SouthConnectorItemDTO<SouthOIConnectItemSettings>> = [
   {
     id: 'id1',
@@ -175,18 +173,7 @@ describe('SouthOIConnect with Basic auth', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOIConnect(
-      connector,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthOIConnect(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should test connection with odbc', async () => {
@@ -302,18 +289,7 @@ describe('SouthOIConnect with Bearer auth', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOIConnect(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthOIConnect(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should fetch data', async () => {
@@ -383,18 +359,7 @@ describe('SouthOIConnect with API-Key auth', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOIConnect(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthOIConnect(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should fetch data with GET method and body', async () => {
@@ -450,18 +415,7 @@ describe('SouthOIConnect without auth', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOIConnect(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthOIConnect(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should fetch data with GET and Body', async () => {

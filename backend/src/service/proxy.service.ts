@@ -1,33 +1,22 @@
-import EncryptionService from './encryption.service';
 import url from 'node:url';
 import ProxyAgent from 'proxy-agent';
 import { AgentOptions } from 'agent-base';
-import ProxyRepository from '../repository/proxy.repository';
 
-import { ProxyDTO } from '../../../shared/model/proxy.model';
+export interface ProxyConfig {
+  url: string;
+  username: string | null;
+  password: string | null;
+}
 
-/**
- * This service manage proxies for use in north or south connectors
- */
-export default class ProxyService {
-  constructor(private readonly proxyRepository: ProxyRepository, private readonly encryptionService: EncryptionService) {}
+export function createProxyAgent(proxyConfig: ProxyConfig, acceptUnauthorized = false) {
+  const proxyOptions = url.parse(proxyConfig.url);
 
-  /**
-   * Create a proxy agent to use wih HTTP requests
-   */
-  async createProxyAgent(proxyId: string, acceptUnauthorized = false): Promise<any | undefined> {
-    const proxySettings: ProxyDTO | null = this.proxyRepository.getProxy(proxyId);
-    if (!proxySettings) return undefined;
+  // @ts-ignore
+  proxyOptions.rejectUnauthorized = !acceptUnauthorized;
 
-    const proxyOptions = url.parse(proxySettings.address);
-
-    // @ts-ignore
-    proxyOptions.rejectUnauthorized = !acceptUnauthorized;
-
-    if (proxySettings.username && proxySettings.password) {
-      proxyOptions.auth = `${proxySettings.username}:${await this.encryptionService.decryptText(proxySettings.password)}`;
-    }
-
-    return new ProxyAgent(proxyOptions as AgentOptions);
+  if (proxyConfig.username && proxyConfig.password) {
+    proxyOptions.auth = `${proxyConfig.username}:${proxyConfig.password}`;
   }
+
+  return new ProxyAgent(proxyOptions as AgentOptions);
 }

@@ -6,7 +6,6 @@ import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { FormComponent } from '../../shared/form/form.component';
-import { ProxyService } from '../../services/proxy.service';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -63,7 +62,6 @@ describe('EditHistoryQueryComponent', () => {
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
-  let proxyService: jasmine.SpyObj<ProxyService>;
 
   const historyQuery: HistoryQueryDTO = {
     id: 'id1',
@@ -101,7 +99,6 @@ describe('EditHistoryQueryComponent', () => {
     southConnectorService = createMock(SouthConnectorService);
     historyQueryService = createMock(HistoryQueryService);
     scanModeService = createMock(ScanModeService);
-    proxyService = createMock(ProxyService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -112,7 +109,6 @@ describe('EditHistoryQueryComponent', () => {
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: HistoryQueryService, useValue: historyQueryService },
         { provide: ScanModeService, useValue: scanModeService },
-        { provide: ProxyService, useValue: proxyService },
         {
           provide: ActivatedRoute,
           useValue: stubRoute({
@@ -125,7 +121,6 @@ describe('EditHistoryQueryComponent', () => {
     });
 
     scanModeService.list.and.returnValue(of([]));
-    proxyService.list.and.returnValue(of([]));
 
     historyQueryService.get.and.returnValue(of(historyQuery));
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(

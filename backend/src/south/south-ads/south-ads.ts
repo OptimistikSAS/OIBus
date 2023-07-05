@@ -3,11 +3,10 @@ import ads from 'ads-client';
 
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
-import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { DateTime } from 'luxon';
 import { Instant } from '../../../../shared/model/types';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { QueriesLastPoint, TestsConnection } from '../south-interface';
@@ -33,24 +32,22 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
-    configuration: SouthConnectorDTO<SouthADSSettings>,
+    connector: SouthConnectorDTO<SouthADSSettings>,
     items: Array<SouthConnectorItemDTO<SouthADSItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string,
     streamMode: boolean
   ) {
     super(
-      configuration,
+      connector,
       items,
       engineAddValuesCallback,
       engineAddFileCallback,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       baseFolder,

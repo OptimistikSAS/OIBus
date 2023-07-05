@@ -10,9 +10,7 @@ import { combineLatest, of, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
-import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { ProxyService } from '../../services/proxy.service';
 import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
@@ -56,7 +54,6 @@ export class EditHistoryQueryComponent implements OnInit {
   northSettingsControls: Array<Array<OibFormControl>> = [];
   southSettingsControls: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
-  proxies: Array<ProxyDTO> = [];
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
 
@@ -94,16 +91,14 @@ export class EditHistoryQueryComponent implements OnInit {
     private fb: NonNullableFormBuilder,
     private notificationService: NotificationService,
     private scanModeService: ScanModeService,
-    private proxyService: ProxyService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
-    combineLatest([this.proxyService.list(), this.scanModeService.list(), this.route.paramMap])
+    combineLatest([this.scanModeService.list(), this.route.paramMap])
       .pipe(
-        switchMap(([proxies, scanModes, params]) => {
-          this.proxies = proxies;
+        switchMap(([scanModes, params]) => {
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
           return this.historyQueryService.get(params.get('historyQueryId') || '').pipe(this.state.pendingUntilFinalization());
         }),

@@ -42,7 +42,6 @@ interface LokiLogSettings extends BaseLogSettings {
   tokenAddress: string;
   username: string;
   password: string;
-  proxyId: string | null;
 }
 
 /**

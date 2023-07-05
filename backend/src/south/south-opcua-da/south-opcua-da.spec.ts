@@ -9,7 +9,6 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import ProxyService from '../../service/proxy.service';
 import { initOpcuaCertificateFolders } from '../../service/opcua.service';
 
 import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
@@ -73,7 +72,6 @@ const logger: pino.Logger = new PinoLogger();
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 const items: Array<SouthConnectorItemDTO<SouthOPCUADAItemSettings>> = [
   {
     id: 'id1',
@@ -135,18 +133,7 @@ describe('SouthOPCUADA', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    south = new SouthOPCUADA(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthOPCUADA(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should be properly initialized', async () => {
@@ -208,19 +195,14 @@ describe('SouthOPCUADA with basic auth', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    configuration.settings.authentication = { type: 'basic', username: 'myUser', password: 'pass', certFilePath: '', keyFilePath: '' };
-    south = new SouthOPCUADA(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    configuration.settings.authentication = {
+      type: 'basic',
+      username: 'myUser',
+      password: 'pass',
+      certFilePath: '',
+      keyFilePath: ''
+    };
+    south = new SouthOPCUADA(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should properly connect to OPCUA server with basic auth', async () => {
@@ -267,18 +249,7 @@ describe('SouthOPCUADA with certificate', () => {
       username: '',
       password: ''
     };
-    south = new SouthOPCUADA(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthOPCUADA(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should properly connect to OPCUA server with basic auth', async () => {

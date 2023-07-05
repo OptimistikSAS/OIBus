@@ -8,7 +8,6 @@ import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { Instant, Interval } from '../../../shared/model/types';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
-import ProxyService from '../service/proxy.service';
 import RepositoryService from '../service/repository.service';
 import DeferredPromise from '../service/deferred-promise';
 import { DateTime } from 'luxon';
@@ -64,7 +63,6 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     private engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     private engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     protected readonly encryptionService: EncryptionService,
-    protected readonly proxyService: ProxyService,
     private readonly repositoryService: RepositoryService,
     protected logger: pino.Logger,
     protected readonly baseFolder: string,

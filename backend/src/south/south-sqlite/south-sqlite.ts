@@ -8,7 +8,6 @@ import manifest from './manifest';
 import { convertDateTimeToInstant, createFolder, formatInstant, logQuery, persistResults } from '../../service/utils';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
@@ -27,24 +26,22 @@ export default class SouthSQLite
   private readonly tmpFolder: string;
 
   constructor(
-    configuration: SouthConnectorDTO<SouthSQLiteSettings>,
+    connector: SouthConnectorDTO<SouthSQLiteSettings>,
     items: Array<SouthConnectorItemDTO<SouthSQLiteItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string,
     streamMode: boolean
   ) {
     super(
-      configuration,
+      connector,
       items,
       engineAddValuesCallback,
       engineAddFileCallback,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       baseFolder,

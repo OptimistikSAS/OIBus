@@ -1,4 +1,5 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
+import { proxy } from '../../../../shared/model/manifest-factory';
 
 const manifest: NorthConnectorManifest = {
   id: 'oiconnect',
@@ -50,7 +51,7 @@ const manifest: NorthConnectorManifest = {
       displayInViewMode: true
     },
     { key: 'timeout', type: 'OibNumber', label: 'Timeout', newRow: true, validators: [{ key: 'required' }] },
-    { key: 'proxyId', type: 'OibProxy', label: 'Proxy', newRow: true },
+    ...proxy,
     {
       key: 'authentication',
       type: 'OibFormGroup',

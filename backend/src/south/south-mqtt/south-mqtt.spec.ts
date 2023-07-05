@@ -10,7 +10,6 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import ProxyService from '../../service/proxy.service';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../../shared/model/south-settings.model';
@@ -55,7 +54,6 @@ const logger: pino.Logger = new PinoLogger();
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
   {
     id: 'id1',
@@ -144,18 +142,7 @@ describe('SouthMQTT without authentication', () => {
 
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthMQTT(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should properly connect', async () => {
@@ -248,18 +235,7 @@ describe('SouthMQTT with Basic Auth', () => {
 
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthMQTT(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should properly connect', async () => {
@@ -344,18 +320,7 @@ describe('SouthMQTT with Cert', () => {
 
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(
-      connector,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthMQTT(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should properly connect', async () => {
@@ -446,18 +411,7 @@ describe('SouthMQTT without Cert', () => {
 
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthMQTT(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should properly connect', async () => {

@@ -1,8 +1,8 @@
-import mqtt from 'mqtt'
+import mqtt from 'mqtt';
 
-import NorthConnector from '../north-connector.ts'
-import { initMQTTTopic, recursiveSplitMessages } from './utils.js'
-import manifest from './manifest.ts'
+import NorthConnector from '../north-connector.ts';
+import { initMQTTTopic, recursiveSplitMessages } from './utils.js';
+import manifest from './manifest.ts';
 
 /**
  * Class NorthWATSY - Send MQTT messages for WATSY application
@@ -24,7 +24,7 @@ import manifest from './manifest.ts'
   }
  */
 export default class NorthWATSY extends NorthConnector {
-  static category = manifest.category
+  static category = manifest.category;
 
   /**
    * Constructor for NorthWATSY
@@ -34,38 +34,23 @@ export default class NorthWATSY extends NorthConnector {
    * @param {Object} logger - The Pino child logger to use
    * @return {void}
    */
-  constructor(
-    configuration,
-    proxyService,
-    logger,
-  ) {
-    super(
-      configuration,
-      proxyService,
-      logger,
-    )
+  constructor(configuration, logger) {
+    super(configuration, logger);
 
-    const {
-      MQTTUrl,
-      port,
-      username,
-      password,
-      applicativeHostUrl,
-      secretKey,
-    } = configuration.settings
-    this.url = MQTTUrl
-    this.port = port
-    this.username = username
-    this.password = password
-    this.qos = 1
-    this.host = applicativeHostUrl
-    this.secretKey = secretKey
+    const { MQTTUrl, port, username, password, applicativeHostUrl, secretKey } = configuration.settings;
+    this.url = MQTTUrl;
+    this.port = port;
+    this.username = username;
+    this.password = password;
+    this.qos = 1;
+    this.host = applicativeHostUrl;
+    this.secretKey = secretKey;
 
-    this.splitMessageTimeout = configuration.caching.sendInterval // in ms
+    this.splitMessageTimeout = configuration.caching.sendInterval; // in ms
 
     // Initialized at connection or init
-    this.client = null
-    this.mqttTopic = null
+    this.client = null;
+    this.mqttTopic = null;
   }
 
   /**
@@ -75,8 +60,8 @@ export default class NorthWATSY extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async start(baseFolder, oibusName) {
-    await super.start()
-      this.mqttTopic = initMQTTTopic(oibusName, this.host)
+    await super.start();
+    this.mqttTopic = initMQTTTopic(oibusName, this.host);
   }
 
   /**
@@ -85,22 +70,22 @@ export default class NorthWATSY extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async connect(_additionalInfo = '') {
-    this.logger.info(`Connecting North "${this.name}" to "${this.url}".`)
+    this.logger.info(`Connecting North "${this.name}" to "${this.url}".`);
 
     const options = {
       username: this.username,
       password: this.password ? Buffer.from(await this.encryptionService.decryptText(this.password)) : '',
-      port: this.port,
-    }
-    this.client = mqtt.connect(this.url, options)
+      port: this.port
+    };
+    this.client = mqtt.connect(this.url, options);
 
     this.client.on('connect', async () => {
-      await super.connect(`url: ${this.url}`)
-    })
+      await super.connect(`url: ${this.url}`);
+    });
 
-    this.client.on('error', (error) => {
-      this.logger.error(error)
-    })
+    this.client.on('error', error => {
+      this.logger.error(error);
+    });
   }
 
   /**
@@ -108,9 +93,9 @@ export default class NorthWATSY extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async disconnect() {
-    this.logger.info(`Disconnecting North "${this.name}" from "${this.url}".`)
-    this.client.end(true)
-    await super.disconnect()
+    this.logger.info(`Disconnecting North "${this.name}" from "${this.url}".`);
+    this.client.end(true);
+    await super.disconnect();
   }
 
   /**
@@ -119,7 +104,7 @@ export default class NorthWATSY extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async handleValues(values) {
-    this.logger.trace(`Handle ${values.length} values.`)
+    this.logger.trace(`Handle ${values.length} values.`);
 
     if (values.length > 0) {
       const watsyMessages = recursiveSplitMessages(
@@ -127,9 +112,9 @@ export default class NorthWATSY extends NorthConnector {
         values,
         this.host,
         await this.encryptionService.decryptText(this.secretKey),
-        this.splitMessageTimeout,
-      )
-      await Promise.all(watsyMessages.map((message) => this.publishValue(message)))
+        this.splitMessageTimeout
+      );
+      await Promise.all(watsyMessages.map(message => this.publishValue(message)));
     }
   }
 
@@ -140,18 +125,13 @@ export default class NorthWATSY extends NorthConnector {
    */
   publishValue(value) {
     return new Promise((resolve, reject) => {
-      this.client.publish(
-        this.mqttTopic,
-        JSON.stringify(value),
-        { qos: this.qos },
-        (error) => {
-          if (error) {
-            reject(error)
-          } else {
-            resolve()
-          }
-        },
-      )
-    })
+      this.client.publish(this.mqttTopic, JSON.stringify(value), { qos: this.qos }, error => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      });
+    });
   }
 }

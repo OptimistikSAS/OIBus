@@ -4,9 +4,8 @@ import { client } from 'jsmodbus';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
@@ -28,24 +27,22 @@ export default class SouthModbus
   private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
-    configuration: SouthConnectorDTO<SouthModbusSettings>,
+    connector: SouthConnectorDTO<SouthModbusSettings>,
     items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string,
     streamMode: boolean
   ) {
     super(
-      configuration,
+      connector,
       items,
       engineAddValuesCallback,
       engineAddFileCallback,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       baseFolder,

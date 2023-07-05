@@ -24,7 +24,6 @@ import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import HistoryQueryEngine from '../engine/history-query-engine';
 
-jest.mock('../repository/proxy.repository');
 jest.mock('./encryption.service');
 jest.mock('./logger/logger.service');
 jest.mock('./health-signal.service');

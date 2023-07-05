@@ -3,7 +3,6 @@ import ArchiveService from '../service/cache/archive.service';
 import { NorthCacheFiles, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
-import ProxyService from '../service/proxy.service';
 import ValueCacheService from '../service/cache/value-cache.service';
 import FileCacheService from '../service/cache/file-cache.service';
 import RepositoryService from '../service/repository.service';
@@ -59,7 +58,6 @@ export default class NorthConnector<T extends NorthSettings = any> {
   constructor(
     protected connector: NorthConnectorDTO<T>,
     protected readonly encryptionService: EncryptionService,
-    protected readonly proxyService: ProxyService,
     private readonly repositoryService: RepositoryService,
     protected logger: pino.Logger,
     protected readonly baseFolder: string

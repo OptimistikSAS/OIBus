@@ -10,7 +10,6 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import ProxyService from '../../service/proxy.service';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import mssql, { ConnectionPool } from 'mssql';
 import {
@@ -59,7 +58,6 @@ const addFile = jest.fn();
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 const items: Array<SouthConnectorItemDTO<SouthMSSQLItemSettings>> = [
   {
     id: 'id1',
@@ -209,18 +207,7 @@ describe('SouthMSSQL with authentication', () => {
 
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect } as unknown as ConnectionPool));
 
-    south = new SouthMSSQL(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthMSSQL(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should create temp folder', async () => {
@@ -339,18 +326,7 @@ describe('SouthMSSQL without authentication', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    south = new SouthMSSQL(
-      connector,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthMSSQL(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should manage query error', async () => {

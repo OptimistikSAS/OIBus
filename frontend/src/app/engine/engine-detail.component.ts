@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { ProxyListComponent } from './proxy-list/proxy-list.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterLink } from '@angular/router';
 import { EngineService } from '../services/engine.service';
@@ -22,7 +21,6 @@ import { ObservableState } from '../shared/save-button/save-button.component';
     NgIf,
     TranslateModule,
     RouterLink,
-    ProxyListComponent,
     ScanModeListComponent,
     ExternalSourceListComponent,
     IpFilterListComponent,

@@ -4,8 +4,6 @@ import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { NgForOf, NgIf } from '@angular/common';
 import { EngineService } from '../../services/engine.service';
-import { ProxyService } from '../../services/proxy.service';
-import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { EngineSettingsCommandDTO, LOG_LEVELS, LogLevel } from '../../../../../shared/model/engine.model';
 import { NotificationService } from '../../shared/notification.service';
 import { formDirectives } from '../../shared/form-directives';
@@ -21,8 +19,6 @@ import { BoxComponent } from '../../shared/box/box.component';
 })
 export class EditEngineComponent implements OnInit {
   readonly logLevels = LOG_LEVELS;
-
-  proxies: Array<ProxyDTO> = [];
 
   engineForm = this.fb.group({
     name: ['', Validators.required],
@@ -58,14 +54,10 @@ export class EditEngineComponent implements OnInit {
     private fb: NonNullableFormBuilder,
     private notificationService: NotificationService,
     private engineService: EngineService,
-    private proxyService: ProxyService,
     private router: Router
   ) {}
 
   ngOnInit(): void {
-    this.proxyService.list().subscribe(proxyList => {
-      this.proxies = proxyList;
-    });
     this.engineService.getEngineSettings().subscribe(settings => {
       this.engineForm.patchValue(settings);
     });
@@ -99,8 +91,7 @@ export class EditEngineComponent implements OnInit {
           address: formValue.logParameters!.loki!.address!,
           tokenAddress: formValue.logParameters!.loki!.tokenAddress!,
           username: formValue.logParameters!.loki!.username!,
-          password: formValue.logParameters!.loki!.password!,
-          proxyId: formValue.logParameters!.loki!.proxyId!
+          password: formValue.logParameters!.loki!.password!
         }
       }
     };

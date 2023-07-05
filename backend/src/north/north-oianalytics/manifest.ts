@@ -1,4 +1,5 @@
 import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
+import { proxy } from '../../../../shared/model/manifest-factory';
 
 const manifest: NorthConnectorManifest = {
   id: 'oianalytics',
@@ -46,7 +47,7 @@ const manifest: NorthConnectorManifest = {
       unitLabel: 'ms',
       validators: [{ key: 'required' }]
     },
-    { key: 'proxyId', type: 'OibProxy', label: 'Proxy' },
+    ...proxy,
     {
       key: 'acceptUnauthorized',
       type: 'OibCheckbox',

@@ -163,6 +163,7 @@ const manifest: SouthConnectorManifest = {
         label: 'Resampling',
         options: ['None', 'Second', '10 Seconds', '30 Seconds', 'Minute', 'Hour', 'Day'],
         defaultValue: 'None',
+        validators: [{ key: 'required' }],
         displayInViewMode: true
       },
       {
