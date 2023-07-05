@@ -296,7 +296,8 @@ describe('SouthMSSQL with authentication', () => {
       requestTimeout: configuration.settings.requestTimeout,
       options: {
         encrypt: configuration.settings.encryption,
-        trustServerCertificate: configuration.settings.trustServerCertificate
+        trustServerCertificate: configuration.settings.trustServerCertificate,
+        useUTC: true
       },
       domain: configuration.settings.domain
     });
@@ -375,7 +376,8 @@ describe('SouthMSSQL without authentication', () => {
       requestTimeout: connector.settings.requestTimeout,
       options: {
         encrypt: connector.settings.encryption,
-        trustServerCertificate: connector.settings.trustServerCertificate
+        trustServerCertificate: connector.settings.trustServerCertificate,
+        useUTC: true
       }
     });
 

@@ -134,10 +134,7 @@ describe('EditElementComponent', () => {
     expect(tester.componentInstance.savedInput).toEqual({
       fieldName: 'Field 2',
       useAsReference: false,
-      type: 'unix-epoch-ms',
-      format: null,
-      timezone: null,
-      locale: null
+      type: 'unix-epoch-ms'
     });
   }));
 

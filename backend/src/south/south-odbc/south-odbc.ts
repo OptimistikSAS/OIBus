@@ -13,10 +13,8 @@ import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { SouthODBCItemSettings, SouthODBCSettings } from '../../../../shared/model/south-settings.model';
-// @ts-ignore
-import type odbcNS from 'odbc';
 
-let odbc: typeof odbcNS | null = null;
+let odbc: any | null = null;
 // @ts-ignore
 import('odbc')
   .then(obj => {
@@ -99,7 +97,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
         await connection.close();
       }
 
-      const { odbcErrors } = error as odbcNS.NodeOdbcError;
+      const { odbcErrors } = error;
       SouthODBC.logOdbcErrors(logger, odbcErrors);
 
       if (odbcErrors[0].state === 'IM002') {
@@ -274,7 +272,11 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     settings: SouthConnectorDTO['settings'],
     logger: pino.Logger,
     encryptionService: EncryptionService
-  ): Promise<odbcNS.ConnectionParameters> {
+  ): Promise<{
+    connectionString: string;
+    connectionTimeout?: number;
+    loginTimeout?: number;
+  }> {
     let connectionString = `Driver=${settings.driverPath};SERVER=${settings.host};PORT=${settings.port};`;
     if (settings.trustServerCertificate) {
       connectionString += `TrustServerCertificate=yes;`;
@@ -293,7 +295,11 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       logger.debug(`Connecting with connection string ${connectionString}`);
     }
 
-    const connectionConfig: odbcNS.ConnectionParameters = {
+    const connectionConfig: {
+      connectionString: string;
+      connectionTimeout?: number;
+      loginTimeout?: number;
+    } = {
       connectionString,
       connectionTimeout: settings.connectionTimeout
     };
@@ -304,7 +310,14 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   /**
    * Parse odbc error codes for known drivers
    */
-  static parseErrorCodes(driverPath: string, odbcError: odbcNS.OdbcError) {
+  static parseErrorCodes(
+    driverPath: string,
+    odbcError: {
+      message: string;
+      code: number;
+      state: string;
+    }
+  ) {
     let errorCode: number;
     let ERROR_CODES: {
       HOST: number;
@@ -371,7 +384,14 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   /**
    * Logs the odbcErrors array
    */
-  static logOdbcErrors(logger: pino.Logger, odbcErrors: odbcNS.OdbcError[]) {
+  static logOdbcErrors(
+    logger: pino.Logger,
+    odbcErrors: Array<{
+      message: string;
+      code: number;
+      state: string;
+    }>
+  ) {
     odbcErrors.forEach(odbcError => {
       logger.error(`Error from ODBC driver: ${odbcError.message}`);
     });

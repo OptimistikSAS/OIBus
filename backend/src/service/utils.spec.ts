@@ -645,7 +645,7 @@ describe('Service utils', () => {
       // From Zulu string
       const result = utils.convertDateTimeToInstant(new Date(testInstant), dateTimeFormat);
       // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
-      expect(result).toEqual('2020-02-02T02:02:02.222Z');
+      expect(result).toEqual('2020-02-01T17:02:02.222Z');
     });
   });
 });
