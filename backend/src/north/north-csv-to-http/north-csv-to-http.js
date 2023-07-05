@@ -1,19 +1,19 @@
-import { createReadStream } from 'node:fs'
+import { createReadStream } from 'node:fs';
 
-import csv from 'papaparse'
+import csv from 'papaparse';
 
-import NorthConnector from '../north-connector.ts'
-import { convertCSVRowIntoHttpBody, isHeaderValid } from './utils.js'
-import { httpSend, addAuthenticationToHeaders } from '../../service/http-request-static-functions.ts'
-import manifest from './manifest.ts'
+import NorthConnector from '../north-connector.ts';
+import { convertCSVRowIntoHttpBody, isHeaderValid } from './utils.js';
+import { httpSend, addAuthenticationToHeaders } from '../../service/http-request-static-functions.ts';
+import manifest from './manifest.ts';
 
-const ERROR_PRINT_SIZE = 5
+const ERROR_PRINT_SIZE = 5;
 
 /**
  * Class NorthCsvToHttp - convert a CSV file into JSON payload for HTTP requests (POST/PUT/PATCH)
  */
 export default class NorthCsvToHttp extends NorthConnector {
-  static category = manifest.category
+  static category = manifest.category;
 
   /**
    * Constructor for NorthCsvToHttp
@@ -23,40 +23,24 @@ export default class NorthCsvToHttp extends NorthConnector {
    * @param {Object} logger - The Pino child logger to use
    * @return {void}
    */
-  constructor(
-    configuration,
-    proxyService,
-    logger,
-  ) {
-    super(
-      configuration,
-      proxyService,
-      logger,
-    )
+  constructor(configuration, logger) {
+    super(configuration, logger);
 
-    const {
-      applicativeHostUrl,
-      requestMethod,
-      bodyMaxLength,
-      acceptUnconvertedRows,
-      authentication,
-      csvDelimiter,
-      mapping,
-      proxy,
-    } = configuration.settings
+    const { applicativeHostUrl, requestMethod, bodyMaxLength, acceptUnconvertedRows, authentication, csvDelimiter, mapping, proxy } =
+      configuration.settings;
 
     // Creation of an entity request with is composed of all necessaries information
     this.request = {
       host: applicativeHostUrl,
       method: requestMethod,
-      authenticationField: authentication,
-    }
+      authenticationField: authentication
+    };
 
-    this.bodyMaxLength = bodyMaxLength
-    this.acceptUnconvertedRows = acceptUnconvertedRows
-    this.mapping = mapping || {}
-    this.csvDelimiter = csvDelimiter
-    this.proxyName = proxy
+    this.bodyMaxLength = bodyMaxLength;
+    this.acceptUnconvertedRows = acceptUnconvertedRows;
+    this.mapping = mapping || {};
+    this.csvDelimiter = csvDelimiter;
+    this.proxyName = proxy;
   }
 
   /**
@@ -66,8 +50,8 @@ export default class NorthCsvToHttp extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async start(baseFolder, _oibusName) {
-    await super.start()
-      this.proxyAgent = await this.proxyService.get(this.proxyName)
+    await super.start();
+    this.proxyAgent = await this.proxyService.get(this.proxyName);
   }
 
   /**
@@ -77,42 +61,42 @@ export default class NorthCsvToHttp extends NorthConnector {
    */
   async handleFile(filePath) {
     // Verify that the received file is a CSV one
-    const regexExp = /.csv$/
+    const regexExp = /.csv$/;
 
     if (!regexExp.test(filePath)) {
-      throw new Error(`Invalid file format: .csv file expected. File "${filePath}" skipped.`)
+      throw new Error(`Invalid file format: .csv file expected. File "${filePath}" skipped.`);
     }
 
-    const csvDataParsed = await this.parseCsvFile(filePath)
+    const csvDataParsed = await this.parseCsvFile(filePath);
 
     if (csvDataParsed.length === 0) {
-      this.logger.debug(`The file "${filePath}" is empty. Skipping it.`)
-      return
+      this.logger.debug(`The file "${filePath}" is empty. Skipping it.`);
+      return;
     }
 
     // The CSV parsing is a success, so we begin to map the content
     // Initialize the body to an empty array
-    const { httpBody, conversionErrorBuffer } = this.convertToHttpBody(csvDataParsed)
+    const { httpBody, conversionErrorBuffer } = this.convertToHttpBody(csvDataParsed);
 
     if (httpBody.length !== 0) {
       try {
-        await this.sendData(httpBody)
+        await this.sendData(httpBody);
       } catch (error) {
-        throw new Error(`Error while sending the data of file "${filePath} (skipping it)": ${error}.`)
+        throw new Error(`Error while sending the data of file "${filePath} (skipping it)": ${error}.`);
       }
     }
     // Logs all the errors
     if (conversionErrorBuffer.length > 0) {
-      this.logger.error(`${conversionErrorBuffer.length} conversion errors.`)
+      this.logger.error(`${conversionErrorBuffer.length} conversion errors.`);
 
       if (conversionErrorBuffer.length > ERROR_PRINT_SIZE) {
         for (let i = 0; i < ERROR_PRINT_SIZE; i += 1) {
-          this.logger.trace(`${conversionErrorBuffer[i]}`)
+          this.logger.trace(`${conversionErrorBuffer[i]}`);
         }
       } else {
-        conversionErrorBuffer.forEach((error) => {
-          this.logger.trace(`${error}`)
-        })
+        conversionErrorBuffer.forEach(error => {
+          this.logger.trace(`${error}`);
+        });
       }
     }
   }
@@ -124,27 +108,27 @@ export default class NorthCsvToHttp extends NorthConnector {
   parseCsvFile(filePath) {
     return new Promise((resolve, reject) => {
       // Initialize array which will be filled at each step
-      const csvDataParsed = []
-      const csvFile = createReadStream(filePath)
+      const csvDataParsed = [];
+      const csvFile = createReadStream(filePath);
 
       // Parse the CSV file into a JSON object
       csv.parse(csvFile, {
         delimiter: this.csvDelimiter,
         header: true,
         dynamicTyping: true,
-        error: (error) => {
-          this.logger.error(error)
-          reject()
+        error: error => {
+          this.logger.error(error);
+          reject();
         },
-        step: (step) => {
-          csvDataParsed.push(step.data)
+        step: step => {
+          csvDataParsed.push(step.data);
         },
         complete: () => {
-          this.logger.debug(`File ${filePath} parsed.`)
-          resolve(csvDataParsed)
-        },
-      })
-    })
+          this.logger.debug(`File ${filePath} parsed.`);
+          resolve(csvDataParsed);
+        }
+      });
+    });
   }
 
   /**
@@ -152,33 +136,33 @@ export default class NorthCsvToHttp extends NorthConnector {
    * @return {Object} - The HTTP body and associated errors
    */
   convertToHttpBody(csvFileInJson) {
-    const httpBody = []
+    const httpBody = [];
     // Reset the buffer for error
-    const conversionErrorBuffer = []
+    const conversionErrorBuffer = [];
 
     // Log all headers in the CSV file and log the value ine the mapping not present in headers
-    this.logger.trace(`All available headers are: ${Object.keys(csvFileInJson[0])}`)
+    this.logger.trace(`All available headers are: ${Object.keys(csvFileInJson[0])}`);
 
-    const onlyValidMappingValue = this.getOnlyValidMappingValue(csvFileInJson[0])
+    const onlyValidMappingValue = this.getOnlyValidMappingValue(csvFileInJson[0]);
 
     // Start the mapping for each row
     csvFileInJson.forEach((csvRowInJson, index) => {
-      const { value, error } = convertCSVRowIntoHttpBody(csvRowInJson, onlyValidMappingValue)
+      const { value, error } = convertCSVRowIntoHttpBody(csvRowInJson, onlyValidMappingValue);
 
       // Test the result of the mapping/conversion before add it in the httpBody
       // Add if we accept error conversion or if everything is fine
       if ((!error && value) || (error && value && this.acceptUnconvertedRows)) {
-        httpBody.push(value)
+        httpBody.push(value);
       }
 
       // Add all the errors caught into the buffer
       if (error) {
-        error.forEach((err) => {
-          conversionErrorBuffer.push(`Line ${index + 1} in CSV file: ${err}`)
-        })
+        error.forEach(err => {
+          conversionErrorBuffer.push(`Line ${index + 1} in CSV file: ${err}`);
+        });
       }
-    })
-    return { httpBody, conversionErrorBuffer }
+    });
+    return { httpBody, conversionErrorBuffer };
   }
 
   /**
@@ -187,15 +171,15 @@ export default class NorthCsvToHttp extends NorthConnector {
    * @return {Object[]} - Return a list of available headers
    */
   getOnlyValidMappingValue(allHeaders) {
-    const onlyValidMappingValue = []
-    this.mapping.forEach((mapping) => {
+    const onlyValidMappingValue = [];
+    this.mapping.forEach(mapping => {
       if (!isHeaderValid(allHeaders, mapping.csvField)) {
-        this.logger.warn(`The header: '${mapping.csvField}' is not present in the CSV file`)
+        this.logger.warn(`The header: '${mapping.csvField}' is not present in the CSV file`);
       } else {
-        onlyValidMappingValue.push(mapping)
+        onlyValidMappingValue.push(mapping);
       }
-    })
-    return onlyValidMappingValue
+    });
+    return onlyValidMappingValue;
   }
 
   /**
@@ -203,20 +187,20 @@ export default class NorthCsvToHttp extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async sendData(httpBody) {
-    const headers = { 'Content-Type': 'application/json' }
+    const headers = { 'Content-Type': 'application/json' };
     if (this.request.authenticationField) {
       addAuthenticationToHeaders(
         headers,
         this.request.authenticationField.type,
         this.request.authenticationField.key,
-        await this.encryptionService.decryptText(this.request.authenticationField.secret),
-      )
+        await this.encryptionService.decryptText(this.request.authenticationField.secret)
+      );
     }
 
     if (httpBody.length > this.bodyMaxLength) {
       // Divide the current body in array of maximum maxLength elements
-      let i = 0
-      const requests = []
+      let i = 0;
+      const requests = [];
       for (i; i < httpBody.length; i += this.bodyMaxLength) {
         requests.push(
           httpSend(
@@ -225,11 +209,11 @@ export default class NorthCsvToHttp extends NorthConnector {
             headers,
             JSON.stringify(httpBody.slice(i, i + this.bodyMaxLength - 1)),
             this.cacheSettings.timeout,
-            this.proxyAgent,
-          ),
-        )
+            this.proxyAgent
+          )
+        );
       }
-      await Promise.all(requests)
+      await Promise.all(requests);
     } else {
       await httpSend(
         this.request.host,
@@ -237,8 +221,8 @@ export default class NorthCsvToHttp extends NorthConnector {
         headers,
         JSON.stringify(httpBody),
         this.cacheSettings.timeout,
-        this.proxyAgent,
-      )
+        this.proxyAgent
+      );
     }
   }
 }

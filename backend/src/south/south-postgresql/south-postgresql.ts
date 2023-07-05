@@ -5,16 +5,15 @@ import { ClientConfig } from 'pg';
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
 import {
-  formatInstant,
   convertDateTimeToInstant,
   createFolder,
+  formatInstant,
   generateReplacementParameters,
   logQuery,
   persistResults
 } from '../../service/utils';
-import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
@@ -32,25 +31,24 @@ export default class SouthPostgreSQL
   static type = manifest.id;
 
   private readonly tmpFolder: string;
+
   constructor(
-    configuration: SouthConnectorDTO<SouthPostgreSQLSettings>,
+    connector: SouthConnectorDTO<SouthPostgreSQLSettings>,
     items: Array<SouthConnectorItemDTO<SouthPostgreSQLItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string,
     streamMode: boolean
   ) {
     super(
-      configuration,
+      connector,
       items,
       engineAddValuesCallback,
       engineAddFileCallback,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       baseFolder,
@@ -109,14 +107,12 @@ export default class SouthPostgreSQL
     let tables;
     try {
       const { rows } = await connection.query(`
-          SELECT TABLES.table_name,
-                (
-                  SELECT string_agg(column_name || '(' || data_type || ')', ', ' ORDER BY table_name)
-                  FROM information_schema.columns
-                  WHERE table_name = TABLES.table_name
-                ) columns
-          FROM information_schema.tables TABLES
-          WHERE table_type = 'BASE TABLE'
+        SELECT TABLES.table_name,
+               (SELECT string_agg(column_name || '(' || data_type || ')', ', ' ORDER BY table_name)
+                FROM information_schema.columns
+                WHERE table_name = TABLES.table_name) columns
+        FROM information_schema.tables TABLES
+        WHERE table_type = 'BASE TABLE'
           AND table_schema = current_schema()
       `);
       tables = rows;

@@ -1,15 +1,15 @@
-import * as pg from 'pg'
-import { vsprintf } from 'sprintf-js'
-import objectPath from 'object-path'
+import * as pg from 'pg';
+import { vsprintf } from 'sprintf-js';
+import objectPath from 'object-path';
 
-import NorthConnector from '../north-connector.ts'
-import manifest from './manifest.ts'
+import NorthConnector from '../north-connector.ts';
+import manifest from './manifest.ts';
 
 /**
  * Class NorthTimescaleDB - Send Data to Timescale DB
  */
 export default class NorthTimescaleDB extends NorthConnector {
-  static category = manifest.category
+  static category = manifest.category;
 
   /**
    * Constructor for NorthTimescaleDB
@@ -19,40 +19,22 @@ export default class NorthTimescaleDB extends NorthConnector {
    * @param {Object} logger - The Pino child logger to use
    * @return {void}
    */
-  constructor(
-    configuration,
-    proxyService,
-    logger,
-  ) {
-    super(
-      configuration,
-      proxyService,
-      logger,
-    )
+  constructor(configuration, logger) {
+    super(configuration, logger);
 
-    const {
-      host,
-      user,
-      password,
-      db,
-      regExp,
-      table,
-      optFields,
-      useDataKeyValue,
-      keyParentValue,
-    } = configuration.settings
-    this.host = host
-    this.user = user
-    this.password = password
-    this.database = db
-    this.regExp = regExp
-    this.table = table
-    this.optFields = optFields
-    this.useDataKeyValue = useDataKeyValue
-    this.keyParentValue = keyParentValue
+    const { host, user, password, db, regExp, table, optFields, useDataKeyValue, keyParentValue } = configuration.settings;
+    this.host = host;
+    this.user = user;
+    this.password = password;
+    this.database = db;
+    this.regExp = regExp;
+    this.table = table;
+    this.optFields = optFields;
+    this.useDataKeyValue = useDataKeyValue;
+    this.keyParentValue = keyParentValue;
 
     // Initialized at connection or init
-    this.client = null
+    this.client = null;
   }
 
   /**
@@ -61,15 +43,16 @@ export default class NorthTimescaleDB extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async connect(_additionalInfo = '') {
-    this.logger.info(`Connecting North "${this.name}" to TimescaleDB: `
-        + `postgres://${this.user}:<password>@${this.host}/${this.database}`)
+    this.logger.info(
+      `Connecting North "${this.name}" to TimescaleDB: ` + `postgres://${this.user}:<password>@${this.host}/${this.database}`
+    );
 
-    const url = `postgres://${this.user}:${await this.encryptionService.decryptText(this.password)}@${this.host}/${this.database}`
+    const url = `postgres://${this.user}:${await this.encryptionService.decryptText(this.password)}@${this.host}/${this.database}`;
 
-    this.client = new pg.Client(url)
+    this.client = new pg.Client(url);
 
-    await this.client.connect()
-    await super.connect(`url: ${url}`)
+    await this.client.connect();
+    await super.connect(`url: ${url}`);
   }
 
   /**
@@ -78,45 +61,47 @@ export default class NorthTimescaleDB extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async handleValues(values) {
-    this.logger.trace(`Handle ${values.length} values.`)
+    this.logger.trace(`Handle ${values.length} values.`);
 
-    let query = 'BEGIN;'
-    let tableValue = ''
-    let optFieldsValue = ''
+    let query = 'BEGIN;';
+    let tableValue = '';
+    let optFieldsValue = '';
 
-    values.forEach((entry) => {
-      const { pointId, data } = entry
+    values.forEach(entry => {
+      const { pointId, data } = entry;
 
-      const mainRegExp = new RegExp(this.regExp)
-      const groups = mainRegExp.exec(pointId)
+      const mainRegExp = new RegExp(this.regExp);
+      const groups = mainRegExp.exec(pointId);
       // Remove the first element, which is the matched string, because we only need the groups
-      groups.shift()
+      groups.shift();
 
-      tableValue = vsprintf(this.table, groups)
+      tableValue = vsprintf(this.table, groups);
 
       // optFieldsValue is used to identify fields which are determined from pointId string
-      optFieldsValue = vsprintf(this.optFields, groups)
+      optFieldsValue = vsprintf(this.optFields, groups);
 
       // If there are fewer groups than placeholders, vsprintf will put undefined.
       // We look for the number of 'undefined' before and after the replacement to see if this is the case
       if ((tableValue.match(/undefined/g) || []).length > (this.table.match(/undefined/g) || []).length) {
-        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for table ${this.table}`)
-        return
+        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for table ${this.table}`);
+        return;
       }
 
       if ((optFieldsValue.match(/undefined/g) || []).length > (this.optFields.match(/undefined/g) || []).length) {
-        this.logger.error(`RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for optionals fields ${this.optFields}`)
-        return
+        this.logger.error(
+          `RegExp returned by ${this.regExp} for ${pointId} doesn't have enough groups for optionals fields ${this.optFields}`
+        );
+        return;
       }
 
       // Make the query
-      const tableName = tableValue
-      let statement = `insert into "${tableName}"(`
+      const tableName = tableValue;
+      let statement = `insert into "${tableName}"(`;
 
       // Determinate the value to process depending on useDataKeyValue and keyParentValue parameters.
       // In fact, as some use cases can produce value structured as JSON objects, values which could be atomic values
       // (integer, float, ...) or JSON object must be processed
-      let dataValue
+      let dataValue;
       if (this.useDataKeyValue) {
         // The data to use is the key "value" of a JSON object data (data.value)
         // This data.value can be a JSON object or an atomic value (i.e. integer or float or string, ...)
@@ -127,57 +112,57 @@ export default class NorthTimescaleDB extends NorthConnector {
         //   - the object to use, containing value and timestamp, is localised in data.value object by keyParentValue
         // level1.level2
         //   - To retrieve this object, we use objectPath with parameters: (data.value, 'level1.level2')
-        dataValue = objectPath.get(data.value, this.keyParentValue)
+        dataValue = objectPath.get(data.value, this.keyParentValue);
       } else {
         // Data to use is the JSON object data
-        dataValue = data
+        dataValue = data;
       }
 
-      let timestamp
+      let timestamp;
       if (this.timestampPathInDataValue) {
         // Case where the timestamp is within the dataValue fields received.
-        timestamp = objectPath.get(dataValue, this.timestampPathInDataValue)
+        timestamp = objectPath.get(dataValue, this.timestampPathInDataValue);
         // Once retrieved, remove the timestamp from the fields to not take it again in the other fields
-        objectPath.del(dataValue, this.timestampPathInDataValue)
+        objectPath.del(dataValue, this.timestampPathInDataValue);
       } else {
         // Case where the timestamp is directly at the root of the data received
-        timestamp = entry.timestamp
+        timestamp = entry.timestamp;
       }
 
-      let valuesToInsert = ''
-      let fields = ''
+      let valuesToInsert = '';
+      let fields = '';
       // Filter the timestamp field in the dataValue object in case we already have a timestamp from the main JSON object
-      Object.entries(dataValue).filter(([fieldKey]) => fieldKey !== 'timestamp')
+      Object.entries(dataValue)
+        .filter(([fieldKey]) => fieldKey !== 'timestamp')
         .forEach(([fieldKey, fieldValue]) => {
           // Only insert string or number
           if (typeof fieldValue === 'string' || typeof fieldValue === 'number') {
-            fields = fields !== '' ? `${fields},"${fieldKey}"` : `"${fieldKey}"`
-            valuesToInsert = valuesToInsert !== '' ? `${valuesToInsert},'${fieldValue}'` : `'${fieldValue}'`
+            fields = fields !== '' ? `${fields},"${fieldKey}"` : `"${fieldKey}"`;
+            valuesToInsert = valuesToInsert !== '' ? `${valuesToInsert},'${fieldValue}'` : `'${fieldValue}'`;
           }
-        })
+        });
 
       // Some of optional fields are not present in valuesToInsert, because they are calculated from pointId
       // Those fields must be added in valuesToInsert
-      optFieldsValue.split(',').forEach((optValueString) => {
-        const optItems = optValueString.split(':')
+      optFieldsValue.split(',').forEach(optValueString => {
+        const optItems = optValueString.split(':');
         if (!fields.includes(optItems[0])) {
-          fields = fields !== '' ? `${fields},"${optItems[0]}"` : `"${optItems[0]}"`
-          valuesToInsert = valuesToInsert !== '' ? `${valuesToInsert},'${optItems[1]}'` : `'${optItems[1]}'`
+          fields = fields !== '' ? `${fields},"${optItems[0]}"` : `"${optItems[0]}"`;
+          valuesToInsert = valuesToInsert !== '' ? `${valuesToInsert},'${optItems[1]}'` : `'${optItems[1]}'`;
         }
-      })
+      });
 
-      fields += ',"timestamp"'
-      valuesToInsert += `,'${timestamp}'`
+      fields += ',"timestamp"';
+      valuesToInsert += `,'${timestamp}'`;
 
       // Replace spaces by _ and append entry to body
-      statement += `${fields.replace(/ /g, '_')}) `
-          + `values(${valuesToInsert.replace(/ /g, '_')});`
+      statement += `${fields.replace(/ /g, '_')}) ` + `values(${valuesToInsert.replace(/ /g, '_')});`;
 
-      query += statement
-    })
+      query += statement;
+    });
 
-    query += 'COMMIT'
-    await this.client.query(query)
+    query += 'COMMIT';
+    await this.client.query(query);
   }
 
   /**
@@ -185,10 +170,10 @@ export default class NorthTimescaleDB extends NorthConnector {
    * @returns {Promise<void>} - The result promise
    */
   async disconnect() {
-    this.logger.info(`Disconnecting North "${this.name}" from TimescaleDB`)
+    this.logger.info(`Disconnecting North "${this.name}" from TimescaleDB`);
     if (this.client) {
-      this.client.end()
+      this.client.end();
     }
-    await super.disconnect()
+    await super.disconnect();
   }
 }

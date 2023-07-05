@@ -2,7 +2,7 @@ import PinoLogger from '../tests/__mocks__/logger.mock';
 import SouthServiceMock from '../tests/__mocks__/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/north-service.mock';
 
-import { SouthConnectorItemDTO, SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 
 import SouthService from '../service/south.service';
@@ -11,9 +11,6 @@ import NorthService from '../service/north.service';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
-import RepositoryService from '../service/repository.service';
-import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
-import ProxyService from '../service/proxy.service';
 import OIBusEngine from './oibus-engine';
 import SouthMQTT from '../south/south-mqtt/south-mqtt';
 
@@ -22,7 +19,6 @@ jest.mock('../service/south.service');
 jest.mock('../service/north.service');
 jest.mock('../service/repository.service');
 jest.mock('../service/encryption.service');
-jest.mock('../service/proxy.service');
 jest.mock('../service/utils');
 
 const logger: pino.Logger = new PinoLogger();
@@ -31,8 +27,6 @@ const anotherLogger: pino.Logger = new PinoLogger();
 const southService: SouthService = new SouthServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
-const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 
@@ -139,7 +133,7 @@ describe('OIBusEngine', () => {
     (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
     (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
 
-    engine = new OIBusEngine(encryptionService, proxyService, northService, southService, logger);
+    engine = new OIBusEngine(encryptionService, northService, southService, logger);
   });
 
   it('it should start', async () => {
@@ -260,7 +254,13 @@ describe('OIBusEngine', () => {
     expect(createdSouth.deleteItem).not.toHaveBeenCalled();
     engine.deleteAllItemsFromSouth('southId');
     expect(createdSouth.deleteAllItems).not.toHaveBeenCalled();
-    engine.updateItemInSouth('southId', items[0], { id: 'itemId', connectorId: 'id', name: 'new name', settings: {}, scanModeId: null });
+    engine.updateItemInSouth('southId', items[0], {
+      id: 'itemId',
+      connectorId: 'id',
+      name: 'new name',
+      settings: {},
+      scanModeId: null
+    });
     expect(createdSouth.updateItem).not.toHaveBeenCalled();
 
     engine.addItemToSouth(southConnectors[1].id, items[0]);

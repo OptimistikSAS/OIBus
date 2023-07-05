@@ -4,7 +4,6 @@ import { FormComponent } from './form.component';
 import { ComponentTester } from 'ngx-speculoos';
 import { Component } from '@angular/core';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
-import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { FormControl, FormGroup, FormRecord } from '@angular/forms';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { formDirectives } from '../form-directives';
@@ -13,7 +12,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 @Component({
   template: ` <form [formGroup]="form">
     <div formGroupName="settings">
-      <oib-form [scanModes]="scanModes" [proxies]="proxies" [settingsSchema]="schema" [formGroup]="form.controls.settings"></oib-form>
+      <oib-form [scanModes]="scanModes" [settingsSchema]="schema" [formGroup]="form.controls.settings"></oib-form>
     </div>
   </form>`,
   standalone: true,
@@ -21,7 +20,6 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 })
 class TestComponent {
   scanModes: Array<ScanModeDTO> = [];
-  proxies: Array<ProxyDTO> = [];
   form = new FormGroup({
     settings: new FormRecord({
       myOibSelectField: new FormControl('option2'),

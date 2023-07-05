@@ -3,7 +3,6 @@ import Database from 'better-sqlite3';
 import EngineRepository from '../repository/engine.repository';
 import ExternalSourceRepository from '../repository/external-source.repository';
 import IpFilterRepository from '../repository/ip-filter.repository';
-import ProxyRepository from '../repository/proxy.repository';
 import ScanModeRepository from '../repository/scan-mode.repository';
 import SouthConnectorRepository from '../repository/south-connector.repository';
 import SouthItemRepository from '../repository/south-item.repository';
@@ -20,7 +19,6 @@ export default class RepositoryService {
   private readonly _cryptoRepository: CryptoRepository;
   private readonly _externalSourceRepository: ExternalSourceRepository;
   private readonly _ipFilterRepository: IpFilterRepository;
-  private readonly _proxyRepository: ProxyRepository;
   private readonly _scanModeRepository: ScanModeRepository;
   private readonly _northConnectorRepository: NorthConnectorRepository;
   private readonly _southConnectorRepository: SouthConnectorRepository;
@@ -37,7 +35,6 @@ export default class RepositoryService {
     const cryptoDatabase = Database(cryptoDatabasePath);
     this._externalSourceRepository = new ExternalSourceRepository(oibusDatabase);
     this._ipFilterRepository = new IpFilterRepository(oibusDatabase);
-    this._proxyRepository = new ProxyRepository(oibusDatabase);
     this._scanModeRepository = new ScanModeRepository(oibusDatabase);
     this._engineRepository = new EngineRepository(oibusDatabase);
     this._cryptoRepository = new CryptoRepository(cryptoDatabase);
@@ -74,10 +71,6 @@ export default class RepositoryService {
 
   get ipFilterRepository(): IpFilterRepository {
     return this._ipFilterRepository;
-  }
-
-  get proxyRepository(): ProxyRepository {
-    return this._proxyRepository;
   }
 
   get scanModeRepository(): ScanModeRepository {

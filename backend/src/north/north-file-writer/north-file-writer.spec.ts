@@ -8,7 +8,6 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import ProxyService from '../../service/proxy.service';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
@@ -18,7 +17,6 @@ jest.mock('node:fs/promises');
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
 jest.mock('../../service/cache/archive.service');
 jest.mock(
@@ -87,7 +85,7 @@ describe('NorthFileWriter', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    north = new NorthFileWriter(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+    north = new NorthFileWriter(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
 

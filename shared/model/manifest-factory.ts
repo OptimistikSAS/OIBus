@@ -67,13 +67,43 @@ export function buildDateTimeFieldsFormControl(dataTypes: Array<DateTimeType>): 
   };
 }
 
+export const proxy: Array<OibFormControl> = [
+  {
+    key: 'useProxy',
+    label: 'Use proxy',
+    type: 'OibCheckbox',
+    newRow: true,
+    defaultValue: false,
+    displayInViewMode: true,
+    validators: [{ key: 'required' }]
+  },
+  {
+    key: 'proxyUrl',
+    label: 'Proxy url',
+    type: 'OibText',
+    validators: [{ key: 'required' }],
+    conditionalDisplay: { field: 'useProxy', values: [true] }
+  },
+  {
+    key: 'proxyUsername',
+    label: 'Proxy username',
+    type: 'OibText',
+    conditionalDisplay: { field: 'useProxy', values: [true] }
+  },
+  {
+    key: 'proxyPassword',
+    label: 'Proxy password',
+    type: 'OibSecret',
+    conditionalDisplay: { field: 'useProxy', values: [true] }
+  }
+];
 export const serialization: OibFormControl = {
   key: 'serialization',
   type: 'OibFormGroup',
   label: 'Serialization',
-  class: 'col',
   newRow: true,
   displayInViewMode: false,
+  validators: [{ key: 'required' }],
   content: [
     {
       key: 'type',
@@ -82,7 +112,8 @@ export const serialization: OibFormControl = {
       options: ['csv', 'json'],
       defaultValue: 'csv',
       newRow: true,
-      displayInViewMode: false
+      displayInViewMode: false,
+      validators: [{ key: 'required' }]
     },
     {
       key: 'filename',
@@ -90,7 +121,8 @@ export const serialization: OibFormControl = {
       label: 'Filename',
       defaultValue: 'sql.csv',
       newRow: false,
-      displayInViewMode: false
+      displayInViewMode: false,
+      validators: [{ key: 'required' }]
     },
     {
       key: 'delimiter',
@@ -100,7 +132,8 @@ export const serialization: OibFormControl = {
       options: ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'],
       defaultValue: 'COMMA',
       newRow: false,
-      displayInViewMode: false
+      displayInViewMode: false,
+      validators: [{ key: 'required' }]
     },
     {
       key: 'compression',
@@ -108,7 +141,8 @@ export const serialization: OibFormControl = {
       label: 'Compression',
       defaultValue: false,
       newRow: false,
-      displayInViewMode: false
+      displayInViewMode: false,
+      validators: [{ key: 'required' }]
     },
     {
       key: 'outputTimestampFormat',
@@ -116,7 +150,8 @@ export const serialization: OibFormControl = {
       label: 'Output date time format',
       defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
       newRow: true,
-      displayInViewMode: false
+      displayInViewMode: false,
+      validators: [{ key: 'required' }]
     },
     {
       key: 'outputTimezone',
@@ -124,7 +159,8 @@ export const serialization: OibFormControl = {
       label: 'Output timezone',
       defaultValue: 'Europe/Paris',
       newRow: false,
-      displayInViewMode: false
+      displayInViewMode: false,
+      validators: [{ key: 'required' }]
     }
   ]
 };

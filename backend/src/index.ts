@@ -6,7 +6,6 @@ import EncryptionService from './service/encryption.service';
 import { createFolder, getCommandLineArguments } from './service/utils';
 import RepositoryService from './service/repository.service';
 import ReloadService from './service/reload.service';
-import ProxyService from './service/proxy.service';
 import HealthSignalService from './service/health-signal.service';
 import NorthService from './service/north.service';
 import SouthService from './service/south.service';
@@ -66,16 +65,13 @@ const LOG_DB_NAME = 'journal.db';
   const loggerService = new LoggerService(encryptionService);
   await loggerService.start(oibusSettings.id, oibusSettings.name, oibusSettings.logParameters);
 
-  const proxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
+  const northService = new NorthService(encryptionService, repositoryService);
+  const southService = new SouthService(encryptionService, repositoryService);
+  const historyQueryService = new HistoryQueryService(encryptionService, repositoryService);
 
-  const northService = new NorthService(proxyService, encryptionService, repositoryService);
-  const southService = new SouthService(proxyService, encryptionService, repositoryService);
-  const historyQueryService = new HistoryQueryService(proxyService, encryptionService, repositoryService);
-
-  const engine = new OIBusEngine(encryptionService, proxyService, northService, southService, loggerService.createChildLogger('engine'));
+  const engine = new OIBusEngine(encryptionService, northService, southService, loggerService.createChildLogger('engine'));
   const historyQueryEngine = new HistoryQueryEngine(
     encryptionService,
-    proxyService,
     northService,
     southService,
     historyQueryService,

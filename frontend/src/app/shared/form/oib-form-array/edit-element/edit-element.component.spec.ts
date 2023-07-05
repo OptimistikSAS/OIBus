@@ -126,7 +126,7 @@ describe('EditElementComponent', () => {
     expect(tester.errors.length).toBe(1);
   }));
 
-  it('should save if valid', fakeAsync(() => {
+  it('should save if valid', () => {
     tester.field.fillWith('Field 2');
 
     tester.ok.click();
@@ -136,7 +136,7 @@ describe('EditElementComponent', () => {
       useAsReference: false,
       type: 'unix-epoch-ms'
     });
-  }));
+  });
 
   it('should cancel', () => {
     tester.cancel.click();

@@ -7,7 +7,6 @@ import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
-import ProxyService from '../service/proxy.service';
 import RepositoryService from '../service/repository.service';
 import ValueCacheServiceMock from '../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../tests/__mocks__/file-cache-service.mock';
@@ -29,7 +28,6 @@ const fileTrigger = new EventEmitter();
 // Mock services
 jest.mock('../service/repository.service');
 jest.mock('../service/encryption.service');
-jest.mock('../service/proxy.service');
 jest.mock('../service/utils');
 jest.mock(
   '../service/cache/value-cache.service',
@@ -82,7 +80,6 @@ const anotherLogger: pino.Logger = new PinoLogger();
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 const flushPromises = () => new Promise(jest.requireActual('timers').setImmediate);
@@ -127,7 +124,7 @@ describe('NorthConnector enabled', () => {
         retentionDuration: 720
       }
     };
-    north = new TestNorth(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+    north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
 
@@ -429,7 +426,7 @@ describe('NorthConnector disabled', () => {
       }
     };
 
-    north = new TestNorth(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+    north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   afterEach(() => {
@@ -437,7 +434,7 @@ describe('NorthConnector disabled', () => {
   });
 
   it('should not call handle values and handle file', async () => {
-    const basicNorth = new NorthConnector(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+    const basicNorth = new NorthConnector(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     basicNorth.handleValuesWrapper = jest.fn();
     basicNorth.handleFilesWrapper = jest.fn();
     await basicNorth.run('scan');

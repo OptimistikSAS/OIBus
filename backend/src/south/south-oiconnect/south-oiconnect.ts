@@ -6,10 +6,9 @@ import https from 'https';
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import { formatQueryParams, httpGetWithBody, parsers } from './utils';
-import { formatInstant, createFolder, persistResults } from '../../service/utils';
-import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { createFolder, formatInstant, persistResults } from '../../service/utils';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
@@ -30,24 +29,22 @@ export default class SouthOIConnect
   private readonly tmpFolder: string;
 
   constructor(
-    configuration: SouthConnectorDTO<SouthOIConnectSettings>,
+    connector: SouthConnectorDTO<SouthOIConnectSettings>,
     items: Array<SouthConnectorItemDTO<SouthOIConnectItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string,
     streamMode: boolean
   ) {
     super(
-      configuration,
+      connector,
       items,
       engineAddValuesCallback,
       engineAddFileCallback,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       baseFolder,

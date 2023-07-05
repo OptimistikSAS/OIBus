@@ -16,7 +16,6 @@ import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG } from '../../service/opcua.service';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { ClientSession } from 'node-opcua-client/source/client_session';
@@ -49,24 +48,22 @@ export default class SouthOPCUAHA
   private disconnecting = false;
 
   constructor(
-    configuration: SouthConnectorDTO<SouthOPCUAHASettings>,
+    connector: SouthConnectorDTO<SouthOPCUAHASettings>,
     items: Array<SouthConnectorItemDTO<SouthOPCUAHAItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string,
     streamMode: boolean
   ) {
     super(
-      configuration,
+      connector,
       items,
       engineAddValuesCallback,
       engineAddFileCallback,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       baseFolder,

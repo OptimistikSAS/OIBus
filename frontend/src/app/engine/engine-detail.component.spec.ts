@@ -6,7 +6,6 @@ import { EngineSettingsDTO } from '../../../../shared/model/engine.model';
 import { of, Subject } from 'rxjs';
 import { EngineService } from '../services/engine.service';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
-import { ProxyListComponent } from './proxy-list/proxy-list.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { ScanModeListComponent } from './scan-mode-list/scan-mode-list.component';
@@ -14,7 +13,6 @@ import { ExternalSourceListComponent } from './external-source-list/external-sou
 import { IpFilterListComponent } from './ip-filter-list/ip-filter-list.component';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
-import { ProxyService } from '../services/proxy.service';
 import { ScanModeService } from '../services/scan-mode.service';
 import { IpFilterService } from '../services/ip-filter.service';
 import { ExternalSourceService } from '../services/external-source.service';
@@ -30,10 +28,6 @@ class EngineComponentTester extends ComponentTester<EngineDetailComponent> {
 
   get generalSettings() {
     return this.elements('tbody.general-settings tr');
-  }
-
-  get proxyList() {
-    return this.element(ProxyListComponent);
   }
 
   get scanModeList() {
@@ -60,7 +54,6 @@ class EngineComponentTester extends ComponentTester<EngineDetailComponent> {
 describe('EngineDetailComponent', () => {
   let tester: EngineComponentTester;
   let engineService: jasmine.SpyObj<EngineService>;
-  let proxyService: jasmine.SpyObj<ProxyService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let ipFilterService: jasmine.SpyObj<IpFilterService>;
   let externalSourceService: jasmine.SpyObj<ExternalSourceService>;
@@ -89,7 +82,6 @@ describe('EngineDetailComponent', () => {
 
   beforeEach(() => {
     engineService = createMock(EngineService);
-    proxyService = createMock(ProxyService);
     scanModeService = createMock(ScanModeService);
     ipFilterService = createMock(IpFilterService);
     externalSourceService = createMock(ExternalSourceService);
@@ -102,7 +94,6 @@ describe('EngineDetailComponent', () => {
         provideRouter([]),
         provideHttpClient(),
         { provide: EngineService, useValue: engineService },
-        { provide: ProxyService, useValue: proxyService },
         { provide: ScanModeService, useValue: scanModeService },
         { provide: IpFilterService, useValue: ipFilterService },
         { provide: ExternalSourceService, useValue: externalSourceService },
@@ -112,7 +103,6 @@ describe('EngineDetailComponent', () => {
     });
 
     engineService.getEngineSettings.and.returnValue(of(engineSettings));
-    proxyService.list.and.returnValue(of([]));
     scanModeService.list.and.returnValue(of([]));
     ipFilterService.list.and.returnValue(of([]));
     externalSourceService.list.and.returnValue(of([]));
@@ -135,7 +125,6 @@ describe('EngineDetailComponent', () => {
     expect(table[2]).toContainText('Database:silent');
     expect(table[2]).toContainText('Loki:error');
 
-    expect(tester.proxyList).toBeDefined();
     expect(tester.scanModeList).toBeDefined();
     expect(tester.externalSourceList).toBeDefined();
     expect(tester.ipFilterList).toBeDefined();

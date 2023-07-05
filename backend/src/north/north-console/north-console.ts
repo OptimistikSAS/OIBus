@@ -6,7 +6,6 @@ import pino from 'pino';
 
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import { HandlesFile, HandlesValues } from '../north-interface';
 import { NorthConsoleSettings } from '../../../../shared/model/north-settings.model';
@@ -20,12 +19,11 @@ export default class NorthConsole extends NorthConnector<NorthConsoleSettings> i
   constructor(
     configuration: NorthConnectorDTO<NorthConsoleSettings>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder);
+    super(configuration, encryptionService, repositoryService, logger, baseFolder);
   }
 
   /**

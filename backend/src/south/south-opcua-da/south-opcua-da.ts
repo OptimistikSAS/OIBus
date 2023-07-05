@@ -5,11 +5,10 @@ import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import { initOpcuaCertificateFolders } from '../../service/opcua.service';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 
-import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { ClientSession } from 'node-opcua-client/source/client_session';
 import { OPCUAClientOptions } from 'node-opcua-client/source/opcua_client';
 import { UserIdentityInfo } from 'node-opcua-client/source/user_identity_info';
@@ -38,7 +37,6 @@ export default class SouthOPCUADA
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string,
@@ -50,7 +48,6 @@ export default class SouthOPCUADA
       engineAddValuesCallback,
       engineAddFileCallback,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       baseFolder,

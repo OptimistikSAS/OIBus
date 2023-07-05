@@ -11,7 +11,6 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import ProxyService from '../../service/proxy.service';
 import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import oracledb from 'oracledb';
 import { DateTime } from 'luxon';
@@ -60,7 +59,6 @@ const addFile = jest.fn();
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 const items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>> = [
   {
     id: 'id1',
@@ -200,18 +198,7 @@ describe('SouthOracle with authentication', () => {
 
     (utils.generateReplacementParameters as jest.Mock).mockReturnValue([new Date(nowDateString), new Date(nowDateString)]);
 
-    south = new SouthOracle(
-      connector,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthOracle(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should create temp folder', async () => {
@@ -363,18 +350,7 @@ describe('SouthOracle without authentication', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    south = new SouthOracle(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      proxyService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthOracle(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
   });
 
   it('should manage connection error', async () => {

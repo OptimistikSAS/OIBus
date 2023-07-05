@@ -10,9 +10,7 @@ import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
-import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { ProxyService } from '../../services/proxy.service';
 import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
@@ -47,7 +45,6 @@ export class EditNorthComponent implements OnInit {
   loading = true;
   northSettingsControls: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
-  proxies: Array<ProxyDTO> = [];
   manifest: NorthConnectorManifest | null = null;
 
   northForm: FormGroup<{
@@ -75,16 +72,14 @@ export class EditNorthComponent implements OnInit {
     private fb: NonNullableFormBuilder,
     private notificationService: NotificationService,
     private scanModeService: ScanModeService,
-    private proxyService: ProxyService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
-    combineLatest([this.proxyService.list(), this.scanModeService.list(), this.route.paramMap, this.route.queryParamMap])
+    combineLatest([this.scanModeService.list(), this.route.paramMap, this.route.queryParamMap])
       .pipe(
-        switchMap(([proxies, scanModes, params, queryParams]) => {
-          this.proxies = proxies;
+        switchMap(([scanModes, params, queryParams]) => {
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
           let paramNorthId = params.get('northId');
           this.northType = queryParams.get('type') || '';

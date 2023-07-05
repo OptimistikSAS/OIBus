@@ -11,7 +11,6 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import ProxyService from '../../service/proxy.service';
 
 import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { SouthFolderScannerItemSettings } from '../../../../shared/model/south-settings.model';
@@ -54,7 +53,6 @@ const logger: pino.Logger = new PinoLogger();
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
 const items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>> = [
   {
@@ -119,7 +117,6 @@ describe('SouthFolderScanner', () => {
       addValues,
       addFile,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       'baseFolder',
@@ -242,7 +239,6 @@ describe('SouthFolderScanner with preserve file and compression', () => {
       addValues,
       addFile,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       'baseFolder',
@@ -321,7 +317,6 @@ describe('SouthFolderScanner with preserve file ignore modified date', () => {
       addValues,
       addFile,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       'baseFolder',

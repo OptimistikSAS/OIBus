@@ -4,16 +4,15 @@ import mysql from 'mysql2/promise';
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
 import {
-  formatInstant,
   convertDateTimeToInstant,
   createFolder,
+  formatInstant,
   generateReplacementParameters,
   logQuery,
   persistResults
 } from '../../service/utils';
-import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
@@ -33,24 +32,22 @@ export default class SouthMySQL
   private readonly tmpFolder: string;
 
   constructor(
-    configuration: SouthConnectorDTO<SouthMySQLSettings>,
+    connector: SouthConnectorDTO<SouthMySQLSettings>,
     items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string,
     streamMode: boolean
   ) {
     super(
-      configuration,
+      connector,
       items,
       engineAddValuesCallback,
       engineAddFileCallback,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       baseFolder,

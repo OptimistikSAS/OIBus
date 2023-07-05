@@ -3,16 +3,15 @@ import path from 'node:path';
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
 import {
-  formatInstant,
   convertDateTimeToInstant,
   createFolder,
+  formatInstant,
   generateReplacementParameters,
   logQuery,
   persistResults
 } from '../../service/utils';
-import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
@@ -45,25 +44,24 @@ export default class SouthOracle
   static type = manifest.id;
 
   private readonly tmpFolder: string;
+
   constructor(
-    configuration: SouthConnectorDTO<SouthOracleSettings>,
+    connector: SouthConnectorDTO<SouthOracleSettings>,
     items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string,
     streamMode: boolean
   ) {
     super(
-      configuration,
+      connector,
       items,
       engineAddValuesCallback,
       engineAddFileCallback,
       encryptionService,
-      proxyService,
       repositoryService,
       logger,
       baseFolder,
@@ -125,15 +123,15 @@ export default class SouthOracle
     try {
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
       const { rows } = await connection.execute(`
-              SELECT TABLES.TABLE_NAME AS "table_name",
-                    (
-                      SELECT LISTAGG(column_name || '(' || data_type || ')', ', ')
-                              WITHIN GROUP (ORDER BY TABLE_NAME)
-                      FROM USER_TAB_COLUMNS
-                      WHERE TABLE_NAME = TABLES.TABLE_NAME
-                    ) AS "columns"
-              FROM ALL_TABLES TABLES
-              WHERE OWNER = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')
+        SELECT TABLES.TABLE_NAME AS "table_name",
+               (SELECT LISTAGG(column_name || '(' || data_type || ')', ', ')
+                         WITHIN
+        GROUP (ORDER BY TABLE_NAME)
+        FROM USER_TAB_COLUMNS
+        WHERE TABLE_NAME = TABLES.TABLE_NAME
+          ) AS "columns"
+        FROM ALL_TABLES TABLES
+        WHERE OWNER = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')
       `);
       tables = rows;
     } catch (error: any) {

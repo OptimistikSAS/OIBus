@@ -1,7 +1,6 @@
 import BaseEngine from './base-engine';
 import EncryptionService from '../service/encryption.service';
 import pino from 'pino';
-import ProxyService from '../service/proxy.service';
 import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import NorthService from '../service/north.service';
@@ -24,14 +23,8 @@ export default class OIBusEngine extends BaseEngine {
   private northConnectors: Map<string, NorthConnector> = new Map<string, NorthConnector>();
   private southConnectors: Map<string, SouthConnector> = new Map<string, SouthConnector>();
 
-  constructor(
-    encryptionService: EncryptionService,
-    proxyService: ProxyService,
-    northService: NorthService,
-    southService: SouthService,
-    logger: pino.Logger
-  ) {
-    super(encryptionService, proxyService, northService, southService, logger, CACHE_FOLDER);
+  constructor(encryptionService: EncryptionService, northService: NorthService, southService: SouthService, logger: pino.Logger) {
+    super(encryptionService, northService, southService, logger, CACHE_FOLDER);
   }
 
   /**

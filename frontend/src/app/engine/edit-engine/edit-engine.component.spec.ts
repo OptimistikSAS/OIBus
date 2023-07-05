@@ -7,8 +7,6 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../../../../../shared/model/engine.model';
 import { EngineService } from '../../services/engine.service';
-import { ProxyService } from '../../services/proxy.service';
-import { ProxyDTO } from '../../../../../shared/model/proxy.model';
 import { of } from 'rxjs';
 import { NotificationService } from '../../shared/notification.service';
 
@@ -89,7 +87,6 @@ class EditEngineComponentTester extends ComponentTester<EditEngineComponent> {
 describe('EditEngineComponent', () => {
   let tester: EditEngineComponentTester;
   let engineService: jasmine.SpyObj<EngineService>;
-  let proxyService: jasmine.SpyObj<ProxyService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
   const engineSettings: EngineSettingsDTO = {
@@ -115,33 +112,13 @@ describe('EditEngineComponent', () => {
         address: 'http://loki.oibus.com',
         tokenAddress: 'http://token-address.oibus.com',
         username: 'oibus',
-        password: 'pass',
-        proxyId: null
+        password: 'pass'
       }
     }
   };
-  const proxies: Array<ProxyDTO> = [
-    {
-      id: 'id1',
-      name: 'proxy1',
-      description: 'My Proxy 1',
-      address: 'http://localhost',
-      username: 'user',
-      password: 'pass'
-    },
-    {
-      id: 'id2',
-      name: 'proxy2',
-      description: 'My Proxy 2',
-      address: 'http://localhost',
-      username: 'user',
-      password: 'pass'
-    }
-  ];
 
   beforeEach(() => {
     engineService = createMock(EngineService);
-    proxyService = createMock(ProxyService);
     notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
@@ -150,7 +127,6 @@ describe('EditEngineComponent', () => {
         provideRouter([]),
         provideI18nTesting(),
         { provide: EngineService, useValue: engineService },
-        { provide: ProxyService, useValue: proxyService },
         { provide: NotificationService, useValue: notificationService }
       ]
     });
@@ -158,7 +134,6 @@ describe('EditEngineComponent', () => {
     engineService.getEngineSettings.and.returnValue(of(engineSettings));
 
     engineService.updateEngineSettings.and.returnValue(of(undefined));
-    proxyService.list.and.returnValue(of(proxies));
 
     tester = new EditEngineComponentTester();
     tester.detectChanges();
@@ -181,7 +156,6 @@ describe('EditEngineComponent', () => {
     expect(tester.lokiAddress).toHaveValue(engineSettings.logParameters.loki.address);
     expect(tester.lokiUsername).toHaveValue(engineSettings.logParameters.loki.username);
     expect(tester.lokiPassword).toHaveValue(engineSettings.logParameters.loki.password);
-    expect(tester.lokiProxy).toHaveSelectedLabel('No proxy');
   });
 
   it('should update engine settings', () => {
@@ -227,8 +201,7 @@ describe('EditEngineComponent', () => {
           address: 'http://loki.oibus.com',
           tokenAddress: 'http://token-address.oibus.com',
           username: 'oibus',
-          password: 'pass',
-          proxyId: null
+          password: 'pass'
         }
       }
     });

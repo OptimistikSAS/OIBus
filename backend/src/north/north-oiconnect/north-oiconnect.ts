@@ -2,7 +2,6 @@ import NorthConnector from '../north-connector';
 import manifest from './manifest';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
-import ProxyService from '../../service/proxy.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import fetch from 'node-fetch';
@@ -13,6 +12,7 @@ import https from 'node:https';
 import { HandlesFile, HandlesValues } from '../north-interface';
 import { filesExists } from '../../service/utils';
 import { NorthOIConnectSettings } from '../../../../shared/model/north-settings.model';
+import { createProxyAgent } from '../../service/proxy.service';
 
 /**
  * Class NorthOIConnect - Send files through a POST Multipart HTTP request and values as JSON payload
@@ -29,12 +29,11 @@ export default class NorthOIConnect extends NorthConnector<NorthOIConnectSetting
   constructor(
     configuration: NorthConnectorDTO<NorthOIConnectSettings>,
     encryptionService: EncryptionService,
-    proxyService: ProxyService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
     baseFolder: string
   ) {
-    super(configuration, encryptionService, proxyService, repositoryService, logger, baseFolder);
+    super(configuration, encryptionService, repositoryService, logger, baseFolder);
   }
 
   /**
@@ -43,9 +42,16 @@ export default class NorthOIConnect extends NorthConnector<NorthOIConnectSetting
   override async start(): Promise<void> {
     await super.start();
 
-    if (this.connector.settings.proxyId) {
-      this.proxyAgent = await this.proxyService.createProxyAgent(
-        this.connector.settings.proxyId,
+    if (this.connector.settings.useProxy) {
+      this.proxyAgent = createProxyAgent(
+        {
+          url: this.connector.settings.proxyUrl!,
+          username: this.connector.settings.proxyUsername!,
+          password:
+            this.connector.settings.proxyPassword != null
+              ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+              : null
+        },
         this.connector.settings.acceptUnauthorized
       );
     } else if (this.connector.settings.acceptUnauthorized && this.connector.settings.host.startsWith('https://')) {

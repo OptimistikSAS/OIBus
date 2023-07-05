@@ -43,7 +43,6 @@ describe('Logger', () => {
         password: 'loki-pass',
         tokenAddress: 'token-url',
         address: 'loki-url',
-        proxyId: null,
         interval: 60
       }
     };

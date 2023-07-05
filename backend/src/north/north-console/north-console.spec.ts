@@ -7,10 +7,10 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import ProxyService from '../../service/proxy.service';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
+import { NorthConsoleSettings } from '../../../../shared/model/north-settings.model';
 
 jest.mock('node:fs/promises');
 // Spy on console table and info
@@ -20,7 +20,6 @@ jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
 const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const proxyService: ProxyService = new ProxyService(repositoryService.proxyRepository, encryptionService);
 
 jest.mock('../../service/cache/archive.service');
 jest.mock(
@@ -57,7 +56,7 @@ jest.mock(
 );
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
-const configuration: NorthConnectorDTO = {
+const configuration: NorthConnectorDTO<NorthConsoleSettings> = {
   id: 'id',
   name: 'north',
   type: 'test',
@@ -87,7 +86,7 @@ describe('NorthConsole with verbose mode', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    north = new NorthConsole(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+    north = new NorthConsole(configuration, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly handle values in verbose mode', async () => {
@@ -120,7 +119,7 @@ describe('NorthConsole without verbose mode', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     configuration.settings.verbose = false;
-    north = new NorthConsole(configuration, encryptionService, proxyService, repositoryService, logger, 'baseFolder');
+    north = new NorthConsole(configuration, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly handle values in non verbose mode', async () => {

@@ -90,11 +90,6 @@ describe('Joi validator', () => {
         label: 'OibTimezone'
       },
       {
-        key: 'proxy',
-        type: 'OibProxy',
-        label: 'OibProxy'
-      },
-      {
         key: 'scanMode',
         type: 'OibScanMode',
         label: 'OibScanMode',
@@ -114,8 +109,7 @@ describe('Joi validator', () => {
       block: Joi.string().allow(null, ''),
       checkbox: Joi.boolean().falsy(0).truthy(1),
       timezone: Joi.string().allow(null, ''),
-      scanMode: Joi.string().allow(null, ''),
-      proxy: Joi.string().allow(null, '')
+      scanMode: Joi.string().allow(null, '')
     });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
   });

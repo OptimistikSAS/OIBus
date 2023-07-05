@@ -5,24 +5,21 @@ import EncryptionService from './encryption.service';
 import NorthService from './north.service';
 import RepositoryService from './repository.service';
 import pino from 'pino';
-import ProxyService from './proxy.service';
 
 import { NorthCacheSettingsDTO } from '../../../shared/model/north-connector.model';
 
-jest.mock('../repository/proxy.repository');
 jest.mock('./encryption.service');
 jest.mock('./north-connector-metrics.service');
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryRepository: RepositoryService = new RepositoryServiceMock('', '');
-const proxyService: ProxyService = new ProxyService(repositoryRepository.proxyRepository, encryptionService);
 
 const logger: pino.Logger = new PinoLogger();
 let service: NorthService;
 describe('north service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new NorthService(proxyService, encryptionService, repositoryRepository);
+    service = new NorthService(encryptionService, repositoryRepository);
   });
 
   it('should get a North connector settings', () => {
