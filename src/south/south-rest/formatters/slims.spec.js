@@ -38,6 +38,10 @@ describe('slims formatter', () => {
               unit: 'g/L',
             },
             {
+              name: 'rslt_modifiedOn',
+              value: 1688652039000,
+            },
+            {
               name: 'rslt_cf_samplingDateAndTime',
               value: new Date('2020-01-01T00:00:00.000Z').getTime(),
             },
@@ -58,6 +62,10 @@ describe('slims formatter', () => {
               value: 0,
             },
             {
+              name: 'rslt_modifiedOn',
+              value: 1688652039000,
+            },
+            {
               name: 'rslt_cf_samplingDateAndTime',
               value: new Date('2021-01-01T00:00:00.000Z').getTime(),
             },
@@ -76,6 +84,10 @@ describe('slims formatter', () => {
             {
               name: 'rslt_value',
               value: 0,
+            },
+            {
+              name: 'rslt_modifiedOn',
+              value: 1688652039000,
             },
             {
               name: 'rslt_cf_samplingDateAndTime',
@@ -108,7 +120,8 @@ describe('slims formatter', () => {
     ]
 
     const result = slims(slimsResults)
-    expect(result).toEqual({ httpResults: expectedResult, latestDateRetrieved: new Date('2021-01-01T00:00:00.001Z') })
+    // date retrieved from modified on field
+    expect(result).toEqual({ httpResults: expectedResult, latestDateRetrieved: new Date('2023-07-06T14:00:39.001Z') })
   })
 
   it('should throw error on parsing', () => {
@@ -230,6 +243,64 @@ describe('slims formatter', () => {
       expect(error).toEqual(new Error('Bad data: expect rslt_value to have a unit and a value.'))
     }
 
+    const slimsResultsWithoutModifiedOn = {
+      entities: [
+        {
+          columns: [
+            {
+              name: 'rslt_cf_pid',
+              value: 'myPid',
+            },
+            {
+              name: 'test_name',
+              value: 'myName',
+            },
+            {
+              name: 'rslt_value',
+              value: 123,
+              unit: 'g/L',
+            },
+          ],
+        },
+      ],
+    }
+    try {
+      slims(slimsResultsWithoutModifiedOn)
+    } catch (error) {
+      expect(error).toEqual(new Error('Bad data: expect rslt_modifiedOn to have a value.'))
+    }
+
+    const slimsResultsWithoutModifiedOnValue = {
+      entities: [
+        {
+          columns: [
+            {
+              name: 'rslt_cf_pid',
+              value: 'myPid',
+            },
+            {
+              name: 'test_name',
+              value: 'myName',
+            },
+            {
+              name: 'rslt_value',
+              value: 123,
+              unit: 'g/L',
+            },
+            {
+              name: 'rslt_modifiedOn',
+              value: null,
+            },
+          ],
+        },
+      ],
+    }
+    try {
+      slims(slimsResultsWithoutModifiedOnValue)
+    } catch (error) {
+      expect(error).toEqual(new Error('Bad data: expect rslt_modifiedOn to have a value.'))
+    }
+
     const slimsResultsWithoutSamplingDateAndTime = {
       entities: [
         {
@@ -246,6 +317,10 @@ describe('slims formatter', () => {
               name: 'rslt_value',
               value: 123,
               unit: 'g/L',
+            },
+            {
+              name: 'rslt_modifiedOn',
+              value: 1688652039000,
             },
           ],
         },
@@ -273,6 +348,10 @@ describe('slims formatter', () => {
               name: 'rslt_value',
               value: 123,
               unit: 'g/L',
+            },
+            {
+              name: 'rslt_modifiedOn',
+              value: 1688652039000,
             },
             {
               name: 'rslt_cf_samplingDateAndTime',

@@ -23,6 +23,10 @@ const format = (httpResult) => {
     if (!rsltValue || (rsltValue && rsltValue.value === null)) {
       throw new Error('Bad data: expect rslt_value to have a unit and a value.')
     }
+    const rsltModifiedOn = element.columns.find((column) => column.name === 'rslt_modifiedOn')
+    if (!rsltModifiedOn?.value) {
+      throw new Error('Bad data: expect rslt_modifiedOn to have a value.')
+    }
     const rsltCfSamplingDateAndTime = element.columns.find((column) => column.name === 'rslt_cf_samplingDateAndTime')
     if (!rsltCfSamplingDateAndTime?.value) {
       throw new Error('Bad data: expect rslt_cf_samplingDateAndTime to have a value.')
@@ -33,8 +37,8 @@ const format = (httpResult) => {
       timestamp: new Date(rsltCfSamplingDateAndTime.value).toISOString(),
       value: rsltValue.value,
     })
-    if (new Date(rsltCfSamplingDateAndTime.value) > latestDateRetrieved) {
-      latestDateRetrieved = new Date(rsltCfSamplingDateAndTime.value)
+    if (new Date(rsltModifiedOn.value) > latestDateRetrieved) {
+      latestDateRetrieved = new Date(rsltModifiedOn.value)
     }
   })
   // increment the latest date retrieved to avoid loop in history query from slims
