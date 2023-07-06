@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.6.1](https://github.com/OptimistikSAS/OIBus/compare/v2.6.0...v2.6.1) (2023-07-06)
+
+
+### Bug Fixes
+
+* **opcua:** Send values as it comes instead of storing them in a big array ([6b8d734](https://github.com/OptimistikSAS/OIBus/commit/6b8d734be0aa6c50c0a5bfd60de5092ce2479d0c))
+* **rest:** Fix Rest API call (GET with body) ([d6240b7](https://github.com/OptimistikSAS/OIBus/commit/d6240b7a425f263d81da67a0a854d92ac63083de))
+* **slims:** Fix date cache update with modifiedOn instead of analysis time ([0f7f047](https://github.com/OptimistikSAS/OIBus/commit/0f7f0475b83315ce81ce9172f4a9cff20ba595af))
+
 ## [2.6.0](https://github.com/OptimistikSAS/OIBus/compare/v2.5.11...v2.6.0) (2023-07-06)
 
 
