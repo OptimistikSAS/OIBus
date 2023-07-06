@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.6.0](https://github.com/OptimistikSAS/OIBus/compare/v2.5.11...v2.6.0) (2023-07-06)
+
+
+### Features
+
+* **north:** backport azure blob ([e505dbe](https://github.com/OptimistikSAS/OIBus/commit/e505dbe9f54396858c21ae5cefd1f476edbea5b4))
+* **south-odbc-remote:** add a new south that will remotely execute odbc commands ([393f120](https://github.com/OptimistikSAS/OIBus/commit/393f1208d7f1e940e92dc78d54e4cc2286712b90))
+
+
+### Bug Fixes
+
+* install lib instead of build-release ([0007b64](https://github.com/OptimistikSAS/OIBus/commit/0007b64b8166f389e768fc86084d67aa7319e263))
+
 ### [2.5.11](https://github.com/OptimistikSAS/OIBus/compare/v2.5.10...v2.5.11) (2023-07-03)
 
 
