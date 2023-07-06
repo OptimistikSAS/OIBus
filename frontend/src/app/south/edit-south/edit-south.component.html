@@ -94,7 +94,7 @@
           <oib-form
             *ngIf="southSettingsControls.length > 0"
             formGroupName="settings"
-            [formGroup]="southForm.controls.settings"
+            [form]="southForm.controls.settings"
             [settingsSchema]="southSettingsControls"
             [scanModes]="scanModes"
           ></oib-form>

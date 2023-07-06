@@ -1,6 +1,6 @@
 <div class="row" *ngFor="let row of settingsSchema">
   <ng-container *ngFor="let setting of row">
-    <div *ngIf="!this.formGroup.get(setting.key)?.disabled" [class]="setting.class || 'col'">
+    <div *ngIf="!this.form.get(setting.key)?.disabled" [class]="setting.class || 'col'">
       <div class="form-group">
         <label
           class="form-label"
@@ -83,8 +83,8 @@
           <oib-form
             *ngIf="setting.content.length > 0"
             [formGroupName]="setting.key"
-            [formGroup]="getFormGroup(setting)"
-            [settingsSchema]="getSettingsGroupedByRow(setting.content)"
+            [form]="getFormGroup(setting)"
+            [settingsSchema]="settingsGroupedByRowByFormGroup.get(setting.key)!"
             [scanModes]="scanModes"
           ></oib-form>
         </ng-container>

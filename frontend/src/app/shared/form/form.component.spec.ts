@@ -12,7 +12,7 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 @Component({
   template: ` <form [formGroup]="form">
     <div formGroupName="settings">
-      <oib-form [scanModes]="scanModes" [settingsSchema]="schema" [formGroup]="form.controls.settings"></oib-form>
+      <oib-form [scanModes]="scanModes" [settingsSchema]="schema" [form]="form.controls.settings"></oib-form>
     </div>
   </form>`,
   standalone: true,
