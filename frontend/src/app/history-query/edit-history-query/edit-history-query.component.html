@@ -19,7 +19,7 @@
             <!-- Description -->
             <div class="col-5">
               <div class="form-group">
-                <label class="form-label" for="history-query-description" translate="history-query.description"></label>
+                <label for="history-query-description" translate="history-query.description"></label>
                 <input formControlName="description" id="history-query-description" class="form-control" />
               </div>
             </div>
@@ -28,14 +28,14 @@
           <div class="row">
             <div class="col">
               <div class="form-group">
-                <label class="form-label" for="start" class="col-auto col-form-label" translate="history-query.start"></label>
+                <label for="start" class="col-auto col-form-label" translate="history-query.start"></label>
                 <oib-datetimepicker formControlName="start" id="start"></oib-datetimepicker>
                 <val-errors controlName="start"></val-errors>
               </div>
             </div>
             <div class="col">
               <div class="form-group">
-                <label class="form-label" for="end" class="col-auto col-form-label" translate="history-query.end"></label>
+                <label for="end" class="col-auto col-form-label" translate="history-query.end"></label>
                 <oib-datetimepicker formControlName="end" id="end"></oib-datetimepicker>
                 <val-errors controlName="end"></val-errors>
               </div>
@@ -164,7 +164,7 @@
           <oib-form
             *ngIf="northSettingsControls.length > 0"
             formGroupName="northSettings"
-            [formGroup]="historyQueryForm.controls.northSettings"
+            [form]="historyQueryForm.controls.northSettings"
             [settingsSchema]="northSettingsControls"
             [scanModes]="scanModes"
           ></oib-form>
@@ -183,7 +183,7 @@
           <oib-form
             *ngIf="southSettingsControls.length > 0"
             formGroupName="southSettings"
-            [formGroup]="historyQueryForm.controls.southSettings"
+            [form]="historyQueryForm.controls.southSettings"
             [settingsSchema]="southSettingsControls"
             [scanModes]="scanModes"
           ></oib-form>

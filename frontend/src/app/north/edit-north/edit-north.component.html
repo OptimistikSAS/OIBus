@@ -44,7 +44,7 @@
           <oib-form
             *ngIf="northSettingsControls.length > 0"
             formGroupName="settings"
-            [formGroup]="northForm.controls.settings"
+            [form]="northForm.controls.settings"
             [settingsSchema]="northSettingsControls"
             [scanModes]="scanModes"
           ></oib-form>

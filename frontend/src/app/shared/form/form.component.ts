@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { NgForOf, NgIf } from '@angular/common';
 import { ControlContainer, FormGroup, FormGroupName } from '@angular/forms';
 import { formDirectives } from '../form-directives';
@@ -35,10 +35,10 @@ declare namespace Intl {
     }
   ]
 })
-export class FormComponent {
+export class FormComponent implements OnInit {
   @Input() settingsSchema: Array<Array<OibFormControl>> = [];
   @Input() scanModes: Array<ScanModeDTO> = [];
-  @Input({ required: true }) formGroup!: FormGroup;
+  @Input({ required: true }) form!: FormGroup;
 
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
   timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
@@ -47,14 +47,22 @@ export class FormComponent {
   );
   protected readonly FormGroup = FormGroup;
 
+  settingsGroupedByRowByFormGroup = new Map<string, Array<Array<OibFormControl>>>();
+
   constructor(private pipeProviderService: PipeProviderService) {}
 
-  getFormGroup(setting: OibFormGroup): FormGroup {
-    return this.formGroup.controls[setting.key] as FormGroup;
+  ngOnInit(): void {
+    this.settingsSchema.forEach(settings => {
+      settings.forEach(setting => {
+        if (setting.type === 'OibFormGroup') {
+          this.settingsGroupedByRowByFormGroup.set(setting.key, groupFormControlsByRow(setting.content));
+        }
+      });
+    });
   }
 
-  getSettingsGroupedByRow(content: Array<OibFormControl>): Array<Array<OibFormControl>> {
-    return groupFormControlsByRow(content);
+  getFormGroup(setting: OibFormGroup): FormGroup {
+    return this.form.controls[setting.key] as FormGroup;
   }
 
   transform(value: string, pipeIdentifier: string | undefined): string {

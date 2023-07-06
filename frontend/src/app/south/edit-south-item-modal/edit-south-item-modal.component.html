@@ -32,7 +32,7 @@
     <oib-form
       *ngIf="southItemRows.length > 0"
       formGroupName="settings"
-      [formGroup]="form.controls.settings"
+      [form]="form.controls.settings"
       [settingsSchema]="southItemRows"
       [scanModes]="scanModes"
     ></oib-form>
