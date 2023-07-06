@@ -225,20 +225,21 @@ export default class SouthOPCUAHA extends SouthConnector {
    * @param {Date} startTime - The start time
    * @param {Date} endTime - The end time
    * @param {Object} options - The read options
-   * @returns {Promise<[][]>} - The list of values for each node
+   * @param {String} scanMode - The scan mode
+   * @returns {Promise<void>} - The result promise
    */
-  async readHistoryValue(nodes, startTime, endTime, options) {
+  async readHistoryValue(nodes, startTime, endTime, options, scanMode) {
     this.logger.trace(`Reading ${nodes.length} with options "${JSON.stringify(options)}".`)
     let nodesToRead = nodes.map((node) => ({
       continuationPoint: null,
       dataEncoding: undefined,
       indexRange: undefined,
       nodeId: node.nodeId,
+      pointId: node.pointId,
     }))
     let historyReadDetails
 
     const logs = {}
-    const dataValues = [[]]
     do {
       if (options.aggregateFn) {
         if (!options.processingInterval) {
@@ -276,6 +277,8 @@ export default class SouthOPCUAHA extends SouthConnector {
       }
 
       if (response.results) {
+        const dataValues = [[]]
+
         this.logger.debug(`Received a response of ${response.results.length} nodes.`)
         nodesToRead = nodesToRead.map((node, i) => {
           if (!dataValues[i]) dataValues.push([])
@@ -303,7 +306,12 @@ export default class SouthOPCUAHA extends SouthConnector {
             continuationPoint: result.continuationPoint,
           }
         })
-          .filter((node) => !!node.continuationPoint)
+
+        // eslint-disable-next-line no-await-in-loop
+        await this.formatAndSendValues(dataValues, nodesToRead, startTime, scanMode)
+
+        nodesToRead = nodesToRead.filter((node) => !!node.continuationPoint)
+
         this.logger.trace(`Continue read for ${nodesToRead.length} points.`)
       } else {
         this.logger.error('No result found in response.')
@@ -340,7 +348,6 @@ export default class SouthOPCUAHA extends SouthConnector {
           break
       }
     })
-    return dataValues
   }
 
   /**
@@ -404,13 +411,7 @@ export default class SouthOPCUAHA extends SouthConnector {
           this.logger.error(`Unsupported aggregate: "${scanGroup.aggregate}".`)
       }
 
-      const dataValues = await this.readHistoryValue(nodesToRead, startTime, endTime, options)
-
-      if (dataValues.length !== nodesToRead.length) {
-        this.logger.error(`Received ${dataValues.length} data values, requested ${nodesToRead.length} nodes.`)
-      }
-
-      await this.formatAndSendValues(dataValues, nodesToRead, startTime, scanMode)
+      await this.readHistoryValue(nodesToRead, startTime, endTime, options, scanMode)
     } catch (error) {
       if (!this.disconnecting) {
         await this.internalDisconnect()

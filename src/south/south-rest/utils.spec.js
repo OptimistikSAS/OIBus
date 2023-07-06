@@ -72,6 +72,7 @@ describe('South connector Rest API utils', () => {
     const onMock = jest.fn()
     const writeMock = jest.fn()
     const endMock = jest.fn()
+    streamStream.setEncoding = jest.fn()
     http.request.mockImplementation((options, callback) => {
       callback(streamStream)
       streamStream.emit('data', '{ "data": "myValue" }')
@@ -97,6 +98,7 @@ describe('South connector Rest API utils', () => {
     const onMock = jest.fn()
     const writeMock = jest.fn()
     const endMock = jest.fn()
+    streamStream.setEncoding = jest.fn()
     https.request.mockImplementation((options, callback) => {
       callback(streamStream)
       streamStream.emit('data', '{ "data": "myValue" }')
@@ -119,6 +121,7 @@ describe('South connector Rest API utils', () => {
 
   it('should throw an error when parsing received data', async () => {
     const streamStream = new Stream()
+    streamStream.setEncoding = jest.fn()
     https.request.mockImplementation((options, callback) => {
       callback(streamStream)
       streamStream.emit('data', 'some data')

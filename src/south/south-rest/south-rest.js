@@ -123,7 +123,7 @@ export default class SouthRest extends SouthConnector {
 
     const requestStartTime = new Date().getTime()
     const results = await this.getDataFromRestApi(startTime, endTime)
-    this.logger.debug(`Response body first 200 chars are {${JSON.stringify(results)?.substring(0, 200)}`)
+    this.logger.debug(`Response body first 200 chars are ${JSON.stringify(results)?.substring(0, 200)}`)
 
     if (results) {
       let formattedResults = null
