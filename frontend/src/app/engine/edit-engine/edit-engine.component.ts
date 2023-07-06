@@ -41,7 +41,6 @@ export class EditEngineComponent implements OnInit {
         interval: [null as number | null, [Validators.required, Validators.min(10)]],
         address: ['', Validators.pattern(/http.*/)],
         tokenAddress: ['', Validators.pattern(/http.*/)],
-        proxyId: null as string | null,
         username: null as string | null,
         password: null as string | null
       })

@@ -33,8 +33,7 @@ const engineSchema: Joi.ObjectSchema = Joi.object({
       address: Joi.string().required().allow(''),
       tokenAddress: Joi.string().required().allow(''),
       username: Joi.string().required().allow(''),
-      password: Joi.string().required().allow(''),
-      proxyId: Joi.string().required().allow(null, '')
+      password: Joi.string().required().allow('')
     })
   })
 });

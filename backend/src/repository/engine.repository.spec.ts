@@ -152,7 +152,6 @@ describe('Non-empty Engine repository', () => {
     lokiLogInterval: 60,
     lokiLogAddress: '',
     lokiLogTokenAddress: '',
-    lokiLogProxyId: null,
     lokiLogUsername: '',
     lokiLogPassword: ''
   };

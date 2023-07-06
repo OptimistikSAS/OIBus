@@ -55,8 +55,7 @@ const dataProviders: DataProvider[] = [
           address: null,
           tokenAddress: null,
           username: null,
-          password: null,
-          proxyId: null
+          password: null
         }
       }
     },
@@ -87,8 +86,7 @@ const dataProviders: DataProvider[] = [
           address: '',
           tokenAddress: '',
           username: '',
-          password: '',
-          proxyId: ''
+          password: ''
         }
       }
     },
@@ -119,8 +117,7 @@ const dataProviders: DataProvider[] = [
           address: '',
           tokenAddress: '',
           username: '',
-          password: '',
-          proxyId: null
+          password: ''
         }
       }
     },

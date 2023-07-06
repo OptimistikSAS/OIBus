@@ -71,8 +71,7 @@ const configuration: NorthConnectorDTO = {
       type: 'api-key',
       key: 'key',
       secret: 'secret'
-    },
-    proxyId: 'proxyId'
+    }
   },
   caching: {
     scanModeId: 'id1',
