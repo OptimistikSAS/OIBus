@@ -19,11 +19,13 @@ const parsers = {
  * @returns {Promise<Object>} - The HTTP response
  */
 const httpGetWithBody = (body, options) => new Promise((resolve, reject) => {
-  const { protocol } = options
   const callback = (response) => {
     let str = ''
+    response.setEncoding('utf8')
     response.on('data', (chunk) => {
-      str += chunk
+      if (chunk) {
+        str += chunk
+      }
     })
     response.on('end', () => {
       try {
@@ -35,7 +37,7 @@ const httpGetWithBody = (body, options) => new Promise((resolve, reject) => {
     })
   }
 
-  const req = (protocol === 'https' ? https : http).request({ ...options, protocol: `${options.protocol}:` }, callback)
+  const req = (options.protocol === 'https' ? https : http).request({ ...options, protocol: `${options.protocol}:` }, callback)
   req.on('error', (e) => {
     reject(e)
   })
