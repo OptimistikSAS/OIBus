@@ -77,7 +77,7 @@ export default class NorthAzureBlob extends NorthConnector {
       process.env.AZURE_CLIENT_SECRET = this.clientSecret
       const defaultAzureCredential = new DefaultAzureCredential()
       this.blobClient = new BlobServiceClient(
-        `https://${this.configuration.settings.account}.blob.core.windows.net`,
+        `https://${this.account}.blob.core.windows.net`,
         defaultAzureCredential,
       )
     } else if (this.authentication === 'accessKey') {

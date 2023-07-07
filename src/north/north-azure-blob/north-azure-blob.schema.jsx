@@ -74,7 +74,7 @@ schema.form = {
   },
   clientSecret: {
     type: 'OibPassword',
-    label: 'Client id',
+    label: 'Client password',
     newRow: false,
     md: 4,
     valid: optional(),
