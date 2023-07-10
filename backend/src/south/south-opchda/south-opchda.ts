@@ -13,6 +13,13 @@ import Agent from './agent';
 import SouthOPCHDATest from './south-opchda-test';
 import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../../shared/model/south-settings.model';
 
+interface AgentPoint {
+  ItemId: string;
+  Timestamp: Instant;
+  Value: number;
+  Quality: string;
+}
+
 /**
  * Class SouthOPCHDA - Run a HDA agent to connect to an OPCHDA server.
  * This connector communicates with the Agent through a TCP connection thanks to the TCP server created on OIBus
@@ -29,7 +36,7 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
   private historyRead$: DeferredPromise | null = null;
   private historyReadTimeout: NodeJS.Timeout | null = null;
 
-  private itemsByGroups = new Map<
+  private readonly itemsByGroups: Map<
     string,
     {
       aggregate: string;
@@ -37,7 +44,7 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
       scanMode: string;
       points: string[];
     }
-  >();
+  >;
 
   constructor(
     connector: SouthConnectorDTO<SouthOPCHDASettings>,
@@ -47,20 +54,39 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string,
-    streamMode: boolean
+    baseFolder: string
   ) {
-    super(
-      connector,
-      items,
-      engineAddValuesCallback,
-      engineAddFileCallback,
-      encryptionService,
-      repositoryService,
-      logger,
-      baseFolder,
-      streamMode
-    );
+    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+
+    this.itemsByGroups = new Map<
+      string,
+      {
+        aggregate: string;
+        resampling: string;
+        scanMode: string;
+        points: string[];
+      }
+    >();
+
+    for (const item of items) {
+      const groupName = `${item.scanModeId}-${item.settings.aggregate}-${item.settings.resampling}`;
+      if (!this.itemsByGroups.get(groupName)) {
+        this.itemsByGroups.set(groupName, {
+          aggregate: item.settings.aggregate,
+          resampling: item.settings.resampling,
+          scanMode: item.scanModeId!,
+          points: [item.settings.nodeId]
+        });
+      } else {
+        const group = this.itemsByGroups.get(groupName)!;
+        this.itemsByGroups.set(groupName, {
+          aggregate: item.settings.aggregate,
+          resampling: item.settings.resampling,
+          scanMode: item.scanModeId!,
+          points: [...group.points, item.settings.nodeId]
+        });
+      }
+    }
 
     this.agent = new Agent(this, connector.settings, logger);
   }
@@ -99,7 +125,11 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
 
     let maxTimestamp = DateTime.fromISO(startTime).toMillis();
 
-    for (const groupName of this.itemsByGroups.keys()) {
+    const groupList: Set<string> = new Set();
+    for (const item of items) {
+      groupList.add(`${item.scanModeId}-${item.settings.aggregate}-${item.settings.resampling}`);
+    }
+    for (const groupName of groupList) {
       this.logger.trace(`Reading ${groupName} group item in HDA Agent`);
       await this.agent.sendReadMessage(groupName, startTime, endTime);
     }
@@ -141,43 +171,11 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
 
       await this.agent.disconnect();
       this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
-
       return;
     }
 
     // Now that the HDA Agent is connected, the Agent can be initialized with the scan groups
     try {
-      this.itemsByGroups = new Map<
-        string,
-        {
-          aggregate: string;
-          resampling: string;
-          scanMode: string;
-          points: string[];
-        }
-      >();
-      for (const [scanModeId, items] of this.itemsByScanModeIds.entries()) {
-        for (const item of items.values()) {
-          const groupName = `${scanModeId}-${item.settings.aggregate}-${item.settings.resampling}`;
-          if (!this.itemsByGroups.get(groupName)) {
-            this.itemsByGroups.set(groupName, {
-              aggregate: item.settings.aggregate,
-              resampling: item.settings.resampling,
-              scanMode: item.scanModeId!,
-              points: [item.settings.nodeId]
-            });
-          } else {
-            const group = this.itemsByGroups.get(groupName)!;
-            this.itemsByGroups.set(groupName, {
-              aggregate: item.settings.aggregate,
-              resampling: item.settings.resampling,
-              scanMode: item.scanModeId!,
-              points: [...group.points, item.settings.nodeId]
-            });
-          }
-        }
-      }
-
       const groups = Array.from(this.itemsByGroups || new Map(), ([groupName, item]) => ({
         name: groupName,
         ...item
@@ -232,18 +230,18 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
     }
 
     let maxTimestamp = 0;
-    const values = messageObject.Content.Points.filter((point: any) => {
+    const values = messageObject.Content.Points.filter((point: AgentPoint) => {
       if (point.Timestamp !== undefined && point.Value !== undefined) {
         return true;
       }
       this.logger.error(`Point: "${point.ItemId}" is invalid: ${JSON.stringify(point)}`);
       return false;
-    }).map((point: any) => {
+    }).map((point: AgentPoint) => {
       maxTimestamp =
         DateTime.fromISO(point.Timestamp).toMillis() > maxTimestamp ? DateTime.fromISO(point.Timestamp).toMillis() : maxTimestamp;
 
       return {
-        pointId: point.itemId,
+        pointId: point.ItemId,
         timestamp: DateTime.fromISO(point.Timestamp).toUTC().toISO(),
         data: { value: point.Value.toString(), quality: JSON.stringify(point.Quality) }
       };

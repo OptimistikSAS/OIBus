@@ -40,14 +40,14 @@ describe('History query item repository', () => {
           name: 'my history query item',
           connectorId: 'historyId',
           settings: {},
-          scanModeId: null
+          scanModeId: 'history'
         },
         {
           id: 'id2',
           name: 'my second history query item',
           connectorId: 'historyId',
           settings: {},
-          scanModeId: null
+          scanModeId: 'history'
         }
       ],
       size: 50,
@@ -88,14 +88,14 @@ describe('History query item repository', () => {
         name: 'my history query item',
         connectorId: 'historyId',
         settings: {},
-        scanModeId: null
+        scanModeId: 'history'
       },
       {
         id: 'id2',
         name: 'my second history query item',
         connectorId: 'historyId',
         settings: {},
-        scanModeId: null
+        scanModeId: 'history'
       }
     ];
     all.mockReturnValueOnce([
@@ -125,7 +125,7 @@ describe('History query item repository', () => {
       name: 'historyItem1',
       connectorId: 'historyId',
       settings: {},
-      scanModeId: null
+      scanModeId: 'history'
     };
     get.mockReturnValueOnce({
       id: 'id1',
@@ -145,7 +145,7 @@ describe('History query item repository', () => {
 
     const command: SouthConnectorItemCommandDTO = {
       name: 'historyItem1',
-      scanModeId: null,
+      scanModeId: 'history',
       settings: {}
     };
     repository.createHistoryItem('historyId', command);
@@ -160,7 +160,7 @@ describe('History query item repository', () => {
   it('should update a history query item', () => {
     const command: SouthConnectorItemCommandDTO = {
       name: 'historyItem1',
-      scanModeId: null,
+      scanModeId: 'history',
       settings: {}
     };
     repository.updateHistoryItem('id1', command);
@@ -189,7 +189,7 @@ describe('History query item repository', () => {
       name: 'item1',
       connectorId: 'southId',
       settings: {},
-      scanModeId: null
+      scanModeId: 'history'
     };
 
     const itemToUpdate: SouthConnectorItemDTO = {
@@ -197,7 +197,7 @@ describe('History query item repository', () => {
       name: 'item2',
       connectorId: 'southId',
       settings: {},
-      scanModeId: null
+      scanModeId: 'history'
     };
 
     repository.createAndUpdateItems('historyId', [itemToAdd], [itemToUpdate]);

@@ -194,7 +194,7 @@ describe('SouthSQLite', () => {
 
     (utils.generateReplacementParameters as jest.Mock).mockReturnValue([new Date(nowDateString), new Date(nowDateString)]);
 
-    south = new SouthSQLite(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthSQLite(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should create temp folder', async () => {

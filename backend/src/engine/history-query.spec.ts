@@ -16,6 +16,7 @@ import path from 'node:path';
 import HistoryServiceMock from '../tests/__mocks__/history-service.mock';
 import HistoryQueryService from '../service/history-query.service';
 import Stream from 'node:stream';
+import { EventEmitter } from 'node:events';
 
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');
@@ -65,6 +66,7 @@ const items: Array<SouthConnectorItemDTO> = [
 ];
 
 const southStream = new Stream();
+const connectedEvent = new EventEmitter();
 const createdSouth = {
   start: jest.fn(),
   stop: jest.fn(),
@@ -75,7 +77,8 @@ const createdSouth = {
   deleteAllItems: jest.fn(),
   resetCache: jest.fn(),
   getMetricsDataStream: jest.fn(() => southStream),
-  historyIsRunning: false
+  historyIsRunning: false,
+  connectedEvent
 };
 
 const northStream = new Stream();
@@ -95,6 +98,8 @@ describe('HistoryQuery enabled', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    connectedEvent.removeAllListeners();
 
     (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
     (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
@@ -141,51 +146,16 @@ describe('HistoryQuery enabled', () => {
   });
 
   it('should be properly initialized', async () => {
-    historyQuery.runSouthConnector = jest.fn();
     await historyQuery.start();
     expect(createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', configuration.id, 'south'));
     expect(createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', configuration.id, 'north'));
     expect(createdNorth.start).toHaveBeenCalledTimes(1);
-    expect(createdNorth.connect).toHaveBeenCalledTimes(1);
-    expect(historyQuery.runSouthConnector).toHaveBeenCalledTimes(1);
 
     northStream.emit('data', `data: ${JSON.stringify({})}`);
     southStream.emit('data', `data: ${JSON.stringify({})}`);
     expect(updateMetrics).toHaveBeenCalledTimes(2);
     expect(updateMetrics).toHaveBeenCalledWith({ status: 'my status', south: {} });
     expect(updateMetrics).toHaveBeenCalledWith({ status: 'my status', north: {} });
-  });
-
-  it('should manage error when no south found', async () => {
-    (southService.createSouth as jest.Mock).mockReturnValueOnce(null);
-
-    historyQuery.runSouthConnector = jest.fn();
-    let error;
-    try {
-      await historyQuery.start();
-    } catch (err) {
-      error = err;
-    }
-    expect(error).toEqual(
-      new Error(`Could not instantiate South type ${configuration.southType} for History Query ${configuration.name} (${configuration.id})`)
-    );
-    expect(historyQuery.runSouthConnector).not.toHaveBeenCalled();
-  });
-
-  it('should manage error when no south found', async () => {
-    (northService.createNorth as jest.Mock).mockReturnValue(null);
-
-    historyQuery.runSouthConnector = jest.fn();
-    let error;
-    try {
-      await historyQuery.start();
-    } catch (err) {
-      error = err;
-    }
-    expect(error).toEqual(
-      new Error(`Could not instantiate North type ${configuration.northType} for History Query ${configuration.name} (${configuration.id})`)
-    );
-    expect(historyQuery.runSouthConnector).not.toHaveBeenCalled();
   });
 
   it('should start south connector', async () => {
@@ -195,8 +165,8 @@ describe('HistoryQuery enabled', () => {
       });
     });
     await historyQuery.start();
+    connectedEvent.emit('connected');
     expect(createdSouth.start).toHaveBeenCalledTimes(1);
-    expect(createdSouth.connect).toHaveBeenCalledTimes(1);
     expect(createdSouth.historyQueryHandler).toHaveBeenCalledTimes(1);
     expect(createdSouth.historyQueryHandler).toHaveBeenCalledWith(items, configuration.startTime, configuration.endTime, 'history');
   });
@@ -214,17 +184,14 @@ describe('HistoryQuery enabled', () => {
         });
       });
     await historyQuery.start();
-    expect(createdSouth.start).toHaveBeenCalledTimes(2);
-    expect(createdSouth.connect).toHaveBeenCalledTimes(2);
+    connectedEvent.emit('connected');
+
+    expect(createdSouth.start).toHaveBeenCalledTimes(1);
     expect(createdSouth.historyQueryHandler).toHaveBeenCalledTimes(1);
     expect(createdSouth.historyQueryHandler).toHaveBeenCalledWith(items, configuration.startTime, configuration.endTime, 'history');
-    expect(logger.error).toHaveBeenCalledWith(
-      `Restarting South for "${configuration.name}" after an error while running South history query handler: error`
-    );
   });
 
   it('should cache values', async () => {
-    historyQuery.runSouthConnector = jest.fn();
     await historyQuery.start();
 
     await historyQuery.addValues('southId', ['', '']);
@@ -233,7 +200,6 @@ describe('HistoryQuery enabled', () => {
   });
 
   it('should cache file', async () => {
-    historyQuery.runSouthConnector = jest.fn();
     await historyQuery.start();
 
     await historyQuery.addFile('southId', 'myFile');
@@ -243,9 +209,10 @@ describe('HistoryQuery enabled', () => {
 
   it('should properly stop', async () => {
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
-    historyQuery.runSouthConnector = jest.fn();
     await historyQuery.start();
+    connectedEvent.emit('connected');
     await historyQuery.stop();
+
     expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
     expect(createdSouth.stop).toHaveBeenCalledTimes(1);
     expect(createdNorth.stop).toHaveBeenCalledTimes(1);
@@ -263,11 +230,9 @@ describe('HistoryQuery enabled', () => {
     createdNorth.isCacheEmpty.mockReturnValueOnce(false).mockReturnValue(true);
 
     await historyQuery.start();
-
     await historyQuery.finish();
 
     expect(logger.debug).toHaveBeenCalledWith(`History query "${configuration.name}" is still running`);
-
     await historyQuery.finish();
     expect(logger.debug).toHaveBeenCalledTimes(2);
 
@@ -277,8 +242,6 @@ describe('HistoryQuery enabled', () => {
   });
 
   it('should properly add item', async () => {
-    historyQuery.runSouthConnector = jest.fn();
-
     await historyQuery.start();
     historyQuery.stop = jest.fn();
     historyQuery.start = jest.fn();
@@ -290,8 +253,6 @@ describe('HistoryQuery enabled', () => {
   });
 
   it('should properly update item', async () => {
-    historyQuery.runSouthConnector = jest.fn();
-
     await historyQuery.start();
     historyQuery.deleteItem = jest.fn();
     historyQuery.addItem = jest.fn();
@@ -301,8 +262,6 @@ describe('HistoryQuery enabled', () => {
   });
 
   it('should properly delete item', async () => {
-    historyQuery.runSouthConnector = jest.fn();
-
     await historyQuery.start();
     await historyQuery.deleteItem(items[0]);
     expect(createdSouth.deleteItem).toHaveBeenCalledTimes(1);
@@ -310,9 +269,7 @@ describe('HistoryQuery enabled', () => {
   });
 
   it('should properly delete items', async () => {
-    historyQuery.runSouthConnector = jest.fn();
     await historyQuery.deleteItems();
-
     await historyQuery.start();
     await historyQuery.deleteItems();
     expect(createdSouth.deleteAllItems).toHaveBeenCalledTimes(1);
@@ -352,6 +309,7 @@ describe('HistoryQuery disabled', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    connectedEvent.removeAllListeners();
 
     (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
     (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
@@ -390,17 +348,10 @@ describe('HistoryQuery disabled', () => {
   });
 
   it('should be properly initialized', async () => {
-    historyQuery.runSouthConnector = jest.fn();
     await historyQuery.start();
     expect(logger.trace).toHaveBeenCalledWith(`History Query "${configuration.name}" not enabled`);
     expect(createdNorth.start).not.toHaveBeenCalled();
     expect(createdNorth.connect).not.toHaveBeenCalled();
-    expect(historyQuery.runSouthConnector).not.toHaveBeenCalled();
-  });
-
-  it('should return if no south is set', async () => {
-    await historyQuery.runSouthConnector();
-    expect(createdSouth.start).not.toHaveBeenCalled();
   });
 
   it('should not cache values if north is not defined', async () => {

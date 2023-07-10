@@ -161,7 +161,7 @@ export class EditSouthItemModalComponent {
 
     const command: SouthConnectorItemCommandDTO = {
       name: formValue.name!,
-      scanModeId: formValue.scanModeId || 'subscription',
+      scanModeId: this.subscriptionOnly ? 'subscription' : formValue.scanModeId!,
       settings: formValue.settings!
     };
 

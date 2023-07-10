@@ -103,10 +103,13 @@ export default class OIBusEngine extends BaseEngine {
       this.addValues.bind(this),
       this.addFile.bind(this),
       baseFolder,
-      true,
       this.logger.child({ scope: `south:${settings.name}` })
     );
     if (south.isEnabled()) {
+      south.connectedEvent.on('connected', async () => {
+        await south.createSubscriptions(items.filter(item => item.scanModeId === 'subscription'));
+        await south.createCronJobs(items.filter(item => item.scanModeId !== 'subscription'));
+      });
       // Do not await here, so it can start all connectors without blocking the thread
       south.start().catch(error => {
         this.logger.error(`Error while starting South connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`);

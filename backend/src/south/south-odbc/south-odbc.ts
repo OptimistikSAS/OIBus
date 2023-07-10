@@ -40,20 +40,9 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string,
-    streamMode: boolean
+    baseFolder: string
   ) {
-    super(
-      connector,
-      items,
-      engineAddValuesCallback,
-      engineAddFileCallback,
-      encryptionService,
-      repositoryService,
-      logger,
-      baseFolder,
-      streamMode
-    );
+    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -223,24 +212,6 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       throw new Error('odbc library not loaded');
     }
 
-    let connectionString = `Driver=${this.connector.settings.driverPath};SERVER=${this.connector.settings.host};PORT=${this.connector.settings.port};`;
-    if (this.connector.settings.trustServerCertificate) {
-      connectionString += `TrustServerCertificate=yes;`;
-    }
-    if (this.connector.settings.database) {
-      connectionString += `Database=${this.connector.settings.database};`;
-    }
-    if (this.connector.settings.username) {
-      connectionString += `UID=${this.connector.settings.username};`;
-    }
-
-    if (this.connector.settings.username && this.connector.settings.password) {
-      this.logger.debug(`Connecting with connection string ${connectionString}PWD=<secret>;`);
-      connectionString += `PWD=${await this.encryptionService.decryptText(this.connector.settings.password)};`;
-    } else {
-      this.logger.debug(`Connecting with connection string ${connectionString}`);
-    }
-
     let connection;
     try {
       const connectionConfig = await SouthODBC.createConnectionConfig(this.connector.settings, this.logger, this.encryptionService);
@@ -292,16 +263,10 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       logger.debug(`Connecting with connection string ${connectionString}`);
     }
 
-    const connectionConfig: {
-      connectionString: string;
-      connectionTimeout?: number;
-      loginTimeout?: number;
-    } = {
+    return {
       connectionString,
       connectionTimeout: settings.connectionTimeout
     };
-
-    return connectionConfig;
   }
 
   /**

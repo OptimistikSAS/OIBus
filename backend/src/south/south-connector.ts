@@ -40,13 +40,11 @@ import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-se
  */
 export default class SouthConnector<T extends SouthSettings = any, I extends SouthItemSettings = any> {
   public static type: string;
-  protected itemsByScanModeIds: Map<string, Map<string, SouthConnectorItemDTO<I>>> = new Map<
-    string,
-    Map<string, SouthConnectorItemDTO<I>>
-  >();
+
   private taskJobQueue: Array<ScanModeDTO> = [];
   private cronByScanModeIds: Map<string, CronJob> = new Map<string, CronJob>();
   private taskRunner: EventEmitter = new EventEmitter();
+  public connectedEvent: EventEmitter = new EventEmitter();
   private stopping = false;
   private runProgress$: DeferredPromise | null = null;
 
@@ -59,24 +57,14 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
    */
   constructor(
     protected connector: SouthConnectorDTO<T>,
-    items: Array<SouthConnectorItemDTO<I>>,
+    private items: Array<SouthConnectorItemDTO<I>>,
     private engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     private engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     protected readonly encryptionService: EncryptionService,
     private readonly repositoryService: RepositoryService,
     protected logger: pino.Logger,
-    protected readonly baseFolder: string,
-    private readonly streamMode: boolean
+    protected readonly baseFolder: string
   ) {
-    items
-      .filter(item => item.scanModeId)
-      .forEach(item => {
-        if (!this.itemsByScanModeIds.get(item.scanModeId!)) {
-          this.itemsByScanModeIds.set(item.scanModeId!, new Map<string, SouthConnectorItemDTO<I>>());
-        }
-        this.itemsByScanModeIds.get(item.scanModeId!)!.set(item.id, item);
-      });
-
     this.cacheService = new SouthCacheService(this.connector.id, path.resolve(this.baseFolder, 'cache.db'));
     this._metricsService = new SouthConnectorMetricsService(this.connector.id, path.resolve(this.baseFolder, 'cache.db'));
 
@@ -84,15 +72,20 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       this.cacheService.createSouthCacheScanModeTable();
     }
 
-    if (this.streamMode) {
-      this.taskRunner.on('next', async () => {
-        if (this.taskJobQueue.length > 0) {
-          await this.run(this.taskJobQueue[0]);
-        } else {
-          this.logger.trace('No more task to run');
+    this.taskRunner.on('next', async () => {
+      if (this.taskJobQueue.length > 0) {
+        if (this.runProgress$) {
+          this.logger.warn('A South task is already running');
+          return;
         }
-      });
-    }
+        const scanMode = this.taskJobQueue[0];
+        const items = this.items.filter(item => item.scanModeId === scanMode.id);
+        this.logger.trace(`Running South with scan mode ${scanMode.name}`);
+        await this.run(scanMode.id, items);
+      } else {
+        this.logger.trace('No more task to run');
+      }
+    });
   }
 
   async start(): Promise<void> {
@@ -105,27 +98,29 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       ...this._metricsService.metrics,
       lastConnection: DateTime.now().toUTC().toISO()
     });
-    if (!this.streamMode) {
-      return;
-    }
+    this.connectedEvent.emit('connected');
+  }
+
+  async createSubscriptions(items: Array<SouthConnectorItemDTO>) {
     if (this.queriesSubscription()) {
-      const items = Array.from(this.itemsByScanModeIds.get('subscription') || new Map(), ([_scanModeId, item]) => item);
       this.logger.debug(`Subscribing to ${items.length} items`);
       await this.subscribe(items);
     }
+  }
 
-    for (const scanModeId of this.itemsByScanModeIds.keys()) {
-      if (scanModeId === 'subscription') {
-        continue;
-      }
-      const scanMode = this.repositoryService.scanModeRepository.getScanMode(scanModeId);
-      if (!scanMode) {
-        this.logger.error(`Scan mode ${scanModeId} not found`);
-      } else {
-        if (scanMode.id !== 'subscription' && scanMode.id !== 'history') {
-          this.createCronJob(scanMode);
+  createCronJobs(items: Array<SouthConnectorItemDTO>) {
+    const scanModes = new Map<string, ScanModeDTO>();
+    items
+      .filter(item => item.scanModeId)
+      .forEach(item => {
+        if (!scanModes.get(item.scanModeId!)) {
+          const scanMode = this.repositoryService.scanModeRepository.getScanMode(item.scanModeId!)!;
+          scanModes.set(scanMode.id, scanMode);
         }
-      }
+      });
+
+    for (const scanMode of scanModes.values()) {
+      this.createCronJob(scanMode);
     }
   }
 
@@ -172,14 +167,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     }
   }
 
-  async run(scanMode: ScanModeDTO): Promise<void> {
-    if (this.runProgress$) {
-      this.logger.warn(`A South task is already running with scan mode ${scanMode.name}`);
-      return;
-    }
-
-    const items = Array.from(this.itemsByScanModeIds.get(scanMode.id) || new Map(), ([_scanModeId, item]) => item);
-    this.logger.trace(`Running South with scan mode ${scanMode.name} and ${items.length} items`);
+  async run(scanModeId: string, items: Array<SouthConnectorItemDTO>): Promise<void> {
     this.createDeferredPromise();
 
     const runStart = DateTime.now();
@@ -196,22 +184,24 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
             .toUTC()
             .toISO() as Instant,
           DateTime.now().toUTC().toISO() as Instant,
-          scanMode.id
+          scanModeId
         );
       } catch (error) {
         this.historyIsRunning = false;
         this.logger.error(`Error when calling historyQuery ${error}`);
       }
     }
-    if (this.queriesFile() && this.streamMode) {
+    if (this.queriesFile()) {
       try {
+        this.logger.trace(`Querying file for ${items.length} items`);
         await this.fileQuery(items);
       } catch (error) {
         this.logger.error(`Error when calling fileQuery ${error}`);
       }
     }
-    if (this.queriesLastPoint() && this.streamMode) {
+    if (this.queriesLastPoint()) {
       try {
+        this.logger.trace(`Querying points for ${items.length} items`);
         await this.lastPointQuery(items);
       } catch (error) {
         this.logger.error(`Error when calling lastPointQuery ${error}`);
@@ -224,8 +214,8 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     });
     this.resolveDeferredPromise();
 
+    this.taskJobQueue.shift();
     if (!this.stopping) {
-      this.taskJobQueue.shift();
       this.taskRunner.emit('next');
     }
   }
@@ -256,6 +246,8 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     endTime: Instant,
     scanModeId: string
   ): Promise<void> {
+    this.logger.trace(`Querying history for ${items.length} items`);
+
     this.historyIsRunning = true;
     if (this.connector.history.maxInstantPerItem) {
       for (const [index, item] of items.entries()) {
@@ -275,7 +267,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         const intervals = generateIntervals(southCache.maxInstant, endTime, this.connector.history.maxReadInterval);
         this.logIntervals(intervals);
         await this.queryIntervals(intervals, [item], southCache, startTime);
-        if (index !== items.length) {
+        if (index !== items.length - 1) {
           await delay(this.connector.history.readDelay);
         }
       }
@@ -428,29 +420,22 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     this.stopping = false;
   }
 
-  addItem(item: SouthConnectorItemDTO<I>): void {
-    if (item.scanModeId) {
-      const scanMode = this.repositoryService.scanModeRepository.getScanMode(item.scanModeId);
-      if (!scanMode) {
-        this.logger.error(`Error when creating South item in cron jobs: scan mode ${item.scanModeId} not found`);
-        return;
-      }
+  async addItem(item: SouthConnectorItemDTO<I>): Promise<void> {
+    const scanMode = this.repositoryService.scanModeRepository.getScanMode(item.scanModeId);
+    if (!scanMode) {
+      this.logger.error(`Error when creating South item in cron jobs: scan mode ${item.scanModeId} not found`);
+      return;
+    }
 
-      let newCronJob = false;
-      if (!this.itemsByScanModeIds.get(item.scanModeId)) {
-        newCronJob = true;
-        this.itemsByScanModeIds.set(item.scanModeId, new Map());
-      }
-      this.itemsByScanModeIds.get(item.scanModeId)!.set(item.id, item);
-
-      // Create a new cron job if the scan mode was not already set, other the item will be taken by the task
-      if (newCronJob) {
-        this.createCronJob(scanMode);
-      }
+    this.items.push(item);
+    if (item.scanModeId === 'subscription') {
+      await this.createSubscriptions([item]);
+    } else if (!this.cronByScanModeIds.get(scanMode.id)) {
+      this.createCronJob(scanMode);
     }
   }
 
-  updateItem(oldItem: SouthConnectorItemDTO<I>, newItem: SouthConnectorItemDTO<I>): void {
+  async updateItem(oldItem: SouthConnectorItemDTO<I>, newItem: SouthConnectorItemDTO<I>): Promise<void> {
     this.logger.info('Updating item in south connector');
     if (newItem.scanModeId) {
       const scanMode = this.repositoryService.scanModeRepository.getScanMode(newItem.scanModeId);
@@ -460,34 +445,30 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       }
     }
 
-    this.deleteItem(oldItem);
-    this.addItem(newItem);
+    await this.deleteItem(oldItem);
+    await this.addItem(newItem);
   }
 
-  deleteItem(item: SouthConnectorItemDTO<I>) {
-    if (!item.scanModeId) {
-      return;
-    }
-    if (!this.itemsByScanModeIds.get(item.scanModeId)) {
-      this.logger.error(`Error when removing South item from cron jobs: scan mode ${item.scanModeId} was not set`);
-      return;
-    }
-
-    if (!this.itemsByScanModeIds.get(item.scanModeId)!.get(item.id)) {
-      this.logger.error(`Error when removing South item from cron jobs: item ${item.id} was not set`);
-      return;
-    }
-
-    this.itemsByScanModeIds.get(item.scanModeId)!.delete(item.id);
-    if (this.itemsByScanModeIds.get(item.scanModeId)!.size === 0) {
-      this.itemsByScanModeIds.delete(item.scanModeId);
-      this.cronByScanModeIds.get(item.scanModeId)?.stop();
-      this.cronByScanModeIds.delete(item.scanModeId);
+  async deleteItem(itemToRemove: SouthConnectorItemDTO<I>): Promise<void> {
+    const itemIndex = this.items.findIndex(item => item.id === itemToRemove.id);
+    if (itemIndex !== -1) {
+      if (this.queriesSubscription() && itemToRemove.scanModeId === 'subscription') {
+        await this.unsubscribe([itemToRemove]);
+      }
+      this.items = this.items.filter(item => item.id !== itemToRemove.id);
+      if (this.items.filter(item => item.scanModeId === itemToRemove.scanModeId).length === 0) {
+        this.cronByScanModeIds.get(itemToRemove.scanModeId)?.stop();
+        this.cronByScanModeIds.delete(itemToRemove.scanModeId);
+      }
     }
   }
 
-  deleteAllItems() {
-    this.itemsByScanModeIds.clear();
+  async deleteAllItems(): Promise<void> {
+    if (this.queriesSubscription()) {
+      await this.unsubscribe(this.items.filter(item => item.scanModeId === 'subscription'));
+    }
+
+    this.items = [];
     for (const cron of this.cronByScanModeIds.values()) {
       cron.stop();
     }
@@ -523,6 +504,6 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   }
 
   queriesSubscription(): this is QueriesSubscription {
-    return 'subscribe' in this;
+    return 'subscribe' in this && 'unsubscribe' in this;
   }
 }

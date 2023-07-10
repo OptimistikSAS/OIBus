@@ -65,6 +65,7 @@ const northConnector: NorthConnectorDTO = {
 const historyQueryCommand: HistoryQueryCommandDTO = {
   name: 'name',
   description: 'description',
+  enabled: false,
   history: {
     maxInstantPerItem: true,
     maxReadInterval: 3600,
@@ -226,6 +227,7 @@ describe('History query controller', () => {
       {
         name: 'name',
         description: 'description',
+        enabled: false,
         history: {
           maxInstantPerItem: false,
           maxReadInterval: 0,
@@ -286,6 +288,7 @@ describe('History query controller', () => {
       {
         name: 'name',
         description: 'description',
+        enabled: false,
         history: {
           maxInstantPerItem: true,
           maxReadInterval: 3600,

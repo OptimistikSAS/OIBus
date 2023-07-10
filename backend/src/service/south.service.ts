@@ -50,24 +50,13 @@ export default class SouthService {
     addValues: (southId: string, values: Array<any>) => Promise<void>,
     addFile: (southId: string, filePath: string) => Promise<void>,
     baseFolder: string,
-    streamMode: boolean,
     logger: pino.Logger
   ): SouthConnector {
     const SouthConnector = southList.find(connector => connector.type === settings.type);
     if (!SouthConnector) {
       throw Error(`South connector of type ${settings.type} not installed`);
     }
-    return new SouthConnector(
-      settings,
-      items,
-      addValues,
-      addFile,
-      this.encryptionService,
-      this.repositoryService,
-      logger,
-      baseFolder,
-      streamMode
-    );
+    return new SouthConnector(settings, items, addValues, addFile, this.encryptionService, this.repositoryService, logger, baseFolder);
   }
 
   /**

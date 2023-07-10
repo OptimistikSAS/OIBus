@@ -226,12 +226,12 @@ describe('reload service', () => {
     expect(repositoryService.historyQueryItemRepository.createHistoryItem).toHaveBeenCalledTimes(2);
     expect(repositoryService.historyQueryItemRepository.createHistoryItem).toHaveBeenCalledWith('historyId', {
       name: 'southItem1',
-      scanModeId: null,
+      scanModeId: 'history',
       settings: {}
     });
     expect(repositoryService.historyQueryItemRepository.createHistoryItem).toHaveBeenCalledWith('historyId', {
       name: 'southItem2',
-      scanModeId: null,
+      scanModeId: 'history',
       settings: {}
     });
   });

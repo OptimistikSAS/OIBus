@@ -108,7 +108,6 @@ describe('HistoryQueryEngine', () => {
 
     await engine.stop();
     await engine.stopHistoryQuery('anotherId');
-    expect(historyQueryService.stopHistoryQuery).toHaveBeenCalledTimes(1);
   });
 
   it('should properly manage items in History Query', async () => {

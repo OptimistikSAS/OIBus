@@ -131,7 +131,7 @@ describe('South OPCHDA', () => {
       }
     }));
 
-    south = new SouthOPCHDA(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthOPCHDA(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   afterAll(() => {

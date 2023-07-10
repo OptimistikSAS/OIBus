@@ -173,7 +173,7 @@ describe('SouthOIConnect with Basic auth', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOIConnect(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthOIConnect(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection with odbc', async () => {
@@ -289,7 +289,7 @@ describe('SouthOIConnect with Bearer auth', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOIConnect(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthOIConnect(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should fetch data', async () => {
@@ -359,7 +359,7 @@ describe('SouthOIConnect with API-Key auth', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOIConnect(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthOIConnect(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should fetch data with GET method and body', async () => {
@@ -415,7 +415,7 @@ describe('SouthOIConnect without auth', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOIConnect(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthOIConnect(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should fetch data with GET and Body', async () => {

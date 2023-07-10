@@ -58,14 +58,8 @@ export default class HistoryQuery {
       this.addValues.bind(this),
       this.addFile.bind(this),
       southFolder,
-      false,
       this.logger
     );
-    if (!this.south) {
-      throw new Error(
-        `Could not instantiate South type ${this.historyConfiguration.southType} for History Query ${this.historyConfiguration.name} (${this.historyConfiguration.id})`
-      );
-    }
 
     const northConfiguration: NorthConnectorDTO<N> = {
       id: this.historyConfiguration.id,
@@ -80,11 +74,6 @@ export default class HistoryQuery {
     const northFolder = path.resolve(this.baseFolder, 'north');
     await createFolder(northFolder);
     this.north = this.northService.createNorth(northConfiguration, northFolder, this.logger);
-    if (!this.north) {
-      throw new Error(
-        `Could not instantiate North type ${this.historyConfiguration.northType} for History Query ${this.historyConfiguration.name} (${this.historyConfiguration.id})`
-      );
-    }
 
     this.south.getMetricsDataStream().on('data', data => {
       // Remove the 'data: ' start of the string
@@ -104,29 +93,17 @@ export default class HistoryQuery {
       return;
     }
 
-    this.finishInterval = setInterval(this.finish.bind(this), FINISH_INTERVAL);
-
     await this.north.start();
-    await this.north.connect();
 
-    await this.runSouthConnector();
-  }
-
-  async runSouthConnector(): Promise<void> {
-    if (!this.south) {
-      return;
-    }
+    this.south.connectedEvent.on('connected', async () => {
+      this.south!.historyQueryHandler(this.items, this.historyConfiguration.startTime, this.historyConfiguration.endTime, 'history').catch(
+        error => {
+          this.logger.error(`Error while executing history query. ${error}`);
+        }
+      );
+      this.finishInterval = setInterval(this.finish.bind(this), FINISH_INTERVAL);
+    });
     await this.south.start();
-    await this.south.connect();
-
-    this.south
-      .historyQueryHandler(this.items, this.historyConfiguration.startTime, this.historyConfiguration.endTime, 'history')
-      .catch(async error => {
-        this.logger.error(
-          `Restarting South for "${this.historyConfiguration.name}" after an error while running South history query handler: ${error}`
-        );
-        await this.runSouthConnector();
-      });
   }
 
   /**
@@ -159,6 +136,7 @@ export default class HistoryQuery {
       clearInterval(this.finishInterval);
     }
     if (this.south) {
+      this.south.connectedEvent.removeAllListeners();
       await this.south.stop();
       if (resetCache) {
         await this.south.resetCache();
@@ -170,7 +148,6 @@ export default class HistoryQuery {
         await this.north.resetCache();
       }
     }
-    this.historyService.stopHistoryQuery(this.historyConfiguration.id);
   }
 
   /**

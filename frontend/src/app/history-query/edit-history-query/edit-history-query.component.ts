@@ -60,8 +60,9 @@ export class EditHistoryQueryComponent implements OnInit {
   historyQueryForm: FormGroup<{
     name: FormControl<string>;
     description: FormControl<string>;
-    start: FormControl<Instant | null>;
-    end: FormControl<Instant | null>;
+    enabled: FormControl<boolean>;
+    startTime: FormControl<Instant | null>;
+    endTime: FormControl<Instant | null>;
     history: FormGroup<{
       maxInstantPerItem: FormControl<boolean>;
       maxReadInterval: FormControl<number>;
@@ -121,8 +122,9 @@ export class EditHistoryQueryComponent implements OnInit {
         this.historyQueryForm = this.fb.group({
           name: ['', Validators.required],
           description: '',
-          start: null as Instant | null,
-          end: null as Instant | null,
+          enabled: false as boolean,
+          startTime: null as Instant | null,
+          endTime: null as Instant | null,
           history: this.fb.group({
             maxInstantPerItem: false,
             maxReadInterval: 0,
@@ -160,8 +162,9 @@ export class EditHistoryQueryComponent implements OnInit {
     const command: HistoryQueryCommandDTO = {
       name: formValue.name!,
       description: formValue.description!,
-      startTime: formValue.start!,
-      endTime: formValue.end!,
+      enabled: formValue.enabled!,
+      startTime: formValue.startTime!,
+      endTime: formValue.endTime!,
       northType: this.historyQuery.northType,
       southType: this.historyQuery.southType,
       southSettings: formValue.southSettings,

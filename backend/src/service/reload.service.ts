@@ -190,7 +190,7 @@ export default class ReloadService {
       this.repositoryService.historyQueryItemRepository.createHistoryItem(historyQuery.id, {
         name: item.name,
         settings: item.settings,
-        scanModeId: null
+        scanModeId: 'history'
       });
     }
     return historyQuery;
@@ -199,6 +199,13 @@ export default class ReloadService {
   async onUpdateHistoryQuerySettings(historyId: string, command: HistoryQueryCommandDTO): Promise<void> {
     await this.historyEngine.stopHistoryQuery(historyId, true); // Reset cache to start the history from scratch when changing the settings
     this.repositoryService.historyQueryRepository.updateHistoryQuery(historyId, command);
+    if (command.enabled) {
+      this.repositoryService.historyQueryRepository.startHistoryQuery(historyId);
+      const settings = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId)!;
+      await this.historyEngine.startHistoryQuery(settings);
+    } else {
+      this.repositoryService.historyQueryRepository.stopHistoryQuery(historyId);
+    }
   }
 
   async onStartHistoryQuery(historyId: string): Promise<void> {

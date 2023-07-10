@@ -12,6 +12,7 @@ import { SouthConnectorManifest } from '../../../../../shared/model/south-connec
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { ScanModeService } from '../../services/scan-mode.service';
 
 class HistoryQueryDisplayComponentTester extends ComponentTester<HistoryQueryDetailComponent> {
   constructor() {
@@ -40,6 +41,7 @@ describe('HistoryQueryDisplayComponent', () => {
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
+  let scanModeService: jasmine.SpyObj<ScanModeService>;
 
   const southManifest: SouthConnectorManifest = {
     id: 'mssql',
@@ -101,7 +103,6 @@ describe('HistoryQueryDisplayComponent', () => {
       }
     ]
   };
-
   const historyQuery: HistoryQueryDTO = {
     id: 'id1',
     name: 'History query',
@@ -141,6 +142,7 @@ describe('HistoryQueryDisplayComponent', () => {
     southConnectorService = createMock(SouthConnectorService);
     northConnectorService = createMock(NorthConnectorService);
     historyQueryService = createMock(HistoryQueryService);
+    scanModeService = createMock(ScanModeService);
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
@@ -156,7 +158,8 @@ describe('HistoryQueryDisplayComponent', () => {
         },
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: NorthConnectorService, useValue: northConnectorService },
-        { provide: HistoryQueryService, useValue: historyQueryService }
+        { provide: HistoryQueryService, useValue: historyQueryService },
+        { provide: ScanModeService, useValue: scanModeService }
       ]
     });
 
@@ -169,13 +172,14 @@ describe('HistoryQueryDisplayComponent', () => {
           id: 'id1',
           name: 'item1',
           connectorId: 'southId',
-          scanModeId: null,
+          scanModeId: 'scanModeId',
           settings: {
             query: 'sql'
           }
         }
       ])
     );
+    scanModeService.list.and.returnValue(of([]));
 
     tester = new HistoryQueryDisplayComponentTester();
     tester.detectChanges();

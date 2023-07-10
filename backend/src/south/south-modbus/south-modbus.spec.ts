@@ -180,7 +180,7 @@ describe('SouthModbus', () => {
       }
     });
 
-    south = new SouthModbus(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthModbus(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should fail to connect and try again', async () => {

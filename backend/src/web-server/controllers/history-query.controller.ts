@@ -67,6 +67,7 @@ export default class HistoryQueryController extends AbstractController {
     const command: HistoryQueryCommandDTO = {
       name: ctx.request.body.name,
       description: ctx.request.body.description,
+      enabled: false,
       startTime: now.minus({ days: 1 }).toUTC().toISO()!,
       endTime: now.toUTC().toISO()!,
       southType: '',
