@@ -34,20 +34,9 @@ export default class SouthFolderScanner
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string,
-    streamMode: boolean
+    baseFolder: string
   ) {
-    super(
-      connector,
-      items,
-      engineAddValuesCallback,
-      engineAddFileCallback,
-      encryptionService,
-      repositoryService,
-      logger,
-      baseFolder,
-      streamMode
-    );
+    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
     if (this.connector.settings.preserveFiles) {
       this.cacheService.cacheRepository.database

@@ -43,7 +43,7 @@ export default class HistoryQueryItemRepository {
         id: result.id,
         name: result.name,
         connectorId: result.historyId,
-        scanModeId: null,
+        scanModeId: 'history',
         settings: JSON.parse(result.settings)
       }));
     const totalElements: number = (
@@ -72,7 +72,7 @@ export default class HistoryQueryItemRepository {
         id: result.id,
         name: result.name,
         connectorId: historyId,
-        scanModeId: null,
+        scanModeId: 'history',
         settings: JSON.parse(result.settings)
       }));
   }
@@ -87,7 +87,7 @@ export default class HistoryQueryItemRepository {
       id: result.id,
       name: result.name,
       connectorId: result.historyId,
-      scanModeId: null,
+      scanModeId: 'history',
       settings: JSON.parse(result.settings)
     };
   }
@@ -106,7 +106,7 @@ export default class HistoryQueryItemRepository {
       id: result.id,
       name: result.name,
       connectorId: result.historyId,
-      scanModeId: null,
+      scanModeId: 'history',
       settings: JSON.parse(result.settings)
     };
   }

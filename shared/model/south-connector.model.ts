@@ -54,7 +54,7 @@ export interface SouthConnectorItemDTO<T extends SouthItemSettings = any> {
   name: string;
   connectorId: string;
   settings: T;
-  scanModeId: string | null;
+  scanModeId: string;
 }
 
 /**
@@ -63,7 +63,7 @@ export interface SouthConnectorItemDTO<T extends SouthItemSettings = any> {
 export interface SouthConnectorItemCommandDTO<T extends SouthItemSettings = any> {
   name: string;
   settings: T;
-  scanModeId: string | null;
+  scanModeId: string;
 }
 
 export interface SouthConnectorItemSearchParam {

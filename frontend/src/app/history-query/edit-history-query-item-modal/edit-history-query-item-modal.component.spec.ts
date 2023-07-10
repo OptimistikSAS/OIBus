@@ -127,7 +127,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
       const expectedCommand: SouthConnectorItemCommandDTO = {
         name: 'MyName',
-        scanModeId: null,
+        scanModeId: 'history',
         settings: {}
       };
 
@@ -146,7 +146,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
       id: 'id1',
       name: 'myName',
       connectorId: 'historyId',
-      scanModeId: null,
+      scanModeId: 'history',
       settings: {}
     };
 
@@ -169,7 +169,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
       const expectedCommand: SouthConnectorItemCommandDTO = {
         name: 'MyName-2',
-        scanModeId: null,
+        scanModeId: 'history',
         settings: {}
       };
 
@@ -183,7 +183,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
       id: 'id1',
       name: 'myName',
       connectorId: 'southId1',
-      scanModeId: null,
+      scanModeId: 'history',
       settings: {}
     };
 
@@ -214,7 +214,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
 
       const expectedCommand: SouthConnectorItemCommandDTO = {
         name: 'South Item 1 (updated)',
-        scanModeId: null,
+        scanModeId: 'history',
         settings: {}
       };
 

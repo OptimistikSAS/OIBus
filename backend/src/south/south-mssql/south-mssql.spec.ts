@@ -207,7 +207,7 @@ describe('SouthMSSQL with authentication', () => {
 
     jest.spyOn(mssql, 'ConnectionPool').mockImplementation(() => ({ connect } as unknown as ConnectionPool));
 
-    south = new SouthMSSQL(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthMSSQL(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should create temp folder', async () => {
@@ -326,7 +326,7 @@ describe('SouthMSSQL without authentication', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    south = new SouthMSSQL(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthMSSQL(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should manage query error', async () => {

@@ -142,7 +142,7 @@ describe('SouthMQTT without authentication', () => {
 
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthMQTT(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect', async () => {
@@ -158,7 +158,7 @@ describe('SouthMQTT without authentication', () => {
     };
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
     mqttStream.emit('connect');
-    expect(south.subscribe).toHaveBeenCalledTimes(1);
+    expect(logger.info).toHaveBeenCalledWith(`Connected to ${configuration.settings.url}`);
     mqttStream.emit('error', new Error('error'));
     expect(logger.error).toHaveBeenCalledWith(`MQTT connection error ${new Error('error')}`);
     mqttStream.emit('message', 'myTopic', 'myMessage', { dup: false });
@@ -235,7 +235,7 @@ describe('SouthMQTT with Basic Auth', () => {
 
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthMQTT(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect', async () => {
@@ -320,7 +320,7 @@ describe('SouthMQTT with Cert', () => {
 
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthMQTT(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect', async () => {
@@ -411,7 +411,7 @@ describe('SouthMQTT without Cert', () => {
 
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
-    south = new SouthMQTT(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthMQTT(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect', async () => {

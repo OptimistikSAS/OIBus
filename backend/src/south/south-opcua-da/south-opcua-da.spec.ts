@@ -133,7 +133,7 @@ describe('SouthOPCUADA', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    south = new SouthOPCUADA(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthOPCUADA(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should be properly initialized', async () => {
@@ -202,7 +202,7 @@ describe('SouthOPCUADA with basic auth', () => {
       certFilePath: '',
       keyFilePath: ''
     };
-    south = new SouthOPCUADA(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthOPCUADA(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect to OPCUA server with basic auth', async () => {
@@ -249,7 +249,7 @@ describe('SouthOPCUADA with certificate', () => {
       username: '',
       password: ''
     };
-    south = new SouthOPCUADA(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthOPCUADA(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect to OPCUA server with basic auth', async () => {

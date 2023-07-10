@@ -132,7 +132,7 @@ describe('SouthOPCUAHA', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
 
-    south = new SouthOPCUAHA(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthOPCUAHA(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should be properly initialized', async () => {
@@ -197,7 +197,7 @@ describe('SouthOPCUAHA with basic auth', () => {
       keyFilePath: '',
       certFilePath: ''
     };
-    south = new SouthOPCUAHA(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthOPCUAHA(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect to OPCUA server with basic auth', async () => {
@@ -240,7 +240,7 @@ describe('SouthOPCUAHA with certificate', () => {
       username: '',
       password: ''
     };
-    south = new SouthOPCUAHA(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder', true);
+    south = new SouthOPCUAHA(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly connect to OPCUA server with basic auth', async () => {

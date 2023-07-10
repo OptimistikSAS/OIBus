@@ -217,7 +217,7 @@ const manifest: SouthConnectorManifest = {
   ],
   items: {
     scanMode: {
-      acceptSubscription: false,
+      acceptSubscription: true,
       subscriptionOnly: true
     },
     settings: [

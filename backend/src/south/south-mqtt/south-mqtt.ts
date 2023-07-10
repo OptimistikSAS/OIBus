@@ -45,20 +45,9 @@ export default class SouthMQTT
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string,
-    streamMode: boolean
+    baseFolder: string
   ) {
-    super(
-      connector,
-      items,
-      engineAddValuesCallback,
-      engineAddFileCallback,
-      encryptionService,
-      repositoryService,
-      logger,
-      baseFolder,
-      streamMode
-    );
+    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
   }
 
   override async connect(): Promise<void> {
@@ -199,6 +188,15 @@ export default class SouthMQTT
       });
     }
     this.mqttItems = items;
+  }
+
+  async unsubscribe(items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>): Promise<void> {
+    if (!this.client) {
+      return;
+    }
+    for (const item of items) {
+      this.client.unsubscribe(item.settings.topic);
+    }
   }
 
   formatValue(data: any, topic: string, formatOptions: MessageFormatOption, items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>) {

@@ -57,7 +57,6 @@ describe('south service', () => {
       jest.fn(),
       jest.fn(),
       'myBaseFolder',
-      true,
       logger
     );
     expect(connector).toBeDefined();
@@ -85,7 +84,6 @@ describe('south service', () => {
         jest.fn(),
         jest.fn(),
         'myBaseFolder',
-        true,
         logger
       );
     } catch (err) {

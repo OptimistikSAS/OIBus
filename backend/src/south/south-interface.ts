@@ -18,6 +18,7 @@ export interface QueriesHistory {
 
 export interface QueriesSubscription {
   subscribe(items: Array<SouthConnectorItemDTO>): Promise<void>;
+  unsubscribe(items: Array<SouthConnectorItemDTO>): Promise<void>;
 }
 
 export abstract class TestsConnection {

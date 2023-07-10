@@ -49,22 +49,32 @@ export default class HistoryQueryEngine extends BaseEngine {
   }
 
   async startHistoryQuery(settings: HistoryQueryDTO): Promise<void> {
-    const items = this.historyQueryService.getItems(settings.id);
-    const baseFolder = path.resolve(this.cacheFolder, `history-${settings.id}`);
-    await createFolder(baseFolder);
-    const historyQuery = new HistoryQuery(
-      settings,
-      this.southService,
-      this.northService,
-      this.historyQueryService,
-      items,
-      this.logger.child({ scope: `history:${settings.name}` }),
-      baseFolder
-    );
-    this.historyQueries.set(settings.id, historyQuery);
-    historyQuery.start().catch(error => {
-      this.logger.error(error);
-    });
+    if (!this.historyQueries.get(settings.id)) {
+      const items = this.historyQueryService.getItems(settings.id);
+      const baseFolder = path.resolve(this.cacheFolder, `history-${settings.id}`);
+      await createFolder(baseFolder);
+      const historyQuery = new HistoryQuery(
+        settings,
+        this.southService,
+        this.northService,
+        this.historyQueryService,
+        items,
+        this.logger.child({ scope: `history:${settings.name}` }),
+        baseFolder
+      );
+      this.historyQueries.set(settings.id, historyQuery);
+      historyQuery.start().catch(error => {
+        this.logger.error(error);
+      });
+    } else {
+      await this.historyQueries.get(settings.id)!.stop();
+      this.historyQueries
+        .get(settings.id)!
+        .start()
+        .catch(error => {
+          this.logger.error(error);
+        });
+    }
   }
 
   async addItemToHistoryQuery(historyId: string, item: SouthConnectorItemDTO): Promise<void> {

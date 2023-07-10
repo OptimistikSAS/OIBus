@@ -133,7 +133,7 @@ export class EditHistoryQueryItemModalComponent {
 
     const command: SouthConnectorItemCommandDTO = {
       name: formValue.name!,
-      scanModeId: null,
+      scanModeId: 'history',
       settings: formValue.settings!
     };
 

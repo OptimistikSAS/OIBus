@@ -68,6 +68,7 @@ describe('HistoryQueryService', () => {
     const command: HistoryQueryCommandDTO = {
       name: 'myHistoryQuery',
       description: 'a test history query',
+      enabled: false,
       history: {
         maxInstantPerItem: false,
         maxReadInterval: 0,

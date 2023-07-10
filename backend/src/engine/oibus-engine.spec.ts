@@ -13,6 +13,7 @@ import EncryptionService from '../service/encryption.service';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import OIBusEngine from './oibus-engine';
 import SouthMQTT from '../south/south-mqtt/south-mqtt';
+import { EventEmitter } from 'node:events';
 
 jest.mock('../south/south-mqtt/south-mqtt');
 jest.mock('../service/south.service');
@@ -48,6 +49,8 @@ const items: Array<SouthConnectorItemDTO> = [
     scanModeId: 'scanModeId2'
   }
 ];
+
+const connectedEvent = new EventEmitter();
 
 describe('OIBusEngine', () => {
   const northConnectors: Array<NorthConnectorDTO> = [
@@ -106,7 +109,8 @@ describe('OIBusEngine', () => {
     updateItem: jest.fn(),
     setLogger: jest.fn(),
     getMetricsDataStream: jest.fn(),
-    resetMetrics: jest.fn()
+    resetMetrics: jest.fn(),
+    connectedEvent: connectedEvent
   };
   const createdNorth = {
     start: jest.fn(),
@@ -259,7 +263,7 @@ describe('OIBusEngine', () => {
       connectorId: 'id',
       name: 'new name',
       settings: {},
-      scanModeId: null
+      scanModeId: 'scanModeId'
     });
     expect(createdSouth.updateItem).not.toHaveBeenCalled();
 
@@ -274,14 +278,14 @@ describe('OIBusEngine', () => {
       connectorId: 'id',
       name: 'new name',
       settings: {},
-      scanModeId: null
+      scanModeId: 'scanModeId'
     });
     expect(createdSouth.updateItem).toHaveBeenCalledWith(items[0], {
       connectorId: 'id',
       id: 'itemId',
       name: 'new name',
       settings: {},
-      scanModeId: null
+      scanModeId: 'scanModeId'
     });
 
     createdSouth.getMetricsDataStream.mockReturnValue({ status: 'myStatus' });

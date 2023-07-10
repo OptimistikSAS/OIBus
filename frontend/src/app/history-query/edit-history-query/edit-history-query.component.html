@@ -23,21 +23,31 @@
                 <input formControlName="description" id="history-query-description" class="form-control" />
               </div>
             </div>
+
+            <!-- Enabled -->
+            <div class="col-3">
+              <div class="form-group">
+                <div class="form-check form-switch padded">
+                  <input formControlName="enabled" id="history-query-enabled" type="checkbox" class="form-check-input" />
+                  <label class="form-check-label" for="history-query-enabled" translate="history-query.enabled"></label>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="row">
             <div class="col">
               <div class="form-group">
                 <label for="start" class="col-auto col-form-label" translate="history-query.start"></label>
-                <oib-datetimepicker formControlName="start" id="start"></oib-datetimepicker>
-                <val-errors controlName="start"></val-errors>
+                <oib-datetimepicker formControlName="startTime" id="start"></oib-datetimepicker>
+                <val-errors controlName="startTime"></val-errors>
               </div>
             </div>
             <div class="col">
               <div class="form-group">
                 <label for="end" class="col-auto col-form-label" translate="history-query.end"></label>
-                <oib-datetimepicker formControlName="end" id="end"></oib-datetimepicker>
-                <val-errors controlName="end"></val-errors>
+                <oib-datetimepicker formControlName="endTime" id="end"></oib-datetimepicker>
+                <val-errors controlName="endTime"></val-errors>
               </div>
             </div>
           </div>

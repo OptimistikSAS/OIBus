@@ -55,20 +55,9 @@ export default class SouthOPCUAHA
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string,
-    streamMode: boolean
+    baseFolder: string
   ) {
-    super(
-      connector,
-      items,
-      engineAddValuesCallback,
-      engineAddFileCallback,
-      encryptionService,
-      repositoryService,
-      logger,
-      baseFolder,
-      streamMode
-    );
+    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
   }
 
   override async start(): Promise<void> {
@@ -227,7 +216,6 @@ export default class SouthOPCUAHA
             }
 
             if (response.results) {
-              const startTimeMs = DateTime.fromISO(startTime).toMillis();
               this.logger.debug(`Received a response of ${response.results.length} nodes.`);
               nodesToRead = nodesToRead
                 .map((node, i) => {
@@ -242,27 +230,19 @@ export default class SouthOPCUAHA
                       );
                       dataByItems = [
                         ...dataByItems,
-                        ...result.historyData.dataValues
-                          .filter((dataValue: any) => {
-                            // It seems that node-opcua doesn't take into account the millisecond part when requesting historical data
-                            // Reading from 1583914010001 returns values with timestamp 1583914010000
-                            // Filter out values with timestamp smaller than startTime
-                            const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
-                            return selectedTimestamp.getTime() >= startTimeMs;
-                          })
-                          .map((dataValue: any) => {
-                            const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
-                            const selectedTime = selectedTimestamp.getTime();
-                            maxTimestamp = selectedTime > maxTimestamp ? selectedTime : maxTimestamp;
-                            return {
-                              pointId: associatedItem.itemName,
-                              timestamp: selectedTimestamp.toISOString(),
-                              data: {
-                                value: dataValue.value.value,
-                                quality: JSON.stringify(dataValue.statusCode)
-                              }
-                            };
-                          })
+                        ...result.historyData.dataValues.map((dataValue: any) => {
+                          const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
+                          const selectedTime = selectedTimestamp.getTime();
+                          maxTimestamp = selectedTime > maxTimestamp ? selectedTime : maxTimestamp;
+                          return {
+                            pointId: associatedItem.itemName,
+                            timestamp: selectedTimestamp.toISOString(),
+                            data: {
+                              value: dataValue.value.value,
+                              quality: JSON.stringify(dataValue.statusCode)
+                            }
+                          };
+                        })
                       ];
                     }
                     // Reason of statusCode not equal to zero could be there is no data for the requested data and interval

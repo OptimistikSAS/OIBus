@@ -250,6 +250,7 @@ describe('History Query repository', () => {
     const command: HistoryQueryCommandDTO = {
       name: 'historyQuery1',
       description: 'My history query',
+      enabled: false,
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
@@ -351,6 +352,7 @@ describe('History Query repository', () => {
     const command: HistoryQueryCommandDTO = {
       name: 'historyQuery1',
       description: 'My history query',
+      enabled: false,
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,

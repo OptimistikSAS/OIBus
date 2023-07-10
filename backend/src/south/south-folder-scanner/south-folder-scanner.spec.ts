@@ -111,17 +111,7 @@ describe('SouthFolderScanner', () => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    south = new SouthFolderScanner(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthFolderScanner(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('fileQuery should manage file query', async () => {
@@ -233,17 +223,7 @@ describe('SouthFolderScanner with preserve file and compression', () => {
     }));
     configuration.settings.compression = true;
     configuration.settings.preserveFiles = true;
-    south = new SouthFolderScanner(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthFolderScanner(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly check age', async () => {
@@ -311,17 +291,7 @@ describe('SouthFolderScanner with preserve file ignore modified date', () => {
     configuration.settings.compression = false;
     configuration.settings.preserveFiles = true;
     configuration.settings.ignoreModifiedDate = true;
-    south = new SouthFolderScanner(
-      configuration,
-      items,
-      addValues,
-      addFile,
-      encryptionService,
-      repositoryService,
-      logger,
-      'baseFolder',
-      true
-    );
+    south = new SouthFolderScanner(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should properly check age with ignore modified date', async () => {
