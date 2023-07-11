@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.7.0](https://github.com/OptimistikSAS/OIBus/compare/v2.6.1...v2.7.0) (2023-07-11)
+
+
+### Features
+
+* Add Linux ARM64 binaries ([7adfe01](https://github.com/OptimistikSAS/OIBus/commit/7adfe015f698f0133c2cd4788b72f46b187adf7e))
+
+
+### Bug Fixes
+
+* **azure:** Fix Azure Blob connection ([dcf4e9d](https://github.com/OptimistikSAS/OIBus/commit/dcf4e9deb2b578ee8ba7aced19c3bc14c8cdb28f))
+
 ### [2.6.1](https://github.com/OptimistikSAS/OIBus/compare/v2.6.0...v2.6.1) (2023-07-06)
 
 
