@@ -416,27 +416,6 @@ describe('South OPCHDA', () => {
     expect(south.historyRead$.reject).toHaveBeenCalledWith(new Error(receivedMessage.Content.Error))
   })
 
-  it('should handle Read message when the HDA Agent has disconnected from the server', async () => {
-    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout')
-
-    const receivedMessage = { Reply: 'Read', Content: { Error: 'read error', Disconnected: true } }
-    south.historyRead$ = { reject: jest.fn() }
-    south.sendConnectMessage = jest.fn()
-    await south.handleTcpHdaAgentMessages(JSON.stringify(receivedMessage))
-
-    expect(south.logger.error).toHaveBeenCalledWith('Agent disconnected from OPC HDA server.')
-    expect(south.connected).toBeFalsy()
-    expect(clearTimeoutSpy).not.toHaveBeenCalled()
-    expect(south.historyRead$.reject).toHaveBeenCalledWith(new Error(receivedMessage.Content.Error))
-
-    await south.handleTcpHdaAgentMessages(JSON.stringify(receivedMessage))
-    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1)
-    expect(south.sendConnectMessage).not.toHaveBeenCalled()
-
-    jest.advanceTimersByTime(configuration.settings.retryInterval)
-    expect(south.sendConnectMessage).toHaveBeenCalledTimes(1)
-  })
-
   it('should handle Read message when the read request return empty Points', async () => {
     const receivedMessage = { Reply: 'Read', Content: { Group: 'myScanMode' } }
     south.historyRead$ = { reject: jest.fn(), resolve: jest.fn() }

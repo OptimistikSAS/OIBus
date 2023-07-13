@@ -424,11 +424,7 @@ export default class SouthOPCHDA extends SouthConnector {
         case 'Read': // Receive the values for the requested scan group (Content.Group) after a read request from historyQuery
           {
             if (messageObject.Content.Error) {
-              if (messageObject.Content.Disconnected) {
-                this.logger.error('Agent disconnected from OPC HDA server.')
-                await this.disconnect()
-                this.reconnectTimeout = setTimeout(this.sendConnectMessage.bind(this), this.retryInterval)
-              }
+              this.logger.error('Error while reading, skip until next retry')
               this.historyRead$.reject(new Error(messageObject.Content.Error))
               return
             }
