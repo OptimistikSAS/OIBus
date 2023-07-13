@@ -65,7 +65,13 @@ export default class NorthAzureBlob extends NorthConnector {
   async start(baseFolder, oibusName) {
     await super.start(baseFolder, oibusName)
 
-    if (this.authentication === 'sas') {
+    if (this.authentication === 'external') {
+      const defaultAzureCredential = new DefaultAzureCredential()
+      this.blobClient = new BlobServiceClient(
+        `https://${this.account}.blob.core.windows.net`,
+        defaultAzureCredential,
+      )
+    } else if (this.authentication === 'sas') {
       const decodedToken = await this.encryptionService.decryptText(this.sasToken)
       this.blobClient = new BlobServiceClient(
         `https://${this.account}.blob.core.windows.net?${decodedToken}`,
