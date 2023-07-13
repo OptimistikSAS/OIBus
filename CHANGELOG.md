@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.7.1](https://github.com/OptimistikSAS/OIBus/compare/v2.7.0...v2.7.1) (2023-07-13)
+
+
+### Bug Fixes
+
+* **opchda:** Fix OPCHDA reconnection with DeferredPromise ([ac5e82c](https://github.com/OptimistikSAS/OIBus/commit/ac5e82cea7e0ae8b569fa173c476b6366db25b32))
+
 ## [2.7.0](https://github.com/OptimistikSAS/OIBus/compare/v2.6.1...v2.7.0) (2023-07-11)
 
 
