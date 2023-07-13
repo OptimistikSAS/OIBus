@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.8.0](https://github.com/OptimistikSAS/OIBus/compare/v2.7.1...v2.8.0) (2023-07-13)
+
+
+### Features
+
+* **azure:** add external connection ([d10713e](https://github.com/OptimistikSAS/OIBus/commit/d10713e57ed59dd3a0fd05d4be356057f8df74e9))
+
+
+### Bug Fixes
+
+* **opchda:** let OPCHDA Agent manage the reconnection in case of read failure ([fbd1f74](https://github.com/OptimistikSAS/OIBus/commit/fbd1f7479bb1ebb64635fb0f6bac96a0d703e552))
+
 ### [2.7.1](https://github.com/OptimistikSAS/OIBus/compare/v2.7.0...v2.7.1) (2023-07-13)
 
 
