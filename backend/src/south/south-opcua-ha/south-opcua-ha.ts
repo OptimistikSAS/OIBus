@@ -26,6 +26,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { SouthOPCUAHAItemSettings, SouthOPCUAHASettings } from '../../../../shared/model/south-settings.model';
+import { randomUUID } from 'crypto';
 
 const AGGREGATE_TYPES = ['raw', 'count', 'max', 'min', 'avg'];
 type AggregateType = (typeof AGGREGATE_TYPES)[number];
@@ -79,10 +80,79 @@ export default class SouthOPCUAHA
     await this.connectToOpcuaServer();
   }
 
-  // TODO: method needs to be implemented
-  static async testConnection(settings: SouthOPCUAHASettings, logger: pino.Logger, _encryptionService: EncryptionService): Promise<void> {
-    logger.trace(`Testing connection`);
-    throw new Error('TODO: method needs to be implemented');
+  static async testConnection(settings: SouthOPCUAHASettings, logger: pino.Logger, encryptionService: EncryptionService): Promise<void> {
+    logger.trace(`Testing if OPCUA HA connection settings are correct`);
+
+    const tempCertFolder = `opcua-test-${randomUUID()}`;
+    await initOpcuaCertificateFolders(tempCertFolder);
+    const clientCertificateManager = new OPCUACertificateManager({
+      rootFolder: `${tempCertFolder}/opcua`,
+      automaticallyAcceptUnknownCertificate: true
+    });
+    // Set the state to the CertificateManager to 2 (Initialized) to avoid a call to openssl
+    // It is useful for offline instances of OIBus where downloading openssl is not possible
+    clientCertificateManager.state = 2;
+
+    logger.trace(`Created OPCUA HA temporary folder for certificates: ${tempCertFolder}`);
+
+    let session;
+    try {
+      const { options, userIdentity } = await SouthOPCUAHA.createSessionConfigs(
+        settings,
+        clientCertificateManager,
+        encryptionService,
+        'OIBus Connector test'
+      );
+      logger.trace(`Connecting to OPCUA HA on ${settings.url}`);
+      session = await OPCUAClient.createSession(settings.url, userIdentity, options);
+      logger.info(`OPCUA HA connected`);
+    } catch (error: any) {
+      logger.error(`Error while connecting to the OPCUA HA server: ${error}`);
+      const message = error.message;
+
+      if (/BadTcpEndpointUrlInvalid/i.test(message)) {
+        throw new Error('Please check the URL');
+      }
+
+      // Security policy
+      if (/Cannot find an Endpoint matching {1,2}security mode/i.test(message) && settings.securityPolicy) {
+        throw new Error(`Security Policy '${settings.securityPolicy}' is not supported on the server`);
+      }
+      if (/The connection may have been rejected by server/i.test(message) && settings.securityPolicy !== 'None') {
+        throw new Error('Please check if the OIBus certificate has been trusted by the server');
+      }
+
+      // Authentication
+      if (/BadIdentityTokenRejected/i.test(message)) {
+        if (settings.authentication.type === 'basic') {
+          throw new Error('Please check username and password');
+        }
+
+        if (settings.authentication.type === 'cert') {
+          throw new Error('Please check the certificate and key');
+        }
+      }
+      if (error.code === 'ENOENT' && settings.authentication.type === 'cert') {
+        throw new Error(`File '${error.path}' does not exist`);
+      }
+      if (/Failed to read private key/i.test(message)) {
+        const keyPath = path.resolve(settings.authentication.keyFilePath!);
+        throw new Error(`Could not read private key '${keyPath}'`);
+      }
+
+      // Unhandled erros
+      throw new Error('Please check logs');
+    } finally {
+      await fs.rm(tempCertFolder, { recursive: true, force: true });
+      logger.trace('OPCUA HA temporary folder deleted');
+
+      if (session) {
+        await session.close();
+        session = null;
+      }
+
+      logger.trace(`Closed connection to OPCUA HA on ${settings.url}`);
+    }
   }
 
   /**
@@ -90,42 +160,13 @@ export default class SouthOPCUAHA
    */
   async connectToOpcuaServer(): Promise<void> {
     try {
-      const options: OPCUAClientOptions = {
-        applicationName: 'OIBus',
-        connectionStrategy: {
-          initialDelay: 1000,
-          maxRetry: 1
-        },
-        securityMode: MessageSecurityMode[this.connector.settings.securityMode],
-        securityPolicy: this.connector.settings.securityPolicy || undefined,
-        endpointMustExist: false,
-        keepSessionAlive: this.connector.settings.keepSessionAlive,
-        keepPendingSessionsOnDisconnect: false,
-        clientName: this.connector.id, // the id of the connector
-        clientCertificateManager: this.clientCertificateManager!
-      };
+      const { options, userIdentity } = await SouthOPCUAHA.createSessionConfigs(
+        this.connector.settings,
+        this.clientCertificateManager!,
+        this.encryptionService,
+        this.connector.id // the id of the connector
+      );
 
-      let userIdentity: UserIdentityInfo;
-      switch (this.connector.settings.authentication.type) {
-        case 'basic':
-          userIdentity = {
-            type: UserTokenType.UserName,
-            userName: this.connector.settings.authentication.username!,
-            password: await this.encryptionService.decryptText(this.connector.settings.authentication.password!)
-          };
-          break;
-        case 'cert':
-          const certContent = await fs.readFile(path.resolve(this.connector.settings.authentication.certFilePath!));
-          const privateKeyContent = await fs.readFile(path.resolve(this.connector.settings.authentication.keyFilePath!));
-          userIdentity = {
-            type: UserTokenType.Certificate,
-            certificateData: certContent,
-            privateKey: privateKeyContent.toString('utf8')
-          };
-          break;
-        default:
-          userIdentity = { type: UserTokenType.Anonymous };
-      }
       this.logger.debug(`Connecting to OPCUA_HA on ${this.connector.settings.url}`);
       this.session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
       this.logger.info(`OPCUA_HA ${this.connector.name} connected`);
@@ -337,5 +378,51 @@ export default class SouthOPCUAHA
 
   override async disconnect(): Promise<void> {
     await this.internalDisconnect();
+  }
+
+  static async createSessionConfigs(
+    settings: SouthOPCUAHASettings,
+    clientCertificateManager: OPCUACertificateManager,
+    encryptionService: EncryptionService,
+    clientName: string
+  ) {
+    const options: OPCUAClientOptions = {
+      applicationName: 'OIBus',
+      connectionStrategy: {
+        initialDelay: 1000,
+        maxRetry: 1
+      },
+      securityMode: MessageSecurityMode[settings.securityMode],
+      securityPolicy: settings.securityPolicy || undefined,
+      endpointMustExist: false,
+      keepSessionAlive: settings.keepSessionAlive,
+      keepPendingSessionsOnDisconnect: false,
+      clientName,
+      clientCertificateManager
+    };
+
+    let userIdentity: UserIdentityInfo;
+    switch (settings.authentication.type) {
+      case 'basic':
+        userIdentity = {
+          type: UserTokenType.UserName,
+          userName: settings.authentication.username!,
+          password: await encryptionService.decryptText(settings.authentication.password!)
+        };
+        break;
+      case 'cert':
+        const certContent = await fs.readFile(path.resolve(settings.authentication.certFilePath!));
+        const privateKeyContent = await fs.readFile(path.resolve(settings.authentication.keyFilePath!));
+        userIdentity = {
+          type: UserTokenType.Certificate,
+          certificateData: certContent,
+          privateKey: privateKeyContent.toString('utf8')
+        };
+        break;
+      default:
+        userIdentity = { type: UserTokenType.Anonymous };
+    }
+
+    return { options, userIdentity };
   }
 }

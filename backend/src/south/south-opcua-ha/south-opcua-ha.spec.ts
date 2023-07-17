@@ -10,6 +10,8 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import { initOpcuaCertificateFolders } from '../../service/opcua.service';
+import { randomUUID } from 'crypto';
+import path from 'node:path';
 
 import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { SouthOPCUAHASettings, SouthOPCUAHASettingsAuthentication } from '../../../../shared/model/south-settings.model';
@@ -61,6 +63,13 @@ jest.mock(
       };
     }
 );
+
+// Mock only the randomUUID function because other functions are used by OPCUA
+jest.mock('crypto', () => ({
+  ...jest.requireActual('crypto'),
+  randomUUID: jest.fn()
+}));
+
 const addValues = jest.fn();
 const addFile = jest.fn();
 
@@ -274,5 +283,212 @@ describe('SouthOPCUAHA with certificate', () => {
     expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(connector.settings.url, expectedUserIdentity, expectedOptions);
     expect(logger.info).toHaveBeenCalledWith(`OPCUA_HA ${connector.name} connected`);
     expect(setTimeoutSpy).not.toBeCalled();
+  });
+});
+
+describe('SouthOPCUAHA test connection', () => {
+  let settings: SouthOPCUAHASettings;
+
+  // Mock UUID
+  const uuid = 'test-uuid';
+  (randomUUID as jest.Mock).mockReturnValue(uuid);
+  const tempCertFolder = `opcua-test-${uuid}`;
+
+  class FileError extends Error {
+    public code: string;
+    public path: string;
+    constructor(message: string, code = '', path = '') {
+      super();
+      this.name = 'FileError';
+      this.message = message;
+      this.code = code;
+      this.path = path;
+    }
+  }
+
+  const securityPolicies: SouthOPCUAHASettings['securityPolicy'][] = [
+    'None',
+    'Basic128',
+    'Basic192',
+    'Basic256',
+    'Basic128Rsa15',
+    'Basic192Rsa15',
+    'Basic256Rsa15',
+    'Basic256Sha256',
+    'Aes128_Sha256_RsaOaep',
+    'PubSub_Aes128_CTR',
+    'PubSub_Aes256_CTR'
+  ];
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime();
+    settings = {
+      url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
+      retryInterval: 10000,
+      readTimeout: 180000,
+      authentication: {
+        type: 'none'
+      } as unknown as SouthOPCUAHASettingsAuthentication,
+      securityMode: 'None',
+      securityPolicy: 'None',
+      keepSessionAlive: false
+    };
+  });
+
+  afterEach(async () => {
+    expect((logger.trace as jest.Mock).mock.calls).toEqual([
+      [`Testing if OPCUA HA connection settings are correct`],
+      [`Created OPCUA HA temporary folder for certificates: ${tempCertFolder}`],
+      [`Connecting to OPCUA HA on ${settings.url}`],
+      ['OPCUA HA temporary folder deleted'],
+      [`Closed connection to OPCUA HA on ${settings.url}`]
+    ]);
+  });
+
+  it('Connection settings are correct', async () => {
+    const close = jest.fn();
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ close });
+
+    const test = SouthOPCUAHA.testConnection(settings, logger, encryptionService);
+    await expect(test).resolves.not.toThrow();
+
+    expect(close).toBeCalled();
+    expect((logger.info as jest.Mock).mock.calls).toEqual([[`OPCUA HA connected`]]);
+  });
+
+  it('Wrong URL', async () => {
+    const error = new Error('BadTcpEndpointUrlInvalid');
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
+      throw error;
+    });
+
+    const test = SouthOPCUAHA.testConnection(settings, logger, encryptionService);
+    await expect(test).rejects.toThrow(new Error('Please check the URL'));
+
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server: ${error}`]]);
+  });
+
+  it.each(securityPolicies)('Server does not support Security policy: %s', async securityPolicy => {
+    settings.securityPolicy = securityPolicy;
+    const error = new Error(`Cannot find an Endpoint matching  security mode: ${securityPolicy}`);
+
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
+      throw error;
+    });
+
+    const test = SouthOPCUAHA.testConnection(settings, logger, encryptionService);
+    await expect(test).rejects.toThrow(new Error(`Security Policy '${securityPolicy}' is not supported on the server`));
+
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server: ${error}`]]);
+  });
+
+  it.each(securityPolicies.slice(1))('Server did not trust certificate using Security policy: %s', async securityPolicy => {
+    settings.securityPolicy = securityPolicy;
+    const error = new Error('The connection may have been rejected by server');
+
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
+      throw error;
+    });
+
+    const test = SouthOPCUAHA.testConnection(settings, logger, encryptionService);
+    await expect(test).rejects.toThrow(new Error('Please check if the OIBus certificate has been trusted by the server'));
+
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server: ${error}`]]);
+  });
+
+  it('Wrong user credentials', async () => {
+    settings.authentication.type = 'basic';
+    const error = new Error('BadIdentityTokenRejected');
+
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
+      throw error;
+    });
+
+    const test = SouthOPCUAHA.testConnection(settings, logger, encryptionService);
+    await expect(test).rejects.toThrow(new Error('Please check username and password'));
+
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server: ${error}`]]);
+  });
+
+  it('Wrong certificate', async () => {
+    settings.authentication = {
+      type: 'cert',
+      certFilePath: 'myCertPath',
+      keyFilePath: 'myKeyPath',
+      username: '',
+      password: ''
+    };
+    const error = new Error('BadIdentityTokenRejected');
+
+    (fs.readFile as jest.Mock)
+      .mockImplementationOnce(() => Buffer.from('cert content'))
+      .mockImplementationOnce(() => Buffer.from('key content'));
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
+      throw error;
+    });
+
+    const test = SouthOPCUAHA.testConnection(settings, logger, encryptionService);
+    await expect(test).rejects.toThrow(new Error('Please check the certificate and key'));
+
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server: ${error}`]]);
+  });
+
+  it('Certificate file does not exist', async () => {
+    settings.authentication = {
+      type: 'cert',
+      certFilePath: 'myCertPath',
+      keyFilePath: 'myKeyPath',
+      username: '',
+      password: ''
+    };
+    const error = new FileError('Wrong file', 'ENOENT', './foo/bar');
+    (fs.readFile as jest.Mock)
+      .mockImplementationOnce(() => Buffer.from('cert content'))
+      .mockImplementationOnce(() => Buffer.from('key content'));
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
+      throw error;
+    });
+
+    const test = SouthOPCUAHA.testConnection(settings, logger, encryptionService);
+    await expect(test).rejects.toThrow(new Error(`File '${error.path}' does not exist`));
+
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server: ${error}`]]);
+  });
+
+  it('Failed to read private key', async () => {
+    settings.authentication = {
+      type: 'cert',
+      certFilePath: 'myCertPath',
+      keyFilePath: 'myKeyPath',
+      username: '',
+      password: ''
+    };
+    const error = new Error('Failed to read private key');
+    const keyPath = path.resolve(settings.authentication.keyFilePath!);
+    (fs.readFile as jest.Mock)
+      .mockImplementationOnce(() => Buffer.from('cert content'))
+      .mockImplementationOnce(() => Buffer.from('key content'));
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
+      throw error;
+    });
+
+    const test = SouthOPCUAHA.testConnection(settings, logger, encryptionService);
+    await expect(test).rejects.toThrow(new Error(`Could not read private key '${keyPath}'`));
+
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server: ${error}`]]);
+  });
+
+  it('Unknown error', async () => {
+    const error = new Error('Unknown error');
+
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockImplementationOnce(() => {
+      throw error;
+    });
+
+    const test = SouthOPCUAHA.testConnection(settings, logger, encryptionService);
+    await expect(test).rejects.toThrow(new Error('Please check logs'));
+
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server: ${error}`]]);
   });
 });
