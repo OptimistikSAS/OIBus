@@ -169,6 +169,10 @@ describe('FileCache', () => {
       path.resolve('myCacheFolder', 'files-errors', filenames[2]),
       path.resolve('myCacheFolder', 'files', filenames[2])
     );
+
+    // Check if the files have been added back to the queue
+    const queueFiles = filenames.map(name => path.resolve('myCacheFolder', 'files', name));
+    expect(cache['filesQueue']).toEqual(queueFiles);
   });
 
   it('should remove all error files when the error folder is not empty', async () => {

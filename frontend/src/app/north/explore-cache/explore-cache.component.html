@@ -7,4 +7,4 @@
     </div>
   </div>
 </div>
-<oib-error-files [northConnector]="northConnector"></oib-error-files>
+<oib-error-files *ngIf="northConnector" [northConnector]="northConnector"></oib-error-files>
