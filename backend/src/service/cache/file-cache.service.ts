@@ -201,6 +201,11 @@ export default class FileCacheService {
         const cacheFilePath = path.join(this._fileFolder, filename);
         this._logger.debug(`Moving error file "${errorFilePath}" back to cache "${cacheFilePath}"`);
         await fs.rename(errorFilePath, cacheFilePath);
+        // Add the file to the queue once it is persisted in the cache folder
+        this.filesQueue.push(cacheFilePath);
+        if (this._settings.sendFileImmediately) {
+          this.triggerRun.emit('next');
+        }
       })
     );
   }
