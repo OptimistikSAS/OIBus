@@ -37,6 +37,7 @@ export class BoxTitleDirective {
 export class BoxComponent implements AfterContentInit {
   @Input() boxTitle = '';
   titleTemplateRef: TemplateRef<void> | null = null;
+  imagePath = '';
 
   @ViewChild('boxContent', { static: true }) boxContent: ElementRef<any> | undefined;
   @ContentChild(BoxTitleDirective, { static: true }) titleQuery: BoxTitleDirective | undefined;
@@ -59,12 +60,21 @@ export class BoxComponent implements AfterContentInit {
       if (tableElement) {
         contentElement.classList.add('has-table');
       }
-      if (emptyDivElements.length > 0) {
+      if (emptyDivElements.length >= 0) {
         contentElement.classList.add('has-empty-div');
       }
       if (alertWarningElement) {
         contentElement.classList.add('has-alert-warning');
       }
+    }
+
+    // Assign image path based on boxTitle
+    if (this.boxTitle.includes('home.south.title')) {
+      this.imagePath = '../../assets/home/south.svg';
+    } else if (this.boxTitle.includes('home.north.title')) {
+      this.imagePath = '../../assets/home/north.svg';
+    } else if (this.boxTitle.includes('home.history-query.title')) {
+      this.imagePath = '../../assets/home/history-query.svg';
     }
   }
 }

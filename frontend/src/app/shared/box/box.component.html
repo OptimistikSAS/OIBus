@@ -4,7 +4,10 @@
       <ng-container *ngIf="titleTemplateRef; else stringTitle">
         <ng-container *ngTemplateOutlet="titleTemplateRef"></ng-container>
       </ng-container>
-      <ng-template #stringTitle>{{ boxTitle | translate }}</ng-template>
+      <ng-template #stringTitle>
+        <img class="oib-title-image" *ngIf="imagePath" [src]="imagePath" alt="Image" /> <!-- Affiche l'image correspondante si imagePath n'est pas vide -->
+        {{ boxTitle | translate }}
+      </ng-template>
     </div>
   </div>
   <div class="oib-box-content" #boxContent>
