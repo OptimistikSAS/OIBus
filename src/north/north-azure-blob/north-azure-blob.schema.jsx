@@ -37,7 +37,7 @@ schema.form = {
     label: 'Authentication',
     newRow: true,
     md: 4,
-    options: ['external', 'sas', 'aad', 'accessKey'],
+    options: ['external', 'sas', 'aad', 'accessKey', 'powershell'],
     defaultValue: 'sas',
   },
   sasToken: {

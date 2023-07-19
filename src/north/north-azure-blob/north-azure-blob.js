@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob'
-import { DefaultAzureCredential } from '@azure/identity'
+import { AzurePowerShellCredential, DefaultAzureCredential } from '@azure/identity'
 import NorthConnector from '../north-connector.js'
 import manifest from './manifest.js'
 
@@ -43,7 +43,16 @@ export default class NorthAzureBlob extends NorthConnector {
       manifest,
     )
 
-    const { account, container, authentication, sasToken, accessKey, tenantId, clientId, clientSecret } = configuration.settings
+    const {
+      account,
+      container,
+      authentication,
+      sasToken,
+      accessKey,
+      tenantId,
+      clientId,
+      clientSecret,
+    } = configuration.settings
 
     this.account = account
     this.container = container
@@ -70,6 +79,11 @@ export default class NorthAzureBlob extends NorthConnector {
       this.blobClient = new BlobServiceClient(
         `https://${this.account}.blob.core.windows.net`,
         defaultAzureCredential,
+      )
+    } else if (this.authentication === 'powershell') {
+      this.blobClient = new BlobServiceClient(
+        `https://${this.account}.blob.core.windows.net`,
+        new AzurePowerShellCredential(),
       )
     } else if (this.authentication === 'sas') {
       const decodedToken = await this.encryptionService.decryptText(this.sasToken)
