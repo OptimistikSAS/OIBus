@@ -119,7 +119,7 @@
     "jest-environment-jsdom": "29.6.1",
     "jsondiffpatch": "0.4.1",
     "monaco-editor": "0.39.0",
-    "monaco-editor-webpack-plugin": "7.0.1",
+    "monaco-editor-webpack-plugin": "7.1.0",
     "ncp": "2.0.0",
     "path-browserify": "1.0.1",
     "pkg": "5.8.1",
