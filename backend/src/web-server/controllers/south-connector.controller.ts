@@ -112,14 +112,23 @@ export default class SouthConnectorController {
       }
       await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
 
-      const command: SouthConnectorCommandDTO = ctx.request.body!;
+      const command: SouthConnectorDTO = { id: 'test', ...ctx.request.body! };
       command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
         command.settings,
         southConnector?.settings || null,
         manifest.settings
       );
       ctx.request.body!.name = southConnector ? southConnector.name : `${ctx.request.body!.type}:test-connection`;
-      await ctx.app.reloadService.oibusEngine.testSouth(command);
+      const southToTest = ctx.app.southService.createSouth(
+        command,
+        [],
+        async (_southId: string, _values: Array<any>): Promise<void> => {},
+        async (_southId: string, _filename: string): Promise<void> => {},
+        'baseFolder',
+        ctx.app.logger,
+        true
+      );
+      await southToTest.testConnection();
 
       ctx.noContent();
     } catch (error: any) {

@@ -8,11 +8,10 @@ import SouthService from '../service/south.service';
 import { createFolder } from '../service/utils';
 import path from 'node:path';
 
-import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
-import { TestsConnection } from '../south/south-interface';
 
 const CACHE_FOLDER = './cache/data-stream';
 
@@ -105,6 +104,7 @@ export default class OIBusEngine extends BaseEngine {
       baseFolder,
       this.logger.child({ scope: `south:${settings.name}` })
     );
+    await south.init();
     if (south.isEnabled()) {
       south.connectedEvent.on('connected', async () => {
         await south.createSubscriptions(items.filter(item => item.scanModeId === 'subscription'));
@@ -118,25 +118,6 @@ export default class OIBusEngine extends BaseEngine {
       this.logger.trace(`South connector ${settings.name} not enabled`);
     }
     this.southConnectors.set(settings.id, south);
-  }
-
-  /**
-   * Tests a SouthConnector based on the settings
-   * @throws {Error} Error with a message specifying wrong settings
-   */
-  async testSouth(settings: SouthConnectorCommandDTO): Promise<void> {
-    const SouthConnectorClass = this.southService.getSouthClass(settings.type);
-
-    if (!SouthConnectorClass) {
-      throw new Error(`Unknown South connector type ${settings.type}`);
-    }
-    if (!('testConnection' in SouthConnectorClass)) {
-      throw new Error(`South connector of type ${settings.type} does not have testConnection method`);
-    }
-    const TestClass = SouthConnectorClass as typeof SouthConnector & typeof TestsConnection;
-    const testLogger = this.logger.child({ scope: `south:${settings.name}` });
-
-    await TestClass.testConnection(settings.settings, testLogger, this.encryptionService);
   }
 
   async startNorth(northId: string, settings: NorthConnectorDTO): Promise<void> {

@@ -69,6 +69,7 @@ const southStream = new Stream();
 const connectedEvent = new EventEmitter();
 const createdSouth = {
   start: jest.fn(),
+  init: jest.fn(),
   stop: jest.fn(),
   connect: jest.fn(),
   historyQueryHandler: jest.fn(),
@@ -84,8 +85,8 @@ const createdSouth = {
 const northStream = new Stream();
 const createdNorth = {
   start: jest.fn(),
-  stop: jest.fn(),
   init: jest.fn(),
+  stop: jest.fn(),
   connect: jest.fn(),
   cacheValues: jest.fn(),
   cacheFile: jest.fn(),

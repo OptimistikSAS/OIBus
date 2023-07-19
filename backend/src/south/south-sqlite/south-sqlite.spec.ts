@@ -273,26 +273,23 @@ describe('SouthSQLite test connection', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    south = new SouthSQLite(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
-  const settings = { ...configuration.settings };
-  const dbPath = path.resolve(settings.databasePath);
+  const dbPath = path.resolve(configuration.settings.databasePath);
 
   it('Database is reachable and has tables', async () => {
     const result = [{ tbl_name: 'logs', columns: 'data(INTEGER), timestamp(datetime)' }];
     all.mockReturnValue(result);
     (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
 
-    const test = SouthSQLite.testConnection(settings, logger, encryptionService);
-    await expect(test).resolves.not.toThrow();
-
-    expect((logger.trace as jest.Mock).mock.calls).toEqual([
-      ['Testing if SQLite file exists'],
-      ['Testing connection to SQLite system table']
-    ]);
+    await expect(south.testConnection()).resolves.not.toThrow();
 
     const tables = result.map((row: any) => `${row.tbl_name}: [${row.columns}]`).join(',\n');
-    expect(logger.info).toHaveBeenCalledWith('Database is live with tables (table:[columns]):\n%s', tables);
+    expect((logger.info as jest.Mock).mock.calls).toEqual([
+      [`Testing connection on "${configuration.settings.databasePath}"`],
+      ['Database is live with tables (table:[columns]):\n%s', tables]
+    ]);
   });
 
   it('Database file does not exist', async () => {
@@ -301,11 +298,10 @@ describe('SouthSQLite test connection', () => {
       throw new Error(errorMessage);
     });
 
-    const test = SouthSQLite.testConnection(settings, logger, encryptionService);
-    await expect(test).rejects.toThrowError(`File '${dbPath}' does not exist`);
+    await expect(south.testConnection()).rejects.toThrowError(`File "${dbPath}" does not exist`);
 
-    expect((logger.trace as jest.Mock).mock.calls).toEqual([['Testing if SQLite file exists']]);
-    expect(logger.error as jest.Mock).toBeCalledWith(`Access error on '${dbPath}': ${errorMessage}`);
+    expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.databasePath}"`]]);
+    expect(logger.error as jest.Mock).toBeCalledWith(`Access error on "${dbPath}". ${errorMessage}`);
   });
 
   it('Database connection error', async () => {
@@ -314,27 +310,20 @@ describe('SouthSQLite test connection', () => {
       throw new Error(errorMessage);
     });
 
-    const test = SouthSQLite.testConnection(settings, logger, encryptionService);
-    await expect(test).rejects.toThrowError('Error testing database connection, check logs');
+    await expect(south.testConnection()).rejects.toThrowError('Error testing database connection, check logs');
 
-    expect((logger.trace as jest.Mock).mock.calls).toEqual([
-      ['Testing if SQLite file exists'],
-      ['Testing connection to SQLite system table']
-    ]);
-    expect(logger.error as jest.Mock).toHaveBeenCalledWith(`Unable to query system table: ${errorMessage}`);
+    expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.databasePath}"`]]);
+
+    expect(logger.error as jest.Mock).toHaveBeenCalledWith(`Unable to query system table. ${errorMessage}`);
   });
 
   it('Database has no tables', async () => {
     all.mockReturnValue([]);
     (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
 
-    const test = SouthSQLite.testConnection(settings, logger, encryptionService);
-    await expect(test).rejects.toThrowError('Database has no tables');
+    await expect(south.testConnection()).rejects.toThrowError('Database has no table');
 
-    expect((logger.trace as jest.Mock).mock.calls).toEqual([
-      ['Testing if SQLite file exists'],
-      ['Testing connection to SQLite system table']
-    ]);
-    expect(logger.warn as jest.Mock).toHaveBeenCalledWith(`Database '${dbPath}' has no tables`);
+    expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.databasePath}"`]]);
+    expect(logger.warn as jest.Mock).toHaveBeenCalledWith(`Database "${dbPath}" has no table`);
   });
 });

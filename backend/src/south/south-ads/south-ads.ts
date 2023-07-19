@@ -39,9 +39,20 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolder: string,
+    testing = false
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      items,
+      engineAddValuesCallback,
+      engineAddFileCallback,
+      encryptionService,
+      repositoryService,
+      logger,
+      baseFolder,
+      testing
+    );
   }
 
   /**

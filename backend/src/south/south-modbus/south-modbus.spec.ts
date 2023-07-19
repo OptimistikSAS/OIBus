@@ -6,11 +6,9 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import net from 'node:net';
 import Stream from 'node:stream';
-import { client } from 'jsmodbus';
-import { SouthModbusSettings } from '../../../../shared/model/south-settings.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node:net');
@@ -398,7 +396,7 @@ describe('SouthModbus test connection', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
   });
 
-  const settings: SouthModbusSettings = { ...configuration.settings };
+  let testingSouth: SouthModbus;
 
   // Error codes handled by the test function
   // With the expected error messages to throw
@@ -409,7 +407,6 @@ describe('SouthModbus test connection', () => {
   } as const;
 
   type ErrorCodes = keyof typeof ERROR_CODES;
-
   class ModbusError extends Error {
     private code: ErrorCodes;
     constructor(message: string, code: ErrorCodes) {
@@ -421,6 +418,8 @@ describe('SouthModbus test connection', () => {
   }
 
   it('Connecting to socket successfully', async () => {
+    testingSouth = new SouthModbus(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+
     // Mock node:net Socket constructor and the used function
     (net.Socket as unknown as jest.Mock).mockReturnValue({
       connect(_connectionObject: any, callback: any) {
@@ -430,15 +429,11 @@ describe('SouthModbus test connection', () => {
       end: jest.fn()
     });
 
-    const test = SouthModbus.testConnection(settings, logger, encryptionService);
-    await expect(test).resolves.not.toThrow();
-    expect(client.TCP).toBeCalled();
+    await expect(testingSouth.testConnection()).resolves.not.toThrow();
 
-    expect((logger.info as jest.Mock).mock.calls).toEqual([[`Successfully connected to Modbus socket ${settings.host}:${settings.port}`]]);
-    expect((logger.trace as jest.Mock).mock.calls).toEqual([
-      [`Testing Modbus connection`],
-      [`Connecting Modbus socket into ${settings.host}:${settings.port}`],
-      [`Ended connection to Modbus socket ${settings.host}:${settings.port}`]
+    expect((logger.info as jest.Mock).mock.calls).toEqual([
+      [`Testing modbus connection on ${configuration.settings.host}:${configuration.settings.port}`],
+      [`Successfully connected to Modbus socket ${configuration.settings.host}:${configuration.settings.port}`]
     ]);
   });
 
@@ -448,7 +443,7 @@ describe('SouthModbus test connection', () => {
 
     for (code in ERROR_CODES) {
       (logger.error as jest.Mock).mockClear();
-      (logger.trace as jest.Mock).mockClear();
+      (logger.info as jest.Mock).mockClear();
 
       // Mock node:net Socket constructor and the used function
       (net.Socket as unknown as jest.Mock).mockReturnValueOnce({
@@ -459,13 +454,11 @@ describe('SouthModbus test connection', () => {
         end: jest.fn()
       });
 
-      const test = SouthModbus.testConnection(settings, logger, encryptionService);
-      await expect(test).rejects.toThrow(new Error(ERROR_CODES[code]));
+      await expect(testingSouth.testConnection()).rejects.toThrow(new Error(ERROR_CODES[code]));
 
       expect((logger.error as jest.Mock).mock.calls).toEqual([[`Unable to connect to socket: ${errorMessage}`]]);
-      expect((logger.trace as jest.Mock).mock.calls).toEqual([
-        [`Testing Modbus connection`],
-        [`Connecting Modbus socket into ${settings.host}:${settings.port}`]
+      expect((logger.info as jest.Mock).mock.calls).toEqual([
+        [`Testing modbus connection on ${configuration.settings.host}:${configuration.settings.port}`]
       ]);
     }
   });

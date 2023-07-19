@@ -80,8 +80,8 @@ export default class SouthOPCUAHA
     await this.connectToOpcuaServer();
   }
 
-  static async testConnection(settings: SouthOPCUAHASettings, logger: pino.Logger, encryptionService: EncryptionService): Promise<void> {
-    logger.trace(`Testing if OPCUA HA connection settings are correct`);
+  override async testConnection(): Promise<void> {
+    this.logger.info(`Testing connection on "${this.connector.settings.url}"`);
 
     const tempCertFolder = `opcua-test-${randomUUID()}`;
     await initOpcuaCertificateFolders(tempCertFolder);
@@ -93,21 +93,20 @@ export default class SouthOPCUAHA
     // It is useful for offline instances of OIBus where downloading openssl is not possible
     clientCertificateManager.state = 2;
 
-    logger.trace(`Created OPCUA HA temporary folder for certificates: ${tempCertFolder}`);
+    this.logger.trace(`Created OPCUA HA temporary folder for certificates: ${tempCertFolder}`);
 
     let session;
     try {
-      const { options, userIdentity } = await SouthOPCUAHA.createSessionConfigs(
-        settings,
+      const { options, userIdentity } = await this.createSessionConfigs(
+        this.connector.settings,
         clientCertificateManager,
-        encryptionService,
+        this.encryptionService,
         'OIBus Connector test'
       );
-      logger.trace(`Connecting to OPCUA HA on ${settings.url}`);
-      session = await OPCUAClient.createSession(settings.url, userIdentity, options);
-      logger.info(`OPCUA HA connected`);
+      session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
+      this.logger.info(`OPCUA HA connected on "${this.connector.settings.url}"`);
     } catch (error: any) {
-      logger.error(`Error while connecting to the OPCUA HA server: ${error}`);
+      this.logger.error(`Error while connecting to the OPCUA HA server. ${error}`);
       const message = error.message;
 
       if (/BadTcpEndpointUrlInvalid/i.test(message)) {
@@ -115,43 +114,41 @@ export default class SouthOPCUAHA
       }
 
       // Security policy
-      if (/Cannot find an Endpoint matching {1,2}security mode/i.test(message) && settings.securityPolicy) {
-        throw new Error(`Security Policy '${settings.securityPolicy}' is not supported on the server`);
+      if (/Cannot find an Endpoint matching {1,2}security mode/i.test(message) && this.connector.settings.securityPolicy) {
+        throw new Error(`Security Policy "${this.connector.settings.securityPolicy}" is not supported on the server`);
       }
-      if (/The connection may have been rejected by server/i.test(message) && settings.securityPolicy !== 'None') {
+      if (/The connection may have been rejected by server/i.test(message) && this.connector.settings.securityPolicy !== 'None') {
         throw new Error('Please check if the OIBus certificate has been trusted by the server');
       }
 
       // Authentication
       if (/BadIdentityTokenRejected/i.test(message)) {
-        if (settings.authentication.type === 'basic') {
+        if (this.connector.settings.authentication.type === 'basic') {
           throw new Error('Please check username and password');
         }
 
-        if (settings.authentication.type === 'cert') {
+        if (this.connector.settings.authentication.type === 'cert') {
           throw new Error('Please check the certificate and key');
         }
       }
-      if (error.code === 'ENOENT' && settings.authentication.type === 'cert') {
-        throw new Error(`File '${error.path}' does not exist`);
+      if (error.code === 'ENOENT' && this.connector.settings.authentication.type === 'cert') {
+        throw new Error(`File "${error.path}" does not exist`);
       }
       if (/Failed to read private key/i.test(message)) {
-        const keyPath = path.resolve(settings.authentication.keyFilePath!);
-        throw new Error(`Could not read private key '${keyPath}'`);
+        const keyPath = path.resolve(this.connector.settings.authentication.keyFilePath!);
+        throw new Error(`Could not read private key "${keyPath}"`);
       }
 
-      // Unhandled erros
+      // Unhandled errors
       throw new Error('Please check logs');
     } finally {
       await fs.rm(tempCertFolder, { recursive: true, force: true });
-      logger.trace('OPCUA HA temporary folder deleted');
+      this.logger.trace('OPCUA HA temporary folder deleted');
 
       if (session) {
         await session.close();
         session = null;
       }
-
-      logger.trace(`Closed connection to OPCUA HA on ${settings.url}`);
     }
   }
 
@@ -160,7 +157,7 @@ export default class SouthOPCUAHA
    */
   async connectToOpcuaServer(): Promise<void> {
     try {
-      const { options, userIdentity } = await SouthOPCUAHA.createSessionConfigs(
+      const { options, userIdentity } = await this.createSessionConfigs(
         this.connector.settings,
         this.clientCertificateManager!,
         this.encryptionService,
@@ -380,7 +377,7 @@ export default class SouthOPCUAHA
     await this.internalDisconnect();
   }
 
-  static async createSessionConfigs(
+  async createSessionConfigs(
     settings: SouthOPCUAHASettings,
     clientCertificateManager: OPCUACertificateManager,
     encryptionService: EncryptionService,

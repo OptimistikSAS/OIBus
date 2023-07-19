@@ -39,9 +39,20 @@ export default class SouthMySQL
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolder: string,
+    testing = false
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      items,
+      engineAddValuesCallback,
+      engineAddFileCallback,
+      encryptionService,
+      repositoryService,
+      logger,
+      baseFolder,
+      testing
+    );
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -53,24 +64,28 @@ export default class SouthMySQL
     await super.start();
   }
 
-  static async testConnection(settings: SouthMySQLSettings, logger: pino.Logger, encryptionService: EncryptionService): Promise<void> {
-    const config: mysql.ConnectionOptions = {
-      host: settings.host,
-      port: settings.port,
-      user: settings.username || undefined,
-      password: settings.password ? await encryptionService.decryptText(settings.password) : undefined,
-      database: settings.database,
-      connectTimeout: settings.connectionTimeout,
+  async createConnectionOptions(): Promise<mysql.ConnectionOptions> {
+    return {
+      host: this.connector.settings.host,
+      port: this.connector.settings.port,
+      user: this.connector.settings.username || undefined,
+      password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : undefined,
+      database: this.connector.settings.database,
+      connectTimeout: this.connector.settings.connectionTimeout,
       timezone: 'Z'
     };
+  }
+
+  override async testConnection(): Promise<void> {
+    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
+    const config = await this.createConnectionOptions();
+
     let connection;
-    logger.trace(`Testing if MYSQL connection settings are correct`);
     try {
       connection = await mysql.createConnection(config);
-      logger.trace(`Pinging the database`);
       await connection.ping();
     } catch (error: any) {
-      logger.error(`Unable to connect to database: ${error.message}`);
+      this.logger.error(`Unable to connect to database. ${error.message}`);
       if (connection) {
         await connection.end();
       }
@@ -84,17 +99,17 @@ export default class SouthMySQL
           throw new Error('Please check username and password');
 
         case 'ER_DBACCESS_DENIED_ERROR':
-          throw new Error(`User '${settings.username}' does not have access to database '${settings.database}'`);
+          throw new Error(
+            `User "${this.connector.settings.username}" does not have access to database "${this.connector.settings.database}"`
+          );
 
         case 'ER_BAD_DB_ERROR':
-          throw new Error(`Database '${settings.database}' does not exist`);
+          throw new Error(`Database "${this.connector.settings.database}" does not exist`);
 
         default:
           throw new Error('Please check logs');
       }
     }
-
-    logger.trace(`Testing system table query`);
 
     let tables;
     try {
@@ -112,20 +127,20 @@ export default class SouthMySQL
     } catch (error: any) {
       await connection.end();
 
-      logger.error(`Unable to read tables in database '${settings.database}': ${error.message}`);
-      throw new Error(`Unable to read tables in database '${settings.database}', check logs`);
+      this.logger.error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}", check logs`);
     }
 
     await connection.end();
 
     if (tables.length === 0) {
-      logger.warn(`Database '${settings.database}' has no tables`);
-      throw new Error('Database has no tables');
+      this.logger.warn(`Database "${this.connector.settings.database}" has no table`);
+      throw new Error('Database has no table');
     }
 
     const tablesString = tables.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
 
-    logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
+    this.logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
   }
 
   /**
@@ -189,15 +204,7 @@ export default class SouthMySQL
    * Apply the SQL query to the target MySQL / MariaDB database
    */
   async queryData(item: SouthConnectorItemDTO<SouthMySQLItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
-    const config = {
-      host: this.connector.settings.host,
-      port: this.connector.settings.port,
-      user: this.connector.settings.username || undefined,
-      password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : undefined,
-      database: this.connector.settings.database,
-      connectTimeout: this.connector.settings.connectionTimeout,
-      timezone: 'Z'
-    };
+    const config = await this.createConnectionOptions();
 
     const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference) || null;
     const mysqlStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);

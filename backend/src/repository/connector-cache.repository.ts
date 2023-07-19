@@ -15,6 +15,7 @@ export default class ConnectorCacheRepository {
   get database(): Database {
     return this._database;
   }
+
   createSouthCacheScanModeTable() {
     const query = `CREATE TABLE IF NOT EXISTS ${SOUTH_CACHE_TABLE} (scan_mode_id TEXT, item_id TEXT, interval_index INTEGER, max_instant TEXT, PRIMARY KEY(scan_mode_id, item_id));`;
     this._database.prepare(query).run();

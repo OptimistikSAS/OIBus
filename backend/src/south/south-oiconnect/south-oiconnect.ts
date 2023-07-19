@@ -36,9 +36,20 @@ export default class SouthOIConnect
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolder: string,
+    testing = false
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      items,
+      engineAddValuesCallback,
+      engineAddFileCallback,
+      encryptionService,
+      repositoryService,
+      logger,
+      baseFolder,
+      testing
+    );
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -51,8 +62,8 @@ export default class SouthOIConnect
   }
 
   // TODO: method needs to be implemented
-  static async testConnection(settings: SouthOIConnectSettings, logger: pino.Logger, _encryptionService: EncryptionService): Promise<void> {
-    logger.trace(`Testing connection`);
+  override async testConnection(): Promise<void> {
+    this.logger.trace(`Testing connection`);
     throw new Error('TODO: method needs to be implemented');
   }
 
