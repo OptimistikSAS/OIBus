@@ -404,10 +404,30 @@ describe('South ADS', () => {
   });
 
   it('should test ADS connection', async () => {
-    // TODO
-    await expect(SouthADS.testConnection(configuration.settings, logger, encryptionService)).rejects.toThrowError(
-      'TODO: method needs to be implemented'
+    // Mock ADS Client constructor and the used function
+    ads.Client.mockReturnValue({
+      connection: {
+        connected: true
+      },
+      connect: () =>
+        new Promise(resolve => {
+          resolve({
+            targetAmsNetId: 'targetAmsNetId',
+            localAmsNetId: 'localAmsNetId',
+            localAdsPort: 'localAdsPort'
+          });
+        }),
+      disconnect,
+      readSymbol
+    });
+
+    south.disconnect = jest.fn();
+    await south.testConnection();
+    expect(logger.info).toHaveBeenCalledWith(
+      'Connected to targetAmsNetId with local AmsNetId localAmsNetId and local port localAdsPort. Disconnecting...'
     );
+    expect(logger.info).toHaveBeenCalledWith('ADS connection correctly closed');
+    expect(south.disconnect).toHaveBeenCalledTimes(1);
   });
 
   it('should read symbol', async () => {
