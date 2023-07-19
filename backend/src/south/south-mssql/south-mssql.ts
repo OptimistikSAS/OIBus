@@ -32,9 +32,20 @@ export default class SouthMSSQL
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolder: string,
+    testing = false
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      items,
+      engineAddValuesCallback,
+      engineAddFileCallback,
+      encryptionService,
+      repositoryService,
+      logger,
+      baseFolder,
+      testing
+    );
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -46,35 +57,38 @@ export default class SouthMSSQL
     await super.start();
   }
 
-  static async testConnection(settings: SouthMSSQLSettings, logger: pino.Logger, encryptionService: EncryptionService): Promise<void> {
+  async createConnectionOptions(): Promise<config> {
     const config: config = {
-      user: settings.username || undefined,
-      password: settings.password ? await encryptionService.decryptText(settings.password) : undefined,
-      server: settings.host,
-      port: settings.port,
-      database: settings.database,
-      connectionTimeout: settings.connectionTimeout,
-      requestTimeout: settings.requestTimeout,
+      user: this.connector.settings.username || undefined,
+      password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : undefined,
+      server: this.connector.settings.host,
+      port: this.connector.settings.port,
+      database: this.connector.settings.database,
+      connectionTimeout: this.connector.settings.connectionTimeout,
+      requestTimeout: this.connector.settings.requestTimeout,
       options: {
-        encrypt: settings.encryption == null ? undefined : settings.encryption,
-        trustServerCertificate: settings.trustServerCertificate,
+        encrypt: this.connector.settings.encryption == null ? undefined : this.connector.settings.encryption,
+        trustServerCertificate: this.connector.settings.trustServerCertificate,
         useUTC: true
       }
     };
-    if (settings.domain) {
-      config.domain = settings.domain;
+    if (this.connector.settings.domain) {
+      config.domain = this.connector.settings.domain;
     }
+    return config;
+  }
+
+  override async testConnection(): Promise<void> {
+    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
+    const config = await this.createConnectionOptions();
 
     let pool;
     let request;
-
-    logger.trace(`Testing if MSSQL connection settings are correct`);
-
     try {
       pool = await new mssql.ConnectionPool(config).connect();
       request = pool.request();
     } catch (error: any) {
-      logger.error(`Unable to connect to database: ${error.message}`);
+      this.logger.error(`Unable to connect to database: ${error.message}`);
       if (pool) {
         await pool.close();
       }
@@ -92,8 +106,6 @@ export default class SouthMSSQL
       }
     }
 
-    logger.trace(`Testing system table query`);
-
     let tables;
     try {
       const {
@@ -110,21 +122,20 @@ export default class SouthMSSQL
       tables = recordset as Array<any>;
     } catch (error: any) {
       await pool.close();
-
-      logger.error(`Unable to read tables in database '${settings.database}': ${error.message}`);
-      throw new Error(`Unable to read tables in database '${settings.database}', check logs`);
+      this.logger.error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}", check logs`);
     }
 
     await pool.close();
 
     if (tables.length === 0) {
-      logger.warn(`Database '${settings.database}' has no tables`);
-      throw new Error('Database has no tables');
+      this.logger.warn(`Database "${this.connector.settings.database}" has no table`);
+      throw new Error('Database has no table');
     }
 
     const tablesString = tables.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
 
-    logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
+    this.logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
   }
 
   /**
@@ -185,24 +196,7 @@ export default class SouthMSSQL
    * Apply the SQL query to the target MSSQL database
    */
   async queryData(item: SouthConnectorItemDTO<SouthMSSQLItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
-    const config: config = {
-      user: this.connector.settings.username || undefined,
-      password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : undefined,
-      server: this.connector.settings.host,
-      port: this.connector.settings.port,
-      database: this.connector.settings.database,
-      connectionTimeout: this.connector.settings.connectionTimeout,
-      requestTimeout: this.connector.settings.requestTimeout,
-      options: {
-        encrypt: this.connector.settings.encryption == null ? undefined : this.connector.settings.encryption,
-        trustServerCertificate: this.connector.settings.trustServerCertificate,
-        useUTC: true
-      }
-    };
-    // domain is optional and allow to activate the ntlm authentication on Windows
-    if (this.connector.settings.domain) {
-      config.domain = this.connector.settings.domain;
-    }
+    const config = await this.createConnectionOptions();
 
     const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference) || null;
     const mssqlStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);

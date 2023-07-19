@@ -25,7 +25,6 @@ export default class SouthConnectorMetricsService {
     const database = Database(cacheDatabasePath);
 
     this._metricsRepository = new SouthConnectorMetricsRepository(database);
-    this.createMetricsTable();
   }
 
   get metricsRepository(): SouthConnectorMetricsRepository {

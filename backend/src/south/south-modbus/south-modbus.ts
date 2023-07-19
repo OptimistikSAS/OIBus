@@ -34,9 +34,20 @@ export default class SouthModbus
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolder: string,
+    testing = false
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      items,
+      engineAddValuesCallback,
+      engineAddFileCallback,
+      encryptionService,
+      repositoryService,
+      logger,
+      baseFolder,
+      testing
+    );
   }
 
   async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>): Promise<void> {
@@ -192,20 +203,15 @@ export default class SouthModbus
     });
   }
 
-  static async testConnection(settings: SouthModbusSettings, logger: pino.Logger, _encryptionService: EncryptionService): Promise<void> {
-    logger.trace(`Testing Modbus connection`);
-
+  override async testConnection(): Promise<void> {
     try {
       await new Promise<void>((resolve, reject) => {
+        this.logger.info(`Testing modbus connection on ${this.connector.settings.host}:${this.connector.settings.port}`);
         const socket = new net.Socket();
-        new client.TCP(socket, settings.slaveId);
 
-        logger.trace(`Connecting Modbus socket into ${settings.host}:${settings.port}`);
-
-        socket.connect({ host: settings.host, port: settings.port }, async () => {
-          logger.info(`Successfully connected to Modbus socket ${settings.host}:${settings.port}`);
+        socket.connect({ host: this.connector.settings.host, port: this.connector.settings.port }, async () => {
+          this.logger.info(`Successfully connected to Modbus socket ${this.connector.settings.host}:${this.connector.settings.port}`);
           socket.end();
-          logger.trace(`Ended connection to Modbus socket ${settings.host}:${settings.port}`);
           resolve();
         });
         socket.on('error', async error => {
@@ -213,8 +219,7 @@ export default class SouthModbus
         });
       });
     } catch (error: any) {
-      logger.error(`Unable to connect to socket: ${error.message}`);
-
+      this.logger.error(`Unable to connect to socket: ${error.message}`);
       switch (error.code) {
         case 'ENOTFOUND':
         case 'ECONNREFUSED':

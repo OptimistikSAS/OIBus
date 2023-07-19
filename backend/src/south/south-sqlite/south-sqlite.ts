@@ -47,18 +47,17 @@ export default class SouthSQLite
     await super.start();
   }
 
-  static async testConnection(settings: SouthSQLiteSettings, logger: pino.Logger, _encryptionService: EncryptionService): Promise<void> {
-    logger.trace(`Testing if SQLite file exists`);
-    const dbPath = path.resolve(settings.databasePath);
+  override async testConnection(): Promise<void> {
+    this.logger.info(`Testing connection on "${this.connector.settings.databasePath}"`);
+    const dbPath = path.resolve(this.connector.settings.databasePath);
 
     try {
       await fs.access(dbPath, fs.constants.F_OK);
     } catch (error: any) {
-      logger.error(`Access error on '${dbPath}': ${error.message}`);
-      throw new Error(`File '${dbPath}' does not exist`);
+      this.logger.error(`Access error on "${dbPath}". ${error.message}`);
+      throw new Error(`File "${dbPath}" does not exist`);
     }
 
-    logger.trace('Testing connection to SQLite system table');
     const database = db(dbPath);
     let result;
 
@@ -73,19 +72,17 @@ export default class SouthSQLite
         )
         .all();
     } catch (error: any) {
-      logger.error(`Unable to query system table: ${error.message}`);
+      this.logger.error(`Unable to query system table. ${error.message}`);
       throw new Error('Error testing database connection, check logs');
     }
     database.close();
 
     if (result.length === 0) {
-      logger.warn(`Database '${dbPath}' has no tables`);
-      throw new Error('Database has no tables');
+      this.logger.warn(`Database "${dbPath}" has no table`);
+      throw new Error('Database has no table');
     }
-
     const tables = result.map((row: any) => `${row.tbl_name}: [${row.columns}]`).join(',\n');
-
-    logger.info('Database is live with tables (table:[columns]):\n%s', tables);
+    this.logger.info('Database is live with tables (table:[columns]):\n%s', tables);
   }
 
   /**

@@ -43,6 +43,7 @@ jest.mock(
   () =>
     function () {
       return {
+        createMetricsTable: jest.fn(),
         updateMetrics: updateMetricsMock,
         resetMetrics,
         get stream() {
@@ -158,6 +159,7 @@ describe('SouthConnector enabled', () => {
       settings: {}
     };
     south = new TestSouth(configuration, [...items], addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    await south.init();
     await south.start();
   });
 
@@ -698,6 +700,7 @@ describe('SouthConnector with max instant per item', () => {
       settings: {}
     };
     south = new TestSouth(configuration, [...items], addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    await south.init();
     await south.start();
   });
 
@@ -882,6 +885,7 @@ describe('SouthConnector disabled', () => {
       settings: {}
     };
     basicSouth = new SouthConnector(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    await basicSouth.init();
     await basicSouth.start();
   });
 

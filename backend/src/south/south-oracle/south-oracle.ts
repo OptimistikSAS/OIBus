@@ -67,25 +67,24 @@ export default class SouthOracle
     await super.start();
   }
 
-  static async testConnection(settings: SouthOracleSettings, logger: pino.Logger, encryptionService: EncryptionService): Promise<void> {
+  override async testConnection(): Promise<void> {
     if (!oracledb) {
       throw new Error('oracledb library not loaded');
     }
+    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
 
     const config: Parameters<typeof oracledb.getConnection>[0] = {
-      user: settings.username,
-      password: settings.password ? await encryptionService.decryptText(settings.password) : '',
-      connectString: `${settings.host}:${settings.port}/${settings.database}`
+      user: this.connector.settings.username,
+      password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : '',
+      connectString: `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`
     };
 
     let connection;
-    logger.trace(`Testing if Oracle connection settings are correct`);
     try {
       connection = await oracledb.getConnection(config);
-      logger.trace(`Pinging the database`);
       await connection.ping();
     } catch (error: any) {
-      logger.error(`Unable to connect to database: ${error.message}`);
+      this.logger.error(`Unable to connect to database. ${error.message}`);
       if (connection) {
         await connection.close();
       }
@@ -99,14 +98,12 @@ export default class SouthOracle
           throw new Error('Please check username and password');
 
         case 'NJS-518':
-          throw new Error(`Cannot connect to database '${settings.database}'. Service is not registered`);
+          throw new Error(`Cannot connect to database "${this.connector.settings.database}". Service is not registered`);
 
         default:
           throw new Error('Please check logs');
       }
     }
-
-    logger.trace(`Testing system table query`);
 
     let tables;
     try {
@@ -126,20 +123,18 @@ export default class SouthOracle
     } catch (error: any) {
       await connection.close();
 
-      logger.error(`Unable to read tables in database '${settings.database}': ${error.message}`);
-      throw new Error(`Unable to read tables in database '${settings.database}', check logs`);
+      this.logger.error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}", check logs`);
     }
 
     await connection.close();
 
     if (tables.length === 0) {
-      logger.warn(`No tables in the '${settings.username}' schema`);
-      throw new Error(`No tables in the '${settings.username}' schema`);
+      this.logger.warn(`No tables in the "${this.connector.settings.username}" schema`);
+      throw new Error(`No tables in the "${this.connector.settings.username}" schema`);
     }
-
     const tablesString = tables.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
-
-    logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
+    this.logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
   }
 
   /**

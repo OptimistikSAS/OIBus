@@ -54,23 +54,28 @@ export default class SouthPostgreSQL
     await super.start();
   }
 
-  static async testConnection(settings: SouthPostgreSQLSettings, logger: pino.Logger, encryptionService: EncryptionService): Promise<void> {
-    const config: ClientConfig = {
-      host: settings.host,
-      port: settings.port,
-      user: settings.username || undefined,
-      password: settings.password ? await encryptionService.decryptText(settings.password) : undefined,
-      database: settings.database,
-      query_timeout: settings.requestTimeout,
-      connectionTimeoutMillis: settings.connectionTimeout
+  async createConnectionOptions(): Promise<ClientConfig> {
+    return {
+      host: this.connector.settings.host,
+      port: this.connector.settings.port,
+      user: this.connector.settings.username || undefined,
+      password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : undefined,
+      database: this.connector.settings.database,
+      query_timeout: this.connector.settings.requestTimeout,
+      connectionTimeoutMillis: this.connector.settings.connectionTimeout
     };
+  }
+
+  override async testConnection(): Promise<void> {
+    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
+    const config = await this.createConnectionOptions();
+
     let connection;
-    logger.trace(`Testing if PostgreSQL connection settings are correct`);
     try {
       connection = new pg.Client(config);
       await connection.connect();
     } catch (error: any) {
-      logger.error(`Unable to connect to database: ${error.message}`);
+      this.logger.error(`Unable to connect to database. ${error.message}`);
       if (connection) {
         await connection.end();
       }
@@ -80,18 +85,16 @@ export default class SouthPostgreSQL
       }
 
       switch (error.message) {
-        case `password authentication failed for user "${settings.username}"`:
+        case `password authentication failed for user "${this.connector.settings.username}"`:
           throw new Error('Please check username and password');
 
-        case `database "${settings.database}" does not exist`:
-          throw new Error(`Database '${settings.database}' does not exist`);
+        case `database "${this.connector.settings.database}" does not exist`:
+          throw new Error(`Database "${this.connector.settings.database}" does not exist`);
 
         default:
           throw new Error('Please check logs');
       }
     }
-
-    logger.trace(`Testing system table query`);
 
     let tables;
     try {
@@ -108,20 +111,18 @@ export default class SouthPostgreSQL
     } catch (error: any) {
       await connection.end();
 
-      logger.error(`Unable to read tables in database '${settings.database}': ${error.message}`);
-      throw new Error(`Unable to read tables in database '${settings.database}', check logs`);
+      this.logger.error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}", check logs`);
     }
 
     await connection.end();
 
     if (tables.length === 0) {
-      logger.warn(`Database '${settings.database}' has no tables`);
-      throw new Error('Database has no tables');
+      this.logger.warn(`Database "${this.connector.settings.database}" has no table`);
+      throw new Error('Database has no table');
     }
-
     const tablesString = tables.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
-
-    logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
+    this.logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
   }
 
   /**
@@ -190,16 +191,7 @@ export default class SouthPostgreSQL
    */
   async queryData(item: SouthConnectorItemDTO<SouthPostgreSQLItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, '$1').replace(/@EndTime/g, '$2');
-
-    const config: ClientConfig = {
-      host: this.connector.settings.host,
-      port: this.connector.settings.port,
-      user: this.connector.settings.username || undefined,
-      password: this.connector.settings.password ? await this.encryptionService.decryptText(this.connector.settings.password) : undefined,
-      database: this.connector.settings.database,
-      query_timeout: this.connector.settings.requestTimeout,
-      connectionTimeoutMillis: this.connector.settings.connectionTimeout
-    };
+    const config = await this.createConnectionOptions();
 
     const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference);
     const postgresqlStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);

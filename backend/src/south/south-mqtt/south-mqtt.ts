@@ -45,14 +45,63 @@ export default class SouthMQTT
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolder: string,
+    testing = false
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      items,
+      engineAddValuesCallback,
+      engineAddFileCallback,
+      encryptionService,
+      repositoryService,
+      logger,
+      baseFolder,
+      testing
+    );
   }
 
   override async connect(): Promise<void> {
     this.logger.info(`Connecting to "${this.connector.settings.url}"`);
+    const options = await this.createConnectionOptions();
 
+    this.client = mqtt.connect(this.connector.settings.url, options);
+    this.client.on('connect', async () => {
+      this.logger.info(`Connected to ${this.connector.settings.url}`);
+      await super.connect();
+    });
+    this.client.on('error', error => {
+      this.logger.error(`MQTT connection error ${error}`);
+    });
+    this.client.on('message', async (topic, message, packet) => {
+      this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}`);
+      await this.handleMessage(topic, message);
+    });
+  }
+
+  override async testConnection(): Promise<void> {
+    this.logger.info(`Testing connection on "${this.connector.settings.url}"`);
+    const options = await this.createConnectionOptions();
+    await this.testConnectionToBroker(options);
+  }
+
+  async testConnectionToBroker(options: IClientOptions): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const client = mqtt.connect(this.connector.settings.url, options);
+      client.on('connect', () => {
+        this.logger.info(`Connection test to "${this.connector.settings.url}" successful`);
+        client.end(true);
+        resolve();
+      });
+      client.on('error', error => {
+        this.logger.error(`MQTT connection error. ${error}`);
+        client.end(true);
+        reject(`MQTT connection error. ${error}`);
+      });
+    });
+  }
+
+  async createConnectionOptions(): Promise<IClientOptions> {
     const options: IClientOptions = {
       rejectUnauthorized: this.connector.settings.rejectUnauthorized,
       reconnectPeriod: this.connector.settings.reconnectPeriod,
@@ -76,53 +125,7 @@ export default class SouthMQTT
     if (this.connector.settings.qos === '1' || this.connector.settings.qos === '2') {
       options.clean = !this.connector.settings.persistent;
     }
-
-    this.client = mqtt.connect(this.connector.settings.url, options);
-    this.client.on('connect', async () => {
-      this.logger.info(`Connected to ${this.connector.settings.url}`);
-      await super.connect();
-    });
-    this.client.on('error', error => {
-      this.logger.error(`MQTT connection error ${error}`);
-    });
-    this.client.on('message', async (topic, message, packet) => {
-      this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}`);
-      await this.handleMessage(topic, message);
-    });
-  }
-
-  static async testConnection(settings: SouthMQTTSettings, logger: pino.Logger, encryptionService: EncryptionService): Promise<void> {
-    const options: IClientOptions = {
-      rejectUnauthorized: settings.rejectUnauthorized,
-      reconnectPeriod: settings.reconnectPeriod,
-      connectTimeout: settings.connectTimeout,
-      clientId: 'oibus-test'
-    };
-    if (settings.authentication.type === 'basic') {
-      options.username = settings.authentication.username;
-      options.password = Buffer.from(await encryptionService.decryptText(settings.authentication.password!)).toString();
-    } else if (settings.authentication.type === 'cert') {
-      options.cert = settings.authentication.certFilePath ? await fs.readFile(path.resolve(settings.authentication.certFilePath)) : '';
-      options.key = settings.authentication.keyFilePath ? await fs.readFile(path.resolve(settings.authentication.keyFilePath)) : '';
-      options.ca = settings.authentication.caFilePath ? await fs.readFile(path.resolve(settings.authentication.caFilePath)) : '';
-    }
-    if (settings.qos === '1' || settings.qos === '2') {
-      options.clean = !settings.persistent;
-    }
-
-    return new Promise((resolve, reject) => {
-      const client = mqtt.connect(settings.url, options);
-      client.on('connect', async () => {
-        logger.info(`Connection test to ${settings.url} successful`);
-        client.end(true);
-        logger.debug(`Disconnected from ${settings.url}`);
-        resolve();
-      });
-      client.on('error', error => {
-        logger.error(`MQTT connection error ${error}`);
-        reject(`MQTT connection error ${error}`);
-      });
-    });
+    return options;
   }
 
   async handleMessage(topic: string, message: Buffer): Promise<void> {

@@ -37,33 +37,35 @@ export default class SouthFolderScanner
     baseFolder: string
   ) {
     super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
-    // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
-    if (this.connector.settings.preserveFiles) {
-      this.cacheService.cacheRepository.database
-        .prepare(`CREATE TABLE IF NOT EXISTS ${FOLDER_SCANNER_TABLE} (filename TEXT PRIMARY KEY, mtime_ms INTEGER);`)
-        .run();
-    }
   }
 
-  static async testConnection(
-    settings: SouthFolderScannerSettings,
-    logger: pino.Logger,
-    _encryptionService: EncryptionService
-  ): Promise<void> {
-    const inputFolder = path.resolve(settings.inputFolder);
+  override async testConnection(): Promise<void> {
+    const inputFolder = path.resolve(this.connector.settings.inputFolder);
 
     try {
       await fs.access(inputFolder, fs.constants.F_OK);
     } catch (error: any) {
-      logger.error(`Access error on '${inputFolder}': ${error.message}`);
+      this.logger.error(`Access error on '${inputFolder}': ${error.message}`);
       throw new Error(`Folder '${inputFolder}' does not exist`);
     }
 
     try {
       await fs.access(inputFolder, fs.constants.R_OK | fs.constants.W_OK);
     } catch (error: any) {
-      logger.error(`Access error on '${inputFolder}': ${error.message}`);
+      this.logger.error(`Access error on '${inputFolder}': ${error.message}`);
       throw new Error(`No read/write access on folder`);
+    }
+
+    this.logger.info(`Folder "${inputFolder}" exists and is reachable`);
+  }
+
+  async start(): Promise<void> {
+    await super.start();
+    // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
+    if (this.connector.settings.preserveFiles) {
+      this.cacheService!.cacheRepository.database.prepare(
+        `CREATE TABLE IF NOT EXISTS ${FOLDER_SCANNER_TABLE} (filename TEXT PRIMARY KEY, mtime_ms INTEGER);`
+      ).run();
     }
   }
 
@@ -142,7 +144,7 @@ export default class SouthFolderScanner
 
   getModifiedTime(filename: string): number {
     const query = `SELECT mtime_ms AS mtimeMs FROM ${FOLDER_SCANNER_TABLE} WHERE filename = ?`;
-    const result: { mtimeMs: string } | null = this.cacheService.cacheRepository.database.prepare(query).get(filename) as {
+    const result: { mtimeMs: string } | null = this.cacheService!.cacheRepository.database.prepare(query).get(filename) as {
       mtimeMs: string;
     } | null;
     return result ? parseFloat(result.mtimeMs) : 0;
@@ -150,7 +152,7 @@ export default class SouthFolderScanner
 
   updateModifiedTime(filename: string, mtimeMs: number): void {
     const query = `INSERT INTO ${FOLDER_SCANNER_TABLE} (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`;
-    this.cacheService.cacheRepository.database.prepare(query).run(filename, mtimeMs, mtimeMs);
+    this.cacheService!.cacheRepository.database.prepare(query).run(filename, mtimeMs, mtimeMs);
   }
 
   /**

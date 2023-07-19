@@ -10,7 +10,6 @@ import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { HandlesAgent } from './agent-handler-interface';
 import Agent from './agent';
-import SouthOPCHDATest from './south-opchda-test';
 import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../../shared/model/south-settings.model';
 
 interface AgentPoint {
@@ -103,17 +102,23 @@ export default class SouthOPCHDA extends SouthConnector implements HandlesAgent,
     await super.connect();
   }
 
-  static async testConnection(settings: SouthConnectorDTO['settings'], logger: pino.Logger): Promise<void> {
-    logger.trace(`Testing if OPCHDA connection settings are correct`);
-
-    const opchdaTest = new SouthOPCHDATest(settings, logger);
-    try {
-      await opchdaTest.testConnection();
-    } catch (error) {
-      throw new Error(`Unable to connect to OPCHDA server: ${error}`);
+  override async testConnection(): Promise<void> {
+    if (process.platform !== 'win32') {
+      throw new Error(`OIBus OPCHDA Agent only supported on Windows: ${process.platform}`);
     }
 
-    logger.info(`OPCHDA connection settings are correct`);
+    this.logger.info(`Testing connection with Agent on "${this.connector.settings.host}"`);
+    const agent = new Agent(this, this.connector.settings, this.logger);
+
+    try {
+      await agent.connect();
+    } catch (error) {
+      throw new Error(`Unable to connect to "${this.connector.settings.serverName}" on ${this.connector.settings.host}: ${error}`);
+    } finally {
+      await agent.disconnect();
+    }
+
+    this.logger.info(`Connection test to OPCHDA server "${this.connector.settings.serverName}" through agent successful`);
   }
 
   /**

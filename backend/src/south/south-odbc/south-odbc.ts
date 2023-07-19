@@ -1,5 +1,4 @@
 import path from 'node:path';
-import { access, constants } from 'node:fs/promises';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
@@ -40,9 +39,20 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string
+    baseFolder: string,
+    testing = false
   ) {
-    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    super(
+      connector,
+      items,
+      engineAddValuesCallback,
+      engineAddFileCallback,
+      encryptionService,
+      repositoryService,
+      logger,
+      baseFolder,
+      testing
+    );
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
@@ -54,43 +64,32 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     await super.start();
   }
 
-  static async testConnection(settings: SouthODBCSettings, logger: pino.Logger, encryptionService: EncryptionService): Promise<void> {
+  override async testConnection(): Promise<void> {
     if (!odbc) {
       throw new Error('odbc library not loaded');
     }
 
+    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
+
     let connection;
-    logger.trace(`Testing if ODBC connection settings are correct`);
-
-    if (/SQLite/i.test(settings.driverPath)) {
-      const dbPath = path.resolve(settings.database);
-
-      try {
-        await access(dbPath, constants.F_OK);
-      } catch (error: any) {
-        logger.error(`Access error on '${dbPath}': ${error.message}`);
-        throw new Error(`File '${dbPath}' does not exist`);
-      }
-    }
-
     try {
-      const connectionConfig = await SouthODBC.createConnectionConfig(settings, logger, encryptionService);
+      const connectionConfig = await this.createConnectionConfig(this.connector.settings);
       connection = await odbc.connect(connectionConfig);
     } catch (error: any) {
-      logger.error(`Unable to connect to database: ${error.message}`);
+      this.logger.error(`Unable to connect to database: ${error.message}`);
 
       if (connection) {
         await connection.close();
       }
 
       const { odbcErrors } = error;
-      SouthODBC.logOdbcErrors(logger, odbcErrors);
+      this.logOdbcErrors(odbcErrors);
 
       if (odbcErrors[0].state === 'IM002') {
-        throw new Error(`Driver '${settings.driverPath}' not found`);
+        throw new Error(`Driver "${this.connector.settings.driverPath}" not found`);
       }
 
-      const { errorCode, ERROR_CODES } = SouthODBC.parseErrorCodes(settings.driverPath, odbcErrors[0]);
+      const { errorCode, ERROR_CODES } = this.parseErrorCodes(this.connector.settings.driverPath, odbcErrors[0]);
 
       switch (errorCode) {
         case ERROR_CODES.HOST:
@@ -101,23 +100,22 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
           throw new Error('Please check username and password');
 
         case ERROR_CODES.DB_ACCESS:
-          throw new Error(`User '${settings.username}' does not have access to database '${settings.database}'`);
+          throw new Error(
+            `User "${this.connector.settings.username}" does not have access to database "${this.connector.settings.database}"`
+          );
 
         default:
           throw new Error('Please check logs');
       }
     }
-
-    logger.trace(`Testing system table query`);
-
     const tables: { table_name: string; columns: string }[] = [];
 
     try {
       // @ts-ignore
-      const tableMetadata = await connection.tables<any>(settings.database, null, null, 'TABLE');
+      const tableMetadata = await connection.tables<any>(this.connector.settings.database, null, null, 'TABLE');
       for (const table of tableMetadata) {
         // @ts-ignore
-        const columnMetadata = await connection.columns<any>(settings.database, null, table.TABLE_NAME, null);
+        const columnMetadata = await connection.columns<any>(this.connector.settings.database, null, table.TABLE_NAME, null);
         // @ts-ignore
         const columns = columnMetadata.map(column => `${column.COLUMN_NAME}(${column.TYPE_NAME})`).join(', ');
         tables.push({
@@ -129,11 +127,9 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       if (connection) {
         await connection.close();
       }
-
-      SouthODBC.logOdbcErrors(logger, error.odbcErrors);
-
-      logger.error(`Unable to read tables in database '${settings.database}': ${error.message}`);
-      throw new Error(`Unable to read tables in database '${settings.database}', check logs`);
+      this.logOdbcErrors(error.odbcErrors);
+      this.logger.error(`Unable to read tables in database "${this.connector.settings.database}": ${error.message}`);
+      throw new Error(`Unable to read tables in database "${this.connector.settings.database}", check logs`);
     }
 
     if (connection) {
@@ -141,13 +137,11 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     }
 
     if (tables.length === 0) {
-      logger.warn(`Database '${settings.database}' has no tables`);
-      throw new Error('Database has no tables');
+      this.logger.warn(`Database "${this.connector.settings.database}" has no table`);
+      throw new Error('Database has no table');
     }
-
     const tablesString = tables.map(row => `${row.table_name}: [${row.columns}]`).join(',\n');
-
-    logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
+    this.logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
   }
 
   /**
@@ -214,7 +208,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
 
     let connection;
     try {
-      const connectionConfig = await SouthODBC.createConnectionConfig(this.connector.settings, this.logger, this.encryptionService);
+      const connectionConfig = await this.createConnectionConfig(this.connector.settings);
       connection = await odbc.connect(connectionConfig);
 
       const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference) || null;
@@ -227,7 +221,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       return data;
     } catch (error: any) {
       if (error.odbcErrors?.length > 0) {
-        SouthODBC.logOdbcErrors(this.logger, error.odbcErrors);
+        this.logOdbcErrors(error.odbcErrors);
       }
       if (connection) {
         await connection.close();
@@ -236,14 +230,9 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     }
   }
 
-  static async createConnectionConfig(
-    settings: SouthConnectorDTO['settings'],
-    logger: pino.Logger,
-    encryptionService: EncryptionService
-  ): Promise<{
+  async createConnectionConfig(settings: SouthODBCSettings): Promise<{
     connectionString: string;
     connectionTimeout?: number;
-    loginTimeout?: number;
   }> {
     let connectionString = `Driver=${settings.driverPath};SERVER=${settings.host};PORT=${settings.port};`;
     if (settings.trustServerCertificate) {
@@ -257,10 +246,10 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     }
 
     if (settings.username && settings.password) {
-      logger.debug(`Connecting with connection string ${connectionString}PWD=<secret>;`);
-      connectionString += `PWD=${await encryptionService.decryptText(settings.password)};`;
+      this.logger.debug(`Connecting with connection string ${connectionString}PWD=<secret>;`);
+      connectionString += `PWD=${await this.encryptionService.decryptText(settings.password)};`;
     } else {
-      logger.debug(`Connecting with connection string ${connectionString}`);
+      this.logger.debug(`Connecting with connection string ${connectionString}`);
     }
 
     return {
@@ -272,7 +261,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   /**
    * Parse odbc error codes for known drivers
    */
-  static parseErrorCodes(
+  parseErrorCodes(
     driverPath: string,
     odbcError: {
       message: string;
@@ -346,8 +335,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   /**
    * Logs the odbcErrors array
    */
-  static logOdbcErrors(
-    logger: pino.Logger,
+  logOdbcErrors(
     odbcErrors: Array<{
       message: string;
       code: number;
@@ -355,7 +343,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     }>
   ) {
     odbcErrors.forEach(odbcError => {
-      logger.error(`Error from ODBC driver: ${odbcError.message}`);
+      this.logger.error(`Error from ODBC driver: ${odbcError.message}`);
     });
   }
 }

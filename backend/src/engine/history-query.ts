@@ -60,7 +60,7 @@ export default class HistoryQuery {
       southFolder,
       this.logger
     );
-
+    await this.south.init();
     const northConfiguration: NorthConnectorDTO<N> = {
       id: this.historyConfiguration.id,
       name: `${this.historyConfiguration.name} (North)`,

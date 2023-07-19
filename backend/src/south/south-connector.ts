@@ -48,8 +48,9 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   private stopping = false;
   private runProgress$: DeferredPromise | null = null;
 
-  protected cacheService: SouthCacheService;
-  private _metricsService: SouthConnectorMetricsService;
+  protected cacheService: SouthCacheService | null = null;
+  private metricsService: SouthConnectorMetricsService | null = null;
+  private isInit = false;
   historyIsRunning = false;
 
   /**
@@ -63,15 +64,9 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     protected readonly encryptionService: EncryptionService,
     private readonly repositoryService: RepositoryService,
     protected logger: pino.Logger,
-    protected readonly baseFolder: string
+    protected readonly baseFolder: string,
+    protected readonly testing = false
   ) {
-    this.cacheService = new SouthCacheService(this.connector.id, path.resolve(this.baseFolder, 'cache.db'));
-    this._metricsService = new SouthConnectorMetricsService(this.connector.id, path.resolve(this.baseFolder, 'cache.db'));
-
-    if (this.queriesHistory()) {
-      this.cacheService.createSouthCacheScanModeTable();
-    }
-
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
         if (this.runProgress$) {
@@ -88,16 +83,30 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     });
   }
 
+  async init(): Promise<void> {
+    this.cacheService = new SouthCacheService(this.connector.id, path.resolve(this.baseFolder, 'cache.db'));
+    this.metricsService = new SouthConnectorMetricsService(this.connector.id, path.resolve(this.baseFolder, 'cache.db'));
+    if (!this.testing) {
+      this.metricsService.createMetricsTable();
+      if (this.queriesHistory()) {
+        this.cacheService.createSouthCacheScanModeTable();
+      }
+    }
+    this.isInit = true;
+  }
+
   async start(): Promise<void> {
     this.logger.trace(`South connector ${this.connector.name} enabled. Starting services...`);
     await this.connect();
   }
 
   async connect(): Promise<void> {
-    this._metricsService.updateMetrics({
-      ...this._metricsService.metrics,
-      lastConnection: DateTime.now().toUTC().toISO()
-    });
+    if (this.isInit) {
+      this.metricsService!.updateMetrics({
+        ...this.metricsService!.metrics,
+        lastConnection: DateTime.now().toUTC().toISO()
+      });
+    }
     this.connectedEvent.emit('connected');
   }
 
@@ -168,10 +177,11 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   }
 
   async run(scanModeId: string, items: Array<SouthConnectorItemDTO>): Promise<void> {
+    if (!this.init) return;
     this.createDeferredPromise();
 
     const runStart = DateTime.now();
-    this._metricsService.updateMetrics({ ...this._metricsService.metrics, lastRunStart: runStart.toUTC().toISO() });
+    this.metricsService!.updateMetrics({ ...this.metricsService!.metrics, lastRunStart: runStart.toUTC().toISO() });
 
     if (this.queriesHistory()) {
       try {
@@ -208,8 +218,8 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       }
     }
 
-    this._metricsService.updateMetrics({
-      ...this._metricsService.metrics,
+    this.metricsService!.updateMetrics({
+      ...this.metricsService!.metrics,
       lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
     });
     this.resolveDeferredPromise();
@@ -253,15 +263,15 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       for (const [index, item] of items.entries()) {
         if (this.stopping) {
           this.logger.debug(`Connector is stopping. Exiting history query at item ${item.name}`);
-          this._metricsService.updateMetrics({
-            ...this._metricsService.metrics,
+          this.metricsService!.updateMetrics({
+            ...this.metricsService!.metrics,
             historyMetrics: { running: false }
           });
           this.historyIsRunning = false;
           return;
         }
 
-        const southCache = this.cacheService.getSouthCacheScanMode(scanModeId, item.id, startTime);
+        const southCache = this.cacheService!.getSouthCacheScanMode(scanModeId, item.id, startTime);
         // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
         // requests. For example only one hour if maxReadInterval is 3600 (in s)
         const intervals = generateIntervals(southCache.maxInstant, endTime, this.connector.history.maxReadInterval);
@@ -272,7 +282,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         }
       }
     } else {
-      const southCache = this.cacheService.getSouthCacheScanMode(scanModeId, 'all', startTime);
+      const southCache = this.cacheService!.getSouthCacheScanMode(scanModeId, 'all', startTime);
       // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
       // requests. For example only one hour if maxReadInterval is 3600 (in s)
       const intervals = generateIntervals(southCache.maxInstant, endTime, this.connector.history.maxReadInterval);
@@ -280,8 +290,8 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
       await this.queryIntervals(intervals, items, southCache, startTime);
     }
-    this._metricsService.updateMetrics({
-      ...this._metricsService.metrics,
+    this.metricsService!.updateMetrics({
+      ...this.metricsService!.metrics,
       historyMetrics: { running: false }
     });
     this.historyIsRunning = false;
@@ -293,8 +303,8 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     southCache: SouthCache,
     startTime: Instant
   ) {
-    this._metricsService.updateMetrics({
-      ...this._metricsService.metrics,
+    this.metricsService!.updateMetrics({
+      ...this.metricsService!.metrics,
       historyMetrics: {
         running: true,
         intervalProgress:
@@ -308,14 +318,14 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
 
       if (index !== intervals.length - 1) {
-        this.cacheService.createOrUpdateCacheScanMode({
+        this.cacheService!.createOrUpdateCacheScanMode({
           scanModeId: southCache.scanModeId,
           itemId: southCache.itemId,
           maxInstant: lastInstantRetrieved,
           intervalIndex: index + southCache.intervalIndex
         });
-        this._metricsService.updateMetrics({
-          ...this._metricsService.metrics,
+        this.metricsService!.updateMetrics({
+          ...this.metricsService!.metrics,
           historyMetrics: {
             running: true,
             intervalProgress:
@@ -330,7 +340,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         }
         await delay(this.connector.history.readDelay);
       } else {
-        this.cacheService.createOrUpdateCacheScanMode({
+        this.cacheService!.createOrUpdateCacheScanMode({
           scanModeId: southCache.scanModeId,
           itemId: southCache.itemId,
           maxInstant: lastInstantRetrieved,
@@ -364,11 +374,11 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
    * Add new values to the South connector buffer.
    */
   async addValues(values: Array<any>): Promise<void> {
-    if (values.length > 0) {
+    if (values.length > 0 && this.isInit) {
       this.logger.debug(`Add ${values.length} values to cache from South "${this.connector.name}"`);
       await this.engineAddValuesCallback(this.connector.id, values);
-      const currentMetrics = this._metricsService.metrics;
-      this._metricsService.updateMetrics({
+      const currentMetrics = this.metricsService!.metrics;
+      this.metricsService!.updateMetrics({
         ...currentMetrics,
         numberOfValuesRetrieved: currentMetrics.numberOfValuesRetrieved + values.length,
         lastValueRetrieved: values[values.length - 1]
@@ -380,10 +390,11 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
    * Add a new file to the Engine.
    */
   async addFile(filePath: string): Promise<void> {
+    if (!this.init) return;
     this.logger.debug(`Add file "${filePath}" to cache from South "${this.connector.name}"`);
     await this.engineAddFileCallback(this.connector.id, filePath);
-    const currentMetrics = this._metricsService.metrics;
-    this._metricsService.updateMetrics({
+    const currentMetrics = this.metricsService!.metrics;
+    this.metricsService!.updateMetrics({
       ...currentMetrics,
       numberOfFilesRetrieved: currentMetrics.numberOfFilesRetrieved + 1,
       lastFileRetrieved: filePath
@@ -480,15 +491,15 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   }
 
   async resetCache(): Promise<void> {
-    this.cacheService.resetCacheScanMode();
+    this.cacheService!.resetCacheScanMode();
   }
 
   getMetricsDataStream(): PassThrough {
-    return this._metricsService.stream;
+    return this.metricsService!.stream;
   }
 
   resetMetrics(): void {
-    this._metricsService.resetMetrics();
+    this.metricsService!.resetMetrics();
   }
 
   queriesFile(): this is QueriesFile {
@@ -505,5 +516,9 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
   queriesSubscription(): this is QueriesSubscription {
     return 'subscribe' in this && 'unsubscribe' in this;
+  }
+
+  async testConnection(): Promise<void> {
+    this.logger.warn('testConnection must be override');
   }
 }

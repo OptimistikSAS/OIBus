@@ -776,12 +776,16 @@ describe('South connector controller', () => {
   });
 
   it('testSouthConnection() should test South connector settings on connector update', async () => {
+    const createdSouth = {
+      testConnection: jest.fn()
+    };
     ctx.request.body = {
       ...southConnectorCommand
     };
     ctx.params.id = 'id1';
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
 
     await southConnectorController.testSouthConnection(ctx);
 
@@ -791,7 +795,6 @@ describe('South connector controller', () => {
       southConnector.settings,
       folderScannerManifest.settings
     );
-    expect(ctx.app.reloadService.oibusEngine.testSouth).toHaveBeenCalledWith({ ...southConnectorCommand, name: 'name' });
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
@@ -840,10 +843,6 @@ describe('South connector controller', () => {
       null,
       folderScannerManifest.settings
     );
-    expect(ctx.app.reloadService.oibusEngine.testSouth).toHaveBeenCalledWith({
-      ...southConnectorCommand,
-      name: 'folder-scanner:test-connection'
-    });
     expect(ctx.notFound).not.toHaveBeenCalled();
   });
 
