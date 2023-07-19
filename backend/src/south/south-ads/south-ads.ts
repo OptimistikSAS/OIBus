@@ -205,10 +205,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     });
   }
 
-  /**
-   * Initiates a connection to the right netId and port.
-   */
-  async connect(): Promise<void> {
+  createConnectionOptions(): ADSOptions {
     const options: ADSOptions = {
       targetAmsNetId: this.connector.settings.netId, // example: 192.168.1.120.1.1
       targetAdsPort: this.connector.settings.port, // example: 851
@@ -230,9 +227,16 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       // port of the Ams router (must be open on the PLC). Example : 48898 (which is default)
       options.routerTcpPort = this.connector.settings.routerTcpPort;
     }
-
-    this.logger.info(`Connecting to ADS Client with options ${JSON.stringify(options)}`);
+    return options;
+  }
+  /**
+   * Initiates a connection to the right netId and port.
+   */
+  async connect(): Promise<void> {
     try {
+      const options = this.createConnectionOptions();
+      this.logger.info(`Connecting to ADS Client with options ${JSON.stringify(options)}`);
+
       this.client = new ads.Client(options);
       await this.connectToAdsServer();
     } catch (error) {
@@ -242,10 +246,17 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     }
   }
 
-  // TODO: method needs to be implemented
-  static async testConnection(settings: SouthADSSettings, logger: pino.Logger, _encryptionService: EncryptionService): Promise<void> {
-    logger.trace(`Testing connection`);
-    throw new Error('TODO: method needs to be implemented');
+  override async testConnection(): Promise<void> {
+    const options = this.createConnectionOptions();
+    this.logger.info(`Connecting to ADS Client with options ${JSON.stringify(options)}`);
+
+    this.client = new ads.Client(options);
+    const result = await this.client.connect();
+    this.logger.info(
+      `Connected to ${result.targetAmsNetId} with local AmsNetId ${result.localAmsNetId} and local port ${result.localAdsPort}. Disconnecting...`
+    );
+    await this.disconnect();
+    this.logger.info(`ADS connection correctly closed`);
   }
 
   /**
