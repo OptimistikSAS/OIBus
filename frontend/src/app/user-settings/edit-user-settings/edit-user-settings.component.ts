@@ -14,6 +14,7 @@ import { WindowService } from '../../shared/window.service';
 import { formDirectives } from '../../shared/form-directives';
 import { NgForOf, NgIf } from '@angular/common';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -26,7 +27,7 @@ declare namespace Intl {
   selector: 'oib-edit-user-settings',
   templateUrl: './edit-user-settings.component.html',
   styleUrls: ['./edit-user-settings.component.scss'],
-  imports: [...formDirectives, TranslateModule, NgIf, NgForOf, NgbTypeahead],
+  imports: [...formDirectives, TranslateModule, NgIf, NgForOf, NgbTypeahead, SaveButtonComponent],
   standalone: true
 })
 export class EditUserSettingsComponent {
@@ -37,6 +38,8 @@ export class EditUserSettingsComponent {
   });
   editedUserSettings: User | null = null;
   languages: Array<Language> = LANGUAGES;
+
+  state = new ObservableState();
 
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');
   timezoneTypeahead: (text$: Observable<string>) => Observable<Array<Timezone>> = inMemoryTypeahead(
@@ -74,6 +77,7 @@ export class EditUserSettingsComponent {
     this.userSettingsService
       .update(this.editedUserSettings!.id, command)
       .pipe(
+        this.state.pendingUntilFinalization(),
         tap(() => {
           this.notificationService.success('user-settings.edit-user-settings.saved');
         }),

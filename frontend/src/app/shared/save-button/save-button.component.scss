@@ -6,6 +6,10 @@
   background-color: $electricBlue;
   border-radius: 5px 0 0 5px;
 
+  &.solo {
+    border-radius: 5px;
+  }
+
   &:hover {
     background-color: $yellow;
     color: $darkGrey;

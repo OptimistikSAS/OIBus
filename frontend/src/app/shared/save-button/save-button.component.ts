@@ -43,4 +43,7 @@ export class SaveButtonComponent {
   @Input() buttonId = 'save-button';
   @Input() state = new ObservableState();
   @Input() disabled = false;
+  // input to indicate if the button is part of a button group with a cancel button
+  // if not then it is rounded all the way
+  @Input() insideOfGroup = true;
 }
