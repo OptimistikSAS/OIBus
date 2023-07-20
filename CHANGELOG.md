@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.9.0](https://github.com/OptimistikSAS/OIBus/compare/v2.8.0...v2.9.0) (2023-07-20)
+
+
+### Features
+
+* **azure:** add powershell connection ([1d454c4](https://github.com/OptimistikSAS/OIBus/commit/1d454c4c0935a72374e9edcb45358150af59d19d))
+
+
+### Bug Fixes
+
+* **opchda:** Fix reconnection from HDA Agent to HDA server ([3c6bb9e](https://github.com/OptimistikSAS/OIBus/commit/3c6bb9ebfbe259751ac345e33ef3d42776b387a4))
+
 ## [2.8.0](https://github.com/OptimistikSAS/OIBus/compare/v2.7.1...v2.8.0) (2023-07-13)
 
 
