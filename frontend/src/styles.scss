@@ -15,7 +15,76 @@ $fa-font-path: '../fonts';
   --menu-height: 35px;
 }
 
+.oib-modal-content-list {
+  background-color: $veryLightGrey;
+  border-radius: 1rem;
+  width: 100%;
+  height:90%;
+  color: $darkGrey;
+  padding: 1rem;
+}
+
+.oib-modal-container-list:hover {
+  .oib-modal-content-list:hover {
+    background-color: $orange;
+    color: $darkGrey;
+  }
+}
+
+.module-button {
+  border: none;
+  width: 100%;
+  padding: 10px;
+  background-color: $lightGrey;
+  // becomes darker on hover
+  &:hover {
+    background-color: $mediumGrey;
+  }
+  &:active,
+  &:focus,
+  &:default {
+    box-shadow: none;
+  }
+}
+
+.oib-modal-category-image {
+  height: 3rem;
+  transform: translate(0%,30%);
+}
+
+.oib-modal-image-block {
+  text-align: center;
+  color: $white;
+  border-radius: 12px;
+  background-color: $darkGrey;
+  width: 5rem;
+  height: 5rem;
+}
+
+.oib-block-title {
+  text-align: center;
+  color: $white;
+  border-radius: 1rem;
+  background-color: $darkGrey;
+  width: 4rem;
+  height: 3rem;
+}
+
 img.oib-title-image {
+  height: 2.5rem;
+}
+
+// container of the page title
+.oib-title-container {
+  display: flex;
+}
+
+.oib-title {
+  margin-top: 0.4rem;
+  margin-left: 1rem
+}
+
+img.oib-image-header {
   height: 1rem;
   margin-right: 0.3rem;
 }
@@ -109,7 +178,7 @@ img.oib-title-image {
 .oib-inner-form {
   @extend .mb-3;
   padding: 15px;
-  border: 1px solid #d1d5da;
+  border: 0px solid;
   border-radius: 6px;
 }
 
