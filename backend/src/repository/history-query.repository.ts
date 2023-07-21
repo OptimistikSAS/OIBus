@@ -1,4 +1,3 @@
-import { SCAN_MODE_TABLE } from './scan-mode.repository';
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
@@ -31,16 +30,7 @@ interface HistoryQueryResult {
 }
 
 export default class HistoryQueryRepository {
-  constructor(private readonly database: Database) {
-    const query =
-      `CREATE TABLE IF NOT EXISTS ${HISTORY_QUERIES_TABLE} (id TEXT PRIMARY KEY, name TEXT, description TEXT, ` +
-      `enabled INTEGER, start_time TEXT, end_time TEXT, south_type TEXT, north_type TEXT, ` +
-      `south_settings TEXT, north_settings TEXT, history_max_instant_per_item INTEGER, history_max_read_interval INTEGER, ` +
-      `history_read_delay INTEGER, caching_scan_mode_id TEXT, caching_group_count INTEGER, caching_retry_interval INTEGER, ` +
-      `caching_retry_count INTEGER, caching_max_send_count INTEGER, caching_send_file_immediately INTEGER, caching_max_size INTEGER, archive_enabled INTEGER, ` +
-      `archive_retention_duration INTEGER, FOREIGN KEY(caching_scan_mode_id) REFERENCES ${SCAN_MODE_TABLE}(id));`;
-    this.database.prepare(query).run();
-  }
+  constructor(private readonly database: Database) {}
 
   /**
    * Get all HistoryQueries

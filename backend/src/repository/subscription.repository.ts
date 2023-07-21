@@ -1,7 +1,7 @@
 import { Database } from 'better-sqlite3';
 import { ExternalSubscriptionDTO, SubscriptionDTO } from '../../../shared/model/subscription.model';
-import { NORTH_CONNECTOR_TABLE } from './north-connector.repository';
-import { SOUTH_CONNECTOR_TABLE } from './south-connector.repository';
+import { NORTH_CONNECTORS_TABLE } from './north-connector.repository';
+import { SOUTH_CONNECTORS_TABLE } from './south-connector.repository';
 import { EXTERNAL_SOURCES_TABLE } from './external-source.repository';
 
 export const SUBSCRIPTION_TABLE = 'subscription';
@@ -18,8 +18,8 @@ export default class SubscriptionRepository {
     const southQuery =
       `CREATE TABLE IF NOT EXISTS ${SUBSCRIPTION_TABLE} (north_connector_id TEXT, south_connector_id TEXT, ` +
       `PRIMARY KEY (north_connector_id, south_connector_id), ` +
-      `FOREIGN KEY(north_connector_id) REFERENCES ${NORTH_CONNECTOR_TABLE}(id), ` +
-      `FOREIGN KEY(south_connector_id) REFERENCES ${SOUTH_CONNECTOR_TABLE}(id));`;
+      `FOREIGN KEY(north_connector_id) REFERENCES ${NORTH_CONNECTORS_TABLE}(id), ` +
+      `FOREIGN KEY(south_connector_id) REFERENCES ${SOUTH_CONNECTORS_TABLE}(id));`;
     this.database.prepare(southQuery).run();
 
     const externalQuery =

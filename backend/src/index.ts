@@ -33,14 +33,14 @@ const LOG_DB_NAME = 'journal.db';
   await createFolder(CACHE_FOLDER);
   await createFolder(LOG_FOLDER_NAME);
 
+  // run migrations
+  await migrate(path.resolve(CONFIG_DATABASE));
+
   const repositoryService = new RepositoryService(
     path.resolve(CONFIG_DATABASE),
     path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME),
     path.resolve(CRYPTO_DATABASE)
   );
-
-  // run migrations
-  migrate(path.resolve(CONFIG_DATABASE));
 
   const oibusSettings = repositoryService.engineRepository.getEngineSettings();
   if (!oibusSettings) {

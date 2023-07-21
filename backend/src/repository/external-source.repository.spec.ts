@@ -22,13 +22,6 @@ describe('External source repository', () => {
     repository = new ExternalSourceRepository(database);
   });
 
-  it('should properly init external source table', () => {
-    expect(database.prepare).toHaveBeenCalledWith(
-      'CREATE TABLE IF NOT EXISTS external_sources (id TEXT PRIMARY KEY, reference TEXT, description TEXT);'
-    );
-    expect(run).toHaveBeenCalledTimes(1);
-  });
-
   it('should properly get all external sources', () => {
     const expectedValue: Array<ExternalSourceDTO> = [
       {

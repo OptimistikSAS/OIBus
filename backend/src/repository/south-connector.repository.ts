@@ -2,20 +2,13 @@ import { generateRandomId } from '../service/utils';
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
 import { Database } from 'better-sqlite3';
 
-export const SOUTH_CONNECTOR_TABLE = 'south_connector';
+export const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 
 /**
  * Repository used for South connectors (Data sources)
  */
 export default class SouthConnectorRepository {
-  private readonly database: Database;
-  constructor(database: Database) {
-    this.database = database;
-    const query =
-      `CREATE TABLE IF NOT EXISTS ${SOUTH_CONNECTOR_TABLE} (id TEXT PRIMARY KEY, name TEXT, type TEXT, description TEXT, ` +
-      `enabled INTEGER, history_max_instant_per_item INTEGER, history_max_read_interval INTEGER, history_read_delay INTEGER, settings TEXT);`;
-    this.database.prepare(query).run();
-  }
+  constructor(private readonly database: Database) {}
 
   /**
    * Retrieve all South connectors
@@ -23,7 +16,7 @@ export default class SouthConnectorRepository {
   getSouthConnectors(): Array<SouthConnectorDTO> {
     const query =
       `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
-      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM ${SOUTH_CONNECTOR_TABLE};`;
+      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM ${SOUTH_CONNECTORS_TABLE};`;
     return this.database
       .prepare(query)
       .all()
@@ -48,7 +41,7 @@ export default class SouthConnectorRepository {
   getSouthConnector(id: string): SouthConnectorDTO | null {
     const query =
       `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
-      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM ${SOUTH_CONNECTOR_TABLE} WHERE id = ?;`;
+      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM ${SOUTH_CONNECTORS_TABLE} WHERE id = ?;`;
     const result: any = this.database.prepare(query).get(id);
 
     if (!result) {
@@ -76,7 +69,7 @@ export default class SouthConnectorRepository {
   createSouthConnector(command: SouthConnectorCommandDTO): SouthConnectorDTO {
     const id = generateRandomId(6);
     const insertQuery =
-      `INSERT INTO ${SOUTH_CONNECTOR_TABLE} (id, name, type, description, enabled, history_max_instant_per_item, history_max_read_interval, history_read_delay, settings) ` +
+      `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, history_max_instant_per_item, history_max_read_interval, history_read_delay, settings) ` +
       `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`;
     const insertResult = this.database
       .prepare(insertQuery)
@@ -94,7 +87,7 @@ export default class SouthConnectorRepository {
 
     const query =
       `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
-      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM ${SOUTH_CONNECTOR_TABLE} WHERE ROWID = ?;`;
+      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM ${SOUTH_CONNECTORS_TABLE} WHERE ROWID = ?;`;
     const result: any = this.database.prepare(query).get(insertResult.lastInsertRowid);
     return {
       id: result.id,
@@ -116,7 +109,7 @@ export default class SouthConnectorRepository {
    */
   updateSouthConnector(id: string, command: SouthConnectorCommandDTO): void {
     const query =
-      `UPDATE ${SOUTH_CONNECTOR_TABLE} SET name = ?, description = ?, enabled = ?, ` +
+      `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, ` +
       `history_max_instant_per_item = ?, history_max_read_interval = ?, history_read_delay = ?, settings = ? WHERE id = ?;`;
     this.database
       .prepare(query)
@@ -136,7 +129,7 @@ export default class SouthConnectorRepository {
    * Delete a South Connector by its ID
    */
   deleteSouthConnector(id: string): void {
-    const query = `DELETE FROM ${SOUTH_CONNECTOR_TABLE} WHERE id = ?;`;
+    const query = `DELETE FROM ${SOUTH_CONNECTORS_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 }

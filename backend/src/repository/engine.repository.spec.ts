@@ -25,14 +25,6 @@ describe('Empty engine repository', () => {
   });
 
   it('should properly init engine settings table', () => {
-    expect(database.prepare).toHaveBeenCalledWith(
-      'CREATE TABLE IF NOT EXISTS engine (id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, port INTEGER NOT NULL, ' +
-        'log_console_level TEXT, log_file_level TEXT, log_file_max_file_size INTEGER, log_file_number_of_files INTEGER, ' +
-        'log_database_level TEXT, log_database_max_number_of_logs INTEGER, log_loki_level TEXT, log_loki_interval INTEGER, ' +
-        'log_loki_address TEXT, log_loki_token_address TEXT, log_loki_username TEXT, ' +
-        'log_loki_password TEXT);'
-    );
-
     const command: EngineSettingsCommandDTO = {
       name: 'OIBus',
       port: 2223,
@@ -62,7 +54,12 @@ describe('Empty engine repository', () => {
 
     repository.createEngineSettings(command);
     expect(generateRandomId).toHaveBeenCalledWith();
-    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO engine VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'INSERT INTO engines (id, name, port, log_console_level, log_file_level, log_file_max_file_size, ' +
+        'log_file_number_of_files, log_database_level, log_database_max_number_of_logs, log_loki_level, ' +
+        'log_loki_interval, log_loki_address, log_loki_token_address, log_loki_username, log_loki_password) ' +
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'
+    );
     expect(run).toHaveBeenCalledWith(
       '123456',
       command.name,
@@ -81,7 +78,7 @@ describe('Empty engine repository', () => {
       command.logParameters.loki.password
     );
 
-    expect(run).toHaveBeenCalledTimes(3);
+    expect(run).toHaveBeenCalledTimes(2);
   });
 
   it('should update engine settings', () => {
@@ -113,10 +110,10 @@ describe('Empty engine repository', () => {
     };
     repository.updateEngineSettings(command);
     expect(database.prepare).toHaveBeenCalledWith(
-      'UPDATE engine SET name = ?, port = ?, log_console_level = ?, log_file_level = ?, log_file_max_file_size = ?, ' +
+      'UPDATE engines SET name = ?, port = ?, log_console_level = ?, log_file_level = ?, log_file_max_file_size = ?, ' +
         'log_file_number_of_files = ?, log_database_level = ?, log_database_max_number_of_logs = ?, log_loki_level = ?, ' +
         'log_loki_interval = ?, log_loki_address = ?, log_loki_token_address = ?, log_loki_username = ?, ' +
-        'log_loki_password = ? WHERE rowid=(SELECT MIN(rowid) FROM engine);'
+        'log_loki_password = ? WHERE rowid=(SELECT MIN(rowid) FROM engines);'
     );
     expect(run).toHaveBeenCalledWith(
       command.name,
@@ -167,18 +164,6 @@ describe('Non-empty Engine repository', () => {
     repository = new EngineRepository(database);
   });
 
-  it('should properly init engine settings table', () => {
-    expect(database.prepare).toHaveBeenCalledWith(
-      'CREATE TABLE IF NOT EXISTS engine (id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, port INTEGER NOT NULL, ' +
-        'log_console_level TEXT, log_file_level TEXT, log_file_max_file_size INTEGER, log_file_number_of_files INTEGER, ' +
-        'log_database_level TEXT, log_database_max_number_of_logs INTEGER, log_loki_level TEXT, log_loki_interval INTEGER, ' +
-        'log_loki_address TEXT, log_loki_token_address TEXT, log_loki_username TEXT, ' +
-        'log_loki_password TEXT);'
-    );
-    expect(generateRandomId).not.toHaveBeenCalled();
-    expect(run).toHaveBeenCalledTimes(1);
-  });
-
   it('should properly get the engine settings', () => {
     const expectedValue: EngineSettingsDTO = {
       id: 'id1',
@@ -214,7 +199,7 @@ describe('Non-empty Engine repository', () => {
         'log_database_level AS databaseLogLevel, log_database_max_number_of_logs AS databaseLogMaxNumberOfLogs, ' +
         'log_loki_level AS lokiLogLevel, log_loki_interval AS lokiLogInterval, log_loki_address AS lokiLogAddress, ' +
         'log_loki_token_address AS lokiLogTokenAddress, ' +
-        'log_loki_username AS lokiLogUsername, log_loki_password AS lokiLogPassword FROM engine;'
+        'log_loki_username AS lokiLogUsername, log_loki_password AS lokiLogPassword FROM engines;'
     );
     expect(all).toHaveBeenCalledTimes(2);
     expect(externalSource).toEqual(expectedValue);

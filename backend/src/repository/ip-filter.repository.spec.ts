@@ -23,13 +23,6 @@ describe('IP Filter repository', () => {
     repository = new IpFilterRepository(database);
   });
 
-  it('should properly init IP filter table', () => {
-    expect(database.prepare).toHaveBeenCalledWith(
-      'CREATE TABLE IF NOT EXISTS ip_filter (id TEXT PRIMARY KEY, address TEXT, description TEXT);'
-    );
-    expect(run).toHaveBeenCalledTimes(1);
-  });
-
   it('should properly get all IP filters', () => {
     const expectedValue: Array<IpFilterDTO> = [
       {
@@ -45,7 +38,7 @@ describe('IP Filter repository', () => {
     ];
     all.mockReturnValueOnce(expectedValue);
     const ipFilters = repository.getIpFilters();
-    expect(database.prepare).toHaveBeenCalledWith('SELECT id, address, description FROM ip_filter;');
+    expect(database.prepare).toHaveBeenCalledWith('SELECT id, address, description FROM ip_filters;');
     expect(ipFilters).toEqual(expectedValue);
   });
 
@@ -57,7 +50,7 @@ describe('IP Filter repository', () => {
     };
     get.mockReturnValueOnce(expectedValue);
     const ipFilter = repository.getIpFilter('id1');
-    expect(database.prepare).toHaveBeenCalledWith('SELECT id, address, description FROM ip_filter WHERE id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('SELECT id, address, description FROM ip_filters WHERE id = ?;');
     expect(get).toHaveBeenCalledWith('id1');
     expect(ipFilter).toEqual(expectedValue);
   });
@@ -70,9 +63,9 @@ describe('IP Filter repository', () => {
     };
     repository.createIpFilter(command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
-    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO ip_filter (id, address, description) VALUES (?, ?, ?);');
+    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO ip_filters (id, address, description) VALUES (?, ?, ?);');
     expect(run).toHaveBeenCalledWith('123456', command.address, command.description);
-    expect(database.prepare).toHaveBeenCalledWith('SELECT id, address, description FROM ip_filter WHERE ROWID = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('SELECT id, address, description FROM ip_filters WHERE ROWID = ?;');
   });
 
   it('should update an IP filter', () => {
@@ -81,13 +74,13 @@ describe('IP Filter repository', () => {
       description: 'my first IP filter'
     };
     repository.updateIpFilter('id1', command);
-    expect(database.prepare).toHaveBeenCalledWith('UPDATE ip_filter SET address = ?, description = ? WHERE id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('UPDATE ip_filters SET address = ?, description = ? WHERE id = ?;');
     expect(run).toHaveBeenCalledWith(command.address, command.description, 'id1');
   });
 
   it('should delete an IP filter', () => {
     repository.deleteIpFilter('id1');
-    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM ip_filter WHERE id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM ip_filters WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 });

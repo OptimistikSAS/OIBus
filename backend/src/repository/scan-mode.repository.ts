@@ -2,17 +2,13 @@ import { ScanModeCommandDTO, ScanModeDTO } from '../../../shared/model/scan-mode
 import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
 
-export const SCAN_MODE_TABLE = 'scan_mode';
+export const SCAN_MODES_TABLE = 'scan_modes';
 
 /**
  * Repository used for scan modes (cron definitions)
  */
 export default class ScanModeRepository {
-  private readonly database: Database;
-  constructor(database: Database) {
-    this.database = database;
-    const query = `CREATE TABLE IF NOT EXISTS ${SCAN_MODE_TABLE} (id TEXT PRIMARY KEY, name TEXT, description TEXT, cron TEXT);`;
-    this.database.prepare(query).run();
+  constructor(private readonly database: Database) {
     if (this.getScanModes().length === 0) {
       this.createScanMode({ name: 'Every seconds', description: 'Trigger every seconds', cron: '* * * * * *' });
       this.createScanMode({ name: 'Every 10 seconds', description: 'Trigger every 10 seconds', cron: '*/10 * * * * *' });
@@ -28,7 +24,7 @@ export default class ScanModeRepository {
    * Retrieve all scan modes
    */
   getScanModes(): Array<ScanModeDTO> {
-    const query = `SELECT id, name, description, cron FROM ${SCAN_MODE_TABLE};`;
+    const query = `SELECT id, name, description, cron FROM ${SCAN_MODES_TABLE};`;
     return this.database.prepare(query).all() as Array<ScanModeDTO>;
   }
 
@@ -36,7 +32,7 @@ export default class ScanModeRepository {
    * Retrieve a scan mode by its ID
    */
   getScanMode(id: string): ScanModeDTO | null {
-    const query = `SELECT id, name, description, cron FROM ${SCAN_MODE_TABLE} WHERE id = ?;`;
+    const query = `SELECT id, name, description, cron FROM ${SCAN_MODES_TABLE} WHERE id = ?;`;
     return this.database.prepare(query).get(id) as ScanModeDTO | null;
   }
 
@@ -44,10 +40,10 @@ export default class ScanModeRepository {
    * Create a scan mode with a random generated ID
    */
   createScanMode(command: ScanModeCommandDTO, id = generateRandomId(6)): ScanModeDTO {
-    const insertQuery = `INSERT INTO ${SCAN_MODE_TABLE} (id, name, description, cron) VALUES (?, ?, ?, ?);`;
+    const insertQuery = `INSERT INTO ${SCAN_MODES_TABLE} (id, name, description, cron) VALUES (?, ?, ?, ?);`;
     const result = this.database.prepare(insertQuery).run(id, command.name, command.description, command.cron);
 
-    const query = `SELECT id, name, description, cron FROM ${SCAN_MODE_TABLE} WHERE ROWID = ?;`;
+    const query = `SELECT id, name, description, cron FROM ${SCAN_MODES_TABLE} WHERE ROWID = ?;`;
     return this.database.prepare(query).get(result.lastInsertRowid) as ScanModeDTO;
   }
 
@@ -55,7 +51,7 @@ export default class ScanModeRepository {
    * Update a scan mode by its ID
    */
   updateScanMode(id: string, command: ScanModeCommandDTO): void {
-    const query = `UPDATE ${SCAN_MODE_TABLE} SET name = ?, description = ?, cron = ? WHERE id = ?;`;
+    const query = `UPDATE ${SCAN_MODES_TABLE} SET name = ?, description = ?, cron = ? WHERE id = ?;`;
     this.database.prepare(query).run(command.name, command.description, command.cron, id);
   }
 
@@ -63,7 +59,7 @@ export default class ScanModeRepository {
    * Delete a scan mode by its ID
    */
   deleteScanMode(id: string): void {
-    const query = `DELETE FROM ${SCAN_MODE_TABLE} WHERE id = ?;`;
+    const query = `DELETE FROM ${SCAN_MODES_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 }

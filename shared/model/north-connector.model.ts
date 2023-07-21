@@ -1,5 +1,5 @@
 import { OibFormControl } from './form.model';
-import { Instant } from './types';
+import { BaseEntity, Instant } from './types';
 import { NorthSettings } from './north-settings.model';
 
 export interface NorthCacheSettingsDTO {
@@ -31,8 +31,7 @@ export interface NorthType {
 /**
  * DTO for North connectors
  */
-export interface NorthConnectorDTO<T extends NorthSettings = any> {
-  id: string;
+export interface NorthConnectorDTO<T extends NorthSettings = any> extends BaseEntity {
   name: string;
   type: string;
   description: string;

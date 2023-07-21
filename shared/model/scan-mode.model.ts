@@ -1,8 +1,9 @@
+import { BaseEntity } from './types';
+
 /**
  * DTO for scan modes
  */
-export interface ScanModeDTO {
-  id: string;
+export interface ScanModeDTO extends BaseEntity {
   name: string;
   description: string;
   cron: string;

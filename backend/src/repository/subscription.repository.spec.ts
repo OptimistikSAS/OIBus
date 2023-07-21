@@ -23,8 +23,8 @@ describe('Subscription repository', () => {
     const southQuery =
       'CREATE TABLE IF NOT EXISTS subscription (north_connector_id TEXT, south_connector_id TEXT, ' +
       'PRIMARY KEY (north_connector_id, south_connector_id), ' +
-      'FOREIGN KEY(north_connector_id) REFERENCES north_connector(id), ' +
-      'FOREIGN KEY(south_connector_id) REFERENCES south_connector(id));';
+      'FOREIGN KEY(north_connector_id) REFERENCES north_connectors(id), ' +
+      'FOREIGN KEY(south_connector_id) REFERENCES south_connectors(id));';
     const externalQuery =
       'CREATE TABLE IF NOT EXISTS external_subscription (north_connector_id TEXT, external_source_id TEXT, ' +
       'PRIMARY KEY (north_connector_id, external_source_id), ' +
