@@ -25,8 +25,8 @@ export default class SouthConnectorMetricsService {
     return this._metricsRepository;
   }
 
-  createMetricsTable(): void {
-    this._metricsRepository.createMetricsTable(this.connectorId);
+  initMetrics(): void {
+    this._metricsRepository.initMetrics(this.connectorId);
     const results = this._metricsRepository.getMetrics(this.connectorId);
     this._metrics = results!;
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
@@ -40,7 +40,7 @@ export default class SouthConnectorMetricsService {
 
   resetMetrics(): void {
     this._metricsRepository.removeMetrics(this.connectorId);
-    this.createMetricsTable();
+    this.initMetrics();
   }
 
   get metrics(): SouthConnectorMetrics {

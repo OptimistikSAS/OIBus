@@ -44,7 +44,7 @@ describe('SouthConnectorMetricsService', () => {
   it('should reset metrics', () => {
     service.resetMetrics();
     expect(service.metricsRepository.removeMetrics).toHaveBeenCalled();
-    expect(service.metricsRepository.createMetricsTable).toHaveBeenCalledWith('connectorId');
+    expect(service.metricsRepository.initMetrics).toHaveBeenCalledWith('connectorId');
     expect(service.metrics).toEqual(metrics);
   });
 
@@ -54,7 +54,7 @@ describe('SouthConnectorMetricsService', () => {
     jest.advanceTimersByTime(100);
     expect(stream.write).toHaveBeenCalledTimes(1);
 
-    service.createMetricsTable();
+    service.initMetrics();
     expect(stream.write).toHaveBeenCalledWith(`data: ${JSON.stringify(metrics)}\n\n`);
 
     service.updateMetrics({

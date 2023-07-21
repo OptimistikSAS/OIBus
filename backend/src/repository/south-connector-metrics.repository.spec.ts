@@ -25,7 +25,7 @@ describe('SouthConnectorMetricsRepository', () => {
   it('should properly init metrics table', () => {
     repository.getMetrics = jest.fn();
 
-    repository.createMetricsTable('id1');
+    repository.initMetrics('id1');
     expect(repository.getMetrics).toHaveBeenCalledWith('id1');
     expect(repository.database.prepare).toHaveBeenCalledWith(
       `INSERT INTO south_metrics (south_id, metrics_start, nb_values, nb_files, ` +

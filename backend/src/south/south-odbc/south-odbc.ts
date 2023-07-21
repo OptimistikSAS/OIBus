@@ -39,20 +39,9 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string,
-    testing = false
+    baseFolder: string
   ) {
-    super(
-      connector,
-      items,
-      engineAddValuesCallback,
-      engineAddFileCallback,
-      encryptionService,
-      repositoryService,
-      logger,
-      baseFolder,
-      testing
-    );
+    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 

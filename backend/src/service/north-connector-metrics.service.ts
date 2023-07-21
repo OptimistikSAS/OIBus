@@ -18,16 +18,14 @@ export default class NorthConnectorMetricsService {
     lastRunDuration: null
   };
 
-  constructor(private readonly connectorId: string, private readonly _metricsRepository: NorthConnectorMetricsRepository) {
-    this.createMetricsTable();
-  }
+  constructor(private readonly connectorId: string, private readonly _metricsRepository: NorthConnectorMetricsRepository) {}
 
   get metricsRepository(): NorthConnectorMetricsRepository {
     return this._metricsRepository;
   }
 
-  createMetricsTable(): void {
-    this._metricsRepository.createMetricsTable(this.connectorId);
+  initMetrics(): void {
+    this._metricsRepository.initMetrics(this.connectorId);
     const results = this._metricsRepository.getMetrics(this.connectorId);
     this._metrics = results!;
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
@@ -41,7 +39,7 @@ export default class NorthConnectorMetricsService {
 
   resetMetrics(): void {
     this._metricsRepository.removeMetrics(this.connectorId);
-    this.createMetricsTable();
+    this.initMetrics();
   }
 
   get metrics(): NorthConnectorMetrics {

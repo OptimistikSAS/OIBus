@@ -34,20 +34,9 @@ export default class SouthModbus
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string,
-    testing = false
+    baseFolder: string
   ) {
-    super(
-      connector,
-      items,
-      engineAddValuesCallback,
-      engineAddFileCallback,
-      encryptionService,
-      repositoryService,
-      logger,
-      baseFolder,
-      testing
-    );
+    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
   }
 
   async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>): Promise<void> {

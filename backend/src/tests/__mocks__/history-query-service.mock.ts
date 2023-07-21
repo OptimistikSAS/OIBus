@@ -1,3 +1,6 @@
+import SouthMetricsRepositoryMock from './south-metrics-repository.mock';
+import NorthMetricsRepositoryMock from './north-metrics-repository.mock';
+
 /**
  * Create a mock object for History Query Service
  */
@@ -7,13 +10,7 @@ export default jest.fn().mockImplementation(() => ({
   getItems: jest.fn(),
   stopHistoryQuery: jest.fn(),
   repositoryService: {
-    southMetricsRepository: {
-      createMetricsTable: jest.fn(),
-      getMetrics: jest.fn()
-    },
-    northMetricsRepository: {
-      createMetricsTable: jest.fn(),
-      getMetrics: jest.fn()
-    }
+    southMetricsRepository: new SouthMetricsRepositoryMock(),
+    northMetricsRepository: new NorthMetricsRepositoryMock()
   }
 }));

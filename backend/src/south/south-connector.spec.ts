@@ -43,7 +43,7 @@ jest.mock(
   () =>
     function () {
       return {
-        createMetricsTable: jest.fn(),
+        initMetrics: jest.fn(),
         updateMetrics: updateMetricsMock,
         resetMetrics,
         get stream() {

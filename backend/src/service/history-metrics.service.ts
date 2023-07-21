@@ -12,9 +12,9 @@ export default class HistoryMetricsService {
     private readonly southMetricsRepository: SouthConnectorMetricsRepository,
     private readonly northMetricsRepository: NorthConnectorMetricsRepository
   ) {
-    this.southMetricsRepository.createMetricsTable(this.historyId);
+    this.southMetricsRepository.initMetrics(this.historyId);
     const southMetrics = this.southMetricsRepository.getMetrics(this.historyId)!;
-    this.northMetricsRepository.createMetricsTable(this.historyId);
+    this.northMetricsRepository.initMetrics(this.historyId);
     const northMetrics = this.northMetricsRepository.getMetrics(this.historyId)!;
     this._metrics = {
       north: northMetrics,
