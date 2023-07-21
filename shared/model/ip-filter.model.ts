@@ -1,8 +1,9 @@
+import { BaseEntity } from './types';
+
 /**
  * DTO for IP filters
  */
-export interface IpFilterDTO {
-  id: string;
+export interface IpFilterDTO extends BaseEntity {
   address: string;
   description: string;
 }

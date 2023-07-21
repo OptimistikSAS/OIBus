@@ -1,5 +1,5 @@
 import { OibFormControl } from './form.model';
-import { Instant } from './types';
+import { BaseEntity, Instant } from './types';
 import { SouthSettings, SouthItemSettings } from './south-settings.model';
 
 export interface SouthType {
@@ -24,8 +24,7 @@ export interface SouthConnectorHistorySettings {
 /**
  * DTO for South connectors
  */
-export interface SouthConnectorDTO<T extends SouthSettings = any> {
-  id: string;
+export interface SouthConnectorDTO<T extends SouthSettings = any> extends BaseEntity {
   name: string;
   type: string;
   description: string;
@@ -49,8 +48,7 @@ export interface SouthConnectorCommandDTO<T = any> {
 /**
  * DTO used for an item to query within a south
  */
-export interface SouthConnectorItemDTO<T extends SouthItemSettings = any> {
-  id: string;
+export interface SouthConnectorItemDTO<T extends SouthItemSettings = any> extends BaseEntity {
   name: string;
   connectorId: string;
   settings: T;

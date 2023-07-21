@@ -2,7 +2,7 @@ import { EngineSettingsCommandDTO, EngineSettingsDTO } from '../../../shared/mod
 import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
 
-const ENGINE_TABLE = 'engine';
+export const ENGINES_TABLE = 'engines';
 
 const defaultEngineSettings: EngineSettingsCommandDTO = {
   name: 'OIBus',
@@ -35,16 +35,7 @@ const defaultEngineSettings: EngineSettingsCommandDTO = {
  * Repository used for engine settings
  */
 export default class EngineRepository {
-  private readonly database: Database;
-  constructor(database: Database) {
-    this.database = database;
-    const query =
-      `CREATE TABLE IF NOT EXISTS ${ENGINE_TABLE} (id TEXT PRIMARY KEY NOT NULL, name TEXT NOT NULL, port INTEGER NOT NULL, ` +
-      'log_console_level TEXT, log_file_level TEXT, log_file_max_file_size INTEGER, log_file_number_of_files INTEGER, ' +
-      'log_database_level TEXT, log_database_max_number_of_logs INTEGER, log_loki_level TEXT, log_loki_interval INTEGER, ' +
-      'log_loki_address TEXT, log_loki_token_address TEXT, log_loki_username TEXT, log_loki_password TEXT);';
-    this.database.prepare(query).run();
-
+  constructor(private readonly database: Database) {
     this.createEngineSettings(defaultEngineSettings);
   }
 
@@ -70,7 +61,7 @@ export default class EngineRepository {
       'log_loki_token_address AS lokiLogTokenAddress, ' +
       'log_loki_username AS lokiLogUsername, ' +
       'log_loki_password AS lokiLogPassword ' +
-      `FROM ${ENGINE_TABLE};`;
+      `FROM ${ENGINES_TABLE};`;
     const results: Array<any> = this.database.prepare(query).all();
 
     if (results.length > 0) {
@@ -111,7 +102,7 @@ export default class EngineRepository {
    */
   updateEngineSettings(command: EngineSettingsCommandDTO): void {
     const query =
-      `UPDATE ${ENGINE_TABLE} SET name = ?, port = ?, ` +
+      `UPDATE ${ENGINES_TABLE} SET name = ?, port = ?, ` +
       'log_console_level = ?, ' +
       'log_file_level = ?, ' +
       'log_file_max_file_size = ?, ' +
@@ -124,7 +115,7 @@ export default class EngineRepository {
       'log_loki_token_address = ?, ' +
       'log_loki_username = ?, ' +
       'log_loki_password = ? ' +
-      `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINE_TABLE});`;
+      `WHERE rowid=(SELECT MIN(rowid) FROM ${ENGINES_TABLE});`;
 
     this.database
       .prepare(query)
@@ -154,7 +145,11 @@ export default class EngineRepository {
       return;
     }
 
-    const query = `INSERT INTO ${ENGINE_TABLE} VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);`;
+    const query =
+      `INSERT INTO ${ENGINES_TABLE} (id, name, port, log_console_level, ` +
+      'log_file_level, log_file_max_file_size, log_file_number_of_files, log_database_level, ' +
+      'log_database_max_number_of_logs, log_loki_level, log_loki_interval, log_loki_address, log_loki_token_address, ' +
+      'log_loki_username, log_loki_password) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);';
     this.database
       .prepare(query)
       .run(

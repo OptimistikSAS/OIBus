@@ -1,4 +1,4 @@
-import { Language, Timezone } from './types';
+import { BaseEntity, Language, Timezone } from './types';
 
 export interface UserSearchParam {
   login: string | null;
@@ -20,8 +20,7 @@ export interface UserCommandDTO {
   timezone: Timezone;
 }
 
-export interface User {
-  id: string;
+export interface User extends BaseEntity {
   login: string;
   firstName: string;
   lastName: string;

@@ -23,18 +23,6 @@ describe('History Query repository', () => {
     repository = new HistoryQueryRepository(database);
   });
 
-  it('should properly init north connector table', () => {
-    expect(database.prepare).toHaveBeenCalledWith(
-      `CREATE TABLE IF NOT EXISTS history_queries (id TEXT PRIMARY KEY, name TEXT, description TEXT, ` +
-        `enabled INTEGER, start_time TEXT, end_time TEXT, south_type TEXT, north_type TEXT, ` +
-        `south_settings TEXT, north_settings TEXT, history_max_instant_per_item INTEGER, history_max_read_interval INTEGER, ` +
-        `history_read_delay INTEGER, caching_scan_mode_id TEXT, caching_group_count INTEGER, caching_retry_interval INTEGER, ` +
-        `caching_retry_count INTEGER, caching_max_send_count INTEGER, caching_send_file_immediately INTEGER, caching_max_size INTEGER, archive_enabled INTEGER, ` +
-        `archive_retention_duration INTEGER, FOREIGN KEY(caching_scan_mode_id) REFERENCES scan_mode(id));`
-    );
-    expect(run).toHaveBeenCalledTimes(1);
-  });
-
   it('should properly get north connectors', () => {
     const expectedValue: Array<HistoryQueryDTO> = [
       {

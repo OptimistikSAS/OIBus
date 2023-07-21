@@ -23,17 +23,6 @@ describe('North connector repository', () => {
     repository = new NorthConnectorRepository(database);
   });
 
-  it('should properly init north connector table', () => {
-    expect(database.prepare).toHaveBeenCalledWith(
-      'CREATE TABLE IF NOT EXISTS north_connector (id TEXT PRIMARY KEY, name TEXT, type TEXT, description TEXT, ' +
-        'enabled INTEGER, settings TEXT, caching_scan_mode_id TEXT, caching_group_count INTEGER, ' +
-        'caching_retry_interval INTEGER, caching_retry_count INTEGER, caching_max_send_count INTEGER, ' +
-        'caching_send_file_immediately INTEGER, caching_max_size INTEGER, archive_enabled INTEGER, archive_retention_duration INTEGER, ' +
-        'FOREIGN KEY(caching_scan_mode_id) REFERENCES scan_mode(id));'
-    );
-    expect(run).toHaveBeenCalledTimes(1);
-  });
-
   it('should properly get north connectors', () => {
     const expectedValue: Array<NorthConnectorDTO> = [
       {
@@ -121,7 +110,7 @@ describe('North connector repository', () => {
         'caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ' +
         'caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ' +
         'caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ' +
-        'archive_retention_duration AS archiveRetentionDuration FROM north_connector;'
+        'archive_retention_duration AS archiveRetentionDuration FROM north_connectors;'
     );
     expect(northConnectors).toEqual(expectedValue);
   });
@@ -171,7 +160,7 @@ describe('North connector repository', () => {
         'caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ' +
         'caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ' +
         'caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ' +
-        'archive_retention_duration AS archiveRetentionDuration FROM north_connector WHERE id = ?;'
+        'archive_retention_duration AS archiveRetentionDuration FROM north_connectors WHERE id = ?;'
     );
     expect(get).toHaveBeenCalledWith('id1');
     expect(northConnector).toEqual(expectedValue);
@@ -185,7 +174,7 @@ describe('North connector repository', () => {
         'caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ' +
         'caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ' +
         'caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ' +
-        'archive_retention_duration AS archiveRetentionDuration FROM north_connector WHERE id = ?;'
+        'archive_retention_duration AS archiveRetentionDuration FROM north_connectors WHERE id = ?;'
     );
     expect(get).toHaveBeenCalledWith('id1');
     expect(northConnector).toBeNull();
@@ -218,7 +207,7 @@ describe('North connector repository', () => {
     repository.createNorthConnector(command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
-      'INSERT INTO north_connector (id, name, type, description, enabled, settings, caching_scan_mode_id, ' +
+      'INSERT INTO north_connectors (id, name, type, description, enabled, settings, caching_scan_mode_id, ' +
         'caching_group_count, caching_retry_interval, caching_retry_count, caching_max_send_count, caching_send_file_immediately, caching_max_size, ' +
         'archive_enabled, archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'
     );
@@ -246,7 +235,7 @@ describe('North connector repository', () => {
         'caching_group_count AS cachingGroupCount, caching_retry_interval AS cachingRetryInterval, ' +
         'caching_retry_count AS cachingRetryCount, caching_max_send_count AS cachingMaxSendCount, ' +
         'caching_send_file_immediately AS cachingSendFileImmediately, caching_max_size AS cachingMaxSize, archive_enabled AS archiveEnabled, ' +
-        'archive_retention_duration AS archiveRetentionDuration FROM north_connector WHERE ROWID = ?;'
+        'archive_retention_duration AS archiveRetentionDuration FROM north_connectors WHERE ROWID = ?;'
     );
   });
 
@@ -273,7 +262,7 @@ describe('North connector repository', () => {
     };
     repository.updateNorthConnector('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
-      'UPDATE north_connector SET name = ?, description = ?, enabled = ?, settings = ?, caching_scan_mode_id = ?, ' +
+      'UPDATE north_connectors SET name = ?, description = ?, enabled = ?, settings = ?, caching_scan_mode_id = ?, ' +
         'caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, caching_max_send_count = ?, ' +
         'caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? WHERE id = ?;'
     );
@@ -297,7 +286,7 @@ describe('North connector repository', () => {
 
   it('should delete a north connector', () => {
     repository.deleteNorthConnector('id1');
-    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM north_connector WHERE id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM north_connectors WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 });

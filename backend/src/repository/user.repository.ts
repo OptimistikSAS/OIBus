@@ -5,7 +5,7 @@ import { generateRandomId } from '../service/utils';
 import { User, UserCommandDTO, UserLight, UserSearchParam } from '../../../shared/model/user.model';
 import { Page } from '../../../shared/model/types';
 
-const USER_TABLE = 'user';
+export const USERS_TABLE = 'users';
 const PAGE_SIZE = 50;
 
 const DEFAULT_USER: UserCommandDTO = {
@@ -23,11 +23,7 @@ const DEFAULT_PASSWORD = 'pass';
  * Repository used for Users
  */
 export default class UserRepository {
-  private readonly database: Database;
-  constructor(database: Database) {
-    this.database = database;
-    const query = `CREATE TABLE IF NOT EXISTS ${USER_TABLE} (id TEXT PRIMARY KEY, login TEXT UNIQUE, password TEXT, first_name TEXT, last_name TEXT, email TEXT, language TEXT, timezone TEXT);`;
-    this.database.prepare(query).run();
+  constructor(private readonly database: Database) {
     this.createDefaultUser();
   }
 
@@ -43,7 +39,7 @@ export default class UserRepository {
       queryParams.push(searchParams.login);
     }
     const query =
-      `SELECT id, login, first_name as firstName, last_name as lastName FROM ${USER_TABLE} ${whereClause}` +
+      `SELECT id, login, first_name as firstName, last_name as lastName FROM ${USERS_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
     const results = this.database
       .prepare(query)
@@ -53,7 +49,7 @@ export default class UserRepository {
         login: result.login,
         friendlyName: `${result.firstName} ${result.lastName}`
       }));
-    const totalElements = (this.database.prepare(`SELECT COUNT(*) as count FROM ${USER_TABLE} ${whereClause}`).get() as { count: number })
+    const totalElements = (this.database.prepare(`SELECT COUNT(*) as count FROM ${USERS_TABLE} ${whereClause}`).get() as { count: number })
       .count;
     const totalPages = Math.ceil(totalElements / PAGE_SIZE);
 
@@ -70,7 +66,7 @@ export default class UserRepository {
    * Retrieve a user by its id
    */
   getUserById(id: string): User | null {
-    const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USER_TABLE} WHERE id = ?;`;
+    const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USERS_TABLE} WHERE id = ?;`;
     const result: User | null = this.database.prepare(query).get(id) as User | null;
     if (!result) return null;
     return {
@@ -89,7 +85,7 @@ export default class UserRepository {
    * Retrieve a user by its login
    */
   getUserByLogin(login: string): User | null {
-    const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USER_TABLE} WHERE login = ?;`;
+    const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USERS_TABLE} WHERE login = ?;`;
     const result: User | null = this.database.prepare(query).get(login) as User | null;
     if (!result) return null;
     return {
@@ -108,7 +104,7 @@ export default class UserRepository {
    * Retrieve a user by the login to authenticate the user in middleware
    */
   getHashedPasswordByLogin(login: string): string | null {
-    const query = `SELECT password FROM ${USER_TABLE} WHERE login = ?;`;
+    const query = `SELECT password FROM ${USERS_TABLE} WHERE login = ?;`;
     const result: { password: string } | null = this.database.prepare(query).get(login) as { password: string } | null;
     if (!result) {
       return null;
@@ -122,7 +118,7 @@ export default class UserRepository {
   async createUser(command: UserCommandDTO, password: string): Promise<User> {
     const id = generateRandomId(6);
     const insertQuery =
-      `INSERT INTO ${USER_TABLE} (id, login, password, first_name, last_name, email, language, timezone) ` +
+      `INSERT INTO ${USERS_TABLE} (id, login, password, first_name, last_name, email, language, timezone) ` +
       `VALUES (?, ?, ?, ?, ?, ?, ?, ?);`;
 
     const hash = await argon2.hash(password);
@@ -130,7 +126,7 @@ export default class UserRepository {
       .prepare(insertQuery)
       .run(id, command.login, hash, command.firstName, command.lastName, command.email, command.language, command.timezone);
 
-    const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USER_TABLE} WHERE ROWID = ?;`;
+    const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USERS_TABLE} WHERE ROWID = ?;`;
     const result: any = this.database.prepare(query).get(insertResult.lastInsertRowid);
     return {
       id: result.id,
@@ -147,7 +143,7 @@ export default class UserRepository {
   async updatePassword(id: string, password: string): Promise<void> {
     const hash = await argon2.hash(password);
 
-    const queryUpdate = `UPDATE ${USER_TABLE} SET password = ? WHERE id = ?;`;
+    const queryUpdate = `UPDATE ${USERS_TABLE} SET password = ? WHERE id = ?;`;
     this.database.prepare(queryUpdate).run(hash, id);
   }
 
@@ -155,7 +151,7 @@ export default class UserRepository {
    * Update a User by its ID
    */
   updateUser(id: string, command: UserCommandDTO): void {
-    const queryUpdate = `UPDATE ${USER_TABLE} SET login = ?, first_name = ?, last_name = ?, email = ?, language = ?, timezone = ? WHERE id = ?;`;
+    const queryUpdate = `UPDATE ${USERS_TABLE} SET login = ?, first_name = ?, last_name = ?, email = ?, language = ?, timezone = ? WHERE id = ?;`;
     this.database
       .prepare(queryUpdate)
       .run(command.login, command.firstName, command.lastName, command.email, command.language, command.timezone, id);
@@ -165,12 +161,12 @@ export default class UserRepository {
    * Delete a User by its ID
    */
   deleteUser(id: string): void {
-    const query = `DELETE FROM ${USER_TABLE} WHERE id = ?;`;
+    const query = `DELETE FROM ${USERS_TABLE} WHERE id = ?;`;
     this.database.prepare(query).run(id);
   }
 
   createDefaultUser(): void {
-    const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USER_TABLE} WHERE login = ?;`;
+    const query = `SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM ${USERS_TABLE} WHERE login = ?;`;
     const result = this.database.prepare(query).get(DEFAULT_USER.login);
     if (result) {
       return;

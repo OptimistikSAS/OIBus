@@ -1,11 +1,11 @@
 import { NorthArchiveSettings, NorthCacheSettingsDTO } from './north-connector.model';
 import { SouthConnectorHistorySettings } from './south-connector.model';
+import { BaseEntity } from './types';
 
 /**
  * DTO for history queries
  */
-export interface HistoryQueryDTO {
-  id: string;
+export interface HistoryQueryDTO extends BaseEntity {
   name: string;
   description: string;
   enabled: boolean;

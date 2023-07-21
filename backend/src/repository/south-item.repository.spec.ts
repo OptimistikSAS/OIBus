@@ -24,15 +24,6 @@ describe('South item repository', () => {
     repository = new SouthItemRepository(database);
   });
 
-  it('should properly init south scan table', () => {
-    expect(database.prepare).toHaveBeenCalledWith(
-      'CREATE TABLE IF NOT EXISTS south_item (id TEXT PRIMARY KEY, connector_id TEXT, scan_mode_id TEXT, name TEXT, ' +
-        'settings TEXT, FOREIGN KEY(connector_id) REFERENCES south_connector(id), ' +
-        'FOREIGN KEY(scan_mode_id) REFERENCES scan_mode(id));'
-    );
-    expect(run).toHaveBeenCalledTimes(1);
-  });
-
   it('should properly list south items', () => {
     const expectedValue: Array<SouthConnectorItemDTO> = [
       {
@@ -68,7 +59,7 @@ describe('South item repository', () => {
     ]);
     const southItems = repository.listSouthItems('southId');
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_item WHERE connector_id = ?;'
+      'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_items WHERE connector_id = ?;'
     );
     expect(southItems).toEqual(expectedValue);
   });
@@ -118,7 +109,7 @@ describe('South item repository', () => {
       name: 'my item'
     });
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_item WHERE ' +
+      'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_items WHERE ' +
         "connector_id = ? AND name like '%' || ? || '%' LIMIT 50 OFFSET 0;"
     );
     expect(southItems).toEqual(expectedValue);
@@ -159,7 +150,7 @@ describe('South item repository', () => {
     ]);
     const southItems = repository.getSouthItems('southId');
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_item WHERE connector_id = ?;'
+      'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_items WHERE connector_id = ?;'
     );
     expect(southItems).toEqual(expectedValue);
   });
@@ -181,7 +172,7 @@ describe('South item repository', () => {
     });
     const southScan = repository.getSouthItem('id1');
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_item WHERE id = ?;'
+      'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_items WHERE id = ?;'
     );
     expect(get).toHaveBeenCalledWith('id1');
     expect(southScan).toEqual(expectedValue);
@@ -191,7 +182,7 @@ describe('South item repository', () => {
     get.mockReturnValueOnce(null);
     const southScan = repository.getSouthItem('id1');
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_item WHERE id = ?;'
+      'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_items WHERE id = ?;'
     );
     expect(get).toHaveBeenCalledWith('id1');
     expect(southScan).toEqual(null);
@@ -209,13 +200,13 @@ describe('South item repository', () => {
     repository.createSouthItem('southId', command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
-      'INSERT INTO south_item (id, name, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?);'
+      'INSERT INTO south_items (id, name, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?);'
     );
     expect(run).toHaveBeenCalledWith('123456', command.name, 'southId', command.scanModeId, JSON.stringify(command.settings));
     expect(get).toHaveBeenCalledWith(1);
 
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_item WHERE ROWID = ?;'
+      'SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM south_items WHERE ROWID = ?;'
     );
   });
 
@@ -226,25 +217,25 @@ describe('South item repository', () => {
       settings: {}
     };
     repository.updateSouthItem('id1', command);
-    expect(database.prepare).toHaveBeenCalledWith('UPDATE south_item SET name = ?, scan_mode_id = ?, settings = ? WHERE id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('UPDATE south_items SET name = ?, scan_mode_id = ?, settings = ? WHERE id = ?;');
     expect(run).toHaveBeenCalledWith(command.name, command.scanModeId, JSON.stringify(command.settings), 'id1');
   });
 
   it('should delete a south item', () => {
     repository.deleteSouthItem('id1');
-    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM south_item WHERE id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM south_items WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should delete all south items', () => {
     repository.deleteAllSouthItems('id1');
-    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM south_item WHERE connector_id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM south_items WHERE connector_id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should delete all south items associated to a connector id', () => {
     repository.deleteAllSouthItems('connectorId');
-    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM south_item WHERE connector_id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM south_items WHERE connector_id = ?;');
     expect(run).toHaveBeenCalledWith('connectorId');
   });
 
@@ -270,9 +261,9 @@ describe('South item repository', () => {
 
     repository.createAndUpdateSouthItems('connectorId', [itemToAdd], [itemToUpdate]);
     expect(database.prepare).toHaveBeenCalledWith(
-      `INSERT INTO south_item (id, name, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?);`
+      `INSERT INTO south_items (id, name, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?);`
     );
-    expect(database.prepare).toHaveBeenCalledWith(`UPDATE south_item SET name = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`);
+    expect(database.prepare).toHaveBeenCalledWith(`UPDATE south_items SET name = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`);
     expect(run).toHaveBeenCalledWith('123456', 'southScan1', 'connectorId', 'scanModeId', '{}');
     expect(run).toHaveBeenCalledWith('southScan2', 'scanModeId', '{}', 'id2');
   });

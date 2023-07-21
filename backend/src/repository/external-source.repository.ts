@@ -1,6 +1,7 @@
 import { generateRandomId } from '../service/utils';
 import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../../shared/model/external-sources.model';
 import { Database } from 'better-sqlite3';
+import { DateTime } from 'luxon';
 
 export const EXTERNAL_SOURCES_TABLE = 'external_sources';
 
@@ -8,13 +9,7 @@ export const EXTERNAL_SOURCES_TABLE = 'external_sources';
  * Repository used for external sources (remote data source that send values directly to the API)
  */
 export default class ExternalSourceRepository {
-  private readonly database: Database;
-
-  constructor(database: Database) {
-    this.database = database;
-    const query = `CREATE TABLE IF NOT EXISTS ${EXTERNAL_SOURCES_TABLE} (id TEXT PRIMARY KEY, reference TEXT, description TEXT);`;
-    this.database.prepare(query).run();
-  }
+  constructor(private readonly database: Database) {}
 
   /**
    * Retrieve all external sources

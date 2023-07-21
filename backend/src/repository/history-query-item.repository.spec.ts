@@ -24,14 +24,6 @@ describe('History query item repository', () => {
     repository = new HistoryQueryItemRepository(database);
   });
 
-  it('should properly init history query item table', () => {
-    expect(database.prepare).toHaveBeenCalledWith(
-      'CREATE TABLE IF NOT EXISTS history_item (id TEXT PRIMARY KEY, history_id TEXT, name TEXT, ' +
-        'settings TEXT, FOREIGN KEY(history_id) REFERENCES history_queries(id));'
-    );
-    expect(run).toHaveBeenCalledTimes(1);
-  });
-
   it('should properly search history query items', () => {
     const expectedValue: Page<SouthConnectorItemDTO> = {
       content: [
@@ -75,7 +67,7 @@ describe('History query item repository', () => {
       name: 'my item'
     });
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, history_id AS historyId, settings FROM history_item WHERE ' +
+      'SELECT id, name, history_id AS historyId, settings FROM history_items WHERE ' +
         "history_id = ? AND name like '%' || ? || '%' LIMIT 50 OFFSET 0;"
     );
     expect(southScans).toEqual(expectedValue);
@@ -115,7 +107,7 @@ describe('History query item repository', () => {
       }
     ]);
     const southScans = repository.getHistoryItems('historyId');
-    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, settings FROM history_item WHERE history_id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, settings FROM history_items WHERE history_id = ?;');
     expect(southScans).toEqual(expectedValue);
   });
 
@@ -134,7 +126,7 @@ describe('History query item repository', () => {
       settings: JSON.stringify({})
     });
     const southScan = repository.getHistoryItem('id1');
-    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, history_id AS historyId, settings FROM history_item WHERE id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, history_id AS historyId, settings FROM history_items WHERE id = ?;');
     expect(get).toHaveBeenCalledWith('id1');
     expect(southScan).toEqual(expectedValue);
   });
@@ -150,11 +142,11 @@ describe('History query item repository', () => {
     };
     repository.createHistoryItem('historyId', command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
-    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO history_item (id, name, history_id, settings) VALUES (?, ?, ?, ?);');
+    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO history_items (id, name, history_id, settings) VALUES (?, ?, ?, ?);');
     expect(run).toHaveBeenCalledWith('123456', command.name, 'historyId', JSON.stringify(command.settings));
     expect(get).toHaveBeenCalledWith(1);
 
-    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, history_id AS historyId, settings FROM history_item WHERE ROWID = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, history_id AS historyId, settings FROM history_items WHERE ROWID = ?;');
   });
 
   it('should update a history query item', () => {
@@ -164,19 +156,19 @@ describe('History query item repository', () => {
       settings: {}
     };
     repository.updateHistoryItem('id1', command);
-    expect(database.prepare).toHaveBeenCalledWith('UPDATE history_item SET name = ?, settings = ? WHERE id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('UPDATE history_items SET name = ?, settings = ? WHERE id = ?;');
     expect(run).toHaveBeenCalledWith(command.name, JSON.stringify(command.settings), 'id1');
   });
 
   it('should delete a history query item', () => {
     repository.deleteHistoryItem('id1');
-    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM history_item WHERE id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM history_items WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should delete all history query items associated to a history id', () => {
     repository.deleteAllItems('historyId');
-    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM history_item WHERE history_id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM history_items WHERE history_id = ?;');
     expect(run).toHaveBeenCalledWith('historyId');
   });
 
@@ -201,8 +193,8 @@ describe('History query item repository', () => {
     };
 
     repository.createAndUpdateItems('historyId', [itemToAdd], [itemToUpdate]);
-    expect(database.prepare).toHaveBeenCalledWith(`INSERT INTO history_item (id, name, history_id, settings) VALUES (?, ?, ?, ?);`);
-    expect(database.prepare).toHaveBeenCalledWith(`UPDATE history_item SET name = ?, settings = ? WHERE id = ?;`);
+    expect(database.prepare).toHaveBeenCalledWith(`INSERT INTO history_items (id, name, history_id, settings) VALUES (?, ?, ?, ?);`);
+    expect(database.prepare).toHaveBeenCalledWith(`UPDATE history_items SET name = ?, settings = ? WHERE id = ?;`);
     expect(run).toHaveBeenCalledWith('123456', 'item1', 'historyId', '{}');
     expect(run).toHaveBeenCalledWith('item2', '{}', 'id2');
   });

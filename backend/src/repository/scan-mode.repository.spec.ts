@@ -30,10 +30,7 @@ describe('Scan mode repository', () => {
     });
 
     it('should properly init scan mode table', () => {
-      expect(database.prepare).toHaveBeenCalledWith(
-        'CREATE TABLE IF NOT EXISTS scan_mode (id TEXT PRIMARY KEY, name TEXT, description TEXT, cron TEXT);'
-      );
-      expect(database.prepare).toHaveBeenCalledWith('INSERT INTO scan_mode (id, name, description, cron) VALUES (?, ?, ?, ?);');
+      expect(database.prepare).toHaveBeenCalledWith('INSERT INTO scan_modes (id, name, description, cron) VALUES (?, ?, ?, ?);');
       expect(run).toHaveBeenCalledWith('123456', 'Every seconds', 'Trigger every seconds', '* * * * * *');
       expect(run).toHaveBeenCalledWith('123456', 'Every 10 seconds', 'Trigger every 10 seconds', '*/10 * * * * *');
       expect(run).toHaveBeenCalledWith('123456', 'Every minutes', 'Trigger every minutes', '0 * * * * *');
@@ -41,7 +38,7 @@ describe('Scan mode repository', () => {
       expect(run).toHaveBeenCalledWith('123456', 'Every hours', 'Trigger every hours', '0 0 * * * *');
       expect(run).toHaveBeenCalledWith('123456', 'Every 24 hours', 'Trigger every 24 hours', '0 0 0 * * *');
       expect(run).toHaveBeenCalledWith('subscription', 'Subscription', 'Used for subscription', '');
-      expect(run).toHaveBeenCalledTimes(8);
+      expect(run).toHaveBeenCalledTimes(7);
     });
   });
 
@@ -86,7 +83,7 @@ describe('Scan mode repository', () => {
       ];
       all.mockReturnValueOnce(expectedValue);
       const scanModes = repository.getScanModes();
-      expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, description, cron FROM scan_mode;');
+      expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, description, cron FROM scan_modes;');
       expect(scanModes).toEqual(expectedValue);
     });
 
@@ -99,7 +96,7 @@ describe('Scan mode repository', () => {
       };
       get.mockReturnValueOnce(expectedValue);
       const scanMode = repository.getScanMode('id1');
-      expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, description, cron FROM scan_mode WHERE id = ?;');
+      expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, description, cron FROM scan_modes WHERE id = ?;');
       expect(get).toHaveBeenCalledWith('id1');
       expect(scanMode).toEqual(expectedValue);
     });
@@ -114,10 +111,10 @@ describe('Scan mode repository', () => {
       };
       repository.createScanMode(command);
       expect(generateRandomId).toHaveBeenCalledWith(6);
-      expect(database.prepare).toHaveBeenCalledWith('INSERT INTO scan_mode (id, name, description, cron) VALUES (?, ?, ?, ?);');
+      expect(database.prepare).toHaveBeenCalledWith('INSERT INTO scan_modes (id, name, description, cron) VALUES (?, ?, ?, ?);');
       expect(run).toHaveBeenCalledWith('123456', command.name, command.description, command.cron);
 
-      expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, description, cron FROM scan_mode WHERE ROWID = ?;');
+      expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, description, cron FROM scan_modes WHERE ROWID = ?;');
     });
 
     it('should update a scan mode', () => {
@@ -127,13 +124,13 @@ describe('Scan mode repository', () => {
         cron: '* * * * * *'
       };
       repository.updateScanMode('id1', command);
-      expect(database.prepare).toHaveBeenCalledWith('UPDATE scan_mode SET name = ?, description = ?, cron = ? WHERE id = ?;');
+      expect(database.prepare).toHaveBeenCalledWith('UPDATE scan_modes SET name = ?, description = ?, cron = ? WHERE id = ?;');
       expect(run).toHaveBeenCalledWith(command.name, command.description, command.cron, 'id1');
     });
 
     it('should delete a scan mode', () => {
       repository.deleteScanMode('id1');
-      expect(database.prepare).toHaveBeenCalledWith('DELETE FROM scan_mode WHERE id = ?;');
+      expect(database.prepare).toHaveBeenCalledWith('DELETE FROM scan_modes WHERE id = ?;');
       expect(run).toHaveBeenCalledWith('id1');
     });
   });

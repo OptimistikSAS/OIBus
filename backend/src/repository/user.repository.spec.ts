@@ -39,14 +39,6 @@ describe('User repository', () => {
     repository = new UserRepository(database);
   });
 
-  it('should properly init user table', async () => {
-    expect(database.prepare).toHaveBeenCalledWith(
-      'CREATE TABLE IF NOT EXISTS user (id TEXT PRIMARY KEY, login TEXT UNIQUE, password TEXT, first_name TEXT, last_name TEXT, email TEXT, language TEXT, timezone TEXT);'
-    );
-    // Once for creation of the table
-    expect(run).toHaveBeenCalledTimes(1);
-  });
-
   it('should properly search users', () => {
     const expectedValue: Page<UserLight> = {
       content: [
@@ -85,7 +77,7 @@ describe('User repository', () => {
 
     const users = repository.searchUsers({ login: 'user', page: 2 });
     expect(database.prepare).toHaveBeenCalledWith(
-      "SELECT id, login, first_name as firstName, last_name as lastName FROM user WHERE login like '%user%' LIMIT 50 OFFSET 100;"
+      "SELECT id, login, first_name as firstName, last_name as lastName FROM users WHERE login like '%user%' LIMIT 50 OFFSET 100;"
     );
     expect(users).toEqual(expectedValue);
   });
@@ -112,7 +104,7 @@ describe('User repository', () => {
     });
     const user = repository.getUserById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM user WHERE id = ?;'
+      'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM users WHERE id = ?;'
     );
     expect(get).toHaveBeenCalledWith('id1');
     expect(user).toEqual(expectedValue);
@@ -122,7 +114,7 @@ describe('User repository', () => {
     get.mockReturnValueOnce(null);
     const user = repository.getUserById('id1');
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM user WHERE id = ?;'
+      'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM users WHERE id = ?;'
     );
     expect(get).toHaveBeenCalledWith('id1');
     expect(user).toEqual(null);
@@ -150,7 +142,7 @@ describe('User repository', () => {
     });
     const user = repository.getUserByLogin('user1');
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM user WHERE login = ?;'
+      'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM users WHERE login = ?;'
     );
     expect(get).toHaveBeenCalledWith('user1');
     expect(user).toEqual(expectedValue);
@@ -160,7 +152,7 @@ describe('User repository', () => {
     get.mockReturnValueOnce(null);
     const user = repository.getUserByLogin('user1');
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM user WHERE login = ?;'
+      'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM users WHERE login = ?;'
     );
     expect(get).toHaveBeenCalledWith('user1');
     expect(user).toEqual(null);
@@ -181,7 +173,7 @@ describe('User repository', () => {
     await repository.createUser(command, 'pass');
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
-      'INSERT INTO user (id, login, password, first_name, last_name, email, language, timezone) VALUES (?, ?, ?, ?, ?, ?, ?, ?);'
+      'INSERT INTO users (id, login, password, first_name, last_name, email, language, timezone) VALUES (?, ?, ?, ?, ?, ?, ?, ?);'
     );
     expect(run).toHaveBeenCalledWith(
       '123456',
@@ -196,7 +188,7 @@ describe('User repository', () => {
     expect(get).toHaveBeenCalledWith(1);
 
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM user WHERE ROWID = ?;'
+      'SELECT id, login, first_name as firstName, last_name as lastName, email, language, timezone FROM users WHERE ROWID = ?;'
     );
   });
 
@@ -208,14 +200,14 @@ describe('User repository', () => {
 
   it('should delete a user', () => {
     repository.deleteUser('id1');
-    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM user WHERE id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM users WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 
   it('should return null when user by login is not found', () => {
     get.mockReturnValueOnce(null);
     const hashedPassword = repository.getHashedPasswordByLogin('user1');
-    expect(database.prepare).toHaveBeenCalledWith('SELECT password FROM user WHERE login = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('SELECT password FROM users WHERE login = ?;');
 
     expect(hashedPassword).toBeNull();
   });
@@ -223,7 +215,7 @@ describe('User repository', () => {
   it('should return hashed password when user by login is found', () => {
     get.mockReturnValueOnce({ password: 'hashedPassword' });
     const hashedPassword = repository.getHashedPasswordByLogin('user1');
-    expect(database.prepare).toHaveBeenCalledWith('SELECT password FROM user WHERE login = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('SELECT password FROM users WHERE login = ?;');
 
     expect(hashedPassword).toEqual('hashedPassword');
   });
@@ -252,7 +244,7 @@ describe('User repository', () => {
     };
     repository.updateUser('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
-      'UPDATE user SET login = ?, first_name = ?, last_name = ?, email = ?, language = ?, timezone = ? WHERE id = ?;'
+      'UPDATE users SET login = ?, first_name = ?, last_name = ?, email = ?, language = ?, timezone = ? WHERE id = ?;'
     );
     expect(run).toHaveBeenCalledWith(
       command.login,
