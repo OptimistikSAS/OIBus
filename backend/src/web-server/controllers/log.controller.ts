@@ -14,12 +14,23 @@ export default class LogsConnectorController extends AbstractController {
       levels.push(ctx.query.levels);
     }
 
+    const scopeIds = Array.isArray(ctx.query.scopeIds) ? ctx.query.scopeIds : [];
+    if (typeof ctx.query.scopeIds === 'string') {
+      scopeIds.push(ctx.query.scopeIds);
+    }
+
+    const scopeTypes = Array.isArray(ctx.query.scopeTypes) ? ctx.query.scopeTypes : [];
+    if (typeof ctx.query.scopeTypes === 'string') {
+      scopeTypes.push(ctx.query.scopeTypes);
+    }
+
     const searchParams: LogSearchParam = {
       page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
       start: ctx.query.start || new Date(dayAgo).toISOString(),
       end: ctx.query.end || new Date(now).toISOString(),
       levels,
-      scope: (ctx.query.scope as string) || null,
+      scopeIds,
+      scopeTypes,
       messageContent: (ctx.query.messageContent as string) || null
     };
     const externalSources = ctx.app.repositoryService.logRepository.searchLogs(searchParams);
@@ -36,7 +47,9 @@ export default class LogsConnectorController extends AbstractController {
           const formattedLog = {
             oibus: myStream.stream.oibus,
             time: new Date(parseInt(value[0]) / 1000000),
-            scope: myStream.stream.scope,
+            scopeType: myStream.stream.scopeType,
+            scopeId: myStream.stream.scopeId,
+            scopeName: myStream.stream.scopeName,
             msg: value[1]
           };
           switch (myStream.stream.level) {

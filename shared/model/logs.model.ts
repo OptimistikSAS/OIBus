@@ -1,4 +1,4 @@
-import { LogLevel } from './engine.model';
+import { LogLevel, ScopeType } from './engine.model';
 
 /**
  * DTO used for Log entries
@@ -6,9 +6,29 @@ import { LogLevel } from './engine.model';
 export interface LogDTO {
   timestamp: string;
   level: LogLevel;
-  scope: string;
+  scopeType: ScopeType;
+  scopeId?: string;
+  scopeName?: string;
   message: string;
 }
+
+export interface PinoLog {
+  msg: string;
+  scopeType: ScopeType;
+  scopeId: string | null;
+  scopeName: string | null;
+  time: number;
+  level: string;
+}
+
+export const LEVEL_FORMAT: { [key: string]: LogLevel } = {
+  '10': 'trace',
+  '20': 'debug',
+  '30': 'info',
+  '40': 'warn',
+  '50': 'error',
+  '60': 'fatal'
+};
 
 export interface LogStreamValuesCommandDTO {
   values: Array<[string, string]>;
@@ -16,7 +36,9 @@ export interface LogStreamValuesCommandDTO {
     level: LogLevel;
     oibus: string;
     oibusName: string;
-    scope: string;
+    scopeType: string;
+    scopeId: string | null;
+    scopeName: string | null;
   };
 }
 export interface LogStreamCommandDTO {
@@ -28,6 +50,7 @@ export interface LogSearchParam {
   start: string | null;
   end: string | null;
   levels: Array<LogLevel>;
-  scope: string | null;
+  scopeIds: Array<string>;
+  scopeTypes: Array<string>;
   messageContent: string | null;
 }

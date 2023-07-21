@@ -25,10 +25,6 @@ describe('Crypto repository', () => {
   });
 
   it('should properly init crypto settings table', () => {
-    expect(database.prepare).toHaveBeenCalledWith(
-      'CREATE TABLE IF NOT EXISTS crypto (id TEXT PRIMARY KEY NOT NULL, algorithm TEXT, init_vector TEXT, security_key TEXT);'
-    );
-
     repository.createCryptoSettings('id1');
     expect(database.prepare).toHaveBeenCalledWith('INSERT INTO crypto VALUES (?,?,?,?);');
     expect(run).toHaveBeenCalledWith(
@@ -38,15 +34,16 @@ describe('Crypto repository', () => {
       Buffer.from('0123456789abcdef').toString('base64')
     );
 
-    expect(run).toHaveBeenCalledTimes(2);
+    expect(run).toHaveBeenCalledTimes(1);
   });
 
   it('should not create crypto if already init', () => {
     get.mockReturnValueOnce({});
 
     repository.createCryptoSettings('id1');
-    expect(database.prepare).toHaveBeenCalledTimes(2);
-    expect(run).toHaveBeenCalledTimes(1);
+    expect(database.prepare).toHaveBeenCalledTimes(1);
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(run).toHaveBeenCalledTimes(0);
   });
 
   it('should properly get crypto settings', () => {

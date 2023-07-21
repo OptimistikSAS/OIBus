@@ -59,7 +59,7 @@ export default class HistoryQueryEngine extends BaseEngine {
         this.northService,
         this.historyQueryService,
         items,
-        this.logger.child({ scope: `history:${settings.name}` }),
+        this.logger.child({ scopeType: 'history-query', scopeId: settings.id, scopeName: settings.name }),
         baseFolder
       );
       this.historyQueries.set(settings.id, historyQuery);
@@ -109,7 +109,7 @@ export default class HistoryQueryEngine extends BaseEngine {
     for (const [id, historyQuery] of this.historyQueries.entries()) {
       const settings = this.historyQueryService.getHistoryQuery(id);
       if (settings) {
-        historyQuery.setLogger(this.logger.child({ scope: `south:${settings.name}` }));
+        historyQuery.setLogger(this.logger.child({ scopeType: 'history-query', scopeId: settings.id, scopeName: settings.name }));
       }
     }
   }

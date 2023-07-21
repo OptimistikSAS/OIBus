@@ -13,7 +13,7 @@ import OIBusEngine from './engine/oibus-engine';
 import HistoryQueryEngine from './engine/history-query-engine';
 import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
-import migrate from './db/migration-service';
+import { migrateCrypto, migrateEntities, migrateLogsAndMetrics } from './db/migration-service';
 
 const CACHE_FOLDER = './cache';
 
@@ -34,7 +34,9 @@ const LOG_DB_NAME = 'journal.db';
   await createFolder(LOG_FOLDER_NAME);
 
   // run migrations
-  await migrate(path.resolve(CONFIG_DATABASE));
+  await migrateEntities(path.resolve(CONFIG_DATABASE));
+  await migrateLogsAndMetrics(path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME));
+  await migrateCrypto(path.resolve(CRYPTO_DATABASE));
 
   const repositoryService = new RepositoryService(
     path.resolve(CONFIG_DATABASE),
@@ -66,26 +68,27 @@ const LOG_DB_NAME = 'journal.db';
     return;
   }
 
-  const loggerService = new LoggerService(encryptionService);
+  await createFolder(LOG_FOLDER_NAME);
+  const loggerService = new LoggerService(encryptionService, path.resolve(LOG_FOLDER_NAME));
   await loggerService.start(oibusSettings.id, oibusSettings.name, oibusSettings.logParameters);
 
   const northService = new NorthService(encryptionService, repositoryService);
   const southService = new SouthService(encryptionService, repositoryService);
   const historyQueryService = new HistoryQueryService(encryptionService, repositoryService);
 
-  const engine = new OIBusEngine(encryptionService, northService, southService, loggerService.createChildLogger('engine'));
+  const engine = new OIBusEngine(encryptionService, northService, southService, loggerService.createChildLogger('data-stream'));
   const historyQueryEngine = new HistoryQueryEngine(
     encryptionService,
     northService,
     southService,
     historyQueryService,
-    loggerService.createChildLogger('history')
+    loggerService.createChildLogger('history-engine')
   );
 
   const oibusService = new OIBusService(engine, historyQueryEngine);
   await engine.start();
   await historyQueryEngine.start();
-  const healthSignalService = new HealthSignalService(loggerService.createChildLogger('health'));
+  const healthSignalService = new HealthSignalService(loggerService.logger!);
 
   const reloadService = new ReloadService(
     loggerService,

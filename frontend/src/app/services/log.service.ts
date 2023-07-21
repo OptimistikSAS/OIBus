@@ -30,8 +30,11 @@ export class LogService {
     if (searchParams.end) {
       params['end'] = searchParams.end;
     }
-    if (searchParams.scope) {
-      params['scope'] = searchParams.scope;
+    if (searchParams.scopeTypes) {
+      params['scopeTypes'] = searchParams.scopeTypes;
+    }
+    if (searchParams.scopeIds) {
+      params['scopeIds'] = searchParams.scopeIds;
     }
     if (searchParams.levels) {
       params['levels'] = searchParams.levels;

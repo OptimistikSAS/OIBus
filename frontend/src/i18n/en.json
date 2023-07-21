@@ -96,6 +96,15 @@
       "debug": "Debug",
       "trace": "Trace"
     },
+    "scope-types": {
+      "south": "South",
+      "north": "North",
+      "data-stream": "Data stream engine",
+      "history-engine": "History engine",
+      "history-query": "History query",
+      "web-server": "Web server",
+      "logger-service": "Logger service"
+    },
     "categories": {
       "api": "API",
       "database": "Database",
@@ -481,11 +490,13 @@
       "start": "Start",
       "end": "End",
       "message-content": "Message",
+      "scope-type": "Type",
       "scope": "Scope",
       "levels": "Levels"
     },
     "date": "Date",
     "level": "Level",
+    "scope-type": "Type",
     "scope": "Scope",
     "message": "Message",
     "none": "No log found"

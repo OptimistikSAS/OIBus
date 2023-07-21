@@ -1,7 +1,7 @@
 import fetch from 'node-fetch';
 import build from 'pino-abstract-transport';
 
-import { LogStreamValuesCommandDTO } from '../../../../shared/model/logs.model';
+import { LogStreamValuesCommandDTO, PinoLog } from '../../../../shared/model/logs.model';
 import { LogLevel } from '../../../../shared/model/engine.model';
 
 const MAX_BATCH_LOG = 500;
@@ -24,13 +24,6 @@ interface LokiOptions {
   oibusName: string;
   interval?: number;
   batchLimit?: number;
-}
-
-interface PinoLog {
-  msg: string;
-  scope: string;
-  time: number;
-  level: string;
 }
 
 interface AccessToken {
@@ -79,7 +72,9 @@ class LokiTransport {
               oibus: this.options.id,
               oibusName: this.options.oibusName,
               level: LEVEL_FORMAT[logLevel],
-              scope: jsonMessage.scope
+              scopeType: jsonMessage.scopeType,
+              scopeId: jsonMessage.scopeId,
+              scopeName: jsonMessage.scopeName
             },
             values: [[logMessage[0], jsonMessage.message]]
           });
@@ -167,7 +162,7 @@ class LokiTransport {
   addLokiLogs = async (log: PinoLog): Promise<void> => {
     this.batchLogs[log.level].push([
       (new Date(log.time).getTime() * 1000000).toString(),
-      JSON.stringify({ message: log.msg, scope: log.scope })
+      JSON.stringify({ message: log.msg, scopeType: log.scopeType, scopeId: log.scopeId, scopeName: log.scopeName })
     ]);
     this.numberOfLogs += 1;
     const batchLimit = this.options.batchLimit || MAX_BATCH_LOG;

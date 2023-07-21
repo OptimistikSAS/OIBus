@@ -101,7 +101,7 @@ describe('HistoryQueryEngine', () => {
     expect(historyQueryService.getHistoryQueryList as jest.Mock).toHaveBeenCalledTimes(1);
     expect(historyQueryService.getItems as jest.Mock).toHaveBeenCalledTimes(1);
     expect(historyQueryService.getItems as jest.Mock).toHaveBeenCalledWith(configuration.id);
-    expect(logger.child).toHaveBeenCalledWith({ scope: `history:${configuration.name}` });
+    expect(logger.child).toHaveBeenCalledWith({ scopeType: 'history-query', scopeId: configuration.id, scopeName: configuration.name });
 
     expect(engine.getHistoryDataStream('bad id')).toEqual(null);
     expect(engine.getHistoryDataStream(configuration.id)).toEqual(expect.any(PassThrough));
@@ -133,6 +133,10 @@ describe('HistoryQueryEngine', () => {
 
     engine.setLogger(anotherLogger);
     expect(historyQueryService.getHistoryQuery).toHaveBeenCalledWith('historyId');
-    expect(anotherLogger.child).toHaveBeenCalledWith({ scope: `south:${configuration.name}` });
+    expect(anotherLogger.child).toHaveBeenCalledWith({
+      scopeType: 'history-query',
+      scopeId: configuration.id,
+      scopeName: configuration.name
+    });
   });
 });

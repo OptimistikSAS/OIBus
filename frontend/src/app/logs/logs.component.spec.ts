@@ -34,13 +34,15 @@ describe('LogsComponent', () => {
     {
       timestamp: '2023-01-01T00:00:00.000Z',
       level: 'error',
-      scope: 'engine',
+      scopeType: 'data-stream',
       message: 'my log 1'
     },
     {
       timestamp: '2023-01-02T00:00:00.000Z',
       level: 'error',
-      scope: 'engine',
+      scopeType: 'south',
+      scopeId: 'southId',
+      scopeName: 'My South',
       message: 'my log 2'
     }
   ]);
@@ -86,7 +88,8 @@ describe('LogsComponent', () => {
     // Default timezone is Europe/Paris
     expect(logService.searchLogs).toHaveBeenCalledWith({
       messageContent: null,
-      scope: null,
+      scopeTypes: [],
+      scopeIds: [],
       start: '2022-12-31T23:00:00.000Z',
       end: '2023-02-28T23:00:00.000Z',
       levels: ['info', 'error'],
@@ -94,16 +97,18 @@ describe('LogsComponent', () => {
     });
     expect(tester.logs.length).toBe(2);
 
-    expect(tester.logs[0].elements('td').length).toBe(4);
+    expect(tester.logs[0].elements('td').length).toBe(5);
     expect(tester.logs[0].elements('td')[0]).toContainText('1 Jan 2023, 01:00:00');
     expect(tester.logs[0].elements('td')[1]).toContainText('Error');
-    expect(tester.logs[0].elements('td')[2]).toContainText('engine');
-    expect(tester.logs[0].elements('td')[3]).toContainText('my log 1');
+    expect(tester.logs[0].elements('td')[2]).toContainText('Data stream engine');
+    expect(tester.logs[0].elements('td')[3]).toHaveText('');
+    expect(tester.logs[0].elements('td')[4]).toContainText('my log 1');
 
     expect(tester.logs[1].elements('td')[0]).toContainText('2 Jan 2023, 01:00:00');
     expect(tester.logs[1].elements('td')[1]).toContainText('Error');
-    expect(tester.logs[1].elements('td')[2]).toContainText('engine');
-    expect(tester.logs[1].elements('td')[3]).toContainText('my log 2');
+    expect(tester.logs[1].elements('td')[2]).toContainText('South');
+    expect(tester.logs[1].elements('td')[3]).toContainText('My South');
+    expect(tester.logs[1].elements('td')[4]).toContainText('my log 2');
     discardPeriodicTasks();
   }));
 });

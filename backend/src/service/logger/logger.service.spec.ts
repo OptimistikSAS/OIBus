@@ -8,7 +8,25 @@ import LoggerService from './logger.service';
 import EncryptionService from '../encryption.service';
 import FileCleanupService from './file-cleanup.service';
 
-jest.mock('pino');
+jest.mock(
+  'pino',
+  jest.fn(() => jest.fn(() => ({ child: jest.fn() })))
+);
+// @ts-ignore
+pino.stdTimeFunctions = {
+  epochTime(): string {
+    return '';
+  },
+  nullTime(): string {
+    return '';
+  },
+  unixTime(): string {
+    return '';
+  },
+  isoTime(): string {
+    return '';
+  }
+};
 jest.mock('./file-cleanup.service');
 jest.mock('../encryption.service');
 
@@ -46,7 +64,7 @@ describe('Logger', () => {
         interval: 60
       }
     };
-    service = new LoggerService(encryptionService);
+    service = new LoggerService(encryptionService, 'folder');
   });
 
   it('should be properly initialized', async () => {
@@ -56,7 +74,7 @@ describe('Logger', () => {
       {
         target: 'pino-roll',
         options: {
-          file: path.resolve('logs', 'journal.log'),
+          file: path.resolve('folder', 'journal.log'),
           size: 10
         },
         level: logSettings.file.level
@@ -64,7 +82,7 @@ describe('Logger', () => {
       {
         target: path.join(__dirname, 'sqlite-transport.js'),
         options: {
-          filename: path.resolve('logs', 'journal.db'),
+          filename: path.resolve('folder', 'journal.db'),
           maxNumberOfLogs: logSettings.database.maxNumberOfLogs
         },
         level: logSettings.database.level
@@ -93,7 +111,6 @@ describe('Logger', () => {
       timestamp: pino.stdTimeFunctions.isoTime,
       transport: { targets: expectedTargets }
     });
-    expect(service.createChildLogger).toHaveBeenCalledWith('logger-service');
   });
 
   it('should be properly initialized with loki error and standard file names', async () => {
@@ -123,7 +140,7 @@ describe('Logger', () => {
       {
         target: 'pino-roll',
         options: {
-          file: path.resolve('logs', 'journal.log'),
+          file: path.resolve('folder', 'journal.log'),
           size: 10
         },
         level: logSettings.file.level
@@ -152,7 +169,6 @@ describe('Logger', () => {
       timestamp: pino.stdTimeFunctions.isoTime,
       transport: { targets: expectedTargets }
     });
-    expect(service.createChildLogger).toHaveBeenCalledWith('logger-service');
   });
 
   it('should be properly initialized without lokiLog nor sqliteLog', async () => {
@@ -166,7 +182,7 @@ describe('Logger', () => {
       {
         target: 'pino-roll',
         options: {
-          file: path.resolve('logs', 'journal.log'),
+          file: path.resolve('folder', 'journal.log'),
           size: 10
         },
         level: logSettings.file.level
@@ -182,14 +198,13 @@ describe('Logger', () => {
       timestamp: pino.stdTimeFunctions.isoTime,
       transport: { targets: expectedTargets }
     });
-    expect(service.createChildLogger).toHaveBeenCalledWith('logger-service');
   });
 
   it('should properly create child logger', async () => {
     const childFunction = jest.fn();
     service.logger = { child: childFunction } as unknown as pino.Logger;
     service.createChildLogger('myScope');
-    expect(service.logger.child).toHaveBeenCalledWith({ scope: 'myScope' });
+    expect(service.logger.child).toHaveBeenCalledWith({ scopeType: 'myScope' });
   });
 
   it('should properly stop logger', async () => {

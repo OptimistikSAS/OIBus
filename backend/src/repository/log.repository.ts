@@ -1,24 +1,20 @@
 import { Page } from '../../../shared/model/types';
-import { LogDTO, LogSearchParam } from '../../../shared/model/logs.model';
+import { LEVEL_FORMAT, LogDTO, LogSearchParam, PinoLog } from '../../../shared/model/logs.model';
 import { Database } from 'better-sqlite3';
 import { DateTime } from 'luxon';
 
-const LOG_TABLE = 'logs';
+export const LOG_TABLE = 'logs';
 const PAGE_SIZE = 50;
 
 /**
  * Repository used for logs
  */
 export default class LogRepository {
-  private readonly database: Database;
-
   /**
    * The database is initialized by the SqliteTransport Pino Logger.
    * @param database
    */
-  constructor(database: Database) {
-    this.database = database;
-  }
+  constructor(private readonly database: Database) {}
 
   /**
    * Search logs
@@ -31,9 +27,13 @@ export default class LogRepository {
       whereClause += ` AND level IN (${searchParams.levels.map(() => '?')})`;
       queryParams.push(...searchParams.levels);
     }
-    if (searchParams.scope) {
-      whereClause += ` AND scope LIKE '%' || ? || '%'`;
-      queryParams.push(searchParams.scope);
+    if (searchParams.scopeIds.length > 0) {
+      whereClause += ` AND scope_id IN (${searchParams.scopeIds.map(() => '?')})`;
+      queryParams.push(...searchParams.scopeIds);
+    }
+    if (searchParams.scopeTypes.length > 0) {
+      whereClause += ` AND scope_type IN (${searchParams.scopeTypes.map(() => '?')})`;
+      queryParams.push(...searchParams.scopeTypes);
     }
     if (searchParams.messageContent) {
       whereClause += ` AND message LIKE '%' || ? || '%'`;
@@ -41,7 +41,7 @@ export default class LogRepository {
     }
 
     const query =
-      `SELECT timestamp, level, scope, message FROM ${LOG_TABLE} ${whereClause}` +
+      `SELECT timestamp, level, scope_id AS scopeId, scope_type as scopeType, scope_name as scopeName, message FROM ${LOG_TABLE} ${whereClause}` +
       ` ORDER BY timestamp DESC LIMIT ${PAGE_SIZE}` +
       ` OFFSET ?;`;
     const results: Array<LogDTO> = this.database.prepare(query).all(...queryParams, PAGE_SIZE * searchParams.page) as Array<LogDTO>;
@@ -58,4 +58,36 @@ export default class LogRepository {
       totalPages
     };
   }
+
+  addLogs = (logsToStore: Array<PinoLog> = []): void => {
+    try {
+      // Create a single query to store many logs at once
+      let valueClause = 'VALUES ';
+      const params: Array<string | number | null> = [];
+      logsToStore.forEach(log => {
+        valueClause += ' (?,?,?,?,?,?),';
+        params.push(log.time, LEVEL_FORMAT[log.level], log.scopeType, log.scopeId, log.scopeName, log.msg);
+      });
+
+      // Remove last string char ","
+      const query = `INSERT INTO ${LOG_TABLE} (timestamp, level, scope_type, scope_id, scope_name, message) ${valueClause.slice(0, -1)};`;
+
+      this.database.prepare(query).run(...params);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  /**
+   * Count the number of logs stored in the repository
+   */
+  countLogs = (): number => {
+    const query = `SELECT COUNT(*) AS count FROM ${LOG_TABLE}`;
+    return (this.database.prepare(query).get() as { count: number }).count;
+  };
+
+  deleteLogs = (numberOfLogsToDelete: number): void => {
+    const query = `DELETE FROM ${LOG_TABLE} WHERE timestamp IN (` + `SELECT timestamp FROM ${LOG_TABLE} ORDER BY timestamp LIMIT ?);`;
+    this.database.prepare(query).run(numberOfLogsToDelete);
+  };
 }

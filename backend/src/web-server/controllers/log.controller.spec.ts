@@ -3,6 +3,7 @@ import Joi from 'joi';
 import LogController from './log.controller';
 import JoiValidator from '../../validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
+import { LogSearchParam } from '../../../../shared/model/logs.model';
 
 jest.mock('../../validators/joi.validator');
 
@@ -16,7 +17,7 @@ const logStreamValuesCommand = {
   stream: {
     level: 'info',
     oibus: 'oibus',
-    scope: 'scope'
+    scopeType: 'scopeType'
   }
 };
 const logStreamCommand = {
@@ -25,13 +26,13 @@ const logStreamCommand = {
 const formattedLog = {
   oibus: logStreamValuesCommand.stream.oibus,
   time: new Date(parseInt(logStreamValuesCommand.values[0][0]) / 1000000),
-  scope: logStreamValuesCommand.stream.scope,
+  scopeType: logStreamValuesCommand.stream.scopeType,
   msg: logStreamValuesCommand.values[0][1]
 };
 const log = {
   timestamp: formattedLog.time.toISOString(),
   level: logStreamValuesCommand.stream.level,
-  scope: formattedLog.scope,
+  scopeType: formattedLog.scopeType,
   message: formattedLog.msg
 };
 const page = {
@@ -54,14 +55,15 @@ describe('Log controller', () => {
     ctx.query.page = 1;
     ctx.query.start = '2023-03-01T00:00:00.000Z';
     ctx.query.end = '2023-03-31T00:00:00.000Z';
-    ctx.query.scope = 'scope';
+    ctx.query.scopeTypes = ['scope'];
     ctx.query.messageContent = 'message';
-    const searchParams = {
+    const searchParams: LogSearchParam = {
       page: 1,
       start: '2023-03-01T00:00:00.000Z',
       end: '2023-03-31T00:00:00.000Z',
       levels: ['info'],
-      scope: 'scope',
+      scopeTypes: ['scope'],
+      scopeIds: [],
       messageContent: 'message'
     };
     ctx.app.repositoryService.logRepository.searchLogs.mockReturnValue(page);
@@ -76,12 +78,13 @@ describe('Log controller', () => {
     ctx.query = {
       levels: 'info'
     };
-    const searchParams = {
+    const searchParams: LogSearchParam = {
       page: 0,
       start: new Date(Date.now() - 86400000).toISOString(),
       end: new Date().toISOString(),
       levels: ['info'],
-      scope: null,
+      scopeTypes: [],
+      scopeIds: [],
       messageContent: null
     };
     ctx.app.repositoryService.logRepository.searchLogs.mockReturnValue(page);

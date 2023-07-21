@@ -77,8 +77,8 @@ export default class ReloadService {
       await this.loggerService.stop();
       await this.loggerService.start(newSettings.id, newSettings.name, newSettings.logParameters);
       await this.webServerChangeLoggerCallback(this.loggerService.createChildLogger('web-server'));
-      await this.healthSignalService.setLogger(this.loggerService.createChildLogger('health'));
-      await this.oibusEngine.setLogger(this.loggerService.createChildLogger('engine'));
+      await this.healthSignalService.setLogger(this.loggerService.createChildLogger('metrics'));
+      await this.oibusEngine.setLogger(this.loggerService.createChildLogger('data-stream'));
     }
     if (!oldSettings || oldSettings.port !== newSettings.port) {
       await this.webServerChangePortCallback(newSettings.port);
