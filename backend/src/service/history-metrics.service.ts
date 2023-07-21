@@ -1,36 +1,26 @@
-import { Instant } from '../../../shared/model/types';
-import { DateTime } from 'luxon';
 import { HistoryMetrics } from '../../../shared/model/engine.model';
 import { PassThrough } from 'node:stream';
+import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
 
 export default class HistoryMetricsService {
   private _stream: PassThrough | null = null;
+  private _metrics: HistoryMetrics;
 
-  private _metrics: HistoryMetrics = {
-    north: {
-      metricsStart: DateTime.now().toUTC().toISO() as Instant,
-      numberOfValuesSent: 0,
-      numberOfFilesSent: 0,
-      lastValueSent: null,
-      lastFileSent: null,
-      lastConnection: null,
-      lastRunStart: null,
-      lastRunDuration: null
-    },
-    south: {
-      metricsStart: DateTime.now().toUTC().toISO() as Instant,
-      numberOfValuesRetrieved: 0,
-      numberOfFilesRetrieved: 0,
-      lastValueRetrieved: null,
-      lastFileRetrieved: null,
-      lastConnection: null,
-      lastRunStart: null,
-      lastRunDuration: null,
-      historyMetrics: {}
-    }
-  };
-
-  constructor(private readonly historyId: string) {}
+  constructor(
+    private readonly historyId: string,
+    private readonly southMetricsRepository: SouthConnectorMetricsRepository,
+    private readonly northMetricsRepository: NorthConnectorMetricsRepository
+  ) {
+    this.southMetricsRepository.createMetricsTable(this.historyId);
+    const southMetrics = this.southMetricsRepository.getMetrics(this.historyId)!;
+    this.northMetricsRepository.createMetricsTable(this.historyId);
+    const northMetrics = this.northMetricsRepository.getMetrics(this.historyId)!;
+    this._metrics = {
+      north: northMetrics,
+      south: southMetrics
+    };
+  }
 
   updateMetrics(newMetrics: HistoryMetrics): void {
     this._metrics = newMetrics;

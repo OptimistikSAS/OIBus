@@ -34,7 +34,11 @@ export default class HistoryQuery {
     baseFolder: string
   ) {
     this.baseFolder = baseFolder;
-    this._metricsService = new HistoryMetricsService(historyConfiguration.id);
+    this._metricsService = new HistoryMetricsService(
+      historyConfiguration.id,
+      this.historyService.repositoryService.southMetricsRepository,
+      this.historyService.repositoryService.northMetricsRepository
+    );
   }
 
   /**

@@ -1,5 +1,5 @@
 /**
- * Create a mock object for OIBus engine
+ * Create a mock object for History Query engine
  */
 export default jest.fn().mockImplementation(() => {
   return {

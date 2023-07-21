@@ -1,4 +1,3 @@
-import Database from 'better-sqlite3';
 import { Instant } from '../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
@@ -6,7 +5,6 @@ import SouthConnectorMetricsRepository from '../repository/south-connector-metri
 import { SouthConnectorMetrics } from '../../../shared/model/engine.model';
 
 export default class SouthConnectorMetricsService {
-  private readonly _metricsRepository: SouthConnectorMetricsRepository;
   private _stream: PassThrough | null = null;
 
   private _metrics: SouthConnectorMetrics = {
@@ -21,11 +19,7 @@ export default class SouthConnectorMetricsService {
     historyMetrics: {}
   };
 
-  constructor(private readonly connectorId: string, cacheDatabasePath: string) {
-    const database = Database(cacheDatabasePath);
-
-    this._metricsRepository = new SouthConnectorMetricsRepository(database);
-  }
+  constructor(private readonly connectorId: string, private readonly _metricsRepository: SouthConnectorMetricsRepository) {}
 
   get metricsRepository(): SouthConnectorMetricsRepository {
     return this._metricsRepository;

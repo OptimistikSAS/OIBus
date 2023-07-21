@@ -74,7 +74,7 @@ const LOG_DB_NAME = 'journal.db';
 
   const northService = new NorthService(encryptionService, repositoryService);
   const southService = new SouthService(encryptionService, repositoryService);
-  const historyQueryService = new HistoryQueryService(encryptionService, repositoryService);
+  const historyQueryService = new HistoryQueryService(repositoryService);
 
   const engine = new OIBusEngine(encryptionService, northService, southService, loggerService.createChildLogger('data-stream'));
   const historyQueryEngine = new HistoryQueryEngine(

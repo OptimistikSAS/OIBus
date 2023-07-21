@@ -13,7 +13,7 @@ import { createFolder } from '../service/utils';
 
 import pino from 'pino';
 import path from 'node:path';
-import HistoryServiceMock from '../tests/__mocks__/history-service.mock';
+import HistoryServiceMock from '../tests/__mocks__/history-query-service.mock';
 import HistoryQueryService from '../service/history-query.service';
 import Stream from 'node:stream';
 import { EventEmitter } from 'node:events';

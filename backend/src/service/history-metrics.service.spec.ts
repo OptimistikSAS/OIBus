@@ -1,5 +1,12 @@
 import { HistoryMetrics } from '../../../shared/model/engine.model';
 import HistoryMetricsService from './history-metrics.service';
+import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
+import SouthMetricsRepositoryMock from '../tests/__mocks__/south-metrics-repository.mock';
+import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
+import NorthMetricsRepositoryMock from '../tests/__mocks__/north-metrics-repository.mock';
+
+const southRepositoryMock: SouthConnectorMetricsRepository = new SouthMetricsRepositoryMock();
+const northRepositoryMock: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 let service: HistoryMetricsService;
@@ -9,7 +16,7 @@ describe('HistoryMetricsService', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    service = new HistoryMetricsService('connectorId');
+    service = new HistoryMetricsService('connectorId', southRepositoryMock, northRepositoryMock);
   });
 
   it('should get stream', () => {

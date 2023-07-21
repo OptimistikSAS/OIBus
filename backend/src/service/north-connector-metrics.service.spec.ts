@@ -1,25 +1,9 @@
-import db from 'better-sqlite3';
 import { NorthConnectorMetrics } from '../../../shared/model/engine.model';
 import NorthConnectorMetricsService from './north-connector-metrics.service';
+import NorthMetricsRepositoryMock, { getMetrics } from '../tests/__mocks__/north-metrics-repository.mock';
+import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
 
-const getMetrics = jest.fn();
-jest.mock(
-  '../repository/north-connector-metrics.repository',
-  () =>
-    function () {
-      return {
-        createMetricsTable: jest.fn(),
-        createCacheHistoryTable: jest.fn(),
-        createOrUpdateCacheScanMode: jest.fn(),
-        getSouthCacheScanMode: jest.fn(),
-        resetDatabase: jest.fn(),
-        getMetrics,
-        updateMetrics: jest.fn(),
-        removeMetrics: jest.fn()
-      };
-    }
-);
-jest.mock('better-sqlite3', () => jest.fn(() => 'sqlite database'));
+const northRepositoryMock: NorthConnectorMetricsRepository = new NorthMetricsRepositoryMock();
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 let service: NorthConnectorMetricsService;
@@ -34,11 +18,10 @@ describe('NorthConnectorMetricsService', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     getMetrics.mockReturnValue(metrics);
-    service = new NorthConnectorMetricsService('connectorId', 'south-cache');
+    service = new NorthConnectorMetricsService('connectorId', northRepositoryMock);
   });
 
   it('should be properly initialized', () => {
-    expect(db).toHaveBeenCalledWith('south-cache');
     expect(service.metricsRepository).toBeDefined();
   });
 

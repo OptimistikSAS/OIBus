@@ -1,19 +1,16 @@
-import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
-import EncryptionService from './encryption.service';
 import RepositoryService from './repository.service';
 import HistoryQueryService from './history-query.service';
 
 jest.mock('./encryption.service');
 
-const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryRepository: RepositoryService = new RepositoryServiceMock('', '');
 
 let service: HistoryQueryService;
 describe('history query service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new HistoryQueryService(encryptionService, repositoryRepository);
+    service = new HistoryQueryService(repositoryRepository);
   });
 
   it('should get a History query settings', () => {
