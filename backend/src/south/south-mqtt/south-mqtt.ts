@@ -45,20 +45,9 @@ export default class SouthMQTT
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
-    baseFolder: string,
-    testing = false
+    baseFolder: string
   ) {
-    super(
-      connector,
-      items,
-      engineAddValuesCallback,
-      engineAddFileCallback,
-      encryptionService,
-      repositoryService,
-      logger,
-      baseFolder,
-      testing
-    );
+    super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
   }
 
   override async connect(): Promise<void> {

@@ -50,7 +50,6 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
   protected cacheService: SouthCacheService | null = null;
   private metricsService: SouthConnectorMetricsService | null = null;
-  private isInit = false;
   historyIsRunning = false;
 
   /**
@@ -64,9 +63,12 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     protected readonly encryptionService: EncryptionService,
     private readonly repositoryService: RepositoryService,
     protected logger: pino.Logger,
-    protected readonly baseFolder: string,
-    protected readonly testing = false
+    protected readonly baseFolder: string
   ) {
+    if (this.connector.id !== 'test') {
+      this.metricsService = new SouthConnectorMetricsService(this.connector.id, this.repositoryService.southMetricsRepository);
+      this.metricsService.initMetrics();
+    }
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
         if (this.runProgress$) {
@@ -85,14 +87,11 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
   async init(): Promise<void> {
     this.cacheService = new SouthCacheService(this.connector.id, path.resolve(this.baseFolder, 'cache.db'));
-    this.metricsService = new SouthConnectorMetricsService(this.connector.id, this.repositoryService.southMetricsRepository);
-    if (!this.testing) {
-      this.metricsService.createMetricsTable();
+    if (this.connector.id !== 'test') {
       if (this.queriesHistory()) {
         this.cacheService.createSouthCacheScanModeTable();
       }
     }
-    this.isInit = true;
   }
 
   async start(): Promise<void> {
@@ -101,7 +100,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   }
 
   async connect(): Promise<void> {
-    if (this.isInit) {
+    if (this.connector.id !== 'test') {
       this.metricsService!.updateMetrics({
         ...this.metricsService!.metrics,
         lastConnection: DateTime.now().toUTC().toISO()
@@ -374,7 +373,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
    * Add new values to the South connector buffer.
    */
   async addValues(values: Array<any>): Promise<void> {
-    if (values.length > 0 && this.isInit) {
+    if (values.length > 0 && this.connector.id !== 'test') {
       this.logger.debug(`Add ${values.length} values to cache from South "${this.connector.name}"`);
       await this.engineAddValuesCallback(this.connector.id, values);
       const currentMetrics = this.metricsService!.metrics;

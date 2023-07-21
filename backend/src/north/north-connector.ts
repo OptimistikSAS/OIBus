@@ -41,7 +41,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   private archiveService: ArchiveService;
   private valueCacheService: ValueCacheService;
   private fileCacheService: FileCacheService;
-  protected metricsService: NorthConnectorMetricsService;
+  protected metricsService: NorthConnectorMetricsService | null = null;
   private subscribedTo: Array<SubscriptionDTO> = [];
   private subscribedToExternalSources: Array<ExternalSubscriptionDTO> = [];
 
@@ -65,7 +65,11 @@ export default class NorthConnector<T extends NorthSettings = any> {
     this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.connector.archive);
     this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.connector.caching);
     this.fileCacheService = new FileCacheService(this.logger, this.baseFolder, this.connector.caching);
-    this.metricsService = new NorthConnectorMetricsService(this.connector.id, this.repositoryService.northMetricsRepository);
+
+    if (this.connector.id !== 'test') {
+      this.metricsService = new NorthConnectorMetricsService(this.connector.id, this.repositoryService.northMetricsRepository);
+      this.metricsService.initMetrics();
+    }
 
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
@@ -119,13 +123,18 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * North connector implementation to allow connection to a third party application for example.
    */
   async connect(): Promise<void> {
-    this.metricsService.updateMetrics({ ...this.metricsService.metrics, lastConnection: DateTime.now().toUTC().toISO() });
+    if (this.connector.id !== 'test') {
+      this.metricsService!.updateMetrics({
+        ...this.metricsService!.metrics,
+        lastConnection: DateTime.now().toUTC().toISO()
+      });
 
-    const scanMode = this.repositoryService.scanModeRepository.getScanMode(this.connector.caching.scanModeId);
-    if (scanMode) {
-      this.createCronJob(scanMode);
-    } else {
-      this.logger.error(`Scan mode ${this.connector.caching.scanModeId} not found`);
+      const scanMode = this.repositoryService.scanModeRepository.getScanMode(this.connector.caching.scanModeId);
+      if (scanMode) {
+        this.createCronJob(scanMode);
+      } else {
+        this.logger.error(`Scan mode ${this.connector.caching.scanModeId} not found`);
+      }
     }
 
     this.logger.info(`North connector "${this.connector.name}" of type ${this.connector.type} started`);
@@ -172,7 +181,9 @@ export default class NorthConnector<T extends NorthSettings = any> {
     this.logger.trace(`North run triggered with flag ${flag}`);
 
     const runStart = DateTime.now();
-    this.metricsService.updateMetrics({ ...this.metricsService.metrics, lastRunStart: runStart.toUTC().toISO() });
+    if (this.connector.id !== 'test') {
+      this.metricsService!.updateMetrics({ ...this.metricsService!.metrics, lastRunStart: runStart.toUTC().toISO() });
+    }
 
     if (this.handlesValues() && (flag === 'scan' || flag === 'value-trigger')) {
       await this.handleValuesWrapper();
@@ -182,11 +193,13 @@ export default class NorthConnector<T extends NorthSettings = any> {
       await this.handleFilesWrapper();
     }
 
-    // TODO: update cache size here
-    this.metricsService.updateMetrics({
-      ...this.metricsService.metrics,
-      lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
-    });
+    if (this.connector.id !== 'test') {
+      // TODO: update cache size here
+      this.metricsService!.updateMetrics({
+        ...this.metricsService!.metrics,
+        lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
+      });
+    }
 
     this.runProgress$.resolve();
     this.runProgress$ = null;
@@ -212,8 +225,8 @@ export default class NorthConnector<T extends NorthSettings = any> {
         // @ts-ignore
         await this.handleValues(arrayValues);
         await this.valueCacheService.removeSentValues(this.valuesBeingSent);
-        const currentMetrics = this.metricsService.metrics;
-        this.metricsService.updateMetrics({
+        const currentMetrics = this.metricsService!.metrics;
+        this.metricsService!.updateMetrics({
           ...currentMetrics,
           numberOfValuesSent: currentMetrics.numberOfValuesSent + arrayValues.length,
           lastValueSent: arrayValues[arrayValues.length - 1]
@@ -246,8 +259,8 @@ export default class NorthConnector<T extends NorthSettings = any> {
         await this.handleFile(this.fileBeingSent);
         this.fileCacheService.removeFileFromQueue();
         await this.archiveService.archiveOrRemoveFile(this.fileBeingSent);
-        const currentMetrics = this.metricsService.metrics;
-        this.metricsService.updateMetrics({
+        const currentMetrics = this.metricsService!.metrics;
+        this.metricsService!.updateMetrics({
           ...currentMetrics,
           numberOfFilesSent: currentMetrics.numberOfFilesSent + 1,
           lastFileSent: this.fileBeingSent
@@ -267,7 +280,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
 
   /**
    * Create a OIBusError from an unknown error thrown by the handleFile or handleValues connector method
-   * The error thrown can be overriden with an OIBusError to force a retry on specific cases
+   * The error thrown can be overridden with an OIBusError to force a retry on specific cases
    */
   createOIBusError(error: unknown): OIBusError {
     // The error is unknown by default, but it can be overridden with an OIBusError. In this case, we can retrieve the message
@@ -416,11 +429,11 @@ export default class NorthConnector<T extends NorthSettings = any> {
   }
 
   getMetricsDataStream(): PassThrough {
-    return this.metricsService.stream;
+    return this.metricsService!.stream;
   }
 
   resetMetrics(): void {
-    this.metricsService.resetMetrics();
+    this.metricsService!.resetMetrics();
   }
 
   handlesFile(): this is HandlesFile {

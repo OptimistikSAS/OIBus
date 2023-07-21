@@ -5,7 +5,7 @@ export const getMetrics = jest.fn();
  */
 export default jest.fn().mockImplementation(() => {
   return {
-    createMetricsTable: jest.fn(),
+    initMetrics: jest.fn(),
     createCacheHistoryTable: jest.fn(),
     createOrUpdateCacheScanMode: jest.fn(),
     getSouthCacheScanMode: jest.fn(),

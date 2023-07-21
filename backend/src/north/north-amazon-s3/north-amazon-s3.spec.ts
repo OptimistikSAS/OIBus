@@ -40,6 +40,7 @@ jest.mock(
   () =>
     function () {
       return {
+        initMetrics: jest.fn(),
         updateMetrics: jest.fn(),
         get stream() {
           return { stream: 'myStream' };

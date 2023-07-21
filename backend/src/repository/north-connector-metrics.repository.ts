@@ -14,7 +14,7 @@ export default class NorthConnectorMetricsRepository {
     return this._database;
   }
 
-  createMetricsTable(connectorId: string) {
+  initMetrics(connectorId: string) {
     const foundMetrics = this.getMetrics(connectorId);
     if (!foundMetrics) {
       const insertQuery =

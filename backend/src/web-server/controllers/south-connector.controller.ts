@@ -112,7 +112,7 @@ export default class SouthConnectorController {
       }
       await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
 
-      const command: SouthConnectorDTO = { id: 'test', ...ctx.request.body! };
+      const command: SouthConnectorDTO = { id: southConnector?.id || 'test', ...ctx.request.body! };
       command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
         command.settings,
         southConnector?.settings || null,
@@ -125,8 +125,7 @@ export default class SouthConnectorController {
         async (_southId: string, _values: Array<any>): Promise<void> => {},
         async (_southId: string, _filename: string): Promise<void> => {},
         'baseFolder',
-        ctx.app.logger,
-        true
+        ctx.app.logger
       );
       await southToTest.testConnection();
 
