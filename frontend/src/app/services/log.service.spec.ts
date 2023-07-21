@@ -27,13 +27,13 @@ describe('LogService', () => {
       {
         timestamp: '2023-01-01T00:00:00.000Z',
         level: 'error',
-        scope: 'engine',
+        scopeType: 'engine',
         message: 'my log 1'
       },
       {
         timestamp: '2023-01-02T00:00:00.000Z',
         level: 'error',
-        scope: 'engine',
+        scopeType: 'engine',
         message: 'my log 2'
       }
     ]);
@@ -42,7 +42,8 @@ describe('LogService', () => {
       .searchLogs({
         page: 0,
         messageContent: 'messageContent',
-        scope: 'myScope',
+        scopeTypes: ['myScopeType1', 'myScopeType2'],
+        scopeIds: ['id1', 'id2'],
         start: '2023-01-01T00:00:00.000Z',
         end: '2023-01-02T00:00:00.000Z',
         levels: ['info', 'debug']
@@ -51,7 +52,7 @@ describe('LogService', () => {
 
     http
       .expectOne({
-        url: '/api/logs?page=0&messageContent=messageContent&start=2023-01-01T00:00:00.000Z&end=2023-01-02T00:00:00.000Z&scope=myScope&levels=info&levels=debug',
+        url: '/api/logs?page=0&messageContent=messageContent&start=2023-01-01T00:00:00.000Z&end=2023-01-02T00:00:00.000Z&scopeTypes=myScopeType1&scopeTypes=myScopeType2&scopeIds=id1&scopeIds=id2&levels=info&levels=debug',
         method: 'GET'
       })
       .flush(logs);

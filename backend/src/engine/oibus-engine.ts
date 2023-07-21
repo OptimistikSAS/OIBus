@@ -126,7 +126,7 @@ export default class OIBusEngine extends BaseEngine {
       this.addValues.bind(this),
       this.addFile.bind(this),
       baseFolder,
-      this.logger.child({ scope: `south:${settings.name}` })
+      this.logger.child({ scopeType: 'south', scopeId: settings.id, scopeName: settings.name })
     );
     await south.init();
     if (south.isEnabled()) {
@@ -148,7 +148,11 @@ export default class OIBusEngine extends BaseEngine {
     const baseFolder = path.resolve(this.cacheFolder, `north-${settings.id}`);
     await createFolder(baseFolder);
 
-    const north = this.northService.createNorth(settings, baseFolder, this.logger.child({ scope: `north:${settings.name}` }));
+    const north = this.northService.createNorth(
+      settings,
+      baseFolder,
+      this.logger.child({ scopeType: 'north', scopeId: settings.id, scopeName: settings.name })
+    );
     if (north.isEnabled()) {
       // Do not await here, so it can start all connectors without blocking the thread
       north.start().catch(error => {
@@ -192,14 +196,14 @@ export default class OIBusEngine extends BaseEngine {
     for (const [id, south] of this.southConnectors.entries()) {
       const southSettings = this.southService.getSouth(id);
       if (southSettings) {
-        south.setLogger(this.logger.child({ scope: `south:${southSettings.name}` }));
+        south.setLogger(this.logger.child({ scopeType: 'south', scopeId: southSettings.id, scopeName: southSettings.name }));
       }
     }
 
     for (const [id, north] of this.northConnectors.entries()) {
       const northSettings = this.northService.getNorth(id);
       if (northSettings) {
-        north.setLogger(this.logger.child({ scope: `north:${northSettings.name}` }));
+        north.setLogger(this.logger.child({ scopeType: 'north', scopeId: northSettings.id, scopeName: northSettings.name }));
       }
     }
   }

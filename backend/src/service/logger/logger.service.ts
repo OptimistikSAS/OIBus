@@ -2,15 +2,13 @@ import path from 'node:path';
 
 import pino from 'pino';
 
-import { LogSettings } from '../../../../shared/model/engine.model';
+import { LogSettings, ScopeType } from '../../../../shared/model/engine.model';
 
 import FileCleanupService from './file-cleanup.service';
-import { createFolder } from '../utils';
 import EncryptionService from '../encryption.service';
 
-const LOG_FOLDER_NAME = 'logs';
-const LOG_FILE_NAME = 'journal.log';
 const LOG_DB_NAME = 'journal.db';
+const LOG_FILE_NAME = 'journal.log';
 
 /**
  * Manage pino loggers
@@ -25,35 +23,29 @@ class LoggerService {
   logger: pino.Logger | null = null;
   fileCleanUpService: FileCleanupService | null = null;
 
-  constructor(private readonly encryptionService: EncryptionService) {}
+  constructor(private readonly encryptionService: EncryptionService, private readonly folder: string) {}
 
   /**
    * Run the appropriate pino log transports according to the configuration
    */
   async start(oibusId: string, oibusName: string, logParameters: LogSettings): Promise<void> {
-    await createFolder(LOG_FOLDER_NAME);
-
     const targets = [];
     targets.push({ target: 'pino-pretty', options: { colorize: true, singleLine: true }, level: logParameters.console.level });
-
-    const filePath = path.resolve(LOG_FOLDER_NAME, LOG_FILE_NAME);
 
     targets.push({
       target: 'pino-roll',
       options: {
-        file: filePath,
+        file: path.resolve(this.folder, LOG_FILE_NAME),
         size: logParameters.file.maxFileSize
       },
       level: logParameters.file.level
     });
 
     if (logParameters.database.maxNumberOfLogs > 0) {
-      const sqlDatabaseName = path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME);
-
       targets.push({
         target: path.join(__dirname, 'sqlite-transport.js'),
         options: {
-          filename: sqlDatabaseName,
+          filename: path.resolve(this.folder, LOG_DB_NAME),
           maxNumberOfLogs: logParameters.database.maxNumberOfLogs
         },
         level: logParameters.database.level
@@ -87,22 +79,17 @@ class LoggerService {
       level: 'trace', // default to trace since each transport has its defined level
       timestamp: pino.stdTimeFunctions.isoTime,
       transport: { targets }
-    });
+    }).child({ scopeType: 'logger-service' });
 
-    this.fileCleanUpService = new FileCleanupService(
-      path.parse(filePath).dir,
-      this.createChildLogger('logger-service'),
-      path.parse(filePath).base,
-      logParameters.file.numberOfFiles
-    );
+    this.fileCleanUpService = new FileCleanupService(this.folder, this.logger, LOG_FILE_NAME, logParameters.file.numberOfFiles);
     await this.fileCleanUpService.start();
   }
 
   /**
    * Create a child logger from the main logger already set up, with the appropriate scope (South, North, Engine...)
    */
-  createChildLogger(scope: string): pino.Logger {
-    return this.logger!.child({ scope });
+  createChildLogger(scopeType: ScopeType, scopeId?: string, scopeName?: string): pino.Logger {
+    return this.logger!.child({ scopeType, scopeId, scopeName });
   }
 
   /**

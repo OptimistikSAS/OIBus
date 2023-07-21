@@ -2,7 +2,7 @@ import { LogLevelsEnumPipe } from './log-levels-enum.pipe';
 import { testEnumPipe } from './base-enum-pipe.spec';
 
 describe('LogLevelsEnumPipe', () => {
-  it('should translate file upload status', () => {
+  it('should translate log levels', () => {
     testEnumPipe(ts => new LogLevelsEnumPipe(ts), {
       silent: 'Silent',
       error: 'Error',

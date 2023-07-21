@@ -35,7 +35,7 @@ const repositoryService: RepositoryService = new RepositoryServiceMock('', '');
 const healthSignalService: HealthSignalService = new HealthSignalServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const southService: SouthService = new SouthServiceMock();
-const loggerService: LoggerService = new LoggerService(encryptionService);
+const loggerService: LoggerService = new LoggerService(encryptionService, 'folder');
 
 let service: ReloadService;
 describe('reload service', () => {

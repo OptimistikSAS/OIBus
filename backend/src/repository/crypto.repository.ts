@@ -2,18 +2,13 @@ import crypto from 'node:crypto';
 import { Database } from 'better-sqlite3';
 import { CryptoSettings } from '../../../shared/model/engine.model';
 
-const CRYPTO_TABLE = 'crypto';
+export const CRYPTO_TABLE = 'crypto';
 
 /**
  * Repository used for engine settings
  */
 export default class CryptoRepository {
-  private readonly database: Database;
-  constructor(database: Database) {
-    this.database = database;
-    const query = `CREATE TABLE IF NOT EXISTS ${CRYPTO_TABLE} (id TEXT PRIMARY KEY NOT NULL, algorithm TEXT, init_vector TEXT, security_key TEXT);`;
-    this.database.prepare(query).run();
-  }
+  constructor(private readonly database: Database) {}
 
   getCryptoSettings(oibusId: string): CryptoSettings | undefined {
     const query = `SELECT algorithm, init_vector AS initVector, security_key AS securityKey FROM ${CRYPTO_TABLE} WHERE id = ?;`;

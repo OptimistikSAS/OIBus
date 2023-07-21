@@ -26,13 +26,13 @@ describe('Log repository', () => {
         {
           timestamp: '2023-01-01T00:00:00.000Z',
           level: 'error',
-          scope: 'engine',
+          scopeType: 'data-stream',
           message: 'my log 1'
         },
         {
           timestamp: '2023-01-02T00:00:00.000Z',
           level: 'error',
-          scope: 'engine',
+          scopeType: 'data-stream',
           message: 'my log 2'
         }
       ],
@@ -45,13 +45,13 @@ describe('Log repository', () => {
       {
         timestamp: '2023-01-01T00:00:00.000Z',
         level: 'error',
-        scope: 'engine',
+        scopeType: 'data-stream',
         message: 'my log 1'
       },
       {
         timestamp: '2023-01-02T00:00:00.000Z',
         level: 'error',
-        scope: 'engine',
+        scopeType: 'data-stream',
         message: 'my log 2'
       }
     ]);
@@ -59,19 +59,20 @@ describe('Log repository', () => {
     const logs = repository.searchLogs({
       page: 0,
       messageContent: 'messageContent',
-      scope: 'myScope',
+      scopeTypes: ['myScopeType1', 'myScopeType2'],
+      scopeIds: ['myScopeId1', 'myScopeId2'],
       start: '2023-01-01T00:00:00.000Z',
       end: '2023-01-02T00:00:00.000Z',
       levels: ['info', 'debug']
     });
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT timestamp, level, scope, message FROM logs WHERE timestamp BETWEEN ? AND ? AND level IN (?,?) ' +
-        "AND scope LIKE '%' || ? || '%' AND message LIKE '%' || ? || '%' ORDER BY timestamp DESC LIMIT 50 OFFSET ?;"
+      'SELECT timestamp, level, scope_id AS scopeId, scope_type as scopeType, scope_name as scopeName, message FROM logs WHERE timestamp BETWEEN ? AND ? AND level IN (?,?) ' +
+        "AND scope_id IN (?,?) AND scope_type IN (?,?) AND message LIKE '%' || ? || '%' ORDER BY timestamp DESC LIMIT 50 OFFSET ?;"
     );
     expect(logs).toEqual(expectedValue);
 
     expect(database.prepare).toHaveBeenCalledWith(
-      "SELECT COUNT(*) as count FROM logs WHERE timestamp BETWEEN ? AND ? AND level IN (?,?) AND scope LIKE '%' || ? || '%' AND message LIKE '%' || ? || '%'"
+      "SELECT COUNT(*) as count FROM logs WHERE timestamp BETWEEN ? AND ? AND level IN (?,?) AND scope_id IN (?,?) AND scope_type IN (?,?) AND message LIKE '%' || ? || '%'"
     );
   });
 });

@@ -1,5 +1,8 @@
 import { BaseEntity, Instant } from './types';
 
+export const SCOPE_TYPES = ['south', 'north', 'data-stream', 'history-engine', 'history-query', 'web-server', 'logger-service'];
+export type ScopeType = typeof SCOPE_TYPES[number];
+
 export const LOG_LEVELS = ['silent', 'error', 'warn', 'info', 'debug', 'trace'];
 export type LogLevel = typeof LOG_LEVELS[number];
 

@@ -19,7 +19,7 @@
             <val-errors [control]="searchForm"></val-errors>
           </div>
           <label for="levels" class="col-auto col-form-label" translate="logs.search.levels"></label>
-          <div class="col-2">
+          <div class="col-1">
             <oib-multi-select formControlName="levels" id="levels">
               <oib-multi-select-option
                 *ngFor="let level of levels"
@@ -28,9 +28,16 @@
               ></oib-multi-select-option>
             </oib-multi-select>
           </div>
-          <label for="scope" class="col-auto col-form-label" translate="logs.search.scope"></label>
+
+          <label for="scope-types" class="col-auto col-form-label" translate="logs.search.scope-type"></label>
           <div class="col-2">
-            <input type="text" class="form-control" id="scope" formControlName="scope" />
+            <oib-multi-select formControlName="scopeTypes" id="scope-types">
+              <oib-multi-select-option
+                *ngFor="let scopeType of scopeTypes"
+                [value]="scopeType"
+                [label]="scopeType | scopeTypesEnum"
+              ></oib-multi-select-option>
+            </oib-multi-select>
           </div>
         </div>
         <div class="row gx-2 py-3">
@@ -58,6 +65,7 @@
             <tr>
               <th translate="logs.date"></th>
               <th translate="logs.level"></th>
+              <th translate="logs.scope-type"></th>
               <th translate="logs.scope"></th>
               <th translate="logs.message"></th>
             </tr>
@@ -68,7 +76,8 @@
               <td>
                 <span [class]="'level-badge ' + log.level.toLowerCase()">{{ log.level | logLevelsEnum }}</span>
               </td>
-              <td>{{ log.scope }}</td>
+              <td>{{ log.scopeType | scopeTypesEnum }}</td>
+              <td>{{ log.scopeName }}</td>
               <td class="text-break">{{ log.message }}</td>
             </tr>
           </tbody>

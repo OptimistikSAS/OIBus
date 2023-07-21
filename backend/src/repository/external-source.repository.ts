@@ -1,7 +1,6 @@
 import { generateRandomId } from '../service/utils';
 import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../../shared/model/external-sources.model';
 import { Database } from 'better-sqlite3';
-import { DateTime } from 'luxon';
 
 export const EXTERNAL_SOURCES_TABLE = 'external_sources';
 

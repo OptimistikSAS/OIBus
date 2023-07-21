@@ -325,10 +325,26 @@ describe('OIBusEngine', () => {
     engine.setLogger(anotherLogger);
     expect(createdNorth.setLogger).toHaveBeenCalledTimes(2);
     expect(createdSouth.setLogger).toHaveBeenCalledTimes(2);
-    expect(anotherLogger.child).toHaveBeenCalledWith({ scope: `south:${southConnectors[0].name}` });
-    expect(anotherLogger.child).toHaveBeenCalledWith({ scope: `south:${southConnectors[1].name}` });
-    expect(anotherLogger.child).toHaveBeenCalledWith({ scope: `north:${northConnectors[0].name}` });
-    expect(anotherLogger.child).toHaveBeenCalledWith({ scope: `north:${northConnectors[1].name}` });
+    expect(anotherLogger.child).toHaveBeenCalledWith({
+      scopeType: 'south',
+      scopeId: southConnectors[0].id,
+      scopeName: southConnectors[0].name
+    });
+    expect(anotherLogger.child).toHaveBeenCalledWith({
+      scopeType: 'south',
+      scopeId: southConnectors[1].id,
+      scopeName: southConnectors[1].name
+    });
+    expect(anotherLogger.child).toHaveBeenCalledWith({
+      scopeType: 'north',
+      scopeId: northConnectors[0].id,
+      scopeName: northConnectors[0].name
+    });
+    expect(anotherLogger.child).toHaveBeenCalledWith({
+      scopeType: 'north',
+      scopeId: northConnectors[1].id,
+      scopeName: northConnectors[1].name
+    });
 
     await engine.stopSouth('southId');
     expect(createdSouth.stop).not.toHaveBeenCalled();

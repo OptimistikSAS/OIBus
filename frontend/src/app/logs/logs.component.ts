@@ -7,7 +7,7 @@ import { LogDTO, LogSearchParam } from '../../../../shared/model/logs.model';
 import { DateTime } from 'luxon';
 import { Instant, Page } from '../../../../shared/model/types';
 import { ascendingDates } from '../shared/validators';
-import { LOG_LEVELS, LogLevel } from '../../../../shared/model/engine.model';
+import { LOG_LEVELS, LogLevel, SCOPE_TYPES, ScopeType } from '../../../../shared/model/engine.model';
 import { catchError, EMPTY, exhaustMap, map, Subscription, switchMap, timer } from 'rxjs';
 import { emptyPage } from '../shared/test-utils';
 import { LogService } from '../services/log.service';
@@ -19,6 +19,7 @@ import { MultiSelectOptionDirective } from '../shared/multi-select/multi-select-
 import { LogLevelsEnumPipe } from '../shared/log-levels-enum.pipe';
 import { DatetimepickerComponent } from '../shared/datetimepicker/datetimepicker.component';
 import { DatetimePipe } from '../shared/datetime.pipe';
+import { ScopeTypesEnumPipe } from '../shared/scope-types-enum.pipe';
 
 @Component({
   selector: 'oib-logs',
@@ -33,7 +34,8 @@ import { DatetimePipe } from '../shared/datetime.pipe';
     MultiSelectOptionDirective,
     LogLevelsEnumPipe,
     DatetimepickerComponent,
-    DatetimePipe
+    DatetimePipe,
+    ScopeTypesEnumPipe
   ],
   templateUrl: './logs.component.html',
   styleUrls: ['./logs.component.scss'],
@@ -45,7 +47,8 @@ export class LogsComponent implements OnInit, OnDestroy {
       messageContent: null as string | null,
       start: null as Instant | null,
       end: null as Instant | null,
-      scope: null as string | null,
+      scopeTypes: [[] as Array<ScopeType>],
+      scopeIds: [[] as Array<string>],
       levels: [[] as Array<LogLevel>],
       page: null as number | null
     },
@@ -53,6 +56,8 @@ export class LogsComponent implements OnInit, OnDestroy {
   );
   searchParams: LogSearchParam | null = null;
   readonly levels = LOG_LEVELS.filter(level => level !== 'silent');
+  readonly scopeTypes = SCOPE_TYPES;
+  readonly scopeIds = SCOPE_TYPES;
   loading = false;
   // subscription to reload the page periodically
   subscription = new Subscription();
@@ -70,7 +75,8 @@ export class LogsComponent implements OnInit, OnDestroy {
       messageContent: this.searchParams.messageContent,
       start: this.searchParams.start,
       end: this.searchParams.end,
-      scope: this.searchParams.scope,
+      scopeTypes: this.searchParams.scopeTypes,
+      scopeIds: this.searchParams.scopeIds,
       levels: this.searchParams.levels,
       page: this.searchParams.page
     });
@@ -99,12 +105,13 @@ export class LogsComponent implements OnInit, OnDestroy {
     const now = DateTime.now().endOf('minute');
     const queryParamMap = route.snapshot.queryParamMap;
     const messageContent = queryParamMap.get('messageContent');
-    const scope = queryParamMap.get('scope');
+    const scopeTypes = queryParamMap.getAll('scopeTypes');
+    const scopeIds = queryParamMap.getAll('scopeIds');
     const start = queryParamMap.get('start') ?? now.minus({ days: 1 }).toISO();
     const end = queryParamMap.get('end');
     const levels = queryParamMap.getAll('levels');
     const page = queryParamMap.get('page') ? parseInt(queryParamMap.get('page')!, 10) : 0;
-    return { messageContent, scope, start, end, levels, page };
+    return { messageContent, scopeTypes, scopeIds, start, end, levels, page };
   }
 
   triggerSearch() {
@@ -117,7 +124,8 @@ export class LogsComponent implements OnInit, OnDestroy {
       end: formValue.end!,
       messageContent: formValue.messageContent!,
       levels: formValue.levels!,
-      scope: formValue.scope!,
+      scopeTypes: formValue.scopeTypes!,
+      scopeIds: formValue.scopeIds!,
       page: 0
     };
     this.router.navigate(['.'], { queryParams: criteria, relativeTo: this.route });
