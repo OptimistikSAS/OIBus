@@ -7,11 +7,11 @@
       <div class="col-lg-12 col-md-12">
         <h1 class="mt-2">{{ 'enums.categories.' + group.category | translate }}</h1>
       </div>
-      <div class="col-lg-4 col-md-4 modal-container-list" *ngFor="let northType of group.types">
-        <button class="btn d-flex align-items-center category-button modal-content-list" (click)="selectType(northType.id)">
-          <div class="image-block col-2">
+      <div class="col-lg-4 col-md-4 oib-modal-container-list" *ngFor="let northType of group.types">
+        <button class="btn d-flex align-items-center category-button oib-modal-content-list" (click)="selectType(northType.id)">
+          <div class="oib-modal-image-block col-2">
             <img
-              class="category-image"
+              class="oib-modal-category-image"
               [src]="'/assets/' + northType.category + '.svg'"
               [alt]="'enums.categories.' + northType.category | translate"
             />
