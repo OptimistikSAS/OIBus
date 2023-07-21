@@ -4,12 +4,15 @@ import NorthConnectorMetricsRepository from './north-connector-metrics.repositor
 import { NorthConnectorMetrics } from '../../../shared/model/engine.model';
 
 jest.mock('../tests/__mocks__/database.mock');
+const nowDateString = '2020-02-02T02:02:02.222Z';
 
 let database: Database;
 let repository: NorthConnectorMetricsRepository;
 describe('NorthConnectorMetricsRepository', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
     database = new SqliteDatabaseMock();
     database.prepare = jest.fn().mockReturnValue({
       run,
@@ -23,17 +26,13 @@ describe('NorthConnectorMetricsRepository', () => {
     repository.getMetrics = jest.fn();
 
     repository.createMetricsTable('id1');
-    expect(repository.database.prepare).toHaveBeenCalledWith(
-      `CREATE TABLE IF NOT EXISTS north_metrics(connector_id TEXT PRIMARY KEY, metrics_start TEXT, nb_values INTEGER, ` +
-        `nb_files INTEGER, last_value TEXT, last_file TEXT, last_connection TEXT, last_run_start TEXT, last_run_duration INTEGER);`
-    );
     expect(repository.getMetrics).toHaveBeenCalledWith('id1');
     expect(repository.database.prepare).toHaveBeenCalledWith(
-      `INSERT INTO north_metrics (connector_id, metrics_start, nb_values, nb_files, ` +
+      `INSERT INTO north_metrics (north_id, metrics_start, nb_values, nb_files, ` +
         `last_value, last_file, last_connection, last_run_start, last_run_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`
     );
-    expect(run).toHaveBeenCalledWith();
-    expect(run).toHaveBeenCalledTimes(2);
+    expect(run).toHaveBeenCalledWith('id1', nowDateString, 0, 0, null, null, null, null, null);
+    expect(run).toHaveBeenCalledTimes(1);
   });
 
   it('should get metrics', () => {
@@ -41,7 +40,7 @@ describe('NorthConnectorMetricsRepository', () => {
     expect(repository.database.prepare).toHaveBeenCalledWith(
       `SELECT metrics_start AS metricsStart, nb_values AS numberOfValuesSent, nb_files AS numberOfFilesSent, ` +
         `last_value AS lastValueSent, last_file AS lastFileSent, last_connection AS lastConnection, last_run_start AS lastRunStart, ` +
-        `last_run_duration AS lastRunDuration FROM north_metrics WHERE connector_id = ?;`
+        `last_run_duration AS lastRunDuration FROM north_metrics WHERE north_id = ?;`
     );
     expect(nullMetrics).toBeNull();
 
@@ -145,7 +144,7 @@ describe('NorthConnectorMetricsRepository', () => {
 
   it('should delete a south metrics', () => {
     repository.removeMetrics('id1');
-    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM north_metrics WHERE connector_id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM north_metrics WHERE north_id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
 });

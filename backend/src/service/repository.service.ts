@@ -13,6 +13,8 @@ import UserRepository from '../repository/user.repository';
 import HistoryQueryItemRepository from '../repository/history-query-item.repository';
 import SubscriptionRepository from '../repository/subscription.repository';
 import CryptoRepository from '../repository/crypto.repository';
+import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
+import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -24,6 +26,8 @@ export default class RepositoryService {
   private readonly _southConnectorRepository: SouthConnectorRepository;
   private readonly _southItemRepository: SouthItemRepository;
   private readonly _logRepository: LogRepository;
+  private readonly _southMetricsRepository: SouthConnectorMetricsRepository;
+  private readonly _northMetricsRepository: NorthConnectorMetricsRepository;
   private readonly _historyQueryRepository: HistoryQueryRepository;
   private readonly _historyQueryItemRepository: HistoryQueryItemRepository;
   private readonly _userRepository: UserRepository;
@@ -46,6 +50,9 @@ export default class RepositoryService {
     this._historyQueryItemRepository = new HistoryQueryItemRepository(oibusDatabase);
     this._userRepository = new UserRepository(oibusDatabase);
     this._logRepository = new LogRepository(logsDatabase);
+    this._southMetricsRepository = new SouthConnectorMetricsRepository(logsDatabase);
+    this._northMetricsRepository = new NorthConnectorMetricsRepository(logsDatabase);
+    this._logRepository = new LogRepository(logsDatabase);
     this._subscriptionRepository = new SubscriptionRepository(oibusDatabase);
   }
 
@@ -59,6 +66,14 @@ export default class RepositoryService {
 
   get logRepository(): LogRepository {
     return this._logRepository;
+  }
+
+  get southMetricsRepository(): SouthConnectorMetricsRepository {
+    return this._southMetricsRepository;
+  }
+
+  get northMetricsRepository(): NorthConnectorMetricsRepository {
+    return this._northMetricsRepository;
   }
 
   get engineRepository(): EngineRepository {

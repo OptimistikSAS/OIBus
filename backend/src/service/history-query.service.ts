@@ -1,4 +1,3 @@
-import EncryptionService from './encryption.service';
 import RepositoryService from './repository.service';
 
 import { SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
@@ -6,7 +5,7 @@ import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import { SouthItemSettings } from '../../../shared/model/south-settings.model';
 
 export default class HistoryQueryService {
-  constructor(private readonly encryptionService: EncryptionService, private readonly repositoryService: RepositoryService) {}
+  constructor(readonly repositoryService: RepositoryService) {}
 
   getHistoryQuery(historyQueryId: string): HistoryQueryDTO | null {
     return this.repositoryService.historyQueryRepository.getHistoryQuery(historyQueryId);

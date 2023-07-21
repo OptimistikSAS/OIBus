@@ -3,7 +3,7 @@ import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
 import { delay, generateIntervals } from '../service/utils';
 
-import { SouthConnectorItemDTO, SouthCache, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
+import { SouthCache, SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { Instant, Interval } from '../../../shared/model/types';
 import pino from 'pino';
@@ -85,7 +85,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
   async init(): Promise<void> {
     this.cacheService = new SouthCacheService(this.connector.id, path.resolve(this.baseFolder, 'cache.db'));
-    this.metricsService = new SouthConnectorMetricsService(this.connector.id, path.resolve(this.baseFolder, 'cache.db'));
+    this.metricsService = new SouthConnectorMetricsService(this.connector.id, this.repositoryService.southMetricsRepository);
     if (!this.testing) {
       this.metricsService.createMetricsTable();
       if (this.queriesHistory()) {

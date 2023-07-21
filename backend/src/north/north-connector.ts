@@ -12,7 +12,6 @@ import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import DeferredPromise from '../service/deferred-promise';
 import { OIBusError } from '../../../shared/model/engine.model';
 import { ExternalSubscriptionDTO, SubscriptionDTO } from '../../../shared/model/subscription.model';
-import path from 'node:path';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
 import { HandlesFile, HandlesValues } from './north-interface';
@@ -66,7 +65,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
     this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.connector.archive);
     this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.connector.caching);
     this.fileCacheService = new FileCacheService(this.logger, this.baseFolder, this.connector.caching);
-    this.metricsService = new NorthConnectorMetricsService(this.connector.id, path.resolve(this.baseFolder, 'cache.db'));
+    this.metricsService = new NorthConnectorMetricsService(this.connector.id, this.repositoryService.northMetricsRepository);
 
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
