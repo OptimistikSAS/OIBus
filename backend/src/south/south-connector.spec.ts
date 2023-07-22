@@ -357,17 +357,17 @@ describe('SouthConnector enabled', () => {
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2021-02-02T02:02:02.222Z',
-      intervalIndex: 0
+      southId: configuration.id
     });
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2022-02-02T02:02:02.222Z',
-      intervalIndex: 1
+      southId: configuration.id
     });
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2023-02-02T02:02:02.222Z',
-      intervalIndex: 0
+      southId: configuration.id
     });
   });
 
@@ -396,12 +396,12 @@ describe('SouthConnector enabled', () => {
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2021-02-02T02:02:02.222Z',
-      intervalIndex: 0
+      southId: configuration.id
     });
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2023-02-02T02:02:02.222Z',
-      intervalIndex: 0
+      southId: configuration.id
     });
   });
 
@@ -423,7 +423,7 @@ describe('SouthConnector enabled', () => {
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2023-02-02T02:02:02.222Z',
-      intervalIndex: 0
+      southId: configuration.id
     });
   });
 
@@ -683,7 +683,7 @@ describe('SouthConnector with max instant per item', () => {
     getSouthCacheMock.mockReturnValue({
       scanModeId: 'id1',
       maxInstant: nowDateString,
-      intervalIndex: 0
+      southId: configuration.id
     });
 
     configuration = {
@@ -730,17 +730,17 @@ describe('SouthConnector with max instant per item', () => {
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2021-02-02T02:02:02.222Z',
-      intervalIndex: 0
+      southId: configuration.id
     });
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2022-02-02T02:02:02.222Z',
-      intervalIndex: 1
+      southId: configuration.id
     });
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2023-02-02T02:02:02.222Z',
-      intervalIndex: 0
+      southId: configuration.id
     });
   });
 
@@ -770,12 +770,12 @@ describe('SouthConnector with max instant per item', () => {
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2021-02-02T02:02:02.222Z',
-      intervalIndex: 0
+      southId: configuration.id
     });
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2023-02-02T02:02:02.222Z',
-      intervalIndex: 0
+      southId: configuration.id
     });
   });
 
@@ -797,7 +797,7 @@ describe('SouthConnector with max instant per item', () => {
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2023-02-02T02:02:02.222Z',
-      intervalIndex: 0
+      southId: configuration.id
     });
   });
 
@@ -819,7 +819,7 @@ describe('SouthConnector with max instant per item', () => {
     expect(createOrUpdateCacheScanModeMock).toHaveBeenCalledWith({
       scanModeId: 'id1',
       maxInstant: '2023-02-02T02:02:02.222Z',
-      intervalIndex: 0
+      southId: configuration.id
     });
   });
 

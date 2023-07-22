@@ -1,4 +1,3 @@
-import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { CronJob } from 'cron';
 import { delay, generateIntervals } from '../service/utils';
@@ -68,6 +67,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     if (this.connector.id !== 'test') {
       this.metricsService = new SouthConnectorMetricsService(this.connector.id, this.repositoryService.southMetricsRepository);
       this.metricsService.initMetrics();
+      this.cacheService = new SouthCacheService(this.connector.id, this.repositoryService.southCacheRepository);
     }
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
@@ -85,14 +85,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     });
   }
 
-  async init(): Promise<void> {
-    this.cacheService = new SouthCacheService(this.connector.id, path.resolve(this.baseFolder, 'cache.db'));
-    if (this.connector.id !== 'test') {
-      if (this.queriesHistory()) {
-        this.cacheService.createSouthCacheScanModeTable();
-      }
-    }
-  }
+  async init(): Promise<void> {}
 
   async start(): Promise<void> {
     this.logger.trace(`South connector ${this.connector.name} enabled. Starting services...`);
@@ -270,7 +263,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
           return;
         }
 
-        const southCache = this.cacheService!.getSouthCacheScanMode(scanModeId, item.id, startTime);
+        const southCache = this.cacheService!.getSouthCacheScanMode(this.connector.id, scanModeId, item.id, startTime);
         // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
         // requests. For example only one hour if maxReadInterval is 3600 (in s)
         const intervals = generateIntervals(southCache.maxInstant, endTime, this.connector.history.maxReadInterval);
@@ -281,7 +274,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         }
       }
     } else {
-      const southCache = this.cacheService!.getSouthCacheScanMode(scanModeId, 'all', startTime);
+      const southCache = this.cacheService!.getSouthCacheScanMode(this.connector.id, scanModeId, 'all', startTime);
       // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
       // requests. For example only one hour if maxReadInterval is 3600 (in s)
       const intervals = generateIntervals(southCache.maxInstant, endTime, this.connector.history.maxReadInterval);
@@ -318,10 +311,10 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
       if (index !== intervals.length - 1) {
         this.cacheService!.createOrUpdateCacheScanMode({
+          southId: this.connector.id,
           scanModeId: southCache.scanModeId,
           itemId: southCache.itemId,
-          maxInstant: lastInstantRetrieved,
-          intervalIndex: index + southCache.intervalIndex
+          maxInstant: lastInstantRetrieved
         });
         this.metricsService!.updateMetrics({
           ...this.metricsService!.metrics,
@@ -340,10 +333,10 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         await delay(this.connector.history.readDelay);
       } else {
         this.cacheService!.createOrUpdateCacheScanMode({
+          southId: this.connector.id,
           scanModeId: southCache.scanModeId,
           itemId: southCache.itemId,
-          maxInstant: lastInstantRetrieved,
-          intervalIndex: 0
+          maxInstant: lastInstantRetrieved
         });
       }
     }
