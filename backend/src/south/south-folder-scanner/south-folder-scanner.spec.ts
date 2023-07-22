@@ -12,7 +12,7 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 
-import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { SouthFolderScannerItemSettings } from '../../../../shared/model/south-settings.model';
 
 jest.mock('node:fs/promises');
@@ -24,7 +24,8 @@ jest.mock(
     function () {
       return {
         cacheRepository: {
-          database
+          createCustomTable: jest.fn(),
+          executeQueryOnCustomTable: jest.fn()
         }
       };
     }
@@ -191,29 +192,6 @@ describe('SouthFolderScanner', () => {
       `Error while removing "${path.resolve(configuration.settings.inputFolder, 'myFile2')}": ${new Error('error')}`
     );
   });
-
-  it('should get modified time', () => {
-    const get = jest.fn().mockReturnValueOnce(null).mockReturnValueOnce({ mtimeMs: 999 });
-    database.prepare.mockImplementation(() => ({
-      get
-    }));
-    expect(south.getModifiedTime('filename')).toEqual(0);
-    expect(database.prepare).toHaveBeenCalledWith(`SELECT mtime_ms AS mtimeMs FROM folder_scanner WHERE filename = ?`);
-    expect(get).toHaveBeenCalledWith('filename');
-    expect(south.getModifiedTime('filename')).toEqual(999);
-  });
-
-  it('should update modified time', () => {
-    const run = jest.fn();
-    database.prepare.mockImplementation(() => ({
-      run
-    }));
-    south.updateModifiedTime('filename', 999);
-    expect(database.prepare).toHaveBeenCalledWith(
-      `INSERT INTO folder_scanner (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`
-    );
-    expect(run).toHaveBeenCalledWith('filename', 999, 999);
-  });
 });
 
 describe('SouthFolderScanner with preserve file and compression', () => {
@@ -231,9 +209,6 @@ describe('SouthFolderScanner with preserve file and compression', () => {
   });
 
   it('should properly check age', async () => {
-    expect(database.prepare).toHaveBeenCalledWith(
-      `CREATE TABLE IF NOT EXISTS folder_scanner (filename TEXT PRIMARY KEY, mtime_ms INTEGER);`
-    );
     const mtimeMs = new Date('2020-02-02T02:02:02.222Z').getTime();
     (fs.stat as jest.Mock).mockImplementation(() => ({ mtimeMs: mtimeMs - 10000 }));
     south.getModifiedTime = jest

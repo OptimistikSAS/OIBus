@@ -13,12 +13,12 @@ import OIBusEngine from './engine/oibus-engine';
 import HistoryQueryEngine from './engine/history-query-engine';
 import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
-import { migrateCrypto, migrateEntities, migrateLogsAndMetrics } from './db/migration-service';
-
-const CACHE_FOLDER = './cache';
+import { migrateCrypto, migrateEntities, migrateLogsAndMetrics, migrateSouthCache } from './db/migration-service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
+const CACHE_FOLDER = './cache';
+const CACHE_DATABASE = 'cache.db';
 const LOG_FOLDER_NAME = 'logs';
 const LOG_DB_NAME = 'journal.db';
 
@@ -37,11 +37,13 @@ const LOG_DB_NAME = 'journal.db';
   await migrateEntities(path.resolve(CONFIG_DATABASE));
   await migrateLogsAndMetrics(path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME));
   await migrateCrypto(path.resolve(CRYPTO_DATABASE));
+  await migrateSouthCache(path.resolve(CACHE_FOLDER, CACHE_DATABASE));
 
   const repositoryService = new RepositoryService(
     path.resolve(CONFIG_DATABASE),
     path.resolve(LOG_FOLDER_NAME, LOG_DB_NAME),
-    path.resolve(CRYPTO_DATABASE)
+    path.resolve(CRYPTO_DATABASE),
+    path.resolve(CACHE_FOLDER, CACHE_DATABASE)
   );
 
   const oibusSettings = repositoryService.engineRepository.getEngineSettings();

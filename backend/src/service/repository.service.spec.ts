@@ -33,10 +33,11 @@ jest.mock('../repository/subscription.repository');
 
 describe('Repository service', () => {
   it('should properly initialize service', () => {
-    const repositoryService = new RepositoryService('myConfigDatabase', 'myLogDatabase', 'myCryptoDatabase');
+    const repositoryService = new RepositoryService('myConfigDatabase', 'myLogDatabase', 'myCryptoDatabase', 'myCacheDatabase');
     expect(db).toHaveBeenCalledWith('myConfigDatabase');
     expect(db).toHaveBeenCalledWith('myLogDatabase');
     expect(db).toHaveBeenCalledWith('myCryptoDatabase');
+    expect(db).toHaveBeenCalledWith('myCacheDatabase');
     expect(EngineRepository).toHaveBeenCalledWith('sqlite database');
     expect(CryptoRepository).toHaveBeenCalledWith('sqlite database');
     expect(ExternalSourceRepository).toHaveBeenCalledWith('sqlite database');

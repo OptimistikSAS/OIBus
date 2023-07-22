@@ -1,20 +1,10 @@
-import db from 'better-sqlite3';
 import SouthCacheService from './south-cache.service';
 
-jest.mock(
-  '../repository/connector-cache.repository',
-  () =>
-    function () {
-      return {
-        createMetricsTable: jest.fn(),
-        createSouthCacheScanModeTable: jest.fn(),
-        createOrUpdateCacheScanMode: jest.fn(),
-        getSouthCacheScanMode: jest.fn(),
-        resetSouthCacheDatabase: jest.fn()
-      };
-    }
-);
-jest.mock('better-sqlite3', () => jest.fn(() => 'sqlite database'));
+import SouthCacheRepositoryMock from '../tests/__mocks__/south-cache-repository.mock';
+import SouthCacheRepository from '../repository/south-cache.repository';
+import { SouthCache } from '../../../shared/model/south-connector.model';
+
+const southCacheRepository: SouthCacheRepository = new SouthCacheRepositoryMock();
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 let service: SouthCacheService;
@@ -24,24 +14,18 @@ describe('South cache service', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    service = new SouthCacheService('connectorId', 'south-cache');
+    service = new SouthCacheService('connectorId', southCacheRepository);
   });
 
   it('should be properly initialized', () => {
-    expect(db).toHaveBeenCalledWith('south-cache');
     expect(service.cacheRepository).toBeDefined();
   });
 
-  it('should create cache history table', () => {
-    service.createSouthCacheScanModeTable();
-    expect(service.cacheRepository.createSouthCacheScanModeTable).toHaveBeenCalledTimes(1);
-  });
-
   it('should create or update cache scan mode', () => {
-    const command = {
+    const command: SouthCache = {
       scanModeId: 'id1',
       itemId: 'itemId',
-      intervalIndex: 1,
+      southId: 'southId',
       maxInstant: ''
     };
     service.createOrUpdateCacheScanMode(command);
@@ -49,22 +33,22 @@ describe('South cache service', () => {
   });
 
   it('should get scan mode', () => {
-    const scanMode = {
+    const scanMode: SouthCache = {
       scanModeId: 'id1',
       itemId: 'itemId',
-      intervalIndex: 1,
+      southId: 'southId',
       maxInstant: ''
     };
     (service.cacheRepository.getSouthCacheScanMode as jest.Mock).mockReturnValueOnce(scanMode).mockReturnValue(null);
-    const result = service.getSouthCacheScanMode('id1', 'itemId', nowDateString);
+    const result = service.getSouthCacheScanMode('southId', 'id1', 'itemId', nowDateString);
     expect(result).toEqual(scanMode);
 
-    const defaultResult = service.getSouthCacheScanMode('id1', 'itemId', nowDateString);
+    const defaultResult = service.getSouthCacheScanMode('southId', 'id1', 'itemId', nowDateString);
     expect(defaultResult).toEqual({
       scanModeId: 'id1',
       itemId: 'itemId',
       maxInstant: nowDateString,
-      intervalIndex: 0
+      southId: 'southId'
     });
   });
 

@@ -12,8 +12,6 @@ import RepositoryService from '../../service/repository.service';
 import { QueriesFile, TestsConnection } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
 
-const FOLDER_SCANNER_TABLE = 'folder_scanner';
-
 /**
  * Class SouthFolderScanner - Retrieve file from a local or remote folder
  */
@@ -63,9 +61,10 @@ export default class SouthFolderScanner
     await super.start();
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
     if (this.connector.settings.preserveFiles) {
-      this.cacheService!.cacheRepository.database.prepare(
-        `CREATE TABLE IF NOT EXISTS ${FOLDER_SCANNER_TABLE} (filename TEXT PRIMARY KEY, mtime_ms INTEGER);`
-      ).run();
+      this.cacheService!.cacheRepository.createCustomTable(
+        `folder_scanner_${this.connector.id}`,
+        'filename TEXT PRIMARY KEY, mtime_ms INTEGER'
+      );
     }
   }
 
@@ -143,16 +142,16 @@ export default class SouthFolderScanner
   }
 
   getModifiedTime(filename: string): number {
-    const query = `SELECT mtime_ms AS mtimeMs FROM ${FOLDER_SCANNER_TABLE} WHERE filename = ?`;
-    const result: { mtimeMs: string } | null = this.cacheService!.cacheRepository.database.prepare(query).get(filename) as {
+    const query = `SELECT mtime_ms AS mtimeMs FROM "folder_scanner_${this.connector.id}" WHERE filename = ?`;
+    const result: { mtimeMs: string } | null = this.cacheService!.cacheRepository.getQueryOnCustomTable(query, [filename]) as {
       mtimeMs: string;
     } | null;
     return result ? parseFloat(result.mtimeMs) : 0;
   }
 
   updateModifiedTime(filename: string, mtimeMs: number): void {
-    const query = `INSERT INTO ${FOLDER_SCANNER_TABLE} (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`;
-    this.cacheService!.cacheRepository.database.prepare(query).run(filename, mtimeMs, mtimeMs);
+    const query = `INSERT INTO "folder_scanner_${this.connector.id}" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`;
+    this.cacheService!.cacheRepository.runQueryOnCustomTable(query, [filename, mtimeMs, mtimeMs]);
   }
 
   /**

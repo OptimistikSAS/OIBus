@@ -45,3 +45,18 @@ export async function migrateCrypto(dbPath: string): Promise<Knex> {
   await knexConfig.migrate.up({ directory: path.resolve(__dirname, 'crypto-migrations') });
   return knexConfig;
 }
+
+export async function migrateSouthCache(dbPath: string): Promise<Knex> {
+  const knexConfig = knex({
+    client: 'better-sqlite3',
+    connection: {
+      filename: dbPath
+    },
+    useNullAsDefault: true,
+    migrations: {
+      tableName: 'migrations'
+    }
+  });
+  await knexConfig.migrate.up({ directory: path.resolve(__dirname, 'south-cache-migrations') });
+  return knexConfig;
+}

@@ -1,37 +1,26 @@
-import Database from 'better-sqlite3';
-import ConnectorCacheRepository from '../repository/connector-cache.repository';
+import SouthCacheRepository from '../repository/south-cache.repository';
 
 import { SouthCache } from '../../../shared/model/south-connector.model';
 import { Instant } from '../../../shared/model/types';
 
 export default class SouthCacheService {
-  private readonly _cacheRepository: ConnectorCacheRepository;
+  constructor(private readonly connectorId: string, private readonly _cacheRepository: SouthCacheRepository) {}
 
-  constructor(private readonly connectorId: string, cacheDatabasePath: string) {
-    const database = Database(cacheDatabasePath);
-
-    this._cacheRepository = new ConnectorCacheRepository(database);
-  }
-
-  get cacheRepository(): ConnectorCacheRepository {
+  get cacheRepository(): SouthCacheRepository {
     return this._cacheRepository;
-  }
-
-  createSouthCacheScanModeTable(): void {
-    this._cacheRepository.createSouthCacheScanModeTable();
   }
 
   /**
    * Retrieve south cache or return a new one with startTime
    */
-  getSouthCacheScanMode(scanModeId: string, itemId: string, startTime: Instant): SouthCache {
-    const southCache = this._cacheRepository.getSouthCacheScanMode(scanModeId, itemId);
+  getSouthCacheScanMode(southId: string, scanModeId: string, itemId: string, startTime: Instant): SouthCache {
+    const southCache = this._cacheRepository.getSouthCacheScanMode(southId, scanModeId, itemId);
     if (!southCache) {
       return {
+        southId,
         scanModeId,
         itemId,
-        maxInstant: startTime,
-        intervalIndex: 0
+        maxInstant: startTime
       };
     }
     return southCache;
