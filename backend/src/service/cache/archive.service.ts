@@ -9,7 +9,9 @@ const ARCHIVE_TIMEOUT = 3600000; // one hour
 const ARCHIVE_TIMEOUT_INIT = 10000; // Wait a little at North start up
 const ARCHIVE_FOLDER = 'archive';
 
-import { NorthArchiveSettings } from '../../../../shared/model/north-connector.model';
+import { NorthArchiveSettings, NorthArchiveFiles } from '../../../../shared/model/north-connector.model';
+import { Instant } from '../../../../shared/model/types';
+import { DateTime } from 'luxon';
 
 /**
  * Archive service used to archive sent file and check periodically the archive folder to remove old files
@@ -124,6 +126,64 @@ export default class ArchiveService {
       } catch (unlinkError) {
         this._logger.error(`Could not remove old file "${path.join(archiveFolder, filename)}" from archive: ${unlinkError}`);
       }
+    }
+  }
+
+  /**
+   * Get list of archive files.
+   */
+  async getArchiveFiles(fromDate: Instant, toDate: Instant, nameFilter: string): Promise<Array<NorthArchiveFiles>> {
+    const filenames = await fs.readdir(this.archiveFolder);
+    const filteredFilenames: Array<NorthArchiveFiles> = [];
+    for (const filename of filenames) {
+      try {
+        const stats = await fs.stat(path.join(this.archiveFolder, filename));
+
+        const dateIsSuperiorToStart = fromDate ? stats.mtimeMs >= DateTime.fromISO(fromDate).toMillis() : true;
+        const dateIsInferiorToEnd = toDate ? stats.mtimeMs <= DateTime.fromISO(toDate).toMillis() : true;
+        const dateIsBetween = dateIsSuperiorToStart && dateIsInferiorToEnd;
+        const filenameContains = nameFilter ? filename.toUpperCase().includes(nameFilter.toUpperCase()) : true;
+        if (dateIsBetween && filenameContains) {
+          filteredFilenames.push({
+            filename,
+            modificationDate: DateTime.fromMillis(stats.mtimeMs).toUTC().toISO() as Instant,
+            size: stats.size
+          });
+        }
+      } catch (error) {
+        this._logger.error(`Error while reading in archive folder file stats "${path.join(this.archiveFolder, filename)}": ${error}`);
+      }
+    }
+    return filteredFilenames;
+  }
+
+  /**
+   * Remove archive files.
+   */
+  async removeFiles(filenames: Array<string>): Promise<void> {
+    await Promise.allSettled(
+      filenames.map(async filename => {
+        const filePath = path.join(this.archiveFolder, filename);
+        try {
+          this._logger.debug(`Removing archived file "${filePath}`);
+          await fs.unlink(filePath);
+        } catch (error) {
+          this._logger.error(`Unable to remove archived file "${filePath}"`);
+        }
+      })
+    );
+  }
+
+  /**
+   * Remove all archive files.
+   */
+  async removeAllArchiveFiles(): Promise<void> {
+    const filenames = await fs.readdir(this.archiveFolder);
+    if (filenames.length > 0) {
+      this._logger.debug(`Removing ${filenames.length} files from "${this.archiveFolder}"`);
+      await this.removeFiles(filenames);
+    } else {
+      this._logger.debug(`The archive folder "${this.archiveFolder}" is empty. Nothing to delete`);
     }
   }
 

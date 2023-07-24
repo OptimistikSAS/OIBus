@@ -1,6 +1,6 @@
 import ArchiveService from '../service/cache/archive.service';
 
-import { NorthCacheFiles, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
+import { NorthArchiveFiles, NorthCacheFiles, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import ValueCacheService from '../service/cache/value-cache.service';
@@ -414,6 +414,45 @@ export default class NorthConnector<T extends NorthSettings = any> {
   async retryAllErrorFiles(): Promise<void> {
     this.logger.trace(`Retrying all error files in North connector "${this.connector.name}"...`);
     await this.fileCacheService.retryAllErrorFiles();
+  }
+
+  /**
+   * Get list of archive files from file cache. Dates are in ISO format
+   */
+  async getArchiveFiles(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthArchiveFiles>> {
+    return await this.archiveService.getArchiveFiles(fromDate, toDate, fileNameContains);
+  }
+
+  /**
+   * Remove archive files from file cache.
+   */
+  async removeArchiveFiles(filenames: Array<string>): Promise<void> {
+    this.logger.trace(`Removing ${filenames.length} archive files from North connector "${this.connector.name}"...`);
+    await this.archiveService.removeFiles(filenames);
+  }
+
+  /**
+   * Retry archive files from file cache.
+   */
+  async retryArchiveFiles(filenames: Array<string>): Promise<void> {
+    this.logger.trace(`Retrying ${filenames.length} archive files in North connector "${this.connector.name}"...`);
+    await this.fileCacheService.retryFiles(this.archiveService.archiveFolder, filenames);
+  }
+
+  /**
+   * Remove all archive files from file cache.
+   */
+  async removeAllArchiveFiles(): Promise<void> {
+    this.logger.trace(`Removing all archive files from North connector "${this.connector.name}"...`);
+    await this.archiveService.removeAllArchiveFiles();
+  }
+
+  /**
+   * Retry all archive files from file cache.
+   */
+  async retryAllArchiveFiles(): Promise<void> {
+    this.logger.trace(`Retrying all archive files in North connector "${this.connector.name}"...`);
+    await this.fileCacheService.retryAllFiles(this.archiveService.archiveFolder);
   }
 
   setLogger(value: pino.Logger) {

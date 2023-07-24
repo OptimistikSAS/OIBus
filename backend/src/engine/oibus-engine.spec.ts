@@ -128,6 +128,11 @@ describe('OIBusEngine', () => {
     retryErrorFiles: jest.fn(),
     removeAllErrorFiles: jest.fn(),
     retryAllErrorFiles: jest.fn(),
+    getArchiveFiles: jest.fn(),
+    removeArchiveFiles: jest.fn(),
+    retryArchiveFiles: jest.fn(),
+    removeAllArchiveFiles: jest.fn(),
+    retryAllArchiveFiles: jest.fn(),
     getMetricsDataStream: jest.fn(),
     resetMetrics: jest.fn()
   };
@@ -266,6 +271,31 @@ describe('OIBusEngine', () => {
     expect(createdNorth.retryAllErrorFiles).not.toHaveBeenCalled();
     await engine.retryAllErrorFiles(northConnectors[1].id);
     expect(createdNorth.retryAllErrorFiles).toHaveBeenCalled();
+
+    await engine.getArchiveFiles('northId', '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
+    expect(createdNorth.getArchiveFiles).not.toHaveBeenCalled();
+    await engine.getArchiveFiles(northConnectors[1].id, '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
+    expect(createdNorth.getArchiveFiles).toHaveBeenCalledWith('2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');
+
+    await engine.retryArchiveFiles('northId', ['file1']);
+    expect(createdNorth.retryArchiveFiles).not.toHaveBeenCalled();
+    await engine.retryArchiveFiles(northConnectors[1].id, ['file1']);
+    expect(createdNorth.retryArchiveFiles).toHaveBeenCalledWith(['file1']);
+
+    await engine.removeArchiveFiles('northId', ['file1']);
+    expect(createdNorth.removeArchiveFiles).not.toHaveBeenCalled();
+    await engine.removeArchiveFiles(northConnectors[1].id, ['file1']);
+    expect(createdNorth.removeArchiveFiles).toHaveBeenCalledWith(['file1']);
+
+    await engine.removeAllArchiveFiles('northId');
+    expect(createdNorth.removeAllArchiveFiles).not.toHaveBeenCalled();
+    await engine.removeAllArchiveFiles(northConnectors[1].id);
+    expect(createdNorth.removeAllArchiveFiles).toHaveBeenCalled();
+
+    await engine.retryAllArchiveFiles('northId');
+    expect(createdNorth.retryAllArchiveFiles).not.toHaveBeenCalled();
+    await engine.retryAllArchiveFiles(northConnectors[1].id);
+    expect(createdNorth.retryAllArchiveFiles).toHaveBeenCalled();
 
     createdNorth.getMetricsDataStream.mockReturnValue({ status: 'myStatus' });
     expect(engine.getNorthDataStream('northId')).toEqual(null);

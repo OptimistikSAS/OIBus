@@ -10,6 +10,7 @@ import EncryptionService from '../service/encryption.service';
 import RepositoryService from '../service/repository.service';
 import ValueCacheServiceMock from '../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../tests/__mocks__/file-cache-service.mock';
+import ArchiveServiceMock from '../tests/__mocks__/archive-service.mock';
 import { EventEmitter } from 'node:events';
 import { HandlesFile, HandlesValues } from './north-interface';
 
@@ -54,7 +55,14 @@ jest.mock(
       return fileCacheServiceMock;
     }
 );
-jest.mock('../service/cache/archive.service');
+jest.mock(
+  '../service/cache/archive.service',
+  () =>
+    function () {
+      const archiveServiceMock = new ArchiveServiceMock();
+      return archiveServiceMock;
+    }
+);
 
 const resetMetrics = jest.fn();
 jest.mock(
@@ -347,6 +355,37 @@ describe('NorthConnector enabled', () => {
   it('should retry all error files', async () => {
     await north.retryAllErrorFiles();
     expect(logger.trace).toHaveBeenCalledWith(`Retrying all error files in North connector "${configuration.name}"...`);
+  });
+
+  it('should get archive files', async () => {
+    const result = await north.getArchiveFiles('2022-11-11T11:11:11.111Z', '2022-11-12T11:11:11.111Z', 'file');
+    expect(result).toEqual([
+      { filename: 'file1.name', modificationDate: '', size: 1 },
+      { filename: 'file2.name', modificationDate: '', size: 2 },
+      { filename: 'file3.name', modificationDate: '', size: 3 }
+    ]);
+  });
+
+  it('should remove archive files', async () => {
+    const files = ['file1.name', 'file2.name', 'file3.name'];
+    await north.removeArchiveFiles(files);
+    expect(logger.trace).toHaveBeenCalledWith(`Removing 3 archive files from North connector "${configuration.name}"...`);
+  });
+
+  it('should retry archive files', async () => {
+    const files = ['file1.name', 'file2.name', 'file3.name'];
+    await north.retryArchiveFiles(files);
+    expect(logger.trace).toHaveBeenCalledWith(`Retrying 3 archive files in North connector "${configuration.name}"...`);
+  });
+
+  it('should remove all archive files', async () => {
+    await north.removeAllArchiveFiles();
+    expect(logger.trace).toHaveBeenCalledWith(`Removing all archive files from North connector "${configuration.name}"...`);
+  });
+
+  it('should retry all archive files', async () => {
+    await north.retryAllArchiveFiles();
+    expect(logger.trace).toHaveBeenCalledWith(`Retrying all archive files in North connector "${configuration.name}"...`);
   });
 
   it('should handle values properly', async () => {

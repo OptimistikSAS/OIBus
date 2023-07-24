@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 
 import ArchiveService from './archive.service';
 
+import { DateTime } from 'luxon';
 import { createFolder } from '../utils';
 import pino from 'pino';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
@@ -149,6 +150,101 @@ describe('ArchiveService', () => {
       await archiveService.refreshArchiveFolder();
       expect(logger.debug).not.toHaveBeenCalled();
       expect(anotherLogger.debug).toHaveBeenCalledWith('Parse archive folder to remove old files');
+    });
+
+    it('should properly get archived files', async () => {
+      const fileError = new Error('error file');
+      (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2', 'file3', 'anotherFile', 'errorFile']);
+      (fs.stat as jest.Mock)
+        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T04:02:02.222Z').toMillis(), size: 1 }))
+        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T06:02:02.222Z').toMillis(), size: 2 }))
+        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-04T02:02:02.222Z').toMillis(), size: 3 }))
+        .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-05T02:02:02.222Z').toMillis(), size: 4 }))
+        .mockImplementationOnce(() => {
+          throw fileError;
+        });
+
+      const files = await archiveService.getArchiveFiles('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
+
+      expect(files).toEqual([
+        { filename: 'file1', modificationDate: '2020-02-02T04:02:02.222Z', size: 1 },
+        { filename: 'file2', modificationDate: '2020-02-02T06:02:02.222Z', size: 2 }
+      ]);
+      expect(logger.error).toHaveBeenCalledWith(
+        `Error while reading in archive folder file stats "${path.resolve('myCacheFolder', 'archive', 'errorFile')}": ${fileError}`
+      );
+    });
+
+    it('should properly get archived files without filtering', async () => {
+      (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
+      (fs.stat as jest.Mock)
+        .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis(), size: 100 })
+        .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis(), size: 60 });
+
+      const files = await archiveService.getArchiveFiles('', '', '');
+
+      expect(files).toEqual([
+        { filename: 'file1', modificationDate: '2000-02-02T02:02:02.222Z', size: 100 },
+        {
+          filename: 'file2',
+          modificationDate: '2030-02-02T02:02:02.222Z',
+          size: 60
+        }
+      ]);
+    });
+
+    it('should remove files from archive folder with error handling', async () => {
+      const filenames = ['file1', 'file2', 'errorFile'];
+      const resolvedFiles = filenames.map(file => [path.resolve('myCacheFolder', 'archive', file)]);
+      const logs = resolvedFiles.map(file => [`Removing archived file "${file}`]);
+
+      (fs.unlink as jest.Mock)
+        .mockImplementationOnce(() => Promise.resolve())
+        .mockImplementationOnce(() => Promise.resolve())
+        .mockImplementationOnce(() => {
+          throw new Error(`Can't remove file`);
+        });
+
+      await archiveService.removeFiles(filenames);
+      expect((fs.unlink as jest.Mock).mock.calls).toEqual(resolvedFiles);
+
+      expect((logger.debug as jest.Mock).mock.calls).toEqual(logs);
+      expect(logger.error).toHaveBeenCalledWith(
+        `Unable to remove archived file "${path.resolve('myCacheFolder', 'archive', filenames[2])}"`
+      );
+      expect(logger.error).toBeCalledTimes(1);
+    });
+
+    it('should remove all archived files', async () => {
+      const filenames = ['file1', 'file2', 'file3'];
+      (fs.readdir as jest.Mock).mockImplementation(() => filenames);
+      archiveService.removeFiles = jest.fn(() => Promise.resolve());
+
+      await archiveService.removeAllArchiveFiles();
+
+      expect(archiveService.removeFiles).toHaveBeenCalledWith(filenames);
+      expect(archiveService.removeFiles).toBeCalledTimes(1);
+
+      expect(logger.debug).toHaveBeenLastCalledWith(
+        `Removing ${filenames.length} files from "${path.resolve('myCacheFolder', 'archive')}"`
+      );
+      expect(logger.debug).toBeCalledTimes(1);
+    });
+
+    it('should properly handle removing all files when folder is empty', async () => {
+      (fs.readdir as jest.Mock).mockImplementation(() => []);
+      const removeFilesSpy = jest.spyOn(archiveService, 'removeFiles').mockImplementation(() => Promise.resolve());
+
+      await archiveService.removeAllArchiveFiles();
+
+      expect(removeFilesSpy).toBeCalledTimes(0);
+
+      expect(logger.debug).toHaveBeenLastCalledWith(
+        `The archive folder "${path.resolve('myCacheFolder', 'archive')}" is empty. Nothing to delete`
+      );
+      expect(logger.debug).toBeCalledTimes(1);
+
+      removeFilesSpy.mockRestore();
     });
   });
 

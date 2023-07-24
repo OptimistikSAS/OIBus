@@ -208,4 +208,63 @@ export default class NorthConnectorController {
     await ctx.app.reloadService.oibusEngine.retryAllErrorFiles(northConnector.id);
     ctx.noContent();
   }
+
+  async getArchiveFiles(ctx: KoaContext<void, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    const fileNameContains = ctx.query.fileNameContains || '';
+    const errorFiles = await ctx.app.reloadService.oibusEngine.getArchiveFiles(northConnector.id, '', '', fileNameContains);
+    ctx.ok(errorFiles);
+  }
+
+  async removeArchiveFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    if (!Array.isArray(ctx.request.body)) {
+      return ctx.throw(400, 'Invalid file list');
+    }
+
+    await ctx.app.reloadService.oibusEngine.removeArchiveFiles(northConnector.id, ctx.request.body);
+    ctx.noContent();
+  }
+
+  async retryArchiveFiles(ctx: KoaContext<Array<string>, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    if (!Array.isArray(ctx.request.body)) {
+      return ctx.throw(400, 'Invalid file list');
+    }
+
+    await ctx.app.reloadService.oibusEngine.retryArchiveFiles(northConnector.id, ctx.request.body);
+    ctx.noContent();
+  }
+
+  async removeAllArchiveFiles(ctx: KoaContext<void, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    await ctx.app.reloadService.oibusEngine.removeAllArchiveFiles(northConnector.id);
+    ctx.noContent();
+  }
+
+  async retryAllArchiveFiles(ctx: KoaContext<void, void>): Promise<void> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    await ctx.app.reloadService.oibusEngine.retryAllArchiveFiles(northConnector.id);
+    ctx.noContent();
+  }
 }
