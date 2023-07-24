@@ -1,8 +1,5 @@
 import { Database } from 'better-sqlite3';
 import { ExternalSubscriptionDTO, SubscriptionDTO } from '../../../shared/model/subscription.model';
-import { NORTH_CONNECTORS_TABLE } from './north-connector.repository';
-import { SOUTH_CONNECTORS_TABLE } from './south-connector.repository';
-import { EXTERNAL_SOURCES_TABLE } from './external-source.repository';
 
 export const SUBSCRIPTION_TABLE = 'subscription';
 export const EXTERNAL_SUBSCRIPTION_TABLE = 'external_subscription';
@@ -11,24 +8,7 @@ export const EXTERNAL_SUBSCRIPTION_TABLE = 'external_subscription';
  * Repository used for subscriptions
  */
 export default class SubscriptionRepository {
-  private readonly database: Database;
-  constructor(database: Database) {
-    this.database = database;
-
-    const southQuery =
-      `CREATE TABLE IF NOT EXISTS ${SUBSCRIPTION_TABLE} (north_connector_id TEXT, south_connector_id TEXT, ` +
-      `PRIMARY KEY (north_connector_id, south_connector_id), ` +
-      `FOREIGN KEY(north_connector_id) REFERENCES ${NORTH_CONNECTORS_TABLE}(id), ` +
-      `FOREIGN KEY(south_connector_id) REFERENCES ${SOUTH_CONNECTORS_TABLE}(id));`;
-    this.database.prepare(southQuery).run();
-
-    const externalQuery =
-      `CREATE TABLE IF NOT EXISTS ${EXTERNAL_SUBSCRIPTION_TABLE} (north_connector_id TEXT, external_source_id TEXT, ` +
-      `PRIMARY KEY (north_connector_id, external_source_id), ` +
-      `FOREIGN KEY(north_connector_id) REFERENCES ${NORTH_CONNECTOR_TABLE}(id), ` +
-      `FOREIGN KEY(external_source_id) REFERENCES ${EXTERNAL_SOURCES_TABLE}(id));`;
-    this.database.prepare(externalQuery).run();
-  }
+  constructor(private readonly database: Database) {}
 
   /**
    * Retrieve all subscriptions for a given North connector

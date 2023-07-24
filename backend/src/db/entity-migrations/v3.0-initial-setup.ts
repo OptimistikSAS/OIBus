@@ -11,6 +11,7 @@ import { SOUTH_CONNECTORS_TABLE } from '../../repository/south-connector.reposit
 import { SOUTH_ITEMS_TABLE } from '../../repository/south-item.repository';
 import { NORTH_CONNECTORS_TABLE } from '../../repository/north-connector.repository';
 import CreateTableBuilder = Knex.CreateTableBuilder;
+import { EXTERNAL_SUBSCRIPTION_TABLE, SUBSCRIPTION_TABLE } from '../../repository/subscription.repository';
 
 export async function up(knex: Knex): Promise<void> {
   await createEnginesTable(knex);
@@ -23,6 +24,8 @@ export async function up(knex: Knex): Promise<void> {
   await createSouthConnectorsTable(knex);
   await createSouthItemsTable(knex);
   await createNorthConnectorsTable(knex);
+  await createSubscriptionsTable(knex);
+  await createExternalSubscriptionsTable(knex);
 }
 
 function createDefaultEntityFields(table: CreateTableBuilder): void {
@@ -171,6 +174,28 @@ async function createNorthConnectorsTable(knex: Knex): Promise<void> {
     table.integer('caching_max_size').notNullable();
     table.integer('archive_enabled').notNullable();
     table.integer('archive_retention_duration').notNullable();
+  });
+}
+
+async function createExternalSubscriptionsTable(knex: Knex): Promise<void> {
+  await knex.schema.createTable(SUBSCRIPTION_TABLE, table => {
+    createDefaultEntityFields(table);
+    table.string('north_connector_id').notNullable();
+    table.foreign('north_connector_id').references('id').inTable(NORTH_CONNECTORS_TABLE);
+    table.string('south_connector_id').notNullable();
+    table.foreign('south_connector_id').references('id').inTable(SOUTH_CONNECTORS_TABLE);
+    table.primary(['north_connector_id', 'south_connector_id']);
+  });
+}
+
+async function createSubscriptionsTable(knex: Knex): Promise<void> {
+  await knex.schema.createTable(EXTERNAL_SUBSCRIPTION_TABLE, table => {
+    createDefaultEntityFields(table);
+    table.string('north_connector_id').notNullable();
+    table.foreign('north_connector_id').references('id').inTable(NORTH_CONNECTORS_TABLE);
+    table.string('external_source_id').notNullable();
+    table.foreign('external_source_id').references('id').inTable(EXTERNAL_SUBSCRIPTION_TABLE);
+    table.primary(['north_connector_id', 'external_source_id']);
   });
 }
 

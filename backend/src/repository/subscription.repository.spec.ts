@@ -19,23 +19,6 @@ describe('Subscription repository', () => {
     repository = new SubscriptionRepository(database);
   });
 
-  it('should properly init subscription table', () => {
-    const southQuery =
-      'CREATE TABLE IF NOT EXISTS subscription (north_connector_id TEXT, south_connector_id TEXT, ' +
-      'PRIMARY KEY (north_connector_id, south_connector_id), ' +
-      'FOREIGN KEY(north_connector_id) REFERENCES north_connectors(id), ' +
-      'FOREIGN KEY(south_connector_id) REFERENCES south_connectors(id));';
-    const externalQuery =
-      'CREATE TABLE IF NOT EXISTS external_subscription (north_connector_id TEXT, external_source_id TEXT, ' +
-      'PRIMARY KEY (north_connector_id, external_source_id), ' +
-      'FOREIGN KEY(north_connector_id) REFERENCES north_connector(id), ' +
-      'FOREIGN KEY(external_source_id) REFERENCES external_sources(id));';
-
-    expect(database.prepare).toHaveBeenNthCalledWith(1, southQuery);
-    expect(database.prepare).toHaveBeenNthCalledWith(2, externalQuery);
-    expect(run).toHaveBeenCalledTimes(2);
-  });
-
   it('should properly get all subscriptions', () => {
     const expectedValue: Array<SubscriptionDTO> = ['south1', 'south2'];
     all.mockReturnValueOnce(expectedValue.map(southId => ({ southConnectorId: southId })));
@@ -98,7 +81,9 @@ describe('Subscription repository', () => {
     run.mockReturnValueOnce({ lastInsertRowid: 1 });
 
     repository.createExternalNorthSubscription('north1', 'external1');
-    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO external_subscription (north_connector_id, external_source_id) VALUES (?, ?);');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'INSERT INTO external_subscription (north_connector_id, external_source_id) VALUES (?, ?);'
+    );
     expect(run).toHaveBeenCalledWith('north1', 'external1');
   });
 
@@ -110,7 +95,9 @@ describe('Subscription repository', () => {
 
   it('should delete an external subscription', () => {
     repository.deleteExternalNorthSubscription('north1', 'external1');
-    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM external_subscription WHERE north_connector_id = ? AND external_source_id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'DELETE FROM external_subscription WHERE north_connector_id = ? AND external_source_id = ?;'
+    );
     expect(run).toHaveBeenCalledWith('north1', 'external1');
   });
 
