@@ -445,9 +445,11 @@
       "send-file-immediately": "Send file immediately",
       "explore-cache": "Explore cache",
       "error-files": "Error files",
+      "archive-files": "Archive files",
       "remove-selected-files": "Remove selected files",
       "retry-selected-files": "Retry selected files",
       "error-files-none": "No error file",
+      "archive-files-none": "No archived files",
       "file-date": "Modification date",
       "file-size": "Size",
       "filename": "Filename"

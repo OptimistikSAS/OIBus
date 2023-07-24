@@ -5,6 +5,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { NorthConnectorService } from './north-connector.service';
 import {
   NorthCacheFiles,
+  NorthArchiveFiles,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorManifest,
@@ -209,6 +210,48 @@ describe('NorthConnectorService', () => {
     let done = false;
     service.retryAllNorthConnectorCacheErrorFiles('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/cache/file-errors/retry-all' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should get archive files', () => {
+    let expectedNorthArchiveFiles: Array<NorthArchiveFiles> | null = null;
+    const northArchiveFiles: Array<NorthArchiveFiles> = [];
+
+    service.getNorthConnectorCacheArchiveFiles('id1').subscribe(c => (expectedNorthArchiveFiles = c));
+
+    http.expectOne({ url: '/api/north/id1/cache/archive-files', method: 'GET' }).flush(northArchiveFiles);
+    expect(expectedNorthArchiveFiles!).toEqual(northArchiveFiles);
+  });
+
+  it('should remove listed archive files', () => {
+    let done = false;
+    service.removeNorthConnectorCacheArchiveFiles('id1', ['file1', 'file2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/archive-files/remove' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should retry listed archive files', () => {
+    let done = false;
+    service.retryNorthConnectorCacheArchiveFiles('id1', ['file1', 'file2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/archive-files/retry' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should remove all archive files', () => {
+    let done = false;
+    service.removeAllNorthConnectorCacheArchiveFiles('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/cache/archive-files/remove-all' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should retry all archive files', () => {
+    let done = false;
+    service.retryAllNorthConnectorCacheArchiveFiles('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/north/id1/cache/archive-files/retry-all' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });

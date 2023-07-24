@@ -1,10 +1,10 @@
 <div class="oib-padded-container" *ngIf="northConnector">
-  <div class="d-flex justify-content-between">
-    <div class="oib-header-container">
-      <h1>
-        <span translate="north.cache.title" [translateParams]="{name: northConnector.name}" id="title"></span>
-      </h1>
-    </div>
+  <div class="oib-header-container">
+    <h1>
+      <span translate="north.cache.title" [translateParams]="{name: northConnector.name}" id="title"></span>
+    </h1>
   </div>
+  <oib-error-files *ngIf="northConnector" [northConnector]="northConnector"></oib-error-files>
+  <br />
+  <oib-archive-files *ngIf="northConnector" [northConnector]="northConnector"></oib-archive-files>
 </div>
-<oib-error-files *ngIf="northConnector" [northConnector]="northConnector"></oib-error-files>
