@@ -61,6 +61,19 @@ describe('External source repository', () => {
     expect(externalSource).toEqual(expectedValue);
   });
 
+  it('should properly get an external source by reference', () => {
+    const expectedValue: ExternalSourceDTO = {
+      id: 'id1',
+      reference: 'ref1',
+      description: 'my first external source'
+    };
+    get.mockReturnValueOnce(expectedValue);
+    const externalSource = repository.findExternalSourceByReference('ref1');
+    expect(database.prepare).toHaveBeenCalledWith('SELECT id, reference, description FROM external_sources WHERE reference = ?;');
+    expect(get).toHaveBeenCalledWith('ref1');
+    expect(externalSource).toEqual(expectedValue);
+  });
+
   it('should create an external source', () => {
     run.mockReturnValueOnce({ lastInsertRowid: 1 });
 

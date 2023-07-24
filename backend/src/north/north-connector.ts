@@ -11,7 +11,7 @@ import { EventEmitter } from 'node:events';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import DeferredPromise from '../service/deferred-promise';
 import { OIBusError } from '../../../shared/model/engine.model';
-import { SubscriptionDTO } from '../../../shared/model/subscription.model';
+import { ExternalSubscriptionDTO, SubscriptionDTO } from '../../../shared/model/subscription.model';
 import path from 'node:path';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
@@ -44,6 +44,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   private fileCacheService: FileCacheService;
   protected metricsService: NorthConnectorMetricsService;
   private subscribedTo: Array<SubscriptionDTO> = [];
+  private subscribedToExternalSources: Array<ExternalSubscriptionDTO> = [];
 
   private fileBeingSent: string | null = null;
   private fileErrorCount = 0;
@@ -99,6 +100,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
 
   async init(): Promise<void> {
     this.subscribedTo = this.repositoryService.subscriptionRepository.getNorthSubscriptions(this.connector.id);
+    this.subscribedToExternalSources = this.repositoryService.subscriptionRepository.getExternalNorthSubscriptions(this.connector.id);
     await this.valueCacheService.start();
     await this.fileCacheService.start();
     this.logger.trace(`North connector "${this.connector.name}" enabled. Starting services...`);
@@ -315,6 +317,14 @@ export default class NorthConnector<T extends NorthSettings = any> {
    */
   isSubscribed(southId: string): boolean {
     return this.subscribedTo.length === 0 || this.subscribedTo.includes(southId);
+  }
+
+  /**
+   * Check whether the North is subscribed to an external source.
+   * If subscribedToExternalSources is not defined or an empty array, the subscription is true.
+   */
+  isSubscribedToExternalSource(externalSourceId: string): boolean {
+    return this.subscribedToExternalSources.length === 0 || this.subscribedToExternalSources.includes(externalSourceId);
   }
 
   /**

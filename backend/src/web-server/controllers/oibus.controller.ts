@@ -45,8 +45,13 @@ export default class OibusController extends AbstractController {
   async addValues(ctx: KoaContext<void, void>): Promise<void> {
     const { name } = ctx.request.query;
     if (name && Array.isArray(ctx.request.body)) {
+      const externalSource = ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference(name as string);
+      if (!externalSource) {
+        ctx.app.logger.info(`External source "${name}" not found`);
+      }
+
       try {
-        await ctx.app.oibusService.addValues(name as string, ctx.request.body);
+        await ctx.app.oibusService.addValues(externalSource?.id ?? null, ctx.request.body);
         return ctx.noContent();
       } catch (error) {
         return ctx.internalServerError();
@@ -59,8 +64,13 @@ export default class OibusController extends AbstractController {
     const { name } = ctx.request.query;
     const file = ctx.request.file;
     if (name && file) {
+      const externalSource = ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference(name as string);
+      if (!externalSource) {
+        ctx.app.logger.info(`External source "${name}" not found`);
+      }
+
       try {
-        await ctx.app.oibusService.addFile(name as string, ctx.request.file.path);
+        await ctx.app.oibusService.addFile(externalSource?.id ?? null, ctx.request.file.path);
         return ctx.noContent();
       } catch (error) {
         return ctx.internalServerError();

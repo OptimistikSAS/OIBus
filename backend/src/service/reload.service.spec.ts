@@ -310,6 +310,20 @@ describe('reload service', () => {
     expect(oibusEngine.startNorth).toHaveBeenCalledWith('northId', { id: 'northId' });
   });
 
+  it('should create external North subscription', async () => {
+    (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock)
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce({ id: 'northId' });
+
+    await service.onCreateExternalNorthSubscription('northId', 'externalId');
+    expect(oibusEngine.stopNorth).toHaveBeenCalledWith('northId');
+    expect(repositoryService.subscriptionRepository.createExternalNorthSubscription).toHaveBeenCalledWith('northId', 'externalId');
+    expect(oibusEngine.startNorth).not.toHaveBeenCalled();
+
+    await service.onCreateExternalNorthSubscription('northId', 'externalId');
+    expect(oibusEngine.startNorth).toHaveBeenCalledWith('northId', { id: 'northId' });
+  });
+
   it('should delete North subscription', async () => {
     (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock)
       .mockReturnValueOnce(null)
@@ -321,6 +335,20 @@ describe('reload service', () => {
     expect(oibusEngine.startNorth).not.toHaveBeenCalled();
 
     await service.onDeleteNorthSubscription('northId', 'southId');
+    expect(oibusEngine.startNorth).toHaveBeenCalledWith('northId', { id: 'northId' });
+  });
+
+  it('should delete external North subscription', async () => {
+    (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock)
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce({ id: 'northId' });
+
+    await service.onDeleteExternalNorthSubscription('northId', 'externalId');
+    expect(oibusEngine.stopNorth).toHaveBeenCalledWith('northId');
+    expect(repositoryService.subscriptionRepository.deleteExternalNorthSubscription).toHaveBeenCalledWith('northId', 'externalId');
+    expect(oibusEngine.startNorth).not.toHaveBeenCalled();
+
+    await service.onDeleteExternalNorthSubscription('northId', 'externalId');
     expect(oibusEngine.startNorth).toHaveBeenCalledWith('northId', { id: 'northId' });
   });
 

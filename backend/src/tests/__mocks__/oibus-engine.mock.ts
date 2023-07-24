@@ -14,7 +14,9 @@ export default jest.fn().mockImplementation(() => {
     updateItemInSouth: jest.fn(),
     deleteItemFromSouth: jest.fn(),
     addValues: jest.fn(),
+    addExternalValues: jest.fn(),
     addFile: jest.fn(),
+    addExternalFile: jest.fn(),
     deleteAllItemsFromSouth: jest.fn(),
     getErrorFiles: jest.fn()
   };

@@ -99,9 +99,23 @@ describe('Oibus controller', () => {
   it('should add values', async () => {
     ctx.request.body = [{ field: 'my value' }];
     ctx.request.query = { name: 'source' };
+    ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference.mockReturnValue({
+      id: '1',
+      reference: 'source',
+      description: 'description'
+    });
     await oibusController.addValues(ctx);
     expect(ctx.noContent).toHaveBeenCalled();
-    expect(ctx.app.oibusService.addValues).toHaveBeenCalledWith('source', [{ field: 'my value' }]);
+    expect(ctx.app.oibusService.addValues).toHaveBeenCalledWith('1', [{ field: 'my value' }]);
+  });
+
+  it('should add values with null as external source', async () => {
+    ctx.request.body = [{ field: 'my value' }];
+    ctx.request.query = { name: 'source' };
+    ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference.mockReturnValue(null);
+    await oibusController.addValues(ctx);
+    expect(ctx.noContent).toHaveBeenCalled();
+    expect(ctx.app.oibusService.addValues).toHaveBeenCalledWith(null, [{ field: 'my value' }]);
   });
 
   it('should not add values if no source name provided', async () => {
@@ -127,9 +141,23 @@ describe('Oibus controller', () => {
   it('should add file', async () => {
     ctx.request.query = { name: 'source' };
     ctx.request.file = { path: 'filePath' };
+    ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference.mockReturnValue({
+      id: '1',
+      reference: 'source',
+      description: 'description'
+    });
     await oibusController.addFile(ctx);
     expect(ctx.noContent).toHaveBeenCalled();
-    expect(ctx.app.oibusService.addFile).toHaveBeenCalledWith('source', 'filePath');
+    expect(ctx.app.oibusService.addFile).toHaveBeenCalledWith('1', 'filePath');
+  });
+
+  it('should add file with null as external source', async () => {
+    ctx.request.query = { name: 'source' };
+    ctx.request.file = { path: 'filePath' };
+    ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference.mockReturnValue(null);
+    await oibusController.addFile(ctx);
+    expect(ctx.noContent).toHaveBeenCalled();
+    expect(ctx.app.oibusService.addFile).toHaveBeenCalledWith(null, 'filePath');
   });
 
   it('should not add file if no source name provided', async () => {

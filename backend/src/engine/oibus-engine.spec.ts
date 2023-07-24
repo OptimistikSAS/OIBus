@@ -121,6 +121,7 @@ describe('OIBusEngine', () => {
     cacheValues: jest.fn(),
     cacheFile: jest.fn(),
     isSubscribed: jest.fn(),
+    isSubscribedToExternalSource: jest.fn(),
     setLogger: jest.fn(),
     getErrorFiles: jest.fn(),
     removeErrorFiles: jest.fn(),
@@ -187,6 +188,7 @@ describe('OIBusEngine', () => {
 
     createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
     createdNorth.isSubscribed.mockReturnValue(true);
+    createdNorth.isSubscribedToExternalSource.mockReturnValue(true);
     createdSouth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
     (southService.getSouthItems as jest.Mock).mockReturnValue(items);
 
@@ -216,8 +218,28 @@ describe('OIBusEngine', () => {
     expect(createdNorth.cacheValues).toHaveBeenCalledWith(['', '']);
 
     createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
+    await engine.addExternalValues('externalSourceId', ['', '']);
+    expect(createdNorth.cacheValues).toHaveBeenCalledTimes(2);
+    expect(createdNorth.cacheValues).toHaveBeenCalledWith(['', '']);
+
+    createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
+    await engine.addExternalValues(null, ['', '']);
+    expect(createdNorth.cacheValues).toHaveBeenCalledTimes(3);
+    expect(createdNorth.cacheValues).toHaveBeenCalledWith(['', '']);
+
+    createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
     await engine.addFile('southId', 'filePath');
     expect(createdNorth.cacheFile).toHaveBeenCalledTimes(1);
+    expect(createdNorth.cacheFile).toHaveBeenCalledWith('filePath');
+
+    createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
+    await engine.addExternalFile('externalSourceId', 'filePath');
+    expect(createdNorth.cacheFile).toHaveBeenCalledTimes(2);
+    expect(createdNorth.cacheFile).toHaveBeenCalledWith('filePath');
+
+    createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
+    await engine.addExternalFile(null, 'filePath');
+    expect(createdNorth.cacheFile).toHaveBeenCalledTimes(3);
     expect(createdNorth.cacheFile).toHaveBeenCalledWith('filePath');
 
     await engine.getErrorFiles('northId', '2020-02-02T02:02:02.222Z', '2022-02-02T02:02:02.222Z', '');

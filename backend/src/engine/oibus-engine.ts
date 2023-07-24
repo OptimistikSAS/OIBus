@@ -39,12 +39,36 @@ export default class OIBusEngine extends BaseEngine {
   }
 
   /**
+   * Add new values from an external source to the Engine.
+   * The Engine will forward the values to the Cache.
+   */
+  async addExternalValues(externalSourceId: string | null, values: Array<any>): Promise<void> {
+    for (const north of this.northConnectors.values()) {
+      if (north.isEnabled() && (!externalSourceId || north.isSubscribedToExternalSource(externalSourceId))) {
+        await north.cacheValues(values);
+      }
+    }
+  }
+
+  /**
    * Add a new file from a South connector to the Engine.
    * The Engine will forward the file to the Cache.
    */
   async addFile(southId: string, filePath: string): Promise<void> {
     for (const north of this.northConnectors.values()) {
       if (north.isEnabled() && north.isSubscribed(southId)) {
+        await north.cacheFile(filePath);
+      }
+    }
+  }
+
+  /**
+   * Add a new file from an external source to the Engine.
+   * The Engine will forward the file to the Cache.
+   */
+  async addExternalFile(externalSourceId: string | null, filePath: string): Promise<void> {
+    for (const north of this.northConnectors.values()) {
+      if (north.isEnabled() && (!externalSourceId || north.isSubscribedToExternalSource(externalSourceId))) {
         await north.cacheFile(filePath);
       }
     }

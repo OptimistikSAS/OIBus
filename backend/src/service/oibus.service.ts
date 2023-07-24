@@ -32,11 +32,11 @@ export default class OIBusService {
     await this.historyEngine.stop();
   }
 
-  async addValues(source: string, values: Array<any>): Promise<void> {
-    await this.engine.addValues(source, values);
+  async addValues(externalSourceId: string | null, values: Array<any>): Promise<void> {
+    await this.engine.addExternalValues(externalSourceId, values);
   }
 
-  async addFile(source: string, filePath: string): Promise<void> {
-    await this.engine.addFile(source, filePath);
+  async addFile(externalSourceId: string | null, filePath: string): Promise<void> {
+    await this.engine.addExternalFile(externalSourceId, filePath);
   }
 }
