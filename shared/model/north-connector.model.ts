@@ -71,3 +71,5 @@ export interface NorthCacheFiles {
   modificationDate: Instant;
   size: number;
 }
+
+export interface NorthArchiveFiles extends NorthCacheFiles {}

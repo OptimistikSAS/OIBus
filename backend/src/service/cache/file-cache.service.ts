@@ -104,13 +104,15 @@ export default class FileCacheService {
   /**
    * Cache a new file from a South connector
    */
-  async cacheFile(filePath: string): Promise<void> {
+  async cacheFile(filePath: string, appendTimestamp = true): Promise<void> {
     this._logger.trace(`Caching file "${filePath}"...`);
     const timestamp = new Date().getTime();
     // When compressed file is received the name looks like filename.txt.gz
     const filenameInfo = path.parse(filePath);
 
-    const cacheFilename = `${filenameInfo.name}-${timestamp}${filenameInfo.ext}`;
+    const cacheFilename = appendTimestamp
+      ? `${filenameInfo.name}-${timestamp}${filenameInfo.ext}`
+      : `${filenameInfo.name}${filenameInfo.ext}`;
     const cachePath = path.join(this._fileFolder, cacheFilename);
 
     await fs.copyFile(filePath, cachePath);
@@ -179,7 +181,7 @@ export default class FileCacheService {
   }
 
   /**
-   * Remove error files.
+   * Remove files from folder.
    */
   async removeFiles(folder: string, filenames: Array<string>): Promise<void> {
     await Promise.allSettled(
@@ -195,19 +197,7 @@ export default class FileCacheService {
    * Retry error files.
    */
   async retryErrorFiles(filenames: Array<string>): Promise<void> {
-    await Promise.allSettled(
-      filenames.map(async filename => {
-        const errorFilePath = path.join(this._errorFolder, filename);
-        const cacheFilePath = path.join(this._fileFolder, filename);
-        this._logger.debug(`Moving error file "${errorFilePath}" back to cache "${cacheFilePath}"`);
-        await fs.rename(errorFilePath, cacheFilePath);
-        // Add the file to the queue once it is persisted in the cache folder
-        this.filesQueue.push(cacheFilePath);
-        if (this._settings.sendFileImmediately) {
-          this.triggerRun.emit('next');
-        }
-      })
-    );
+    await this.retryFiles(this._errorFolder, filenames);
   }
 
   /**
@@ -240,11 +230,34 @@ export default class FileCacheService {
    * Retry all error files.
    */
   async retryAllErrorFiles(): Promise<void> {
-    const filenames = await fs.readdir(this._errorFolder);
+    await this.retryAllFiles(this._errorFolder);
+  }
+
+  /**
+   * Retry files from folder.
+   */
+  async retryFiles(folder: string, filenames: Array<string>): Promise<void> {
+    await Promise.allSettled(
+      filenames.map(async filename => {
+        const fromFilePath = path.join(folder, filename);
+        const cacheFilePath = path.join(this._fileFolder, filename);
+        this._logger.debug(`Moving file "${fromFilePath}" back to cache "${cacheFilePath}"`);
+
+        await this.cacheFile(fromFilePath, false);
+        await this.removeFiles(folder, [filename]);
+      })
+    );
+  }
+
+  /**
+   * Retry all files from folder.
+   */
+  async retryAllFiles(folder: string): Promise<void> {
+    const filenames = await fs.readdir(folder);
     if (filenames.length > 0) {
-      await this.retryErrorFiles(filenames);
+      await this.retryFiles(folder, filenames);
     } else {
-      this._logger.debug(`The error folder "${this._errorFolder}" is empty. Nothing to delete`);
+      this._logger.debug(`The folder "${folder}" is empty. Nothing to delete`);
     }
   }
 

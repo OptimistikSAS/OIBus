@@ -228,6 +228,26 @@ export default class OIBusEngine extends BaseEngine {
     await this.northConnectors.get(northId)?.retryAllErrorFiles();
   }
 
+  async getArchiveFiles(northId: string, start: Instant, end: Instant, fileNameContains: string) {
+    return (await this.northConnectors.get(northId)?.getArchiveFiles(start, end, fileNameContains)) || [];
+  }
+
+  async removeArchiveFiles(northId: string, filenames: Array<string>): Promise<void> {
+    await this.northConnectors.get(northId)?.removeArchiveFiles(filenames);
+  }
+
+  async retryArchiveFiles(northId: string, filenames: Array<string>): Promise<void> {
+    await this.northConnectors.get(northId)?.retryArchiveFiles(filenames);
+  }
+
+  async removeAllArchiveFiles(northId: string): Promise<void> {
+    await this.northConnectors.get(northId)?.removeAllArchiveFiles();
+  }
+
+  async retryAllArchiveFiles(northId: string): Promise<void> {
+    await this.northConnectors.get(northId)?.retryAllArchiveFiles();
+  }
+
   getSouthDataStream(southId: string): PassThrough | null {
     return this.southConnectors.get(southId)?.getMetricsDataStream() || null;
   }

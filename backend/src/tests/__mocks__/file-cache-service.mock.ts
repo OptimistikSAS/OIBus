@@ -18,6 +18,8 @@ export default class FileCacheServiceMock {
   retryAllErrorFiles = jest.fn();
   removeAllCacheFiles = jest.fn();
   getFileToSend = jest.fn();
+  retryFiles = jest.fn();
+  retryAllFiles = jest.fn();
   removeFileFromQueue = jest.fn();
   manageErroredFiles = jest.fn();
   isEmpty = jest.fn();

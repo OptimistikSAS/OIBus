@@ -88,6 +88,15 @@ describe('FileCache', () => {
     );
   });
 
+  it('should properly cache file without appending timestamp', async () => {
+    // When retrying an archived file, it will already have a timestamp, so we skip adding another
+    await cache.cacheFile('myFile-1580608922222.csv', false);
+    const cacheFilePath = path.resolve('myCacheFolder', 'files', 'myFile-1580608922222.csv');
+
+    expect(fs.copyFile).toHaveBeenCalledWith('myFile-1580608922222.csv', cacheFilePath);
+    expect(logger.debug).toHaveBeenCalledWith(`File "myFile-1580608922222.csv" cached in "${cacheFilePath}"`);
+  });
+
   it('should properly managed cache file error', async () => {
     (fs.copyFile as jest.Mock).mockImplementation(() => {
       throw new Error('copy file');
@@ -141,38 +150,76 @@ describe('FileCache', () => {
     );
   });
 
-  it('should remove error files', async () => {
+  it('should retry files from folder', async () => {
+    // Used to retry files from error and archive folders
     const filenames = ['file1.name', 'file2.name', 'file3.name'];
+    const cacheFileArgs = filenames.map(filename => [path.resolve('myCacheFolder', 'files-errors', filename), false]);
+    const removeFilesArgs = filenames.map(filename => [cache.errorFolder, [filename]]);
+    const loggerArgs = filenames.map(filename => {
+      const fromFilePath = path.resolve('myCacheFolder', 'files-errors', filename);
+      const cacheFilePath = path.resolve('myCacheFolder', 'files', filename);
+      return [`Moving file "${fromFilePath}" back to cache "${cacheFilePath}"`];
+    });
 
-    await cache.removeFiles(cache.errorFolder, filenames);
-    expect(fs.unlink).toHaveBeenNthCalledWith(1, path.join(path.resolve('myCacheFolder', 'files-errors'), filenames[0]));
-    expect(fs.unlink).toHaveBeenNthCalledWith(2, path.join(path.resolve('myCacheFolder', 'files-errors'), filenames[1]));
-    expect(fs.unlink).toHaveBeenNthCalledWith(3, path.join(path.resolve('myCacheFolder', 'files-errors'), filenames[2]));
+    cache.cacheFile = jest.fn();
+    cache.removeFiles = jest.fn();
+
+    await cache.retryFiles(cache.errorFolder, filenames);
+
+    expect((cache.cacheFile as jest.Mock).mock.calls).toEqual(cacheFileArgs);
+    expect((cache.removeFiles as jest.Mock).mock.calls).toEqual(removeFilesArgs);
+    expect((logger.debug as jest.Mock).mock.calls).toEqual(loggerArgs);
   });
 
   it('should retry error files', async () => {
     const filenames = ['file1.name', 'file2.name', 'file3.name'];
+    cache.retryFiles = jest.fn();
 
     await cache.retryErrorFiles(filenames);
-    expect(fs.rename).toHaveBeenNthCalledWith(
-      1,
-      path.resolve('myCacheFolder', 'files-errors', filenames[0]),
-      path.resolve('myCacheFolder', 'files', filenames[0])
-    );
-    expect(fs.rename).toHaveBeenNthCalledWith(
-      2,
-      path.resolve('myCacheFolder', 'files-errors', filenames[1]),
-      path.resolve('myCacheFolder', 'files', filenames[1])
-    );
-    expect(fs.rename).toHaveBeenNthCalledWith(
-      3,
-      path.resolve('myCacheFolder', 'files-errors', filenames[2]),
-      path.resolve('myCacheFolder', 'files', filenames[2])
-    );
+    expect(cache.retryFiles).toBeCalledWith(cache.errorFolder, filenames);
+    expect(cache.retryFiles).toBeCalledTimes(1);
+  });
 
-    // Check if the files have been added back to the queue
-    const queueFiles = filenames.map(name => path.resolve('myCacheFolder', 'files', name));
-    expect(cache['filesQueue']).toEqual(queueFiles);
+  it('should retry all files from folder', async () => {
+    // Used to retry all files from error and archive folders
+    const filenames = ['file1.name', 'file2.name', 'file3.name'];
+    (fs.readdir as jest.Mock).mockImplementationOnce(() => filenames);
+    cache.retryFiles = jest.fn();
+
+    await cache.retryAllFiles(cache.errorFolder);
+
+    expect(fs.readdir).toHaveBeenCalledWith(cache.errorFolder);
+    expect(cache.retryFiles).toHaveBeenCalledWith(cache.errorFolder, filenames);
+    expect(cache.retryFiles).toBeCalledTimes(1);
+  });
+
+  it('should retry all error files', async () => {
+    cache.retryAllFiles = jest.fn();
+
+    await cache.retryAllErrorFiles();
+
+    expect(cache.retryAllFiles).toBeCalledWith(cache.errorFolder);
+    expect(cache.retryAllFiles).toBeCalledTimes(1);
+  });
+
+  it('should handle retrying all files when folder is empty', async () => {
+    (fs.readdir as jest.Mock).mockImplementationOnce(() => []);
+
+    await cache.retryAllFiles('folder');
+
+    expect(logger.debug).toHaveBeenCalledWith(`The folder "folder" is empty. Nothing to delete`);
+    expect(logger.debug).toHaveBeenCalledTimes(1);
+  });
+
+  it('should remove files from folder', async () => {
+    // Used to remove files from error and archive folders
+    const filenames = ['file1.name', 'file2.name', 'file3.name'];
+
+    await cache.removeFiles(cache.errorFolder, filenames);
+
+    expect(fs.unlink).toHaveBeenNthCalledWith(1, path.join(path.resolve('myCacheFolder', 'files-errors'), filenames[0]));
+    expect(fs.unlink).toHaveBeenNthCalledWith(2, path.join(path.resolve('myCacheFolder', 'files-errors'), filenames[1]));
+    expect(fs.unlink).toHaveBeenNthCalledWith(3, path.join(path.resolve('myCacheFolder', 'files-errors'), filenames[2]));
   });
 
   it('should remove all error files when the error folder is not empty', async () => {
@@ -207,15 +254,6 @@ describe('FileCache', () => {
 
     await cache.removeAllCacheFiles();
     expect(cache.removeFiles).not.toHaveBeenCalled();
-  });
-
-  it('should retry all error files when the error folder is not empty', async () => {
-    const filenames = ['file1.name', 'file2.name', 'file3.name'];
-    fs.readdir = jest.fn().mockReturnValue(Promise.resolve(filenames));
-    cache.retryErrorFiles = jest.fn();
-
-    await cache.retryAllErrorFiles();
-    expect(cache.retryErrorFiles).toHaveBeenCalledWith(filenames);
   });
 
   it('should not remove any error file when the error folder is empty', async () => {

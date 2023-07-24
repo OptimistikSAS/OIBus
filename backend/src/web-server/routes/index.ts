@@ -112,6 +112,21 @@ router.delete('/api/north/:northId/cache/file-errors/remove-all', (ctx: KoaConte
 router.delete('/api/north/:northId/cache/file-errors/retry-all', (ctx: KoaContext<any, any>) =>
   northConnectorController.retryAllErrorFiles(ctx)
 );
+
+router.get('/api/north/:northId/cache/archive-files', (ctx: KoaContext<any, any>) => northConnectorController.getArchiveFiles(ctx));
+router.post('/api/north/:northId/cache/archive-files/remove', (ctx: KoaContext<any, any>) =>
+  northConnectorController.removeArchiveFiles(ctx)
+);
+router.post('/api/north/:northId/cache/archive-files/retry', (ctx: KoaContext<any, any>) =>
+  northConnectorController.retryArchiveFiles(ctx)
+);
+router.delete('/api/north/:northId/cache/archive-files/remove-all', (ctx: KoaContext<any, any>) =>
+  northConnectorController.removeAllArchiveFiles(ctx)
+);
+router.delete('/api/north/:northId/cache/archive-files/retry-all', (ctx: KoaContext<any, any>) =>
+  northConnectorController.retryAllArchiveFiles(ctx)
+);
+
 router.put('/api/north/:northId/cache/reset-metrics', (ctx: KoaContext<any, any>) => northConnectorController.resetNorthMetrics(ctx));
 
 router.get('/api/south-types', (ctx: KoaContext<any, any>) => southConnectorController.getSouthConnectorTypes(ctx));
