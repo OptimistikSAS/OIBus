@@ -51,6 +51,7 @@ export class ErrorFilesComponent implements OnInit {
     const files = this.errorFiles.filter(file => this.checkboxByErrorFiles.get(file.filename)).map(file => file.filename);
     this.northConnectorService.retryNorthConnectorCacheErrorFiles(this.northConnector!.id, files).subscribe(() => {
       this.refreshErrorFiles();
+      this.mainErrorFilesCheckboxState = 'UNCHECKED';
     });
   }
 
@@ -58,6 +59,7 @@ export class ErrorFilesComponent implements OnInit {
     const files = this.errorFiles.filter(file => this.checkboxByErrorFiles.get(file.filename)).map(file => file.filename);
     this.northConnectorService.removeNorthConnectorCacheErrorFiles(this.northConnector!.id, files).subscribe(() => {
       this.refreshErrorFiles();
+      this.mainErrorFilesCheckboxState = 'UNCHECKED';
     });
   }
 

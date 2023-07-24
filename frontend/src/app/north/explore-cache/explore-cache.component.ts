@@ -11,6 +11,7 @@ import { DatetimePipe } from '../../shared/datetime.pipe';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { FileSizePipe } from '../../shared/file-size.pipe';
 import { ErrorFilesComponent } from './error-files/error-files.component';
+import { ArchiveFilesComponent } from './archive-files/archive-files.component';
 
 @Component({
   selector: 'oib-explore-cache',
@@ -26,7 +27,8 @@ import { ErrorFilesComponent } from './error-files/error-files.component';
     PaginationComponent,
     FileSizePipe,
     RouterLink,
-    ErrorFilesComponent
+    ErrorFilesComponent,
+    ArchiveFilesComponent
   ],
   standalone: true
 })

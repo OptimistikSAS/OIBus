@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
 import { By } from '@angular/platform-browser';
 import { ErrorFilesComponent } from './error-files/error-files.component';
+import { ArchiveFilesComponent } from './archive-files/archive-files.component';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { provideHttpClient } from '@angular/common/http';
@@ -21,6 +22,9 @@ class ExploreCacheComponentTester extends ComponentTester<ExploreCacheComponent>
 
   get errorFiles(): ErrorFilesComponent {
     return this.debugElement.query(By.directive(ErrorFilesComponent)).componentInstance! as ErrorFilesComponent;
+  }
+  get archiveFiles(): ArchiveFilesComponent {
+    return this.debugElement.query(By.directive(ArchiveFilesComponent)).componentInstance! as ArchiveFilesComponent;
   }
 }
 
@@ -65,12 +69,14 @@ describe('ExploreCacheComponent', () => {
     });
     northConnectorService.getNorthConnector.and.returnValue(of(northConnector));
     northConnectorService.getNorthConnectorCacheErrorFiles.and.returnValue(of([]));
+    northConnectorService.getNorthConnectorCacheArchiveFiles.and.returnValue(of([]));
     tester = new ExploreCacheComponentTester();
     tester.detectChanges();
   });
 
-  it('should have a title and error list component', () => {
+  it('should have a title, error and archive list components', () => {
     expect(tester.title).toContainText('Cache content for connector North Connector');
     expect(tester.errorFiles).toBeDefined();
+    expect(tester.archiveFiles).toBeDefined();
   });
 });
