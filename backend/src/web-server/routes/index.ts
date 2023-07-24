@@ -94,6 +94,13 @@ router.post('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<any, 
 router.delete('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<any, any>) =>
   subscriptionController.deleteNorthSubscription(ctx)
 );
+router.get('/api/north/:northId/external-subscriptions', (ctx: KoaContext<any, any>) => subscriptionController.getExternalNorthSubscriptions(ctx));
+router.post('/api/north/:northId/external-subscriptions/:externalSourceId', (ctx: KoaContext<any, any>) =>
+  subscriptionController.createExternalNorthSubscription(ctx)
+);
+router.delete('/api/north/:northId/external-subscriptions/:externalSourceId', (ctx: KoaContext<any, any>) =>
+  subscriptionController.deleteExternalNorthSubscription(ctx)
+);
 router.get('/api/north/:northId/cache/file-errors', (ctx: KoaContext<any, any>) => northConnectorController.getFileErrors(ctx));
 router.post('/api/north/:northId/cache/file-errors/remove', (ctx: KoaContext<any, any>) => northConnectorController.removeFileErrors(ctx));
 router.post('/api/north/:northId/cache/file-errors/retry', (ctx: KoaContext<any, any>) => northConnectorController.retryErrorFiles(ctx));

@@ -132,6 +132,7 @@ export default class NorthConnectorController {
     const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
     if (northConnector) {
       await ctx.app.repositoryService.subscriptionRepository.deleteNorthSubscriptions(ctx.params.id);
+      await ctx.app.repositoryService.subscriptionRepository.deleteExternalNorthSubscriptions(ctx.params.id);
       await ctx.app.reloadService.onDeleteNorth(ctx.params.id);
       ctx.noContent();
     } else {

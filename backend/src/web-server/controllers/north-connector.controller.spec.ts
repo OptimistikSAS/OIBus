@@ -289,6 +289,7 @@ describe('North connector controller', () => {
     await northConnectorController.deleteNorthConnector(ctx);
 
     expect(ctx.app.repositoryService.subscriptionRepository.deleteNorthSubscriptions).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.subscriptionRepository.deleteExternalNorthSubscriptions).toHaveBeenCalledWith('id');
     expect(ctx.app.reloadService.onDeleteNorth).toHaveBeenCalledWith('id');
     expect(ctx.noContent).toHaveBeenCalled();
   });

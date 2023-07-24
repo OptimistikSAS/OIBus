@@ -175,9 +175,27 @@ export default class ReloadService {
     }
   }
 
+  async onCreateExternalNorthSubscription(northId: string, externalSourceId: string): Promise<void> {
+    await this.oibusEngine.stopNorth(northId);
+    this.repositoryService.subscriptionRepository.createExternalNorthSubscription(northId, externalSourceId);
+    const settings = this.repositoryService.northConnectorRepository.getNorthConnector(northId);
+    if (settings) {
+      await this.oibusEngine.startNorth(northId, settings);
+    }
+  }
+
   async onDeleteNorthSubscription(northId: string, southId: string): Promise<void> {
     await this.oibusEngine.stopNorth(northId);
     this.repositoryService.subscriptionRepository.deleteNorthSubscription(northId, southId);
+    const settings = this.repositoryService.northConnectorRepository.getNorthConnector(northId);
+    if (settings) {
+      await this.oibusEngine.startNorth(northId, settings);
+    }
+  }
+
+  async onDeleteExternalNorthSubscription(northId: string, externalSourceId: string): Promise<void> {
+    await this.oibusEngine.stopNorth(northId);
+    this.repositoryService.subscriptionRepository.deleteExternalNorthSubscription(northId, externalSourceId);
     const settings = this.repositoryService.northConnectorRepository.getNorthConnector(northId);
     if (settings) {
       await this.oibusEngine.startNorth(northId, settings);

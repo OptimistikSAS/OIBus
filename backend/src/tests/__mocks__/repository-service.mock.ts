@@ -50,6 +50,7 @@ export default jest.fn().mockImplementation(() => ({
   externalSourceRepository: {
     getExternalSources: jest.fn(),
     getExternalSource: jest.fn(),
+    findExternalSourceByReference: jest.fn(),
     createExternalSource: jest.fn(),
     updateExternalSource: jest.fn(),
     deleteExternalSource: jest.fn()
@@ -92,10 +93,15 @@ export default jest.fn().mockImplementation(() => ({
   },
   subscriptionRepository: {
     getNorthSubscriptions: jest.fn(),
+    getExternalNorthSubscriptions: jest.fn(),
     getSubscribedNorthConnectors: jest.fn(),
     checkNorthSubscription: jest.fn(),
+    checkExternalNorthSubscription: jest.fn(),
     createNorthSubscription: jest.fn(),
+    createExternalNorthSubscription: jest.fn(),
     deleteNorthSubscription: jest.fn(),
-    deleteNorthSubscriptions: jest.fn()
+    deleteExternalNorthSubscription: jest.fn(),
+    deleteNorthSubscriptions: jest.fn(),
+    deleteExternalNorthSubscriptions: jest.fn()
   }
 }));

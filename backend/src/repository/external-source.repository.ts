@@ -2,7 +2,7 @@ import { generateRandomId } from '../service/utils';
 import { ExternalSourceCommandDTO, ExternalSourceDTO } from '../../../shared/model/external-sources.model';
 import { Database } from 'better-sqlite3';
 
-const EXTERNAL_SOURCES_TABLE = 'external_sources';
+export const EXTERNAL_SOURCES_TABLE = 'external_sources';
 
 /**
  * Repository used for external sources (remote data source that send values directly to the API)
@@ -30,6 +30,14 @@ export default class ExternalSourceRepository {
   getExternalSource(id: string): ExternalSourceDTO | null {
     const query = `SELECT id, reference, description FROM ${EXTERNAL_SOURCES_TABLE} WHERE id = ?;`;
     return this.database.prepare(query).get(id) as ExternalSourceDTO | null;
+  }
+
+  /**
+   * Retrieve an external source by its reference
+   */
+  findExternalSourceByReference(reference: string): ExternalSourceDTO | null {
+    const query = `SELECT id, reference, description FROM ${EXTERNAL_SOURCES_TABLE} WHERE reference = ?;`;
+    return this.database.prepare(query).get(reference) as ExternalSourceDTO | null;
   }
 
   /**

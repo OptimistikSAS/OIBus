@@ -46,11 +46,11 @@ describe('OIBus service', () => {
 
   it('should add values', async () => {
     await service.addValues('source', []);
-    expect(oibusEngine.addValues).toHaveBeenCalledWith('source', []);
+    expect(oibusEngine.addExternalValues).toHaveBeenCalledWith('source', []);
   });
 
   it('should add file', async () => {
     await service.addFile('source', 'filePath');
-    expect(oibusEngine.addFile).toHaveBeenCalledWith('source', 'filePath');
+    expect(oibusEngine.addExternalFile).toHaveBeenCalledWith('source', 'filePath');
   });
 });
