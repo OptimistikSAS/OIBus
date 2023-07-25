@@ -83,6 +83,7 @@ router.get('/api/north-types', (ctx: KoaContext<any, any>) => northConnectorCont
 router.get('/api/north-types/:id', (ctx: KoaContext<any, any>) => northConnectorController.getNorthConnectorManifest(ctx));
 
 router.get('/api/north', (ctx: KoaContext<any, any>) => northConnectorController.getNorthConnectors(ctx));
+router.put('/api/north/:id/test-connection', (ctx: KoaContext<any, any>) => northConnectorController.testNorthConnection(ctx));
 router.get('/api/north/:id', (ctx: KoaContext<any, any>) => northConnectorController.getNorthConnector(ctx));
 router.post('/api/north', (ctx: KoaContext<any, any>) => northConnectorController.createNorthConnector(ctx));
 router.put('/api/north/:id', (ctx: KoaContext<any, any>) => northConnectorController.updateNorthConnector(ctx));

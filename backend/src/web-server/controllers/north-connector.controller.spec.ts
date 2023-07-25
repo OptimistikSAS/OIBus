@@ -632,4 +632,103 @@ describe('North connector controller', () => {
     expect(ctx.app.reloadService.oibusEngine.retryAllArchiveFiles).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalledTimes(1);
   });
+
+  it('testNorthConnection() should test North connector settings on connector update', async () => {
+    const createdNorth = {
+      testConnection: jest.fn()
+    };
+    ctx.request.body = {
+      ...northConnectorCommand
+    };
+    ctx.params.id = 'id';
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    (ctx.app.northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
+
+    await northConnectorController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, northConnectorCommand.settings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      northConnectorCommand.settings,
+      northConnector.settings,
+      mqttManifest.settings
+    );
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('testNorthConnection() should throw 404 when manifest not found', async () => {
+    ctx.request.body = {
+      ...northConnectorCommand,
+      type: 'invalid'
+    };
+
+    await northConnectorController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.northService.createNorth).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
+  });
+
+  it('testNorthConnection() should return 404 when Nouth connector is not found', async () => {
+    ctx.request.body = {
+      ...northConnectorCommand
+    };
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+
+    await northConnectorController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.northService.createNorth).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it('testNorthConnection() should test connector on connector creation', async () => {
+    ctx.request.body = {
+      ...northConnectorCommand
+    };
+    ctx.params.id = 'create';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+
+    await northConnectorController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).toHaveBeenCalledTimes(1);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      northConnectorCommand.settings,
+      null,
+      mqttManifest.settings
+    );
+    expect(ctx.notFound).not.toHaveBeenCalled();
+  });
+
+  it('testNorthConnection() should return 404 when body is null', async () => {
+    ctx.request.body = null;
+
+    await northConnectorController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.northService.createNorth).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
+  });
+
+  it('testNorthConnection() should return bad request when validation fails', async () => {
+    ctx.request.body = {
+      ...northConnectorCommand
+    };
+    const validationError = new Error('invalid body');
+    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
+      throw validationError;
+    });
+
+    await northConnectorController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, northConnectorCommand.settings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.northService.createNorth).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+  });
 });
