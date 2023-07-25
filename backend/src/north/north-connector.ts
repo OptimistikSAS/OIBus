@@ -482,4 +482,11 @@ export default class NorthConnector<T extends NorthSettings = any> {
   handlesValues(): this is HandlesValues {
     return 'handleValues' in this;
   }
+
+  /**
+   * @throws {Error} Error with a message specifying wrong settings
+   */
+  async testConnection(): Promise<void> {
+    this.logger.warn('testConnection must be override');
+  }
 }

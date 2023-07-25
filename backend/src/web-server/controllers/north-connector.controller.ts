@@ -267,4 +267,38 @@ export default class NorthConnectorController {
     await ctx.app.reloadService.oibusEngine.retryAllArchiveFiles(northConnector.id);
     ctx.noContent();
   }
+
+  async testNorthConnection(ctx: KoaContext<NorthConnectorCommandDTO, void>): Promise<void> {
+    try {
+      const manifest = ctx.request.body ? northManifests.find(northManifest => northManifest.id === ctx.request.body!.type) : null;
+      if (!manifest) {
+        return ctx.throw(404, 'North manifest not found');
+      }
+      let northConnector: NorthConnectorDTO | null = null;
+      if (ctx.params.id !== 'create') {
+        northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+        if (!northConnector) {
+          return ctx.notFound();
+        }
+      }
+      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
+      const command: NorthConnectorDTO = {
+        id: northConnector?.id || 'test',
+        ...ctx.request.body!,
+        name: northConnector?.name || `${ctx.request.body!.type}:test-connection`
+      };
+      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
+        command.settings,
+        northConnector?.settings || null,
+        manifest.settings
+      );
+      const logger = ctx.app.logger.child({ scopeType: 'north', scopeId: command.id, scopeName: command.name });
+      const northToTest = ctx.app.northService.createNorth(command, 'baseFolder', logger);
+      await northToTest.testConnection();
+
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
 }
