@@ -10,6 +10,7 @@ import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.m
 import { SubscriptionDTO } from '../../../../../shared/model/subscription.model';
 import { Component } from '@angular/core';
 import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
+import { ExternalSourceService } from '../../services/external-source.service';
 
 @Component({
   template: `<oib-north-subscriptions [northConnector]="northConnector"></oib-north-subscriptions>`,
@@ -49,6 +50,7 @@ describe('NorthSubscriptionsComponent', () => {
   let tester: NorthSubscriptionsComponentTester;
   let northService: jasmine.SpyObj<NorthConnectorService>;
   let southService: jasmine.SpyObj<SouthConnectorService>;
+  let externalSourceService: jasmine.SpyObj<ExternalSourceService>;
 
   const southConnectors: Array<SouthConnectorDTO> = [
     {
@@ -66,17 +68,21 @@ describe('NorthSubscriptionsComponent', () => {
   beforeEach(() => {
     northService = createMock(NorthConnectorService);
     southService = createMock(SouthConnectorService);
+    externalSourceService = createMock(ExternalSourceService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         { provide: NorthConnectorService, useValue: northService },
-        { provide: SouthConnectorService, useValue: southService }
+        { provide: SouthConnectorService, useValue: southService },
+        { provide: ExternalSourceService, useValue: externalSourceService }
       ]
     });
 
     southService.list.and.returnValue(of(southConnectors));
+    externalSourceService.list.and.returnValue(of([]));
     northService.getNorthConnectorSubscriptions.and.returnValue(of(northSubscriptions));
+    northService.getNorthConnectorExternalSubscriptions.and.returnValue(of([]));
 
     tester = new NorthSubscriptionsComponentTester();
   });
@@ -86,9 +92,11 @@ describe('NorthSubscriptionsComponent', () => {
 
     expect(tester.title).toContainText('Subscriptions');
     expect(tester.subscriptions.length).toEqual(2);
-    expect(tester.subscriptions[0].elements('td').length).toEqual(2);
-    expect(tester.subscriptions[0].elements('td')[0]).toContainText('south1');
-    expect(tester.subscriptions[1].elements('td')[0]).toContainText('south2');
+    expect(tester.subscriptions[0].elements('td').length).toEqual(3);
+    expect(tester.subscriptions[0].elements('td')[0]).toContainText('South connector');
+    expect(tester.subscriptions[0].elements('td')[1]).toContainText('south1');
+    expect(tester.subscriptions[1].elements('td')[0]).toContainText('South connector');
+    expect(tester.subscriptions[1].elements('td')[1]).toContainText('south2');
   });
 
   it('should display an empty list', () => {
@@ -96,6 +104,6 @@ describe('NorthSubscriptionsComponent', () => {
     tester.detectChanges();
 
     expect(tester.title).toContainText('Subscriptions');
-    expect(tester.noSubscriptions).toContainText('No subscription set. The connector receives data from all south connectors.');
+    expect(tester.noSubscriptions).toContainText('No subscription set. The connector receives data from all data sources.');
   });
 });

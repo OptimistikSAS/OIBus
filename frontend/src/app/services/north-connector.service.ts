@@ -8,7 +8,7 @@ import {
   NorthConnectorManifest,
   NorthType
 } from '../../../../shared/model/north-connector.model';
-import { SubscriptionDTO } from '../../../../shared/model/subscription.model';
+import { ExternalSubscriptionDTO, SubscriptionDTO } from '../../../../shared/model/subscription.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on North connectors
@@ -100,6 +100,27 @@ export class NorthConnectorService {
    */
   deleteNorthConnectorSubscription(northId: string, southId: SubscriptionDTO): Observable<void> {
     return this.http.delete<void>(`/api/north/${northId}/subscriptions/${southId}`);
+  }
+
+  /**
+   * Retrieve the North connector external subscriptions
+   */
+  getNorthConnectorExternalSubscriptions(northId: string): Observable<Array<ExternalSubscriptionDTO>> {
+    return this.http.get<Array<ExternalSubscriptionDTO>>(`/api/north/${northId}/external-subscriptions`);
+  }
+
+  /**
+   * Create a new North connector external subscription
+   */
+  createNorthConnectorExternalSubscription(northId: string, externalSourceId: ExternalSubscriptionDTO): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/external-subscriptions/${externalSourceId}`, null);
+  }
+
+  /**
+   * Delete the selected North connector external subscription
+   */
+  deleteNorthConnectorExternalSubscription(northId: string, externalSourceId: ExternalSubscriptionDTO): Observable<void> {
+    return this.http.delete<void>(`/api/north/${northId}/external-subscriptions/${externalSourceId}`);
   }
 
   getNorthConnectorCacheErrorFiles(northId: string): Observable<Array<NorthCacheFiles>> {
