@@ -214,6 +214,7 @@ img.oib-image-header {
     padding: 0;
     // case of table
     td {
+      vertical-align: middle;
       padding-left: 1rem;
       border-bottom-width: 0px;
     }
@@ -526,4 +527,39 @@ val-errors > div {
   .page-link {
     background-color: $electricBlue;
   }
+}
+
+/* checkbox */
+[type="checkbox"] {
+  opacity: 0;
+}
+[type="checkbox"] + label {
+  position: relative;
+  cursor:pointer;
+  display:inline;
+  color: $darkGrey;
+  line-height: 25px;
+  pointer-events: none;
+}
+[type="checkbox"] + label::before {
+  content:"";
+  position: absolute;
+  transform: translate(-11px, 6px);
+  width: 10px;
+  height:10px;
+  outline: 2px solid $darkGrey;
+  background: white;
+  border-radius: 1px;
+  transition:all .3s ease;
+}
+[type="checkbox"]:checked + label::before {
+  content:"";
+  position: absolute;
+  transform: translate(-11px, 6px);
+  width: 10px;
+  height:10px;
+  outline: 2px solid $darkGrey;
+  background: $yellow;
+  border-radius: 1px;
+  transition:all .3s ease;
 }

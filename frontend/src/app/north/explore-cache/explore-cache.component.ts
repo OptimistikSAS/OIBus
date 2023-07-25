@@ -9,6 +9,7 @@ import { of, switchMap } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
+import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { FileSizePipe } from '../../shared/file-size.pipe';
 import { ErrorFilesComponent } from './error-files/error-files.component';
 import { ArchiveFilesComponent } from './archive-files/archive-files.component';
@@ -25,6 +26,7 @@ import { ArchiveFilesComponent } from './archive-files/archive-files.component';
     DatetimePipe,
     NgIf,
     PaginationComponent,
+    BackNavigationDirective,
     FileSizePipe,
     RouterLink,
     ErrorFilesComponent,
