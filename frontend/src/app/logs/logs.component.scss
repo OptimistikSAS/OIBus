@@ -97,10 +97,13 @@
         width: 2rem;
       }
       td:nth-child(3) {
-        width: 6rem;
+        width: 2rem;
+      }
+      td:nth-child(4) {
+        width: 12rem;
       }
       td:last-child {
-        text-align: right;
+        text-align: left;
         padding-right: 1em;
         overflow-wrap: break-word;
         max-width: 12rem; //idk why but with a little max-width the table isn't broken
