@@ -87,6 +87,7 @@ export class HistoryQueryListComponent implements OnInit {
           .pipe(tap(() => (this.allHistoryQueries = null)))
           .subscribe(queries => {
             this.allHistoryQueries = queries;
+            this.filteredHistoryQueries = this.filter(queries);
             this.changePage(0);
           });
         this.notificationService.success('history-query.deleted', {

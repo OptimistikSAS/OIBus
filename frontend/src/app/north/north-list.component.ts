@@ -78,6 +78,7 @@ export class NorthListComponent implements OnInit {
           .pipe(tap(() => (this.allNorths = null)))
           .subscribe(norths => {
             this.allNorths = norths;
+            this.filteredNorths = this.filter(this.allNorths);
             this.changePage(0);
           });
         this.notificationService.success('north.deleted', {
