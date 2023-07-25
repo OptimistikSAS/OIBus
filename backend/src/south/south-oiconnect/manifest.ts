@@ -70,7 +70,6 @@ const manifest: SouthConnectorManifest = {
           type: 'OibSecret',
           label: 'Password',
           defaultValue: '',
-          validators: [{ key: 'required' }],
           conditionalDisplay: { field: 'type', values: ['basic'] },
           displayInViewMode: false
         },
@@ -80,7 +79,6 @@ const manifest: SouthConnectorManifest = {
           label: 'Token',
           defaultValue: '',
           conditionalDisplay: { field: 'type', values: ['bearer'] },
-          validators: [{ key: 'required' }],
           newRow: false,
           displayInViewMode: false
         },

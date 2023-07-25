@@ -23,8 +23,8 @@ export type NorthOIConnectSettingsAuthenticationType = (typeof NORTH_O_I_CONNECT
 export interface NorthOIConnectSettingsAuthentication {
   type: NorthOIConnectSettingsAuthenticationType;
   username?: string;
-  password?: string;
-  token?: string;
+  password?: string | null;
+  token?: string | null;
   apiKeyHeader?: string | null;
   apiKey?: string | null;
 }
@@ -36,7 +36,7 @@ export interface NorthAmazonS3Settings extends BaseNorthSettings {
   region: string;
   folder: string;
   accessKey: string;
-  secretKey: string;
+  secretKey: string | null;
   useProxy: boolean;
   proxyUrl?: string;
   proxyUsername?: string | null;
@@ -52,7 +52,7 @@ export interface NorthAzureBlobSettings extends BaseNorthSettings {
   accessKey?: string | null;
   tenantId?: string | null;
   clientId?: string;
-  clientSecret?: string;
+  clientSecret?: string | null;
 }
 
 export interface NorthConsoleSettings extends BaseNorthSettings {

@@ -57,7 +57,9 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
       region: this.connector.settings.region,
       credentials: {
         accessKeyId: this.connector.settings.accessKey,
-        secretAccessKey: await this.encryptionService.decryptText(this.connector.settings.secretKey)
+        secretAccessKey: this.connector.settings.secretKey
+          ? await this.encryptionService.decryptText(this.connector.settings.secretKey)
+          : ''
       },
       requestHandler: this.proxyAgent ? new NodeHttpHandler({ httpAgent: this.proxyAgent }) : undefined
     });

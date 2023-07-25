@@ -47,8 +47,7 @@ const manifest: NorthConnectorManifest = {
       key: 'secretKey',
       type: 'OibSecret',
       label: 'Secret key',
-      newRow: true,
-      validators: [{ key: 'required' }]
+      newRow: true
     },
     ...proxy
   ]
