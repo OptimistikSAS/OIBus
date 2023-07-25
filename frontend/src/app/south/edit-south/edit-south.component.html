@@ -60,7 +60,7 @@
                 </div>
               </div>
             </div>
-            <div class="col-4">
+            <div class="col-4" *ngIf="!manifest.modes.forceMaxInstantPerItem">
               <div class="form-group">
                 <div class="form-check form-switch padded">
                   <input formControlName="maxInstantPerItem" id="south-max-instant-per-item" type="checkbox" class="form-check-input" />

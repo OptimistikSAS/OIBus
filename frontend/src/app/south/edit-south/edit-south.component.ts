@@ -108,7 +108,7 @@ export class EditSouthComponent implements OnInit {
           description: '',
           enabled: true as boolean,
           history: this.fb.group({
-            maxInstantPerItem: false,
+            maxInstantPerItem: manifest.modes.forceMaxInstantPerItem,
             maxReadInterval: 0,
             readDelay: 200
           }),

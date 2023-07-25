@@ -50,7 +50,8 @@ class TestComponent {
       subscription: false,
       history: true,
       lastFile: true,
-      lastPoint: false
+      lastPoint: false,
+      forceMaxInstantPerItem: false
     }
   };
   northManifest: NorthConnectorManifest = {

@@ -145,6 +145,9 @@ export default class SouthConnectorController {
       await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
 
       const command: SouthConnectorCommandDTO = ctx.request.body!;
+      if (manifest.modes.forceMaxInstantPerItem) {
+        command.history.maxInstantPerItem = true;
+      }
       command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, null, manifest.settings);
       const southConnector = await ctx.app.reloadService.onCreateSouth(command);
       ctx.created(southConnector);

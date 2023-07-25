@@ -9,7 +9,8 @@ const manifest: SouthConnectorManifest = {
     subscription: false,
     lastPoint: true,
     lastFile: false,
-    history: false
+    history: false,
+    forceMaxInstantPerItem: false
   },
   settings: [
     {
