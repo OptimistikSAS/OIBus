@@ -262,9 +262,9 @@ describe('SouthConnector enabled', () => {
     );
     expect(south.fileQuery).toHaveBeenCalledTimes(1);
     expect(south.lastPointQuery).toHaveBeenCalledTimes(1);
-    expect(logger.error).toHaveBeenCalledWith(`Error when calling historyQuery ${new Error('history query error')}`);
-    expect(logger.error).toHaveBeenCalledWith(`Error when calling fileQuery ${new Error('file query error')}`);
-    expect(logger.error).toHaveBeenCalledWith(`Error when calling lastPointQuery ${new Error('last point query error')}`);
+    expect(logger.error).toHaveBeenCalledWith(`Error when calling historyQuery. ${new Error('history query error')}`);
+    expect(logger.error).toHaveBeenCalledWith(`Error when calling fileQuery. ${new Error('file query error')}`);
+    expect(logger.error).toHaveBeenCalledWith(`Error when calling lastPointQuery. ${new Error('last point query error')}`);
 
     await south.run(scanMode.id, items);
     expect(south.historyQueryHandler).toHaveBeenCalledTimes(2);
