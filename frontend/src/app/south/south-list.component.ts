@@ -89,6 +89,7 @@ export class SouthListComponent implements OnInit {
           .pipe(tap(() => (this.allSouths = null)))
           .subscribe(southList => {
             this.allSouths = southList;
+            this.filteredSouths = this.filter(this.allSouths);
             this.changePage(0);
           });
         this.notificationService.success('south.deleted', {
