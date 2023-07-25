@@ -76,7 +76,6 @@ const manifest: NorthConnectorManifest = {
       type: 'OibSecret',
       label: 'Client Secret',
       newRow: false,
-      validators: [{ key: 'required' }],
       conditionalDisplay: { field: 'authentication', values: ['aad'] }
     }
   ]

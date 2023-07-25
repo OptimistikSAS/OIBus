@@ -86,7 +86,6 @@ const manifest: NorthConnectorManifest = {
           type: 'OibSecret',
           label: 'Password',
           defaultValue: '',
-          validators: [{ key: 'required' }],
           conditionalDisplay: { field: 'type', values: ['basic'] },
           displayInViewMode: false
         },
@@ -96,7 +95,6 @@ const manifest: NorthConnectorManifest = {
           label: 'Token',
           defaultValue: '',
           conditionalDisplay: { field: 'type', values: ['bearer'] },
-          validators: [{ key: 'required' }],
           newRow: false,
           displayInViewMode: false
         },
