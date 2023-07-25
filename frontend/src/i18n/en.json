@@ -461,13 +461,23 @@
     },
     "subscriptions": {
       "title": "Subscriptions",
-      "none": "No subscription set. The connector receives data from all south connectors.",
-      "add": "Subscribe to a connector",
-      "title-creation": "Subscribe to a South connector",
-      "created": "The connector is now subscribed to {{ name }}",
-      "confirm-deletion": "Are you sure you want to unsubscribe from South {{ name }}?",
-      "deleted": "The connector is not subscribed to {{ name }} anymore",
-      "name": "South connector"
+      "none": "No subscription set. The connector receives data from all data sources.",
+      "add": "Subscribe to a data source",
+      "title-creation": "Subscribe to a data source",
+      "type": "Type",
+      "name": "Name",
+      "south": {
+        "title": "South connector",
+        "created": "The connector is now subscribed to the South connector {{ name }}",
+        "confirm-deletion": "Are you sure you want to unsubscribe from South connector {{ name }}?",
+        "deleted": "The connector is not subscribed to the South connector {{ name }} anymore"
+      },
+      "external-source": {
+        "title": "External source",
+        "created": "The connector is now subscribed to the external source {{ name }}",
+        "confirm-deletion": "Are you sure you want to unsubscribe from external source {{ name }}?",
+        "deleted": "The connector is not subscribed to the external source {{ name }} anymore"
+      }
     },
     "monitoring": {
       "title": "Monitoring",

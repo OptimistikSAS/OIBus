@@ -2,28 +2,36 @@
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between">
       <span translate="north.subscriptions.title" id="title"></span>
-      <button class="btn btn-primary btn-sm oib-box-btn" (click)="addSubscription()" translate="north.subscriptions.add"></button>
+      <button
+        class="btn btn-primary btn-sm oib-box-btn"
+        *ngIf="externalSources.length + southConnectors.length !== subscriptions.length"
+        (click)="addSubscription()"
+        translate="north.subscriptions.add"
+      ></button>
     </div>
   </ng-template>
 
-  <div class="mb-3" *ngIf="northSubscriptions.length !== 0; else emptySubscriptions">
-    <table class="mb-2 table table-sm table-hover">
-      <thead class="table-light">
+  <div class="mb-3" *ngIf="subscriptions.length !== 0; else emptySubscriptions">
+    <table class="mb-2 table table-sm table-hover oib-table">
+      <thead class="light">
         <tr>
+          <th translate="north.subscriptions.type" style="width: 17%"></th>
           <th translate="north.subscriptions.name"></th>
           <th style="width: 3%"></th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let northSubscription of northSubscriptions">
-          <td>{{ getSouthName(northSubscription) }}</td>
+        <tr *ngFor="let subscription of subscriptions">
+          <td>{{ 'north.subscriptions.' + subscription.type + '.title' | translate }}</td>
+          <td *ngIf="subscription.type === 'south'">{{ subscription.subscription!.name }}</td>
+          <td *ngIf="subscription.type === 'external-source'">{{ subscription.externalSubscription!.reference }}</td>
           <td class="text-nowrap action-buttons">
             <div class="pull-right">
               <!-- Delete button -->
               <button
                 type="button"
                 class="btn btn-link delete-scan-mode fa fa-trash px-1 py-0"
-                (click)="deleteSubscription(northSubscription)"
+                (click)="deleteSubscription(subscription)"
               ></button>
             </div>
           </td>
