@@ -177,9 +177,9 @@ async function createNorthConnectorsTable(knex: Knex): Promise<void> {
   });
 }
 
-async function createExternalSubscriptionsTable(knex: Knex): Promise<void> {
+async function createSubscriptionsTable(knex: Knex): Promise<void> {
   await knex.schema.createTable(SUBSCRIPTION_TABLE, table => {
-    createDefaultEntityFields(table);
+    table.timestamps(false, true);
     table.string('north_connector_id').notNullable();
     table.foreign('north_connector_id').references('id').inTable(NORTH_CONNECTORS_TABLE);
     table.string('south_connector_id').notNullable();
@@ -188,13 +188,13 @@ async function createExternalSubscriptionsTable(knex: Knex): Promise<void> {
   });
 }
 
-async function createSubscriptionsTable(knex: Knex): Promise<void> {
+async function createExternalSubscriptionsTable(knex: Knex): Promise<void> {
   await knex.schema.createTable(EXTERNAL_SUBSCRIPTION_TABLE, table => {
-    createDefaultEntityFields(table);
+    table.timestamps(false, true);
     table.string('north_connector_id').notNullable();
     table.foreign('north_connector_id').references('id').inTable(NORTH_CONNECTORS_TABLE);
     table.string('external_source_id').notNullable();
-    table.foreign('external_source_id').references('id').inTable(EXTERNAL_SUBSCRIPTION_TABLE);
+    table.foreign('external_source_id').references('id').inTable(EXTERNAL_SOURCES_TABLE);
     table.primary(['north_connector_id', 'external_source_id']);
   });
 }
