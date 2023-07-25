@@ -190,7 +190,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         );
       } catch (error) {
         this.historyIsRunning = false;
-        this.logger.error(`Error when calling historyQuery ${error}`);
+        this.logger.error(`Error when calling historyQuery. ${error}`);
       }
     }
     if (this.queriesFile()) {
@@ -198,7 +198,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         this.logger.trace(`Querying file for ${items.length} items`);
         await this.fileQuery(items);
       } catch (error) {
-        this.logger.error(`Error when calling fileQuery ${error}`);
+        this.logger.error(`Error when calling fileQuery. ${error}`);
       }
     }
     if (this.queriesLastPoint()) {
@@ -206,7 +206,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         this.logger.trace(`Querying points for ${items.length} items`);
         await this.lastPointQuery(items);
       } catch (error) {
-        this.logger.error(`Error when calling lastPointQuery ${error}`);
+        this.logger.error(`Error when calling lastPointQuery. ${error}`);
       }
     }
 
@@ -308,7 +308,6 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     for (const [index, interval] of intervals.entries()) {
       // @ts-ignore
       const lastInstantRetrieved = await this.historyQuery(items, interval.start, interval.end);
-
       if (index !== intervals.length - 1) {
         this.cacheService!.createOrUpdateCacheScanMode({
           southId: this.connector.id,
