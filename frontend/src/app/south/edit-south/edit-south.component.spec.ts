@@ -74,7 +74,8 @@ describe('EditSouthComponent', () => {
           subscription: false,
           lastPoint: false,
           lastFile: false,
-          history: true
+          history: true,
+          forceMaxInstantPerItem: false
         },
         items: {
           scanMode: { subscriptionOnly: false, acceptSubscription: true },

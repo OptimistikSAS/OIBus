@@ -49,7 +49,7 @@ export class SouthMetricsComponent implements OnInit, OnDestroy {
 
   resetMetrics() {
     this.southService.resetMetrics(this.southConnector.id).subscribe(() => {
-      this.notificationService.success('south.data.metrics-reset');
+      this.notificationService.success('south.monitoring.metrics-reset');
     });
   }
 }

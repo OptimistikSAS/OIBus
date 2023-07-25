@@ -147,7 +147,8 @@ describe('EditHistoryQueryComponent', () => {
           history: true,
           lastFile: false,
           lastPoint: false,
-          subscription: false
+          subscription: false,
+          forceMaxInstantPerItem: false
         },
         settings: [],
         items: {

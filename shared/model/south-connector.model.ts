@@ -87,6 +87,7 @@ export interface SouthConnectorManifest {
     lastPoint: boolean;
     lastFile: boolean;
     history: boolean;
+    forceMaxInstantPerItem: boolean;
   };
   settings: Array<OibFormControl>;
   items: SouthConnectorItemManifest;

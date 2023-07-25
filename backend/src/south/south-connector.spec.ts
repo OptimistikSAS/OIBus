@@ -81,7 +81,8 @@ const manifest: SouthConnectorManifest = {
     subscription: true,
     lastPoint: true,
     lastFile: true,
-    history: true
+    history: true,
+    forceMaxInstantPerItem: false
   },
   settings: [],
   schema: {} as unknown,
