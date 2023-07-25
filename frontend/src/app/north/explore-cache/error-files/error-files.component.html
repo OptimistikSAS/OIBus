@@ -29,7 +29,7 @@
             type="checkbox"
             #checkbox
             id="toggle-all-parameters"
-          />
+          /><label></label>
         </th>
         <th translate="north.cache-settings.file-date"></th>
         <th translate="north.cache-settings.filename"></th>
@@ -46,7 +46,7 @@
             [checked]="checkboxByErrorFiles.get(file.filename)"
             class="toggle-parameter"
             [id]="'error-file-' + file.filename"
-          />
+          /><label></label>
         </td>
         <td>{{ file.modificationDate | datetime:'mediumWithSeconds'}}</td>
         <td>{{ file.filename }}</td>
