@@ -88,6 +88,8 @@ router.get('/api/north/:id', (ctx: KoaContext<any, any>) => northConnectorContro
 router.post('/api/north', (ctx: KoaContext<any, any>) => northConnectorController.createNorthConnector(ctx));
 router.put('/api/north/:id', (ctx: KoaContext<any, any>) => northConnectorController.updateNorthConnector(ctx));
 router.delete('/api/north/:id', (ctx: KoaContext<any, any>) => northConnectorController.deleteNorthConnector(ctx));
+router.put('/api/north/:id/start', (ctx: KoaContext<any, any>) => northConnectorController.startNorthConnector(ctx));
+router.put('/api/north/:id/stop', (ctx: KoaContext<any, any>) => northConnectorController.stopNorthConnector(ctx));
 router.get('/api/north/:northId/subscriptions', (ctx: KoaContext<any, any>) => subscriptionController.getNorthSubscriptions(ctx));
 router.post('/api/north/:northId/subscriptions/:southId', (ctx: KoaContext<any, any>) =>
   subscriptionController.createNorthSubscription(ctx)
@@ -139,6 +141,8 @@ router.get('/api/south/:id', (ctx: KoaContext<any, any>) => southConnectorContro
 router.post('/api/south', (ctx: KoaContext<any, any>) => southConnectorController.createSouthConnector(ctx));
 router.put('/api/south/:id', (ctx: KoaContext<any, any>) => southConnectorController.updateSouthConnector(ctx));
 router.delete('/api/south/:id', (ctx: KoaContext<any, any>) => southConnectorController.deleteSouthConnector(ctx));
+router.put('/api/south/:id/start', (ctx: KoaContext<any, any>) => southConnectorController.startSouthConnector(ctx));
+router.put('/api/south/:id/stop', (ctx: KoaContext<any, any>) => southConnectorController.stopSouthConnector(ctx));
 router.get('/api/south/:southId/items', (ctx: KoaContext<any, any>) => southConnectorController.searchSouthItems(ctx));
 router.get('/api/south/:southId/items/all', (ctx: KoaContext<any, any>) => southConnectorController.listSouthItems(ctx));
 router.post('/api/south/:southId/items', (ctx: KoaContext<any, any>) => southConnectorController.createSouthItem(ctx));

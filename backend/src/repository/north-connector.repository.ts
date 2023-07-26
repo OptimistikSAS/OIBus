@@ -95,25 +95,23 @@ export default class NorthConnectorRepository {
       `caching_scan_mode_id, caching_group_count, caching_retry_interval, caching_retry_count, caching_max_send_count, ` +
       `caching_send_file_immediately, caching_max_size, archive_enabled, archive_retention_duration) ` +
       `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
-    const insertResult = this.database
-      .prepare(insertQuery)
-      .run(
-        id,
-        command.name,
-        command.type,
-        command.description,
-        +command.enabled,
-        JSON.stringify(command.settings),
-        command.caching.scanModeId,
-        command.caching.groupCount,
-        command.caching.retryInterval,
-        command.caching.retryCount,
-        command.caching.maxSendCount,
-        +command.caching.sendFileImmediately,
-        command.caching.maxSize,
-        +command.archive.enabled,
-        command.archive.retentionDuration
-      );
+    const insertResult = this.database.prepare(insertQuery).run(
+      id,
+      command.name,
+      command.type,
+      command.description,
+      0, // disabled by default at creation
+      JSON.stringify(command.settings),
+      command.caching.scanModeId,
+      command.caching.groupCount,
+      command.caching.retryInterval,
+      command.caching.retryCount,
+      command.caching.maxSendCount,
+      +command.caching.sendFileImmediately,
+      command.caching.maxSize,
+      +command.archive.enabled,
+      command.archive.retentionDuration
+    );
 
     const query =
       `SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ` +
@@ -145,12 +143,22 @@ export default class NorthConnectorRepository {
     };
   }
 
+  startNorthConnector(id: string) {
+    const query = `UPDATE ${NORTH_CONNECTORS_TABLE} SET enabled = ? WHERE id = ?;`;
+    this.database.prepare(query).run(1, id);
+  }
+
+  stopNorthConnector(id: string) {
+    const query = `UPDATE ${NORTH_CONNECTORS_TABLE} SET enabled = ? WHERE id = ?;`;
+    this.database.prepare(query).run(0, id);
+  }
+
   /**
    * Update a North connector by its ID
    */
   updateNorthConnector(id: string, command: NorthConnectorCommandDTO): void {
     const query =
-      `UPDATE ${NORTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, settings = ?, ` +
+      `UPDATE ${NORTH_CONNECTORS_TABLE} SET name = ?, description = ?, settings = ?, ` +
       `caching_scan_mode_id = ?, caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, ` +
       `caching_max_send_count = ?, caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? ` +
       `WHERE id = ?;`;
@@ -159,7 +167,6 @@ export default class NorthConnectorRepository {
       .run(
         command.name,
         command.description,
-        +command.enabled,
         JSON.stringify(command.settings),
         command.caching.scanModeId,
         command.caching.groupCount,

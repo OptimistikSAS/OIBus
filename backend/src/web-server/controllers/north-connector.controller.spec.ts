@@ -305,6 +305,78 @@ describe('North connector controller', () => {
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
+  it('startNorthConnector() should enable North connector', async () => {
+    ctx.params.enable = true;
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+
+    await northConnectorController.startNorthConnector(ctx);
+
+    expect(ctx.app.reloadService.onStartNorth).toHaveBeenCalledTimes(1);
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+  });
+
+  it('startNorthConnector() should throw badRequest if fail to enable', async () => {
+    ctx.params.enable = true;
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+
+    ctx.app.reloadService.onStartNorth.mockImplementation(() => {
+      throw new Error('bad');
+    });
+
+    await northConnectorController.startNorthConnector(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalled();
+  });
+
+  it('startNorthConnector() should return not found if North not found', async () => {
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+
+    await northConnectorController.startNorthConnector(ctx);
+
+    expect(ctx.app.reloadService.onStartNorth).not.toHaveBeenCalled();
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+  });
+
+  it('stopNorthConnector() should enable North connector', async () => {
+    ctx.params.enable = true;
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+
+    await northConnectorController.stopNorthConnector(ctx);
+
+    expect(ctx.app.reloadService.onStopNorth).toHaveBeenCalledTimes(1);
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+  });
+
+  it('stopNorthConnector() should throw badRequest if fail to enable', async () => {
+    ctx.params.enable = true;
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+
+    ctx.app.reloadService.onStopNorth.mockImplementation(() => {
+      throw new Error('bad');
+    });
+
+    await northConnectorController.stopNorthConnector(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalled();
+  });
+
+  it('stopNorthConnector() should return not found if North not found', async () => {
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
+
+    await northConnectorController.stopNorthConnector(ctx);
+
+    expect(ctx.app.reloadService.onStopNorth).not.toHaveBeenCalled();
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+  });
+
   it('resetNorthMetrics() should reset North metrics', async () => {
     ctx.params.northId = 'id';
     ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
