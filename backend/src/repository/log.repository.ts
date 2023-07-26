@@ -60,22 +60,19 @@ export default class LogRepository {
   }
 
   addLogs = (logsToStore: Array<PinoLog> = []): void => {
-    try {
-      // Create a single query to store many logs at once
-      let valueClause = 'VALUES ';
-      const params: Array<string | number | null> = [];
-      logsToStore.forEach(log => {
-        valueClause += ' (?,?,?,?,?,?),';
-        params.push(log.time, LEVEL_FORMAT[log.level], log.scopeType, log.scopeId, log.scopeName, log.msg);
-      });
+    if (logsToStore.length === 0) return;
+    // Create a single query to store many logs at once
+    let valueClause = 'VALUES';
+    const params: Array<string | number | null> = [];
+    logsToStore.forEach(log => {
+      valueClause += ' (?,?,?,?,?,?),';
+      params.push(log.time, LEVEL_FORMAT[log.level], log.scopeType, log.scopeId, log.scopeName, log.msg);
+    });
 
-      // Remove last string char ","
-      const query = `INSERT INTO ${LOG_TABLE} (timestamp, level, scope_type, scope_id, scope_name, message) ${valueClause.slice(0, -1)};`;
+    // Remove last string char ","
+    const query = `INSERT INTO ${LOG_TABLE} (timestamp, level, scope_type, scope_id, scope_name, message) ${valueClause.slice(0, -1)};`;
 
-      this.database.prepare(query).run(...params);
-    } catch (error) {
-      console.error(error);
-    }
+    this.database.prepare(query).run(...params);
   };
 
   /**

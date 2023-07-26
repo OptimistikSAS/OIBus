@@ -30,6 +30,7 @@ describe('History query item repository', () => {
         {
           id: 'id1',
           name: 'my history query item',
+          enabled: true,
           connectorId: 'historyId',
           settings: {},
           scanModeId: 'history'
@@ -37,6 +38,7 @@ describe('History query item repository', () => {
         {
           id: 'id2',
           name: 'my second history query item',
+          enabled: false,
           connectorId: 'historyId',
           settings: {},
           scanModeId: 'history'
@@ -51,12 +53,14 @@ describe('History query item repository', () => {
       {
         id: 'id1',
         name: 'my history query item',
+        enabled: true,
         historyId: 'historyId',
         settings: JSON.stringify({})
       },
       {
         id: 'id2',
         name: 'my second history query item',
+        enabled: false,
         historyId: 'historyId',
         settings: JSON.stringify({})
       }
@@ -67,7 +71,7 @@ describe('History query item repository', () => {
       name: 'my item'
     });
     expect(database.prepare).toHaveBeenCalledWith(
-      'SELECT id, name, history_id AS historyId, settings FROM history_items WHERE ' +
+      'SELECT id, name, enabled, history_id AS historyId, settings FROM history_items WHERE ' +
         "history_id = ? AND name like '%' || ? || '%' LIMIT 50 OFFSET 0;"
     );
     expect(southScans).toEqual(expectedValue);
@@ -78,6 +82,7 @@ describe('History query item repository', () => {
       {
         id: 'id1',
         name: 'my history query item',
+        enabled: true,
         connectorId: 'historyId',
         settings: {},
         scanModeId: 'history'
@@ -85,6 +90,7 @@ describe('History query item repository', () => {
       {
         id: 'id2',
         name: 'my second history query item',
+        enabled: false,
         connectorId: 'historyId',
         settings: {},
         scanModeId: 'history'
@@ -94,6 +100,7 @@ describe('History query item repository', () => {
       {
         id: 'id1',
         name: 'my history query item',
+        enabled: true,
         historyId: 'historyId',
         scanModeId: 'scanMode1',
         settings: JSON.stringify({})
@@ -101,13 +108,14 @@ describe('History query item repository', () => {
       {
         id: 'id2',
         name: 'my second history query item',
+        enabled: false,
         historyId: 'historyId',
         scanModeId: 'scan1',
         settings: JSON.stringify({})
       }
     ]);
     const southScans = repository.getHistoryItems('historyId');
-    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, settings FROM history_items WHERE history_id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, enabled, settings FROM history_items WHERE history_id = ?;');
     expect(southScans).toEqual(expectedValue);
   });
 
@@ -115,6 +123,7 @@ describe('History query item repository', () => {
     const expectedValue: SouthConnectorItemDTO = {
       id: 'id1',
       name: 'historyItem1',
+      enabled: true,
       connectorId: 'historyId',
       settings: {},
       scanModeId: 'history'
@@ -122,11 +131,14 @@ describe('History query item repository', () => {
     get.mockReturnValueOnce({
       id: 'id1',
       name: 'historyItem1',
+      enabled: true,
       historyId: 'historyId',
       settings: JSON.stringify({})
     });
     const southScan = repository.getHistoryItem('id1');
-    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, history_id AS historyId, settings FROM history_items WHERE id = ?;');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT id, name, enabled, history_id AS historyId, settings FROM history_items WHERE id = ?;'
+    );
     expect(get).toHaveBeenCalledWith('id1');
     expect(southScan).toEqual(expectedValue);
   });
@@ -142,11 +154,15 @@ describe('History query item repository', () => {
     };
     repository.createHistoryItem('historyId', command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
-    expect(database.prepare).toHaveBeenCalledWith('INSERT INTO history_items (id, name, history_id, settings) VALUES (?, ?, ?, ?);');
-    expect(run).toHaveBeenCalledWith('123456', command.name, 'historyId', JSON.stringify(command.settings));
+    expect(database.prepare).toHaveBeenCalledWith(
+      'INSERT INTO history_items (id, name, enabled, history_id, settings) VALUES (?, ?, ?, ?, ?);'
+    );
+    expect(run).toHaveBeenCalledWith('123456', command.name, 1, 'historyId', JSON.stringify(command.settings));
     expect(get).toHaveBeenCalledWith(1);
 
-    expect(database.prepare).toHaveBeenCalledWith('SELECT id, name, history_id AS historyId, settings FROM history_items WHERE ROWID = ?;');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'SELECT id, name, enabled, history_id AS historyId, settings FROM history_items WHERE ROWID = ?;'
+    );
   });
 
   it('should update a history query item', () => {
@@ -179,6 +195,7 @@ describe('History query item repository', () => {
     const itemToAdd: SouthConnectorItemDTO = {
       id: 'id1',
       name: 'item1',
+      enabled: true,
       connectorId: 'southId',
       settings: {},
       scanModeId: 'history'
@@ -187,15 +204,18 @@ describe('History query item repository', () => {
     const itemToUpdate: SouthConnectorItemDTO = {
       id: 'id2',
       name: 'item2',
+      enabled: true,
       connectorId: 'southId',
       settings: {},
       scanModeId: 'history'
     };
 
     repository.createAndUpdateItems('historyId', [itemToAdd], [itemToUpdate]);
-    expect(database.prepare).toHaveBeenCalledWith(`INSERT INTO history_items (id, name, history_id, settings) VALUES (?, ?, ?, ?);`);
+    expect(database.prepare).toHaveBeenCalledWith(
+      `INSERT INTO history_items (id, name, enabled, history_id, settings) VALUES (?, ?, ?, ?, ?);`
+    );
     expect(database.prepare).toHaveBeenCalledWith(`UPDATE history_items SET name = ?, settings = ? WHERE id = ?;`);
-    expect(run).toHaveBeenCalledWith('123456', 'item1', 'historyId', '{}');
+    expect(run).toHaveBeenCalledWith('123456', 'item1', 1, 'historyId', '{}');
     expect(run).toHaveBeenCalledWith('item2', '{}', 'id2');
   });
 });

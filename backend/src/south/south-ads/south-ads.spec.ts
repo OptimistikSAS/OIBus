@@ -59,6 +59,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'GVL_Test.TestINT1',
+    enabled: true,
     connectorId: 'southId',
     settings: {},
     scanModeId: 'scanModeId1'
@@ -66,6 +67,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id2',
     name: 'GVL_Test.TestINT2',
+    enabled: true,
     connectorId: 'southId',
     settings: {},
     scanModeId: 'scanModeId1'

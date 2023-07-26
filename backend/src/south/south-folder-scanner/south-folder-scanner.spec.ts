@@ -60,6 +60,7 @@ const items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       regex: '.*.csv'
@@ -69,6 +70,7 @@ const items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>> = [
   {
     id: 'id2',
     name: 'item2',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       regex: '.*.log'
@@ -78,6 +80,7 @@ const items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>> = [
   {
     id: 'id2',
     name: 'item2',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       regex: '.*.txt'

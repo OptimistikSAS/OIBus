@@ -36,6 +36,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'item1',
+    enabled: true,
     connectorId: 'southId',
     settings: {},
     scanModeId: 'scanModeId1'
@@ -43,6 +44,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id2',
     name: 'item2',
+    enabled: true,
     connectorId: 'southId',
     settings: {},
     scanModeId: 'scanModeId2'
@@ -315,6 +317,7 @@ describe('OIBusEngine', () => {
       id: 'itemId',
       connectorId: 'id',
       name: 'new name',
+      enabled: true,
       settings: {},
       scanModeId: 'scanModeId'
     });
@@ -330,6 +333,7 @@ describe('OIBusEngine', () => {
       id: 'itemId',
       connectorId: 'id',
       name: 'new name',
+      enabled: true,
       settings: {},
       scanModeId: 'scanModeId'
     });
@@ -337,6 +341,7 @@ describe('OIBusEngine', () => {
       connectorId: 'id',
       id: 'itemId',
       name: 'new name',
+      enabled: true,
       settings: {},
       scanModeId: 'scanModeId'
     });

@@ -130,6 +130,7 @@ describe('SouthDetailComponent', () => {
         {
           id: 'id1',
           name: 'item1',
+          enabled: true,
           connectorId: 'southId',
           settings: {
             query: 'sql'

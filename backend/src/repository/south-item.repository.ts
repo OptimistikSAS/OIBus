@@ -21,7 +21,7 @@ export default class SouthItemRepository {
    */
   listSouthItems(southId: string): Array<SouthConnectorItemDTO> {
     const queryParams = [southId];
-    const query = `SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
+    const query = `SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
 
     return this.database
       .prepare(query)
@@ -29,6 +29,7 @@ export default class SouthItemRepository {
       .map((result: any) => ({
         id: result.id,
         name: result.name,
+        enabled: result.enabled,
         connectorId: result.connectorId,
         scanModeId: result.scanModeId,
         settings: JSON.parse(result.settings)
@@ -47,7 +48,7 @@ export default class SouthItemRepository {
       whereClause += ` AND name like '%' || ? || '%'`;
     }
     const query =
-      `SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} ${whereClause}` +
+      `SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
     const results = this.database
       .prepare(query)
@@ -55,6 +56,7 @@ export default class SouthItemRepository {
       .map((result: any) => ({
         id: result.id,
         name: result.name,
+        enabled: result.enabled,
         connectorId: result.connectorId,
         scanModeId: result.scanModeId,
         settings: JSON.parse(result.settings)
@@ -77,13 +79,14 @@ export default class SouthItemRepository {
    * Retrieve all South items (point, query, folder...) associated to a South connector
    */
   getSouthItems(southId: string): Array<SouthConnectorItemDTO> {
-    const query = `SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
+    const query = `SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} WHERE connector_id = ?;`;
     return this.database
       .prepare(query)
       .all(southId)
       .map((result: any) => ({
         id: result.id,
         name: result.name,
+        enabled: result.enabled,
         connectorId: result.connectorId,
         scanModeId: result.scanModeId,
         settings: JSON.parse(result.settings)
@@ -94,12 +97,13 @@ export default class SouthItemRepository {
    * Retrieve a South item by its ID
    */
   getSouthItem(id: string): SouthConnectorItemDTO | null {
-    const query = `SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} WHERE id = ?;`;
+    const query = `SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} WHERE id = ?;`;
     const result: any = this.database.prepare(query).get(id);
     if (!result) return null;
     return {
       id: result.id,
       name: result.name,
+      enabled: result.enabled,
       connectorId: result.connectorId,
       scanModeId: result.scanModeId,
       settings: JSON.parse(result.settings)
@@ -111,16 +115,18 @@ export default class SouthItemRepository {
    */
   createSouthItem(southId: string, command: SouthConnectorItemCommandDTO): SouthConnectorItemDTO {
     const id = generateRandomId(6);
-    const insertQuery = `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, connector_id, scan_mode_id, settings) ` + `VALUES (?, ?, ?, ?, ?);`;
+    const insertQuery =
+      `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings) ` + `VALUES (?, ?, ?, ?, ?, ?);`;
     const insertResult = this.database
       .prepare(insertQuery)
-      .run(id, command.name, southId, command.scanModeId, JSON.stringify(command.settings));
+      .run(id, command.name, 1, southId, command.scanModeId, JSON.stringify(command.settings));
 
-    const query = `SELECT id, name, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} WHERE ROWID = ?;`;
+    const query = `SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} WHERE ROWID = ?;`;
     const result: any = this.database.prepare(query).get(insertResult.lastInsertRowid);
     return {
       id: result.id,
       name: result.name,
+      enabled: result.enabled,
       connectorId: result.connectorId,
       scanModeId: result.scanModeId,
       settings: JSON.parse(result.settings)
@@ -153,7 +159,7 @@ export default class SouthItemRepository {
 
   createAndUpdateSouthItems(southId: string, itemsToAdd: Array<SouthConnectorItemDTO>, itemsToUpdate: Array<SouthConnectorItemDTO>): void {
     const insert = this.database.prepare(
-      `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?);`
+      `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?, ?);`
     );
     const update = this.database.prepare(`UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`);
 
@@ -161,7 +167,7 @@ export default class SouthItemRepository {
       for (const item of itemsToAdd) {
         const id = generateRandomId(6);
 
-        insert.run(id, item.name, southId, item.scanModeId, JSON.stringify(item.settings));
+        insert.run(id, item.name, 1, southId, item.scanModeId, JSON.stringify(item.settings));
       }
       for (const item of itemsToUpdate) {
         update.run(item.name, item.scanModeId, JSON.stringify(item.settings), item.id);

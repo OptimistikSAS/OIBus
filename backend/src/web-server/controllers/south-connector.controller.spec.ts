@@ -71,6 +71,7 @@ const itemCommand: SouthConnectorItemCommandDTO<SouthFolderScannerItemSettings> 
 const item: SouthConnectorItemDTO<SouthFolderScannerItemSettings> = {
   id: 'id',
   connectorId: 'connectorId',
+  enabled: true,
   ...itemCommand
 };
 const page = {
@@ -738,12 +739,14 @@ describe('South connector controller', () => {
       {
         id: 'id',
         name: 'name',
+        enabled: true,
         scanModeId: 'scanModeId',
         settings_regex: '.*'
       },
       {
         id: 'id',
         name: 'name',
+        enabled: true,
         scanModeId: 'scanModeId',
         settings_regex: '.*'
       }

@@ -204,4 +204,16 @@ describe('South connector repository', () => {
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM south_connectors WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
+
+  it('should start south connector', () => {
+    repository.startSouthConnector('id1');
+    expect(database.prepare).toHaveBeenCalledWith('UPDATE south_connectors SET enabled = ? WHERE id = ?;');
+    expect(run).toHaveBeenCalledWith(1, 'id1');
+  });
+
+  it('should stop south connector', () => {
+    repository.stopSouthConnector('id1');
+    expect(database.prepare).toHaveBeenCalledWith('UPDATE south_connectors SET enabled = ? WHERE id = ?;');
+    expect(run).toHaveBeenCalledWith(0, 'id1');
+  });
 });

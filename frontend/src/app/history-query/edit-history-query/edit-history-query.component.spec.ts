@@ -167,6 +167,7 @@ describe('EditHistoryQueryComponent', () => {
         {
           id: 'id1',
           name: 'item1',
+          enabled: true,
           connectorId: 'southId',
           scanModeId: 'history',
           settings: {

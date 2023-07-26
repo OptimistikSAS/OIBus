@@ -64,6 +64,7 @@ const items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
@@ -99,6 +100,7 @@ const items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>> = [
   {
     id: 'id2',
     name: 'item2',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
@@ -134,6 +136,7 @@ const items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>> = [
   {
     id: 'id3',
     name: 'item3',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',

@@ -59,6 +59,7 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       topic: 'my/first/topic'
@@ -68,6 +69,7 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
   {
     id: 'id2',
     name: 'item2',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       topic: 'my/+/#/topic/with/wildcard/#'
@@ -77,6 +79,7 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
   {
     id: 'id3',
     name: 'item3',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       topic: 'my/wrong/topic////'

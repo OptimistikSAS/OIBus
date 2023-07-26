@@ -63,6 +63,7 @@ const items: Array<SouthConnectorItemDTO<SouthMSSQLItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table WHERE timestamp > @StartTime AND timestamp < @EndTime',
@@ -98,6 +99,7 @@ const items: Array<SouthConnectorItemDTO<SouthMSSQLItemSettings>> = [
   {
     id: 'id2',
     name: 'item2',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
@@ -133,6 +135,7 @@ const items: Array<SouthConnectorItemDTO<SouthMSSQLItemSettings>> = [
   {
     id: 'id3',
     name: 'item3',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',

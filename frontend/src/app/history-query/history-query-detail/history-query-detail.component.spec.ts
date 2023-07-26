@@ -183,6 +183,7 @@ describe('HistoryQueryDisplayComponent', () => {
         {
           id: 'id1',
           name: 'item1',
+          enabled: true,
           connectorId: 'southId',
           scanModeId: 'scanModeId',
           settings: {

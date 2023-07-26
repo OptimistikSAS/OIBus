@@ -70,6 +70,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'HoldingRegister',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       modbusType: 'holdingRegister',
@@ -82,6 +83,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id2',
     name: 'HoldingRegister',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       modbusType: 'holdingRegister',
@@ -94,6 +96,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id3',
     name: 'InputRegister',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       modbusType: 'inputRegister',
@@ -106,6 +109,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id4',
     name: 'DiscreteInput',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       modbusType: 'discreteInput',
@@ -118,6 +122,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id5',
     name: 'Coil',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       modbusType: 'coil',
@@ -357,6 +362,7 @@ describe('SouthModbus', () => {
     const item: SouthConnectorItemDTO = {
       id: 'bad',
       connectorId: 'connectorId',
+      enabled: true,
       name: 'Bad Item',
       scanModeId: 'id',
       settings: {

@@ -84,4 +84,27 @@ describe('SouthCacheRepository', () => {
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM cache_history;');
     expect(run).toHaveBeenCalledTimes(1);
   });
+
+  it('should create custom table', () => {
+    repository.createCustomTable('test', 'field1 TEXT, field2 INTEGER');
+    expect(database.prepare).toHaveBeenCalledWith(`CREATE TABLE IF NOT EXISTS test (field1 TEXT, field2 INTEGER);`);
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it('should run on custom table', () => {
+    repository.getQueryOnCustomTable(`SELECT mtime_ms AS mtimeMs FROM "test" WHERE filename = ?`, ['my filename']);
+    expect(database.prepare).toHaveBeenCalledWith(`SELECT mtime_ms AS mtimeMs FROM "test" WHERE filename = ?`);
+    expect(get).toHaveBeenCalledTimes(1);
+  });
+
+  it('should query on custom table', () => {
+    repository.runQueryOnCustomTable(
+      `INSERT INTO "test" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`,
+      ['my filename']
+    );
+    expect(database.prepare).toHaveBeenCalledWith(
+      `INSERT INTO "test" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`
+    );
+    expect(run).toHaveBeenCalledTimes(1);
+  });
 });
