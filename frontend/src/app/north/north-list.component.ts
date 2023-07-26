@@ -113,4 +113,40 @@ export class NorthListComponent implements OnInit {
 
     return filteredItems;
   }
+
+  toggleConnector(northId: string, northName: string, value: boolean) {
+    if (value) {
+      this.northConnectorService
+        .startNorth(northId)
+        .pipe(
+          tap(() => {
+            this.notificationService.success('north.started', { name: northName });
+          }),
+          switchMap(() => {
+            return this.northConnectorService.list();
+          })
+        )
+        .subscribe(norths => {
+          this.allNorths = norths;
+          this.filteredNorths = this.filter(this.allNorths);
+          this.displayedNorths = this.createPage(this.displayedNorths.number);
+        });
+    } else {
+      this.northConnectorService
+        .stopNorth(northId)
+        .pipe(
+          tap(() => {
+            this.notificationService.success('north.stopped', { name: northName });
+          }),
+          switchMap(() => {
+            return this.northConnectorService.list();
+          })
+        )
+        .subscribe(norths => {
+          this.allNorths = norths;
+          this.filteredNorths = this.filter(this.allNorths);
+          this.displayedNorths = this.createPage(this.displayedNorths.number);
+        });
+    }
+  }
 }

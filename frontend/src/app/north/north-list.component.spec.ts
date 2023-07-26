@@ -8,6 +8,7 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { NotificationService } from '../shared/notification.service';
 
 class NorthListComponentTester extends ComponentTester<NorthListComponent> {
   constructor() {
@@ -25,6 +26,7 @@ class NorthListComponentTester extends ComponentTester<NorthListComponent> {
 describe('NorthListComponent', () => {
   let tester: NorthListComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
+  let notificationService: jasmine.SpyObj<NotificationService>;
 
   const northConnectors: Array<NorthConnectorDTO> = [
     {
@@ -38,24 +40,28 @@ describe('NorthListComponent', () => {
       id: 'id2',
       name: 'myNorthConnector2',
       description: 'a test north connector',
-      enabled: true,
+      enabled: false,
       type: 'Test'
     } as NorthConnectorDTO
   ];
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
+    notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         provideRouter([]),
         provideHttpClient(),
-        { provide: NorthConnectorService, useValue: northConnectorService }
+        { provide: NorthConnectorService, useValue: northConnectorService },
+        { provide: NotificationService, useValue: notificationService }
       ]
     });
 
     northConnectorService.list.and.returnValue(of(northConnectors));
+    northConnectorService.startNorth.and.returnValue(of(undefined));
+    northConnectorService.stopNorth.and.returnValue(of(undefined));
 
     tester = new NorthListComponentTester();
     tester.detectChanges();
@@ -69,12 +75,22 @@ describe('NorthListComponent', () => {
     expect(tester.northList[0].elements('td')[2]).toContainText('active');
     expect(tester.northList[0].elements('td')[3]).toContainText(northConnectors[0].description);
     expect(tester.northList[0].elements('td')[4].elements('a').length).toBe(3);
-    expect(tester.northList[0].elements('td')[4].elements('button').length).toBe(1);
+    expect(tester.northList[0].elements('td')[4].elements('button').length).toBe(2);
     expect(tester.northList[1].elements('td')[0]).toContainText(northConnectors[1].name);
     expect(tester.northList[1].elements('td')[1]).toContainText(northConnectors[1].type);
-    expect(tester.northList[1].elements('td')[2]).toContainText('active');
+    expect(tester.northList[1].elements('td')[2]).toContainText('paused');
     expect(tester.northList[1].elements('td')[3]).toContainText(northConnectors[1].description);
     expect(tester.northList[1].elements('td')[4].elements('a').length).toBe(3);
-    expect(tester.northList[1].elements('td')[4].elements('button').length).toBe(1);
+    expect(tester.northList[1].elements('td')[4].elements('button').length).toBe(2);
+  });
+
+  it('should toggle north connector', () => {
+    tester.northList[0].elements('td')[4].elements('button')[0].click();
+    expect(northConnectorService.stopNorth).toHaveBeenCalledWith('id1');
+    expect(notificationService.success).toHaveBeenCalledWith('north.stopped', { name: northConnectors[0].name });
+
+    tester.northList[1].elements('td')[4].elements('button')[0].click();
+    expect(northConnectorService.startNorth).toHaveBeenCalledWith('id2');
+    expect(notificationService.success).toHaveBeenCalledWith('north.started', { name: northConnectors[1].name });
   });
 });

@@ -56,6 +56,13 @@
             <td>{{ south.description }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
+                <button
+                  class="btn btn-link enable-history-query px-1 py-0"
+                  id="history-query-enabled"
+                  (click)="toggleConnector(south.id, south.name, !south.enabled)"
+                >
+                  <i [class]="south.enabled ?  'fa fa-pause' : 'fa fa-play'"></i>
+                </button>
                 <!-- Display button -->
                 <a class="btn btn-link display-south px-1 py-0" id="display-link" [routerLink]="[south.id]">
                   <span class="fa fa-search"></span>

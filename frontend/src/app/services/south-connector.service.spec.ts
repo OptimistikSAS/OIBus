@@ -266,4 +266,24 @@ describe('SouthConnectorService', () => {
     testRequest.flush(null);
     expect(done).toBe(true);
   });
+
+  it('should start a South', () => {
+    let done = false;
+
+    service.startSouth('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1/start' });
+    expect(testRequest.request.body).toEqual(null);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should stop a South', () => {
+    let done = false;
+
+    service.stopSouth('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1/stop' });
+    expect(testRequest.request.body).toEqual(null);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
 });

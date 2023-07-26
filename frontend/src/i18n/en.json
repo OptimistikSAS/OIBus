@@ -359,6 +359,8 @@
     "description": "Description",
     "status": "Status",
     "enabled": "Enabled",
+    "started": "South connector {{ name }} started",
+    "stopped": "South connector {{ name }} stopped",
     "history": {
       "settings": "History settings",
       "max-instant-per-item": "Max instant per item",
@@ -432,6 +434,8 @@
     "description": "Description",
     "status": "Status",
     "enabled": "Enabled",
+    "started": "North connector {{ name }} started",
+    "stopped": "North connector {{ name }} stopped",
     "type": "Type",
     "general-settings": "General settings",
     "specific-settings": "{{ type }} settings",

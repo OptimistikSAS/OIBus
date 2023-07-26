@@ -21,6 +21,10 @@ class SouthDisplayComponentTester extends ComponentTester<SouthDetailComponent> 
     return this.element('#title');
   }
 
+  get toggleButton() {
+    return this.button('#south-enabled')!;
+  }
+
   get southSettings() {
     return this.elements('tbody.south-settings tr');
   }
@@ -118,9 +122,9 @@ describe('SouthDetailComponent', () => {
     );
 
     southConnectorService.get.and.returnValue(of(southConnector));
-
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(manifest));
-
+    southConnectorService.startSouth.and.returnValue(of(undefined));
+    southConnectorService.stopSouth.and.returnValue(of(undefined));
     southConnectorService.listItems.and.returnValue(
       of([
         {
@@ -136,10 +140,10 @@ describe('SouthDetailComponent', () => {
     );
 
     tester = new SouthDisplayComponentTester();
-    tester.detectChanges();
   });
 
   it('should display south connector detail', () => {
+    tester.detectChanges();
     expect(tester.title).toContainText(southConnector.name);
     const settings = tester.southSettings;
     expect(settings.length).toBe(1);
@@ -148,10 +152,26 @@ describe('SouthDetailComponent', () => {
   });
 
   it('should display items', () => {
+    tester.detectChanges();
     expect(tester.southItems.length).toBe(1);
     const item = tester.southItems[0];
     expect(item.elements('td')[0]).toContainText('item1');
     expect(item.elements('td')[1]).toContainText('Every mn');
     expect(item.elements('td')[2]).toContainText('sql');
+  });
+
+  it('should stop south', () => {
+    tester.detectChanges();
+    tester.toggleButton.click();
+    expect(southConnectorService.stopSouth).toHaveBeenCalledWith(southConnector.id);
+    expect(notificationService.success).toHaveBeenCalledWith('south.stopped', { name: southConnector.name });
+  });
+
+  it('should start south', () => {
+    southConnectorService.get.and.returnValue(of({ ...southConnector, enabled: false }));
+    tester.detectChanges();
+    tester.toggleButton.click();
+    expect(southConnectorService.startSouth).toHaveBeenCalledWith(southConnector.id);
+    expect(notificationService.success).toHaveBeenCalledWith('south.started', { name: southConnector.name });
   });
 });

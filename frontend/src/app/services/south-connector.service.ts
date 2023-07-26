@@ -181,4 +181,12 @@ export class SouthConnectorService {
   testConnection(southId: string, settings: SouthConnectorCommandDTO<any>): Observable<void> {
     return this.http.put<void>(`/api/south/${southId}/test-connection`, settings);
   }
+
+  startSouth(southId: string): Observable<void> {
+    return this.http.put<void>(`/api/south/${southId}/start`, null);
+  }
+
+  stopSouth(southId: string): Observable<void> {
+    return this.http.put<void>(`/api/south/${southId}/stop`, null);
+  }
 }
