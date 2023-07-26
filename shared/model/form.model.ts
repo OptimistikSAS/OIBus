@@ -13,10 +13,10 @@ export const FORM_COMPONENT_TYPES = [
   'OibArray',
   'OibFormGroup'
 ] as const;
-export type FormComponentType = (typeof FORM_COMPONENT_TYPES)[number];
+export type FormComponentType = typeof FORM_COMPONENT_TYPES[number];
 
 export const FORM_COMPONENT_VALIDATOR_TYPES = ['required', 'min', 'max', 'pattern', 'minLength', 'maxLength'] as const;
-export type FormComponentValidatorType = (typeof FORM_COMPONENT_VALIDATOR_TYPES)[number];
+export type FormComponentValidatorType = typeof FORM_COMPONENT_VALIDATOR_TYPES[number];
 
 interface Validator {
   key: FormComponentValidatorType;

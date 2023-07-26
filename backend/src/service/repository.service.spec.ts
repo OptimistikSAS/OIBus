@@ -15,6 +15,9 @@ import HistoryQueryItemRepository from '../repository/history-query-item.reposit
 import UserRepository from '../repository/user.repository';
 import SubscriptionRepository from '../repository/subscription.repository';
 import CryptoRepository from '../repository/crypto.repository';
+import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
+import SouthCacheRepository from '../repository/south-cache.repository';
+import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
 
 jest.mock('better-sqlite3', () => jest.fn(() => 'sqlite database'));
 jest.mock('../repository/external-source.repository');
@@ -23,7 +26,10 @@ jest.mock('../repository/ip-filter.repository');
 jest.mock('../repository/scan-mode.repository');
 jest.mock('../repository/engine.repository');
 jest.mock('../repository/north-connector.repository');
+jest.mock('../repository/north-connector-metrics.repository');
 jest.mock('../repository/south-connector.repository');
+jest.mock('../repository/south-cache.repository');
+jest.mock('../repository/south-connector-metrics.repository');
 jest.mock('../repository/south-item.repository');
 jest.mock('../repository/log.repository');
 jest.mock('../repository/history-query.repository');
@@ -44,7 +50,10 @@ describe('Repository service', () => {
     expect(IpFilterRepository).toHaveBeenCalledWith('sqlite database');
     expect(ScanModeRepository).toHaveBeenCalledWith('sqlite database');
     expect(NorthConnectorRepository).toHaveBeenCalledWith('sqlite database');
+    expect(NorthConnectorMetricsRepository).toHaveBeenCalledWith('sqlite database');
     expect(SouthConnectorRepository).toHaveBeenCalledWith('sqlite database');
+    expect(SouthConnectorMetricsRepository).toHaveBeenCalledWith('sqlite database');
+    expect(SouthCacheRepository).toHaveBeenCalledWith('sqlite database');
     expect(SouthItemRepository).toHaveBeenCalledWith('sqlite database');
     expect(LogRepository).toHaveBeenCalledWith('sqlite database');
     expect(HistoryQueryRepository).toHaveBeenCalledWith('sqlite database');
@@ -58,8 +67,11 @@ describe('Repository service', () => {
     expect(repositoryService.ipFilterRepository).toBeDefined();
     expect(repositoryService.scanModeRepository).toBeDefined();
     expect(repositoryService.northConnectorRepository).toBeDefined();
+    expect(repositoryService.northMetricsRepository).toBeDefined();
     expect(repositoryService.southConnectorRepository).toBeDefined();
     expect(repositoryService.southItemRepository).toBeDefined();
+    expect(repositoryService.southMetricsRepository).toBeDefined();
+    expect(repositoryService.southCacheRepository).toBeDefined();
     expect(repositoryService.logRepository).toBeDefined();
     expect(repositoryService.historyQueryRepository).toBeDefined();
     expect(repositoryService.historyQueryItemRepository).toBeDefined();

@@ -95,23 +95,25 @@ export default class NorthConnectorRepository {
       `caching_scan_mode_id, caching_group_count, caching_retry_interval, caching_retry_count, caching_max_send_count, ` +
       `caching_send_file_immediately, caching_max_size, archive_enabled, archive_retention_duration) ` +
       `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
-    const insertResult = this.database.prepare(insertQuery).run(
-      id,
-      command.name,
-      command.type,
-      command.description,
-      0, // disabled by default at creation
-      JSON.stringify(command.settings),
-      command.caching.scanModeId,
-      command.caching.groupCount,
-      command.caching.retryInterval,
-      command.caching.retryCount,
-      command.caching.maxSendCount,
-      +command.caching.sendFileImmediately,
-      command.caching.maxSize,
-      +command.archive.enabled,
-      command.archive.retentionDuration
-    );
+    const insertResult = this.database
+      .prepare(insertQuery)
+      .run(
+        id,
+        command.name,
+        command.type,
+        command.description,
+        +command.enabled,
+        JSON.stringify(command.settings),
+        command.caching.scanModeId,
+        command.caching.groupCount,
+        command.caching.retryInterval,
+        command.caching.retryCount,
+        command.caching.maxSendCount,
+        +command.caching.sendFileImmediately,
+        command.caching.maxSize,
+        +command.archive.enabled,
+        command.archive.retentionDuration
+      );
 
     const query =
       `SELECT id, name, type, description, enabled, settings, caching_scan_mode_id AS cachingScanModeId, ` +
