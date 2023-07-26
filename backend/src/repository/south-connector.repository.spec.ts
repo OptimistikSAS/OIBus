@@ -156,7 +156,7 @@ describe('South connector repository', () => {
       command.name,
       command.type,
       command.description,
-      0,
+      +command.enabled,
       +command.history.maxInstantPerItem,
       command.history.maxReadInterval,
       command.history.readDelay,

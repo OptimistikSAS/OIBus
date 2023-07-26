@@ -87,16 +87,21 @@ export default class ReloadService {
 
   async onCreateSouth(command: SouthConnectorCommandDTO): Promise<SouthConnectorDTO> {
     const southConnector = this.repositoryService.southConnectorRepository.createSouthConnector(command);
-    await this.oibusEngine.startSouth(southConnector.id, southConnector);
+    if (command.enabled) {
+      await this.oibusEngine.startSouth(southConnector.id, southConnector);
+    }
     return southConnector;
   }
 
   async onUpdateSouth(southId: string, command: SouthConnectorCommandDTO): Promise<void> {
     await this.oibusEngine.stopSouth(southId);
     this.repositoryService.southConnectorRepository.updateSouthConnector(southId, command);
-    const settings = this.repositoryService.southConnectorRepository.getSouthConnector(southId);
-    if (settings) {
+    if (command.enabled) {
+      this.repositoryService.southConnectorRepository.startSouthConnector(southId);
+      const settings = this.repositoryService.southConnectorRepository.getSouthConnector(southId)!;
       await this.oibusEngine.startSouth(southId, settings);
+    } else {
+      this.repositoryService.southConnectorRepository.stopSouthConnector(southId);
     }
   }
 
@@ -159,16 +164,21 @@ export default class ReloadService {
 
   async onCreateNorth(command: NorthConnectorCommandDTO): Promise<NorthConnectorDTO> {
     const northSettings = this.repositoryService.northConnectorRepository.createNorthConnector(command);
-    await this.oibusEngine.startNorth(northSettings.id, northSettings);
+    if (command.enabled) {
+      await this.oibusEngine.startNorth(northSettings.id, northSettings);
+    }
     return northSettings;
   }
 
   async onUpdateNorthSettings(northId: string, command: NorthConnectorCommandDTO): Promise<void> {
     await this.oibusEngine.stopNorth(northId);
     this.repositoryService.northConnectorRepository.updateNorthConnector(northId, command);
-    const settings = this.repositoryService.northConnectorRepository.getNorthConnector(northId);
-    if (settings) {
+    if (command.enabled) {
+      this.repositoryService.northConnectorRepository.startNorthConnector(northId);
+      const settings = this.repositoryService.northConnectorRepository.getNorthConnector(northId)!;
       await this.oibusEngine.startNorth(northId, settings);
+    } else {
+      this.repositoryService.northConnectorRepository.stopNorthConnector(northId);
     }
   }
 
@@ -192,7 +202,7 @@ export default class ReloadService {
     await this.oibusEngine.stopNorth(northId);
     this.repositoryService.subscriptionRepository.createNorthSubscription(northId, southId);
     const settings = this.repositoryService.northConnectorRepository.getNorthConnector(northId);
-    if (settings) {
+    if (settings && settings.enabled) {
       await this.oibusEngine.startNorth(northId, settings);
     }
   }
@@ -201,7 +211,7 @@ export default class ReloadService {
     await this.oibusEngine.stopNorth(northId);
     this.repositoryService.subscriptionRepository.createExternalNorthSubscription(northId, externalSourceId);
     const settings = this.repositoryService.northConnectorRepository.getNorthConnector(northId);
-    if (settings) {
+    if (settings && settings.enabled) {
       await this.oibusEngine.startNorth(northId, settings);
     }
   }
@@ -210,7 +220,7 @@ export default class ReloadService {
     await this.oibusEngine.stopNorth(northId);
     this.repositoryService.subscriptionRepository.deleteNorthSubscription(northId, southId);
     const settings = this.repositoryService.northConnectorRepository.getNorthConnector(northId);
-    if (settings) {
+    if (settings && settings.enabled) {
       await this.oibusEngine.startNorth(northId, settings);
     }
   }
@@ -219,7 +229,7 @@ export default class ReloadService {
     await this.oibusEngine.stopNorth(northId);
     this.repositoryService.subscriptionRepository.deleteExternalNorthSubscription(northId, externalSourceId);
     const settings = this.repositoryService.northConnectorRepository.getNorthConnector(northId);
-    if (settings) {
+    if (settings && settings.enabled) {
       await this.oibusEngine.startNorth(northId, settings);
     }
   }

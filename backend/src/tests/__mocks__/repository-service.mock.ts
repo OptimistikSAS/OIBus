@@ -7,6 +7,8 @@ export default jest.fn().mockImplementation(() => ({
     getNorthConnectors: jest.fn(),
     createNorthConnector: jest.fn(),
     updateNorthConnector: jest.fn(),
+    stopNorthConnector: jest.fn(),
+    startNorthConnector: jest.fn(),
     deleteNorthConnector: jest.fn()
   },
   southConnectorRepository: {
@@ -14,6 +16,8 @@ export default jest.fn().mockImplementation(() => ({
     getSouthConnectors: jest.fn(),
     createSouthConnector: jest.fn(),
     updateSouthConnector: jest.fn(),
+    stopSouthConnector: jest.fn(),
+    startSouthConnector: jest.fn(),
     deleteSouthConnector: jest.fn()
   },
   southItemRepository: {

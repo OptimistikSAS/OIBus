@@ -216,7 +216,7 @@ describe('North connector repository', () => {
       command.name,
       command.type,
       command.description,
-      0,
+      +command.enabled,
       JSON.stringify(command.settings),
       command.caching.scanModeId,
       command.caching.groupCount,
