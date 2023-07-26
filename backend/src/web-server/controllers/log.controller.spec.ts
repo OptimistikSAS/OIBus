@@ -55,15 +55,16 @@ describe('Log controller', () => {
     ctx.query.page = 1;
     ctx.query.start = '2023-03-01T00:00:00.000Z';
     ctx.query.end = '2023-03-31T00:00:00.000Z';
-    ctx.query.scopeTypes = ['scope'];
+    ctx.query.scopeTypes = ['scopeType'];
+    ctx.query.scopeIds = ['scope'];
     ctx.query.messageContent = 'message';
     const searchParams: LogSearchParam = {
       page: 1,
       start: '2023-03-01T00:00:00.000Z',
       end: '2023-03-31T00:00:00.000Z',
       levels: ['info'],
-      scopeTypes: ['scope'],
-      scopeIds: [],
+      scopeTypes: ['scopeType'],
+      scopeIds: ['scope'],
       messageContent: 'message'
     };
     ctx.app.repositoryService.logRepository.searchLogs.mockReturnValue(page);
@@ -76,15 +77,17 @@ describe('Log controller', () => {
 
   it('searchLogs() should return logs with default search params', async () => {
     ctx.query = {
-      levels: 'info'
+      levels: 'info',
+      scopeTypes: 'scopeType1',
+      scopeIds: 'scope1'
     };
     const searchParams: LogSearchParam = {
       page: 0,
       start: new Date(Date.now() - 86400000).toISOString(),
       end: new Date().toISOString(),
       levels: ['info'],
-      scopeTypes: [],
-      scopeIds: [],
+      scopeTypes: ['scopeType1'],
+      scopeIds: ['scope1'],
       messageContent: null
     };
     ctx.app.repositoryService.logRepository.searchLogs.mockReturnValue(page);

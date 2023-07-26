@@ -108,6 +108,17 @@ export default class ReloadService {
     this.repositoryService.southConnectorRepository.deleteSouthConnector(southId);
   }
 
+  async onStartSouth(southId: string): Promise<void> {
+    this.repositoryService.southConnectorRepository.startSouthConnector(southId);
+    const settings = this.repositoryService.southConnectorRepository.getSouthConnector(southId);
+    await this.oibusEngine.startSouth(southId, settings!);
+  }
+
+  async onStopSouth(southId: string): Promise<void> {
+    await this.oibusEngine.stopSouth(southId);
+    this.repositoryService.southConnectorRepository.stopSouthConnector(southId);
+  }
+
   async onCreateSouthItem(southId: string, command: SouthConnectorItemCommandDTO): Promise<SouthConnectorItemDTO> {
     const southItem = this.repositoryService.southItemRepository.createSouthItem(southId, command);
     this.oibusEngine.addItemToSouth(southId, southItem);
@@ -164,6 +175,17 @@ export default class ReloadService {
   async onDeleteNorth(northId: string): Promise<void> {
     await this.oibusEngine.stopNorth(northId);
     this.repositoryService.northConnectorRepository.deleteNorthConnector(northId);
+  }
+
+  async onStartNorth(northId: string): Promise<void> {
+    this.repositoryService.northConnectorRepository.startNorthConnector(northId);
+    const settings = this.repositoryService.northConnectorRepository.getNorthConnector(northId);
+    await this.oibusEngine.startNorth(northId, settings!);
+  }
+
+  async onStopNorth(northId: string): Promise<void> {
+    await this.oibusEngine.stopNorth(northId);
+    this.repositoryService.northConnectorRepository.stopNorthConnector(northId);
   }
 
   async onCreateNorthSubscription(northId: string, southId: string): Promise<void> {

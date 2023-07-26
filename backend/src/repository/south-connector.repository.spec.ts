@@ -156,7 +156,7 @@ describe('South connector repository', () => {
       command.name,
       command.type,
       command.description,
-      +command.enabled,
+      0,
       +command.history.maxInstantPerItem,
       command.history.maxReadInterval,
       command.history.readDelay,
@@ -185,13 +185,12 @@ describe('South connector repository', () => {
     };
     repository.updateSouthConnector('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
-      'UPDATE south_connectors SET name = ?, description = ?, enabled = ?, ' +
+      'UPDATE south_connectors SET name = ?, description = ?, ' +
         'history_max_instant_per_item = ?, history_max_read_interval = ?, history_read_delay = ?, settings = ? WHERE id = ?;'
     );
     expect(run).toHaveBeenCalledWith(
       command.name,
       command.description,
-      +command.enabled,
       +command.history.maxInstantPerItem,
       command.history.maxReadInterval,
       command.history.readDelay,

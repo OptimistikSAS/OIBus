@@ -2,6 +2,7 @@ import SouthConnectorController, { southManifests } from './south-connector.cont
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from '../../validators/joi.validator';
 import folderScannerManifest from '../../south/south-folder-scanner/manifest';
+import sqliteManifest from '../../south/south-sqlite/manifest';
 import csv from 'papaparse';
 import fs from 'node:fs/promises';
 import {
@@ -10,7 +11,11 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO
 } from '../../../../shared/model/south-connector.model';
-import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
+import {
+  SouthFolderScannerItemSettings,
+  SouthFolderScannerSettings,
+  SouthSQLiteSettings
+} from '../../../../shared/model/south-settings.model';
 
 jest.mock('../../validators/joi.validator');
 jest.mock('papaparse');
@@ -20,6 +25,20 @@ const ctx = new KoaContextMock();
 const validator = new JoiValidator();
 const southConnectorController = new SouthConnectorController(validator);
 
+const sqliteConnectorCommand: SouthConnectorCommandDTO<SouthSQLiteSettings> = {
+  name: 'name',
+  type: 'sqlite',
+  description: 'description',
+  enabled: true,
+  settings: {
+    databasePath: 'databasePath.db'
+  },
+  history: {
+    maxInstantPerItem: true,
+    maxReadInterval: 0,
+    readDelay: 0
+  }
+};
 const southConnectorCommand: SouthConnectorCommandDTO<SouthFolderScannerSettings> = {
   name: 'name',
   type: 'folder-scanner',
@@ -180,6 +199,25 @@ describe('South connector controller', () => {
     expect(ctx.created).toHaveBeenCalledWith(southConnector);
   });
 
+  it('createSouthConnector() should create South connector with forceMaxInstantPerItem', async () => {
+    ctx.request.body = {
+      ...sqliteConnectorCommand
+    };
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(sqliteConnectorCommand.settings);
+    ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
+
+    await southConnectorController.createSouthConnector(ctx);
+
+    expect(validator.validateSettings).toHaveBeenCalledWith(sqliteManifest.settings, sqliteConnectorCommand.settings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      sqliteConnectorCommand.settings,
+      null,
+      sqliteManifest.settings
+    );
+    expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith(sqliteConnectorCommand);
+    expect(ctx.created).toHaveBeenCalledWith(southConnector);
+  });
+
   it('createSouthConnector() should return 404 when manifest not found', async () => {
     ctx.request.body = {
       ...southConnectorCommand,
@@ -324,6 +362,78 @@ describe('South connector controller', () => {
     await southConnectorController.deleteSouthConnector(ctx);
 
     expect(ctx.app.reloadService.onDeleteSouth).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+  });
+
+  it('startSouthConnector() should enable South connector', async () => {
+    ctx.params.enable = true;
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+
+    await southConnectorController.startSouthConnector(ctx);
+
+    expect(ctx.app.reloadService.onStartSouth).toHaveBeenCalledTimes(1);
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+  });
+
+  it('startSouthConnector() should throw badRequest if fail to enable', async () => {
+    ctx.params.enable = true;
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+
+    ctx.app.reloadService.onStartSouth.mockImplementation(() => {
+      throw new Error('bad');
+    });
+
+    await southConnectorController.startSouthConnector(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalled();
+  });
+
+  it('startSouthConnector() should return not found if South not found', async () => {
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+
+    await southConnectorController.startSouthConnector(ctx);
+
+    expect(ctx.app.reloadService.onStartSouth).not.toHaveBeenCalled();
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalled();
+  });
+
+  it('stopSouthConnector() should enable South connector', async () => {
+    ctx.params.enable = true;
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+
+    await southConnectorController.stopSouthConnector(ctx);
+
+    expect(ctx.app.reloadService.onStopSouth).toHaveBeenCalledTimes(1);
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+  });
+
+  it('stopSouthConnector() should throw badRequest if fail to enable', async () => {
+    ctx.params.enable = true;
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+
+    ctx.app.reloadService.onStopSouth.mockImplementation(() => {
+      throw new Error('bad');
+    });
+
+    await southConnectorController.stopSouthConnector(ctx);
+
+    expect(ctx.badRequest).toHaveBeenCalled();
+  });
+
+  it('stopSouthConnector() should return not found if South not found', async () => {
+    ctx.params.id = 'id';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+
+    await southConnectorController.stopSouthConnector(ctx);
+
+    expect(ctx.app.reloadService.onStopSouth).not.toHaveBeenCalled();
+    expect(ctx.badRequest).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
@@ -788,7 +898,8 @@ describe('South connector controller', () => {
     (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
 
     await southConnectorController.testSouthConnection(ctx);
-
+    await southConnectorController.addValues('id1', []);
+    await southConnectorController.addFile('id1', 'filename');
     expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,

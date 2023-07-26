@@ -1,6 +1,7 @@
 import { generateRandomId } from '../service/utils';
 import { SouthConnectorCommandDTO, SouthConnectorDTO } from '../../../shared/model/south-connector.model';
 import { Database } from 'better-sqlite3';
+import { HISTORY_QUERIES_TABLE } from './history-query.repository';
 
 export const SOUTH_CONNECTORS_TABLE = 'south_connectors';
 
@@ -71,19 +72,17 @@ export default class SouthConnectorRepository {
     const insertQuery =
       `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, history_max_instant_per_item, history_max_read_interval, history_read_delay, settings) ` +
       `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`;
-    const insertResult = this.database
-      .prepare(insertQuery)
-      .run(
-        id,
-        command.name,
-        command.type,
-        command.description,
-        +command.enabled,
-        +command.history.maxInstantPerItem,
-        command.history.maxReadInterval,
-        command.history.readDelay,
-        JSON.stringify(command.settings)
-      );
+    const insertResult = this.database.prepare(insertQuery).run(
+      id,
+      command.name,
+      command.type,
+      command.description,
+      0, // disabled by default at creation
+      +command.history.maxInstantPerItem,
+      command.history.maxReadInterval,
+      command.history.readDelay,
+      JSON.stringify(command.settings)
+    );
 
     const query =
       `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
@@ -104,19 +103,28 @@ export default class SouthConnectorRepository {
     };
   }
 
+  startSouthConnector(id: string) {
+    const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET enabled = ? WHERE id = ?;`;
+    this.database.prepare(query).run(1, id);
+  }
+
+  stopSouthConnector(id: string) {
+    const query = `UPDATE ${SOUTH_CONNECTORS_TABLE} SET enabled = ? WHERE id = ?;`;
+    this.database.prepare(query).run(0, id);
+  }
+
   /**
    * Update a South connector by its ID
    */
   updateSouthConnector(id: string, command: SouthConnectorCommandDTO): void {
     const query =
-      `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, enabled = ?, ` +
+      `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, ` +
       `history_max_instant_per_item = ?, history_max_read_interval = ?, history_read_delay = ?, settings = ? WHERE id = ?;`;
     this.database
       .prepare(query)
       .run(
         command.name,
         command.description,
-        +command.enabled,
         +command.history.maxInstantPerItem,
         command.history.maxReadInterval,
         command.history.readDelay,
