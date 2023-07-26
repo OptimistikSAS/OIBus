@@ -24,7 +24,7 @@ import {
   SouthType
 } from '../../../../shared/model/south-connector.model';
 import { Page } from '../../../../shared/model/types';
-import JoiValidator from '../../validators/joi.validator';
+import JoiValidator from './validators/joi.validator';
 import fs from 'node:fs/promises';
 
 // TODO: retrieve south types from a local store

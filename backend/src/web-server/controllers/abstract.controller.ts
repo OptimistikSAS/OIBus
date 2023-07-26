@@ -1,4 +1,4 @@
-import JoiValidator from '../../validators/joi.validator';
+import JoiValidator from './validators/joi.validator';
 import Joi from 'joi';
 
 export default abstract class AbstractController {

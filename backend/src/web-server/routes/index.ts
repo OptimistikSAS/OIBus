@@ -22,7 +22,7 @@ import SouthConnectorController, { southManifests } from '../controllers/south-c
 import UserController from '../controllers/user.controller';
 import HistoryQueryController from '../controllers/history-query.controller';
 import SubscriptionController from '../controllers/subscription.controller';
-import JoiValidator from '../../validators/joi.validator';
+import JoiValidator from '../controllers/validators/joi.validator';
 import { KoaContext } from '../koa';
 
 const joiValidator = new JoiValidator();

@@ -1,11 +1,11 @@
 import Joi from 'joi';
 
 import LogController from './log.controller';
-import JoiValidator from '../../validators/joi.validator';
+import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import { LogSearchParam } from '../../../../shared/model/logs.model';
 
-jest.mock('../../validators/joi.validator');
+jest.mock('./validators/joi.validator');
 
 const validator = new JoiValidator();
 const schema = Joi.object({});

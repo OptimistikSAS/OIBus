@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import JoiValidator from './joi.validator';
-import { OibFormControl } from '../../../shared/model/form.model';
+import { OibFormControl } from '../../../../../shared/model/form.model';
 
 const validator = new JoiValidator();
 
@@ -235,6 +235,147 @@ describe('Joi validator', () => {
         }),
       query: Joi.string().allow(null, '')
     });
+    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+  });
+
+  it('generateJoiSchema should generate proper Joi schema for form Groups', async () => {
+    const settings: OibFormControl[] = [
+      {
+        key: 'authentication',
+        type: 'OibFormGroup',
+        label: 'Authentication',
+        class: 'col',
+        newRow: true,
+        displayInViewMode: false,
+        validators: [{ key: 'required' }],
+        content: [
+          {
+            key: 'type',
+            type: 'OibSelect',
+            label: 'Type',
+            options: ['none', 'basic', 'bearer', 'api-key'],
+            pipe: 'authentication',
+            validators: [{ key: 'required' }],
+            defaultValue: 'none',
+            newRow: true,
+            displayInViewMode: false
+          },
+          {
+            key: 'username',
+            type: 'OibText',
+            label: 'Username',
+            defaultValue: '',
+            displayInViewMode: false
+          },
+          {
+            key: 'password',
+            type: 'OibSecret',
+            label: 'Password',
+            defaultValue: '',
+            displayInViewMode: false
+          },
+          {
+            key: 'token',
+            type: 'OibSecret',
+            label: 'Token',
+            defaultValue: '',
+            newRow: false,
+            displayInViewMode: false
+          },
+          {
+            key: 'apiKeyHeader',
+            type: 'OibSecret',
+            label: 'Api key header',
+            defaultValue: '',
+            newRow: false,
+            displayInViewMode: false
+          },
+          {
+            key: 'apiKey',
+            type: 'OibSecret',
+            label: 'Api key',
+            defaultValue: '',
+            newRow: false,
+            displayInViewMode: false
+          }
+        ]
+      }
+    ];
+    const generatedSchema = extendedValidator.generateJoiSchema(settings);
+
+    const expectedSchema = Joi.object({
+      authentication: Joi.object({
+        type: Joi.string().valid('none', 'basic', 'bearer', 'api-key').required(),
+        username: Joi.string().allow(null, ''),
+        password: Joi.string().allow(null, ''),
+        token: Joi.string().allow(null, ''),
+        apiKeyHeader: Joi.string().allow(null, ''),
+        apiKey: Joi.string().allow(null, '')
+      }).required()
+    });
+    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+  });
+
+  it('generateJoiSchema should generate proper Joi schema for form Array', async () => {
+    const settings: OibFormControl[] = [
+      {
+        key: 'dateTimeFields',
+        type: 'OibArray',
+        label: 'Date time fields',
+        validators: [{ key: 'required' }],
+        content: [
+          {
+            key: 'fieldName',
+            label: 'Field name',
+            type: 'OibText',
+            defaultValue: '',
+            displayInViewMode: true
+          },
+          {
+            key: 'useAsReference',
+            label: 'Reference field',
+            type: 'OibCheckbox',
+            defaultValue: false,
+            displayInViewMode: true
+          },
+          {
+            key: 'type',
+            label: 'Type',
+            type: 'OibSelect',
+            defaultValue: 'string',
+            options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
+            pipe: 'dateTimeType',
+            displayInViewMode: true
+          },
+          {
+            key: 'timezone',
+            label: 'Timezone',
+            type: 'OibTimezone',
+            defaultValue: 'UTC',
+            newRow: true,
+            displayInViewMode: true
+          },
+          {
+            key: 'format',
+            label: 'Format',
+            type: 'OibText',
+            defaultValue: 'yyyy-MM-dd HH:mm:ss'
+          },
+          {
+            key: 'locale',
+            label: 'Locale',
+            defaultValue: 'en-En',
+            type: 'OibText'
+          }
+        ],
+        class: 'col',
+        newRow: true,
+        displayInViewMode: false
+      }
+    ];
+    const generatedSchema = extendedValidator.generateJoiSchema(settings);
+
+    const expectedSchema = Joi.object({ dateTimeFields: Joi.array().required() });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
   });
 });

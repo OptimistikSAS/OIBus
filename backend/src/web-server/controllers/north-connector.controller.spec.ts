@@ -1,9 +1,9 @@
 import NorthConnectorController, { northManifests } from './north-connector.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import JoiValidator from '../../validators/joi.validator';
+import JoiValidator from './validators/joi.validator';
 import mqttManifest from '../../north/north-mqtt/manifest';
 
-jest.mock('../../validators/joi.validator');
+jest.mock('./validators/joi.validator');
 
 const ctx = new KoaContextMock();
 const validator = new JoiValidator();

@@ -1,5 +1,5 @@
 import JoiValidator from './joi.validator';
-import { externalSourceSchema } from '../engine/oibus-validation-schema';
+import { ipFilterSchema } from '../../../engine/oibus-validation-schema';
 
 interface DataProvider {
   dto: any;
@@ -10,31 +10,31 @@ interface DataProvider {
 const dataProviders: DataProvider[] = [
   {
     dto: {
-      reference1: 'missing',
+      address1: 'missing',
       description1: 'missing'
     },
     isValid: false,
-    errorMessage: '"reference" is required. "description" is required. "reference1" is not allowed. "description1" is not allowed'
+    errorMessage: '"address" is required. "description" is required. "address1" is not allowed. "description1" is not allowed'
   },
   {
     dto: {
-      reference: null,
+      address: null,
       description: null
     },
     isValid: false,
-    errorMessage: '"reference" must be a string'
+    errorMessage: '"address" must be a string'
   },
   {
     dto: {
-      reference: '',
+      address: '',
       description: ''
     },
     isValid: false,
-    errorMessage: '"reference" is not allowed to be empty'
+    errorMessage: '"address" is not allowed to be empty'
   },
   {
     dto: {
-      reference: 'valid',
+      address: 'valid',
       description: 'valid',
       description1: 'invalid'
     },
@@ -43,7 +43,7 @@ const dataProviders: DataProvider[] = [
   },
   {
     dto: {
-      reference: 'valid',
+      address: 'valid',
       description: 'valid'
     },
     isValid: true,
@@ -51,14 +51,14 @@ const dataProviders: DataProvider[] = [
   }
 ];
 
-describe('External source validator', () => {
+describe('Ip filter validator', () => {
   const validator: JoiValidator = new JoiValidator();
 
   it.each(dataProviders)(`$# Should be valid: $isValid`, async dataProvider => {
     if (dataProvider.isValid) {
-      await expect(validator.validate(externalSourceSchema, dataProvider.dto)).resolves.not.toThrow();
+      await expect(validator.validate(ipFilterSchema, dataProvider.dto)).resolves.not.toThrow();
     } else {
-      await expect(validator.validate(externalSourceSchema, dataProvider.dto)).rejects.toThrowError(
+      await expect(validator.validate(ipFilterSchema, dataProvider.dto)).rejects.toThrowError(
         new Error(dataProvider.errorMessage as string)
       );
     }
