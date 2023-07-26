@@ -3,7 +3,7 @@ import { northManifests } from './north-connector.controller';
 import { southManifests } from './south-connector.controller';
 
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import JoiValidator from '../../validators/joi.validator';
+import JoiValidator from './validators/joi.validator';
 import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO } from '../../../../shared/model/history-query.model';
 import { historyQuerySchema } from '../../engine/oibus-validation-schema';
 import { NorthArchiveSettings, NorthCacheSettingsDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
@@ -13,7 +13,7 @@ import fs from 'node:fs/promises';
 
 jest.mock('papaparse');
 jest.mock('node:fs/promises');
-jest.mock('../../validators/joi.validator');
+jest.mock('./validators/joi.validator');
 
 const ctx = new KoaContextMock();
 const validator = new JoiValidator();

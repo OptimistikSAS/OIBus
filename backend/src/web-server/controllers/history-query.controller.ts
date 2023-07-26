@@ -1,6 +1,6 @@
 import { KoaContext } from '../koa';
 import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
-import JoiValidator from '../../validators/joi.validator';
+import JoiValidator from './validators/joi.validator';
 
 import {
   SouthConnectorItemCommandDTO,

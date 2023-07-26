@@ -1,11 +1,11 @@
 import Joi from 'joi';
 
 import OibusController from './oibus.controller';
-import JoiValidator from '../../validators/joi.validator';
+import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import { OIBusInfo } from '../../../../shared/model/engine.model';
 
-jest.mock('../../validators/joi.validator');
+jest.mock('./validators/joi.validator');
 
 const validator = new JoiValidator();
 const schema = Joi.object({});

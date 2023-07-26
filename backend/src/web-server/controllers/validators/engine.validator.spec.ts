@@ -1,5 +1,5 @@
 import JoiValidator from './joi.validator';
-import { engineSchema } from '../engine/oibus-validation-schema';
+import { engineSchema } from '../../../engine/oibus-validation-schema';
 
 interface DataProvider {
   dto: any;

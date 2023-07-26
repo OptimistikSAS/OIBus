@@ -1,10 +1,10 @@
 import Joi from 'joi';
 
 import UserController from './user.controller';
-import JoiValidator from '../../validators/joi.validator';
+import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 
-jest.mock('../../validators/joi.validator');
+jest.mock('./validators/joi.validator');
 
 const validator = new JoiValidator();
 const schema = Joi.object({});

@@ -1,6 +1,6 @@
 import SouthConnectorController, { southManifests } from './south-connector.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import JoiValidator from '../../validators/joi.validator';
+import JoiValidator from './validators/joi.validator';
 import folderScannerManifest from '../../south/south-folder-scanner/manifest';
 import sqliteManifest from '../../south/south-sqlite/manifest';
 import csv from 'papaparse';
@@ -17,7 +17,7 @@ import {
   SouthSQLiteSettings
 } from '../../../../shared/model/south-settings.model';
 
-jest.mock('../../validators/joi.validator');
+jest.mock('./validators/joi.validator');
 jest.mock('papaparse');
 jest.mock('node:fs/promises');
 

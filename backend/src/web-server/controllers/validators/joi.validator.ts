@@ -12,7 +12,7 @@ import {
   OibTextAreaFormControl,
   OibTextFormControl,
   OibTimezoneFormControl
-} from '../../../shared/model/form.model';
+} from '../../../../../shared/model/form.model';
 
 export default class JoiValidator {
   async validate(schema: Joi.ObjectSchema, dto: any): Promise<void> {
