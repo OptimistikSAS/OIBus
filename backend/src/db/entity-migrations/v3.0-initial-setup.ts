@@ -125,6 +125,7 @@ async function createHistoryItemsTable(knex: Knex): Promise<void> {
     table.uuid('history_id').notNullable();
     table.foreign('history_id').references('id').inTable(HISTORY_QUERIES_TABLE);
     table.string('name').notNullable().unique();
+    table.boolean('enabled').notNullable();
     table.string('description');
     table.json('settings').notNullable();
   });
@@ -152,6 +153,7 @@ async function createSouthItemsTable(knex: Knex): Promise<void> {
     table.uuid('scan_mode_id').notNullable();
     table.foreign('scan_mode_id').references('id').inTable(SCAN_MODES_TABLE);
     table.string('name').notNullable().unique();
+    table.boolean('enabled').notNullable();
     table.json('settings').notNullable();
   });
 }

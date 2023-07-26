@@ -12,6 +12,7 @@ const nowDateString = '2020-02-02T02:02:02.222Z';
 const item: SouthConnectorItemDTO = {
   id: 'id1',
   name: 'item1',
+  enabled: true,
   connectorId: 'southId',
   settings: {
     payloadParser: 'raw',

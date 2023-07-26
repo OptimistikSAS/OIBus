@@ -52,6 +52,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'item1',
+    enabled: true,
     connectorId: 'southId',
     settings: {},
     scanModeId: 'scanModeId1'
@@ -59,6 +60,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id2',
     name: 'item2',
+    enabled: false,
     connectorId: 'southId',
     settings: {},
     scanModeId: 'scanModeId2'

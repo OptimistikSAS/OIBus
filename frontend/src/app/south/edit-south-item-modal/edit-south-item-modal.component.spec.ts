@@ -149,6 +149,7 @@ describe('EditSouthItemModalComponent', () => {
     const southItem: SouthConnectorItemDTO = {
       id: 'id1',
       name: 'myName',
+      enabled: true,
       connectorId: 'southId1',
       scanModeId: 'scanModeId1',
       settings: {}
@@ -187,6 +188,7 @@ describe('EditSouthItemModalComponent', () => {
     const southItem: SouthConnectorItemDTO = {
       id: 'id1',
       name: 'myName',
+      enabled: true,
       connectorId: 'southId1',
       scanModeId: 'scanModeId1',
       settings: {}

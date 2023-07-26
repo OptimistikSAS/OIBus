@@ -62,6 +62,7 @@ const items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
@@ -97,6 +98,7 @@ const items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>> = [
   {
     id: 'id2',
     name: 'item2',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
@@ -132,6 +134,7 @@ const items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>> = [
   {
     id: 'id3',
     name: 'item3',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',

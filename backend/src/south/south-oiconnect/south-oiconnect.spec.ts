@@ -66,6 +66,7 @@ const items: Array<SouthConnectorItemDTO<SouthOIConnectItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       requestMethod: 'POST',
@@ -90,6 +91,7 @@ const items: Array<SouthConnectorItemDTO<SouthOIConnectItemSettings>> = [
   {
     id: 'id2',
     name: 'item2',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       requestMethod: 'GET',
@@ -114,6 +116,7 @@ const items: Array<SouthConnectorItemDTO<SouthOIConnectItemSettings>> = [
   {
     id: 'id3',
     name: 'item3',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       requestMethod: 'GET',

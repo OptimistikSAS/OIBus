@@ -61,6 +61,7 @@ const items: Array<SouthConnectorItemDTO<SouthPostgreSQLItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
@@ -96,6 +97,7 @@ const items: Array<SouthConnectorItemDTO<SouthPostgreSQLItemSettings>> = [
   {
     id: 'id2',
     name: 'item2',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
@@ -131,6 +133,7 @@ const items: Array<SouthConnectorItemDTO<SouthPostgreSQLItemSettings>> = [
   {
     id: 'id3',
     name: 'item3',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',

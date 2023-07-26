@@ -82,6 +82,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'item1',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       nodeId: 'ns=3;s=Random'
@@ -91,6 +92,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id2',
     name: 'item2',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       nodeId: 'ns=3;s=Counter'
@@ -100,6 +102,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id3',
     name: 'item3',
+    enabled: true,
     connectorId: 'southId',
     settings: {
       nodeId: 'ns=3;s=Triangle'

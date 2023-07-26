@@ -113,7 +113,7 @@ describe('HistoryQueryService', () => {
   it('should search History query items', () => {
     let expectedItems: Page<SouthConnectorItemDTO> | null = null;
     const southConnectorItems = toPage<SouthConnectorItemDTO>([
-      { id: 'itemId', name: 'MySouthItem', connectorId: 'id1', scanModeId: 'scanModeId', settings: {} }
+      { id: 'itemId', name: 'MySouthItem', enabled: true, connectorId: 'id1', scanModeId: 'scanModeId', settings: {} }
     ]);
 
     service.searchItems('id1', { page: 0, name: null }).subscribe(c => (expectedItems = c));

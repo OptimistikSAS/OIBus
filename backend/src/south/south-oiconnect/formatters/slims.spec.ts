@@ -5,6 +5,7 @@ import { SouthConnectorItemDTO } from '../../../../../shared/model/south-connect
 const item: SouthConnectorItemDTO = {
   id: 'id1',
   name: 'item1',
+  enabled: true,
   connectorId: 'southId',
   settings: {
     payloadParser: 'raw'

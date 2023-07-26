@@ -5,6 +5,7 @@ const item: SouthConnectorItemDTO = {
   id: 'id1',
   name: 'item1',
   connectorId: 'southId',
+  enabled: true,
   settings: {
     payloadParser: 'raw'
   },

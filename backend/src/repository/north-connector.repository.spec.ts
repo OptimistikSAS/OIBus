@@ -288,4 +288,16 @@ describe('North connector repository', () => {
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM north_connectors WHERE id = ?;');
     expect(run).toHaveBeenCalledWith('id1');
   });
+
+  it('should start north connector', () => {
+    repository.startNorthConnector('id1');
+    expect(database.prepare).toHaveBeenCalledWith('UPDATE north_connectors SET enabled = ? WHERE id = ?;');
+    expect(run).toHaveBeenCalledWith(1, 'id1');
+  });
+
+  it('should stop north connector', () => {
+    repository.stopNorthConnector('id1');
+    expect(database.prepare).toHaveBeenCalledWith('UPDATE north_connectors SET enabled = ? WHERE id = ?;');
+    expect(run).toHaveBeenCalledWith(0, 'id1');
+  });
 });

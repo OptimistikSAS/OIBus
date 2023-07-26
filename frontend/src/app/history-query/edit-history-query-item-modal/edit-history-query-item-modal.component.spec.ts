@@ -145,6 +145,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
     const item: SouthConnectorItemDTO = {
       id: 'id1',
       name: 'myName',
+      enabled: true,
       connectorId: 'historyId',
       scanModeId: 'history',
       settings: {}
@@ -182,6 +183,7 @@ describe('EditHistoryQueryItemModalComponent', () => {
     const southItem: SouthConnectorItemDTO = {
       id: 'id1',
       name: 'myName',
+      enabled: true,
       connectorId: 'southId1',
       scanModeId: 'history',
       settings: {}

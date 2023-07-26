@@ -50,6 +50,7 @@ export interface SouthConnectorCommandDTO<T = any> {
  */
 export interface SouthConnectorItemDTO<T extends SouthItemSettings = any> extends BaseEntity {
   name: string;
+  enabled: boolean;
   connectorId: string;
   settings: T;
   scanModeId: string;

@@ -75,4 +75,55 @@ describe('Log repository', () => {
       "SELECT COUNT(*) as count FROM logs WHERE timestamp BETWEEN ? AND ? AND level IN (?,?) AND scope_id IN (?,?) AND scope_type IN (?,?) AND message LIKE '%' || ? || '%'"
     );
   });
+
+  it('should add logs', () => {
+    repository.addLogs([
+      { msg: 'my message 1', scopeType: 'myScopeType', scopeId: 'scopeId', scopeName: 'scope name', time: 0, level: '30' },
+      { msg: 'my message 1', scopeType: 'myScopeType', scopeId: 'scopeId', scopeName: 'scope name', time: 1, level: '10' }
+    ]);
+
+    expect(database.prepare).toHaveBeenCalledWith(
+      'INSERT INTO logs (timestamp, level, scope_type, scope_id, scope_name, message) VALUES (?,?,?,?,?,?), (?,?,?,?,?,?);'
+    );
+    expect(run).toHaveBeenCalledWith(
+      0,
+      'info',
+      'myScopeType',
+      'scopeId',
+      'scope name',
+      'my message 1',
+      1,
+      'trace',
+      'myScopeType',
+      'scopeId',
+      'scope name',
+      'my message 1'
+    );
+  });
+
+  it('should not add logs if empty array', () => {
+    repository.addLogs();
+    repository.addLogs([]);
+
+    expect(database.prepare).not.toHaveBeenCalled();
+  });
+
+  it('should count logs', () => {
+    get.mockReturnValueOnce({ count: 2 });
+    const result = repository.countLogs();
+
+    expect(database.prepare).toHaveBeenCalledWith('SELECT COUNT(*) AS count FROM logs');
+    expect(get).toHaveBeenCalledTimes(1);
+    expect(result).toEqual(2);
+  });
+
+  it('should delete logs', () => {
+    repository.deleteLogs(2);
+
+    expect(database.prepare).toHaveBeenCalledWith(
+      'DELETE FROM logs WHERE timestamp IN (SELECT timestamp FROM logs ORDER BY timestamp LIMIT ?);'
+    );
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(run).toHaveBeenCalledWith(2);
+  });
 });

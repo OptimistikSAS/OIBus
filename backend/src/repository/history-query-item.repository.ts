@@ -28,7 +28,7 @@ export default class HistoryQueryItemRepository {
       whereClause += ` AND name like '%' || ? || '%'`;
     }
     const query =
-      `SELECT id, name, history_id AS historyId, settings FROM ${HISTORY_ITEMS_TABLE} ${whereClause}` +
+      `SELECT id, name, enabled, history_id AS historyId, settings FROM ${HISTORY_ITEMS_TABLE} ${whereClause}` +
       ` LIMIT ${PAGE_SIZE} OFFSET ${PAGE_SIZE * searchParams.page};`;
     const results: Array<SouthConnectorItemDTO> = this.database
       .prepare(query)
@@ -36,6 +36,7 @@ export default class HistoryQueryItemRepository {
       .map((result: any) => ({
         id: result.id,
         name: result.name,
+        enabled: result.enabled,
         connectorId: result.historyId,
         scanModeId: 'history',
         settings: JSON.parse(result.settings)
@@ -58,13 +59,14 @@ export default class HistoryQueryItemRepository {
    * Retrieve all History items (point, query, folder...) associated to a History Query
    */
   getHistoryItems(historyId: string): Array<SouthConnectorItemDTO> {
-    const query = `SELECT id, name, settings FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
+    const query = `SELECT id, name, enabled, settings FROM ${HISTORY_ITEMS_TABLE} WHERE history_id = ?;`;
     return this.database
       .prepare(query)
       .all(historyId)
       .map((result: any) => ({
         id: result.id,
         name: result.name,
+        enabled: result.enabled,
         connectorId: historyId,
         scanModeId: 'history',
         settings: JSON.parse(result.settings)
@@ -75,11 +77,12 @@ export default class HistoryQueryItemRepository {
    * Retrieve a History item by its ID
    */
   getHistoryItem(id: string): SouthConnectorItemDTO {
-    const query = `SELECT id, name, history_id AS historyId, settings FROM ${HISTORY_ITEMS_TABLE} WHERE id = ?;`;
+    const query = `SELECT id, name, enabled, history_id AS historyId, settings FROM ${HISTORY_ITEMS_TABLE} WHERE id = ?;`;
     const result: any = this.database.prepare(query).get(id);
     return {
       id: result.id,
       name: result.name,
+      enabled: result.enabled,
       connectorId: result.historyId,
       scanModeId: 'history',
       settings: JSON.parse(result.settings)
@@ -91,14 +94,15 @@ export default class HistoryQueryItemRepository {
    */
   createHistoryItem(historyId: string, command: SouthConnectorItemCommandDTO): SouthConnectorItemDTO {
     const id = generateRandomId(6);
-    const insertQuery = `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, history_id, settings) ` + `VALUES (?, ?, ?, ?);`;
-    const insertResult = this.database.prepare(insertQuery).run(id, command.name, historyId, JSON.stringify(command.settings));
+    const insertQuery = `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings) ` + `VALUES (?, ?, ?, ?, ?);`;
+    const insertResult = this.database.prepare(insertQuery).run(id, command.name, 1, historyId, JSON.stringify(command.settings));
 
-    const query = `SELECT id, name, history_id AS historyId, settings FROM ${HISTORY_ITEMS_TABLE} WHERE ROWID = ?;`;
+    const query = `SELECT id, name, enabled, history_id AS historyId, settings FROM ${HISTORY_ITEMS_TABLE} WHERE ROWID = ?;`;
     const result: any = this.database.prepare(query).get(insertResult.lastInsertRowid);
     return {
       id: result.id,
       name: result.name,
+      enabled: result.enabled,
       connectorId: result.historyId,
       scanModeId: 'history',
       settings: JSON.parse(result.settings)
@@ -130,13 +134,15 @@ export default class HistoryQueryItemRepository {
   }
 
   createAndUpdateItems(historyId: string, itemsToAdd: Array<SouthConnectorItemDTO>, itemsToUpdate: Array<SouthConnectorItemDTO>): void {
-    const insert = this.database.prepare(`INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, history_id, settings) VALUES (?, ?, ?, ?);`);
+    const insert = this.database.prepare(
+      `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings) VALUES (?, ?, ?, ?, ?);`
+    );
     const update = this.database.prepare(`UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, settings = ? WHERE id = ?;`);
 
     const transaction = this.database.transaction(() => {
       for (const item of itemsToAdd) {
         const id = generateRandomId(6);
-        insert.run(id, item.name, historyId, JSON.stringify(item.settings));
+        insert.run(id, item.name, 1, historyId, JSON.stringify(item.settings));
       }
       for (const item of itemsToUpdate) {
         update.run(item.name, JSON.stringify(item.settings), item.id);

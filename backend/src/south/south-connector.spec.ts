@@ -100,6 +100,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'item1',
+    enabled: true,
     connectorId: 'southId',
     settings: {},
     scanModeId: 'scanModeId1'
@@ -107,6 +108,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id2',
     name: 'item2',
+    enabled: true,
     connectorId: 'southId',
     settings: {},
     scanModeId: 'scanModeId2'
@@ -114,6 +116,7 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id3',
     name: 'item3',
+    enabled: true,
     connectorId: 'southId',
     settings: {},
     scanModeId: 'scanModeId1'
@@ -240,6 +243,7 @@ describe('SouthConnector enabled', () => {
       {
         id: 'id1',
         name: 'item1',
+        enabled: true,
         connectorId: 'southId',
         settings: {},
         scanModeId: 'scanModeId1'
@@ -252,6 +256,7 @@ describe('SouthConnector enabled', () => {
         {
           id: 'id1',
           name: 'item1',
+          enabled: true,
           connectorId: 'southId',
           settings: {},
           scanModeId: 'scanModeId1'
@@ -465,6 +470,7 @@ describe('SouthConnector enabled', () => {
     const item: SouthConnectorItemDTO = {
       id: 'id1',
       scanModeId: 'scanModeId',
+      enabled: true,
       connectorId: 'southId1',
       name: 'my item',
       settings: {}
@@ -491,6 +497,7 @@ describe('SouthConnector enabled', () => {
     const item: SouthConnectorItemDTO = {
       id: 'id1',
       scanModeId: 'scanModeId',
+      enabled: true,
       connectorId: 'southId1',
       name: 'my item',
       settings: {}
@@ -507,6 +514,7 @@ describe('SouthConnector enabled', () => {
     await south.updateItem(item, {
       id: 'itemId',
       scanModeId: 'scanModeId',
+      enabled: true,
       connectorId: 'id',
       name: 'my updated item',
       settings: {}
@@ -517,6 +525,7 @@ describe('SouthConnector enabled', () => {
     await south.updateItem(item, {
       id: 'itemId',
       scanModeId: 'scanModeId',
+      enabled: true,
       connectorId: 'id',
       name: 'my updated item',
       settings: {}
@@ -530,6 +539,7 @@ describe('SouthConnector enabled', () => {
     const item1: SouthConnectorItemDTO = {
       id: 'id1',
       scanModeId: 'scanModeId3',
+      enabled: true,
       connectorId: 'southId1',
       name: 'my item',
       settings: {}
@@ -537,6 +547,7 @@ describe('SouthConnector enabled', () => {
     const item2: SouthConnectorItemDTO = {
       id: 'id2',
       scanModeId: 'scanModeId3',
+      enabled: true,
       connectorId: 'southId1',
       name: 'my item',
       settings: {}
@@ -544,6 +555,7 @@ describe('SouthConnector enabled', () => {
     const item3: SouthConnectorItemDTO = {
       id: 'id3',
       scanModeId: 'scanModeId1',
+      enabled: true,
       connectorId: 'southId1',
       name: 'my item',
       settings: {}
@@ -551,6 +563,7 @@ describe('SouthConnector enabled', () => {
     const item4: SouthConnectorItemDTO = {
       id: 'id4',
       scanModeId: 'subscription',
+      enabled: true,
       connectorId: 'southId1',
       name: 'my item',
       settings: {}
