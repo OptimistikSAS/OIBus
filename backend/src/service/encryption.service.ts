@@ -143,10 +143,18 @@ export default class EncryptionService {
         } else {
           encryptedSettings[fieldSettings.key] = oldSettings ? oldSettings[fieldSettings.key] || '' : '';
         }
-      } else if (fieldSettings.type === 'OibArray' || fieldSettings.type === 'OibFormGroup') {
+      } else if (fieldSettings.type === 'OibArray') {
+        for (let i = 0; i < encryptedSettings[fieldSettings.key].length; i++) {
+          encryptedSettings[fieldSettings.key][i] = await this.encryptConnectorSecrets(
+            encryptedSettings[fieldSettings.key][i],
+            oldSettings[fieldSettings.key] || null,
+            fieldSettings.content
+          );
+        }
+      } else if (fieldSettings.type === 'OibFormGroup') {
         encryptedSettings[fieldSettings.key] = await this.encryptConnectorSecrets(
           encryptedSettings[fieldSettings.key],
-          oldSettings != null ? oldSettings[fieldSettings.key] : null,
+          oldSettings[fieldSettings.key] || null,
           fieldSettings.content
         );
       }
@@ -158,7 +166,11 @@ export default class EncryptionService {
     for (const fieldSettings of formSettings) {
       if (fieldSettings.type === 'OibSecret') {
         connectorSettings[fieldSettings.key] = '';
-      } else if (fieldSettings.type === 'OibArray' || fieldSettings.type === 'OibFormGroup') {
+      } else if (fieldSettings.type === 'OibArray') {
+        for (let i = 0; i < connectorSettings[fieldSettings.key].length; i++) {
+          connectorSettings[fieldSettings.key][i] = this.filterSecrets(connectorSettings[fieldSettings.key][i], fieldSettings.content);
+        }
+      } else if (fieldSettings.type === 'OibFormGroup') {
         this.filterSecrets(connectorSettings[fieldSettings.key], fieldSettings.content);
       }
     }
