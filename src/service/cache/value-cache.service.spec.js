@@ -71,7 +71,7 @@ describe('ValueCache', () => {
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values'))
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors'))
 
-    expect(logger.info).toHaveBeenCalledWith('8 values in cache.')
+    expect(logger.info).toHaveBeenCalledWith('4 values in queue and 2 compacted files and in cache.')
     expect(cache.resetValuesTimeout).toHaveBeenCalledTimes(1)
   })
 
@@ -97,7 +97,7 @@ describe('ValueCache', () => {
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values'))
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors'))
 
-    expect(logger.info).toHaveBeenCalledWith('8 values in cache.')
+    expect(logger.info).toHaveBeenCalledWith('4 values in queue and 2 compacted files and in cache.')
     expect(cache.resetValuesTimeout).toHaveBeenCalledTimes(1)
   })
 
@@ -595,7 +595,6 @@ describe('ValueCache', () => {
     expect(cache.compactedQueue).toEqual([{
       fileName: 'generated-uuid.compact.tmp',
       createdAt: new Date(nowDateString).getTime(),
-      numberOfValues: 3,
     }])
   })
 

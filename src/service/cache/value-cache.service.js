@@ -90,7 +90,7 @@ export default class ValueCacheService {
       },
     ), Promise.resolve())
 
-    let numberOfValuesInCache = 0
+    let numberOfValuesInQueue = 0
     // Filters file that don't match the regex (keep queue.tmp files only)
     const queueFiles = files.filter((file) => file.match(/.*.queue.tmp/))
     await queueFiles.reduce((promise, fileName) => promise.then(
@@ -99,7 +99,7 @@ export default class ValueCacheService {
           const fileContent = await fs.readFile(path.resolve(this.valueFolder, fileName), { encoding: 'utf8' })
           const values = JSON.parse(fileContent)
           this.queue.set(fileName, values)
-          numberOfValuesInCache += values.length
+          numberOfValuesInQueue += values.length
         } catch (error) {
           // If a file is being written or corrupted, the readFile method can fail
           // An error is logged and the cache goes through the other files
@@ -115,10 +115,7 @@ export default class ValueCacheService {
       async () => {
         try {
           const fileStat = await fs.stat(path.resolve(this.valueFolder, fileName))
-          const fileContent = await fs.readFile(path.resolve(this.valueFolder, fileName), { encoding: 'utf8' })
-          const values = JSON.parse(fileContent)
-          this.compactedQueue.push({ fileName, createdAt: fileStat.ctimeMs, numberOfValues: values.length })
-          numberOfValuesInCache += values.length
+          this.compactedQueue.push({ fileName, createdAt: fileStat.ctimeMs })
         } catch (error) {
           // If a file is being written or corrupted, the stat method can fail
           // An error is logged and the cache goes through the other files
@@ -128,8 +125,8 @@ export default class ValueCacheService {
     ), Promise.resolve())
     // Sort the compact queue to have the oldest file first
     this.compactedQueue.sort((a, b) => a.createdAt - b.createdAt)
-    if (numberOfValuesInCache > 0) {
-      this.logger.info(`${numberOfValuesInCache} values in cache.`)
+    if (numberOfValuesInQueue > 0) {
+      this.logger.info(`${numberOfValuesInQueue} values in queue and ${compactedQueueFiles.length} compacted files and in cache.`)
     } else {
       this.logger.info('No value in cache.')
     }
@@ -233,7 +230,6 @@ export default class ValueCacheService {
       this.compactedQueue.push({
         fileName: compactFileName,
         createdAt: new Date().getTime(),
-        numberOfValues: valuesInQueue.length,
       })
 
       // Once compacted, remove values from queue.
