@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { DecimalPipe, NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { of, switchMap } from 'rxjs';
+import { of, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -13,6 +13,7 @@ import { NorthMetricsComponent } from './north-metrics/north-metrics.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
+import { NotificationService } from '../../shared/notification.service';
 
 @Component({
   selector: 'oib-north-detail',
@@ -44,6 +45,7 @@ export class NorthDetailComponent implements OnInit {
   constructor(
     private northConnectorService: NorthConnectorService,
     private scanModeService: ScanModeService,
+    private notificationService: NotificationService,
     protected router: Router,
     private route: ActivatedRoute
   ) {}
@@ -88,5 +90,37 @@ export class NorthDetailComponent implements OnInit {
 
   getScanMode(scanModeId: string) {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
+  }
+
+  toggleConnector(value: boolean) {
+    if (value) {
+      this.northConnectorService
+        .startNorth(this.northConnector!.id)
+        .pipe(
+          tap(() => {
+            this.notificationService.success('north.started', { name: this.northConnector!.name });
+          }),
+          switchMap(() => {
+            return this.northConnectorService.getNorthConnector(this.northConnector!.id);
+          })
+        )
+        .subscribe(northConnector => {
+          this.northConnector = northConnector;
+        });
+    } else {
+      this.northConnectorService
+        .stopNorth(this.northConnector!.id)
+        .pipe(
+          tap(() => {
+            this.notificationService.success('north.stopped', { name: this.northConnector!.name });
+          }),
+          switchMap(() => {
+            return this.northConnectorService.getNorthConnector(this.northConnector!.id);
+          })
+        )
+        .subscribe(northConnector => {
+          this.northConnector = northConnector;
+        });
+    }
   }
 }

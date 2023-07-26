@@ -6,7 +6,6 @@
           <span class="ms-2">
             <button class="btn btn-primary" id="edit-link" routerLink="edit">
               <i class="fa fa-pencil"></i>
-              {{ 'history-query.edit' | translate }}
             </button>
             <button class="btn btn-primary pull-right me-2" id="history-query-enabled" (click)="toggleHistoryQuery(!historyQuery.enabled)">
               <i [class]="historyQuery.enabled ?  'fa fa-pause' : 'fa fa-play'"></i>

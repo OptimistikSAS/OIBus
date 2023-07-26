@@ -8,6 +8,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { HistoryQueryDTO } from '../../../../shared/model/history-query.model';
 import { HistoryQueryService } from '../services/history-query.service';
+import { NotificationService } from '../shared/notification.service';
 
 class HistoryQueryListComponentTester extends ComponentTester<HistoryQueryListComponent> {
   constructor() {
@@ -25,6 +26,7 @@ class HistoryQueryListComponentTester extends ComponentTester<HistoryQueryListCo
 describe('HistoryQueryListComponent', () => {
   let tester: HistoryQueryListComponentTester;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
+  let notificationService: jasmine.SpyObj<NotificationService>;
 
   const historyQueries: Array<HistoryQueryDTO> = [
     {
@@ -43,17 +45,21 @@ describe('HistoryQueryListComponent', () => {
 
   beforeEach(() => {
     historyQueryService = createMock(HistoryQueryService);
+    notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
         provideRouter([]),
         provideHttpClient(),
-        { provide: HistoryQueryService, useValue: historyQueryService }
+        { provide: HistoryQueryService, useValue: historyQueryService },
+        { provide: NotificationService, useValue: notificationService }
       ]
     });
 
     historyQueryService.list.and.returnValue(of(historyQueries));
+    historyQueryService.startHistoryQuery.and.returnValue(of(undefined));
+    historyQueryService.stopHistoryQuery.and.returnValue(of(undefined));
 
     tester = new HistoryQueryListComponentTester();
     tester.detectChanges();
@@ -72,5 +78,15 @@ describe('HistoryQueryListComponent', () => {
     expect(tester.historyQueryList[1].elements('td')[2]).toContainText('paused');
     expect(tester.historyQueryList[1].elements('td')[3].elements('button').length).toBe(2);
     expect(tester.historyQueryList[1].elements('td')[3].elements('a').length).toBe(2);
+  });
+
+  it('should toggle history query', () => {
+    tester.historyQueryList[0].elements('td')[3].elements('button')[0].click();
+    expect(historyQueryService.stopHistoryQuery).toHaveBeenCalledWith('id1');
+    expect(notificationService.success).toHaveBeenCalledWith('history-query.stopped', { name: historyQueries[0].name });
+
+    tester.historyQueryList[1].elements('td')[3].elements('button')[0].click();
+    expect(historyQueryService.startHistoryQuery).toHaveBeenCalledWith('id2');
+    expect(notificationService.success).toHaveBeenCalledWith('history-query.started', { name: historyQueries[1].name });
   });
 });

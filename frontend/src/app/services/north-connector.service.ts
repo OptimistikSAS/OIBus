@@ -170,4 +170,12 @@ export class NorthConnectorService {
   resetMetrics(northId: string): Observable<void> {
     return this.http.put<void>(`/api/north/${northId}/cache/reset-metrics`, null);
   }
+
+  startNorth(northId: string): Observable<void> {
+    return this.http.put<void>(`/api/north/${northId}/start`, null);
+  }
+
+  stopNorth(northId: string): Observable<void> {
+    return this.http.put<void>(`/api/north/${northId}/stop`, null);
+  }
 }

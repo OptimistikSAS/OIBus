@@ -8,6 +8,9 @@
               <i class="fa fa-pencil"></i>
             </button>
           </span>
+          <button class="btn btn-primary pull-right me-2" id="north-enabled" (click)="toggleConnector(!northConnector.enabled)">
+            <i [class]="northConnector.enabled ?  'fa fa-pause' : 'fa fa-play'"></i>
+          </button>
         </h1>
       </div>
 

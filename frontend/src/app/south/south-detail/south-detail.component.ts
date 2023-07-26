@@ -9,7 +9,7 @@ import {
 } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, of, switchMap } from 'rxjs';
+import { catchError, of, switchMap, tap } from 'rxjs';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { PageLoader } from '../../shared/page-loader.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
@@ -126,5 +126,37 @@ export class SouthDetailComponent implements OnInit {
       .subscribe(() => {
         this.notificationService.success('south.test-connection.success');
       });
+  }
+
+  toggleConnector(value: boolean) {
+    if (value) {
+      this.southConnectorService
+        .startSouth(this.southConnector!.id)
+        .pipe(
+          tap(() => {
+            this.notificationService.success('south.started', { name: this.southConnector!.name });
+          }),
+          switchMap(() => {
+            return this.southConnectorService.get(this.southConnector!.id);
+          })
+        )
+        .subscribe(southConnector => {
+          this.southConnector = southConnector;
+        });
+    } else {
+      this.southConnectorService
+        .stopSouth(this.southConnector!.id)
+        .pipe(
+          tap(() => {
+            this.notificationService.success('south.stopped', { name: this.southConnector!.name });
+          }),
+          switchMap(() => {
+            return this.southConnectorService.get(this.southConnector!.id);
+          })
+        )
+        .subscribe(southConnector => {
+          this.southConnector = southConnector;
+        });
+    }
   }
 }

@@ -124,4 +124,40 @@ export class SouthListComponent implements OnInit {
 
     return filteredItems;
   }
+
+  toggleConnector(southId: string, northName: string, value: boolean) {
+    if (value) {
+      this.southConnectorService
+        .startSouth(southId)
+        .pipe(
+          tap(() => {
+            this.notificationService.success('south.started', { name: northName });
+          }),
+          switchMap(() => {
+            return this.southConnectorService.list();
+          })
+        )
+        .subscribe(souths => {
+          this.allSouths = souths;
+          this.filteredSouths = this.filter(this.allSouths);
+          this.displayedSouths = this.createPage(this.displayedSouths.number);
+        });
+    } else {
+      this.southConnectorService
+        .stopSouth(southId)
+        .pipe(
+          tap(() => {
+            this.notificationService.success('south.stopped', { name: northName });
+          }),
+          switchMap(() => {
+            return this.southConnectorService.list();
+          })
+        )
+        .subscribe(souths => {
+          this.allSouths = souths;
+          this.filteredSouths = this.filter(this.allSouths);
+          this.displayedSouths = this.createPage(this.displayedSouths.number);
+        });
+    }
+  }
 }

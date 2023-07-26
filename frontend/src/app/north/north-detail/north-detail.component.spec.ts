@@ -9,6 +9,7 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { ScanModeService } from '../../services/scan-mode.service';
+import { NotificationService } from '../../shared/notification.service';
 
 class NorthDetailComponentTester extends ComponentTester<NorthDetailComponent> {
   constructor() {
@@ -17,6 +18,10 @@ class NorthDetailComponentTester extends ComponentTester<NorthDetailComponent> {
 
   get title() {
     return this.element('#title');
+  }
+
+  get toggleButton() {
+    return this.button('#north-enabled')!;
   }
 
   get northSettings() {
@@ -28,6 +33,7 @@ describe('NorthDetailComponent', () => {
   let tester: NorthDetailComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
+  let notificationService: jasmine.SpyObj<NotificationService>;
 
   const northConnector: NorthConnectorDTO = {
     id: 'id1',
@@ -82,6 +88,8 @@ describe('NorthDetailComponent', () => {
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
     scanModeService = createMock(ScanModeService);
+    notificationService = createMock(NotificationService);
+
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
@@ -96,19 +104,22 @@ describe('NorthDetailComponent', () => {
           })
         },
         { provide: NorthConnectorService, useValue: northConnectorService },
+        { provide: NotificationService, useValue: notificationService },
         { provide: ScanModeService, useValue: scanModeService }
       ]
     });
 
     northConnectorService.getNorthConnector.and.returnValue(of(northConnector));
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(of(manifest));
+    northConnectorService.startNorth.and.returnValue(of(undefined));
+    northConnectorService.stopNorth.and.returnValue(of(undefined));
     scanModeService.list.and.returnValue(of([]));
 
     tester = new NorthDetailComponentTester();
-    tester.detectChanges();
   });
 
   it('should display north connector detail', () => {
+    tester.detectChanges();
     expect(tester.title).toContainText(northConnector.name);
     const settings = tester.northSettings;
     expect(settings.length).toBe(2);
@@ -116,5 +127,20 @@ describe('NorthDetailComponent', () => {
     expect(settings[0]).toContainText('active');
     expect(settings[1]).toContainText('Host');
     expect(settings[1]).toContainText('url');
+  });
+
+  it('should stop north', () => {
+    tester.detectChanges();
+    tester.toggleButton.click();
+    expect(northConnectorService.stopNorth).toHaveBeenCalledWith(northConnector.id);
+    expect(notificationService.success).toHaveBeenCalledWith('north.stopped', { name: northConnector.name });
+  });
+
+  it('should start north', () => {
+    northConnectorService.getNorthConnector.and.returnValue(of({ ...northConnector, enabled: false }));
+    tester.detectChanges();
+    tester.toggleButton.click();
+    expect(northConnectorService.startNorth).toHaveBeenCalledWith(northConnector.id);
+    expect(notificationService.success).toHaveBeenCalledWith('north.started', { name: northConnector.name });
   });
 });

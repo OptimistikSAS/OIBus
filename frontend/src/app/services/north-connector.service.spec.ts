@@ -265,4 +265,24 @@ describe('NorthConnectorService', () => {
     testRequest.flush(null);
     expect(done).toBe(true);
   });
+
+  it('should start a North', () => {
+    let done = false;
+
+    service.startNorth('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/start' });
+    expect(testRequest.request.body).toEqual(null);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should stop a North', () => {
+    let done = false;
+
+    service.stopNorth('id1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/stop' });
+    expect(testRequest.request.body).toEqual(null);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
 });
