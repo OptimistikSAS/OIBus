@@ -119,14 +119,7 @@ export default class SouthConnectorController {
         manifest.settings
       );
       ctx.request.body!.name = southConnector ? southConnector.name : `${ctx.request.body!.type}:test-connection`;
-      const southToTest = ctx.app.southService.createSouth(
-        command,
-        [],
-        async (_southId: string, _values: Array<any>): Promise<void> => {},
-        async (_southId: string, _filename: string): Promise<void> => {},
-        'baseFolder',
-        ctx.app.logger
-      );
+      const southToTest = ctx.app.southService.createSouth(command, [], this.addValues, this.addFile, 'baseFolder', ctx.app.logger);
       await southToTest.testConnection();
 
       ctx.noContent();
@@ -193,6 +186,34 @@ export default class SouthConnectorController {
       ctx.notFound();
     }
   }
+
+  startSouthConnector = async (ctx: KoaContext<void, void>) => {
+    const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
+    if (!southConnector) {
+      return ctx.notFound();
+    }
+
+    try {
+      await ctx.app.reloadService.onStartSouth(ctx.params.id);
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  };
+
+  stopSouthConnector = async (ctx: KoaContext<void, void>) => {
+    const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
+    if (!southConnector) {
+      return ctx.notFound();
+    }
+
+    try {
+      await ctx.app.reloadService.onStopSouth(ctx.params.id);
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  };
 
   async resetSouthMetrics(ctx: KoaContext<void, void>): Promise<void> {
     const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
@@ -352,4 +373,7 @@ export default class SouthConnectorController {
     await ctx.app.reloadService.onDeleteAllSouthItems(ctx.params.southId);
     ctx.noContent();
   }
+
+  async addValues(_southId: string, _values: Array<any>): Promise<void> {}
+  async addFile(_southId: string, _filename: string): Promise<void> {}
 }

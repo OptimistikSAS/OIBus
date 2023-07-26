@@ -1,4 +1,4 @@
-import SqliteDatabaseMock, { run, get, all } from '../tests/__mocks__/database.mock';
+import SqliteDatabaseMock, { all, get, run } from '../tests/__mocks__/database.mock';
 import { generateRandomId } from '../service/utils';
 import NorthConnectorRepository from './north-connector.repository';
 import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
@@ -216,7 +216,7 @@ describe('North connector repository', () => {
       command.name,
       command.type,
       command.description,
-      +command.enabled,
+      0,
       JSON.stringify(command.settings),
       command.caching.scanModeId,
       command.caching.groupCount,
@@ -262,14 +262,13 @@ describe('North connector repository', () => {
     };
     repository.updateNorthConnector('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
-      'UPDATE north_connectors SET name = ?, description = ?, enabled = ?, settings = ?, caching_scan_mode_id = ?, ' +
+      'UPDATE north_connectors SET name = ?, description = ?, settings = ?, caching_scan_mode_id = ?, ' +
         'caching_group_count = ?, caching_retry_interval = ?, caching_retry_count = ?, caching_max_send_count = ?, ' +
         'caching_send_file_immediately = ?, caching_max_size = ?, archive_enabled = ?, archive_retention_duration = ? WHERE id = ?;'
     );
     expect(run).toHaveBeenCalledWith(
       command.name,
       command.description,
-      +command.enabled,
       JSON.stringify(command.settings),
       command.caching.scanModeId,
       command.caching.groupCount,

@@ -140,6 +140,34 @@ export default class NorthConnectorController {
     }
   }
 
+  startNorthConnector = async (ctx: KoaContext<void, void>) => {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    if (!northConnector) {
+      return ctx.notFound();
+    }
+
+    try {
+      await ctx.app.reloadService.onStartNorth(ctx.params.id);
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  };
+
+  stopNorthConnector = async (ctx: KoaContext<void, void>) => {
+    const southConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    if (!southConnector) {
+      return ctx.notFound();
+    }
+
+    try {
+      await ctx.app.reloadService.onStopNorth(ctx.params.id);
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  };
+
   async resetNorthMetrics(ctx: KoaContext<void, void>): Promise<void> {
     const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
     if (northConnector) {
