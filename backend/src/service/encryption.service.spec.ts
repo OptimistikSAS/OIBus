@@ -45,6 +45,45 @@ const settings: Array<OibFormControl> = [
     key: 'field3',
     type: 'OibText',
     label: 'Field 3'
+  },
+  {
+    key: 'field4',
+    type: 'OibArray',
+    label: 'Field 4',
+    content: [
+      {
+        key: 'fieldArray1',
+        type: 'OibText',
+        label: 'Field array 1'
+      },
+      {
+        key: 'fieldArray2',
+        type: 'OibSecret',
+        label: 'Field array 2'
+      },
+      {
+        key: 'fieldArray3',
+        type: 'OibSecret',
+        label: 'Field array 3'
+      }
+    ]
+  },
+  {
+    key: 'field5',
+    type: 'OibFormGroup',
+    label: 'Field 5',
+    content: [
+      {
+        key: 'fieldGroup1',
+        type: 'OibText',
+        label: 'Field group 1'
+      },
+      {
+        key: 'fieldGroup2',
+        type: 'OibSecret',
+        label: 'Field group 2'
+      }
+    ]
   }
 ];
 
@@ -202,7 +241,15 @@ describe('Encryption service with crypto settings', () => {
       settings: {
         field1: 'not a secret',
         field2: 'secret',
-        field3: 'not a secret'
+        field3: 'not a secret',
+        field4: [
+          { fieldArray1: 'not an array secret', fieldArray2: 'an array secret' },
+          { fieldArray1: 'not an array secret', fieldArray2: 'another array secret' }
+        ],
+        field5: {
+          fieldGroup1: 'not a group secret',
+          fieldGroup2: 'a group secret'
+        }
       }
     };
     const connector: SouthConnectorDTO = {
@@ -233,7 +280,15 @@ describe('Encryption service with crypto settings', () => {
     const expectedCommand = {
       field1: 'not a secret',
       field2: 'encrypted secret',
-      field3: 'not a secret'
+      field3: 'not a secret',
+      field4: [
+        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' },
+        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' }
+      ],
+      field5: {
+        fieldGroup1: 'not a group secret',
+        fieldGroup2: 'encrypted secret'
+      }
     };
 
     expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
@@ -253,7 +308,15 @@ describe('Encryption service with crypto settings', () => {
       settings: {
         field1: 'not a secret',
         field2: '',
-        field3: 'not a secret'
+        field3: 'not a secret',
+        field4: [
+          { fieldArray1: 'not an array secret', fieldArray2: 'an array secret', fieldArray3: null },
+          { fieldArray1: 'not an array secret', fieldArray2: 'another array secret' }
+        ],
+        field5: {
+          fieldGroup1: 'not a group secret',
+          fieldGroup2: ''
+        }
       }
     };
     const connector: SouthConnectorDTO = {
@@ -270,13 +333,29 @@ describe('Encryption service with crypto settings', () => {
       settings: {
         field1: 'not a secret',
         field2: 'encrypted secret',
-        field3: 'not a secret'
+        field3: 'not a secret',
+        field4: [
+          { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret' },
+          { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret' }
+        ],
+        field5: {
+          fieldGroup1: 'not a group secret',
+          fieldGroup2: 'a group secret'
+        }
       }
     };
     const expectedCommand = {
       field1: 'not a secret',
       field2: 'encrypted secret',
-      field3: 'not a secret'
+      field3: 'not a secret',
+      field4: [
+        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' },
+        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' }
+      ],
+      field5: {
+        fieldGroup1: 'not a group secret',
+        fieldGroup2: 'a group secret'
+      }
     };
 
     const update = jest.fn(() => 'encrypted secret');
@@ -304,43 +383,30 @@ describe('Encryption service with crypto settings', () => {
       settings: {
         field1: 'not a secret',
         field2: 'encrypted secret',
-        field3: 'not a secret'
+        field3: 'not a secret',
+        field4: [
+          { fieldArray1: 'not an array secret', fieldArray2: 'an array secret' },
+          { fieldArray1: 'not an array secret', fieldArray2: 'another array secret' }
+        ],
+        field5: {
+          fieldGroup1: 'not a group secret',
+          fieldGroup2: 'a group secret'
+        }
       }
     };
 
     expect(encryptionService.filterSecrets(connector.settings, settings)).toEqual({
       field1: 'not a secret',
       field2: '',
-      field3: 'not a secret'
+      field3: 'not a secret',
+      field4: [
+        { fieldArray1: 'not an array secret', fieldArray2: '', fieldArray3: '' },
+        { fieldArray1: 'not an array secret', fieldArray2: '', fieldArray3: '' }
+      ],
+      field5: {
+        fieldGroup1: 'not a group secret',
+        fieldGroup2: ''
+      }
     });
   });
 });
-//
-// describe('Encryption service with bad crypto settings', () => {
-//   beforeEach(() => {
-//     jest.resetAllMocks();
-//   });
-//
-//   it('should properly initialized encryption service', async () => {
-//     const consoleSpy = jest.spyOn(console, 'error').mockImplementationOnce(() => {});
-//     encryptionService = new EncryptionService('');
-//     expect(consoleSpy).toHaveBeenCalledTimes(1);
-//     expect(consoleSpy).toHaveBeenCalledWith(`Could not parse crypto settings: SyntaxError: Unexpected end of JSON input`);
-//
-//     let decryptError;
-//     try {
-//       await encryptionService.decryptText('encrypted');
-//     } catch (err) {
-//       decryptError = err;
-//     }
-//     expect(decryptError).toEqual(new Error('Encryption service not initialized properly'));
-//
-//     let encryptError;
-//     try {
-//       await encryptionService.encryptText('plain text');
-//     } catch (err) {
-//       encryptError = err;
-//     }
-//     expect(encryptError).toEqual(new Error('Encryption service not initialized properly'));
-//   });
-// });
