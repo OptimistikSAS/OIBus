@@ -80,6 +80,8 @@ describe('FileCache', () => {
   });
 
   it('should properly cache file', async () => {
+    (fs.stat as jest.Mock).mockImplementation(() => ({ size: 123 }));
+
     await cache.cacheFile('myFile.csv');
 
     expect(fs.copyFile).toHaveBeenCalledWith('myFile.csv', path.resolve('myCacheFolder', 'files', 'myFile-1580608922222.csv'));
@@ -89,6 +91,8 @@ describe('FileCache', () => {
   });
 
   it('should properly cache file without appending timestamp', async () => {
+    (fs.stat as jest.Mock).mockImplementation(() => ({ size: 123 }));
+
     // When retrying an archived file, it will already have a timestamp, so we skip adding another
     await cache.cacheFile('myFile-1580608922222.csv', false);
     const cacheFilePath = path.resolve('myCacheFolder', 'files', 'myFile-1580608922222.csv');
@@ -265,6 +269,8 @@ describe('FileCache', () => {
   });
 
   it('should properly get and remove file from queue', async () => {
+    (fs.stat as jest.Mock).mockImplementation(() => ({ size: 123 }));
+
     const noFile = cache.getFileToSend();
 
     expect(noFile).toBeNull();
@@ -339,6 +345,8 @@ describe('FileCache', () => {
   });
 
   it('should send file immediately', async () => {
+    (fs.stat as jest.Mock).mockImplementation(() => ({ size: 123 }));
+
     const otherSettings: NorthCacheSettingsDTO = {
       scanModeId: 'id1',
       groupCount: 1000,

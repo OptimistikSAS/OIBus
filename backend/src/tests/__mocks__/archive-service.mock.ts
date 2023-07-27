@@ -1,3 +1,5 @@
+import { EventEmitter } from 'node:events';
+
 /**
  * Create a mock object for Archive Service
  */
@@ -15,4 +17,8 @@ export default class ArchiveServiceMock {
   removeFiles = jest.fn();
   removeAllArchiveFiles = jest.fn();
   setLogger = jest.fn();
+  triggerRun: EventEmitter = {
+    on: jest.fn(),
+    emit: jest.fn()
+  } as unknown as EventEmitter;
 }

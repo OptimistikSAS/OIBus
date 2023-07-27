@@ -105,7 +105,6 @@ export default class FileCacheService {
    * Cache a new file from a South connector
    */
   async cacheFile(filePath: string, appendTimestamp = true): Promise<void> {
-    this._logger.trace(`Caching file "${filePath}"...`);
     const timestamp = new Date().getTime();
     // When compressed file is received the name looks like filename.txt.gz
     const filenameInfo = path.parse(filePath);
@@ -116,6 +115,9 @@ export default class FileCacheService {
     const cachePath = path.join(this._fileFolder, cacheFilename);
 
     await fs.copyFile(filePath, cachePath);
+    const fileStat = await fs.stat(cachePath);
+    this.triggerRun.emit('cache-size', fileStat.size);
+
     // Add the file to the queue once it is persisted in the cache folder
     this.filesQueue.push(cachePath);
     this._logger.debug(`File "${filePath}" cached in "${cachePath}"`);
@@ -188,7 +190,9 @@ export default class FileCacheService {
       filenames.map(async filename => {
         const filePath = path.join(folder, filename);
         this._logger.debug(`Removing file "${filePath}`);
+        const fileStat = await fs.stat(filePath);
         await fs.unlink(filePath);
+        this.triggerRun.emit('cache-size', -fileStat.size);
       })
     );
   }

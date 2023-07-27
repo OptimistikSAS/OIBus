@@ -44,10 +44,9 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
         {
           url: this.connector.settings.proxyUrl!,
           username: this.connector.settings.proxyUsername!,
-          password:
-            this.connector.settings.proxyPassword != null
-              ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
-              : null
+          password: this.connector.settings.proxyPassword
+            ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+            : null
         },
         false
       );

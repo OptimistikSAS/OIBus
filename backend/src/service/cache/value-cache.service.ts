@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import { createFolder, dirSize, generateRandomId } from '../utils';
+import { createFolder, generateRandomId } from '../utils';
 import pino from 'pino';
 
 import { NorthCacheSettingsDTO } from '../../../../shared/model/north-connector.model';
@@ -9,7 +9,6 @@ import { EventEmitter } from 'node:events';
 
 const BUFFER_MAX = 250;
 const BUFFER_TIMEOUT = 300;
-// const RESEND_IMMEDIATELY_TIMEOUT = 100;
 
 const VALUE_FOLDER = 'values';
 const ERROR_FOLDER = 'values-errors';
@@ -22,11 +21,10 @@ export default class ValueCacheService {
   private readonly baseFolder: string;
   private readonly valueFolder: string;
   private readonly errorFolder: string;
-  private cacheSize = 0;
   private flushInProgress = false;
 
   private bufferTimeout: NodeJS.Timeout | undefined;
-  private compactedQueue: Array<{ filename: string; createdAt: number; numberOfValues: number }> = []; // List of compact filename (randomId.compact.tmp)
+  private compactedQueue: Array<{ filename: string; createdAt: number }> = []; // List of compact filename (randomId.compact.tmp)
   private bufferFiles: Map<string, Array<any>> = new Map(); // key: buffer filename (randomId.buffer.tmp, value: the values in the queue file)
   private queue: Map<string, Array<any>> = new Map(); // key: queue filename (randomId.queue.tmp, value: the values in the queue file)
 
@@ -48,8 +46,6 @@ export default class ValueCacheService {
     await createFolder(this.valueFolder);
     await createFolder(this.errorFolder);
 
-    this.cacheSize = await dirSize(this.baseFolder);
-
     const files = await fs.readdir(this.valueFolder);
 
     // Take buffer.tmp file data into this.bufferFiles
@@ -59,7 +55,7 @@ export default class ValueCacheService {
       try {
         const fileContent = await fs.readFile(path.resolve(this.valueFolder, filename), { encoding: 'utf8' });
         const values = JSON.parse(fileContent);
-        this.bufferFiles.set(filename, values);
+        this.bufferFiles.set(path.resolve(this.valueFolder, filename), values);
       } catch (error) {
         // If a file is being written or corrupted, the readFile method can fail
         // An error is logged and the cache goes through the other files
@@ -74,7 +70,7 @@ export default class ValueCacheService {
       try {
         const fileContent = await fs.readFile(path.resolve(this.valueFolder, filename), { encoding: 'utf8' });
         const values = JSON.parse(fileContent);
-        this.queue.set(filename, values);
+        this.queue.set(path.resolve(this.valueFolder, filename), values);
         numberOfValuesInCache += values.length;
       } catch (error) {
         // If a file is being written or corrupted, the readFile method can fail
@@ -89,10 +85,10 @@ export default class ValueCacheService {
     for (const filename of compactedQueueFiles) {
       try {
         const fileStat = await fs.stat(path.resolve(this.valueFolder, filename));
-        const fileContent = await fs.readFile(path.resolve(this.valueFolder, filename), { encoding: 'utf8' });
-        const values = JSON.parse(fileContent);
-        this.compactedQueue.push({ filename, createdAt: fileStat.ctimeMs, numberOfValues: values.length });
-        numberOfValuesInCache += values.length;
+        this.compactedQueue.push({
+          filename: path.resolve(this.valueFolder, filename),
+          createdAt: fileStat.ctimeMs
+        });
       } catch (error) {
         // If a file is being written or corrupted, the stat method can fail
         // An error is logged and the cache goes through the other files
@@ -103,7 +99,7 @@ export default class ValueCacheService {
     // Sort the compact queue to have the oldest file first
     this.compactedQueue.sort((a, b) => a.createdAt - b.createdAt);
     if (numberOfValuesInCache > 0) {
-      this._logger.debug(`${numberOfValuesInCache} values in cache`);
+      this._logger.debug(`${numberOfValuesInCache} values in queue and ${this.compactedQueue.length} compacted files in cache`);
     } else {
       this._logger.debug('No value in cache');
     }
@@ -143,20 +139,22 @@ export default class ValueCacheService {
     // Store the values in a tmp file
     try {
       await fs.writeFile(path.resolve(this.valueFolder, tmpFileName), JSON.stringify(valuesToFlush), { encoding: 'utf8', flag: 'w' });
+      const fileStat = await fs.stat(path.resolve(this.valueFolder, tmpFileName));
+      this.triggerRun.emit('cache-size', fileStat.size);
+      this.queue.set(path.resolve(this.valueFolder, tmpFileName), valuesToFlush);
     } catch (error) {
-      this._logger.error(`Error while writing queue file ${path.resolve(this.valueFolder, tmpFileName)}: ${error}`);
+      this._logger.error(`Error while writing queue file "${path.resolve(this.valueFolder, tmpFileName)}". ${error}`);
       this.flushInProgress = false;
       return; // Do not empty the buffer if the file could not be written
     }
 
-    this.queue.set(tmpFileName, valuesToFlush);
     // Once compacted, remove values from queue.
     for (const key of fileInBuffer) {
       this.bufferFiles.delete(key);
       try {
-        await fs.unlink(path.resolve(this.valueFolder, key));
+        await fs.unlink(path.resolve(key));
       } catch (error) {
-        this._logger.error(`Error while removing buffer file ${path.resolve(this.valueFolder, key)}: ${error}`);
+        this._logger.error(`Error while removing buffer file "${path.resolve(this.valueFolder, key)}". ${error}`);
       }
     }
 
@@ -194,11 +192,13 @@ export default class ValueCacheService {
     try {
       // Store the values in a tmp file
       await fs.writeFile(path.resolve(this.valueFolder, compactFilename), JSON.stringify(valuesInQueue), { encoding: 'utf8', flag: 'w' });
+      const fileStat = await fs.stat(path.resolve(this.valueFolder, compactFilename));
       this.compactedQueue.push({
-        filename: compactFilename,
-        createdAt: new Date().getTime(),
-        numberOfValues: valuesInQueue.length
+        filename: path.resolve(this.valueFolder, compactFilename),
+        createdAt: new Date().getTime()
       });
+
+      this.triggerRun.emit('cache-size', fileStat.size);
 
       // Once compacted, remove values from queue.
       for (const key of fileInBuffer) {
@@ -227,17 +227,17 @@ export default class ValueCacheService {
     // Otherwise, get the first element from the compacted queue and retrieve the values from the file
     const [queueFile] = this.compactedQueue;
     try {
-      this._logger.trace(`Retrieving values from ${path.resolve(this.valueFolder, queueFile.filename)}.`);
-      const fileContent = await fs.readFile(path.resolve(this.valueFolder, queueFile.filename), { encoding: 'utf8' });
+      this._logger.trace(`Retrieving values from ${path.resolve(queueFile.filename)}.`);
+      const fileContent = await fs.readFile(path.resolve(queueFile.filename), { encoding: 'utf8' });
       valuesInQueue.set(queueFile.filename, JSON.parse(fileContent));
     } catch (err) {
-      this._logger.error(`Error while reading compacted file "${queueFile.filename}": ${err}`);
+      this._logger.error(`Error while reading compacted file "${queueFile.filename}". ${err}`);
     }
     return valuesInQueue;
   }
 
   /**
-   * Remove the values from the queue. The sent values are in an array of the form of key, values objects.
+   * Remove the values from the queue. The values are in an array of the form of key, values objects.
    * The key is the filename to remove from disk and the Map key to remove from the queue.
    * Values are not used in this case
    */
@@ -245,7 +245,6 @@ export default class ValueCacheService {
     for (const key of sentValues.keys()) {
       await this.deleteKeyFromCache(key);
     }
-    this.cacheSize = await dirSize(this.baseFolder);
   }
 
   /**
@@ -261,11 +260,13 @@ export default class ValueCacheService {
 
     // Remove file from disk
     try {
-      this._logger.trace(`Removing "${path.resolve(this.valueFolder, key)}" from cache`);
-      await fs.unlink(path.resolve(this.valueFolder, key));
+      this._logger.trace(`Removing "${path.resolve(key)}" from cache`);
+      const fileStat = await fs.stat(path.resolve(key));
+      await fs.unlink(path.resolve(key));
+      this.triggerRun.emit('cache-size', -fileStat.size);
     } catch (err) {
       // Catch error locally to not block the removal of other files
-      this._logger.error(`Error while removing file "${path.resolve(this.valueFolder, key)}" from cache: ${err}`);
+      this._logger.error(`Error while removing file "${path.resolve(key)}" from cache: ${err}`);
     }
   }
 
@@ -283,17 +284,14 @@ export default class ValueCacheService {
 
       const filePath = path.parse(key);
       try {
-        await fs.rename(path.resolve(this.valueFolder, key), path.resolve(this.errorFolder, filePath.base));
+        await fs.rename(path.resolve(key), path.resolve(this.errorFolder, filePath.base));
         this._logger.warn(
-          `Values file "${path.resolve(this.valueFolder, key)}" moved to "${path.resolve(
-            this.errorFolder,
-            filePath.base
-          )}" after ${errorCount} errors`
+          `Values file "${path.resolve(key)}" moved to "${path.resolve(this.errorFolder, filePath.base)}" after ${errorCount} errors`
         );
       } catch (renameError) {
         // Catch error locally to let OIBus moving the other files.
         this._logger.error(
-          `Error while moving values file "${path.resolve(this.valueFolder, key)}" into cache error ` +
+          `Error while moving values file "${path.resolve(key)}" into cache error ` +
             `"${path.resolve(this.errorFolder, filePath.base)}": ${renameError}`
         );
       }
@@ -304,20 +302,10 @@ export default class ValueCacheService {
    * Persist values into a tmp file and keep them in a local buffer to flush them in the queue later
    */
   async cacheValues(values: Array<any>): Promise<void> {
-    if (this._settings.maxSize !== 0 && this.cacheSize >= this._settings.maxSize * 1024 * 1024) {
-      this._logger.debug(
-        `North cache is exceeding the maximum allowed size ` +
-          `(${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this._settings.maxSize} MB). ` +
-          'Values will be discarded until the cache is emptied (by sending files/values or manual removal)'
-      );
-      return;
-    }
-
-    this._logger.debug(`Caching ${values.length} values (cache size : ${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB)`);
-    const tmpFileName = `${generateRandomId()}.buffer.tmp`;
+    const tmpFileName = path.resolve(this.valueFolder, `${generateRandomId()}.buffer.tmp`);
 
     // Immediately write the values into the buffer.tmp file to persist them on disk
-    await fs.writeFile(path.resolve(this.valueFolder, tmpFileName), JSON.stringify(values), { encoding: 'utf8' });
+    await fs.writeFile(tmpFileName, JSON.stringify(values), { encoding: 'utf8' });
     this.bufferFiles.set(tmpFileName, values);
     let numberOfValuesInBufferFiles = 0;
     for (const valuesInFile of this.bufferFiles.values()) {

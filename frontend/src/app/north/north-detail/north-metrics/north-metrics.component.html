@@ -44,6 +44,11 @@
           <td translate="north.monitoring.last-run-duration"></td>
           <td>{{ connectorMetrics.lastRunDuration | duration:'short' }}</td>
         </tr>
+        <!-- last duration -->
+        <tr>
+          <td translate="north.monitoring.cache-size"></td>
+          <td>{{ connectorMetrics.cacheSize | fileSize }}</td>
+        </tr>
       </tbody>
     </table>
   </div>

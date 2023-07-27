@@ -125,7 +125,6 @@ describe('OIBusEngine', () => {
   };
   const createdNorth = {
     start: jest.fn(),
-    init: jest.fn(),
     stop: jest.fn(),
     connect: jest.fn(),
     isEnabled: jest.fn(),

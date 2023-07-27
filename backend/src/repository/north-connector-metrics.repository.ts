@@ -19,8 +19,8 @@ export default class NorthConnectorMetricsRepository {
     if (!foundMetrics) {
       const insertQuery =
         `INSERT INTO ${NORTH_METRICS_TABLE} (north_id, metrics_start, nb_values, nb_files, ` +
-        `last_value, last_file, last_connection, last_run_start, last_run_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`;
-      this._database.prepare(insertQuery).run(connectorId, DateTime.now().toUTC().toISO(), 0, 0, null, null, null, null, null);
+        `last_value, last_file, last_connection, last_run_start, last_run_duration, cache_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      this._database.prepare(insertQuery).run(connectorId, DateTime.now().toUTC().toISO(), 0, 0, null, null, null, null, null, 0);
     }
   }
 
@@ -28,7 +28,7 @@ export default class NorthConnectorMetricsRepository {
     const query =
       `SELECT metrics_start AS metricsStart, nb_values AS numberOfValuesSent, nb_files AS numberOfFilesSent, ` +
       `last_value AS lastValueSent, last_file AS lastFileSent, last_connection AS lastConnection, last_run_start AS lastRunStart, ` +
-      `last_run_duration AS lastRunDuration FROM ${NORTH_METRICS_TABLE} WHERE north_id = ?;`;
+      `last_run_duration AS lastRunDuration, cache_size AS cacheSize FROM ${NORTH_METRICS_TABLE} WHERE north_id = ?;`;
     const result: NorthConnectorMetrics | undefined = this._database.prepare(query).get(connectorId) as NorthConnectorMetrics;
     if (!result) return null;
     return {
@@ -39,14 +39,15 @@ export default class NorthConnectorMetricsRepository {
       lastFileSent: result.lastFileSent,
       lastConnection: result.lastConnection,
       lastRunStart: result.lastRunStart,
-      lastRunDuration: result.lastRunDuration
+      lastRunDuration: result.lastRunDuration,
+      cacheSize: result.cacheSize
     };
   }
 
   updateMetrics(metrics: NorthConnectorMetrics): void {
     const updateQuery =
       `UPDATE ${NORTH_METRICS_TABLE} SET metrics_start = ?, nb_values = ?, nb_files = ?,  ` +
-      `last_value = ?, last_file = ?, last_connection = ?, last_run_start = ?, last_run_duration = ?;`;
+      `last_value = ?, last_file = ?, last_connection = ?, last_run_start = ?, last_run_duration = ?, cache_size = ?;`;
     this._database
       .prepare(updateQuery)
       .run(
@@ -57,7 +58,8 @@ export default class NorthConnectorMetricsRepository {
         metrics.lastFileSent,
         metrics.lastConnection,
         metrics.lastRunStart,
-        metrics.lastRunDuration
+        metrics.lastRunDuration,
+        metrics.cacheSize
       );
   }
 
