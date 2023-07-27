@@ -293,6 +293,16 @@ export default class HistoryQueryController extends AbstractController {
     ctx.noContent();
   }
 
+  async enableHistoryQueryItem(ctx: KoaContext<void, void>): Promise<void> {
+    await ctx.app.reloadService.onEnableHistoryItem(ctx.params.historyQueryId, ctx.params.id);
+    ctx.noContent();
+  }
+
+  async disableHistoryQueryItem(ctx: KoaContext<void, void>): Promise<void> {
+    await ctx.app.reloadService.onDisableHistoryItem(ctx.params.historyQueryId, ctx.params.id);
+    ctx.noContent();
+  }
+
   async deleteAllItems(ctx: KoaContext<void, void>): Promise<void> {
     await ctx.app.reloadService.onDeleteAllHistoryItems(ctx.params.historyQueryId);
     ctx.noContent();

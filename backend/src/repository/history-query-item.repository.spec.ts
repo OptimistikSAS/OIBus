@@ -218,4 +218,16 @@ describe('History query item repository', () => {
     expect(run).toHaveBeenCalledWith('123456', 'item1', 1, 'historyId', '{}');
     expect(run).toHaveBeenCalledWith('item2', '{}', 'id2');
   });
+
+  it('should enable history item', () => {
+    repository.enableHistoryItem('id1');
+    expect(database.prepare).toHaveBeenCalledWith('UPDATE history_items SET enabled = 1 WHERE id = ?;');
+    expect(run).toHaveBeenCalledWith('id1');
+  });
+
+  it('should disable history item', () => {
+    repository.disableHistoryItem('id1');
+    expect(database.prepare).toHaveBeenCalledWith('UPDATE history_items SET enabled = 0 WHERE id = ?;');
+    expect(run).toHaveBeenCalledWith('id1');
+  });
 });

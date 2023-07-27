@@ -157,6 +157,20 @@ export default class ReloadService {
     this.repositoryService.southItemRepository.deleteSouthItem(itemId);
   }
 
+  async onEnableSouthItem(itemId: string): Promise<void> {
+    const southItem = this.repositoryService.southItemRepository.getSouthItem(itemId);
+    if (!southItem) throw new Error('South item not found');
+    this.repositoryService.southItemRepository.enableSouthItem(itemId);
+    this.oibusEngine.updateItemInSouth(southItem.connectorId, southItem, { ...southItem, enabled: true });
+  }
+
+  async onDisableSouthItem(itemId: string): Promise<void> {
+    const southItem = this.repositoryService.southItemRepository.getSouthItem(itemId);
+    if (!southItem) throw new Error('South item not found');
+    this.repositoryService.southItemRepository.disableSouthItem(itemId);
+    this.oibusEngine.updateItemInSouth(southItem.connectorId, southItem, { ...southItem, enabled: false });
+  }
+
   async onDeleteAllSouthItems(southId: string): Promise<void> {
     this.oibusEngine.deleteAllItemsFromSouth(southId);
     this.repositoryService.southItemRepository.deleteAllSouthItems(southId);
@@ -294,6 +308,20 @@ export default class ReloadService {
     const item = this.repositoryService.historyQueryItemRepository.getHistoryItem(itemId);
     this.repositoryService.historyQueryItemRepository.deleteHistoryItem(itemId);
     await this.historyEngine.deleteItemFromHistoryQuery(historyId, item);
+  }
+
+  async onEnableHistoryItem(historyId: string, itemId: string): Promise<void> {
+    const item = this.repositoryService.historyQueryItemRepository.getHistoryItem(itemId);
+    if (!item) throw new Error('History item not found');
+    this.repositoryService.historyQueryItemRepository.enableHistoryItem(itemId);
+    await this.historyEngine.updateItemInHistoryQuery(historyId, { ...item, enabled: true });
+  }
+
+  async onDisableHistoryItem(historyId: string, itemId: string): Promise<void> {
+    const item = this.repositoryService.historyQueryItemRepository.getHistoryItem(itemId);
+    if (!item) throw new Error('History item not found');
+    this.repositoryService.historyQueryItemRepository.disableHistoryItem(itemId);
+    await this.historyEngine.updateItemInHistoryQuery(historyId, { ...item, enabled: false });
   }
 
   async onDeleteAllHistoryItems(historyId: string): Promise<void> {

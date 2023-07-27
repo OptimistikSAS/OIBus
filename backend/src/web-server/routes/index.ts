@@ -152,6 +152,8 @@ router.post('/api/south/:southId/items/upload', upload.single('file'), (ctx: Koa
 router.get('/api/south/:southId/items/export', (ctx: KoaContext<any, any>) => southConnectorController.exportSouthItems(ctx));
 router.get('/api/south/:southId/items/:id', (ctx: KoaContext<any, any>) => southConnectorController.getSouthItem(ctx));
 router.put('/api/south/:southId/items/:id', (ctx: KoaContext<any, any>) => southConnectorController.updateSouthItem(ctx));
+router.put('/api/south/:southId/items/:id/enable', (ctx: KoaContext<any, any>) => southConnectorController.enableSouthItem(ctx));
+router.put('/api/south/:southId/items/:id/disable', (ctx: KoaContext<any, any>) => southConnectorController.disableSouthItem(ctx));
 router.delete('/api/south/:southId/items/all', (ctx: KoaContext<any, any>) => southConnectorController.deleteAllSouthItem(ctx));
 router.delete('/api/south/:southId/items/:id', (ctx: KoaContext<any, any>) => southConnectorController.deleteSouthItem(ctx));
 router.put('/api/south/:southId/cache/reset-metrics', (ctx: KoaContext<any, any>) => southConnectorController.resetSouthMetrics(ctx));
@@ -181,6 +183,12 @@ router.post('/api/history-queries/:historyQueryId/items/upload', upload.single('
 );
 router.put('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext<any, any>) =>
   historyQueryController.updateHistoryQueryItem(ctx)
+);
+router.put('/api/history-queries/:historyQueryId/items/:id/enable', (ctx: KoaContext<any, any>) =>
+  historyQueryController.enableHistoryQueryItem(ctx)
+);
+router.put('/api/history-queries/:historyQueryId/items/:id/disable', (ctx: KoaContext<any, any>) =>
+  historyQueryController.disableHistoryQueryItem(ctx)
 );
 router.delete('/api/history-queries/:historyQueryId/items/all', (ctx: KoaContext<any, any>) => historyQueryController.deleteAllItems(ctx));
 router.delete('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext<any, any>) =>

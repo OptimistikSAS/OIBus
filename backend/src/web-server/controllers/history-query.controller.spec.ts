@@ -851,6 +851,26 @@ describe('History query controller', () => {
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
+  it('enableHistoryQueryItem() should enable History item', async () => {
+    ctx.params.id = 'id';
+    ctx.params.historyQueryId = 'historyId';
+
+    await historyQueryController.enableHistoryQueryItem(ctx);
+
+    expect(ctx.app.reloadService.onEnableHistoryItem).toHaveBeenCalledWith('historyId', 'id');
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('disableHistoryQueryItem() should disable History item', async () => {
+    ctx.params.id = 'id';
+    ctx.params.historyQueryId = 'historyId';
+
+    await historyQueryController.disableHistoryQueryItem(ctx);
+
+    expect(ctx.app.reloadService.onDisableHistoryItem).toHaveBeenCalledWith('historyId', 'id');
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
   it('deleteAllItems() should delete all South items', async () => {
     ctx.params.historyQueryId = 'id';
 

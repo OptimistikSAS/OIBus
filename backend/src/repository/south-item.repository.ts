@@ -149,6 +149,16 @@ export default class SouthItemRepository {
     this.database.prepare(query).run(id);
   }
 
+  enableSouthItem(id: string): void {
+    const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET enabled = 1 WHERE id = ?;`;
+    this.database.prepare(query).run(id);
+  }
+
+  disableSouthItem(id: string): void {
+    const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET enabled = 0 WHERE id = ?;`;
+    this.database.prepare(query).run(id);
+  }
+
   /**
    * Delete all South items of a South connector
    */

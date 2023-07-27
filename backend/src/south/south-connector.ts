@@ -76,7 +76,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
           return;
         }
         const scanMode = this.taskJobQueue[0];
-        const items = this.items.filter(item => item.scanModeId === scanMode.id);
+        const items = this.items.filter(item => item.scanModeId === scanMode.id && item.enabled);
         this.logger.trace(`Running South with scan mode ${scanMode.name}`);
         await this.run(scanMode.id, items);
       } else {
@@ -84,8 +84,6 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       }
     });
   }
-
-  async init(): Promise<void> {}
 
   async start(): Promise<void> {
     this.logger.trace(`South connector ${this.connector.name} enabled. Starting services...`);
@@ -169,7 +167,6 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   }
 
   async run(scanModeId: string, items: Array<SouthConnectorItemDTO>): Promise<void> {
-    if (!this.init) return;
     this.createDeferredPromise();
 
     const runStart = DateTime.now();
@@ -381,7 +378,6 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
    * Add a new file to the Engine.
    */
   async addFile(filePath: string): Promise<void> {
-    if (!this.init) return;
     this.logger.debug(`Add file "${filePath}" to cache from South "${this.connector.name}"`);
     await this.engineAddFileCallback(this.connector.id, filePath);
     const currentMetrics = this.metricsService!.metrics;
@@ -430,9 +426,9 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     }
 
     this.items.push(item);
-    if (item.scanModeId === 'subscription') {
+    if (item.scanModeId === 'subscription' && item.enabled) {
       await this.createSubscriptions([item]);
-    } else if (!this.cronByScanModeIds.get(scanMode.id)) {
+    } else if (!this.cronByScanModeIds.get(scanMode.id) && item.enabled) {
       this.createCronJob(scanMode);
     }
   }

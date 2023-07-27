@@ -48,6 +48,14 @@ const items: Array<SouthConnectorItemDTO> = [
     connectorId: 'southId',
     settings: {},
     scanModeId: 'scanModeId2'
+  },
+  {
+    id: 'id3',
+    name: 'item3',
+    enabled: true,
+    connectorId: 'southId',
+    settings: {},
+    scanModeId: 'subscription'
   }
 ];
 
@@ -100,7 +108,6 @@ describe('OIBusEngine', () => {
   ];
   const createdSouth = {
     start: jest.fn(),
-    init: jest.fn(),
     stop: jest.fn(),
     connect: jest.fn(),
     historyQueryHandler: jest.fn(),
@@ -112,6 +119,8 @@ describe('OIBusEngine', () => {
     setLogger: jest.fn(),
     getMetricsDataStream: jest.fn(),
     resetMetrics: jest.fn(),
+    createSubscriptions: jest.fn(),
+    createCronJobs: jest.fn(),
     connectedEvent: connectedEvent
   };
   const createdNorth = {
@@ -206,6 +215,9 @@ describe('OIBusEngine', () => {
     expect(logger.error).toHaveBeenCalledWith(
       `Error while starting South connector "${southConnectors[0].name}" of type "${southConnectors[0].type}" (${southConnectors[0].id}): error`
     );
+
+    createdSouth.connectedEvent.emit('connected');
+    expect(createdSouth.createSubscriptions).toHaveBeenCalledWith(items.filter(item => item.scanModeId === 'subscription' && item.enabled));
 
     await engine.startNorth(northConnectors[0].id, northConnectors[0]);
     expect(northService.createNorth).toHaveBeenCalledTimes(1);

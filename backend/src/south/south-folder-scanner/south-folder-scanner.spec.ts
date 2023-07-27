@@ -117,7 +117,6 @@ describe('SouthFolderScanner', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     south = new SouthFolderScanner(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
-    await south.init();
   });
 
   it('fileQuery should manage file query', async () => {
@@ -207,7 +206,6 @@ describe('SouthFolderScanner with preserve file and compression', () => {
     configuration.settings.compression = true;
     configuration.settings.preserveFiles = true;
     south = new SouthFolderScanner(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
-    await south.init();
     await south.start();
   });
 

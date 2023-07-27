@@ -503,12 +503,39 @@ describe('Service utils', () => {
       expect(result).toEqual('2020-02-02 11:02:02.222');
     });
 
-    it('should return a formatted ISO String', () => {
+    it('should return a formatted ISO String from ISO String', () => {
       const dateTimeFormat = {
         type: 'iso-string' as DateTimeType
       };
       const result = utils.formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(testInstant);
+    });
+
+    it('should return a formatted Date', () => {
+      const dateTimeFormat = {
+        type: 'Date' as DateTimeType,
+        timezone: 'Asia/Tokyo'
+      };
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      expect(result).toEqual('2020-02-02');
+    });
+
+    it('should return a formatted SmallDateTime', () => {
+      const dateTimeFormat = {
+        type: 'SmallDateTime' as DateTimeType,
+        timezone: 'Asia/Tokyo'
+      };
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      expect(result).toEqual('2020-02-02 11:02:02');
+    });
+
+    it('should return a formatted DateTime', () => {
+      const dateTimeFormat = {
+        type: 'DateTime' as DateTimeType,
+        timezone: 'Asia/Tokyo'
+      };
+      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      expect(result).toEqual('2020-02-02 11:02:02.222');
     });
 
     it('should return a formatted String with correct timezone for locale en-US', () => {
@@ -544,7 +571,7 @@ describe('Service utils', () => {
 
     it('should return an ISO String from Date with correct timezone', () => {
       const dateTimeFormat = {
-        type: 'timestamptz' as DateTimeType,
+        type: 'DateTimeOffset' as DateTimeType,
         timezone: 'Asia/Tokyo'
       };
       // From Zulu string
@@ -569,6 +596,11 @@ describe('Service utils', () => {
 
   describe('convertDateTimeToInstant', () => {
     const testInstant = '2020-02-02T02:02:02.222Z';
+    it('should return current value if no type specified', () => {
+      const result = utils.convertDateTimeToInstant(testInstant, { type: '' as DateTimeType });
+      expect(result).toEqual(testInstant);
+    });
+
     it('should return ISO String if no dateTimeFormat specified', () => {
       const result = utils.convertDateTimeToInstant(testInstant, { type: 'iso-string' });
       expect(result).toEqual('2020-02-02T02:02:02.222Z');
@@ -637,7 +669,7 @@ describe('Service utils', () => {
       expect(result).toEqual('2020-02-02T02:02:02.000Z');
     });
 
-    it('should return an ISO String from Date with correct timezone', () => {
+    it('should return an ISO String from timestamp with correct timezone', () => {
       const dateTimeFormat = {
         type: 'timestamp' as DateTimeType,
         timezone: 'Asia/Tokyo'
@@ -646,6 +678,15 @@ describe('Service utils', () => {
       const result = utils.convertDateTimeToInstant(new Date(testInstant), dateTimeFormat);
       // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
       expect(result).toEqual('2020-02-01T17:02:02.222Z');
+    });
+
+    it('should return an ISO String from timestamptz with correct timezone', () => {
+      const dateTimeFormat = {
+        type: 'DateTimeOffset' as DateTimeType,
+        timezone: 'Asia/Tokyo'
+      };
+      const result = utils.convertDateTimeToInstant(new Date(testInstant), dateTimeFormat);
+      expect(result).toEqual('2020-02-02T02:02:02.222Z');
     });
   });
 });

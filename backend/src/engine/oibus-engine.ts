@@ -128,11 +128,10 @@ export default class OIBusEngine extends BaseEngine {
       baseFolder,
       this.logger.child({ scopeType: 'south', scopeId: settings.id, scopeName: settings.name })
     );
-    await south.init();
     if (south.isEnabled()) {
       south.connectedEvent.on('connected', async () => {
-        await south.createSubscriptions(items.filter(item => item.scanModeId === 'subscription'));
-        await south.createCronJobs(items.filter(item => item.scanModeId !== 'subscription'));
+        await south.createSubscriptions(items.filter(item => item.scanModeId === 'subscription' && item.enabled));
+        await south.createCronJobs(items.filter(item => item.scanModeId !== 'subscription' && item.enabled));
       });
       // Do not await here, so it can start all connectors without blocking the thread
       south.start().catch(error => {

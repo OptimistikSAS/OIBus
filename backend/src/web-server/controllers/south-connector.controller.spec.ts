@@ -697,6 +697,24 @@ describe('South connector controller', () => {
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
+  it('enableSouthItem() should enable South item', async () => {
+    ctx.params.id = 'id';
+
+    await southConnectorController.enableSouthItem(ctx);
+
+    expect(ctx.app.reloadService.onEnableSouthItem).toHaveBeenCalledWith('id');
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('disableSouthItem() should disable South item', async () => {
+    ctx.params.id = 'id';
+
+    await southConnectorController.disableSouthItem(ctx);
+
+    expect(ctx.app.reloadService.onDisableSouthItem).toHaveBeenCalledWith('id');
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
   it('deleteAllSouthItem() should delete all South items', async () => {
     ctx.params.southId = 'id';
 
