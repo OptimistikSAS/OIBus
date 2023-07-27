@@ -90,7 +90,6 @@ export default class HistoryQuery {
       this._metricsService.updateMetrics({ ...this._metricsService.metrics, north: northMetrics });
     });
 
-    await this.north.init();
     if (!this.historyConfiguration.enabled) {
       this.logger.trace(`History Query "${this.historyConfiguration.name}" not enabled`);
       return;

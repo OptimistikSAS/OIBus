@@ -198,6 +198,7 @@ describe('ArchiveService', () => {
       const resolvedFiles = filenames.map(file => [path.resolve('myCacheFolder', 'archive', file)]);
       const logs = resolvedFiles.map(file => [`Removing archived file "${file}`]);
 
+      (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
       (fs.unlink as jest.Mock)
         .mockImplementationOnce(() => Promise.resolve())
         .mockImplementationOnce(() => Promise.resolve())

@@ -94,7 +94,6 @@ const createdSouth = {
 const northStream = new Stream();
 const createdNorth = {
   start: jest.fn(),
-  init: jest.fn(),
   stop: jest.fn(),
   connect: jest.fn(),
   cacheValues: jest.fn(),

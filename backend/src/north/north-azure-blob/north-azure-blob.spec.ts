@@ -13,6 +13,7 @@ import { DefaultAzureCredential } from '@azure/identity';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
+import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 
 const uploadMock = jest.fn().mockReturnValue(Promise.resolve({ requestId: 'requestId' }));
 const getBlockBlobClientMock = jest.fn().mockImplementation(() => ({
@@ -29,7 +30,13 @@ jest.mock('@azure/storage-blob', () => ({
 }));
 jest.mock('@azure/identity', () => ({ DefaultAzureCredential: jest.fn() }));
 jest.mock('node:fs/promises');
-jest.mock('../../service/cache/archive.service');
+jest.mock(
+  '../../service/cache/archive.service',
+  () =>
+    function () {
+      return new ArchiveServiceMock();
+    }
+);
 jest.mock(
   '../../service/cache/value-cache.service',
   () =>

@@ -29,7 +29,8 @@ describe('HistoryMetricsService', () => {
         lastFileSent: null,
         lastConnection: null,
         lastRunStart: null,
-        lastRunDuration: null
+        lastRunDuration: null,
+        cacheSize: 0
       },
       south: {
         metricsStart: nowDateString,

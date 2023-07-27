@@ -15,6 +15,7 @@ import * as utils from '../../service/utils';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
+import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -23,7 +24,13 @@ jest.mock('../../service/utils');
 jest.mock('node-fetch');
 const { Response } = jest.requireActual('node-fetch');
 
-jest.mock('../../service/cache/archive.service');
+jest.mock(
+  '../../service/cache/archive.service',
+  () =>
+    function () {
+      return new ArchiveServiceMock();
+    }
+);
 jest.mock(
   '../../service/cache/value-cache.service',
   () =>

@@ -12,6 +12,7 @@ const ARCHIVE_FOLDER = 'archive';
 import { NorthArchiveSettings, NorthArchiveFiles } from '../../../../shared/model/north-connector.model';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
+import { EventEmitter } from 'node:events';
 
 /**
  * Archive service used to archive sent file and check periodically the archive folder to remove old files
@@ -25,6 +26,7 @@ export default class ArchiveService {
   private readonly retentionDuration: number; // Converted from hours to ms to compare with mtimeMs (file modified time in ms)
   readonly archiveFolder: string;
   private archiveTimeout: NodeJS.Timeout | null = null;
+  private _triggerRun: EventEmitter = new EventEmitter();
 
   constructor(logger: pino.Logger, baseFolder: string, settings: NorthArchiveSettings) {
     this._logger = logger;
@@ -121,8 +123,11 @@ export default class ArchiveService {
     }
     if (stats && stats.mtimeMs + this.retentionDuration < referenceDate) {
       try {
-        await fs.unlink(path.join(archiveFolder, filename));
+        const filePath = path.join(archiveFolder, filename);
+        const fileStat = await fs.stat(filePath);
+        await fs.unlink(filePath);
         this._logger.debug(`File "${path.join(archiveFolder, filename)}" removed from archive`);
+        this.triggerRun.emit('cache-size', -fileStat.size);
       } catch (unlinkError) {
         this._logger.error(`Could not remove old file "${path.join(archiveFolder, filename)}" from archive: ${unlinkError}`);
       }
@@ -161,17 +166,17 @@ export default class ArchiveService {
    * Remove archive files.
    */
   async removeFiles(filenames: Array<string>): Promise<void> {
-    await Promise.allSettled(
-      filenames.map(async filename => {
-        const filePath = path.join(this.archiveFolder, filename);
-        try {
-          this._logger.debug(`Removing archived file "${filePath}`);
-          await fs.unlink(filePath);
-        } catch (error) {
-          this._logger.error(`Unable to remove archived file "${filePath}"`);
-        }
-      })
-    );
+    for (const filename of filenames) {
+      const filePath = path.join(this.archiveFolder, filename);
+      try {
+        this._logger.debug(`Removing archived file "${filePath}`);
+        const fileStat = await fs.stat(filePath);
+        await fs.unlink(filePath);
+        this.triggerRun.emit('cache-size', -fileStat.size);
+      } catch (error) {
+        this._logger.error(`Unable to remove archived file "${filePath}"`);
+      }
+    }
   }
 
   /**
@@ -189,5 +194,9 @@ export default class ArchiveService {
 
   setLogger(value: pino.Logger) {
     this._logger = value;
+  }
+
+  get triggerRun(): EventEmitter {
+    return this._triggerRun;
   }
 }

@@ -17,6 +17,7 @@ import { PassThrough } from 'node:stream';
 import { HandlesFile, HandlesValues } from './north-interface';
 import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { dirSize } from '../service/utils';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -44,6 +45,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   protected metricsService: NorthConnectorMetricsService | null = null;
   private subscribedTo: Array<SubscriptionDTO> = [];
   private subscribedToExternalSources: Array<ExternalSubscriptionDTO> = [];
+  private cacheSize = 0;
 
   private fileBeingSent: string | null = null;
   private fileErrorCount = 0;
@@ -66,10 +68,12 @@ export default class NorthConnector<T extends NorthSettings = any> {
     this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.connector.caching);
     this.fileCacheService = new FileCacheService(this.logger, this.baseFolder, this.connector.caching);
 
-    if (this.connector.id !== 'test') {
-      this.metricsService = new NorthConnectorMetricsService(this.connector.id, this.repositoryService.northMetricsRepository);
-      this.metricsService.initMetrics();
+    if (this.connector.id === 'test') {
+      return;
     }
+
+    this.metricsService = new NorthConnectorMetricsService(this.connector.id, this.repositoryService.northMetricsRepository);
+    this.metricsService.initMetrics();
 
     this.taskRunner.on('next', async () => {
       if (this.taskJobQueue.length > 0) {
@@ -88,6 +92,14 @@ export default class NorthConnector<T extends NorthSettings = any> {
       }
     });
 
+    this.valueCacheService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
+      this.cacheSize += sizeToAdd;
+      this.metricsService!.updateMetrics({
+        ...this.metricsService!.metrics,
+        cacheSize: this.cacheSize
+      });
+    });
+
     this.fileCacheService.triggerRun.on('next', async () => {
       this.taskJobQueue.push({ id: 'file-trigger', cron: '', name: '', description: '' });
       this.logger.trace(`File cache trigger immediately: ${!this.runProgress$}`);
@@ -95,26 +107,45 @@ export default class NorthConnector<T extends NorthSettings = any> {
         await this.run('file-trigger');
       }
     });
+
+    this.fileCacheService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
+      this.cacheSize += sizeToAdd;
+      this.metricsService!.updateMetrics({
+        ...this.metricsService!.metrics,
+        cacheSize: this.cacheSize
+      });
+    });
+
+    this.archiveService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
+      this.cacheSize += sizeToAdd;
+      this.metricsService!.updateMetrics({
+        ...this.metricsService!.metrics,
+        cacheSize: this.cacheSize
+      });
+    });
   }
 
   isEnabled(): boolean {
     return this.connector.enabled;
   }
 
-  async init(): Promise<void> {
-    this.subscribedTo = this.repositoryService.subscriptionRepository.getNorthSubscriptions(this.connector.id);
-    this.subscribedToExternalSources = this.repositoryService.subscriptionRepository.getExternalNorthSubscriptions(this.connector.id);
-    await this.valueCacheService.start();
-    await this.fileCacheService.start();
-    this.logger.trace(`North connector "${this.connector.name}" enabled. Starting services...`);
-    await this.archiveService.start();
-  }
-
   /**
    * Initialize services at startup
    */
   async start(): Promise<void> {
-    await this.init();
+    this.logger.trace(`North connector "${this.connector.name}" enabled. Starting services...`);
+    if (this.connector.id !== 'test') {
+      this.cacheSize = await dirSize(this.baseFolder);
+      this.metricsService!.updateMetrics({
+        ...this.metricsService!.metrics,
+        cacheSize: this.cacheSize
+      });
+      this.subscribedTo = this.repositoryService.subscriptionRepository.getNorthSubscriptions(this.connector.id);
+      this.subscribedToExternalSources = this.repositoryService.subscriptionRepository.getExternalNorthSubscriptions(this.connector.id);
+    }
+    await this.valueCacheService.start();
+    await this.fileCacheService.start();
+    await this.archiveService.start();
     await this.connect();
   }
 
@@ -194,7 +225,6 @@ export default class NorthConnector<T extends NorthSettings = any> {
     }
 
     if (this.connector.id !== 'test') {
-      // TODO: update cache size here
       this.metricsService!.updateMetrics({
         ...this.metricsService!.metrics,
         lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
@@ -237,8 +267,8 @@ export default class NorthConnector<T extends NorthSettings = any> {
         this.valueErrorCount += 1;
         this.logger.error(`Error while sending ${arrayValues.length} values (${this.valueErrorCount}). ${oibusError.message}`);
         if (this.valueErrorCount > this.connector.caching.retryCount && !oibusError.retry) {
-          await this.valueCacheService.manageErroredValues(this.valuesBeingSent!, this.valueErrorCount);
-          this.fileBeingSent = null;
+          await this.valueCacheService.manageErroredValues(this.valuesBeingSent, this.valueErrorCount);
+          this.valuesBeingSent = new Map();
         }
       }
     }
@@ -259,12 +289,6 @@ export default class NorthConnector<T extends NorthSettings = any> {
         await this.handleFile(this.fileBeingSent);
         this.fileCacheService.removeFileFromQueue();
         await this.archiveService.archiveOrRemoveFile(this.fileBeingSent);
-        const currentMetrics = this.metricsService!.metrics;
-        this.metricsService!.updateMetrics({
-          ...currentMetrics,
-          numberOfFilesSent: currentMetrics.numberOfFilesSent + 1,
-          lastFileSent: this.fileBeingSent
-        });
         this.fileBeingSent = null;
       } catch (error) {
         const oibusError = this.createOIBusError(error);
@@ -307,10 +331,19 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * and send them to a third party application.
    */
   async cacheValues(values: Array<any>): Promise<void> {
+    if (this.connector.caching.maxSize !== 0 && this.cacheSize >= this.connector.caching.maxSize * 1024 * 1024) {
+      this.logger.debug(
+        `North cache is exceeding the maximum allowed size ` +
+          `(${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this.connector.caching.maxSize} MB). ` +
+          'Values will be discarded until the cache is emptied (by sending files/values or manual removal)'
+      );
+      return;
+    }
+
     const chunkSize = this.connector.caching.maxSendCount;
     for (let i = 0; i < values.length; i += chunkSize) {
       const chunk = values.slice(i, i + chunkSize);
-      this.logger.trace(`Caching ${chunk.length} values in North connector "${this.connector.name}"...`);
+      this.logger.debug(`Caching ${values.length} values (cache size: ${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB)`);
       await this.valueCacheService.cacheValues(chunk);
     }
   }
@@ -319,7 +352,15 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * Method called by the Engine to cache a file and send them to a third party application.
    */
   async cacheFile(filePath: string): Promise<void> {
-    this.logger.trace(`Caching file "${filePath}" in North connector "${this.connector.name}"...`);
+    if (this.connector.caching.maxSize !== 0 && this.cacheSize >= this.connector.caching.maxSize * 1024 * 1024) {
+      this.logger.debug(
+        `North cache is exceeding the maximum allowed size ` +
+          `(${Math.floor((this.cacheSize / 1024 / 1024) * 100) / 100} MB >= ${this.connector.caching.maxSize} MB). ` +
+          'Files will be discarded until the cache is emptied (by sending files/values or manual removal)'
+      );
+      return;
+    }
+    this.logger.debug(`Caching file "${filePath}" in North connector "${this.connector.name}"...`);
     await this.fileCacheService.cacheFile(filePath);
   }
 
@@ -429,6 +470,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   async removeArchiveFiles(filenames: Array<string>): Promise<void> {
     this.logger.trace(`Removing ${filenames.length} archive files from North connector "${this.connector.name}"...`);
     await this.archiveService.removeFiles(filenames);
+    this.cacheSize = await dirSize(this.baseFolder);
   }
 
   /**

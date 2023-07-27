@@ -29,9 +29,9 @@ describe('NorthConnectorMetricsRepository', () => {
     expect(repository.getMetrics).toHaveBeenCalledWith('id1');
     expect(repository.database.prepare).toHaveBeenCalledWith(
       `INSERT INTO north_metrics (north_id, metrics_start, nb_values, nb_files, ` +
-        `last_value, last_file, last_connection, last_run_start, last_run_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`
+        `last_value, last_file, last_connection, last_run_start, last_run_duration, cache_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
     );
-    expect(run).toHaveBeenCalledWith('id1', nowDateString, 0, 0, null, null, null, null, null);
+    expect(run).toHaveBeenCalledWith('id1', nowDateString, 0, 0, null, null, null, null, null, 0);
     expect(run).toHaveBeenCalledTimes(1);
   });
 
@@ -40,7 +40,7 @@ describe('NorthConnectorMetricsRepository', () => {
     expect(repository.database.prepare).toHaveBeenCalledWith(
       `SELECT metrics_start AS metricsStart, nb_values AS numberOfValuesSent, nb_files AS numberOfFilesSent, ` +
         `last_value AS lastValueSent, last_file AS lastFileSent, last_connection AS lastConnection, last_run_start AS lastRunStart, ` +
-        `last_run_duration AS lastRunDuration FROM north_metrics WHERE north_id = ?;`
+        `last_run_duration AS lastRunDuration, cache_size AS cacheSize FROM north_metrics WHERE north_id = ?;`
     );
     expect(nullMetrics).toBeNull();
 
@@ -52,7 +52,8 @@ describe('NorthConnectorMetricsRepository', () => {
       lastFileSent: 'myFile',
       lastConnection: '2020-02-02T02:02:02.222Z',
       lastRunStart: '2020-02-02T02:02:02.222Z',
-      lastRunDuration: 120
+      lastRunDuration: 120,
+      cacheSize: 123
     });
     const metrics = repository.getMetrics('id1');
     expect(metrics).toEqual({
@@ -63,7 +64,8 @@ describe('NorthConnectorMetricsRepository', () => {
       lastFileSent: 'myFile',
       lastConnection: '2020-02-02T02:02:02.222Z',
       lastRunStart: '2020-02-02T02:02:02.222Z',
-      lastRunDuration: 120
+      lastRunDuration: 120,
+      cacheSize: 123
     });
 
     get.mockReturnValueOnce({
@@ -74,7 +76,8 @@ describe('NorthConnectorMetricsRepository', () => {
       lastFileSent: 'myFile',
       lastConnection: '2020-02-02T02:02:02.222Z',
       lastRunStart: '2020-02-02T02:02:02.222Z',
-      lastRunDuration: 120
+      lastRunDuration: 120,
+      cacheSize: 123
     });
     const metricsWithEmptyValue = repository.getMetrics('id1');
     expect(metricsWithEmptyValue).toEqual({
@@ -85,7 +88,8 @@ describe('NorthConnectorMetricsRepository', () => {
       lastFileSent: 'myFile',
       lastConnection: '2020-02-02T02:02:02.222Z',
       lastRunStart: '2020-02-02T02:02:02.222Z',
-      lastRunDuration: 120
+      lastRunDuration: 120,
+      cacheSize: 123
     });
   });
 
@@ -98,13 +102,14 @@ describe('NorthConnectorMetricsRepository', () => {
       lastFileSent: 'myFile',
       lastConnection: '2020-02-02T02:02:02.222Z',
       lastRunStart: '2020-02-02T02:02:02.222Z',
-      lastRunDuration: 120
+      lastRunDuration: 120,
+      cacheSize: 123
     };
 
     repository.updateMetrics(newConnectorMetrics);
     expect(repository.database.prepare).toHaveBeenCalledWith(
       `UPDATE north_metrics SET metrics_start = ?, nb_values = ?, nb_files = ?,  ` +
-        `last_value = ?, last_file = ?, last_connection = ?, last_run_start = ?, last_run_duration = ?;`
+        `last_value = ?, last_file = ?, last_connection = ?, last_run_start = ?, last_run_duration = ?, cache_size = ?;`
     );
     expect(run).toHaveBeenCalledWith(
       newConnectorMetrics.metricsStart,
@@ -114,7 +119,8 @@ describe('NorthConnectorMetricsRepository', () => {
       newConnectorMetrics.lastFileSent,
       newConnectorMetrics.lastConnection,
       newConnectorMetrics.lastRunStart,
-      newConnectorMetrics.lastRunDuration
+      newConnectorMetrics.lastRunDuration,
+      123
     );
 
     const connectorMetricsWithNullValue: NorthConnectorMetrics = {
@@ -125,7 +131,8 @@ describe('NorthConnectorMetricsRepository', () => {
       lastFileSent: 'myFile',
       lastConnection: '2020-02-02T02:02:02.222Z',
       lastRunStart: '2020-02-02T02:02:02.222Z',
-      lastRunDuration: 120
+      lastRunDuration: 120,
+      cacheSize: 123
     };
 
     repository.updateMetrics(connectorMetricsWithNullValue);
@@ -138,7 +145,8 @@ describe('NorthConnectorMetricsRepository', () => {
       newConnectorMetrics.lastFileSent,
       newConnectorMetrics.lastConnection,
       newConnectorMetrics.lastRunStart,
-      newConnectorMetrics.lastRunDuration
+      newConnectorMetrics.lastRunDuration,
+      123
     );
   });
 

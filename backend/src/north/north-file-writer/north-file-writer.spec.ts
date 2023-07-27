@@ -11,6 +11,7 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
+import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 
 jest.mock('node:fs/promises');
 
@@ -18,7 +19,13 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 
-jest.mock('../../service/cache/archive.service');
+jest.mock(
+  '../../service/cache/archive.service',
+  () =>
+    function () {
+      return new ArchiveServiceMock();
+    }
+);
 jest.mock(
   '../../service/cache/value-cache.service',
   () =>
@@ -52,6 +59,7 @@ jest.mock(
       };
     }
 );
+jest.mock('../../service/utils');
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 const configuration: NorthConnectorDTO = {

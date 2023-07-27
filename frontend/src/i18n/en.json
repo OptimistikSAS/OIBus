@@ -495,7 +495,8 @@
       "last-file": "Last file sent",
       "last-value": "Last value sent",
       "last-run-start": "Last run",
-      "last-run-duration": "Last run duration"
+      "last-run-duration": "Last run duration",
+      "cache-size": "Cache size"
     },
     "cache": {
       "title": "Cache content for connector {{ name }}"

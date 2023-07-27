@@ -15,7 +15,8 @@ export default class NorthConnectorMetricsService {
     lastFileSent: null,
     lastConnection: null,
     lastRunStart: null,
-    lastRunDuration: null
+    lastRunDuration: null,
+    cacheSize: 0
   };
 
   constructor(private readonly connectorId: string, private readonly _metricsRepository: NorthConnectorMetricsRepository) {}

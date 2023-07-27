@@ -14,7 +14,6 @@ jest.mock('../utils', () => ({
   dirSize: jest.fn()
 }));
 jest.mock('node:fs/promises');
-
 // Mock logger
 const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
@@ -62,23 +61,21 @@ describe('ValueCache', () => {
       .mockImplementationOnce(() => JSON.stringify([{ data: 'mySecondQueueValue1' }, { data: 'mySecondQueueValue2' }]))
       .mockImplementationOnce(() => {
         throw new Error('queue error');
-      })
-      .mockImplementationOnce(() => JSON.stringify([{ data: 'myFirstCompactValue1' }, { data: 'myFirstCompactValue2' }]))
-      .mockImplementationOnce(() => JSON.stringify([{ data: 'mySecondCompactValue1' }, { data: 'mySecondCompactValue2' }]))
-      .mockImplementationOnce(() => {
-        throw new Error('compact error');
       });
     fs.stat = jest
       .fn()
       .mockImplementationOnce(() => ({ ctimeMs: 2 }))
-      .mockImplementationOnce(() => ({ ctimeMs: 1 }));
+      .mockImplementationOnce(() => ({ ctimeMs: 2 }))
+      .mockImplementationOnce(() => {
+        throw new Error('compact error');
+      });
     await cache.start();
 
     expect(createFolder).toHaveBeenCalledTimes(2);
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values'));
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors'));
 
-    expect(logger.debug).toHaveBeenCalledWith('8 values in cache');
+    expect(logger.debug).toHaveBeenCalledWith('4 values in queue and 2 compacted files in cache');
     expect(logger.error).toHaveBeenCalledWith(
       `Error while reading buffer file "${path.resolve(
         'myCacheFolder',
@@ -124,7 +121,7 @@ describe('ValueCache', () => {
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values'));
     expect(createFolder).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values-errors'));
 
-    expect(logger.debug).toHaveBeenCalledWith('8 values in cache');
+    expect(logger.debug).toHaveBeenCalledWith('4 values in queue and 2 compacted files in cache');
   });
 
   it('should properly time flush with no data to flush', async () => {
@@ -177,14 +174,15 @@ describe('ValueCache', () => {
         throw new Error('unlink error');
       });
 
-    await cache.deleteKeyFromCache('1.queue.tmp');
+    (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
+    await cache.deleteKeyFromCache(path.resolve('myCacheFolder', 'values', '1.queue.tmp'));
     const expectedMap = new Map();
     expectedMap.set('2.queue.tmp', []);
     expect(logger.error).not.toHaveBeenCalled();
     expect(logger.trace).toHaveBeenCalledWith(`Removing "${path.resolve('myCacheFolder', 'values', '1.queue.tmp')}" from cache`);
     expect(fs.unlink).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values', '1.queue.tmp'));
 
-    await cache.deleteKeyFromCache('1.compact.tmp');
+    await cache.deleteKeyFromCache(path.resolve('myCacheFolder', 'values', '1.compact.tmp'));
     expect(logger.trace).toHaveBeenCalledWith(`Removing "${path.resolve('myCacheFolder', 'values', '1.compact.tmp')}" from cache`);
     expect(fs.unlink).toHaveBeenCalledWith(path.resolve('myCacheFolder', 'values', '1.compact.tmp'));
     expect(logger.error).toHaveBeenCalledWith(
@@ -195,8 +193,8 @@ describe('ValueCache', () => {
 
   it('should manage error values', async () => {
     const valuesToRemove: Map<string, Array<any>> = new Map();
-    valuesToRemove.set('1.queue.tmp', []);
-    valuesToRemove.set('1.compact.tmp', []);
+    valuesToRemove.set(path.resolve('myCacheFolder', 'values', '1.queue.tmp'), []);
+    valuesToRemove.set(path.resolve('myCacheFolder', 'values', '1.compact.tmp'), []);
     fs.rename = jest
       .fn()
       .mockImplementationOnce(() => '')
@@ -286,7 +284,7 @@ describe('ValueCache', () => {
     // clearTimeout called because max-flush has been triggered
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while writing queue file ${path.resolve('myCacheFolder', 'values', 'generated-uuid3.queue.tmp')}: Error: write error`
+      `Error while writing queue file "${path.resolve('myCacheFolder', 'values', 'generated-uuid3.queue.tmp')}". Error: write error`
     );
 
     jest.advanceTimersByTime(150);
@@ -375,6 +373,7 @@ describe('ValueCache', () => {
         .mockReturnValueOnce('generated-uuid7')
         .mockReturnValueOnce('generated-uuid8')
         .mockReturnValueOnce('generated-uuid9');
+      (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
 
       cache = new ValueCache(logger, 'myCacheFolder', settings);
 
@@ -386,9 +385,9 @@ describe('ValueCache', () => {
 
     it('should properly get values to send from queue', async () => {
       const expectedValues: Map<string, Array<any>> = new Map();
-      expectedValues.set('generated-uuid2.queue.tmp', valuesToCache);
-      expectedValues.set('generated-uuid4.queue.tmp', valuesToCache);
-      expectedValues.set('generated-uuid6.queue.tmp', valuesToCache);
+      expectedValues.set(path.resolve('myCacheFolder', 'values', 'generated-uuid2.queue.tmp'), valuesToCache);
+      expectedValues.set(path.resolve('myCacheFolder', 'values', 'generated-uuid4.queue.tmp'), valuesToCache);
+      expectedValues.set(path.resolve('myCacheFolder', 'values', 'generated-uuid6.queue.tmp'), valuesToCache);
       const valuesToSend = await cache.getValuesToSend();
 
       expect(valuesToSend).toEqual(expectedValues);
@@ -398,13 +397,13 @@ describe('ValueCache', () => {
       (fs.readFile as jest.Mock).mockImplementationOnce(() => '[{}]');
 
       const expectedValues: Map<string, Array<any>> = new Map();
-      expectedValues.set('generated-uuid9.compact.tmp', [{}]);
+      expectedValues.set(path.resolve('myCacheFolder', 'values', 'generated-uuid9.compact.tmp'), [{}]);
 
       await cache.cacheValues(valuesToCache); // compact queue here
       const valuesToSend = await cache.getValuesToSend();
       expect(valuesToSend).toEqual(expectedValues);
 
-      await cache.deleteKeyFromCache('generated-uuid9.compact.tmp');
+      await cache.deleteKeyFromCache(path.resolve('myCacheFolder', 'values', 'generated-uuid9.compact.tmp'));
       expect(logger.trace).toHaveBeenCalledWith(
         `Removing "${path.resolve('myCacheFolder', 'values', 'generated-uuid9.compact.tmp')}" from cache`
       );
@@ -418,10 +417,16 @@ describe('ValueCache', () => {
       await cache.cacheValues(valuesToCache); // compact queue here
       const noValues = await cache.getValuesToSend();
       expect(noValues).toEqual(new Map());
-      expect(logger.error).toHaveBeenCalledWith(`Error while reading compacted file "generated-uuid9.compact.tmp": Error: read file error`);
+      expect(logger.error).toHaveBeenCalledWith(
+        `Error while reading compacted file "${path.resolve(
+          'myCacheFolder',
+          'values',
+          'generated-uuid9.compact.tmp'
+        )}". Error: read file error`
+      );
 
       const errorMap = new Map();
-      errorMap.set('generated-uuid9.compact.tmp', []);
+      errorMap.set(path.resolve('myCacheFolder', 'values', 'generated-uuid9.compact.tmp'), []);
       await cache.manageErroredValues(errorMap, 1);
       expect(logger.warn).toHaveBeenCalledWith(
         `Values file "${path.resolve('myCacheFolder', 'values', 'generated-uuid9.compact.tmp')}" moved to "${path.resolve(
@@ -438,24 +443,6 @@ describe('ValueCache', () => {
       await cache.stop();
 
       expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe('with cache full of values', () => {
-    beforeEach(async () => {
-      (dirSize as jest.Mock).mockImplementation(() => 10_000_000_000_000); // 10 To
-
-      (fs.readdir as jest.Mock).mockReturnValue([]);
-      await cache.start();
-    });
-
-    it('should not accept new values', async () => {
-      await cache.cacheValues([{}, {}]);
-      expect(logger.debug).toHaveBeenCalledWith(
-        `North cache is exceeding the maximum allowed size ` +
-          `(${Math.floor((10_000_000_000_000 / 1024 / 1024) * 100) / 100} MB >= 1000 MB). ` +
-          'Values will be discarded until the cache is emptied (by sending files/values or manual removal)'
-      );
     });
   });
 });

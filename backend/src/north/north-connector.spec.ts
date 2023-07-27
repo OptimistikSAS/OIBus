@@ -13,6 +13,8 @@ import FileCacheServiceMock from '../tests/__mocks__/file-cache-service.mock';
 import ArchiveServiceMock from '../tests/__mocks__/archive-service.mock';
 import { EventEmitter } from 'node:events';
 import { HandlesFile, HandlesValues } from './north-interface';
+import fs from 'node:fs/promises';
+import { dirSize } from '../service/utils';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -25,6 +27,7 @@ const removeAllErrorFiles = jest.fn();
 const removeAllCacheFiles = jest.fn();
 const valueTrigger = new EventEmitter();
 const fileTrigger = new EventEmitter();
+const archiveTrigger = new EventEmitter();
 
 // Mock services
 jest.mock('../service/repository.service');
@@ -60,6 +63,7 @@ jest.mock(
   () =>
     function () {
       const archiveServiceMock = new ArchiveServiceMock();
+      archiveServiceMock.triggerRun = archiveTrigger;
       return archiveServiceMock;
     }
 );
@@ -134,11 +138,15 @@ describe('NorthConnector enabled', () => {
       }
     };
     north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    (dirSize as jest.Mock).mockReturnValue(123);
     await north.start();
   });
 
   afterEach(() => {
     jest.clearAllTimers();
+    valueTrigger.removeAllListeners();
+    fileTrigger.removeAllListeners();
+    archiveTrigger.removeAllListeners();
   });
 
   it('should be properly initialized', async () => {
@@ -247,8 +255,11 @@ describe('NorthConnector enabled', () => {
     expect(north.handleValuesWrapper).toHaveBeenCalled();
     expect(logger.trace).toHaveBeenCalledWith(`Value cache trigger immediately: true`);
     expect(north.handleFilesWrapper).not.toHaveBeenCalled();
+    valueTrigger.emit('cache-size', 123);
 
     fileTrigger.emit('next');
+    fileTrigger.emit('cache-size', 123);
+    archiveTrigger.emit('cache-size', 123);
     expect(north.handleFilesWrapper).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
     await flushPromises();
@@ -278,12 +289,12 @@ describe('NorthConnector enabled', () => {
 
   it('should properly cache values', async () => {
     await north.cacheValues([{}, {}]);
-    expect(logger.trace).toHaveBeenCalledWith(`Caching 2 values in North connector "${configuration.name}"...`);
+    expect(logger.debug).toHaveBeenCalledWith(`Caching 2 values (cache size: 0 MB)`);
   });
 
   it('should properly cache file', async () => {
     await north.cacheFile('myFilePath');
-    expect(logger.trace).toHaveBeenCalledWith(`Caching file "myFilePath" in North connector "${configuration.name}"...`);
+    expect(logger.debug).toHaveBeenCalledWith(`Caching file "myFilePath" in North connector "${configuration.name}"...`);
   });
 
   it('should check if North caches are empty', async () => {
@@ -440,6 +451,8 @@ describe('NorthConnector enabled', () => {
         };
       });
 
+    (fs.stat as jest.Mock).mockReturnValue({ size: 123 });
+
     await north.handleFilesWrapper();
     expect(logger.error).not.toHaveBeenCalled();
     await north.handleFilesWrapper();
@@ -452,10 +465,13 @@ describe('NorthConnector enabled', () => {
 });
 
 describe('NorthConnector disabled', () => {
+  const cacheSize = 1_000_000_000;
+
   beforeEach(async () => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
+    (dirSize as jest.Mock).mockReturnValue(cacheSize);
     const valuesInQueue = new Map();
     getValuesToSendMock.mockImplementation(() => valuesInQueue);
     getFileToSend.mockImplementation(() => null);
@@ -476,7 +492,7 @@ describe('NorthConnector disabled', () => {
         maxSendCount: 10000,
         retryCount: 2,
         sendFileImmediately: true,
-        maxSize: 1000
+        maxSize: 10
       },
       archive: {
         enabled: true,
@@ -489,6 +505,9 @@ describe('NorthConnector disabled', () => {
 
   afterEach(() => {
     jest.clearAllTimers();
+    valueTrigger.removeAllListeners();
+    fileTrigger.removeAllListeners();
+    archiveTrigger.removeAllListeners();
   });
 
   it('should not call handle values and handle file', async () => {
@@ -536,10 +555,6 @@ describe('NorthConnector disabled', () => {
     });
   });
 
-  it('should check if North caches are empty', async () => {
-    expect(await north.isCacheEmpty()).toBeFalsy();
-  });
-
   it('should use another logger', async () => {
     jest.resetAllMocks();
 
@@ -563,5 +578,73 @@ describe('NorthConnector disabled', () => {
   it('should reset metrics', () => {
     north.resetMetrics();
     expect(resetMetrics).toHaveBeenCalledTimes(1);
+  });
+
+  it('should manage caching file when cache size is more than max size', async () => {
+    await north.start();
+    await north.cacheFile('filePath');
+    expect(logger.debug).toHaveBeenCalledWith(
+      `North cache is exceeding the maximum allowed size ` +
+        `(${Math.floor((cacheSize / 1024 / 1024) * 100) / 100} MB >= ${configuration.caching.maxSize} MB). ` +
+        'Files will be discarded until the cache is emptied (by sending files/values or manual removal)'
+    );
+  });
+
+  it('should manage caching value when cache size is more than max size', async () => {
+    await north.start();
+    await north.cacheValues([]);
+    expect(logger.debug).toHaveBeenCalledWith(
+      `North cache is exceeding the maximum allowed size ` +
+        `(${Math.floor((cacheSize / 1024 / 1024) * 100) / 100} MB >= ${configuration.caching.maxSize} MB). ` +
+        'Values will be discarded until the cache is emptied (by sending files/values or manual removal)'
+    );
+  });
+});
+
+describe('NorthConnector test', () => {
+  beforeEach(async () => {
+    jest.resetAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    configuration = {
+      id: 'test',
+      name: 'north',
+      type: 'test',
+      description: 'my test connector',
+      enabled: false,
+      settings: {},
+      caching: {
+        scanModeId: 'id1',
+        retryInterval: 5000,
+        groupCount: 10000,
+        maxSendCount: 10000,
+        retryCount: 2,
+        sendFileImmediately: true,
+        maxSize: 10
+      },
+      archive: {
+        enabled: true,
+        retentionDuration: 720
+      }
+    };
+
+    north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+  });
+
+  afterEach(() => {
+    jest.clearAllTimers();
+    valueTrigger.removeAllListeners();
+    fileTrigger.removeAllListeners();
+    archiveTrigger.removeAllListeners();
+  });
+
+  it('should check if North caches are empty', async () => {
+    expect(await north.isCacheEmpty()).toBeFalsy();
+  });
+
+  it('should test connection', async () => {
+    await north.start();
+    await north.testConnection();
+    expect(logger.warn).toHaveBeenCalledWith('testConnection must be override');
   });
 });

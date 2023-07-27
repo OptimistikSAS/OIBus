@@ -34,7 +34,8 @@ describe('NorthConnectorMetricsService', () => {
       lastFileSent: 'myFile',
       lastConnection: '2020-02-02T02:02:02.222Z',
       lastRunStart: '2020-02-02T02:02:02.222Z',
-      lastRunDuration: 120
+      lastRunDuration: 120,
+      cacheSize: 123
     };
     service.updateMetrics(newConnectorMetrics);
     expect(service.metricsRepository.updateMetrics).toHaveBeenCalledWith(newConnectorMetrics);

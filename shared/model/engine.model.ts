@@ -108,6 +108,7 @@ export interface NorthConnectorMetrics extends BaseConnectorMetrics {
   numberOfFilesSent: number;
   lastValueSent: any | null;
   lastFileSent: string | null;
+  cacheSize: number;
 }
 
 export interface SouthHistoryMetrics {}
