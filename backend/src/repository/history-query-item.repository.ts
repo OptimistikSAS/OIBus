@@ -133,6 +133,16 @@ export default class HistoryQueryItemRepository {
     this.database.prepare(query).run(historyId);
   }
 
+  enableHistoryItem(id: string): void {
+    const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET enabled = 1 WHERE id = ?;`;
+    this.database.prepare(query).run(id);
+  }
+
+  disableHistoryItem(id: string): void {
+    const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET enabled = 0 WHERE id = ?;`;
+    this.database.prepare(query).run(id);
+  }
+
   createAndUpdateItems(historyId: string, itemsToAdd: Array<SouthConnectorItemDTO>, itemsToUpdate: Array<SouthConnectorItemDTO>): void {
     const insert = this.database.prepare(
       `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings) VALUES (?, ?, ?, ?, ?);`

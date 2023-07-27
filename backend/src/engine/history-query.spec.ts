@@ -60,6 +60,14 @@ const items: Array<SouthConnectorItemDTO> = [
   {
     id: 'id2',
     name: 'item2',
+    enabled: true,
+    connectorId: 'southId',
+    settings: {},
+    scanModeId: 'scanModeId2'
+  },
+  {
+    id: 'id3',
+    name: 'item3',
     enabled: false,
     connectorId: 'southId',
     settings: {},
@@ -71,7 +79,6 @@ const southStream = new Stream();
 const connectedEvent = new EventEmitter();
 const createdSouth = {
   start: jest.fn(),
-  init: jest.fn(),
   stop: jest.fn(),
   connect: jest.fn(),
   historyQueryHandler: jest.fn(),
@@ -171,7 +178,12 @@ describe('HistoryQuery enabled', () => {
     connectedEvent.emit('connected');
     expect(createdSouth.start).toHaveBeenCalledTimes(1);
     expect(createdSouth.historyQueryHandler).toHaveBeenCalledTimes(1);
-    expect(createdSouth.historyQueryHandler).toHaveBeenCalledWith(items, configuration.startTime, configuration.endTime, 'history');
+    expect(createdSouth.historyQueryHandler).toHaveBeenCalledWith(
+      items.filter(item => item.enabled),
+      configuration.startTime,
+      configuration.endTime,
+      'history'
+    );
   });
 
   it('should start south connector with error', async () => {
@@ -191,7 +203,12 @@ describe('HistoryQuery enabled', () => {
 
     expect(createdSouth.start).toHaveBeenCalledTimes(1);
     expect(createdSouth.historyQueryHandler).toHaveBeenCalledTimes(1);
-    expect(createdSouth.historyQueryHandler).toHaveBeenCalledWith(items, configuration.startTime, configuration.endTime, 'history');
+    expect(createdSouth.historyQueryHandler).toHaveBeenCalledWith(
+      items.filter(item => item.enabled),
+      configuration.startTime,
+      configuration.endTime,
+      'history'
+    );
   });
 
   it('should cache values', async () => {

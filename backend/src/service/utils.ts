@@ -294,6 +294,7 @@ export const formatInstant = (
       return DateTime.fromISO(instant, { zone: options.timezone }).toFormat('yyyy-MM-dd HH:mm:ss.SSS');
     case 'DateTimeOffset':
     case 'timestamptz':
+    default:
       return instant;
   }
 };
@@ -302,7 +303,7 @@ export const convertDateTimeToInstant = (
   dateTime: any,
   options: { type: DateTimeType; timezone?: Timezone; format?: string; locale?: string }
 ): Instant => {
-  if (!options?.type) {
+  if (!options.type) {
     return dateTime;
   }
   switch (options.type) {
@@ -321,11 +322,11 @@ export const convertDateTimeToInstant = (
       })
         .toUTC()
         .toISO()!;
+    case 'timestamp':
     case 'Date':
     case 'DateTime':
     case 'DateTime2':
     case 'SmallDateTime':
-    case 'timestamp':
       return DateTime.fromJSDate(dateTime).toUTC().setZone(options.timezone, { keepLocalTime: true }).toUTC().toISO()!;
     case 'DateTimeOffset':
     case 'timestamptz':

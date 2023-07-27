@@ -108,6 +108,7 @@ describe('HistoryQueryEngine', () => {
     expect(engine.getHistoryDataStream('bad id')).toEqual(null);
     expect(engine.getHistoryDataStream(configuration.id)).toEqual(expect.any(PassThrough));
 
+    await engine.startHistoryQuery(configuration);
     await engine.stop();
     await engine.stopHistoryQuery('anotherId');
   });

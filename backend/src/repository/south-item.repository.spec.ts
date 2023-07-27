@@ -283,4 +283,16 @@ describe('South item repository', () => {
     expect(run).toHaveBeenCalledWith('123456', 'southScan1', 1, 'connectorId', 'scanModeId', '{}');
     expect(run).toHaveBeenCalledWith('southScan2', 'scanModeId', '{}', 'id2');
   });
+
+  it('should enable south item', () => {
+    repository.enableSouthItem('id1');
+    expect(database.prepare).toHaveBeenCalledWith('UPDATE south_items SET enabled = 1 WHERE id = ?;');
+    expect(run).toHaveBeenCalledWith('id1');
+  });
+
+  it('should disable south item', () => {
+    repository.disableSouthItem('id1');
+    expect(database.prepare).toHaveBeenCalledWith('UPDATE south_items SET enabled = 0 WHERE id = ?;');
+    expect(run).toHaveBeenCalledWith('id1');
+  });
 });

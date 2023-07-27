@@ -204,6 +204,52 @@ describe('reload service', () => {
     expect(repositoryService.southItemRepository.deleteSouthItem).not.toHaveBeenCalled();
   });
 
+  it('should enable south item', async () => {
+    const southItem = { id: 'southItemId', connectorId: 'southId', settings: {} };
+    (repositoryService.southItemRepository.getSouthItem as jest.Mock).mockReturnValueOnce(southItem);
+
+    await service.onEnableSouthItem('southItemId');
+    expect(oibusEngine.updateItemInSouth).toHaveBeenCalledWith('southId', southItem, { ...southItem, enabled: true });
+    expect(repositoryService.southItemRepository.enableSouthItem).toHaveBeenCalledWith('southItemId');
+  });
+
+  it('enable should throw when south item not found', async () => {
+    (repositoryService.southItemRepository.getSouthItem as jest.Mock).mockReturnValue(null);
+
+    let error;
+    try {
+      await service.onEnableSouthItem('southItemId');
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error('South item not found'));
+    expect(oibusEngine.updateItemInSouth).not.toHaveBeenCalled();
+    expect(repositoryService.southItemRepository.enableSouthItem).not.toHaveBeenCalled();
+  });
+
+  it('should disable south item', async () => {
+    const southItem = { id: 'southItemId', connectorId: 'southId', settings: {} };
+    (repositoryService.southItemRepository.getSouthItem as jest.Mock).mockReturnValueOnce(southItem);
+
+    await service.onDisableSouthItem('southItemId');
+    expect(oibusEngine.updateItemInSouth).toHaveBeenCalledWith('southId', southItem, { ...southItem, enabled: false });
+    expect(repositoryService.southItemRepository.disableSouthItem).toHaveBeenCalledWith('southItemId');
+  });
+
+  it('disable should throw when south item not found', async () => {
+    (repositoryService.southItemRepository.getSouthItem as jest.Mock).mockReturnValue(null);
+
+    let error;
+    try {
+      await service.onDisableSouthItem('southItemId');
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error('South item not found'));
+    expect(oibusEngine.updateItemInSouth).not.toHaveBeenCalled();
+    expect(repositoryService.southItemRepository.disableSouthItem).not.toHaveBeenCalled();
+  });
+
   it('should delete all south items', async () => {
     await service.onDeleteAllSouthItems('southId');
     expect(oibusEngine.deleteAllItemsFromSouth).toHaveBeenCalledWith('southId');
@@ -357,6 +403,52 @@ describe('reload service', () => {
     expect(repositoryService.historyQueryItemRepository.getHistoryItem).toHaveBeenCalledWith('itemId');
     expect(repositoryService.historyQueryItemRepository.deleteHistoryItem).toHaveBeenCalledWith('itemId');
     expect(historyQueryEngine.deleteItemFromHistoryQuery).toHaveBeenCalledWith('historyItemId', historyItem);
+  });
+
+  it('should enable history item', async () => {
+    const historyItem = { id: 'historyItemId', connectorId: 'historyId', settings: {} };
+    (repositoryService.historyQueryItemRepository.getHistoryItem as jest.Mock).mockReturnValueOnce(historyItem);
+
+    await service.onEnableHistoryItem('historyId', 'historyItemId');
+    expect(historyQueryEngine.updateItemInHistoryQuery).toHaveBeenCalledWith('historyId', { ...historyItem, enabled: true });
+    expect(repositoryService.historyQueryItemRepository.enableHistoryItem).toHaveBeenCalledWith('historyItemId');
+  });
+
+  it('enable should throw when history item not found', async () => {
+    (repositoryService.historyQueryItemRepository.getHistoryItem as jest.Mock).mockReturnValue(null);
+
+    let error;
+    try {
+      await service.onEnableHistoryItem('historyId', 'historyItemId');
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error('History item not found'));
+    expect(historyQueryEngine.updateItemInHistoryQuery).not.toHaveBeenCalled();
+    expect(repositoryService.historyQueryItemRepository.enableHistoryItem).not.toHaveBeenCalled();
+  });
+
+  it('should disable history item', async () => {
+    const historyItem = { id: 'historyItemId', connectorId: 'historyId', settings: {} };
+    (repositoryService.historyQueryItemRepository.getHistoryItem as jest.Mock).mockReturnValueOnce(historyItem);
+
+    await service.onDisableHistoryItem('historyId', 'historyItemId');
+    expect(historyQueryEngine.updateItemInHistoryQuery).toHaveBeenCalledWith('historyId', { ...historyItem, enabled: false });
+    expect(repositoryService.historyQueryItemRepository.disableHistoryItem).toHaveBeenCalledWith('historyItemId');
+  });
+
+  it('disable should throw when south item not found', async () => {
+    (repositoryService.historyQueryItemRepository.getHistoryItem as jest.Mock).mockReturnValue(null);
+
+    let error;
+    try {
+      await service.onDisableHistoryItem('historyId', 'historyItemId');
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error('History item not found'));
+    expect(historyQueryEngine.updateItemInHistoryQuery).not.toHaveBeenCalled();
+    expect(repositoryService.historyQueryItemRepository.disableHistoryItem).not.toHaveBeenCalled();
   });
 
   it('should create North subscription', async () => {

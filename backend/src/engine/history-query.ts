@@ -64,7 +64,6 @@ export default class HistoryQuery {
       southFolder,
       this.logger
     );
-    await this.south.init();
     const northConfiguration: NorthConnectorDTO<N> = {
       id: this.historyConfiguration.id,
       name: `${this.historyConfiguration.name} (North)`,
@@ -100,11 +99,14 @@ export default class HistoryQuery {
     await this.north.start();
 
     this.south.connectedEvent.on('connected', async () => {
-      this.south!.historyQueryHandler(this.items, this.historyConfiguration.startTime, this.historyConfiguration.endTime, 'history').catch(
-        error => {
-          this.logger.error(`Error while executing history query. ${error}`);
-        }
-      );
+      this.south!.historyQueryHandler(
+        this.items.filter(item => item.enabled),
+        this.historyConfiguration.startTime,
+        this.historyConfiguration.endTime,
+        'history'
+      ).catch(error => {
+        this.logger.error(`Error while executing history query. ${error}`);
+      });
       this.finishInterval = setInterval(this.finish.bind(this), FINISH_INTERVAL);
     });
     await this.south.start();
