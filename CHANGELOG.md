@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [2.9.1](https://github.com/OptimistikSAS/OIBus/compare/v2.9.0...v2.9.1) (2023-07-27)
+
+
+### Bug Fixes
+
+* **cache:** Remove the number in values for compact files ([d33875c](https://github.com/OptimistikSAS/OIBus/commit/d33875c5f3732edb9642aedca699c38b68765abf))
+
 ## [2.9.0](https://github.com/OptimistikSAS/OIBus/compare/v2.8.0...v2.9.0) (2023-07-20)
 
 
