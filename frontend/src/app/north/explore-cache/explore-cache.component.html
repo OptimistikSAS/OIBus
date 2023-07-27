@@ -1,11 +1,16 @@
 <div class="oib-padded-container" *ngIf="northConnector">
-  <div class="oib-header-container">
-    <h1>
-      <span translate="north.cache.title" [translateParams]="{name: northConnector.name}" id="title"></span>
-      <button class="pull-right btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
-    </h1>
+  <div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+      <div class="oib-header-container">
+        <h1>
+          <span translate="north.cache.title" [translateParams]="{name: northConnector.name}" id="title"></span>
+          <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
+        </h1>
+      </div>
+      <div class="mb-2">
+        <oib-error-files *ngIf="northConnector" [northConnector]="northConnector"></oib-error-files>
+      </div>
+      <oib-archive-files *ngIf="northConnector" [northConnector]="northConnector"></oib-archive-files>
+    </div>
   </div>
-  <oib-error-files *ngIf="northConnector" [northConnector]="northConnector"></oib-error-files>
-  <br />
-  <oib-archive-files *ngIf="northConnector" [northConnector]="northConnector"></oib-archive-files>
 </div>

@@ -9,6 +9,7 @@ import { RouterLink } from '@angular/router';
 import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
+import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
 
 @Component({
   selector: 'oib-error-files',
@@ -23,7 +24,9 @@ import { FileSizePipe } from '../../../shared/file-size.pipe';
     NgIf,
     PaginationComponent,
     FileSizePipe,
-    RouterLink
+    RouterLink,
+    BoxComponent,
+    BoxTitleDirective
   ],
   standalone: true
 })
