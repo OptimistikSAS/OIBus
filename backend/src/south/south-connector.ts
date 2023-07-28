@@ -424,8 +424,10 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       this.logger.error(`Error when creating South item in cron jobs: scan mode ${item.scanModeId} not found`);
       return;
     }
-
     this.items.push(item);
+    if (!this.isEnabled() || !item.enabled) {
+      return;
+    }
     if (item.scanModeId === 'subscription' && item.enabled) {
       await this.createSubscriptions([item]);
     } else if (!this.cronByScanModeIds.get(scanMode.id) && item.enabled) {

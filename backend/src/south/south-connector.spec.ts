@@ -683,6 +683,20 @@ describe('SouthConnector enabled', () => {
 
     await south.stop();
   });
+
+  it('should not activate item when adding disabled item', () => {
+    (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValueOnce({
+      id: 'id1',
+      name: 'scanMode1',
+      description: 'my scan mode',
+      cron: '* * * * * *'
+    });
+    south.createSubscriptions = jest.fn();
+    south.createCronJob = jest.fn();
+    south.addItem({ ...items[1], enabled: false });
+    expect(south.createSubscriptions).not.toHaveBeenCalled();
+    expect(south.createCronJob).not.toHaveBeenCalled();
+  });
 });
 
 describe('SouthConnector with max instant per item', () => {
@@ -912,5 +926,24 @@ describe('SouthConnector disabled', () => {
     expect(basicSouth.historyQueryHandler).not.toHaveBeenCalled();
 
     await basicSouth.deleteAllItems();
+  });
+
+  it('should not activate item when adding and connector disabled', () => {
+    (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValueOnce({
+      id: 'id1',
+      name: 'scanMode1',
+      description: 'my scan mode',
+      cron: '* * * * * *'
+    });
+    basicSouth.createSubscriptions = jest.fn();
+    basicSouth.createCronJob = jest.fn();
+    basicSouth.addItem(items[0]);
+    expect(basicSouth.createSubscriptions).not.toHaveBeenCalled();
+    expect(basicSouth.createCronJob).not.toHaveBeenCalled();
+  });
+
+  it('should test connection', async () => {
+    await basicSouth.testConnection();
+    expect(logger.warn).toHaveBeenCalledWith('testConnection must be override');
   });
 });
