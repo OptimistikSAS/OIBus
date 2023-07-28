@@ -9,9 +9,8 @@ import { FormControlValidationDirective } from '../../shared/form-control-valida
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner.component';
 import { SouthConnectorItemDTO, SouthConnectorItemManifest } from '../../../../../shared/model/south-connector.model';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { OibFormControl } from '../../../../../shared/model/form.model';
@@ -46,7 +45,6 @@ const PAGE_SIZE = 20;
 export class HistoryQueryItemsComponent implements OnInit {
   @Input() historyQuery: HistoryQueryDTO | null = null;
   @Input() southConnectorItemSchema!: SouthConnectorItemManifest;
-  @Input() scanModes!: Array<ScanModeDTO>;
 
   allItems: Array<SouthConnectorItemDTO> = [];
   private filteredItems: Array<SouthConnectorItemDTO> = [];
@@ -130,7 +128,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   private refreshAfterModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
     modalRef.result.subscribe(() => {
       this.fetchItemsAndResetPage();
-      this.notificationService.success(`south.items.${mode}`);
+      this.notificationService.success(`history-query.items.${mode}`);
     });
   }
 
@@ -146,7 +144,7 @@ export class HistoryQueryItemsComponent implements OnInit {
         .pipe(switchMap(() => this.historyQueryService.deleteItem(this.historyQuery!.id, item.id)))
         .subscribe(() => {
           this.fetchItemsAndResetPage();
-          this.notificationService.success('south.items.deleted');
+          this.notificationService.success('history-query.items.deleted');
         });
     }
   }
@@ -176,12 +174,12 @@ export class HistoryQueryItemsComponent implements OnInit {
     if (this.historyQuery) {
       this.confirmationService
         .confirm({
-          messageKey: 'south.items.confirm-delete-all'
+          messageKey: 'history-query.items.confirm-delete-all'
         })
         .pipe(switchMap(() => this.historyQueryService.deleteAllItems(this.historyQuery!.id)))
         .subscribe(() => {
           this.fetchItemsAndResetPage();
-          this.notificationService.success('south.items.all-deleted');
+          this.notificationService.success('history-query.items.all-deleted');
         });
     }
   }
@@ -206,12 +204,44 @@ export class HistoryQueryItemsComponent implements OnInit {
   importItems(file: File) {
     if (this.historyQuery) {
       this.historyQueryService.uploadItems(this.historyQuery.id, file).subscribe(() => {
-        this.notificationService.success('south.items.imported');
+        this.notificationService.success('history-query.items.imported');
       });
     }
   }
 
-  getScanMode(scanModeId: string | null): ScanModeDTO | undefined {
-    return this.scanModes.find(scanMode => scanMode.id === scanModeId);
+  toggleItem(item: SouthConnectorItemDTO, value: boolean) {
+    if (value) {
+      this.historyQueryService
+        .enableItem(this.historyQuery!.id, item.id)
+        .pipe(
+          tap(() => {
+            this.notificationService.success('history-query.items.enabled', { name: item.name });
+          }),
+          switchMap(() => {
+            return this.historyQueryService.listItems(this.historyQuery!.id);
+          })
+        )
+        .subscribe(items => {
+          this.allItems = items;
+          this.filteredItems = this.filter(items);
+          this.changePage(this.displayedItems.number);
+        });
+    } else {
+      this.historyQueryService
+        .disableItem(this.historyQuery!.id, item.id)
+        .pipe(
+          tap(() => {
+            this.notificationService.success('history-query.items.disabled', { name: item.name });
+          }),
+          switchMap(() => {
+            return this.historyQueryService.listItems(this.historyQuery!.id);
+          })
+        )
+        .subscribe(items => {
+          this.allItems = items;
+          this.filteredItems = this.filter(items);
+          this.changePage(this.displayedItems.number);
+        });
+    }
   }
 }

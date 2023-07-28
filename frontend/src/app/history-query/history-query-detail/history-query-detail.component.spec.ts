@@ -215,7 +215,7 @@ describe('HistoryQueryDisplayComponent', () => {
     tester.detectChanges();
     expect(tester.items.length).toBe(1);
     const item = tester.items[0];
-    expect(item.elements('td')[0]).toContainText('item1');
+    expect(item.elements('td')[1]).toContainText('item1');
     expect(item.elements('td')[2]).toContainText('sql');
   });
 

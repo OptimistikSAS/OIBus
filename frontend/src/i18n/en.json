@@ -397,6 +397,8 @@
       "none": "No items has been defined on this connector yet",
       "none-match": "No items match the search criteria",
       "scan-mode": "Schedule",
+      "enabled": "South item {{name}} enabled",
+      "disabled": "South item {{name}} disabled",
       "search": {
         "name": "Name"
       }
@@ -582,6 +584,8 @@
       "export": "Export items",
       "import": "Import items",
       "imported": "Items imported",
+      "enabled": "History item {{ name }} enabled",
+      "disabled": "History item {{ name }} disabled",
       "search": {
         "name": "Name"
       }

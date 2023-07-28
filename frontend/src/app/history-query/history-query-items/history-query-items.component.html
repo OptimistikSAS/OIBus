@@ -14,7 +14,13 @@
         <button type="button" class="btn btn-primary btn-sm" (click)="addItem()">
           <span class="fa fa-plus"></span>
         </button>
-        <button type="button" class="btn btn-primary btn-sm" (click)="exportItems()" translate="south.items.export"></button>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          id="export-items"
+          (click)="exportItems()"
+          translate="south.items.export"
+        ></button>
         <button
           type="button"
           class="btn btn-primary btn-sm"
@@ -25,7 +31,13 @@
         >
           <span translate="south.items.import"></span>
         </button>
-        <button type="button" class="btn btn-danger btn-sm" (click)="deleteAllItems()" translate="south.items.delete-all"></button>
+        <button
+          type="button"
+          id="delete-all"
+          class="btn btn-danger btn-sm"
+          (click)="deleteAllItems()"
+          translate="south.items.delete-all"
+        ></button>
       </div>
     </div>
   </ng-template>
@@ -36,16 +48,20 @@
       <table class="table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
-            <th translate="south.items.name"></th>
-            <th translate="south.items.scan-mode"></th>
+            <th style="width: 3%"></th>
+            <th translate="history-query.items.name"></th>
             <th *ngFor="let setting of displaySettings">{{ setting.label }}</th>
             <th style="width: 3%"></th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let item of displayedItems.content" class="south-item">
+            <td>
+              <div class="form-check form-switch">
+                <input (click)="toggleItem(item, !item.enabled)" [checked]="item.enabled" type="checkbox" class="form-check-input" />
+              </div>
+            </td>
             <td>{{ item.name }}</td>
-            <td>{{ getScanMode(item.scanModeId)?.name }}</td>
             <td *ngFor="let setting of displaySettings">{{ item.settings[setting.key] }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">

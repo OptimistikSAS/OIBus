@@ -11,7 +11,7 @@ import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angul
 import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner.component';
 import { SouthConnectorItemDTO, SouthConnectorItemManifest, SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 import { EditSouthItemModalComponent } from '../edit-south-item-modal/edit-south-item-modal.component';
-import { debounceTime, distinctUntilChanged, switchMap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { DatetimePipe } from '../../shared/datetime.pipe';
@@ -212,5 +212,41 @@ export class SouthItemsComponent implements OnInit {
 
   getScanMode(scanModeId: string | null): ScanModeDTO | undefined {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId);
+  }
+
+  toggleItem(item: SouthConnectorItemDTO, value: boolean) {
+    if (value) {
+      this.southConnectorService
+        .enableItem(this.southConnector!.id, item.id)
+        .pipe(
+          tap(() => {
+            this.notificationService.success('south.items.enabled', { name: item.name });
+          }),
+          switchMap(() => {
+            return this.southConnectorService.listItems(this.southConnector!.id);
+          })
+        )
+        .subscribe(items => {
+          this.allItems = items;
+          this.filteredItems = this.filter(items);
+          this.changePage(this.displayedItems.number);
+        });
+    } else {
+      this.southConnectorService
+        .disableItem(this.southConnector!.id, item.id)
+        .pipe(
+          tap(() => {
+            this.notificationService.success('south.items.disabled', { name: item.name });
+          }),
+          switchMap(() => {
+            return this.southConnectorService.listItems(this.southConnector!.id);
+          })
+        )
+        .subscribe(items => {
+          this.allItems = items;
+          this.filteredItems = this.filter(items);
+          this.changePage(this.displayedItems.number);
+        });
+    }
   }
 }
