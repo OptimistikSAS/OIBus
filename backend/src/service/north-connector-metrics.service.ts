@@ -32,8 +32,8 @@ export default class NorthConnectorMetricsService {
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
 
-  updateMetrics(newMetrics: NorthConnectorMetrics): void {
-    this._metricsRepository.updateMetrics(newMetrics);
+  updateMetrics(northId: string, newMetrics: NorthConnectorMetrics): void {
+    this._metricsRepository.updateMetrics(northId, newMetrics);
     this._metrics = newMetrics;
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }

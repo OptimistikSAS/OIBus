@@ -1,6 +1,6 @@
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
-import HealthSignalServiceMock from '../tests/__mocks__/health-signal-service.mock';
+import EngineMetricsServiceMock from '../tests/__mocks__/engine-metrics-service.mock';
 import NorthServiceMock from '../tests/__mocks__/north-service.mock';
 import SouthServiceMock from '../tests/__mocks__/south-service.mock';
 import OibusEngineMock from '../tests/__mocks__/oibus-engine.mock';
@@ -10,7 +10,7 @@ import RepositoryService from './repository.service';
 import SouthService from './south.service';
 import ReloadService from './reload.service';
 import LoggerService from './logger/logger.service';
-import HealthSignalService from './health-signal.service';
+import EngineMetricsService from './engine-metrics.service';
 import NorthService from './north.service';
 import OIBusEngine from '../engine/oibus-engine';
 import { EngineSettingsDTO, LogSettings } from '../../../shared/model/engine.model';
@@ -26,13 +26,13 @@ import HistoryQueryEngine from '../engine/history-query-engine';
 
 jest.mock('./encryption.service');
 jest.mock('./logger/logger.service');
-jest.mock('./health-signal.service');
+jest.mock('./engine-metrics.service');
 
 const oibusEngine: OIBusEngine = new OibusEngineMock();
 const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock('', '');
-const healthSignalService: HealthSignalService = new HealthSignalServiceMock();
+const engineMetricsService: EngineMetricsService = new EngineMetricsServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const southService: SouthService = new SouthServiceMock();
 const loggerService: LoggerService = new LoggerService(encryptionService, 'folder');
@@ -44,7 +44,7 @@ describe('reload service', () => {
     service = new ReloadService(
       loggerService,
       repositoryService,
-      healthSignalService,
+      engineMetricsService,
       northService,
       southService,
       oibusEngine,
@@ -55,7 +55,7 @@ describe('reload service', () => {
   it('should be properly initialized', () => {
     expect(service.repositoryService).toBeDefined();
     expect(service.loggerService).toBeDefined();
-    expect(service.healthSignalService).toBeDefined();
+    expect(service.engineMetricsService).toBeDefined();
     expect(service.northService).toBeDefined();
     expect(service.southService).toBeDefined();
     expect(service.oibusEngine).toBeDefined();
@@ -85,7 +85,7 @@ describe('reload service', () => {
     expect(loggerService.stop).toHaveBeenCalledTimes(1);
     expect(loggerService.start).toHaveBeenCalledWith(newSettings.id, newSettings.name, newSettings.logParameters);
     expect(changeLoggerFn).toHaveBeenCalledTimes(1);
-    expect(healthSignalService.setLogger).toHaveBeenCalledTimes(1);
+    expect(engineMetricsService.setLogger).toHaveBeenCalledTimes(1);
   });
 
   it('should create and start south', async () => {

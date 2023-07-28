@@ -6,7 +6,7 @@ import ReloadService from '../../service/reload.service';
 import OIBusService from '../../service/oibus.service';
 import NorthService from '../../service/north.service';
 import SouthService from '../../service/south.service';
-import HealthSignalService from '../../service/health-signal.service';
+import EngineMetricsService from '../../service/engine-metrics.service';
 
 /**
  * OIBus middleware for Koa
@@ -19,7 +19,7 @@ const oibus = (
   southService: SouthService,
   northService: NorthService,
   oibusService: OIBusService,
-  healthSignalService: HealthSignalService,
+  engineMetricsService: EngineMetricsService,
   logger: pino.Logger
 ) => {
   return async (ctx: KoaContext<any, any>, next: () => Promise<any>) => {
@@ -30,7 +30,7 @@ const oibus = (
     ctx.app.southService = southService;
     ctx.app.northService = northService;
     ctx.app.oibusService = oibusService;
-    ctx.app.healthSignalService = healthSignalService;
+    ctx.app.engineMetricsService = engineMetricsService;
     ctx.app.logger = logger;
     return next();
   };

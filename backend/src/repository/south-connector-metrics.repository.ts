@@ -14,22 +14,22 @@ export default class SouthConnectorMetricsRepository {
     return this._database;
   }
 
-  initMetrics(connectorId: string) {
-    const foundMetrics = this.getMetrics(connectorId);
+  initMetrics(southId: string) {
+    const foundMetrics = this.getMetrics(southId);
     if (!foundMetrics) {
       const insertQuery =
         `INSERT INTO ${SOUTH_METRICS_TABLE} (south_id, metrics_start, nb_values, nb_files, ` +
         `last_value, last_file, last_connection, last_run_start, last_run_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`;
-      this._database.prepare(insertQuery).run(connectorId, DateTime.now().toUTC().toISO(), 0, 0, null, null, null, null, null);
+      this._database.prepare(insertQuery).run(southId, DateTime.now().toUTC().toISO(), 0, 0, null, null, null, null, null);
     }
   }
 
-  getMetrics(connectorId: string): SouthConnectorMetrics | null {
+  getMetrics(southId: string): SouthConnectorMetrics | null {
     const query =
       `SELECT metrics_start AS metricsStart, nb_values AS numberOfValuesRetrieved, nb_files AS numberOfFilesRetrieved, ` +
       `last_value AS lastValueRetrieved, last_file AS lastFileRetrieved, last_connection AS lastConnection, last_run_start AS lastRunStart, ` +
       `last_run_duration AS lastRunDuration FROM ${SOUTH_METRICS_TABLE} WHERE south_id = ?;`;
-    const result: SouthConnectorMetrics | undefined = this._database.prepare(query).get(connectorId) as SouthConnectorMetrics;
+    const result: SouthConnectorMetrics | undefined = this._database.prepare(query).get(southId) as SouthConnectorMetrics;
     if (!result) return null;
     return {
       metricsStart: result.metricsStart,
@@ -44,10 +44,10 @@ export default class SouthConnectorMetricsRepository {
     };
   }
 
-  updateMetrics(metrics: SouthConnectorMetrics): void {
+  updateMetrics(southId: string, metrics: SouthConnectorMetrics): void {
     const updateQuery =
-      `UPDATE ${SOUTH_METRICS_TABLE} SET metrics_start = ?, nb_values = ?, nb_files = ?,  ` +
-      `last_value = ?, last_file = ?, last_connection = ?, last_run_start = ?, last_run_duration = ?;`;
+      `UPDATE ${SOUTH_METRICS_TABLE} SET metrics_start = ?, nb_values = ?, nb_files = ?, last_value = ?, ` +
+      `last_file = ?, last_connection = ?, last_run_start = ?, last_run_duration = ? WHERE south_id = ?;`;
     this._database
       .prepare(updateQuery)
       .run(
@@ -58,12 +58,13 @@ export default class SouthConnectorMetricsRepository {
         metrics.lastFileRetrieved,
         metrics.lastConnection,
         metrics.lastRunStart,
-        metrics.lastRunDuration
+        metrics.lastRunDuration,
+        southId
       );
   }
 
-  removeMetrics(connectorId: string): void {
+  removeMetrics(southId: string): void {
     const query = `DELETE FROM ${SOUTH_METRICS_TABLE} WHERE south_id = ?;`;
-    this._database.prepare(query).run(connectorId);
+    this._database.prepare(query).run(southId);
   }
 }

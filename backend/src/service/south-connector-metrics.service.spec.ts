@@ -37,8 +37,8 @@ describe('SouthConnectorMetricsService', () => {
       lastRunDuration: 120,
       historyMetrics: {}
     };
-    service.updateMetrics(newConnectorMetrics);
-    expect(service.metricsRepository.updateMetrics).toHaveBeenCalledWith(newConnectorMetrics);
+    service.updateMetrics('southId', newConnectorMetrics);
+    expect(service.metricsRepository.updateMetrics).toHaveBeenCalledWith('southId', newConnectorMetrics);
   });
 
   it('should reset metrics', () => {
@@ -57,7 +57,7 @@ describe('SouthConnectorMetricsService', () => {
     service.initMetrics();
     expect(stream.write).toHaveBeenCalledWith(`data: ${JSON.stringify(metrics)}\n\n`);
 
-    service.updateMetrics({
+    service.updateMetrics('southId', {
       numberOfValuesRetrieved: 2,
       numberOfFilesRetrieved: 2
     } as SouthConnectorMetrics);

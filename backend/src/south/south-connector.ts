@@ -92,7 +92,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
   async connect(): Promise<void> {
     if (this.connector.id !== 'test') {
-      this.metricsService!.updateMetrics({
+      this.metricsService!.updateMetrics(this.connector.id, {
         ...this.metricsService!.metrics,
         lastConnection: DateTime.now().toUTC().toISO()
       });
@@ -170,7 +170,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     this.createDeferredPromise();
 
     const runStart = DateTime.now();
-    this.metricsService!.updateMetrics({ ...this.metricsService!.metrics, lastRunStart: runStart.toUTC().toISO() });
+    this.metricsService!.updateMetrics(this.connector.id, { ...this.metricsService!.metrics, lastRunStart: runStart.toUTC().toISO() });
 
     if (this.queriesHistory()) {
       try {
@@ -207,7 +207,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       }
     }
 
-    this.metricsService!.updateMetrics({
+    this.metricsService!.updateMetrics(this.connector.id, {
       ...this.metricsService!.metrics,
       lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
     });
@@ -252,7 +252,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       for (const [index, item] of items.entries()) {
         if (this.stopping) {
           this.logger.debug(`Connector is stopping. Exiting history query at item ${item.name}`);
-          this.metricsService!.updateMetrics({
+          this.metricsService!.updateMetrics(this.connector.id, {
             ...this.metricsService!.metrics,
             historyMetrics: { running: false }
           });
@@ -279,7 +279,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
       await this.queryIntervals(intervals, items, southCache, startTime);
     }
-    this.metricsService!.updateMetrics({
+    this.metricsService!.updateMetrics(this.connector.id, {
       ...this.metricsService!.metrics,
       historyMetrics: { running: false }
     });
@@ -292,7 +292,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     southCache: SouthCache,
     startTime: Instant
   ) {
-    this.metricsService!.updateMetrics({
+    this.metricsService!.updateMetrics(this.connector.id, {
       ...this.metricsService!.metrics,
       historyMetrics: {
         running: true,
@@ -312,7 +312,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
           itemId: southCache.itemId,
           maxInstant: lastInstantRetrieved
         });
-        this.metricsService!.updateMetrics({
+        this.metricsService!.updateMetrics(this.connector.id, {
           ...this.metricsService!.metrics,
           historyMetrics: {
             running: true,
@@ -366,7 +366,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       this.logger.debug(`Add ${values.length} values to cache from South "${this.connector.name}"`);
       await this.engineAddValuesCallback(this.connector.id, values);
       const currentMetrics = this.metricsService!.metrics;
-      this.metricsService!.updateMetrics({
+      this.metricsService!.updateMetrics(this.connector.id, {
         ...currentMetrics,
         numberOfValuesRetrieved: currentMetrics.numberOfValuesRetrieved + values.length,
         lastValueRetrieved: values[values.length - 1]
@@ -381,7 +381,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     this.logger.debug(`Add file "${filePath}" to cache from South "${this.connector.name}"`);
     await this.engineAddFileCallback(this.connector.id, filePath);
     const currentMetrics = this.metricsService!.metrics;
-    this.metricsService!.updateMetrics({
+    this.metricsService!.updateMetrics(this.connector.id, {
       ...currentMetrics,
       numberOfFilesRetrieved: currentMetrics.numberOfFilesRetrieved + 1,
       lastFileRetrieved: filePath

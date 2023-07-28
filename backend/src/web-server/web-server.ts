@@ -21,7 +21,7 @@ import { KoaApplication } from './koa';
 import SouthService from '../service/south.service';
 import OIBusService from '../service/oibus.service';
 import NorthService from '../service/north.service';
-import HealthSignalService from '../service/health-signal.service';
+import EngineMetricsService from '../service/engine-metrics.service';
 
 /**
  * Class Server - Provides the web client and establish socket connections.
@@ -42,7 +42,7 @@ export default class WebServer {
     private readonly southService: SouthService,
     private readonly northService: NorthService,
     private readonly oibusService: OIBusService,
-    private readonly healthSignalService: HealthSignalService,
+    private readonly engineMetricsService: EngineMetricsService,
     logger: pino.Logger
   ) {
     this._id = id;
@@ -85,7 +85,7 @@ export default class WebServer {
         this.southService,
         this.northService,
         this.oibusService,
-        this.healthSignalService,
+        this.engineMetricsService,
         this.logger
       )
     );

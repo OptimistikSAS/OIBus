@@ -126,9 +126,10 @@ export interface HistoryMetrics {
   south: SouthConnectorMetrics;
 }
 
-export interface HealthSignalContent {
+export interface EngineMetrics {
+  metricsStart: Instant;
   processCpuUsage: number;
-  processUptime: number;
+  processUpTime: number;
   freeMemory: number;
   totalMemory: number;
   minRss: number;

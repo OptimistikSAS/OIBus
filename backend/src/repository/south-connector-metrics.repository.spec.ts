@@ -104,10 +104,10 @@ describe('SouthConnectorMetricsRepository', () => {
       historyMetrics: {}
     };
 
-    repository.updateMetrics(newConnectorMetrics);
+    repository.updateMetrics('southId', newConnectorMetrics);
     expect(repository.database.prepare).toHaveBeenCalledWith(
-      `UPDATE south_metrics SET metrics_start = ?, nb_values = ?, nb_files = ?,  ` +
-        `last_value = ?, last_file = ?, last_connection = ?, last_run_start = ?, last_run_duration = ?;`
+      `UPDATE south_metrics SET metrics_start = ?, nb_values = ?, nb_files = ?, last_value = ?, last_file = ?, ` +
+        `last_connection = ?, last_run_start = ?, last_run_duration = ? WHERE south_id = ?;`
     );
     expect(run).toHaveBeenCalledWith(
       newConnectorMetrics.metricsStart,
@@ -117,7 +117,8 @@ describe('SouthConnectorMetricsRepository', () => {
       newConnectorMetrics.lastFileRetrieved,
       newConnectorMetrics.lastConnection,
       newConnectorMetrics.lastRunStart,
-      newConnectorMetrics.lastRunDuration
+      newConnectorMetrics.lastRunDuration,
+      'southId'
     );
 
     const connectorMetricsWithNullValue: SouthConnectorMetrics = {
@@ -132,7 +133,7 @@ describe('SouthConnectorMetricsRepository', () => {
       historyMetrics: {}
     };
 
-    repository.updateMetrics(connectorMetricsWithNullValue);
+    repository.updateMetrics('southId', connectorMetricsWithNullValue);
 
     expect(run).toHaveBeenCalledWith(
       newConnectorMetrics.metricsStart,
@@ -142,7 +143,8 @@ describe('SouthConnectorMetricsRepository', () => {
       newConnectorMetrics.lastFileRetrieved,
       newConnectorMetrics.lastConnection,
       newConnectorMetrics.lastRunStart,
-      newConnectorMetrics.lastRunDuration
+      newConnectorMetrics.lastRunDuration,
+      'southId'
     );
   });
 
