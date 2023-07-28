@@ -3,13 +3,13 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentTester } from 'ngx-speculoos';
 import { SouthMetricsComponent } from './south-metrics.component';
 import { Component } from '@angular/core';
-import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
-  template: `<oib-south-metrics [southConnector]="southConnector"></oib-south-metrics>`,
+  template: `<oib-south-metrics [southConnector]="southConnector" [manifest]="manifest"></oib-south-metrics>`,
   standalone: true,
   imports: [SouthMetricsComponent]
 })
@@ -18,6 +18,35 @@ class TestComponent {
     id: 'southId',
     name: 'South Connector'
   } as SouthConnectorDTO;
+
+  manifest: SouthConnectorManifest = {
+    id: 'mssql',
+    category: 'database',
+    name: 'SQL',
+    description: 'SQL',
+    settings: [],
+    items: {
+      scanMode: {
+        acceptSubscription: false,
+        subscriptionOnly: false
+      },
+      settings: [
+        {
+          label: 'query',
+          key: 'query',
+          displayInViewMode: true,
+          type: 'OibText'
+        }
+      ]
+    },
+    modes: {
+      subscription: false,
+      history: true,
+      lastFile: true,
+      lastPoint: false,
+      forceMaxInstantPerItem: false
+    }
+  };
 }
 
 class SouthDataComponentTester extends ComponentTester<TestComponent> {
@@ -47,8 +76,8 @@ describe('SouthMetricsComponent', () => {
     tester = new SouthDataComponentTester();
   });
 
-  it('should have a title', () => {
+  it('should not have a title', () => {
     tester.detectChanges();
-    expect(tester.title).toContainText('Monitoring');
+    expect(tester.title).toBeNull();
   });
 });

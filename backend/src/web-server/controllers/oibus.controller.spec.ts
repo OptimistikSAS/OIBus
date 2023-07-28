@@ -96,6 +96,12 @@ describe('Oibus controller', () => {
     expect(ctx.ok).toHaveBeenCalledWith({ version: '3.0' });
   });
 
+  it('should reset metrics', async () => {
+    (ctx.app.engineMetricsService.resetMetrics as jest.Mock).mockReturnValue({ version: '3.0' } as OIBusInfo);
+    await oibusController.resetEngineMetrics(ctx);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
   it('should add values', async () => {
     ctx.request.body = [{ field: 'my value' }];
     ctx.request.query = { name: 'source' };

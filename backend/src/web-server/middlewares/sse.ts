@@ -23,7 +23,7 @@ const sse = () => {
       ctx.body = ctx.app.reloadService.oibusEngine.getNorthDataStream(splitString[3]);
       return ctx.ok();
     }
-    if (ctx.path.startsWith('/sse/engine/')) {
+    if (ctx.path.startsWith('/sse/engine')) {
       ctx.body = ctx.app.reloadService.engineMetricsService.stream;
       return ctx.ok();
     }

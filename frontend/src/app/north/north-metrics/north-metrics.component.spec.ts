@@ -3,13 +3,13 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NorthMetricsComponent } from './north-metrics.component';
 import { Component } from '@angular/core';
-import { NorthConnectorDTO } from '../../../../../../shared/model/north-connector.model';
-import { NorthConnectorService } from '../../../services/north-connector.service';
-import { NotificationService } from '../../../shared/notification.service';
-import { provideI18nTesting } from '../../../../i18n/mock-i18n';
+import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorService } from '../../services/north-connector.service';
+import { NotificationService } from '../../shared/notification.service';
+import { provideI18nTesting } from '../../../i18n/mock-i18n';
 
 @Component({
-  template: `<oib-north-metrics [northConnector]="northConnector"></oib-north-metrics>`,
+  template: `<oib-north-metrics [northConnector]="northConnector" [manifest]="manifest"></oib-north-metrics>`,
   standalone: true,
   imports: [NorthMetricsComponent]
 })
@@ -18,6 +18,31 @@ class TestComponent {
     id: 'northId',
     name: 'North Connector'
   } as NorthConnectorDTO;
+  manifest: NorthConnectorManifest = {
+    id: 'oianalytics',
+    name: 'OIAnalytics',
+    category: 'oi',
+    description: 'OIAnalytics description',
+    modes: {
+      files: true,
+      points: true
+    },
+    settings: [
+      {
+        key: 'host',
+        type: 'OibText',
+        label: 'Host',
+        validators: [
+          { key: 'required' },
+          {
+            key: 'pattern',
+            params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' }
+          }
+        ],
+        displayInViewMode: true
+      }
+    ]
+  };
 }
 
 class NorthMetricsComponentTester extends ComponentTester<TestComponent> {
@@ -50,8 +75,8 @@ describe('NorthMetricsComponent', () => {
     tester = new NorthMetricsComponentTester();
   });
 
-  it('should display a title', () => {
+  it('should not display a title', () => {
     tester.detectChanges();
-    expect(tester.title).toContainText('Monitoring');
+    expect(tester.title).toBeNull();
   });
 });

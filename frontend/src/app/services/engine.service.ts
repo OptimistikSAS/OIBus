@@ -38,4 +38,11 @@ export class EngineService {
   restart(): Observable<void> {
     return this.http.put<void>('/api/restart', null);
   }
+
+  /**
+   * Reset the Engine metrics
+   */
+  resetMetrics(): Observable<void> {
+    return this.http.put<void>(`/api/engine/reset-metrics`, null);
+  }
 }

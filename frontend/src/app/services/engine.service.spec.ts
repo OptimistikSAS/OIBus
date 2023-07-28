@@ -69,4 +69,14 @@ describe('EngineService', () => {
     testRequest.flush(null);
     expect(done).toBe(true);
   });
+
+  it('should reset metrics', () => {
+    let done = false;
+
+    service.resetMetrics().subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/engine/reset-metrics' });
+    expect(testRequest.request.body).toBeNull();
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
 });

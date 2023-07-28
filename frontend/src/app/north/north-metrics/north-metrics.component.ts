@@ -1,15 +1,15 @@
 import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { NorthConnectorMetrics } from '../../../../../../shared/model/engine.model';
+import { NorthConnectorMetrics } from '../../../../../shared/model/engine.model';
 import { JsonPipe, NgIf } from '@angular/common';
-import { WindowService } from '../../../shared/window.service';
-import { DatetimePipe } from '../../../shared/datetime.pipe';
-import { DurationPipe } from '../../../shared/duration.pipe';
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../../shared/model/north-connector.model';
-import { NorthConnectorService } from '../../../services/north-connector.service';
-import { NotificationService } from '../../../shared/notification.service';
-import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
-import { FileSizePipe } from '../../../shared/file-size.pipe';
+import { WindowService } from '../../shared/window.service';
+import { DatetimePipe } from '../../shared/datetime.pipe';
+import { DurationPipe } from '../../shared/duration.pipe';
+import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorService } from '../../services/north-connector.service';
+import { NotificationService } from '../../shared/notification.service';
+import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { FileSizePipe } from '../../shared/file-size.pipe';
 
 @Component({
   selector: 'oib-north-metrics',

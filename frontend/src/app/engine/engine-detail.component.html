@@ -1,15 +1,20 @@
 <div class="oib-padded-container" *ngIf="engineSettings">
   <div class="row justify-content-center">
     <div class="col-md-10 col-lg-8">
-      <div class="oib-header-container d-flex justify-content-between">
+      <div class="oib-header-container d-flex align-items-center justify-content-between">
         <div class="d-flex">
           <div class="oib-block-title">
             <img class="oib-title-image pt-2" src="../assets/home/engine.svg" />
           </div>
-          <h1 class="oib-title" translate="engine.title"></h1>
+
+          <h1 class="oib-title" translate="engine.title">
+            <button class="btn btn-primary mx-2" id="edit-link" routerLink="edit">
+              <i class="fa fa-pencil"></i>
+            </button>
+          </h1>
         </div>
+
         <div>
-          <a type="button" class="btn btn-primary me-2" translate="engine.edit" routerLink="edit"></a>
           <button
             (click)="restart()"
             type="button"
@@ -26,7 +31,6 @@
             <span *ngIf="(restarting.isPending | async) === false" class="fa fa-rotate-right me-1" role="status" aria-hidden="true"></span>
             <span translate="engine.restart"></span>
           </button>
-
           <button
             type="button"
             [disabled]="(shuttingDown.isPending | async) || (restarting.isPending | async)"
@@ -45,6 +49,9 @@
           </button>
         </div>
       </div>
+
+      <!-- Engine metrics -->
+      <oib-engine-metrics></oib-engine-metrics>
 
       <oib-box boxTitle="engine.general-settings.title">
         <table class="table table-sm table-hover oib-table mb-3">

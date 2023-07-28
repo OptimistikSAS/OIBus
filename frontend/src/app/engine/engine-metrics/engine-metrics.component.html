@@ -1,0 +1,37 @@
+<oib-box *ngIf="metrics">
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between align-items-center">
+      <span translate="engine.monitoring.title" id="title"></span>
+      <div class="d-flex align-items-center">
+        <span translate="engine.monitoring.since" [translateParams]="{ date: metrics.metricsStart | datetime:'mediumWithSeconds' }"></span>
+        <button
+          class="ms-3 btn btn-primary btn-sm oib-box-btn"
+          (click)="resetMetrics()"
+          translate="engine.monitoring.reset-metrics"
+        ></button>
+      </div>
+    </div>
+  </ng-template>
+
+  <div class="mb-3">
+    <table class="table table-sm table-hover oib-table">
+      <tbody>
+        <!-- Instant percentage of CPU usage -->
+        <tr>
+          <td style="width: 33%" translate="engine.monitoring.cpu-usage-instant"></td>
+          <td>{{ metrics.processCpuUsageInstant | percent:'.2' }}</td>
+        </tr>
+        <!-- Average percentage of CPU usage -->
+        <tr>
+          <td style="width: 33%" translate="engine.monitoring.cpu-usage-average"></td>
+          <td>{{ metrics.processCpuUsageAverage | percent:'.2' }}</td>
+        </tr>
+        <!-- Percentage of CPU up time -->
+        <tr>
+          <td style="width: 33%" translate="engine.monitoring.uptime"></td>
+          <td>{{ metrics.processUptime | duration }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</oib-box>

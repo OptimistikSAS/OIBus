@@ -4,6 +4,7 @@ import os from 'node:os';
 import process from 'node:process';
 import EngineMetricsRepository from '../repository/engine-metrics.repository';
 import { PassThrough } from 'node:stream';
+import { DateTime } from 'luxon';
 
 export const HEALTH_SIGNAL_INTERVAL = 60_000_000; // 10 minutes
 export const UPDATE_INTERVAL = 1000; // every second
@@ -16,12 +17,16 @@ export default class EngineMetricsService {
   private logSignalInterval: NodeJS.Timeout | null = null;
   private updateInterval: NodeJS.Timeout | null = null;
   private _metrics: EngineMetrics;
+  private cpuUsageRefInstant: number;
+  private cpuUsageRef: NodeJS.CpuUsage;
 
   constructor(
     private _logger: pino.Logger,
     private readonly engineId: string,
     private readonly engineMetricsRepository: EngineMetricsRepository
   ) {
+    this.cpuUsageRefInstant = DateTime.now().toMillis(); // Reference between two dates for cpu usage calculation
+    this.cpuUsageRef = process.cpuUsage();
     this.engineMetricsRepository.initMetrics(this.engineId);
     this._metrics = this.engineMetricsRepository.getMetrics(this.engineId)!;
     this.initTimers();
@@ -45,15 +50,25 @@ export default class EngineMetricsService {
   }
 
   updateMetrics(): void {
-    const processCpuUsage = process.cpuUsage();
-    const processUpTime = Math.floor(process.uptime());
-    const cpuUsagePercentage = (100 * (processCpuUsage.user + processCpuUsage.system)) / processUpTime;
-    const memoryUsage = process.memoryUsage();
+    const newRefInstant = DateTime.now().toMillis();
+    const cpuUsage = process.cpuUsage();
+    const processUptime = process.uptime() * 1000; // number of ms
 
-    const healthSignal: EngineMetrics = {
+    // Time is *1000 because cpuUsage is in us (microseconds)
+    const instantCpuUsagePercent =
+      (cpuUsage.user - this.cpuUsageRef.user + cpuUsage.system - this.cpuUsageRef.system) /
+      ((newRefInstant - this.cpuUsageRefInstant) * 1000);
+    const averageCpuUsagePercent = (cpuUsage.user + cpuUsage.system) / (processUptime * 1000);
+
+    this.cpuUsageRef = cpuUsage;
+    this.cpuUsageRefInstant = newRefInstant;
+
+    const memoryUsage = process.memoryUsage();
+    this._metrics = {
       metricsStart: this._metrics.metricsStart,
-      processCpuUsage: cpuUsagePercentage,
-      processUpTime: processUpTime,
+      processCpuUsageInstant: instantCpuUsagePercent,
+      processCpuUsageAverage: averageCpuUsagePercent,
+      processUptime: processUptime,
       freeMemory: os.freemem(),
       totalMemory: os.totalmem(),
       minRss: this._metrics.minRss > memoryUsage.rss ? memoryUsage.rss : this._metrics.minRss,
@@ -72,7 +87,6 @@ export default class EngineMetricsService {
       currentArrayBuffers: memoryUsage.arrayBuffers,
       maxArrayBuffers: this._metrics.maxArrayBuffers < memoryUsage.arrayBuffers ? memoryUsage.arrayBuffers : this._metrics.maxArrayBuffers
     };
-    this._metrics = healthSignal;
     this.engineMetricsRepository.updateMetrics(this.engineId, this._metrics);
     this._stream?.write(`data: ${JSON.stringify(this._metrics)}\n\n`);
   }
@@ -80,6 +94,8 @@ export default class EngineMetricsService {
   resetMetrics(): void {
     this.engineMetricsRepository.removeMetrics(this.engineId);
     this.engineMetricsRepository.initMetrics(this.engineId);
+    this._metrics = this.engineMetricsRepository.getMetrics(this.engineId)!;
+    this.updateMetrics();
   }
 
   /**

@@ -28,20 +28,20 @@ describe('EngineMetricsRepository', () => {
     repository.initMetrics('engineId');
     expect(repository.getMetrics).toHaveBeenCalledWith('engineId');
     expect(repository.database.prepare).toHaveBeenCalledWith(
-      'INSERT INTO engine_metrics (engine_id, metrics_start, process_cpu_usage, process_up_time, free_memory, ' +
+      'INSERT INTO engine_metrics (engine_id, metrics_start, process_cpu_usage_instant, process_cpu_usage_average, process_uptime, free_memory, ' +
         'total_memory, min_rss, current_rss, max_rss, min_heap_total, current_heap_total, ' +
         'max_heap_total, min_heap_used, current_heap_used, max_heap_used, min_external, current_external, ' +
         'max_external, min_array_buffers, current_array_buffers, max_array_buffers) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'
     );
-    expect(run).toHaveBeenCalledWith('engineId', nowDateString, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    expect(run).toHaveBeenCalledWith('engineId', nowDateString, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     expect(run).toHaveBeenCalledTimes(1);
   });
 
   it('should get metrics', () => {
     const nullMetrics = repository.getMetrics('engineId');
     expect(repository.database.prepare).toHaveBeenCalledWith(
-      `SELECT metrics_start AS metricsStart, process_cpu_usage AS processCpuUsage, process_up_time AS processUpTime, ` +
+      `SELECT metrics_start AS metricsStart, process_cpu_usage_instant AS processCpuUsageInstant, process_cpu_usage_average AS processCpuUsageAverage, process_uptime AS processUptime, ` +
         'free_memory AS freeMemory, total_memory AS totalMemory, min_rss AS minRss, current_rss AS currentRss, ' +
         'max_rss AS maxRss, min_heap_total AS minHeapTotal, current_heap_total AS currentHeapTotal, ' +
         'max_heap_total AS maxHeapTotal, min_heap_used AS minHeapUsed, current_heap_used AS currentHeapUsed, ' +
@@ -53,8 +53,9 @@ describe('EngineMetricsRepository', () => {
 
     get.mockReturnValueOnce({
       metricsStart: '2020-02-02T02:02:02.222Z',
-      processCpuUsage: 1,
-      processUpTime: 2,
+      processCpuUsageInstant: 1,
+      processCpuUsageAverage: 1,
+      processUptime: 2,
       freeMemory: 3,
       totalMemory: 4,
       minRss: 5,
@@ -76,8 +77,9 @@ describe('EngineMetricsRepository', () => {
     const metrics = repository.getMetrics('engineId');
     expect(metrics).toEqual({
       metricsStart: '2020-02-02T02:02:02.222Z',
-      processCpuUsage: 1,
-      processUpTime: 2,
+      processCpuUsageInstant: 1,
+      processCpuUsageAverage: 1,
+      processUptime: 2,
       freeMemory: 3,
       totalMemory: 4,
       minRss: 5,
@@ -101,8 +103,9 @@ describe('EngineMetricsRepository', () => {
   it('should update metrics', () => {
     const newConnectorMetrics: EngineMetrics = {
       metricsStart: '2020-02-02T02:02:02.222Z',
-      processCpuUsage: 1,
-      processUpTime: 2,
+      processCpuUsageInstant: 1,
+      processCpuUsageAverage: 1,
+      processUptime: 2,
       freeMemory: 3,
       totalMemory: 4,
       minRss: 5,
@@ -124,15 +127,16 @@ describe('EngineMetricsRepository', () => {
 
     repository.updateMetrics('engineId', newConnectorMetrics);
     expect(repository.database.prepare).toHaveBeenCalledWith(
-      `UPDATE engine_metrics SET metrics_start = ?, process_cpu_usage = ?, process_up_time = ?, free_memory = ?, ` +
+      `UPDATE engine_metrics SET metrics_start = ?, process_cpu_usage_instant = ?, process_cpu_usage_average = ?, process_uptime = ?, free_memory = ?, ` +
         'total_memory = ?, min_rss = ?, current_rss = ?, max_rss = ?, min_heap_total = ?, current_heap_total = ?, ' +
         'max_heap_total = ?, min_heap_used = ?, current_heap_used = ?, max_heap_used = ?, min_external = ?, current_external = ?, ' +
         'max_external = ?, min_array_buffers = ?, current_array_buffers = ?, max_array_buffers = ? WHERE engine_id = ?;'
     );
     expect(run).toHaveBeenCalledWith(
       newConnectorMetrics.metricsStart,
-      newConnectorMetrics.processCpuUsage,
-      newConnectorMetrics.processUpTime,
+      newConnectorMetrics.processCpuUsageInstant,
+      newConnectorMetrics.processCpuUsageAverage,
+      newConnectorMetrics.processUptime,
       newConnectorMetrics.freeMemory,
       newConnectorMetrics.totalMemory,
       newConnectorMetrics.minRss,
