@@ -57,8 +57,9 @@ describe('EngineMetrics service', () => {
   it('should update metrics', async () => {
     (engineMetricsRepository.getMetrics as jest.Mock).mockReturnValue({
       metricsStart: '2020-01-01T00:00:00.000',
-      processCpuUsage: 20,
-      processUpTime: 10000,
+      processCpuUsageInstant: 0,
+      processCpuUsageAverage: 0.0000002,
+      processUptime: 10000,
       freeMemory: 2_000_000,
       totalMemory: 16_000_000,
       minRss: 5,
@@ -96,8 +97,9 @@ describe('EngineMetrics service', () => {
     expect(engineMetricsRepository.updateMetrics).toHaveBeenCalledTimes(4);
     expect(engineMetricsRepository.updateMetrics).toHaveBeenCalledWith('engineId', {
       metricsStart: '2020-01-01T00:00:00.000',
-      processCpuUsage: 20,
-      processUpTime: 10000,
+      processCpuUsageInstant: 0,
+      processCpuUsageAverage: 0.0000002,
+      processUptime: 10000000,
       freeMemory: 2_000_000,
       totalMemory: 16_000_000,
       minRss: 0,
@@ -122,8 +124,9 @@ describe('EngineMetrics service', () => {
     jest.spyOn(process, 'memoryUsage').mockReturnValue({ rss: 5, heapTotal: 5, heapUsed: 5, external: 5, arrayBuffers: 5 });
     (engineMetricsRepository.getMetrics as jest.Mock).mockReturnValue({
       metricsStart: '2020-01-01T00:00:00.000',
-      processCpuUsage: 20,
-      processUpTime: 10000,
+      processCpuUsageInstant: 0,
+      processCpuUsageAverage: 0.0000002,
+      processUptime: 10000,
       freeMemory: 2_000_000,
       totalMemory: 16_000_000,
       minRss: 5,
@@ -156,8 +159,9 @@ describe('EngineMetrics service', () => {
     expect(anotherLogger.info).toHaveBeenCalledWith(
       JSON.stringify({
         metricsStart: '2020-01-01T00:00:00.000',
-        processCpuUsage: 20,
-        processUpTime: 10000,
+        processCpuUsageInstant: 0,
+        processCpuUsageAverage: 0.0000002,
+        processUptime: 10000000,
         freeMemory: 2_000_000,
         totalMemory: 16_000_000,
         minRss: 0,
@@ -183,8 +187,9 @@ describe('EngineMetrics service', () => {
     jest.spyOn(process, 'memoryUsage').mockReturnValue({ rss: 5, heapTotal: 5, heapUsed: 5, external: 5, arrayBuffers: 5 });
     (engineMetricsRepository.getMetrics as jest.Mock).mockReturnValue({
       metricsStart: '2020-01-01T00:00:00.000',
-      processCpuUsage: 20,
-      processUpTime: 10000,
+      processCpuUsageInstant: 0,
+      processCpuUsageAverage: 0.0000002,
+      processUptime: 10000,
       freeMemory: 2_000_000,
       totalMemory: 16_000_000,
       minRss: 5,
@@ -214,8 +219,9 @@ describe('EngineMetrics service', () => {
     expect(stream.write).toHaveBeenCalledWith(
       `data: ${JSON.stringify({
         metricsStart: '2020-01-01T00:00:00.000',
-        processCpuUsage: 20,
-        processUpTime: 10000,
+        processCpuUsageInstant: 0,
+        processCpuUsageAverage: 0.0000002,
+        processUptime: 10000,
         freeMemory: 2_000_000,
         totalMemory: 16_000_000,
         minRss: 5,

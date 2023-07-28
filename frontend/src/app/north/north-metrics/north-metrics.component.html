@@ -1,12 +1,22 @@
-<oib-box>
+<oib-box *ngIf="connectorMetrics">
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between">
       <span translate="north.monitoring.title" id="title"></span>
-      <button class="ms-3 btn btn-primary btn-sm oib-box-btn" (click)="resetMetrics()" translate="north.monitoring.reset-metrics"></button>
+      <div class="d-flex align-items-center">
+        <span
+          translate="south.monitoring.since"
+          [translateParams]="{ date: connectorMetrics.metricsStart | datetime:'mediumWithSeconds' }"
+        ></span>
+        <button
+          class="ms-3 btn btn-primary btn-sm oib-box-btn"
+          (click)="resetMetrics()"
+          translate="north.monitoring.reset-metrics"
+        ></button>
+      </div>
     </div>
   </ng-template>
 
-  <div *ngIf="connectorMetrics" class="mb-3">
+  <div class="mb-3">
     <table class="table table-sm table-hover oib-table">
       <tbody>
         <!-- number of values for point connectors -->

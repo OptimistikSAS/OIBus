@@ -9,7 +9,7 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
-import { NorthMetricsComponent } from './north-metrics/north-metrics.component';
+import { NorthMetricsComponent } from '../north-metrics/north-metrics.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';

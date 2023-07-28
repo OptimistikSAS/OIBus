@@ -18,20 +18,20 @@ export default class EngineMetricsRepository {
     const foundMetrics = this.getMetrics(engineId);
     if (!foundMetrics) {
       const insertQuery =
-        `INSERT INTO ${ENGINE_METRICS_TABLE} (engine_id, metrics_start, process_cpu_usage, process_up_time, free_memory, ` +
+        `INSERT INTO ${ENGINE_METRICS_TABLE} (engine_id, metrics_start, process_cpu_usage_instant, process_cpu_usage_average, process_uptime, free_memory, ` +
         'total_memory, min_rss, current_rss, max_rss, min_heap_total, current_heap_total, ' +
         'max_heap_total, min_heap_used, current_heap_used, max_heap_used, min_external, current_external, ' +
         'max_external, min_array_buffers, current_array_buffers, max_array_buffers) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);';
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);';
       this._database
         .prepare(insertQuery)
-        .run(engineId, DateTime.now().toUTC().toISO(), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        .run(engineId, DateTime.now().toUTC().toISO(), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     }
   }
 
   getMetrics(engineId: string): EngineMetrics | null {
     const query =
-      `SELECT metrics_start AS metricsStart, process_cpu_usage AS processCpuUsage, process_up_time AS processUpTime, ` +
+      `SELECT metrics_start AS metricsStart, process_cpu_usage_instant AS processCpuUsageInstant, process_cpu_usage_average AS processCpuUsageAverage, process_uptime AS processUptime, ` +
       'free_memory AS freeMemory, total_memory AS totalMemory, min_rss AS minRss, current_rss AS currentRss, ' +
       'max_rss AS maxRss, min_heap_total AS minHeapTotal, current_heap_total AS currentHeapTotal, ' +
       'max_heap_total AS maxHeapTotal, min_heap_used AS minHeapUsed, current_heap_used AS currentHeapUsed, ' +
@@ -42,8 +42,9 @@ export default class EngineMetricsRepository {
     if (!result) return null;
     return {
       metricsStart: result.metricsStart,
-      processCpuUsage: result.processCpuUsage,
-      processUpTime: result.processUpTime,
+      processCpuUsageInstant: result.processCpuUsageInstant,
+      processCpuUsageAverage: result.processCpuUsageAverage,
+      processUptime: result.processUptime,
       freeMemory: result.freeMemory,
       totalMemory: result.totalMemory,
       minRss: result.minRss,
@@ -66,7 +67,7 @@ export default class EngineMetricsRepository {
 
   updateMetrics(engineId: string, metrics: EngineMetrics): void {
     const updateQuery =
-      `UPDATE ${ENGINE_METRICS_TABLE} SET metrics_start = ?, process_cpu_usage = ?, process_up_time = ?, free_memory = ?, ` +
+      `UPDATE ${ENGINE_METRICS_TABLE} SET metrics_start = ?, process_cpu_usage_instant = ?, process_cpu_usage_average = ?, process_uptime = ?, free_memory = ?, ` +
       'total_memory = ?, min_rss = ?, current_rss = ?, max_rss = ?, min_heap_total = ?, current_heap_total = ?, ' +
       'max_heap_total = ?, min_heap_used = ?, current_heap_used = ?, max_heap_used = ?, min_external = ?, current_external = ?, ' +
       'max_external = ?, min_array_buffers = ?, current_array_buffers = ?, max_array_buffers = ? WHERE engine_id = ?;';
@@ -74,8 +75,9 @@ export default class EngineMetricsRepository {
       .prepare(updateQuery)
       .run(
         metrics.metricsStart,
-        metrics.processCpuUsage,
-        metrics.processUpTime,
+        metrics.processCpuUsageInstant,
+        metrics.processCpuUsageAverage,
+        metrics.processUptime,
         metrics.freeMemory,
         metrics.totalMemory,
         metrics.minRss,

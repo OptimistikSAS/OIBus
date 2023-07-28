@@ -25,6 +25,11 @@ export default class OibusController extends AbstractController {
     }
   }
 
+  async resetEngineMetrics(ctx: KoaContext<void, void>): Promise<void> {
+    ctx.app.engineMetricsService.resetMetrics();
+    ctx.noContent();
+  }
+
   async restart(ctx: KoaContext<void, void>): Promise<void> {
     ctx.app.logger.info('Restarting OIBus');
     await ctx.app.oibusService.restartOIBus();

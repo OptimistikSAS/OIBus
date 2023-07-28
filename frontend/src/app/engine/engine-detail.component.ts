@@ -13,6 +13,7 @@ import { switchMap } from 'rxjs';
 import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
 import { ObservableState } from '../shared/save-button/save-button.component';
 import { BoxComponent } from '../shared/box/box.component';
+import { EngineMetricsComponent } from './engine-metrics/engine-metrics.component';
 
 @Component({
   selector: 'oib-engine-detail',
@@ -27,7 +28,8 @@ import { BoxComponent } from '../shared/box/box.component';
     EnabledEnumPipe,
     NgForOf,
     AsyncPipe,
-    BoxComponent
+    BoxComponent,
+    EngineMetricsComponent
   ],
   templateUrl: './engine-detail.component.html',
   styleUrls: ['./engine-detail.component.scss']

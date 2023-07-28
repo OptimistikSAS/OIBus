@@ -128,8 +128,9 @@ export interface HistoryMetrics {
 
 export interface EngineMetrics {
   metricsStart: Instant;
-  processCpuUsage: number;
-  processUpTime: number;
+  processCpuUsageInstant: number;
+  processCpuUsageAverage: number;
+  processUptime: number;
   freeMemory: number;
   totalMemory: number;
   minRss: number;

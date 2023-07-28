@@ -67,6 +67,7 @@ router.delete('/api/external-sources/:id', (ctx: KoaContext<any, any>) => extern
 
 router.get('/api/engine', (ctx: KoaContext<any, any>) => oibusController.getEngineSettings(ctx));
 router.put('/api/engine', (ctx: KoaContext<any, any>) => oibusController.updateEngineSettings(ctx));
+router.put('/api/engine/reset-metrics', (ctx: KoaContext<any, any>) => oibusController.resetEngineMetrics(ctx));
 router.put('/api/restart', (ctx: KoaContext<any, any>) => oibusController.restart(ctx));
 router.put('/api/shutdown', (ctx: KoaContext<any, any>) => oibusController.shutdown(ctx));
 router.post('/api/add-values', (ctx: KoaContext<any, any>) => oibusController.addValues(ctx));

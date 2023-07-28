@@ -56,8 +56,9 @@ async function createEngineMetricsTable(knex: Knex): Promise<void> {
   await knex.schema.createTable(ENGINE_METRICS_TABLE, table => {
     table.uuid('engine_id').notNullable();
     table.datetime('metrics_start').notNullable();
-    table.integer('process_cpu_usage');
-    table.integer('process_up_time');
+    table.integer('process_cpu_usage_instant');
+    table.integer('process_cpu_usage_average');
+    table.integer('process_uptime');
     table.integer('free_memory');
     table.integer('total_memory');
     table.integer('min_rss');

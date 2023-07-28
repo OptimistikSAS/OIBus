@@ -270,21 +270,13 @@
         "password": "Loki password"
       }
     },
-    "health-signal": {
-      "title": "Health signal",
-      "logging": {
-        "title": "Logger",
-        "enabled": "Enabled",
-        "interval": "Interval"
-      },
-      "http": {
-        "title": "HTTP",
-        "enabled": "Enabled",
-        "interval": "Interval",
-        "verbose": "Verbose",
-        "address": "Address",
-        "proxy": "Proxy"
-      }
+    "monitoring": {
+      "title": "Monitoring",
+      "cpu-usage-instant": "CPU usage (last second)",
+      "cpu-usage-average": "CPU usage (average)",
+      "uptime": "Uptime",
+      "reset-metrics": "Reset metrics",
+      "since": "since {{ date }}"
     },
     "proxy": {
       "list": "Proxies",
@@ -405,6 +397,7 @@
     },
     "monitoring": {
       "title": "Monitoring",
+      "since": "since {{ date }}",
       "reset-metrics": "Reset metrics",
       "metrics-reset": "Metrics successfully reset",
       "metrics-title": "South metrics",
@@ -488,6 +481,7 @@
     },
     "monitoring": {
       "title": "Monitoring",
+      "since": "since {{ date }}",
       "reset-metrics": "Reset metrics",
       "metrics-reset": "Metrics successfully reset",
       "metrics-start": "Metrics started on {{ start }}",
