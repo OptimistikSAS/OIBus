@@ -106,10 +106,10 @@ describe('NorthConnectorMetricsRepository', () => {
       cacheSize: 123
     };
 
-    repository.updateMetrics(newConnectorMetrics);
+    repository.updateMetrics('northId', newConnectorMetrics);
     expect(repository.database.prepare).toHaveBeenCalledWith(
-      `UPDATE north_metrics SET metrics_start = ?, nb_values = ?, nb_files = ?,  ` +
-        `last_value = ?, last_file = ?, last_connection = ?, last_run_start = ?, last_run_duration = ?, cache_size = ?;`
+      `UPDATE north_metrics SET metrics_start = ?, nb_values = ?, nb_files = ?, last_value = ?, last_file = ?, ` +
+        `last_connection = ?, last_run_start = ?, last_run_duration = ?, cache_size = ? WHERE north_id = ?;`
     );
     expect(run).toHaveBeenCalledWith(
       newConnectorMetrics.metricsStart,
@@ -120,7 +120,8 @@ describe('NorthConnectorMetricsRepository', () => {
       newConnectorMetrics.lastConnection,
       newConnectorMetrics.lastRunStart,
       newConnectorMetrics.lastRunDuration,
-      123
+      123,
+      'northId'
     );
 
     const connectorMetricsWithNullValue: NorthConnectorMetrics = {
@@ -135,7 +136,7 @@ describe('NorthConnectorMetricsRepository', () => {
       cacheSize: 123
     };
 
-    repository.updateMetrics(connectorMetricsWithNullValue);
+    repository.updateMetrics('northId', connectorMetricsWithNullValue);
 
     expect(run).toHaveBeenCalledWith(
       newConnectorMetrics.metricsStart,
@@ -146,11 +147,12 @@ describe('NorthConnectorMetricsRepository', () => {
       newConnectorMetrics.lastConnection,
       newConnectorMetrics.lastRunStart,
       newConnectorMetrics.lastRunDuration,
-      123
+      123,
+      'northId'
     );
   });
 
-  it('should delete a south metrics', () => {
+  it('should delete a north metrics', () => {
     repository.removeMetrics('id1');
     expect(database.prepare).toHaveBeenCalledWith('DELETE FROM north_metrics WHERE north_id = ?;');
     expect(run).toHaveBeenCalledWith('id1');

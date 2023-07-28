@@ -16,6 +16,7 @@ import UserRepository from '../repository/user.repository';
 import SubscriptionRepository from '../repository/subscription.repository';
 import CryptoRepository from '../repository/crypto.repository';
 import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
+import EngineMetricsRepository from '../repository/engine-metrics.repository';
 import SouthCacheRepository from '../repository/south-cache.repository';
 import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
 
@@ -30,6 +31,7 @@ jest.mock('../repository/north-connector-metrics.repository');
 jest.mock('../repository/south-connector.repository');
 jest.mock('../repository/south-cache.repository');
 jest.mock('../repository/south-connector-metrics.repository');
+jest.mock('../repository/engine-metrics.repository');
 jest.mock('../repository/south-item.repository');
 jest.mock('../repository/log.repository');
 jest.mock('../repository/history-query.repository');
@@ -53,6 +55,7 @@ describe('Repository service', () => {
     expect(NorthConnectorMetricsRepository).toHaveBeenCalledWith('sqlite database');
     expect(SouthConnectorRepository).toHaveBeenCalledWith('sqlite database');
     expect(SouthConnectorMetricsRepository).toHaveBeenCalledWith('sqlite database');
+    expect(EngineMetricsRepository).toHaveBeenCalledWith('sqlite database');
     expect(SouthCacheRepository).toHaveBeenCalledWith('sqlite database');
     expect(SouthItemRepository).toHaveBeenCalledWith('sqlite database');
     expect(LogRepository).toHaveBeenCalledWith('sqlite database');
@@ -71,6 +74,7 @@ describe('Repository service', () => {
     expect(repositoryService.southConnectorRepository).toBeDefined();
     expect(repositoryService.southItemRepository).toBeDefined();
     expect(repositoryService.southMetricsRepository).toBeDefined();
+    expect(repositoryService.engineMetricsRepository).toBeDefined();
     expect(repositoryService.southCacheRepository).toBeDefined();
     expect(repositoryService.logRepository).toBeDefined();
     expect(repositoryService.historyQueryRepository).toBeDefined();

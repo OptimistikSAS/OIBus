@@ -16,6 +16,7 @@ import CryptoRepository from '../repository/crypto.repository';
 import SouthConnectorMetricsRepository from '../repository/south-connector-metrics.repository';
 import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
 import SouthCacheRepository from '../repository/south-cache.repository';
+import EngineMetricsRepository from '../repository/engine-metrics.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -28,6 +29,7 @@ export default class RepositoryService {
   private readonly _southItemRepository: SouthItemRepository;
   private readonly _logRepository: LogRepository;
   private readonly _southMetricsRepository: SouthConnectorMetricsRepository;
+  private readonly _engineMetricsRepository: EngineMetricsRepository;
   private readonly _southCacheRepository: SouthCacheRepository;
   private readonly _northMetricsRepository: NorthConnectorMetricsRepository;
   private readonly _historyQueryRepository: HistoryQueryRepository;
@@ -59,6 +61,7 @@ export default class RepositoryService {
     this._southCacheRepository = new SouthCacheRepository(cacheDatabase);
 
     this._logRepository = new LogRepository(logsDatabase);
+    this._engineMetricsRepository = new EngineMetricsRepository(logsDatabase);
     this._southMetricsRepository = new SouthConnectorMetricsRepository(logsDatabase);
     this._northMetricsRepository = new NorthConnectorMetricsRepository(logsDatabase);
     this._logRepository = new LogRepository(logsDatabase);
@@ -78,6 +81,10 @@ export default class RepositoryService {
 
   get southMetricsRepository(): SouthConnectorMetricsRepository {
     return this._southMetricsRepository;
+  }
+
+  get engineMetricsRepository(): EngineMetricsRepository {
+    return this._engineMetricsRepository;
   }
 
   get southCacheRepository(): SouthCacheRepository {

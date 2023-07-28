@@ -24,12 +24,8 @@ const sse = () => {
       return ctx.ok();
     }
     if (ctx.path.startsWith('/sse/engine/')) {
-      console.warn('TODO: send status for engine');
-
-      // createSocket(ctx);
-      // ctx.body = this.engine.statusService.getDataStream();
-      // this.engine.statusService.forceDataUpdate();
-      return next();
+      ctx.body = ctx.app.reloadService.engineMetricsService.stream;
+      return ctx.ok();
     }
     if (ctx.path.startsWith('/sse/history-queries/')) {
       const splitString = ctx.path.split('/');

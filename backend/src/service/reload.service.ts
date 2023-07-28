@@ -11,7 +11,7 @@ import {
 import { NorthCacheFiles, NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import pino from 'pino';
-import HealthSignalService from './health-signal.service';
+import EngineMetricsService from './engine-metrics.service';
 import NorthService from './north.service';
 import SouthService from './south.service';
 import OIBusEngine from '../engine/oibus-engine';
@@ -25,7 +25,7 @@ export default class ReloadService {
   constructor(
     private readonly _loggerService: LoggerService,
     private readonly _repositoryService: RepositoryService,
-    private readonly _healthSignalService: HealthSignalService,
+    private readonly _engineMetricsService: EngineMetricsService,
     private readonly _northService: NorthService,
     private readonly _southService: SouthService,
     private readonly _oibusEngine: OIBusEngine,
@@ -40,8 +40,8 @@ export default class ReloadService {
     return this._loggerService;
   }
 
-  get healthSignalService(): HealthSignalService {
-    return this._healthSignalService;
+  get engineMetricsService(): EngineMetricsService {
+    return this._engineMetricsService;
   }
 
   get northService(): NorthService {
@@ -77,7 +77,7 @@ export default class ReloadService {
       await this.loggerService.stop();
       await this.loggerService.start(newSettings.id, newSettings.name, newSettings.logParameters);
       await this.webServerChangeLoggerCallback(this.loggerService.createChildLogger('web-server'));
-      await this.healthSignalService.setLogger(this.loggerService.createChildLogger('metrics'));
+      await this.engineMetricsService.setLogger(this.loggerService.createChildLogger('metrics'));
       await this.oibusEngine.setLogger(this.loggerService.createChildLogger('data-stream'));
     }
     if (!oldSettings || oldSettings.port !== newSettings.port) {

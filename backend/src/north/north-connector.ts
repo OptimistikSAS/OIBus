@@ -94,7 +94,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
 
     this.valueCacheService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
       this.cacheSize += sizeToAdd;
-      this.metricsService!.updateMetrics({
+      this.metricsService!.updateMetrics(this.connector.id, {
         ...this.metricsService!.metrics,
         cacheSize: this.cacheSize
       });
@@ -110,7 +110,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
 
     this.fileCacheService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
       this.cacheSize += sizeToAdd;
-      this.metricsService!.updateMetrics({
+      this.metricsService!.updateMetrics(this.connector.id, {
         ...this.metricsService!.metrics,
         cacheSize: this.cacheSize
       });
@@ -118,7 +118,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
 
     this.archiveService.triggerRun.on('cache-size', async (sizeToAdd: number) => {
       this.cacheSize += sizeToAdd;
-      this.metricsService!.updateMetrics({
+      this.metricsService!.updateMetrics(this.connector.id, {
         ...this.metricsService!.metrics,
         cacheSize: this.cacheSize
       });
@@ -136,7 +136,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
     this.logger.trace(`North connector "${this.connector.name}" enabled. Starting services...`);
     if (this.connector.id !== 'test') {
       this.cacheSize = await dirSize(this.baseFolder);
-      this.metricsService!.updateMetrics({
+      this.metricsService!.updateMetrics(this.connector.id, {
         ...this.metricsService!.metrics,
         cacheSize: this.cacheSize
       });
@@ -155,7 +155,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    */
   async connect(): Promise<void> {
     if (this.connector.id !== 'test') {
-      this.metricsService!.updateMetrics({
+      this.metricsService!.updateMetrics(this.connector.id, {
         ...this.metricsService!.metrics,
         lastConnection: DateTime.now().toUTC().toISO()
       });
@@ -213,7 +213,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
 
     const runStart = DateTime.now();
     if (this.connector.id !== 'test') {
-      this.metricsService!.updateMetrics({ ...this.metricsService!.metrics, lastRunStart: runStart.toUTC().toISO() });
+      this.metricsService!.updateMetrics(this.connector.id, { ...this.metricsService!.metrics, lastRunStart: runStart.toUTC().toISO() });
     }
 
     if (this.handlesValues() && (flag === 'scan' || flag === 'value-trigger')) {
@@ -225,7 +225,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
     }
 
     if (this.connector.id !== 'test') {
-      this.metricsService!.updateMetrics({
+      this.metricsService!.updateMetrics(this.connector.id, {
         ...this.metricsService!.metrics,
         lastRunDuration: DateTime.now().toMillis() - runStart.toMillis()
       });
@@ -256,7 +256,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
         await this.handleValues(arrayValues);
         await this.valueCacheService.removeSentValues(this.valuesBeingSent);
         const currentMetrics = this.metricsService!.metrics;
-        this.metricsService!.updateMetrics({
+        this.metricsService!.updateMetrics(this.connector.id, {
           ...currentMetrics,
           numberOfValuesSent: currentMetrics.numberOfValuesSent + arrayValues.length,
           lastValueSent: arrayValues[arrayValues.length - 1]

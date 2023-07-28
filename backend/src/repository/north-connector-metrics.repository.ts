@@ -14,22 +14,22 @@ export default class NorthConnectorMetricsRepository {
     return this._database;
   }
 
-  initMetrics(connectorId: string) {
-    const foundMetrics = this.getMetrics(connectorId);
+  initMetrics(northId: string) {
+    const foundMetrics = this.getMetrics(northId);
     if (!foundMetrics) {
       const insertQuery =
         `INSERT INTO ${NORTH_METRICS_TABLE} (north_id, metrics_start, nb_values, nb_files, ` +
         `last_value, last_file, last_connection, last_run_start, last_run_duration, cache_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
-      this._database.prepare(insertQuery).run(connectorId, DateTime.now().toUTC().toISO(), 0, 0, null, null, null, null, null, 0);
+      this._database.prepare(insertQuery).run(northId, DateTime.now().toUTC().toISO(), 0, 0, null, null, null, null, null, 0);
     }
   }
 
-  getMetrics(connectorId: string): NorthConnectorMetrics | null {
+  getMetrics(northId: string): NorthConnectorMetrics | null {
     const query =
       `SELECT metrics_start AS metricsStart, nb_values AS numberOfValuesSent, nb_files AS numberOfFilesSent, ` +
       `last_value AS lastValueSent, last_file AS lastFileSent, last_connection AS lastConnection, last_run_start AS lastRunStart, ` +
       `last_run_duration AS lastRunDuration, cache_size AS cacheSize FROM ${NORTH_METRICS_TABLE} WHERE north_id = ?;`;
-    const result: NorthConnectorMetrics | undefined = this._database.prepare(query).get(connectorId) as NorthConnectorMetrics;
+    const result: NorthConnectorMetrics | undefined = this._database.prepare(query).get(northId) as NorthConnectorMetrics;
     if (!result) return null;
     return {
       metricsStart: result.metricsStart,
@@ -44,10 +44,10 @@ export default class NorthConnectorMetricsRepository {
     };
   }
 
-  updateMetrics(metrics: NorthConnectorMetrics): void {
+  updateMetrics(northId: string, metrics: NorthConnectorMetrics): void {
     const updateQuery =
-      `UPDATE ${NORTH_METRICS_TABLE} SET metrics_start = ?, nb_values = ?, nb_files = ?,  ` +
-      `last_value = ?, last_file = ?, last_connection = ?, last_run_start = ?, last_run_duration = ?, cache_size = ?;`;
+      `UPDATE ${NORTH_METRICS_TABLE} SET metrics_start = ?, nb_values = ?, nb_files = ?, last_value = ?, last_file = ?, ` +
+      'last_connection = ?, last_run_start = ?, last_run_duration = ?, cache_size = ? WHERE north_id = ?;';
     this._database
       .prepare(updateQuery)
       .run(
@@ -59,12 +59,13 @@ export default class NorthConnectorMetricsRepository {
         metrics.lastConnection,
         metrics.lastRunStart,
         metrics.lastRunDuration,
-        metrics.cacheSize
+        metrics.cacheSize,
+        northId
       );
   }
 
-  removeMetrics(connectorId: string): void {
+  removeMetrics(northId: string): void {
     const query = `DELETE FROM ${NORTH_METRICS_TABLE} WHERE north_id = ?;`;
-    this._database.prepare(query).run(connectorId);
+    this._database.prepare(query).run(northId);
   }
 }

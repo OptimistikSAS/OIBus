@@ -3,11 +3,13 @@ import { LOG_TABLE } from '../../repository/log.repository';
 import { LOG_LEVELS, SCOPE_TYPES } from '../../../../shared/model/engine.model';
 import { NORTH_METRICS_TABLE } from '../../repository/north-connector-metrics.repository';
 import { SOUTH_METRICS_TABLE } from '../../repository/south-connector-metrics.repository';
+import { ENGINE_METRICS_TABLE } from '../../repository/engine-metrics.repository';
 
 export async function up(knex: Knex): Promise<void> {
   await createLogsTable(knex);
   await createSouthMetricsTable(knex);
   await createNorthMetricsTable(knex);
+  await createEngineMetricsTable(knex);
 }
 
 async function createLogsTable(knex: Knex): Promise<void> {
@@ -46,6 +48,33 @@ async function createNorthMetricsTable(knex: Knex): Promise<void> {
     table.integer('last_run_duration');
     table.json('last_value');
     table.string('last_file');
+    table.integer('cache_size');
+  });
+}
+
+async function createEngineMetricsTable(knex: Knex): Promise<void> {
+  await knex.schema.createTable(ENGINE_METRICS_TABLE, table => {
+    table.uuid('engine_id').notNullable();
+    table.datetime('metrics_start').notNullable();
+    table.integer('process_cpu_usage');
+    table.integer('process_up_time');
+    table.integer('free_memory');
+    table.integer('total_memory');
+    table.integer('min_rss');
+    table.integer('current_rss');
+    table.integer('max_rss');
+    table.integer('min_heap_total');
+    table.integer('current_heap_total');
+    table.integer('max_heap_total');
+    table.integer('min_heap_used');
+    table.integer('current_heap_used');
+    table.integer('max_heap_used');
+    table.integer('min_external');
+    table.integer('current_external');
+    table.integer('max_external');
+    table.integer('min_array_buffers');
+    table.integer('current_array_buffers');
+    table.integer('max_array_buffers');
   });
 }
 
