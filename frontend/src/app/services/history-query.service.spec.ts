@@ -170,6 +170,22 @@ describe('HistoryQueryService', () => {
     expect(done).toBe(true);
   });
 
+  it('should enable a History query item', () => {
+    let done = false;
+    service.enableItem('id1', 'historyItemId1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/items/historyItemId1/enable' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should disable a History query item', () => {
+    let done = false;
+    service.disableItem('id1', 'historyItemId1').subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/items/historyItemId1/disable' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
   it('should delete all South connector items', () => {
     let done = false;
     service.deleteAllItems('id1').subscribe(() => (done = true));

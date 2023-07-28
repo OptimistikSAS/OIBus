@@ -119,6 +119,24 @@ export class HistoryQueryService {
   }
 
   /**
+   * Enable an item in the History query
+   * @param historyId - the ID of the History query
+   * @param itemId - the ID of the History query item to enable
+   */
+  enableItem(historyId: string, itemId: string) {
+    return this.http.put<void>(`/api/history-queries/${historyId}/items/${itemId}/enable`, null);
+  }
+
+  /**
+   * Disable an item in the History query
+   * @param historyId - the ID of the History query
+   * @param itemId - the ID of the History query item to disable
+   */
+  disableItem(historyId: string, itemId: string) {
+    return this.http.put<void>(`/api/history-queries/${historyId}/items/${itemId}/disable`, null);
+  }
+
+  /**
    * Delete all items
    * @param historyId - the ID of the History Query connector
    */

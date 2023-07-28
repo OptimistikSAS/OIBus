@@ -14,7 +14,13 @@
         <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addItem()">
           <span class="fa fa-plus"></span>
         </button>
-        <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="exportItems()" translate="south.items.export"></button>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm oib-box-btn"
+          id="export-items"
+          (click)="exportItems()"
+          translate="south.items.export"
+        ></button>
         <button
           type="button"
           class="btn btn-primary btn-sm oib-box-btn"
@@ -30,6 +36,7 @@
           class="btn btn-danger btn-sm oib-box-btn"
           (click)="deleteAllItems()"
           translate="south.items.delete-all"
+          id="delete-all"
         ></button>
       </div>
     </div>
@@ -41,6 +48,7 @@
       <table class="mb-2 table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
+            <th style="width: 3%"></th>
             <th translate="south.items.name"></th>
             <th translate="south.items.scan-mode"></th>
             <th *ngFor="let setting of displaySettings">{{ setting.label }}</th>
@@ -49,6 +57,11 @@
         </thead>
         <tbody>
           <tr *ngFor="let item of displayedItems.content" class="south-item">
+            <td>
+              <div class="form-check form-switch">
+                <input (click)="toggleItem(item, !item.enabled)" [checked]="item.enabled" type="checkbox" class="form-check-input" />
+              </div>
+            </td>
             <td>{{ item.name }}</td>
             <td>{{ getScanMode(item.scanModeId)?.name }}</td>
             <td *ngFor="let setting of displaySettings">{{ item.settings[setting.key] }}</td>

@@ -156,9 +156,9 @@ describe('SouthDetailComponent', () => {
     tester.detectChanges();
     expect(tester.southItems.length).toBe(1);
     const item = tester.southItems[0];
-    expect(item.elements('td')[0]).toContainText('item1');
-    expect(item.elements('td')[1]).toContainText('Every mn');
-    expect(item.elements('td')[2]).toContainText('sql');
+    expect(item.elements('td')[1]).toContainText('item1');
+    expect(item.elements('td')[2]).toContainText('Every mn');
+    expect(item.elements('td')[3]).toContainText('sql');
   });
 
   it('should stop south', () => {
