@@ -110,6 +110,30 @@ const manifest: SouthConnectorManifest = {
       class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true
+    },
+    {
+      key: 'structureFiltering',
+      type: 'OibArray',
+      label: 'Structure',
+      content: [
+        {
+          key: 'name',
+          label: 'Object name',
+          type: 'OibText',
+          defaultValue: '',
+          validators: [{ key: 'required' }]
+        },
+        {
+          key: 'fields',
+          label: 'Fields to keep (comma separated)',
+          type: 'OibText',
+          defaultValue: '*',
+          validators: [{ key: 'required' }]
+        }
+      ],
+      class: 'col',
+      newRow: true,
+      displayInViewMode: false
     }
   ],
   items: {
@@ -117,7 +141,15 @@ const manifest: SouthConnectorManifest = {
       acceptSubscription: false,
       subscriptionOnly: false
     },
-    settings: []
+    settings: [
+      {
+        key: 'address',
+        type: 'OibText',
+        label: 'Topic',
+        validators: [{ key: 'required' }],
+        displayInViewMode: true
+      }
+    ]
   }
 };
 export default manifest;
