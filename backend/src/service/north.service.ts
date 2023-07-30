@@ -9,6 +9,7 @@ import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import NorthAmazonS3 from '../north/north-amazon-s3/north-amazon-s3';
 import NorthFileWriter from '../north/north-file-writer/north-file-writer';
 import NorthOIConnect from '../north/north-oiconnect/north-oiconnect';
+import NorthRestApi from '../north/north-rest-api/north-rest-api';
 
 const northList: Array<typeof NorthConnector<any>> = [
   NorthConsole,
@@ -16,7 +17,8 @@ const northList: Array<typeof NorthConnector<any>> = [
   NorthOIConnect,
   NorthAzureBlob,
   NorthAmazonS3,
-  NorthFileWriter
+  NorthFileWriter,
+  NorthRestApi
 ];
 
 export default class NorthService {

@@ -11,19 +11,23 @@ import FormData from 'form-data';
 import https from 'node:https';
 import { HandlesFile, HandlesValues } from '../north-interface';
 import { filesExists } from '../../service/utils';
-import { NorthOIConnectSettings } from '../../../../shared/model/north-settings.model';
+import { NorthRestAPISettings } from '../../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy.service';
 
 /**
- * Class NorthOIConnect - Send files through a POST Multipart HTTP request and values as JSON payload into another OIBus
+ * Class NorthRestApi - Send files through a POST Multipart HTTP request and values as JSON payload
+ * Both endpoints are configurable by the user, allowing to send data to any HTTP application
+ * To send data to another OIBus, use the following endpoints:
+ *  -files endpoint: /engine/addFile
+ *  -values endpoint: /engine/addValues
  */
-export default class NorthOIConnect extends NorthConnector<NorthOIConnectSettings> implements HandlesFile, HandlesValues {
+export default class NorthRestApi extends NorthConnector<NorthRestAPISettings> implements HandlesFile, HandlesValues {
   static type = manifest.id;
 
   private proxyAgent: any | undefined;
 
   constructor(
-    configuration: NorthConnectorDTO<NorthOIConnectSettings>,
+    configuration: NorthConnectorDTO<NorthRestAPISettings>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
@@ -62,14 +66,23 @@ export default class NorthOIConnect extends NorthConnector<NorthOIConnectSetting
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     };
-    headers.authorization = `Basic ${Buffer.from(
-      `${this.connector.settings.authentication.username}:${await this.encryptionService.decryptText(
-        this.connector.settings.authentication.password!
-      )}`
-    ).toString('base64')}`;
+    switch (this.connector.settings.authentication.type) {
+      case 'basic':
+        headers.authorization = `Basic ${Buffer.from(
+          `${this.connector.settings.authentication.username}:${
+            this.connector.settings.authentication.password
+              ? await this.encryptionService.decryptText(this.connector.settings.authentication.password)
+              : ''
+          }`
+        ).toString('base64')}`;
+        break;
+
+      default:
+        break;
+    }
 
     let response;
-    const valuesUrl = `${this.connector.settings.host}/api/add-values?name=${this.connector.name}`;
+    const valuesUrl = `${this.connector.settings.host}${this.connector.settings.valuesEndpoint}?name=${this.connector.name}`;
     try {
       response = await fetch(valuesUrl, {
         method: 'POST',
@@ -98,12 +111,20 @@ export default class NorthOIConnect extends NorthConnector<NorthOIConnectSetting
    */
   async handleFile(filePath: string): Promise<void> {
     const headers: Record<string, string> = {};
-    headers.authorization = `Basic ${Buffer.from(
-      `${this.connector.settings.authentication.username}:${await this.encryptionService.decryptText(
-        this.connector.settings.authentication.password!
-      )}`
-    ).toString('base64')}`;
+    switch (this.connector.settings.authentication.type) {
+      case 'basic':
+        headers.authorization = `Basic ${Buffer.from(
+          `${this.connector.settings.authentication.username}:${
+            this.connector.settings.authentication.password
+              ? await this.encryptionService.decryptText(this.connector.settings.authentication.password)
+              : ''
+          }`
+        ).toString('base64')}`;
+        break;
 
+      default:
+        break;
+    }
     if (!(await filesExists(filePath))) {
       throw new Error(`File ${filePath} does not exist`);
     }
@@ -120,7 +141,7 @@ export default class NorthOIConnect extends NorthConnector<NorthOIConnectSetting
     });
 
     let response;
-    const fileUrl = `${this.connector.settings.host}/api/add-file?name=${this.connector.name}`;
+    const fileUrl = `${this.connector.settings.host}${this.connector.settings.fileEndpoint}?name=${this.connector.name}`;
     try {
       response = await fetch(fileUrl, {
         method: 'POST',

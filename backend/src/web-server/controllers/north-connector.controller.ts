@@ -12,16 +12,18 @@ import oianalyticsManifest from '../../north/north-oianalytics/manifest';
 import oiconnectManifest from '../../north/north-oiconnect/manifest';
 import timescaleManifest from '../../north/north-timescale-db/manifest';
 import watsyManifest from '../../north/north-watsy/manifest';
+import restApiManifest from '../../north/north-rest-api/manifest';
 import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthType } from '../../../../shared/model/north-connector.model';
 import JoiValidator from './validators/joi.validator';
 
 // TODO: retrieve north types from a local store
 export const northManifests = [
   azureManifest,
-  watsyManifest,
-  oiconnectManifest,
-  timescaleManifest,
   oianalyticsManifest,
+  oiconnectManifest,
+  restApiManifest,
+  watsyManifest,
+  timescaleManifest,
   mqttManifest,
   mongoManifest,
   influxManifest,
