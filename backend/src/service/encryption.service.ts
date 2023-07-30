@@ -147,14 +147,14 @@ export default class EncryptionService {
         for (let i = 0; i < encryptedSettings[fieldSettings.key].length; i++) {
           encryptedSettings[fieldSettings.key][i] = await this.encryptConnectorSecrets(
             encryptedSettings[fieldSettings.key][i],
-            oldSettings[fieldSettings.key] || null,
+            oldSettings ? oldSettings[fieldSettings.key] || null : null,
             fieldSettings.content
           );
         }
       } else if (fieldSettings.type === 'OibFormGroup') {
         encryptedSettings[fieldSettings.key] = await this.encryptConnectorSecrets(
           encryptedSettings[fieldSettings.key],
-          oldSettings[fieldSettings.key] || null,
+          oldSettings ? oldSettings[fieldSettings.key] || null : null,
           fieldSettings.content
         );
       }

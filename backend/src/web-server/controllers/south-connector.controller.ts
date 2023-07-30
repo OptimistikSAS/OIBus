@@ -8,7 +8,8 @@ import mqttManifest from '../../south/south-mqtt/manifest';
 import opchdaManifest from '../../south/south-opchda/manifest';
 import opcuaDaManifest from '../../south/south-opcua-da/manifest';
 import opcuaHaManifest from '../../south/south-opcua-ha/manifest';
-import oiconnectManifest from '../../south/south-oiconnect/manifest';
+import oianalyticsManifest from '../../south/south-oianalytics/manifest';
+import slimsManifest from '../../south/south-slims/manifest';
 import mssqlManifest from '../../south/south-mssql/manifest';
 import mysqlManifest from '../../south/south-mysql/manifest';
 import postgresqlManifest from '../../south/south-postgresql/manifest';
@@ -29,7 +30,8 @@ import fs from 'node:fs/promises';
 
 // TODO: retrieve south types from a local store
 export const southManifests = [
-  oiconnectManifest,
+  oianalyticsManifest,
+  slimsManifest,
   opcuaHaManifest,
   opcuaDaManifest,
   opchdaManifest,
