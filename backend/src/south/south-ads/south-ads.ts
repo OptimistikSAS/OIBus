@@ -113,8 +113,9 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       default:
         if (subItems.length > 0) {
           // It is an ADS structure object (as json)
-          // TODO @burgerni look into this
-          const structure = (this.connector.settings as any).structureFiltering.find((element: any) => element.name === dataType);
+          const structure = this.connector.settings.structureFiltering.find(
+            (element: { name: string; fields: string }) => element.name === dataType
+          );
           if (structure) {
             const parsedValues = subItems
               .filter(item => structure.fields === '*' || structure.fields.split(',').includes(item.name))
@@ -160,7 +161,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthADSItemSettings>>): Promise<void> {
     const timestamp = DateTime.now().toUTC().toISO()!;
     try {
-      const results = await Promise.all(items.map(item => this.readAdsSymbol(item.name, timestamp)));
+      const results = await Promise.all(items.map(item => this.readAdsSymbol(item, timestamp)));
       await this.addValues(results.reduce((concatenatedResults, result) => [...concatenatedResults, ...result], []));
     } catch (error: any) {
       if (error.message.startsWith('Client is not connected')) {
@@ -173,13 +174,13 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     }
   }
 
-  readAdsSymbol(itemName: string, timestamp: Instant): Promise<Array<any>> {
+  readAdsSymbol(item: SouthConnectorItemDTO<SouthADSItemSettings>, timestamp: Instant): Promise<Array<any>> {
     return new Promise((resolve, reject) => {
       this.client
-        .readSymbol(itemName)
+        .readSymbol(item.settings.address)
         .then((nodeResult: any) => {
           const parsedResult = this.parseValues(
-            `${this.connector.settings.plcName}${itemName}`,
+            `${this.connector.settings.plcName}${item.name}`,
             nodeResult.symbol?.type,
             nodeResult.value,
             timestamp,

@@ -9,6 +9,7 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthADSItemSettings, SouthADSSettings } from '../../../../shared/model/south-settings.model';
 
 // End of global variables
 
@@ -55,13 +56,15 @@ const logger: pino.Logger = new PinoLogger();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 
-const items: Array<SouthConnectorItemDTO> = [
+const items: Array<SouthConnectorItemDTO<SouthADSItemSettings>> = [
   {
     id: 'id1',
     name: 'GVL_Test.TestINT1',
     enabled: true,
     connectorId: 'southId',
-    settings: {},
+    settings: {
+      address: 'GVL_Test.TestINT1'
+    },
     scanModeId: 'scanModeId1'
   },
   {
@@ -69,7 +72,9 @@ const items: Array<SouthConnectorItemDTO> = [
     name: 'GVL_Test.TestINT2',
     enabled: true,
     connectorId: 'southId',
-    settings: {},
+    settings: {
+      address: 'GVL_Test.TestINT2'
+    },
     scanModeId: 'scanModeId1'
   }
 ];
@@ -77,7 +82,7 @@ const items: Array<SouthConnectorItemDTO> = [
 const nowDateString = '2020-02-02T02:02:02.222Z';
 
 let south: SouthADS;
-const configuration: SouthConnectorDTO = {
+const configuration: SouthConnectorDTO<SouthADSSettings> = {
   id: 'southId',
   name: 'south',
   type: 'test',
@@ -466,21 +471,21 @@ describe('South ADS', () => {
     south.parseValues = jest.fn().mockReturnValue([{ value: 'my value' }]);
 
     await south.start();
-    await south.readAdsSymbol('item', nowDateString);
-    await south.readAdsSymbol('item', nowDateString);
+    await south.readAdsSymbol(items[0], nowDateString);
+    await south.readAdsSymbol(items[0], nowDateString);
 
     expect(readSymbol).toHaveBeenCalledTimes(2);
     expect(south.parseValues).toHaveBeenCalledTimes(2);
-    expect(south.parseValues).toHaveBeenCalledWith(`${configuration.settings.plcName}item`, 'Int8', 1, nowDateString, [], []);
+    expect(south.parseValues).toHaveBeenCalledWith(`${configuration.settings.plcName}${items[0].name}`, 'Int8', 1, nowDateString, [], []);
     expect(south.parseValues).toHaveBeenCalledWith(
-      `${configuration.settings.plcName}item`,
+      `${configuration.settings.plcName}${items[0].name}`,
       undefined,
       2,
       nowDateString,
       undefined,
       undefined
     );
-    await expect(south.readAdsSymbol('item', nowDateString)).rejects.toThrowError('read error');
+    await expect(south.readAdsSymbol(items[0], nowDateString)).rejects.toThrowError('read error');
   });
 
   it('should disconnect ads client', async () => {

@@ -133,6 +133,11 @@ export type SouthSQLiteItemSettingsSerializationType = (typeof SOUTH_S_Q_LITE_IT
 const SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
 export type SouthSQLiteItemSettingsSerializationDelimiter = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
+export interface SouthADSSettingsStructureFiltering {
+  name: string;
+  fields: string;
+}
+
 export interface SouthMQTTSettingsAuthentication {
   type: SouthMQTTSettingsAuthenticationType;
   username?: string;
@@ -181,6 +186,7 @@ export interface SouthADSSettings extends BaseSouthSettings {
   plcName: string | null;
   enumAsText: SouthADSSettingsEnumAsText;
   boolAsText: SouthADSSettingsBoolAsText;
+  structureFiltering: Array<SouthADSSettingsStructureFiltering>;
 }
 
 export interface SouthFolderScannerSettings extends BaseSouthSettings {
@@ -488,6 +494,7 @@ export interface SouthSQLiteItemSettingsSerialization {
 interface BaseSouthItemSettings {}
 
 export interface SouthADSItemSettings extends BaseSouthItemSettings {
+  address: string;
 }
 
 export interface SouthFolderScannerItemSettings extends BaseSouthItemSettings {
