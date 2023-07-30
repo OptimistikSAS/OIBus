@@ -344,5 +344,4 @@ export default class ReloadService {
   }
 
   // TODO: on scan mode delete, add, update
-  // TODO: on proxy delete, add, update
 }
