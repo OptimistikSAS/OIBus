@@ -69,10 +69,40 @@ export default class SouthSlims
     await super.start();
   }
 
-  // TODO: method needs to be implemented
   override async testConnection(): Promise<void> {
-    this.logger.trace(`Testing connection`);
-    throw new Error('TODO: method needs to be implemented');
+    this.logger.info(`Testing connection on "${this.connector.settings.url}"`);
+
+    const headers: Record<string, string | number> = {};
+    const basic = Buffer.from(
+      `${this.connector.settings.authentication.username}:${await this.encryptionService.decryptText(
+        this.connector.settings.authentication.password!
+      )}`
+    ).toString('base64');
+    headers.authorization = `Basic ${basic}`;
+    const fetchOptions: Record<string, any> = {
+      method: 'GET',
+      headers,
+      agent: this.connector.settings.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
+      timeout: 10000
+    };
+    const requestUrl = `${this.connector.settings.url}:${this.connector.settings.port}/slimsrest/rest`;
+
+    try {
+      const response = await fetch(requestUrl, fetchOptions);
+      switch (response.status) {
+        case 404: // 404 is included because /slimsrest/rest is not found but the authentication occurs before. There is no ping to test the connection
+        case 200:
+        case 201:
+          this.logger.info('SLIMS server request successful');
+          return;
+        default:
+          this.logger.error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
+          throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
+      }
+    } catch (error) {
+      this.logger.error(`Fetch error ${error}`);
+      throw new Error(`Fetch error ${error}`);
+    }
   }
 
   /**
