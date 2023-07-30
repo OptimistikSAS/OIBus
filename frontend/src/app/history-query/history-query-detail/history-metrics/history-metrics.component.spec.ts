@@ -57,7 +57,7 @@ class TestComponent {
   northManifest: NorthConnectorManifest = {
     id: 'oianalytics',
     name: 'OIAnalytics',
-    category: 'oi',
+    category: 'api',
     description: 'OIAnalytics description',
     modes: {
       files: true,

@@ -4,7 +4,7 @@ import { proxy } from '../../../../shared/model/manifest-factory';
 const manifest: NorthConnectorManifest = {
   id: 'oianalytics',
   name: 'OIAnalytics',
-  category: 'oi',
+  category: 'api',
   description: 'Send files and values to OIAnalytics application',
   modes: {
     files: true,

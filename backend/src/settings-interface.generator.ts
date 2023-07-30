@@ -296,6 +296,8 @@ function buildNorthInterfaceName(connectorId: string): string {
       return 'NorthMqttSettings';
     case 'oianalytics':
       return 'NorthOIAnalyticsSettings';
+    case 'rest-api':
+      return 'NorthRestAPISettings';
     case 'oiconnect':
       return 'NorthOIConnectSettings';
     case 'timescaledb':

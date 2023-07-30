@@ -17,11 +17,16 @@ export type NorthInfluxDBSettingsPrecision = (typeof NORTH_INFLUX_D_B_SETTINGS_P
 const NORTH_MQTT_SETTINGS_QOSS = ['0', '1', '2'] as const
 export type NorthMqttSettingsQos = (typeof NORTH_MQTT_SETTINGS_QOSS)[number];
 
-const NORTH_O_I_CONNECT_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key'] as const
-export type NorthOIConnectSettingsAuthenticationType = (typeof NORTH_O_I_CONNECT_SETTINGS_AUTHENTICATION_TYPES)[number];
+const NORTH_REST_A_P_I_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key'] as const
+export type NorthRestAPISettingsAuthenticationType = (typeof NORTH_REST_A_P_I_SETTINGS_AUTHENTICATION_TYPES)[number];
 
 export interface NorthOIConnectSettingsAuthentication {
-  type: NorthOIConnectSettingsAuthenticationType;
+  username: string;
+  password: string | null;
+}
+
+export interface NorthRestAPISettingsAuthentication {
+  type: NorthRestAPISettingsAuthenticationType;
   username?: string;
   password?: string | null;
   token?: string | null;
@@ -136,6 +141,17 @@ export interface NorthOIAnalyticsSettings extends BaseNorthSettings {
 export interface NorthOIConnectSettings extends BaseNorthSettings {
   host: string;
   acceptUnauthorized: boolean;
+  timeout: number;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
+  authentication: NorthOIConnectSettingsAuthentication;
+}
+
+export interface NorthRestAPISettings extends BaseNorthSettings {
+  host: string;
+  acceptUnauthorized: boolean;
   valuesEndpoint: string;
   fileEndpoint: string;
   timeout: number;
@@ -143,7 +159,7 @@ export interface NorthOIConnectSettings extends BaseNorthSettings {
   proxyUrl?: string;
   proxyUsername?: string | null;
   proxyPassword?: string | null;
-  authentication: NorthOIConnectSettingsAuthentication;
+  authentication: NorthRestAPISettingsAuthentication;
 }
 
 export interface NorthTimescaleDBSettings extends BaseNorthSettings {
@@ -179,6 +195,7 @@ export type NorthSettings =
   | NorthMqttSettings
   | NorthOIAnalyticsSettings
   | NorthOIConnectSettings
+  | NorthRestAPISettings
   | NorthTimescaleDBSettings
   | NorthWatsySettings
 

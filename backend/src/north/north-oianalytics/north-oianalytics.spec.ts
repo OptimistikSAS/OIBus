@@ -16,10 +16,13 @@ import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.moc
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
+import { createProxyAgent } from '../../service/proxy.service';
+import https from 'node:https';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
 jest.mock('../../service/utils');
+jest.mock('../../service/proxy.service');
 
 jest.mock('node-fetch');
 const { Response } = jest.requireActual('node-fetch');
@@ -81,37 +84,38 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
-const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
-  id: 'id',
-  name: 'north',
-  type: 'test',
-  description: 'my test connector',
-  enabled: true,
-  settings: {
-    host: 'https://hostname',
-    timeout: 1000,
-    acceptUnauthorized: false,
-    accessKey: 'anyUser',
-    secretKey: 'anypass',
-    useProxy: false
-  },
-  caching: {
-    scanModeId: 'id1',
-    retryInterval: 5000,
-    groupCount: 10000,
-    maxSendCount: 10000,
-    retryCount: 2,
-    sendFileImmediately: true,
-    maxSize: 30000
-  },
-  archive: {
-    enabled: true,
-    retentionDuration: 720
-  }
-};
 let north: NorthOIAnalytics;
 
-describe('NorthOIAnalytics', () => {
+describe('NorthOIAnalytics without proxy', () => {
+  const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      host: 'https://hostname',
+      timeout: 1000,
+      acceptUnauthorized: false,
+      accessKey: 'anyUser',
+      secretKey: 'anypass',
+      useProxy: false
+    },
+    caching: {
+      scanModeId: 'id1',
+      retryInterval: 5000,
+      groupCount: 10000,
+      maxSendCount: 10000,
+      retryCount: 2,
+      sendFileImmediately: true,
+      maxSize: 30000
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 720
+    }
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
@@ -396,6 +400,243 @@ describe('NorthOIAnalytics', () => {
     expect(fetch).toHaveBeenCalledWith(
       `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
       expectedFetchOptions
+    );
+  });
+});
+
+describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
+  const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      host: 'https://hostname',
+      timeout: 1000,
+      acceptUnauthorized: true,
+      accessKey: 'anyUser',
+      secretKey: null,
+      useProxy: false
+    },
+    caching: {
+      scanModeId: 'id1',
+      retryInterval: 5000,
+      groupCount: 10000,
+      maxSendCount: 10000,
+      retryCount: 2,
+      sendFileImmediately: true,
+      maxSize: 30000
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 720
+    }
+  };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    (utils.filesExists as jest.Mock).mockReturnValue(true);
+    north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    await north.start();
+  });
+
+  it('should properly handle values', async () => {
+    await north.start();
+    const values = [
+      {
+        pointId: 'pointId1',
+        timestamp: nowDateString,
+        data: { value: 666, quality: 'good' }
+      },
+      undefined,
+      {
+        pointId: 'pointId2',
+        timestamp: nowDateString,
+        data: undefined
+      },
+      {
+        pointId: 'pointId3',
+        timestamp: nowDateString,
+        data: { value: undefined, quality: 'good' }
+      },
+      {
+        pointId: 'pointId4',
+        timestamp: nowDateString,
+        data: { value: null, quality: 'good' }
+      },
+      {
+        pointId: 'pointId4',
+        timestamp: undefined,
+        data: { value: 666, quality: 'good' }
+      },
+      {
+        pointId: undefined,
+        timestamp: nowDateString,
+        data: { value: 666, quality: 'good' }
+      }
+    ];
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
+
+    const expectedFetchOptions = {
+      method: 'POST',
+      headers: {
+        authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:`).toString('base64')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify([
+        {
+          timestamp: values[0]!.timestamp,
+          data: values[0]!.data,
+          pointId: values[0]!.pointId
+        }
+      ]),
+      timeout: configuration.settings.timeout * 1000,
+      agent: expect.any(https.Agent)
+    };
+
+    await north.handleValues(values);
+
+    expect(fetch).toHaveBeenCalledWith(
+      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      expectedFetchOptions
+    );
+  });
+
+  it('should properly handle files', async () => {
+    const filePath = '/path/to/file/example.file';
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
+
+    const expectedFetchOptions = {
+      method: 'POST',
+      headers: {
+        authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:`).toString('base64')}`,
+        'content-type': expect.stringContaining('multipart/form-data; boundary=')
+      },
+      body: expect.anything(),
+      timeout: configuration.settings.timeout * 1000,
+      agent: expect.any(https.Agent)
+    };
+
+    await north.handleFile(filePath);
+
+    expect(fetch).toHaveBeenCalledWith(
+      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      expectedFetchOptions
+    );
+  });
+});
+
+describe('NorthOIAnalytics with proxy', () => {
+  const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      host: 'https://hostname',
+      timeout: 1000,
+      acceptUnauthorized: false,
+      accessKey: 'anyUser',
+      secretKey: 'anypass',
+      useProxy: true,
+      proxyUrl: 'http://localhost',
+      proxyUsername: 'my username',
+      proxyPassword: 'my password'
+    },
+    caching: {
+      scanModeId: 'id1',
+      retryInterval: 5000,
+      groupCount: 10000,
+      maxSendCount: 10000,
+      retryCount: 2,
+      sendFileImmediately: true,
+      maxSize: 30000
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 720
+    }
+  };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    (utils.filesExists as jest.Mock).mockReturnValue(true);
+    (createProxyAgent as jest.Mock).mockReturnValue({});
+
+    north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    await north.start();
+  });
+
+  it('should properly create proxy', () => {
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      {
+        url: configuration.settings.proxyUrl,
+        username: configuration.settings.proxyUsername,
+        password: configuration.settings.proxyPassword
+      },
+      configuration.settings.acceptUnauthorized
+    );
+  });
+});
+
+describe('NorthOIAnalytics with proxy but without proxy password', () => {
+  const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      host: 'https://hostname',
+      timeout: 1000,
+      acceptUnauthorized: false,
+      accessKey: 'anyUser',
+      secretKey: 'anypass',
+      useProxy: true,
+      proxyUrl: 'http://localhost',
+      proxyUsername: 'my username',
+      proxyPassword: null
+    },
+    caching: {
+      scanModeId: 'id1',
+      retryInterval: 5000,
+      groupCount: 10000,
+      maxSendCount: 10000,
+      retryCount: 2,
+      sendFileImmediately: true,
+      maxSize: 30000
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 720
+    }
+  };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    (utils.filesExists as jest.Mock).mockReturnValue(true);
+    (createProxyAgent as jest.Mock).mockReturnValue({});
+
+    north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    await north.start();
+  });
+
+  it('should properly create proxy', () => {
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      {
+        url: configuration.settings.proxyUrl,
+        username: configuration.settings.proxyUsername,
+        password: null
+      },
+      configuration.settings.acceptUnauthorized
     );
   });
 });

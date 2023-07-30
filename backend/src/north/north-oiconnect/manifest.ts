@@ -4,8 +4,8 @@ import { proxy } from '../../../../shared/model/manifest-factory';
 const manifest: NorthConnectorManifest = {
   id: 'oiconnect',
   name: 'OIConnect',
-  category: 'oi',
-  description: 'Send files and values to REST API HTTP endpoints',
+  category: 'api',
+  description: 'Send files and values to another OIBus',
   modes: {
     files: true,
     points: true
@@ -32,25 +32,7 @@ const manifest: NorthConnectorManifest = {
       defaultValue: false,
       displayInViewMode: true
     },
-    {
-      key: 'valuesEndpoint',
-      type: 'OibText',
-      label: 'Values endpoint',
-      defaultValue: '/engine/add-values',
-      newRow: true,
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    },
-    {
-      key: 'fileEndpoint',
-      type: 'OibText',
-      label: 'File endpoint',
-      defaultValue: '/engine/add-file',
-      newRow: false,
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    },
-    { key: 'timeout', type: 'OibNumber', label: 'Timeout', newRow: true, validators: [{ key: 'required' }] },
+    { key: 'timeout', type: 'OibNumber', label: 'Timeout', newRow: true, defaultValue: 1000, validators: [{ key: 'required' }] },
     ...proxy,
     {
       key: 'authentication',
@@ -62,23 +44,11 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }],
       content: [
         {
-          key: 'type',
-          type: 'OibSelect',
-          label: 'Type',
-          options: ['none', 'basic', 'bearer', 'api-key'],
-          pipe: 'authentication',
-          validators: [{ key: 'required' }],
-          defaultValue: 'none',
-          newRow: true,
-          displayInViewMode: false
-        },
-        {
           key: 'username',
           type: 'OibText',
           label: 'Username',
           defaultValue: '',
           validators: [{ key: 'required' }],
-          conditionalDisplay: { field: 'type', values: ['basic'] },
           displayInViewMode: false
         },
         {
@@ -86,34 +56,6 @@ const manifest: NorthConnectorManifest = {
           type: 'OibSecret',
           label: 'Password',
           defaultValue: '',
-          conditionalDisplay: { field: 'type', values: ['basic'] },
-          displayInViewMode: false
-        },
-        {
-          key: 'token',
-          type: 'OibSecret',
-          label: 'Token',
-          defaultValue: '',
-          conditionalDisplay: { field: 'type', values: ['bearer'] },
-          newRow: false,
-          displayInViewMode: false
-        },
-        {
-          key: 'apiKeyHeader',
-          type: 'OibSecret',
-          label: 'Api key header',
-          defaultValue: '',
-          conditionalDisplay: { field: 'type', values: ['api-key'] },
-          newRow: false,
-          displayInViewMode: false
-        },
-        {
-          key: 'apiKey',
-          type: 'OibSecret',
-          label: 'Api key',
-          defaultValue: '',
-          conditionalDisplay: { field: 'type', values: ['api-key'] },
-          newRow: false,
           displayInViewMode: false
         }
       ]
