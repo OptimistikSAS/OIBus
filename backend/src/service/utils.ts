@@ -9,6 +9,8 @@ import { DateTime } from 'luxon';
 import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../../shared/model/types';
 import pino from 'pino';
 import csv from 'papaparse';
+import https from 'node:https';
+import http from 'node:http';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -333,3 +335,56 @@ export const convertDateTimeToInstant = (
       return DateTime.fromJSDate(dateTime).toUTC().toISO()!;
   }
 };
+
+export const formatQueryParams = (startTime: any, endTime: any, queryParams: Array<{ key: string; value: string }>): string => {
+  if (queryParams.length === 0) {
+    return '';
+  }
+  let queryParamsString = '?';
+  queryParams.forEach((queryParam, index) => {
+    let value;
+    switch (queryParam.value) {
+      case '@StartTime':
+        value = startTime;
+        break;
+      case '@EndTime':
+        value = endTime;
+        break;
+      default:
+        value = queryParam.value;
+    }
+    queryParamsString += `${encodeURIComponent(queryParam.key)}=${encodeURIComponent(value)}`;
+    if (index < queryParams.length - 1) {
+      queryParamsString += '&';
+    }
+  });
+  return queryParamsString;
+};
+
+/**
+ * Some API such as SLIMS uses a body with GET. It's not standard and requires a specific implementation
+ */
+export const httpGetWithBody = (body: string, options: any): Promise<any> =>
+  new Promise((resolve, reject) => {
+    const callback = (response: any) => {
+      let str = '';
+      response.on('data', (chunk: string) => {
+        str += chunk;
+      });
+      response.on('end', () => {
+        try {
+          const parsedResult = JSON.parse(str);
+          resolve(parsedResult);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    };
+
+    const req = (options.protocol === 'https:' ? https : http).request(options, callback);
+    req.on('error', e => {
+      reject(e);
+    });
+    req.write(body);
+    req.end();
+  });

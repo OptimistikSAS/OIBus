@@ -58,20 +58,11 @@ export type SouthODBCItemSettingsSerializationType = (typeof SOUTH_O_D_B_C_ITEM_
 const SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
 export type SouthODBCItemSettingsSerializationDelimiter = (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-const SOUTH_O_I_CONNECT_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key'] as const
-export type SouthOIConnectSettingsAuthenticationType = (typeof SOUTH_O_I_CONNECT_SETTINGS_AUTHENTICATION_TYPES)[number];
+const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv', 'json'] as const
+export type SouthOIAnalyticsItemSettingsSerializationType = (typeof SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
-const SOUTH_O_I_CONNECT_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv', 'json'] as const
-export type SouthOIConnectItemSettingsSerializationType = (typeof SOUTH_O_I_CONNECT_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
-
-const SOUTH_O_I_CONNECT_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
-export type SouthOIConnectItemSettingsSerializationDelimiter = (typeof SOUTH_O_I_CONNECT_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
-
-const SOUTH_O_I_CONNECT_ITEM_SETTINGS_REQUEST_METHODS = ['GET', 'POST', 'PUT', 'PATCH'] as const
-export type SouthOIConnectItemSettingsRequestMethod = (typeof SOUTH_O_I_CONNECT_ITEM_SETTINGS_REQUEST_METHODS)[number];
-
-const SOUTH_O_I_CONNECT_ITEM_SETTINGS_PAYLOAD_PARSERS = ['raw', 'oianalytics-time-values', 'slims'] as const
-export type SouthOIConnectItemSettingsPayloadParser = (typeof SOUTH_O_I_CONNECT_ITEM_SETTINGS_PAYLOAD_PARSERS)[number];
+const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
+export type SouthOIAnalyticsItemSettingsSerializationDelimiter = (typeof SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
 const SOUTH_O_P_C_H_D_A_SETTINGS_LOG_LEVELS = ['trace', 'debug', 'info', 'warning', 'error'] as const
 export type SouthOPCHDASettingsLogLevel = (typeof SOUTH_O_P_C_H_D_A_SETTINGS_LOG_LEVELS)[number];
@@ -124,6 +115,15 @@ export type SouthPostgreSQLItemSettingsSerializationType = (typeof SOUTH_POSTGRE
 const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
 export type SouthPostgreSQLItemSettingsSerializationDelimiter = (typeof SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
+const SOUTH_SLIMS_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
+export type SouthSlimsItemSettingsDateTimeFieldsType = (typeof SOUTH_SLIMS_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
+
+const SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv', 'json'] as const
+export type SouthSlimsItemSettingsSerializationType = (typeof SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
+
+const SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
+export type SouthSlimsItemSettingsSerializationDelimiter = (typeof SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
+
 const SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
 export type SouthSQLiteItemSettingsDateTimeFieldsType = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
@@ -142,13 +142,9 @@ export interface SouthMQTTSettingsAuthentication {
   caFilePath?: string | null;
 }
 
-export interface SouthOIConnectSettingsAuthentication {
-  type: SouthOIConnectSettingsAuthenticationType | null;
-  username?: string;
-  password?: string | null;
-  token?: string | null;
-  apiKeyHeader?: string | null;
-  apiKey?: string | null;
+export interface SouthOIAnalyticsSettingsAuthentication {
+  username: string;
+  password: string | null;
 }
 
 export interface SouthOPCUADASettingsAuthentication {
@@ -165,6 +161,11 @@ export interface SouthOPCUAHASettingsAuthentication {
   password?: string | null;
   certFilePath?: string;
   keyFilePath?: string | null;
+}
+
+export interface SouthSlimsSettingsAuthentication {
+  username: string;
+  password: string | null;
 }
 
 interface BaseSouthSettings {}
@@ -253,11 +254,11 @@ export interface SouthODBCSettings extends BaseSouthSettings {
   trustServerCertificate: boolean;
 }
 
-export interface SouthOIConnectSettings extends BaseSouthSettings {
+export interface SouthOIAnalyticsSettings extends BaseSouthSettings {
   url: string;
   port: number;
   acceptSelfSigned: boolean;
-  authentication: SouthOIConnectSettingsAuthentication;
+  authentication: SouthOIAnalyticsSettingsAuthentication;
 }
 
 export interface SouthOPCHDASettings extends BaseSouthSettings {
@@ -311,6 +312,13 @@ export interface SouthPostgreSQLSettings extends BaseSouthSettings {
   requestTimeout: number;
 }
 
+export interface SouthSlimsSettings extends BaseSouthSettings {
+  url: string;
+  port: number;
+  acceptSelfSigned: boolean;
+  authentication: SouthSlimsSettingsAuthentication;
+}
+
 export interface SouthSQLiteSettings extends BaseSouthSettings {
   databasePath: string;
 }
@@ -323,12 +331,13 @@ export type SouthSettings =
   | SouthMSSQLSettings
   | SouthMySQLSettings
   | SouthODBCSettings
-  | SouthOIConnectSettings
+  | SouthOIAnalyticsSettings
   | SouthOPCHDASettings
   | SouthOPCUADASettings
   | SouthOPCUAHASettings
   | SouthOracleSettings
   | SouthPostgreSQLSettings
+  | SouthSlimsSettings
   | SouthSQLiteSettings
 
 export interface SouthMSSQLItemSettingsDateTimeFields {
@@ -385,10 +394,15 @@ export interface SouthODBCItemSettingsSerialization {
   outputTimezone: Timezone;
 }
 
-export interface SouthOIConnectItemSettingsSerialization {
-  type: SouthOIConnectItemSettingsSerializationType;
+export interface SouthOIAnalyticsItemSettingsQueryParams {
+  key: string;
+  value: string;
+}
+
+export interface SouthOIAnalyticsItemSettingsSerialization {
+  type: SouthOIAnalyticsItemSettingsSerializationType;
   filename: string;
-  delimiter: SouthOIConnectItemSettingsSerializationDelimiter;
+  delimiter: SouthOIAnalyticsItemSettingsSerializationDelimiter;
   compression: boolean;
   outputTimestampFormat: string;
   outputTimezone: Timezone;
@@ -425,6 +439,29 @@ export interface SouthPostgreSQLItemSettingsSerialization {
   type: SouthPostgreSQLItemSettingsSerializationType;
   filename: string;
   delimiter: SouthPostgreSQLItemSettingsSerializationDelimiter;
+  compression: boolean;
+  outputTimestampFormat: string;
+  outputTimezone: Timezone;
+}
+
+export interface SouthSlimsItemSettingsQueryParams {
+  key: string;
+  value: string;
+}
+
+export interface SouthSlimsItemSettingsDateTimeFields {
+  fieldName: string;
+  useAsReference: boolean;
+  type: SouthSlimsItemSettingsDateTimeFieldsType;
+  timezone?: Timezone;
+  format?: string;
+  locale?: string;
+}
+
+export interface SouthSlimsItemSettingsSerialization {
+  type: SouthSlimsItemSettingsSerializationType;
+  filename: string;
+  delimiter: SouthSlimsItemSettingsSerializationDelimiter;
   compression: boolean;
   outputTimestampFormat: string;
   outputTimezone: Timezone;
@@ -486,16 +523,11 @@ export interface SouthODBCItemSettings extends BaseSouthItemSettings {
   serialization: SouthODBCItemSettingsSerialization;
 }
 
-export interface SouthOIConnectItemSettings extends BaseSouthItemSettings {
-  requestMethod: SouthOIConnectItemSettingsRequestMethod;
+export interface SouthOIAnalyticsItemSettings extends BaseSouthItemSettings {
   endpoint: string;
-  payloadParser: SouthOIConnectItemSettingsPayloadParser;
   requestTimeout: number;
-  body: string | null;
-  timestampFormat?: string;
-  timezone?: Timezone;
-  locale?: string;
-  serialization: SouthOIConnectItemSettingsSerialization;
+  queryParams: Array<SouthOIAnalyticsItemSettingsQueryParams> | null;
+  serialization: SouthOIAnalyticsItemSettingsSerialization;
 }
 
 export interface SouthOPCHDAItemSettings extends BaseSouthItemSettings {
@@ -526,6 +558,15 @@ export interface SouthPostgreSQLItemSettings extends BaseSouthItemSettings {
   serialization: SouthPostgreSQLItemSettingsSerialization;
 }
 
+export interface SouthSlimsItemSettings extends BaseSouthItemSettings {
+  endpoint: string;
+  requestTimeout: number;
+  body: string | null;
+  queryParams: Array<SouthSlimsItemSettingsQueryParams> | null;
+  dateTimeFields: Array<SouthSlimsItemSettingsDateTimeFields>;
+  serialization: SouthSlimsItemSettingsSerialization;
+}
+
 export interface SouthSQLiteItemSettings extends BaseSouthItemSettings {
   query: string;
   dateTimeFields: Array<SouthSQLiteItemSettingsDateTimeFields>;
@@ -540,10 +581,11 @@ export type SouthItemSettings =
   | SouthMSSQLItemSettings
   | SouthMySQLItemSettings
   | SouthODBCItemSettings
-  | SouthOIConnectItemSettings
+  | SouthOIAnalyticsItemSettings
   | SouthOPCHDAItemSettings
   | SouthOPCUADAItemSettings
   | SouthOPCUAHAItemSettings
   | SouthOracleItemSettings
   | SouthPostgreSQLItemSettings
+  | SouthSlimsItemSettings
   | SouthSQLiteItemSettings

@@ -16,10 +16,11 @@ import SouthPostgreSQL from '../south/south-postgresql/south-postgresql';
 import SouthSQLite from '../south/south-sqlite/south-sqlite';
 import SouthADS from '../south/south-ads/south-ads';
 import SouthModbus from '../south/south-modbus/south-modbus';
-import SouthOIConnect from '../south/south-oiconnect/south-oiconnect';
+import SouthOIAnalytics from '../south/south-oianalytics/south-oianalytics';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import SouthConnector from '../south/south-connector';
+import SouthSlims from '../south/south-slims/south-slims';
 
 const southList: Array<typeof SouthConnector<any, any>> = [
   SouthFolderScanner,
@@ -35,7 +36,8 @@ const southList: Array<typeof SouthConnector<any, any>> = [
   SouthSQLite,
   SouthADS,
   SouthModbus,
-  SouthOIConnect
+  SouthOIAnalytics,
+  SouthSlims
 ];
 
 export default class SouthService {

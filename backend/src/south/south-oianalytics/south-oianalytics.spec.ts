@@ -1,7 +1,6 @@
 import fetch from 'node-fetch';
-import SouthOIConnect from './south-oiconnect';
-import * as utils from './utils';
-import * as mainUtils from '../../service/utils';
+import SouthOianalytics from './south-oianalytics';
+import * as utils from '../../service/utils';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import PinoLogger from '../../tests/__mocks__/logger.mock';
 
@@ -12,17 +11,17 @@ import RepositoryService from '../../service/repository.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import path from 'node:path';
-import https from 'node:https';
-import { SouthOIConnectItemSettings, SouthOIConnectSettings } from '../../../../shared/model/south-settings.model';
+import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
 
-jest.mock('./utils', () => ({
-  formatQueryParams: jest.fn(),
-  parsers: new Map(),
-  httpGetWithBody: jest.fn()
+jest.mock('../../service/utils', () => ({
+  formatInstant: jest.fn((instant: string) => instant),
+  persistResults: jest.fn(),
+  createFolder: jest.fn(),
+  formatQueryParams: jest.fn()
 }));
-jest.mock('../../service/utils');
 
 // Mock node-fetch
+jest.mock('https', () => ({ Agent: jest.fn() }));
 jest.mock('node-fetch');
 jest.mock('node:fs/promises');
 const database = new DatabaseMock();
@@ -62,21 +61,16 @@ const logger: pino.Logger = new PinoLogger();
 
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
-const items: Array<SouthConnectorItemDTO<SouthOIConnectItemSettings>> = [
+const items: Array<SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>> = [
   {
     id: 'id1',
     name: 'item1',
     enabled: true,
     connectorId: 'southId',
     settings: {
-      requestMethod: 'POST',
       endpoint: '/api/my/endpoint',
-      payloadParser: 'raw',
       requestTimeout: 3000,
-      body: 'my body',
-      timestampFormat: 'yyyy-MM-dd HH:mm:ss',
-      timezone: 'Europe/Paris',
-      locale: 'en-En',
+      queryParams: [],
       serialization: {
         type: 'csv',
         filename: 'sql-@CurrentDate.csv',
@@ -94,14 +88,9 @@ const items: Array<SouthConnectorItemDTO<SouthOIConnectItemSettings>> = [
     enabled: true,
     connectorId: 'southId',
     settings: {
-      requestMethod: 'GET',
       endpoint: '/api/my/endpoint',
-      payloadParser: 'raw',
       requestTimeout: 3000,
-      body: '',
-      timestampFormat: 'yyyy-MM-dd HH:mm:ss',
-      timezone: 'Europe/Paris',
-      locale: 'en-En',
+      queryParams: null,
       serialization: {
         type: 'csv',
         filename: 'sql-@CurrentDate.csv',
@@ -119,14 +108,9 @@ const items: Array<SouthConnectorItemDTO<SouthOIConnectItemSettings>> = [
     enabled: true,
     connectorId: 'southId',
     settings: {
-      requestMethod: 'GET',
       endpoint: '/api/my/endpoint',
-      payloadParser: 'raw',
       requestTimeout: 3000,
-      body: 'my body',
-      timestampFormat: 'yyyy-MM-dd HH:mm:ss',
-      timezone: 'Europe/Paris',
-      locale: 'en-En',
+      queryParams: [],
       serialization: {
         type: 'csv',
         filename: 'sql-@CurrentDate.csv',
@@ -141,10 +125,10 @@ const items: Array<SouthConnectorItemDTO<SouthOIConnectItemSettings>> = [
 ];
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
-let south: SouthOIConnect;
+let south: SouthOianalytics;
 
-describe('SouthOIConnect with Basic auth', () => {
-  const connector: SouthConnectorDTO<SouthOIConnectSettings> = {
+describe('SouthOIAnalytics with Basic auth', () => {
+  const connector: SouthConnectorDTO<SouthOIAnalyticsSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -160,12 +144,8 @@ describe('SouthOIConnect with Basic auth', () => {
       port: 4200,
       acceptSelfSigned: false,
       authentication: {
-        type: 'basic',
         username: 'username',
-        password: 'password',
-        token: '',
-        apiKey: '',
-        apiKeyHeader: ''
+        password: 'password'
       }
     }
   };
@@ -177,7 +157,7 @@ describe('SouthOIConnect with Basic auth', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOIConnect(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
   it('should test connection with odbc', async () => {
@@ -188,7 +168,7 @@ describe('SouthOIConnect with Basic auth', () => {
 
   it('should log error if temp folder creation fails', async () => {
     await south.start();
-    expect(mainUtils.createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp'));
+    expect(utils.createFolder).toHaveBeenCalledWith(path.resolve('baseFolder', 'tmp'));
   });
 
   it('should properly run historyQuery', async () => {
@@ -200,7 +180,7 @@ describe('SouthOIConnect with Basic auth', () => {
         { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
       ])
       .mockReturnValue([]);
-    const rawMethod = jest
+    south.parseData = jest
       .fn()
       .mockImplementationOnce((item: SouthConnectorItemDTO, httpResults: Array<any>) => ({
         formattedResult: httpResults,
@@ -210,12 +190,11 @@ describe('SouthOIConnect with Basic auth', () => {
         formattedResult: [],
         maxInstant: '2020-03-01T00:00:00.000Z'
       }));
-    utils.parsers.set('raw', rawMethod);
 
     await south.historyQuery(items, startTime, nowDateString);
-    expect(mainUtils.persistResults).toHaveBeenCalledTimes(1);
+    expect(utils.persistResults).toHaveBeenCalledTimes(1);
     expect(south.queryData).toHaveBeenCalledTimes(3);
-    expect(rawMethod).toHaveBeenCalledTimes(3);
+    expect(south.parseData).toHaveBeenCalledTimes(3);
     expect(south.queryData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
     expect(south.queryData).toHaveBeenCalledWith(items[1], '2020-03-01T00:00:00.000Z', nowDateString);
     expect(south.queryData).toHaveBeenCalledWith(items[2], '2020-03-01T00:00:00.000Z', nowDateString);
@@ -242,92 +221,46 @@ describe('SouthOIConnect with Basic auth', () => {
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
         agent: null,
-        headers: { 'Content-Type': 'application/json', authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'POST',
-        timeout: 3000,
-        body: 'my body'
+        headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+        method: 'GET',
+        timeout: 3000
       }
     );
     expect(logger.info).toHaveBeenCalledWith(
-      'Requesting data with POST ' +
-        'method: "http://localhost:4200/api/my/endpoint' +
+      'Requesting data from URL "http://localhost:4200/api/my/endpoint' +
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X"'
     );
   });
-});
 
-describe('SouthOIConnect with Bearer auth', () => {
-  const configuration: SouthConnectorDTO<SouthOIConnectSettings> = {
-    id: 'southId',
-    name: 'south',
-    type: 'test',
-    description: 'my test connector',
-    enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0
-    },
-    settings: {
-      url: 'http://localhost',
-      port: 4200,
-      acceptSelfSigned: true,
-      authentication: {
-        type: 'bearer',
-        token: 'my token',
-        username: '',
-        password: '',
-        apiKeyHeader: '',
-        apiKey: ''
-      }
-    }
-  };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-
-    (utils.formatQueryParams as jest.Mock).mockReturnValue(
-      '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
-    );
-
-    south = new SouthOIConnect(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
-  });
-
-  it('should fetch data', async () => {
+  it('should properly fetch', async () => {
     (fetch as unknown as jest.Mock).mockReturnValue(
       Promise.resolve({
-        ok: true,
-        status: 200,
-        json: () => ['some data']
+        json: () => ({ result: [] }),
+        ok: true
       })
     );
 
-    const result = await south.queryData(items[0], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
-
-    expect(result).toEqual(['some data']);
-
+    const result = await south.queryData(items[1], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    expect(result).toEqual({ result: [] });
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:4200/api/my/endpoint' +
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
-        agent: expect.any(https.Agent),
-        headers: { 'Content-Type': 'application/json', authorization: 'Bearer my token' },
-        method: 'POST',
-        timeout: 3000,
-        body: 'my body'
+        agent: null,
+        headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+        method: 'GET',
+        timeout: 3000
       }
     );
     expect(logger.info).toHaveBeenCalledWith(
-      'Requesting data with POST ' +
-        'method: "http://localhost:4200/api/my/endpoint' +
+      'Requesting data from URL "http://localhost:4200/api/my/endpoint' +
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X"'
     );
   });
 });
 
-describe('SouthOIConnect with API-Key auth', () => {
-  const configuration: SouthConnectorDTO<SouthOIConnectSettings> = {
+describe('SouthOIAnalytics with  accept self signed', () => {
+  const configuration: SouthConnectorDTO<SouthOIAnalyticsSettings> = {
     id: 'southId',
     name: 'south',
     type: 'test',
@@ -343,12 +276,8 @@ describe('SouthOIConnect with API-Key auth', () => {
       port: 4200,
       acceptSelfSigned: true,
       authentication: {
-        type: 'api-key',
-        apiKeyHeader: 'myKey',
-        apiKey: 'mySecret',
-        token: '',
-        username: '',
-        password: ''
+        username: 'username',
+        password: 'password'
       }
     }
   };
@@ -361,83 +290,152 @@ describe('SouthOIConnect with API-Key auth', () => {
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
 
-    south = new SouthOIConnect(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
-  it('should fetch data with GET method and body', async () => {
-    (utils.httpGetWithBody as unknown as jest.Mock).mockReturnValue(Promise.resolve(['some data']));
-
-    const result = await south.queryData(items[2], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
-
-    expect(result).toEqual(['some data']);
-
-    expect(utils.httpGetWithBody).toHaveBeenCalledWith('my body', {
-      agent: expect.any(https.Agent),
-      headers: {
-        'Content-Type': 'application/json',
-        myKey: 'mySecret'
-      },
-      host: 'http://localhost',
-      method: 'GET',
-      path: '/api/my/endpoint',
-      port: 4200,
-      timeout: 3000
-    });
-    expect(logger.info).toHaveBeenCalledWith('Requesting data with GET method and body on: "http://localhost:4200/api/my/endpoint"');
-  });
-});
-
-describe('SouthOIConnect without auth', () => {
-  const configuration: SouthConnectorDTO = {
-    id: 'southId',
-    name: 'south',
-    type: 'test',
-    description: 'my test connector',
-    enabled: true,
-    history: {
-      maxInstantPerItem: true,
-      maxReadInterval: 3600,
-      readDelay: 0
-    },
-    settings: {
-      url: 'http://localhost',
-      port: 4200,
-      acceptSelfSigned: false,
-      authentication: {
-        type: 'none'
-      }
-    }
-  };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-
-    (utils.formatQueryParams as jest.Mock).mockReturnValue(
-      '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
+  it('should properly fetch', async () => {
+    (fetch as unknown as jest.Mock).mockReturnValue(
+      Promise.resolve({
+        json: () => ({ result: [] }),
+        ok: true
+      })
     );
 
-    south = new SouthOIConnect(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+    const result = await south.queryData(items[2], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    expect(result).toEqual({ result: [] });
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost:4200/api/my/endpoint' +
+        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
+      {
+        agent: {},
+        headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+        method: 'GET',
+        timeout: 3000
+      }
+    );
+    expect(logger.info).toHaveBeenCalledWith(
+      'Requesting data from URL "http://localhost:4200/api/my/endpoint' +
+        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X"'
+    );
   });
 
-  it('should fetch data with GET and Body', async () => {
-    (utils.httpGetWithBody as unknown as jest.Mock).mockReturnValue(Promise.resolve(['some data']));
+  it('should reject bad data', () => {
+    try {
+      south.parseData(items[0], {} as any);
+    } catch (error) {
+      expect(error).toEqual(Error('Bad data: expect OIAnalytics time values to be an array'));
+    }
 
-    const result = await south.queryData(items[2], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    try {
+      south.parseData(items[0], [{}] as any);
+    } catch (error) {
+      expect(error).toEqual(Error('Bad data: expect data.reference field'));
+    }
 
-    expect(result).toEqual(['some data']);
+    try {
+      south.parseData(items[0], [{ data: { reference: 'dataReference' } }] as any);
+    } catch (error) {
+      expect(error).toEqual(Error('Bad data: expect unit.label field'));
+    }
 
-    expect(utils.httpGetWithBody).toHaveBeenCalledWith('my body', {
-      agent: null,
-      headers: {
-        'Content-Type': 'application/json'
+    try {
+      south.parseData(items[0], [
+        {
+          data: { reference: 'dataReference' },
+          unit: { label: 'g/L' }
+        }
+      ] as any);
+    } catch (error) {
+      expect(error).toEqual(Error('Bad data: expect values to be an array'));
+    }
+
+    try {
+      south.parseData(items[0], [
+        {
+          data: { reference: 'dataReference' },
+          unit: { label: 'g/L' },
+          values: []
+        }
+      ] as any);
+    } catch (error) {
+      expect(error).toEqual(Error('Bad data: expect timestamps to be an array'));
+    }
+  });
+
+  it('should correctly parse accepted data', () => {
+    const oiaData = [
+      {
+        type: 'time-values',
+        unit: { id: '2', label: '%' },
+        data: {
+          dataType: 'RAW_TIME_DATA',
+          id: 'D4',
+          reference: 'ref1',
+          description: 'Concentration O2 fermentation'
+        },
+        timestamps: ['2022-01-01T00:00:00Z', '2022-01-01T00:10:00Z'],
+        values: [63, 84]
       },
-      host: 'http://localhost',
-      method: 'GET',
-      path: '/api/my/endpoint',
-      port: 4200,
-      timeout: 3000
+      {
+        type: 'time-values',
+        unit: { id: '180', label: 'pH' },
+        data: {
+          dataType: 'RAW_TIME_DATA',
+          id: 'D5',
+          reference: 'ref2',
+          description: 'pH fermentation'
+        },
+        timestamps: ['2022-01-01T00:00:00Z', '2022-01-01T00:10:00Z'],
+        values: [7, 8]
+      }
+    ];
+
+    expect(south.parseData(items[0], oiaData)).toEqual({
+      formattedResult: [
+        {
+          pointId: 'ref1',
+          timestamp: '2022-01-01T00:00:00.000Z',
+          unit: '%',
+          value: 63
+        },
+        {
+          pointId: 'ref1',
+          timestamp: '2022-01-01T00:10:00.000Z',
+          unit: '%',
+          value: 84
+        },
+        {
+          pointId: 'ref2',
+          timestamp: '2022-01-01T00:00:00.000Z',
+          unit: 'pH',
+          value: 7
+        },
+        {
+          pointId: 'ref2',
+          timestamp: '2022-01-01T00:10:00.000Z',
+          unit: 'pH',
+          value: 8
+        }
+      ],
+      maxInstant: '2022-01-01T00:10:00.000Z'
     });
-    expect(logger.info).toHaveBeenCalledWith('Requesting data with GET method and body on: "http://localhost:4200/api/my/endpoint"');
+
+    expect(south.parseData(items[0], [])).toEqual({ formattedResult: [], maxInstant: '1970-01-01T00:00:00.000Z' });
+    expect(
+      south.parseData(items[0], [
+        {
+          type: 'time-values',
+          unit: { id: '2', label: '%' },
+          data: {
+            dataType: 'RAW_TIME_DATA',
+            id: 'D4',
+            reference: 'ref1',
+            description: 'Concentration O2 fermentation'
+          },
+          timestamps: [],
+          values: []
+        }
+      ])
+    ).toEqual({ formattedResult: [], maxInstant: '1970-01-01T00:00:00.000Z' });
   });
 });
