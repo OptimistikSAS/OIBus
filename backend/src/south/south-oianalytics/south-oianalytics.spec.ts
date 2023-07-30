@@ -160,10 +160,26 @@ describe('SouthOIAnalytics with Basic auth', () => {
     south = new SouthOianalytics(connector, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
-  it('should test connection with odbc', async () => {
-    // TODO
-    await expect(south.testConnection()).rejects.toThrow('TODO: method needs to be implemented');
-    expect(logger.trace).toHaveBeenCalledWith(`Testing connection`);
+  it('should test connection', async () => {
+    (fetch as unknown as jest.Mock)
+      .mockReturnValueOnce(
+        Promise.resolve({
+          ok: true,
+          status: 200
+        })
+      )
+      .mockReturnValueOnce(
+        Promise.resolve({
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized'
+        })
+      );
+
+    await south.testConnection();
+    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${connector.settings.url}"`);
+    expect(logger.info).toHaveBeenCalledWith('OIAnalytics request successful');
+    await expect(south.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
   });
 
   it('should log error if temp folder creation fails', async () => {
@@ -291,6 +307,21 @@ describe('SouthOIAnalytics with  accept self signed', () => {
     );
 
     south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+  });
+
+  it('should test connection', async () => {
+    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('Timeout error');
+    });
+
+    await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
+    expect(fetch).toHaveBeenCalledWith('http://localhost:4200/info', {
+      agent: {},
+      headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+      method: 'POST',
+      timeout: 10000
+    });
+    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
 
   it('should properly fetch', async () => {
