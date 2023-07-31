@@ -54,6 +54,7 @@ export class BoxComponent implements AfterContentInit {
       const tableElement = contentElement.querySelector('table');
       const alertWarningElement = contentElement.querySelector('.alert-warning');
       const emptyDivElements = contentElement.querySelectorAll('div');
+      const greyContainerElement = contentElement.querySelector('.oib-grey-container');
 
       contentElement.classList.remove('has-empty-div', 'has-table', 'has-alert-warning'); // Deletes the existing class
 
@@ -65,6 +66,9 @@ export class BoxComponent implements AfterContentInit {
       }
       if (alertWarningElement) {
         contentElement.classList.add('has-alert-warning');
+      }
+      if (greyContainerElement) {
+        contentElement.classList.add('has-grey-container');
       }
     }
   }
