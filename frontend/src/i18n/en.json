@@ -431,6 +431,10 @@
     "enabled": "Enabled",
     "started": "North connector {{ name }} started",
     "stopped": "North connector {{ name }} stopped",
+    "test-connection": {
+      "success": "Connection successfully tested",
+      "failure": "Connection failed: {{ error }}"
+    },
     "type": "Type",
     "general-settings": "General settings",
     "specific-settings": "{{ type }} settings",
