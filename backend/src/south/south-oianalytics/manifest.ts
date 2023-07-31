@@ -1,5 +1,5 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
-import { serialization } from '../../../../shared/model/manifest-factory';
+import { proxy, serialization } from '../../../../shared/model/manifest-factory';
 
 const manifest: SouthConnectorManifest = {
   id: 'oianalytics',
@@ -15,7 +15,7 @@ const manifest: SouthConnectorManifest = {
   },
   settings: [
     {
-      key: 'url',
+      key: 'host',
       type: 'OibText',
       label: 'URL',
       defaultValue: 'http://localhost',
@@ -24,47 +24,35 @@ const manifest: SouthConnectorManifest = {
       displayInViewMode: true
     },
     {
-      key: 'port',
+      key: 'accessKey',
+      type: 'OibText',
+      label: 'Access key',
+      validators: [{ key: 'required' }],
+      displayInViewMode: true
+    },
+    {
+      key: 'secretKey',
+      type: 'OibSecret',
+      label: 'Secret key',
+      displayInViewMode: false
+    },
+    {
+      key: 'timeout',
       type: 'OibNumber',
-      label: 'Port',
-      defaultValue: 80,
-      newRow: false,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }]
-    },
-    {
-      key: 'acceptSelfSigned',
-      type: 'OibCheckbox',
-      label: 'Accept rejected certificates?',
-      defaultValue: false,
-      newRow: false,
-      validators: [{ key: 'required' }],
-      class: 'col-4'
-    },
-    {
-      key: 'authentication',
-      type: 'OibFormGroup',
-      label: 'Authentication',
-      class: 'col',
+      label: 'Timeout',
       newRow: true,
-      displayInViewMode: false,
+      defaultValue: 30_000,
+      unitLabel: 'ms',
+      validators: [{ key: 'required' }]
+    },
+    ...proxy,
+    {
+      key: 'acceptUnauthorized',
+      type: 'OibCheckbox',
+      label: 'Accept unauthorized certificate',
       validators: [{ key: 'required' }],
-      content: [
-        {
-          key: 'username',
-          type: 'OibText',
-          label: 'Username',
-          defaultValue: '',
-          validators: [{ key: 'required' }],
-          displayInViewMode: false
-        },
-        {
-          key: 'password',
-          type: 'OibSecret',
-          label: 'Password',
-          defaultValue: '',
-          displayInViewMode: false
-        }
-      ]
+      defaultValue: false,
+      displayInViewMode: true
     }
   ],
   items: {

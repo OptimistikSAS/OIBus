@@ -46,15 +46,44 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         {
           url: this.connector.settings.proxyUrl!,
           username: this.connector.settings.proxyUsername!,
-          password:
-            this.connector.settings.proxyPassword != null
-              ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
-              : null
+          password: this.connector.settings.proxyPassword
+            ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+            : null
         },
         this.connector.settings.acceptUnauthorized
       );
     } else if (this.connector.settings.acceptUnauthorized && this.connector.settings.host.startsWith('https://')) {
       this.proxyAgent = new https.Agent({ rejectUnauthorized: false });
+    }
+  }
+
+  override async testConnection(): Promise<void> {
+    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
+
+    const headers: Record<string, string | number> = {};
+    const basic = Buffer.from(
+      `${this.connector.settings.accessKey}:${await this.encryptionService.decryptText(this.connector.settings.secretKey!)}`
+    ).toString('base64');
+    headers.authorization = `Basic ${basic}`;
+    const fetchOptions: Record<string, any> = {
+      method: 'POST',
+      headers,
+      agent: this.proxyAgent,
+      timeout: 10000
+    };
+    const requestUrl = `${this.connector.settings.host}/info`;
+
+    try {
+      const response = await fetch(requestUrl, fetchOptions);
+      if (response.ok) {
+        this.logger.info('OIAnalytics request successful');
+        return;
+      }
+      this.logger.error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
+      throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
+    } catch (error) {
+      this.logger.error(`Fetch error ${error}`);
+      throw new Error(`Fetch error ${error}`);
     }
   }
 

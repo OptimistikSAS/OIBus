@@ -402,6 +402,42 @@ describe('NorthOIAnalytics without proxy', () => {
       expectedFetchOptions
     );
   });
+
+  it('should test connection', async () => {
+    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('Timeout error');
+    });
+
+    await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
+    expect(fetch).toHaveBeenCalledWith('https://hostname/info', {
+      headers: { authorization: 'Basic YW55VXNlcjphbnlwYXNz' },
+      method: 'POST',
+      timeout: 10000
+    });
+    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
+  });
+
+  it('should test connection', async () => {
+    (fetch as unknown as jest.Mock)
+      .mockReturnValueOnce(
+        Promise.resolve({
+          ok: true,
+          status: 200
+        })
+      )
+      .mockReturnValueOnce(
+        Promise.resolve({
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized'
+        })
+      );
+
+    await north.testConnection();
+    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${configuration.settings.host}"`);
+    expect(logger.info).toHaveBeenCalledWith('OIAnalytics request successful');
+    await expect(north.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
+  });
 });
 
 describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {

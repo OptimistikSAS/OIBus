@@ -14,6 +14,7 @@ import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
+import { createProxyAgent } from '../../service/proxy.service';
 
 interface OIATimeValues {
   type: string;
@@ -39,6 +40,7 @@ export default class SouthOIAnalytics
   implements QueriesHistory, TestsConnection
 {
   static type = manifest.id;
+  private proxyAgent: any | undefined;
 
   private readonly tmpFolder: string;
 
@@ -61,26 +63,40 @@ export default class SouthOIAnalytics
    */
   async start(): Promise<void> {
     await createFolder(this.tmpFolder);
+
+    if (this.connector.settings.useProxy) {
+      this.proxyAgent = createProxyAgent(
+        {
+          url: this.connector.settings.proxyUrl!,
+          username: this.connector.settings.proxyUsername!,
+          password: this.connector.settings.proxyPassword
+            ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+            : null
+        },
+        this.connector.settings.acceptUnauthorized
+      );
+    } else if (this.connector.settings.acceptUnauthorized && this.connector.settings.host.startsWith('https://')) {
+      this.proxyAgent = new https.Agent({ rejectUnauthorized: false });
+    }
+
     await super.start();
   }
 
   override async testConnection(): Promise<void> {
-    this.logger.info(`Testing connection on "${this.connector.settings.url}"`);
+    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
 
     const headers: Record<string, string | number> = {};
     const basic = Buffer.from(
-      `${this.connector.settings.authentication.username}:${await this.encryptionService.decryptText(
-        this.connector.settings.authentication.password!
-      )}`
+      `${this.connector.settings.accessKey}:${await this.encryptionService.decryptText(this.connector.settings.secretKey!)}`
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
     const fetchOptions: Record<string, any> = {
       method: 'POST',
       headers,
-      agent: this.connector.settings.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
+      agent: this.proxyAgent,
       timeout: 10000
     };
-    const requestUrl = `${this.connector.settings.url}:${this.connector.settings.port}/info`;
+    const requestUrl = `${this.connector.settings.host}/info`;
 
     try {
       const response = await fetch(requestUrl, fetchOptions);
@@ -138,19 +154,17 @@ export default class SouthOIAnalytics
   async queryData(item: SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>, startTime: Instant, endTime: Instant): Promise<any> {
     const headers: Record<string, string> = {};
     const basic = Buffer.from(
-      `${this.connector.settings.authentication.username}:${await this.encryptionService.decryptText(
-        this.connector.settings.authentication.password!
-      )}`
+      `${this.connector.settings.accessKey}:${await this.encryptionService.decryptText(this.connector.settings.secretKey!)}`
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
 
     const fetchOptions: Record<string, any> = {
       method: 'GET',
       headers,
-      agent: this.connector.settings.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
+      agent: this.proxyAgent,
       timeout: item.settings.requestTimeout
     };
-    const requestUrl = `${this.connector.settings.url}:${this.connector.settings.port}${item.settings.endpoint}${formatQueryParams(
+    const requestUrl = `${this.connector.settings.host}${item.settings.endpoint}${formatQueryParams(
       startTime,
       endTime,
       item.settings.queryParams || []
