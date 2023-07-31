@@ -154,3 +154,49 @@ describe('NorthConsole without verbose mode', () => {
     expect(console.table).not.toHaveBeenCalled();
   });
 });
+
+describe('NorthConsole test connection', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    north = new NorthConsole(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+  });
+
+  it('should be able to write test data to output', async () => {
+    await expect(north.testConnection()).resolves.not.toThrow();
+
+    expect(logger.info).toBeCalledWith('Testing North Console output');
+    expect(process.stdout.write).toBeCalledWith('North Console output test.\r\n');
+    expect(console.table).toBeCalledWith([{ data: 'foo' }, { data: 'bar' }]);
+  });
+
+  it('should not be able to write to output when stdout is not writable', async () => {
+    // Override the process.stdout.writable property
+    Object.defineProperty(process.stdout, 'writable', { value: false, configurable: true });
+
+    const error = new Error('The process.stdout stream has been destroyed, errored or ended');
+    await expect(north.testConnection()).rejects.toThrow(new Error('Node process is unable to write to STDOUT'));
+
+    expect(logger.info).toBeCalledWith('Testing North Console output');
+    expect(process.stdout.write).not.toBeCalled();
+    expect(console.table).not.toBeCalled();
+    expect(logger.error).toBeCalledWith(`Error testing North Console output: ${error}`);
+
+    Object.defineProperty(process.stdout, 'writable', { value: true, configurable: true });
+  });
+
+  it('should not be able to write to output when stdout.write throws error', async () => {
+    const error = new Error('Cannot write to stdout');
+    jest.spyOn(process.stdout, 'write').mockImplementation(() => {
+      throw error;
+    });
+
+    await expect(north.testConnection()).rejects.toThrow(new Error('Node process is unable to write to STDOUT'));
+
+    expect(logger.info).toBeCalledWith('Testing North Console output');
+    expect(process.stdout.write).toBeCalled();
+    expect(console.table).not.toBeCalled();
+    expect(logger.error).toBeCalledWith(`Error testing North Console output: ${error}`);
+  });
+});
