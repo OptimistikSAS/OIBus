@@ -114,21 +114,23 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'structureFiltering',
       type: 'OibArray',
-      label: 'Structure',
+      label: 'Structure filtering',
       content: [
         {
           key: 'name',
-          label: 'Object name',
+          label: 'Structure name',
           type: 'OibText',
           defaultValue: '',
-          validators: [{ key: 'required' }]
+          validators: [{ key: 'required' }],
+          displayInViewMode: true
         },
         {
           key: 'fields',
           label: 'Fields to keep (comma separated)',
           type: 'OibText',
-          defaultValue: '*',
-          validators: [{ key: 'required' }]
+          defaultValue: '',
+          validators: [{ key: 'required' }],
+          displayInViewMode: true
         }
       ],
       class: 'col',
@@ -145,7 +147,7 @@ const manifest: SouthConnectorManifest = {
       {
         key: 'address',
         type: 'OibText',
-        label: 'Topic',
+        label: 'Address',
         validators: [{ key: 'required' }],
         displayInViewMode: true
       }
