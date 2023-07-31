@@ -56,7 +56,7 @@ export class BoxComponent implements AfterContentInit {
       const emptyDivElements = contentElement.querySelectorAll('div');
       const greyContainerElement = contentElement.querySelector('.oib-grey-container');
 
-      contentElement.classList.remove('has-empty-div', 'has-table', 'has-alert-warning'); // Deletes the existing class
+      contentElement.classList.remove('has-empty-div', 'has-table', 'has-alert-warning', 'has-grey-container'); // Deletes the existing class
 
       if (tableElement) {
         contentElement.classList.add('has-table');
