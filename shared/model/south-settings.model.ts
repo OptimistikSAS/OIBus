@@ -153,11 +153,6 @@ export interface SouthMQTTSettingsAuthentication {
   caFilePath?: string | null;
 }
 
-export interface SouthOIAnalyticsSettingsAuthentication {
-  username: string;
-  password: string | null;
-}
-
 export interface SouthOPCUADASettingsAuthentication {
   type: SouthOPCUADASettingsAuthenticationType;
   username?: string;
@@ -259,10 +254,15 @@ export interface SouthODBCSettings extends BaseSouthSettings {
 }
 
 export interface SouthOIAnalyticsSettings extends BaseSouthSettings {
-  url: string;
-  port: number;
-  acceptSelfSigned: boolean;
-  authentication: SouthOIAnalyticsSettingsAuthentication;
+  host: string;
+  accessKey: string;
+  secretKey: string | null;
+  timeout: number;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
+  acceptUnauthorized: boolean;
 }
 
 export interface SouthOPCHDASettings extends BaseSouthSettings {

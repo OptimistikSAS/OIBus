@@ -12,7 +12,9 @@ import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import path from 'node:path';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
+import { createProxyAgent } from '../../service/proxy.service';
 
+jest.mock('../../service/proxy.service');
 jest.mock('../../service/utils', () => ({
   formatInstant: jest.fn((instant: string) => instant),
   persistResults: jest.fn(),
@@ -140,13 +142,12 @@ describe('SouthOIAnalytics with Basic auth', () => {
       readDelay: 0
     },
     settings: {
-      url: 'http://localhost',
-      port: 4200,
-      acceptSelfSigned: false,
-      authentication: {
-        username: 'username',
-        password: 'password'
-      }
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      accessKey: 'username',
+      secretKey: 'password',
+      timeout: 1000,
+      useProxy: false
     }
   };
   beforeEach(() => {
@@ -177,7 +178,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
       );
 
     await south.testConnection();
-    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${connector.settings.url}"`);
+    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${connector.settings.host}"`);
     expect(logger.info).toHaveBeenCalledWith('OIAnalytics request successful');
     await expect(south.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
   });
@@ -236,7 +237,6 @@ describe('SouthOIAnalytics with Basic auth', () => {
       'http://localhost:4200/api/my/endpoint' +
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
-        agent: null,
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
         method: 'GET',
         timeout: 3000
@@ -262,7 +262,6 @@ describe('SouthOIAnalytics with Basic auth', () => {
       'http://localhost:4200/api/my/endpoint' +
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
-        agent: null,
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
         method: 'GET',
         timeout: 3000
@@ -275,7 +274,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
   });
 });
 
-describe('SouthOIAnalytics with  accept self signed', () => {
+describe('SouthOIAnalytics without proxy but with accept self signed', () => {
   const configuration: SouthConnectorDTO<SouthOIAnalyticsSettings> = {
     id: 'southId',
     name: 'south',
@@ -288,13 +287,12 @@ describe('SouthOIAnalytics with  accept self signed', () => {
       readDelay: 0
     },
     settings: {
-      url: 'http://localhost',
-      port: 4200,
-      acceptSelfSigned: true,
-      authentication: {
-        username: 'username',
-        password: 'password'
-      }
+      host: 'https://localhost:4200',
+      acceptUnauthorized: true,
+      accessKey: 'username',
+      secretKey: 'password',
+      timeout: 1000,
+      useProxy: false
     }
   };
 
@@ -310,12 +308,13 @@ describe('SouthOIAnalytics with  accept self signed', () => {
   });
 
   it('should test connection', async () => {
+    await south.start();
     (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
       throw new Error('Timeout error');
     });
 
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
-    expect(fetch).toHaveBeenCalledWith('http://localhost:4200/info', {
+    expect(fetch).toHaveBeenCalledWith('https://localhost:4200/info', {
       agent: {},
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
       method: 'POST',
@@ -335,17 +334,16 @@ describe('SouthOIAnalytics with  accept self signed', () => {
     const result = await south.queryData(items[2], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
     expect(result).toEqual({ result: [] });
     expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:4200/api/my/endpoint' +
+      'https://localhost:4200/api/my/endpoint' +
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
-        agent: {},
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
         method: 'GET',
         timeout: 3000
       }
     );
     expect(logger.info).toHaveBeenCalledWith(
-      'Requesting data from URL "http://localhost:4200/api/my/endpoint' +
+      'Requesting data from URL "https://localhost:4200/api/my/endpoint' +
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X"'
     );
   });
@@ -468,5 +466,115 @@ describe('SouthOIAnalytics with  accept self signed', () => {
         }
       ])
     ).toEqual({ formattedResult: [], maxInstant: '1970-01-01T00:00:00.000Z' });
+  });
+});
+
+describe('SouthOIAnalytics with proxy', () => {
+  const configuration: SouthConnectorDTO<SouthOIAnalyticsSettings> = {
+    id: 'southId',
+    name: 'south',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
+    },
+    settings: {
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      accessKey: 'username',
+      secretKey: 'password',
+      timeout: 1000,
+      useProxy: true,
+      proxyPassword: 'proxyPassword',
+      proxyUrl: 'http://proxyurl',
+      proxyUsername: 'proxyUsername'
+    }
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    (utils.formatQueryParams as jest.Mock).mockReturnValue(
+      '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
+    );
+
+    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+  });
+
+  it('should test connection', async () => {
+    (createProxyAgent as jest.Mock).mockReturnValue({});
+
+    await south.start();
+    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('Timeout error');
+    });
+
+    await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
+    expect(fetch).toHaveBeenCalledWith('http://localhost:4200/info', {
+      agent: {},
+      headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+      method: 'POST',
+      timeout: 10000
+    });
+    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
+  });
+});
+
+describe('SouthOIAnalytics with proxy but without proxy password', () => {
+  const configuration: SouthConnectorDTO<SouthOIAnalyticsSettings> = {
+    id: 'southId',
+    name: 'south',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
+    },
+    settings: {
+      host: 'http://localhost:4200',
+      acceptUnauthorized: false,
+      accessKey: 'username',
+      secretKey: 'password',
+      timeout: 1000,
+      useProxy: true,
+      proxyPassword: '',
+      proxyUrl: 'http://proxyurl',
+      proxyUsername: 'proxyUsername'
+    }
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    (utils.formatQueryParams as jest.Mock).mockReturnValue(
+      '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
+    );
+
+    south = new SouthOianalytics(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+  });
+
+  it('should test connection', async () => {
+    (createProxyAgent as jest.Mock).mockReturnValue({});
+
+    await south.start();
+    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('Timeout error');
+    });
+
+    await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
+    expect(fetch).toHaveBeenCalledWith('http://localhost:4200/info', {
+      agent: {},
+      headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+      method: 'POST',
+      timeout: 10000
+    });
+    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
 });
