@@ -178,4 +178,8 @@ export class NorthConnectorService {
   stopNorth(northId: string): Observable<void> {
     return this.http.put<void>(`/api/north/${northId}/stop`, null);
   }
+
+  testConnection(northId: string, settings: NorthConnectorCommandDTO<any>): Observable<void> {
+    return this.http.put<void>(`/api/north/${northId}/test-connection`, settings);
+  }
 }

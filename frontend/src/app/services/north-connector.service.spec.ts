@@ -266,6 +266,36 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
+  it('should test a North connector connection', () => {
+    let done = false;
+    const command: NorthConnectorCommandDTO = {
+      name: 'myNorthConnector',
+      description: 'a test north connector',
+      enabled: true,
+      type: 'Test',
+      settings: {},
+      caching: {
+        scanModeId: 'scanModeId1',
+        retryInterval: 1000,
+        retryCount: 3,
+        groupCount: 1000,
+        maxSendCount: 10000,
+        sendFileImmediately: true,
+        maxSize: 30
+      },
+      archive: {
+        enabled: false,
+        retentionDuration: 0
+      }
+    };
+
+    service.testConnection('id1', command).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/north/id1/test-connection' });
+    expect(testRequest.request.body).toEqual(command);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
   it('should start a North', () => {
     let done = false;
 

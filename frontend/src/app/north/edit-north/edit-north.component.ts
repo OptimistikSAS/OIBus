@@ -6,7 +6,7 @@ import { formDirectives } from '../../shared/form-directives';
 import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
+import { catchError, combineLatest, Observable, of, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
@@ -164,7 +164,7 @@ export class EditNorthComponent implements OnInit {
     });
   }
 
-  save() {
+  submit(value: 'save' | 'test') {
     if (!this.northForm!.valid) {
       return;
     }
@@ -191,6 +191,20 @@ export class EditNorthComponent implements OnInit {
         retentionDuration: formValue.archive!.retentionDuration!
       }
     };
-    this.createOrUpdateNorthConnector(command);
+    if (value === 'save') {
+      this.createOrUpdateNorthConnector(command);
+    } else {
+      this.northConnectorService
+        .testConnection(this.northConnector?.id || 'create', command)
+        .pipe(
+          catchError(httpError => {
+            this.notificationService.error('north.test-connection.failure', { error: httpError.error.message });
+            throw httpError;
+          })
+        )
+        .subscribe(() => {
+          this.notificationService.success('north.test-connection.success');
+        });
+    }
   }
 }

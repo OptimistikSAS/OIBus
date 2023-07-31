@@ -2,9 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { DecimalPipe, NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { of, switchMap, tap } from 'rxjs';
+import { catchError, of, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
@@ -90,6 +90,30 @@ export class NorthDetailComponent implements OnInit {
 
   getScanMode(scanModeId: string) {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
+  }
+
+  testConnection() {
+    const command: NorthConnectorCommandDTO = {
+      name: this.northConnector!.name,
+      type: this.northConnector!.type,
+      description: this.northConnector!.description,
+      enabled: this.northConnector!.enabled,
+      settings: this.northConnector!.settings,
+      caching: this.northConnector!.caching,
+      archive: this.northConnector!.archive
+    };
+
+    this.northConnectorService
+      .testConnection(this.northConnector!.id, command)
+      .pipe(
+        catchError(httpError => {
+          this.notificationService.error('north.test-connection.failure', { error: httpError.error.message });
+          throw httpError;
+        })
+      )
+      .subscribe(() => {
+        this.notificationService.success('north.test-connection.success');
+      });
   }
 
   toggleConnector(value: boolean) {
