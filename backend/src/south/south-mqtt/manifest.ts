@@ -136,82 +136,9 @@ const manifest: SouthConnectorManifest = {
       type: 'OibNumber',
       label: 'Connect Timeout',
       unitLabel: 'ms',
-      defaultValue: 30000,
+      defaultValue: 10000,
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }],
-      displayInViewMode: false
-    },
-    {
-      key: 'dataArrayPath',
-      type: 'OibText',
-      label: 'Data array path',
-      newRow: true,
-      displayInViewMode: false
-    },
-    {
-      key: 'valuePath',
-      type: 'OibText',
-      label: 'Value path',
-      defaultValue: 'value',
-      validators: [{ key: 'required' }],
-      newRow: false,
-      displayInViewMode: false
-    },
-    {
-      key: 'pointIdPath',
-      type: 'OibText',
-      label: 'Point ID path',
-      defaultValue: 'pointId',
-      validators: [{ key: 'required' }],
-      newRow: false,
-      displayInViewMode: false
-    },
-    {
-      key: 'qualityPath',
-      type: 'OibText',
-      label: 'Quality path',
-      defaultValue: '',
-      newRow: false,
-      displayInViewMode: false
-    },
-    {
-      key: 'timestampOrigin',
-      type: 'OibSelect',
-      label: 'Timestamp origin',
-      options: ['payload', 'oibus'],
-      defaultValue: 'oibus',
-      validators: [{ key: 'required' }],
-      newRow: true,
-      displayInViewMode: false
-    },
-    {
-      key: 'timestampPath',
-      type: 'OibText',
-      label: 'Timestamp path',
-      defaultValue: 'timestamp',
-      validators: [{ key: 'required' }],
-      conditionalDisplay: { field: 'timestampOrigin', values: ['payload'] },
-      newRow: false,
-      displayInViewMode: false
-    },
-    {
-      key: 'timestampFormat',
-      type: 'OibText',
-      label: 'Timestamp format',
-      defaultValue: 'yyyy-MM-dd HH:mm:ss.SSS',
-      validators: [{ key: 'required' }],
-      conditionalDisplay: { field: 'timestampOrigin', values: ['payload'] },
-      newRow: false,
-      displayInViewMode: false
-    },
-    {
-      key: 'timestampTimezone',
-      type: 'OibTimezone',
-      label: 'Timezone',
-      defaultValue: 'Europe/Paris',
-      validators: [{ key: 'required' }],
-      conditionalDisplay: { field: 'timestampOrigin', values: ['payload'] },
-      newRow: false,
       displayInViewMode: false
     }
   ],
@@ -227,6 +154,136 @@ const manifest: SouthConnectorManifest = {
         label: 'Topic',
         validators: [{ key: 'required' }],
         displayInViewMode: true
+      },
+      {
+        key: 'valueType',
+        type: 'OibSelect',
+        label: 'Value type',
+        options: ['number', 'string', 'json'],
+        defaultValue: 'number',
+        validators: [{ key: 'required' }],
+        newRow: false,
+        displayInViewMode: true
+      },
+      {
+        key: 'jsonPayload',
+        type: 'OibFormGroup',
+        label: 'JSON payload',
+        newRow: true,
+        displayInViewMode: false,
+        conditionalDisplay: { field: 'valueType', values: ['json'] },
+        content: [
+          {
+            key: 'useArray',
+            type: 'OibCheckbox',
+            label: 'Values in array',
+            defaultValue: false,
+            newRow: true,
+            displayInViewMode: false
+          },
+          {
+            key: 'dataArrayPath',
+            type: 'OibText',
+            label: 'Array path',
+            newRow: false,
+            displayInViewMode: false,
+            defaultValue: '',
+            conditionalDisplay: { field: 'useArray', values: [true] }
+          },
+          {
+            key: 'valuePath',
+            type: 'OibText',
+            label: 'Value path',
+            defaultValue: 'value',
+            validators: [{ key: 'required' }],
+            newRow: true,
+            displayInViewMode: false
+          },
+          {
+            key: 'timestampOrigin',
+            type: 'OibSelect',
+            label: 'Timestamp origin',
+            options: ['payload', 'oibus'],
+            validators: [{ key: 'required' }],
+            defaultValue: 'oibus',
+            newRow: false,
+            displayInViewMode: false
+          },
+          {
+            key: 'timestampPayload',
+            type: 'OibFormGroup',
+            label: '',
+            newRow: true,
+            displayInViewMode: false,
+            conditionalDisplay: { field: 'timestampOrigin', values: ['payload'] },
+            content: [
+              {
+                key: 'timestampPath',
+                label: 'Timestamp path',
+                type: 'OibText',
+                defaultValue: '',
+                validators: [{ key: 'required' }],
+                displayInViewMode: true
+              },
+              {
+                key: 'timestampType',
+                label: 'Type',
+                type: 'OibSelect',
+                defaultValue: 'unix-epoch-ms',
+                options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
+                validators: [{ key: 'required' }],
+                pipe: 'dateTimeType',
+                displayInViewMode: true
+              },
+              {
+                key: 'timezone',
+                label: 'Timezone',
+                type: 'OibTimezone',
+                defaultValue: 'UTC',
+                newRow: false,
+                displayInViewMode: true,
+                validators: [{ key: 'required' }],
+                conditionalDisplay: { field: 'timestampType', values: ['string'] }
+              },
+              {
+                key: 'timestampFormat',
+                label: 'Timestamp format',
+                type: 'OibText',
+                defaultValue: 'yyyy-MM-dd HH:mm:ss',
+                conditionalDisplay: { field: 'timestampType', values: ['string'] },
+                validators: [{ key: 'required' }],
+                newRow: false,
+                displayInViewMode: false
+              }
+            ]
+          },
+          {
+            key: 'otherFields',
+            type: 'OibArray',
+            label: 'Structure',
+            content: [
+              {
+                key: 'name',
+                label: 'Field name in output',
+                type: 'OibText',
+                defaultValue: '',
+                validators: [{ key: 'required' }],
+                displayInViewMode: true
+              },
+              {
+                key: 'path',
+                label: 'Path in the retrieved payload',
+                type: 'OibText',
+                defaultValue: '*',
+                validators: [{ key: 'required' }],
+                displayInViewMode: true
+              }
+            ],
+            class: 'col',
+            newRow: true,
+            displayInViewMode: false
+          }
+        ]
       }
     ]
   }

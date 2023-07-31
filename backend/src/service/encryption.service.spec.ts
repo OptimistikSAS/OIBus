@@ -294,6 +294,56 @@ describe('Encryption service with crypto settings', () => {
     expect(await encryptionService.encryptConnectorSecrets(command.settings, connector.settings, settings)).toEqual(expectedCommand);
   });
 
+  it('should properly encrypt connector secrets when not secret provided', async () => {
+    const command: SouthConnectorCommandDTO = {
+      name: 'connector',
+      type: 'any',
+      description: 'my connector',
+      enabled: true,
+      history: {
+        maxInstantPerItem: true,
+        maxReadInterval: 3600,
+        readDelay: 0
+      },
+      settings: {
+        field1: 'not a secret',
+        field2: 'secret',
+        field3: 'not a secret',
+        field4: [
+          { fieldArray1: 'not an array secret', fieldArray2: 'an array secret' },
+          { fieldArray1: 'not an array secret', fieldArray2: 'another array secret' }
+        ],
+        field5: {
+          fieldGroup1: 'not a group secret',
+          fieldGroup2: 'a group secret'
+        }
+      }
+    };
+
+    const update = jest.fn(() => 'encrypted secret');
+    const final = jest.fn(() => '');
+    (crypto.createCipheriv as jest.Mock).mockImplementation(() => ({
+      update,
+      final
+    }));
+
+    const expectedCommand = {
+      field1: 'not a secret',
+      field2: 'encrypted secret',
+      field3: 'not a secret',
+      field4: [
+        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' },
+        { fieldArray1: 'not an array secret', fieldArray2: 'encrypted secret', fieldArray3: '' }
+      ],
+      field5: {
+        fieldGroup1: 'not a group secret',
+        fieldGroup2: 'encrypted secret'
+      }
+    };
+
+    expect(await encryptionService.encryptConnectorSecrets(command.settings, null, settings)).toEqual(expectedCommand);
+  });
+
   it('should properly keep existing and encrypted connector secrets', async () => {
     const command: SouthConnectorCommandDTO = {
       name: 'connector',

@@ -164,8 +164,15 @@ export default class JoiValidator {
     formControl.content.forEach(formControl => {
       subSchema[formControl.key] = this.generateJoiSchemaFromOibFormControl(formControl)[formControl.key];
     });
-    const schema = Joi.object(subSchema).required();
+    let schema = Joi.object(subSchema);
 
+    formControl.validators?.forEach(validator => {
+      switch (validator.key) {
+        case 'required':
+          schema = schema.required();
+          break;
+      }
+    });
     return {
       [formControl.key]: schema
     };

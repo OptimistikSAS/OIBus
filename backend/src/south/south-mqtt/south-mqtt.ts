@@ -1,5 +1,5 @@
 import mqtt, { IClientOptions, MqttClient, QoS } from 'mqtt';
-import { vsprintf } from 'sprintf-js';
+import objectPath from 'object-path';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
@@ -11,19 +11,14 @@ import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/mod
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
-import { Instant, Timezone } from '../../../../shared/model/types';
+import { Instant } from '../../../../shared/model/types';
 import { QueriesSubscription, TestsConnection } from '../south-interface';
-import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../../shared/model/south-settings.model';
-
-interface MessageFormatOption {
-  timestampOrigin: 'payload' | 'oibus';
-  timestampPath: string;
-  timestampFormat: string;
-  timezone: Timezone;
-  valuePath: string;
-  pointIdPath: string;
-  qualityPath: string | null;
-}
+import {
+  SouthMQTTItemSettings,
+  SouthMQTTItemSettingsJsonPayloadTimestampPayload,
+  SouthMQTTSettings
+} from '../../../../shared/model/south-settings.model';
+import { convertDateTimeToInstant } from '../../service/utils';
 
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
@@ -35,7 +30,6 @@ export default class SouthMQTT
   static type = manifest.id;
 
   private client: MqttClient | null = null;
-  private mqttItems: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [];
 
   constructor(
     connector: SouthConnectorDTO<SouthMQTTSettings>,
@@ -66,6 +60,14 @@ export default class SouthMQTT
       this.logger.trace(`MQTT message for topic ${topic}: ${message}, dup:${packet.dup}`);
       await this.handleMessage(topic, message);
     });
+  }
+
+  override async disconnect(): Promise<void> {
+    if (this.client) {
+      this.client.end(true);
+      this.logger.info(`Disconnected from ${this.connector.settings.url}...`);
+    }
+    await super.disconnect();
   }
 
   override async testConnection(): Promise<void> {
@@ -117,56 +119,6 @@ export default class SouthMQTT
     return options;
   }
 
-  async handleMessage(topic: string, message: Buffer): Promise<void> {
-    try {
-      const parsedMessage = JSON.parse(message.toString());
-      const formatOptions: MessageFormatOption = {
-        timestampPath: this.connector.settings.timestampPath!,
-        timestampOrigin: this.connector.settings.timestampOrigin,
-        timestampFormat: this.connector.settings.timestampFormat!,
-        timezone: this.connector.settings.timestampTimezone!,
-        valuePath: this.connector.settings.valuePath,
-        pointIdPath: this.connector.settings.pointIdPath,
-        qualityPath: this.connector.settings.qualityPath
-      };
-
-      if (this.connector.settings.dataArrayPath) {
-        // if a path is set to get the data array from the message
-        if (parsedMessage[this.connector.settings.dataArrayPath]) {
-          // if the data array exists at this path
-          const dataArray = parsedMessage[this.connector.settings.dataArrayPath]
-            .map((data: any) => {
-              try {
-                return this.formatValue(data, topic, formatOptions, this.mqttItems);
-              } catch (formatError) {
-                this.logger.error(formatError);
-                return null;
-              }
-            })
-            .filter((data: any) => data !== null);
-          // Send a formatted array of values
-          if (dataArray.length > 0) {
-            await this.addValues(dataArray);
-          }
-        } else {
-          this.logger.error(
-            `Could not find the dataArrayPath "${this.connector.settings.dataArrayPath}" in message "${JSON.stringify(parsedMessage)}".`
-          );
-        }
-      } else {
-        // if the message contains only one value as a json
-        try {
-          const formattedValue = this.formatValue(parsedMessage, topic, formatOptions, this.mqttItems);
-          await this.addValues([formattedValue]);
-        } catch (formatError) {
-          this.logger.error(formatError);
-        }
-      }
-    } catch (error) {
-      this.logger.error(`Could not parse message "${message}" for topic "${topic}". ${error}`);
-    }
-  }
-
   async subscribe(items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>): Promise<void> {
     if (!this.client) {
       this.logger.error('MQTT client could not subscribe to items: client not set');
@@ -175,15 +127,15 @@ export default class SouthMQTT
     for (const item of items) {
       this.client.subscribe(item.settings.topic, { qos: parseInt(this.connector.settings.qos) as QoS }, subscriptionError => {
         if (subscriptionError) {
-          this.logger.error(`Error in MQTT subscription for topic ${item.settings.topic}: ${subscriptionError}`);
+          this.logger.error(`Error in MQTT subscription for topic ${item.settings.topic}. ${subscriptionError}`);
         }
       });
     }
-    this.mqttItems = items;
   }
 
   async unsubscribe(items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>): Promise<void> {
     if (!this.client) {
+      this.logger.warn('MQTT client is not set. Nothing to unsubscribe');
       return;
     }
     for (const item of items) {
@@ -191,63 +143,79 @@ export default class SouthMQTT
     }
   }
 
-  formatValue(data: any, topic: string, formatOptions: MessageFormatOption, items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>) {
-    const { timestampPath, timestampOrigin, timestampFormat, timezone, valuePath, pointIdPath, qualityPath } = formatOptions;
-    const dataPointId = this.getPointId(topic, data, pointIdPath, items);
+  async handleMessage(topic: string, message: Buffer): Promise<void> {
+    const messageTimestamp: Instant = DateTime.now().toUTC().toISO()!;
+    try {
+      const associatedItem = this.getItem(topic, this.items);
 
-    const dataTimestamp = this.getTimestamp(data[timestampPath], timestampOrigin, timestampFormat, timezone);
-    const dataValue = data[valuePath];
-    // todo @burgerni look into this to render quality path
-    const dataQuality = data[qualityPath!];
-    // delete fields to avoid duplicates in the returned object
-    delete data[timestampPath];
-    delete data[valuePath];
-    delete data[pointIdPath];
-    // todo @burgerni look into this to render quality path
-    delete data[qualityPath!];
-    return {
-      pointId: dataPointId,
-      timestamp: dataTimestamp,
-      data: {
-        ...data,
-        value: dataValue,
-        quality: dataQuality
+      switch (associatedItem.settings.valueType) {
+        case 'number':
+          await this.addValues([
+            {
+              pointId: associatedItem.name,
+              timestamp: messageTimestamp,
+              data: {
+                value: parseInt(message.toString())
+              }
+            }
+          ]);
+          break;
+        case 'string':
+          await this.addValues([
+            {
+              pointId: associatedItem.name,
+              timestamp: messageTimestamp,
+              data: {
+                value: message.toString()
+              }
+            }
+          ]);
+          break;
+        case 'json':
+          await this.addValues(this.formatValue(associatedItem, JSON.parse(message.toString()), messageTimestamp));
+          break;
       }
-    };
+    } catch (error) {
+      this.logger.error(`Could not handle message "${message.toString()}" for topic "${topic}". ${error}`);
+    }
   }
 
-  getPointId(
-    topic: string,
-    currentData: any,
-    pointIdPath: string,
-    items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>
-  ): string | null {
-    if (pointIdPath) {
-      // if the pointId is in the data
-      if (!currentData[pointIdPath]) {
-        throw new Error(`Could node find pointId in path "${pointIdPath}" for data: ${JSON.stringify(currentData)}`);
-      }
-      return currentData[pointIdPath];
+  formatValue(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): Array<any> {
+    const dataTimestamp =
+      item.settings.jsonPayload!.timestampOrigin === 'oibus'
+        ? messageTimestamp
+        : this.getTimestamp(data, item.settings.jsonPayload!.timestampPayload!, messageTimestamp);
+
+    const dataValue: Record<string, string> = {
+      value: objectPath.get(data, item.settings.jsonPayload!.valuePath)
+    };
+
+    for (const element of item.settings.jsonPayload!.otherFields!) {
+      dataValue[element.name] = objectPath.get(data, element.path);
     }
 
-    // else, the pointId is in the topic
-    let pointId = null;
+    return [
+      {
+        pointId: item.name,
+        timestamp: dataTimestamp,
+        data: {
+          ...dataValue
+        }
+      }
+    ];
+  }
+
+  getItem(topic: string, items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>): SouthConnectorItemDTO<SouthMQTTItemSettings> {
     const matchedPoints: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [];
 
     for (const item of items) {
       const matchList = this.wildcardTopic(topic, item.settings.topic);
       if (Array.isArray(matchList)) {
-        if (!pointId) {
-          const nrWildcards = (item.name.match(/[+#]/g) || []).length;
-          if (nrWildcards === matchList.length) {
-            const normalizedPointId = item.name.replace(/[+#]/g, '%s');
-            pointId = vsprintf(normalizedPointId, matchList);
-            matchedPoints.push(item);
-          } else {
-            throw new Error(`Invalid point configuration: ${JSON.stringify(item)}`);
-          }
-        } else {
+        const nrWildcards = (item.name.match(/[+#]/g) || []).length;
+        if (nrWildcards === matchList.length) {
           matchedPoints.push(item);
+        } else {
+          throw new Error(`Invalid point configuration: ${JSON.stringify(item)}`);
         }
       }
     }
@@ -256,24 +224,23 @@ export default class SouthMQTT
       throw new Error(
         `Topic "${topic}" should be subscribed only once but it has the following subscriptions: ${JSON.stringify(matchedPoints)}`
       );
-    } else if (!pointId) {
-      throw new Error(`PointId can't be determined. The following value ${JSON.stringify(currentData)} is not saved.`);
+    } else if (matchedPoints.length === 0) {
+      throw new Error(`Item can't be determined from topic ${topic}`);
     }
 
-    return pointId;
+    return matchedPoints[0];
   }
 
-  getTimestamp(elementTimestamp: string, timestampOrigin: 'payload' | 'oibus', timestampFormat: string, timezone: Timezone): string {
-    let timestamp: Instant = DateTime.now().toUTC().toISO() as Instant;
-    if (timestampOrigin === 'payload') {
-      if (timezone && elementTimestamp) {
-        if (DateTime.fromISO(elementTimestamp).isValid) {
-          timestamp = DateTime.fromISO(elementTimestamp).toUTC().toISO() as Instant;
-        }
-        timestamp = DateTime.fromFormat(elementTimestamp, timestampFormat, { zone: timezone }).toUTC().toISO() as Instant;
-      }
+  getTimestamp(data: any, formatOptions: SouthMQTTItemSettingsJsonPayloadTimestampPayload, messageTimestamp: Instant): string | void {
+    const timestamp = objectPath.get(data, formatOptions.timestampPath!);
+    if (!timestamp) {
+      return messageTimestamp;
     }
-    return timestamp;
+    return convertDateTimeToInstant(timestamp, {
+      type: formatOptions.timestampType!,
+      timezone: formatOptions.timezone!,
+      format: formatOptions.timestampFormat!
+    });
   }
 
   wildcardTopic(topic: string, wildcard: string): Array<string> | null {
@@ -298,17 +265,7 @@ export default class SouthMQTT
       }
     }
 
-    if (w[t.length - 1] === '#') {
-      return t.length + 1 === w.length ? res : null;
-    }
-    return t.length === w.length ? res : null;
-  }
-
-  override async disconnect(): Promise<void> {
-    if (this.client) {
-      this.client.end(true);
-      this.logger.info(`Disconnected from ${this.connector.settings.url}...`);
-    }
-    await super.disconnect();
+    if (t.length === w.length) return res;
+    else return null;
   }
 }

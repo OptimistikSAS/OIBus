@@ -50,7 +50,7 @@
           <tr>
             <th style="width: 3%"></th>
             <th translate="south.items.name"></th>
-            <th translate="south.items.scan-mode"></th>
+            <th *ngIf="!southConnectorItemSchema.scanMode.subscriptionOnly" translate="south.items.scan-mode"></th>
             <th *ngFor="let setting of displaySettings">{{ setting.label }}</th>
             <th style="width: 3%"></th>
           </tr>
@@ -63,7 +63,7 @@
               </div>
             </td>
             <td>{{ item.name }}</td>
-            <td>{{ getScanMode(item.scanModeId)?.name }}</td>
+            <td *ngIf="!southConnectorItemSchema.scanMode.subscriptionOnly">{{ getScanMode(item.scanModeId)?.name }}</td>
             <td *ngFor="let setting of displaySettings">{{ item.settings[setting.key] }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">

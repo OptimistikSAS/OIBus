@@ -13,11 +13,13 @@ import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
-import { SouthFolderScannerItemSettings } from '../../../../shared/model/south-settings.model';
+import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
 
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 const database = new DatabaseMock();
+const getQueryOnCustomTable = jest.fn();
+const runQueryOnCustomTable = jest.fn();
 jest.mock(
   '../../service/south-cache.service',
   () =>
@@ -25,7 +27,8 @@ jest.mock(
       return {
         cacheRepository: {
           createCustomTable: jest.fn(),
-          executeQueryOnCustomTable: jest.fn()
+          runQueryOnCustomTable,
+          getQueryOnCustomTable
         }
       };
     }
@@ -91,7 +94,7 @@ const items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>> = [
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 let south: SouthFolderScanner;
-const configuration: SouthConnectorDTO = {
+const configuration: SouthConnectorDTO<SouthFolderScannerSettings> = {
   id: 'southId',
   name: 'south',
   type: 'test',
@@ -192,6 +195,24 @@ describe('SouthFolderScanner', () => {
     expect(fs.unlink).toHaveBeenCalledTimes(2);
     expect(logger.error).toHaveBeenCalledWith(
       `Error while removing "${path.resolve(configuration.settings.inputFolder, 'myFile2')}": ${new Error('error')}`
+    );
+  });
+
+  it('should get modified time', () => {
+    getQueryOnCustomTable.mockReturnValueOnce({ mtimeMs: 1 }).mockReturnValueOnce(null);
+    expect(south.getModifiedTime('my file')).toEqual(1);
+    expect(south.getModifiedTime('my file')).toEqual(0);
+    expect(getQueryOnCustomTable).toHaveBeenCalledWith(
+      `SELECT mtime_ms AS mtimeMs FROM "folder_scanner_${configuration.id}" WHERE filename = ?`,
+      ['my file']
+    );
+  });
+
+  it('should update modified time', () => {
+    south.updateModifiedTime('my file', 1);
+    expect(runQueryOnCustomTable).toHaveBeenCalledWith(
+      `INSERT INTO "folder_scanner_${configuration.id}" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`,
+      ['my file', 1, 1]
     );
   });
 });
@@ -319,5 +340,12 @@ describe('SouthFolderScanner test connection', () => {
 
     const accessRegex = new RegExp(`Access error on '.*(${configuration.settings.inputFolder}).*': ${errorMessage}`);
     expect((logger.error as jest.Mock).mock.calls).toEqual([[expect.stringMatching(accessRegex)]]);
+  });
+
+  it('should properly test connection', async () => {
+    (fs.access as jest.Mock).mockImplementation(() => Promise.resolve());
+    await south.testConnection();
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith(`Folder "${path.resolve(configuration.settings.inputFolder)}" exists and is reachable`);
   });
 });

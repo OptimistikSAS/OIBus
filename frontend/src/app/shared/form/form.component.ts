@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { NgForOf, NgIf } from '@angular/common';
 import { ControlContainer, FormGroup, FormGroupName } from '@angular/forms';
 import { formDirectives } from '../form-directives';
-import { OibFormControl, OibFormGroup } from '../../../../../shared/model/form.model';
+import { OibFormControl, OibFormGroup, OibSelectFormControl } from '../../../../../shared/model/form.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { OibCodeBlockComponent } from './oib-code-block/oib-code-block.component';
 import { Timezone } from '../../../../../shared/model/types';
@@ -70,5 +70,9 @@ export class FormComponent implements OnInit {
       return value;
     }
     return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
+  }
+
+  checkIfRequired(setting: OibSelectFormControl) {
+    return setting.validators?.some(validator => validator.key === 'required');
   }
 }

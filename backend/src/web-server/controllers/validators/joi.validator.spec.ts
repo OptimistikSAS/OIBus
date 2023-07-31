@@ -316,6 +316,82 @@ describe('Joi validator', () => {
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
   });
 
+  it('generateJoiSchema should generate proper Joi schema for form Groups without validators', async () => {
+    const settings: OibFormControl[] = [
+      {
+        key: 'authentication',
+        type: 'OibFormGroup',
+        label: 'Authentication',
+        class: 'col',
+        newRow: true,
+        displayInViewMode: false,
+        content: [
+          {
+            key: 'type',
+            type: 'OibSelect',
+            label: 'Type',
+            options: ['none', 'basic', 'bearer', 'api-key'],
+            pipe: 'authentication',
+            defaultValue: 'none',
+            newRow: true,
+            displayInViewMode: false
+          },
+          {
+            key: 'username',
+            type: 'OibText',
+            label: 'Username',
+            defaultValue: '',
+            displayInViewMode: false
+          },
+          {
+            key: 'password',
+            type: 'OibSecret',
+            label: 'Password',
+            defaultValue: '',
+            displayInViewMode: false
+          },
+          {
+            key: 'token',
+            type: 'OibSecret',
+            label: 'Token',
+            defaultValue: '',
+            newRow: false,
+            displayInViewMode: false
+          },
+          {
+            key: 'apiKeyHeader',
+            type: 'OibSecret',
+            label: 'Api key header',
+            defaultValue: '',
+            newRow: false,
+            displayInViewMode: false
+          },
+          {
+            key: 'apiKey',
+            type: 'OibSecret',
+            label: 'Api key',
+            defaultValue: '',
+            newRow: false,
+            displayInViewMode: false
+          }
+        ]
+      }
+    ];
+    const generatedSchema = extendedValidator.generateJoiSchema(settings);
+
+    const expectedSchema = Joi.object({
+      authentication: Joi.object({
+        type: Joi.string().valid('none', 'basic', 'bearer', 'api-key'),
+        username: Joi.string().allow(null, ''),
+        password: Joi.string().allow(null, ''),
+        token: Joi.string().allow(null, ''),
+        apiKeyHeader: Joi.string().allow(null, ''),
+        apiKey: Joi.string().allow(null, '')
+      })
+    });
+    expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
+  });
+
   it('generateJoiSchema should generate proper Joi schema for form Array', async () => {
     const settings: OibFormControl[] = [
       {

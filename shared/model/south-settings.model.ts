@@ -28,8 +28,14 @@ export type SouthMQTTSettingsAuthenticationType = (typeof SOUTH_M_Q_T_T_SETTINGS
 const SOUTH_M_Q_T_T_SETTINGS_QOSS = ['0', '1', '2'] as const
 export type SouthMQTTSettingsQos = (typeof SOUTH_M_Q_T_T_SETTINGS_QOSS)[number];
 
-const SOUTH_M_Q_T_T_SETTINGS_TIMESTAMP_ORIGINS = ['payload', 'oibus'] as const
-export type SouthMQTTSettingsTimestampOrigin = (typeof SOUTH_M_Q_T_T_SETTINGS_TIMESTAMP_ORIGINS)[number];
+const SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_PAYLOAD_TIMESTAMP_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
+export type SouthMQTTItemSettingsJsonPayloadTimestampPayloadTimestampType = (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_PAYLOAD_TIMESTAMP_TYPES)[number];
+
+const SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_ORIGINS = ['payload', 'oibus'] as const
+export type SouthMQTTItemSettingsJsonPayloadTimestampOrigin = (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_ORIGINS)[number];
+
+const SOUTH_M_Q_T_T_ITEM_SETTINGS_VALUE_TYPES = ['number', 'string', 'json'] as const
+export type SouthMQTTItemSettingsValueType = (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS_VALUE_TYPES)[number];
 
 const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'Date', 'DateTime', 'DateTime2', 'DateTimeOffset', 'SmallDateTime', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
 export type SouthMSSQLItemSettingsDateTimeFieldsType = (typeof SOUTH_M_S_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
@@ -186,7 +192,7 @@ export interface SouthADSSettings extends BaseSouthSettings {
   plcName: string | null;
   enumAsText: SouthADSSettingsEnumAsText;
   boolAsText: SouthADSSettingsBoolAsText;
-  structureFiltering: Array<SouthADSSettingsStructureFiltering>;
+  structureFiltering: Array<SouthADSSettingsStructureFiltering> | null;
 }
 
 export interface SouthFolderScannerSettings extends BaseSouthSettings {
@@ -216,14 +222,6 @@ export interface SouthMQTTSettings extends BaseSouthSettings {
   rejectUnauthorized: boolean;
   reconnectPeriod: number;
   connectTimeout: number;
-  dataArrayPath: string | null;
-  valuePath: string;
-  pointIdPath: string;
-  qualityPath: string | null;
-  timestampOrigin: SouthMQTTSettingsTimestampOrigin;
-  timestampPath?: string;
-  timestampFormat?: string;
-  timestampTimezone?: Timezone;
 }
 
 export interface SouthMSSQLSettings extends BaseSouthSettings {
@@ -345,6 +343,27 @@ export type SouthSettings =
   | SouthPostgreSQLSettings
   | SouthSlimsSettings
   | SouthSQLiteSettings
+
+export interface SouthMQTTItemSettingsJsonPayloadTimestampPayload {
+  timestampPath: string;
+  timestampType: SouthMQTTItemSettingsJsonPayloadTimestampPayloadTimestampType;
+  timezone?: Timezone;
+  timestampFormat?: string;
+}
+
+export interface SouthMQTTItemSettingsJsonPayloadOtherFields {
+  name: string;
+  path: string;
+}
+
+export interface SouthMQTTItemSettingsJsonPayload {
+  useArray: boolean | null;
+  dataArrayPath?: string | null;
+  valuePath: string;
+  timestampOrigin: SouthMQTTItemSettingsJsonPayloadTimestampOrigin;
+  timestampPayload?: SouthMQTTItemSettingsJsonPayloadTimestampPayload | null;
+  otherFields: Array<SouthMQTTItemSettingsJsonPayloadOtherFields> | null;
+}
 
 export interface SouthMSSQLItemSettingsDateTimeFields {
   fieldName: string;
@@ -510,6 +529,8 @@ export interface SouthModbusItemSettings extends BaseSouthItemSettings {
 
 export interface SouthMQTTItemSettings extends BaseSouthItemSettings {
   topic: string;
+  valueType: SouthMQTTItemSettingsValueType;
+  jsonPayload?: SouthMQTTItemSettingsJsonPayload | null;
 }
 
 export interface SouthMSSQLItemSettings extends BaseSouthItemSettings {

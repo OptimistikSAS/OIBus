@@ -56,7 +56,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
    */
   constructor(
     protected connector: SouthConnectorDTO<T>,
-    private items: Array<SouthConnectorItemDTO<I>>,
+    protected items: Array<SouthConnectorItemDTO<I>>,
     private engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     private engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     protected readonly encryptionService: EncryptionService,

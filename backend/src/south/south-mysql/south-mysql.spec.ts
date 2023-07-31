@@ -138,24 +138,7 @@ const items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      dateTimeFields: [
-        {
-          fieldName: 'anotherTimestamp',
-          useAsReference: false,
-          type: 'unix-epoch-ms',
-          timezone: null,
-          format: null,
-          locale: null
-        } as unknown as SouthMySQLItemSettingsDateTimeFields,
-        {
-          fieldName: 'timestamp',
-          useAsReference: true,
-          type: 'string',
-          timezone: 'Europe/Paris',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          locale: 'en-US'
-        }
-      ],
+      dateTimeFields: [],
       serialization: {
         type: 'csv',
         filename: 'sql-@CurrentDate.csv',
@@ -271,6 +254,22 @@ describe('SouthMySQL with authentication', () => {
       }
     );
     expect(mysqlConnection.end).toHaveBeenCalledTimes(1);
+
+    expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
+  });
+
+  it('should get data from MySQL without reference', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    const endTime = '2022-01-01T00:00:00.000Z';
+
+    const mysqlConnection = {
+      end: jest.fn(),
+      execute: jest.fn().mockReturnValue([[{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]])
+    };
+    (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
+    const result = await south.queryData(items[2], startTime, endTime);
+    expect(utils.formatInstant).not.toHaveBeenCalled();
+    expect(utils.logQuery).toHaveBeenCalledWith(items[2].settings.query, startTime, endTime, logger);
 
     expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
   });

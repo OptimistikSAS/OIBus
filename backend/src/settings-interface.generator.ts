@@ -246,12 +246,12 @@ function checkIfNullableOrUndefined(setting: OibFormControl): { nullable: boolea
 /**
  * Get all sub manifests
  */
-function collectSubManifests(manifestControls: Array<OibFormControl>): Array<SubManifest> {
+function collectSubManifests(manifestControls: Array<OibFormControl>, prefixKey = ''): Array<SubManifest> {
   const subManifests: Array<SubManifest> = [];
   manifestControls.forEach(formControl => {
     if (formControl.type === 'OibFormGroup' || formControl.type === 'OibArray') {
-      subManifests.push(...collectSubManifests(formControl.content));
-      subManifests.push({ name: formControl.key, settings: formControl.content });
+      subManifests.push(...collectSubManifests(formControl.content, prefixKey + capitalizeFirstLetter(formControl.key)));
+      subManifests.push({ name: prefixKey + capitalizeFirstLetter(formControl.key), settings: formControl.content });
     }
   });
   return subManifests;

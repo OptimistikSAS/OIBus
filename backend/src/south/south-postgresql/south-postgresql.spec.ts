@@ -137,24 +137,7 @@ const items: Array<SouthConnectorItemDTO<SouthPostgreSQLItemSettings>> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      dateTimeFields: [
-        {
-          fieldName: 'anotherTimestamp',
-          useAsReference: false,
-          type: 'unix-epoch-ms',
-          timezone: null,
-          format: null,
-          locale: null
-        } as unknown as SouthPostgreSQLItemSettingsDateTimeFields,
-        {
-          fieldName: 'timestamp',
-          useAsReference: true,
-          type: 'string',
-          timezone: 'Europe/Paris',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          locale: 'en-US'
-        }
-      ],
+      dateTimeFields: [],
       serialization: {
         type: 'csv',
         filename: 'sql-@CurrentDate.csv',
@@ -283,6 +266,25 @@ describe('SouthPostgreSQL with authentication', () => {
       DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
       DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
     );
+
+    expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
+  });
+
+  it('should get data from postgre without reference', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    const endTime = '2022-01-01T00:00:00.000Z';
+
+    const client = {
+      connect: jest.fn(),
+      query: jest.fn(() => ({
+        rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+      })),
+      end: jest.fn()
+    };
+    (pg.Client as unknown as jest.Mock).mockReturnValue(client);
+    const result = await south.queryData(items[2], startTime, endTime);
+    expect(utils.formatInstant).not.toHaveBeenCalled();
+    expect(utils.logQuery).toHaveBeenCalledWith(items[2].settings.query, startTime, endTime, logger);
 
     expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
   });
