@@ -107,14 +107,16 @@ const manifest: SouthConnectorManifest = {
             label: 'Key',
             type: 'OibText',
             defaultValue: '',
-            validators: [{ key: 'required' }]
+            validators: [{ key: 'required' }],
+            displayInViewMode: true
           },
           {
             key: 'value',
             label: 'Value',
             type: 'OibText',
             defaultValue: '',
-            validators: [{ key: 'required' }]
+            validators: [{ key: 'required' }],
+            displayInViewMode: true
           }
         ],
         class: 'col',

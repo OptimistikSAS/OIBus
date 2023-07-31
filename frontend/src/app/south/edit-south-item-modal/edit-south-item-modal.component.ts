@@ -123,6 +123,8 @@ export class EditSouthItemModalComponent {
     this.mode = 'edit';
     this.item = southItem;
     this.southConnector = southConnector;
+    this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
+    this.acceptSubscription = southItemSchema.scanMode.acceptSubscription;
     this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
     this.southItemSchema = southItemSchema;
     this.scanModes = scanModes;

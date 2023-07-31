@@ -92,17 +92,17 @@ export const handleConditionalDisplay = (formGroup: FormGroup, formDescription: 
     const control = formGroup.controls[formControl.key];
     if (formControl.conditionalDisplay) {
       const correspondingControl = formGroup.controls[formControl.conditionalDisplay.field];
+      control.disable();
       correspondingControl.valueChanges.subscribe(newVal => {
         if (formControl.conditionalDisplay!.values.includes(newVal)) {
           control.enable();
+          if (formControl.type === 'OibFormGroup') {
+            handleConditionalDisplay(formGroup.controls[formControl.key] as FormGroup, formControl.content);
+          }
         } else {
           control.disable();
         }
       });
-    }
-
-    if (formControl.type === 'OibFormGroup') {
-      handleConditionalDisplay(formGroup.controls[formControl.key] as FormGroup, formControl.content);
     }
   });
 };

@@ -208,7 +208,7 @@ export default class SouthModbus
         });
       });
     } catch (error: any) {
-      this.logger.error(`Unable to connect to socket: ${error.message}`);
+      this.logger.error(`Unable to connect to socket. ${error}`);
       switch (error.code) {
         case 'ENOTFOUND':
         case 'ECONNREFUSED':

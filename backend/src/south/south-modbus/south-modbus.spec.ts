@@ -463,10 +463,28 @@ describe('SouthModbus test connection', () => {
 
       await expect(testingSouth.testConnection()).rejects.toThrow(new Error(ERROR_CODES[code]));
 
-      expect((logger.error as jest.Mock).mock.calls).toEqual([[`Unable to connect to socket: ${errorMessage}`]]);
+      expect((logger.error as jest.Mock).mock.calls).toEqual([[`Unable to connect to socket. ${new ModbusError(errorMessage, code)}`]]);
       expect((logger.info as jest.Mock).mock.calls).toEqual([
         [`Testing modbus connection on ${configuration.settings.host}:${configuration.settings.port}`]
       ]);
     }
+  });
+
+  it('should fail to connect', async () => {
+    testingSouth = new SouthModbus(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
+
+    const mockedEmitter = new CustomStream();
+    mockedEmitter.connect = (_connectionObject: any, _callback: any) => {};
+
+    // Mock node:net Socket constructor and the used function
+    (net.Socket as unknown as jest.Mock).mockImplementation(() => mockedEmitter);
+
+    testingSouth.testConnection().catch(() => {});
+
+    expect(net.Socket).toHaveBeenCalledTimes(1);
+    mockedEmitter.emit('error', 'connect error');
+    await flushPromises();
+
+    expect(logger.error).toHaveBeenCalledWith(`Unable to connect to socket. connect error`);
   });
 });

@@ -13,9 +13,12 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 import { SouthMQTTItemSettings, SouthMQTTSettings } from '../../../../shared/model/south-settings.model';
+import * as utils from '../../service/utils';
 
 jest.mock('mqtt');
 jest.mock('node:fs/promises');
+jest.mock('../../service/utils');
+
 const database = new DatabaseMock();
 jest.mock(
   '../../service/south-cache.service',
@@ -62,7 +65,8 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
     enabled: true,
     connectorId: 'southId',
     settings: {
-      topic: 'my/first/topic'
+      topic: 'my/first/topic',
+      valueType: 'number'
     },
     scanModeId: 'scanModeId1'
   },
@@ -72,7 +76,8 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
     enabled: true,
     connectorId: 'southId',
     settings: {
-      topic: 'my/+/#/topic/with/wildcard/#'
+      topic: 'my/+/#/topic/with/wildcard/#',
+      valueType: 'string'
     },
     scanModeId: 'scanModeId1'
   },
@@ -82,7 +87,81 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
     enabled: true,
     connectorId: 'southId',
     settings: {
-      topic: 'my/wrong/topic////'
+      topic: 'my/wrong/topic////',
+      valueType: 'string'
+    },
+    scanModeId: 'scanModeId2'
+  },
+  {
+    id: 'id4',
+    name: 'item4',
+    enabled: true,
+    connectorId: 'southId',
+    settings: {
+      topic: 'json/topic',
+      valueType: 'json',
+      jsonPayload: {
+        useArray: false,
+        dataArrayPath: null,
+        valuePath: 'received.value',
+        otherFields: [
+          { name: 'appId', path: 'received.appId' },
+          { name: 'messageType', path: 'received.message.type' }
+        ],
+        timestampOrigin: 'payload',
+        timestampPayload: {
+          timestampPath: 'received.timestamp',
+          timestampType: 'string',
+          timezone: 'Europe/Paris',
+          timestampFormat: 'yyyy-MM-dd HH:mm:ss'
+        }
+      }
+    },
+    scanModeId: 'scanModeId2'
+  },
+  {
+    id: 'id5',
+    name: 'item5',
+    enabled: true,
+    connectorId: 'southId',
+    settings: {
+      topic: 'json/topic',
+      valueType: 'json',
+      jsonPayload: {
+        useArray: true,
+        dataArrayPath: 'myArray',
+        valuePath: 'received.value',
+        otherFields: [
+          { name: 'appId', path: 'received.appId' },
+          { name: 'messageType', path: 'received.message.type' }
+        ],
+        timestampOrigin: 'payload',
+        timestampPayload: {
+          timestampPath: 'received.timestamp',
+          timestampType: 'unix-epoch-ms'
+        }
+      }
+    },
+    scanModeId: 'scanModeId2'
+  },
+  {
+    id: 'id6',
+    name: 'item6',
+    enabled: true,
+    connectorId: 'southId',
+    settings: {
+      topic: 'json/topic',
+      valueType: 'json',
+      jsonPayload: {
+        useArray: true,
+        dataArrayPath: '',
+        valuePath: 'received.value',
+        otherFields: [
+          { name: 'appId', path: 'received.appId' },
+          { name: 'messageType', path: 'received.message.type' }
+        ],
+        timestampOrigin: 'oibus'
+      }
     },
     scanModeId: 'scanModeId2'
   }
@@ -95,10 +174,13 @@ class CustomStream extends Stream {
 
   subscribe() {}
 
+  unsubscribe() {}
+
   end() {}
 }
 
 let south: SouthMQTT;
+const nowDateString = '2020-02-02T02:02:02.222Z';
 
 describe('SouthMQTT without authentication', () => {
   const configuration: SouthConnectorDTO<SouthMQTTSettings> = {
@@ -126,15 +208,7 @@ describe('SouthMQTT without authentication', () => {
       },
       connectTimeout: 1000,
       reconnectPeriod: 1000,
-      rejectUnauthorized: false,
-      dataArrayPath: null,
-      pointIdPath: 'name',
-      qualityPath: 'quality',
-      valuePath: 'value',
-      timestampOrigin: 'oibus',
-      timestampPath: 'timestamp',
-      timestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-      timestampTimezone: 'Europe/Paris'
+      rejectUnauthorized: false
     }
   };
   const mqttStream = new CustomStream();
@@ -218,7 +292,7 @@ describe('SouthMQTT with Basic Auth', () => {
   };
   beforeEach(async () => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     (mqtt.connect as jest.Mock).mockImplementation(() => mqttStream);
 
@@ -238,6 +312,191 @@ describe('SouthMQTT with Basic Auth', () => {
       reconnectPeriod: 1000
     };
     expect(mqtt.connect).toHaveBeenCalledWith(configuration.settings.url, expectedOptions);
+  });
+
+  it('should not subscribe if client is not set', async () => {
+    await south.subscribe(items);
+    expect(logger.error).toHaveBeenCalledWith('MQTT client could not subscribe to items: client not set');
+  });
+
+  it('should properly subscribe when client is set', async () => {
+    mqttStream.subscribe = jest
+      .fn()
+      .mockImplementationOnce((_topic, _options, callback) => {
+        callback('subscription error');
+      })
+      .mockImplementation((_topic, _options, callback) => {
+        callback();
+      });
+
+    await south.start();
+    await south.subscribe(items);
+    expect(logger.error).toHaveBeenCalledWith(`Error in MQTT subscription for topic ${items[0].settings.topic}. subscription error`);
+    expect(logger.error).toHaveBeenCalledTimes(1);
+    expect(mqttStream.subscribe).toHaveBeenCalledTimes(6);
+    expect(mqttStream.subscribe).toHaveBeenCalledWith(items[0].settings.topic, { qos: configuration.settings.qos }, expect.any(Function));
+    expect(mqttStream.subscribe).toHaveBeenCalledWith(items[1].settings.topic, { qos: configuration.settings.qos }, expect.any(Function));
+    expect(mqttStream.subscribe).toHaveBeenCalledWith(items[2].settings.topic, { qos: configuration.settings.qos }, expect.any(Function));
+    expect(mqttStream.subscribe).toHaveBeenCalledWith(items[3].settings.topic, { qos: configuration.settings.qos }, expect.any(Function));
+    expect(mqttStream.subscribe).toHaveBeenCalledWith(items[4].settings.topic, { qos: configuration.settings.qos }, expect.any(Function));
+    expect(mqttStream.subscribe).toHaveBeenCalledWith(items[5].settings.topic, { qos: configuration.settings.qos }, expect.any(Function));
+  });
+
+  it('should not unsubscribe if client is not set', async () => {
+    await south.unsubscribe(items);
+    expect(logger.warn).toHaveBeenCalledWith('MQTT client is not set. Nothing to unsubscribe');
+  });
+
+  it('should properly unsubscribe when client is set', async () => {
+    mqttStream.unsubscribe = jest.fn();
+
+    await south.start();
+    await south.unsubscribe(items);
+    expect(mqttStream.unsubscribe).toHaveBeenCalledTimes(6);
+    expect(mqttStream.unsubscribe).toHaveBeenCalledWith(items[0].settings.topic);
+    expect(mqttStream.unsubscribe).toHaveBeenCalledWith(items[1].settings.topic);
+    expect(mqttStream.unsubscribe).toHaveBeenCalledWith(items[2].settings.topic);
+    expect(mqttStream.unsubscribe).toHaveBeenCalledWith(items[3].settings.topic);
+    expect(mqttStream.unsubscribe).toHaveBeenCalledWith(items[4].settings.topic);
+    expect(mqttStream.unsubscribe).toHaveBeenCalledWith(items[5].settings.topic);
+  });
+
+  it('should check wildcard', () => {
+    expect(south.wildcardTopic('/my/topic', '/my/topic')).toEqual([]);
+    expect(south.wildcardTopic('/my/topic', '#')).toEqual(['/my/topic']);
+    expect(south.wildcardTopic('/my/test/topic', '/my/+/topic')).toEqual(['test']);
+    expect(south.wildcardTopic('/my/topic/test', '/my/topic/#')).toEqual(['test']);
+    expect(south.wildcardTopic('/my/topic/test/leaf', '/my/topic/#')).toEqual(['test/leaf']);
+    expect(south.wildcardTopic('/my/topic/test', '/my/topic/wrong/with/more/fields')).toEqual(null);
+    expect(south.wildcardTopic('/my/topic/test', '/my/topic/test/with/more/fields')).toEqual(null);
+  });
+
+  it('should get timestamp', () => {
+    expect(south.getTimestamp({}, items[3].settings.jsonPayload!.timestampPayload!, nowDateString)).toEqual(nowDateString);
+
+    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+    expect(
+      south.getTimestamp(
+        { received: { timestamp: '2023-01-01T00:00:00.000Z' } },
+        items[3].settings.jsonPayload!.timestampPayload!,
+        nowDateString
+      )
+    ).toEqual('2023-01-01T00:00:00.000Z');
+  });
+
+  it('should get item', () => {
+    south.wildcardTopic = jest.fn().mockReturnValueOnce(['bad', 'topic']).mockReturnValueOnce(null).mockReturnValue([]);
+
+    let error;
+    try {
+      south.getItem(items[1].settings.topic, [items[1]]);
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error(`Invalid point configuration: ${JSON.stringify(items[1])}`));
+
+    try {
+      south.getItem(items[1].settings.topic, [items[1]]);
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error(`Item can't be determined from topic ${items[1].settings.topic}`));
+
+    try {
+      south.getItem(items[1].settings.topic, [items[1], items[1]]);
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(
+      new Error(
+        `Topic "${items[1].settings.topic}" should be subscribed only once but it has the following subscriptions: ${JSON.stringify([
+          items[1],
+          items[1]
+        ])}`
+      )
+    );
+
+    try {
+      south.getItem(items[1].settings.topic, []);
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error(`Item can't be determined from topic ${items[1].settings.topic}`));
+
+    expect(south.getItem(items[1].settings.topic, [items[1]])).toEqual(items[1]);
+  });
+
+  it('should format value', () => {
+    const data = { received: { value: 123, appId: 'my app id', message: { type: 'test' } } };
+    expect(south.formatValue(items[5], data, nowDateString)).toEqual([
+      {
+        pointId: items[5].name,
+        timestamp: nowDateString,
+        data: {
+          value: 123,
+          appId: 'my app id',
+          messageType: 'test'
+        }
+      }
+    ]);
+
+    south.getTimestamp = jest.fn().mockReturnValue(nowDateString);
+    expect(south.formatValue(items[3], data, nowDateString)).toEqual([
+      {
+        pointId: items[3].name,
+        timestamp: nowDateString,
+        data: {
+          value: 123,
+          appId: 'my app id',
+          messageType: 'test'
+        }
+      }
+    ]);
+    expect(south.getTimestamp).toHaveBeenCalledWith(data, items[3].settings.jsonPayload!.timestampPayload, nowDateString);
+  });
+
+  it('should handle message', async () => {
+    south.getItem = jest.fn().mockReturnValueOnce(items[0]).mockReturnValueOnce(items[1]).mockReturnValue(items[5]);
+    south.addValues = jest.fn();
+    await south.handleMessage(items[0].settings.topic, Buffer.from('12'));
+    expect(south.addValues).toHaveBeenCalledWith([
+      {
+        pointId: items[0].name,
+        timestamp: nowDateString,
+        data: {
+          value: 12
+        }
+      }
+    ]);
+
+    await south.handleMessage(items[1].settings.topic, Buffer.from('my value'));
+    expect(south.addValues).toHaveBeenCalledWith([
+      {
+        pointId: items[1].name,
+        timestamp: nowDateString,
+        data: {
+          value: 'my value'
+        }
+      }
+    ]);
+
+    const expectValue = [
+      {
+        pointId: items[5].name,
+        timestamp: nowDateString,
+        data: {
+          value: 'my json value'
+        }
+      }
+    ];
+    south.formatValue = jest.fn().mockReturnValue(expectValue);
+    await south.handleMessage(items[5].settings.topic, Buffer.from(JSON.stringify({ json: 'object' })));
+    expect(south.addValues).toHaveBeenCalledWith(expectValue);
+
+    await south.handleMessage(items[5].settings.topic, Buffer.from('not a json object'));
+    expect(logger.error).toHaveBeenCalledWith(
+      `Could not handle message "not a json object" for topic "${items[5].settings.topic}". SyntaxError: Unexpected token o in JSON at position 1`
+    );
   });
 });
 
@@ -270,15 +529,7 @@ describe('SouthMQTT with Cert', () => {
       },
       connectTimeout: 1000,
       reconnectPeriod: 1000,
-      rejectUnauthorized: false,
-      dataArrayPath: null,
-      pointIdPath: 'name',
-      qualityPath: 'quality',
-      valuePath: 'value',
-      timestampOrigin: 'oibus',
-      timestampPath: 'timestamp',
-      timestampFormat: 'yyyy-MM-dd HH:mm:ss.SSS',
-      timestampTimezone: 'Europe/Paris'
+      rejectUnauthorized: false
     }
   };
   beforeEach(async () => {

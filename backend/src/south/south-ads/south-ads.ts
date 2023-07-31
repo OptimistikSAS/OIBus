@@ -113,7 +113,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
       default:
         if (subItems.length > 0) {
           // It is an ADS structure object (as json)
-          const structure = this.connector.settings.structureFiltering.find(
+          const structure = this.connector.settings.structureFiltering!.find(
             (element: { name: string; fields: string }) => element.name === dataType
           );
           if (structure) {
