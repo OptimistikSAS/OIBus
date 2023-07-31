@@ -53,7 +53,7 @@ export class BoxComponent implements AfterContentInit {
     if (contentElement) {
       const tableElement = contentElement.querySelector('table');
       const alertWarningElement = contentElement.querySelector('.alert-warning');
-      const emptyDivElements = contentElement.querySelectorAll('div:empty');
+      const emptyDivElements = contentElement.querySelectorAll('div');
 
       contentElement.classList.remove('has-empty-div', 'has-table', 'has-alert-warning'); // Deletes the existing class
 
