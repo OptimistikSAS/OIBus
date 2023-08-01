@@ -148,3 +148,50 @@ describe('NorthFileWriter', () => {
     await expect(north.handleFile(filePath)).rejects.toThrowError('Error handling files');
   });
 });
+
+describe('NorthFileWriter test connection', () => {
+  const outputFolder = path.resolve(configuration.settings.outputFolder);
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    north = new NorthFileWriter(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+  });
+
+  it('should have access to output folder', async () => {
+    (fs.access as jest.Mock).mockImplementation(() => Promise.resolve());
+
+    await expect(north.testConnection()).resolves.not.toThrow();
+
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenNthCalledWith(1, 'Testing North File Writer');
+    expect(logger.info).toHaveBeenNthCalledWith(2, `Folder "${outputFolder}" exists and is reachable`);
+  });
+
+  it('should handle folder not existing', async () => {
+    const errorMessage = 'Folder does not exist';
+    (fs.access as jest.Mock).mockImplementationOnce(() => {
+      throw new Error(errorMessage);
+    });
+
+    await expect(north.testConnection()).rejects.toThrow(`Folder "${outputFolder}" does not exist`);
+
+    expect(logger.info).toBeCalledWith('Testing North File Writer');
+    expect(logger.error).toBeCalledWith(`Access error on "${outputFolder}": ${errorMessage}`);
+  });
+
+  it('should handle not having write access on folder', async () => {
+    const errorMessage = 'No write access';
+    (fs.access as jest.Mock)
+      .mockImplementationOnce(() => Promise.resolve())
+      .mockImplementationOnce(() => {
+        throw new Error(errorMessage);
+      });
+
+    await expect(north.testConnection()).rejects.toThrow('No write access on folder');
+
+    expect(logger.info).toBeCalledWith('Testing North File Writer');
+    expect(logger.error).toBeCalledWith(`Access error on "${outputFolder}": ${errorMessage}`);
+  });
+});
