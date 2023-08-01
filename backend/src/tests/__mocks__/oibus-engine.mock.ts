@@ -18,6 +18,7 @@ export default jest.fn().mockImplementation(() => {
     addFile: jest.fn(),
     addExternalFile: jest.fn(),
     deleteAllItemsFromSouth: jest.fn(),
-    getErrorFiles: jest.fn()
+    getErrorFiles: jest.fn(),
+    updateScanMode: jest.fn()
   };
 });

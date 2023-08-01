@@ -90,11 +90,12 @@ describe('Scan mode controller', () => {
     await scanModeController.updateScanMode(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, scanModeCommand);
-    expect(ctx.app.repositoryService.scanModeRepository.updateScanMode).toHaveBeenCalledWith(id, scanModeCommand);
+    expect(ctx.app.reloadService.onUpdateScanMode).toHaveBeenCalledWith('id', scanModeCommand);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
   it('updateScanMode() should return bad request', async () => {
+    ctx.params.id = 'scanModeId';
     ctx.request.body = scanModeCommand;
     const validationError = new Error('invalid body');
     validator.validate = jest.fn().mockImplementationOnce(() => {
@@ -104,7 +105,7 @@ describe('Scan mode controller', () => {
     await scanModeController.updateScanMode(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, scanModeCommand);
-    expect(ctx.app.repositoryService.scanModeRepository.updateScanMode).not.toHaveBeenCalledWith();
+    expect(ctx.app.reloadService.onUpdateScanMode).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 

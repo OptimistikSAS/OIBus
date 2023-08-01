@@ -15,6 +15,7 @@ import { EventEmitter } from 'node:events';
 import { HandlesFile, HandlesValues } from './north-interface';
 import fs from 'node:fs/promises';
 import { dirSize } from '../service/utils';
+import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -177,6 +178,11 @@ describe('NorthConnector enabled', () => {
     jest.advanceTimersByTime(1000);
     expect(north.addToQueue).toHaveBeenCalledTimes(1);
     expect(north.addToQueue).toHaveBeenCalledWith(scanMode);
+
+    await north.updateScanMode({ id: 'scanModeId', name: 'name', cron: '* * * * *' } as ScanModeDTO);
+    await north.updateScanMode({ id: 'id1', name: 'name', cron: '* * * * *' } as ScanModeDTO);
+    expect(logger.debug).toHaveBeenCalledWith(`Creating North cron job for scan mode "name" (* * * * *)`);
+    expect(logger.debug).toHaveBeenCalledWith(`Removing existing North cron job associated to scan mode "name" (* * * * *)`);
 
     await north.stop();
   });

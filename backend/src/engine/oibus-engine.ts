@@ -12,6 +12,7 @@ import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
+import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 
 const CACHE_FOLDER = './cache/data-stream';
 
@@ -261,5 +262,21 @@ export default class OIBusEngine extends BaseEngine {
 
   resetNorthMetrics(northId: string): PassThrough | null {
     return this.northConnectors.get(northId)?.resetMetrics() || null;
+  }
+
+  async updateScanMode(scanMode: ScanModeDTO): Promise<void> {
+    for (const [id, south] of this.southConnectors.entries()) {
+      const southSettings = this.southService.getSouth(id);
+      if (southSettings) {
+        await south.updateScanMode(scanMode);
+      }
+    }
+
+    for (const [id, north] of this.northConnectors.entries()) {
+      const northSettings = this.northService.getNorth(id);
+      if (northSettings) {
+        await north.updateScanMode(scanMode);
+      }
+    }
   }
 }

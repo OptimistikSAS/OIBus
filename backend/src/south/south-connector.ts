@@ -510,4 +510,10 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   async testConnection(): Promise<void> {
     this.logger.warn('testConnection must be override');
   }
+
+  async updateScanMode(scanMode: ScanModeDTO): Promise<void> {
+    if (this.cronByScanModeIds.get(scanMode.id)) {
+      this.createCronJob(scanMode);
+    }
+  }
 }
