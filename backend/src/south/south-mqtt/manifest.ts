@@ -229,7 +229,7 @@ const manifest: SouthConnectorManifest = {
                 key: 'timestampType',
                 label: 'Type',
                 type: 'OibSelect',
-                defaultValue: 'unix-epoch-ms',
+                defaultValue: 'string',
                 options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
                 validators: [{ key: 'required' }],
                 pipe: 'dateTimeType',
@@ -240,8 +240,7 @@ const manifest: SouthConnectorManifest = {
                 label: 'Timezone',
                 type: 'OibTimezone',
                 defaultValue: 'UTC',
-                newRow: false,
-                displayInViewMode: true,
+                displayInViewMode: false,
                 validators: [{ key: 'required' }],
                 conditionalDisplay: { field: 'timestampType', values: ['string'] }
               },
@@ -252,7 +251,6 @@ const manifest: SouthConnectorManifest = {
                 defaultValue: 'yyyy-MM-dd HH:mm:ss',
                 conditionalDisplay: { field: 'timestampType', values: ['string'] },
                 validators: [{ key: 'required' }],
-                newRow: false,
                 displayInViewMode: false
               }
             ]

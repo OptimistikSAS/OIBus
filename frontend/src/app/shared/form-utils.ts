@@ -1,6 +1,5 @@
 import { FormComponentValidator, OibFormControl } from '../../../../shared/model/form.model';
 import { FormControl, FormGroup, NonNullableFormBuilder, ValidatorFn, Validators } from '@angular/forms';
-import { ScanModeDTO } from '../../../../shared/model/scan-mode.model';
 
 /**
  * Create the validators associated to an input from the settings schema
@@ -37,12 +36,8 @@ export const createFormGroup = (formDescription: Array<OibFormControl>, fb: NonN
   return formGroup;
 };
 
-export const createFormControl = (
-  value: OibFormControl,
-  fb: NonNullableFormBuilder,
-  scanModes: Array<ScanModeDTO> = []
-): FormControl | FormGroup => {
-  switch (value.type) {
+export const createFormControl = (formControlSettings: OibFormControl, fb: NonNullableFormBuilder): FormControl | FormGroup => {
+  switch (formControlSettings.type) {
     case 'OibText':
     case 'OibNumber':
     case 'OibSecret':
@@ -50,20 +45,15 @@ export const createFormControl = (
     case 'OibCodeBlock':
     case 'OibTextArea':
     case 'OibTimezone':
-      return fb.control(value.defaultValue, getValidators(value.validators || []));
+      return fb.control(formControlSettings.defaultValue, getValidators(formControlSettings.validators || []));
     case 'OibArray':
-      return fb.control(value.defaultValue || [], getValidators(value.validators || []));
+      return fb.control(formControlSettings.defaultValue || [], getValidators(formControlSettings.validators || []));
     case 'OibCheckbox':
-      return fb.control(value.defaultValue || false, getValidators(value.validators || []));
+      return fb.control(formControlSettings.defaultValue || false, getValidators(formControlSettings.validators || []));
     case 'OibScanMode':
-      return fb.control(null, getValidators(value.validators || []));
+      return fb.control(null, getValidators(formControlSettings.validators || []));
     case 'OibFormGroup':
-      const formGroup = fb.group({});
-      value.content.forEach(item => {
-        const formControl = createFormControl(item, fb, scanModes);
-        formGroup.addControl(item.key, formControl);
-      });
-      return formGroup;
+      return createFormGroup(formControlSettings.content, fb);
   }
 };
 
@@ -92,15 +82,16 @@ export const handleConditionalDisplay = (formGroup: FormGroup, formDescription: 
     const control = formGroup.controls[formControl.key];
     if (formControl.conditionalDisplay) {
       const correspondingControl = formGroup.controls[formControl.conditionalDisplay.field];
-      control.disable();
+      if (formControl.conditionalDisplay!.values.includes(correspondingControl.value) && control.parent?.enabled) {
+        control.enable();
+      } else {
+        control.disable({ emitEvent: false });
+      }
       correspondingControl.valueChanges.subscribe(newVal => {
-        if (formControl.conditionalDisplay!.values.includes(newVal)) {
+        if (formControl.conditionalDisplay!.values.includes(newVal) && control.parent?.enabled) {
           control.enable();
-          if (formControl.type === 'OibFormGroup') {
-            handleConditionalDisplay(formGroup.controls[formControl.key] as FormGroup, formControl.content);
-          }
         } else {
-          control.disable();
+          control.disable({ emitEvent: false });
         }
       });
     }
