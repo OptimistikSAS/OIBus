@@ -21,6 +21,7 @@ import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { SouthSlimsItemSettings, SouthSlimsSettings } from '../../../../shared/model/south-settings.model';
+import { createProxyAgent } from '../../service/proxy.service';
 
 export interface SlimsColumn {
   name: string;
@@ -44,6 +45,7 @@ export default class SouthSlims
   implements QueriesHistory, TestsConnection
 {
   static type = manifest.id;
+  private proxyAgent: any | undefined;
 
   private readonly tmpFolder: string;
 
@@ -66,6 +68,22 @@ export default class SouthSlims
    */
   async start(): Promise<void> {
     await createFolder(this.tmpFolder);
+
+    if (this.connector.settings.useProxy) {
+      this.proxyAgent = createProxyAgent(
+        {
+          url: this.connector.settings.proxyUrl!,
+          username: this.connector.settings.proxyUsername!,
+          password: this.connector.settings.proxyPassword
+            ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+            : null
+        },
+        this.connector.settings.acceptUnauthorized
+      );
+    } else if (this.connector.settings.acceptUnauthorized && this.connector.settings.url.startsWith('https://')) {
+      this.proxyAgent = new https.Agent({ rejectUnauthorized: false });
+    }
+
     await super.start();
   }
 
@@ -74,15 +92,13 @@ export default class SouthSlims
 
     const headers: Record<string, string | number> = {};
     const basic = Buffer.from(
-      `${this.connector.settings.authentication.username}:${await this.encryptionService.decryptText(
-        this.connector.settings.authentication.password!
-      )}`
+      `${this.connector.settings.username}:${await this.encryptionService.decryptText(this.connector.settings.password!)}`
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
     const fetchOptions: Record<string, any> = {
       method: 'GET',
       headers,
-      agent: this.connector.settings.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
+      agent: this.proxyAgent,
       timeout: 10000
     };
     const requestUrl = `${this.connector.settings.url}:${this.connector.settings.port}/slimsrest/rest`;
@@ -143,9 +159,7 @@ export default class SouthSlims
   async queryData(item: SouthConnectorItemDTO<SouthSlimsItemSettings>, startTime: Instant, endTime: Instant): Promise<SlimsResults> {
     const headers: Record<string, string | number> = {};
     const basic = Buffer.from(
-      `${this.connector.settings.authentication.username}:${await this.encryptionService.decryptText(
-        this.connector.settings.authentication.password!
-      )}`
+      `${this.connector.settings.username}:${await this.encryptionService.decryptText(this.connector.settings.password!)}`
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
 
@@ -168,7 +182,7 @@ export default class SouthSlims
       }
       const requestOptions = {
         method: 'GET',
-        agent: this.connector.settings.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
+        agent: this.proxyAgent,
         timeout: item.settings.requestTimeout,
         host,
         protocol,
@@ -187,7 +201,7 @@ export default class SouthSlims
     const fetchOptions: Record<string, any> = {
       method: 'GET',
       headers,
-      agent: this.connector.settings.acceptSelfSigned ? new https.Agent({ rejectUnauthorized: false }) : null,
+      agent: this.proxyAgent,
       timeout: item.settings.requestTimeout
     };
     const requestUrl = `${this.connector.settings.url}:${this.connector.settings.port}${item.settings.endpoint}${formatQueryParams(
