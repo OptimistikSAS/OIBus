@@ -55,6 +55,38 @@ export default class NorthOIConnect extends NorthConnector<NorthOIConnectSetting
     }
   }
 
+  override async testConnection(): Promise<void> {
+    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
+
+    const headers: Record<string, string | number> = {};
+    const basic = Buffer.from(
+      `${this.connector.settings.authentication.username}:${await this.encryptionService.decryptText(
+        this.connector.settings.authentication.password!
+      )}`
+    ).toString('base64');
+    headers.authorization = `Basic ${basic}`;
+    const fetchOptions: Record<string, any> = {
+      method: 'GET',
+      headers,
+      agent: this.proxyAgent,
+      timeout: 10000
+    };
+    const requestUrl = `${this.connector.settings.host}/api/info`;
+
+    try {
+      const response = await fetch(requestUrl, fetchOptions);
+      if (response.ok) {
+        this.logger.info('OIConnect request successful');
+        return;
+      }
+      this.logger.error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
+      throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
+    } catch (error) {
+      this.logger.error(`Fetch error ${error}`);
+      throw new Error(`Fetch error ${error}`);
+    }
+  }
+
   /**
    * Handle values by sending them to the specified endpoint
    */
