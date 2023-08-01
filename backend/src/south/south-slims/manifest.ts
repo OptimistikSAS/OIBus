@@ -1,5 +1,5 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
-import { buildDateTimeFieldsFormControl, serialization } from '../../../../shared/model/manifest-factory';
+import { buildDateTimeFieldsFormControl, proxy, serialization } from '../../../../shared/model/manifest-factory';
 
 const manifest: SouthConnectorManifest = {
   id: 'slims',
@@ -32,39 +32,28 @@ const manifest: SouthConnectorManifest = {
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }]
     },
     {
-      key: 'acceptSelfSigned',
-      type: 'OibCheckbox',
-      label: 'Accept rejected certificates?',
-      defaultValue: false,
-      newRow: false,
+      key: 'username',
+      type: 'OibText',
+      label: 'Username',
+      defaultValue: '',
       validators: [{ key: 'required' }],
-      class: 'col-4'
+      displayInViewMode: false
     },
     {
-      key: 'authentication',
-      type: 'OibFormGroup',
-      label: 'Authentication',
-      class: 'col',
-      newRow: true,
-      displayInViewMode: false,
+      key: 'password',
+      type: 'OibSecret',
+      label: 'Password',
+      defaultValue: '',
+      displayInViewMode: false
+    },
+    ...proxy,
+    {
+      key: 'acceptUnauthorized',
+      type: 'OibCheckbox',
+      label: 'Accept unauthorized certificate',
       validators: [{ key: 'required' }],
-      content: [
-        {
-          key: 'username',
-          type: 'OibText',
-          label: 'Username',
-          defaultValue: '',
-          validators: [{ key: 'required' }],
-          displayInViewMode: false
-        },
-        {
-          key: 'password',
-          type: 'OibSecret',
-          label: 'Password',
-          defaultValue: '',
-          displayInViewMode: false
-        }
-      ]
+      defaultValue: false,
+      displayInViewMode: true
     }
   ],
   items: {

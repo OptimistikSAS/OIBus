@@ -13,8 +13,10 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import path from 'node:path';
 import { SouthSlimsItemSettings, SouthSlimsSettings } from '../../../../shared/model/south-settings.model';
 import { DateTime } from 'luxon';
+import { createProxyAgent } from '../../service/proxy.service';
 
 jest.mock('../../service/utils');
+jest.mock('../../service/proxy.service');
 
 // Mock node-fetch
 jest.mock('node-fetch');
@@ -176,11 +178,10 @@ describe('SouthSlims with body', () => {
     settings: {
       url: 'http://localhost',
       port: 4200,
-      acceptSelfSigned: false,
-      authentication: {
-        username: 'username',
-        password: 'password'
-      }
+      username: 'username',
+      password: 'password',
+      useProxy: false,
+      acceptUnauthorized: false
     }
   };
   beforeEach(() => {
@@ -261,7 +262,6 @@ describe('SouthSlims with body', () => {
     expect(result).toEqual({ result: [] });
     const expectedOptions = {
       method: 'GET',
-      agent: null,
       timeout: items[0].settings.requestTimeout,
       host: 'localhost',
       protocol: 'http:',
@@ -291,11 +291,10 @@ describe('SouthSlims with body and accept self signed', () => {
     settings: {
       url: 'https://localhost',
       port: 4200,
-      acceptSelfSigned: true,
-      authentication: {
-        username: 'username',
-        password: 'password'
-      }
+      username: 'username',
+      password: 'password',
+      useProxy: false,
+      acceptUnauthorized: true
     }
   };
   beforeEach(() => {
@@ -313,7 +312,7 @@ describe('SouthSlims with body and accept self signed', () => {
     (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
       throw new Error('Timeout error');
     });
-
+    await south.start();
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(fetch).toHaveBeenCalledWith('https://localhost:4200/slimsrest/rest', {
       agent: {},
@@ -327,6 +326,7 @@ describe('SouthSlims with body and accept self signed', () => {
   it('should properly fetch with Body', async () => {
     (utils.httpGetWithBody as jest.Mock).mockReturnValue(Promise.resolve({ result: [] }));
 
+    await south.start();
     const result = await south.queryData(items[3], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
     expect(result).toEqual({ result: [] });
     const expectedOptions = {
@@ -361,11 +361,12 @@ describe('SouthSlims with query params', () => {
     settings: {
       url: 'http://localhost',
       port: 4200,
-      acceptSelfSigned: false,
-      authentication: {
-        username: 'username',
-        password: 'password'
-      }
+      username: 'username',
+      password: 'password',
+      useProxy: true,
+      proxyUsername: 'proxy username',
+      proxyPassword: null,
+      acceptUnauthorized: false
     }
   };
 
@@ -373,6 +374,8 @@ describe('SouthSlims with query params', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (utils.formatInstant as jest.Mock).mockImplementation((instant: string) => instant);
+    (createProxyAgent as jest.Mock).mockReturnValue({});
+
     south = new SouthSlims(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
@@ -383,14 +386,14 @@ describe('SouthSlims with query params', () => {
         ok: true
       })
     );
-
+    await south.start();
     const result = await south.queryData(items[1], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
     expect(result).toEqual({ result: [] });
     expect(fetch).toHaveBeenCalledWith(
       'http://localhost:4200/api/my/endpoint' +
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
-        agent: null,
+        agent: {},
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
         method: 'GET',
         timeout: 3000
@@ -411,6 +414,7 @@ describe('SouthSlims with query params', () => {
       })
     );
 
+    await south.start();
     await expect(south.queryData(items[1], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z')).rejects.toThrowError(
       'HTTP request failed with status code 400 and message: statusText'
     );
@@ -419,7 +423,7 @@ describe('SouthSlims with query params', () => {
       'http://localhost:4200/api/my/endpoint' +
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
-        agent: null,
+        agent: {},
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
         method: 'GET',
         timeout: 3000
@@ -912,16 +916,18 @@ describe('SouthSlims with query params and accept self signed', () => {
     settings: {
       url: 'http://localhost',
       port: 4200,
-      acceptSelfSigned: true,
-      authentication: {
-        username: 'username',
-        password: 'password'
-      }
+      username: 'username',
+      password: 'password',
+      useProxy: true,
+      proxyPassword: 'proxy password',
+      proxyUsername: 'proxy username',
+      acceptUnauthorized: false
     }
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    (createProxyAgent as jest.Mock).mockReturnValue({});
     (utils.formatInstant as jest.Mock).mockImplementation((instant: string) => instant);
     south = new SouthSlims(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
@@ -934,6 +940,7 @@ describe('SouthSlims with query params and accept self signed', () => {
       })
     );
 
+    await south.start();
     const result = await south.queryData(items[2], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
     expect(result).toEqual({ result: [] });
     expect(fetch).toHaveBeenCalledWith(

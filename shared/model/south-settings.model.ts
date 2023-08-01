@@ -169,11 +169,6 @@ export interface SouthOPCUAHASettingsAuthentication {
   keyFilePath?: string | null;
 }
 
-export interface SouthSlimsSettingsAuthentication {
-  username: string;
-  password: string | null;
-}
-
 interface BaseSouthSettings {}
 
 export interface SouthADSSettings extends BaseSouthSettings {
@@ -319,8 +314,13 @@ export interface SouthPostgreSQLSettings extends BaseSouthSettings {
 export interface SouthSlimsSettings extends BaseSouthSettings {
   url: string;
   port: number;
-  acceptSelfSigned: boolean;
-  authentication: SouthSlimsSettingsAuthentication;
+  username: string;
+  password: string | null;
+  useProxy: boolean;
+  proxyUrl?: string;
+  proxyUsername?: string | null;
+  proxyPassword?: string | null;
+  acceptUnauthorized: boolean;
 }
 
 export interface SouthSQLiteSettings extends BaseSouthSettings {
