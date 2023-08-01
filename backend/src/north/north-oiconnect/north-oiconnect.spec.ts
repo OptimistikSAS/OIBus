@@ -322,6 +322,43 @@ describe('NorthOIConnect with proxy', () => {
 
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/add-file?name=${configuration.name}`, expectedFetchOptions);
   });
+
+  it('should test connection', async () => {
+    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('Timeout error');
+    });
+
+    await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
+    expect(fetch).toHaveBeenCalledWith('https://hostname/api/info', {
+      agent: {},
+      headers: { authorization: 'Basic dXNlcjpwYXNz' },
+      method: 'GET',
+      timeout: 10000
+    });
+    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
+  });
+
+  it('should test connection', async () => {
+    (fetch as unknown as jest.Mock)
+      .mockReturnValueOnce(
+        Promise.resolve({
+          ok: true,
+          status: 200
+        })
+      )
+      .mockReturnValueOnce(
+        Promise.resolve({
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized'
+        })
+      );
+
+    await north.testConnection();
+    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${configuration.settings.host}"`);
+    expect(logger.info).toHaveBeenCalledWith('OIConnect request successful');
+    await expect(north.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
+  });
 });
 
 describe('NorthOIConnect with proxy but without proxy password', () => {
