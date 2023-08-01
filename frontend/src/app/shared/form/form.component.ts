@@ -59,6 +59,7 @@ export class FormComponent implements OnInit {
         }
       });
     });
+    this.form.setValue(this.form.getRawValue());
   }
 
   getFormGroup(setting: OibFormGroup): FormGroup {

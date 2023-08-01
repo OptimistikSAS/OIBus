@@ -34,6 +34,10 @@ export class EditElementComponent implements OnInit {
     this.form.patchValue({ wrapper: this.element });
   }
 
+  getFormGroup(): FormGroup {
+    return this.form!.controls['wrapper']! as FormGroup;
+  }
+
   ok() {
     if (!this.form!.valid) {
       return;

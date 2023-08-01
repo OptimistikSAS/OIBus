@@ -1,7 +1,7 @@
-<ng-container *ngIf="!this.form.disabled">
+<ng-container>
   <div class="row" *ngFor="let row of settingsSchema">
     <ng-container *ngFor="let setting of row">
-      <div *ngIf="!this.form.get(setting.key)?.disabled" [class]="setting.class || 'col'">
+      <div *ngIf="this.form.get(setting.key)?.enabled" [class]="setting.class || 'col'">
         <div class="form-group" *ngIf="setting.type !== 'OibFormGroup'">
           <label
             class="form-label"
@@ -82,7 +82,7 @@
           <val-errors [controlName]="setting.key"></val-errors>
         </div>
 
-        <div class="form-group" *ngIf="setting.type === 'OibFormGroup' && setting.content.length > 0">
+        <div class="form-group" *ngIf="setting.type === 'OibFormGroup' && setting.content.length > 0 && getFormGroup(setting).enabled">
           <label class="form-label" [for]="setting.type + '-' + setting.key">{{ setting.label }}</label>
           <oib-form
             [formGroupName]="setting.key"
