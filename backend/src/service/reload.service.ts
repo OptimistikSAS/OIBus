@@ -17,6 +17,7 @@ import SouthService from './south.service';
 import OIBusEngine from '../engine/oibus-engine';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import { Instant } from '../../../shared/model/types';
+import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 
 export default class ReloadService {
   private webServerChangeLoggerCallback: (logger: pino.Logger) => void = () => {};
@@ -343,5 +344,15 @@ export default class ReloadService {
     return await this.oibusEngine.getErrorFiles(northId, start, end, fileNameContains);
   }
 
-  // TODO: on scan mode delete, add, update
+  async onUpdateScanMode(scanModeId: string, scanModeCommand: ScanModeCommandDTO) {
+    const oldScanMode = this.repositoryService.scanModeRepository.getScanMode(scanModeId);
+    if (!oldScanMode) {
+      throw new Error(`Scan mode ${scanModeId} not found`);
+    }
+    this.repositoryService.scanModeRepository.updateScanMode(scanModeId, scanModeCommand);
+    const newScanMode = this.repositoryService.scanModeRepository.getScanMode(scanModeId)!;
+    if (oldScanMode.cron !== scanModeCommand.cron) {
+      await this.oibusEngine.updateScanMode(newScanMode);
+    }
+  }
 }

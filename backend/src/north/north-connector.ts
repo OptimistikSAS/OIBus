@@ -531,4 +531,10 @@ export default class NorthConnector<T extends NorthSettings = any> {
   async testConnection(): Promise<void> {
     this.logger.warn('testConnection must be override');
   }
+
+  async updateScanMode(scanMode: ScanModeDTO): Promise<void> {
+    if (this.cronByScanModeIds.get(scanMode.id)) {
+      this.createCronJob(scanMode);
+    }
+  }
 }

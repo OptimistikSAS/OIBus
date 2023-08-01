@@ -30,7 +30,8 @@ export default class ScanModeController extends AbstractController {
   async updateScanMode(ctx: KoaContext<ScanModeCommandDTO, void>): Promise<void> {
     try {
       await this.validate(ctx.request.body);
-      ctx.app.repositoryService.scanModeRepository.updateScanMode(ctx.params.id, ctx.request.body as ScanModeCommandDTO);
+
+      await ctx.app.reloadService.onUpdateScanMode(ctx.params.id, ctx.request.body as ScanModeCommandDTO);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);

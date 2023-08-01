@@ -12,6 +12,7 @@ import RepositoryService from '../service/repository.service';
 import { delay, generateIntervals } from '../service/utils';
 import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
 import { Instant } from '../../../shared/model/types';
+import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -677,6 +678,11 @@ describe('SouthConnector enabled', () => {
     expect(`Removing existing South cron job associated to scan mode "${scanMode.name}" (${scanMode.cron})`);
     jest.advanceTimersByTime(1000);
     expect(south.addToQueue).toHaveBeenCalledTimes(1);
+
+    await south.updateScanMode({ id: 'scanModeId', name: 'name', cron: '* * * * *' } as ScanModeDTO);
+    await south.updateScanMode({ id: 'id1', name: 'name', cron: '* * * * *' } as ScanModeDTO);
+    expect(logger.debug).toHaveBeenCalledWith(`Creating South cron job for scan mode "name" (* * * * *)`);
+    expect(logger.debug).toHaveBeenCalledWith(`Removing existing South cron job associated to scan mode "name" (* * * * *)`);
 
     await south.disconnect();
     south.createCronJob(scanMode);

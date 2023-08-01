@@ -23,6 +23,7 @@ import {
 import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.model';
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import HistoryQueryEngine from '../engine/history-query-engine';
+import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
 
 jest.mock('./encryption.service');
 jest.mock('./logger/logger.service');
@@ -538,5 +539,31 @@ describe('reload service', () => {
     await service.onCreateOrUpdateHistoryQueryItems({ id: 'historyId' } as HistoryQueryDTO, [], []);
     expect(repositoryService.historyQueryItemRepository.createAndUpdateItems).toHaveBeenCalledWith('historyId', [], []);
     expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith('historyId');
+  });
+
+  it('should update scan mode', async () => {
+    (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValue({ id: 'scanModeId', cron: '* * * * *' });
+
+    await service.onUpdateScanMode('scanModeId', { cron: '*/10 * * * *' } as ScanModeCommandDTO);
+    expect(repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith('scanModeId');
+    expect(oibusEngine.updateScanMode).toHaveBeenCalledWith({ id: 'scanModeId', cron: '* * * * *' });
+  });
+
+  it('should not update scan mode if not found', async () => {
+    (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValue(null);
+
+    await expect(service.onUpdateScanMode('scanModeId', { cron: '*/10 * * * *' } as ScanModeCommandDTO)).rejects.toThrowError(
+      new Error(`Scan mode scanModeId not found`)
+    );
+    expect(repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith('scanModeId');
+    expect(oibusEngine.updateScanMode).not.toHaveBeenCalled();
+  });
+
+  it('should not update scan mode if same cron', async () => {
+    (repositoryService.scanModeRepository.getScanMode as jest.Mock).mockReturnValue({ id: 'scanModeId', cron: '* * * * *' });
+
+    await service.onUpdateScanMode('scanModeId', { cron: '* * * * *' } as ScanModeCommandDTO);
+    expect(repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith('scanModeId');
+    expect(oibusEngine.updateScanMode).not.toHaveBeenCalled();
   });
 });

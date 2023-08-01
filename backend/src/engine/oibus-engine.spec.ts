@@ -13,6 +13,7 @@ import EncryptionService from '../service/encryption.service';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import OIBusEngine from './oibus-engine';
 import { EventEmitter } from 'node:events';
+import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 
 jest.mock('../south/south-mqtt/south-mqtt');
 jest.mock('../service/south.service');
@@ -117,6 +118,7 @@ describe('OIBusEngine', () => {
     deleteAllItems: jest.fn(),
     updateItem: jest.fn(),
     setLogger: jest.fn(),
+    updateScanMode: jest.fn(),
     getMetricsDataStream: jest.fn(),
     resetMetrics: jest.fn(),
     createSubscriptions: jest.fn(),
@@ -133,6 +135,7 @@ describe('OIBusEngine', () => {
     isSubscribed: jest.fn(),
     isSubscribedToExternalSource: jest.fn(),
     setLogger: jest.fn(),
+    updateScanMode: jest.fn(),
     getErrorFiles: jest.fn(),
     removeErrorFiles: jest.fn(),
     retryErrorFiles: jest.fn(),
@@ -391,6 +394,18 @@ describe('OIBusEngine', () => {
       scopeId: northConnectors[1].id,
       scopeName: northConnectors[1].name
     });
+
+    (southService.getSouth as jest.Mock).mockReturnValueOnce(southConnectors[0]).mockReturnValueOnce(southConnectors[1]);
+    (northService.getNorth as jest.Mock).mockReturnValueOnce(northConnectors[0]).mockReturnValueOnce(northConnectors[1]);
+    await engine.updateScanMode({ id: 'scanModeId' } as ScanModeDTO);
+    expect(createdNorth.updateScanMode).toHaveBeenCalledTimes(2);
+    expect(createdSouth.updateScanMode).toHaveBeenCalledTimes(2);
+
+    (southService.getSouth as jest.Mock).mockReturnValueOnce(null).mockReturnValueOnce(null);
+    (northService.getNorth as jest.Mock).mockReturnValueOnce(null).mockReturnValueOnce(null);
+    await engine.updateScanMode({ id: 'scanModeId' } as ScanModeDTO);
+    expect(createdNorth.updateScanMode).toHaveBeenCalledTimes(2);
+    expect(createdSouth.updateScanMode).toHaveBeenCalledTimes(2);
 
     await engine.stopSouth('southId');
     expect(createdSouth.stop).not.toHaveBeenCalled();
