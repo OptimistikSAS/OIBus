@@ -9,13 +9,24 @@ import { SouthConnectorDTO } from '../../../../shared/model/south-connector.mode
 import { HistoryQueryDTO } from '../../../../shared/model/history-query.model';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { NorthConnectorService } from '../services/north-connector.service';
-import { HistoryQueryService } from '../services/history-query.service';
 import { combineLatest } from 'rxjs';
+import { PaginationComponent } from '../shared/pagination/pagination.component';
+import { EngineMetricsComponent } from '../engine/engine-metrics/engine-metrics.component';
 
 @Component({
   selector: 'oib-home',
   standalone: true,
-  imports: [TranslateModule, RouterLink, NgOptimizedImage, BoxComponent, EnabledEnumPipe, NgForOf, NgIf],
+  imports: [
+    TranslateModule,
+    RouterLink,
+    NgOptimizedImage,
+    BoxComponent,
+    EnabledEnumPipe,
+    NgForOf,
+    NgIf,
+    PaginationComponent,
+    EngineMetricsComponent
+  ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
@@ -25,20 +36,14 @@ export class HomeComponent implements OnInit {
   norths: Array<NorthConnectorDTO> | null = null;
   historyQueries: Array<HistoryQueryDTO> | null = null;
 
-  constructor(
-    private southService: SouthConnectorService,
-    private northService: NorthConnectorService,
-    private historyQueryService: HistoryQueryService
-  ) {}
+  constructor(private southService: SouthConnectorService, private northService: NorthConnectorService) {}
 
   ngOnInit(): void {
     const souths$ = this.southService.list();
     const norths$ = this.northService.list();
-    const historyQueries$ = this.historyQueryService.list();
-    combineLatest([souths$, norths$, historyQueries$]).subscribe(([souths, norths, historyQueries]) => {
-      this.souths = souths;
-      this.norths = norths;
-      this.historyQueries = historyQueries;
+    combineLatest([souths$, norths$]).subscribe(([souths, norths]) => {
+      this.souths = souths.filter(south => south.enabled);
+      this.norths = norths.filter(north => north.enabled);
     });
   }
 }

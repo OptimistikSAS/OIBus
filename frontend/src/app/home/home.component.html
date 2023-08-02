@@ -1,73 +1,42 @@
 <div class="oib-padded-container">
   <div class="row">
-    <h1 class="visually-hidden">OIBus</h1>
-
-    <!-- Logo OIBus -->
-    <div class="d-none d-sm-block col-sm-6 col-md-5">
-      <img ngSrc="/assets/oibus_white.svg" alt="" class="logo ms-2" height="86" width="126" />
-    </div>
-  </div>
-
-  <div class="row">
     <!-- Norths -->
-    <div class="col-4">
-      <oib-box boxTitle="home.north.title" imagePath="../../assets/home/north.svg">
-        <table class="table table-sm table-hover oib-table">
-          <thead class="light">
-            <tr>
-              <th translate="home.north.name"></th>
-              <th translate="home.north.files-count-last-hour"></th>
-              <th translate="home.north.values-count-last-hour"></th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody *ngIf="norths" class="north">
-            <tr *ngFor="let north of norths">
-              <td>{{ north.name }}</td>
-              <td>10</td>
-              <td>10</td>
-              <td>
-                <a [routerLink]="['north', north.id]"><span class="fa fa-search"></span></a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </oib-box>
-    </div>
-
-    <!-- Souths -->
-    <div class="col-4">
-      <oib-box boxTitle="home.south.title" imagePath="../../assets/home/south.svg">
-        <table class="table table-sm table-hover oib-table">
-          <thead class="light">
-            <tr>
-              <th translate="home.south.name"></th>
-              <th translate="home.south.files-count-last-hour"></th>
-              <th translate="home.south.values-count-last-hour"></th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody *ngIf="souths" class="south">
-            <tr *ngFor="let south of souths">
-              <td>{{ south.name }}</td>
-              <td>10</td>
-              <td>10</td>
-              <td>
-                <a [routerLink]="['south', south.id]"><span class="fa fa-search"></span></a>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </oib-box>
-    </div>
-
-    <!-- History queries -->
-    <div class="col-4">
-      <oib-box boxTitle="home.history-query.title" imagePath="../../assets/home/history-query.svg"></oib-box>
+    <div class="oib-title-container mb-3">
+      <div class="oib-block-title">
+        <img class="oib-title-image pt-2" src="../assets/home/north.svg" alt="north-logo" />
+      </div>
+      <h1 id="north-title" class="oib-title">
+        <span translate="home.north.title"></span>
+      </h1>
     </div>
   </div>
 
   <div class="row">
-    <span class="text-center" translate="about.copyright" [translateParams]="{nowYear: copyrightYear}"></span>
+    <!-- Engine -->
+    <div class="oib-title-container mb-3">
+      <div class="oib-block-title">
+        <img class="oib-title-image pt-2" src="../assets/home/engine.svg" alt="engine-logo" />
+      </div>
+      <h1 id="engine-title" class="oib-title">
+        <span translate="home.engine.title"></span>
+      </h1>
+    </div>
+    <oib-engine-metrics></oib-engine-metrics>
+  </div>
+
+  <div class="row">
+    <!-- Souths -->
+    <div class="oib-title-container mb-3">
+      <div class="oib-block-title">
+        <img class="oib-title-image pt-2" src="../assets/home/south.svg" alt="south-logo" />
+      </div>
+      <h1 id="south-title" class="oib-title">
+        <span translate="home.south.title"></span>
+      </h1>
+    </div>
+  </div>
+
+  <div class="row">
+    <span class="text-center" translate="about.copyright" [translateParams]="{ nowYear: copyrightYear }"></span>
   </div>
 </div>

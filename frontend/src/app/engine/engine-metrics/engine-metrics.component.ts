@@ -8,12 +8,24 @@ import { DurationPipe } from '../../shared/duration.pipe';
 import { NotificationService } from '../../shared/notification.service';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { EngineService } from '../../services/engine.service';
+import { FileSizePipe } from '../../shared/file-size.pipe';
 
 @Component({
   selector: 'oib-engine-metrics',
   templateUrl: './engine-metrics.component.html',
   styleUrls: ['./engine-metrics.component.scss'],
-  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, DatePipe, PercentPipe],
+  imports: [
+    TranslateModule,
+    NgIf,
+    DatetimePipe,
+    DurationPipe,
+    BoxComponent,
+    BoxTitleDirective,
+    JsonPipe,
+    DatePipe,
+    PercentPipe,
+    FileSizePipe
+  ],
   standalone: true
 })
 export class EngineMetricsComponent implements OnInit, OnDestroy {
