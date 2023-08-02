@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { GetBucketAclCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
 
 import NorthConnector from '../north-connector';
@@ -38,7 +38,10 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
    */
   async start(): Promise<void> {
     await super.start();
+    await this.prepareConnection();
+  }
 
+  async prepareConnection(): Promise<void> {
     if (this.connector.settings.useProxy) {
       this.proxyAgent = createProxyAgent(
         {
@@ -84,5 +87,22 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
     const { name, ext } = path.parse(filePath);
     const filename = name.slice(0, name.lastIndexOf('-'));
     return `${filename}${ext}`;
+  }
+
+  override async testConnection(): Promise<void> {
+    this.logger.info('Testing Amazon S3 connection');
+    await this.prepareConnection();
+
+    try {
+      const result = await this.s3!.send(
+        new GetBucketAclCommand({
+          Bucket: this.connector.settings.bucket // required
+        })
+      );
+      this.logger.info(`Access to bucket ${this.connector.settings.bucket} allowed. ${result}`);
+    } catch (error) {
+      this.logger.error(`Error testing Amazon S3 connection. ${error}`);
+      throw new Error(`Error testing Amazon S3 connection. ${error}`);
+    }
   }
 }
