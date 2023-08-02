@@ -1,4 +1,4 @@
-import { ReadStream, createReadStream } from 'node:fs';
+import { createReadStream, ReadStream } from 'node:fs';
 import fs from 'node:fs/promises';
 
 import { S3Client } from '@aws-sdk/client-s3';
@@ -280,6 +280,25 @@ describe('NorthAmazonS3', () => {
         region: 'eu-west-1',
         requestHandler: undefined
       });
+    });
+
+    it('should test connection and success', async () => {
+      sendMock.mockReturnValueOnce({ result: 'ok' });
+      await north.testConnection();
+      expect(logger.info).toHaveBeenCalledWith('Testing Amazon S3 connection');
+      expect(sendMock).toHaveBeenCalledTimes(1);
+      expect(logger.info).toHaveBeenCalledWith(`Access to bucket ${configuration.settings.bucket} allowed. ${{ result: 'ok' }}`);
+    });
+
+    it('should test connection and fail', async () => {
+      const error = new Error('connection error');
+      sendMock.mockImplementationOnce(() => {
+        throw error;
+      });
+
+      await expect(north.testConnection()).rejects.toThrow(new Error(`Error testing Amazon S3 connection. ${error}`));
+      expect(logger.info).toHaveBeenCalledWith('Testing Amazon S3 connection');
+      expect(logger.error).toHaveBeenCalledWith(`Error testing Amazon S3 connection. ${error}`);
     });
   });
 });
