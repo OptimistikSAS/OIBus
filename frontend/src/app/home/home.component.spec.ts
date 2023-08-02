@@ -6,26 +6,34 @@ import { ComponentTester, createMock } from 'ngx-speculoos';
 import { provideRouter } from '@angular/router';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { NorthConnectorService } from '../services/north-connector.service';
-import { HistoryQueryService } from '../services/history-query.service';
 import { of } from 'rxjs';
 import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { EngineService } from '../services/engine.service';
 
 class HomeComponentTester extends ComponentTester<HomeComponent> {
   constructor() {
     super(HomeComponent);
   }
 
-  get souths() {
-    return this.elements('tbody.south tr');
+  get northTitle() {
+    return this.element('#north-title');
   }
 
   get norths() {
     return this.elements('tbody.north tr');
   }
 
-  get historyQueries() {
-    return this.elements('tbody.history-query tr');
+  get engineTitle() {
+    return this.element('#engine-title');
+  }
+
+  get southTitle() {
+    return this.element('#south-title');
+  }
+
+  get souths() {
+    return this.elements('tbody.south tr');
   }
 }
 
@@ -33,12 +41,12 @@ describe('HomeComponent', () => {
   let tester: HomeComponentTester;
   let southService: jasmine.SpyObj<SouthConnectorService>;
   let northService: jasmine.SpyObj<NorthConnectorService>;
-  let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
+  let engineService: jasmine.SpyObj<EngineService>;
 
   beforeEach(() => {
     southService = createMock(SouthConnectorService);
     northService = createMock(NorthConnectorService);
-    historyQueryService = createMock(HistoryQueryService);
+    engineService = createMock(EngineService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -46,33 +54,33 @@ describe('HomeComponent', () => {
         provideRouter([]),
         { provide: SouthConnectorService, useValue: southService },
         { provide: NorthConnectorService, useValue: northService },
-        { provide: HistoryQueryService, useValue: historyQueryService }
+        { provide: EngineService, useValue: engineService }
       ]
     });
 
-    southService.list.and.returnValue(of([{ name: 'south1' }, { name: 'south2' }, { name: 'south3' }] as Array<SouthConnectorDTO>));
+    southService.list.and.returnValue(
+      of([
+        { name: 'south1', enabled: true },
+        { name: 'south2', enabled: false },
+        { name: 'south3', enabled: true }
+      ] as Array<SouthConnectorDTO>)
+    );
 
-    northService.list.and.returnValue(of([{ name: 'north1' }, { name: 'north2' }] as Array<NorthConnectorDTO>));
-
-    historyQueryService.list.and.returnValue(of([]));
+    northService.list.and.returnValue(
+      of([
+        { name: 'north1', enabled: true },
+        { name: 'north2', enabled: false },
+        { name: 'north2', enabled: true }
+      ] as Array<NorthConnectorDTO>)
+    );
 
     tester = new HomeComponentTester();
     tester.detectChanges();
   });
 
-  it('should display souths', () => {
-    expect(tester.souths.length).toBe(3);
-    const first = tester.souths[0].elements('td')[0];
-    expect(first).toContainText('south1');
-  });
-
-  it('should display norths', () => {
-    expect(tester.norths.length).toBe(2);
-    const first = tester.norths[0].elements('td')[0];
-    expect(first).toContainText('north1');
-  });
-
-  it('should display history query', () => {
-    expect(tester.historyQueries.length).toBe(0);
+  it('should display titles', () => {
+    expect(tester.northTitle).toContainText('North');
+    expect(tester.engineTitle).toContainText('Engine');
+    expect(tester.southTitle).toContainText('South');
   });
 });

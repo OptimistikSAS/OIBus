@@ -191,16 +191,19 @@
   },
   "home": {
     "south": {
-      "title": "South",
+      "title": "Enabled South",
       "name": "Name",
       "files-count-last-hour": "# files (last hr)",
       "values-count-last-hour": "# values (last hr)"
     },
     "north": {
-      "title": "North",
+      "title": "Enabled North",
       "name": "Name",
       "files-count-last-hour": "# files (last hr)",
       "values-count-last-hour": "# values (last hr)"
+    },
+    "engine": {
+      "title": "Engine"
     },
     "history-query": {
       "title": "History query",
@@ -221,7 +224,7 @@
     "copyright": "(c) Copyright 2019-{{nowYear}} Optimistik, all rights reserved."
   },
   "engine": {
-    "title": "Engine configuration",
+    "title": "Engine",
     "edit": "Edit settings",
     "edit-title": "Edit engine settings",
     "shutdown": "Shutdown",
@@ -275,6 +278,12 @@
       "cpu-usage-instant": "CPU usage (last second)",
       "cpu-usage-average": "CPU usage (average)",
       "uptime": "Uptime",
+      "free-memory": "Free memory",
+      "rss": "RSS (min / current / max)",
+      "heap-total": "Heap total (min / current / max)",
+      "heap-used": "Heap used (min / current / max)",
+      "external": "External (min / current / max)",
+      "array-buffer": "Array buffer (min / current / max)",
       "reset-metrics": "Reset metrics",
       "since": "since {{ date }}"
     },
