@@ -112,7 +112,7 @@ describe('EditSouthComponent', () => {
     const southConnector: SouthConnectorDTO = {
       id: 'id1',
       type: 'SQL',
-      name: 'South Connector 1',
+      name: 'My South Connector 1',
       description: 'My South connector description',
       enabled: true,
       history: {
@@ -134,7 +134,7 @@ describe('EditSouthComponent', () => {
     it('should display general settings', () => {
       tester.maxInstant.check();
       expect(southConnectorService.get).toHaveBeenCalledWith('id1');
-      expect(tester.title).toContainText('Edit SQL south connector');
+      expect(tester.title).toContainText('Edit My South Connector 1');
       expect(tester.enabled).toBeChecked();
       expect(tester.maxInstant).toBeChecked();
 

@@ -1,7 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { NgForOf, NgIf } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorManifest
+} from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { formDirectives } from '../../shared/form-directives';
@@ -17,6 +22,7 @@ import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { SouthItemsComponent } from '../south-items/south-items.component';
+import { EditElementComponent } from '../../shared/form/oib-form-array/edit-element/edit-element.component';
 
 @Component({
   selector: 'oib-edit-south',
@@ -32,7 +38,8 @@ import { SouthItemsComponent } from '../south-items/south-items.component';
     BackNavigationDirective,
     BoxComponent,
     BoxTitleDirective,
-    SouthItemsComponent
+    SouthItemsComponent,
+    EditElementComponent
   ],
   templateUrl: './edit-south.component.html',
   styleUrls: ['./edit-south.component.scss']
@@ -57,6 +64,8 @@ export class EditSouthComponent implements OnInit {
     }>;
     settings: FormGroup;
   }> | null = null;
+
+  inMemoryItems: Array<SouthConnectorItemDTO> = [];
 
   constructor(
     private southConnectorService: SouthConnectorService,
@@ -93,14 +102,15 @@ export class EditSouthComponent implements OnInit {
           if (southConnector) {
             this.southType = southConnector.type;
           }
-          return combineLatest([of(southConnector), this.southConnectorService.getSouthConnectorTypeManifest(this.southType)]);
+          return this.southConnectorService.getSouthConnectorTypeManifest(this.southType);
         })
       )
-      .subscribe(([southConnector, manifest]) => {
+      .subscribe(manifest => {
         if (!manifest) {
           return;
         }
 
+        this.manifest = manifest;
         this.southSettingsControls = groupFormControlsByRow(manifest.settings);
 
         this.southForm = this.fb.group({
@@ -116,14 +126,12 @@ export class EditSouthComponent implements OnInit {
         });
 
         // if we have a south connector we initialize the values
-        if (southConnector) {
-          this.southForm.patchValue(southConnector);
+        if (this.southConnector) {
+          this.southForm.patchValue(this.southConnector);
         } else {
           // we should provoke all value changes to make sure fields are properly hidden and disabled
           this.southForm.setValue(this.southForm.getRawValue());
         }
-
-        this.manifest = manifest;
       });
   }
 
@@ -137,15 +145,11 @@ export class EditSouthComponent implements OnInit {
       );
     } else {
       createOrUpdate = this.southConnectorService
-        .create(command)
+        .create(command, this.inMemoryItems)
         .pipe(tap(() => this.notificationService.success('south.created', { name: command.name })));
     }
     createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(southConnector => {
-      if (this.mode === 'create') {
-        this.router.navigate(['/south', southConnector.id, 'edit']);
-      } else {
-        this.router.navigate(['south']);
-      }
+      this.router.navigate(['/south', southConnector.id]);
     });
   }
 
@@ -182,5 +186,9 @@ export class EditSouthComponent implements OnInit {
           this.notificationService.success('south.test-connection.success');
         });
     }
+  }
+
+  updateInMemoryItems(items: Array<SouthConnectorItemDTO>) {
+    this.inMemoryItems = items;
   }
 }

@@ -62,9 +62,10 @@ export class SouthConnectorService {
   /**
    * Create a new South connector
    * @param command - the new South connector
+   * @param items - the new South connector items
    */
-  create(command: SouthConnectorCommandDTO<any>): Observable<SouthConnectorDTO<any>> {
-    return this.http.post<SouthConnectorDTO<any>>(`/api/south`, command);
+  create(command: SouthConnectorCommandDTO<any>, items: Array<SouthConnectorItemDTO<any>>): Observable<SouthConnectorDTO<any>> {
+    return this.http.post<SouthConnectorDTO<any>>(`/api/south`, { south: command, items });
   }
 
   /**

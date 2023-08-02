@@ -182,7 +182,7 @@ describe('EditHistoryQueryComponent', () => {
 
   it('should display general settings', () => {
     expect(historyQueryService.get).toHaveBeenCalledWith('id1');
-    expect(tester.title).toContainText('Edit history query Test');
+    expect(tester.title).toContainText('Edit Test');
     expect(tester.description).toHaveValue('My History query description');
     expect(tester.specificForm).toBeDefined();
     expect(tester.northSpecificTitle).toContainText('Console settings');

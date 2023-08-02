@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
@@ -8,17 +8,21 @@ import { Modal, ModalService } from '../../shared/modal.service';
 import { FormControlValidationDirective } from '../../shared/form-control-validation.directive';
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner.component';
-import { SouthConnectorItemDTO, SouthConnectorItemManifest } from '../../../../../shared/model/south-connector.model';
-import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
+import {
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorItemManifest
+} from '../../../../../shared/model/south-connector.model';
+import { debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { createPageFromArray, Page } from '../../../../../shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
-import { EditHistoryQueryItemModalComponent } from '../edit-history-query-item-modal/edit-history-query-item-modal.component';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
+import { EditSouthItemModalComponent } from '../../south/edit-south-item-modal/edit-south-item-modal.component';
 
 const PAGE_SIZE = 20;
 
@@ -45,6 +49,8 @@ const PAGE_SIZE = 20;
 export class HistoryQueryItemsComponent implements OnInit {
   @Input() historyQuery: HistoryQueryDTO | null = null;
   @Input() southConnectorItemSchema!: SouthConnectorItemManifest;
+  @Input() initItems: Array<SouthConnectorItemDTO> = [];
+  @Output() readonly inMemoryItems = new EventEmitter<Array<SouthConnectorItemDTO>>();
 
   allItems: Array<SouthConnectorItemDTO> = [];
   private filteredItems: Array<SouthConnectorItemDTO> = [];
@@ -62,6 +68,10 @@ export class HistoryQueryItemsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.southConnectorItemSchema.scanMode.subscriptionOnly = true;
+    if (!this.historyQuery) {
+      this.allItems = this.initItems;
+    }
     this.fetchItemsAndResetPage();
     this.displaySettings = this.southConnectorItemSchema.settings.filter(setting => setting.displayInViewMode);
 
@@ -79,6 +89,10 @@ export class HistoryQueryItemsComponent implements OnInit {
         this.filteredItems = this.filter(items);
         this.changePage(0);
       });
+    } else {
+      this.filteredItems = this.filter(this.allItems);
+      this.changePage(0);
+      this.inMemoryItems.emit(this.allItems);
     }
   }
 
@@ -102,60 +116,93 @@ export class HistoryQueryItemsComponent implements OnInit {
    * Open a modal to edit a South item
    */
   editItem(southItem: SouthConnectorItemDTO) {
-    if (this.historyQuery) {
-      const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
-      const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-      component.prepareForEdition(this.historyQuery, this.southConnectorItemSchema, southItem);
-      this.refreshAfterModalClosed(modalRef, 'updated');
-    }
+    const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
+    const component: EditSouthItemModalComponent = modalRef.componentInstance;
+    component.prepareForEdition(this.southConnectorItemSchema, [], southItem);
+    this.refreshAfterEditionModalClosed(modalRef);
   }
 
   /**
    * Open a modal to create a South item
    */
   addItem() {
-    if (this.historyQuery) {
-      const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
-      const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-      component.prepareForCreation(this.historyQuery, this.southConnectorItemSchema);
-      this.refreshAfterModalClosed(modalRef, 'created');
-    }
+    const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
+    const component: EditSouthItemModalComponent = modalRef.componentInstance;
+    component.prepareForCreation(this.southConnectorItemSchema, []);
+    this.refreshAfterCreationModalClosed(modalRef);
   }
 
   /**
-   * Refresh the South item list when the South item is edited
+   * Refresh the South item list when a South item is created
    */
-  private refreshAfterModalClosed(modalRef: Modal<any>, mode: 'created' | 'updated') {
-    modalRef.result.subscribe(() => {
-      this.fetchItemsAndResetPage();
-      this.notificationService.success(`history-query.items.${mode}`);
-    });
+  private refreshAfterCreationModalClosed(modalRef: Modal<any>) {
+    modalRef.result
+      .pipe(
+        switchMap((command: SouthConnectorItemCommandDTO) => {
+          if (this.historyQuery) {
+            return this.historyQueryService.createItem(this.historyQuery.id, command);
+          } else {
+            this.allItems.push({ id: '', connectorId: '', enabled: false, ...command });
+            return of(null);
+          }
+        })
+      )
+      .subscribe(() => {
+        this.fetchItemsAndResetPage();
+        this.notificationService.success(`history-query.items.created`);
+      });
+  }
+
+  /**
+   * Refresh the South item list when a South item is created
+   */
+  private refreshAfterEditionModalClosed(modalRef: Modal<any>) {
+    modalRef.result
+      .pipe(
+        switchMap((command: SouthConnectorItemCommandDTO) => {
+          if (this.historyQuery) {
+            return this.historyQueryService.updateItem(this.historyQuery.id, command.id || '', command);
+          } else {
+            this.allItems.push({ id: '', connectorId: '', enabled: false, ...command });
+            return of(null);
+          }
+        })
+      )
+      .subscribe(() => {
+        this.fetchItemsAndResetPage();
+        this.notificationService.success(`history-query.items.updated`);
+      });
   }
 
   /**
    * Deletes a parser by its ID and refreshes the list
    */
   deleteItem(item: SouthConnectorItemDTO) {
-    if (this.historyQuery) {
-      this.confirmationService
-        .confirm({
-          messageKey: 'south.items.confirm-deletion'
+    this.confirmationService
+      .confirm({
+        messageKey: 'history-query.items.confirm-deletion'
+      })
+      .pipe(
+        switchMap(() => {
+          if (this.historyQuery) {
+            return this.historyQueryService.deleteItem(this.historyQuery!.id, item.id);
+          } else {
+            this.allItems = this.allItems.filter(element => element.name !== item.name);
+            return of(null);
+          }
         })
-        .pipe(switchMap(() => this.historyQueryService.deleteItem(this.historyQuery!.id, item.id)))
-        .subscribe(() => {
-          this.fetchItemsAndResetPage();
-          this.notificationService.success('history-query.items.deleted');
-        });
-    }
+      )
+      .subscribe(() => {
+        this.fetchItemsAndResetPage();
+        this.notificationService.success('history-query.items.deleted');
+      });
   }
 
   duplicateItem(item: SouthConnectorItemDTO) {
-    if (this.historyQuery) {
-      const modalRef = this.modalService.open(EditHistoryQueryItemModalComponent, { size: 'xl' });
-      const component: EditHistoryQueryItemModalComponent = modalRef.componentInstance;
-      component.prepareForCopy(this.historyQuery, this.southConnectorItemSchema, item);
-      this.refreshAfterModalClosed(modalRef, 'created');
-    }
+    const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
+    const component: EditSouthItemModalComponent = modalRef.componentInstance;
+    component.prepareForCopy(this.southConnectorItemSchema, [], item);
+    this.refreshAfterCreationModalClosed(modalRef);
   }
 
   /**
@@ -171,17 +218,24 @@ export class HistoryQueryItemsComponent implements OnInit {
    * Delete all items
    */
   deleteAllItems() {
-    if (this.historyQuery) {
-      this.confirmationService
-        .confirm({
-          messageKey: 'history-query.items.confirm-delete-all'
+    this.confirmationService
+      .confirm({
+        messageKey: 'history-query.items.confirm-delete-all'
+      })
+      .pipe(
+        switchMap(() => {
+          if (this.historyQuery) {
+            return this.historyQueryService.deleteAllItems(this.historyQuery!.id);
+          } else {
+            this.allItems = [];
+            return of(null);
+          }
         })
-        .pipe(switchMap(() => this.historyQueryService.deleteAllItems(this.historyQuery!.id)))
-        .subscribe(() => {
-          this.fetchItemsAndResetPage();
-          this.notificationService.success('history-query.items.all-deleted');
-        });
-    }
+      )
+      .subscribe(() => {
+        this.fetchItemsAndResetPage();
+        this.notificationService.success('history-query.items.all-deleted');
+      });
   }
 
   onImportDragOver(e: Event) {

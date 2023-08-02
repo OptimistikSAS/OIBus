@@ -183,7 +183,8 @@ describe('South connector controller', () => {
 
   it('createSouthConnector() should create South connector', async () => {
     ctx.request.body = {
-      ...southConnectorCommand
+      south: southConnectorCommand,
+      items: []
     };
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
     ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
@@ -202,7 +203,8 @@ describe('South connector controller', () => {
 
   it('createSouthConnector() should create South connector with forceMaxInstantPerItem', async () => {
     ctx.request.body = {
-      ...sqliteConnectorCommand
+      south: sqliteConnectorCommand,
+      items: [{}]
     };
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(sqliteConnectorCommand.settings);
     ctx.app.reloadService.onCreateSouth.mockReturnValue(southConnector);
@@ -221,9 +223,10 @@ describe('South connector controller', () => {
 
   it('createSouthConnector() should return 404 when manifest not found', async () => {
     ctx.request.body = {
-      ...southConnectorCommand,
-      type: 'invalid'
+      south: sqliteConnectorCommand,
+      items: []
     };
+    ctx.request.body.south.type = 'invalid';
 
     await southConnectorController.createSouthConnector(ctx);
 
@@ -234,20 +237,19 @@ describe('South connector controller', () => {
   });
 
   it('createSouthConnector() should return 404 when body is null', async () => {
-    ctx.request.body = null;
+    ctx.request.body = { south: {}, items: null };
 
     await southConnectorController.createSouthConnector(ctx);
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateSouth).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+    expect(ctx.badRequest).toHaveBeenCalled();
   });
 
   it('createSouthConnector() should return bad request when validation fails', async () => {
-    ctx.request.body = {
-      ...southConnectorCommand
-    };
+    ctx.request.body = { south: southConnectorCommand, items: [] };
+
     const validationError = new Error('invalid body');
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
       throw validationError;

@@ -127,7 +127,7 @@ describe('EditNorthComponent', () => {
     });
     it('should display general settings', () => {
       expect(northConnectorService.getNorthConnector).toHaveBeenCalledWith('id1');
-      expect(tester.title).toContainText('Edit Console north connector');
+      expect(tester.title).toContainText('Edit North Connector');
       expect(tester.enabled).toBeChecked();
       expect(tester.description).toHaveValue('My North connector description');
       expect(tester.specificForm).toBeDefined();

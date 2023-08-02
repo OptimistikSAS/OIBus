@@ -19,11 +19,13 @@
           class="btn btn-primary btn-sm oib-box-btn"
           id="export-items"
           (click)="exportItems()"
+          *ngIf="this.southConnector"
           translate="south.items.export"
         ></button>
         <button
           type="button"
           class="btn btn-primary btn-sm oib-box-btn"
+          *ngIf="this.southConnector"
           (click)="fileInput.click()"
           (drop)="onImportDrop($event)"
           (dragover)="onImportDragOver($event)"
@@ -35,6 +37,7 @@
           type="button"
           class="btn btn-danger btn-sm oib-box-btn"
           (click)="deleteAllItems()"
+          [disabled]="this.allItems.length === 0"
           translate="south.items.delete-all"
           id="delete-all"
         ></button>
@@ -43,7 +46,7 @@
   </ng-template>
   <input #fileInput (change)="onImportClick($event)" id="file" type="file" accept=".csv" class="d-none" />
 
-  <div class="mb-3" *ngIf="southConnector?.id; else saveBefore">
+  <div class="mb-3">
     <ng-container *ngIf="displayedItems.content.length > 0; else empty">
       <table class="mb-2 table table-sm table-hover oib-table">
         <thead class="light">
@@ -90,10 +93,4 @@
       <div class="oib-grey-container" translate="south.items.none" *ngIf="allItems.length === 0"></div>
     </ng-template>
   </div>
-
-  <ng-template #saveBefore>
-    <div class="alert alert-warning text-center">
-      <span translate="south.items.save-before-adding-items"></span>
-    </div>
-  </ng-template>
 </oib-box>

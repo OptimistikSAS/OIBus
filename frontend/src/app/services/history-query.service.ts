@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
 import { Page } from '../../../../shared/model/types';
 import {
   SouthConnectorItemCommandDTO,
@@ -9,6 +9,7 @@ import {
   SouthConnectorItemSearchParam
 } from '../../../../shared/model/south-connector.model';
 import { DownloadService } from './download.service';
+
 /**
  * Service used to interact with the backend for CRUD operations on History queries
  */
@@ -36,9 +37,17 @@ export class HistoryQueryService {
   /**
    * Create a new History query
    * @param command - the new History query
+   * @param items - the new History query items
+   * @param fromSouthId - The source south (used to encrypt password in the backend)
+   * @param fromNorthId - The source north (used to encrypt password in the backend)
    */
-  create(command: HistoryQueryCreateCommandDTO): Observable<HistoryQueryDTO> {
-    return this.http.post<HistoryQueryDTO>(`/api/history-queries`, command);
+  create(
+    command: HistoryQueryCommandDTO,
+    items: Array<SouthConnectorItemDTO>,
+    fromSouthId: string | null,
+    fromNorthId: string | null
+  ): Observable<HistoryQueryDTO> {
+    return this.http.post<HistoryQueryDTO>(`/api/history-queries`, { historyQuery: command, items, fromSouthId, fromNorthId });
   }
 
   /**

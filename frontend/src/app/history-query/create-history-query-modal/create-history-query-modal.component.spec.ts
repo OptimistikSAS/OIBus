@@ -146,7 +146,10 @@ describe('CreateHistoryQueryModalComponent', () => {
       tester.createButton.click();
 
       expect(fakeActiveModal.close).toHaveBeenCalledWith({
-        id: 'historyId'
+        northType: 'mongodb',
+        southType: 'mssql',
+        northId: null,
+        southId: null
       });
     });
   });
@@ -236,7 +239,10 @@ describe('CreateHistoryQueryModalComponent', () => {
       tester.createButton.click();
 
       expect(fakeActiveModal.close).toHaveBeenCalledWith({
-        id: 'historyId'
+        northType: null,
+        southType: null,
+        northId: 'id2',
+        southId: 'id1'
       });
     });
   });

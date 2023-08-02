@@ -15,7 +15,6 @@ import fs from 'node:fs/promises';
 import { southManifests } from './south-connector.controller';
 import AbstractController from './abstract.controller';
 import Joi from 'joi';
-import { DateTime } from 'luxon';
 
 export default class HistoryQueryController extends AbstractController {
   constructor(
@@ -60,86 +59,56 @@ export default class HistoryQueryController extends AbstractController {
   };
 
   createHistoryQuery = async (ctx: KoaContext<HistoryQueryCreateCommandDTO, void>) => {
-    if (!ctx.request.body) {
+    if (!ctx.request.body || !ctx.request.body.items || !ctx.request.body.historyQuery) {
       return ctx.badRequest();
     }
-    const now = DateTime.now().endOf('minute');
-    const command: HistoryQueryCommandDTO = {
-      name: ctx.request.body.name,
-      description: ctx.request.body.description,
-      enabled: false,
-      startTime: now.minus({ days: 1 }).toUTC().toISO()!,
-      endTime: now.toUTC().toISO()!,
-      southType: '',
-      northType: '',
-      southSettings: {},
-      northSettings: {},
-      history: {
-        maxInstantPerItem: false,
-        maxReadInterval: 0,
-        readDelay: 200
-      },
-      caching: {
-        scanModeId: '',
-        retryInterval: 5000,
-        retryCount: 3,
-        groupCount: 3000,
-        maxSendCount: 10000,
-        sendFileImmediately: false,
-        maxSize: 0
-      },
-      archive: {
-        enabled: false,
-        retentionDuration: 0
-      }
-    };
 
-    let southManifest: SouthConnectorManifest | undefined;
-    let southItems: Array<SouthConnectorItemDTO> = [];
-    if (ctx.request.body.southType) {
-      southManifest = this.southManifests.find(manifest => manifest.id === ctx.request.body!.southType);
-      command.southType = ctx.request.body.southType;
-    } else if (ctx.request.body.southId) {
-      const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.request.body.southId);
-      if (!southConnector) {
-        return ctx.throw(404, 'South connector not found');
-      }
-      command.southSettings = southConnector.settings;
-      command.southType = southConnector.type;
-      command.history = southConnector.history;
-      southItems = ctx.app.repositoryService.southItemRepository.getSouthItems(ctx.request.body.southId);
-      southManifest = this.southManifests.find(manifest => manifest.id === southConnector.type);
-    }
+    const command = ctx.request.body.historyQuery;
+    const itemsToAdd = ctx.request.body.items;
+    const southManifest = this.southManifests.find(manifest => manifest.id === command.southType);
     if (!southManifest) {
       return ctx.throw(404, 'South manifest not found');
     }
-
-    let northManifest: NorthConnectorManifest | undefined;
-    if (ctx.request.body.northType) {
-      northManifest = this.northManifests.find(manifest => manifest.id === ctx.request.body!.northType);
-      command.northType = ctx.request.body.northType;
-    } else if (ctx.request.body.northId) {
-      const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.request.body.northId);
-      if (!northConnector) {
-        return ctx.throw(404, 'North connector not found');
+    let southSource;
+    if (ctx.request.body.fromSouthId) {
+      southSource = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.request.body.fromSouthId);
+      if (!southSource) {
+        return ctx.notFound();
       }
-      command.northSettings = northConnector.settings;
-      command.caching = northConnector.caching;
-      command.archive = northConnector.archive;
-      command.northType = northConnector.type;
-      northManifest = this.northManifests.find(manifest => manifest.id === northConnector.type);
     }
+
+    const northManifest = this.northManifests.find(manifest => manifest.id === command.northType);
     if (!northManifest) {
       return ctx.throw(404, 'North manifest not found');
+    }
+    let northSource;
+    if (ctx.request.body.fromNorthId) {
+      northSource = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.request.body.fromNorthId);
+      if (!northSource) {
+        return ctx.notFound();
+      }
     }
 
     try {
       await this.validator.validateSettings(southManifest.settings, command.southSettings);
       await this.validator.validateSettings(northManifest.settings, command.northSettings);
-      command.southSettings = await ctx.app.encryptionService.encryptConnectorSecrets(command.southSettings, null, southManifest.settings);
-      command.northSettings = await ctx.app.encryptionService.encryptConnectorSecrets(command.northSettings, null, northManifest.settings);
+      // Check if item settings match the item schema, throw an error otherwise
+      for (const item of itemsToAdd) {
+        await this.validator.validateSettings(southManifest.items.settings, item.settings);
+      }
 
-      const historyQuery = await ctx.app.reloadService.onCreateHistoryQuery(command, southItems);
+      command.southSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
+        command.southSettings,
+        southSource?.settings,
+        southManifest.settings
+      );
+      command.northSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
+        command.northSettings,
+        northSource?.settings,
+        northManifest.settings
+      );
+
+      const historyQuery = await ctx.app.reloadService.onCreateHistoryQuery(command, itemsToAdd);
       ctx.created(historyQuery);
     } catch (error: any) {
       ctx.badRequest(error.message);

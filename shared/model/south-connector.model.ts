@@ -46,6 +46,14 @@ export interface SouthConnectorCommandDTO<T = any> {
 }
 
 /**
+ * Command DTO for South connector
+ */
+export interface SouthConnectorCreationCommandDTO<> {
+  south: SouthConnectorDTO;
+  items: Array<SouthConnectorItemDTO>;
+}
+
+/**
  * DTO used for an item to query within a south
  */
 export interface SouthConnectorItemDTO<T extends SouthItemSettings = any> extends BaseEntity {
@@ -60,6 +68,7 @@ export interface SouthConnectorItemDTO<T extends SouthItemSettings = any> extend
  * Command DTO used to create an SouthConnectorItem
  */
 export interface SouthConnectorItemCommandDTO<T extends SouthItemSettings = any> {
+  id?: string;
   name: string;
   settings: T;
   scanModeId: string;

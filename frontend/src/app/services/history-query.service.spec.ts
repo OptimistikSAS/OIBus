@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { HistoryQueryService } from './history-query.service';
-import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
 import { toPage } from '../shared/test-utils';
 import { Page } from '../../../../shared/model/types';
 import { SouthConnectorItemCommandDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
@@ -47,18 +47,16 @@ describe('HistoryQueryService', () => {
 
   it('should create a History query', () => {
     let done = false;
-    const command: HistoryQueryCreateCommandDTO = {
+    const command: HistoryQueryCommandDTO = {
       name: 'myHistoryQuery',
       description: 'a test history query',
       southType: 'SQL',
-      northType: 'OIConnect',
-      southId: null,
-      northId: null
-    };
+      northType: 'OIConnect'
+    } as HistoryQueryCommandDTO;
 
-    service.create(command).subscribe(() => (done = true));
+    service.create(command, [], null, null).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries' });
-    expect(testRequest.request.body).toEqual(command);
+    expect(testRequest.request.body).toEqual({ historyQuery: command, items: [], fromSouthId: null, fromNorthId: null });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
