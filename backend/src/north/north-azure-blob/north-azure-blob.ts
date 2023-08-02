@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import pino from 'pino';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
-import { DefaultAzureCredential } from '@azure/identity';
+import { AzurePowerShellCredential, DefaultAzureCredential } from '@azure/identity';
 import NorthConnector from '../north-connector';
 import manifest from '../north-azure-blob/manifest';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
@@ -27,6 +27,11 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
   }
 
   async start(): Promise<void> {
+    await super.start();
+    await this.prepareConnection();
+  }
+
+  async prepareConnection(): Promise<void> {
     this.logger.info(
       `Connecting to Azure Blob Storage for account ${this.connector.settings.account} and container ${this.connector.settings.container}`
     );
@@ -51,8 +56,21 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         const defaultAzureCredential = new DefaultAzureCredential();
         this.blobClient = new BlobServiceClient(`https://${this.connector.settings.account}.blob.core.windows.net`, defaultAzureCredential);
         break;
+      case 'external':
+        const externalAzureCredential = new DefaultAzureCredential();
+        this.blobClient = new BlobServiceClient(
+          `https://${this.connector.settings.account}.blob.core.windows.net`,
+          externalAzureCredential
+        );
+        break;
+      case 'powershell':
+        this.blobClient = new BlobServiceClient(
+          `https://${this.connector.settings.account}.blob.core.windows.net`,
+          new AzurePowerShellCredential()
+        );
+        break;
       default:
-        throw new Error(`Authentication "${this.connector.settings.authentication}" not supported for South "${this.connector.name}"`);
+        throw new Error(`Authentication "${this.connector.settings.authentication}" not supported for North "${this.connector.name}"`);
     }
   }
 
@@ -75,5 +93,23 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
     const blockBlobClient = containerClient.getBlockBlobClient(blobName);
     const uploadBlobResponse = await blockBlobClient.upload(content, stats.size);
     this.logger.info(`Upload block blob "${blobName}" successfully with requestId: ${uploadBlobResponse.requestId}`);
+  }
+
+  override async testConnection(): Promise<void> {
+    this.logger.info('Testing Azure Blob connection');
+    await this.prepareConnection();
+
+    let result = false;
+    try {
+      result = await this.blobClient!.getContainerClient(this.connector.settings.container).exists();
+    } catch (error) {
+      this.logger.error(`Error testing Azure Blob connection. ${error}`);
+      throw error;
+    }
+    if (result) {
+      this.logger.info(`Access to container ${this.connector.settings.container} ok`);
+    } else {
+      throw new Error(`Container ${this.connector.settings.container} does not exist`);
+    }
   }
 }
