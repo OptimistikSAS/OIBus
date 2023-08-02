@@ -7,7 +7,7 @@ import JoiValidator from './validators/joi.validator';
 import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO } from '../../../../shared/model/history-query.model';
 import { historyQuerySchema } from '../../engine/oibus-validation-schema';
 import { NorthArchiveSettings, NorthCacheSettingsDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
-import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import csv from 'papaparse';
 import fs from 'node:fs/promises';
 
@@ -85,12 +85,10 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   archive: northArchiveSettings
 };
 const historyQueryCreateCommand: HistoryQueryCreateCommandDTO = {
-  name: 'name',
-  description: 'description',
-  southType: 'opcua-ha',
-  northType: 'console',
-  southId: null,
-  northId: null
+  historyQuery: historyQueryCommand,
+  items: [{} as SouthConnectorItemDTO],
+  fromSouthId: null,
+  fromNorthId: null
 };
 const historyQuery = {
   id: 'id',
@@ -210,7 +208,7 @@ describe('History query controller', () => {
 
   it('createHistoryQuery() should create History query with new connectors', async () => {
     ctx.request.body = {
-      ...historyQueryCreateCommand
+      ...JSON.parse(JSON.stringify(historyQueryCreateCommand))
     };
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValueOnce({}).mockReturnValueOnce({});
     ctx.app.reloadService.onCreateHistoryQuery.mockReturnValue(historyQuery);
@@ -219,54 +217,40 @@ describe('History query controller', () => {
 
     const southManifest = southManifests.find(manifest => manifest.id === 'opcua-ha')!;
     const northManifest = northManifests.find(manifest => manifest.id === 'console')!;
-    expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, {});
-    expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, {});
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith({}, null, southManifest.settings);
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith({}, null, northManifest.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQueryCommand.southSettings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, historyQueryCommand.northSettings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      historyQueryCommand.southSettings,
+      undefined,
+      southManifest.settings
+    );
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      historyQueryCommand.northSettings,
+      undefined,
+      northManifest.settings
+    );
     expect(ctx.app.reloadService.onCreateHistoryQuery).toHaveBeenCalledWith(
       {
         name: 'name',
         description: 'description',
         enabled: false,
-        history: {
-          maxInstantPerItem: false,
-          maxReadInterval: 0,
-          readDelay: 200
-        },
+        history: southConnector.history,
         startTime: '2020-02-01T02:02:59.999Z',
         endTime: '2020-02-02T02:02:59.999Z',
         southType: 'opcua-ha',
         northType: 'console',
         southSettings: {},
         northSettings: {},
-        caching: {
-          scanModeId: '',
-          retryInterval: 5000,
-          retryCount: 3,
-          groupCount: 3000,
-          maxSendCount: 10000,
-          sendFileImmediately: false,
-          maxSize: 0
-        },
-        archive: {
-          enabled: false,
-          retentionDuration: 0
-        }
+        caching: northCacheSettings,
+        archive: northArchiveSettings
       },
-      []
+      historyQueryCreateCommand.items
     );
     expect(ctx.created).toHaveBeenCalledWith(historyQuery);
   });
 
   it('createHistoryQuery() should create History query with existing connectors', async () => {
-    ctx.request.body = {
-      name: 'name',
-      description: 'description',
-      southType: null,
-      northType: null,
-      southId: 'southId',
-      northId: 'northId'
-    };
+    ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)), fromNorthId: 'id1', fromSouthId: 'id2' };
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
     ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValue([]);
     ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
@@ -280,10 +264,18 @@ describe('History query controller', () => {
 
     const southManifest = southManifests.find(manifest => manifest.id === 'opcua-ha')!;
     const northManifest = northManifests.find(manifest => manifest.id === 'console')!;
-    expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, northConnector.settings);
-    expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, southConnector.settings);
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(southConnector.settings, null, southManifest.settings);
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(northConnector.settings, null, northManifest.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQuery.southSettings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(northManifest.settings, historyQuery.northSettings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      historyQuery.southSettings,
+      southConnector.settings,
+      southManifest.settings
+    );
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      historyQuery.northSettings,
+      northConnector.settings,
+      northManifest.settings
+    );
     expect(ctx.app.reloadService.onCreateHistoryQuery).toHaveBeenCalledWith(
       {
         name: 'name',
@@ -303,7 +295,7 @@ describe('History query controller', () => {
         caching: northCacheSettings,
         archive: northArchiveSettings
       },
-      []
+      historyQueryCreateCommand.items
     );
     expect(ctx.created).toHaveBeenCalledWith(historyQuery);
   });
@@ -323,14 +315,7 @@ describe('History query controller', () => {
   });
 
   it('createHistoryQuery() should return 404 when North connector not found', async () => {
-    ctx.request.body = {
-      name: 'name',
-      description: 'description',
-      southType: null,
-      northType: null,
-      southId: 'southId',
-      northId: 'northId'
-    };
+    ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)), fromNorthId: 'id1' };
 
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
     ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValue([]);
@@ -340,18 +325,11 @@ describe('History query controller', () => {
 
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateHistoryQuery).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'North connector not found');
+    expect(ctx.notFound).toHaveBeenCalled();
   });
 
-  it('createHistoryQuery() should return 404 when North connector not found', async () => {
-    ctx.request.body = {
-      name: 'name',
-      description: 'description',
-      southType: null,
-      northType: null,
-      southId: 'southId',
-      northId: 'northId'
-    };
+  it('createHistoryQuery() should return 404 when South connector not found', async () => {
+    ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)), fromSouthId: 'id1' };
 
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
     ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValue([]);
@@ -360,14 +338,12 @@ describe('History query controller', () => {
 
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateHistoryQuery).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South connector not found');
+    expect(ctx.notFound).toHaveBeenCalled();
   });
 
   it('createHistoryQuery() should return 404 when North manifest not found', async () => {
-    ctx.request.body = {
-      ...historyQueryCommand,
-      northType: 'invalid'
-    };
+    ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)) };
+    ctx.request.body.historyQuery.northType = 'bad type';
 
     await historyQueryController.createHistoryQuery(ctx);
 
@@ -378,10 +354,8 @@ describe('History query controller', () => {
   });
 
   it('createHistoryQuery() should return 404 when South manifest not found', async () => {
-    ctx.request.body = {
-      ...historyQueryCommand,
-      southType: 'invalid'
-    };
+    ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)) };
+    ctx.request.body.historyQuery.southType = 'bad type';
 
     await historyQueryController.createHistoryQuery(ctx);
 
@@ -392,9 +366,8 @@ describe('History query controller', () => {
   });
 
   it('createHistoryQuery() should return bad request when validation fails', async () => {
-    ctx.request.body = {
-      ...historyQueryCommand
-    };
+    ctx.request.body = { ...JSON.parse(JSON.stringify(historyQueryCreateCommand)) };
+
     const validationError = new Error('invalid body');
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
       throw validationError;
@@ -403,7 +376,7 @@ describe('History query controller', () => {
     await historyQueryController.createHistoryQuery(ctx);
     const southManifest = southManifests.find(manifest => manifest.id === 'opcua-ha')!;
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, {});
+    expect(validator.validateSettings).toHaveBeenCalledWith(southManifest.settings, historyQuery.southSettings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateSouth).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);

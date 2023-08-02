@@ -10,7 +10,6 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { combineLatest } from 'rxjs';
 import { NonNullableFormBuilder, Validators } from '@angular/forms';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
-import { HistoryQueryService } from '../../services/history-query.service';
 
 @Component({
   selector: 'oib-create-history-query-modal',
@@ -40,7 +39,6 @@ export class CreateHistoryQueryModalComponent implements OnInit {
     private modal: NgbActiveModal,
     private northConnectorService: NorthConnectorService,
     private southConnectorService: SouthConnectorService,
-    private historyQueryService: HistoryQueryService,
     private fb: NonNullableFormBuilder
   ) {
     this.createForm.controls.southType.disable();
@@ -101,20 +99,13 @@ export class CreateHistoryQueryModalComponent implements OnInit {
     }
 
     const formValues = this.createForm.value;
-    const queryParams = {
-      name: formValues.name!,
-      description: formValues.description || '',
+    const queryParams: Record<string, string | null> = {
       northType: formValues.northType || null,
       southType: formValues.southType || null,
       northId: formValues.northId || null,
       southId: formValues.southId || null
     };
-    this.historyQueryService
-      .create(queryParams)
-      .pipe(this.state.pendingUntilFinalization())
-      .subscribe(historyQuery => {
-        this.modal.close(historyQuery);
-      });
+    this.modal.close(queryParams);
   }
 
   cancel() {

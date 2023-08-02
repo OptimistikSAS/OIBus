@@ -1,5 +1,5 @@
 import { NorthArchiveSettings, NorthCacheSettingsDTO } from './north-connector.model';
-import { SouthConnectorHistorySettings } from './south-connector.model';
+import { SouthConnectorHistorySettings, SouthConnectorItemDTO } from './south-connector.model';
 import { BaseEntity } from './types';
 
 /**
@@ -42,10 +42,8 @@ export interface HistoryQueryCommandDTO {
  * Command DTO for history queries
  */
 export interface HistoryQueryCreateCommandDTO {
-  name: string;
-  description: string;
-  southType: string | null;
-  northType: string | null;
-  southId: string | null;
-  northId: string | null;
+  historyQuery: HistoryQueryCommandDTO;
+  items: Array<SouthConnectorItemDTO>;
+  fromSouthId: string | null; // used to retrieve passwords
+  fromNorthId: string | null; // used to retrieve passwords
 }

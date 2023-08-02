@@ -98,8 +98,8 @@ export class HistoryQueryListComponent implements OnInit {
 
   createHistoryQuery() {
     const modalRef = this.modalService.open(CreateHistoryQueryModalComponent);
-    modalRef.result.subscribe(historyQuery => {
-      this.router.navigate(['history-queries', historyQuery.id, 'edit']);
+    modalRef.result.subscribe(queryParams => {
+      this.router.navigate(['/history-queries', 'create'], { queryParams });
     });
   }
 

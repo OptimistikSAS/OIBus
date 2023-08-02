@@ -2,14 +2,11 @@ import { EditSouthItemModalComponent } from './edit-south-item-modal.component';
 import { ComponentTester, createMock } from 'ngx-speculoos';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { fakeAsync, TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
 import { DefaultValidationErrorsComponent } from '../../shared/default-validation-errors/default-validation-errors.component';
-import { SouthConnectorService } from '../../services/south-connector.service';
 import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemManifest,
-  SouthConnectorDTO
+  SouthConnectorItemManifest
 } from '../../../../../shared/model/south-connector.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
@@ -43,21 +40,6 @@ class EditSouthItemModalComponentTester extends ComponentTester<EditSouthItemMod
 describe('EditSouthItemModalComponent', () => {
   let tester: EditSouthItemModalComponentTester;
   let fakeActiveModal: NgbActiveModal;
-  let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
-
-  const southConnector: SouthConnectorDTO = {
-    id: 'southId1',
-    type: 'SQL',
-    name: 'South Connector 1',
-    description: 'My South connector description',
-    enabled: true,
-    history: {
-      maxInstantPerItem: false,
-      maxReadInterval: 0,
-      readDelay: 200
-    },
-    settings: []
-  };
 
   const southItemSchema: SouthConnectorItemManifest = {
     scanMode: { subscriptionOnly: false, acceptSubscription: true },
@@ -81,14 +63,9 @@ describe('EditSouthItemModalComponent', () => {
 
   beforeEach(() => {
     fakeActiveModal = createMock(NgbActiveModal);
-    southConnectorService = createMock(SouthConnectorService);
 
     TestBed.configureTestingModule({
-      providers: [
-        provideI18nTesting(),
-        { provide: NgbActiveModal, useValue: fakeActiveModal },
-        { provide: SouthConnectorService, useValue: southConnectorService }
-      ]
+      providers: [provideI18nTesting(), { provide: NgbActiveModal, useValue: fakeActiveModal }]
     });
 
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
@@ -98,7 +75,7 @@ describe('EditSouthItemModalComponent', () => {
 
   describe('create mode', () => {
     beforeEach(() => {
-      tester.componentInstance.prepareForCreation(southConnector, southItemSchema, scanModes);
+      tester.componentInstance.prepareForCreation(southItemSchema, scanModes);
       tester.detectChanges();
     });
 
@@ -121,22 +98,14 @@ describe('EditSouthItemModalComponent', () => {
 
       tester.detectChanges();
 
-      const createdSouthItem = {
-        id: 'id1',
-        connectorId: 'southId1'
-      } as SouthConnectorItemDTO;
-      southConnectorService.createItem.and.returnValue(of(createdSouthItem));
-
-      tester.save.click();
-
-      const expectedCommand: SouthConnectorItemCommandDTO = {
+      const command: SouthConnectorItemCommandDTO = {
+        id: undefined,
         name: 'MyName',
         scanModeId: 'scanModeId2',
         settings: {}
       };
-
-      expect(southConnectorService.createItem).toHaveBeenCalledWith('southId1', expectedCommand);
-      expect(fakeActiveModal.close).toHaveBeenCalledWith(createdSouthItem);
+      tester.save.click();
+      expect(fakeActiveModal.close).toHaveBeenCalledWith(command);
     }));
 
     it('should cancel', () => {
@@ -156,7 +125,7 @@ describe('EditSouthItemModalComponent', () => {
     };
 
     it('should duplicate item', () => {
-      tester.componentInstance.prepareForCopy(southConnector, southItemSchema, scanModes, southItem);
+      tester.componentInstance.prepareForCopy(southItemSchema, scanModes, southItem);
       tester.detectChanges();
       expect(tester.name).toHaveValue('myName-copy');
 
@@ -165,22 +134,14 @@ describe('EditSouthItemModalComponent', () => {
 
       tester.detectChanges();
 
-      const createdSouthItem = {
+      const command: SouthConnectorItemCommandDTO = {
         id: 'id1',
-        connectorId: 'southId1'
-      } as SouthConnectorItemDTO;
-      southConnectorService.createItem.and.returnValue(of(createdSouthItem));
-
-      tester.save.click();
-
-      const expectedCommand: SouthConnectorItemCommandDTO = {
         name: 'MyName-2',
         scanModeId: 'scanModeId2',
         settings: {}
       };
-
-      expect(southConnectorService.createItem).toHaveBeenCalledWith('southId1', expectedCommand);
-      expect(fakeActiveModal.close).toHaveBeenCalledWith(createdSouthItem);
+      tester.save.click();
+      expect(fakeActiveModal.close).toHaveBeenCalledWith(command);
     });
   });
 
@@ -195,10 +156,7 @@ describe('EditSouthItemModalComponent', () => {
     };
 
     beforeEach(() => {
-      southConnectorService.getItem.and.returnValue(of(southItem));
-      southConnectorService.updateItem.and.returnValue(of(undefined));
-
-      tester.componentInstance.prepareForEdition(southConnector, southItemSchema, scanModes, southItem);
+      tester.componentInstance.prepareForEdition(southItemSchema, scanModes, southItem);
       tester.detectChanges();
     });
 
@@ -219,16 +177,13 @@ describe('EditSouthItemModalComponent', () => {
       tester.name.fillWith('South Item 1 (updated)');
       tester.scanMode.selectLabel('Subscribe');
       tester.save.click();
-
-      const expectedCommand: SouthConnectorItemCommandDTO = {
+      const command: SouthConnectorItemCommandDTO = {
+        id: 'id1',
         name: 'South Item 1 (updated)',
         scanModeId: 'scanModeId1',
         settings: {}
       };
-
-      expect(southConnectorService.updateItem).toHaveBeenCalledWith('southId1', 'id1', expectedCommand);
-      expect(southConnectorService.getItem).toHaveBeenCalledWith('southId1', 'id1');
-      expect(fakeActiveModal.close).toHaveBeenCalledWith(southItem);
+      expect(fakeActiveModal.close).toHaveBeenCalledWith(command);
     }));
 
     it('should cancel', () => {

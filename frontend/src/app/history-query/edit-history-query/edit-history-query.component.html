@@ -1,7 +1,8 @@
-<div class="oib-padded-container" *ngIf="historyQuery && southManifest && northManifest && historyQueryForm">
+<div class="oib-padded-container">
   <div class="row justify-content-center">
-    <div class="col-md-10 col-lg-8">
-      <h1 translate="history-query.edit-title" [translateParams]="{ name: historyQuery.name }"></h1>
+    <div class="col-md-10 col-lg-8" *ngIf="southManifest && northManifest && historyQueryForm">
+      <h1 *ngIf="mode === 'create'" translate="history-query.create-title"></h1>
+      <h1 *ngIf="mode === 'edit' && historyQuery" translate="history-query.edit-title" [translateParams]="{ name: historyQuery.name }"></h1>
 
       <form [formGroup]="historyQueryForm" (ngSubmit)="save()" id="history-query-form" class="mt-3">
         <!-- General settings -->
@@ -202,11 +203,7 @@
         <!-- History settings -->
         <oib-box formGroupName="history">
           <ng-template oibBoxTitle>
-            <span
-              translate="south.history.settings"
-              [translateParams]="{ type: historyQuery.southType }"
-              id="history-settings-title"
-            ></span>
+            <span translate="south.history.settings" [translateParams]="{ type: southType }" id="history-settings-title"></span>
           </ng-template>
           <div class="row">
             <div class="col-4">
@@ -239,7 +236,12 @@
         </oib-box>
 
         <!-- items -->
-        <oib-history-query-items [historyQuery]="historyQuery" [southConnectorItemSchema]="southManifest.items"></oib-history-query-items>
+        <oib-history-query-items
+          (inMemoryItems)="updateInMemoryItems($event)"
+          [historyQuery]="historyQuery"
+          [southConnectorItemSchema]="southManifest.items"
+          [initItems]="inMemoryItems"
+        ></oib-history-query-items>
       </form>
 
       <div id="actions" class="mb-2 d-flex justify-content-end">

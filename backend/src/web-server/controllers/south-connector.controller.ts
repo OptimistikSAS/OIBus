@@ -18,6 +18,7 @@ import odbcManifest from '../../south/south-odbc/manifest';
 import sqliteManifest from '../../south/south-sqlite/manifest';
 import {
   SouthConnectorCommandDTO,
+  SouthConnectorCreationCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
@@ -130,21 +131,32 @@ export default class SouthConnectorController {
     }
   }
 
-  async createSouthConnector(ctx: KoaContext<SouthConnectorCommandDTO, void>): Promise<void> {
+  async createSouthConnector(ctx: KoaContext<SouthConnectorCreationCommandDTO, void>): Promise<void> {
+    if (!ctx.request.body || !ctx.request.body.items || !ctx.request.body.south) {
+      return ctx.badRequest();
+    }
+
     try {
-      const manifest = ctx.request.body ? southManifests.find(southManifest => southManifest.id === ctx.request.body!.type) : null;
+      const command = ctx.request.body!.south;
+      const manifest = southManifests.find(southManifest => southManifest.id === command.type);
+
       if (!manifest) {
         return ctx.throw(404, 'South manifest not found');
       }
 
-      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
+      await this.validator.validateSettings(manifest.settings, command.settings);
+      // Check if item settings match the item schema, throw an error otherwise
+      for (const item of ctx.request.body!.items) {
+        await this.validator.validateSettings(manifest.items.settings, item.settings);
+      }
 
-      const command: SouthConnectorCommandDTO = ctx.request.body!;
       if (manifest.modes.forceMaxInstantPerItem) {
         command.history.maxInstantPerItem = true;
       }
       command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, null, manifest.settings);
       const southConnector = await ctx.app.reloadService.onCreateSouth(command);
+      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, ctx.request.body!.items, []);
+
       ctx.created(southConnector);
     } catch (error: any) {
       ctx.badRequest(error.message);
