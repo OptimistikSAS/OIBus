@@ -43,6 +43,32 @@ export class OibArrayComponent implements OnInit {
     });
   }
 
+  ngAfterViewChecked(): void {
+    this.countDivsInFakeTableRows();
+  }
+
+  /*
+   * Counts the number of div elements within a row with the class "oib-fake-table"
+   * and ensures that there are exactly six div elements in each row.
+   * If there are fewer than six div elements, it adds the missing div elements
+   * before the "col-2 text-end text-nowrap" div to align it to the right of the table.
+   */
+  countDivsInFakeTableRows() {
+    const rows = document.getElementsByClassName('oib-fake-table');
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const divElements = row.getElementsByTagName('div');
+      if (divElements.length !== 6) {
+        const numMissingDivs = 6 - divElements.length;
+        for (let j = 0; j < numMissingDivs; j++) {
+          const newDiv = document.createElement('div');
+          newDiv.classList.add('col-2');
+          row.insertBefore(newDiv, row.querySelector('.col-2.text-end.text-nowrap'));
+        }
+      }
+    }
+  }
+
   /**
    * If null, this means no element is being edited or added. If not null, it contains the element being edited,
    * and a flag indicating if it's a new element being created, or an existing one being edited.
@@ -131,7 +157,6 @@ export class OibArrayComponent implements OnInit {
       this.elements = newElements;
     }
     this.editedElement = null;
-    this.recomputeElementsIncludingNew();
     this.propagateChange();
   }
 
@@ -171,10 +196,12 @@ export class OibArrayComponent implements OnInit {
   propagateChange() {
     this.onChange(this.elements);
     this.onTouched();
+    this.recomputeElementsIncludingNew();
   }
 
   recomputeElementsIncludingNew() {
     this.elementsIncludingNew = this.editedElement?.isNew ? [...this.elements, this.editedElement.element] : this.elements;
+    this.countDivsInFakeTableRows();
   }
 
   createDefaultValue(): any {
