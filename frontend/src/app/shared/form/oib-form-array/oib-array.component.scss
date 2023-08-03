@@ -1,3 +1,5 @@
+@import '../../../../common.scss';
+
 .data-list-header {
   background-color: #e9ecef;
   border-bottom: 0px;
@@ -10,5 +12,15 @@
   border-radius: 1rem;
   &.empty {
     background-color: #e9ecef;
+  }
+}
+
+.oib-fake-table:hover {
+  background-color: $mediumGrey;
+  .btn-link {
+    color: $darkGrey;
+  }
+  .btn-link:hover {
+    color: $yellow;
   }
 }
