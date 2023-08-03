@@ -13,7 +13,7 @@
 <div>
   <div class="component-drop-list" [class.empty]="elementsIncludingNew.length === 0">
     <div *ngIf="elementsIncludingNew.length === 0" class="p-2 oib-grey-container" translate="oib-array.no-elements"></div>
-    <div *ngFor="let element of elementsIncludingNew; index as index; last as last">
+    <div class="oib-fake-container" *ngFor="let element of elementsIncludingNew; index as index; last as last">
       <oib-edit-element
         *ngIf="isEdited(element); else displayElement"
         class="my-1"

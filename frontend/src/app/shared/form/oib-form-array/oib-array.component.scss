@@ -24,3 +24,17 @@
     color: $yellow;
   }
 }
+
+.oib-fake-container:nth-child(odd) {
+  background-color: $veryLightGrey;
+    &:hover {
+      background-color: $mediumGrey;
+  }
+}
+
+.oib-fake-container:nth-child(even) {
+  background-color: $white;
+    &:hover {
+      background-color: $mediumGrey;
+  }
+}
