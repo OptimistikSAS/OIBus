@@ -179,9 +179,13 @@ img.oib-image-header {
   padding: 15px;
   border: 0px solid;
   border-radius: 6px;
+  border-bottom-width: 0px;
 }
 
 .oib-table {
+  :not(caption) > * > * {
+      border-bottom-width: 0px;
+    }
   // table header
   thead {
     color: white;

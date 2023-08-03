@@ -32,7 +32,7 @@
             <div class="row" formGroupName="console">
               <div class="col-4">
                 <div class="form-group">
-                  <label for="console-level" translate="engine.logger.console.level"></label>
+                  <label class="form-label" for="console-level" translate="engine.logger.console.level"></label>
                   <select formControlName="level" class="form-select mb-2 mr-sm-2" id="console-level">
                     <option *ngFor="let level of logLevels" [ngValue]="level">{{ 'enums.log-levels.' + level | translate }}</option>
                   </select>
