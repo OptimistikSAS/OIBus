@@ -1,13 +1,22 @@
-<oib-box *ngIf="connectorMetrics">
+<oib-box *ngIf="connectorMetrics && manifest">
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
-      <span translate="south.monitoring.title" id="title"></span>
+      <span translate="south.monitoring.title" id="title" [translateParams]="{ name: southConnector.name }"></span>
       <div class="d-flex align-items-center">
         <span
           translate="south.monitoring.since"
           [translateParams]="{ date: connectorMetrics.metricsStart | datetime:'mediumWithSeconds' }"
         ></span>
+        <a
+          *ngIf="displayButton"
+          class="btn btn-link display-south px-1 py-0"
+          id="display-link"
+          [routerLink]="['/south', southConnector.id]"
+        >
+          <span class="fa fa-search"></span>
+        </a>
         <button
+          *ngIf="!displayButton"
           class="ms-3 btn btn-primary btn-sm oib-box-btn"
           (click)="resetMetrics()"
           translate="south.monitoring.reset-metrics"

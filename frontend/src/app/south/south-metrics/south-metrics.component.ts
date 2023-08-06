@@ -9,17 +9,19 @@ import { DurationPipe } from '../../shared/duration.pipe';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'oib-south-metrics',
   templateUrl: './south-metrics.component.html',
   styleUrls: ['./south-metrics.component.scss'],
-  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe],
+  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, RouterLink],
   standalone: true
 })
 export class SouthMetricsComponent implements OnInit, OnDestroy {
   @Input({ required: true }) southConnector!: SouthConnectorDTO;
-  @Input({ required: true }) manifest!: SouthConnectorManifest;
+  @Input() manifest: SouthConnectorManifest | null = null;
+  @Input() displayButton = false;
 
   connectorMetrics: SouthConnectorMetrics | null = null;
   connectorStream: EventSource | null = null;
@@ -34,6 +36,11 @@ export class SouthMetricsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const token = this.windowService.getStorageItem('oibus-token');
 
+    if (!this.manifest) {
+      this.southService.getSouthConnectorTypeManifest(this.southConnector.type).subscribe(manifest => {
+        this.manifest = manifest;
+      });
+    }
     this.connectorStream = new EventSource(`/sse/south/${this.southConnector!.id}?token=${token}`, { withCredentials: true });
     this.connectorStream.onmessage = (event: MessageEvent) => {
       if (event && event.data) {

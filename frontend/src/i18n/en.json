@@ -274,7 +274,7 @@
       }
     },
     "monitoring": {
-      "title": "Monitoring",
+      "title": "Metrics",
       "cpu-usage-instant": "CPU usage (last second)",
       "cpu-usage-average": "CPU usage (average)",
       "uptime": "Uptime",
@@ -405,7 +405,7 @@
       }
     },
     "monitoring": {
-      "title": "Monitoring",
+      "title": "{{ name }} metrics",
       "since": "since {{ date }}",
       "reset-metrics": "Reset metrics",
       "metrics-reset": "Metrics successfully reset",
@@ -493,7 +493,7 @@
       }
     },
     "monitoring": {
-      "title": "Monitoring",
+      "title": "{{ name }} metrics",
       "since": "since {{ date }}",
       "reset-metrics": "Reset metrics",
       "metrics-reset": "Metrics successfully reset",
@@ -598,7 +598,7 @@
       }
     },
     "monitoring": {
-      "title": "Monitoring",
+      "title": "{{ name }} metrics",
       "north": {
         "title": "North metrics",
         "reset-metrics": "Reset metrics",
