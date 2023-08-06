@@ -10,17 +10,19 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { NotificationService } from '../../shared/notification.service';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { FileSizePipe } from '../../shared/file-size.pipe';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'oib-north-metrics',
   templateUrl: './north-metrics.component.html',
   styleUrls: ['./north-metrics.component.scss'],
-  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, FileSizePipe],
+  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, FileSizePipe, RouterLink],
   standalone: true
 })
 export class NorthMetricsComponent implements OnInit, OnDestroy {
   @Input({ required: true }) northConnector!: NorthConnectorDTO;
-  @Input({ required: true }) manifest!: NorthConnectorManifest;
+  @Input() manifest: NorthConnectorManifest | null = null;
+  @Input() displayButton = false;
 
   connectorMetrics: NorthConnectorMetrics | null = null;
   connectorStream: EventSource | null = null;
@@ -34,6 +36,12 @@ export class NorthMetricsComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const token = this.windowService.getStorageItem('oibus-token');
+
+    if (!this.manifest) {
+      this.northConnectorService.getNorthConnectorTypeManifest(this.northConnector.type).subscribe(manifest => {
+        this.manifest = manifest;
+      });
+    }
 
     this.connectorStream = new EventSource(`/sse/north/${this.northConnector!.id}?token=${token}`, { withCredentials: true });
     this.connectorStream.onmessage = (event: MessageEvent) => {

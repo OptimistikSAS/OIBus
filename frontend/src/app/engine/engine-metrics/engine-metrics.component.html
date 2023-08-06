@@ -4,7 +4,13 @@
       <span translate="engine.monitoring.title" id="title"></span>
       <div class="d-flex align-items-center">
         <span translate="engine.monitoring.since" [translateParams]="{ date: metrics.metricsStart | datetime:'mediumWithSeconds' }"></span>
+        <!-- Display button -->
+        <a *ngIf="displayButton" class="btn btn-link display-engine px-1 py-0" id="display-link" [routerLink]="['/engine']">
+          <span class="fa fa-search"></span>
+        </a>
+        <!-- Reset button -->
         <button
+          *ngIf="!displayButton"
           class="ms-3 btn btn-primary btn-sm oib-box-btn"
           (click)="resetMetrics()"
           translate="engine.monitoring.reset-metrics"

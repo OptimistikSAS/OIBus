@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { EngineMetrics } from '../../../../../shared/model/engine.model';
 import { DatePipe, JsonPipe, NgIf, PercentPipe } from '@angular/common';
@@ -9,6 +9,7 @@ import { NotificationService } from '../../shared/notification.service';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { EngineService } from '../../services/engine.service';
 import { FileSizePipe } from '../../shared/file-size.pipe';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'oib-engine-metrics',
@@ -24,11 +25,14 @@ import { FileSizePipe } from '../../shared/file-size.pipe';
     JsonPipe,
     DatePipe,
     PercentPipe,
-    FileSizePipe
+    FileSizePipe,
+    RouterLink
   ],
   standalone: true
 })
 export class EngineMetricsComponent implements OnInit, OnDestroy {
+  @Input() displayButton = false;
+
   metrics: EngineMetrics | null = null;
   connectorStream: EventSource | null = null;
 

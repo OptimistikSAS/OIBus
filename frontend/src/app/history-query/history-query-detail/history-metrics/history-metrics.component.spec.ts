@@ -126,7 +126,7 @@ class NorthMetricsComponentTester extends ComponentTester<TestComponent> {
   }
 }
 
-describe('NorthMetricsComponent', () => {
+describe('HistoryMetricsComponent', () => {
   let tester: NorthMetricsComponentTester;
 
   beforeEach(async () => {
@@ -139,6 +139,6 @@ describe('NorthMetricsComponent', () => {
 
   it('should display a title', () => {
     tester.detectChanges();
-    expect(tester.title).toContainText('Monitoring');
+    expect(tester.title).toContainText('metrics');
   });
 });

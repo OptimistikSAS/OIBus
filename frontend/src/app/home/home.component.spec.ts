@@ -7,8 +7,8 @@ import { provideRouter } from '@angular/router';
 import { SouthConnectorService } from '../services/south-connector.service';
 import { NorthConnectorService } from '../services/north-connector.service';
 import { of } from 'rxjs';
-import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
-import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
+import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
+import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 import { EngineService } from '../services/engine.service';
 
 class HomeComponentTester extends ComponentTester<HomeComponent> {
@@ -73,6 +73,8 @@ describe('HomeComponent', () => {
         { name: 'north2', enabled: true }
       ] as Array<NorthConnectorDTO>)
     );
+    northService.getNorthConnectorTypeManifest.and.returnValue(of({} as NorthConnectorManifest));
+    southService.getSouthConnectorTypeManifest.and.returnValue(of({} as SouthConnectorManifest));
 
     tester = new HomeComponentTester();
     tester.detectChanges();
