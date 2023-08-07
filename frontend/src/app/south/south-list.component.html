@@ -41,18 +41,27 @@
       <table class="mt-2 table table-sm table-hover oib-table">
         <thead>
           <tr>
+            <th translate="south.status" style="width: 3%"></th>
             <th translate="south.name"></th>
             <th translate="south.type"></th>
-            <th translate="south.status"></th>
             <th translate="south.description"></th>
             <th style="width: 3%"></th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let south of displayedSouths.content">
+            <td>
+              <div class="form-check form-switch">
+                <input
+                  (click)="toggleConnector(south.id, south.name, !south.enabled)"
+                  [checked]="south.enabled"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+              </div>
+            </td>
             <td>{{ south.name }}</td>
             <td>{{ south.type }}</td>
-            <td>{{ south.enabled | enabled }}</td>
             <td>{{ south.description }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
@@ -60,9 +69,7 @@
                   class="btn btn-link enable-history-query px-1 py-0"
                   id="history-query-enabled"
                   (click)="toggleConnector(south.id, south.name, !south.enabled)"
-                >
-                  <i [class]="south.enabled ?  'fa fa-pause' : 'fa fa-play'"></i>
-                </button>
+                ></button>
                 <!-- Display button -->
                 <a class="btn btn-link display-south px-1 py-0" id="display-link" [routerLink]="[south.id]">
                   <span class="fa fa-search"></span>
