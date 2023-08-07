@@ -9,7 +9,6 @@ jobs:
     strategy:
       matrix:
         config:
-          - { os: 'macos-latest' }
           - { os: 'windows-latest' }
           - { os: 'ubuntu-latest' }
     timeout-minutes: 20

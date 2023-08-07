@@ -9,6 +9,11 @@ runs:
       working-directory: backend
       run: npm run lint
 
+    - name: Run frontend linting
+      shell: bash
+      working-directory: frontend
+      run: npm run lint
+
     - name: Build backend
       shell: bash
       working-directory: backend
@@ -18,11 +23,6 @@ runs:
       shell: bash
       working-directory: backend
       run: npm test
-
-    - name: Run frontend linting
-      shell: bash
-      working-directory: frontend
-      run: npm run lint
 
     - name: Build frontend
       shell: bash

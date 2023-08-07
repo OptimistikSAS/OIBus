@@ -1,5 +1,6 @@
 # Compiled output
-/build
+/build/bin
+/data-folder/
 
 # Node
 /node_modules
