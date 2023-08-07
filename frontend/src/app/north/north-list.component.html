@@ -41,18 +41,27 @@
       <table class="mt-2 table table-sm table-hover oib-table">
         <thead>
           <tr>
+            <th translate="north.status" style="width: 3%"></th>
             <th translate="north.name"></th>
             <th translate="north.type"></th>
-            <th translate="north.status"></th>
             <th translate="north.description"></th>
             <th style="width: 3%"></th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let north of displayedNorths.content">
+            <td>
+              <div class="form-check form-switch">
+                <input
+                  (click)="toggleConnector(north.id, north.name, !north.enabled)"
+                  [checked]="north.enabled"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+              </div>
+            </td>
             <td>{{ north.name }}</td>
             <td>{{ north.type }}</td>
-            <td>{{ north.enabled | enabled }}</td>
             <td>{{ north.description }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
@@ -60,9 +69,7 @@
                   class="btn btn-link enable-history-query px-1 py-0"
                   id="history-query-enabled"
                   (click)="toggleConnector(north.id, north.name, !north.enabled)"
-                >
-                  <i [class]="north.enabled ?  'fa fa-pause' : 'fa fa-play'"></i>
-                </button>
+                ></button>
                 <!-- Display button -->
                 <a class="btn btn-link display-north px-1 py-0" id="display-link" [routerLink]="[north.id]">
                   <span class="fa fa-search"></span>

@@ -41,26 +41,33 @@
       <table class="mt-2 table table-sm table-hover oib-table">
         <thead>
           <tr>
+            <th translate="history-query.enabled" style="width: 3%"></th>
             <th translate="history-query.name"></th>
             <th translate="history-query.description"></th>
-            <th translate="history-query.enabled"></th>
             <th style="width: 3%"></th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let query of displayedHistoryQueries.content">
+            <td>
+              <div class="form-check form-switch">
+                <input
+                  (click)="toggleHistoryQuery(query.id, query.name, !query.enabled)"
+                  [checked]="query.enabled"
+                  type="checkbox"
+                  class="form-check-input"
+                />
+              </div>
+            </td>
             <td>{{ query.name }}</td>
             <td>{{ query.description }}</td>
-            <td>{{ query.enabled | enabled }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <button
                   class="btn btn-link enable-history-query px-1 py-0"
                   id="history-query-enabled"
                   (click)="toggleHistoryQuery(query.id, query.name, !query.enabled)"
-                >
-                  <i [class]="query.enabled ?  'fa fa-pause' : 'fa fa-play'"></i>
-                </button>
+                ></button>
                 <!-- Display button -->
                 <a class="btn btn-link display-history-query px-1 py-0" id="display-link" [routerLink]="[query.id]">
                   <span class="fa fa-search"></span>
