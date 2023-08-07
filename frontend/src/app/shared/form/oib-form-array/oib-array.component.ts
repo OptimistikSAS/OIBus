@@ -1,4 +1,4 @@
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnInit, AfterViewChecked } from '@angular/core';
 import { NG_VALUE_ACCESSOR } from '@angular/forms';
 import { formDirectives } from '../../form-directives';
 import { NgForOf, NgIf } from '@angular/common';
@@ -21,7 +21,7 @@ import { PipeProviderService } from '../pipe-provider.service';
   ],
   standalone: true
 })
-export class OibArrayComponent implements OnInit {
+export class OibArrayComponent implements OnInit, AfterViewChecked {
   @Input() label = '';
   @Input() key = '';
   @Input({ required: true }) formDescription!: Array<OibFormControl>;
