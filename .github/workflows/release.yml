@@ -32,11 +32,6 @@ jobs:
         with:
           cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
 
-      - name: Setup frontend environment
-        uses: ./.github/actions/setup_frontend_environment
-        with:
-          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
-
       - name: Bump version
         id: standard-version
         working-directory: ./backend
@@ -70,81 +65,27 @@ jobs:
         with:
           path: CHANGELOG.md
 
-  build-binaries:
+  build-x64:
     needs: standard-version
-    name: Build on ${{ matrix.config['os'] }}
-    runs-on: ${{ matrix.config['os'] }}
-    strategy:
-      matrix:
-        config:
-          - { os: 'macos-latest',   platform: 'macos', archiveName: 'oibus-macos.zip', zip: 'zip -r' }
-          - { os: 'windows-latest', platform: 'win',   archiveName: 'oibus-win32x64.zip', zip: '7z a -tzip' }
-          - { os: 'ubuntu-latest',  platform: 'linux', archiveName: 'oibus-linux.tar.gz', zip: 'tar -czvf' }
-    timeout-minutes: 20
+    name: 'Build x64 binaries'
+    uses: ./.github/workflows/build_x64.yml
+    secrets:
+      PFX_PASSWORD: ${{ secrets.PFX_PASSWORD }}
+      PFX_BASE64_CONTENT: ${{ secrets.PFX_BASE64_CONTENT }}
+    with:
+      branch: ${{ needs.standard-version.outputs.branch-release }}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ needs.standard-version.outputs.branch-release }}
-
-      - name: Setup backend environment
-        uses: ./.github/actions/setup_backend_environment
-        with:
-          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
-
-      - name: Setup frontend environment
-        uses: ./.github/actions/setup_frontend_environment
-        with:
-          cache_version: ${{ secrets.GH_ACTIONS_CACHE_KEY }}
-
-      - name: Bundle frontend
-        working-directory: ./frontend
-        run: npm run build
-
-      - name: Bundle backend
-        working-directory: ./backend
-        run: npm run build
-
-      - name: Package OIBus for ${{ matrix.config['platform'] }}
-        working-directory: ./backend
-        run: |
-          npm run build:${{ matrix.config['platform'] }}
-          cd ../build/bin/${{ matrix.config['platform'] }}
-          ./oibus --config ../../../data-folder --check true
-          ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }} .
-
-      - name: Upload artifact ${{ matrix.config['archiveName'] }}
-        uses: actions/upload-artifact@v3
-        with:
-          path: ./build/bin/${{ matrix.config['archiveName'] }}
-
-      - name: Package Windows installer
-        env:
-          PFX_PASSWORD: ${{ secrets.PFX_PASSWORD }}
-          PFX_BASE64_CONTENT: ${{ secrets.PFX_BASE64_CONTENT }}
-          PFX_PATH: C://oibus.pfx
-        if: ${{ matrix.config['platform'] == 'win' }}
-        shell: pwsh
-        working-directory: ./backend
-        run: |
-          $encodedBytes = [System.Convert]::FromBase64String("$env:PFX_BASE64_CONTENT")
-          Set-Content -Path "$env:PFX_PATH" -AsByteStream -Value $encodedBytes
-          npm run build:win-setup
-          Remove-Item -Path "$env:PFX_PATH";
-
-      - name: Rename windows installer
-        if: ${{ matrix.config['platform'] == 'win' }}
-        run: mv ./build/bin/win-setup-release/oibus-setup.exe ./build/bin/win-setup-release/oibus-setup-win32x64.exe
-
-      - name: Upload Windows installer
-        if: ${{ matrix.config['platform'] == 'win' }}
-        uses: actions/upload-artifact@v3
-        with:
-          path: ./build/bin/win-setup-release/oibus-setup-win32x64.exe
+#  build-arm64:
+#    needs: standard-version
+#    name: 'Build arm64 binaries'
+#    uses: ./.github/workflows/build_arm64.yml
+#    with:
+#      branch: ${{ needs.standard-version.outputs.branch-release }}
+#      node-version: node18
+#      pkg: 5.8.1
 
   publish-binaries:
-    needs: [build-binaries, standard-version]
+    needs: [build-x64, standard-version]
     name: 'Publish OIBus binaries'
     runs-on: ubuntu-latest
     steps:
@@ -163,10 +104,12 @@ jobs:
           body_path: ./artifact/CHANGELOG.md
           prerelease: ${{ needs.standard-version.outputs.prerelease }}
           files: |
-            ./artifact/oibus-setup-win32x64.exe
-            ./artifact/oibus-linux.tar.gz
-            ./artifact/oibus-macos.zip
-            ./artifact/oibus-win32x64.zip
+            ./artifact/oibus-win_x64.zip
+            ./artifact/oibus-setup-win_x64.exe
+            ./artifact/oibus-linux_x64.zip
+#            ./artifact/oibus-linux_arm64.zip
+            ./artifact/oibus-macos_x64.zip
+#            ./artifact/oibus-macos_arm64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }} # Need REPO_ACCESS_TOKEN to propagate 'release published' event
 

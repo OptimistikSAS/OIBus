@@ -67,6 +67,7 @@ const LOG_DB_NAME = 'journal.db';
 
   if (check) {
     console.info('OIBus started in check mode. Exiting process.');
+    process.exit();
     return;
   }
 
