@@ -35,30 +35,19 @@ const manifest: NorthConnectorManifest = {
     { key: 'timeout', type: 'OibNumber', label: 'Timeout', newRow: true, defaultValue: 1000, validators: [{ key: 'required' }] },
     ...proxy,
     {
-      key: 'authentication',
-      type: 'OibFormGroup',
-      label: 'Authentication',
-      class: 'col',
-      newRow: true,
-      displayInViewMode: false,
+      key: 'username',
+      type: 'OibText',
+      label: 'Username',
+      defaultValue: '',
       validators: [{ key: 'required' }],
-      content: [
-        {
-          key: 'username',
-          type: 'OibText',
-          label: 'Username',
-          defaultValue: '',
-          validators: [{ key: 'required' }],
-          displayInViewMode: false
-        },
-        {
-          key: 'password',
-          type: 'OibSecret',
-          label: 'Password',
-          defaultValue: '',
-          displayInViewMode: false
-        }
-      ]
+      displayInViewMode: false
+    },
+    {
+      key: 'password',
+      type: 'OibSecret',
+      label: 'Password',
+      defaultValue: '',
+      displayInViewMode: false
     }
   ]
 };

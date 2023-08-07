@@ -60,9 +60,7 @@ export default class NorthOIConnect extends NorthConnector<NorthOIConnectSetting
 
     const headers: Record<string, string | number> = {};
     const basic = Buffer.from(
-      `${this.connector.settings.authentication.username}:${await this.encryptionService.decryptText(
-        this.connector.settings.authentication.password!
-      )}`
+      `${this.connector.settings.username}:${await this.encryptionService.decryptText(this.connector.settings.password!)}`
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
     const fetchOptions: Record<string, any> = {
@@ -95,9 +93,7 @@ export default class NorthOIConnect extends NorthConnector<NorthOIConnectSetting
       'Content-Type': 'application/json'
     };
     headers.authorization = `Basic ${Buffer.from(
-      `${this.connector.settings.authentication.username}:${await this.encryptionService.decryptText(
-        this.connector.settings.authentication.password!
-      )}`
+      `${this.connector.settings.username}:${await this.encryptionService.decryptText(this.connector.settings.password!)}`
     ).toString('base64')}`;
 
     let response;
@@ -131,9 +127,7 @@ export default class NorthOIConnect extends NorthConnector<NorthOIConnectSetting
   async handleFile(filePath: string): Promise<void> {
     const headers: Record<string, string> = {};
     headers.authorization = `Basic ${Buffer.from(
-      `${this.connector.settings.authentication.username}:${await this.encryptionService.decryptText(
-        this.connector.settings.authentication.password!
-      )}`
+      `${this.connector.settings.username}:${await this.encryptionService.decryptText(this.connector.settings.password!)}`
     ).toString('base64')}`;
 
     if (!(await filesExists(filePath))) {

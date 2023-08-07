@@ -101,10 +101,8 @@ describe('NorthOIConnect with proxy', () => {
       proxyUrl: 'http://localhost',
       proxyUsername: 'my username',
       proxyPassword: 'my password',
-      authentication: {
-        username: 'user',
-        password: 'pass'
-      }
+      username: 'user',
+      password: 'pass'
     },
     caching: {
       scanModeId: 'id1',
@@ -155,9 +153,7 @@ describe('NorthOIConnect with proxy', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(
-          `${configuration.settings.authentication.username}:${configuration.settings.authentication.password}`
-        ).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
@@ -211,9 +207,7 @@ describe('NorthOIConnect with proxy', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(
-          `${configuration.settings.authentication.username}:${configuration.settings.authentication.password}`
-        ).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
@@ -243,9 +237,7 @@ describe('NorthOIConnect with proxy', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(
-          `${configuration.settings.authentication.username}:${configuration.settings.authentication.password}`
-        ).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
@@ -298,9 +290,7 @@ describe('NorthOIConnect with proxy', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(
-          `${configuration.settings.authentication.username}:${configuration.settings.authentication.password}`
-        ).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
@@ -376,10 +366,8 @@ describe('NorthOIConnect with proxy but without proxy password', () => {
       proxyUrl: 'http://localhost',
       proxyUsername: 'my username',
       proxyPassword: null,
-      authentication: {
-        username: 'user',
-        password: 'pass'
-      }
+      username: 'user',
+      password: 'pass'
     },
     caching: {
       scanModeId: 'id1',
@@ -429,10 +417,8 @@ describe('NorthOIConnect without proxy with acceptUnauthorized', () => {
       acceptUnauthorized: true,
       timeout: 10,
       useProxy: false,
-      authentication: {
-        username: 'user',
-        password: 'pass'
-      }
+      username: 'user',
+      password: 'pass'
     },
     caching: {
       scanModeId: 'id1',
@@ -471,9 +457,7 @@ describe('NorthOIConnect without proxy with acceptUnauthorized', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(
-          `${configuration.settings.authentication.username}:${configuration.settings.authentication.password}`
-        ).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
@@ -493,9 +477,7 @@ describe('NorthOIConnect without proxy with acceptUnauthorized', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(
-          `${configuration.settings.authentication.username}:${configuration.settings.authentication.password}`
-        ).toString('base64')}`,
+        authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),

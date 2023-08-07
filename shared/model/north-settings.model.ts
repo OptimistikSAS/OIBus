@@ -20,11 +20,6 @@ export type NorthMqttSettingsQos = (typeof NORTH_MQTT_SETTINGS_QOSS)[number];
 const NORTH_REST_A_P_I_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'bearer', 'api-key'] as const
 export type NorthRestAPISettingsAuthenticationType = (typeof NORTH_REST_A_P_I_SETTINGS_AUTHENTICATION_TYPES)[number];
 
-export interface NorthOIConnectSettingsAuthentication {
-  username: string;
-  password: string | null;
-}
-
 export interface NorthRestAPISettingsAuthentication {
   type: NorthRestAPISettingsAuthenticationType;
   username?: string;
@@ -146,7 +141,8 @@ export interface NorthOIConnectSettings extends BaseNorthSettings {
   proxyUrl?: string;
   proxyUsername?: string | null;
   proxyPassword?: string | null;
-  authentication: NorthOIConnectSettingsAuthentication;
+  username: string;
+  password: string | null;
 }
 
 export interface NorthRestAPISettings extends BaseNorthSettings {
