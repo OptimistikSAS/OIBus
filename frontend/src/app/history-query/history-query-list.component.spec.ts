@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { HistoryQueryListComponent } from './history-query-list.component';
-import { ComponentTester, createMock } from 'ngx-speculoos';
+import { ComponentTester, createMock, TestButton } from 'ngx-speculoos';
 import { provideI18nTesting } from '../../i18n/mock-i18n';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
@@ -68,24 +68,24 @@ describe('HistoryQueryListComponent', () => {
   it('should display title', () => {
     expect(tester.title).toContainText('History queries');
     expect(tester.historyQueryList.length).toBe(2);
-    expect(tester.historyQueryList[0].elements('td')[0]).toContainText(historyQueries[0].name);
-    expect(tester.historyQueryList[0].elements('td')[1]).toContainText(historyQueries[0].description);
-    expect(tester.historyQueryList[0].elements('td')[2]).toContainText('active');
+    expect(tester.historyQueryList[0].elements('td')[1]).toContainText(historyQueries[0].name);
+    expect(tester.historyQueryList[0].elements('td')[2]).toContainText(historyQueries[0].description);
     expect(tester.historyQueryList[0].elements('td')[3].elements('button').length).toBe(2);
     expect(tester.historyQueryList[0].elements('td')[3].elements('a').length).toBe(2);
-    expect(tester.historyQueryList[1].elements('td')[0]).toContainText(historyQueries[1].name);
-    expect(tester.historyQueryList[1].elements('td')[1]).toContainText(historyQueries[1].description);
-    expect(tester.historyQueryList[1].elements('td')[2]).toContainText('paused');
+    expect(tester.historyQueryList[1].elements('td')[1]).toContainText(historyQueries[1].name);
+    expect(tester.historyQueryList[1].elements('td')[2]).toContainText(historyQueries[1].description);
     expect(tester.historyQueryList[1].elements('td')[3].elements('button').length).toBe(2);
     expect(tester.historyQueryList[1].elements('td')[3].elements('a').length).toBe(2);
   });
 
   it('should toggle history query', () => {
-    tester.historyQueryList[0].elements('td')[3].elements('button')[0].click();
+    const toggle1 = tester.historyQueryList[0].elements('td')[0].elements('.form-check-input')[0] as TestButton;
+    toggle1.click();
     expect(historyQueryService.stopHistoryQuery).toHaveBeenCalledWith('id1');
     expect(notificationService.success).toHaveBeenCalledWith('history-query.stopped', { name: historyQueries[0].name });
 
-    tester.historyQueryList[1].elements('td')[3].elements('button')[0].click();
+    const toggle2 = tester.historyQueryList[1].elements('td')[0].elements('.form-check-input')[0] as TestButton;
+    toggle2.click();
     expect(historyQueryService.startHistoryQuery).toHaveBeenCalledWith('id2');
     expect(notificationService.success).toHaveBeenCalledWith('history-query.started', { name: historyQueries[1].name });
   });
