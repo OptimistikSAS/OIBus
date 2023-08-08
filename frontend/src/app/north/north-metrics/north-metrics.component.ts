@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { NorthConnectorMetrics } from '../../../../../shared/model/engine.model';
 import { JsonPipe, NgIf } from '@angular/common';
@@ -30,24 +30,26 @@ export class NorthMetricsComponent implements OnInit, OnDestroy {
   constructor(
     private windowService: WindowService,
     private northConnectorService: NorthConnectorService,
-    private notificationService: NotificationService,
-    private cd: ChangeDetectorRef
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
-    const token = this.windowService.getStorageItem('oibus-token');
-
     if (!this.manifest) {
       this.northConnectorService.getNorthConnectorTypeManifest(this.northConnector.type).subscribe(manifest => {
         this.manifest = manifest;
+        this.connectToEventSource();
       });
+    } else {
+      this.connectToEventSource();
     }
+  }
 
-    this.connectorStream = new EventSource(`/sse/north/${this.northConnector!.id}?token=${token}`, { withCredentials: true });
+  connectToEventSource(): void {
+    const token = this.windowService.getStorageItem('oibus-token');
+    this.connectorStream = new EventSource(`/sse/north/${this.northConnector.id}?token=${token}`, { withCredentials: true });
     this.connectorStream.onmessage = (event: MessageEvent) => {
       if (event && event.data) {
         this.connectorMetrics = JSON.parse(event.data);
-        this.cd.detectChanges();
       }
     };
   }

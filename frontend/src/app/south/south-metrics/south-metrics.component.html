@@ -1,9 +1,10 @@
-<oib-box *ngIf="connectorMetrics && manifest">
+<oib-box *ngIf="manifest">
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <span translate="south.monitoring.title" id="title" [translateParams]="{ name: southConnector.name }"></span>
       <div class="d-flex align-items-center">
         <span
+          *ngIf="connectorMetrics"
           translate="south.monitoring.since"
           [translateParams]="{ date: connectorMetrics.metricsStart | datetime:'mediumWithSeconds' }"
           class="mx-1"
@@ -28,7 +29,7 @@
 
   <div class="mb-3">
     <table class="table table-sm table-hover oib-table">
-      <tbody>
+      <tbody *ngIf="connectorMetrics">
         <!-- number of values for point connectors -->
         <tr *ngIf="connectorMetrics.numberOfValuesRetrieved !== null">
           <td style="width: 33%" translate="south.monitoring.number-of-values"></td>

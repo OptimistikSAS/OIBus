@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { EngineMetrics } from '../../../../../shared/model/engine.model';
 import { DatePipe, JsonPipe, NgIf, PercentPipe } from '@angular/common';
@@ -39,8 +39,7 @@ export class EngineMetricsComponent implements OnInit, OnDestroy {
   constructor(
     private windowService: WindowService,
     private engineService: EngineService,
-    private notificationService: NotificationService,
-    private cd: ChangeDetectorRef
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -50,7 +49,6 @@ export class EngineMetricsComponent implements OnInit, OnDestroy {
     this.connectorStream.onmessage = (event: MessageEvent) => {
       if (event && event.data) {
         this.metrics = JSON.parse(event.data);
-        this.cd.detectChanges();
       }
     };
   }
