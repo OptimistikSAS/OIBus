@@ -5,6 +5,8 @@ import path from 'node:path';
 
 import minimist from 'minimist';
 import { DateTime } from 'luxon';
+import fetch from 'node-fetch';
+import AdmZip from 'adm-zip';
 
 import { CsvCharacter, DateTimeType, Instant, Interval, SerializationSettings, Timezone } from '../../../shared/model/types';
 import pino from 'pino';
@@ -90,6 +92,18 @@ export const compress = async (input: string, output: string): Promise<void> =>
       .on('finish', () => {
         resolve();
       });
+  });
+
+export const unzip = async (input: string, output: string): Promise<void> =>
+  new Promise((resolve, reject) => {
+    const zip = new AdmZip(input);
+    zip.extractAllToAsync(output, true, true, error => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve();
+      }
+    });
   });
 
 /**
@@ -433,6 +447,25 @@ export const httpGetWithBody = (body: string, options: any): Promise<any> =>
     req.end();
   });
 
+export const downloadFile = async (url: string, filePath: string, timeout: number): Promise<void> => {
+  let response;
+
+  try {
+    response = await fetch(url, {
+      timeout: timeout
+    });
+  } catch (fetchError) {
+    throw new Error(`Download failed: ${fetchError}`);
+  }
+
+  if (!response.ok) {
+    throw new Error(`Download failed with status code ${response.status} and message: ${response.statusText}`);
+  }
+
+  const buffer = await response.buffer();
+  await fs.writeFile(filePath, buffer);
+};
+
 export const getOIBusInfo = (): OIBusInfo => {
   return {
     dataDirectory: process.cwd(),
@@ -441,6 +474,20 @@ export const getOIBusInfo = (): OIBusInfo => {
     hostname: os.hostname(),
     operatingSystem: `${os.type()} ${os.release()}`,
     architecture: process.arch,
-    version
+    version,
+    platform: getPlatformFromOsType(os.type())
   };
+};
+
+export const getPlatformFromOsType = (osType: string): string => {
+  switch (osType) {
+    case 'Linux':
+      return 'linux';
+    case 'Darwin':
+      return 'macos';
+    case 'Windows_NT':
+      return 'windows';
+    default:
+      return 'unknown';
+  }
 };

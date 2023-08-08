@@ -53,6 +53,7 @@
     "@koa/cors": "4.0.0",
     "@koa/multer": "3.0.2",
     "@koa/router": "12.0.1",
+    "adm-zip": "0.5.10",
     "ads-client": "1.14.3",
     "argon2": "0.31.2",
     "basic-auth": "2.0.1",
@@ -96,6 +97,7 @@
     "oracledb": "6.2.0"
   },
   "devDependencies": {
+    "@types/adm-zip": "0.5.0",
     "@types/basic-auth": "1.1.5",
     "@types/better-sqlite3": "7.6.6",
     "@types/cron": "2.0.1",
