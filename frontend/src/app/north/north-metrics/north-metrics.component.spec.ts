@@ -75,8 +75,8 @@ describe('NorthMetricsComponent', () => {
     tester = new NorthMetricsComponentTester();
   });
 
-  it('should not display a title', () => {
+  it('should display a title', () => {
     tester.detectChanges();
-    expect(tester.title).toBeNull();
+    expect(tester.title).toContainText('North Connector metrics');
   });
 });

@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
@@ -29,25 +29,28 @@ export class SouthMetricsComponent implements OnInit, OnDestroy {
   constructor(
     private windowService: WindowService,
     private southService: SouthConnectorService,
-    private notificationService: NotificationService,
-    private cd: ChangeDetectorRef
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
-    const token = this.windowService.getStorageItem('oibus-token');
-
     if (!this.manifest) {
       this.southService.getSouthConnectorTypeManifest(this.southConnector.type).subscribe(manifest => {
         this.manifest = manifest;
+        this.connectToEventSource();
       });
+    } else {
+      this.connectToEventSource();
     }
-    this.connectorStream = new EventSource(`/sse/south/${this.southConnector!.id}?token=${token}`, { withCredentials: true });
-    this.connectorStream.onmessage = (event: MessageEvent) => {
+  }
+
+  connectToEventSource(): void {
+    const token = this.windowService.getStorageItem('oibus-token');
+    this.connectorStream = new EventSource(`/sse/south/${this.southConnector.id}?token=${token}`, { withCredentials: true });
+    this.connectorStream.addEventListener('message', (event: MessageEvent) => {
       if (event && event.data) {
         this.connectorMetrics = JSON.parse(event.data);
-        this.cd.detectChanges();
       }
-    };
+    });
   }
 
   ngOnDestroy() {

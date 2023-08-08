@@ -27,9 +27,8 @@ export class HomeComponent implements OnInit {
   constructor(private southService: SouthConnectorService, private northService: NorthConnectorService) {}
 
   ngOnInit(): void {
-    const souths$ = this.southService.list();
-    const norths$ = this.northService.list();
-    combineLatest([souths$, norths$]).subscribe(([souths, norths]) => {
+    combineLatest([this.southService.list(), this.northService.list()]).subscribe(([souths, norths]) => {
+      this.southRows = [];
       const enabledSouth = souths.filter(south => south.enabled);
       for (let i = 0; i < enabledSouth.length; i++) {
         if (i % NUMBER_OF_COLUMN === 0) {
@@ -38,6 +37,7 @@ export class HomeComponent implements OnInit {
           this.southRows[this.southRows.length - 1].push(enabledSouth[i]);
         }
       }
+      this.northRows = [];
       const enabledNorth = norths.filter(north => north.enabled);
       for (let i = 0; i < enabledNorth.length; i++) {
         if (i % NUMBER_OF_COLUMN === 0) {

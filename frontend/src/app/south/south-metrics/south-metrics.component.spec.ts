@@ -76,8 +76,8 @@ describe('SouthMetricsComponent', () => {
     tester = new SouthDataComponentTester();
   });
 
-  it('should not have a title', () => {
+  it('should have a title', () => {
     tester.detectChanges();
-    expect(tester.title).toBeNull();
+    expect(tester.title).toContainText('South Connector metrics');
   });
 });
