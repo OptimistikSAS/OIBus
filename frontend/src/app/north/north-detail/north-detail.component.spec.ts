@@ -93,7 +93,8 @@ describe('NorthDetailComponent', () => {
     architecture: 'x64',
     hostname: 'hostname',
     binaryDirectory: 'bin-directory',
-    operatingSystem: 'Windows'
+    operatingSystem: 'Windows',
+    platform: 'windows'
   };
 
   beforeEach(() => {

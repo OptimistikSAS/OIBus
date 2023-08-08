@@ -1,0 +1,40 @@
+{
+  "name": "oibus-launcher",
+  "version": "1.0.0",
+  "description": "OIBus launcher",
+  "main": "index.js",
+  "author": "Optimistik SAS",
+  "license": "EUPL",
+  "engines": {
+    "node": ">=v18.15",
+    "npm": ">=9.5.0"
+  },
+  "scripts": {
+    "lint": "eslint . --ext .ts --fix --ignore-path .gitignore",
+    "lint:fix": "npm run lint -- --fix",
+    "build": "tsc --project tsconfig.app.json",
+    "start": "tsc --sourceMap --project tsconfig.app.json && npm run start:launcher",
+    "start:launcher": "node ./dist/index.js --config ../data-folder --check"
+  },
+  "keywords": [
+    "Optimistik"
+  ],
+  "dependencies": {
+    "minimist": "1.2.8"
+  },
+  "devDependencies": {
+    "@types/minimist": "1.2.4",
+    "@types/node": "20.5.3",
+    "@typescript-eslint/eslint-plugin": "6.4.1",
+    "@typescript-eslint/parser": "6.4.1",
+    "eslint": "8.47.0",
+    "eslint-config-prettier": "9.0.0",
+    "eslint-import-resolver-typescript": "3.6.0",
+    "eslint-plugin-ban": "1.6.0",
+    "eslint-plugin-deprecation": "1.5.0",
+    "eslint-plugin-import": "2.28.1",
+    "eslint-plugin-prettier": "5.0.0",
+    "prettier": "3.0.2",
+    "typescript": "5.1.6"
+  }
+}
