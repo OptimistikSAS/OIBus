@@ -94,6 +94,7 @@ export interface OIBusInfo {
   hostname: string;
   operatingSystem: string;
   architecture: string;
+  platform: string;
 }
 
 export interface BaseConnectorMetrics {

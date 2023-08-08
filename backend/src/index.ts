@@ -69,7 +69,6 @@ const LOG_DB_NAME = 'logs.db';
   if (check) {
     console.info('OIBus started in check mode. Exiting process.');
     process.exit();
-    return;
   }
 
   await createFolder(LOG_FOLDER_NAME);
