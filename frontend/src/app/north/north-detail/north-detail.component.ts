@@ -14,6 +14,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { DurationPipe } from '../../shared/duration.pipe';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { NotificationService } from '../../shared/notification.service';
+import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 
 @Component({
   selector: 'oib-north-detail',
@@ -25,6 +26,7 @@ import { NotificationService } from '../../shared/notification.service';
     NgSwitch,
     NgForOf,
     DecimalPipe,
+    BackNavigationDirective,
     NorthSubscriptionsComponent,
     NorthMetricsComponent,
     BoxComponent,

@@ -20,6 +20,7 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { SouthItemsComponent } from '../south-items/south-items.component';
 import { NotificationService } from '../../shared/notification.service';
+import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 
 @Component({
   selector: 'oib-south-detail',
@@ -31,6 +32,7 @@ import { NotificationService } from '../../shared/notification.service';
     NgSwitch,
     NgForOf,
     PaginationComponent,
+    BackNavigationDirective,
     SouthMetricsComponent,
     NorthMetricsComponent,
     BoxComponent,
