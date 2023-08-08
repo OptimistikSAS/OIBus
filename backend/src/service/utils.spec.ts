@@ -25,11 +25,16 @@ import {
   httpGetWithBody,
   logQuery,
   persistResults,
+  unzip,
+  downloadFile,
+  getPlatformFromOsType,
   getFilesFiltered,
   validateCronExpression
 } from './utils';
 import csv from 'papaparse';
 import pino from 'pino';
+import AdmZip from 'adm-zip';
+import fetch from 'node-fetch';
 import PinoLogger from '../tests/__mocks__/logger.mock';
 import { DateTimeType } from '../../../shared/model/types';
 import Stream from 'node:stream';
@@ -43,6 +48,9 @@ jest.mock('node:fs/promises');
 jest.mock('node:fs');
 jest.mock('minimist');
 jest.mock('papaparse');
+jest.mock('adm-zip');
+jest.mock('node-fetch');
+const { Response } = jest.requireActual('node-fetch');
 jest.mock('node:http', () => ({ request: jest.fn() }));
 jest.mock('node:https', () => ({ request: jest.fn() }));
 
@@ -215,6 +223,36 @@ describe('Service utils', () => {
       expect(myReadStream.pipe).toHaveBeenCalledTimes(2);
       expect(fsSync.createWriteStream).toHaveBeenCalledTimes(1);
       expect(fsSync.createWriteStream).toHaveBeenCalledWith('myOutputFile');
+    });
+  });
+
+  describe('unzip', () => {
+    it('should properly unzip file', async () => {
+      const extractAllToAsync = jest.fn().mockImplementation((output, overwrite, keepOriginal, callback) => {
+        callback();
+      });
+      (AdmZip as jest.Mock).mockImplementation(() => ({ extractAllToAsync }));
+
+      await unzip('myInputFile', 'myOutputFolder');
+
+      expect(extractAllToAsync).toHaveBeenCalledTimes(1);
+    });
+
+    it('should properly manage unzip errors', async () => {
+      const extractAllToAsync = jest.fn().mockImplementation((output, overwrite, keepOriginal, callback) => {
+        callback('unzip error');
+      });
+      (AdmZip as jest.Mock).mockImplementation(() => ({ extractAllToAsync }));
+
+      let expectedError = null;
+      try {
+        await unzip('myInputFile', 'myOutputFolder');
+      } catch (error) {
+        expectedError = error;
+      }
+
+      expect(expectedError).toEqual('unzip error');
+      expect(extractAllToAsync).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -925,6 +963,61 @@ describe('Service utils', () => {
     });
   });
 
+  describe('downloadFile', () => {
+    beforeEach(() => {
+      jest.resetAllMocks();
+    });
+
+    it('should download file', async () => {
+      const downloadUrl = 'https://example.com';
+      const filePath = 'oibus.zip';
+      const timeout = 1000;
+
+      const response = new Response('content');
+      (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(response));
+
+      await downloadFile(downloadUrl, filePath, timeout);
+
+      expect(fetch).toHaveBeenCalledWith(downloadUrl, { timeout });
+      expect(fs.writeFile).toHaveBeenCalledWith(filePath, Buffer.from('content'));
+    });
+
+    it('should handle fetch error during download', async () => {
+      const downloadUrl = 'https://example.com';
+      const filePath = 'oibus.zip';
+      const timeout = 1000;
+
+      (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+        throw new Error('error');
+      });
+
+      try {
+        await downloadFile(downloadUrl, filePath, timeout);
+      } catch (error) {
+        expect(error).toEqual(new Error('Download failed: Error: error'));
+      }
+      expect(fetch).toHaveBeenCalledWith(downloadUrl, { timeout });
+      expect(fs.writeFile).not.toHaveBeenCalled();
+    });
+
+    it('should handle invalid fetch response during download', async () => {
+      const downloadUrl = 'https://example.com';
+      const filePath = 'oibus.zip';
+      const timeout = 1000;
+      (fetch as unknown as jest.Mock).mockReturnValueOnce(
+        Promise.resolve(new Response('invalid', { status: 404, statusText: 'Not Found' }))
+      );
+
+      try {
+        await downloadFile(downloadUrl, filePath, timeout);
+      } catch (error) {
+        expect(error).toEqual(new Error('Download failed with status code 404 and message: Not Found'));
+      }
+      expect(fetch).toHaveBeenCalledWith(downloadUrl, { timeout });
+      expect(fs.writeFile).not.toHaveBeenCalled();
+    });
+  });
+
   it('should get OIBus info', () => {
     const expectedResult = {
       architecture: process.arch,
@@ -933,10 +1026,18 @@ describe('Service utils', () => {
       hostname: os.hostname(),
       operatingSystem: `${os.type()} ${os.release()}`,
       processId: process.pid.toString(),
-      version: version
+      version: version,
+      platform: getPlatformFromOsType(os.type())
     };
     const result = getOIBusInfo();
     expect(result).toEqual(expectedResult);
+  });
+
+  it('should return proper platform from OS type', async () => {
+    expect(getPlatformFromOsType('Linux')).toEqual('linux');
+    expect(getPlatformFromOsType('Darwin')).toEqual('macos');
+    expect(getPlatformFromOsType('Windows_NT')).toEqual('windows');
+    expect(getPlatformFromOsType('unknown')).toEqual('unknown');
   });
 
   describe('getFilesFiltered', () => {
