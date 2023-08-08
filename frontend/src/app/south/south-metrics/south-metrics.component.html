@@ -6,6 +6,7 @@
         <span
           translate="south.monitoring.since"
           [translateParams]="{ date: connectorMetrics.metricsStart | datetime:'mediumWithSeconds' }"
+          class="mx-1"
         ></span>
         <a
           *ngIf="displayButton"

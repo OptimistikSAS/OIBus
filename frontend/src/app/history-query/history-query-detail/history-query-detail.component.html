@@ -7,6 +7,7 @@
             <button class="btn btn-primary" id="edit-link" routerLink="edit">
               <i class="fa fa-pencil"></i>
             </button>
+            <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
             <button class="btn btn-primary pull-right me-2" id="history-query-enabled" (click)="toggleHistoryQuery(!historyQuery.enabled)">
               <i [class]="historyQuery.enabled ?  'fa fa-pause' : 'fa fa-play'"></i>
             </button>

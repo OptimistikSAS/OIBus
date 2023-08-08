@@ -9,14 +9,14 @@
         <span translate="home.north.title"></span>
       </h1>
     </div>
-    <div *ngFor="let northRow of northRows" class="row justify-content-center">
+    <div *ngFor="let northRow of northRows" class="row justify-content-start">
       <div *ngFor="let north of northRow" class="col-4">
         <oib-north-metrics [displayButton]="true" [northConnector]="north"></oib-north-metrics>
       </div>
     </div>
   </div>
 
-  <div class="row">
+  <div class="row pb-4">
     <!-- Engine -->
     <div class="oib-title-container mb-3">
       <div class="oib-block-title">
@@ -29,7 +29,7 @@
     <oib-engine-metrics [displayButton]="true"></oib-engine-metrics>
   </div>
 
-  <div class="row">
+  <div class="row pb-4">
     <!-- Souths -->
     <div class="oib-title-container mb-3">
       <div class="oib-block-title">
@@ -39,7 +39,7 @@
         <span translate="home.south.title"></span>
       </h1>
     </div>
-    <div *ngFor="let southRow of southRows" class="row justify-content-center">
+    <div *ngFor="let southRow of southRows" class="row justify-content-start">
       <div *ngFor="let south of southRow" class="col-4">
         <oib-south-metrics [displayButton]="true" [southConnector]="south"></oib-south-metrics>
       </div>

@@ -24,6 +24,7 @@ import { DurationPipe } from '../../shared/duration.pipe';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
+import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 
 @Component({
   selector: 'oib-history-query-detail',
@@ -35,6 +36,7 @@ import { HistoryMetricsComponent } from './history-metrics/history-metrics.compo
     NgSwitch,
     NgForOf,
     DecimalPipe,
+    BackNavigationDirective,
     PaginationComponent,
     HistoryQueryItemsComponent,
     BoxComponent,
