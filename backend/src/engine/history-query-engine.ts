@@ -6,7 +6,8 @@ import pino from 'pino';
 import HistoryQueryService from '../service/history-query.service';
 import HistoryQuery from './history-query';
 import path from 'node:path';
-import { createFolder } from '../service/utils';
+import fs from 'node:fs/promises';
+import { createFolder, filesExists } from '../service/utils';
 
 import { HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import { SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
@@ -116,5 +117,26 @@ export default class HistoryQueryEngine extends BaseEngine {
 
   getHistoryDataStream(historyId: string): PassThrough | null {
     return this.historyQueries.get(historyId)?.getMetricsDataStream() || null;
+  }
+
+  /**
+   * Stops the History query and deletes all cache inside the base folder
+   */
+  async deleteHistoryQuery(historyId: string): Promise<void> {
+    await this.stopHistoryQuery(historyId);
+    const baseFolder = path.resolve(this.cacheFolder, `history-${historyId}`);
+
+    if (!(await filesExists(baseFolder))) {
+      this.logger.warn(`History query with id ${historyId} has been deleted already`);
+      return;
+    }
+
+    try {
+      this.logger.trace(`Deleting base folder "${baseFolder}" of History query with id: ${historyId}`);
+      await fs.rm(baseFolder, { recursive: true });
+      this.logger.info(`Deleted History query with id: ${historyId}`);
+    } catch (error) {
+      this.logger.error(`Unable to delete History query base folder: ${error}`);
+    }
   }
 }
