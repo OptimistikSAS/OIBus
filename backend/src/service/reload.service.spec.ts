@@ -355,6 +355,7 @@ describe('reload service', () => {
 
   it('should delete history query', async () => {
     await service.onDeleteHistoryQuery('historyId');
+    expect(historyQueryEngine.deleteHistoryQuery).toHaveBeenCalledWith('historyId');
     expect(repositoryService.historyQueryRepository.deleteHistoryQuery).toHaveBeenCalledWith('historyId');
     expect(repositoryService.historyQueryItemRepository.deleteAllItems).toHaveBeenCalledWith('historyId');
   });

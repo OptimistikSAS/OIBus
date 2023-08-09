@@ -285,7 +285,7 @@ export default class ReloadService {
   }
 
   async onDeleteHistoryQuery(historyId: string): Promise<void> {
-    await this.historyEngine.stopHistoryQuery(historyId);
+    await this.historyEngine.deleteHistoryQuery(historyId);
     this.repositoryService.historyQueryItemRepository.deleteAllItems(historyId);
     this.repositoryService.historyQueryRepository.deleteHistoryQuery(historyId);
   }

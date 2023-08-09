@@ -15,12 +15,16 @@ import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import HistoryQueryEngine from './history-query-engine';
 import HistoryQueryService from '../service/history-query.service';
 import { PassThrough } from 'node:stream';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { filesExists } from '../service/utils';
 
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');
 jest.mock('../service/history-query.service');
 jest.mock('../service/repository.service');
 jest.mock('../service/encryption.service');
+jest.mock('node:fs/promises');
 
 jest.mock('../service/utils');
 
@@ -141,5 +145,58 @@ describe('HistoryQueryEngine', () => {
       scopeId: configuration.id,
       scopeName: configuration.name
     });
+  });
+
+  it('should delete History Query', async () => {
+    (filesExists as jest.Mock).mockImplementationOnce(() => Promise.resolve(true)).mockImplementationOnce(() => Promise.resolve(false));
+    const stopHistoryQuerySpy = jest.spyOn(engine, 'stopHistoryQuery');
+
+    await engine.start();
+
+    const historyId = configuration.id;
+    const baseFolder = path.resolve('./cache/history-query', `history-${historyId}`);
+    await engine.deleteHistoryQuery(historyId);
+
+    expect(stopHistoryQuerySpy).toBeCalled();
+    expect(filesExists).toBeCalledWith(baseFolder);
+    expect(fs.rm).toBeCalledWith(baseFolder, { recursive: true });
+    expect(logger.trace).toBeCalledWith(`Deleting base folder "${baseFolder}" of History query with id: ${historyId}`);
+    expect(logger.info).toBeCalledWith(`Deleted History query with id: ${historyId}`);
+
+    // Removing again should fail, meaning that it's actually removed
+    await engine.deleteHistoryQuery(historyId);
+    expect(logger.warn).toBeCalledWith(`History query with id ${historyId} has been deleted already`);
+  });
+
+  it('should warn about deleted connector', async () => {
+    (filesExists as jest.Mock).mockImplementation(() => Promise.resolve(false));
+    const stopHistoryQuerySpy = jest.spyOn(engine, 'stopHistoryQuery');
+
+    await engine.start();
+
+    const historyId = configuration.id;
+    await engine.deleteHistoryQuery(historyId);
+    expect(stopHistoryQuerySpy).toBeCalled();
+    expect(logger.warn).toBeCalledWith(`History query with id ${historyId} has been deleted already`);
+  });
+
+  it('should handle deletion errors', async () => {
+    (filesExists as jest.Mock).mockImplementation(() => Promise.resolve(true));
+    const stopHistoryQuerySpy = jest.spyOn(engine, 'stopHistoryQuery');
+
+    await engine.start();
+
+    const error = new Error(`Can't remove folder`);
+    (fs.rm as jest.Mock).mockImplementation(() => {
+      throw error;
+    });
+
+    const historyId = configuration.id;
+    const baseFolder = path.resolve('./cache/history-query', `history-${historyId}`);
+    await engine.deleteHistoryQuery(historyId);
+    expect(stopHistoryQuerySpy).toBeCalled();
+    expect(filesExists).toBeCalled();
+    expect(logger.trace).toBeCalledWith(`Deleting base folder "${baseFolder}" of History query with id: ${historyId}`);
+    expect(logger.error).toBeCalledWith(`Unable to delete History query base folder: ${error}`);
   });
 });
