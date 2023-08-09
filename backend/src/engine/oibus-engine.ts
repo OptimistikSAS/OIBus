@@ -5,8 +5,9 @@ import NorthConnector from '../north/north-connector';
 import SouthConnector from '../south/south-connector';
 import NorthService from '../service/north.service';
 import SouthService from '../service/south.service';
-import { createFolder } from '../service/utils';
+import { createFolder, filesExists } from '../service/utils';
 import path from 'node:path';
+import fs from 'node:fs/promises';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
 import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
@@ -188,6 +189,48 @@ export default class OIBusEngine extends BaseEngine {
   async stopNorth(northId: string): Promise<void> {
     await this.northConnectors.get(northId)?.stop();
     this.northConnectors.delete(northId);
+  }
+
+  /**
+   * Stops the south connector and deletes all cache inside the base folder
+   */
+  async deleteSouth(southId: string): Promise<void> {
+    await this.stopSouth(southId);
+    const baseFolder = path.resolve(this.cacheFolder, `south-${southId}`);
+
+    if (!(await filesExists(baseFolder))) {
+      this.logger.warn(`South connector with id ${southId} has been deleted already`);
+      return;
+    }
+
+    try {
+      this.logger.trace(`Deleting base folder "${baseFolder}" of South with id: ${southId}`);
+      await fs.rm(baseFolder, { recursive: true });
+      this.logger.info(`Deleted South connector with id: ${southId}`);
+    } catch (error) {
+      this.logger.error(`Unable to delete South connector base folder: ${error}`);
+    }
+  }
+
+  /**
+   * Stops the north connector and deletes all cache inside the base folder
+   */
+  async deleteNorth(northId: string): Promise<void> {
+    await this.stopNorth(northId);
+    const baseFolder = path.resolve(this.cacheFolder, `north-${northId}`);
+
+    if (!(await filesExists(baseFolder))) {
+      this.logger.warn(`North connector with id ${northId} has been deleted already`);
+      return;
+    }
+
+    try {
+      this.logger.trace(`Deleting base folder "${baseFolder}" of North with id: ${northId}`);
+      await fs.rm(baseFolder, { recursive: true });
+      this.logger.info(`Deleted North connector with id: ${northId}`);
+    } catch (error) {
+      this.logger.error(`Unable to delete North connector base folder: ${error}`);
+    }
   }
 
   setLogger(value: pino.Logger) {

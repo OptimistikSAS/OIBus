@@ -109,7 +109,7 @@ export default class ReloadService {
   async onDeleteSouth(southId: string): Promise<void> {
     const subscribedNorthIds = this.repositoryService.subscriptionRepository.getSubscribedNorthConnectors(southId);
     await Promise.allSettled(subscribedNorthIds.map(northId => this.onDeleteNorthSubscription(northId, southId)));
-    await this.oibusEngine.stopSouth(southId);
+    await this.oibusEngine.deleteSouth(southId);
     this.repositoryService.southItemRepository.deleteAllSouthItems(southId);
     this.repositoryService.southConnectorRepository.deleteSouthConnector(southId);
   }
@@ -198,7 +198,7 @@ export default class ReloadService {
   }
 
   async onDeleteNorth(northId: string): Promise<void> {
-    await this.oibusEngine.stopNorth(northId);
+    await this.oibusEngine.deleteNorth(northId);
     this.repositoryService.northConnectorRepository.deleteNorthConnector(northId);
   }
 
