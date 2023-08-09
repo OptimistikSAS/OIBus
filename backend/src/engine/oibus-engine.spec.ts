@@ -13,7 +13,10 @@ import EncryptionService from '../service/encryption.service';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import OIBusEngine from './oibus-engine';
 import { EventEmitter } from 'node:events';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
+import { filesExists } from '../service/utils';
 
 jest.mock('../south/south-mqtt/south-mqtt');
 jest.mock('../service/south.service');
@@ -21,6 +24,7 @@ jest.mock('../service/north.service');
 jest.mock('../service/repository.service');
 jest.mock('../service/encryption.service');
 jest.mock('../service/utils');
+jest.mock('node:fs/promises');
 
 const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
@@ -62,94 +66,94 @@ const items: Array<SouthConnectorItemDTO> = [
 
 const connectedEvent = new EventEmitter();
 
-describe('OIBusEngine', () => {
-  const northConnectors: Array<NorthConnectorDTO> = [
-    {
-      id: 'id1',
-      name: 'myNorthConnector1',
-      description: 'a test north connector',
-      enabled: true,
-      type: 'oianalytics'
-    } as NorthConnectorDTO,
-    {
-      id: 'id2',
-      name: 'myNorthConnector2',
-      description: 'a test north connector',
-      enabled: false,
-      type: 'oiconnect'
-    } as NorthConnectorDTO
-  ];
-  const southConnectors: Array<SouthConnectorDTO> = [
-    {
-      id: 'id1',
-      type: 'sqlite',
-      name: 'South Connector1 ',
-      description: 'My first South connector description',
-      enabled: true,
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0
-      },
-      settings: {}
+const northConnectors: Array<NorthConnectorDTO> = [
+  {
+    id: 'id1',
+    name: 'myNorthConnector1',
+    description: 'a test north connector',
+    enabled: true,
+    type: 'oianalytics'
+  } as NorthConnectorDTO,
+  {
+    id: 'id2',
+    name: 'myNorthConnector2',
+    description: 'a test north connector',
+    enabled: false,
+    type: 'oiconnect'
+  } as NorthConnectorDTO
+];
+const southConnectors: Array<SouthConnectorDTO> = [
+  {
+    id: 'id1',
+    type: 'sqlite',
+    name: 'South Connector1 ',
+    description: 'My first South connector description',
+    enabled: true,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
     },
-    {
-      id: 'id2',
-      type: 'opcua-ha',
-      name: 'South Connector 2',
-      description: 'My second South connector description',
-      enabled: false,
-      history: {
-        maxInstantPerItem: true,
-        maxReadInterval: 3600,
-        readDelay: 0
-      },
-      settings: {}
-    }
-  ];
-  const createdSouth = {
-    start: jest.fn(),
-    stop: jest.fn(),
-    connect: jest.fn(),
-    historyQueryHandler: jest.fn(),
-    isEnabled: jest.fn(),
-    addItem: jest.fn(),
-    deleteItem: jest.fn(),
-    deleteAllItems: jest.fn(),
-    updateItem: jest.fn(),
-    setLogger: jest.fn(),
-    updateScanMode: jest.fn(),
-    getMetricsDataStream: jest.fn(),
-    resetMetrics: jest.fn(),
-    createSubscriptions: jest.fn(),
-    createCronJobs: jest.fn(),
-    connectedEvent: connectedEvent
-  };
-  const createdNorth = {
-    start: jest.fn(),
-    stop: jest.fn(),
-    connect: jest.fn(),
-    isEnabled: jest.fn(),
-    cacheValues: jest.fn(),
-    cacheFile: jest.fn(),
-    isSubscribed: jest.fn(),
-    isSubscribedToExternalSource: jest.fn(),
-    setLogger: jest.fn(),
-    updateScanMode: jest.fn(),
-    getErrorFiles: jest.fn(),
-    removeErrorFiles: jest.fn(),
-    retryErrorFiles: jest.fn(),
-    removeAllErrorFiles: jest.fn(),
-    retryAllErrorFiles: jest.fn(),
-    getArchiveFiles: jest.fn(),
-    removeArchiveFiles: jest.fn(),
-    retryArchiveFiles: jest.fn(),
-    removeAllArchiveFiles: jest.fn(),
-    retryAllArchiveFiles: jest.fn(),
-    getMetricsDataStream: jest.fn(),
-    resetMetrics: jest.fn()
-  };
+    settings: {}
+  },
+  {
+    id: 'id2',
+    type: 'opcua-ha',
+    name: 'South Connector 2',
+    description: 'My second South connector description',
+    enabled: false,
+    history: {
+      maxInstantPerItem: true,
+      maxReadInterval: 3600,
+      readDelay: 0
+    },
+    settings: {}
+  }
+];
+const createdSouth = {
+  start: jest.fn(),
+  stop: jest.fn(),
+  connect: jest.fn(),
+  historyQueryHandler: jest.fn(),
+  isEnabled: jest.fn(),
+  addItem: jest.fn(),
+  deleteItem: jest.fn(),
+  deleteAllItems: jest.fn(),
+  updateItem: jest.fn(),
+  setLogger: jest.fn(),
+  updateScanMode: jest.fn(),
+  getMetricsDataStream: jest.fn(),
+  resetMetrics: jest.fn(),
+  createSubscriptions: jest.fn(),
+  createCronJobs: jest.fn(),
+  connectedEvent: connectedEvent
+};
+const createdNorth = {
+  start: jest.fn(),
+  stop: jest.fn(),
+  connect: jest.fn(),
+  isEnabled: jest.fn(),
+  cacheValues: jest.fn(),
+  cacheFile: jest.fn(),
+  isSubscribed: jest.fn(),
+  isSubscribedToExternalSource: jest.fn(),
+  setLogger: jest.fn(),
+  updateScanMode: jest.fn(),
+  getErrorFiles: jest.fn(),
+  removeErrorFiles: jest.fn(),
+  retryErrorFiles: jest.fn(),
+  removeAllErrorFiles: jest.fn(),
+  retryAllErrorFiles: jest.fn(),
+  getArchiveFiles: jest.fn(),
+  removeArchiveFiles: jest.fn(),
+  retryArchiveFiles: jest.fn(),
+  removeAllArchiveFiles: jest.fn(),
+  retryAllArchiveFiles: jest.fn(),
+  getMetricsDataStream: jest.fn(),
+  resetMetrics: jest.fn()
+};
 
+describe('OIBusEngine', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
@@ -415,5 +419,106 @@ describe('OIBusEngine', () => {
     await engine.stop();
     expect(createdSouth.stop).toHaveBeenCalledTimes(2);
     expect(createdNorth.stop).toHaveBeenCalledTimes(2);
+  });
+
+  it('should delete south connector', async () => {
+    (filesExists as jest.Mock).mockImplementationOnce(() => Promise.resolve(true)).mockImplementationOnce(() => Promise.resolve(false));
+    const stopSouthSpy = jest.spyOn(engine, 'stopSouth');
+
+    (northService.getNorthList as jest.Mock).mockReturnValue([]);
+    (southService.getSouthList as jest.Mock).mockReturnValue(southConnectors);
+    (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
+    await engine.start();
+
+    const southId = southConnectors[0].id;
+    const baseFolder = path.resolve('./cache/data-stream', `south-${southId}`);
+    await engine.deleteSouth(southId);
+
+    expect(stopSouthSpy).toBeCalled();
+    expect(filesExists).toBeCalledWith(baseFolder);
+    expect(fs.rm).toBeCalledWith(baseFolder, { recursive: true });
+    expect(logger.trace).toBeCalledWith(`Deleting base folder "${baseFolder}" of South with id: ${southId}`);
+    expect(logger.info).toBeCalledWith(`Deleted South connector with id: ${southId}`);
+
+    // Removing again should fail, meaning that it's actually removed
+    await engine.deleteSouth(southId);
+    expect(logger.warn).toBeCalledWith(`South connector with id ${southId} has been deleted already`);
+  });
+
+  it('should delete north connector', async () => {
+    (filesExists as jest.Mock).mockImplementationOnce(() => Promise.resolve(true)).mockImplementationOnce(() => Promise.resolve(false));
+    const stopNorthSpy = jest.spyOn(engine, 'stopNorth');
+
+    (southService.getSouthList as jest.Mock).mockReturnValue([]);
+    (northService.getNorthList as jest.Mock).mockReturnValue(northConnectors);
+    (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
+    await engine.start();
+
+    const northId = northConnectors[0].id;
+    const baseFolder = path.resolve('./cache/data-stream', `north-${northId}`);
+    await engine.deleteNorth(northId);
+
+    expect(stopNorthSpy).toBeCalled();
+    expect(filesExists).toBeCalledWith(baseFolder);
+    expect(fs.rm).toBeCalledWith(baseFolder, { recursive: true });
+    expect(logger.trace).toBeCalledWith(`Deleting base folder "${baseFolder}" of North with id: ${northId}`);
+    expect(logger.info).toBeCalledWith(`Deleted North connector with id: ${northId}`);
+
+    // Removing again should fail, meaning that it's actually removed
+    await engine.deleteNorth(northId);
+    expect(logger.warn).toBeCalledWith(`North connector with id ${northId} has been deleted already`);
+  });
+
+  it('should warn about deleted connector', async () => {
+    (filesExists as jest.Mock).mockImplementation(() => Promise.resolve(false));
+    const stopSouthSpy = jest.spyOn(engine, 'stopSouth');
+    const stopNorthSpy = jest.spyOn(engine, 'stopNorth');
+
+    (southService.getSouthList as jest.Mock).mockReturnValue([]);
+    (northService.getNorthList as jest.Mock).mockReturnValue([]);
+    await engine.start();
+
+    const southId = southConnectors[0].id;
+    await engine.deleteSouth(southId);
+    expect(stopSouthSpy).toBeCalled();
+    expect(logger.warn).toBeCalledWith(`South connector with id ${southId} has been deleted already`);
+
+    const northId = northConnectors[0].id;
+    await engine.deleteNorth(northId);
+    expect(stopNorthSpy).toBeCalled();
+    expect(logger.warn).toBeCalledWith(`North connector with id ${northId} has been deleted already`);
+  });
+
+  it('should handle connector deletion errors', async () => {
+    (filesExists as jest.Mock).mockImplementation(() => Promise.resolve(true));
+    const stopSouthSpy = jest.spyOn(engine, 'stopSouth');
+    const stopNorthSpy = jest.spyOn(engine, 'stopNorth');
+
+    (southService.getSouthList as jest.Mock).mockReturnValue(southConnectors);
+    (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
+    (northService.getNorthList as jest.Mock).mockReturnValue(northConnectors);
+    (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
+    await engine.start();
+
+    const error = new Error(`Can't remove folder`);
+    (fs.rm as jest.Mock).mockImplementation(() => {
+      throw error;
+    });
+
+    const southId = southConnectors[0].id;
+    const southBaseFolder = path.resolve('./cache/data-stream', `south-${southId}`);
+    await engine.deleteSouth(southId);
+    expect(stopSouthSpy).toBeCalled();
+    expect(filesExists).toBeCalled();
+    expect(logger.trace).toBeCalledWith(`Deleting base folder "${southBaseFolder}" of South with id: ${southId}`);
+    expect(logger.error).toBeCalledWith(`Unable to delete South connector base folder: ${error}`);
+
+    const northId = northConnectors[0].id;
+    const northBaseFolder = path.resolve('./cache/data-stream', `north-${northId}`);
+    await engine.deleteNorth(northId);
+    expect(stopNorthSpy).toBeCalled();
+    expect(filesExists).toBeCalled();
+    expect(logger.trace).toBeCalledWith(`Deleting base folder "${northBaseFolder}" of North with id: ${northId}`);
+    expect(logger.error).toBeCalledWith(`Unable to delete North connector base folder: ${error}`);
   });
 });

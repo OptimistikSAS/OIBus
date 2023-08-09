@@ -137,7 +137,7 @@ describe('reload service', () => {
     expect(repositoryService.subscriptionRepository.deleteNorthSubscription).toHaveBeenNthCalledWith(2, 'northId2', 'southId');
     expect(oibusEngine.startNorth).toHaveBeenNthCalledWith(1, 'northId1', { id: 'northId1', enabled: true });
     expect(oibusEngine.startNorth).toHaveBeenNthCalledWith(2, 'northId2', { id: 'northId2', enabled: true });
-    expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
+    expect(oibusEngine.deleteSouth).toHaveBeenCalledWith('southId');
     expect(repositoryService.southConnectorRepository.deleteSouthConnector).toHaveBeenCalledWith('southId');
     expect(repositoryService.southItemRepository.deleteAllSouthItems).toHaveBeenCalledWith('southId');
   });
@@ -295,7 +295,7 @@ describe('reload service', () => {
 
   it('should delete north', async () => {
     await service.onDeleteNorth('northId');
-    expect(oibusEngine.stopNorth).toHaveBeenCalledWith('northId');
+    expect(oibusEngine.deleteNorth).toHaveBeenCalledWith('northId');
     expect(repositoryService.northConnectorRepository.deleteNorthConnector).toHaveBeenCalledWith('northId');
   });
 
