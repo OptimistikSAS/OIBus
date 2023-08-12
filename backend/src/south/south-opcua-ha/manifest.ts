@@ -152,8 +152,9 @@ const manifest: SouthConnectorManifest = {
         key: 'aggregate',
         type: 'OibSelect',
         label: 'Aggregate',
-        options: ['Raw', 'Average', 'Minimum', 'Maximum', 'Count'],
-        defaultValue: 'Raw',
+        pipe: 'aggregates',
+        options: ['raw', 'average', 'minimum', 'maximum', 'count'],
+        defaultValue: 'raw',
         validators: [{ key: 'required' }],
         displayInViewMode: true
       },
@@ -161,9 +162,11 @@ const manifest: SouthConnectorManifest = {
         key: 'resampling',
         type: 'OibSelect',
         label: 'Resampling',
-        options: ['None', 'Second', '10 Seconds', '30 Seconds', 'Minute', 'Hour', 'Day'],
-        defaultValue: 'None',
+        pipe: 'resampling',
+        options: ['none', 'second', '10Seconds', '30Seconds', 'minute', 'hour', 'day'],
+        defaultValue: 'none',
         validators: [{ key: 'required' }],
+        conditionalDisplay: { field: 'aggregate', values: ['average', 'minimum', 'maximum', 'count'] },
         displayInViewMode: true
       },
       {

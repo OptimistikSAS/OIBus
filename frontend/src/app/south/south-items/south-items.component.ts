@@ -24,6 +24,7 @@ import { DurationPipe } from '../../shared/duration.pipe';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { createPageFromArray, Page } from '../../../../../shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
+import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 
 const PAGE_SIZE = 20;
 
@@ -66,6 +67,7 @@ export class SouthItemsComponent implements OnInit {
     private notificationService: NotificationService,
     private modalService: ModalService,
     private southConnectorService: SouthConnectorService,
+    private pipeProviderService: PipeProviderService,
     private fb: NonNullableFormBuilder
   ) {}
 
@@ -299,5 +301,13 @@ export class SouthItemsComponent implements OnInit {
           this.changePage(this.displayedItems.number);
         });
     }
+  }
+
+  getFieldValue(element: any, field: string, pipeIdentifier: string | undefined): string {
+    const value = element[field];
+    if (value && pipeIdentifier && this.pipeProviderService.validIdentifier(pipeIdentifier)) {
+      return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
+    }
+    return value;
   }
 }

@@ -73,8 +73,13 @@ export const DATE_TIME_TYPES = [
 ] as const;
 export type DateTimeType = typeof DATE_TIME_TYPES[number];
 
-export const ALL_CSV_CHARACTERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const;
+export const AGGREGATES = ['raw', 'maximum', 'minimum', 'count', 'average'] as const;
+export type Aggregate = typeof AGGREGATES[number];
 
+export const RESAMPLING = ['none', 'second', '10Seconds', '30Seconds', 'minute', 'hour', 'day'] as const;
+export type Resampling = typeof RESAMPLING[number];
+
+export const ALL_CSV_CHARACTERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const;
 export type CsvCharacter = typeof ALL_CSV_CHARACTERS[number];
 
 // TODO: custom serialization with parser / transformer

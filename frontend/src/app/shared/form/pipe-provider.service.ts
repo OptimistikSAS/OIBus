@@ -3,6 +3,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { CsvCharacterEnumPipe } from '../csv-character-enum.pipe';
 import { DatetimeTypesEnumPipe } from '../datetime-types-enum.pipe';
 import { AuthTypesEnumPipe } from '../auth-types-enum.pipe';
+import { AggregatesEnumPipe } from '../aggregates-enum.pipe';
+import { ResamplingEnumPipe } from '../resampling-enum.pipe';
 
 @Injectable({
   providedIn: 'root'
@@ -14,6 +16,8 @@ export class PipeProviderService {
     this.PIPES.set('character', new CsvCharacterEnumPipe(translateService));
     this.PIPES.set('dateTimeType', new DatetimeTypesEnumPipe(translateService));
     this.PIPES.set('authentication', new AuthTypesEnumPipe(translateService));
+    this.PIPES.set('aggregates', new AggregatesEnumPipe(translateService));
+    this.PIPES.set('resampling', new ResamplingEnumPipe(translateService));
   }
 
   getPipeForString(pipeIdentifier: string): PipeTransform {

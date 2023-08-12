@@ -138,6 +138,22 @@
       "csv": "CSV File",
       "json": "OIBus values"
     },
+    "aggregates": {
+      "raw": "Raw",
+      "maximum": "Maximum",
+      "minimum": "Minimum",
+      "count": "Count",
+      "average": "Average"
+    },
+    "resampling": {
+      "none": "None",
+      "second": "1 second",
+      "10Seconds": "10 seconds",
+      "30Seconds": "30 seconds",
+      "minute": "1 minute",
+      "hour": "1 hour",
+      "day": "1 day"
+    },
     "csv-character": {
       "DOT": "Dot .",
       "SEMI_COLON": "Semi colon ;",

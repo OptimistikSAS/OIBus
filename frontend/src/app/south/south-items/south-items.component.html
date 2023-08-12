@@ -66,8 +66,13 @@
               </div>
             </td>
             <td>{{ item.name }}</td>
-            <td *ngIf="!southConnectorItemSchema.scanMode.subscriptionOnly">{{ getScanMode(item.scanModeId)?.name }}</td>
-            <td *ngFor="let setting of displaySettings">{{ item.settings[setting.key] }}</td>
+            <td *ngIf="!southConnectorItemSchema.scanMode.subscriptionOnly && item.scanModeId !== 'subscription'">
+              {{ getScanMode(item.scanModeId)?.name }}
+            </td>
+            <td *ngIf="!southConnectorItemSchema.scanMode.subscriptionOnly && item.scanModeId === 'subscription'">
+              {{ 'scan-mode.subscription' | translate }}
+            </td>
+            <td *ngFor="let setting of displaySettings">{{ getFieldValue(item.settings, setting.key, setting.pipe) }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <!-- Edit button -->

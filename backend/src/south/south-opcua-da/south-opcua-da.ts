@@ -1,4 +1,12 @@
-import { MessageSecurityMode, OPCUAClient, UserTokenType } from 'node-opcua-client';
+import {
+  AttributeIds,
+  ClientMonitoredItem,
+  ClientSubscription,
+  MessageSecurityMode,
+  OPCUAClient,
+  TimestampsToReturn,
+  UserTokenType
+} from 'node-opcua-client';
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
 
 import manifest from './manifest';
@@ -14,22 +22,25 @@ import { OPCUAClientOptions } from 'node-opcua-client/source/opcua_client';
 import { UserIdentityInfo } from 'node-opcua-client/source/user_identity_info';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { QueriesLastPoint, TestsConnection } from '../south-interface';
+import { QueriesLastPoint, QueriesSubscription, TestsConnection } from '../south-interface';
 import { SouthOPCUADAItemSettings, SouthOPCUADASettings } from '../../../../shared/model/south-settings.model';
 import { randomUUID } from 'crypto';
+import { DateTime } from 'luxon';
 
 /**
  * Class SouthOPCUADA - Connect to an OPCUA server in DA (Data Access) mode
  */
 export default class SouthOPCUADA
   extends SouthConnector<SouthOPCUADASettings, SouthOPCUADAItemSettings>
-  implements QueriesLastPoint, TestsConnection
+  implements QueriesLastPoint, QueriesSubscription, TestsConnection
 {
   static type = manifest.id;
 
   private clientCertificateManager: OPCUACertificateManager | null = null;
   private session: ClientSession | null = null;
+  private subscription: ClientSubscription | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
+  private monitoredItems = new Map<string, ClientMonitoredItem>();
   private disconnecting = false;
 
   constructor(
@@ -153,12 +164,16 @@ export default class SouthOPCUADA
       await super.connect();
     } catch (error) {
       this.logger.error(`Error while connecting to the OPCUA DA server. ${error}`);
-      await this.internalDisconnect();
+      await this.disconnect();
       this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.connector.settings.retryInterval);
     }
   }
 
   async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthOPCUADAItemSettings>>): Promise<void> {
+    if (!this.session) {
+      this.logger.error('OPCUA session not set. The connector cannot read values');
+      return;
+    }
     try {
       if (items.length > 1) {
         this.logger.debug(`Read ${items.length} nodes ` + `[${items[0].settings.nodeId}...${items[items.length - 1].settings.nodeId}]`);
@@ -166,7 +181,7 @@ export default class SouthOPCUADA
         this.logger.debug(`Read node ${items[0].settings.nodeId}`);
       }
 
-      const dataValues = await this.session?.read(items.map(item => ({ nodeId: item.settings.nodeId })));
+      const dataValues = await this.session.read(items.map(item => ({ nodeId: item.settings.nodeId })));
       if (!dataValues) {
         this.logger.error(`Could not read nodes`);
         return;
@@ -187,28 +202,27 @@ export default class SouthOPCUADA
       await this.addValues(values);
     } catch (error) {
       if (!this.disconnecting) {
-        await this.internalDisconnect();
+        await this.disconnect();
         await this.connect();
       }
       throw error;
     }
   }
 
-  async internalDisconnect(): Promise<void> {
+  override async disconnect(): Promise<void> {
+    this.disconnecting = true;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
     }
+
+    await this.subscription?.terminate();
+    this.subscription = null;
 
     await this.session?.close();
     this.session = null;
 
     await super.disconnect();
     this.disconnecting = false;
-  }
-
-  override async disconnect(): Promise<void> {
-    this.disconnecting = true;
-    await this.internalDisconnect();
   }
 
   async createSessionConfigs(
@@ -257,46 +271,61 @@ export default class SouthOPCUADA
     return { options, userIdentity };
   }
 
-  /*
-  monitorPoints() {
-    const nodesToMonitor = this.points
-      .filter((point) => point.scanMode === 'listen')
-      .map((point) => point.pointId)
-    if (!nodesToMonitor.length) {
-      this.logger.error('Monitoring ignored: no points to monitor')
-      return
+  async subscribe(items: Array<SouthConnectorItemDTO<SouthOPCUADAItemSettings>>): Promise<void> {
+    if (!items.length) {
+      return;
+    }
+    if (!this.session) {
+      this.logger.error('OPCUA client could not subscribe to items: session not set');
+      return;
+    }
+    if (!this.subscription) {
+      this.subscription = ClientSubscription.create(this.session, {
+        requestedPublishingInterval: 150,
+        requestedLifetimeCount: 10 * 60 * 10,
+        requestedMaxKeepAliveCount: 10,
+        maxNotificationsPerPublish: 2,
+        publishingEnabled: true,
+        priority: 6
+      });
     }
 
-    this.subscription = ClientSubscription.create(this.session, {
-      requestedPublishingInterval: 150,
-      requestedLifetimeCount: 10 * 60 * 10,
-      requestedMaxKeepAliveCount: 10,
-      maxNotificationsPerPublish: 2,
-      publishingEnabled: true,
-      priority: 6,
-    })
-    nodesToMonitor.forEach((nodeToMonitor) => {
+    items.forEach(item => {
       const monitoredItem = ClientMonitoredItem.create(
-        this.subscription,
+        this.subscription!,
         {
-          nodeId: nodeToMonitor,
-          attributeId: AttributeIds.Value,
+          nodeId: item.settings.nodeId,
+          attributeId: AttributeIds.Value
         },
         {
           samplingInterval: 2,
           discardOldest: true,
-          queueSize: 1,
+          queueSize: 1
         },
-        TimestampsToReturn.Neither,
-      )
+        TimestampsToReturn.Neither
+      );
+      monitoredItem.on('changed', async dataValue => {
+        await this.addValues([
+          {
+            pointId: item.name,
+            timestamp: DateTime.now().toUTC().toISO(),
+            data: {
+              value: dataValue.value.value,
+              quality: JSON.stringify(dataValue.statusCode)
+            }
+          }
+        ]);
+      });
+      this.monitoredItems.set(item.id, monitoredItem);
+    });
+  }
 
-      monitoredItem.on('changed', (dataValue) => this.manageDataValues([dataValue], nodesToMonitor))
-    })
-
-    // On disconnect()
-    if (this.subscription) {
-      await this.subscription.terminate()
+  async unsubscribe(items: Array<SouthConnectorItemDTO<SouthOPCUADAItemSettings>>): Promise<void> {
+    for (const item of items) {
+      if (this.monitoredItems.has(item.id)) {
+        await this.monitoredItems.get(item.id)!.terminate();
+        this.monitoredItems.delete(item.id);
+      }
     }
   }
-   */
 }

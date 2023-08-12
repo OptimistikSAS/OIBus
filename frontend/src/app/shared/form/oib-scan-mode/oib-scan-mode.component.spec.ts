@@ -7,6 +7,7 @@ import { formDirectives } from '../../form-directives';
 import { ComponentTester } from 'ngx-speculoos';
 import { FormControl, FormGroup } from '@angular/forms';
 import { ScanModeDTO } from '../../../../../../shared/model/scan-mode.model';
+import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 
 @Component({
   template: `<form [formGroup]="form">
@@ -50,6 +51,10 @@ describe('OibScanModeComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
+
+    TestBed.configureTestingModule({
+      providers: [provideI18nTesting()]
+    });
 
     tester = new OibFormComponentTester();
     tester.detectChanges();

@@ -6,7 +6,7 @@ const manifest: SouthConnectorManifest = {
   category: 'iot',
   description: 'Request data from OPC UA server on Data Access (DA) mode',
   modes: {
-    subscription: false,
+    subscription: true,
     lastPoint: true,
     lastFile: false,
     history: false,
@@ -144,7 +144,7 @@ const manifest: SouthConnectorManifest = {
   ],
   items: {
     scanMode: {
-      acceptSubscription: false,
+      acceptSubscription: true,
       subscriptionOnly: false
     },
     settings: [

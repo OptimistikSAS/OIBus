@@ -1,7 +1,9 @@
 import {
+  AggregateFunction,
   HistoryReadRequest,
   MessageSecurityMode,
   OPCUAClient,
+  ReadProcessedDetails,
   ReadRawModifiedDetails,
   StatusCodes,
   TimestampsToReturn,
@@ -10,7 +12,7 @@ import {
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
-import { Instant } from '../../../../shared/model/types';
+import { Aggregate, Instant, Resampling } from '../../../../shared/model/types';
 
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
@@ -27,12 +29,7 @@ import path from 'node:path';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { SouthOPCUAHAItemSettings, SouthOPCUAHASettings } from '../../../../shared/model/south-settings.model';
 import { randomUUID } from 'crypto';
-
-const AGGREGATE_TYPES = ['raw', 'count', 'max', 'min', 'avg'];
-type AggregateType = (typeof AGGREGATE_TYPES)[number];
-
-const RESAMPLINGS = ['none', '1s', '10s', '30s', '60s', '1h', '24h'];
-type Resampling = (typeof RESAMPLINGS)[number];
+import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 
 /**
  * Class SouthOPCUAHA - Connect to an OPCUA server in HA (Historian Access) mode
@@ -170,7 +167,7 @@ export default class SouthOPCUAHA
       await super.connect();
     } catch (error) {
       this.logger.error(`Error while connecting to the OPCUA HA server. ${error}`);
-      await this.internalDisconnect();
+      await this.disconnect();
       this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.connector.settings.retryInterval);
     }
   }
@@ -186,7 +183,11 @@ export default class SouthOPCUAHA
     try {
       let maxTimestamp = DateTime.fromISO(startTime).toMillis();
 
-      const itemsByAggregates = new Map<AggregateType, Map<Resampling, Array<{ nodeId: string; itemName: string }>>>();
+      if (!this.session) {
+        this.logger.error('OPCUA session not set. The connector cannot read values');
+        return startTime;
+      }
+      const itemsByAggregates = new Map<Aggregate, Map<Resampling | undefined, Array<{ nodeId: string; itemName: string }>>>();
       items.forEach(item => {
         if (!itemsByAggregates.has(item.settings.aggregate)) {
           itemsByAggregates.set(
@@ -211,12 +212,11 @@ export default class SouthOPCUAHA
         }
       });
 
-      let dataByItems: Array<any> = [];
       for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
         for (const [resampling, resampledItems] of aggregatedItems.entries()) {
           const logs: Map<string, { description: string; affectedNodes: Array<string> }> = new Map();
 
-          let nodesToRead = resampledItems.map(item => ({
+          let nodesToRead: Array<HistoryReadValueIdOptions> = resampledItems.map(item => ({
             continuationPoint: undefined,
             dataEncoding: undefined,
             indexRange: undefined,
@@ -224,78 +224,58 @@ export default class SouthOPCUAHA
           }));
 
           this.logger.trace(`Reading ${resampledItems.length} items with aggregate ${aggregate} and resampling ${resampling}`);
-          let historyReadDetails: ReadRawModifiedDetails;
-          do {
-            switch (aggregate) {
-              case 'raw':
-              default:
-                historyReadDetails = new ReadRawModifiedDetails({
-                  // @ts-ignore
-                  startTime,
-                  // @ts-ignore
-                  endTime,
-                  // numValuesPerNode: options.numValuesPerNode,
-                  isReadModified: false,
-                  returnBounds: false
-                });
-            }
 
-            const request = new HistoryReadRequest({
-              historyReadDetails,
-              nodesToRead,
-              releaseContinuationPoints: false,
-              timestampsToReturn: TimestampsToReturn.Both
-            });
-            // if (options.timeout) request.requestHeader.timeoutHint = options.timeout
+          do {
+            const request: HistoryReadRequest = this.getHistoryReadRequest(startTime, endTime, aggregate, resampling, nodesToRead);
+
             // @ts-ignore
-            const response = await this.session?.performMessageTransaction(request);
+            const response = await this.session.performMessageTransaction(request);
             if (response.responseHeader.serviceResult.isNot(StatusCodes.Good)) {
               this.logger.error(`Error while reading history: ${response.responseHeader.serviceResult.description}`);
             }
 
             if (response.results) {
-              this.logger.debug(`Received a response of ${response.results.length} nodes.`);
+              this.logger.debug(`Received a response of ${response.results.length} nodes`);
+              let dataByItems: Array<any> = [];
+
               nodesToRead = nodesToRead
                 .map((node, i) => {
                   const result = response.results[i];
-                  const associatedItem = resampledItems.find(item => item.nodeId === node.nodeId);
-                  if (associatedItem) {
-                    if (result.historyData?.dataValues) {
-                      this.logger.trace(
-                        `Result for node "${node.nodeId}" (number ${i}) contains ` +
-                          `${result.historyData.dataValues.length} values and has status code ` +
-                          `${JSON.stringify(result.statusCode.value)}, continuation point is ${result.continuationPoint}`
-                      );
-                      dataByItems = [
-                        ...dataByItems,
-                        ...result.historyData.dataValues.map((dataValue: any) => {
-                          const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
-                          const selectedTime = selectedTimestamp.getTime();
-                          maxTimestamp = selectedTime > maxTimestamp ? selectedTime : maxTimestamp;
-                          return {
-                            pointId: associatedItem.itemName,
-                            timestamp: selectedTimestamp.toISOString(),
-                            data: {
-                              value: dataValue.value.value,
-                              quality: JSON.stringify(dataValue.statusCode)
-                            }
-                          };
-                        })
-                      ];
+                  const associatedItem = resampledItems.find(item => item.nodeId === node.nodeId)!;
+
+                  if (result.historyData?.dataValues) {
+                    this.logger.trace(
+                      `Result for node "${node.nodeId}" (number ${i}) contains ` +
+                        `${result.historyData.dataValues.length} values and has status code ` +
+                        `${JSON.stringify(result.statusCode.value)}, continuation point is ${result.continuationPoint}`
+                    );
+                    dataByItems = [
+                      ...dataByItems,
+                      ...result.historyData.dataValues.map((dataValue: any) => {
+                        const selectedTimestamp = dataValue.sourceTimestamp ?? dataValue.serverTimestamp;
+                        const selectedTime = selectedTimestamp.getTime();
+                        maxTimestamp = selectedTime > maxTimestamp ? selectedTime : maxTimestamp;
+                        return {
+                          pointId: associatedItem.itemName,
+                          timestamp: selectedTimestamp.toISOString(),
+                          data: {
+                            value: dataValue.value.value,
+                            quality: JSON.stringify(dataValue.statusCode)
+                          }
+                        };
+                      })
+                    ];
+                  }
+                  // Reason of statusCode not equal to zero could be there is no data for the requested data and interval
+                  if (result.statusCode.value !== StatusCodes.Good) {
+                    if (!logs.has(result.statusCode.value)) {
+                      logs.set(result.statusCode.value, {
+                        description: result.statusCode.description,
+                        affectedNodes: [associatedItem.itemName]
+                      });
+                    } else {
+                      logs.get(result.statusCode.value)!.affectedNodes.push(associatedItem.itemName);
                     }
-                    // Reason of statusCode not equal to zero could be there is no data for the requested data and interval
-                    if (result.statusCode.value !== StatusCodes.Good) {
-                      if (!logs.has(result.statusCode.value)) {
-                        logs.set(result.statusCode.value, {
-                          description: result.statusCode.description,
-                          affectedNodes: [associatedItem.itemName]
-                        });
-                      } else {
-                        logs.get(result.statusCode.value)!.affectedNodes.push(associatedItem.itemName);
-                      }
-                    }
-                  } else {
-                    this.logger.error(`Node "${node.nodeId}" not found in items for aggregate ${aggregate} and resampling ${resampling}`);
                   }
 
                   return {
@@ -304,9 +284,14 @@ export default class SouthOPCUAHA
                   };
                 })
                 .filter(node => !!node.continuationPoint);
-              this.logger.trace(`Continue read for ${nodesToRead.length} points.`);
+
+              this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
+              await this.addValues(dataByItems);
+
+              this.logger.trace(`Continue read for ${nodesToRead.length} points`);
             } else {
-              this.logger.error('No result found in response.');
+              this.logger.error('No result found in response');
+              nodesToRead = [];
             }
           } while (nodesToRead.length > 0);
 
@@ -319,48 +304,37 @@ export default class SouthOPCUAHA
           }));
 
           // @ts-ignore
-          const response = await this.session?.performMessageTransaction(
-            new HistoryReadRequest({
-              historyReadDetails,
-              nodesToRead,
-              releaseContinuationPoints: true,
-              timestampsToReturn: TimestampsToReturn.Both
-            })
+          const response = await this.session.performMessageTransaction(
+            this.getHistoryReadRequest(startTime, endTime, aggregate, resampling, nodesToRead)
           );
 
           if (response.responseHeader.serviceResult.isNot(StatusCodes.Good)) {
             this.logger.error(`Error while releasing continuation points: ${response.responseHeader.serviceResult.description}`);
           }
           for (const [statusCode, log] of logs.entries()) {
-            switch (statusCode) {
-              default:
-                if (log.affectedNodes.length > MAX_NUMBER_OF_NODE_TO_LOG) {
-                  this.logger.debug(
-                    `${log.description} with status code ${statusCode}: [${log.affectedNodes[0]}..${
-                      log.affectedNodes[log.affectedNodes.length - 1]
-                    }]`
-                  );
-                } else {
-                  this.logger.debug(`${log.description} with status code ${statusCode}: [${log.affectedNodes.toString()}]`);
-                }
-                break;
+            if (log.affectedNodes.length > MAX_NUMBER_OF_NODE_TO_LOG) {
+              this.logger.debug(
+                `${log.description} with status code ${statusCode}: [${log.affectedNodes[0]}..${
+                  log.affectedNodes[log.affectedNodes.length - 1]
+                }]`
+              );
+            } else {
+              this.logger.debug(`${log.description} with status code ${statusCode}: [${log.affectedNodes.toString()}]`);
             }
           }
         }
       }
-      this.logger.debug(`Adding ${dataByItems.length} values between ${startTime} and ${endTime}`);
-      await this.addValues(dataByItems);
       return DateTime.fromMillis(maxTimestamp).toUTC().toISO() as Instant;
     } catch (error) {
       if (!this.disconnecting) {
-        await this.internalDisconnect();
+        await this.disconnect();
         await this.connect();
       }
       throw error;
     }
   }
 
-  async internalDisconnect(): Promise<void> {
+  override async disconnect(): Promise<void> {
     this.disconnecting = true;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
@@ -371,10 +345,6 @@ export default class SouthOPCUAHA
 
     await super.disconnect();
     this.disconnecting = false;
-  }
-
-  override async disconnect(): Promise<void> {
-    await this.internalDisconnect();
   }
 
   async createSessionConfigs(
@@ -421,5 +391,84 @@ export default class SouthOPCUAHA
     }
 
     return { options, userIdentity };
+  }
+
+  getHistoryReadRequest(
+    startTime: Instant,
+    endTime: Instant,
+    aggregate: string,
+    resampling: string | undefined,
+    nodesToRead: Array<HistoryReadValueIdOptions>
+  ): HistoryReadRequest {
+    let historyReadDetails: ReadRawModifiedDetails | ReadProcessedDetails;
+    switch (aggregate) {
+      case 'average':
+        historyReadDetails = new ReadProcessedDetails({
+          startTime: new Date(startTime),
+          endTime: new Date(endTime),
+          aggregateType: Array(nodesToRead.length).fill(AggregateFunction.Average),
+          processingInterval: this.getResamplingValue(resampling)
+        });
+        break;
+      case 'minimum':
+        historyReadDetails = new ReadProcessedDetails({
+          startTime: new Date(startTime),
+          endTime: new Date(endTime),
+          aggregateType: Array(nodesToRead.length).fill(AggregateFunction.Minimum),
+          processingInterval: this.getResamplingValue(resampling)
+        });
+        break;
+      case 'maximum':
+        historyReadDetails = new ReadProcessedDetails({
+          startTime: new Date(startTime),
+          endTime: new Date(endTime),
+          aggregateType: Array(nodesToRead.length).fill(AggregateFunction.Maximum),
+          processingInterval: this.getResamplingValue(resampling)
+        });
+        break;
+      case 'count':
+        historyReadDetails = new ReadProcessedDetails({
+          startTime: new Date(startTime),
+          endTime: new Date(endTime),
+          aggregateType: Array(nodesToRead.length).fill(AggregateFunction.Count),
+          processingInterval: this.getResamplingValue(resampling)
+        });
+        break;
+      case 'raw':
+      default:
+        historyReadDetails = new ReadRawModifiedDetails({
+          startTime: new Date(startTime),
+          endTime: new Date(endTime),
+          isReadModified: false,
+          returnBounds: false
+        });
+        break;
+    }
+    return new HistoryReadRequest({
+      historyReadDetails,
+      nodesToRead,
+      releaseContinuationPoints: false,
+      timestampsToReturn: TimestampsToReturn.Both
+    });
+  }
+
+  getResamplingValue(resampling: string | undefined): number | undefined {
+    switch (resampling) {
+      case 'second':
+        return 1000;
+      case '10Seconds':
+        return 1000 * 10;
+      case '30Seconds':
+        return 1000 * 30;
+      case 'minute':
+        return 1000 * 60;
+      case 'hour':
+        return 1000 * 3600;
+      case 'day':
+        return 1000 * 3600 * 24;
+      case 'none':
+      default:
+        return undefined;
+    }
   }
 }
