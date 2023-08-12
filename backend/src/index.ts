@@ -14,6 +14,7 @@ import HistoryQueryEngine from './engine/history-query-engine';
 import HistoryQueryService from './service/history-query.service';
 import OIBusService from './service/oibus.service';
 import { migrateCrypto, migrateEntities, migrateLogsAndMetrics, migrateSouthCache } from './db/migration-service';
+import HomeMetricsService from './service/home-metrics.service';
 
 const CONFIG_DATABASE = 'oibus.db';
 const CRYPTO_DATABASE = 'crypto.db';
@@ -79,7 +80,22 @@ const LOG_DB_NAME = 'journal.db';
   const southService = new SouthService(encryptionService, repositoryService);
   const historyQueryService = new HistoryQueryService(repositoryService);
 
-  const engine = new OIBusEngine(encryptionService, northService, southService, loggerService.createChildLogger('data-stream'));
+  const engineMetricsService = new EngineMetricsService(loggerService.logger!, oibusSettings.id, repositoryService.engineMetricsRepository);
+  const homeMetricsService = new HomeMetricsService(
+    oibusSettings.id,
+    engineMetricsService,
+    repositoryService.engineMetricsRepository,
+    repositoryService.northMetricsRepository,
+    repositoryService.southMetricsRepository
+  );
+
+  const engine = new OIBusEngine(
+    encryptionService,
+    northService,
+    southService,
+    homeMetricsService,
+    loggerService.createChildLogger('data-stream')
+  );
   const historyQueryEngine = new HistoryQueryEngine(
     encryptionService,
     northService,
@@ -89,14 +105,15 @@ const LOG_DB_NAME = 'journal.db';
   );
 
   const oibusService = new OIBusService(engine, historyQueryEngine);
+
   await engine.start();
   await historyQueryEngine.start();
-  const engineMetricsService = new EngineMetricsService(loggerService.logger!, oibusSettings.id, repositoryService.engineMetricsRepository);
 
   const reloadService = new ReloadService(
     loggerService,
     repositoryService,
     engineMetricsService,
+    homeMetricsService,
     northService,
     southService,
     engine,

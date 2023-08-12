@@ -14,6 +14,7 @@ import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
 import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
+import HomeMetricsService from '../service/home-metrics.service';
 
 const CACHE_FOLDER = './cache/data-stream';
 
@@ -24,7 +25,13 @@ export default class OIBusEngine extends BaseEngine {
   private northConnectors: Map<string, NorthConnector> = new Map<string, NorthConnector>();
   private southConnectors: Map<string, SouthConnector> = new Map<string, SouthConnector>();
 
-  constructor(encryptionService: EncryptionService, northService: NorthService, southService: SouthService, logger: pino.Logger) {
+  constructor(
+    encryptionService: EncryptionService,
+    northService: NorthService,
+    southService: SouthService,
+    private readonly homeMetricsService: HomeMetricsService,
+    logger: pino.Logger
+  ) {
     super(encryptionService, northService, southService, logger, CACHE_FOLDER);
   }
 
@@ -131,6 +138,7 @@ export default class OIBusEngine extends BaseEngine {
       this.logger.child({ scopeType: 'south', scopeId: settings.id, scopeName: settings.name })
     );
     if (south.isEnabled()) {
+      this.homeMetricsService.addSouth(south, settings.id);
       south.connectedEvent.on('connected', async () => {
         await south.createSubscriptions(items.filter(item => item.scanModeId === 'subscription' && item.enabled));
         await south.createCronJobs(items.filter(item => item.scanModeId !== 'subscription' && item.enabled));
@@ -155,6 +163,7 @@ export default class OIBusEngine extends BaseEngine {
       this.logger.child({ scopeType: 'north', scopeId: settings.id, scopeName: settings.name })
     );
     if (north.isEnabled()) {
+      this.homeMetricsService.addNorth(north, settings.id);
       // Do not await here, so it can start all connectors without blocking the thread
       north.start().catch(error => {
         this.logger.error(`Error while starting North connector "${settings.name}" of type "${settings.type}" (${settings.id}): ${error}`);
@@ -182,11 +191,13 @@ export default class OIBusEngine extends BaseEngine {
   }
 
   async stopSouth(southId: string): Promise<void> {
+    this.homeMetricsService.removeSouth(southId);
     await this.southConnectors.get(southId)?.stop();
     this.southConnectors.delete(southId);
   }
 
   async stopNorth(northId: string): Promise<void> {
+    this.homeMetricsService.removeNorth(northId);
     await this.northConnectors.get(northId)?.stop();
     this.northConnectors.delete(northId);
   }

@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgForOf, NgIf, NgOptimizedImage } from '@angular/common';
+import { NgForOf, NgIf } from '@angular/common';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../services/south-connector.service';
@@ -9,22 +9,31 @@ import { combineLatest } from 'rxjs';
 import { EngineMetricsComponent } from '../engine/engine-metrics/engine-metrics.component';
 import { NorthMetricsComponent } from '../north/north-metrics/north-metrics.component';
 import { SouthMetricsComponent } from '../south/south-metrics/south-metrics.component';
+import { WindowService } from '../shared/window.service';
+import { HomeMetrics } from '../../../../shared/model/engine.model';
 
 const NUMBER_OF_COLUMN = 3;
 
 @Component({
   selector: 'oib-home',
   standalone: true,
-  imports: [TranslateModule, NgOptimizedImage, NgForOf, NgIf, EngineMetricsComponent, NorthMetricsComponent, SouthMetricsComponent],
+  imports: [TranslateModule, NgForOf, NgIf, EngineMetricsComponent, NorthMetricsComponent, SouthMetricsComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
-export class HomeComponent implements OnInit {
+export class HomeComponent implements OnInit, OnDestroy {
   readonly copyrightYear = new Date().getFullYear();
   southRows: Array<Array<SouthConnectorDTO>> = [];
   northRows: Array<Array<NorthConnectorDTO>> = [];
+  stream: EventSource | null = null;
+  homeMetrics: HomeMetrics | null = null;
 
-  constructor(private southService: SouthConnectorService, private northService: NorthConnectorService) {}
+  constructor(
+    private windowService: WindowService,
+    private southService: SouthConnectorService,
+    private northService: NorthConnectorService,
+    private cd: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     combineLatest([this.southService.list(), this.northService.list()]).subscribe(([souths, norths]) => {
@@ -46,6 +55,22 @@ export class HomeComponent implements OnInit {
           this.northRows[this.northRows.length - 1].push(enabledNorth[i]);
         }
       }
+      this.connectToEventSource();
     });
+  }
+
+  connectToEventSource(): void {
+    const token = this.windowService.getStorageItem('oibus-token');
+    this.stream = new EventSource(`/sse/home?token=${token}`, { withCredentials: true });
+    this.stream.onmessage = (event: MessageEvent) => {
+      if (event && event.data) {
+        this.homeMetrics = JSON.parse(event.data);
+        this.cd.detectChanges();
+      }
+    };
+  }
+
+  ngOnDestroy() {
+    this.stream?.close();
   }
 }

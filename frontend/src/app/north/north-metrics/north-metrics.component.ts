@@ -1,8 +1,7 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { NorthConnectorMetrics } from '../../../../../shared/model/engine.model';
 import { JsonPipe, NgIf } from '@angular/common';
-import { WindowService } from '../../shared/window.service';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
@@ -19,43 +18,20 @@ import { RouterLink } from '@angular/router';
   imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, FileSizePipe, RouterLink],
   standalone: true
 })
-export class NorthMetricsComponent implements OnInit, OnDestroy {
+export class NorthMetricsComponent implements OnInit {
   @Input({ required: true }) northConnector!: NorthConnectorDTO;
   @Input() manifest: NorthConnectorManifest | null = null;
   @Input() displayButton = false;
+  @Input({ required: true }) connectorMetrics!: NorthConnectorMetrics;
 
-  connectorMetrics: NorthConnectorMetrics | null = null;
-  connectorStream: EventSource | null = null;
-
-  constructor(
-    private windowService: WindowService,
-    private northConnectorService: NorthConnectorService,
-    private notificationService: NotificationService
-  ) {}
+  constructor(private northConnectorService: NorthConnectorService, private notificationService: NotificationService) {}
 
   ngOnInit(): void {
     if (!this.manifest) {
       this.northConnectorService.getNorthConnectorTypeManifest(this.northConnector.type).subscribe(manifest => {
         this.manifest = manifest;
-        this.connectToEventSource();
       });
-    } else {
-      this.connectToEventSource();
     }
-  }
-
-  connectToEventSource(): void {
-    const token = this.windowService.getStorageItem('oibus-token');
-    this.connectorStream = new EventSource(`/sse/north/${this.northConnector.id}?token=${token}`, { withCredentials: true });
-    this.connectorStream.onmessage = (event: MessageEvent) => {
-      if (event && event.data) {
-        this.connectorMetrics = JSON.parse(event.data);
-      }
-    };
-  }
-
-  ngOnDestroy() {
-    this.connectorStream?.close();
   }
 
   resetMetrics() {

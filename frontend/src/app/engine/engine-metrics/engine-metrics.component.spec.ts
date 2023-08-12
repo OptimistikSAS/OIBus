@@ -6,13 +6,22 @@ import { Component } from '@angular/core';
 import { NotificationService } from '../../shared/notification.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { EngineService } from '../../services/engine.service';
+import { EngineMetrics } from '../../../../../shared/model/engine.model';
+import { provideHttpClient } from '@angular/common/http';
 
 @Component({
-  template: `<oib-engine-metrics></oib-engine-metrics>`,
+  template: `<oib-engine-metrics [metrics]="metrics"></oib-engine-metrics>`,
   standalone: true,
   imports: [EngineMetricsComponent]
 })
-class TestComponent {}
+class TestComponent {
+  metrics: EngineMetrics = {
+    metricsStart: '2020-02-02T00:00:00.000Z',
+    processCpuUsageInstant: 11,
+    processCpuUsageAverage: 12,
+    processUptime: 13
+  } as EngineMetrics;
+}
 
 class EngineMetricsComponentTester extends ComponentTester<TestComponent> {
   constructor() {
@@ -33,6 +42,7 @@ describe('EngineMetricsComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
+        provideHttpClient(),
         { provide: EngineService, useValue: engineService },
         { provide: NotificationService, useValue: notificationService }
       ]
@@ -43,6 +53,6 @@ describe('EngineMetricsComponent', () => {
 
   it('should not have a title', () => {
     tester.detectChanges();
-    expect(tester.title).toBeNull();
+    expect(tester.title).toContainText('Metrics');
   });
 });

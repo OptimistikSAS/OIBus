@@ -7,13 +7,26 @@ import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NotificationService } from '../../shared/notification.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { NorthConnectorMetrics } from '../../../../../shared/model/engine.model';
+import { provideHttpClient } from '@angular/common/http';
 
 @Component({
-  template: `<oib-north-metrics [northConnector]="northConnector" [manifest]="manifest"></oib-north-metrics>`,
+  template: `<oib-north-metrics [connectorMetrics]="metrics" [northConnector]="northConnector" [manifest]="manifest"></oib-north-metrics>`,
   standalone: true,
   imports: [NorthMetricsComponent]
 })
 class TestComponent {
+  metrics: NorthConnectorMetrics = {
+    metricsStart: '2020-02-02T00:00:00.000Z',
+    lastConnection: '2020-02-02T00:00:00.000Z',
+    lastRunStart: '2020-02-02T00:00:00.000Z',
+    lastRunDuration: 10,
+    numberOfValuesSent: 11,
+    numberOfFilesSent: 12,
+    lastValueSent: 13,
+    lastFileSent: 'file',
+    cacheSize: 14
+  };
   northConnector: NorthConnectorDTO = {
     id: 'northId',
     name: 'North Connector'
@@ -67,6 +80,7 @@ describe('NorthMetricsComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
+        provideHttpClient(),
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: NotificationService, useValue: notificationService }
       ]

@@ -24,6 +24,8 @@ import { NorthConnectorCommandDTO } from '../../../shared/model/north-connector.
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
+import HomeMetricsService from './home-metrics.service';
+import HomeMetricsServiceMock from '../tests/__mocks__/home-metrics-service.mock';
 
 jest.mock('./encryption.service');
 jest.mock('./logger/logger.service');
@@ -34,6 +36,7 @@ const historyQueryEngine: HistoryQueryEngine = new HistoryQueryEngineMock();
 const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock('', '');
 const engineMetricsService: EngineMetricsService = new EngineMetricsServiceMock();
+const homeMetrics: HomeMetricsService = new HomeMetricsServiceMock();
 const northService: NorthService = new NorthServiceMock();
 const southService: SouthService = new SouthServiceMock();
 const loggerService: LoggerService = new LoggerService(encryptionService, 'folder');
@@ -46,6 +49,7 @@ describe('reload service', () => {
       loggerService,
       repositoryService,
       engineMetricsService,
+      homeMetrics,
       northService,
       southService,
       oibusEngine,
@@ -57,6 +61,7 @@ describe('reload service', () => {
     expect(service.repositoryService).toBeDefined();
     expect(service.loggerService).toBeDefined();
     expect(service.engineMetricsService).toBeDefined();
+    expect(service.homeMetricsService).toBeDefined();
     expect(service.northService).toBeDefined();
     expect(service.southService).toBeDefined();
     expect(service.oibusEngine).toBeDefined();

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import {
@@ -21,6 +21,8 @@ import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { SouthItemsComponent } from '../south-items/south-items.component';
 import { NotificationService } from '../../shared/notification.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
+import { SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
+import { WindowService } from '../../shared/window.service';
 
 @Component({
   selector: 'oib-south-detail',
@@ -44,19 +46,23 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
   styleUrls: ['./south-detail.component.scss'],
   providers: [PageLoader]
 })
-export class SouthDetailComponent implements OnInit {
+export class SouthDetailComponent implements OnInit, OnDestroy {
   southConnector: SouthConnectorDTO | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
   southItemSchema: SouthConnectorItemManifest | null = null;
   scanModes: Array<ScanModeDTO> = [];
   manifest: SouthConnectorManifest | null = null;
+  connectorMetrics: SouthConnectorMetrics | null = null;
+  connectorStream: EventSource | null = null;
 
   constructor(
+    private windowService: WindowService,
     private southConnectorService: SouthConnectorService,
     private scanModeService: ScanModeService,
     private notificationService: NotificationService,
     protected router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cd: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -88,6 +94,8 @@ export class SouthDetailComponent implements OnInit {
         }
         this.manifest = manifest;
         this.southItemSchema = manifest.items;
+        this.connectToEventSource();
+
         this.displayedSettings = manifest.settings
           .filter(setting => setting.displayInViewMode)
           .map(setting => {
@@ -160,5 +168,20 @@ export class SouthDetailComponent implements OnInit {
           this.southConnector = southConnector;
         });
     }
+  }
+
+  connectToEventSource(): void {
+    const token = this.windowService.getStorageItem('oibus-token');
+    this.connectorStream = new EventSource(`/sse/south/${this.southConnector!.id}?token=${token}`, { withCredentials: true });
+    this.connectorStream.addEventListener('message', (event: MessageEvent) => {
+      if (event && event.data) {
+        this.connectorMetrics = JSON.parse(event.data);
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.connectorStream?.close();
   }
 }

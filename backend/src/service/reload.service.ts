@@ -18,6 +18,7 @@ import OIBusEngine from '../engine/oibus-engine';
 import HistoryQueryEngine from '../engine/history-query-engine';
 import { Instant } from '../../../shared/model/types';
 import { ScanModeCommandDTO } from '../../../shared/model/scan-mode.model';
+import HomeMetricsService from './home-metrics.service';
 
 export default class ReloadService {
   private webServerChangeLoggerCallback: (logger: pino.Logger) => void = () => {};
@@ -27,6 +28,7 @@ export default class ReloadService {
     private readonly _loggerService: LoggerService,
     private readonly _repositoryService: RepositoryService,
     private readonly _engineMetricsService: EngineMetricsService,
+    private readonly _homeMetricsService: HomeMetricsService,
     private readonly _northService: NorthService,
     private readonly _southService: SouthService,
     private readonly _oibusEngine: OIBusEngine,
@@ -43,6 +45,10 @@ export default class ReloadService {
 
   get engineMetricsService(): EngineMetricsService {
     return this._engineMetricsService;
+  }
+
+  get homeMetricsService(): HomeMetricsService {
+    return this._homeMetricsService;
   }
 
   get northService(): NorthService {

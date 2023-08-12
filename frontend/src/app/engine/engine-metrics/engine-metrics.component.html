@@ -1,11 +1,11 @@
-<oib-box *ngIf="metrics">
+<oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
       <span translate="engine.monitoring.title" id="title"></span>
       <div class="d-flex align-items-center">
         <span translate="engine.monitoring.since" [translateParams]="{ date: metrics.metricsStart | datetime:'mediumWithSeconds' }"></span>
         <!-- Display button -->
-        <a *ngIf="displayButton" class="btn btn-link display-engine px-1 py-0" id="display-link" [routerLink]="['/engine']">
+        <a *ngIf="displayButton" class="btn btn-link display-engine px-1 py-0" id="display-link" routerLink="/engine">
           <span class="fa fa-search"></span>
         </a>
         <!-- Reset button -->

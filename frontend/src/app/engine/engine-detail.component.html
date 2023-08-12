@@ -51,7 +51,7 @@
       </div>
 
       <!-- Engine metrics -->
-      <oib-engine-metrics></oib-engine-metrics>
+      <oib-engine-metrics *ngIf="metrics" [metrics]="metrics"></oib-engine-metrics>
 
       <oib-box boxTitle="engine.general-settings.title">
         <table class="table table-sm table-hover oib-table mb-3">
