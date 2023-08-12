@@ -5,7 +5,6 @@
       <div class="d-flex align-items-center">
         <span
           translate="south.monitoring.since"
-          *ngIf="connectorMetrics"
           [translateParams]="{ date: connectorMetrics.metricsStart | datetime:'mediumWithSeconds' }"
           class="mx-1"
         ></span>
@@ -31,7 +30,7 @@
 
   <div class="mb-3">
     <table class="table table-sm table-hover oib-table">
-      <tbody *ngIf="connectorMetrics">
+      <tbody>
         <!-- number of values for point connectors -->
         <tr *ngIf="manifest.modes.points">
           <td style="width: 33%" translate="north.monitoring.number-of-values"></td>

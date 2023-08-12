@@ -149,3 +149,9 @@ export interface EngineMetrics {
   currentArrayBuffers: number;
   maxArrayBuffers: number;
 }
+
+export interface HomeMetrics {
+  norths: Record<string, NorthConnectorMetrics>;
+  engine: EngineMetrics;
+  souths: Record<string, SouthConnectorMetrics>;
+}

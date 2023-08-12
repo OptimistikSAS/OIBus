@@ -16,7 +16,12 @@
       </div>
 
       <!-- North metrics -->
-      <oib-north-metrics [manifest]="manifest" [northConnector]="northConnector"></oib-north-metrics>
+      <oib-north-metrics
+        *ngIf="connectorMetrics"
+        [connectorMetrics]="connectorMetrics"
+        [manifest]="manifest"
+        [northConnector]="northConnector"
+      ></oib-north-metrics>
 
       <!-- Specific settings -->
       <oib-box>

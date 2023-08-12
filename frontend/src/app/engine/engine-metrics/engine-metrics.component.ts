@@ -1,8 +1,7 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { EngineMetrics } from '../../../../../shared/model/engine.model';
-import { DatePipe, JsonPipe, NgIf, PercentPipe } from '@angular/common';
-import { WindowService } from '../../shared/window.service';
+import { NgIf, PercentPipe } from '@angular/common';
 import { DatetimePipe } from '../../shared/datetime.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
 import { NotificationService } from '../../shared/notification.service';
@@ -13,49 +12,16 @@ import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'oib-engine-metrics',
+  standalone: true,
+  imports: [TranslateModule, NgIf, BoxComponent, BoxTitleDirective, PercentPipe, FileSizePipe, RouterLink, DatetimePipe, DurationPipe],
   templateUrl: './engine-metrics.component.html',
-  styleUrls: ['./engine-metrics.component.scss'],
-  imports: [
-    TranslateModule,
-    NgIf,
-    DatetimePipe,
-    DurationPipe,
-    BoxComponent,
-    BoxTitleDirective,
-    JsonPipe,
-    DatePipe,
-    PercentPipe,
-    FileSizePipe,
-    RouterLink
-  ],
-  standalone: true
+  styleUrls: ['./engine-metrics.component.scss']
 })
-export class EngineMetricsComponent implements OnInit, OnDestroy {
+export class EngineMetricsComponent {
   @Input() displayButton = false;
+  @Input({ required: true }) metrics!: EngineMetrics;
 
-  metrics: EngineMetrics | null = null;
-  connectorStream: EventSource | null = null;
-
-  constructor(
-    private windowService: WindowService,
-    private engineService: EngineService,
-    private notificationService: NotificationService
-  ) {}
-
-  ngOnInit(): void {
-    const token = this.windowService.getStorageItem('oibus-token');
-
-    this.connectorStream = new EventSource(`/sse/engine?token=${token}`, { withCredentials: true });
-    this.connectorStream.onmessage = (event: MessageEvent) => {
-      if (event && event.data) {
-        this.metrics = JSON.parse(event.data);
-      }
-    };
-  }
-
-  ngOnDestroy() {
-    this.connectorStream?.close();
-  }
+  constructor(private engineService: EngineService, private notificationService: NotificationService) {}
 
   resetMetrics() {
     this.engineService.resetMetrics().subscribe(() => {

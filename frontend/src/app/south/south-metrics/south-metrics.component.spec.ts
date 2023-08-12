@@ -7,13 +7,26 @@ import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared
 import { NotificationService } from '../../shared/notification.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { provideI18nTesting } from '../../../i18n/mock-i18n';
+import { SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
+import { provideHttpClient } from '@angular/common/http';
 
 @Component({
-  template: `<oib-south-metrics [southConnector]="southConnector" [manifest]="manifest"></oib-south-metrics>`,
+  template: `<oib-south-metrics [connectorMetrics]="metrics" [southConnector]="southConnector" [manifest]="manifest"></oib-south-metrics>`,
   standalone: true,
   imports: [SouthMetricsComponent]
 })
 class TestComponent {
+  metrics: SouthConnectorMetrics = {
+    metricsStart: '2020-02-02T00:00:00.000Z',
+    lastConnection: '2020-02-02T00:00:00.000Z',
+    lastRunStart: '2020-02-02T00:00:00.000Z',
+    lastRunDuration: 10,
+    numberOfValuesRetrieved: 11,
+    numberOfFilesRetrieved: 12,
+    lastValueRetrieved: 13,
+    lastFileRetrieved: 'file',
+    historyMetrics: {}
+  };
   southConnector: SouthConnectorDTO = {
     id: 'southId',
     name: 'South Connector'
@@ -68,6 +81,7 @@ describe('SouthMetricsComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         provideI18nTesting(),
+        provideHttpClient(),
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: NotificationService, useValue: notificationService }
       ]

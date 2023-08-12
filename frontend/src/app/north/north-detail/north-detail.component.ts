@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { DecimalPipe, NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { catchError, of, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
-import { NorthConnectorDTO, NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
@@ -15,6 +15,8 @@ import { DurationPipe } from '../../shared/duration.pipe';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { NotificationService } from '../../shared/notification.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
+import { WindowService } from '../../shared/window.service';
+import { NorthConnectorMetrics } from '../../../../../shared/model/engine.model';
 
 @Component({
   selector: 'oib-north-detail',
@@ -38,18 +40,21 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
   styleUrls: ['./north-detail.component.scss'],
   providers: [PageLoader]
 })
-export class NorthDetailComponent implements OnInit {
+export class NorthDetailComponent implements OnInit, OnDestroy {
   northConnector: NorthConnectorDTO | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
   scanModes: Array<ScanModeDTO> = [];
   manifest: NorthConnectorManifest | null = null;
+  connectorStream: EventSource | null = null;
+  connectorMetrics: NorthConnectorMetrics | null = null;
 
   constructor(
+    private windowService: WindowService,
     private northConnectorService: NorthConnectorService,
     private scanModeService: ScanModeService,
     private notificationService: NotificationService,
-    protected router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private cd: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -78,6 +83,7 @@ export class NorthDetailComponent implements OnInit {
         if (!manifest) {
           return;
         }
+        this.connectToEventSource();
         this.displayedSettings = manifest.settings
           .filter(setting => setting.displayInViewMode)
           .map(setting => {
@@ -148,5 +154,20 @@ export class NorthDetailComponent implements OnInit {
           this.northConnector = northConnector;
         });
     }
+  }
+
+  connectToEventSource(): void {
+    const token = this.windowService.getStorageItem('oibus-token');
+    this.connectorStream = new EventSource(`/sse/north/${this.northConnector!.id}?token=${token}`, { withCredentials: true });
+    this.connectorStream.onmessage = (event: MessageEvent) => {
+      if (event && event.data) {
+        this.connectorMetrics = JSON.parse(event.data);
+        this.cd.detectChanges();
+      }
+    };
+  }
+
+  ngOnDestroy() {
+    this.connectorStream?.close();
   }
 }
