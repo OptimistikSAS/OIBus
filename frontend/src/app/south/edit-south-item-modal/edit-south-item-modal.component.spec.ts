@@ -180,7 +180,7 @@ describe('EditSouthItemModalComponent', () => {
       const command: SouthConnectorItemCommandDTO = {
         id: 'id1',
         name: 'South Item 1 (updated)',
-        scanModeId: 'scanModeId1',
+        scanModeId: 'subscription',
         settings: {}
       };
       expect(fakeActiveModal.close).toHaveBeenCalledWith(command);

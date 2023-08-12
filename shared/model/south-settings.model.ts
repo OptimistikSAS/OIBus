@@ -97,10 +97,10 @@ export type SouthOPCUAHASettingsSecurityMode = (typeof SOUTH_O_P_C_U_A_H_A_SETTI
 const SOUTH_O_P_C_U_A_H_A_SETTINGS_SECURITY_POLICYS = ['None', 'Basic128', 'Basic192', 'Basic256', 'Basic128Rsa15', 'Basic192Rsa15', 'Basic256Rsa15', 'Basic256Sha256', 'Aes128_Sha256_RsaOaep', 'PubSub_Aes128_CTR', 'PubSub_Aes256_CTR'] as const
 export type SouthOPCUAHASettingsSecurityPolicy = (typeof SOUTH_O_P_C_U_A_H_A_SETTINGS_SECURITY_POLICYS)[number];
 
-const SOUTH_O_P_C_U_A_H_A_ITEM_SETTINGS_AGGREGATES = ['Raw', 'Average', 'Minimum', 'Maximum', 'Count'] as const
+const SOUTH_O_P_C_U_A_H_A_ITEM_SETTINGS_AGGREGATES = ['raw', 'average', 'minimum', 'maximum', 'count'] as const
 export type SouthOPCUAHAItemSettingsAggregate = (typeof SOUTH_O_P_C_U_A_H_A_ITEM_SETTINGS_AGGREGATES)[number];
 
-const SOUTH_O_P_C_U_A_H_A_ITEM_SETTINGS_RESAMPLINGS = ['None', 'Second', '10 Seconds', '30 Seconds', 'Minute', 'Hour', 'Day'] as const
+const SOUTH_O_P_C_U_A_H_A_ITEM_SETTINGS_RESAMPLINGS = ['none', 'second', '10Seconds', '30Seconds', 'minute', 'hour', 'day'] as const
 export type SouthOPCUAHAItemSettingsResampling = (typeof SOUTH_O_P_C_U_A_H_A_ITEM_SETTINGS_RESAMPLINGS)[number];
 
 const SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
@@ -570,7 +570,7 @@ export interface SouthOPCUADAItemSettings extends BaseSouthItemSettings {
 
 export interface SouthOPCUAHAItemSettings extends BaseSouthItemSettings {
   aggregate: SouthOPCUAHAItemSettingsAggregate;
-  resampling: SouthOPCUAHAItemSettingsResampling;
+  resampling?: SouthOPCUAHAItemSettingsResampling;
   nodeId: string;
 }
 

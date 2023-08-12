@@ -13,17 +13,29 @@ import { initOpcuaCertificateFolders } from '../../service/opcua.service';
 import { randomUUID } from 'crypto';
 import path from 'node:path';
 
-import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import {
   SouthOPCUADAItemSettings,
   SouthOPCUADASettings,
   SouthOPCUADASettingsAuthentication
 } from '../../../../shared/model/south-settings.model';
+import Stream from 'node:stream';
+
+class CustomStream extends Stream {
+  constructor() {
+    super();
+  }
+
+  terminate() {}
+}
 
 // Mock node-opcua-client
 jest.mock('node-opcua-client', () => ({
   OPCUAClient: { createSession: jest.fn() },
-  MessageSecurityMode: { None: 1 },
+  ClientSubscription: { create: jest.fn() },
+  ClientMonitoredItem: { create: jest.fn() },
+  MessageSecurityMode: jest.requireActual('node-opcua-client').MessageSecurityMode,
+  AttributeIds: jest.requireActual('node-opcua-client').AttributeIds,
   StatusCodes: jest.requireActual('node-opcua-client').StatusCodes,
   SecurityPolicy: jest.requireActual('node-opcua-client').SecurityPolicy,
   UserTokenType: jest.requireActual('node-opcua-client').UserTokenType,
@@ -159,7 +171,7 @@ describe('SouthOPCUADA', () => {
   });
 
   it('should properly connect and disconnect to OPCUA server without password', async () => {
-    south.internalDisconnect = jest.fn();
+    south.disconnect = jest.fn();
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
     const expectedOptions = {
@@ -202,6 +214,168 @@ describe('SouthOPCUADA', () => {
     expect(logger.error).toHaveBeenCalledWith(`Error while connecting to the OPCUA DA server. ${new Error('connection error')}`);
     await south.disconnect();
   });
+
+  it('should properly query items', async () => {
+    const read = jest.fn().mockReturnValue([
+      { value: { value: 1 }, statusCode: { value: 0 } },
+      { value: { value: 2 }, statusCode: { value: 0 } },
+      { value: { value: 3 }, statusCode: { value: 0 } }
+    ]);
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
+    south.addValues = jest.fn();
+
+    await south.start();
+    await south.lastPointQuery(items);
+    expect(logger.debug).toHaveBeenCalledWith(
+      `Read ${items.length} nodes ` + `[${items[0].settings.nodeId}...${items[items.length - 1].settings.nodeId}]`
+    );
+    expect(read).toHaveBeenCalledWith(items.map(item => ({ nodeId: item.settings.nodeId })));
+    expect(south.addValues).toHaveBeenCalledWith([
+      {
+        pointId: items[0].name,
+        timestamp: nowDateString,
+        data: {
+          value: 1,
+          quality: JSON.stringify({ value: 0 })
+        }
+      },
+      {
+        pointId: items[1].name,
+        timestamp: nowDateString,
+        data: {
+          value: 2,
+          quality: JSON.stringify({ value: 0 })
+        }
+      },
+      {
+        pointId: items[2].name,
+        timestamp: nowDateString,
+        data: {
+          value: 3,
+          quality: JSON.stringify({ value: 0 })
+        }
+      }
+    ]);
+  });
+
+  it('should properly query items and catch read error', async () => {
+    const read = jest.fn().mockImplementation(() => {
+      throw new Error('opcua read error');
+    });
+    const close = jest.fn().mockImplementationOnce(() => {
+      return new Promise<void>(resolve => {
+        setTimeout(() => resolve(), 1000);
+      });
+    });
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read, close });
+    south.addValues = jest.fn();
+
+    await south.start();
+    south.disconnect();
+    await expect(south.lastPointQuery(items)).rejects.toThrowError('opcua read error');
+    expect(read).toHaveBeenCalledWith(items.map(item => ({ nodeId: item.settings.nodeId })));
+    expect(south.addValues).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(1000);
+    await south.start();
+    await expect(south.lastPointQuery(items)).rejects.toThrowError('opcua read error');
+
+    await south.connect();
+  });
+
+  it('should properly query items and manage null result', async () => {
+    const read = jest.fn().mockReturnValue(null);
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
+    south.addValues = jest.fn();
+
+    await south.start();
+    await south.lastPointQuery([items[0]]);
+    expect(logger.debug).toHaveBeenCalledWith(`Read node ${items[0].settings.nodeId}`);
+    expect(logger.error).toHaveBeenCalledWith(`Could not read nodes`);
+    expect(read).toHaveBeenCalledWith([{ nodeId: items[0].settings.nodeId }]);
+    expect(south.addValues).not.toHaveBeenCalled();
+  });
+
+  it('should properly query items and log error when not same number of items and values', async () => {
+    const read = jest.fn().mockReturnValue([
+      { value: { value: 1 }, statusCode: { value: 0 } },
+      { value: { value: 2 }, statusCode: { value: 0 } }
+    ]);
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ read });
+    south.addValues = jest.fn();
+
+    await south.start();
+    await south.lastPointQuery(items);
+    expect(logger.error).toHaveBeenCalledWith(`Received 2 node results, requested ${items.length} nodes`);
+    expect(read).toHaveBeenCalledWith(items.map(item => ({ nodeId: item.settings.nodeId })));
+    expect(south.addValues).toHaveBeenCalledWith([
+      {
+        pointId: items[0].name,
+        timestamp: nowDateString,
+        data: {
+          value: 1,
+          quality: JSON.stringify({ value: 0 })
+        }
+      },
+      {
+        pointId: items[1].name,
+        timestamp: nowDateString,
+        data: {
+          value: 2,
+          quality: JSON.stringify({ value: 0 })
+        }
+      }
+    ]);
+  });
+
+  it('should not query items if session is not set', async () => {
+    south.addValues = jest.fn();
+    await south.lastPointQuery(items);
+    expect(south.addValues).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith('OPCUA session not set. The connector cannot read values');
+  });
+
+  it('should not subscribe if not items provided', async () => {
+    await south.subscribe([]);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('should not subscribe if session is not set', async () => {
+    await south.subscribe(items);
+    expect(logger.error).toHaveBeenCalledWith('OPCUA client could not subscribe to items: session not set');
+  });
+
+  it('should properly subscribe', async () => {
+    const stream = new CustomStream();
+    stream.terminate = jest.fn();
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ close: jest.fn() });
+    (nodeOPCUAClient.ClientSubscription.create as jest.Mock).mockReturnValue({ terminate: jest.fn() });
+    (nodeOPCUAClient.ClientMonitoredItem.create as jest.Mock).mockReturnValue(stream);
+    south.addValues = jest.fn();
+
+    await south.start();
+    await south.subscribe([items[0]]);
+    expect(nodeOPCUAClient.ClientSubscription.create).toHaveBeenCalledTimes(1);
+    expect(nodeOPCUAClient.ClientMonitoredItem.create).toHaveBeenCalledTimes(1);
+    expect(south.addValues).not.toHaveBeenCalled();
+
+    stream.emit('changed', { value: { value: 1 }, statusCode: { value: 0 } });
+    expect(south.addValues).toHaveBeenCalledWith([
+      {
+        pointId: items[0].name,
+        timestamp: nowDateString,
+        data: {
+          value: 1,
+          quality: JSON.stringify({ value: 0 })
+        }
+      }
+    ]);
+
+    await south.unsubscribe([items[0]]);
+    expect(stream.terminate).toHaveBeenCalledTimes(1);
+
+    await south.unsubscribe([items[1]]);
+    await south.disconnect();
+  });
 });
 
 describe('SouthOPCUADA with basic auth', () => {
@@ -228,7 +402,7 @@ describe('SouthOPCUADA with basic auth', () => {
         keyFilePath: ''
       } as unknown as SouthOPCUADASettingsAuthentication,
       securityMode: 'None',
-      securityPolicy: 'None',
+      securityPolicy: null,
       keepSessionAlive: false
     }
   };
@@ -249,7 +423,6 @@ describe('SouthOPCUADA with basic auth', () => {
         maxRetry: 1
       },
       securityMode: nodeOPCUAClient.MessageSecurityMode.None,
-      securityPolicy: 'None',
       endpointMustExist: false,
       keepSessionAlive: false,
       keepPendingSessionsOnDisconnect: false,

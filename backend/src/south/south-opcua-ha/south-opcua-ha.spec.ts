@@ -1,4 +1,11 @@
-import nodeOPCUAClient from 'node-opcua-client';
+import nodeOPCUAClient, {
+  AggregateFunction,
+  HistoryReadRequest,
+  ReadProcessedDetails,
+  ReadRawModifiedDetails,
+  StatusCodes,
+  TimestampsToReturn
+} from 'node-opcua-client';
 
 import fs from 'node:fs/promises';
 import SouthOPCUAHA from './south-opcua-ha';
@@ -9,12 +16,13 @@ import EncryptionService from '../../service/encryption.service';
 import EncryptionServiceMock from '../../tests/__mocks__/encryption-service.mock';
 import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
-import { initOpcuaCertificateFolders } from '../../service/opcua.service';
+import * as opcuaService from '../../service/opcua.service';
 import { randomUUID } from 'crypto';
 import path from 'node:path';
 
 import { SouthConnectorItemDTO, SouthConnectorDTO } from '../../../../shared/model/south-connector.model';
 import { SouthOPCUAHASettings, SouthOPCUAHASettingsAuthentication } from '../../../../shared/model/south-settings.model';
+import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 
 // Mock node-opcua-client
 jest.mock('node-opcua-client', () => ({
@@ -110,6 +118,7 @@ const items: Array<SouthConnectorItemDTO> = [
     scanModeId: 'scanModeId2'
   }
 ];
+const nowDateString = '2020-02-02T02:02:02.222Z';
 
 let south: SouthOPCUAHA;
 
@@ -153,12 +162,12 @@ describe('SouthOPCUAHA', () => {
     south.connectToOpcuaServer = jest.fn();
     await south.start();
     await south.start();
-    expect(initOpcuaCertificateFolders).toHaveBeenCalledTimes(2);
+    expect(opcuaService.initOpcuaCertificateFolders).toHaveBeenCalledTimes(2);
     expect(south.connectToOpcuaServer).toHaveBeenCalledTimes(2);
   });
 
   it('should properly connect and disconnect to OPCUA server without password', async () => {
-    south.internalDisconnect = jest.fn();
+    south.disconnect = jest.fn();
     const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
 
     const expectedOptions = {
@@ -197,6 +206,256 @@ describe('SouthOPCUAHA', () => {
     expect(logger.error).toHaveBeenCalledWith(`Error while connecting to the OPCUA HA server. ${new Error('connection error')}`);
     await south.disconnect();
   });
+
+  it('should properly manage history query', async () => {
+    const performMessageTransaction = jest
+      .fn()
+      .mockReturnValueOnce({
+        responseHeader: {
+          serviceResult: {
+            isNot: jest.fn().mockReturnValue(false)
+          }
+        },
+        results: [
+          {
+            historyData: {
+              dataValues: [
+                {
+                  sourceTimestamp: new Date(nowDateString),
+                  value: {
+                    value: 123
+                  },
+                  statusCode: {
+                    value: StatusCodes.Good,
+                    description: 'ok'
+                  }
+                },
+                {
+                  serverTimestamp: new Date(nowDateString),
+                  value: {
+                    value: 123
+                  },
+                  statusCode: {
+                    value: StatusCodes.Good,
+                    description: 'ok'
+                  }
+                },
+                {
+                  serverTimestamp: new Date('2023-12-12T00:00:00.000Z'),
+                  value: {
+                    value: 456
+                  },
+                  statusCode: {
+                    value: StatusCodes.Good,
+                    description: 'ok'
+                  }
+                }
+              ]
+            },
+            statusCode: { value: StatusCodes.Good, description: 'ok' },
+            continuationPoint: false
+          },
+          {
+            historyData: {
+              dataValues: [
+                {
+                  sourceTimestamp: new Date(nowDateString),
+                  value: {
+                    value: 123
+                  },
+                  statusCode: {
+                    value: StatusCodes.Good,
+                    description: 'ok'
+                  }
+                },
+                {
+                  sourceTimestamp: new Date(nowDateString),
+                  value: {
+                    value: 123
+                  },
+                  statusCode: {
+                    value: StatusCodes.Bad,
+                    description: 'not ok'
+                  }
+                }
+              ]
+            },
+            statusCode: { value: StatusCodes.Bad, description: 'not ok' },
+            continuationPoint: true
+          },
+          {
+            statusCode: { value: StatusCodes.Bad, description: 'not ok' },
+            continuationPoint: false
+          }
+        ]
+      })
+      .mockReturnValue({
+        responseHeader: {
+          serviceResult: {
+            isNot: jest.fn().mockReturnValue(false)
+          }
+        },
+        results: [
+          {
+            historyData: {
+              dataValues: []
+            },
+            statusCode: { value: StatusCodes.Good, description: 'ok' },
+            continuationPoint: false
+          }
+        ]
+      });
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({
+      performMessageTransaction,
+      close: jest.fn()
+    });
+
+    south.addValues = jest.fn();
+    await south.start();
+
+    await south.historyQuery([items[0], items[1], items[2]], nowDateString, nowDateString);
+
+    expect(south.addValues).toHaveBeenCalledWith([
+      {
+        data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+        pointId: items[0].name,
+        timestamp: nowDateString
+      },
+      {
+        data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+        pointId: items[0].name,
+        timestamp: nowDateString
+      },
+      {
+        data: { value: 456, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+        pointId: items[0].name,
+        timestamp: '2023-12-12T00:00:00.000Z'
+      },
+      {
+        data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Good, description: 'ok' }) },
+        pointId: items[1].name,
+        timestamp: nowDateString
+      },
+      {
+        data: { value: 123, quality: JSON.stringify({ value: StatusCodes.Bad, description: 'not ok' }) },
+        pointId: items[1].name,
+        timestamp: nowDateString
+      }
+    ]);
+  });
+
+  it('should properly manage history query with status not good', async () => {
+    const performMessageTransaction = jest.fn().mockReturnValue({
+      responseHeader: {
+        serviceResult: {
+          isNot: jest.fn().mockReturnValue(true),
+          description: 'not ok'
+        }
+      }
+    });
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({
+      performMessageTransaction,
+      close: jest.fn()
+    });
+
+    south.addValues = jest.fn();
+    await south.start();
+
+    await south.historyQuery([items[0], items[1]], nowDateString, nowDateString);
+
+    expect(logger.error).toHaveBeenCalledWith('Error while reading history: not ok');
+    expect(logger.error).toHaveBeenCalledWith('No result found in response');
+  });
+
+  it('should properly manage history query and log with mor than max', async () => {
+    const results = [];
+    for (let i = 0; i < opcuaService.MAX_NUMBER_OF_NODE_TO_LOG + 1; i++) {
+      results.push({
+        historyData: {
+          dataValues: []
+        },
+        statusCode: { value: StatusCodes.Bad, description: 'not ok' },
+        continuationPoint: false
+      });
+    }
+    const performMessageTransaction = jest.fn().mockReturnValue({
+      responseHeader: {
+        serviceResult: {
+          isNot: jest.fn().mockReturnValue(true),
+          description: 'ok'
+        }
+      },
+      results
+    });
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({
+      performMessageTransaction,
+      close: jest.fn()
+    });
+
+    south.addValues = jest.fn();
+    await south.start();
+
+    await south.historyQuery(
+      [items[0], items[0], items[0], items[0], items[0], items[0], items[0], items[0], items[0], items[0], items[0]],
+      nowDateString,
+      nowDateString
+    );
+
+    expect(logger.debug).toHaveBeenCalledWith(`not ok with status code ${StatusCodes.Bad}: [${items[0].name}..${items[0].name}]`);
+  });
+
+  it('should properly manage history query with associated node not found', async () => {
+    const performMessageTransaction = jest.fn().mockReturnValue({
+      responseHeader: {
+        serviceResult: {
+          isNot: jest.fn().mockReturnValue(true),
+          description: 'not ok'
+        }
+      }
+    });
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({
+      performMessageTransaction,
+      close: jest.fn()
+    });
+
+    south.addValues = jest.fn();
+    await south.start();
+
+    await south.historyQuery([items[0], items[1]], nowDateString, nowDateString);
+
+    expect(logger.error).toHaveBeenCalledWith('Error while reading history: not ok');
+    expect(logger.error).toHaveBeenCalledWith('No result found in response');
+  });
+
+  it('should properly manage history query and catch read error', async () => {
+    const performMessageTransaction = jest.fn().mockImplementation(() => {
+      throw new Error('opcua read error');
+    });
+    const close = jest.fn().mockImplementationOnce(() => {
+      return new Promise<void>(resolve => {
+        setTimeout(() => resolve(), 1000);
+      });
+    });
+    (nodeOPCUAClient.OPCUAClient.createSession as jest.Mock).mockReturnValue({ performMessageTransaction, close });
+    south.addValues = jest.fn();
+
+    await south.start();
+    south.disconnect();
+    await expect(south.historyQuery(items, nowDateString, nowDateString)).rejects.toThrowError('opcua read error');
+    expect(south.addValues).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(1000);
+    await south.start();
+    await expect(south.historyQuery(items, nowDateString, nowDateString)).rejects.toThrowError('opcua read error');
+
+    await south.connect();
+  });
+
+  it('should not query items if session is not set', async () => {
+    south.addValues = jest.fn();
+    await south.historyQuery(items, nowDateString, nowDateString);
+    expect(south.addValues).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith('OPCUA session not set. The connector cannot read values');
+  });
 });
 
 describe('SouthOPCUAHA with basic auth', () => {
@@ -223,7 +482,7 @@ describe('SouthOPCUAHA with basic auth', () => {
         certFilePath: ''
       } as unknown as SouthOPCUAHASettingsAuthentication,
       securityMode: 'None',
-      securityPolicy: 'None',
+      securityPolicy: null,
       keepSessionAlive: false
     }
   };
@@ -244,7 +503,7 @@ describe('SouthOPCUAHA with basic auth', () => {
         maxRetry: 1
       },
       securityMode: nodeOPCUAClient.MessageSecurityMode.None,
-      securityPolicy: 'None',
+      securityPolicy: undefined,
       endpointMustExist: false,
       keepSessionAlive: false,
       keepPendingSessionsOnDisconnect: false,
@@ -329,6 +588,87 @@ describe('SouthOPCUAHA with certificate', () => {
     expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(connector.settings.url, expectedUserIdentity, expectedOptions);
     expect(logger.info).toHaveBeenCalledWith(`OPCUA_HA ${connector.name} connected`);
     expect(setTimeoutSpy).not.toBeCalled();
+  });
+
+  it('should get resampling value', () => {
+    expect(south.getResamplingValue('second')).toBe(1000);
+    expect(south.getResamplingValue('10Seconds')).toBe(10 * 1000);
+    expect(south.getResamplingValue('30Seconds')).toBe(30 * 1000);
+    expect(south.getResamplingValue('minute')).toBe(60 * 1000);
+    expect(south.getResamplingValue('hour')).toBe(3600 * 1000);
+    expect(south.getResamplingValue('day')).toBe(24 * 3600 * 1000);
+    expect(south.getResamplingValue('none')).toBe(undefined);
+  });
+
+  it('should get historyReadRequest', () => {
+    const nodes: Array<HistoryReadValueIdOptions> = [
+      { continuationPoint: undefined, dataEncoding: undefined, indexRange: undefined, nodeId: 'ns=3;i=1001' }
+    ];
+    expect(south.getHistoryReadRequest(nowDateString, nowDateString, 'raw', 'none', nodes)).toEqual(
+      new HistoryReadRequest({
+        historyReadDetails: new ReadRawModifiedDetails({
+          startTime: new Date(nowDateString),
+          endTime: new Date(nowDateString),
+          isReadModified: false,
+          returnBounds: false
+        }),
+        nodesToRead: nodes,
+        releaseContinuationPoints: false,
+        timestampsToReturn: TimestampsToReturn.Both
+      })
+    );
+
+    expect(south.getHistoryReadRequest(nowDateString, nowDateString, 'average', 'none', nodes)).toEqual(
+      new HistoryReadRequest({
+        historyReadDetails: new ReadProcessedDetails({
+          startTime: new Date(nowDateString),
+          endTime: new Date(nowDateString),
+          aggregateType: Array(nodes.length).fill(AggregateFunction.Average)
+        }),
+        nodesToRead: nodes,
+        releaseContinuationPoints: false,
+        timestampsToReturn: TimestampsToReturn.Both
+      })
+    );
+
+    expect(south.getHistoryReadRequest(nowDateString, nowDateString, 'minimum', 'none', nodes)).toEqual(
+      new HistoryReadRequest({
+        historyReadDetails: new ReadProcessedDetails({
+          startTime: new Date(nowDateString),
+          endTime: new Date(nowDateString),
+          aggregateType: Array(nodes.length).fill(AggregateFunction.Minimum)
+        }),
+        nodesToRead: nodes,
+        releaseContinuationPoints: false,
+        timestampsToReturn: TimestampsToReturn.Both
+      })
+    );
+
+    expect(south.getHistoryReadRequest(nowDateString, nowDateString, 'maximum', 'none', nodes)).toEqual(
+      new HistoryReadRequest({
+        historyReadDetails: new ReadProcessedDetails({
+          startTime: new Date(nowDateString),
+          endTime: new Date(nowDateString),
+          aggregateType: Array(nodes.length).fill(AggregateFunction.Maximum)
+        }),
+        nodesToRead: nodes,
+        releaseContinuationPoints: false,
+        timestampsToReturn: TimestampsToReturn.Both
+      })
+    );
+
+    expect(south.getHistoryReadRequest(nowDateString, nowDateString, 'count', 'none', nodes)).toEqual(
+      new HistoryReadRequest({
+        historyReadDetails: new ReadProcessedDetails({
+          startTime: new Date(nowDateString),
+          endTime: new Date(nowDateString),
+          aggregateType: Array(nodes.length).fill(AggregateFunction.Count)
+        }),
+        nodesToRead: nodes,
+        releaseContinuationPoints: false,
+        timestampsToReturn: TimestampsToReturn.Both
+      })
+    );
   });
 });
 
