@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { Page } from '../../../../shared/model/types';
-import { LogDTO, LogSearchParam } from '../../../../shared/model/logs.model';
+import { LogDTO, LogSearchParam, Scope } from '../../../../shared/model/logs.model';
 
 /**
  * Service used to interact with the backend Log repository
@@ -40,5 +40,13 @@ export class LogService {
       params['levels'] = searchParams.levels;
     }
     return this.http.get<Page<LogDTO>>(`/api/logs`, { params });
+  }
+
+  suggestByScopeName(name: string): Observable<Array<Scope>> {
+    return this.http.get<Array<Scope>>('/api/scope-logs/suggestions', { params: { name } });
+  }
+
+  getScopeById(id: string): Observable<Scope | null> {
+    return this.http.get<Scope | null>(`/api/scope-logs/${id}`);
   }
 }

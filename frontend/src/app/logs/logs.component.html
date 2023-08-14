@@ -44,10 +44,30 @@
           </div>
         </div>
         <div class="row gx-2 py-3">
+          <label for="scope-ids" class="col-auto col-form-label" translate="logs.search.scope"></label>
+          <div class="col-2">
+            <input
+              id="scope-ids"
+              class="form-control"
+              formControlName="scopeIds"
+              [ngbTypeahead]="scopeTypeahead"
+              [resultFormatter]="scopeFormatter"
+              [inputFormatter]="scopeFormatter"
+              [editable]="false"
+              (selectItem)="selectScope($event)"
+            />
+            <div [style.margin-top.rem]="selectedScopes.length ? -0.75 : 0">
+              <oib-pill *ngFor="let scope of selectedScopes" type="secondary" [removable]="true" (removed)="removeScope(scope)">
+                {{ scope.scopeName }}
+              </oib-pill>
+            </div>
+          </div>
+
           <label for="message-content" class="col-auto col-form-label" translate="logs.search.message-content"></label>
           <div class="col-8">
             <input type="text" class="form-control" id="message-content" formControlName="messageContent" />
           </div>
+
           <div class="col">
             <button class="btn btn-primary pull-right" id="search-button" [disabled]="loading">
               <span *ngIf="loading" class="fa fa-spin fa-spinner"></span>

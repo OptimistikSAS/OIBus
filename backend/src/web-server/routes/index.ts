@@ -197,6 +197,8 @@ router.delete('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext
 );
 
 router.get('/api/logs', (ctx: KoaContext<any, any>) => logController.searchLogs(ctx));
+router.get('/api/scope-logs/suggestions', (ctx: KoaContext<any, any>) => logController.suggestScopes(ctx));
+router.get('/api/scope-logs/:id', (ctx: KoaContext<any, any>) => logController.getScopeById(ctx));
 router.post('/api/logs', (ctx: KoaContext<any, any>) => logController.addLogs(ctx));
 
 export default router;

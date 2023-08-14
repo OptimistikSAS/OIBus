@@ -12,6 +12,11 @@ export interface LogDTO {
   message: string;
 }
 
+export interface Scope {
+  scopeId: string;
+  scopeName: string;
+}
+
 export interface PinoLog {
   msg: string;
   scopeType: ScopeType;

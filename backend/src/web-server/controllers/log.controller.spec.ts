@@ -3,7 +3,7 @@ import Joi from 'joi';
 import LogController from './log.controller';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import { LogSearchParam } from '../../../../shared/model/logs.model';
+import { LogSearchParam, Scope } from '../../../../shared/model/logs.model';
 
 jest.mock('./validators/joi.validator');
 
@@ -121,5 +121,23 @@ describe('Log controller', () => {
     expect(ctx.app.logger.warn).not.toHaveBeenCalled();
     expect(ctx.app.logger.error).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalled();
+  });
+
+  it('should suggest scopes by name', async () => {
+    const scopes: Array<Scope> = [{ scopeId: 'id', scopeName: 'name' }];
+    ctx.app.repositoryService.logRepository.searchScopesByName.mockReturnValue(scopes);
+    ctx.query = { name: 'name' };
+    await logController.suggestScopes(ctx);
+    expect(ctx.ok).toHaveBeenCalledWith(scopes);
+    expect(ctx.app.repositoryService.logRepository.searchScopesByName).toHaveBeenCalledWith('name');
+  });
+
+  it('should get scope by its ID', async () => {
+    const scope: Scope = { scopeId: 'id', scopeName: 'name' };
+    ctx.app.repositoryService.logRepository.getScopeById.mockReturnValue(scope);
+    ctx.params = { id: 'id' };
+    await logController.getScopeById(ctx);
+    expect(ctx.ok).toHaveBeenCalledWith(scope);
+    expect(ctx.app.repositoryService.logRepository.getScopeById).toHaveBeenCalledWith('id');
   });
 });

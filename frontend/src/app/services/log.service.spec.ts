@@ -4,7 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { Page } from '../../../../shared/model/types';
 import { toPage } from '../shared/test-utils';
 import { LogService } from './log.service';
-import { LogDTO } from '../../../../shared/model/logs.model';
+import { LogDTO, Scope } from '../../../../shared/model/logs.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('LogService', () => {
@@ -57,5 +57,47 @@ describe('LogService', () => {
       })
       .flush(logs);
     expect(expectedLogs!).toEqual(logs);
+  });
+
+  it('should suggest scopes by name', () => {
+    let expectedScopes: Array<Scope> = [];
+    const scopes: Array<Scope> = [
+      {
+        scopeId: 'id1',
+        scopeName: 'name'
+      },
+      {
+        scopeId: 'id2',
+        scopeName: 'name'
+      }
+    ];
+
+    service.suggestByScopeName('name').subscribe(c => (expectedScopes = c));
+
+    http
+      .expectOne({
+        url: '/api/scope-logs/suggestions?name=name',
+        method: 'GET'
+      })
+      .flush(scopes);
+    expect(expectedScopes!).toEqual(scopes);
+  });
+
+  it('should get scope by id', () => {
+    let expectedScope: Scope | null = null;
+    const scope: Scope = {
+      scopeId: 'id1',
+      scopeName: 'name'
+    };
+
+    service.getScopeById('id1').subscribe(c => (expectedScope = c));
+
+    http
+      .expectOne({
+        url: '/api/scope-logs/id1',
+        method: 'GET'
+      })
+      .flush(scope);
+    expect(expectedScope!).toEqual(scope);
   });
 });

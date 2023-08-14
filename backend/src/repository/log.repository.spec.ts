@@ -126,4 +126,48 @@ describe('Log repository', () => {
     expect(run).toHaveBeenCalledTimes(1);
     expect(run).toHaveBeenCalledWith(2);
   });
+
+  it('should suggest scopes by name', () => {
+    all.mockReturnValueOnce([
+      {
+        scopeId: 'id1',
+        scopeName: 'name'
+      },
+      {
+        scopeId: 'id2',
+        scopeName: 'name'
+      }
+    ]);
+    const scopes = repository.searchScopesByName('name');
+    expect(database.prepare).toHaveBeenCalledWith(
+      `SELECT DISTINCT scope_id AS scopeId, scope_type as scopeType, scope_name as scopeName FROM logs WHERE scope_name LIKE '%' || ? || '%';`
+    );
+    expect(all).toHaveBeenCalledWith('name');
+    expect(scopes).toEqual([
+      {
+        scopeId: 'id1',
+        scopeName: 'name'
+      },
+      {
+        scopeId: 'id2',
+        scopeName: 'name'
+      }
+    ]);
+  });
+
+  it('should get scope by id', () => {
+    get.mockReturnValueOnce({
+      scopeId: 'id1',
+      scopeName: 'name'
+    });
+    const scope = repository.getScopeById('id');
+    expect(database.prepare).toHaveBeenCalledWith(
+      `SELECT scope_id AS scopeId, scope_type as scopeType, scope_name as scopeName FROM logs WHERE scope_id = ?;`
+    );
+    expect(get).toHaveBeenCalledWith('id');
+    expect(scope).toEqual({
+      scopeId: 'id1',
+      scopeName: 'name'
+    });
+  });
 });

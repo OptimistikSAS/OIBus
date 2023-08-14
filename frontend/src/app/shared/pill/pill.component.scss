@@ -1,0 +1,16 @@
+@import '../../../common';
+
+.badge {
+  // ensure all badges have the same size,
+  // even if the badge is not removable and does not contain a button
+  line-height: $btn-line-height * 1rem;
+}
+
+.badge-primary {
+  color: #fff !important;
+  background-color: $electricBlue;
+}
+.badge-secondary {
+  color: #fff !important;
+  background-color: $link-color;
+}

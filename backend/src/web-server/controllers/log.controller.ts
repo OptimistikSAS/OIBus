@@ -1,6 +1,6 @@
 import { KoaContext } from '../koa';
 import { Page } from '../../../../shared/model/types';
-import { LogDTO, LogSearchParam, LogStreamCommandDTO } from '../../../../shared/model/logs.model';
+import { LogDTO, LogSearchParam, LogStreamCommandDTO, Scope } from '../../../../shared/model/logs.model';
 import { DateTime } from 'luxon';
 import AbstractController from './abstract.controller';
 
@@ -33,8 +33,19 @@ export default class LogsConnectorController extends AbstractController {
       scopeTypes,
       messageContent: (ctx.query.messageContent as string) || null
     };
-    const externalSources = ctx.app.repositoryService.logRepository.searchLogs(searchParams);
-    ctx.ok(externalSources);
+
+    const logs = ctx.app.repositoryService.logRepository.searchLogs(searchParams);
+    ctx.ok(logs);
+  }
+
+  async suggestScopes(ctx: KoaContext<void, Array<Scope>>): Promise<void> {
+    const scopes = ctx.app.repositoryService.logRepository.searchScopesByName(ctx.query.name);
+    ctx.ok(scopes);
+  }
+
+  async getScopeById(ctx: KoaContext<void, Scope>): Promise<void> {
+    const scope = ctx.app.repositoryService.logRepository.getScopeById(ctx.params.id);
+    ctx.ok(scope);
   }
 
   async addLogs(ctx: KoaContext<LogStreamCommandDTO, void>): Promise<void> {
