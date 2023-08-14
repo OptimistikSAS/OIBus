@@ -107,9 +107,7 @@ jobs:
             ./artifact/oibus-win_x64.zip
             ./artifact/oibus-setup-win_x64.exe
             ./artifact/oibus-linux_x64.zip
-#            ./artifact/oibus-linux_arm64.zip
             ./artifact/oibus-macos_x64.zip
-#            ./artifact/oibus-macos_arm64.zip
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }} # Need REPO_ACCESS_TOKEN to propagate 'release published' event
 
