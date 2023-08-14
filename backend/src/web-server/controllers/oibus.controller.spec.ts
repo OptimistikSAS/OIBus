@@ -120,8 +120,9 @@ describe('Oibus controller', () => {
     ctx.request.query = { name: 'source' };
     ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference.mockReturnValue(null);
     await oibusController.addValues(ctx);
-    expect(ctx.noContent).toHaveBeenCalled();
-    expect(ctx.app.oibusService.addValues).toHaveBeenCalledWith(null, [{ field: 'my value' }]);
+    expect(ctx.badRequest).toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.app.oibusService.addValues).not.toHaveBeenCalled();
   });
 
   it('should not add values if no source name provided', async () => {
@@ -135,6 +136,11 @@ describe('Oibus controller', () => {
   it('should properly manage internal error when adding values', async () => {
     (ctx.app.oibusService.addValues as jest.Mock).mockImplementationOnce(() => {
       throw new Error('internal error');
+    });
+    ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference.mockReturnValue({
+      id: '1',
+      reference: 'source',
+      description: 'description'
     });
     ctx.request.body = [{ field: 'my value' }];
     ctx.request.query = { name: 'source' };
@@ -162,8 +168,9 @@ describe('Oibus controller', () => {
     ctx.request.file = { path: 'filePath' };
     ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference.mockReturnValue(null);
     await oibusController.addFile(ctx);
-    expect(ctx.noContent).toHaveBeenCalled();
-    expect(ctx.app.oibusService.addFile).toHaveBeenCalledWith(null, 'filePath');
+    expect(ctx.badRequest).toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
+    expect(ctx.app.oibusService.addFile).not.toHaveBeenCalled();
   });
 
   it('should not add file if no source name provided', async () => {
@@ -177,6 +184,11 @@ describe('Oibus controller', () => {
   it('should properly manage internal error when adding file', async () => {
     (ctx.app.oibusService.addFile as jest.Mock).mockImplementationOnce(() => {
       throw new Error('internal error');
+    });
+    ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference.mockReturnValue({
+      id: '1',
+      reference: 'source',
+      description: 'description'
     });
     ctx.request.query = { name: 'source' };
     ctx.request.file = { path: 'filePath' };

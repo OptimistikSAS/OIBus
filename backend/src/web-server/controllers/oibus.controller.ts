@@ -53,10 +53,11 @@ export default class OibusController extends AbstractController {
       const externalSource = ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference(name as string);
       if (!externalSource) {
         ctx.app.logger.info(`External source "${name}" not found`);
+        return ctx.badRequest();
       }
 
       try {
-        await ctx.app.oibusService.addValues(externalSource?.id ?? null, ctx.request.body);
+        await ctx.app.oibusService.addValues(externalSource.id, ctx.request.body);
         return ctx.noContent();
       } catch (error) {
         return ctx.internalServerError();
@@ -72,10 +73,11 @@ export default class OibusController extends AbstractController {
       const externalSource = ctx.app.repositoryService.externalSourceRepository.findExternalSourceByReference(name as string);
       if (!externalSource) {
         ctx.app.logger.info(`External source "${name}" not found`);
+        return ctx.badRequest();
       }
 
       try {
-        await ctx.app.oibusService.addFile(externalSource?.id ?? null, ctx.request.file.path);
+        await ctx.app.oibusService.addFile(externalSource.id, ctx.request.file.path);
         return ctx.noContent();
       } catch (error) {
         return ctx.internalServerError();
