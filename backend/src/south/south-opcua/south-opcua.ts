@@ -1,5 +1,8 @@
 import {
   AggregateFunction,
+  AttributeIds,
+  ClientMonitoredItem,
+  ClientSubscription,
   HistoryReadRequest,
   MessageSecurityMode,
   OPCUAClient,
@@ -16,8 +19,7 @@ import { Aggregate, Instant, Resampling } from '../../../../shared/model/types';
 
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
-import { initOpcuaCertificateFolders, MAX_NUMBER_OF_NODE_TO_LOG } from '../../service/opcua.service';
-import EncryptionService from '../../service/encryption.service';
+import EncryptionService, { CERT_FILE_NAME, CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME } from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { ClientSession } from 'node-opcua-client/source/client_session';
@@ -26,17 +28,20 @@ import { OPCUAClientOptions } from 'node-opcua-client/source/opcua_client';
 import { DateTime } from 'luxon';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { QueriesHistory, TestsConnection } from '../south-interface';
-import { SouthOPCUAHAItemSettings, SouthOPCUAHASettings } from '../../../../shared/model/south-settings.model';
+import { QueriesHistory, QueriesLastPoint, QueriesSubscription, TestsConnection } from '../south-interface';
+import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../../shared/model/south-settings.model';
 import { randomUUID } from 'crypto';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
+import { createFolder } from '../../service/utils';
+
+export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
 
 /**
- * Class SouthOPCUAHA - Connect to an OPCUA server in HA (Historian Access) mode
+ * Class SouthOPCUA - Connect to an OPCUA server
  */
-export default class SouthOPCUAHA
-  extends SouthConnector<SouthOPCUAHASettings, SouthOPCUAHAItemSettings>
-  implements QueriesHistory, TestsConnection
+export default class SouthOPCUA
+  extends SouthConnector<SouthOPCUASettings, SouthOPCUAItemSettings>
+  implements QueriesHistory, QueriesLastPoint, QueriesSubscription, TestsConnection
 {
   static type = manifest.id;
 
@@ -44,10 +49,12 @@ export default class SouthOPCUAHA
   private session: ClientSession | null = null;
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private disconnecting = false;
+  private monitoredItems = new Map<string, ClientMonitoredItem>();
+  private subscription: ClientSubscription | null = null;
 
   constructor(
-    connector: SouthConnectorDTO<SouthOPCUAHASettings>,
-    items: Array<SouthConnectorItemDTO<SouthOPCUAHAItemSettings>>,
+    connector: SouthConnectorDTO<SouthOPCUASettings>,
+    items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>,
     engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
@@ -59,7 +66,7 @@ export default class SouthOPCUAHA
   }
 
   override async start(): Promise<void> {
-    await initOpcuaCertificateFolders(this.baseFolder);
+    await this.initOpcuaCertificateFolders(this.baseFolder);
     if (!this.clientCertificateManager) {
       this.clientCertificateManager = new OPCUACertificateManager({
         rootFolder: `${this.baseFolder}/opcua`,
@@ -81,7 +88,7 @@ export default class SouthOPCUAHA
     this.logger.info(`Testing connection on "${this.connector.settings.url}"`);
 
     const tempCertFolder = `opcua-test-${randomUUID()}`;
-    await initOpcuaCertificateFolders(tempCertFolder);
+    await this.initOpcuaCertificateFolders(tempCertFolder);
     const clientCertificateManager = new OPCUACertificateManager({
       rootFolder: `${tempCertFolder}/opcua`,
       automaticallyAcceptUnknownCertificate: true
@@ -175,11 +182,7 @@ export default class SouthOPCUAHA
   /**
    * Get values from the OPCUA server between startTime and endTime and write them into the cache.
    */
-  async historyQuery(
-    items: Array<SouthConnectorItemDTO<SouthOPCUAHAItemSettings>>,
-    startTime: Instant,
-    endTime: Instant
-  ): Promise<Instant> {
+  async historyQuery(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
     try {
       let maxTimestamp = DateTime.fromISO(startTime).toMillis();
 
@@ -188,29 +191,31 @@ export default class SouthOPCUAHA
         return startTime;
       }
       const itemsByAggregates = new Map<Aggregate, Map<Resampling | undefined, Array<{ nodeId: string; itemName: string }>>>();
-      items.forEach(item => {
-        if (!itemsByAggregates.has(item.settings.aggregate)) {
-          itemsByAggregates.set(
-            item.settings.aggregate,
-            new Map<
-              Resampling,
-              Array<{
-                nodeId: string;
-                itemName: string;
-              }>
-            >()
-          );
-        }
-        if (!itemsByAggregates.get(item.settings.aggregate)!.has(item.settings.resampling)) {
-          itemsByAggregates
-            .get(item.settings.aggregate)!
-            .set(item.settings.resampling, [{ itemName: item.name, nodeId: item.settings.nodeId }]);
-        } else {
-          const currentList = itemsByAggregates.get(item.settings.aggregate)!.get(item.settings.resampling)!;
-          currentList.push({ itemName: item.name, nodeId: item.settings.nodeId });
-          itemsByAggregates.get(item.settings.aggregate)!.set(item.settings.resampling, currentList);
-        }
-      });
+      items
+        .filter(item => item.settings.mode === 'HA')
+        .forEach(item => {
+          if (!itemsByAggregates.has(item.settings.haMode!.aggregate)) {
+            itemsByAggregates.set(
+              item.settings.haMode!.aggregate,
+              new Map<
+                Resampling,
+                Array<{
+                  nodeId: string;
+                  itemName: string;
+                }>
+              >()
+            );
+          }
+          if (!itemsByAggregates.get(item.settings.haMode!.aggregate!)!.has(item.settings.haMode!.resampling)) {
+            itemsByAggregates
+              .get(item.settings.haMode!.aggregate)!
+              .set(item.settings.haMode!.resampling, [{ itemName: item.name, nodeId: item.settings.nodeId }]);
+          } else {
+            const currentList = itemsByAggregates.get(item.settings.haMode!.aggregate)!.get(item.settings.haMode!.resampling)!;
+            currentList.push({ itemName: item.name, nodeId: item.settings.nodeId });
+            itemsByAggregates.get(item.settings.haMode!.aggregate)!.set(item.settings.haMode!.resampling, currentList);
+          }
+        });
 
       for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
         for (const [resampling, resampledItems] of aggregatedItems.entries()) {
@@ -340,6 +345,9 @@ export default class SouthOPCUAHA
       clearTimeout(this.reconnectTimeout);
     }
 
+    await this.subscription?.terminate();
+    this.subscription = null;
+
     await this.session?.close();
     this.session = null;
 
@@ -348,7 +356,7 @@ export default class SouthOPCUAHA
   }
 
   async createSessionConfigs(
-    settings: SouthOPCUAHASettings,
+    settings: SouthOPCUASettings,
     clientCertificateManager: OPCUACertificateManager,
     encryptionService: EncryptionService,
     clientName: string
@@ -470,5 +478,125 @@ export default class SouthOPCUAHA
       default:
         return undefined;
     }
+  }
+
+  async lastPointQuery(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>): Promise<void> {
+    if (!this.session) {
+      this.logger.error('OPCUA session not set. The connector cannot read values');
+      return;
+    }
+    const itemsToRead = items.filter(item => item.settings.mode === 'DA');
+    if (itemsToRead.length === 0) {
+      return;
+    }
+    try {
+      if (itemsToRead.length > 1) {
+        this.logger.debug(`Read ${items.length} nodes ` + `[${items[0].settings.nodeId}...${items[items.length - 1].settings.nodeId}]`);
+      } else {
+        this.logger.debug(`Read node ${items[0].settings.nodeId}`);
+      }
+
+      const dataValues = await this.session.read(items.map(item => ({ nodeId: item.settings.nodeId })));
+      if (!dataValues) {
+        this.logger.error(`Could not read nodes`);
+        return;
+      }
+      if (dataValues.length !== items.length) {
+        this.logger.error(`Received ${dataValues.length} node results, requested ${items.length} nodes`);
+      }
+
+      const timestamp = new Date().toISOString();
+      const values = dataValues.map((dataValue, i) => ({
+        pointId: items[i].name,
+        timestamp,
+        data: {
+          value: dataValue.value.value,
+          quality: JSON.stringify(dataValue.statusCode)
+        }
+      }));
+      await this.addValues(values);
+    } catch (error) {
+      if (!this.disconnecting) {
+        await this.disconnect();
+        await this.connect();
+      }
+      throw error;
+    }
+  }
+
+  async subscribe(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>): Promise<void> {
+    if (!items.length) {
+      return;
+    }
+    if (!this.session) {
+      this.logger.error('OPCUA client could not subscribe to items: session not set');
+      return;
+    }
+    if (!this.subscription) {
+      this.subscription = ClientSubscription.create(this.session, {
+        requestedPublishingInterval: 150,
+        requestedLifetimeCount: 10 * 60 * 10,
+        requestedMaxKeepAliveCount: 10,
+        maxNotificationsPerPublish: 2,
+        publishingEnabled: true,
+        priority: 6
+      });
+    }
+
+    items.forEach(item => {
+      const monitoredItem = ClientMonitoredItem.create(
+        this.subscription!,
+        {
+          nodeId: item.settings.nodeId,
+          attributeId: AttributeIds.Value
+        },
+        {
+          samplingInterval: 2,
+          discardOldest: true,
+          queueSize: 1
+        },
+        TimestampsToReturn.Neither
+      );
+      monitoredItem.on('changed', async dataValue => {
+        await this.addValues([
+          {
+            pointId: item.name,
+            timestamp: DateTime.now().toUTC().toISO(),
+            data: {
+              value: dataValue.value.value,
+              quality: JSON.stringify(dataValue.statusCode)
+            }
+          }
+        ]);
+      });
+      this.monitoredItems.set(item.id, monitoredItem);
+    });
+  }
+
+  async unsubscribe(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>): Promise<void> {
+    for (const item of items) {
+      if (this.monitoredItems.has(item.id)) {
+        await this.monitoredItems.get(item.id)!.terminate();
+        this.monitoredItems.delete(item.id);
+      }
+    }
+  }
+
+  async initOpcuaCertificateFolders(certFolder: string): Promise<void> {
+    const opcuaBaseFolder = path.resolve(certFolder, 'opcua');
+    await createFolder(path.join(opcuaBaseFolder, 'own'));
+    await createFolder(path.join(opcuaBaseFolder, 'own/certs'));
+    await createFolder(path.join(opcuaBaseFolder, 'own/private'));
+    await createFolder(path.join(opcuaBaseFolder, 'rejected'));
+    await createFolder(path.join(opcuaBaseFolder, 'trusted'));
+    await createFolder(path.join(opcuaBaseFolder, 'trusted/certs'));
+    await createFolder(path.join(opcuaBaseFolder, 'trusted/crl'));
+
+    await createFolder(path.join(opcuaBaseFolder, 'issuers'));
+    await createFolder(path.join(opcuaBaseFolder, 'issuers/certs')); // contains Trusted CA certificates
+    await createFolder(path.join(opcuaBaseFolder, 'issuers/crl')); // contains CRL of revoked CA certificates
+
+    await fs.copyFile(path.resolve(`./`, CERT_FOLDER, CERT_PRIVATE_KEY_FILE_NAME), `${opcuaBaseFolder}/own/private/private_key.pem`);
+    await fs.copyFile(path.resolve(`./`, CERT_FOLDER, CERT_FILE_NAME), `${opcuaBaseFolder}/own/certs/client_certificate.pem`);
   }
 }

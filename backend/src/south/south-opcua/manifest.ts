@@ -1,13 +1,13 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
 
 const manifest: SouthConnectorManifest = {
-  id: 'opcua-ha',
-  name: 'OPC UA HA',
+  id: 'opcua',
+  name: 'OPC UA',
   category: 'iot',
-  description: 'Request data from OPC UA server on Historical Access (HA) mode',
+  description: 'Request data from OPC UA server',
   modes: {
-    subscription: false,
-    lastPoint: false,
+    subscription: true,
+    lastPoint: true,
     lastFile: false,
     history: true,
     forceMaxInstantPerItem: false
@@ -30,16 +30,6 @@ const manifest: SouthConnectorManifest = {
       newRow: false,
       validators: [{ key: 'required' }],
       displayInViewMode: true
-    },
-    {
-      key: 'readTimeout',
-      type: 'OibNumber',
-      label: 'Read timeout',
-      unitLabel: 'ms',
-      defaultValue: 10_000,
-      newRow: true,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 1000 } }, { key: 'max', params: { max: 3_600_000 } }],
-      displayInViewMode: false
     },
     {
       key: 'retryInterval',
@@ -144,37 +134,57 @@ const manifest: SouthConnectorManifest = {
   ],
   items: {
     scanMode: {
-      acceptSubscription: false,
+      acceptSubscription: true,
       subscriptionOnly: false
     },
     settings: [
-      {
-        key: 'aggregate',
-        type: 'OibSelect',
-        label: 'Aggregate',
-        pipe: 'aggregates',
-        options: ['raw', 'average', 'minimum', 'maximum', 'count'],
-        defaultValue: 'raw',
-        validators: [{ key: 'required' }],
-        displayInViewMode: true
-      },
-      {
-        key: 'resampling',
-        type: 'OibSelect',
-        label: 'Resampling',
-        pipe: 'resampling',
-        options: ['none', 'second', '10Seconds', '30Seconds', 'minute', 'hour', 'day'],
-        defaultValue: 'none',
-        validators: [{ key: 'required' }],
-        conditionalDisplay: { field: 'aggregate', values: ['average', 'minimum', 'maximum', 'count'] },
-        displayInViewMode: true
-      },
       {
         key: 'nodeId',
         type: 'OibText',
         label: 'Node ID',
         validators: [{ key: 'required' }],
         displayInViewMode: true
+      },
+
+      {
+        key: 'mode',
+        type: 'OibSelect',
+        label: 'Mode',
+        options: ['HA', 'DA'],
+        defaultValue: 'HA',
+        validators: [{ key: 'required' }],
+        displayInViewMode: true
+      },
+      {
+        key: 'haMode',
+        type: 'OibFormGroup',
+        label: '',
+        newRow: true,
+        displayInViewMode: false,
+        conditionalDisplay: { field: 'mode', values: ['HA'] },
+        content: [
+          {
+            key: 'aggregate',
+            type: 'OibSelect',
+            label: 'Aggregate',
+            pipe: 'aggregates',
+            options: ['raw', 'average', 'minimum', 'maximum', 'count'],
+            defaultValue: 'raw',
+            validators: [{ key: 'required' }],
+            displayInViewMode: true
+          },
+          {
+            key: 'resampling',
+            type: 'OibSelect',
+            label: 'Resampling',
+            pipe: 'resampling',
+            options: ['none', 'second', '10Seconds', '30Seconds', 'minute', 'hour', 'day'],
+            defaultValue: 'none',
+            validators: [{ key: 'required' }],
+            conditionalDisplay: { field: 'aggregate', values: ['average', 'minimum', 'maximum', 'count'] },
+            displayInViewMode: true
+          }
+        ]
       }
     ]
   }

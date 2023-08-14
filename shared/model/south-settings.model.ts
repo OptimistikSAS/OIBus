@@ -79,29 +79,23 @@ export type SouthOPCHDAItemSettingsAggregate = (typeof SOUTH_O_P_C_H_D_A_ITEM_SE
 const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_RESAMPLINGS = ['None', 'Second', '10 Seconds', '30 Seconds', 'Minute', 'Hour', 'Day'] as const
 export type SouthOPCHDAItemSettingsResampling = (typeof SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_RESAMPLINGS)[number];
 
-const SOUTH_O_P_C_U_A_D_A_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const
-export type SouthOPCUADASettingsAuthenticationType = (typeof SOUTH_O_P_C_U_A_D_A_SETTINGS_AUTHENTICATION_TYPES)[number];
+const SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const
+export type SouthOPCUASettingsAuthenticationType = (typeof SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES)[number];
 
-const SOUTH_O_P_C_U_A_D_A_SETTINGS_SECURITY_MODES = ['None', 'Sign', 'SignAndEncrypt'] as const
-export type SouthOPCUADASettingsSecurityMode = (typeof SOUTH_O_P_C_U_A_D_A_SETTINGS_SECURITY_MODES)[number];
+const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_MODES = ['None', 'Sign', 'SignAndEncrypt'] as const
+export type SouthOPCUASettingsSecurityMode = (typeof SOUTH_O_P_C_U_A_SETTINGS_SECURITY_MODES)[number];
 
-const SOUTH_O_P_C_U_A_D_A_SETTINGS_SECURITY_POLICYS = ['None', 'Basic128', 'Basic192', 'Basic256', 'Basic128Rsa15', 'Basic192Rsa15', 'Basic256Rsa15', 'Basic256Sha256', 'Aes128_Sha256_RsaOaep', 'PubSub_Aes128_CTR', 'PubSub_Aes256_CTR'] as const
-export type SouthOPCUADASettingsSecurityPolicy = (typeof SOUTH_O_P_C_U_A_D_A_SETTINGS_SECURITY_POLICYS)[number];
+const SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS = ['None', 'Basic128', 'Basic192', 'Basic256', 'Basic128Rsa15', 'Basic192Rsa15', 'Basic256Rsa15', 'Basic256Sha256', 'Aes128_Sha256_RsaOaep', 'PubSub_Aes128_CTR', 'PubSub_Aes256_CTR'] as const
+export type SouthOPCUASettingsSecurityPolicy = (typeof SOUTH_O_P_C_U_A_SETTINGS_SECURITY_POLICYS)[number];
 
-const SOUTH_O_P_C_U_A_H_A_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const
-export type SouthOPCUAHASettingsAuthenticationType = (typeof SOUTH_O_P_C_U_A_H_A_SETTINGS_AUTHENTICATION_TYPES)[number];
+const SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_AGGREGATES = ['raw', 'average', 'minimum', 'maximum', 'count'] as const
+export type SouthOPCUAItemSettingsHaModeAggregate = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_AGGREGATES)[number];
 
-const SOUTH_O_P_C_U_A_H_A_SETTINGS_SECURITY_MODES = ['None', 'Sign', 'SignAndEncrypt'] as const
-export type SouthOPCUAHASettingsSecurityMode = (typeof SOUTH_O_P_C_U_A_H_A_SETTINGS_SECURITY_MODES)[number];
+const SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_RESAMPLINGS = ['none', 'second', '10Seconds', '30Seconds', 'minute', 'hour', 'day'] as const
+export type SouthOPCUAItemSettingsHaModeResampling = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_HA_MODE_RESAMPLINGS)[number];
 
-const SOUTH_O_P_C_U_A_H_A_SETTINGS_SECURITY_POLICYS = ['None', 'Basic128', 'Basic192', 'Basic256', 'Basic128Rsa15', 'Basic192Rsa15', 'Basic256Rsa15', 'Basic256Sha256', 'Aes128_Sha256_RsaOaep', 'PubSub_Aes128_CTR', 'PubSub_Aes256_CTR'] as const
-export type SouthOPCUAHASettingsSecurityPolicy = (typeof SOUTH_O_P_C_U_A_H_A_SETTINGS_SECURITY_POLICYS)[number];
-
-const SOUTH_O_P_C_U_A_H_A_ITEM_SETTINGS_AGGREGATES = ['raw', 'average', 'minimum', 'maximum', 'count'] as const
-export type SouthOPCUAHAItemSettingsAggregate = (typeof SOUTH_O_P_C_U_A_H_A_ITEM_SETTINGS_AGGREGATES)[number];
-
-const SOUTH_O_P_C_U_A_H_A_ITEM_SETTINGS_RESAMPLINGS = ['none', 'second', '10Seconds', '30Seconds', 'minute', 'hour', 'day'] as const
-export type SouthOPCUAHAItemSettingsResampling = (typeof SOUTH_O_P_C_U_A_H_A_ITEM_SETTINGS_RESAMPLINGS)[number];
+const SOUTH_O_P_C_U_A_ITEM_SETTINGS_MODES = ['HA', 'DA'] as const
+export type SouthOPCUAItemSettingsMode = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_MODES)[number];
 
 const SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
 export type SouthOracleItemSettingsDateTimeFieldsType = (typeof SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
@@ -153,16 +147,8 @@ export interface SouthMQTTSettingsAuthentication {
   caFilePath?: string | null;
 }
 
-export interface SouthOPCUADASettingsAuthentication {
-  type: SouthOPCUADASettingsAuthenticationType;
-  username?: string;
-  password?: string | null;
-  certFilePath?: string;
-  keyFilePath?: string | null;
-}
-
-export interface SouthOPCUAHASettingsAuthentication {
-  type: SouthOPCUAHASettingsAuthenticationType;
+export interface SouthOPCUASettingsAuthentication {
+  type: SouthOPCUASettingsAuthenticationType;
   username?: string;
   password?: string | null;
   certFilePath?: string;
@@ -271,24 +257,13 @@ export interface SouthOPCHDASettings extends BaseSouthSettings {
   maxReturnValues: number;
 }
 
-export interface SouthOPCUADASettings extends BaseSouthSettings {
+export interface SouthOPCUASettings extends BaseSouthSettings {
   url: string;
   keepSessionAlive: boolean;
-  readTimeout: number;
   retryInterval: number;
-  securityMode: SouthOPCUADASettingsSecurityMode;
-  securityPolicy?: SouthOPCUADASettingsSecurityPolicy | null;
-  authentication: SouthOPCUADASettingsAuthentication;
-}
-
-export interface SouthOPCUAHASettings extends BaseSouthSettings {
-  url: string;
-  keepSessionAlive: boolean;
-  readTimeout: number;
-  retryInterval: number;
-  securityMode: SouthOPCUAHASettingsSecurityMode;
-  securityPolicy?: SouthOPCUAHASettingsSecurityPolicy | null;
-  authentication: SouthOPCUAHASettingsAuthentication;
+  securityMode: SouthOPCUASettingsSecurityMode;
+  securityPolicy?: SouthOPCUASettingsSecurityPolicy | null;
+  authentication: SouthOPCUASettingsAuthentication;
 }
 
 export interface SouthOracleSettings extends BaseSouthSettings {
@@ -337,8 +312,7 @@ export type SouthSettings =
   | SouthODBCSettings
   | SouthOIAnalyticsSettings
   | SouthOPCHDASettings
-  | SouthOPCUADASettings
-  | SouthOPCUAHASettings
+  | SouthOPCUASettings
   | SouthOracleSettings
   | SouthPostgreSQLSettings
   | SouthSlimsSettings
@@ -431,6 +405,11 @@ export interface SouthOIAnalyticsItemSettingsSerialization {
   compression: boolean;
   outputTimestampFormat: string;
   outputTimezone: Timezone;
+}
+
+export interface SouthOPCUAItemSettingsHaMode {
+  aggregate: SouthOPCUAItemSettingsHaModeAggregate;
+  resampling?: SouthOPCUAItemSettingsHaModeResampling;
 }
 
 export interface SouthOracleItemSettingsDateTimeFields {
@@ -564,14 +543,10 @@ export interface SouthOPCHDAItemSettings extends BaseSouthItemSettings {
   nodeId: string;
 }
 
-export interface SouthOPCUADAItemSettings extends BaseSouthItemSettings {
+export interface SouthOPCUAItemSettings extends BaseSouthItemSettings {
   nodeId: string;
-}
-
-export interface SouthOPCUAHAItemSettings extends BaseSouthItemSettings {
-  aggregate: SouthOPCUAHAItemSettingsAggregate;
-  resampling?: SouthOPCUAHAItemSettingsResampling;
-  nodeId: string;
+  mode: SouthOPCUAItemSettingsMode;
+  haMode?: SouthOPCUAItemSettingsHaMode | null;
 }
 
 export interface SouthOracleItemSettings extends BaseSouthItemSettings {
@@ -611,8 +586,7 @@ export type SouthItemSettings =
   | SouthODBCItemSettings
   | SouthOIAnalyticsItemSettings
   | SouthOPCHDAItemSettings
-  | SouthOPCUADAItemSettings
-  | SouthOPCUAHAItemSettings
+  | SouthOPCUAItemSettings
   | SouthOracleItemSettings
   | SouthPostgreSQLItemSettings
   | SouthSlimsItemSettings
