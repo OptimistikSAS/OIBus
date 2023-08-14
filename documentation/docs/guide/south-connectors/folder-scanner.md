@@ -4,69 +4,41 @@ sidebar_position: 3
 
 # Folder Scanner
 
-The Folder Scanner connector periodically checks the input folder for new files at an interval specified by the scan
-mode. When a new file is detected, it is sent to any North capable of handling files and configured to accept files 
-from this South.
+The Folder Scanner connector periodically checks the input folder for new files, according to Regexp specified in its items.
+When a new file is detected, it is sent to North caches.
 
-## Settings
-### Input folder
-The folder path must be entered in the _Input folder_ field. The path can be absolute or relative. Be careful: 
-**the path is case-sensitive**.
+## Specific settings
+- **Input folder**: Path of the folder scan. The path can be absolute or relative (the relative path is computed from 
+the Data folder, mentioned in the About section). Remote path can be specified (example:
+  `/remote.server/data` or `Z:\\Remote disk\\DATA `). Be careful:**the path is case-sensitive**. 
 
-:::tip Relative path
+- **Preserve file**: When enabled, retrieved files are kept in the folder. Useful when another application needs to access the files.
+Preserve file list all the file retrieved in the cache, with their last modification time. If the modification time does 
+not change, the file is ignored, otherwise, the file is retrieved again. 
 
-The relative path is computed from the cache folder (mentioned in the About section, _configuration directory_ field).
+- **Ignored modified date** (_preserve file must be enabled_): Retrieve the file again, even if its modification time has not changed 
+since the last retrieval.
 
-:::
+- **Compress file**: Compress file with gzip locally before sending it into the north caches.
+
+- **Minimum age**: Writing large files to the input folder can take some time. To avoid retrieving a corrupted file 
+(because it is being written), the _Minimum age_ field can be adjusted. By default, OIBus recovers files that has been 
+written more than one second ago.
 
 :::danger User access
-
-The user running OIBus (logged user when OIBus run from a terminal, the service session when OIBus run from a service) 
-must have read access to the input folder to be able to read the files.
-
+The user running OIBus (the logged user when OIBus run from a terminal or the service session when OIBus run from a service)
+must have read access to the input folder to be able to read the files. If **Preserve file** is not enable, the files will
+be removed, so the write access may be needed.
 :::
 
-OIBus can also read folders from a remote location. To do so, remote path can be specified (example: 
-`/remote.server/data` or `D:\\Remote disk\\DATA `). Be sure to have access to this folder (network and authentication).
+## Item settings 
+- RegExp: A Regular Expression can be used to retrieve only certain files matching the regular expression. 
+  - `.*` retrieves all files of the input folder
+  - `.*.txt` retrieves all txt files of the input folder
+  - `.*.csv` retrieves all csv files of the input folder
+  - `.csv||.xlsx` retrieves all csv or xlsx files of the input folder
 
-#### Preserve File and modified date
-When _Preserve File?_ is checked, retrieved files are kept in the folder. Otherwise, they are deleted once copied in
-the OIBus cache.
 
-:::info Important
-
-When this field file is not preserved, OIBus moves it from the input folder to its cache, which in computer terms means it 
-deletes the file from the input folder. For this reason, OIBus also needs write access. Otherwise, the file will be 
-copied.
-
-:::
-
-When this field is checked, OIBus keeps track of the modification date of files already retrieved. It will only retrieve
-a file if its modification date has changed.
-
-If _Ignore modified date_ is checked, files will be resent each time the folder is scanned, regardless of when the file
-was modified. This field is not used when _Preserve File?_ is not checked.
-
-### Filtering
-#### RegExp
-A RegExp can be used to retrieve only certain files matching the regular expression. 
-- `.*` retrieves all files of the input folder
-- `.*.txt` retrieves all txt files of the input folder
-- `.*.csv` retrieves all csv files of the input folder
-- `.csv||.xlsx` retrieves all csv or xlsx files of the input folder
-
-#### Minimum age
-Writing large files to the input folder can take some time. To avoid retrieving a corrupted file (because it is
-being written), the _Minimum Age_ field can be adjusted. By default, OIBus recovers files that has been written more 
-than one second ago.
-
-### Compression
-By default, files are retrieved exactly as they are in the input folder. They can be compressed to reduce their size 
-during transfer. If enabled, files stored in the OIBus cache are compressed too.
-
-:::danger Important
-
-When compression is enabled, OIBus writes the compressed file to the input folder. Therefore, OIBus also needs 
-write access. Otherwise, the compression will be ignored and the raw file will be copied.
-
+:::info Regex testing
+To test your regular expressions, you can use https://regex101.com/
 :::
