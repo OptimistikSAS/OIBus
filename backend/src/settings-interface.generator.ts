@@ -329,10 +329,8 @@ function buildSouthInterfaceName(connectorId: string, itemInterface: boolean): s
       return `SouthOIAnalytics${prefix}Settings`;
     case 'opc-hda':
       return `SouthOPCHDA${prefix}Settings`;
-    case 'opcua-da':
-      return `SouthOPCUADA${prefix}Settings`;
-    case 'opcua-ha':
-      return `SouthOPCUAHA${prefix}Settings`;
+    case 'opcua':
+      return `SouthOPCUA${prefix}Settings`;
     case 'oracle':
       return `SouthOracle${prefix}Settings`;
     case 'postgresql':

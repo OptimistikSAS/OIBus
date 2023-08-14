@@ -4,8 +4,7 @@ import RepositoryService from './repository.service';
 
 // South imports
 import SouthFolderScanner from '../south/south-folder-scanner/south-folder-scanner';
-import SouthOPCUAHA from '../south/south-opcua-ha/south-opcua-ha';
-import SouthOPCUADA from '../south/south-opcua-da/south-opcua-da';
+import SouthOPCUA from '../south/south-opcua/south-opcua';
 import SouthOPCHDA from '../south/south-opchda/south-opchda';
 import SouthMQTT from '../south/south-mqtt/south-mqtt';
 import SouthMSSQL from '../south/south-mssql/south-mssql';
@@ -25,8 +24,7 @@ import SouthSlims from '../south/south-slims/south-slims';
 const southList: Array<typeof SouthConnector<any, any>> = [
   SouthFolderScanner,
   SouthMQTT,
-  SouthOPCUAHA,
-  SouthOPCUADA,
+  SouthOPCUA,
   SouthOPCHDA,
   SouthMSSQL,
   SouthMySQL,

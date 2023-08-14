@@ -6,8 +6,7 @@ import folderScannerManifest from '../../south/south-folder-scanner/manifest';
 import modbusManifest from '../../south/south-modbus/manifest';
 import mqttManifest from '../../south/south-mqtt/manifest';
 import opchdaManifest from '../../south/south-opchda/manifest';
-import opcuaDaManifest from '../../south/south-opcua-da/manifest';
-import opcuaHaManifest from '../../south/south-opcua-ha/manifest';
+import opcuaManifest from '../../south/south-opcua/manifest';
 import oianalyticsManifest from '../../south/south-oianalytics/manifest';
 import slimsManifest from '../../south/south-slims/manifest';
 import mssqlManifest from '../../south/south-mssql/manifest';
@@ -33,8 +32,7 @@ import fs from 'node:fs/promises';
 export const southManifests = [
   oianalyticsManifest,
   slimsManifest,
-  opcuaHaManifest,
-  opcuaDaManifest,
+  opcuaManifest,
   opchdaManifest,
   mqttManifest,
   modbusManifest,
