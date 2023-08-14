@@ -260,16 +260,16 @@ describe('SouthFolderScanner with preserve file and compression', () => {
     expect(logger.info).toHaveBeenCalledWith(`Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile1')}" to the engine`);
     expect(compress).toHaveBeenCalledWith(
       path.resolve(configuration.settings.inputFolder, 'myFile1'),
-      `${path.resolve(configuration.settings.inputFolder, 'myFile1')}.gz`
+      `${path.resolve('baseFolder', 'tmp', 'myFile1')}.gz`
     );
-    expect(south.addFile).toHaveBeenCalledWith(`${path.resolve(configuration.settings.inputFolder, 'myFile1')}.gz`);
-    expect(fs.unlink).toHaveBeenCalledWith(`${path.resolve(configuration.settings.inputFolder, 'myFile1')}.gz`);
+    expect(south.addFile).toHaveBeenCalledWith(`${path.resolve('baseFolder', 'tmp', 'myFile1')}.gz`);
+    expect(fs.unlink).toHaveBeenCalledWith(`${path.resolve('baseFolder', 'tmp', 'myFile1')}.gz`);
     expect(logger.error).not.toHaveBeenCalled();
     expect(south.updateModifiedTime).toHaveBeenCalledWith('myFile1', mtimeMs);
 
     await south.sendFile('myFile2');
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while removing compressed file "${path.resolve(configuration.settings.inputFolder, 'myFile2')}.gz": ${new Error('error')}`
+      `Error while removing compressed file "${path.resolve('baseFolder', 'tmp', 'myFile2')}.gz": ${new Error('error')}`
     );
 
     (compress as jest.Mock).mockImplementationOnce(() => {

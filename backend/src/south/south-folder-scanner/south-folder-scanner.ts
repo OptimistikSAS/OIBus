@@ -21,6 +21,8 @@ export default class SouthFolderScanner
 {
   static type = manifest.id;
 
+  private readonly tmpFolder: string;
+
   /**
    * Constructor for SouthFolderScanner
    */
@@ -35,6 +37,7 @@ export default class SouthFolderScanner
     baseFolder: string
   ) {
     super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
+    this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
   }
 
   override async testConnection(): Promise<void> {
@@ -164,7 +167,7 @@ export default class SouthFolderScanner
     if (this.connector.settings.compression) {
       try {
         // Compress and send the compressed file
-        const gzipPath = `${filePath}.gz`;
+        const gzipPath = path.resolve(this.tmpFolder, `${filename}.gz`);
         await compress(filePath, gzipPath);
         await this.addFile(gzipPath);
         try {
