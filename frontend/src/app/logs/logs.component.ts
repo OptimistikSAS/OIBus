@@ -3,12 +3,25 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PageLoader } from '../shared/page-loader.service';
 import { NonNullableFormBuilder } from '@angular/forms';
-import { LogDTO, LogSearchParam } from '../../../../shared/model/logs.model';
+import { LogDTO, LogSearchParam, Scope } from '../../../../shared/model/logs.model';
 import { DateTime } from 'luxon';
 import { Instant, Page } from '../../../../shared/model/types';
 import { ascendingDates } from '../shared/validators';
 import { LOG_LEVELS, LogLevel, SCOPE_TYPES, ScopeType } from '../../../../shared/model/engine.model';
-import { catchError, EMPTY, exhaustMap, map, Subscription, switchMap, timer } from 'rxjs';
+import {
+  catchError,
+  combineLatest,
+  debounceTime,
+  distinctUntilChanged,
+  EMPTY,
+  exhaustMap,
+  map,
+  Observable,
+  Subscription,
+  switchMap,
+  tap,
+  timer
+} from 'rxjs';
 import { emptyPage } from '../shared/test-utils';
 import { LogService } from '../services/log.service';
 import { formDirectives } from '../shared/form-directives';
@@ -20,6 +33,9 @@ import { LogLevelsEnumPipe } from '../shared/log-levels-enum.pipe';
 import { DatetimepickerComponent } from '../shared/datetimepicker/datetimepicker.component';
 import { DatetimePipe } from '../shared/datetime.pipe';
 import { ScopeTypesEnumPipe } from '../shared/scope-types-enum.pipe';
+import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/typeahead';
+import { NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
+import { PillComponent } from '../shared/pill/pill.component';
 
 @Component({
   selector: 'oib-logs',
@@ -35,7 +51,9 @@ import { ScopeTypesEnumPipe } from '../shared/scope-types-enum.pipe';
     LogLevelsEnumPipe,
     DatetimepickerComponent,
     DatetimePipe,
-    ScopeTypesEnumPipe
+    ScopeTypesEnumPipe,
+    NgbTypeahead,
+    PillComponent
   ],
   templateUrl: './logs.component.html',
   styleUrls: ['./logs.component.scss'],
@@ -48,7 +66,7 @@ export class LogsComponent implements OnInit, OnDestroy {
       start: null as Instant | null,
       end: null as Instant | null,
       scopeTypes: [[] as Array<ScopeType>],
-      scopeIds: [[] as Array<string>],
+      scopeIds: null as string | null,
       levels: [[] as Array<LogLevel>],
       page: null as number | null
     },
@@ -57,11 +75,23 @@ export class LogsComponent implements OnInit, OnDestroy {
   searchParams: LogSearchParam | null = null;
   readonly levels = LOG_LEVELS.filter(level => level !== 'silent');
   readonly scopeTypes = SCOPE_TYPES;
-  readonly scopeIds = SCOPE_TYPES;
+  selectedScopes: Array<Scope> = [];
   loading = false;
   // subscription to reload the page periodically
   subscription = new Subscription();
   logs: Page<LogDTO> = emptyPage();
+  noLogMatchingWarning = false;
+
+  scopeTypeahead = (text$: Observable<string>) =>
+    text$.pipe(
+      debounceTime(TYPEAHEAD_DEBOUNCE_TIME),
+      distinctUntilChanged(),
+      switchMap(text => this.logService.suggestByScopeName(text)),
+      tap(scopes => {
+        this.noLogMatchingWarning = scopes.length === 0;
+      })
+    );
+  scopeFormatter = (scope: Scope) => scope.scopeName;
 
   constructor(
     private route: ActivatedRoute,
@@ -76,13 +106,19 @@ export class LogsComponent implements OnInit, OnDestroy {
       start: this.searchParams.start,
       end: this.searchParams.end,
       scopeTypes: this.searchParams.scopeTypes,
-      scopeIds: this.searchParams.scopeIds,
+      scopeIds: '',
       levels: this.searchParams.levels,
       page: this.searchParams.page
     });
   }
 
   ngOnInit(): void {
+    const queryScopeIds = this.route.snapshot.queryParamMap.getAll('scopeIds');
+    if (queryScopeIds.length > 0) {
+      combineLatest(queryScopeIds.map(scopeId => this.logService.getScopeById(scopeId))).subscribe(selectedScopes => {
+        this.selectedScopes = selectedScopes.filter(scope => !!scope) as Array<Scope>;
+      });
+    }
     this.subscription.add(
       this.pageLoader.pageLoads$
         .pipe(
@@ -125,13 +161,24 @@ export class LogsComponent implements OnInit, OnDestroy {
       messageContent: formValue.messageContent!,
       levels: formValue.levels!,
       scopeTypes: formValue.scopeTypes!,
-      scopeIds: formValue.scopeIds!,
+      scopeIds: this.selectedScopes!.map(scope => scope.scopeId),
       page: 0
     };
+
     this.router.navigate(['.'], { queryParams: criteria, relativeTo: this.route });
   }
 
   ngOnDestroy() {
     this.subscription.unsubscribe();
+  }
+
+  selectScope(event: NgbTypeaheadSelectItemEvent<Scope>) {
+    this.selectedScopes.push(event.item);
+    this.searchForm.controls.scopeIds.setValue('');
+    event.preventDefault();
+  }
+
+  removeScope(scopeToRemove: Scope) {
+    this.selectedScopes = this.selectedScopes.filter(scope => scope.scopeId !== scopeToRemove.scopeId);
   }
 }

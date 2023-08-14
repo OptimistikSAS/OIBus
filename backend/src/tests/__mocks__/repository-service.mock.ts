@@ -93,7 +93,9 @@ export default jest.fn().mockImplementation(() => ({
     deleteUser: jest.fn()
   },
   logRepository: {
-    searchLogs: jest.fn()
+    searchLogs: jest.fn(),
+    getScopeById: jest.fn(),
+    searchScopesByName: jest.fn()
   },
   engineRepository: {
     getEngineSettings: jest.fn(),

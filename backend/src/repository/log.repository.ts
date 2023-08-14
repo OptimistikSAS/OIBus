@@ -1,5 +1,5 @@
 import { Page } from '../../../shared/model/types';
-import { LEVEL_FORMAT, LogDTO, LogSearchParam, PinoLog } from '../../../shared/model/logs.model';
+import { LEVEL_FORMAT, LogDTO, LogSearchParam, PinoLog, Scope } from '../../../shared/model/logs.model';
 import { Database } from 'better-sqlite3';
 import { DateTime } from 'luxon';
 
@@ -57,6 +57,16 @@ export default class LogRepository {
       totalElements,
       totalPages
     };
+  }
+
+  searchScopesByName(name: string): Array<Scope> {
+    const query = `SELECT DISTINCT scope_id AS scopeId, scope_type as scopeType, scope_name as scopeName FROM ${LOG_TABLE} WHERE scope_name LIKE '%' || ? || '%';`;
+    return this.database.prepare(query).all(name) as Array<Scope>;
+  }
+
+  getScopeById(id: string): Scope | undefined {
+    const query = `SELECT scope_id AS scopeId, scope_type as scopeType, scope_name as scopeName FROM ${LOG_TABLE} WHERE scope_id = ?;`;
+    return this.database.prepare(query).get(id) as Scope | undefined;
   }
 
   addLogs = (logsToStore: Array<PinoLog> = []): void => {
