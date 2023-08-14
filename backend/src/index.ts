@@ -21,7 +21,7 @@ const CRYPTO_DATABASE = 'crypto.db';
 const CACHE_FOLDER = './cache';
 const CACHE_DATABASE = 'cache.db';
 const LOG_FOLDER_NAME = 'logs';
-const LOG_DB_NAME = 'journal.db';
+const LOG_DB_NAME = 'logs.db';
 
 (async () => {
   const { configFile, check } = getCommandLineArguments();
