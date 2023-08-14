@@ -7,7 +7,7 @@ import { LogSettings, ScopeType } from '../../../../shared/model/engine.model';
 import FileCleanupService from './file-cleanup.service';
 import EncryptionService from '../encryption.service';
 
-const LOG_DB_NAME = 'journal.db';
+const LOG_DB_NAME = 'logs.db';
 const LOG_FILE_NAME = 'journal.log';
 
 /**

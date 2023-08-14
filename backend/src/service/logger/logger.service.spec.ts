@@ -82,7 +82,7 @@ describe('Logger', () => {
       {
         target: path.join(__dirname, 'sqlite-transport.js'),
         options: {
-          filename: path.resolve('folder', 'journal.db'),
+          filename: path.resolve('folder', 'logs.db'),
           maxNumberOfLogs: logSettings.database.maxNumberOfLogs
         },
         level: logSettings.database.level
