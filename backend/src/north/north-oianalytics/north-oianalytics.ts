@@ -33,6 +33,10 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     baseFolder: string
   ) {
     super(connector, encryptionService, repositoryService, logger, baseFolder);
+
+    if (this.connector.settings.host.endsWith('/')) {
+      this.connector.settings.host = this.connector.settings.host.slice(0, this.connector.settings.host.length - 1);
+    }
   }
 
   /**

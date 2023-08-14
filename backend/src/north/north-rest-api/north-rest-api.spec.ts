@@ -89,7 +89,7 @@ const configuration: NorthConnectorDTO<NorthRestAPISettings> = {
   description: 'my test connector',
   enabled: true,
   settings: {
-    host: 'https://hostname',
+    host: 'https://hostname/',
     acceptUnauthorized: false,
     valuesEndpoint: '/api/values',
     fileEndpoint: '/api/file',

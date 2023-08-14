@@ -289,7 +289,7 @@ describe('SouthSlims with body and accept self signed', () => {
       readDelay: 0
     },
     settings: {
-      url: 'https://localhost',
+      url: 'https://localhost/',
       port: 4200,
       username: 'username',
       password: 'password',
