@@ -25,7 +25,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'port',
       type: 'OibNumber',
-      label: 'Port',
+      label: 'PLC Port',
       defaultValue: 851,
       newRow: false,
       class: 'col-2',
@@ -73,7 +73,8 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'retryInterval',
       type: 'OibNumber',
-      label: 'Retry interval (ms)',
+      label: 'Retry interval',
+      unitLabel: 'ms',
       defaultValue: 10000,
       newRow: true,
       class: 'col-4',
