@@ -125,6 +125,7 @@ const manifest: SouthConnectorManifest = {
         label: 'Data Type',
         defaultValue: 'UInt16',
         validators: [{ key: 'required' }],
+        conditionalDisplay: { field: 'modbusType', values: ['inputRegister', 'holdingRegister'] },
         displayInViewMode: false
       },
       {
@@ -133,6 +134,7 @@ const manifest: SouthConnectorManifest = {
         label: 'Multiplier Coefficient',
         defaultValue: 1,
         validators: [{ key: 'required' }],
+        conditionalDisplay: { field: 'modbusType', values: ['inputRegister', 'holdingRegister'] },
         displayInViewMode: false
       }
     ]

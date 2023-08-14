@@ -502,8 +502,8 @@ export interface SouthFolderScannerItemSettings extends BaseSouthItemSettings {
 export interface SouthModbusItemSettings extends BaseSouthItemSettings {
   address: string;
   modbusType: SouthModbusItemSettingsModbusType;
-  dataType: SouthModbusItemSettingsDataType;
-  multiplierCoefficient: number;
+  dataType?: SouthModbusItemSettingsDataType;
+  multiplierCoefficient?: number;
 }
 
 export interface SouthMQTTItemSettings extends BaseSouthItemSettings {

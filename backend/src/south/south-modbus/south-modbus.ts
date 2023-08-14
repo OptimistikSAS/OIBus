@@ -72,10 +72,10 @@ export default class SouthModbus
         value = await this.readDiscreteInputRegister(address);
         break;
       case 'inputRegister':
-        value = await this.readInputRegister(address, item.settings.multiplierCoefficient, item.settings.dataType);
+        value = await this.readInputRegister(address, item.settings.multiplierCoefficient!, item.settings.dataType!);
         break;
       case 'holdingRegister':
-        value = await this.readHoldingRegister(address, item.settings.multiplierCoefficient, item.settings.dataType);
+        value = await this.readHoldingRegister(address, item.settings.multiplierCoefficient!, item.settings.dataType!);
         break;
       default:
         throw new Error(`Wrong Modbus type "${item.settings.modbusType}" for point ${item.name}`);
