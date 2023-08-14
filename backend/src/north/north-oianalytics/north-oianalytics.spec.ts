@@ -94,7 +94,7 @@ describe('NorthOIAnalytics without proxy', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      host: 'https://hostname',
+      host: 'https://hostname/',
       timeout: 1000,
       acceptUnauthorized: false,
       accessKey: 'anyUser',

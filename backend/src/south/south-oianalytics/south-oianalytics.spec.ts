@@ -287,7 +287,7 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
       readDelay: 0
     },
     settings: {
-      host: 'https://localhost:4200',
+      host: 'https://localhost:4200/',
       acceptUnauthorized: true,
       accessKey: 'username',
       secretKey: 'password',

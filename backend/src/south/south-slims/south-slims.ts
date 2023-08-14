@@ -61,6 +61,9 @@ export default class SouthSlims
   ) {
     super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
+    if (this.connector.settings.url.endsWith('/')) {
+      this.connector.settings.url = this.connector.settings.url.slice(0, this.connector.settings.url.length - 1);
+    }
   }
 
   /**

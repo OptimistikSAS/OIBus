@@ -34,6 +34,9 @@ export default class NorthRestApi extends NorthConnector<NorthRestAPISettings> i
     baseFolder: string
   ) {
     super(configuration, encryptionService, repositoryService, logger, baseFolder);
+    if (this.connector.settings.host.endsWith('/')) {
+      this.connector.settings.host = this.connector.settings.host.slice(0, this.connector.settings.host.length - 1);
+    }
   }
 
   /**

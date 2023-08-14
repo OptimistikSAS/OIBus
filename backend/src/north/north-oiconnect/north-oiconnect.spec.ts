@@ -94,7 +94,7 @@ describe('NorthOIConnect with proxy', () => {
     description: 'my test connector',
     enabled: true,
     settings: {
-      host: 'https://hostname',
+      host: 'https://hostname/',
       acceptUnauthorized: false,
       timeout: 10,
       useProxy: true,

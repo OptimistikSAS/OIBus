@@ -56,6 +56,9 @@ export default class SouthOIAnalytics
   ) {
     super(connector, items, engineAddValuesCallback, engineAddFileCallback, encryptionService, repositoryService, logger, baseFolder);
     this.tmpFolder = path.resolve(this.baseFolder, 'tmp');
+    if (this.connector.settings.host.endsWith('/')) {
+      this.connector.settings.host = this.connector.settings.host.slice(0, this.connector.settings.host.length - 1);
+    }
   }
 
   /**
