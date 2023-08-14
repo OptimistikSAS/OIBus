@@ -2,37 +2,36 @@ import DownloadButton from '@site/src/components/DownloadButton';
 
 
 ## Download
-<DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-linux.tar.gz'>
+<DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-linux_x64.zip'>
   Download OIBus for Linux (x64)
 </DownloadButton>
 
-To install or update OIBus, you should run the installation script. To do that, you may either download from the above
+To install or update OIBus, you must run the installation script. To do that, you may either download from the above
 button and unzip the downloaded file, or use the following cURL or Wget command:
 
 ```
-curl -o- -L https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-linux.tar.gz | tar -xzv
+curl -o- -L https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-linux_x64.tar.gz | tar -xzv
 ```
 
 
 ```
-wget -c https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-linux.tar.gz -O - | tar -xzv
+wget -c https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-linux.tar_64.gz -O - | tar -xzv
 ```
 
 The following files have been extracted:
 ```
-default-config.json     // default configuration that will be updated during the installation process
 oibus                   // OIBus binary
 oibus-setup.sh          // installation script
 oibus-uninstall.sh      // uninstallation script that will be updated during the installation process
 ```
 
-Bash scripts have been tested on Ubuntu. They interact with the user to fill the first OIBus configuration, and set OIBus
-as a service. Alternatively, it is possible to [run OIBus binary only](#run-oibus-in-standalone).
+Bash scripts have been tested on Ubuntu. They are used to set OIBus as a service. Alternatively, it is possible
+to [run OIBus binary only](#run-oibus-in-standalone).
 
 ## Installation of OIBus as a Linux service
 The installation script can be run with the following command. The admin rights will que required during the script execution.
 ```
-./oibus-setup.sh
+sudo ./oibus-setup.sh
 ```
 
 The following questions will be asked during the installation (default answers have been kept in this example):
@@ -61,12 +60,11 @@ Access OIBus: http://localhost:2223/
 ## Update
 To update OIBus, download the latest version, unzip the archive and run the setup install:
 ```
-./oibus-setup.sh
+sudo ./oibus-setup.sh
 ```
 
-During the installation process, fill the OIBus directory and OIBus data directory with the already existing directories.
-At start, OIBus will automatically update the configuration file (oibus.json) and the cache structure if needed. Here is
-an output example, the default values:
+At start, OIBus will automatically update the configuration (oibus.db) and the cache structure if needed. Here is
+an output example:
 
 ```
 Administrative permissions are required to proceed. Do you wish to continue? (Y/n)
@@ -92,7 +90,7 @@ Useful commands:
 ## Uninstall OIBus
 An uninstallation script has been created in the OIBus binary folder. Once in this folder, enter the following command:
 ```
-oibus-uninstall.sh
+sudo ./oibus-uninstall.sh
 ```
 
 Here is an output example:
@@ -105,7 +103,7 @@ Removed /etc/systemd/system/default.target.wants/oibus.service.
 OIBus service was successfully removed.
 ```
 
-By default, the data are kept if you want to reinstall OIBus later. You can remove them, but you will lose all credentials
+By default, the configuration is kept if you want to reinstall OIBus later. You can remove it, but you will lose all credentials
 and the whole OIBus configuration.
 
 ## Run OIBus in standalone
@@ -113,7 +111,7 @@ If you want to run OIBus without installing it as a service, once the archive do
 the following command:
 
 ```
-./oibus --config ./OIBusData/oibus.json
+./oibus --config ./OIBusData
 ```
 
 Make sure the OIBusData folder already exists. The cache, logs and configuration files are stored in this folder (in the
