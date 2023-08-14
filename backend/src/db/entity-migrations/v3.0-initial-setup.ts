@@ -152,9 +152,10 @@ async function createSouthItemsTable(knex: Knex): Promise<void> {
     table.foreign('connector_id').references('id').inTable(SOUTH_CONNECTORS_TABLE);
     table.uuid('scan_mode_id').notNullable();
     table.foreign('scan_mode_id').references('id').inTable(SCAN_MODES_TABLE);
-    table.string('name').notNullable().unique();
+    table.string('name').notNullable();
     table.boolean('enabled').notNullable();
     table.json('settings').notNullable();
+    table.unique(['connector_id', 'name']);
   });
 }
 
