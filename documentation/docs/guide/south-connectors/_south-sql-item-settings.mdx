@@ -1,3 +1,5 @@
+import SerializationSettings from './_south-rest-serialization-settings.mdx';
+
 ## Item settings
 ### Query
 The query fields accept SQL syntax and can use several internal variables. These variables are useful for data stream
@@ -29,17 +31,4 @@ months).
 OIBus will internally use these dates in ISO UTC format. The output datetime format can be set in the
 [serialization section](#serialization).
 
-### CSV Serialization
-- Filename: The name of the file where the result will be stored. Several internal variable can be used:
-- @ConnectorName: The name of the connector.
-- @CurrentDate: The current date in yyyy_MM_dd_HH_mm_ss_SSS format.
-- Delimiter: The delimiter to use in the CSV.
-- Compression: Compress the file with gunzip or not.
-- Output datetime format: The format of the datetime in the CSV. OIBus will only convert the
-[datetime fields](#datetime-fields) specified.
-- Output timezone: The timezone to use to store the datetime.
-
-## Splitting large queries
-In some cases, a query can be quite heavy for the server, especially if a large time interval is requested. If
-@StartTime and @EndTime [query variables](#query-variables) are used, the query can be split in several sub-queries
-with smaller intervals using the **Max read interval** field of [history settings](./common-settings.md#history-settings).
+<SerializationSettings></SerializationSettings>

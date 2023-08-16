@@ -1,0 +1,83 @@
+---
+sidebar_position: 12
+---
+
+import SerializationSettings from './_south-rest-serialization-settings.mdx';
+
+
+# SLIM (Rest API)
+Send HTTP queries to a SLIMS application.
+
+## Specific settings
+- **URL**: the address of the SLIMS application
+- **Port**: the port the application listen to
+- **Username**: the username used for authentication
+- **Password**: the password used for authentication
+- **Use proxy**: Pass the request through a proxy
+- **Accept unauthorized certificate**: Accept certificates even if outdated or selfsigned
+
+## Item settings
+- **Endpoint**: The endpoint where to send the HTTP request.
+- **Request timeout**: Time to wait before the HTTP request fails.
+
+### Body and query params
+The body field accept JSON syntax and can use several internal variables. These variables are useful for data stream
+resilience on connection failure, and to cut big intervals into smaller chunks, reducing the load on the serve and network
+(see [the big queries section](#splitting-large-queries)).
+
+The query params field is a key / value array and can use the same interval variables.
+
+#### Query variables
+Several OIBus variables can be used and will be interpreted by OIBus.
+- **@StartTime**: The @StartTime variable initially takes the date of the first execution of the query. When results are
+retrieved from the database, @StartTime value is set to the most recent timestamp among those results in the field used
+as reference (see [the datetime fields section](#datetime-fields)).
+- **@EndTime**: The @EndTime variable is set to the current time (_now()_) or to the end of the sub-interval if a query is split.
+
+Example on endpoint `/slimsrest/rest/Result/advanced`
+```json
+{
+    "criteria": {
+        "operator": "and",
+        "criteria": [
+            {
+                "fieldName": "rslt_fk_status",
+                "operator": "equals",
+                "value": 14
+            },
+            {
+                "fieldName": "rslt_cf_pid",
+                "operator": "notNull"
+            },
+            {
+                "fieldName": "rslt_cf_samplingDateAndTime",
+                "operator": "notNull"
+            },
+            {
+                "fieldName": "rslt_modifiedOn",
+                "operator": "between",
+                "start": @StartTime,
+                "end": @EndTime
+            }
+        ]
+    },
+    "sortBy": [
+        "rslt_modifiedOn"
+    ]
+}
+```
+### Datetime fields
+You can specify in this array which fields are a datetime type, and which format to use.
+- **Field name**: The field name in the HTTP payload result.
+- **Reference field**: Use this field as reference for the next @StartTime value (see [query variables](#query-variables)).
+- **Type**: The type of the data in the result.
+- **Timezone** (for string only): The timezone of the datetime stored in the
+database.
+- **Format** (for string only): The string format of the datetime retrieved.
+- **Locale** (for string only): The locale to use when the format contains locale specific string (such as MMM format for
+months).
+
+OIBus will internally use these dates in ISO UTC format. The output datetime format can be set in the
+[serialization section](#serialization).
+
+<SerializationSettings></SerializationSettings>
