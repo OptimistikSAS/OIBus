@@ -1,24 +1,21 @@
 ---
-sidebar_position: 6
+sidebar_position: 3
 ---
 
 import ItemSettings from './_south-sql-item-settings.mdx';
 
-# Oracle
-Send SQL queries to Oracle server.
-
-:::caution Dependency
-This connector requires the local installation of an Oracle Instant Client (Basic or Basic Light, minimal supported
-version is 18.5.0.0.0)
-:::
-
+# Microsoft SQL Server (MSSQL)
+Send SQL queries to Microsoft SQL Server.
 
 ## Specific settings
 - **Host**: the address of the SQL server
-- **Port**: Oracle server port (default is 1521)
+- **Port**: MSSQL server port (default is 1433)
 - **Database**: the name of the database to connect to
 - **Username**: the username used for authentication
 - **Password**: the password used for authentication
+- **Domain**: this field is useful when the user wishes to connect to an Active Directory domain
+- **Use encryption**: Encrypt the data between the database and OIBus (can overload the server)
+- **Trust server certificate**: Accept server certificates even if outdated or selfsigned
 - **Connection timeout**: Timeout on connection
 - **Request timeout**: Timeout for each query
 

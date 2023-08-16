@@ -1,0 +1,35 @@
+---
+sidebar_position: 13
+---
+
+import SerializationSettings from './_south-rest-serialization-settings.mdx';
+
+
+# OIAnalytics (Rest API)
+Send HTTP queries to an OIAnalytics application.
+
+## Specific settings
+- **URL**: the address of the OIAnalytics application
+- **Access key**: the access key used for authentication
+- **Secret key**: the secret key used for authentication
+- **Use proxy**: Pass the request through a proxy
+- **Accept unauthorized certificate**: Accept certificates even if outdated or selfsigned
+
+## Item settings
+## Item settings
+- **Endpoint**: The endpoint where to send the HTTP request.
+- **Request timeout**: Time to wait before the HTTP request fails.
+
+### Body and query params
+The query params field is a key / value array and can use interval variables. These variables are useful for data stream
+resilience on connection failure, and to cut big intervals into smaller chunks, reducing the load on the serve and network
+(see [the big queries section](#splitting-large-queries)).
+
+#### Query variables
+Several OIBus variables can be used and will be interpreted by OIBus.
+- **@StartTime**: The @StartTime variable initially takes the date of the first execution of the query. When results are
+retrieved from the database, @StartTime value is set to the most recent timestamp among those results in the field used
+as reference (see [the datetime fields section](#datetime-fields)).
+- **@EndTime**: The @EndTime variable is set to the current time (_now()_) or to the end of the sub-interval if a query is split.
+
+<SerializationSettings></SerializationSettings>
