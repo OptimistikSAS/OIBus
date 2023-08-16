@@ -1,0 +1,29 @@
+---
+sidebar_position: 6
+---
+
+import ItemSettings from './_south-sql-item-settings.mdx';
+
+# Oracle
+Send SQL queries to Oracle server.
+
+:::caution Dependency
+This connector requires the local installation of an Oracle Instant Client (Basic or Basic Light, minimal supported
+version is 18.5.0.0.0)
+:::
+
+
+## Specific settings
+- **Host**: the address of the SQL server
+- **Port**: Oracle server port (default is 1521)
+- **Database**: the name of the database to connect to
+- **Username**: the username used for authentication
+- **Password**: the password used for authentication
+- **Connection timeout**: Timeout on connection
+- **Request timeout**: Timeout for each query
+
+:::tip Database access
+Using a read only user to connect to the database is strongly advised.
+:::
+
+<ItemSettings></ItemSettings>

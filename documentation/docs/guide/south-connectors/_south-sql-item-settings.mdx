@@ -1,0 +1,45 @@
+## Item settings
+### Query
+The query fields accept SQL syntax and can use several internal variables. These variables are useful for data stream
+resilience on connection failure, and to cut big intervals into smaller chunks, reducing the load on the serve and network
+(see [the big queries section](#splitting-large-queries).
+
+#### Query variables
+Several OIBus variables can be used and will be interpreted by OIBus.
+- **@StartTime**: The @StartTime variable initially takes the date of the first execution of the query. When results are
+retrieved from the database, @StartTime value is set to the most recent timestamp among those results in the field used
+as reference (see [the datetime fields section](#datetime-fields)).
+- **@EndTime**: The @EndTime variable is set to the current time (_now()_) or to the end of the sub-interval if a query is split.
+
+#### Example
+```sql
+SELECT reference, value, timestamp FROM table WHERE timestamp > @StartTime AND timestamp < @EndTime
+```
+### Datetime fields
+You can specify in this array which fields are a datetime type, and which format to use.
+- **Field name**: The field name in the SELECT section of the query.
+- **Reference field**: Use this field as reference for the next @StartTime value (see [query variables](#query-variables)).
+- **Type**: The type of the data in the result.
+- **Timezone** (for string, Date, DateTime, DateTime2, SmallDateTime types): The timezone of the datetime stored in the
+database.
+- **Format** (for string only): The string format of the datetime stored in the database.
+- **Locale** (for string only): The locale to use when the format contains locale specific string (such as MMM format for
+months).
+
+OIBus will internally use these dates in ISO UTC format. The output datetime format can be set in the
+[serialization section](#serialization).
+
+### CSV Serialization
+- Filename: The name of the file where the result will be stored. Several internal variable can be used:
+- @ConnectorName: The name of the connector.
+- @CurrentDate: The current date in yyyy_MM_dd_HH_mm_ss_SSS format.
+- Delimiter: The delimiter to use in the CSV.
+- Compression: Compress the file with gunzip or not.
+- Output datetime format: The format of the datetime in the CSV. OIBus will only convert the
+[datetime fields](#datetime-fields) specified.
+- Output timezone: The timezone to use to store the datetime.
+
+## Splitting large queries
+In some cases, a query can be quite heavy for the server, especially if a large time interval is requested. If
+@StartTime and @EndTime [query variables](#query-variables) are used, the query can be split in several sub-queries
+with smaller intervals using the **Max read interval** field of [history settings](./common-settings.md#history-settings).

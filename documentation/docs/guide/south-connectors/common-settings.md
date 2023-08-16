@@ -20,6 +20,12 @@ You can see the status of the South connector from its display screen, or edit i
 - **Toggle**: You can activate or pause the connector from the **enabled toggle**. However, from the south list or from 
 the display screen, you can also toggle the connector.
 
+## History settings
+For history capable South connectors (SQL, OPCUA...), intervals of data can be requested. These intervals can be quite large 
+depending on the scan mode, or if a network failure occurred for a long time. In this case, the history settings allows you
+to split intervals into smaller intervals of **Max read interval** seconds. Each sub-intervals will be requested with a delay
+of **Read delay**.
+
 ## Specific section
 Connector specific settings. Refer to the appropriate connector to have more details.
 
