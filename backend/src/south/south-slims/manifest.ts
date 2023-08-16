@@ -1,5 +1,5 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
-import { buildDateTimeFieldsFormControl, proxy, serialization } from '../../../../shared/model/manifest-factory';
+import { buildDateTimeFieldsFormControl, buildSerializationFormControl, proxy } from '../../../../shared/model/manifest-factory';
 
 const manifest: SouthConnectorManifest = {
   id: 'slims',
@@ -113,7 +113,7 @@ const manifest: SouthConnectorManifest = {
         displayInViewMode: false
       },
       buildDateTimeFieldsFormControl(['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms']),
-      serialization
+      buildSerializationFormControl(['csv'])
     ]
   }
 };

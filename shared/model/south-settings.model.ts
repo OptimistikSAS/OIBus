@@ -40,7 +40,7 @@ export type SouthMQTTItemSettingsValueType = (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS
 const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'Date', 'DateTime', 'DateTime2', 'DateTimeOffset', 'SmallDateTime', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
 export type SouthMSSQLItemSettingsDateTimeFieldsType = (typeof SOUTH_M_S_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv', 'json'] as const
+const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
 export type SouthMSSQLItemSettingsSerializationType = (typeof SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
 const SOUTH_M_S_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
@@ -49,7 +49,7 @@ export type SouthMSSQLItemSettingsSerializationDelimiter = (typeof SOUTH_M_S_S_Q
 const SOUTH_MY_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
 export type SouthMySQLItemSettingsDateTimeFieldsType = (typeof SOUTH_MY_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv', 'json'] as const
+const SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
 export type SouthMySQLItemSettingsSerializationType = (typeof SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
 const SOUTH_MY_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
@@ -58,13 +58,13 @@ export type SouthMySQLItemSettingsSerializationDelimiter = (typeof SOUTH_MY_S_Q_
 const SOUTH_O_D_B_C_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
 export type SouthODBCItemSettingsDateTimeFieldsType = (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv', 'json'] as const
+const SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
 export type SouthODBCItemSettingsSerializationType = (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
 const SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
 export type SouthODBCItemSettingsSerializationDelimiter = (typeof SOUTH_O_D_B_C_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv', 'json'] as const
+const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
 export type SouthOIAnalyticsItemSettingsSerializationType = (typeof SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
 const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
@@ -100,7 +100,7 @@ export type SouthOPCUAItemSettingsMode = (typeof SOUTH_O_P_C_U_A_ITEM_SETTINGS_M
 const SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
 export type SouthOracleItemSettingsDateTimeFieldsType = (typeof SOUTH_ORACLE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv', 'json'] as const
+const SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
 export type SouthOracleItemSettingsSerializationType = (typeof SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
 const SOUTH_ORACLE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
@@ -109,7 +109,7 @@ export type SouthOracleItemSettingsSerializationDelimiter = (typeof SOUTH_ORACLE
 const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms', 'timestamp', 'timestamptz'] as const
 export type SouthPostgreSQLItemSettingsDateTimeFieldsType = (typeof SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv', 'json'] as const
+const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
 export type SouthPostgreSQLItemSettingsSerializationType = (typeof SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
 const SOUTH_POSTGRE_S_Q_L_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
@@ -118,7 +118,7 @@ export type SouthPostgreSQLItemSettingsSerializationDelimiter = (typeof SOUTH_PO
 const SOUTH_SLIMS_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
 export type SouthSlimsItemSettingsDateTimeFieldsType = (typeof SOUTH_SLIMS_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv', 'json'] as const
+const SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
 export type SouthSlimsItemSettingsSerializationType = (typeof SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
 const SOUTH_SLIMS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
@@ -127,7 +127,7 @@ export type SouthSlimsItemSettingsSerializationDelimiter = (typeof SOUTH_SLIMS_I
 const SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
 export type SouthSQLiteItemSettingsDateTimeFieldsType = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_DATE_TIME_FIELDS_TYPES)[number];
 
-const SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv', 'json'] as const
+const SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_TYPES = ['csv'] as const
 export type SouthSQLiteItemSettingsSerializationType = (typeof SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_TYPES)[number];
 
 const SOUTH_S_Q_LITE_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const

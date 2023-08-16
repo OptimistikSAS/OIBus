@@ -1,5 +1,5 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
-import { proxy, serialization } from '../../../../shared/model/manifest-factory';
+import { buildSerializationFormControl, proxy } from '../../../../shared/model/manifest-factory';
 
 const manifest: SouthConnectorManifest = {
   id: 'oianalytics',
@@ -103,7 +103,7 @@ const manifest: SouthConnectorManifest = {
         newRow: true,
         displayInViewMode: false
       },
-      serialization
+      buildSerializationFormControl(['csv'])
     ]
   }
 };
