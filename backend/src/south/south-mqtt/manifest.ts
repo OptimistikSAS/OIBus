@@ -115,7 +115,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'rejectUnauthorized',
       type: 'OibCheckbox',
-      label: 'Reject Unauthorized Connection',
+      label: 'Reject unauthorized connection',
       defaultValue: false,
       newRow: true,
       displayInViewMode: false,
@@ -134,7 +134,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'connectTimeout',
       type: 'OibNumber',
-      label: 'Connect Timeout',
+      label: 'Connect timeout',
       unitLabel: 'ms',
       defaultValue: 10000,
       newRow: false,
@@ -258,7 +258,7 @@ const manifest: SouthConnectorManifest = {
           {
             key: 'otherFields',
             type: 'OibArray',
-            label: 'Structure',
+            label: 'Additional fields',
             content: [
               {
                 key: 'name',
