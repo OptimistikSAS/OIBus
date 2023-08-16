@@ -12,9 +12,8 @@ The MQTT protocol is made up of two main types of entities:
  
 OIBus is a MQTT client and uses the [MQTT.js](https://github.com/mqttjs/MQTT.js) library.
 
-## Connection settings
+## Specific settings
 ### Connection
-To connect to a broker, the MQTT connector requires some information:
 - **URL**: of the form `mqtt://address:1883`. The default MQTT port is 1883 but may differ depending on the broker’s 
 configuration.
 - **Quality of service (QoS)**: agreement between the sender of a message and the receiver of a message that defines the
@@ -27,42 +26,30 @@ once.
   - QoS 2: exactly once. This means that the message is sent only once, and a new attempt to send the message takes 
 place after a certain time until the client confirms the good reception. There is no risk of multiple receptions in this
 case.
-- **Persistence**: Both QoS1 and QoS2 allow persistent connections. A persistent connection allows the broker to keep a 
-certain number of messages in memory (set on the broker) until the client reconnects in case of connection loss. 
-Persistence is ignored for QoS 0.
+- **Persistence** (QoS1 and QoS2): Both QoS1 and QoS2 allow persistent connections. A persistent connection allows the 
+broker to keep a certain number of messages in memory (set on the broker) until the client reconnects in case of 
+connection loss.
+- **Authentication**:
+  - None: no authentication.
+  - Username and password authentication.
+  - Certificate based:
+    - **Cert file path**: signed file to authenticate OIBus from the broker. The certificate must be accepted by the broker.
+    - **Key file path**: the key used to sign the certificate
+    - **CA file path**: the certificate authority used to generate the cert file. If empty, the cert file is considered as
+      self-signed.
+- **Reject unauthorized connection**: Reject connection that can not be verified (because of a self-signed certificate 
+from the broker for example).
+- **Reconnect period**: Time to wait before reconnection the socket on connection loss.
+- **Connect timeout**: Time to wait before the connection fails.
 
-### Network
-Several options are available to better manage network failure or inactivity:
-- **Keep alive interval**: time to send a keep alive signal to the broker (in ms)
-- **Reconnect period**: in case of connection failure, time to wait before reconnecting (in ms)
-- **Connect timeout**: time to wait before aborting connection (in ms) 
+## Item settings
+### Address space and topic
+MQTT uses subscription only. No scan mode can be set for these items.
 
-### Authentication
-#### Basic
-If only the username and password fields are filled, the MQTT connector will connect to the broker using username and 
-password only. The username must be defined on the broker. 
-
-#### Certificates
-A certificate file can be used with `mqtts://` protocol to secure the communication:
-- Cert file: signed file to authenticate OIBus from the broker. The certificate must be accepted by the broker.
-- Key file: the key used to sign the certificate (cert file)
-- CA file: the certificate authority used to generate the cert file. If empty, the cert file is considered as 
-self-signed.
-
-The broker also uses certificates. An option to **reject unauthorized connection** can be used to reject self-signed 
-certificates or obsolete certificates from the broker.
-
-#### None
-If no username / password and no certificates are specified, an anonymous connection will be established (if authorized 
-on the broker).
-
-## Points and topics
-### Address space
-The MQTT connector retrieves values from specific topics. These can be added in the _Points section_ (in the upper right
-corner). A topic is the address associated to a data in the broker space address.
+The MQTT connector retrieves values from specific topics. A topic is the address associated to a data in the broker 
+space address. 
 
 The broker organizes the data by tree structures. Here is an example:
-
 ````
 France
     | -> Paris
@@ -72,16 +59,12 @@ France
         | -> temperatureTank1
         | -> temperatureTank2
 ````
-
-
 It is then possible to subscribe to a dataset by entering a parent node, for example `France/#` or `France/Chambery/#`. 
 It is also possible to directly enter a complete path, for example `France/Paris/temperatureTank1` to subscribe to only 
 one data.
 
-### Subscriptions
 When a MQTT client subscribes to a data item on the broker, the broker sends the new values as soon as they are 
-available for each client subscribing to this data. The scan mode is therefore always **listen**. It is a subscription 
-of the MQTT client, which waits for the broker to send him new values.
+available for each client subscribing to this data.
 
 Once the value is retrieved, it is associated to the point ID (which can be different from the topic). Ths point ID
 will then be used to the North connectors to which it will be sent.
@@ -93,8 +76,9 @@ When subscribing to a set of points as with `France/#`, then the list of topic r
 - France:Chambery/temperatureTank2
 
 ## Payload and timestamp
-The payload contained in the messages sent by the broker may differ from broker to broker. The OIBus MQTT client can 
-adapt to this payload through the **MQTT payload** section:
+The MQTT payload can be of different type: number, string or json.
+
+For the last case, it is possible to parse the payload to form the data that OIBus will store in North caches.
 
 For example, if the payload is:
 ````
@@ -107,11 +91,17 @@ For example, if the payload is:
 ````
 
 Then the following configuration must be applied:
-- **Data array path**: _Ø_
+- **Values in array**: _false_
 - **Value path**: _value_
-- **Point ID path**: _Ø_ (default is pointId)
+- **Timestamp origin**: _payload_
 - **Timestamp path**: _timestamp_
-- **Quality path**: _quality_
+- **Type**: _String_
+- **Timezone**: _UTC_ (if the broker is in UTC timezone)
+- **Timestamp format**: _yyyy-MM-dd HH:mm:ss_
+
+Other fields can be added in the OIBus data object. Add them in the Additional fields section. Here, with the quality field:
+- Field name in output: _quality_
+- Path in the retrieved payload: _quality_
 
 Another example, with a payload such as:
 ````
@@ -124,15 +114,24 @@ Another example, with a payload such as:
     }
 ]
 ````
+
 Then the following configuration must be applied:
-- **Data array path**: _metrics_. Each element of the _metrics_ array will be parse with the following fields.
+- **Values in array**: _true_
+- **Array path**: _metrics_
 - **Value path**: _customValue_
-- **Point ID path**: _customName_
+- **Timestamp origin**: _payload_
 - **Timestamp path**: _customTimestamp_
-- **Quality path**: _customQuality_
+- **Type**: _String_
+- **Timezone**: _UTC_ (if the broker is in UTC timezone)
+- **Timestamp format**: _yyyy-MM-dd HH:mm:ss_
 
-Sometimes, the timestamp is not in the payload. In this case, the _OIBus_ option can be selected in the **timestamp 
-origin** field. The resulting timestamp will be the one from the OIBus machine in UTC format.
+Here, the quality field can be added with:
+- Field name in output: _quality_
+- Path in the retrieved payload: _customQuality_
 
-When the timestamp is retrieved from the payload, it is parsed according to the specified **timestamp format**, and 
-convert to UTC from the specified **timestamp timezone**. 
+
+When the timestamp is retrieved from the payload, it is parsed according to the specified **timestamp format**, and
+convert to UTC from the specified **timestamp timezone**.
+
+Otherwise, it is possible to retrieve the timestamp from OIBus. The value will take the current timestamp in UTC format.
+
