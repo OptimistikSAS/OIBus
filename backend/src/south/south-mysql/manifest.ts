@@ -1,5 +1,5 @@
 import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
-import { buildDateTimeFieldsFormControl, serialization } from '../../../../shared/model/manifest-factory';
+import { buildDateTimeFieldsFormControl, buildSerializationFormControl } from '../../../../shared/model/manifest-factory';
 
 const manifest: SouthConnectorManifest = {
   id: 'mysql',
@@ -92,7 +92,7 @@ const manifest: SouthConnectorManifest = {
         displayInViewMode: true
       },
       buildDateTimeFieldsFormControl(['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms']),
-      serialization
+      buildSerializationFormControl(['csv'])
     ]
   }
 };

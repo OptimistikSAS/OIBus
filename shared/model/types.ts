@@ -82,8 +82,6 @@ export type Resampling = typeof RESAMPLING[number];
 export const ALL_CSV_CHARACTERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const;
 export type CsvCharacter = typeof ALL_CSV_CHARACTERS[number];
 
-// TODO: custom serialization with parser / transformer
-// TODO: HTTP Payload (OIConnect south)
 export const SERIALIZATION_TYPES = ['csv', 'json'];
 export type SerializationType = typeof SERIALIZATION_TYPES[number];
 
