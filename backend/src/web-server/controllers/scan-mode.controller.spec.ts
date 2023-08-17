@@ -118,6 +118,7 @@ describe('Scan mode controller', () => {
 
     expect(ctx.app.repositoryService.scanModeRepository.getScanMode).toHaveBeenCalledWith(id);
     expect(ctx.app.repositoryService.scanModeRepository.deleteScanMode).toHaveBeenCalledWith(id);
+    expect(ctx.app.repositoryService.southCacheRepository.deleteCacheScanModesByScanMode).toHaveBeenCalledWith(id);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
