@@ -42,6 +42,7 @@ export default class ScanModeController extends AbstractController {
     const scanMode = ctx.app.repositoryService.scanModeRepository.getScanMode(ctx.params.id);
     if (scanMode) {
       ctx.app.repositoryService.scanModeRepository.deleteScanMode(ctx.params.id);
+      ctx.app.repositoryService.southCacheRepository.deleteCacheScanModesByScanMode(ctx.params.id);
       ctx.noContent();
     } else {
       ctx.notFound();
