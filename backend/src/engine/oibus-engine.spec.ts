@@ -434,18 +434,19 @@ describe('OIBusEngine', () => {
     await engine.start();
 
     const southId = southConnectors[0].id;
+    const name = southConnectors[0].name;
     const baseFolder = path.resolve('./cache/data-stream', `south-${southId}`);
-    await engine.deleteSouth(southId);
+    await engine.deleteSouth(southId, name);
 
     expect(stopSouthSpy).toBeCalled();
     expect(filesExists).toBeCalledWith(baseFolder);
     expect(fs.rm).toBeCalledWith(baseFolder, { recursive: true });
-    expect(logger.trace).toBeCalledWith(`Deleting base folder "${baseFolder}" of South with id: ${southId}`);
-    expect(logger.info).toBeCalledWith(`Deleted South connector with id: ${southId}`);
+    expect(logger.trace).toBeCalledWith(`Deleting base folder "${baseFolder}" of South connector "${name}" (${southId})`);
+    expect(logger.info).toBeCalledWith(`Deleted South connector "${name}" (${southId})`);
 
-    // Removing again should fail, meaning that it's actually removed
-    await engine.deleteSouth(southId);
-    expect(logger.warn).toBeCalledWith(`South connector with id ${southId} has been deleted already`);
+    // Removing again should not call rm, meaning that it's actually removed
+    await engine.deleteSouth(southId, name);
+    expect(fs.rm).toBeCalledTimes(1);
   });
 
   it('should delete north connector', async () => {
@@ -458,38 +459,19 @@ describe('OIBusEngine', () => {
     await engine.start();
 
     const northId = northConnectors[0].id;
+    const name = northConnectors[0].name;
     const baseFolder = path.resolve('./cache/data-stream', `north-${northId}`);
-    await engine.deleteNorth(northId);
+    await engine.deleteNorth(northId, name);
 
     expect(stopNorthSpy).toBeCalled();
     expect(filesExists).toBeCalledWith(baseFolder);
     expect(fs.rm).toBeCalledWith(baseFolder, { recursive: true });
-    expect(logger.trace).toBeCalledWith(`Deleting base folder "${baseFolder}" of North with id: ${northId}`);
-    expect(logger.info).toBeCalledWith(`Deleted North connector with id: ${northId}`);
+    expect(logger.trace).toBeCalledWith(`Deleting base folder "${baseFolder}" of North connector "${name}" (${northId})`);
+    expect(logger.info).toBeCalledWith(`Deleted North connector "${name}" (${northId})`);
 
-    // Removing again should fail, meaning that it's actually removed
-    await engine.deleteNorth(northId);
-    expect(logger.warn).toBeCalledWith(`North connector with id ${northId} has been deleted already`);
-  });
-
-  it('should warn about deleted connector', async () => {
-    (filesExists as jest.Mock).mockImplementation(() => Promise.resolve(false));
-    const stopSouthSpy = jest.spyOn(engine, 'stopSouth');
-    const stopNorthSpy = jest.spyOn(engine, 'stopNorth');
-
-    (southService.getSouthList as jest.Mock).mockReturnValue([]);
-    (northService.getNorthList as jest.Mock).mockReturnValue([]);
-    await engine.start();
-
-    const southId = southConnectors[0].id;
-    await engine.deleteSouth(southId);
-    expect(stopSouthSpy).toBeCalled();
-    expect(logger.warn).toBeCalledWith(`South connector with id ${southId} has been deleted already`);
-
-    const northId = northConnectors[0].id;
-    await engine.deleteNorth(northId);
-    expect(stopNorthSpy).toBeCalled();
-    expect(logger.warn).toBeCalledWith(`North connector with id ${northId} has been deleted already`);
+    // Removing again should not call rm, meaning that it's actually removed
+    await engine.deleteNorth(northId, name);
+    expect(fs.rm).toBeCalledTimes(1);
   });
 
   it('should handle connector deletion errors', async () => {
@@ -508,20 +490,26 @@ describe('OIBusEngine', () => {
       throw error;
     });
 
+    // South Connector error
     const southId = southConnectors[0].id;
+    const southName = southConnectors[0].name;
     const southBaseFolder = path.resolve('./cache/data-stream', `south-${southId}`);
-    await engine.deleteSouth(southId);
+    await engine.deleteSouth(southId, southName);
+
     expect(stopSouthSpy).toBeCalled();
     expect(filesExists).toBeCalled();
-    expect(logger.trace).toBeCalledWith(`Deleting base folder "${southBaseFolder}" of South with id: ${southId}`);
-    expect(logger.error).toBeCalledWith(`Unable to delete South connector base folder: ${error}`);
+    expect(logger.trace).toBeCalledWith(`Deleting base folder "${southBaseFolder}" of South connector "${southName}" (${southId})`);
+    expect(logger.error).toBeCalledWith(`Unable to delete South connector "${southName}" (${southId} base folder: ${error}`);
 
+    // North Connector error
     const northId = northConnectors[0].id;
+    const northName = northConnectors[0].name;
     const northBaseFolder = path.resolve('./cache/data-stream', `north-${northId}`);
-    await engine.deleteNorth(northId);
+    await engine.deleteNorth(northId, northName);
+
     expect(stopNorthSpy).toBeCalled();
     expect(filesExists).toBeCalled();
-    expect(logger.trace).toBeCalledWith(`Deleting base folder "${northBaseFolder}" of North with id: ${northId}`);
-    expect(logger.error).toBeCalledWith(`Unable to delete North connector base folder: ${error}`);
+    expect(logger.trace).toBeCalledWith(`Deleting base folder "${northBaseFolder}" of North connector "${northName}" (${northId})`);
+    expect(logger.error).toBeCalledWith(`Unable to delete North connector "${northName}" (${northId}) base folder: ${error}`);
   });
 });

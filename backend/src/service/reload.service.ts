@@ -115,9 +115,14 @@ export default class ReloadService {
   async onDeleteSouth(southId: string): Promise<void> {
     const subscribedNorthIds = this.repositoryService.subscriptionRepository.getSubscribedNorthConnectors(southId);
     await Promise.allSettled(subscribedNorthIds.map(northId => this.onDeleteNorthSubscription(northId, southId)));
-    await this.oibusEngine.deleteSouth(southId);
+
+    const { name } = this.repositoryService.southConnectorRepository.getSouthConnector(southId)!;
+    await this.oibusEngine.deleteSouth(southId, name);
+
     this.repositoryService.southItemRepository.deleteAllSouthItems(southId);
     this.repositoryService.southConnectorRepository.deleteSouthConnector(southId);
+
+    this.loggerService.deleteLogs('south', southId);
   }
 
   async onStartSouth(southId: string): Promise<void> {
@@ -204,8 +209,10 @@ export default class ReloadService {
   }
 
   async onDeleteNorth(northId: string): Promise<void> {
-    await this.oibusEngine.deleteNorth(northId);
+    const { name } = this.repositoryService.northConnectorRepository.getNorthConnector(northId)!;
+    await this.oibusEngine.deleteNorth(northId, name);
     this.repositoryService.northConnectorRepository.deleteNorthConnector(northId);
+    this.loggerService.deleteLogs('north', northId);
   }
 
   async onStartNorth(northId: string): Promise<void> {
@@ -291,9 +298,13 @@ export default class ReloadService {
   }
 
   async onDeleteHistoryQuery(historyId: string): Promise<void> {
-    await this.historyEngine.deleteHistoryQuery(historyId);
+    const { name } = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId)!;
+    await this.historyEngine.deleteHistoryQuery(historyId, name);
+
     this.repositoryService.historyQueryItemRepository.deleteAllItems(historyId);
     this.repositoryService.historyQueryRepository.deleteHistoryQuery(historyId);
+
+    this.loggerService.deleteLogs('history-query', historyId);
   }
 
   async onCreateHistoryItem(historyId: string, command: SouthConnectorItemCommandDTO): Promise<SouthConnectorItemDTO> {

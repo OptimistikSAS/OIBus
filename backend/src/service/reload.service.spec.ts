@@ -122,7 +122,6 @@ describe('reload service', () => {
 
   it('should update and not start south', async () => {
     const command = {};
-    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ id: 'southId' });
 
     await service.onUpdateSouth('southId', command as SouthConnectorCommandDTO);
     expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
@@ -135,16 +134,24 @@ describe('reload service', () => {
     (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock)
       .mockReturnValueOnce({ id: 'northId1', enabled: true })
       .mockReturnValueOnce({ id: 'northId2', enabled: true });
+    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ name: 'southName' });
+
     await service.onDeleteSouth('southId');
+
     expect(oibusEngine.stopNorth).toHaveBeenNthCalledWith(1, 'northId1');
     expect(oibusEngine.stopNorth).toHaveBeenNthCalledWith(2, 'northId2');
     expect(repositoryService.subscriptionRepository.deleteNorthSubscription).toHaveBeenNthCalledWith(1, 'northId1', 'southId');
     expect(repositoryService.subscriptionRepository.deleteNorthSubscription).toHaveBeenNthCalledWith(2, 'northId2', 'southId');
     expect(oibusEngine.startNorth).toHaveBeenNthCalledWith(1, 'northId1', { id: 'northId1', enabled: true });
     expect(oibusEngine.startNorth).toHaveBeenNthCalledWith(2, 'northId2', { id: 'northId2', enabled: true });
-    expect(oibusEngine.deleteSouth).toHaveBeenCalledWith('southId');
-    expect(repositoryService.southConnectorRepository.deleteSouthConnector).toHaveBeenCalledWith('southId');
+
+    expect(repositoryService.southConnectorRepository.getSouthConnector).toBeCalledWith('southId');
+    expect(oibusEngine.deleteSouth).toHaveBeenCalledWith('southId', 'southName');
+
     expect(repositoryService.southItemRepository.deleteAllSouthItems).toHaveBeenCalledWith('southId');
+    expect(repositoryService.southConnectorRepository.deleteSouthConnector).toHaveBeenCalledWith('southId');
+
+    expect(loggerService.deleteLogs).toBeCalledWith('south', 'southId');
   });
 
   it('should start south', async () => {
@@ -290,7 +297,6 @@ describe('reload service', () => {
 
   it('should update and not start north', async () => {
     const command = {};
-    (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock).mockReturnValueOnce({ id: 'northId' });
 
     await service.onUpdateNorthSettings('northId', command as NorthConnectorCommandDTO);
     expect(oibusEngine.stopNorth).toHaveBeenCalledWith('northId');
@@ -299,9 +305,14 @@ describe('reload service', () => {
   });
 
   it('should delete north', async () => {
+    (repositoryService.northConnectorRepository.getNorthConnector as jest.Mock).mockReturnValueOnce({ name: 'northName' });
+
     await service.onDeleteNorth('northId');
-    expect(oibusEngine.deleteNorth).toHaveBeenCalledWith('northId');
+
+    expect(repositoryService.northConnectorRepository.getNorthConnector).toBeCalledWith('northId');
+    expect(oibusEngine.deleteNorth).toHaveBeenCalledWith('northId', 'northName');
     expect(repositoryService.northConnectorRepository.deleteNorthConnector).toHaveBeenCalledWith('northId');
+    expect(loggerService.deleteLogs).toBeCalledWith('north', 'northId');
   });
 
   it('should start north', async () => {
@@ -359,10 +370,17 @@ describe('reload service', () => {
   });
 
   it('should delete history query', async () => {
+    (repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValueOnce({ name: 'historyName' });
+
     await service.onDeleteHistoryQuery('historyId');
-    expect(historyQueryEngine.deleteHistoryQuery).toHaveBeenCalledWith('historyId');
-    expect(repositoryService.historyQueryRepository.deleteHistoryQuery).toHaveBeenCalledWith('historyId');
+
+    expect(repositoryService.historyQueryRepository.getHistoryQuery).toBeCalledWith('historyId');
+    expect(historyQueryEngine.deleteHistoryQuery).toHaveBeenCalledWith('historyId', 'historyName');
+
     expect(repositoryService.historyQueryItemRepository.deleteAllItems).toHaveBeenCalledWith('historyId');
+    expect(repositoryService.historyQueryRepository.deleteHistoryQuery).toHaveBeenCalledWith('historyId');
+
+    expect(loggerService.deleteLogs).toBeCalledWith('history-query', 'historyId');
   });
 
   it('should create history item', async () => {
