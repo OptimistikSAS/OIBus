@@ -1,7 +1,7 @@
 import SqliteDatabaseMock, { all, get, run } from '../tests/__mocks__/database.mock';
 import { SouthCache } from '../../../shared/model/south-connector.model';
 import { Database } from 'better-sqlite3';
-import SouthCacheRepository from './south-cache.repository';
+import SouthCacheRepository, { SOUTH_CACHE_TABLE } from './south-cache.repository';
 
 jest.mock('../tests/__mocks__/database.mock');
 
@@ -106,5 +106,23 @@ describe('SouthCacheRepository', () => {
       `INSERT INTO "test" (filename, mtime_ms) VALUES (?, ?) ON CONFLICT(filename) DO UPDATE SET mtime_ms = ?`
     );
     expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it('should delete all cache rows of a south connector', () => {
+    repository.deleteAllCacheScanModes('southId');
+    expect(database.prepare).toHaveBeenCalledWith(`DELETE FROM ${SOUTH_CACHE_TABLE} WHERE south_id = ?;`);
+    expect(run).toHaveBeenCalledWith('southId');
+  });
+
+  it('should delete all cache rows of an item', () => {
+    repository.deleteCacheScanModesByItem('itemId');
+    expect(database.prepare).toHaveBeenCalledWith(`DELETE FROM ${SOUTH_CACHE_TABLE} WHERE item_id = ?;`);
+    expect(run).toHaveBeenCalledWith('itemId');
+  });
+
+  it('should delete all cache rows of a scan mode', () => {
+    repository.deleteCacheScanModesByScanMode('scanModeId');
+    expect(database.prepare).toHaveBeenCalledWith(`DELETE FROM ${SOUTH_CACHE_TABLE} WHERE scan_mode_id = ?;`);
+    expect(run).toHaveBeenCalledWith('scanModeId');
   });
 });
