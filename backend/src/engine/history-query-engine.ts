@@ -122,21 +122,20 @@ export default class HistoryQueryEngine extends BaseEngine {
   /**
    * Stops the History query and deletes all cache inside the base folder
    */
-  async deleteHistoryQuery(historyId: string): Promise<void> {
+  async deleteHistoryQuery(historyId: string, name: string): Promise<void> {
     await this.stopHistoryQuery(historyId);
     const baseFolder = path.resolve(this.cacheFolder, `history-${historyId}`);
 
-    if (!(await filesExists(baseFolder))) {
-      this.logger.warn(`History query with id ${historyId} has been deleted already`);
-      return;
-    }
-
     try {
-      this.logger.trace(`Deleting base folder "${baseFolder}" of History query with id: ${historyId}`);
-      await fs.rm(baseFolder, { recursive: true });
-      this.logger.info(`Deleted History query with id: ${historyId}`);
+      this.logger.trace(`Deleting base folder "${baseFolder}" of History query "${name}" (${historyId})`);
+
+      if (await filesExists(baseFolder)) {
+        await fs.rm(baseFolder, { recursive: true });
+      }
+
+      this.logger.info(`Deleted History query "${name}" (${historyId})`);
     } catch (error) {
-      this.logger.error(`Unable to delete History query base folder: ${error}`);
+      this.logger.error(`Unable to delete History query "${name}" (${historyId}) base folder: ${error}`);
     }
   }
 }

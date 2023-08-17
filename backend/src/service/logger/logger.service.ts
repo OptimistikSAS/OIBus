@@ -6,6 +6,8 @@ import { LogSettings, ScopeType } from '../../../../shared/model/engine.model';
 
 import FileCleanupService from './file-cleanup.service';
 import EncryptionService from '../encryption.service';
+import Database from 'better-sqlite3';
+import { LOG_TABLE } from '../../repository/log.repository';
 
 const LOG_DB_NAME = 'logs.db';
 const LOG_FILE_NAME = 'journal.log';
@@ -99,6 +101,15 @@ class LoggerService {
     if (this.fileCleanUpService) {
       this.fileCleanUpService.stop();
     }
+  }
+
+  /**
+   * Deletes logs from the logs table
+   */
+  deleteLogs(scopeType: ScopeType, scopeId: string): void {
+    const db = new Database(path.resolve(this.folder, LOG_DB_NAME));
+    const query = `DELETE FROM ${LOG_TABLE} WHERE scope_type = ? AND scope_id = ?`;
+    db.prepare(query).run(scopeType, scopeId);
   }
 }
 

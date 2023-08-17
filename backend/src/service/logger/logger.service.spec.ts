@@ -7,7 +7,22 @@ import pino from 'pino';
 import LoggerService from './logger.service';
 import EncryptionService from '../encryption.service';
 import FileCleanupService from './file-cleanup.service';
+import SqliteDatabaseMock, { run } from '../../tests/__mocks__/database.mock';
+import { LOG_TABLE } from '../../repository/log.repository';
 
+jest.mock('../../tests/__mocks__/database.mock');
+
+const database: any = jest.fn().mockReturnValue(new SqliteDatabaseMock());
+database.prepare = jest.fn().mockReturnValue({ run });
+
+jest.mock(
+  'better-sqlite3',
+  jest.fn().mockImplementation(() => {
+    return function () {
+      return database;
+    };
+  })
+);
 jest.mock(
   'pino',
   jest.fn(() => jest.fn(() => ({ child: jest.fn() })))
@@ -214,5 +229,16 @@ describe('Logger', () => {
     service.fileCleanUpService = { stop: stopMock } as unknown as FileCleanupService;
     service.stop();
     expect(stopMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('should delete logs by scopeType and scopeId', async () => {
+    const query = `DELETE FROM ${LOG_TABLE} WHERE scope_type = ? AND scope_id = ?`;
+    const scopeType = 'scope';
+    const scopeId = 'id';
+
+    service.deleteLogs(scopeType, scopeId);
+
+    expect(database.prepare).toBeCalledWith(query);
+    expect(run).toBeCalledWith(scopeType, scopeId);
   });
 });

@@ -205,42 +205,40 @@ export default class OIBusEngine extends BaseEngine {
   /**
    * Stops the south connector and deletes all cache inside the base folder
    */
-  async deleteSouth(southId: string): Promise<void> {
+  async deleteSouth(southId: string, name: string): Promise<void> {
     await this.stopSouth(southId);
     const baseFolder = path.resolve(this.cacheFolder, `south-${southId}`);
 
-    if (!(await filesExists(baseFolder))) {
-      this.logger.warn(`South connector with id ${southId} has been deleted already`);
-      return;
-    }
-
     try {
-      this.logger.trace(`Deleting base folder "${baseFolder}" of South with id: ${southId}`);
-      await fs.rm(baseFolder, { recursive: true });
-      this.logger.info(`Deleted South connector with id: ${southId}`);
+      this.logger.trace(`Deleting base folder "${baseFolder}" of South connector "${name}" (${southId})`);
+
+      if (await filesExists(baseFolder)) {
+        await fs.rm(baseFolder, { recursive: true });
+      }
+
+      this.logger.info(`Deleted South connector "${name}" (${southId})`);
     } catch (error) {
-      this.logger.error(`Unable to delete South connector base folder: ${error}`);
+      this.logger.error(`Unable to delete South connector "${name}" (${southId} base folder: ${error}`);
     }
   }
 
   /**
    * Stops the north connector and deletes all cache inside the base folder
    */
-  async deleteNorth(northId: string): Promise<void> {
+  async deleteNorth(northId: string, name: string): Promise<void> {
     await this.stopNorth(northId);
     const baseFolder = path.resolve(this.cacheFolder, `north-${northId}`);
 
-    if (!(await filesExists(baseFolder))) {
-      this.logger.warn(`North connector with id ${northId} has been deleted already`);
-      return;
-    }
-
     try {
-      this.logger.trace(`Deleting base folder "${baseFolder}" of North with id: ${northId}`);
-      await fs.rm(baseFolder, { recursive: true });
-      this.logger.info(`Deleted North connector with id: ${northId}`);
+      this.logger.trace(`Deleting base folder "${baseFolder}" of North connector "${name}" (${northId})`);
+
+      if (await filesExists(baseFolder)) {
+        await fs.rm(baseFolder, { recursive: true });
+      }
+
+      this.logger.info(`Deleted North connector "${name}" (${northId})`);
     } catch (error) {
-      this.logger.error(`Unable to delete North connector base folder: ${error}`);
+      this.logger.error(`Unable to delete North connector "${name}" (${northId}) base folder: ${error}`);
     }
   }
 
