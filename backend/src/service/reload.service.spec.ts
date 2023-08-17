@@ -152,6 +152,7 @@ describe('reload service', () => {
     expect(repositoryService.southConnectorRepository.deleteSouthConnector).toHaveBeenCalledWith('southId');
 
     expect(loggerService.deleteLogs).toBeCalledWith('south', 'southId');
+    expect(repositoryService.southMetricsRepository.removeMetrics).toBeCalledWith('southId');
   });
 
   it('should start south', async () => {
@@ -313,6 +314,7 @@ describe('reload service', () => {
     expect(oibusEngine.deleteNorth).toHaveBeenCalledWith('northId', 'northName');
     expect(repositoryService.northConnectorRepository.deleteNorthConnector).toHaveBeenCalledWith('northId');
     expect(loggerService.deleteLogs).toBeCalledWith('north', 'northId');
+    expect(repositoryService.northMetricsRepository.removeMetrics).toBeCalledWith('northId');
   });
 
   it('should start north', async () => {
