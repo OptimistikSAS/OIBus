@@ -127,5 +127,9 @@ export default jest.fn().mockImplementation(() => ({
     getMetrics: jest.fn(),
     updateMetrics: jest.fn(),
     removeMetrics: jest.fn()
+  },
+  southCacheRepository: {
+    deleteAllCacheScanModes: jest.fn(),
+    deleteCacheScanModesByItem: jest.fn()
   }
 }));

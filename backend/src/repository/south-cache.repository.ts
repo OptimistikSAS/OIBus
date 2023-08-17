@@ -65,4 +65,20 @@ export default class SouthCacheRepository {
   getQueryOnCustomTable(query: string, params: Array<any>): any {
     return this._database.prepare(query).get(...params);
   }
+
+  /**
+   * Delete all cache scan modes of the South connector
+   */
+  deleteAllCacheScanModes(southId: string): void {
+    const query = `DELETE FROM ${SOUTH_CACHE_TABLE} WHERE south_id = ?;`;
+    this._database.prepare(query).run(southId);
+  }
+
+  /**
+   * Delete all cache scan modes of the Item
+   */
+  deleteCacheScanModesByItem(itemId: string): void {
+    const query = `DELETE FROM ${SOUTH_CACHE_TABLE} WHERE item_id = ?;`;
+    this._database.prepare(query).run(itemId);
+  }
 }
