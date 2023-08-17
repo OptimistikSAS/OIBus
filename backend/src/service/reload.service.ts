@@ -123,6 +123,7 @@ export default class ReloadService {
     this.repositoryService.southConnectorRepository.deleteSouthConnector(southId);
 
     this.loggerService.deleteLogs('south', southId);
+    this.repositoryService.southMetricsRepository.removeMetrics(southId);
   }
 
   async onStartSouth(southId: string): Promise<void> {
@@ -213,6 +214,7 @@ export default class ReloadService {
     await this.oibusEngine.deleteNorth(northId, name);
     this.repositoryService.northConnectorRepository.deleteNorthConnector(northId);
     this.loggerService.deleteLogs('north', northId);
+    this.repositoryService.northMetricsRepository.removeMetrics(northId);
   }
 
   async onStartNorth(northId: string): Promise<void> {
