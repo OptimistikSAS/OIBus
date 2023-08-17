@@ -124,6 +124,7 @@ export default class ReloadService {
 
     this.loggerService.deleteLogs('south', southId);
     this.repositoryService.southMetricsRepository.removeMetrics(southId);
+    this.repositoryService.southCacheRepository.deleteAllCacheScanModes(southId);
   }
 
   async onStartSouth(southId: string): Promise<void> {
@@ -168,6 +169,7 @@ export default class ReloadService {
     if (!southItem) throw new Error('South item not found');
     this.oibusEngine.deleteItemFromSouth(southItem.connectorId, southItem);
     this.repositoryService.southItemRepository.deleteSouthItem(itemId);
+    this.repositoryService.southCacheRepository.deleteCacheScanModesByItem(itemId);
   }
 
   async onEnableSouthItem(itemId: string): Promise<void> {

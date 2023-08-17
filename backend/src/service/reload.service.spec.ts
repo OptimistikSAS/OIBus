@@ -153,6 +153,7 @@ describe('reload service', () => {
 
     expect(loggerService.deleteLogs).toBeCalledWith('south', 'southId');
     expect(repositoryService.southMetricsRepository.removeMetrics).toBeCalledWith('southId');
+    expect(repositoryService.southCacheRepository.deleteAllCacheScanModes).toBeCalledWith('southId');
   });
 
   it('should start south', async () => {
@@ -202,6 +203,7 @@ describe('reload service', () => {
     await service.onDeleteSouthItem('southItemId');
     expect(oibusEngine.deleteItemFromSouth).toHaveBeenCalledWith('southId', southItem);
     expect(repositoryService.southItemRepository.deleteSouthItem).toHaveBeenCalledWith('southItemId');
+    expect(repositoryService.southCacheRepository.deleteCacheScanModesByItem).toBeCalledWith('southItemId');
   });
 
   it('delete should throw when south item not found', async () => {
