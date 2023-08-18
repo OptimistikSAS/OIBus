@@ -170,4 +170,15 @@ describe('Log repository', () => {
       scopeName: 'name'
     });
   });
+
+  it('should delete logs by scopeType and scopeId', async () => {
+    const query = `DELETE FROM logs WHERE scope_type = ? AND scope_id = ?`;
+    const scopeType = 'scope';
+    const scopeId = 'id';
+
+    repository.deleteLogsByScopeId(scopeType, scopeId);
+
+    expect(database.prepare).toBeCalledWith(query);
+    expect(run).toBeCalledWith(scopeType, scopeId);
+  });
 });

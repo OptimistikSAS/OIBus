@@ -122,7 +122,7 @@ export default class ReloadService {
     this.repositoryService.southItemRepository.deleteAllSouthItems(southId);
     this.repositoryService.southConnectorRepository.deleteSouthConnector(southId);
 
-    this.loggerService.deleteLogs('south', southId);
+    this.repositoryService.logRepository.deleteLogsByScopeId('south', southId);
     this.repositoryService.southMetricsRepository.removeMetrics(southId);
     this.repositoryService.southCacheRepository.deleteAllCacheScanModes(southId);
   }
@@ -215,7 +215,7 @@ export default class ReloadService {
     const { name } = this.repositoryService.northConnectorRepository.getNorthConnector(northId)!;
     await this.oibusEngine.deleteNorth(northId, name);
     this.repositoryService.northConnectorRepository.deleteNorthConnector(northId);
-    this.loggerService.deleteLogs('north', northId);
+    this.repositoryService.logRepository.deleteLogsByScopeId('north', northId);
     this.repositoryService.northMetricsRepository.removeMetrics(northId);
   }
 
@@ -307,8 +307,7 @@ export default class ReloadService {
 
     this.repositoryService.historyQueryItemRepository.deleteAllItems(historyId);
     this.repositoryService.historyQueryRepository.deleteHistoryQuery(historyId);
-
-    this.loggerService.deleteLogs('history-query', historyId);
+    this.repositoryService.logRepository.deleteLogsByScopeId('history-query', historyId);
   }
 
   async onCreateHistoryItem(historyId: string, command: SouthConnectorItemCommandDTO): Promise<SouthConnectorItemDTO> {

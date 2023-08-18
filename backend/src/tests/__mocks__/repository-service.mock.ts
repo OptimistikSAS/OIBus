@@ -95,7 +95,8 @@ export default jest.fn().mockImplementation(() => ({
   logRepository: {
     searchLogs: jest.fn(),
     getScopeById: jest.fn(),
-    searchScopesByName: jest.fn()
+    searchScopesByName: jest.fn(),
+    deleteLogsByScopeId: jest.fn()
   },
   engineRepository: {
     getEngineSettings: jest.fn(),
