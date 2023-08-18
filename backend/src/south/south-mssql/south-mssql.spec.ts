@@ -103,24 +103,7 @@ const items: Array<SouthConnectorItemDTO<SouthMSSQLItemSettings>> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      dateTimeFields: [
-        {
-          fieldName: 'anotherTimestamp',
-          useAsReference: false,
-          type: 'unix-epoch-ms',
-          timezone: null,
-          format: null,
-          locale: null
-        } as unknown as SouthMSSQLItemSettingsDateTimeFields,
-        {
-          fieldName: 'timestamp',
-          useAsReference: true,
-          type: 'string',
-          timezone: 'Europe/Paris',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          locale: 'en-US'
-        }
-      ],
+      dateTimeFields: [],
       serialization: {
         type: 'csv',
         filename: 'sql-@CurrentDate.csv',
@@ -199,7 +182,7 @@ describe('SouthMSSQL with authentication', () => {
       username: 'username',
       password: 'password',
       domain: 'domain',
-      encryption: true,
+      encryption: null,
       connectionTimeout: 1000,
       requestTimeout: 1000,
       trustServerCertificate: true
@@ -286,7 +269,6 @@ describe('SouthMSSQL with authentication', () => {
       connectionTimeout: configuration.settings.connectionTimeout,
       requestTimeout: configuration.settings.requestTimeout,
       options: {
-        encrypt: configuration.settings.encryption,
         trustServerCertificate: configuration.settings.trustServerCertificate,
         useUTC: true
       },
@@ -320,7 +302,7 @@ describe('SouthMSSQL without authentication', () => {
       username: null,
       password: null,
       domain: '',
-      encryption: false,
+      encryption: true,
       connectionTimeout: 1000,
       requestTimeout: 1000,
       trustServerCertificate: false

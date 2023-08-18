@@ -15,45 +15,29 @@ const manifest: SouthConnectorManifest = {
   },
   settings: [
     {
-      key: 'driverPath',
-      type: 'OibText',
-      label: 'ODBC Driver Path',
+      key: 'remoteAgent',
+      type: 'OibCheckbox',
+      label: 'Use remote agent',
+      defaultValue: false,
       newRow: true,
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
     {
-      key: 'host',
+      key: 'agentUrl',
       type: 'OibText',
-      label: 'Host',
+      label: 'Use remote agent',
+      defaultValue: 'http://ip-adress-or-host:2224',
+      validators: [{ key: 'required' }],
+      conditionalDisplay: { field: 'remoteAgent', values: [true] }
+    },
+    {
+      key: 'connectionString',
+      type: 'OibText',
+      label: 'Connection string',
       defaultValue: 'localhost',
       newRow: true,
       validators: [{ key: 'required' }],
-      displayInViewMode: true
-    },
-    {
-      key: 'port',
-      type: 'OibNumber',
-      label: 'Port',
-      defaultValue: 1433,
-      newRow: false,
-      class: 'col-2',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-      displayInViewMode: true
-    },
-    {
-      key: 'database',
-      type: 'OibText',
-      label: 'Database',
-      defaultValue: 'db',
-      newRow: true,
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    },
-    {
-      key: 'username',
-      type: 'OibText',
-      label: 'Username',
       displayInViewMode: true
     },
     {
@@ -74,11 +58,13 @@ const manifest: SouthConnectorManifest = {
       displayInViewMode: false
     },
     {
-      key: 'trustServerCertificate',
-      type: 'OibCheckbox',
-      label: 'Accept self-signed certificate',
-      defaultValue: false,
-      validators: [{ key: 'required' }],
+      key: 'requestTimeout',
+      type: 'OibNumber',
+      label: 'Request timeout',
+      defaultValue: 15_000,
+      unitLabel: 'ms',
+      class: 'col-4',
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
       displayInViewMode: false
     }
   ],

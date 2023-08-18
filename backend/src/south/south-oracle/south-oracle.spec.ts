@@ -104,24 +104,7 @@ const items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      dateTimeFields: [
-        {
-          fieldName: 'anotherTimestamp',
-          useAsReference: false,
-          type: 'unix-epoch-ms',
-          timezone: null,
-          format: null,
-          locale: null
-        } as unknown as SouthOracleItemSettingsDateTimeFields,
-        {
-          fieldName: 'timestamp',
-          useAsReference: true,
-          type: 'string',
-          timezone: 'Europe/Paris',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          locale: 'en-US'
-        }
-      ],
+      dateTimeFields: [],
       serialization: {
         type: 'csv',
         filename: 'sql-@CurrentDate.csv',
@@ -170,6 +153,10 @@ const items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>> = [
     scanModeId: 'scanModeId2'
   }
 ];
+
+// Spy on console info and error
+jest.spyOn(global.console, 'info').mockImplementation(() => {});
+jest.spyOn(global.console, 'error').mockImplementation(() => {});
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
 let south: SouthOracle;
@@ -291,6 +278,36 @@ describe('SouthOracle with authentication', () => {
     expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
 
     const nullResult = await south.queryData(items[0], startTime, endTime);
+    expect(nullResult).toEqual([]);
+  });
+
+  it('should get data from Oracle without datetime reference', async () => {
+    const startTime = '2020-01-01T00:00:00.000Z';
+    const endTime = '2022-01-01T00:00:00.000Z';
+
+    (generateReplacementParameters as jest.Mock).mockReturnValue({
+      startTime: DateTime.fromISO(startTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS'),
+      endTime: DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
+    });
+    const oracleConnection = {
+      callTimeout: connector.settings.requestTimeout,
+      close: jest.fn(),
+      execute: jest
+        .fn()
+        .mockReturnValueOnce({
+          rows: [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]
+        })
+        .mockReturnValue({ rows: null })
+    };
+    (oracledb.getConnection as jest.Mock).mockReturnValue(oracleConnection);
+
+    await south.queryData(items[1], startTime, endTime);
+
+    expect(utils.logQuery).toHaveBeenCalledWith(items[1].settings.query, startTime, endTime, logger);
+
+    expect(generateReplacementParameters).toHaveBeenCalledWith(items[1].settings.query, startTime, endTime);
+
+    const nullResult = await south.queryData(items[1], startTime, endTime);
     expect(nullResult).toEqual([]);
   });
 
