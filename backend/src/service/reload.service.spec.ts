@@ -151,7 +151,7 @@ describe('reload service', () => {
     expect(repositoryService.southItemRepository.deleteAllSouthItems).toHaveBeenCalledWith('southId');
     expect(repositoryService.southConnectorRepository.deleteSouthConnector).toHaveBeenCalledWith('southId');
 
-    expect(loggerService.deleteLogs).toBeCalledWith('south', 'southId');
+    expect(repositoryService.logRepository.deleteLogsByScopeId).toBeCalledWith('south', 'southId');
     expect(repositoryService.southMetricsRepository.removeMetrics).toBeCalledWith('southId');
     expect(repositoryService.southCacheRepository.deleteAllCacheScanModes).toBeCalledWith('southId');
   });
@@ -315,7 +315,7 @@ describe('reload service', () => {
     expect(repositoryService.northConnectorRepository.getNorthConnector).toBeCalledWith('northId');
     expect(oibusEngine.deleteNorth).toHaveBeenCalledWith('northId', 'northName');
     expect(repositoryService.northConnectorRepository.deleteNorthConnector).toHaveBeenCalledWith('northId');
-    expect(loggerService.deleteLogs).toBeCalledWith('north', 'northId');
+    expect(repositoryService.logRepository.deleteLogsByScopeId).toBeCalledWith('north', 'northId');
     expect(repositoryService.northMetricsRepository.removeMetrics).toBeCalledWith('northId');
   });
 
@@ -384,7 +384,7 @@ describe('reload service', () => {
     expect(repositoryService.historyQueryItemRepository.deleteAllItems).toHaveBeenCalledWith('historyId');
     expect(repositoryService.historyQueryRepository.deleteHistoryQuery).toHaveBeenCalledWith('historyId');
 
-    expect(loggerService.deleteLogs).toBeCalledWith('history-query', 'historyId');
+    expect(repositoryService.logRepository.deleteLogsByScopeId).toBeCalledWith('history-query', 'historyId');
   });
 
   it('should create history item', async () => {

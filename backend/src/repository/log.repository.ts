@@ -2,6 +2,7 @@ import { Page } from '../../../shared/model/types';
 import { LEVEL_FORMAT, LogDTO, LogSearchParam, PinoLog, Scope } from '../../../shared/model/logs.model';
 import { Database } from 'better-sqlite3';
 import { DateTime } from 'luxon';
+import { ScopeType } from '../../../shared/model/engine.model';
 
 export const LOG_TABLE = 'logs';
 const PAGE_SIZE = 50;
@@ -96,5 +97,10 @@ export default class LogRepository {
   deleteLogs = (numberOfLogsToDelete: number): void => {
     const query = `DELETE FROM ${LOG_TABLE} WHERE timestamp IN (` + `SELECT timestamp FROM ${LOG_TABLE} ORDER BY timestamp LIMIT ?);`;
     this.database.prepare(query).run(numberOfLogsToDelete);
+  };
+
+  deleteLogsByScopeId = (scopeType: ScopeType, scopeId: string): void => {
+    const query = `DELETE FROM ${LOG_TABLE} WHERE scope_type = ? AND scope_id = ?`;
+    this.database.prepare(query).run(scopeType, scopeId);
   };
 }
