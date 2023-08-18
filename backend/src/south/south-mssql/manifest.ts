@@ -67,6 +67,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibCheckbox',
       label: 'Use encryption',
       defaultValue: false,
+      validators: [{ key: 'required' }],
       newRow: true,
       displayInViewMode: true
     },

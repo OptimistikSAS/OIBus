@@ -11,6 +11,7 @@ import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory, TestsConnection } from '../south-interface';
 import { SouthODBCItemSettings, SouthODBCSettings } from '../../../../shared/model/south-settings.model';
+import fetch from 'node-fetch';
 
 let odbc: any | null = null;
 // @ts-ignore
@@ -30,6 +31,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   static type = manifest.id;
 
   private readonly tmpFolder: string;
+  private connected = false;
 
   constructor(
     connector: SouthConnectorDTO<SouthODBCSettings>,
@@ -53,12 +55,49 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     await super.start();
   }
 
+  override async connect(): Promise<void> {
+    if (this.connector.settings.remoteAgent) {
+      this.connected = false;
+      const headers: Record<string, string> = {};
+      headers['Content-Type'] = 'application/json';
+      const fetchOptions = {
+        method: 'PUT',
+        body: JSON.stringify({
+          connectionString: this.connector.settings.connectionString,
+          connectionTimeout: this.connector.settings.connectionTimeout
+        }),
+        headers,
+        timeout: this.connector.settings.connectionTimeout
+      };
+
+      await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/connect`, fetchOptions);
+      this.connected = true;
+    }
+    await super.connect();
+  }
+
+  async disconnect(): Promise<void> {
+    this.connected = false;
+    if (this.connector.settings.remoteAgent) {
+      const fetchOptions = { method: 'DELETE', timeout: this.connector.settings.connectionTimeout };
+      await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/disconnect`, fetchOptions);
+    }
+    await super.disconnect();
+  }
+
   override async testConnection(): Promise<void> {
+    if (this.connector.settings.remoteAgent) {
+      await this.testAgentConnection();
+    } else {
+      await this.testOdbcConnection();
+    }
+  }
+
+  async testOdbcConnection(): Promise<void> {
     if (!odbc) {
       throw new Error('odbc library not loaded');
     }
-
-    this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
+    this.logger.info(`Testing ODBC connection with "${this.connector.settings.connectionString}"`);
 
     let connection;
     try {
@@ -67,18 +106,14 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     } catch (error: any) {
       this.logger.error(`Unable to connect to database: ${error.message}`);
 
-      if (connection) {
-        await connection.close();
-      }
-
       const { odbcErrors } = error;
       this.logOdbcErrors(odbcErrors);
 
       if (odbcErrors[0].state === 'IM002') {
-        throw new Error(`Driver "${this.connector.settings.driverPath}" not found`);
+        throw new Error(`Driver not found. Check connection string and driver`);
       }
 
-      const { errorCode, ERROR_CODES } = this.parseErrorCodes(this.connector.settings.driverPath, odbcErrors[0]);
+      const { errorCode, ERROR_CODES } = this.parseErrorCodes(this.connector.settings.connectionString, odbcErrors[0]);
 
       switch (errorCode) {
         case ERROR_CODES.HOST:
@@ -89,9 +124,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
           throw new Error('Please check username and password');
 
         case ERROR_CODES.DB_ACCESS:
-          throw new Error(
-            `User "${this.connector.settings.username}" does not have access to database "${this.connector.settings.database}"`
-          );
+          throw new Error(`User does not have access to database`);
 
         default:
           throw new Error('Please check logs');
@@ -113,24 +146,49 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
         });
       }
     } catch (error: any) {
-      if (connection) {
-        await connection.close();
-      }
+      await connection.close();
       this.logOdbcErrors(error.odbcErrors);
-      this.logger.error(`Unable to read tables in database "${this.connector.settings.database}": ${error.message}`);
-      throw new Error(`Unable to read tables in database "${this.connector.settings.database}", check logs`);
+      this.logger.error(`Unable to read tables in database: ${error.message}`);
+      throw new Error(`Unable to read tables in database, check logs`);
     }
 
-    if (connection) {
-      await connection.close();
-    }
+    await connection.close();
 
     if (tables.length === 0) {
-      this.logger.warn(`Database "${this.connector.settings.database}" has no table`);
+      this.logger.warn(`Database has no table`);
       throw new Error('Database has no table');
     }
     const tablesString = tables.map(row => `${row.table_name}: [${row.columns}]`).join(',\n');
     this.logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
+  }
+
+  async testAgentConnection(): Promise<void> {
+    this.logger.info(
+      `Testing ODBC OIBus Agent connection on ${this.connector.settings.agentUrl} with "${this.connector.settings.connectionString}"`
+    );
+
+    const headers: Record<string, string> = {};
+    headers['Content-Type'] = 'application/json';
+    const fetchOptions = {
+      method: 'PUT',
+      body: JSON.stringify({
+        connectionString: this.connector.settings.connectionString,
+        connectionTimeout: this.connector.settings.connectionTimeout
+      }),
+      headers
+    };
+    const response = await fetch(`${this.connector.settings.agentUrl!}/api/odbc/${this.connector.id}/connect`, fetchOptions);
+    if (response.status === 200) {
+      this.logger.info('Connected to remote odbc. Disconnecting...');
+      await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/disconnect`, { method: 'DELETE' });
+    } else if (response.status === 400) {
+      const errorMessage = await response.text();
+      this.logger.error(`Error occurred when sending connect command to remote agent with status ${response.status}: ${errorMessage}`);
+      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.status}: ${errorMessage}`);
+    } else {
+      this.logger.error(`Error occurred when sending connect command to remote agent with status ${response.status}`);
+      throw new Error(`Error occurred when sending connect command to remote agent with status ${response.status}`);
+    }
   }
 
   /**
@@ -141,38 +199,52 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     let updatedStartTime = startTime;
 
     for (const item of items) {
-      const startRequest = DateTime.now().toMillis();
-      const result: Array<any> = await this.queryData(item, updatedStartTime, endTime);
+      if (this.connector.settings.remoteAgent) {
+        updatedStartTime = await this.queryRemoteAgentData(item, updatedStartTime, endTime);
+      } else {
+        updatedStartTime = await this.queryOdbcData(item, updatedStartTime, endTime);
+      }
+    }
+    return updatedStartTime;
+  }
+
+  async queryRemoteAgentData(item: SouthConnectorItemDTO<SouthODBCItemSettings>, startTime: Instant, endTime: Instant): Promise<Instant> {
+    let updatedStartTime = startTime;
+    const startRequest = DateTime.now().toMillis();
+
+    const headers: Record<string, string> = {};
+    headers['Content-Type'] = 'application/json';
+
+    const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference);
+    const odbcStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
+    const odbcEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;
+    const adaptedQuery = item.settings.query.replace(/@StartTime/g, `${odbcStartTime}`).replace(/@EndTime/g, `${odbcEndTime}`);
+    logQuery(adaptedQuery, odbcStartTime, odbcEndTime, this.logger);
+
+    const fetchOptions = {
+      method: 'PUT',
+      body: JSON.stringify({
+        connectionString: this.connector.settings.connectionString,
+        sql: adaptedQuery,
+        readTimeout: this.connector.settings.requestTimeout,
+        timeColumn: referenceTimestampField?.fieldName,
+        datasourceTimestampFormat: referenceTimestampField?.format,
+        datasourceTimezone: referenceTimestampField?.timezone,
+        delimiter: item.settings.serialization.delimiter,
+        outputTimestampFormat: item.settings.serialization.outputTimestampFormat,
+        outputTimezone: item.settings.serialization.outputTimezone
+      }),
+      headers
+    };
+    const response = await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/read`, fetchOptions);
+    if (response.status === 200) {
+      const result: { recordCount: number; content: Array<any>; maxInstantRetrieved: Instant } = await response.json();
       const requestDuration = DateTime.now().toMillis() - startRequest;
+      this.logger.info(`Found ${result.recordCount} results for item ${item.name} in ${requestDuration} ms`);
 
-      if (result.length > 0) {
-        this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
-
-        const formattedResult = result.map(entry => {
-          const formattedEntry: Record<string, any> = {};
-          Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.fieldName === key);
-            if (!datetimeField) {
-              formattedEntry[key] = value;
-            } else {
-              const entryDate = convertDateTimeToInstant(value, datetimeField);
-              if (datetimeField.useAsReference) {
-                if (entryDate > updatedStartTime) {
-                  updatedStartTime = entryDate;
-                }
-              }
-              formattedEntry[key] = formatInstant(entryDate, {
-                type: 'string',
-                format: item.settings.serialization.outputTimestampFormat,
-                timezone: item.settings.serialization.outputTimezone,
-                locale: 'en-En'
-              });
-            }
-          });
-          return formattedEntry;
-        });
+      if (result.content.length > 0) {
         await persistResults(
-          formattedResult,
+          result.content,
           item.settings.serialization,
           this.connector.name,
           this.tmpFolder,
@@ -180,34 +252,42 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
           this.addValues.bind(this),
           this.logger
         );
+        if (result.maxInstantRetrieved > updatedStartTime) {
+          updatedStartTime = result.maxInstantRetrieved;
+        }
       } else {
         this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
       }
+    } else if (response.status === 400) {
+      const errorMessage = await response.text();
+      this.logger.error(`Error occurred when querying remote agent with status ${response.status}: ${errorMessage}`);
+    } else {
+      this.logger.error(`Error occurred when querying remote agent with status ${response.status}`);
     }
+
     return updatedStartTime;
   }
 
-  /**
-   * Apply the SQL query to the target ODBC database
-   */
-  async queryData(item: SouthConnectorItemDTO<SouthODBCItemSettings>, startTime: Instant, endTime: Instant) {
+  async queryOdbcData(item: SouthConnectorItemDTO<SouthODBCItemSettings>, startTime: Instant, endTime: Instant): Promise<Instant> {
     if (!odbc) {
       throw new Error('odbc library not loaded');
     }
 
+    let updatedStartTime = startTime;
+    const startRequest = DateTime.now().toMillis();
+    let result: Array<any> = [];
     let connection;
     try {
       const connectionConfig = await this.createConnectionConfig(this.connector.settings);
       connection = await odbc.connect(connectionConfig);
 
-      const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference) || null;
-      const odbcStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);
-      const odbcEndTime = referenceTimestampField == null ? endTime : formatInstant(endTime, referenceTimestampField);
+      const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference);
+      const odbcStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
+      const odbcEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;
       const adaptedQuery = item.settings.query.replace(/@StartTime/g, `${odbcStartTime}`).replace(/@EndTime/g, `${odbcEndTime}`);
       logQuery(adaptedQuery, odbcStartTime, odbcEndTime, this.logger);
-      const data = await connection.query(adaptedQuery);
+      result = await connection.query(adaptedQuery);
       await connection.close();
-      return data;
     } catch (error: any) {
       if (error.odbcErrors?.length > 0) {
         this.logOdbcErrors(error.odbcErrors);
@@ -217,25 +297,60 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       }
       throw error;
     }
+    const requestDuration = DateTime.now().toMillis() - startRequest;
+
+    if (result.length > 0) {
+      this.logger.info(`Found ${result.length} results for item ${item.name} in ${requestDuration} ms`);
+
+      const formattedResult = result.map(entry => {
+        const formattedEntry: Record<string, any> = {};
+        Object.entries(entry).forEach(([key, value]) => {
+          const datetimeField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.fieldName === key);
+          if (!datetimeField) {
+            formattedEntry[key] = value;
+          } else {
+            const entryDate = convertDateTimeToInstant(value, datetimeField);
+            if (datetimeField.useAsReference) {
+              if (entryDate > updatedStartTime) {
+                updatedStartTime = entryDate;
+              }
+            }
+            formattedEntry[key] = formatInstant(entryDate, {
+              type: 'string',
+              format: item.settings.serialization.outputTimestampFormat,
+              timezone: item.settings.serialization.outputTimezone,
+              locale: 'en-En'
+            });
+          }
+        });
+        return formattedEntry;
+      });
+      await persistResults(
+        formattedResult,
+        item.settings.serialization,
+        this.connector.name,
+        this.tmpFolder,
+        this.addFile.bind(this),
+        this.addValues.bind(this),
+        this.logger
+      );
+    } else {
+      this.logger.debug(`No result found for item ${item.name}. Request done in ${requestDuration} ms`);
+    }
+    return updatedStartTime;
   }
 
   async createConnectionConfig(settings: SouthODBCSettings): Promise<{
     connectionString: string;
     connectionTimeout?: number;
   }> {
-    let connectionString = `Driver=${settings.driverPath};SERVER=${settings.host};PORT=${settings.port};`;
-    if (settings.trustServerCertificate) {
-      connectionString += `TrustServerCertificate=yes;`;
-    }
-    if (settings.database) {
-      connectionString += `Database=${settings.database};`;
-    }
-    if (settings.username) {
-      connectionString += `UID=${settings.username};`;
-    }
+    let connectionString = settings.connectionString;
 
-    if (settings.username && settings.password) {
+    if (settings.password) {
       this.logger.debug(`Connecting with connection string ${connectionString}PWD=<secret>;`);
+      if (!connectionString.endsWith(';')) {
+        connectionString += ';';
+      }
       connectionString += `PWD=${await this.encryptionService.decryptText(settings.password)};`;
     } else {
       this.logger.debug(`Connecting with connection string ${connectionString}`);
@@ -251,7 +366,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
    * Parse odbc error codes for known drivers
    */
   parseErrorCodes(
-    driverPath: string,
+    connectionString: string,
     odbcError: {
       message: string;
       code: number;
@@ -267,7 +382,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     };
 
     // MSSQL
-    if (/SQL Server/i.test(driverPath)) {
+    if (/SQL Server/i.test(connectionString)) {
       errorCode = odbcError.code;
       ERROR_CODES = {
         HOST: 17,
@@ -277,7 +392,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       };
     }
     // PostgreSQL
-    else if (/PostgreSQL|psqlODBC/i.test(driverPath)) {
+    else if (/PostgreSQL|psqlODBC/i.test(connectionString)) {
       const message = odbcError.message;
       if (/Unknown host|server closed the connection unexpectedly/i.test(message)) errorCode = 1;
       else if (/Connection refused/i.test(message)) errorCode = 2;
@@ -293,7 +408,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       };
     }
     // Oracle
-    else if (/Oracle/i.test(driverPath)) {
+    else if (/Oracle/i.test(connectionString)) {
       errorCode = odbcError.code;
       // Note: Could not determine host, port and db_access errors codes
       ERROR_CODES = {
@@ -304,7 +419,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       };
     }
     // MySQL
-    else if (/MySQL/i.test(driverPath)) {
+    else if (/MySQL/i.test(connectionString)) {
       errorCode = odbcError.code;
       ERROR_CODES = {
         HOST: 2005,

@@ -207,7 +207,7 @@ export interface SouthMSSQLSettings extends BaseSouthSettings {
   username: string | null;
   password: string | null;
   domain: string | null;
-  encryption: boolean | null;
+  encryption: boolean;
   trustServerCertificate: boolean;
   connectionTimeout: number;
   requestTimeout: number;
@@ -224,14 +224,12 @@ export interface SouthMySQLSettings extends BaseSouthSettings {
 }
 
 export interface SouthODBCSettings extends BaseSouthSettings {
-  driverPath: string;
-  host: string;
-  port: number;
-  database: string;
-  username: string | null;
+  remoteAgent: boolean;
+  agentUrl?: string;
+  connectionString: string;
   password: string | null;
   connectionTimeout: number;
-  trustServerCertificate: boolean;
+  requestTimeout: number;
 }
 
 export interface SouthOIAnalyticsSettings extends BaseSouthSettings {

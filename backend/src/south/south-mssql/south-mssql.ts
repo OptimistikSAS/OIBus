@@ -56,7 +56,7 @@ export default class SouthMSSQL
       connectionTimeout: this.connector.settings.connectionTimeout,
       requestTimeout: this.connector.settings.requestTimeout,
       options: {
-        encrypt: this.connector.settings.encryption == null ? undefined : this.connector.settings.encryption,
+        encrypt: this.connector.settings.encryption || undefined,
         trustServerCertificate: this.connector.settings.trustServerCertificate,
         useUTC: true
       }
@@ -78,9 +78,6 @@ export default class SouthMSSQL
       request = pool.request();
     } catch (error: any) {
       this.logger.error(`Unable to connect to database: ${error.message}`);
-      if (pool) {
-        await pool.close();
-      }
 
       switch (error.code) {
         case 'ETIMEOUT':

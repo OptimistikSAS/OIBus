@@ -208,9 +208,9 @@ export default class SouthOracle
       connectString: `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`
     };
 
-    const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference) || null;
-    const oracleStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);
-    const oracleEndTime = referenceTimestampField == null ? endTime : formatInstant(endTime, referenceTimestampField);
+    const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference);
+    const oracleStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
+    const oracleEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;
     logQuery(item.settings.query, oracleStartTime, oracleEndTime, this.logger);
 
     let connection;
