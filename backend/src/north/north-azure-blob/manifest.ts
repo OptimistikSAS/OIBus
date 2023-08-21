@@ -36,6 +36,7 @@ const manifest: NorthConnectorManifest = {
       type: 'OibSelect',
       options: ['external', 'sasToken', 'accessKey', 'aad', 'powershell'],
       label: 'Authentication',
+      pipe: 'authentication',
       defaultValue: 'accessKey',
       newRow: true,
       validators: [{ key: 'required' }],
@@ -44,14 +45,13 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'sasToken',
       type: 'OibSecret',
-      label: 'Shared Access Signature Token',
+      label: 'Shared Access Signature token',
       conditionalDisplay: { field: 'authentication', values: ['sasToken'] }
     },
     {
       key: 'accessKey',
       type: 'OibSecret',
-      label: 'Access Key',
-      newRow: true,
+      label: 'Access key',
       conditionalDisplay: { field: 'authentication', values: ['accessKey'] }
     },
     {
@@ -74,7 +74,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'clientSecret',
       type: 'OibSecret',
-      label: 'Client Secret',
+      label: 'Client secret',
       newRow: false,
       conditionalDisplay: { field: 'authentication', values: ['aad'] }
     }

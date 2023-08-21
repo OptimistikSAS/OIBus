@@ -5,6 +5,7 @@ sidebar_position: 6
 # Console
 The console is mainly used for development or troubleshooting purposes.
 
+## Specific settings
 It only accepts one option: **verbose**. When verbose is enabled, received data are fully displayed in tables in
 the console. Otherwise, only the number of values received by this North connector is displayed.
 
