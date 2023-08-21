@@ -119,7 +119,12 @@
       "basic": "Basic auth",
       "bearer": "Bearer",
       "api-key": "API key",
-      "cert": "Certificate"
+      "cert": "Certificate",
+      "aad": "AAD",
+      "accessKey": "Access key",
+      "powershell": "Powershell",
+      "sasToken": "Shared Access Signature token",
+      "external": "External"
     },
     "datetime-types": {
       "iso-string": "ISO 8601",

@@ -7,7 +7,13 @@ describe('AuthTypesEnumPipe', () => {
       none: 'None',
       basic: 'Basic auth',
       bearer: 'Bearer',
-      'api-key': 'API key'
+      'api-key': 'API key',
+      cert: 'Certificate',
+      aad: 'AAD',
+      accessKey: 'Access key',
+      powershell: 'Powershell',
+      sasToken: 'Shared Access Signature token',
+      external: 'External'
     });
   });
 });
