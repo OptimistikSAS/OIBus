@@ -26,7 +26,7 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'agentUrl',
       type: 'OibText',
-      label: 'Use remote agent',
+      label: 'Remote agent URL',
       defaultValue: 'http://ip-adress-or-host:2224',
       validators: [{ key: 'required' }],
       conditionalDisplay: { field: 'remoteAgent', values: [true] }
