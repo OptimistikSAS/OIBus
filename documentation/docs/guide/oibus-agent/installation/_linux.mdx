@@ -1,0 +1,23 @@
+import DownloadButton from '@site/src/components/DownloadButton';
+
+<div style={{
+  display: "flex",
+  justifyContent: "space-around"
+}}>
+  <DownloadButton link='https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/-oibus-agent-linux_x64.zip'>
+    OIBus Agent x64
+  </DownloadButton>
+
+  <DownloadButton link='https://github.com/OptimistikSAS/OIBusAgentRelease/releases/latest/download/oibus-agent-linux_arm64.zip'>
+    OIBus Agent ARM64
+  </DownloadButton>
+</div>
+
+## Running the agent
+Linux OIBus agent comes without install script. You can run the agent in your terminal with:
+
+`./OIBusAgent`
+
+That will run the OIBus agent on its default HTTP port 2224. You can specify another port with:
+
+`./OIBusAgent -p 2225`

@@ -40,7 +40,6 @@ If you choose to keep files indefinitely, be careful to manually clear the archi
 the archive folder may use a lot of disk space.
 :::
 
-
 ## Archive
 It is also possible to enable archive mode, and to set a retention duration. With archive mode enabled, files will be
 kept in the `archive` subfolder. Otherwise, they are deleted once sent to the North application.
