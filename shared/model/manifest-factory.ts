@@ -79,7 +79,7 @@ export const proxy: Array<OibFormControl> = [
   },
   {
     key: 'proxyUrl',
-    label: 'Proxy url',
+    label: 'Proxy URL',
     type: 'OibText',
     validators: [{ key: 'required' }],
     conditionalDisplay: { field: 'useProxy', values: [true] }

@@ -34,17 +34,18 @@ data as soon as the number of data to send reach this number.
 - **Max group count** (for JSON payloads): When the connection is lost for some time, the cache of a north connector can
 store many data. To avoid sending them all at once, this field can be set to split the data to send in several smaller 
 chunks of data, separated by _Send interval_.
+- **Send file immediately**: Instead of waiting for _Send interval_, the North will directly send the file.
+
+## Archive
+It is also possible to enable archive mode, and to set a **retention duration**. With archive mode enabled, files will be
+kept in the `archive` subfolder. Otherwise, they are deleted once sent to the North application.
+
+If the retention duration is set to zero, it will keep files indefinitely.
 
 :::caution Disk space
 If you choose to keep files indefinitely, be careful to manually clear the archive folder from time to time. Otherwise,
 the archive folder may use a lot of disk space.
 :::
-
-## Archive
-It is also possible to enable archive mode, and to set a retention duration. With archive mode enabled, files will be
-kept in the `archive` subfolder. Otherwise, they are deleted once sent to the North application.
-
-Be careful of the disk space when enabling the archive.
 
 ## Subscriptions
 By default, a North connector receives data from all activated South connectors. It is possible to subscribe a 
