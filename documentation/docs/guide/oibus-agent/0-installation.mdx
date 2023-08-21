@@ -1,0 +1,47 @@
+---
+sidebar_position: 1
+---
+
+import DownloadButton from '../../../src/components/DownloadButton';
+
+# Concept and installation
+OIBus Agent is a tool used to embed through HTTP some protocol specific queries. For now, [ODBC](./odbc) and OPCHDA
+are supported.
+
+OIBus can request the agent through its South connectors [ODBC](../south-connectors/odbc).
+
+## Download
+<div style={{
+  display: "flex",
+  justifyContent: "space-between"
+}}>
+  <DownloadButton link='https://github.com/OptimistikSAS/OIBusWindowsAgentRelease/releases/download/v0.0.2/OIBusWindowsAgent-v0.0.2-win-x64.zip'>
+    OIBus Agent (Windows x64)
+  </DownloadButton>
+
+  <DownloadButton link='https://github.com/OptimistikSAS/OIBusWindowsAgentRelease/releases/download/v0.0.2/OIBusWindowsAgent-v0.0.2-win-arm64.zip'>
+    OIBus Agent (Windows ARM64)
+  </DownloadButton>
+
+  <DownloadButton link='https://github.com/OptimistikSAS/OIBusWindowsAgentRelease/releases/download/v0.0.2/OIBusWindowsAgent-v0.0.2-win-x86.zip'>
+    OIBus Agent (Windows x86)
+  </DownloadButton>
+</div>
+
+
+## Installation
+Unzip the archive, from which you will get three files:
+- OIBusWindowsAgent.exe: binary used to run the agent
+- install-agent.bat: script used to install the agent as a Windows service (port 2224)
+- uninstall-agent.bat: script used to uninstall the service
+
+## Running the agent
+If you just want to run the agent without using the service manager, simply run the following command in a terminal:
+
+`OIBusWindowsAgent.exe`
+
+That will run the OIBus agent on its default HTTP port 2224. You can specify another port with:
+
+`OIBusWindowsAgent.exe -p 2225`
+
+
