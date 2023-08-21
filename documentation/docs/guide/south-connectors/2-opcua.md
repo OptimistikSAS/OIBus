@@ -77,3 +77,46 @@ On the OPCUA server side, the self-signed certificate (`cert.pem`) must be copie
 
 For example, with Prosys OPCUA Simulation Server: `.prosysopc\prosys-opc-ua-simulation-server\USERS_PKI\CA\certs`.
 
+## Using certificates with ProSys OPC UA Simulation Server
+1. Create a cert.conf file:
+```
+[ req ]
+default_bits = 2048
+default_md = sha256
+distinguished_name = subject
+req_extensions = req_ext
+x509_extensions = req_ext
+string_mask = utf8only
+prompt = no
+
+[ req_ext ]
+basicConstraints = CA:FALSE
+nsCertType = client, server
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment, dataEncipherment, keyCertSign
+extendedKeyUsage= serverAuth, clientAuth
+nsComment = "OIBus User Cert"
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid,issuer
+subjectAltName = URI:urn:opcua:user:oibus,IP: 127.0.0.1
+
+[ subject ]
+countryName = FR
+stateOrProvinceName = FR
+localityName = Chambéry
+organizationName = OI
+commonName = oibus
+```
+2. Create a private key and certificate using the `cert.conf`:
+```
+openssl req -new -x509 -keyout oibus.key -out oibus.pem -config cert.conf
+```
+2. Remove private key passphrase:
+```
+openssl rsa -in oibus.key -out oibus.key
+```
+3. Create DER cert for ProSys:
+```
+openssl x509 -inform PEM -outform DER -in oibus.pem -out oibus.der
+``` 
+
+4. Copy the DER cert in ProSys USERS_PKI certificate folder: `prosys-opc-ua-simulation-server\USERS_PKI\CA\certs`
