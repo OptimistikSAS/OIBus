@@ -16,7 +16,7 @@ const config = {
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'OptimistikSAS', // Usually your GitHub org/user name.
+  organizationName: 'OptimistikSAS', // Usually your GitHub org/username.
   projectName: 'OIBus', // Usually your repo name.
 
   // Even if you don't use internalization, you can use this field to set useful
@@ -24,7 +24,7 @@ const config = {
   // to replace "en" with "zh-Hans".
   i18n: {
     defaultLocale: 'en',
-    locales: ['en', 'fr'],
+    locales: ['en'],
   },
 
   presets: [
@@ -108,6 +108,26 @@ const config = {
           },
         ],
         copyright: `Copyright © ${new Date().getFullYear()} Optimistik. Built with Docusaurus.`,
+      },
+      algolia: {
+        // The application ID provided by Algolia
+        appId: 'RFGM4OD43Y',
+
+        // Public API key: it is safe to commit it
+        apiKey: '4d97db82cb5a33edb810b5798335f501',
+
+        indexName: 'oibus-optimistik',
+
+        // Optional: see doc section below
+        contextualSearch: true,
+
+        // Optional: Algolia search parameters
+        searchParameters: {},
+
+        // Optional: path for search page that enabled by default (`false` to disable it)
+        searchPagePath: 'search',
+
+        //... other Algolia params
       },
       prism: {
         theme: lightCodeTheme,
