@@ -5,7 +5,7 @@ sidebar_position: 1
 # OIBus security
 
 OIBus is usually installed on a dedicated machine (which can be a virtual machine) located at the customer site. The 
-OIBus behavior is fully managed by the OIBus configuration file (oibus.json). It is important to consider several 
+OIBus behavior is fully managed by the OIBus configuration SQLite database (oibus.db). It is important to consider several 
 aspects to protect OIBus:
 - Access to the machine
 - Access to the OIBus administration interface
@@ -31,11 +31,6 @@ password is **pass**.
 
 Changing the default password is strongly recommended.
 
-## Forgotten password
-The administrator with access to the OIBus configuration file (`oibus.json`)can use a text editor to delete the 
-_password_ value in the _Engine_ section of the OIBus configuration file. The password will then be restored to its 
-default value **pass**.
-
 ## HTTP protocol and Basic Auth
 OIBus uses the Basic Auth method in addition to the HTTP protocol supported by most web browsers. This method
 **does not provide any privacy protection** for the transmitted credentials sent in the header at each HTTP request. 
@@ -48,18 +43,21 @@ that the credentials will not leak.
 Therefore, remote access to the OIBus administration interface should be limited to within the customer’s LAN and 
 should not be accessible over the Internet. The use of a VPN is strongly advised.
 
-## Protection of passwords and secrets in the configuration file
+OIBus does not store the user passwords. Instead, it hashes the password with the argon2 algorithm, and only the hash
+is stored. When logging into OIBus, the hash of the password is compared with the stored hash.
+
+## Protection of passwords and secrets
 OIBus needs to access multiple sources of information (Histories, DCS, LIMS, MES, Databases, etc.). Many of these 
 sources require a username/password pair or a secret key to grant access.
 
-This information is also stored in the OIBus configuration file (`oibus.json`), but it is all encrypted. This adds a 
-level of protection that prevents anyone from reading this information unencrypted.
+This information is also stored in the OIBus database configuration (`oibus.db`), but it is all encrypted with the AES-256 
+(CBC mode) algorithm. This adds a level of protection that prevents anyone from reading this information unencrypted.
 
-This encryption uses public/private keys stored in the OIBus cache folder. These keys are created automatically at each
-startup if they do not already exist.
+The AES symmetric key is stored in the `crypto.db` SQLite database. We choose to use a separate database in case the 
+`oibus.db` database file is sent for debugging or replicating a configuration. Since the secrets are encrypted with a 
+key stored in a separate database, it won't be possible to access the encrypted secrets. Of course, it implies to never
+send both files together.
 
-If these keys are deleted, it will be impossible for OIBus to decrypt the passwords or secret keys. A new key pair will
-be generated when OIBus is restarted. In this case it will be necessary to use the administration interface and 
-re-enter all passwords, including the admin password. If the administration interface is not accessible anymore because
-the keys have changed, use the [forgotten password procedure](#forgotten-password) to access it again and change every 
-password and secrets.
+If the `crypto.db` SQLite database is deleted, it will be impossible for OIBus to decrypt the encrypted secrets. A new 
+AES key will be generated when OIBus is restarted. In this case it will be necessary to use the administration interface 
+and re-enter all secrets.
