@@ -2,7 +2,7 @@
 sidebar_position: 0
 ---
 
-# Concepts
+# Concept
 A South connector is used to retrieve data from a data source. The data are sent into North caches. 
 One connector can request several items. The nature of an item depends on the connector type. For example, an 
 [MQTT item](./mqtt.md) will subscribe to a topic from a remote broker, and a [MSSQL item](./mssql.md) will regularly 
@@ -12,13 +12,13 @@ To add a South connector, go to the South page, and click on the **+** button. S
 connector types, and fill its settings. The form may change depending on the type of connector selected. However, some 
 concepts are the same.
 
-You can see the status of the South connector from its display screen, or edit its settings.
+You can see the status of the South connector from its display page, or edit its settings.
 
 ## General settings
 - **Name**: The name of the connector lets you remind with a user-friendly name what it does. 
-- **Description**: You can add a description to better remember some quirks (about the connection, access rights, etc). 
-- **Toggle**: You can activate or pause the connector from the **enabled toggle**. However, from the south list or from 
-the display screen, you can also toggle the connector.
+- **Description**: You can add a description to better remember some quirks (about the connection, access rights, etc.). 
+- **Toggle**: You can activate or pause the connector from the **enabled toggle**. However, from the South list or from 
+the display page, you can also toggle the connector.
 
 ## History settings
 For history capable South connectors (SQL, OPCUA...), intervals of data can be requested. These intervals can be quite large 
