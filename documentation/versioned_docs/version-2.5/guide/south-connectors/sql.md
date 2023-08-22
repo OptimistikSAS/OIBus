@@ -13,7 +13,7 @@ Several databases are supported by OIBus:
 - Oracle. This driver requires the local installation of an Oracle Instant Client (Basic or Basic Light, minimal supported version is 18.5.0.0.0)
 - MySQL
 - SQLite
-- ODBC. This driver requires [the installation of a local module](docs/guide/advanced/sql-with-odbc.md) that matches the 
+- ODBC. This driver requires [the installation of a local module](../advanced/sql-with-odbc.md) that matches the 
 Database you want to connect.
 
 ### Connection 

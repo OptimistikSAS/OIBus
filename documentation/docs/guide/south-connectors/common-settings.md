@@ -5,7 +5,7 @@ sidebar_position: 0
 # Concept
 A South connector is used to retrieve data from a data source. The data are sent into North caches. 
 One connector can request several items. The nature of an item depends on the connector type. For example, an 
-[MQTT item](./mqtt.md) will subscribe to a topic from a remote broker, and a [MSSQL item](./mssql.md) will regularly 
+[MQTT item](./mqtt.md) will subscribe to a topic from a remote broker, and a [MSSQL item](./mssql.mdx) will regularly 
 run a query at the Microsoft SQL database.
 
 To add a South connector, go to the South page, and click on the **+** button. Select one of the available South 

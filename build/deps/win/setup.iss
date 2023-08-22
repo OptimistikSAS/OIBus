@@ -69,11 +69,13 @@ var
   LogsFolder: string;
   CertsFolder: string;
   SettingsFile: string;
+  CryptoFile: string;
 begin
     CacheFolder := DirToDelete + '\cache\'
     LogsFolder := DirToDelete + '\logs\'
     CertsFolder := DirToDelete + '\certs\'
     SettingsFile := DirToDelete + '\oibus.db'
+    CryptoFile := DirToDelete + '\crypto.db'
     if (DirExists(CacheFolder) and not DelTree(CacheFolder, True, True, True)) then
     begin
       MsgBox('Error: Directory ' + CacheFolder + ' could not be removed', mbError, MB_OK)
@@ -94,6 +96,11 @@ begin
       MsgBox('Error: File ' + SettingsFile + ' could not be removed', mbError, MB_OK)
       Result := False
     end
+    else if not DelTree(CryptoFile, False, True, False) then
+        begin
+          MsgBox('Error: File ' + CryptoFile + ' could not be removed', mbError, MB_OK)
+          Result := False
+        end
     else
     begin
       Sleep(400)

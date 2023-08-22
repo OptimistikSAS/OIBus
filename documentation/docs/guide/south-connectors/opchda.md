@@ -5,24 +5,24 @@ sidebar_position: 10
 # OPCHDA (Windows only)
 OPCDA and OPCHDA are communication protocols used in the industrial world and developed by the 
 [OPC Foundation](https://opcfoundation.org/). This technology has been replaced by OPCUA but is still widely used in 
-the industry. To use OPCUA in OIBus, see the [OPCUA connector documentation](docs/guide/south-connectors/opcua.md).
+the industry. To use OPCUA in OIBus, see the [OPCUA connector documentation](./opcua.md).
 
 An HDA server allows to retrieve the history of data over a more or less long period, while a DA server allows to 
 retrieve only the most recent value of a tag.
 
 Only OPCHDA is supported by OIBus. OIBus uses an HDA agent, i.e. a module integrated to OIBus, but available in 
 standalone, to perform OPC history extractions in command line. See the 
-[OPCHDA agent documentation](docs/guide/advanced/opchda-agent.md) to use the agent in standalone.
+[OPCHDA agent documentation](../oibus-agent/opchda.md) to use the agent in standalone.
 
 Both the OPCHDA connector and the standalone agent are available under Windows only and use Microsoft’s proprietary DCOM
 technology to transfer information over the network. This technology is much more complex to set up than traditional TCP
-communications. A dedicated guide is offered [here](docs/guide/advanced/opchda-dcom.md) to correctly setup HDA communications 
-with COM/DCOM interfaces.
+communications. A dedicated guide is offered [here](../oibus-agent/opchda.md#comdcom-setup) to correctly 
+setup HDA communications with COM/DCOM interfaces.
 
 
 ## OPCHDA connector
 OIBus uses a HDA agent, compiled for Windows platforms, to interact with COM/DCOM interfaces. The HDA agent can also be
-used [in standalone](docs/guide/advanced/opchda-agent.md). 
+used [in standalone](../oibus-agent/opchda.md). 
 
 ### HDA Agent section
 OIBus exchanges commands and data with the HDA agent through a TCP server/client communication. Therefore, several 
@@ -31,7 +31,7 @@ fields must be filled to make OIBus communicate with the HDA Agent:
 - **TCP port**: the TCP port that the HDA Agent will use to create its own TCP server. If you need two OPCHDA connectors, 
 be careful to have two distinct TCP ports to avoid conflicts.
 - **Logging level**: the level of log the HDA Agent will use. If the HDA agent log level is lower than the OIBus log levels, 
-the lowest logs will be lost. See the [Engine log section](docs/guide/engine/logging-parameters.md) to know more about logging parameters.
+the lowest logs will be lost. See the [Engine log section](../engine/engine-settings.md) to know more about logging parameters.
 
 ### Connection and network
 Some information are required to connect to the OPCHDA server:
@@ -49,7 +49,7 @@ multiplied by 100 to have the total number of values retrieved.
 ### Accessing data
 #### Scan groups
 OIBus retrieves data by intervals. It is then possible to aggregate these values or to resample them. To do so, a scan 
-mode must be selected (to create additional scan modes, see [Engine settings](docs/guide/engine/scan-modes.md)), with its 
+mode must be selected (to create additional scan modes, see [Engine settings](../engine/scan-modes.md)), with its 
 associated aggregate and resampling options.
 
 :::info Creating scan groups

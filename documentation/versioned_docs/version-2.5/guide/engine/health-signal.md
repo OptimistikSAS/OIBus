@@ -8,7 +8,7 @@ A message can be sent regularly to the logs or to an HTTP endpoint to give infor
 ## Log
 When enabled, the health signal is sent to the logs with an `info` criticality, at the desired frequency. It will be 
 sent to the appropriate channels (console, file, SQLite, loki...) according to the
-[logging settings](docs/guide/engine/logging-parameters.md).
+[logging settings](../engine/logging-parameters.md).
 
 ## HTTP
 It is also possible to send the OIBus health signal to a remote HTTP endpoint as a JSON payload:

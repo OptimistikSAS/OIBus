@@ -10,7 +10,7 @@ It collects data from a wide variety of sources encountered in the industry and 
 whether they are on-premises or in the cloud.
 
 OIBus is an open-source solution which allows great flexibility to answer various use cases. Historically developed to 
-power the OIAnalytics® solution, Optimistik offers and maintains since 2020 this solution under [(EUPL)
+power the OIAnalytics® solution, Optimistik offers and maintains since 2020 this solution under [(EU-PL)
 ](https://ec.europa.eu/info/european-union-public-licence_en) open-source license. 
 
 It is used by other solution providers who choose to join this initiative so that the collection of data in industry is 
@@ -20,7 +20,7 @@ no longer an obstacle to its digitization.
 OIBus is built in a modular way with a South (data collection from source systems), a North (transmission to target 
 systems) and an Engine (mainly in charge of configuration, orchestration and cache).
 
-![Example banner](@site/static/img/guide/oibus-EN.png)
+![Example banner](./oibus-EN.png)
 
 This structure facilitates the scalability of the solution by concentrating most of the complexity in the Engine. Thus, 
 the development of North or South modules is made easier.

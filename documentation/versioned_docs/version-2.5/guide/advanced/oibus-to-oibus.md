@@ -29,7 +29,7 @@ In this case, let's keep the default endpoints `/engine/addValues` and `/engine/
 respectively.
 The host could be something like `http://1.2.3.4:2223` where 1.2.3.4 is the IP address and 2223 is the port of the
 second OIBus. Be careful to authorize remote connection in the second OIBus Engine settings in the
-[IP Filter section](docs/guide/engine/access.md) and to use the appropriate username and password (using Basic
+[IP Filter section](../engine/access.md) and to use the appropriate username and password (using Basic
 Authentication). In this case, the OIBus username and password must be used (by default, admin and pass).
 
 ### Set up an External source in OIBus2
@@ -37,8 +37,8 @@ On the second OIBus, if you have a North connector with no subscription, the dat
 North.
 
 However, if you want a North to subscribe to a specific external source, you must declare an additional external source
-in the [Engine settings](docs/guide/engine/external-sources.md). Its name must follow the syntax of the [name query
-param](docs/guide/north-connectors/oiconnect.md#query-param), for example `MyOIBus:MyOIConnect`.
+in the [Engine settings](../engine/external-sources.md). Its name must follow the syntax of the [name query
+param](../north-connectors/oiconnect.md#query-param), for example `MyOIBus:MyOIConnect`.
 
 The North connector can now subscribe to this specific external source.
 

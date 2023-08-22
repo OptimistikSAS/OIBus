@@ -1,0 +1,43 @@
+---
+sidebar_position: 2
+---
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import DownloadButton from '@site/src/components/DownloadButton';
+import MacOSInstallation from './_macos.mdx';
+
+
+# Requirements and download
+
+Let's install OIBus in less than 2 minutes.
+
+## Requirements
+To operate, OIBus must be installed on an environment with the following minimum characteristics:
+- **RAM: 2GB minimum**. OIBus may require more or less RAM depending on your configuration.
+- **Disk space: 200 MB**. For the application. It is however recommended to have extra space (several GB, depending on
+your data stream) to store the collected data in the cache if an upstream network failure occurs.
+- **Admin rights** on the environment to install OIBus and register it as a service (for Windows and Linux).
+- **Modern web browser** (IE not supported). Used to access the OIBus configuration interface. The browser can be on the
+targeted computer or on another, provided you have configured the [necessary access](../engine/ip-filters.md).
+
+## Download links
+<Tabs>
+    <TabItem value="windows" label="Windows" default>
+      <div style={{display: "flex", justifyContent:"space-around"}}>
+        <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-setup-win_x64.exe'>
+          OIBus Windows installer (x64)
+        </DownloadButton>
+        <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-win_x64.zip'>
+          OIBus bat scripts (x64)
+        </DownloadButton>
+      </div>
+    </TabItem>
+    <TabItem value="linux" label="Linux">
+      <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-linux_x64.zip'>
+        OIBus for Linux (x64)
+      </DownloadButton>
+    </TabItem>
+    <TabItem value="macos" label="MacOS">
+        <MacOSInstallation/>
+    </TabItem>
+</Tabs>

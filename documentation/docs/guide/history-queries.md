@@ -1,8 +1,8 @@
 ---
-sidebar_position: 1
+sidebar_position: 6
 ---
 
-# Concept
+# History queries
 OIBus is mainly used for data streaming: you want to get data regularly, from points or files, as they come in your data source.
 
 ## Create a History Query

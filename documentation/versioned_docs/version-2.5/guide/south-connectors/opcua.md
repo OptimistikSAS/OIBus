@@ -6,7 +6,7 @@ sidebar_position: 4
 
 OPCUA technology is a protocol for accessing data in read or write mode. The data are organized in a tree-like address 
 space and are referenced with a unique address each (called node ID). OPCUA is a modern standard based on TPC, replacing
-OPC HDA/DA (see [OPCHDA connector](docs/guide/south-connectors/opchda.md)) technologies, and is often embedded natively in industrial controllers.
+OPC HDA/DA (see [OPCHDA connector](../south-connectors/opchda.md)) technologies, and is often embedded natively in industrial controllers.
 
 OPCUA embeds two variants of the protocol: HA (Historical Access) and DA (Data Access). The first mode allows access to 
 a history of values over a time interval for the requested points (data), while the second mode accesses the values at 
@@ -107,7 +107,7 @@ For example, with Prosys OPCUA Simulation Server: `.prosysopc\prosys-opc-ua-simu
 ## Accessing data
 ### Scan groups (HA only)
 With HA mode, data are retrieved by intervals. It is then possible to aggregate these values or to resample them. To do 
-so, a scan mode must be selected (to create additional scan modes, see [Engine settings](docs/guide/engine/scan-modes.md)), with 
+so, a scan mode must be selected (to create additional scan modes, see [Engine settings](../engine/scan-modes.md)), with 
 its associated aggregate and resampling options.
 
 :::info Creating scan groups

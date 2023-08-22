@@ -121,8 +121,8 @@ Each field has the following meaning:
 
 We will focus on data in JSON file format. In this case the size depends on several parameters:
 - The data sampling frequency
-- The number of points grouped by sending (defined by [_Group Count_](docs/guide/north-connectors/common-settings.md#caching))
-- The sending frequency (defined by [_Send Interval_](docs/guide/north-connectors/common-settings.md#caching))
+- The number of points grouped by sending (defined by [_Group Count_](../north-connectors/common-settings.md#caching))
+- The sending frequency (defined by [_Send Interval_](../north-connectors/common-settings.md#caching))
 - The format of data and quality: number of characters used (precision)
 - The size of the data references
 

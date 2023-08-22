@@ -19,4 +19,4 @@ and IPv6 format.
 You can add a remote address to access OIBus from a remote workstation. However, keep in mind that only http is used to 
 access OIBus since OIBus is rarely attached to a machine with a domain name and certificate installed. So, if you need
 to access OIBus remotely, please do so through a VPN or any secure channels. See the 
-[security section](docs/guide/advanced/oibus-security.md) to learn more about the security in OIBus.
+[security section](../advanced/oibus-security.md) to learn more about the security in OIBus.

@@ -17,7 +17,7 @@ The status window displays several metrics, according to the connector.
 The connector can be enabled or disabled from the toggle action, at the top of the **General settings** section.
 
 ## Caching
-Refer to [this page](docs/guide/engine/cache-and-archive.md) to understand how and why OIBus manages caches.
+Refer to [this page](../engine/cache-and-archive.md) to understand how and why OIBus manages caches.
 
 The caching section allow OIBus to better manage network congestion:
 - **Send interval**: time to wait between successive sending of data to a North (in ms).
@@ -51,7 +51,7 @@ If a North connector is disabled, it won't store any data in its cache.
 :::
 
 ## Network
-If some proxies are defined in the [Engine section](docs/guide/engine/proxy.md), it is possible to select a proxy from the 
+If some proxies are defined in the [Engine section](../engine/proxy.md), it is possible to select a proxy from the 
 North connector to use when an HTTP query occurs. This setting is only possible for HTTP-compatible North connectors
 (OIAnalytics, OIConnect).
 

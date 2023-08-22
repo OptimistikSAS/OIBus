@@ -38,7 +38,7 @@ In this list, points can be added with:
 - **Data type**: Used in case of _holding registers_ or _input registers_ (ignored otherwise). This parameter indicates
 the type of data retrieved from the register: UInt16 (default), Int16, UInt32, Int32, UInt64, Int64, Float or Double.
 - **Multiplier Coefficient** (default 1)
-- **Scan mode**: the request frequency. To define more scan modes, see [Engine settings](docs/guide/engine/scan-modes.md).  
+- **Scan mode**: the request frequency. To define more scan modes, see [Engine settings](../engine/scan-modes.md).  
 
 The address corresponds to the address of the variable in the PLC, **in hexadecimal without the data type digit**. For
 example:
