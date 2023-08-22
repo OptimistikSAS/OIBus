@@ -1,0 +1,8 @@
+{
+  "label": "History queries",
+  "position": 6,
+  "link": {
+    "type": "generated-index",
+    "description": "Learn how to create history queries to get back old data."
+  }
+}
