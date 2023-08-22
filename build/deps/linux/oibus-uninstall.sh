@@ -55,8 +55,11 @@ done
 
 if [[ "$delete_data" == "Y" || "$delete_data" == "y" ]]; then
   data_directory=OIBUS_INSTALL_FLAG_DATA_DIR
-  if [[ -f "$data_directory/oibus.json" ]]; then
-    sudo rm -f "$data_directory/oibus.json"
+  if [[ -f "$data_directory/oibus.db" ]]; then
+    sudo rm -f "$data_directory/oibus.db"
+  fi
+  if [[ -f "$data_directory/crypto.db" ]]; then
+    sudo rm -f "$data_directory/crypto.db"
   fi
   if [[ -d "$data_directory/cache/" ]]; then
     sudo rm -rf "$data_directory/cache/"
@@ -65,6 +68,9 @@ if [[ "$delete_data" == "Y" || "$delete_data" == "y" ]]; then
     sudo rm -rf "$data_directory/logs/"
   fi
   if [[ -d "$data_directory/certs/" ]]; then
-      sudo rm -rf "$data_directory/certs/"
-    fi
+    sudo rm -rf "$data_directory/certs/"
+  fi
+  if [[ -d "$data_directory/keys/" ]]; then
+    sudo rm -rf "$data_directory/keys/"
+  fi
 fi
