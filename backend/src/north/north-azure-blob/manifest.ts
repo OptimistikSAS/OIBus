@@ -34,7 +34,7 @@ const manifest: NorthConnectorManifest = {
     {
       key: 'authentication',
       type: 'OibSelect',
-      options: ['external', 'sasToken', 'accessKey', 'aad', 'powershell'],
+      options: ['accessKey', 'sasToken', 'aad', 'external', 'powershell'],
       label: 'Authentication',
       pipe: 'authentication',
       defaultValue: 'accessKey',

@@ -9,7 +9,7 @@ describe('AuthTypesEnumPipe', () => {
       bearer: 'Bearer',
       'api-key': 'API key',
       cert: 'Certificate',
-      aad: 'AAD',
+      aad: 'Application Active Directory',
       accessKey: 'Access key',
       powershell: 'Powershell',
       sasToken: 'Shared Access Signature token',
