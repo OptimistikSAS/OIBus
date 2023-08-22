@@ -9,17 +9,14 @@ import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
-import { QueriesHistory, TestsConnection } from '../south-interface';
+import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthMSSQLItemSettings, SouthMSSQLSettings } from '../../../../shared/model/south-settings.model';
 
 /**
  * Class SouthMSSQL - Retrieve data from MSSQL databases and send them to the cache as CSV files.
  */
-export default class SouthMSSQL
-  extends SouthConnector<SouthMSSQLSettings, SouthMSSQLItemSettings>
-  implements QueriesHistory, TestsConnection
-{
+export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, SouthMSSQLItemSettings> implements QueriesHistory {
   static type = manifest.id;
 
   private readonly tmpFolder: string;

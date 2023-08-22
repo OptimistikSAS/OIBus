@@ -12,7 +12,7 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { QueriesHistory, TestsConnection } from '../south-interface';
+import { QueriesHistory } from '../south-interface';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy.service';
 
@@ -37,7 +37,7 @@ interface OIATimeValues {
  */
 export default class SouthOIAnalytics
   extends SouthConnector<SouthOIAnalyticsSettings, SouthOIAnalyticsItemSettings>
-  implements QueriesHistory, TestsConnection
+  implements QueriesHistory
 {
   static type = manifest.id;
   private proxyAgent: any | undefined;

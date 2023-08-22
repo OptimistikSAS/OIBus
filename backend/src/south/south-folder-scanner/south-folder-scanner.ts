@@ -9,7 +9,7 @@ import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/mod
 import pino from 'pino';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
-import { QueriesFile, TestsConnection } from '../south-interface';
+import { QueriesFile } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
 
 /**
@@ -17,7 +17,7 @@ import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../.
  */
 export default class SouthFolderScanner
   extends SouthConnector<SouthFolderScannerSettings, SouthFolderScannerItemSettings>
-  implements QueriesFile, TestsConnection
+  implements QueriesFile
 {
   static type = manifest.id;
 

@@ -16,17 +16,14 @@ import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
-import { QueriesHistory, TestsConnection } from '../south-interface';
+import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthMySQLItemSettings, SouthMySQLSettings } from '../../../../shared/model/south-settings.model';
 
 /**
  * Class SouthMySQL - Retrieve data from MySQL / MariaDB databases and send them to the cache as CSV files.
  */
-export default class SouthMySQL
-  extends SouthConnector<SouthMySQLSettings, SouthMySQLItemSettings>
-  implements QueriesHistory, TestsConnection
-{
+export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, SouthMySQLItemSettings> implements QueriesHistory {
   static type = manifest.id;
 
   private readonly tmpFolder: string;

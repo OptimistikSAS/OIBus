@@ -11,16 +11,13 @@ import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { QueriesHistory, TestsConnection } from '../south-interface';
+import { QueriesHistory } from '../south-interface';
 import { SouthSQLiteItemSettings, SouthSQLiteSettings } from '../../../../shared/model/south-settings.model';
 
 /**
  * Class SouthSQLite - Retrieve data from SQLite databases and send them to the cache as CSV files.
  */
-export default class SouthSQLite
-  extends SouthConnector<SouthSQLiteSettings, SouthSQLiteItemSettings>
-  implements QueriesHistory, TestsConnection
-{
+export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, SouthSQLiteItemSettings> implements QueriesHistory {
   static type = manifest.id;
 
   private readonly tmpFolder: string;

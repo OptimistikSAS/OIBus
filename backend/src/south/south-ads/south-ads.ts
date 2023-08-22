@@ -9,7 +9,7 @@ import { Instant } from '../../../../shared/model/types';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import { QueriesLastPoint, TestsConnection } from '../south-interface';
+import { QueriesLastPoint } from '../south-interface';
 import { SouthADSItemSettings, SouthADSSettings } from '../../../../shared/model/south-settings.model';
 
 interface ADSOptions {
@@ -25,7 +25,7 @@ interface ADSOptions {
 /**
  * Class SouthADS - Provides instruction for TwinCAT ADS client connection
  */
-export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSItemSettings> implements QueriesLastPoint, TestsConnection {
+export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSItemSettings> implements QueriesLastPoint {
   static type = manifest.id;
 
   private client: ads.Client | null = null;

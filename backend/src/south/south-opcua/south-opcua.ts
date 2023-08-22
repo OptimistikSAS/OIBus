@@ -28,7 +28,7 @@ import { OPCUAClientOptions } from 'node-opcua-client/source/opcua_client';
 import { DateTime } from 'luxon';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { QueriesHistory, QueriesLastPoint, QueriesSubscription, TestsConnection } from '../south-interface';
+import { QueriesHistory, QueriesLastPoint, QueriesSubscription } from '../south-interface';
 import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../../shared/model/south-settings.model';
 import { randomUUID } from 'crypto';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
@@ -41,7 +41,7 @@ export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
  */
 export default class SouthOPCUA
   extends SouthConnector<SouthOPCUASettings, SouthOPCUAItemSettings>
-  implements QueriesHistory, QueriesLastPoint, QueriesSubscription, TestsConnection
+  implements QueriesHistory, QueriesLastPoint, QueriesSubscription
 {
   static type = manifest.id;
 

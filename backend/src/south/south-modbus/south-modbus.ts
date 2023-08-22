@@ -9,17 +9,14 @@ import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
-import { QueriesLastPoint, TestsConnection } from '../south-interface';
+import { QueriesLastPoint } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthModbusItemSettings, SouthModbusSettings } from '../../../../shared/model/south-settings.model';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
  */
-export default class SouthModbus
-  extends SouthConnector<SouthModbusSettings, SouthModbusItemSettings>
-  implements QueriesLastPoint, TestsConnection
-{
+export default class SouthModbus extends SouthConnector<SouthModbusSettings, SouthModbusItemSettings> implements QueriesLastPoint {
   static type = manifest.id;
 
   private socket: net.Socket | null = null;

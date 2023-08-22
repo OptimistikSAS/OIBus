@@ -12,7 +12,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { DateTime } from 'luxon';
 import { Instant } from '../../../../shared/model/types';
-import { QueriesSubscription, TestsConnection } from '../south-interface';
+import { QueriesSubscription } from '../south-interface';
 import {
   SouthMQTTItemSettings,
   SouthMQTTItemSettingsJsonPayloadTimestampPayload,
@@ -23,10 +23,7 @@ import { convertDateTimeToInstant } from '../../service/utils';
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
  */
-export default class SouthMQTT
-  extends SouthConnector<SouthMQTTSettings, SouthMQTTItemSettings>
-  implements QueriesSubscription, TestsConnection
-{
+export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQTTItemSettings> implements QueriesSubscription {
   static type = manifest.id;
 
   private client: MqttClient | null = null;
