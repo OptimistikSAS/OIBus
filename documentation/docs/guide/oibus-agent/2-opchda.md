@@ -1,8 +1,17 @@
 ---
-sidebar_position: 4
+sidebar_position: 2
 ---
 
-# OPCHDA COM/DCOM setup
+# OPCHDA agent
+## HTTP API
+### Status
+### Connection
+### Read
+### Disconnection
+
+
+
+## COM/DCOM setup
 ## Background
 ### COM
 COM is the standard protocol for communication between objects located on the same computer but which are part of
@@ -12,7 +21,7 @@ application that uses the services provided by the server.
 ### DCOM
 DCOM represents an expansion of COM functionality to allow access to objects on remote computers. This protocol allows
 standardized data exchange between applications from industry, administrative offices and manufacturing. Previously, the
-applications that accessed the process data were tied to the access protocols of the communication network. The OPC 
+applications that accessed the process data were tied to the access protocols of the communication network. The OPC
 standard software interface allows devices and applications from different manufacturers to be combined in a uniform way.
 
 The OPC client is an application that accesses process data, messages, and archives of an OPC server. Access is through
@@ -35,15 +44,15 @@ configuration.
 Follow these steps to enable COM/DCOM communications from the client. First, open the Component services, and access the
 _Properties_ of the computer.
 
-![Component Services](@site/static/img/guide/south/opchda/OPCHDA-component-services.png)
+![Component Services](../../../static/img/guide/south/opchda/OPCHDA-component-services.png)
 
 Be sure to enable _Distributed COM_ on this computer.
 
-![Computer Properties](@site/static/img/guide/south/opchda/OPCHDA-computer-properties.png)
+![Computer Properties](../../../static/img/guide/south/opchda/OPCHDA-computer-properties.png)
 
 On the COM Security tab, edit default access permissions.
 
-![COM Security](@site/static/img/guide/south/opchda/OPCHDA-COM-security.png)
+![COM Security](../../../static/img/guide/south/opchda/OPCHDA-COM-security.png)
 
 On the Access permissions window, allow the following permissions:
 - Local Launch
@@ -51,7 +60,7 @@ On the Access permissions window, allow the following permissions:
 - Local Activation
 - Remote Activation
 
-![Access Permissions](@site/static/img/guide/south/opchda/OPCHDA-access-permissions.png)
+![Access Permissions](../../../static/img/guide/south/opchda/OPCHDA-access-permissions.png)
 
 ### Test communication
 DCOM uses port 135 of the HDA server to exchange with the client. To do so, it is interesting to use the tnc command of
@@ -60,7 +69,7 @@ succeeds:
 
 `tnc 35.180.44.30 -port 135`
 
-![Test DCOM communication](@site/static/img/guide/south/opchda/OPCHDA-test-communication.png)
+![Test DCOM communication](../../../static/img/guide/south/opchda/OPCHDA-test-communication.png)
 
 If you have a communication problem, see the [firewall configuration section](#firewall-configuration) which is probably the source of the problem.
 
@@ -91,12 +100,12 @@ In case of communication issue, the most likely cause is the configuration of a 
 and/or at the hosting company in the case of machines on the cloud. On a Windows server, it is possible to configure
 the firewall by adding a rule on port 135.
 
-![Windows Firewall Configuration](@site/static/img/guide/south/opchda/OPCHDA-windows-firewall.png)
+![Windows Firewall Configuration](../../../static/img/guide/south/opchda/OPCHDA-windows-firewall.png)
 
 In the case of a server hosted by Lightsail, there is an additional firewall in which a custom rule must be configured
 for port 135.
 
-![Lightsail Firewall Configuration](@site/static/img/guide/south/opchda/OPCHDA-lightsail-firewall.png)
+![Lightsail Firewall Configuration](../../../static/img/guide/south/opchda/OPCHDA-lightsail-firewall.png)
 
 ### OPCEnum tool
 The OPC Foundation has provided a tool to allow OPCHDA clients to locate servers on remote nodes, without having
@@ -110,16 +119,16 @@ This allows access to any user who can log on to the system. The permissions can
 If the RPC server is unavailable, try again testing COM/DCOM communication
 [testing COM/DCOM communication](#test-communication) and check your firewall.
 
-![RPC Unavailable](@site/static/img/guide/south/opchda/OPCHDA-rpc-unavailable.png)
+![RPC Unavailable](../../../static/img/guide/south/opchda/OPCHDA-rpc-unavailable.png)
 
 #### Access denied
 Access rights can be diagnosed using the server security log. If the following error happens, check the user and its
 password created on the HDA server and that the user is in the _Distributed COM Users_ group on the HDA server.
 
-![Access denied](@site/static/img/guide/south/opchda/OPCHDA-access-denied.png)
+![Access denied](../../../static/img/guide/south/opchda/OPCHDA-access-denied.png)
 
 
 ## Server settings
 Check on the server machine if DCOM is enabled for the OPC Server application by opening the _Component Service_ window.
 
-![Server Machine DCOM Configuration](@site/static/img/guide/south/opchda/OPCHDA-server-DCOM-configuration.png)
+![Server Machine DCOM Configuration](../../../static/img/guide/south/opchda/OPCHDA-server-DCOM-configuration.png)
