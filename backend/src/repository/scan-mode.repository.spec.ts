@@ -31,11 +31,11 @@ describe('Scan mode repository', () => {
 
     it('should properly init scan mode table', () => {
       expect(database.prepare).toHaveBeenCalledWith('INSERT INTO scan_modes (id, name, description, cron) VALUES (?, ?, ?, ?);');
-      expect(run).toHaveBeenCalledWith('123456', 'Every seconds', 'Trigger every seconds', '* * * * * *');
+      expect(run).toHaveBeenCalledWith('123456', 'Every second', 'Trigger every second', '* * * * * *');
       expect(run).toHaveBeenCalledWith('123456', 'Every 10 seconds', 'Trigger every 10 seconds', '*/10 * * * * *');
-      expect(run).toHaveBeenCalledWith('123456', 'Every minutes', 'Trigger every minutes', '0 * * * * *');
+      expect(run).toHaveBeenCalledWith('123456', 'Every minute', 'Trigger every minute', '0 * * * * *');
       expect(run).toHaveBeenCalledWith('123456', 'Every 10 minutes', 'Trigger every 10 minutes', '0 */10 * * * *');
-      expect(run).toHaveBeenCalledWith('123456', 'Every hours', 'Trigger every hours', '0 0 * * * *');
+      expect(run).toHaveBeenCalledWith('123456', 'Every hour', 'Trigger every hour', '0 0 * * * *');
       expect(run).toHaveBeenCalledWith('123456', 'Every 24 hours', 'Trigger every 24 hours', '0 0 0 * * *');
       expect(run).toHaveBeenCalledWith('subscription', 'Subscription', 'Used for subscription', '');
       expect(run).toHaveBeenCalledTimes(7);
