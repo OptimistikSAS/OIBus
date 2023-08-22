@@ -40,4 +40,4 @@ Example of an HTTP query: `http://1.2.3.4:2223/engine/addValues?name=MyOIBus:MyO
 
 
 ## Connecting two OIBus together
-See [this doc](docs/guide/advanced/oibus-to-oibus.md) to learn more on how to connect one OIBus to another.
+See [this doc](../advanced/oibus-to-oibus.md) to learn more on how to connect one OIBus to another.

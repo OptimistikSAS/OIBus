@@ -57,7 +57,7 @@ corner).
 
 In this list, points can be added with:
 - **Point ID**: the address of the data in the targeted PLC (example: `GVL_Test1.TestINT`)
-- **Scan mode**: the request frequency. To define more scan modes, see [Engine settings](docs/guide/engine/scan-modes.md).  
+- **Scan mode**: the request frequency. To define more scan modes, see [Engine settings](../engine/scan-modes.md).  
 
 ### Data settings
 #### PLC name

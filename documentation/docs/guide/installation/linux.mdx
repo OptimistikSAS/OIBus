@@ -1,18 +1,14 @@
-import DownloadButton from '@site/src/components/DownloadButton';
+---
+sidebar_position: 3
+---
 
-
-## Download
-<DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-linux_x64.zip'>
-  Download OIBus for Linux (x64)
-</DownloadButton>
-
-To install or update OIBus, you must run the installation script. To do that, you may either download from the above
-button and unzip the downloaded file, or use the following cURL or Wget command:
+# Linux
+## Download command
+Instead of the download link, you can also retrieve the files with the following command
 
 ```
 curl -o- -L https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-linux_x64.tar.gz | tar -xzv
 ```
-
 
 ```
 wget -c https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-linux.tar_64.gz -O - | tar -xzv

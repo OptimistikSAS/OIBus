@@ -40,4 +40,4 @@ If several North connectors are set and enabled, files will be duplicated in eac
 to have enough disk space to manage them.
 
 To set up archive mode, and tune caching settings from North specific configuration, refer to 
-[this page](docs/guide/north-connectors/common-settings.md).
+[this page](../north-connectors/common-settings.md).

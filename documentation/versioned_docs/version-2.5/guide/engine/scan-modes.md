@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Scan modes
 Scan modes are Cron defined and used in OIBus to retrieve data at specific dates and interval from 
-[South connectors](docs/guide/south-connectors/common-settings.md).
+[South connectors](../south-connectors/common-settings.md).
 
 Four default scan modes are defined:
 - everySecond

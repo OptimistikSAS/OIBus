@@ -227,4 +227,4 @@ _Matrikon.OPC.Simulation_ server located on _localhost_, between  2022-01-01 00:
 ````
 
 # HdaAgent (with OIBus)
-OIBus communicates with the HdaAgent through a TCP communication. See [OIBus OPCHDA documentation](docs/guide/south-connectors/opchda.md) for more information.
+OIBus communicates with the HdaAgent through a TCP communication. See [OIBus OPCHDA documentation](../south-connectors/opchda.md) for more information.

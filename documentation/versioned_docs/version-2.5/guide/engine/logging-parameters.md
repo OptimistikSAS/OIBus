@@ -17,7 +17,7 @@ troubleshooting purposes.
 
 ## Console
 This section displays the logs in the Console, alongside values if a [North Console connector
-](docs/guide/north-connectors/console.md) is used. 
+](../north-connectors/console.md) is used. 
 
 ## File
 To store logs in one or several files. You can choose the file maximum size and the number of files to roll logs.
