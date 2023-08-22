@@ -2,13 +2,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import pino from 'pino';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
-import { AzurePowerShellCredential, DefaultAzureCredential } from '@azure/identity';
+import { AzurePowerShellCredential, ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import NorthConnector from '../north-connector';
 import manifest from '../north-azure-blob/manifest';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
-import * as process from 'process';
 import { HandlesFile } from '../north-interface';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
 
@@ -33,28 +32,26 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
 
   async prepareConnection(): Promise<void> {
     this.logger.info(
-      `Connecting to Azure Blob Storage for account ${this.connector.settings.account} and container ${this.connector.settings.container}`
+      `Connecting to Azure Blob Storage for account ${this.connector.settings.account} and container ${this.connector.settings.container} with authentication ${this.connector.settings.authentication}`
     );
     switch (this.connector.settings.authentication) {
       case 'sasToken':
-        this.logger.debug(`Initiate Azure blob service client using ${this.connector.settings.authentication}`);
         const decryptedToken = await this.encryptionService.decryptText(this.connector.settings.sasToken!);
         this.blobClient = new BlobServiceClient(`https://${this.connector.settings.account}.blob.core.windows.net?${decryptedToken}`);
         break;
       case 'accessKey':
-        this.logger.debug(`Initiate Azure blob service client using ${this.connector.settings.authentication}`);
         const decryptedAccessKey = await this.encryptionService.decryptText(this.connector.settings.accessKey!);
         const sharedKeyCredential = new StorageSharedKeyCredential(this.connector.settings.account!, decryptedAccessKey);
         this.blobClient = new BlobServiceClient(`https://${this.connector.settings.account}.blob.core.windows.net`, sharedKeyCredential);
         break;
       case 'aad':
-        this.logger.debug(`Initiate Azure blob service client using ${this.connector.settings.authentication}`);
-        process.env.AZURE_TENANT_ID = this.connector.settings.tenantId!;
-        process.env.AZURE_CLIENT_ID = this.connector.settings.clientId!;
         const decryptedClientSecret = await this.encryptionService.decryptText(this.connector.settings.clientSecret!);
-        process.env.AZURE_CLIENT_SECRET = decryptedClientSecret;
-        const defaultAzureCredential = new DefaultAzureCredential();
-        this.blobClient = new BlobServiceClient(`https://${this.connector.settings.account}.blob.core.windows.net`, defaultAzureCredential);
+        const clientSecretCredential = new ClientSecretCredential(
+          this.connector.settings.tenantId!,
+          this.connector.settings.clientId!,
+          decryptedClientSecret
+        );
+        this.blobClient = new BlobServiceClient(`https://${this.connector.settings.account}.blob.core.windows.net`, clientSecretCredential);
         break;
       case 'external':
         const externalAzureCredential = new DefaultAzureCredential();

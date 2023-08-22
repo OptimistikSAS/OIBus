@@ -9,7 +9,7 @@ import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
-import { AzurePowerShellCredential, DefaultAzureCredential } from '@azure/identity';
+import { AzurePowerShellCredential, DefaultAzureCredential, ClientSecretCredential } from '@azure/identity';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
@@ -28,7 +28,11 @@ jest.mock('@azure/storage-blob', () => ({
   })),
   StorageSharedKeyCredential: jest.fn()
 }));
-jest.mock('@azure/identity', () => ({ DefaultAzureCredential: jest.fn(), AzurePowerShellCredential: jest.fn() }));
+jest.mock('@azure/identity', () => ({
+  DefaultAzureCredential: jest.fn(),
+  ClientSecretCredential: jest.fn(),
+  AzurePowerShellCredential: jest.fn()
+}));
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
 jest.mock(
@@ -162,8 +166,8 @@ describe('NorthAzureBlob', () => {
     const filePath = '/path/to/file/example-123.file';
     (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
     (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
-    const defaultAzureCredential = jest.fn();
-    (DefaultAzureCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
+    const clientSecretCredential = jest.fn();
+    (ClientSecretCredential as jest.Mock).mockImplementationOnce(() => clientSecretCredential);
 
     configuration.settings.authentication = 'aad';
     configuration.settings.tenantId = 'tenantId';
@@ -176,10 +180,10 @@ describe('NorthAzureBlob', () => {
 
     expect(fs.stat).toHaveBeenCalledWith(filePath);
     expect(fs.readFile).toHaveBeenCalledWith(filePath);
-    expect(DefaultAzureCredential).toHaveBeenCalled();
+    expect(ClientSecretCredential).toHaveBeenCalled();
     expect(BlobServiceClient).toHaveBeenCalledWith(
       `https://${configuration.settings.account}.blob.core.windows.net`,
-      defaultAzureCredential
+      clientSecretCredential
     );
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(getBlockBlobClientMock).toHaveBeenCalledWith('example.file');
