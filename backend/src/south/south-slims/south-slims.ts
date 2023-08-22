@@ -6,12 +6,12 @@ import https from 'https';
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
 import {
+  convertDateTimeToInstant,
   createFolder,
   formatInstant,
-  persistResults,
   formatQueryParams,
   httpGetWithBody,
-  convertDateTimeToInstant
+  persistResults
 } from '../../service/utils';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
@@ -19,7 +19,7 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { QueriesHistory, TestsConnection } from '../south-interface';
+import { QueriesHistory } from '../south-interface';
 import { SouthSlimsItemSettings, SouthSlimsSettings } from '../../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy.service';
 
@@ -40,10 +40,7 @@ export interface SlimsResults {
 /**
  * Class SouthSlims - Retrieve data from SLIMS REST API
  */
-export default class SouthSlims
-  extends SouthConnector<SouthSlimsSettings, SouthSlimsItemSettings>
-  implements QueriesHistory, TestsConnection
-{
+export default class SouthSlims extends SouthConnector<SouthSlimsSettings, SouthSlimsItemSettings> implements QueriesHistory {
   static type = manifest.id;
   private proxyAgent: any | undefined;
 

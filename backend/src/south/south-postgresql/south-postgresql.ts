@@ -17,7 +17,7 @@ import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
-import { QueriesHistory, TestsConnection } from '../south-interface';
+import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthPostgreSQLItemSettings, SouthPostgreSQLSettings } from '../../../../shared/model/south-settings.model';
 
@@ -26,7 +26,7 @@ import { SouthPostgreSQLItemSettings, SouthPostgreSQLSettings } from '../../../.
  */
 export default class SouthPostgreSQL
   extends SouthConnector<SouthPostgreSQLSettings, SouthPostgreSQLItemSettings>
-  implements QueriesHistory, TestsConnection
+  implements QueriesHistory
 {
   static type = manifest.id;
 

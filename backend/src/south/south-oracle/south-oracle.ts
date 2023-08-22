@@ -15,7 +15,7 @@ import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
-import { QueriesHistory, TestsConnection } from '../south-interface';
+import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthOracleItemSettings, SouthOracleSettings } from '../../../../shared/model/south-settings.model';
 
@@ -37,10 +37,7 @@ import('oracledb')
 /**
  * Class SouthOracle - Retrieve data from Oracle databases and send them to the cache as CSV files.
  */
-export default class SouthOracle
-  extends SouthConnector<SouthOracleSettings, SouthOracleItemSettings>
-  implements QueriesHistory, TestsConnection
-{
+export default class SouthOracle extends SouthConnector<SouthOracleSettings, SouthOracleItemSettings> implements QueriesHistory {
   static type = manifest.id;
 
   private readonly tmpFolder: string;

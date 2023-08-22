@@ -7,7 +7,7 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
-import { QueriesHistory, TestsConnection } from '../south-interface';
+import { QueriesHistory } from '../south-interface';
 import { HandlesAgent } from './agent-handler-interface';
 import Agent from './agent';
 import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../../shared/model/south-settings.model';
@@ -24,7 +24,7 @@ interface AgentPoint {
  * This connector communicates with the Agent through a TCP connection thanks to the TCP server created on OIBus
  * and associated to this connector
  */
-export default class SouthOPCHDA extends SouthConnector implements HandlesAgent, QueriesHistory, TestsConnection {
+export default class SouthOPCHDA extends SouthConnector implements HandlesAgent, QueriesHistory {
   static type = manifest.id;
 
   private agent: Agent;
