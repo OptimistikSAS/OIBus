@@ -1,0 +1,78 @@
+---
+sidebar_position: 5
+---
+
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+import DownloadButton from '@site/src/components/DownloadButton';
+
+# Migrate to v3
+Migrate from OIBus v1 and v2 into the new OIBus v3 version with our migration tool and a few manuel steps.
+
+:::caution
+WORK IN PROGRESS
+:::
+
+## Download link
+<Tabs>
+  <TabItem value="windows" label="Windows" default>
+    <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-win32x64.zip'>
+      Migration tool (x64)
+    </DownloadButton>
+  </TabItem>
+  <TabItem value="linux" label="Linux">
+    <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-linux.tar.gz'>
+      Migration tool (x64)
+    </DownloadButton>
+  </TabItem>
+  <TabItem value="macos" label="MacOS">
+    <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-macos.zip'>
+      Migration tool (x64)
+    </DownloadButton>
+  </TabItem>
+</Tabs>
+
+## Download specific v3.0.0 OIBus version
+<Tabs>
+  <TabItem value="windows" label="Windows" default>
+    <div style={{display: "flex", justifyContent:"space-around"}}>
+      <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/download/v3.1.0-story-angular.0/oibus-setup-win_x64.exe'>
+        OIBus 3.0 Windows installer (x64)
+      </DownloadButton>
+      <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/download/v3.1.0-story-angular.0/oibus-win_x64.zip'>
+        OIBus 3.0 bat scripts (x64)
+      </DownloadButton>
+    </div>
+  </TabItem>
+  <TabItem value="linux" label="Linux">
+    <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/download/v3.1.0-story-angular.0/oibus-linux_x64.zip'>
+      OIBus 3.0 (x64)
+    </DownloadButton>
+  </TabItem>
+  <TabItem value="macos" label="MacOS">
+    <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/download/v3.1.0-story-angular.0/oibus-macos_x64.zip'>
+      OIBus 3.0 (x64)
+    </DownloadButton>
+  </TabItem>
+</Tabs>
+
+## Stop OIBus service
+Stop the OIBus service.
+
+:::tip
+You can zip the data folder, or at least the configuration file `oibus.json` and its `keys` as a backup
+:::
+
+## Install the specific OIBus v3 version
+Either with the Windows installer or with the installation script, install the v3 version of OIBus. Be careful to specify
+the **same data folder**.
+
+Check that OIBus v3 run properly by login on `http::localhost:2223` with admin / pass. If everything works, go on with
+the next step.
+
+
+## Run the migration tool
+Stop OIBus v3 and copy the migration tool in the OIBus **binary folder**. Run the OIBus migration tool.
+````
+
+````
