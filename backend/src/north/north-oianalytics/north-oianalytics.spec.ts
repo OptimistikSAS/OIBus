@@ -23,6 +23,14 @@ jest.mock('node:fs/promises');
 jest.mock('node:fs');
 jest.mock('../../service/utils');
 jest.mock('../../service/proxy.service');
+jest.mock('@azure/identity', () => ({
+  ClientSecretCredential: jest.fn().mockImplementation(() => ({
+    getToken: () => ({ token: 'token' })
+  })),
+  ClientCertificateCredential: jest.fn().mockImplementation(() => ({
+    getToken: () => ({ token: 'token' })
+  }))
+}));
 
 jest.mock('node-fetch');
 const { Response } = jest.requireActual('node-fetch');
@@ -97,6 +105,7 @@ describe('NorthOIAnalytics without proxy', () => {
       host: 'https://hostname/',
       timeout: 30,
       acceptUnauthorized: false,
+      authentication: 'basic',
       accessKey: 'anyUser',
       secretKey: 'anypass',
       useProxy: false
@@ -346,6 +355,11 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
       acceptUnauthorized: true,
       timeout: 30,
       accessKey: 'anyUser',
+      authentication: 'aad-client-secret',
+      tenantId: 'tenantId',
+      clientId: 'clientId',
+      clientSecret: 'clientSecret',
+      scope: 'api://my-scope/.default',
       secretKey: null,
       useProxy: false
     },
@@ -389,12 +403,12 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:`).toString('base64')}`,
+        authorization: `Bearer token`,
         'Content-Type': 'application/json'
       },
+      timeout: 30000,
       body: JSON.stringify(values),
-      agent: fakeAgent,
-      timeout: 30000
+      agent: fakeAgent
     };
 
     await north.handleValues(values);
@@ -418,7 +432,7 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     const expectedFetchOptions = {
       method: 'POST',
       headers: {
-        authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:`).toString('base64')}`,
+        authorization: `Bearer token`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
@@ -452,8 +466,11 @@ describe('NorthOIAnalytics with proxy', () => {
       host: 'https://hostname',
       acceptUnauthorized: false,
       timeout: 30,
-      accessKey: 'anyUser',
-      secretKey: 'anypass',
+      authentication: 'aad-client-secret',
+      tenantId: 'tenantId',
+      clientId: 'clientId',
+      clientSecret: 'clientSecret',
+      scope: 'api://my-scope/.default',
       useProxy: true,
       proxyUrl: 'http://localhost',
       proxyUsername: 'my username',
@@ -493,7 +510,7 @@ describe('NorthOIAnalytics with proxy', () => {
 
     await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(fetch).toHaveBeenCalledWith('https://hostname/api/optimistik/oibus/status', {
-      headers: { authorization: 'Basic YW55VXNlcjphbnlwYXNz' },
+      headers: { authorization: `Bearer token` },
       method: 'GET',
       agent: fakeAgent,
       timeout: 30000
@@ -576,8 +593,9 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
       host: 'https://hostname',
       acceptUnauthorized: false,
       timeout: 30,
+      authentication: 'basic',
       accessKey: 'anyUser',
-      secretKey: 'anypass',
+      secretKey: null,
       useProxy: true,
       proxyUrl: 'http://localhost',
       proxyUsername: 'my username',
@@ -657,5 +675,89 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
       },
       configuration.settings.acceptUnauthorized
     );
+  });
+
+  it('should properly handle files without secret key', async () => {
+    const filePath = '/path/to/file/example.file';
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
+
+    const expectedFetchOptions = {
+      method: 'POST',
+      headers: {
+        authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:`).toString('base64')}`,
+        'content-type': expect.stringContaining('multipart/form-data; boundary=')
+      },
+      body: expect.anything(),
+      timeout: configuration.settings.timeout * 1000,
+      agent: {}
+    };
+
+    await north.handleFile(filePath);
+
+    expect(fetch).toHaveBeenCalledWith(
+      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      expectedFetchOptions
+    );
+  });
+});
+
+describe('NorthOIAnalytics with aad-certificate', () => {
+  const configuration: NorthConnectorDTO<NorthOIAnalyticsSettings> = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      host: 'https://hostname/',
+      timeout: 30,
+      acceptUnauthorized: false,
+      authentication: 'aad-certificate',
+      certificateId: 'certificateId',
+      useProxy: false
+    },
+    caching: {
+      scanModeId: 'id1',
+      retryInterval: 5000,
+      groupCount: 10000,
+      maxSendCount: 10000,
+      retryCount: 2,
+      sendFileImmediately: true,
+      maxSize: 30000
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 720
+    }
+  };
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    (filesExists as jest.Mock).mockReturnValue(true);
+    north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    await north.start();
+  });
+
+  it('should add header with aad-certificate', async () => {
+    const headers: any = {};
+    (repositoryService.certificateRepository.findById as jest.Mock).mockReturnValueOnce({
+      name: 'name',
+      description: 'description',
+      publicKey: 'public key',
+      privateKey: 'private key',
+      certificate: 'cert',
+      expiry: '2020-10-10T00:00:00.000Z'
+    });
+    await north.addHeaderAuthentication(headers);
+    expect(headers).toEqual({ authorization: 'Bearer token' });
+  });
+
+  it('should not add header with aad-certificate when cert not found', async () => {
+    const headers: any = {};
+    (repositoryService.certificateRepository.findById as jest.Mock).mockReturnValueOnce(null);
+    await north.addHeaderAuthentication(headers);
+    expect(headers).toEqual({});
   });
 });

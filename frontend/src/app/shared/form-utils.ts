@@ -45,6 +45,7 @@ export const createFormControl = (formControlSettings: OibFormControl, fb: NonNu
     case 'OibCodeBlock':
     case 'OibTextArea':
     case 'OibTimezone':
+    case 'OibCertificate':
       return fb.control(formControlSettings.defaultValue, getValidators(formControlSettings.validators || []));
     case 'OibArray':
       return fb.control(formControlSettings.defaultValue || [], getValidators(formControlSettings.validators || []));

@@ -3,6 +3,7 @@ import Router from '@koa/router';
 import multer from '@koa/multer';
 
 import {
+  certificateSchema,
   engineSchema,
   externalSourceSchema,
   historyQuerySchema,
@@ -24,9 +25,11 @@ import HistoryQueryController from '../controllers/history-query.controller';
 import SubscriptionController from '../controllers/subscription.controller';
 import JoiValidator from '../controllers/validators/joi.validator';
 import { KoaContext } from '../koa';
+import CertificateController from '../controllers/certificate.controller';
 
 const joiValidator = new JoiValidator();
 const scanModeController = new ScanModeController(joiValidator, scanModeSchema);
+const certificateController = new CertificateController(joiValidator, certificateSchema);
 const externalSourceController = new ExternalSourceController(joiValidator, externalSourceSchema);
 const oibusController = new OibusController(joiValidator, engineSchema);
 const ipFilterController = new IpFilterController(joiValidator, ipFilterSchema);
@@ -58,6 +61,12 @@ router.get('/api/scan-modes/:id', (ctx: KoaContext<any, any>) => scanModeControl
 router.post('/api/scan-modes', (ctx: KoaContext<any, any>) => scanModeController.createScanMode(ctx));
 router.put('/api/scan-modes/:id', (ctx: KoaContext<any, any>) => scanModeController.updateScanMode(ctx));
 router.delete('/api/scan-modes/:id', (ctx: KoaContext<any, any>) => scanModeController.deleteScanMode(ctx));
+
+router.get('/api/certificates', (ctx: KoaContext<any, any>) => certificateController.findAll(ctx));
+router.get('/api/certificates/:id', (ctx: KoaContext<any, any>) => certificateController.findById(ctx));
+router.post('/api/certificates', (ctx: KoaContext<any, any>) => certificateController.create(ctx));
+router.put('/api/certificates/:id', (ctx: KoaContext<any, any>) => certificateController.update(ctx));
+router.delete('/api/certificates/:id', (ctx: KoaContext<any, any>) => certificateController.delete(ctx));
 
 router.get('/api/external-sources', (ctx: KoaContext<any, any>) => externalSourceController.getExternalSources(ctx));
 router.get('/api/external-sources/:id', (ctx: KoaContext<any, any>) => externalSourceController.getExternalSource(ctx));

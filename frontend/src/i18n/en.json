@@ -90,6 +90,10 @@
   "enabled": "active",
   "disabled": "paused",
   "enums": {
+    "boolean": {
+      "true": "Yes",
+      "false": "No"
+    },
     "log-levels": {
       "silent": "Silent",
       "error": "Error",
@@ -122,6 +126,8 @@
       "api-key": "API key",
       "cert": "Certificate",
       "aad": "Application Active Directory",
+      "aad-client-secret": "Azure Active Directory with client secret",
+      "aad-certificate": "Azure Active Directory with certificate",
       "accessKey": "Access key",
       "powershell": "Powershell",
       "sasToken": "Shared Access Signature token",
@@ -344,6 +350,29 @@
       "name": "Name",
       "description": "Description",
       "cron": "Cron"
+    },
+    "certificate": {
+      "list": "Certificates",
+      "title-create": "Create a certificate",
+      "title-edit": "Edit certificate",
+      "confirm-deletion": "Are you sure you want to delete the certificate {{ name }}? Beforehand, be sure it is not used.",
+      "updated": "Certificate {{ name }} successfully updated",
+      "created": "Certificate {{ name }} successfully created",
+      "deleted": "Certificate {{ name }} deleted",
+      "none": "No certificate",
+      "name": "Name",
+      "description": "Description",
+      "expiry": "Expires",
+      "public-key": "Public key",
+      "certificate": "Certificate",
+      "regenerate-certificate": "Regenerate certificate",
+      "common-name": "Common name",
+      "country-name": "Country name",
+      "state-or-province-name": "State/Province name",
+      "locality-name": "Locality name",
+      "organization-name": "Organization name",
+      "key-size": "Key size",
+      "days-before-expiry": "Days before expiry"
     },
     "ip-filter": {
       "list": "IP filters",

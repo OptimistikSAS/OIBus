@@ -9,7 +9,7 @@ import RepositoryService from '../../service/repository.service';
 import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
-import { AzurePowerShellCredential, DefaultAzureCredential, ClientSecretCredential } from '@azure/identity';
+import { DefaultAzureCredential, ClientSecretCredential } from '@azure/identity';
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import { NorthAzureBlobSettings } from '../../../../shared/model/north-settings.model';
@@ -30,8 +30,7 @@ jest.mock('@azure/storage-blob', () => ({
 }));
 jest.mock('@azure/identity', () => ({
   DefaultAzureCredential: jest.fn(),
-  ClientSecretCredential: jest.fn(),
-  AzurePowerShellCredential: jest.fn()
+  ClientSecretCredential: jest.fn()
 }));
 jest.mock('node:fs/promises');
 jest.mock('../../service/utils');
@@ -198,6 +197,8 @@ describe('NorthAzureBlob', () => {
     (DefaultAzureCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
 
     configuration.settings.authentication = 'external';
+    configuration.settings.path = 'my path';
+
     const north = new NorthAzureBlob(configuration, encryptionService, repositoryService, logger, 'baseFolder');
 
     await north.start();
@@ -211,39 +212,13 @@ describe('NorthAzureBlob', () => {
       defaultAzureCredential
     );
     expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
-    expect(getBlockBlobClientMock).toHaveBeenCalledWith('example.file');
-    expect(uploadMock).toHaveBeenCalledWith('content', 666);
-  });
-
-  it('should properly handle files with powershell credentials', async () => {
-    const filePath = '/path/to/file/example-123.file';
-    (fs.stat as jest.Mock).mockImplementationOnce(() => Promise.resolve({ size: 666 }));
-    (fs.readFile as jest.Mock).mockImplementationOnce(() => Promise.resolve('content'));
-    const defaultAzureCredential = jest.fn();
-    (AzurePowerShellCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
-
-    configuration.settings.path = 'my path';
-    configuration.settings.authentication = 'powershell';
-    const north = new NorthAzureBlob(configuration, encryptionService, repositoryService, logger, 'baseFolder');
-
-    await north.start();
-    await north.handleFile(filePath);
-
-    expect(fs.stat).toHaveBeenCalledWith(filePath);
-    expect(fs.readFile).toHaveBeenCalledWith(filePath);
-    expect(AzurePowerShellCredential).toHaveBeenCalled();
-    expect(BlobServiceClient).toHaveBeenCalledWith(
-      `https://${configuration.settings.account}.blob.core.windows.net`,
-      defaultAzureCredential
-    );
-    expect(getContainerClientMock).toHaveBeenCalledWith(configuration.settings.container);
     expect(getBlockBlobClientMock).toHaveBeenCalledWith('my path/example.file');
     expect(uploadMock).toHaveBeenCalledWith('content', 666);
   });
 
   it('should successfully test', async () => {
     const defaultAzureCredential = jest.fn();
-    (AzurePowerShellCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
+    (DefaultAzureCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
     const exists = jest.fn().mockReturnValueOnce(true).mockReturnValueOnce(false);
     (getContainerClientMock as jest.Mock).mockImplementation(() => {
       return {
@@ -252,7 +227,7 @@ describe('NorthAzureBlob', () => {
     });
     const north = new NorthAzureBlob(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.testConnection();
-    expect(AzurePowerShellCredential).toHaveBeenCalled();
+    expect(DefaultAzureCredential).toHaveBeenCalled();
     expect(BlobServiceClient).toHaveBeenCalledWith(
       `https://${configuration.settings.account}.blob.core.windows.net`,
       defaultAzureCredential
@@ -264,7 +239,7 @@ describe('NorthAzureBlob', () => {
 
   it('should manage test error', async () => {
     const defaultAzureCredential = jest.fn();
-    (AzurePowerShellCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
+    (DefaultAzureCredential as jest.Mock).mockImplementationOnce(() => defaultAzureCredential);
     (getContainerClientMock as jest.Mock).mockImplementation(() => {
       throw new Error('connection error');
     });

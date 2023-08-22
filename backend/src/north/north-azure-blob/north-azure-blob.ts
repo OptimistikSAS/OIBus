@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import pino from 'pino';
 import { BlobServiceClient, StorageSharedKeyCredential } from '@azure/storage-blob';
-import { AzurePowerShellCredential, ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
+import { ClientSecretCredential, DefaultAzureCredential } from '@azure/identity';
 import NorthConnector from '../north-connector';
 import manifest from '../north-azure-blob/manifest';
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
@@ -45,11 +45,10 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         this.blobClient = new BlobServiceClient(`https://${this.connector.settings.account}.blob.core.windows.net`, sharedKeyCredential);
         break;
       case 'aad':
-        const decryptedClientSecret = await this.encryptionService.decryptText(this.connector.settings.clientSecret!);
         const clientSecretCredential = new ClientSecretCredential(
           this.connector.settings.tenantId!,
           this.connector.settings.clientId!,
-          decryptedClientSecret
+          await this.encryptionService.decryptText(this.connector.settings.clientSecret!)
         );
         this.blobClient = new BlobServiceClient(`https://${this.connector.settings.account}.blob.core.windows.net`, clientSecretCredential);
         break;
@@ -58,12 +57,6 @@ export default class NorthAzureBlob extends NorthConnector<NorthAzureBlobSetting
         this.blobClient = new BlobServiceClient(
           `https://${this.connector.settings.account}.blob.core.windows.net`,
           externalAzureCredential
-        );
-        break;
-      case 'powershell':
-        this.blobClient = new BlobServiceClient(
-          `https://${this.connector.settings.account}.blob.core.windows.net`,
-          new AzurePowerShellCredential()
         );
         break;
       default:

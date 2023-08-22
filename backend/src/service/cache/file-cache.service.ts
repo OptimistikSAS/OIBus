@@ -189,9 +189,8 @@ export default class FileCacheService {
         this._logger.debug(`Removing file "${filePath}`);
         const fileStat = await fs.stat(filePath);
         await fs.unlink(filePath);
-        this.triggerRun.emit('cache-size', -fileStat.size);
-
         this.removeFileFromQueue(filePath);
+        this.triggerRun.emit('cache-size', -fileStat.size);
       })
     );
   }

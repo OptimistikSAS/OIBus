@@ -11,7 +11,8 @@ import {
   OibSelectFormControl,
   OibTextAreaFormControl,
   OibTextFormControl,
-  OibTimezoneFormControl
+  OibTimezoneFormControl,
+  OibCertificateFormControl
 } from '../../../../../shared/model/form.model';
 
 export default class JoiValidator {
@@ -53,6 +54,8 @@ export default class JoiValidator {
         return this.generateBooleanJoiSchema(oibFormControl);
       case 'OibScanMode':
         return this.generateTextJoiSchema(oibFormControl);
+      case 'OibCertificate':
+        return this.generateTextJoiSchema(oibFormControl);
       case 'OibTimezone':
         return this.generateTextJoiSchema(oibFormControl);
       case 'OibFormGroup':
@@ -68,6 +71,7 @@ export default class JoiValidator {
       | OibSecretFormControl
       | OibTextAreaFormControl
       | OibCodeBlockFormControl
+      | OibCertificateFormControl
       | OibScanModeFormControl
       | OibTimezoneFormControl
   ): Record<string, AnySchema> {

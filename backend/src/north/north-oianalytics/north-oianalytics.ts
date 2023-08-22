@@ -15,6 +15,7 @@ import { HandlesFile, HandlesValues } from '../north-interface';
 import { filesExists } from '../../service/utils';
 import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { ClientSecretCredential, ClientCertificateCredential } from '@azure/identity';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -41,10 +42,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
 
     const headers: HeadersInit = {};
-    const basic = Buffer.from(
-      `${this.connector.settings.accessKey}:${await this.encryptionService.decryptText(this.connector.settings.secretKey!)}`
-    ).toString('base64');
-    headers.authorization = `Basic ${basic}`;
+    await this.addHeaderAuthentication(headers);
     const requestUrl = `${this.connector.settings.host}/api/optimistik/oibus/status`;
     const fetchOptions: RequestInit = {
       method: 'GET',
@@ -86,12 +84,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     const headers: HeadersInit = {
       'Content-Type': 'application/json'
     };
-
-    headers.authorization = `Basic ${Buffer.from(
-      `${this.connector.settings.accessKey}:${
-        this.connector.settings.secretKey ? await this.encryptionService.decryptText(this.connector.settings.secretKey) : ''
-      }`
-    ).toString('base64')}`;
+    await this.addHeaderAuthentication(headers);
 
     let response;
     const valuesUrl = `${this.connector.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${this.connector.name}`;
@@ -136,12 +129,8 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
    */
   async handleFile(filePath: string): Promise<void> {
     const headers: HeadersInit = {};
-    headers.authorization = `Basic ${Buffer.from(
-      `${this.connector.settings.accessKey}:${
-        this.connector.settings.secretKey ? await this.encryptionService.decryptText(this.connector.settings.secretKey) : ''
-      }`
-    ).toString('base64')}`;
 
+    await this.addHeaderAuthentication(headers);
     if (!(await filesExists(filePath))) {
       throw new Error(`File ${filePath} does not exist`);
     }
@@ -194,6 +183,42 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         message: `Error ${response.status}: ${response.statusText}`,
         retry: [400, 401, 403, 404, 500, 502, 503, 504].includes(response.status)
       };
+    }
+  }
+
+  async addHeaderAuthentication(headers: Record<string, string>): Promise<boolean> {
+    switch (this.connector.settings.authentication) {
+      case 'basic':
+        headers.authorization = `Basic ${Buffer.from(
+          `${this.connector.settings.accessKey}:${
+            this.connector.settings.secretKey ? await this.encryptionService.decryptText(this.connector.settings.secretKey) : ''
+          }`
+        ).toString('base64')}`;
+        return true;
+      case 'aad-client-secret':
+        const clientSecretCredential = new ClientSecretCredential(
+          this.connector.settings.tenantId!,
+          this.connector.settings.clientId!,
+          await this.encryptionService.decryptText(this.connector.settings.clientSecret!)
+        );
+        const result = await clientSecretCredential.getToken(this.connector.settings.scope!);
+        headers.authorization = `Bearer ${Buffer.from(result.token)}`;
+        return true;
+      case 'aad-certificate':
+        const certificate = this.repositoryService.certificateRepository.findById(this.connector.settings.certificateId!);
+        if (certificate != null) {
+          const decryptedPrivateKey = await this.encryptionService.decryptText(certificate.privateKey);
+          const clientCertificateCredential = new ClientCertificateCredential(
+            this.connector.settings.tenantId!,
+            this.connector.settings.clientId!,
+            {
+              certificate: `${certificate.certificate}\n${decryptedPrivateKey}`
+            }
+          );
+          const result = await clientCertificateCredential.getToken(this.connector.settings.scope!);
+          headers.authorization = `Bearer ${Buffer.from(result.token)}`;
+        }
+        return true;
     }
   }
 }

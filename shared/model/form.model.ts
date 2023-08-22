@@ -9,14 +9,15 @@ export const FORM_COMPONENT_TYPES = [
   'OibCodeBlock',
   'OibCheckbox',
   'OibScanMode',
+  'OibCertificate',
   'OibTimezone',
   'OibArray',
   'OibFormGroup'
 ] as const;
-export type FormComponentType = typeof FORM_COMPONENT_TYPES[number];
+export type FormComponentType = (typeof FORM_COMPONENT_TYPES)[number];
 
 export const FORM_COMPONENT_VALIDATOR_TYPES = ['required', 'min', 'max', 'pattern', 'minLength', 'maxLength'] as const;
-export type FormComponentValidatorType = typeof FORM_COMPONENT_VALIDATOR_TYPES[number];
+export type FormComponentValidatorType = (typeof FORM_COMPONENT_VALIDATOR_TYPES)[number];
 
 interface Validator {
   key: FormComponentValidatorType;
@@ -124,6 +125,10 @@ export interface OibScanModeFormControl extends BaseOibFormControl<ScanModeDTO> 
   subscriptionOnly: boolean;
 }
 
+export interface OibCertificateFormControl extends BaseOibFormControl<string> {
+  type: 'OibCertificate';
+}
+
 export interface OibTimezoneFormControl extends BaseOibFormControl<string> {
   type: 'OibTimezone';
 }
@@ -147,6 +152,7 @@ export type OibFormControl =
   | OibSecretFormControl
   | OibCheckboxFormControl
   | OibScanModeFormControl
+  | OibCertificateFormControl
   | OibTimezoneFormControl
   | OibArrayFormControl
   | OibFormGroup;

@@ -45,10 +45,22 @@ const manifest: NorthConnectorManifest = {
       class: 'col-3'
     },
     {
+      key: 'authentication',
+      type: 'OibSelect',
+      options: ['basic', 'aad-client-secret', 'aad-certificate'],
+      label: 'Authentication',
+      pipe: 'authentication',
+      defaultValue: 'basic',
+      newRow: true,
+      validators: [{ key: 'required' }],
+      displayInViewMode: true
+    },
+    {
       key: 'accessKey',
       type: 'OibText',
       label: 'Access key',
       validators: [{ key: 'required' }],
+      conditionalDisplay: { field: 'authentication', values: ['basic'] },
       newRow: true,
       displayInViewMode: true
     },
@@ -56,9 +68,49 @@ const manifest: NorthConnectorManifest = {
       key: 'secretKey',
       type: 'OibSecret',
       label: 'Secret key',
+      conditionalDisplay: { field: 'authentication', values: ['basic'] },
       displayInViewMode: false
+    },
+    {
+      key: 'tenantId',
+      type: 'OibText',
+      label: 'Tenant ID',
+      newRow: true,
+      conditionalDisplay: { field: 'authentication', values: ['aad-client-secret', 'aad-certificate'] },
+      displayInViewMode: true
+    },
+    {
+      key: 'clientId',
+      type: 'OibText',
+      label: 'Client ID',
+      newRow: false,
+      validators: [{ key: 'required' }],
+      conditionalDisplay: { field: 'authentication', values: ['aad-client-secret', 'aad-certificate'] },
+      displayInViewMode: true
+    },
+    {
+      key: 'clientSecret',
+      type: 'OibSecret',
+      label: 'Client secret',
+      newRow: false,
+      conditionalDisplay: { field: 'authentication', values: ['aad-client-secret'] }
+    },
+    {
+      key: 'certificateId',
+      type: 'OibCertificate',
+      label: 'Certificate',
+      newRow: false,
+      conditionalDisplay: { field: 'authentication', values: ['aad-certificate'] }
+    },
+    {
+      key: 'scope',
+      type: 'OibText',
+      label: 'Scope',
+      newRow: false,
+      conditionalDisplay: { field: 'authentication', values: ['aad', 'aad-certificate'] }
     },
     ...proxy
   ]
 };
+
 export default manifest;

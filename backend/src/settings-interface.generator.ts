@@ -203,6 +203,9 @@ function generateInterface(interfaceName: string, settings: Array<OibFormControl
         typesToGenerate.imports.add(SCAN_MODE_IMPORT);
         attributes.push({ key: setting.key, type: 'ScanMode', ...checkIfNullableOrUndefined(setting) });
         break;
+      case 'OibCertificate':
+        attributes.push({ key: setting.key, type: 'string', ...checkIfNullableOrUndefined(setting) });
+        break;
       case 'OibTimezone':
         typesToGenerate.imports.add(TIMEZONE_IMPORT);
         attributes.push({ key: setting.key, type: 'Timezone', ...checkIfNullableOrUndefined(setting) });
