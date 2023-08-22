@@ -1,28 +1,9 @@
 ---
 displayed_sidebar: developerSidebar
-sidebar_position: 3
+sidebar_position: 2
 ---
 
-# Create a new OIBus connector
-Connectors, both North and South, are written in [TypeScript](https://www.typescriptlang.org/). It allows you to create your
-own connector while being sure to match OIBus type structures and method calls.
-
-The connectors source files are located in the `backend/src` folder, either in `north` or in `south`. Most of them are
-composed of three files:
-- **A manifest**: this file is a JSON where you describe all the fields of your connector and how some basic settings of OIBus
-will apply or not with the connector
-- **A class file**: That's where all your logic goes. Connection methods, retrieval or sending of data...
-- **A test file**: Tests are mandatory, specially if you want to be sure that future changes won't break your logic. Be sure
-that your test coverage is 100%.
-
-Some may have more files to implement protocol-specific logic in another file and better testing.
-
-:::tip
-Please contact us if you don't know where to start with your development! Maybe what you seek can also be done as an 
-improvement of an existing North or South connector.
-:::
-
-## The manifest
+# The manifest
 With this JSON, you can specify what fields are required to configure your connector, what type of fields, etc...
 - **id**: The id of your manifest (must not be used by another manifest)
 - **name**: The name used for display
@@ -45,7 +26,7 @@ With this JSON, you can specify what fields are required to configure your conne
     - subscriptionOnly: Is subscription the only choice for each item? Example: MQTT 
   - settings: An array of settings which represents the inputs to configure your item. See the [settings section](#settings)
 
-### Settings
+## Settings
 All settings have common fields, used for display or validation. These common fields are:
 - **Main fields**
   - **key**: The field, written in `camelCase`
@@ -82,56 +63,56 @@ if the current field is displayed. See example below.
 
 Then, each type of fields comes with its frontend logic and backend type safety. Some types add more fields.
 
-#### OibText
+### OibText
 Create an input of type text in the frontend, and a field of type `string` in the TypeScript model.
 
-#### OibTextArea
+### OibTextArea
 Create a textarea input in the frontend, and a field of type `string` in the TypeScript model.
 
-#### OibCodeBlock
+### OibCodeBlock
 Create a code block with [monaco editor](https://microsoft.github.io/monaco-editor/) in the frontend, and a field of type
 `string` in the TypeScript model.
 Additional field:
 - contentType: The language to set up the editor on the frontend (example: `sql`, `json`).
 
-#### OibNumber
+### OibNumber
 Create an input of type number in the frontend, and a field of type `number` in the TypeScript model.
 
-#### OibSelect
+### OibSelect
 Create an input of type select in the frontend, and a field of type `string` in the TypeScript model.
 Additional field:
 - options: The options to display in the select
 
-#### OibSecret
+### OibSecret
 Create an input of type password in the frontend, and a field of type `string` in the TypeScript model.
 This field does not show what is typed in the frontend, and indicate OIBus [to encrypt the 
 input](../guide/advanced/oibus-security.md#oibus-security)
 
-#### OibCheckbox
+### OibCheckbox
 Create an input of type checkbox in the frontend (customized in a toggle), and a field of type `boolean` in the TypeScript 
 model.
 
-#### OibTimezone
+### OibTimezone
 Create an input of type select in the frontend, and a field of type `string` in the TypeScript model. The options are the 
 available timezones.
 
-#### Group settings
+### Group settings
 It is possible to group settings together, inside a structure or inside an array. 
 
-##### OibArray
+#### OibArray
 OibArray will be displayed... as an array where you can add or delete rows: each row will have the fields described in 
 the **content** fields. See the `dateTimeFields` builder as an example.
 
-##### OibFormGroup
+#### OibFormGroup
 Group settings in another structure. Specially useful to apply a `conditonalDisplay` to a group of settings, and add other
 `conditionalDisplays` inside the structure
 
-### Items
+## Items
 The items form (create, or update) can be called from the Item array of the display or edit page of a South connector.
 All items must have a name, a scanMode (that can be hidden if it only accepts subscription) and [specific settings described
 in the manifest](#settings).
 
-### Create or update your data types
+## Create or update your data types
 If you create a new connector, add it in the `buildSouthInterfaceName` or `buildNorthInterfaceName` method of the 
 `settings-interface.generator.ts` file.
 
