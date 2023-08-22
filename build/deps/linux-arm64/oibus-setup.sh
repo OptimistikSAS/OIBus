@@ -64,9 +64,11 @@ printf "ARG1=--config\nARG2=%s" "$conf_path" > "$install_dir/oibus-env"
 if [[ "$keep_conf" == "N" ]] || [[ "$keep_conf" == "n" ]]; then
 #  Remove configuration, cache, logs and certs. They will be created at first OIBus startup
   rm "$conf_path/oibus.db"
+  rm "$conf_path/crypto.db"
   rm -rf "$conf_path/cache"
   rm -rf "$conf_path/logs"
   rm -rf "$conf_path/certs"
+  rm -rf "$conf_path/keys"
 fi
 
 # Installing service file
