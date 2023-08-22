@@ -75,7 +75,56 @@ Be sure to close your connection at the end of the test.
 
 ## North methods
 North connectors can implement two interfaces: `HandlesFile` and `HandlesValues`
+### Handles File
+Files are retrieved from its `files` cache folder and its path are pass as method argument.
+```` typescript title="handleFile method"
+async handleFile(filePath: string): Promise<void> {
+    // manage file here
+}
+````
 
+### Handles Values
+Values are retrieved from its `values` cache folder and the method receives them as an array.
+```` typescript title="handleValues method"
+async handleValues(values: Array<any>): Promise<void> {
+    // manage values here
+}
+````
 
 ## South methods
-South connectors can implement four interfaces: `QueriesHistory`, `QueriesLastPoint`, `QueriesFile`, `QueriesSubscription`.
+South connectors can implement four interfaces: `QueriesFile`,`QueriesLastPoint`, `QueriesSubscription`, `QueriesHistory`.
+
+Each South connector has access to the method `addFile` and `addValue`. With these two methods, you can send file and values
+to the OIBus engine, that will send it to North caches.
+
+``` typescript title="addValues usage"
+await this.addValues(values); // values variable is an array of JSON
+```
+
+``` typescript title="addFile usage"
+await this.addFile(filePath); // filePath variable is the full path of a file
+```
+
+These methods can be called from the methods which implement to following interfaces. All these methods receive an array 
+of SouthConnectorItemDTO that will be used in the method to query their associated data.
+
+### Queries File
+``` typescript title="fileQuery prototype"
+fileQuery(items: Array<SouthConnectorItemDTO>): Promise<void>;
+```
+
+### Queries Last Point
+``` typescript title="lastPointQuery prototype"
+lastPointQuery(items: Array<SouthConnectorItemDTO>): Promise<void>;
+```
+
+### Queries Subscription
+``` typescript title="subscribe and unsubscribe prototype"
+subscribe(items: Array<SouthConnectorItemDTO>): Promise<void>;
+unsubscribe(items: Array<SouthConnectorItemDTO>): Promise<void>;
+```
+
+### Queries History
+``` typescript title="historyQuery prototype"
+historyQuery(items: Array<SouthConnectorItemDTO>, startTime: Instant, endTime: Instant): Promise<Instant>;
+```
