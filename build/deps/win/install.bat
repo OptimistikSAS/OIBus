@@ -18,8 +18,7 @@ goto CHECK
 SET /P CONFIG_PATH=Enter the directory in which you want to save all your OIBus related data, caches, and logs (example: C:\OIBusData):
 
 :CHECK
-if "%CONFIG_PATH:~-5%" neq "\" (
-    echo %CONFIG_PATH% is not a valid folder
+if "%CONFIG_PATH%"==""  (
     goto INPUT
 )
 

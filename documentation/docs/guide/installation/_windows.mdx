@@ -37,10 +37,47 @@ web interface.
 ![Installer final step](@site/static/img/guide/installation/6.png)
 
 :::caution Browser support
-
 Note that Internet Explorer is not supported.
-
 :::
+
+### With the installation bat script
+
+``` commandline title="Usage"
+install.bat <data-path>
+```
+
+``` commandline title="Example with terminal outputs"
+install.bat C:\OIBusData
+> Administrator permissions required. Detecting permission...
+> Stopping OIBus service...
+> Installing OIBus as Windows service...
+> The "OIBus" service has been successfully installed!
+> Configuration of the "AppDirectory" parameter value for the "OIBus" service.
+> nssm set OIBus AppNoConsole 1
+> Starting OIBus service...
+> OIBus: START: Operation successful.
+> Creating go.bat
+> echo Stopping OIBus service... You can restart it from the Windows Service Manager
+> nssm.exe stop OIBus
+> "C:\Users\Administrator\Downloads\oibus-win_x64\oibus.exe" --config "C:\OIBusData"
+```
+
+:::tip
+If you omit the data path argument, it will be asked as input when running the script
+:::
+
+## Uninstall
+### With the uninstallation bat script
+```` title="Example with terminal outputs"
+uninstall.bat
+Administrator permissions required. Detecting permission...
+Stopping OIBus service...
+Removing OIBus service...
+````
+:::caution
+The data folder must be removed manually
+:::
+
 
 
 ## Update
