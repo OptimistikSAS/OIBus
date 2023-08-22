@@ -10,6 +10,7 @@ import { ScanModeService } from '../../services/scan-mode.service';
 import { provideHttpClient } from '@angular/common/http';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { CertificateService } from '../../services/certificate.service';
 
 class EditNorthComponentTester extends ComponentTester<EditNorthComponent> {
   constructor() {
@@ -44,10 +45,12 @@ describe('EditNorthComponent', () => {
   let tester: EditNorthComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
+  let certificateService: jasmine.SpyObj<CertificateService>;
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
     scanModeService = createMock(ScanModeService);
+    certificateService = createMock(CertificateService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -55,11 +58,13 @@ describe('EditNorthComponent', () => {
         provideRouter([]),
         provideHttpClient(),
         { provide: NorthConnectorService, useValue: northConnectorService },
-        { provide: ScanModeService, useValue: scanModeService }
+        { provide: ScanModeService, useValue: scanModeService },
+        { provide: CertificateService, useValue: certificateService }
       ]
     });
 
     scanModeService.list.and.returnValue(of([]));
+    certificateService.list.and.returnValue(of([]));
 
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(
       of({

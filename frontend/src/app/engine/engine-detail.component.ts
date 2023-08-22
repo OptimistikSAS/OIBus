@@ -14,6 +14,7 @@ import { BoxComponent } from '../shared/box/box.component';
 import { EngineMetricsComponent } from './engine-metrics/engine-metrics.component';
 import { WindowService } from '../shared/window.service';
 import { RouterLink } from '@angular/router';
+import { CertificateListComponent } from './certificate-list/certificate-list.component';
 
 @Component({
   selector: 'oib-engine-detail',
@@ -22,6 +23,7 @@ import { RouterLink } from '@angular/router';
     NgIf,
     TranslateModule,
     ScanModeListComponent,
+    CertificateListComponent,
     ExternalSourceListComponent,
     IpFilterListComponent,
     AsyncPipe,

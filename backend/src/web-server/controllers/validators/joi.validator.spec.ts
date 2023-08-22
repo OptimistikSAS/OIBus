@@ -95,6 +95,11 @@ describe('Joi validator', () => {
         label: 'OibScanMode',
         acceptSubscription: false,
         subscriptionOnly: false
+      },
+      {
+        key: 'certificate',
+        type: 'OibCertificate',
+        label: 'OibCertificate'
       }
     ];
 
@@ -109,7 +114,8 @@ describe('Joi validator', () => {
       block: Joi.string().allow(null, ''),
       checkbox: Joi.boolean().falsy(0).truthy(1),
       timezone: Joi.string().allow(null, ''),
-      scanMode: Joi.string().allow(null, '')
+      scanMode: Joi.string().allow(null, ''),
+      certificate: Joi.string().allow(null, '')
     });
     expect(expectedSchema.describe()).toEqual(generatedSchema.describe());
   });

@@ -53,6 +53,16 @@
             <option *ngIf="!checkIfRequired(setting)" [ngValue]="null"></option>
             <option *ngFor="let option of setting.options" [ngValue]="option">{{ transform(option, setting.pipe) }}</option>
           </select>
+          <select
+            *ngIf="setting.type === 'OibCertificate'"
+            [formControlName]="setting.key"
+            [id]="setting.type + '-' + setting.key"
+            class="form-select mb-2 mr-sm-2"
+          >
+            <option [ngValue]="null"></option>
+            <option *ngFor="let certificate of certificates" [ngValue]="certificate.id">{{ certificate.name }}</option>
+          </select>
+
           <div class="form-check form-switch padded" *ngIf="setting.type === 'OibCheckbox'">
             <input [formControlName]="setting.key" [id]="setting.type + '-' + setting.key" type="checkbox" class="form-check-input" />
             <label class="form-check-label" *ngIf="setting.label" [for]="setting.type + '-' + setting.key">{{ setting.label }}</label>

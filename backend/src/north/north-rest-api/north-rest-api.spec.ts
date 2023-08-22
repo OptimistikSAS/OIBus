@@ -97,6 +97,7 @@ describe('NorthRestApi without proxy', () => {
     settings: {
       host: 'https://hostname/',
       acceptUnauthorized: false,
+      timeout: 30,
       valuesEndpoint: '/api/values',
       fileEndpoint: '/api/file',
       useProxy: false,
@@ -319,6 +320,7 @@ describe('NorthOIConnect with proxy but no password', () => {
       valuesEndpoint: '/api/values',
       fileEndpoint: '/api/file',
       useProxy: true,
+      timeout: 30,
       proxyUsername: 'proxy username',
       proxyPassword: null,
       authentication: {
@@ -429,6 +431,7 @@ describe('NorthOIConnect without authentication but with proxy', () => {
       valuesEndpoint: '/api/values',
       fileEndpoint: '/api/file',
       useProxy: true,
+      timeout: 30,
       proxyPassword: 'proxy password',
       proxyUsername: 'proxy password',
       authentication: {

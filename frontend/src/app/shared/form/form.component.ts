@@ -13,6 +13,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { OibArrayComponent } from './oib-form-array/oib-array.component';
 import { groupFormControlsByRow } from '../form-utils';
 import { PipeProviderService } from './pipe-provider.service';
+import { CertificateDTO } from '../../../../../shared/model/certificate.model';
 
 // TypeScript issue with Intl: https://github.com/microsoft/TypeScript/issues/49231
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -38,6 +39,7 @@ declare namespace Intl {
 export class FormComponent implements OnInit {
   @Input() settingsSchema: Array<Array<OibFormControl>> = [];
   @Input() scanModes: Array<ScanModeDTO> = [];
+  @Input() certificates: Array<CertificateDTO> = [];
   @Input({ required: true }) form!: FormGroup;
 
   private timezones: ReadonlyArray<Timezone> = Intl.supportedValuesOf('timeZone');

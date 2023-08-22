@@ -1,0 +1,67 @@
+<oib-box>
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between align-items-center">
+      <span translate="engine.certificate.list" id="title"></span>
+      <button type="button" class="btn btn-primary btn-sm oib-box-btn" (click)="addCertificate()">
+        <span class="fa fa-plus" id="add-certificate"></span>
+      </button>
+    </div>
+  </ng-template>
+</oib-box>
+
+<!-- the certificate list -->
+<div *ngIf="certificates.length !== 0; else emptyCertificates">
+  <table class="mb-2 table table-sm table-hover oib-table">
+    <thead class="light">
+      <tr>
+        <th translate="engine.certificate.name"></th>
+        <th translate="engine.certificate.description"></th>
+        <th translate="engine.certificate.public-key"></th>
+        <th translate="engine.certificate.certificate"></th>
+        <th translate="engine.certificate.expiry"></th>
+        <th style="width: 3%"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let certificate of certificates">
+        <td>{{ certificate.name }}</td>
+        <td>{{ certificate.description }}</td>
+        <td>
+          <oib-truncated-string [string]="certificate.publicKey"></oib-truncated-string>
+          <button class="btn btn-link" [string]="certificate.publicKey" oibClipboardCopy>
+            <span class="fa fa-copy"></span>
+          </button>
+        </td>
+        <td>
+          <div class="d-flex justify-content-between align-items-center">
+            <oib-truncated-string [string]="certificate.certificate"></oib-truncated-string>
+            <div>
+              <button class="btn btn-link px-1 py-0" [string]="certificate.certificate" oibClipboardCopy>
+                <span class="fa fa-copy"></span>
+              </button>
+              <button class="btn btn-link px-1 py-0" (click)="downloadCertificate(certificate)">
+                <span class="fa fa-download"></span>
+              </button>
+            </div>
+          </div>
+        </td>
+        <td>{{ certificate.expiry | datetime }}</td>
+        <td class="text-nowrap action-buttons">
+          <div class="pull-right">
+            <!-- Edit button -->
+            <button type="button" class="btn btn-link edit-certificate px-1 py-0" (click)="editCertificate(certificate)">
+              <span class="fa fa-pencil"></span>
+            </button>
+            <!-- Delete button -->
+            <button type="button" class="btn btn-link delete-certificate px-1 py-0" (click)="deleteCertificate(certificate)">
+              <span class="fa fa-trash"></span>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<ng-template #emptyCertificates>
+  <div class="oib-grey-container" id="no-certificate" translate="engine.certificate.none"></div>
+</ng-template>

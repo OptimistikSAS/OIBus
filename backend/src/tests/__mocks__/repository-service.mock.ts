@@ -79,6 +79,14 @@ export default jest.fn().mockImplementation(() => ({
     updateScanMode: jest.fn(),
     deleteScanMode: jest.fn()
   },
+  certificateRepository: {
+    findAll: jest.fn(),
+    findById: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    updateNameAndDescription: jest.fn(),
+    delete: jest.fn()
+  },
   proxyRepository: {
     getProxies: jest.fn(),
     getProxy: jest.fn(),

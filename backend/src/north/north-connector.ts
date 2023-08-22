@@ -61,7 +61,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
   constructor(
     protected connector: NorthConnectorDTO<T>,
     protected readonly encryptionService: EncryptionService,
-    private readonly repositoryService: RepositoryService,
+    protected readonly repositoryService: RepositoryService,
     protected logger: pino.Logger,
     protected readonly baseFolder: string
   ) {

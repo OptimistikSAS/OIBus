@@ -17,6 +17,7 @@ import SouthConnectorMetricsRepository from '../repository/south-connector-metri
 import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
 import SouthCacheRepository from '../repository/south-cache.repository';
 import EngineMetricsRepository from '../repository/engine-metrics.repository';
+import CertificateRepository from '../repository/certificate.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -24,6 +25,7 @@ export default class RepositoryService {
   private readonly _externalSourceRepository: ExternalSourceRepository;
   private readonly _ipFilterRepository: IpFilterRepository;
   private readonly _scanModeRepository: ScanModeRepository;
+  private readonly _certificateRepository: CertificateRepository;
   private readonly _northConnectorRepository: NorthConnectorRepository;
   private readonly _southConnectorRepository: SouthConnectorRepository;
   private readonly _southItemRepository: SouthItemRepository;
@@ -46,6 +48,7 @@ export default class RepositoryService {
     this._externalSourceRepository = new ExternalSourceRepository(oibusDatabase);
     this._ipFilterRepository = new IpFilterRepository(oibusDatabase);
     this._scanModeRepository = new ScanModeRepository(oibusDatabase);
+    this._certificateRepository = new CertificateRepository(oibusDatabase);
     this._engineRepository = new EngineRepository(oibusDatabase);
     this._northConnectorRepository = new NorthConnectorRepository(oibusDatabase);
     this._southConnectorRepository = new SouthConnectorRepository(oibusDatabase);
@@ -109,6 +112,10 @@ export default class RepositoryService {
 
   get scanModeRepository(): ScanModeRepository {
     return this._scanModeRepository;
+  }
+
+  get certificateRepository(): CertificateRepository {
+    return this._certificateRepository;
   }
 
   get northConnectorRepository(): NorthConnectorRepository {

@@ -19,6 +19,7 @@ import SouthConnectorMetricsRepository from '../repository/south-connector-metri
 import EngineMetricsRepository from '../repository/engine-metrics.repository';
 import SouthCacheRepository from '../repository/south-cache.repository';
 import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
+import CertificateRepository from '../repository/certificate.repository';
 
 jest.mock('better-sqlite3', () => jest.fn(() => 'sqlite database'));
 jest.mock('../repository/external-source.repository');
@@ -38,6 +39,7 @@ jest.mock('../repository/history-query.repository');
 jest.mock('../repository/history-query-item.repository');
 jest.mock('../repository/user.repository');
 jest.mock('../repository/subscription.repository');
+jest.mock('../repository/certificate.repository');
 
 describe('Repository service', () => {
   it('should properly initialize service', () => {
@@ -63,6 +65,7 @@ describe('Repository service', () => {
     expect(HistoryQueryItemRepository).toHaveBeenCalledWith('sqlite database');
     expect(UserRepository).toHaveBeenCalledWith('sqlite database');
     expect(SubscriptionRepository).toHaveBeenCalledWith('sqlite database');
+    expect(CertificateRepository).toHaveBeenCalledWith('sqlite database');
 
     expect(repositoryService.engineRepository).toBeDefined();
     expect(repositoryService.cryptoRepository).toBeDefined();
@@ -81,5 +84,6 @@ describe('Repository service', () => {
     expect(repositoryService.historyQueryItemRepository).toBeDefined();
     expect(repositoryService.userRepository).toBeDefined();
     expect(repositoryService.subscriptionRepository).toBeDefined();
+    expect(repositoryService.certificateRepository).toBeDefined();
   });
 });

@@ -19,6 +19,8 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
+import { CertificateDTO } from '../../../../../shared/model/certificate.model';
+import { CertificateService } from '../../services/certificate.service';
 
 @Component({
   selector: 'oib-edit-north',
@@ -47,6 +49,7 @@ export class EditNorthComponent implements OnInit {
   loading = true;
   northSettingsControls: Array<Array<OibFormControl>> = [];
   scanModes: Array<ScanModeDTO> = [];
+  certificates: Array<CertificateDTO> = [];
   manifest: NorthConnectorManifest | null = null;
 
   northForm: FormGroup<{
@@ -74,16 +77,18 @@ export class EditNorthComponent implements OnInit {
     private fb: NonNullableFormBuilder,
     private notificationService: NotificationService,
     private scanModeService: ScanModeService,
+    private certificateService: CertificateService,
     private modalService: ModalService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
-    combineLatest([this.scanModeService.list(), this.route.paramMap, this.route.queryParamMap])
+    combineLatest([this.scanModeService.list(), this.certificateService.list(), this.route.paramMap, this.route.queryParamMap])
       .pipe(
-        switchMap(([scanModes, params, queryParams]) => {
+        switchMap(([scanModes, certificates, params, queryParams]) => {
           this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
+          this.certificates = certificates;
           let paramNorthId = params.get('northId');
           this.northType = queryParams.get('type') || '';
           // if there is a North ID, we are editing a North connector

@@ -20,6 +20,8 @@ import { WindowService } from '../../shared/window.service';
 import { NorthConnectorMetrics, OIBusInfo } from '../../../../../shared/model/engine.model';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
+import { BooleanEnumPipe } from '../../shared/boolean-enum.pipe';
+import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { EngineService } from '../../services/engine.service';
 
 @Component({
@@ -43,7 +45,7 @@ import { EngineService } from '../../services/engine.service';
   ],
   templateUrl: './north-detail.component.html',
   styleUrls: ['./north-detail.component.scss'],
-  providers: [PageLoader]
+  providers: [PageLoader, BooleanEnumPipe]
 })
 export class NorthDetailComponent implements OnInit, OnDestroy {
   northConnector: NorthConnectorDTO | null = null;
@@ -62,7 +64,9 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
     private notificationService: NotificationService,
     private modalService: ModalService,
     private route: ActivatedRoute,
-    private cd: ChangeDetectorRef
+    private cd: ChangeDetectorRef,
+    private pipeProviderService: PipeProviderService,
+    private booleanPipe: BooleanEnumPipe
   ) {}
 
   ngOnInit() {
@@ -96,10 +100,36 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
         this.displayedSettings = manifest.settings
           .filter(setting => setting.displayInViewMode)
           .map(setting => {
-            return {
-              key: setting.label,
-              value: this.northConnector!.settings[setting.key]
-            };
+            switch (setting.type) {
+              case 'OibText':
+              case 'OibTextArea':
+              case 'OibCodeBlock':
+              case 'OibNumber':
+              case 'OibTimezone':
+              case 'OibScanMode':
+                return {
+                  key: setting.label,
+                  value: this.northConnector!.settings[setting.key]
+                };
+              case 'OibSelect':
+                return {
+                  key: setting.label,
+                  value: this.transform(this.northConnector!.settings[setting.key], setting.pipe)
+                };
+              case 'OibCheckbox':
+                return {
+                  key: setting.label,
+                  value: this.booleanPipe.transform(this.northConnector!.settings[setting.key])
+                };
+              case 'OibCertificate':
+              case 'OibSecret':
+              case 'OibArray':
+              case 'OibFormGroup':
+                return {
+                  key: setting.label,
+                  value: ''
+                };
+            }
           });
         this.manifest = manifest;
       });
@@ -107,6 +137,13 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
 
   getScanMode(scanModeId: string) {
     return this.scanModes.find(scanMode => scanMode.id === scanModeId)?.name || scanModeId;
+  }
+
+  transform(value: string, pipeIdentifier: string | undefined): string {
+    if (!pipeIdentifier || !this.pipeProviderService.validIdentifier(pipeIdentifier)) {
+      return value;
+    }
+    return this.pipeProviderService.getPipeForString(pipeIdentifier).transform(value);
   }
 
   testConnection() {
