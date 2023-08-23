@@ -41,6 +41,10 @@ side. It is important that the **AmsNetId is used through the IP address specifi
 
 ![TwinCAT Static Routes tool](../../../static/img/guide/south/ads/installation-ads-distant.png)
 
+![Add a TwinCAT Static Route](../../../static/img/guide/south/ads/routes.png)
+
+The AMSNetId specified must be filled in the **Client AMS Net ID** field of the configuration.
+
 :::danger Multiple ADS connectors
 Only one remote ADS connector can be set for OIBus. If two ADS connectors are needed to connect two PLCs, use a local
 ADS server (available by default if OIBus is installed on the same machine as 
