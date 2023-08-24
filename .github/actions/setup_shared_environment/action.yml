@@ -16,7 +16,6 @@ runs:
     - name: Write cache version
       shell: bash
       working-directory: shared
-
       run: echo $CACHE_VERSION >> cache_version
       env:
         CACHE_VERSION: ${{ inputs.cache_version }}
@@ -32,7 +31,7 @@ runs:
         # calendar week and the cache version.
         # Providing a different value for the cache version enables manual
         # invalidation of the cache in case it is in some erroneous state.
-        key: shared-node_modules-${{ runner.os }}-${{ hashFiles('./shared/package-lock.json') }}-${{ hashFiles('./shared/package.json') }}-${{ steps.date.outputs.date }}-${{ hashFiles('cache_version') }}
+        key: shared-node_modules-${{ runner.os }}-${{ hashFiles('./shared/package-lock.json') }}-${{ steps.date.outputs.date }}-${{ hashFiles('cache_version') }}
 
     - name: Remove cache version
       shell: bash
@@ -40,9 +39,9 @@ runs:
       run: rm cache_version
 
     - name: Install dependencies
+      if: ${{ steps.cached-node-modules-dependencies.outputs.cache-hit != 'true' }}
       shell: bash
       working-directory: shared
-      if: steps.cached-node-modules-dependencies.outputs.cache-hit != 'true'
       run: npm ci
 
 

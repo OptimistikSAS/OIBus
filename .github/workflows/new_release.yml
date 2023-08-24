@@ -1,0 +1,31 @@
+name: Release new OIBus version
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  # New commit on branch cancels running workflows of the same branch
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: 'Tag new version'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/release-please-action@v3
+        id: release
+        with:
+          command: manifest
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          signoff: "Optimistik SAS <optimistiksas@users.noreply.github.com>"
+          default-branch: main
+          config-file: .github/release-please-config.json
+          manifest-file: .github/release-please-manifest.json
+          prerelease: true
