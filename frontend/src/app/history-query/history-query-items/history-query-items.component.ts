@@ -119,7 +119,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   editItem(southItem: SouthConnectorItemDTO) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForEdition(this.southConnectorItemSchema, [], southItem);
+    component.prepareForEdition(this.southConnectorItemSchema, this.allItems, [], southItem);
     this.refreshAfterEditionModalClosed(modalRef);
   }
 
@@ -129,7 +129,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   addItem() {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.southConnectorItemSchema, []);
+    component.prepareForCreation(this.southConnectorItemSchema, this.allItems, []);
     this.refreshAfterCreationModalClosed(modalRef);
   }
 

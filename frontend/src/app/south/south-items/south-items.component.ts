@@ -119,7 +119,7 @@ export class SouthItemsComponent implements OnInit {
   editItem(southItem: SouthConnectorItemDTO) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForEdition(this.southConnectorItemSchema, this.scanModes, southItem);
+    component.prepareForEdition(this.southConnectorItemSchema, this.allItems, this.scanModes, southItem);
     this.refreshAfterEditionModalClosed(modalRef);
   }
 
@@ -129,7 +129,7 @@ export class SouthItemsComponent implements OnInit {
   addItem() {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.southConnectorItemSchema, this.scanModes);
+    component.prepareForCreation(this.southConnectorItemSchema, this.allItems, this.scanModes);
     this.refreshAfterCreationModalClosed(modalRef);
   }
 

@@ -50,6 +50,16 @@ describe('EditSouthItemModalComponent', () => {
     settings: [],
     schema: []
   } as SouthConnectorItemManifest;
+  const allItems: Array<SouthConnectorItemDTO> = [
+    {
+      id: 'id1',
+      enabled: true,
+      name: 'item',
+      connectorId: 'southId',
+      scanModeId: 'scanModeId1',
+      settings: {}
+    }
+  ];
   const scanModes: Array<ScanModeDTO> = [
     {
       id: 'scanModeId1',
@@ -79,7 +89,7 @@ describe('EditSouthItemModalComponent', () => {
 
   describe('create mode', () => {
     beforeEach(() => {
-      tester.componentInstance.prepareForCreation(southItemSchema, scanModes);
+      tester.componentInstance.prepareForCreation(southItemSchema, allItems, scanModes);
       tester.detectChanges();
     });
 
@@ -162,7 +172,7 @@ describe('EditSouthItemModalComponent', () => {
     };
 
     beforeEach(() => {
-      tester.componentInstance.prepareForEdition(southItemSchema, scanModes, southItem);
+      tester.componentInstance.prepareForEdition(southItemSchema, allItems, scanModes, southItem);
       tester.detectChanges();
     });
 
@@ -175,6 +185,15 @@ describe('EditSouthItemModalComponent', () => {
       tester.save.click();
 
       // name
+      expect(tester.validationErrors.length).toBe(1);
+      expect(fakeActiveModal.close).not.toHaveBeenCalled();
+    });
+
+    it('should not save if name already taken', () => {
+      tester.name.fillWith('item');
+      tester.save.click();
+
+      // mustBeUnique
       expect(tester.validationErrors.length).toBe(1);
       expect(fakeActiveModal.close).not.toHaveBeenCalled();
     });
