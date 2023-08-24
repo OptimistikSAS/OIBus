@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, NonNullableFormBuilder, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { ObservableState, SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -58,6 +58,7 @@ export class EditSouthItemModalComponent {
   southItemRows: Array<Array<OibFormControl>> = [];
 
   item: SouthConnectorItemDTO | null = null;
+  itemList: Array<SouthConnectorItemDTO> = [];
 
   form: FormGroup<{
     name: FormControl<string>;
@@ -74,9 +75,15 @@ export class EditSouthItemModalComponent {
 
   constructor(private modal: NgbActiveModal, private fb: NonNullableFormBuilder) {}
 
+  private checkUniqueness(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      return this.itemList.map(item => item.name).includes(control.value) ? { mustBeUnique: true } : null;
+    };
+  }
+
   private createForm(item: SouthConnectorItemDTO | null) {
     this.form = this.fb.group({
-      name: ['', Validators.required],
+      name: ['', [Validators.required, this.checkUniqueness()]],
       enabled: [true, Validators.required],
       scanModeId: this.fb.control<string | null>(null, Validators.required),
       settings: createFormGroup(this.southItemSchema!.settings, this.fb)
@@ -99,8 +106,9 @@ export class EditSouthItemModalComponent {
   /**
    * Prepares the component for creation.
    */
-  prepareForCreation(southItemSchema: SouthConnectorItemManifest, scanModes: Array<ScanModeDTO>) {
+  prepareForCreation(southItemSchema: SouthConnectorItemManifest, itemList: Array<SouthConnectorItemDTO>, scanModes: Array<ScanModeDTO>) {
     this.mode = 'create';
+    this.itemList = itemList;
     this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
     this.acceptSubscription = southItemSchema.scanMode.acceptSubscription;
     this.southItemRows = groupFormControlsByRow(southItemSchema.settings);
@@ -112,8 +120,14 @@ export class EditSouthItemModalComponent {
   /**
    * Prepares the component for edition.
    */
-  prepareForEdition(southItemSchema: SouthConnectorItemManifest, scanModes: Array<ScanModeDTO>, southItem: SouthConnectorItemDTO) {
+  prepareForEdition(
+    southItemSchema: SouthConnectorItemManifest,
+    itemList: Array<SouthConnectorItemDTO>,
+    scanModes: Array<ScanModeDTO>,
+    southItem: SouthConnectorItemDTO
+  ) {
     this.mode = 'edit';
+    this.itemList = itemList;
     this.item = southItem;
     this.subscriptionOnly = southItemSchema.scanMode.subscriptionOnly;
     this.acceptSubscription = southItemSchema.scanMode.acceptSubscription;
