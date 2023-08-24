@@ -3,7 +3,7 @@ import Joi from 'joi';
 import OibusController from './oibus.controller';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
-import { OIBusInfo } from '../../../../shared/model/engine.model';
+import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../shared/model/engine.model';
 
 jest.mock('./validators/joi.validator');
 
@@ -12,21 +12,29 @@ const schema = Joi.object({});
 const oibusController = new OibusController(validator, schema);
 
 const ctx = new KoaContextMock();
-const engineCommand = {
-  name: 'name',
-  port: 8080,
-  logParameters: {},
-  healthSignal: {}
-};
-const engine = {
-  id: '1',
-  ...engineCommand
-};
 
 describe('Oibus controller', () => {
+  let engineCommand: EngineSettingsCommandDTO;
+  let engine: EngineSettingsDTO;
+
   beforeEach(async () => {
     jest.resetAllMocks();
     jest.useFakeTimers();
+
+    engineCommand = {
+      name: 'name',
+      port: 8080,
+      logParameters: {
+        loki: {
+          username: 'user',
+          password: 'pass'
+        }
+      }
+    } as EngineSettingsCommandDTO;
+    engine = {
+      id: '1',
+      ...engineCommand
+    };
   });
 
   it('getEngineSettings() should return engine settings', async () => {
@@ -47,7 +55,7 @@ describe('Oibus controller', () => {
     expect(ctx.notFound).toHaveBeenCalledWith();
   });
 
-  it('updateEngineSettings() should update engine settings', async () => {
+  it('updateEngineSettings() should update engine settings with loki password change', async () => {
     ctx.request.body = engineCommand;
     const newEngine = { ...engine, name: 'new name' };
     ctx.app.repositoryService.engineRepository.getEngineSettings.mockReturnValueOnce(engine).mockReturnValueOnce(newEngine);
@@ -55,6 +63,23 @@ describe('Oibus controller', () => {
     await oibusController.updateEngineSettings(ctx);
 
     expect(validator.validate).toHaveBeenCalledWith(schema, engineCommand);
+    expect(ctx.app.encryptionService.encryptText).toHaveBeenCalledWith('pass');
+    expect(ctx.app.repositoryService.engineRepository.getEngineSettings).toHaveBeenCalledTimes(2);
+    expect(ctx.app.repositoryService.engineRepository.updateEngineSettings).toHaveBeenCalledWith(engineCommand);
+    await expect(ctx.app.reloadService.onUpdateOibusSettings).toHaveBeenCalledWith(engine, newEngine);
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('updateEngineSettings() should update engine settings without password change', async () => {
+    ctx.request.body = JSON.parse(JSON.stringify(engineCommand));
+    ctx.request.body.logParameters.loki.password = '';
+    const newEngine = { ...engine, name: 'new name' };
+    ctx.app.repositoryService.engineRepository.getEngineSettings.mockReturnValueOnce(engine).mockReturnValueOnce(newEngine);
+
+    await oibusController.updateEngineSettings(ctx);
+
+    expect(validator.validate).toHaveBeenCalledWith(schema, engineCommand);
+    expect(ctx.app.encryptionService.encryptText).not.toHaveBeenCalled();
     expect(ctx.app.repositoryService.engineRepository.getEngineSettings).toHaveBeenCalledTimes(2);
     expect(ctx.app.repositoryService.engineRepository.updateEngineSettings).toHaveBeenCalledWith(engineCommand);
     await expect(ctx.app.reloadService.onUpdateOibusSettings).toHaveBeenCalledWith(engine, newEngine);

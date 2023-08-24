@@ -6,6 +6,7 @@ export default class OibusController extends AbstractController {
   async getEngineSettings(ctx: KoaContext<void, EngineSettingsDTO>): Promise<void> {
     const settings = ctx.app.repositoryService.engineRepository.getEngineSettings();
     if (settings) {
+      settings.logParameters.loki.password = '';
       ctx.ok(settings);
     } else {
       ctx.notFound();
@@ -15,8 +16,14 @@ export default class OibusController extends AbstractController {
   async updateEngineSettings(ctx: KoaContext<EngineSettingsCommandDTO, void>): Promise<void> {
     try {
       await this.validate(ctx.request.body);
-      const oldEngineSettings = ctx.app.repositoryService.engineRepository.getEngineSettings();
-      ctx.app.repositoryService.engineRepository.updateEngineSettings(ctx.request.body as EngineSettingsCommandDTO);
+      const command = ctx.request.body as EngineSettingsCommandDTO;
+      const oldEngineSettings = ctx.app.repositoryService.engineRepository.getEngineSettings()!;
+      if (!command.logParameters.loki.password) {
+        command.logParameters.loki.password = oldEngineSettings.logParameters.loki.password;
+      } else {
+        command.logParameters.loki.password = await ctx.app.encryptionService.encryptText(command.logParameters.loki.password);
+      }
+      ctx.app.repositoryService.engineRepository.updateEngineSettings(command);
       const newEngineSettings = ctx.app.repositoryService.engineRepository.getEngineSettings();
       await ctx.app.reloadService.onUpdateOibusSettings(oldEngineSettings, newEngineSettings!);
       ctx.noContent();
