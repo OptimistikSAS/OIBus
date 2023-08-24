@@ -77,8 +77,7 @@ describe('SouthOracle with authentication', () => {
       database: 'db',
       username: 'username',
       password: 'password',
-      connectionTimeout: 1000,
-      requestTimeout: 1000
+      connectionTimeout: 1000
     }
   };
   beforeEach(async () => {

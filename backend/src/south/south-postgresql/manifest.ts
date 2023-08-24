@@ -36,7 +36,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibNumber',
       label: 'Connection timeout',
       defaultValue: 1000,
-      class: 'col-2',
+      class: 'col-3',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
       unitLabel: 'ms',
       displayInViewMode: false

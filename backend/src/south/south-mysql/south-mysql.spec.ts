@@ -66,6 +66,7 @@ const items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
+      requestTimeout: 1000,
       dateTimeFields: [
         {
           fieldName: 'anotherTimestamp',
@@ -102,6 +103,7 @@ const items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
+      requestTimeout: 1000,
       dateTimeFields: [
         {
           fieldName: 'anotherTimestamp',
@@ -138,6 +140,7 @@ const items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
+      requestTimeout: 1000,
       dateTimeFields: [],
       serialization: {
         type: 'csv',
@@ -173,8 +176,7 @@ describe('SouthMySQL with authentication', () => {
       database: 'db',
       username: 'username',
       password: 'password',
-      connectionTimeout: 1000,
-      requestTimeout: 1000
+      connectionTimeout: 1000
     }
   };
   beforeEach(async () => {
@@ -246,7 +248,7 @@ describe('SouthMySQL with authentication', () => {
     expect(mysqlConnection.execute).toHaveBeenCalledWith(
       {
         sql: items[0].settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'),
-        timeout: connector.settings.requestTimeout
+        timeout: items[0].settings.requestTimeout
       },
       {
         startTime,
@@ -297,7 +299,7 @@ describe('SouthMySQL with authentication', () => {
     expect(mysqlConnection.execute).toHaveBeenCalledWith(
       {
         sql: items[0].settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'),
-        timeout: connector.settings.requestTimeout
+        timeout: items[0].settings.requestTimeout
       },
       {
         startTime,
@@ -327,8 +329,7 @@ describe('SouthMySQL without authentication', () => {
       database: 'db',
       username: null,
       password: null,
-      connectionTimeout: 1000,
-      requestTimeout: 1000
+      connectionTimeout: 1000
     }
   };
   beforeEach(async () => {

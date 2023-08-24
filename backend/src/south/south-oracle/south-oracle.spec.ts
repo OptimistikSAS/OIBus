@@ -68,6 +68,7 @@ const items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
+      requestTimeout: 1000,
       dateTimeFields: [
         {
           fieldName: 'anotherTimestamp',
@@ -104,6 +105,7 @@ const items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
+      requestTimeout: 1000,
       dateTimeFields: [],
       serialization: {
         type: 'csv',
@@ -123,6 +125,7 @@ const items: Array<SouthConnectorItemDTO<SouthOracleItemSettings>> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
+      requestTimeout: 1000,
       dateTimeFields: [
         {
           fieldName: 'anotherTimestamp',
@@ -179,8 +182,7 @@ describe('SouthOracle with authentication', () => {
       database: 'db',
       username: 'username',
       password: 'password',
-      connectionTimeout: 1000,
-      requestTimeout: 1000
+      connectionTimeout: 1000
     }
   };
   beforeEach(async () => {
@@ -233,7 +235,7 @@ describe('SouthOracle with authentication', () => {
       endTime: DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
     });
     const oracleConnection = {
-      callTimeout: connector.settings.requestTimeout,
+      callTimeout: items[0].settings.requestTimeout,
       close: jest.fn(),
       execute: jest
         .fn()
@@ -290,7 +292,7 @@ describe('SouthOracle with authentication', () => {
       endTime: DateTime.fromISO(endTime).toFormat('yyyy-MM-dd HH:mm:ss.SSS')
     });
     const oracleConnection = {
-      callTimeout: connector.settings.requestTimeout,
+      callTimeout: items[1].settings.requestTimeout,
       close: jest.fn(),
       execute: jest
         .fn()
@@ -317,7 +319,7 @@ describe('SouthOracle with authentication', () => {
 
     (generateReplacementParameters as jest.Mock).mockReturnValue({ startTime, endTime });
     const oracleConnection = {
-      callTimeout: connector.settings.requestTimeout,
+      callTimeout: items[0].settings.requestTimeout,
       close: jest.fn(),
       execute: jest.fn().mockImplementation(() => {
         throw new Error('query error');

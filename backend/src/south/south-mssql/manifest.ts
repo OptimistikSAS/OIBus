@@ -37,7 +37,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Connection timeout',
       defaultValue: 1000,
       unitLabel: 'ms',
-      class: 'col-2',
+      class: 'col-3',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
       displayInViewMode: false
     },

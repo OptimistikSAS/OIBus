@@ -223,7 +223,6 @@ export interface SouthMySQLSettings extends BaseSouthSettings {
   database: string;
   username: string | null;
   password: string | null;
-  requestTimeout: number;
 }
 
 export interface SouthODBCSettings extends BaseSouthSettings {
@@ -232,7 +231,7 @@ export interface SouthODBCSettings extends BaseSouthSettings {
   connectionString: string;
   password: string | null;
   connectionTimeout: number;
-  requestTimeout: number;
+  requestTimeout?: number;
 }
 
 export interface SouthOIAnalyticsSettings extends BaseSouthSettings {
@@ -273,7 +272,6 @@ export interface SouthOracleSettings extends BaseSouthSettings {
   database: string;
   username: string | null;
   password: string | null;
-  requestTimeout: number;
 }
 
 export interface SouthPostgreSQLSettings extends BaseSouthSettings {
@@ -522,6 +520,7 @@ export interface SouthMSSQLItemSettings extends BaseSouthItemSettings {
 
 export interface SouthMySQLItemSettings extends BaseSouthItemSettings {
   query: string;
+  requestTimeout: number;
   dateTimeFields: Array<SouthMySQLItemSettingsDateTimeFields>;
   serialization: SouthMySQLItemSettingsSerialization;
 }
@@ -553,6 +552,7 @@ export interface SouthOPCUAItemSettings extends BaseSouthItemSettings {
 
 export interface SouthOracleItemSettings extends BaseSouthItemSettings {
   query: string;
+  requestTimeout: number;
   dateTimeFields: Array<SouthOracleItemSettingsDateTimeFields>;
   serialization: SouthOracleItemSettingsSerialization;
 }
