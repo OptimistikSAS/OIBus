@@ -9,15 +9,16 @@ import { combineLatest } from 'rxjs';
 import { EngineMetricsComponent } from '../engine/engine-metrics/engine-metrics.component';
 import { NorthMetricsComponent } from '../north/north-metrics/north-metrics.component';
 import { SouthMetricsComponent } from '../south/south-metrics/south-metrics.component';
-import { WindowService } from '../shared/window.service';
 import { HomeMetrics } from '../../../../shared/model/engine.model';
+import { RouterLink } from '@angular/router';
+import { WindowService } from '../shared/window.service';
 
 const NUMBER_OF_COLUMN = 3;
 
 @Component({
   selector: 'oib-home',
   standalone: true,
-  imports: [TranslateModule, NgForOf, NgIf, EngineMetricsComponent, NorthMetricsComponent, SouthMetricsComponent],
+  imports: [TranslateModule, NgForOf, NgIf, EngineMetricsComponent, NorthMetricsComponent, SouthMetricsComponent, RouterLink],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })
