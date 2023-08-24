@@ -1,6 +1,6 @@
 {
   "name": "oibus",
-  "version": "3.0.0",
+  "version": "2.9.1",
   "main": "index.js",
   "author": "Optimistik SAS",
   "license": "EUPL",
@@ -19,7 +19,7 @@
     "build:macos": "npm run internal:build:lib-macos && rimraf ../build/bin/macos && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos/oibus --target node18-macos-x64",
     "build:macos-arm64": "npm run internal:build:lib-macos-arm64 && rimraf ../build/bin/macos-arm64 && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/macos-arm64/oibus --target node18-macos-arm64",
     "build:linux": "npm run internal:build:lib-linux && rimraf ../build/bin/linux && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux/oibus --target node18-linux-x64 && ncp ../build/deps/linux ../build/bin/linux",
-    "build:linux-arm64": "npm run internal:build:linux-arm64 && rimraf ../build/bin/linux-arm64 && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/oibus --target node18-linux-arm64 && ncp ../build/deps/linux-arm64 ../build/bin/linux-arm64",
+    "build:linux-arm64": "npm run internal:build:lib-linux-arm64 && rimraf ../build/bin/linux-arm64 && npm run build && pkg ./dist/backend/src/index.js --public --compress GZip --config ./package.json --output ../build/bin/linux-arm64/oibus --target node18-linux-arm64 && ncp ../build/deps/linux-arm64 ../build/bin/linux-arm64",
     "start": "tsc --sourceMap --project tsconfig.app.json && npm run start:backend",
     "start:backend": "node ./dist/backend/src/index.js --config ../data-folder",
     "generate-settings-interface": "tsc -p tsconfig.generator.json && node dist/backend/src/settings-interface.generator.js",
@@ -30,11 +30,11 @@
     "lint": "eslint . --ext .ts --fix --ignore-path .gitignore",
     "lint:fix": "npm run lint -- --fix",
     "build": "tsc --project tsconfig.app.json",
-    "internal:build:lib-win": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=x64",
-    "internal:build:lib-macos": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=x64",
-    "internal:build:lib-macos-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=arm64",
-    "internal:build:lib-linux": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=x64",
-    "internal:build:lib-linux-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=arm64"
+    "internal:build:lib-win": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=win --target_arch=x64 ",
+    "internal:build:lib-macos": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_platform=darwin --target_arch=x64 ",
+    "internal:build:lib-macos-arm64": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=arm64 && npm run --prefix node_modules/argon2 install -- --target_arch=arm64 --target_platform=darwin",
+    "internal:build:lib-linux": "npm run --prefix node_modules/better-sqlite3 install -- --target=v18.15.0 --arch=x64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_arch=x64 --target_platform=linux",
+    "internal:build:lib-linux-arm64": "npm run --prefix node_modules/better-sqlite3 install --update-binary -- --target=v18.15.0 --arch=arm64 && npm run --prefix node_modules/argon2 install --update-binary -- --target_arch=arm64 --target_platform=linux"
   },
   "keywords": [
     "Optimistik"
