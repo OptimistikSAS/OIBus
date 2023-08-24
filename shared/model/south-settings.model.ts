@@ -31,7 +31,10 @@ export type SouthMQTTSettingsQos = (typeof SOUTH_M_Q_T_T_SETTINGS_QOSS)[number];
 const SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_PAYLOAD_TIMESTAMP_TYPES = ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'] as const
 export type SouthMQTTItemSettingsJsonPayloadTimestampPayloadTimestampType = (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_PAYLOAD_TIMESTAMP_TYPES)[number];
 
-const SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_ORIGINS = ['payload', 'oibus'] as const
+const SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_POINT_ID_ORIGINS = ['oibus', 'payload'] as const
+export type SouthMQTTItemSettingsJsonPayloadPointIdOrigin = (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_POINT_ID_ORIGINS)[number];
+
+const SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_ORIGINS = ['oibus', 'payload'] as const
 export type SouthMQTTItemSettingsJsonPayloadTimestampOrigin = (typeof SOUTH_M_Q_T_T_ITEM_SETTINGS_JSON_PAYLOAD_TIMESTAMP_ORIGINS)[number];
 
 const SOUTH_M_Q_T_T_ITEM_SETTINGS_VALUE_TYPES = ['number', 'string', 'json'] as const
@@ -328,10 +331,12 @@ export interface SouthMQTTItemSettingsJsonPayloadOtherFields {
 }
 
 export interface SouthMQTTItemSettingsJsonPayload {
-  useArray: boolean | null;
+  useArray: boolean;
   dataArrayPath?: string | null;
-  valuePath: string;
+  pointIdOrigin: SouthMQTTItemSettingsJsonPayloadPointIdOrigin;
   timestampOrigin: SouthMQTTItemSettingsJsonPayloadTimestampOrigin;
+  valuePath: string;
+  pointIdPath?: string | null;
   timestampPayload?: SouthMQTTItemSettingsJsonPayloadTimestampPayload | null;
   otherFields: Array<SouthMQTTItemSettingsJsonPayloadOtherFields> | null;
 }

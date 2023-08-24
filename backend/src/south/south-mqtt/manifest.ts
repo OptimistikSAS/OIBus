@@ -178,43 +178,59 @@ const manifest: SouthConnectorManifest = {
             type: 'OibCheckbox',
             label: 'Values in array',
             defaultValue: false,
-            newRow: true,
-            displayInViewMode: false
+            class: 'col-4',
+            validators: [{ key: 'required' }]
           },
           {
             key: 'dataArrayPath',
             type: 'OibText',
             label: 'Array path',
             newRow: false,
-            displayInViewMode: false,
             defaultValue: '',
+            class: 'col-4',
             conditionalDisplay: { field: 'useArray', values: [true] }
+          },
+          {
+            key: 'pointIdOrigin',
+            type: 'OibSelect',
+            label: 'Point ID origin',
+            options: ['oibus', 'payload'],
+            defaultValue: 'oibus',
+            class: 'col-4',
+            newRow: true,
+            validators: [{ key: 'required' }]
+          },
+          {
+            key: 'timestampOrigin',
+            type: 'OibSelect',
+            label: 'Timestamp origin',
+            options: ['oibus', 'payload'],
+            defaultValue: 'oibus',
+            class: 'col-4',
+            validators: [{ key: 'required' }]
           },
           {
             key: 'valuePath',
             type: 'OibText',
             label: 'Value path',
             defaultValue: 'value',
-            validators: [{ key: 'required' }],
+            class: 'col-4',
             newRow: true,
-            displayInViewMode: false
+            validators: [{ key: 'required' }]
           },
           {
-            key: 'timestampOrigin',
-            type: 'OibSelect',
-            label: 'Timestamp origin',
-            options: ['payload', 'oibus'],
-            validators: [{ key: 'required' }],
-            defaultValue: 'oibus',
-            newRow: false,
-            displayInViewMode: false
+            key: 'pointIdPath',
+            type: 'OibText',
+            label: 'Point ID path',
+            defaultValue: 'name',
+            class: 'col-4',
+            conditionalDisplay: { field: 'pointIdOrigin', values: ['payload'] }
           },
           {
             key: 'timestampPayload',
             type: 'OibFormGroup',
             label: '',
             newRow: true,
-            displayInViewMode: false,
             conditionalDisplay: { field: 'timestampOrigin', values: ['payload'] },
             content: [
               {
@@ -232,15 +248,13 @@ const manifest: SouthConnectorManifest = {
                 defaultValue: 'string',
                 options: ['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms'],
                 validators: [{ key: 'required' }],
-                pipe: 'dateTimeType',
-                displayInViewMode: true
+                pipe: 'dateTimeType'
               },
               {
                 key: 'timezone',
                 label: 'Timezone',
                 type: 'OibTimezone',
                 defaultValue: 'UTC',
-                displayInViewMode: false,
                 validators: [{ key: 'required' }],
                 conditionalDisplay: { field: 'timestampType', values: ['string'] }
               },
@@ -250,8 +264,7 @@ const manifest: SouthConnectorManifest = {
                 type: 'OibText',
                 defaultValue: 'yyyy-MM-dd HH:mm:ss',
                 conditionalDisplay: { field: 'timestampType', values: ['string'] },
-                validators: [{ key: 'required' }],
-                displayInViewMode: false
+                validators: [{ key: 'required' }]
               }
             ]
           },
