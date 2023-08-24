@@ -215,7 +215,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       process.env.ORA_SDTZ = 'UTC';
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
       connection = await oracledb.getConnection(config);
-      connection.callTimeout = this.connector.settings.requestTimeout;
+      connection.callTimeout = item.settings.requestTimeout;
 
       const params = generateReplacementParameters(item.settings.query, oracleStartTime, oracleEndTime);
       const { rows } = await connection.execute(

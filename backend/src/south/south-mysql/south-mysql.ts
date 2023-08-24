@@ -204,7 +204,7 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
       const [data] = await connection.execute(
         {
           sql: item.settings.query.replace(/@StartTime/g, '?').replace(/@EndTime/g, '?'),
-          timeout: this.connector.settings.requestTimeout
+          timeout: item.settings.requestTimeout
         },
         params
       );

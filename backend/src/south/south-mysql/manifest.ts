@@ -34,9 +34,10 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'connectionTimeout',
       type: 'OibNumber',
-      label: 'Connection timeout (ms)',
+      label: 'Connection timeout',
+      unitLabel: 'ms',
       defaultValue: 1000,
-      class: 'col-2',
+      class: 'col-3',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
       displayInViewMode: false
     },
@@ -60,16 +61,6 @@ const manifest: SouthConnectorManifest = {
       type: 'OibSecret',
       label: 'Password',
       displayInViewMode: false
-    },
-    {
-      key: 'requestTimeout',
-      type: 'OibNumber',
-      label: 'Request timeout (ms)',
-      defaultValue: 1000,
-      class: 'col-4',
-      newRow: true,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60000 } }],
-      displayInViewMode: false
     }
   ],
   items: {
@@ -87,6 +78,17 @@ const manifest: SouthConnectorManifest = {
         class: 'col-12 text-nowrap',
         validators: [{ key: 'required' }],
         displayInViewMode: true
+      },
+      {
+        key: 'requestTimeout',
+        type: 'OibNumber',
+        label: 'Request timeout',
+        defaultValue: 1000,
+        class: 'col-4',
+        newRow: true,
+        unitLabel: 'ms',
+        validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 300_000 } }],
+        displayInViewMode: false
       },
       buildDateTimeFieldsFormControl(['string', 'iso-string', 'unix-epoch', 'unix-epoch-ms']),
       buildSerializationFormControl(['csv'])

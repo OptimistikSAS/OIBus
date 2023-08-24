@@ -50,12 +50,12 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'connectionTimeout',
       type: 'OibNumber',
-      label: 'Connection timeout (ms)',
+      label: 'Connection timeout',
       defaultValue: 1000,
       newRow: true,
+      unitLabel: 'ms',
       class: 'col-4',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
-      displayInViewMode: false
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }]
     },
     {
       key: 'requestTimeout',
@@ -65,7 +65,7 @@ const manifest: SouthConnectorManifest = {
       unitLabel: 'ms',
       class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
-      displayInViewMode: false
+      conditionalDisplay: { field: 'remoteAgent', values: [true] }
     }
   ],
   items: {
