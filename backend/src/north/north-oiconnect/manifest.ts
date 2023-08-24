@@ -24,6 +24,7 @@ const manifest: NorthConnectorManifest = {
       ],
       displayInViewMode: true
     },
+    { key: 'timeout', type: 'OibNumber', label: 'Timeout', unitLabel: 's', defaultValue: 30, validators: [{ key: 'required' }] },
     {
       key: 'acceptUnauthorized',
       type: 'OibCheckbox',
@@ -32,14 +33,13 @@ const manifest: NorthConnectorManifest = {
       defaultValue: false,
       displayInViewMode: true
     },
-    { key: 'timeout', type: 'OibNumber', label: 'Timeout', newRow: true, defaultValue: 1000, validators: [{ key: 'required' }] },
-    ...proxy,
     {
       key: 'username',
       type: 'OibText',
       label: 'Username',
       defaultValue: '',
       validators: [{ key: 'required' }],
+      newRow: true,
       displayInViewMode: false
     },
     {
@@ -48,7 +48,8 @@ const manifest: NorthConnectorManifest = {
       label: 'Password',
       defaultValue: '',
       displayInViewMode: false
-    }
+    },
+    ...proxy
   ]
 };
 

@@ -121,7 +121,7 @@ export function buildSerializationFormControl(serializationTypes: Array<Serializ
         key: 'filename',
         type: 'OibText',
         label: 'Filename',
-        defaultValue: 'sql.csv',
+        defaultValue: '@ConnectorName-@CurrentDate.csv',
         newRow: false,
         displayInViewMode: false,
         validators: [{ key: 'required' }]

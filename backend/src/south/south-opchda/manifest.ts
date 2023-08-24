@@ -60,8 +60,8 @@ const manifest: SouthConnectorManifest = {
     {
       key: 'readTimeout',
       type: 'OibNumber',
-      label: 'Read timeout (ms)',
-      defaultValue: 180_000,
+      label: 'Read timeout (s)',
+      defaultValue: 180,
       newRow: true,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       displayInViewMode: false
@@ -92,6 +92,13 @@ const manifest: SouthConnectorManifest = {
     },
     settings: [
       {
+        key: 'nodeId',
+        type: 'OibText',
+        label: 'Node ID',
+        validators: [{ key: 'required' }],
+        displayInViewMode: true
+      },
+      {
         key: 'aggregate',
         type: 'OibSelect',
         label: 'Aggregate',
@@ -108,13 +115,6 @@ const manifest: SouthConnectorManifest = {
         defaultValue: 'None',
         displayInViewMode: true,
         validators: [{ key: 'required' }]
-      },
-      {
-        key: 'nodeId',
-        type: 'OibText',
-        label: 'Node ID',
-        validators: [{ key: 'required' }],
-        displayInViewMode: true
       }
     ]
   }

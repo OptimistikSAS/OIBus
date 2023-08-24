@@ -26,10 +26,27 @@ const manifest: NorthConnectorManifest = {
       displayInViewMode: true
     },
     {
+      key: 'timeout',
+      type: 'OibNumber',
+      label: 'Timeout',
+      defaultValue: 30,
+      unitLabel: 's',
+      validators: [{ key: 'required' }]
+    },
+    {
+      key: 'acceptUnauthorized',
+      type: 'OibCheckbox',
+      label: 'Accept unauthorized certificate',
+      validators: [{ key: 'required' }],
+      defaultValue: false,
+      displayInViewMode: true
+    },
+    {
       key: 'accessKey',
       type: 'OibText',
       label: 'Access key',
       validators: [{ key: 'required' }],
+      newRow: true,
       displayInViewMode: true
     },
     {
@@ -38,24 +55,7 @@ const manifest: NorthConnectorManifest = {
       label: 'Secret key',
       displayInViewMode: false
     },
-    {
-      key: 'timeout',
-      type: 'OibNumber',
-      label: 'Timeout',
-      newRow: true,
-      defaultValue: 30_000,
-      unitLabel: 'ms',
-      validators: [{ key: 'required' }]
-    },
-    ...proxy,
-    {
-      key: 'acceptUnauthorized',
-      type: 'OibCheckbox',
-      label: 'Accept unauthorized certificate',
-      validators: [{ key: 'required' }],
-      defaultValue: false,
-      displayInViewMode: true
-    }
+    ...proxy
   ]
 };
 export default manifest;

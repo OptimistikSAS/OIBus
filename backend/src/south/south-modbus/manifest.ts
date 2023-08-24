@@ -18,7 +18,6 @@ const manifest: SouthConnectorManifest = {
       type: 'OibText',
       label: 'Host',
       defaultValue: '127.0.0.1',
-      newRow: true,
       class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -28,16 +27,6 @@ const manifest: SouthConnectorManifest = {
       type: 'OibNumber',
       label: 'Port',
       defaultValue: 502,
-      newRow: false,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-      displayInViewMode: true
-    },
-    {
-      key: 'slaveId',
-      type: 'OibNumber',
-      label: 'Slave ID',
-      defaultValue: 1,
-      newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       displayInViewMode: true
     },
@@ -47,10 +36,19 @@ const manifest: SouthConnectorManifest = {
       label: 'Retry interval',
       unitLabel: 'ms',
       defaultValue: 10000,
-      newRow: true,
       class: 'col-4',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60_000 } }],
       displayInViewMode: false
+    },
+    {
+      key: 'slaveId',
+      type: 'OibNumber',
+      label: 'Slave ID',
+      defaultValue: 1,
+      newRow: true,
+      class: 'col-4',
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
+      displayInViewMode: true
     },
     {
       key: 'addressOffset',
@@ -58,7 +56,6 @@ const manifest: SouthConnectorManifest = {
       options: ['Modbus', 'JBus'],
       label: 'Address Offset',
       defaultValue: 'Modbus',
-      newRow: true,
       class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -69,7 +66,6 @@ const manifest: SouthConnectorManifest = {
       options: ['Big Endian', 'Little Endian'],
       label: 'Endianness',
       defaultValue: 'Big Endian',
-      newRow: false,
       class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true

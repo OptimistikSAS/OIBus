@@ -19,14 +19,22 @@ const manifest: SouthConnectorManifest = {
       type: 'OibText',
       label: 'URL',
       defaultValue: 'http://localhost',
-      newRow: true,
       validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }],
+      displayInViewMode: true
+    },
+    {
+      key: 'acceptUnauthorized',
+      type: 'OibCheckbox',
+      label: 'Accept unauthorized certificate',
+      validators: [{ key: 'required' }],
+      defaultValue: false,
       displayInViewMode: true
     },
     {
       key: 'accessKey',
       type: 'OibText',
       label: 'Access key',
+      newRow: true,
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
@@ -36,24 +44,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Secret key',
       displayInViewMode: false
     },
-    {
-      key: 'timeout',
-      type: 'OibNumber',
-      label: 'Timeout',
-      newRow: true,
-      defaultValue: 30_000,
-      unitLabel: 'ms',
-      validators: [{ key: 'required' }]
-    },
-    ...proxy,
-    {
-      key: 'acceptUnauthorized',
-      type: 'OibCheckbox',
-      label: 'Accept unauthorized certificate',
-      validators: [{ key: 'required' }],
-      defaultValue: false,
-      displayInViewMode: true
-    }
+    ...proxy
   ],
   items: {
     scanMode: {
