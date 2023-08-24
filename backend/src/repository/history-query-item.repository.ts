@@ -95,7 +95,9 @@ export default class HistoryQueryItemRepository {
   createHistoryItem(historyId: string, command: SouthConnectorItemCommandDTO): SouthConnectorItemDTO {
     const id = generateRandomId(6);
     const insertQuery = `INSERT INTO ${HISTORY_ITEMS_TABLE} (id, name, enabled, history_id, settings) ` + `VALUES (?, ?, ?, ?, ?);`;
-    const insertResult = this.database.prepare(insertQuery).run(id, command.name, 1, historyId, JSON.stringify(command.settings));
+    const insertResult = this.database
+      .prepare(insertQuery)
+      .run(id, command.name, +command.enabled, historyId, JSON.stringify(command.settings));
 
     const query = `SELECT id, name, enabled, history_id AS historyId, settings FROM ${HISTORY_ITEMS_TABLE} WHERE ROWID = ?;`;
     const result: any = this.database.prepare(query).get(insertResult.lastInsertRowid);
@@ -113,8 +115,8 @@ export default class HistoryQueryItemRepository {
    * Update a History item by its ID
    */
   updateHistoryItem(id: string, command: SouthConnectorItemCommandDTO): void {
-    const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, settings = ? WHERE id = ?;`;
-    this.database.prepare(query).run(command.name, JSON.stringify(command.settings), id);
+    const query = `UPDATE ${HISTORY_ITEMS_TABLE} SET name = ?, enabled = ?, settings = ? WHERE id = ?;`;
+    this.database.prepare(query).run(command.name, +command.enabled, JSON.stringify(command.settings), id);
   }
 
   /**

@@ -98,7 +98,11 @@
       </oib-box>
 
       <!-- Items -->
-      <oib-history-query-items [historyQuery]="historyQuery" [southConnectorItemSchema]="southManifest.items"></oib-history-query-items>
+      <oib-history-query-items
+        [displayItemToggle]="true"
+        [historyQuery]="historyQuery"
+        [southConnectorItemSchema]="southManifest.items"
+      ></oib-history-query-items>
     </div>
   </div>
 </div>

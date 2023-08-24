@@ -51,6 +51,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   @Input() southConnectorItemSchema!: SouthConnectorItemManifest;
   @Input() initItems: Array<SouthConnectorItemDTO> = [];
   @Output() readonly inMemoryItems = new EventEmitter<Array<SouthConnectorItemDTO>>();
+  @Input() displayItemToggle = false;
 
   allItems: Array<SouthConnectorItemDTO> = [];
   private filteredItems: Array<SouthConnectorItemDTO> = [];
@@ -142,7 +143,7 @@ export class HistoryQueryItemsComponent implements OnInit {
           if (this.historyQuery) {
             return this.historyQueryService.createItem(this.historyQuery.id, command);
           } else {
-            this.allItems.push({ id: '', connectorId: '', enabled: false, ...command });
+            this.allItems.push({ id: '', connectorId: '', ...command });
             return of(null);
           }
         })
@@ -163,7 +164,7 @@ export class HistoryQueryItemsComponent implements OnInit {
           if (this.historyQuery) {
             return this.historyQueryService.updateItem(this.historyQuery.id, command.id || '', command);
           } else {
-            this.allItems.push({ id: '', connectorId: '', enabled: false, ...command });
+            this.allItems.push({ id: '', connectorId: '', ...command });
             return of(null);
           }
         })

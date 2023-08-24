@@ -134,6 +134,7 @@ describe('HistoryQueryService', () => {
     let done = false;
     const command: SouthConnectorItemCommandDTO = {
       name: 'myPointId',
+      enabled: true,
       scanModeId: 'scanModeId',
       settings: {}
     };
@@ -149,6 +150,7 @@ describe('HistoryQueryService', () => {
     let done = false;
     const command: SouthConnectorItemCommandDTO = {
       name: 'myPointId',
+      enabled: false,
       scanModeId: 'scanModeId',
       settings: {}
     };

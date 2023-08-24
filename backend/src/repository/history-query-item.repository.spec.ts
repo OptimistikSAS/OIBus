@@ -149,6 +149,7 @@ describe('History query item repository', () => {
 
     const command: SouthConnectorItemCommandDTO = {
       name: 'historyItem1',
+      enabled: true,
       scanModeId: 'history',
       settings: {}
     };
@@ -168,12 +169,13 @@ describe('History query item repository', () => {
   it('should update a history query item', () => {
     const command: SouthConnectorItemCommandDTO = {
       name: 'historyItem1',
+      enabled: false,
       scanModeId: 'history',
       settings: {}
     };
     repository.updateHistoryItem('id1', command);
-    expect(database.prepare).toHaveBeenCalledWith('UPDATE history_items SET name = ?, settings = ? WHERE id = ?;');
-    expect(run).toHaveBeenCalledWith(command.name, JSON.stringify(command.settings), 'id1');
+    expect(database.prepare).toHaveBeenCalledWith('UPDATE history_items SET name = ?, enabled = ?, settings = ? WHERE id = ?;');
+    expect(run).toHaveBeenCalledWith(command.name, 0, JSON.stringify(command.settings), 'id1');
   });
 
   it('should delete a history query item', () => {

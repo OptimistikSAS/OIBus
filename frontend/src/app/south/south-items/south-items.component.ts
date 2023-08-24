@@ -52,6 +52,7 @@ export class SouthItemsComponent implements OnInit {
   @Input() southConnector: SouthConnectorDTO | null = null;
   @Input({ required: true }) southConnectorItemSchema!: SouthConnectorItemManifest;
   @Input({ required: true }) scanModes!: Array<ScanModeDTO>;
+  @Input() displayItemToggle = false;
 
   @Output() readonly inMemoryItems = new EventEmitter<Array<SouthConnectorItemDTO>>();
 
@@ -142,7 +143,7 @@ export class SouthItemsComponent implements OnInit {
           if (this.southConnector) {
             return this.southConnectorService.createItem(this.southConnector.id, command);
           } else {
-            this.allItems.push({ id: '', connectorId: '', enabled: false, ...command });
+            this.allItems.push({ id: '', connectorId: '', ...command });
             return of(null);
           }
         })
@@ -163,7 +164,7 @@ export class SouthItemsComponent implements OnInit {
           if (this.southConnector) {
             return this.southConnectorService.updateItem(this.southConnector.id, command.id || '', command);
           } else {
-            this.allItems.push({ id: '', connectorId: '', enabled: false, ...command });
+            this.allItems.push({ id: '', connectorId: '', ...command });
             return of(null);
           }
         })

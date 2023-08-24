@@ -24,6 +24,10 @@ class EditSouthItemModalComponentTester extends ComponentTester<EditSouthItemMod
     return this.select('#OibScanMode-item-scan-mode')!;
   }
 
+  get enabled() {
+    return this.input('#item-enabled')!;
+  }
+
   get validationErrors() {
     return this.elements('val-errors div');
   }
@@ -100,6 +104,7 @@ describe('EditSouthItemModalComponent', () => {
 
       const command: SouthConnectorItemCommandDTO = {
         id: undefined,
+        enabled: true,
         name: 'MyName',
         scanModeId: 'scanModeId2',
         settings: {}
@@ -136,6 +141,7 @@ describe('EditSouthItemModalComponent', () => {
 
       const command: SouthConnectorItemCommandDTO = {
         id: 'id1',
+        enabled: true,
         name: 'MyName-2',
         scanModeId: 'scanModeId2',
         settings: {}
@@ -175,10 +181,12 @@ describe('EditSouthItemModalComponent', () => {
 
     it('should save if valid', fakeAsync(() => {
       tester.name.fillWith('South Item 1 (updated)');
+      tester.enabled.uncheck();
       tester.scanMode.selectLabel('Subscribe');
       tester.save.click();
       const command: SouthConnectorItemCommandDTO = {
         id: 'id1',
+        enabled: false,
         name: 'South Item 1 (updated)',
         scanModeId: 'subscription',
         settings: {}

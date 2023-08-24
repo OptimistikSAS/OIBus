@@ -119,7 +119,7 @@ export default class SouthItemRepository {
       `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings) ` + `VALUES (?, ?, ?, ?, ?, ?);`;
     const insertResult = this.database
       .prepare(insertQuery)
-      .run(id, command.name, 1, southId, command.scanModeId, JSON.stringify(command.settings));
+      .run(id, command.name, +command.enabled, southId, command.scanModeId, JSON.stringify(command.settings));
 
     const query = `SELECT id, name, enabled, connector_id AS connectorId, scan_mode_id AS scanModeId, settings FROM ${SOUTH_ITEMS_TABLE} WHERE ROWID = ?;`;
     const result: any = this.database.prepare(query).get(insertResult.lastInsertRowid);
@@ -137,8 +137,8 @@ export default class SouthItemRepository {
    * Update a South item by its ID
    */
   updateSouthItem(id: string, command: SouthConnectorItemCommandDTO): void {
-    const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`;
-    this.database.prepare(query).run(command.name, command.scanModeId, JSON.stringify(command.settings), id);
+    const query = `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`;
+    this.database.prepare(query).run(command.name, +command.enabled, command.scanModeId, JSON.stringify(command.settings), id);
   }
 
   /**
