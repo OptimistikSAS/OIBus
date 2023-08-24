@@ -176,7 +176,7 @@ const manifest: SouthConnectorManifest = {
           {
             key: 'useArray',
             type: 'OibCheckbox',
-            label: 'Values in array',
+            label: 'Payload in array',
             defaultValue: false,
             class: 'col-4',
             validators: [{ key: 'required' }]

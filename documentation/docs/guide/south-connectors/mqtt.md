@@ -13,7 +13,6 @@ The MQTT protocol is made up of two main types of entities:
 OIBus is a MQTT client and uses the [MQTT.js](https://github.com/mqttjs/MQTT.js) library.
 
 ## Specific settings
-### Connection
 - **URL**: of the form `mqtt://address:1883`. The default MQTT port is 1883 but may differ depending on the broker’s 
 configuration.
 - **Quality of service (QoS)**: agreement between the sender of a message and the receiver of a message that defines the
@@ -66,14 +65,11 @@ one data.
 When a MQTT client subscribes to a data item on the broker, the broker sends the new values as soon as they are 
 available for each client subscribing to this data.
 
-Once the value is retrieved, it is associated to the point ID (which can be different from the topic). Ths point ID
-will then be used to the North connectors to which it will be sent.
-
 When subscribing to a set of points as with `France/#`, then the list of topic retrieved will be:
-- France:Paris/temperatureTank1
-- France:Paris/temperatureTank2
-- France:Chambery/temperatureTank1
-- France:Chambery/temperatureTank2
+- France/Paris/temperatureTank1
+- France/Paris/temperatureTank2
+- France/Chambery/temperatureTank1
+- France/Chambery/temperatureTank2
 
 ## Payload and timestamp
 The MQTT payload can be of different type: number, string or json.
@@ -91,23 +87,24 @@ For example, if the payload is:
 ````
 
 Then the following configuration must be applied:
-- **Values in array**: _false_
-- **Value path**: _value_
+- **Payload in array**: _false_
+- **Point ID origin**: _payload_ (it will override the name of the item as reference)
 - **Timestamp origin**: _payload_
+- **Value path**: _value_
+- **Point ID path**: _pointId_
 - **Timestamp path**: _timestamp_
 - **Type**: _String_
 - **Timezone**: _UTC_ (if the broker is in UTC timezone)
 - **Timestamp format**: _yyyy-MM-dd HH:mm:ss_
 
-Other fields can be added in the OIBus data object. Add them in the Additional fields section. Here, with the quality field:
-- Field name in output: _quality_
-- Path in the retrieved payload: _quality_
+You can retrieve additional fields, such as the quality field, by clicking on the `+` button on the last section.
+- **Field name in output**: _quality_
+- **Path in the retrieved payload**: _quality_
 
 Another example, with a payload such as:
 ````
 "metrics": [
     {
-        "customName": "point1",
         "customValue": "666.666",
         "customTimestamp": "2020-02-02 02:02:02",
         "customQuality": "true"
@@ -118,16 +115,17 @@ Another example, with a payload such as:
 Then the following configuration must be applied:
 - **Values in array**: _true_
 - **Array path**: _metrics_
-- **Value path**: _customValue_
+- **Point ID origin**: _oibus_ (the name of the item will be taken as point ID reference)
 - **Timestamp origin**: _payload_
+- **Value path**: _customValue_
 - **Timestamp path**: _customTimestamp_
 - **Type**: _String_
 - **Timezone**: _UTC_ (if the broker is in UTC timezone)
 - **Timestamp format**: _yyyy-MM-dd HH:mm:ss_
 
 Here, the quality field can be added with:
-- Field name in output: _quality_
-- Path in the retrieved payload: _customQuality_
+- **Field name in output**: _quality_
+- **Path in the retrieved payload**: _customQuality_
 
 
 When the timestamp is retrieved from the payload, it is parsed according to the specified **timestamp format**, and
