@@ -146,7 +146,6 @@ describe('SouthOIAnalytics with Basic auth', () => {
       acceptUnauthorized: false,
       accessKey: 'username',
       secretKey: 'password',
-      timeout: 1000,
       useProxy: false
     }
   };
@@ -291,7 +290,6 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
       acceptUnauthorized: true,
       accessKey: 'username',
       secretKey: 'password',
-      timeout: 1000,
       useProxy: false
     }
   };
@@ -424,26 +422,34 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
         {
           pointId: 'ref1',
           timestamp: '2022-01-01T00:00:00.000Z',
-          unit: '%',
-          value: 63
+          data: {
+            unit: '%',
+            value: 63
+          }
         },
         {
           pointId: 'ref1',
           timestamp: '2022-01-01T00:10:00.000Z',
-          unit: '%',
-          value: 84
+          data: {
+            unit: '%',
+            value: 84
+          }
         },
         {
           pointId: 'ref2',
           timestamp: '2022-01-01T00:00:00.000Z',
-          unit: 'pH',
-          value: 7
+          data: {
+            unit: 'pH',
+            value: 7
+          }
         },
         {
           pointId: 'ref2',
           timestamp: '2022-01-01T00:10:00.000Z',
-          unit: 'pH',
-          value: 8
+          data: {
+            unit: 'pH',
+            value: 8
+          }
         }
       ],
       maxInstant: '2022-01-01T00:10:00.000Z'
@@ -486,7 +492,6 @@ describe('SouthOIAnalytics with proxy', () => {
       acceptUnauthorized: false,
       accessKey: 'username',
       secretKey: 'password',
-      timeout: 1000,
       useProxy: true,
       proxyPassword: 'proxyPassword',
       proxyUrl: 'http://proxyurl',
@@ -541,7 +546,6 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
       acceptUnauthorized: false,
       accessKey: 'username',
       secretKey: 'password',
-      timeout: 1000,
       useProxy: true,
       proxyPassword: '',
       proxyUrl: 'http://proxyurl',

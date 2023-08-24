@@ -182,8 +182,8 @@ export interface SouthFolderScannerSettings extends BaseSouthSettings {
 export interface SouthModbusSettings extends BaseSouthSettings {
   host: string;
   port: number;
-  slaveId: number;
   retryInterval: number;
+  slaveId: number;
   addressOffset: SouthModbusSettingsAddressOffset;
   endianness: SouthModbusSettingsEndianness;
   swapBytesInWords: boolean;
@@ -203,23 +203,23 @@ export interface SouthMQTTSettings extends BaseSouthSettings {
 export interface SouthMSSQLSettings extends BaseSouthSettings {
   host: string;
   port: number;
+  connectionTimeout: number;
   database: string;
   username: string | null;
   password: string | null;
   domain: string | null;
   encryption: boolean;
   trustServerCertificate: boolean;
-  connectionTimeout: number;
   requestTimeout: number;
 }
 
 export interface SouthMySQLSettings extends BaseSouthSettings {
   host: string;
   port: number;
+  connectionTimeout: number;
   database: string;
   username: string | null;
   password: string | null;
-  connectionTimeout: number;
   requestTimeout: number;
 }
 
@@ -234,14 +234,13 @@ export interface SouthODBCSettings extends BaseSouthSettings {
 
 export interface SouthOIAnalyticsSettings extends BaseSouthSettings {
   host: string;
+  acceptUnauthorized: boolean;
   accessKey: string;
   secretKey: string | null;
-  timeout: number;
   useProxy: boolean;
   proxyUrl?: string;
   proxyUsername?: string | null;
   proxyPassword?: string | null;
-  acceptUnauthorized: boolean;
 }
 
 export interface SouthOPCHDASettings extends BaseSouthSettings {
@@ -267,33 +266,33 @@ export interface SouthOPCUASettings extends BaseSouthSettings {
 export interface SouthOracleSettings extends BaseSouthSettings {
   host: string;
   port: number;
+  connectionTimeout: number;
   database: string;
   username: string | null;
   password: string | null;
-  connectionTimeout: number;
   requestTimeout: number;
 }
 
 export interface SouthPostgreSQLSettings extends BaseSouthSettings {
   host: string;
   port: number;
+  connectionTimeout: number;
   database: string;
   username: string | null;
   password: string | null;
-  connectionTimeout: number;
   requestTimeout: number;
 }
 
 export interface SouthSlimsSettings extends BaseSouthSettings {
   url: string;
   port: number;
+  acceptUnauthorized: boolean;
   username: string;
   password: string | null;
   useProxy: boolean;
   proxyUrl?: string;
   proxyUsername?: string | null;
   proxyPassword?: string | null;
-  acceptUnauthorized: boolean;
 }
 
 export interface SouthSQLiteSettings extends BaseSouthSettings {
@@ -536,9 +535,9 @@ export interface SouthOIAnalyticsItemSettings extends BaseSouthItemSettings {
 }
 
 export interface SouthOPCHDAItemSettings extends BaseSouthItemSettings {
+  nodeId: string;
   aggregate: SouthOPCHDAItemSettingsAggregate;
   resampling: SouthOPCHDAItemSettingsResampling;
-  nodeId: string;
 }
 
 export interface SouthOPCUAItemSettings extends BaseSouthItemSettings {
