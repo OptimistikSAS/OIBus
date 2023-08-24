@@ -542,21 +542,27 @@ describe('SouthSlims with query params', () => {
     const expectedResult = [
       {
         pointId: 'myPid-myName',
-        unit: 'g/L',
         timestamp: '2020-01-01T00:00:00.000Z',
-        value: 123
+        data: {
+          unit: 'g/L',
+          value: 123
+        }
       },
       {
         pointId: 'myOtherPid-myOtherName',
-        unit: 'Ø',
         timestamp: '2021-01-01T00:00:00.000Z',
-        value: 0
+        data: {
+          unit: 'Ø',
+          value: 0
+        }
       },
       {
         pointId: 'anotherPid-anotherName',
-        unit: 'Ø',
         timestamp: '2020-06-01T00:00:00.000Z',
-        value: 0
+        data: {
+          unit: 'Ø',
+          value: 0
+        }
       }
     ];
 

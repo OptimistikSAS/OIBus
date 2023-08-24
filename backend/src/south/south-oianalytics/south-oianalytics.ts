@@ -240,9 +240,8 @@ export default class SouthOIAnalytics
 
         formattedData.push({
           pointId: element.data!.reference,
-          unit: element.unit!.label,
           timestamp: resultInstant,
-          value: currentValue
+          data: { value: currentValue, unit: element.unit!.label }
         });
         if (resultInstant > maxInstant) {
           maxInstant = resultInstant;

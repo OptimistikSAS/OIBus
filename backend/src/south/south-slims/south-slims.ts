@@ -277,9 +277,8 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
 
       formattedData.push({
         pointId: `${rsltCfPid.value}-${testName.value}`,
-        unit: rsltValue.unit || 'Ø',
         timestamp: formatInstant(resultInstant, { type: 'iso-string' }),
-        value: rsltValue.value
+        data: { value: rsltValue.value, unit: rsltValue.unit || 'Ø' }
       });
       if (referenceInstant > maxInstant) {
         maxInstant = referenceInstant;
