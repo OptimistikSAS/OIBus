@@ -16,23 +16,28 @@ WORK IN PROGRESS
 ## Download link
 <Tabs>
   <TabItem value="windows" label="Windows" default>
-    <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-win32x64.zip'>
+    <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-win_x64.zip'>
       Migration tool (x64)
     </DownloadButton>
   </TabItem>
   <TabItem value="linux" label="Linux">
-    <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-linux.tar.gz'>
+    <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-linux_x64.zip'>
       Migration tool (x64)
     </DownloadButton>
   </TabItem>
   <TabItem value="macos" label="MacOS">
-    <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-macos.zip'>
+    <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-macos_x64.zip'>
       Migration tool (x64)
     </DownloadButton>
   </TabItem>
 </Tabs>
 
 ## Download specific v3.0.0 OIBus version
+:::caution OIBus version
+The migration will work only with the 3.0.0 OIBus version. If you want to migrate to a later version, first install OIBus v3.0.0
+from one of the links below, and then update OIBus from v3.0.0 to a later version.
+:::
+
 <Tabs>
   <TabItem value="windows" label="Windows" default>
     <div style={{display: "flex", justifyContent:"space-around"}}>
@@ -56,23 +61,30 @@ WORK IN PROGRESS
   </TabItem>
 </Tabs>
 
-## Stop OIBus service
-Stop the OIBus service.
-
+## Migration steps
+1. Stop the OIBus service.
 :::tip
 You can zip the data folder, or at least the configuration file `oibus.json` and its `keys` as a backup
 :::
 
-## Install the specific OIBus v3 version
-Either with the Windows installer or with the installation script, install the v3 version of OIBus. Be careful to specify
-the **same data folder**.
+2. Install [OIBus v3.0.0](#download-specific-v3.0.0-oibus-version). Be careful to specify the **same data folder**. Check
+that OIBus v3 run properly by login on `http::localhost:2223` with admin / pass. If everything works, go on with the next step.
 
-Check that OIBus v3 run properly by login on `http::localhost:2223` with admin / pass. If everything works, go on with
-the next step.
+3. Stop OIBus v3.
 
+4. Copy the migration tool in the OIBus **binary folder**.
 
-## Run the migration tool
-Stop OIBus v3 and copy the migration tool in the OIBus **binary folder**. Run the OIBus migration tool.
+5. Run the OIBus migration tool. Be sure to specify the appropriate data folder.
+````
+./oibus-upgrade --config ./data-folder
 ````
 
 ````
+./build/bin/macos-arm64/oibus-upgrade --config ./data-folder
+````
+
+6. Start OIBus v3.
+
+:::tip
+The file `upgrade-journal.log` contains the logs of the migration.
+:::
