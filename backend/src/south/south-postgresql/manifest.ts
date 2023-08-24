@@ -19,7 +19,6 @@ const manifest: SouthConnectorManifest = {
       type: 'OibText',
       label: 'Host',
       defaultValue: 'localhost',
-      newRow: true,
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
@@ -28,10 +27,19 @@ const manifest: SouthConnectorManifest = {
       type: 'OibNumber',
       label: 'Port',
       defaultValue: 5432,
-      newRow: false,
       class: 'col-2',
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
       displayInViewMode: true
+    },
+    {
+      key: 'connectionTimeout',
+      type: 'OibNumber',
+      label: 'Connection timeout',
+      defaultValue: 1000,
+      class: 'col-2',
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
+      unitLabel: 'ms',
+      displayInViewMode: false
     },
     {
       key: 'database',
@@ -52,18 +60,6 @@ const manifest: SouthConnectorManifest = {
       key: 'password',
       type: 'OibSecret',
       label: 'Password',
-      newRow: false,
-      displayInViewMode: false
-    },
-    {
-      key: 'connectionTimeout',
-      type: 'OibNumber',
-      label: 'Connection timeout',
-      defaultValue: 1000,
-      newRow: true,
-      class: 'col-4',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30000 } }],
-      unitLabel: 'ms',
       displayInViewMode: false
     },
     {
@@ -72,6 +68,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Request timeout',
       defaultValue: 1000,
       class: 'col-4',
+      newRow: true,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60000 } }],
       unitLabel: 'ms',
       displayInViewMode: false

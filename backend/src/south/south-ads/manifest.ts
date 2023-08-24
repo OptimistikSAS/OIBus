@@ -96,7 +96,6 @@ const manifest: SouthConnectorManifest = {
       options: ['Text', 'Integer'],
       label: 'Enumeration value',
       defaultValue: 'Integer',
-      newRow: true,
       class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true
@@ -107,7 +106,6 @@ const manifest: SouthConnectorManifest = {
       label: 'Boolean value',
       options: ['Text', 'Integer'],
       defaultValue: 'Integer',
-      newRow: false,
       class: 'col-4',
       validators: [{ key: 'required' }],
       displayInViewMode: true

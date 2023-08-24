@@ -28,8 +28,15 @@ const manifest: SouthConnectorManifest = {
       type: 'OibNumber',
       label: 'Port',
       defaultValue: 80,
-      newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }]
+    },
+    {
+      key: 'acceptUnauthorized',
+      type: 'OibCheckbox',
+      label: 'Accept unauthorized certificate',
+      validators: [{ key: 'required' }],
+      defaultValue: false,
+      displayInViewMode: true
     },
     {
       key: 'username',
@@ -37,6 +44,7 @@ const manifest: SouthConnectorManifest = {
       label: 'Username',
       defaultValue: '',
       validators: [{ key: 'required' }],
+      newRow: true,
       displayInViewMode: false
     },
     {
@@ -46,15 +54,7 @@ const manifest: SouthConnectorManifest = {
       defaultValue: '',
       displayInViewMode: false
     },
-    ...proxy,
-    {
-      key: 'acceptUnauthorized',
-      type: 'OibCheckbox',
-      label: 'Accept unauthorized certificate',
-      validators: [{ key: 'required' }],
-      defaultValue: false,
-      displayInViewMode: true
-    }
+    ...proxy
   ],
   items: {
     scanMode: {
