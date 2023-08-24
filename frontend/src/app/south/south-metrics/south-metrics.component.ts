@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, NgZone, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
@@ -8,14 +8,14 @@ import { DurationPipe } from '../../shared/duration.pipe';
 import { NotificationService } from '../../shared/notification.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'oib-south-metrics',
   templateUrl: './south-metrics.component.html',
   styleUrls: ['./south-metrics.component.scss'],
   standalone: true,
-  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe, RouterLink]
+  imports: [TranslateModule, NgIf, DatetimePipe, DurationPipe, BoxComponent, BoxTitleDirective, JsonPipe]
 })
 export class SouthMetricsComponent implements OnInit {
   @Input({ required: true }) southConnector!: SouthConnectorDTO;
@@ -23,7 +23,12 @@ export class SouthMetricsComponent implements OnInit {
   @Input() displayButton = false;
   @Input({ required: true }) connectorMetrics!: SouthConnectorMetrics;
 
-  constructor(private southService: SouthConnectorService, private notificationService: NotificationService) {}
+  constructor(
+    private zone: NgZone,
+    private router: Router,
+    private southService: SouthConnectorService,
+    private notificationService: NotificationService
+  ) {}
 
   ngOnInit(): void {
     if (!this.manifest) {
@@ -34,8 +39,16 @@ export class SouthMetricsComponent implements OnInit {
   }
 
   resetMetrics() {
-    this.southService.resetMetrics(this.southConnector.id).subscribe(() => {
-      this.notificationService.success('south.monitoring.metrics-reset');
+    this.zone.run(() => {
+      this.southService.resetMetrics(this.southConnector.id).subscribe(() => {
+        this.notificationService.success('south.monitoring.metrics-reset');
+      });
+    });
+  }
+
+  navigateToDisplay() {
+    this.zone.run(() => {
+      this.router.navigate(['/south', this.southConnector.id]);
     });
   }
 }

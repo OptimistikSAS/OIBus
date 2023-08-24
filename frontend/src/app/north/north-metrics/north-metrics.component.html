@@ -9,12 +9,7 @@
           class="mx-1"
         ></span>
         <!-- Display button -->
-        <a
-          *ngIf="displayButton"
-          class="btn btn-link display-north px-1 py-0"
-          id="display-link"
-          [routerLink]="['/north', northConnector.id]"
-        >
+        <a *ngIf="displayButton" class="btn btn-link display-north px-1 py-0" id="display-link" (click)="navigateToDisplay()">
           <span class="fa fa-search"></span>
         </a>
         <!-- Reset button -->
