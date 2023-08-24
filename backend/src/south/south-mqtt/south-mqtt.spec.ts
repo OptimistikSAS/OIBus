@@ -101,8 +101,9 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
       topic: 'json/topic',
       valueType: 'json',
       jsonPayload: {
-        useArray: false,
-        dataArrayPath: null,
+        useArray: true,
+        dataArrayPath: '',
+        pointIdOrigin: 'oibus',
         valuePath: 'received.value',
         otherFields: [
           { name: 'appId', path: 'received.appId' },
@@ -128,8 +129,10 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
       topic: 'json/topic',
       valueType: 'json',
       jsonPayload: {
-        useArray: true,
-        dataArrayPath: 'myArray',
+        useArray: false,
+        dataArrayPath: '',
+        pointIdOrigin: 'payload',
+        pointIdPath: 'received.reference',
         valuePath: 'received.value',
         otherFields: [
           { name: 'appId', path: 'received.appId' },
@@ -154,7 +157,9 @@ const items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>> = [
       valueType: 'json',
       jsonPayload: {
         useArray: true,
-        dataArrayPath: '',
+        dataArrayPath: 'myArray',
+        pointIdOrigin: 'payload',
+        pointIdPath: 'received.reference',
         valuePath: 'received.value',
         otherFields: [
           { name: 'appId', path: 'received.appId' },
@@ -373,6 +378,11 @@ describe('SouthMQTT with Basic Auth', () => {
 
   it('should get timestamp', () => {
     expect(south.getTimestamp({}, items[3].settings.jsonPayload!.timestampPayload!, nowDateString)).toEqual(nowDateString);
+    expect(logger.warn).toHaveBeenCalledWith(
+      `Timestamp found for path ${items[3].settings.jsonPayload!.timestampPayload!.timestampPath!} in ${JSON.stringify(
+        {}
+      )}. Using OIBus timestamp "${nowDateString}" instead`
+    );
 
     (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
     expect(
@@ -382,6 +392,19 @@ describe('SouthMQTT with Basic Auth', () => {
         nowDateString
       )
     ).toEqual('2023-01-01T00:00:00.000Z');
+  });
+
+  it('should get pointId', () => {
+    expect(south.getPointId({}, items[5].settings.jsonPayload!.pointIdPath!, items[5].name)).toEqual(items[5].name);
+    expect(logger.warn).toHaveBeenCalledWith(
+      `Point ID not found for path ${items[5].settings.jsonPayload!.pointIdPath!} in ${JSON.stringify({})}. Using item name "${
+        items[5].name
+      }" instead`
+    );
+    (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
+    expect(
+      south.getPointId({ received: { reference: 'PointReference' } }, items[5].settings.jsonPayload!.pointIdPath!, items[5].name)
+    ).toEqual('PointReference');
   });
 
   it('should get item', () => {
@@ -428,9 +451,10 @@ describe('SouthMQTT with Basic Auth', () => {
 
   it('should format value', () => {
     const data = { received: { value: 123, appId: 'my app id', message: { type: 'test' } } };
-    expect(south.formatValue(items[5], data, nowDateString)).toEqual([
+    south.getPointId = jest.fn().mockImplementation((_data, _path, _name) => _name);
+    expect(south.formatValues(items[4], data, nowDateString)).toEqual([
       {
-        pointId: items[5].name,
+        pointId: items[4].name,
         timestamp: nowDateString,
         data: {
           value: 123,
@@ -439,9 +463,66 @@ describe('SouthMQTT with Basic Auth', () => {
         }
       }
     ]);
+    expect(south.getPointId).toHaveBeenCalledWith(data, items[4].settings.jsonPayload!.pointIdPath, items[4].name);
+  });
 
-    south.getTimestamp = jest.fn().mockReturnValue(nowDateString);
-    expect(south.formatValue(items[3], data, nowDateString)).toEqual([
+  it('should format array values', async () => {
+    const data = {
+      myArray: [
+        { received: { reference: 'reference', value: 123, appId: 'my app id', message: { type: 'test' } } },
+        { received: { reference: 'reference', value: 456, appId: 'my app id', message: { type: 'test2' } } }
+      ]
+    };
+    const expectedResults = [
+      {
+        pointId: 'reference',
+        timestamp: nowDateString,
+        data: {
+          value: 123,
+          appId: 'my app id',
+          messageType: 'test'
+        }
+      },
+      {
+        pointId: 'reference',
+        timestamp: nowDateString,
+        data: {
+          value: 456,
+          appId: 'my app id',
+          messageType: 'test2'
+        }
+      }
+    ];
+
+    const formattedResults = south.formatValues(items[5], data, nowDateString);
+    expect(formattedResults).toEqual(expectedResults);
+
+    const badItem = JSON.parse(JSON.stringify(items[5]));
+    badItem.settings.jsonPayload.dataArrayPath = 'badArrayPath';
+    let error;
+    try {
+      south.formatValues(badItem, data, nowDateString);
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(new Error(`Array not found for path ${badItem.settings.jsonPayload!.dataArrayPath!} in ${JSON.stringify(data)}`));
+
+    try {
+      south.formatValues(badItem, { badArrayPath: {} }, nowDateString);
+    } catch (err) {
+      error = err;
+    }
+    expect(error).toEqual(
+      new Error(`Array not found for path ${badItem.settings.jsonPayload!.dataArrayPath!} in ${JSON.stringify({ badArrayPath: {} })}`)
+    );
+  });
+
+  it('should format array values from root', async () => {
+    const data = [
+      { received: { reference: 'reference', value: 123, appId: 'my app id', message: { type: 'test' } } },
+      { received: { reference: 'reference', value: 456, appId: 'my app id', message: { type: 'test2' } } }
+    ];
+    const expectedResults = [
       {
         pointId: items[3].name,
         timestamp: nowDateString,
@@ -450,9 +531,20 @@ describe('SouthMQTT with Basic Auth', () => {
           appId: 'my app id',
           messageType: 'test'
         }
+      },
+      {
+        pointId: items[3].name,
+        timestamp: nowDateString,
+        data: {
+          value: 456,
+          appId: 'my app id',
+          messageType: 'test2'
+        }
       }
-    ]);
-    expect(south.getTimestamp).toHaveBeenCalledWith(data, items[3].settings.jsonPayload!.timestampPayload, nowDateString);
+    ];
+
+    const formattedResults = await south.formatValues(items[3], data, nowDateString);
+    expect(formattedResults).toEqual(expectedResults);
   });
 
   it('should handle message', async () => {
@@ -489,7 +581,7 @@ describe('SouthMQTT with Basic Auth', () => {
         }
       }
     ];
-    south.formatValue = jest.fn().mockReturnValue(expectValue);
+    south.formatValues = jest.fn().mockReturnValue(expectValue);
     await south.handleMessage(items[5].settings.topic, Buffer.from(JSON.stringify({ json: 'object' })));
     expect(south.addValues).toHaveBeenCalledWith(expectValue);
 

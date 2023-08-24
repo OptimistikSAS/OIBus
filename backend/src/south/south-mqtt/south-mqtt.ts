@@ -169,7 +169,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
           ]);
           break;
         case 'json':
-          await this.addValues(this.formatValue(associatedItem, JSON.parse(message.toString()), messageTimestamp));
+          await this.addValues(this.formatValues(associatedItem, JSON.parse(message.toString()), messageTimestamp));
           break;
       }
     } catch (error) {
@@ -177,11 +177,27 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     }
   }
 
-  formatValue(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): Array<any> {
+  formatValues(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): Array<any> {
+    if (item.settings.jsonPayload!.useArray) {
+      const array = objectPath.get(data, item.settings.jsonPayload!.dataArrayPath!);
+      if (!array || !Array.isArray(array)) {
+        throw new Error(`Array not found for path ${item.settings.jsonPayload!.dataArrayPath!} in ${JSON.stringify(data)}`);
+      }
+      return array.map((element: any) => this.formatValue(item, element, messageTimestamp));
+    }
+    return [this.formatValue(item, data, messageTimestamp)];
+  }
+
+  formatValue(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): any {
     const dataTimestamp =
       item.settings.jsonPayload!.timestampOrigin === 'oibus'
         ? messageTimestamp
         : this.getTimestamp(data, item.settings.jsonPayload!.timestampPayload!, messageTimestamp);
+
+    const pointId =
+      item.settings.jsonPayload!.pointIdOrigin === 'oibus'
+        ? item.name
+        : this.getPointId(data, item.settings.jsonPayload!.pointIdPath!, item.name);
 
     const dataValue: Record<string, string> = {
       value: objectPath.get(data, item.settings.jsonPayload!.valuePath)
@@ -191,15 +207,22 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
       dataValue[element.name] = objectPath.get(data, element.path);
     }
 
-    return [
-      {
-        pointId: item.name,
-        timestamp: dataTimestamp,
-        data: {
-          ...dataValue
-        }
+    return {
+      pointId: pointId,
+      timestamp: dataTimestamp,
+      data: {
+        ...dataValue
       }
-    ];
+    };
+  }
+
+  getPointId(data: any, pointIdPath: string, itemName: string): string {
+    const pointId = objectPath.get(data, pointIdPath!);
+    if (!pointId) {
+      this.logger.warn(`Point ID not found for path ${pointIdPath} in ${JSON.stringify(data)}. Using item name "${itemName}" instead`);
+      return itemName;
+    }
+    return pointId;
   }
 
   getItem(topic: string, items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>): SouthConnectorItemDTO<SouthMQTTItemSettings> {
@@ -231,6 +254,11 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   getTimestamp(data: any, formatOptions: SouthMQTTItemSettingsJsonPayloadTimestampPayload, messageTimestamp: Instant): string | void {
     const timestamp = objectPath.get(data, formatOptions.timestampPath!);
     if (!timestamp) {
+      this.logger.warn(
+        `Timestamp found for path ${formatOptions.timestampPath!} in ${JSON.stringify(
+          data
+        )}. Using OIBus timestamp "${messageTimestamp}" instead`
+      );
       return messageTimestamp;
     }
     return convertDateTimeToInstant(timestamp, {
