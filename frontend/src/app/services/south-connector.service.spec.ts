@@ -159,6 +159,7 @@ describe('SouthConnectorService', () => {
     let done = false;
     const command: SouthConnectorItemCommandDTO<any> = {
       name: 'myPointId',
+      enabled: false,
       scanModeId: 'scanModeId',
       settings: {}
     };
@@ -174,6 +175,7 @@ describe('SouthConnectorService', () => {
     let done = false;
     const command: SouthConnectorItemCommandDTO<any> = {
       name: 'myPointId',
+      enabled: true,
       scanModeId: 'scanModeId',
       settings: {}
     };

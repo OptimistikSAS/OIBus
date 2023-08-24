@@ -62,6 +62,7 @@ export class EditSouthItemModalComponent {
   form: FormGroup<{
     name: FormControl<string>;
     scanModeId: FormControl<string | null>;
+    enabled: FormControl<boolean>;
     settings: FormGroup;
   }> | null = null;
 
@@ -76,6 +77,7 @@ export class EditSouthItemModalComponent {
   private createForm(item: SouthConnectorItemDTO | null) {
     this.form = this.fb.group({
       name: ['', Validators.required],
+      enabled: [true, Validators.required],
       scanModeId: this.fb.control<string | null>(null, Validators.required),
       settings: createFormGroup(this.southItemSchema!.settings, this.fb)
     });
@@ -147,6 +149,7 @@ export class EditSouthItemModalComponent {
 
     const command: SouthConnectorItemCommandDTO = {
       id: this.item ? this.item.id : undefined,
+      enabled: formValue.enabled!,
       name: formValue.name!,
       scanModeId: this.subscriptionOnly ? 'subscription' : formValue.scanModeId!,
       settings: formValue.settings!

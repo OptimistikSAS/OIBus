@@ -69,6 +69,7 @@ export interface SouthConnectorItemDTO<T extends SouthItemSettings = any> extend
  */
 export interface SouthConnectorItemCommandDTO<T extends SouthItemSettings = any> {
   id?: string;
+  enabled: boolean;
   name: string;
   settings: T;
   scanModeId: string;

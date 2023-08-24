@@ -208,6 +208,7 @@ describe('South item repository', () => {
 
     const command: SouthConnectorItemCommandDTO = {
       name: 'southScan1',
+      enabled: true,
       scanModeId: 'scanModeId',
       settings: {}
     };
@@ -227,12 +228,15 @@ describe('South item repository', () => {
   it('should update a south item', () => {
     const command: SouthConnectorItemCommandDTO = {
       name: 'southScan1',
+      enabled: true,
       scanModeId: 'scanModeId',
       settings: {}
     };
     repository.updateSouthItem('id1', command);
-    expect(database.prepare).toHaveBeenCalledWith('UPDATE south_items SET name = ?, scan_mode_id = ?, settings = ? WHERE id = ?;');
-    expect(run).toHaveBeenCalledWith(command.name, command.scanModeId, JSON.stringify(command.settings), 'id1');
+    expect(database.prepare).toHaveBeenCalledWith(
+      'UPDATE south_items SET name = ?, enabled = ?, scan_mode_id = ?, settings = ? WHERE id = ?;'
+    );
+    expect(run).toHaveBeenCalledWith(command.name, +command.enabled, command.scanModeId, JSON.stringify(command.settings), 'id1');
   });
 
   it('should delete a south item', () => {

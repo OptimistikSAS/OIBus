@@ -271,6 +271,7 @@ export default class ReloadService {
     for (const item of southItems) {
       this.repositoryService.historyQueryItemRepository.createHistoryItem(historyQuery.id, {
         name: item.name,
+        enabled: item.enabled,
         settings: item.settings,
         scanModeId: 'history'
       });

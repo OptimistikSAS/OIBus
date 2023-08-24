@@ -63,6 +63,7 @@ const southConnector: SouthConnectorDTO<SouthFolderScannerSettings> = {
 };
 const itemCommand: SouthConnectorItemCommandDTO<SouthFolderScannerItemSettings> = {
   name: 'name',
+  enabled: true,
   settings: {
     regex: '.*'
   },
@@ -71,7 +72,6 @@ const itemCommand: SouthConnectorItemCommandDTO<SouthFolderScannerItemSettings> 
 const item: SouthConnectorItemDTO<SouthFolderScannerItemSettings> = {
   id: 'id',
   connectorId: 'connectorId',
-  enabled: true,
   ...itemCommand
 };
 const page = {

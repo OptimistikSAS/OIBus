@@ -13,11 +13,11 @@
         </div>
       </div>
 
-      <div class="col-3">
+      <!-- Enabled -->
+      <div class="col-3" *ngIf="!subscriptionOnly">
         <div class="form-group">
           <oib-scan-mode
             [scanModes]="scanModes"
-            *ngIf="!subscriptionOnly"
             key="item-scan-mode"
             [label]="'scan-mode.label' | translate"
             formControlName="scanModeId"
@@ -25,6 +25,16 @@
             [subscriptionOnly]="subscriptionOnly"
           ></oib-scan-mode>
           <val-errors controlName="scanModeId"></val-errors>
+        </div>
+      </div>
+
+      <!-- Enabled -->
+      <div class="col-3">
+        <div class="form-group">
+          <div class="form-check form-switch padded">
+            <input formControlName="enabled" id="item-enabled" type="checkbox" class="form-check-input" />
+            <label class="form-check-label" for="item-enabled" translate="south.items.enable"></label>
+          </div>
         </div>
       </div>
     </div>
