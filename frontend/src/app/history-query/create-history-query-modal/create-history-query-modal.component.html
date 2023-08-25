@@ -4,22 +4,8 @@
 <div class="modal-body">
   <form [formGroup]="createForm" (ngSubmit)="create()" id="form">
     <div class="row">
-      <div class="form-group">
-        <label for="history-query-name" translate="history-query.name"></label>
-        <input formControlName="name" id="history-query-name" class="form-control" />
-        <val-errors controlName="name"></val-errors>
-      </div>
-    </div>
-    <div class="row">
-      <div class="form-group">
-        <label for="history-query-description" translate="history-query.description"></label>
-        <textarea formControlName="description" id="history-query-description" class="form-control"></textarea>
-      </div>
-    </div>
-    <div class="row">
       <div class="col">
         <div class="form-group">
-          <label for="from-existing-south" translate="history-query.from-existing-south"></label>
           <div class="form-check form-switch">
             <input
               [formControl]="createForm.controls.fromExistingSouth"
@@ -27,6 +13,7 @@
               type="checkbox"
               class="form-check-input"
             />
+            <label class="form-check-label" for="from-existing-south" translate="history-query.from-existing-south"></label>
           </div>
         </div>
         <div class="form-group" *ngIf="!createForm.controls.fromExistingSouth.value">
@@ -44,7 +31,6 @@
       </div>
       <div class="col">
         <div class="form-group">
-          <label for="from-existing-north" translate="history-query.from-existing-north"></label>
           <div class="form-check form-switch">
             <input
               [formControl]="createForm.controls.fromExistingNorth"
@@ -52,6 +38,7 @@
               type="checkbox"
               class="form-check-input"
             />
+            <label for="from-existing-north" class="form-check-label" translate="history-query.from-existing-north"></label>
           </div>
         </div>
         <div class="form-group" *ngIf="!createForm.controls.fromExistingNorth.value">

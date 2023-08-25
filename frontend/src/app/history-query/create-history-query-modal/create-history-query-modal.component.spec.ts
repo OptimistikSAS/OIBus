@@ -17,14 +17,6 @@ class CreateHistoryQueryModalComponentTester extends ComponentTester<CreateHisto
     super(CreateHistoryQueryModalComponent);
   }
 
-  get name() {
-    return this.input('#history-query-name')!;
-  }
-
-  get description() {
-    return this.textarea('#history-query-description')!;
-  }
-
   get fromExistingSouth() {
     return this.input('#from-existing-south')!;
   }
@@ -141,8 +133,6 @@ describe('CreateHistoryQueryModalComponent', () => {
 
       tester.southTypeSelect!.selectLabel('SQL');
       tester.northTypeSelect!.selectLabel('MongoDB');
-      tester.name.fillWith('test');
-      tester.description.fillWith('my description');
       tester.createButton.click();
 
       expect(fakeActiveModal.close).toHaveBeenCalledWith({
@@ -234,8 +224,6 @@ describe('CreateHistoryQueryModalComponent', () => {
 
       tester.southIdSelect!.selectLabel('South Connector1 (mssql)');
       tester.northIdSelect!.selectLabel('myNorthConnector2 (test)');
-      tester.name.fillWith('test');
-      tester.description.fillWith('my description');
       tester.createButton.click();
 
       expect(fakeActiveModal.close).toHaveBeenCalledWith({

@@ -208,6 +208,7 @@ export class EditHistoryQueryComponent implements OnInit {
             this.historyQueryForm.controls.history.patchValue(southConnector.history);
           }
           if (northConnector) {
+            this.historyQueryForm.controls.northSettings.patchValue(northConnector.settings);
             this.historyQueryForm.controls.caching.patchValue(northConnector.caching);
             this.historyQueryForm.controls.archive.patchValue(northConnector.archive);
           }
