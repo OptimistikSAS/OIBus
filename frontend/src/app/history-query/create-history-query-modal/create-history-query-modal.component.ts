@@ -26,8 +26,6 @@ export class CreateHistoryQueryModalComponent implements OnInit {
   state = new ObservableState();
 
   createForm = this.fb.group({
-    name: this.fb.control(null as string | null, Validators.required),
-    description: this.fb.control(null as string | null),
     fromExistingSouth: this.fb.control(true),
     fromExistingNorth: this.fb.control(true),
     southType: this.fb.control(null as string | null, Validators.required),
