@@ -60,8 +60,8 @@ Open a terminal in the backend folder (`cd backend`)
 The folder `data-folder` is used to store the cache, logs and configuration files.
 
 The project is up and running, but currently there are no South or North connectors. A simple way to try out OIBus is 
-to create a [FolderScanner](../guide/south-connectors/1-folder-scanner.md) South connector and a 
-[Console](../guide/north-connectors/6-console.md) North connector.
+to create a [FolderScanner](../guide/south-connectors/folder-scanner.md) South connector and a 
+[Console](../guide/north-connectors/console.md) North connector.
 
 ### Start the documentation
 Open a terminal in the documentation folder (`cd documentation`)

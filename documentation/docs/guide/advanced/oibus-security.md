@@ -23,7 +23,7 @@ It is important to limit access to the OIBus machine so that no one can access i
 The OIBus administration interface is web-based and can be launched locally or from any remote PC with a 
 web browser. We recommend to use the interface using the local URL `http://localhost:2223`.
 
-To use it from a remote PC, you must configure the [IP Filters](docs/guide/engine/access.md#ip-filters) section of the OIBus 
+To use it from a remote PC, you must configure the [IP Filters](../engine/ip-filters.md) section of the OIBus 
 Engine. 
 
 Access to the administration interface requires a user/password. The default username is **admin**. The default 
