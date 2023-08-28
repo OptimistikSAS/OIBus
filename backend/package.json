@@ -47,7 +47,7 @@
     "firefox esr"
   ],
   "dependencies": {
-    "@aws-sdk/client-s3": "3.325.0",
+    "@aws-sdk/client-s3": "3.400.0",
     "@aws-sdk/node-http-handler": "3.321.1",
     "@azure/storage-blob": "12.15.0",
     "@koa/cors": "4.0.0",
