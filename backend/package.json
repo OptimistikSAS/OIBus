@@ -65,7 +65,7 @@
     "knex": "2.4.2",
     "koa": "2.14.2",
     "koa-bodyparser": "4.4.0",
-    "koa-helmet": "6.1.0",
+    "koa-helmet": "7.0.2",
     "koa-respond": "2.1.0",
     "koa-send": "5.0.1",
     "luxon": "3.3.0",
