@@ -133,7 +133,7 @@
     "prettier": "3.0.2",
     "rimraf": "5.0.1",
     "standard-version": "9.5.0",
-    "ts-jest": "29.1.0",
+    "ts-jest": "29.1.1",
     "typescript": "4.9.5"
   },
   "pkg": {
