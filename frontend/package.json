@@ -21,7 +21,7 @@
     "@angular/platform-browser": "16.0.5",
     "@angular/platform-browser-dynamic": "16.0.5",
     "@angular/router": "16.0.5",
-    "@ng-bootstrap/ng-bootstrap": "15.0.1",
+    "@ng-bootstrap/ng-bootstrap": "15.1.1",
     "@ngx-translate/core": "15.0.0",
     "bootstrap": "5.0.2",
     "font-awesome": "4.7.0",
