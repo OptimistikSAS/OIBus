@@ -1,12 +1,13 @@
-import mqtt, { IClientOptions, MqttClient, QoS } from 'mqtt';
-import objectPath from 'object-path';
+import * as mqtt from 'mqtt';
+import { QoS } from 'mqtt-packet';
 
+import objectPath from 'object-path';
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
-import pino from 'pino';
 
+import pino from 'pino';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -26,7 +27,7 @@ import { convertDateTimeToInstant } from '../../service/utils';
 export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQTTItemSettings> implements QueriesSubscription {
   static type = manifest.id;
 
-  private client: MqttClient | null = null;
+  private client: mqtt.MqttClient | null = null;
 
   constructor(
     connector: SouthConnectorDTO<SouthMQTTSettings>,
@@ -73,7 +74,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     await this.testConnectionToBroker(options);
   }
 
-  async testConnectionToBroker(options: IClientOptions): Promise<void> {
+  async testConnectionToBroker(options: mqtt.IClientOptions): Promise<void> {
     return new Promise((resolve, reject) => {
       const client = mqtt.connect(this.connector.settings.url, options);
       client.on('connect', () => {
@@ -89,8 +90,8 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     });
   }
 
-  async createConnectionOptions(): Promise<IClientOptions> {
-    const options: IClientOptions = {
+  async createConnectionOptions(): Promise<mqtt.IClientOptions> {
+    const options: mqtt.IClientOptions = {
       rejectUnauthorized: this.connector.settings.rejectUnauthorized,
       reconnectPeriod: this.connector.settings.reconnectPeriod,
       connectTimeout: this.connector.settings.connectTimeout,

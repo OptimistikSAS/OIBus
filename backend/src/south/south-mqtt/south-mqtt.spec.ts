@@ -1,7 +1,7 @@
 import Stream from 'node:stream';
 import fs from 'node:fs/promises';
 
-import mqtt from 'mqtt';
+import * as mqtt from 'mqtt';
 
 import SouthMQTT from './south-mqtt';
 import pino from 'pino';
