@@ -23,8 +23,8 @@
   },
   "devDependencies": {
     "@types/luxon": "3.1.0",
-    "@typescript-eslint/eslint-plugin": "5.46.0",
-    "@typescript-eslint/parser": "5.46.1",
+    "@typescript-eslint/eslint-plugin": "6.4.1",
+    "@typescript-eslint/parser": "6.4.1",
     "eslint": "8.48.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-import-resolver-typescript": "3.6.0",
