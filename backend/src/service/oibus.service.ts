@@ -6,7 +6,10 @@ import OIBusEngine from '../engine/oibus-engine';
 import HistoryQueryEngine from '../engine/history-query-engine';
 
 export default class OIBusService {
-  constructor(private engine: OIBusEngine, private historyEngine: HistoryQueryEngine) {}
+  constructor(
+    private engine: OIBusEngine,
+    private historyEngine: HistoryQueryEngine
+  ) {}
 
   getOIBusInfo(): OIBusInfo {
     return {

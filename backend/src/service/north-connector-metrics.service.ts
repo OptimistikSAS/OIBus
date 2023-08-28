@@ -19,7 +19,10 @@ export default class NorthConnectorMetricsService {
     cacheSize: 0
   };
 
-  constructor(private readonly connectorId: string, private readonly _metricsRepository: NorthConnectorMetricsRepository) {}
+  constructor(
+    private readonly connectorId: string,
+    private readonly _metricsRepository: NorthConnectorMetricsRepository
+  ) {}
 
   get metricsRepository(): NorthConnectorMetricsRepository {
     return this._metricsRepository;

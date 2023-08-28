@@ -39,7 +39,10 @@ const southList: Array<typeof SouthConnector<any, any>> = [
 ];
 
 export default class SouthService {
-  constructor(private readonly encryptionService: EncryptionService, private readonly repositoryService: RepositoryService) {}
+  constructor(
+    private readonly encryptionService: EncryptionService,
+    private readonly repositoryService: RepositoryService
+  ) {}
 
   /**
    * Return the South connector

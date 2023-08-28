@@ -19,7 +19,10 @@ export default class SouthConnectorMetricsService {
     historyMetrics: {}
   };
 
-  constructor(private readonly connectorId: string, private readonly _metricsRepository: SouthConnectorMetricsRepository) {}
+  constructor(
+    private readonly connectorId: string,
+    private readonly _metricsRepository: SouthConnectorMetricsRepository
+  ) {}
 
   get metricsRepository(): SouthConnectorMetricsRepository {
     return this._metricsRepository;

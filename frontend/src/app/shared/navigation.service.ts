@@ -8,7 +8,10 @@ import { Router, NavigationEnd } from '@angular/router';
 export class NavigationService {
   private history: string[] = [];
 
-  constructor(private router: Router, private location: Location) {}
+  constructor(
+    private router: Router,
+    private location: Location
+  ) {}
 
   init() {
     this.router.events.subscribe(event => {

@@ -25,7 +25,10 @@ export class HistoryMetricsComponent implements OnInit, OnDestroy {
   historyMetrics: HistoryMetrics | null = null;
   stream: EventSource | null = null;
 
-  constructor(private windowService: WindowService, private cd: ChangeDetectorRef) {}
+  constructor(
+    private windowService: WindowService,
+    private cd: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     const token = this.windowService.getStorageItem('oibus-token');

@@ -30,7 +30,11 @@ export default class ValueCacheService {
 
   private _triggerRun: EventEmitter = new EventEmitter();
 
-  constructor(logger: pino.Logger, baseFolder: string, private _settings: NorthCacheSettingsDTO) {
+  constructor(
+    logger: pino.Logger,
+    baseFolder: string,
+    private _settings: NorthCacheSettingsDTO
+  ) {
     this._logger = logger;
     this.baseFolder = path.resolve(baseFolder);
     this.valueFolder = path.resolve(baseFolder, VALUE_FOLDER);

@@ -28,7 +28,10 @@ export interface ConfirmationOptions {
   providedIn: 'root'
 })
 export class ConfirmationService {
-  constructor(private modalService: ModalService, private translateService: TranslateService) {}
+  constructor(
+    private modalService: ModalService,
+    private translateService: TranslateService
+  ) {}
 
   /**
    * Opens a confirmation modal, and returns an observable, which emits and completes if the user clicks "Yes".

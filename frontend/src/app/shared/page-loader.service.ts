@@ -19,7 +19,10 @@ export class PageLoader {
    */
   pageLoads$: Observable<number>;
 
-  constructor(private route: ActivatedRoute, private router: Router) {
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router
+  ) {
     const pageQueryParam$ = route.queryParamMap.pipe(map(paramMap => +(paramMap.get('page') || 0)));
     this.pageLoads$ = merge(pageQueryParam$, this.pageLoadsSubject);
   }

@@ -20,7 +20,10 @@ import { DownloadService } from './download.service';
   providedIn: 'root'
 })
 export class SouthConnectorService {
-  constructor(private http: HttpClient, private downloadService: DownloadService) {}
+  constructor(
+    private http: HttpClient,
+    private downloadService: DownloadService
+  ) {}
 
   /**
    * Get South connectors types

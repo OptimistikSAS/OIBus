@@ -14,7 +14,10 @@ export interface ModalOptions extends NgbModalOptions {
 export class Modal<T> {
   private options: ModalOptions;
 
-  constructor(private ngbModalRef: NgbModalRef, options?: ModalOptions) {
+  constructor(
+    private ngbModalRef: NgbModalRef,
+    options?: ModalOptions
+  ) {
     this.options = { errorOnClose: false, ...options };
   }
 

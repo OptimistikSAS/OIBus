@@ -53,9 +53,12 @@ class LokiTransport {
       '10': []
     };
 
-    this.sendLokiLogsInterval = setInterval(async () => {
-      await this.sendLokiLogs();
-    }, (this.options.interval || MAX_BATCH_INTERVAL_S) * 1000);
+    this.sendLokiLogsInterval = setInterval(
+      async () => {
+        await this.sendLokiLogs();
+      },
+      (this.options.interval || MAX_BATCH_INTERVAL_S) * 1000
+    );
   }
 
   /**
@@ -146,9 +149,12 @@ class LokiTransport {
       if (this.mustRenewTokenTimeout) {
         clearTimeout(this.mustRenewTokenTimeout);
       }
-      this.mustRenewTokenTimeout = setTimeout(() => {
-        this.mustRenewToken = true;
-      }, (responseData.expires_in - 60) * 1000);
+      this.mustRenewTokenTimeout = setTimeout(
+        () => {
+          this.mustRenewToken = true;
+        },
+        (responseData.expires_in - 60) * 1000
+      );
       this.token = responseData;
       this.mustRenewToken = false;
     } catch (error) {
@@ -172,9 +178,12 @@ class LokiTransport {
       }
       await this.sendLokiLogs();
 
-      this.sendLokiLogsInterval = setInterval(async () => {
-        await this.sendLokiLogs();
-      }, (this.options.interval || MAX_BATCH_INTERVAL_S) * 1000);
+      this.sendLokiLogsInterval = setInterval(
+        async () => {
+          await this.sendLokiLogs();
+        },
+        (this.options.interval || MAX_BATCH_INTERVAL_S) * 1000
+      );
     }
   };
 

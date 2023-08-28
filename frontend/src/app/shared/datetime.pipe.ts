@@ -70,7 +70,10 @@ export function formatDateTime(
   standalone: true
 })
 export class DatetimePipe implements PipeTransform {
-  constructor(@Inject(LOCALE_ID) private locale: string, private currentUserService: CurrentUserService) {}
+  constructor(
+    @Inject(LOCALE_ID) private locale: string,
+    private currentUserService: CurrentUserService
+  ) {}
 
   transform(value: string | Date | number | DateTime, format: FriendlyFormat | string = 'mediumDate', timezone?: Timezone): string | null {
     return formatDateTime(value, this.locale, timezone ?? this.currentUserService.getTimezone(), format);

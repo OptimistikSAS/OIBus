@@ -20,7 +20,10 @@ export class NavbarComponent implements OnInit {
   user: User | null = null;
   info: OIBusInfo | null = null;
 
-  constructor(private currentUserService: CurrentUserService, private engineService: EngineService) {}
+  constructor(
+    private currentUserService: CurrentUserService,
+    private engineService: EngineService
+  ) {}
 
   ngOnInit() {
     this.currentUserService.get().subscribe(u => (this.user = u));

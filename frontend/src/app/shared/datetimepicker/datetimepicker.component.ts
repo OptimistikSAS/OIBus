@@ -73,7 +73,10 @@ export class DatetimepickerComponent implements OnInit, AfterViewInit, ControlVa
   private onChange: (value: any) => void = () => {};
   private onTouched: () => void = () => {};
 
-  constructor(private fb: NonNullableFormBuilder, private element: ElementRef<HTMLElement>) {}
+  constructor(
+    private fb: NonNullableFormBuilder,
+    private element: ElementRef<HTMLElement>
+  ) {}
 
   registerOnChange(fn: any): void {
     this.onChange = fn;

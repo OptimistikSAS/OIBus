@@ -17,7 +17,10 @@ export class PaginationComponent {
 
   @Input() navigate = false;
 
-  constructor(@Optional() private router: Router, @Optional() private route: ActivatedRoute) {}
+  constructor(
+    @Optional() private router: Router,
+    @Optional() private route: ActivatedRoute
+  ) {}
 
   onPageChanged($event: number) {
     const newPage = $event - 1;

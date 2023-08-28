@@ -37,7 +37,10 @@ import { ArchiveFilesComponent } from './archive-files/archive-files.component';
 export class ExploreCacheComponent implements OnInit {
   northConnector: NorthConnectorDTO | null = null;
 
-  constructor(private route: ActivatedRoute, private northConnectorService: NorthConnectorService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private northConnectorService: NorthConnectorService
+  ) {}
 
   ngOnInit() {
     this.route.paramMap

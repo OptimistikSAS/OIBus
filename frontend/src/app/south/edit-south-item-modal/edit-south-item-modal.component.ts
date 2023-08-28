@@ -73,7 +73,10 @@ export class EditSouthItemModalComponent {
     timezone => timezone
   );
 
-  constructor(private modal: NgbActiveModal, private fb: NonNullableFormBuilder) {}
+  constructor(
+    private modal: NgbActiveModal,
+    private fb: NonNullableFormBuilder
+  ) {}
 
   private checkUniqueness(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
