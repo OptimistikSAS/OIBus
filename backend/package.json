@@ -49,7 +49,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "3.325.0",
     "@aws-sdk/node-http-handler": "3.321.1",
-    "@azure/storage-blob": "12.13.0",
+    "@azure/storage-blob": "12.15.0",
     "@koa/cors": "4.0.0",
     "@koa/multer": "3.0.2",
     "@koa/router": "12.0.0",
