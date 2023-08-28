@@ -138,7 +138,7 @@
     "webpack-cli": "5.1.4"
   },
   "optionalDependencies": {
-    "oracledb": "5.5.0",
+    "oracledb": "6.0.3",
     "odbc": "2.4.8"
   },
   "jest": {
