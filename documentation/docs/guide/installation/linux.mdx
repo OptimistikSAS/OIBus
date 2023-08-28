@@ -2,17 +2,19 @@
 sidebar_position: 3
 ---
 
+import CodeBlock from '@theme/CodeBlock';
+import packageInfo from '../../../package.json'
+
 # Linux
 ## Download command
 Instead of the download link, you can also retrieve the files with the following command
 
-```
-curl -o- -L https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-linux_x64.tar.gz | tar -xzv
-```
 
-```
-wget -c https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-linux.tar_64.gz -O - | tar -xzv
-```
+<CodeBlock>
+{ `curl -LO https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_arm64-v${packageInfo.version}.zip` }
+{ `\r\nunzip -a oibus-linux_arm64-v${packageInfo.version}.zip -d OIBus/`}
+</CodeBlock>
+
 
 The following files have been extracted:
 ```

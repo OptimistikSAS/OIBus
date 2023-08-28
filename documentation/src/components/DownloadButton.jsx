@@ -9,6 +9,7 @@ const DownloadButton = ({ children, link, color }) => (
   }}
   >
     <a
+      rel="nofollow"
       href={link}
       style={{
         backgroundColor: color,
@@ -18,6 +19,8 @@ const DownloadButton = ({ children, link, color }) => (
         cursor: 'pointer',
         minWidth: '10rem',
         textAlign: 'center',
+        display: 'flex',
+        justifyContent: 'space-around'
       }}
     >
       {children}
