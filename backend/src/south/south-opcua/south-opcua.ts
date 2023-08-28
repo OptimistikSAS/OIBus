@@ -12,7 +12,6 @@ import {
   TimestampsToReturn,
   UserTokenType
 } from 'node-opcua-client';
-import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import { Aggregate, Instant, Resampling } from '../../../../shared/model/types';
@@ -33,6 +32,7 @@ import { SouthOPCUAItemSettings, SouthOPCUASettings } from '../../../../shared/m
 import { randomUUID } from 'crypto';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import { createFolder } from '../../service/utils';
+import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
 
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
 
@@ -373,6 +373,7 @@ export default class SouthOPCUA
       keepSessionAlive: settings.keepSessionAlive,
       keepPendingSessionsOnDisconnect: false,
       clientName,
+      // @ts-ignore
       clientCertificateManager
     };
 
