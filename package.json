@@ -84,7 +84,7 @@
     "pg": "8.11.1",
     "pino": "8.14.1",
     "pino-abstract-transport": "1.0.0",
-    "pino-pretty": "10.0.1",
+    "pino-pretty": "10.2.0",
     "pino-roll": "1.0.0-rc.1",
     "proxy-agent": "5.0.0",
     "selfsigned": "2.1.1",
