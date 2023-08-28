@@ -1,0 +1,25 @@
+---
+sidebar_position: 4
+---
+
+import CodeBlock from "@theme/CodeBlock";
+
+# macOS
+macOS OIBus binary can be run through its executable. Once unzipped, start a Terminal and enter the following command:
+
+<CodeBlock>
+    {`./oibus --config ./data-folder`}
+</CodeBlock>
+
+The `./data-folder` path must be adapted according to the place where the OIBus cache and config will be stored.
+
+For example, if the binary is stored in `/bin/` and the cache and configuration files are stored in
+`~/test/oibus-data`, the command will be:
+
+<CodeBlock>
+    {`/bin/oibus --config ~/test/oibus-data`}
+</CodeBlock>
+
+:::caution
+Be sure to have admin permissions to run the binary
+:::

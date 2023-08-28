@@ -4,7 +4,7 @@ sidebar_position: 2
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 import DownloadButton from '@site/src/components/DownloadButton';
-import MacOSInstallation from './_macos.mdx';
+import packageInfo from '../../../package.json'
 
 
 # Requirements and download
@@ -23,21 +23,54 @@ targeted computer or on another, provided you have configured the [necessary acc
 ## Download links
 <Tabs>
     <TabItem value="windows" label="Windows" default>
-      <div style={{display: "flex", justifyContent:"space-around"}}>
-        <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-setup-win_x64.exe'>
-          OIBus Windows installer (x64)
-        </DownloadButton>
-        <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-win_x64.zip'>
-          OIBus bat scripts (x64)
-        </DownloadButton>
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-around" }}>
+          <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-setup-win_x64-v${packageInfo.version}.exe`}>
+           <div>
+              <div>{`OIBus v${packageInfo.version} (installer)`}</div>
+              <div>Windows (x64)</div>
+           </div>
+          </DownloadButton>
+          <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-win_x64-v${packageInfo.version}.zip`}>
+            <div>
+              <div>{`OIBus v${packageInfo.version} (zip)`}</div>
+              <div>Windows (x64)</div>
+            </div>
+          </DownloadButton>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-around" }}>
+          <a href='./windows'> Installation </a>
+        </div>
       </div>
     </TabItem>
     <TabItem value="linux" label="Linux">
-      <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/latest/download/oibus-linux_x64.zip'>
-        OIBus for Linux (x64)
-      </DownloadButton>
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-around" }}>
+          <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-linux_x64-v${packageInfo.version}.zip`}>
+            <div>
+              <div>{`OIBus v${packageInfo.version}`}</div>
+              <div>Linux (x64)</div>
+            </div>
+          </DownloadButton>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-around" }}>
+          <a href='./linux'> Installation </a>
+        </div>
+      </div>
     </TabItem>
     <TabItem value="macos" label="MacOS">
-        <MacOSInstallation/>
+      <div>
+        <div style={{ display: "flex", justifyContent: "space-around" }}>
+          <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-macos_x64-v${packageInfo.version}.zip`}>
+            <div>
+              <div>{`OIBus v${packageInfo.version}`}</div>
+              <div>MacOS (Intel chip)</div>
+            </div>
+          </DownloadButton>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-around" }}>
+          <a href='./macos'> Installation </a>
+        </div>
+      </div>
     </TabItem>
 </Tabs>

@@ -1,8 +1,13 @@
 import DownloadButton from '../../../../src/components/DownloadButton';
 
-<DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/latest/download/OIBus-setup-win32x64.exe'>
-  Download OIBus Windows installer (x64)
-</DownloadButton>
+<div style={{ display: "flex", justifyContent: "space-around" }}>
+  <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/download/v2.10.0/oibus-setup-win32x64.exe'>
+    <div>
+      <div>{`OIBus v2.10 (installer)`}</div>
+      <div>Windows (x64)</div>
+    </div>
+  </DownloadButton>
+</div>
 
 ## Installation
 ### With the Windows Installer

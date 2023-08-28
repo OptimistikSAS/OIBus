@@ -50,6 +50,21 @@
       "type": "json",
       "path": "shared/package-lock.json",
       "jsonpath": "packages[\"\"].version"
+    },
+    {
+      "type": "json",
+      "path": "documentation/package.json",
+      "jsonpath": "version"
+    },
+    {
+      "type": "json",
+      "path": "documentation/package-lock.json",
+      "jsonpath": "version"
+    },
+    {
+      "type": "json",
+      "path": "documentation/package-lock.json",
+      "jsonpath": "packages[\"\"].version"
     }
   ]
 }

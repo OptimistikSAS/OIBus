@@ -32,7 +32,15 @@ const config = {
       'classic',
       /** @type {import('@docusaurus/preset-classic').Options} */
       {
-        docs: { sidebarPath: require.resolve('./sidebars.js') },
+        docs: { sidebarPath: require.resolve('./sidebars.js'),
+          lastVersion: 'current',
+          versions: {
+            current: {
+              label: '3.0',
+              path: '3.0',
+            },
+          },
+        },
         theme: { customCss: require.resolve('./src/css/custom.css') },
       },
     ],
