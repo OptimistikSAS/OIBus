@@ -107,13 +107,13 @@ img.oib-image-header {
     border-bottom-right-radius: 1rem;
     background-color: $yellow;
     color: $darkGrey;
-    border: 0px;
+    border: 0;
       &:hover {
         border-top-right-radius: 1rem;
         border-bottom-right-radius: 1rem;
         background-color: $electricBlue;
         color: $white;
-        border: 0px;
+        border: 0;
       }
   }
 // change to yellow when hover a day in the ngb-datepicker
@@ -164,7 +164,7 @@ img.oib-image-header {
 .oib-grey-container {
   background-color: $lightGrey;
   padding: 0.375rem 0.75rem;
-  border: 0px;
+  border: 0;
   border-bottom-left-radius: 1rem;
   border-bottom-right-radius: 1rem;
 }
@@ -178,14 +178,13 @@ img.oib-image-header {
 .oib-inner-form {
   @extend .mb-3;
   padding: 15px;
-  border: 0px solid;
+  border: 0 solid;
   border-radius: 6px;
-  border-bottom-width: 0px;
 }
 
 .oib-table {
   :not(caption) > * > * {
-      border-bottom-width: 0px;
+      border-bottom-width: 0;
     }
   // table header
   thead {
@@ -221,7 +220,7 @@ img.oib-image-header {
     td {
       vertical-align: middle;
       padding-left: 1rem;
-      border-bottom-width: 0px;
+      border-bottom-width: 0;
     }
     // line
     tr {
@@ -455,15 +454,14 @@ val-errors > div {
 // customization of modal footer colors
 .modal-footer {
   background-color: $white !important;
-  border-top: 0px;
   border-bottom-left-radius: 1rem;
   border-bottom-right-radius: 1rem;
-  border:0px;
+  border:0;
 }
 // customization of modal content colors
 .modal-content {
   background-color: transparent;
-  border: 0px;
+  border: 0;
   // customization of modal header colors in modal content
   .modal-header {
     background-color: $darkGrey;
