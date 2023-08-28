@@ -1,5 +1,5 @@
 import url from 'node:url';
-import ProxyAgent from 'proxy-agent';
+import { ProxyAgent } from 'proxy-agent';
 import { AgentOptions } from 'agent-base';
 
 export interface ProxyConfig {

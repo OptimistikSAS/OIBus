@@ -1,4 +1,10 @@
 import { createProxyAgent, ProxyConfig } from './proxy.service';
+import { ProxyAgent } from 'proxy-agent';
+import url from 'node:url';
+
+jest.mock('proxy-agent', () => {
+  return { ProxyAgent: jest.fn().mockImplementation(() => ({ host: 'localhost:8080' })) };
+});
 
 describe('proxy service', () => {
   beforeEach(() => {
@@ -12,25 +18,12 @@ describe('proxy service', () => {
       password: 'my password'
     };
     const agent = await createProxyAgent(proxyConfig);
-    expect(agent).toEqual({
-      proxy: {
-        protocol: 'http:',
-        slashes: true,
-        auth: 'my user:my password',
-        host: 'localhost:8080',
-        port: '8080',
-        hostname: 'localhost',
-        hash: null,
-        search: null,
-        query: null,
-        rejectUnauthorized: true,
-        pathname: '/',
-        path: '/',
-        href: 'http://localhost:8080/'
-      },
-      proxyUri: 'http://my%20user:my%20password@localhost:8080',
-      proxyFn: expect.any(Function)
+    expect(ProxyAgent).toHaveBeenCalledWith({
+      ...url.parse('http://localhost:8080'),
+      auth: `my user:my password`,
+      rejectUnauthorized: true
     });
+    expect(agent).toEqual({ host: 'localhost:8080' });
   });
 
   it('should create proxy agent without user', async () => {
@@ -40,24 +33,10 @@ describe('proxy service', () => {
       password: null
     };
     const agent = await createProxyAgent(proxyConfig, true);
-    expect(agent).toEqual({
-      proxy: {
-        protocol: 'http:',
-        slashes: true,
-        auth: null,
-        host: 'localhost:8080',
-        port: '8080',
-        hostname: 'localhost',
-        hash: null,
-        search: null,
-        query: null,
-        rejectUnauthorized: false,
-        pathname: '/',
-        path: '/',
-        href: 'http://localhost:8080/'
-      },
-      proxyUri: 'http://localhost:8080',
-      proxyFn: expect.any(Function)
+    expect(ProxyAgent).toHaveBeenCalledWith({
+      ...url.parse('http://localhost:8080'),
+      rejectUnauthorized: false
     });
+    expect(agent).toEqual({ host: 'localhost:8080' });
   });
 });
