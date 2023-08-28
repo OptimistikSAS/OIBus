@@ -8,7 +8,10 @@ export class ArrayPage<T> implements Page<T> {
   private _number: number | null = null;
   private _totalPages: number;
 
-  constructor(private array: Array<T>, public readonly size: number) {
+  constructor(
+    private array: Array<T>,
+    public readonly size: number
+  ) {
     this._totalPages = Math.ceil(array.length / size);
     this.gotoPage(0);
   }

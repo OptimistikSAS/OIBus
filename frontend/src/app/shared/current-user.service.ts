@@ -22,7 +22,10 @@ export class CurrentUserService {
    */
   private timezone: Timezone;
 
-  constructor(private http: HttpClient, private windowService: WindowService) {
+  constructor(
+    private http: HttpClient,
+    private windowService: WindowService
+  ) {
     const storedToken = windowService.getStorageItem('oibus-token');
     this.currentUser$ = of(storedToken !== null).pipe(
       switchMap(authenticated => (authenticated ? this.retrieveConnection() : of(null))),

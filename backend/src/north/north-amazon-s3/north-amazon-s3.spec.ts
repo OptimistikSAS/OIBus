@@ -129,7 +129,7 @@ describe('NorthAmazonS3', () => {
 
     it('should properly handle file', async () => {
       const filePath = '/csv/test/file-789.csv';
-      (createReadStream as jest.Mock).mockImplementation(() => ({} as ReadStream));
+      (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
 
       await north.start();
       await north.handleFile(filePath);
@@ -139,7 +139,7 @@ describe('NorthAmazonS3', () => {
 
     it('should properly catch handle file error', async () => {
       const filePath = '/csv/test/file-789.csv';
-      (createReadStream as jest.Mock).mockImplementation(() => ({} as ReadStream));
+      (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
 
       sendMock.mockImplementationOnce(() => {
         throw new Error('test');
@@ -208,7 +208,7 @@ describe('NorthAmazonS3', () => {
 
     it('should properly handle file', async () => {
       const filePath = '/csv/test/file-789.csv';
-      (createReadStream as jest.Mock).mockImplementation(() => ({} as ReadStream));
+      (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
 
       await north.start();
       await north.handleFile(filePath);
@@ -218,7 +218,7 @@ describe('NorthAmazonS3', () => {
 
     it('should properly catch handle file error', async () => {
       const filePath = '/csv/test/file-789.csv';
-      (createReadStream as jest.Mock).mockImplementation(() => ({} as ReadStream));
+      (createReadStream as jest.Mock).mockImplementation(() => ({}) as ReadStream);
 
       sendMock.mockImplementationOnce(() => {
         throw new Error('test');

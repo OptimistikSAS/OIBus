@@ -24,7 +24,11 @@ export class EditIpFilterModalComponent {
     description: ''
   });
 
-  constructor(private modal: NgbActiveModal, private fb: FormBuilder, private ipFilterService: IpFilterService) {}
+  constructor(
+    private modal: NgbActiveModal,
+    private fb: FormBuilder,
+    private ipFilterService: IpFilterService
+  ) {}
 
   /**
    * Prepares the component for creation.

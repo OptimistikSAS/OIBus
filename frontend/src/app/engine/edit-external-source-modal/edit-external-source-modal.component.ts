@@ -24,7 +24,11 @@ export class EditExternalSourceModalComponent {
     description: ''
   });
 
-  constructor(private modal: NgbActiveModal, private fb: FormBuilder, private externalSourceService: ExternalSourceService) {}
+  constructor(
+    private modal: NgbActiveModal,
+    private fb: FormBuilder,
+    private externalSourceService: ExternalSourceService
+  ) {}
 
   /**
    * Prepares the component for creation.

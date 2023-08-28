@@ -22,7 +22,10 @@ const northList: Array<typeof NorthConnector<any>> = [
 ];
 
 export default class NorthService {
-  constructor(private readonly encryptionService: EncryptionService, private readonly repositoryService: RepositoryService) {}
+  constructor(
+    private readonly encryptionService: EncryptionService,
+    private readonly repositoryService: RepositoryService
+  ) {}
 
   /**
    * Return the North connector

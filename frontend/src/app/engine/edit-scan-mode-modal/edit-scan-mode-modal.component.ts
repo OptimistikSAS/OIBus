@@ -25,7 +25,11 @@ export class EditScanModeModalComponent {
     cron: ['', Validators.required]
   });
 
-  constructor(private modal: NgbActiveModal, private fb: FormBuilder, private scanModeService: ScanModeService) {}
+  constructor(
+    private modal: NgbActiveModal,
+    private fb: FormBuilder,
+    private scanModeService: ScanModeService
+  ) {}
 
   /**
    * Prepares the component for creation.

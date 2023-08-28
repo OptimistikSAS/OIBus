@@ -23,7 +23,10 @@ class LoggerService {
   logger: pino.Logger | null = null;
   fileCleanUpService: FileCleanupService | null = null;
 
-  constructor(private readonly encryptionService: EncryptionService, private readonly folder: string) {}
+  constructor(
+    private readonly encryptionService: EncryptionService,
+    private readonly folder: string
+  ) {}
 
   /**
    * Run the appropriate pino log transports according to the configuration

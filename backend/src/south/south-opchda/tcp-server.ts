@@ -10,7 +10,11 @@ import { Server } from 'net';
 export default class TcpServer {
   private netServer: Server | null = null;
   private socketSession: SocketSession | null = null;
-  constructor(private port: number, private handleMessage: (message: string) => Promise<void>, private logger: pino.Logger) {
+  constructor(
+    private port: number,
+    private handleMessage: (message: string) => Promise<void>,
+    private logger: pino.Logger
+  ) {
     this.netServer = null;
   }
 

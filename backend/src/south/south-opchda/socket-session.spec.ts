@@ -8,7 +8,10 @@ const closeCallback = jest.fn();
 const handleMessage = jest.fn();
 
 class CustomSocket extends Stream {
-  constructor(public remoteAddress: string, public remotePort: string) {
+  constructor(
+    public remoteAddress: string,
+    public remotePort: string
+  ) {
     super();
   }
 

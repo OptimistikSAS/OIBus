@@ -14,7 +14,12 @@ export default class FileCleanupService {
   private readonly logFolder: string;
   private cleanUpInterval: NodeJS.Timeout | null = null;
 
-  constructor(logFolder: string, private logger: pino.Logger, private readonly filename: string, private readonly numberOfFiles: number) {
+  constructor(
+    logFolder: string,
+    private logger: pino.Logger,
+    private readonly filename: string,
+    private readonly numberOfFiles: number
+  ) {
     this.logFolder = path.resolve(logFolder);
   }
 

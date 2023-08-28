@@ -14,7 +14,10 @@ import { ValdemortConfig } from 'ngx-valdemort';
   standalone: true
 })
 export class FormControlValidationDirective {
-  constructor(@Optional() private ngControl: NgControl, private config: ValdemortConfig) {}
+  constructor(
+    @Optional() private ngControl: NgControl,
+    private config: ValdemortConfig
+  ) {}
 
   @HostBinding('class.is-invalid') get isInvalid() {
     return (

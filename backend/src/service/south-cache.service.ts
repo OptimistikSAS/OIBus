@@ -4,7 +4,10 @@ import { SouthCache } from '../../../shared/model/south-connector.model';
 import { Instant } from '../../../shared/model/types';
 
 export default class SouthCacheService {
-  constructor(private readonly connectorId: string, private readonly _cacheRepository: SouthCacheRepository) {}
+  constructor(
+    private readonly connectorId: string,
+    private readonly _cacheRepository: SouthCacheRepository
+  ) {}
 
   get cacheRepository(): SouthCacheRepository {
     return this._cacheRepository;

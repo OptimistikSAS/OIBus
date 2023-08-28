@@ -16,7 +16,10 @@ import { formatNumber } from '@angular/common';
   standalone: true
 })
 export class DurationPipe implements PipeTransform {
-  constructor(private translateService: TranslateService, @Inject(LOCALE_ID) private locale: string) {}
+  constructor(
+    private translateService: TranslateService,
+    @Inject(LOCALE_ID) private locale: string
+  ) {}
 
   transform(value: number, style: 'long' | 'short' = 'long', type?: undefined | 'hourMinute'): string {
     if (value == null) {

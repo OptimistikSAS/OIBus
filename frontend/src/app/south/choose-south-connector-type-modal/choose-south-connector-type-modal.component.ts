@@ -18,7 +18,11 @@ export class ChooseSouthConnectorTypeModalComponent implements OnInit {
   southTypes: Array<SouthType> = [];
   groupedSouthTypes: { category: string; types: SouthType[] }[] = [];
 
-  constructor(private modal: NgbActiveModal, private southConnectorService: SouthConnectorService, private router: Router) {}
+  constructor(
+    private modal: NgbActiveModal,
+    private southConnectorService: SouthConnectorService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
     this.southConnectorService.getAvailableTypes().subscribe(types => {

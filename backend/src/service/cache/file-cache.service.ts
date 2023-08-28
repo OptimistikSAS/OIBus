@@ -24,7 +24,11 @@ export default class FileCacheService {
 
   private _triggerRun: EventEmitter = new EventEmitter();
 
-  constructor(logger: pino.Logger, baseFolder: string, private _settings: NorthCacheSettingsDTO) {
+  constructor(
+    logger: pino.Logger,
+    baseFolder: string,
+    private _settings: NorthCacheSettingsDTO
+  ) {
     this._logger = logger;
     this._fileFolder = path.resolve(baseFolder, FILE_FOLDER);
     this._errorFolder = path.resolve(baseFolder, ERROR_FOLDER);
