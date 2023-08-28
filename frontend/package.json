@@ -29,7 +29,7 @@
     "monaco-editor": "0.41.0",
     "ngx-valdemort": "10.0.1",
     "rxjs": "7.8.1",
-    "tslib": "2.5.0",
+    "tslib": "2.6.2",
     "zone.js": "0.13.1"
   },
   "devDependencies": {
