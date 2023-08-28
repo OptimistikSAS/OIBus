@@ -132,7 +132,6 @@
     "react-router-dom": "6.14.2",
     "reactstrap": "9.2.0",
     "rimraf": "5.0.1",
-    "standard-version": "9.5.0",
     "style-loader": "3.3.3",
     "typescript": "5.1.6",
     "webpack": "5.88.2",

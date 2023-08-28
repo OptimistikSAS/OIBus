@@ -1,0 +1,25 @@
+{
+  "bootstrap-sha": "09190ea91dc98729bfce4b2e9a645e877cfa1b75",
+  "last-release-sha": "09190ea91dc98729bfce4b2e9a645e877cfa1b75",
+  "release-type": "simple",
+  "packages": {
+    ".": {}
+  },
+  "extra-files": [
+    {
+      "type": "json",
+      "path": "package.json",
+      "jsonpath": "version"
+    },
+    {
+      "type": "json",
+      "path": "package-lock.json",
+      "jsonpath": "version"
+    },
+    {
+      "type": "json",
+      "path": "package-lock.json",
+      "jsonpath": "packages[\"\"].version"
+    }
+  ]
+}
