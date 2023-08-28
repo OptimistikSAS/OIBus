@@ -59,6 +59,8 @@
     "better-sqlite3": "8.3.0",
     "cron": "2.4.3",
     "form-data": "4.0.0",
+    "http-proxy-agent": "7.0.0",
+    "https-proxy-agent": "7.0.1",
     "joi": "17.10.0",
     "jsmodbus": "4.0.6",
     "jsonwebtoken": "9.0.1",
@@ -84,7 +86,6 @@
     "pino-abstract-transport": "1.0.0",
     "pino-pretty": "10.2.0",
     "pino-roll": "1.0.0-rc.1",
-    "proxy-agent": "5.0.0",
     "selfsigned": "2.1.1",
     "sprintf-js": "1.1.2",
     "thread-stream": "2.4.0"

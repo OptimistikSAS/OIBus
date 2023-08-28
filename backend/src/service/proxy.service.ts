@@ -1,6 +1,5 @@
-import url from 'node:url';
-import ProxyAgent from 'proxy-agent';
-import { AgentOptions } from 'agent-base';
+import { HttpProxyAgent } from 'http-proxy-agent';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 
 export interface ProxyConfig {
   url: string;
@@ -9,14 +8,13 @@ export interface ProxyConfig {
 }
 
 export function createProxyAgent(proxyConfig: ProxyConfig, acceptUnauthorized = false) {
-  const proxyOptions = url.parse(proxyConfig.url);
-
-  // @ts-ignore
-  proxyOptions.rejectUnauthorized = !acceptUnauthorized;
-
-  if (proxyConfig.username && proxyConfig.password) {
-    proxyOptions.auth = `${proxyConfig.username}:${proxyConfig.password}`;
+  let proxyAgent: HttpProxyAgent<string> | HttpsProxyAgent<string>;
+  if (proxyConfig.url.startsWith('http://')) {
+    proxyAgent = new HttpProxyAgent(proxyConfig.url);
+  } else if (proxyConfig.url.startsWith('https://')) {
+    proxyAgent = new HttpsProxyAgent(proxyConfig.url, { rejectUnauthorized: !acceptUnauthorized });
+  } else {
+    throw new Error(`Proxy URL ${proxyConfig.url} should start with http:// or https://`);
   }
-
-  return new ProxyAgent(proxyOptions as AgentOptions);
+  return proxyAgent;
 }
