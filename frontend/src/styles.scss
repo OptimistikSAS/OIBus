@@ -184,11 +184,13 @@ img.oib-image-header {
 
 .oib-table {
   :not(caption) > * > * {
-      border-bottom-width: 0;
-    }
+    border-bottom-width: 0;
+  }
+  --bs-table-bg: $white;
+  --bs-table-color: $white;
   // table header
   thead {
-    color: white;
+    color: $white;
     background-color: $darkGrey;
     // alternative case
     &.light {
