@@ -132,6 +132,10 @@ export default jest.fn().mockImplementation(() => ({
   southCacheRepository: {
     deleteAllCacheScanModes: jest.fn(),
     deleteCacheScanModesByItem: jest.fn(),
-    deleteCacheScanModesByScanMode: jest.fn()
+    deleteCacheScanModesByScanMode: jest.fn(),
+    getLatestMaxInstants: jest.fn(),
+    updateCacheScanModeId: jest.fn(),
+    createOrUpdateCacheScanMode: jest.fn(),
+    deleteCacheScanMode: jest.fn()
   }
 }));

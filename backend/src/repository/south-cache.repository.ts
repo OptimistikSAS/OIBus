@@ -1,5 +1,6 @@
 import { Database } from 'better-sqlite3';
 import { SouthCache } from '../../../shared/model/south-connector.model';
+import { Instant } from '../../../shared/model/types';
 
 export const SOUTH_CACHE_TABLE = 'cache_history';
 
@@ -39,6 +40,29 @@ export default class SouthCacheRepository {
       const query = `UPDATE ${SOUTH_CACHE_TABLE} SET max_instant = ? WHERE south_id = ? AND scan_mode_id = ? AND item_id = ?;`;
       this._database.prepare(query).run(command.maxInstant, command.southId, command.scanModeId, command.itemId);
     }
+  }
+
+  /**
+   * Retrieve a map of unique scan modes with their latest max instant
+   *
+   * NOTE: Map elements are sorted by max instant from latest to oldest
+   */
+  getLatestMaxInstants(southId: string): Map<string, Instant> | null {
+    const query = `SELECT max(max_instant) as maxInstant, scan_mode_id AS scanModeId FROM ${SOUTH_CACHE_TABLE} WHERE south_id = ? GROUP BY scan_mode_id ORDER BY max_instant DESC;`;
+    const results = this._database.prepare(query).all(southId) as { maxInstant: Instant; scanModeId: string }[];
+    if (results.length === 0) return null;
+    return new Map(results.map(r => [r.scanModeId, r.maxInstant]));
+  }
+
+  /**
+   * Update a cache row's scan mode ID
+   */
+  updateCacheScanModeId(southId: string, itemId: string, oldScanModeId: string, newScanModeId: string): void {
+    const foundScanMode = this.getSouthCacheScanMode(southId, oldScanModeId, itemId);
+    if (!foundScanMode) return;
+
+    const query = `UPDATE ${SOUTH_CACHE_TABLE} SET scan_mode_id = ? WHERE south_id = ? AND scan_mode_id = ? AND item_id = ?;`;
+    this._database.prepare(query).run(newScanModeId, southId, oldScanModeId, itemId);
   }
 
   /**

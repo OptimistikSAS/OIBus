@@ -101,8 +101,28 @@ export default class ReloadService {
   }
 
   async onUpdateSouth(southId: string, command: SouthConnectorCommandDTO): Promise<void> {
+    const previousSettings = this.repositoryService.southConnectorRepository.getSouthConnector(southId)!;
+
     await this.oibusEngine.stopSouth(southId);
     this.repositoryService.southConnectorRepository.updateSouthConnector(southId, command);
+
+    if (previousSettings.history.maxInstantPerItem != command.history.maxInstantPerItem) {
+      const maxInstants = this.repositoryService.southCacheRepository.getLatestMaxInstants(southId);
+      const latestInstant = maxInstants?.values().next().value as Instant;
+      const southItems = this.repositoryService.southItemRepository.getSouthItems(southId);
+      this.repositoryService.southCacheRepository.deleteAllCacheScanModes(southId);
+      if (!maxInstants) return;
+
+      for (const item of southItems) {
+        this.repositoryService.southCacheRepository.createOrUpdateCacheScanMode({
+          southId,
+          itemId: command.history.maxInstantPerItem ? item.id : 'all', // When max instant per item is disabled, we use 'all' as item_id
+          scanModeId: item.scanModeId,
+          maxInstant: maxInstants.get(item.scanModeId) || latestInstant
+        });
+      }
+    }
+
     if (command.enabled) {
       this.repositoryService.southConnectorRepository.startSouthConnector(southId);
       const settings = this.repositoryService.southConnectorRepository.getSouthConnector(southId)!;
@@ -151,6 +171,22 @@ export default class ReloadService {
   ): Promise<void> {
     this.repositoryService.southItemRepository.updateSouthItem(southItem.id, command);
     const newItem = this.repositoryService.southItemRepository.getSouthItem(southItem.id)!;
+    const settings = this.repositoryService.southConnectorRepository.getSouthConnector(southId)!;
+    const oldScanModeId = southItem.scanModeId;
+    const newScanModeId = newItem.scanModeId;
+
+    if (oldScanModeId != newScanModeId) {
+      this.repositoryService.southCacheRepository.updateCacheScanModeId(southId, newItem.id, oldScanModeId, newScanModeId);
+
+      if (!settings.history.maxInstantPerItem) {
+        const southItems = this.repositoryService.southItemRepository.getSouthItems(southId);
+        const isOldScanModeUnused = !southItems.some(item => item.scanModeId === oldScanModeId);
+        if (isOldScanModeUnused) {
+          this.repositoryService.southCacheRepository.deleteCacheScanMode(southId, oldScanModeId, 'all');
+        }
+      }
+    }
+
     this.oibusEngine.updateItemInSouth(southId, southItem, newItem);
   }
 

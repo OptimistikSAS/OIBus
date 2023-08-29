@@ -125,4 +125,29 @@ describe('SouthCacheRepository', () => {
     expect(database.prepare).toHaveBeenCalledWith(`DELETE FROM ${SOUTH_CACHE_TABLE} WHERE scan_mode_id = ?;`);
     expect(run).toHaveBeenCalledWith('scanModeId');
   });
+
+  it('should return max instants grouped by scan modes', () => {
+    const mockValues = [
+      { maxInstant: '2023-03-01T10:30:16.000Z', scanModeId: 'id1' },
+      { maxInstant: '2023-03-01T10:30:00.000Z', scanModeId: 'id2' }
+    ];
+    all.mockReturnValueOnce(mockValues);
+    const expectedMap = new Map(mockValues.map(r => [r.scanModeId, r.maxInstant]));
+    const resultMap = repository.getLatestMaxInstants('southId');
+
+    expect(database.prepare).toHaveBeenCalledWith(
+      `SELECT max(max_instant) as maxInstant, scan_mode_id AS scanModeId FROM ${SOUTH_CACHE_TABLE} WHERE south_id = ? GROUP BY scan_mode_id ORDER BY max_instant DESC;`
+    );
+    expect(all).toHaveBeenCalledWith('southId');
+    expect(resultMap).toEqual(expectedMap);
+  });
+
+  it("should update a chache row's scan mode id", () => {
+    get.mockReturnValueOnce({});
+    repository.updateCacheScanModeId('southId', 'itemId', 'oldScanModeId', 'newScanModeId');
+    expect(database.prepare).toHaveBeenCalledWith(
+      `UPDATE ${SOUTH_CACHE_TABLE} SET scan_mode_id = ? WHERE south_id = ? AND scan_mode_id = ? AND item_id = ?;`
+    );
+    expect(run).toHaveBeenCalledWith('newScanModeId', 'southId', 'oldScanModeId', 'itemId');
+  });
 });
