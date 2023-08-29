@@ -111,7 +111,8 @@ describe('reload service', () => {
   });
 
   it('should update and start south', async () => {
-    const command = { enabled: true };
+    const command = { enabled: true, history: { maxInstantPerItem: false } };
+    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ history: { maxInstantPerItem: 0 } });
     (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ id: 'southId' });
 
     await service.onUpdateSouth('southId', command as SouthConnectorCommandDTO);
@@ -121,12 +122,107 @@ describe('reload service', () => {
   });
 
   it('should update and not start south', async () => {
-    const command = {};
+    const command = { enabled: false, history: { maxInstantPerItem: false } };
+    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ history: { maxInstantPerItem: 0 } });
 
     await service.onUpdateSouth('southId', command as SouthConnectorCommandDTO);
     expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
     expect(repositoryService.southConnectorRepository.updateSouthConnector).toHaveBeenCalledWith('southId', command);
     expect(oibusEngine.startSouth).not.toHaveBeenCalled();
+  });
+
+  it('should handle enabling max instant per item', async () => {
+    const command = { enabled: false, history: { maxInstantPerItem: true } };
+    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ history: { maxInstantPerItem: 0 } });
+    (repositoryService.southCacheRepository.getLatestMaxInstants as jest.Mock).mockReturnValueOnce(
+      new Map([
+        ['scanModeId1', '2023-03-01T10:30:16.000Z'],
+        ['scanModeId2', '2023-03-01T10:30:10.000Z']
+      ])
+    );
+    (repositoryService.southItemRepository.getSouthItems as jest.Mock).mockReturnValueOnce([
+      { id: 'item1', scanModeId: 'scanModeId1' },
+      { id: 'item2', scanModeId: 'scanModeId2' },
+      { id: 'item3', scanModeId: 'scanModeId2' },
+      { id: 'item4', scanModeId: 'scanModeId3' }
+    ]);
+
+    await service.onUpdateSouth('southId', command as SouthConnectorCommandDTO);
+    expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
+    expect(repositoryService.southConnectorRepository.updateSouthConnector).toHaveBeenCalledWith('southId', command);
+    expect(oibusEngine.startSouth).not.toHaveBeenCalled();
+    expect(repositoryService.southCacheRepository.deleteAllCacheScanModes).toBeCalled();
+    expect(repositoryService.southCacheRepository.createOrUpdateCacheScanMode).toHaveBeenNthCalledWith(1, {
+      southId: 'southId',
+      itemId: 'item1',
+      scanModeId: 'scanModeId1',
+      maxInstant: '2023-03-01T10:30:16.000Z'
+    });
+    expect(repositoryService.southCacheRepository.createOrUpdateCacheScanMode).toHaveBeenNthCalledWith(2, {
+      southId: 'southId',
+      itemId: 'item2',
+      scanModeId: 'scanModeId2',
+      maxInstant: '2023-03-01T10:30:10.000Z'
+    });
+    expect(repositoryService.southCacheRepository.createOrUpdateCacheScanMode).toHaveBeenNthCalledWith(3, {
+      southId: 'southId',
+      itemId: 'item3',
+      scanModeId: 'scanModeId2',
+      maxInstant: '2023-03-01T10:30:10.000Z'
+    });
+    expect(repositoryService.southCacheRepository.createOrUpdateCacheScanMode).toHaveBeenNthCalledWith(4, {
+      southId: 'southId',
+      itemId: 'item4',
+      scanModeId: 'scanModeId3',
+      maxInstant: '2023-03-01T10:30:16.000Z'
+    });
+  });
+
+  it('should handle disabling max instant per item', async () => {
+    const command = { enabled: false, history: { maxInstantPerItem: false } };
+    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ history: { maxInstantPerItem: 1 } });
+    (repositoryService.southCacheRepository.getLatestMaxInstants as jest.Mock).mockReturnValueOnce(
+      new Map([
+        ['scanModeId1', '2023-03-01T10:30:16.000Z'],
+        ['scanModeId2', '2023-03-01T10:30:10.000Z']
+      ])
+    );
+    (repositoryService.southItemRepository.getSouthItems as jest.Mock).mockReturnValueOnce([
+      { id: 'item1', scanModeId: 'scanModeId1' },
+      { id: 'item2', scanModeId: 'scanModeId2' },
+      { id: 'item3', scanModeId: 'scanModeId2' },
+      { id: 'item4', scanModeId: 'scanModeId3' }
+    ]);
+
+    await service.onUpdateSouth('southId', command as SouthConnectorCommandDTO);
+    expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
+    expect(repositoryService.southConnectorRepository.updateSouthConnector).toHaveBeenCalledWith('southId', command);
+    expect(oibusEngine.startSouth).not.toHaveBeenCalled();
+    expect(repositoryService.southCacheRepository.deleteAllCacheScanModes).toBeCalled();
+    expect(repositoryService.southCacheRepository.createOrUpdateCacheScanMode).toHaveBeenNthCalledWith(1, {
+      southId: 'southId',
+      itemId: 'all',
+      scanModeId: 'scanModeId1',
+      maxInstant: '2023-03-01T10:30:16.000Z'
+    });
+    expect(repositoryService.southCacheRepository.createOrUpdateCacheScanMode).toHaveBeenNthCalledWith(2, {
+      southId: 'southId',
+      itemId: 'all',
+      scanModeId: 'scanModeId2',
+      maxInstant: '2023-03-01T10:30:10.000Z'
+    });
+    expect(repositoryService.southCacheRepository.createOrUpdateCacheScanMode).toHaveBeenNthCalledWith(3, {
+      southId: 'southId',
+      itemId: 'all',
+      scanModeId: 'scanModeId2',
+      maxInstant: '2023-03-01T10:30:10.000Z'
+    });
+    expect(repositoryService.southCacheRepository.createOrUpdateCacheScanMode).toHaveBeenNthCalledWith(4, {
+      southId: 'southId',
+      itemId: 'all',
+      scanModeId: 'scanModeId3',
+      maxInstant: '2023-03-01T10:30:16.000Z'
+    });
   });
 
   it('should delete south', async () => {
@@ -187,6 +283,47 @@ describe('reload service', () => {
     await service.onUpdateSouthItemsSettings('southId', oldSouthItem as SouthConnectorItemDTO, command as SouthConnectorItemCommandDTO);
     expect(repositoryService.southItemRepository.updateSouthItem).toHaveBeenCalledWith('southItemId', command);
     expect(oibusEngine.updateItemInSouth).toHaveBeenCalledWith('southId', oldSouthItem, newSouthItem);
+  });
+
+  it('should update south item scan mode with enabled max instant per item', async () => {
+    const oldSouthItem = { id: 'southItemId', connectorId: 'southId', settings: { field: 'value' }, scanModeId: 'scanModeId1' };
+    const newSouthItem = { id: 'southItemId', connectorId: 'southId', settings: { field: 'newValue' }, scanModeId: 'scanModeId2' };
+    (repositoryService.southItemRepository.getSouthItem as jest.Mock).mockReturnValueOnce(newSouthItem);
+    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ history: { maxInstantPerItem: 1 } });
+
+    const command = {};
+    await service.onUpdateSouthItemsSettings('southId', oldSouthItem as SouthConnectorItemDTO, command as SouthConnectorItemCommandDTO);
+    expect(repositoryService.southItemRepository.updateSouthItem).toHaveBeenCalledWith('southItemId', command);
+    expect(oibusEngine.updateItemInSouth).toHaveBeenCalledWith('southId', oldSouthItem, newSouthItem);
+    expect(repositoryService.southCacheRepository.updateCacheScanModeId).toHaveBeenCalledWith(
+      'southId',
+      'southItemId',
+      'scanModeId1',
+      'scanModeId2'
+    );
+  });
+
+  it('should update south item scan mode with disabled max instant per item', async () => {
+    const oldSouthItem = { id: 'item1', connectorId: 'southId', settings: { field: 'value' }, scanModeId: 'scanModeId1' };
+    const newSouthItem = { id: 'item1', connectorId: 'southId', settings: { field: 'newValue' }, scanModeId: 'scanModeId2' };
+    (repositoryService.southItemRepository.getSouthItem as jest.Mock).mockReturnValueOnce(newSouthItem);
+    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ history: { maxInstantPerItem: 0 } });
+    (repositoryService.southItemRepository.getSouthItems as jest.Mock).mockReturnValueOnce([
+      { id: 'item1', scanModeId: 'scanModeId2' },
+      { id: 'item2', scanModeId: 'scanModeId2' }
+    ]);
+
+    const command = {};
+    await service.onUpdateSouthItemsSettings('southId', oldSouthItem as SouthConnectorItemDTO, command as SouthConnectorItemCommandDTO);
+    expect(repositoryService.southItemRepository.updateSouthItem).toHaveBeenCalledWith('item1', command);
+    expect(oibusEngine.updateItemInSouth).toHaveBeenCalledWith('southId', oldSouthItem, newSouthItem);
+    expect(repositoryService.southCacheRepository.updateCacheScanModeId).toHaveBeenCalledWith(
+      'southId',
+      'item1',
+      'scanModeId1',
+      'scanModeId2'
+    );
+    expect(repositoryService.southCacheRepository.deleteCacheScanMode).toHaveBeenCalledWith('southId', 'scanModeId1', 'all');
   });
 
   it('should create or update south items', async () => {
