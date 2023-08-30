@@ -81,4 +81,9 @@ describe('north service', () => {
     expect(error).toEqual(new Error('North connector of type another not installed'));
     expect(connector).not.toBeDefined();
   });
+
+  it('should retrieve a list of north manifest', () => {
+    const list = service.getInstalledNorthManifests();
+    expect(list).toBeDefined();
+  });
 });

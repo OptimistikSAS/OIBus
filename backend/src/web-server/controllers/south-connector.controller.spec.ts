@@ -1,8 +1,6 @@
-import SouthConnectorController, { southManifests } from './south-connector.controller';
+import SouthConnectorController from './south-connector.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from './validators/joi.validator';
-import folderScannerManifest from '../../south/south-folder-scanner/manifest';
-import sqliteManifest from '../../south/south-sqlite/manifest';
 import csv from 'papaparse';
 import fs from 'node:fs/promises';
 import {
@@ -16,6 +14,7 @@ import {
   SouthFolderScannerSettings,
   SouthSQLiteSettings
 } from '../../../../shared/model/south-settings.model';
+import { southTestManifest } from '../../tests/__mocks__/south-service.mock';
 
 jest.mock('./validators/joi.validator');
 jest.mock('papaparse');
@@ -27,7 +26,7 @@ const southConnectorController = new SouthConnectorController(validator);
 
 const sqliteConnectorCommand: SouthConnectorCommandDTO<SouthSQLiteSettings> = {
   name: 'name',
-  type: 'sqlite',
+  type: 'south-test',
   description: 'description',
   enabled: true,
   settings: {
@@ -41,7 +40,7 @@ const sqliteConnectorCommand: SouthConnectorCommandDTO<SouthSQLiteSettings> = {
 };
 const southConnectorCommand: SouthConnectorCommandDTO<SouthFolderScannerSettings> = {
   name: 'name',
-  type: 'folder-scanner',
+  type: 'south-test',
   description: 'description',
   enabled: true,
   settings: {
@@ -84,29 +83,35 @@ const page = {
 
 describe('South connector controller', () => {
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
   });
 
   it('getSouthConnectorTypes() should return South connector types', async () => {
     await southConnectorController.getSouthConnectorTypes(ctx);
 
-    expect(ctx.ok).toHaveBeenCalledWith(
-      southManifests.map(manifest => ({
-        category: manifest.category,
-        id: manifest.id,
-        name: manifest.name,
-        description: manifest.description,
-        modes: manifest.modes
-      }))
-    );
+    expect(ctx.ok).toHaveBeenCalledWith([
+      {
+        id: 'south-test',
+        category: 'debug',
+        name: 'Test',
+        description: '',
+        modes: {
+          subscription: true,
+          lastPoint: true,
+          lastFile: true,
+          history: true,
+          forceMaxInstantPerItem: true
+        }
+      }
+    ]);
   });
 
   it('getSouthConnectorManifest() should return South connector manifest', async () => {
-    ctx.params.id = 'folder-scanner';
+    ctx.params.id = 'south-test';
 
     await southConnectorController.getSouthConnectorManifest(ctx);
 
-    expect(ctx.ok).toHaveBeenCalledWith(folderScannerManifest);
+    expect(ctx.ok).toHaveBeenCalledWith(southTestManifest);
   });
 
   it('getSouthConnectorManifest() should return not found', async () => {
@@ -124,7 +129,7 @@ describe('South connector controller', () => {
     await southConnectorController.getSouthConnectors(ctx);
 
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnectors).toHaveBeenCalled();
-    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, folderScannerManifest.settings);
+    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, southTestManifest.settings);
     expect(ctx.ok).toHaveBeenCalledWith([southConnector]);
   });
 
@@ -139,7 +144,7 @@ describe('South connector controller', () => {
     await southConnectorController.getSouthConnectors(ctx);
 
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnectors).toHaveBeenCalled();
-    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, folderScannerManifest.settings);
+    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, southTestManifest.settings);
     expect(ctx.ok).toHaveBeenCalledWith([southConnector, null]);
   });
 
@@ -151,7 +156,7 @@ describe('South connector controller', () => {
     await southConnectorController.getSouthConnector(ctx);
 
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('id');
-    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, folderScannerManifest.settings);
+    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(southConnector.settings, southTestManifest.settings);
     expect(ctx.ok).toHaveBeenCalledWith(southConnector);
   });
 
@@ -191,11 +196,11 @@ describe('South connector controller', () => {
 
     await southConnectorController.createSouthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
       null,
-      folderScannerManifest.settings
+      southTestManifest.settings
     );
     expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith(southConnectorCommand);
     expect(ctx.created).toHaveBeenCalledWith(southConnector);
@@ -211,11 +216,11 @@ describe('South connector controller', () => {
 
     await southConnectorController.createSouthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(sqliteManifest.settings, sqliteConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, sqliteConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       sqliteConnectorCommand.settings,
       null,
-      sqliteManifest.settings
+      southTestManifest.settings
     );
     expect(ctx.app.reloadService.onCreateSouth).toHaveBeenCalledWith(sqliteConnectorCommand);
     expect(ctx.created).toHaveBeenCalledWith(southConnector);
@@ -257,7 +262,7 @@ describe('South connector controller', () => {
 
     await southConnectorController.createSouthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateSouth).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
@@ -273,12 +278,12 @@ describe('South connector controller', () => {
 
     await southConnectorController.updateSouthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('id');
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
       southConnector.settings,
-      folderScannerManifest.settings
+      southTestManifest.settings
     );
     expect(ctx.app.reloadService.onUpdateSouth).toHaveBeenCalledWith('id', southConnectorCommand);
     expect(ctx.noContent).toHaveBeenCalled();
@@ -325,7 +330,7 @@ describe('South connector controller', () => {
 
     await southConnectorController.updateSouthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
@@ -341,7 +346,7 @@ describe('South connector controller', () => {
 
     await southConnectorController.updateSouthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('id');
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
@@ -512,7 +517,7 @@ describe('South connector controller', () => {
 
     await southConnectorController.createSouthItem(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.items.settings, itemCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.items.settings, itemCommand.settings);
     expect(ctx.app.reloadService.onCreateSouthItem).toHaveBeenCalledWith('southId', itemCommand);
     expect(ctx.created).toHaveBeenCalledWith(item);
   });
@@ -575,7 +580,7 @@ describe('South connector controller', () => {
 
     await southConnectorController.createSouthItem(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.items.settings, itemCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.items.settings, itemCommand.settings);
     expect(ctx.app.reloadService.onCreateSouthItem).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
@@ -592,7 +597,7 @@ describe('South connector controller', () => {
 
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
     expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
-    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.items.settings, itemCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.items.settings, itemCommand.settings);
     expect(ctx.app.reloadService.onUpdateSouthItemsSettings).toHaveBeenCalledWith('southId', item, itemCommand);
     expect(ctx.noContent).toHaveBeenCalled();
   });
@@ -685,7 +690,7 @@ describe('South connector controller', () => {
 
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).toHaveBeenCalledWith('southId');
     expect(ctx.app.repositoryService.southItemRepository.getSouthItem).toHaveBeenCalledWith('id');
-    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.items.settings, itemCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.items.settings, itemCommand.settings);
     expect(ctx.app.reloadService.onUpdateSouthItemsSettings).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
@@ -923,11 +928,11 @@ describe('South connector controller', () => {
     await southConnectorController.testSouthConnection(ctx);
     await southConnectorController.addValues('id1', []);
     await southConnectorController.addFile('id1', 'filename');
-    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
       southConnector.settings,
-      folderScannerManifest.settings
+      southTestManifest.settings
     );
     expect(ctx.noContent).toHaveBeenCalled();
   });
@@ -975,7 +980,7 @@ describe('South connector controller', () => {
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       southConnectorCommand.settings,
       null,
-      folderScannerManifest.settings
+      southTestManifest.settings
     );
     expect(ctx.notFound).not.toHaveBeenCalled();
   });
@@ -1002,7 +1007,7 @@ describe('South connector controller', () => {
 
     await southConnectorController.testSouthConnection(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(folderScannerManifest.settings, southConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.oibusEngine.testSouth).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);

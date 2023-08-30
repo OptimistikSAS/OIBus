@@ -5,23 +5,18 @@ import JoiValidator from './validators/joi.validator';
 import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemSearchParam,
-  SouthConnectorManifest
+  SouthConnectorItemSearchParam
 } from '../../../../shared/model/south-connector.model';
-import { NorthConnectorManifest } from '../../../../shared/model/north-connector.model';
 import { Page } from '../../../../shared/model/types';
 import csv from 'papaparse';
 import fs from 'node:fs/promises';
-import { southManifests } from './south-connector.controller';
 import AbstractController from './abstract.controller';
 import Joi from 'joi';
 
 export default class HistoryQueryController extends AbstractController {
   constructor(
     protected readonly validator: JoiValidator,
-    protected readonly schema: Joi.ObjectSchema,
-    private southManifests: Array<SouthConnectorManifest>,
-    private northManifests: Array<NorthConnectorManifest>
+    protected readonly schema: Joi.ObjectSchema
   ) {
     super(validator, schema);
   }
@@ -30,8 +25,8 @@ export default class HistoryQueryController extends AbstractController {
     const historyQueries = ctx.app.repositoryService.historyQueryRepository.getHistoryQueries();
     ctx.ok(
       historyQueries.map(historyQuery => {
-        const southManifest = this.southManifests.find(manifest => manifest.id === historyQuery.southType);
-        const northManifest = this.northManifests.find(manifest => manifest.id === historyQuery.northType);
+        const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === historyQuery.southType);
+        const northManifest = ctx.app.northService.getInstalledNorthManifests().find(manifest => manifest.id === historyQuery.northType);
         if (southManifest && northManifest) {
           historyQuery.southSettings = ctx.app.encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings);
           historyQuery.northSettings = ctx.app.encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings);
@@ -47,8 +42,8 @@ export default class HistoryQueryController extends AbstractController {
     if (!historyQuery) {
       return ctx.notFound();
     }
-    const southManifest = this.southManifests.find(manifest => manifest.id === historyQuery.southType);
-    const northManifest = this.northManifests.find(manifest => manifest.id === historyQuery.northType);
+    const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === historyQuery.southType);
+    const northManifest = ctx.app.northService.getInstalledNorthManifests().find(manifest => manifest.id === historyQuery.northType);
     if (southManifest && northManifest) {
       historyQuery.southSettings = ctx.app.encryptionService.filterSecrets(historyQuery.southSettings, southManifest.settings);
       historyQuery.northSettings = ctx.app.encryptionService.filterSecrets(historyQuery.northSettings, northManifest.settings);
@@ -65,7 +60,7 @@ export default class HistoryQueryController extends AbstractController {
 
     const command = ctx.request.body.historyQuery;
     const itemsToAdd = ctx.request.body.items;
-    const southManifest = this.southManifests.find(manifest => manifest.id === command.southType);
+    const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === command.southType);
     if (!southManifest) {
       return ctx.throw(404, 'South manifest not found');
     }
@@ -77,7 +72,7 @@ export default class HistoryQueryController extends AbstractController {
       }
     }
 
-    const northManifest = this.northManifests.find(manifest => manifest.id === command.northType);
+    const northManifest = ctx.app.northService.getInstalledNorthManifests().find(manifest => manifest.id === command.northType);
     if (!northManifest) {
       return ctx.throw(404, 'North manifest not found');
     }
@@ -120,12 +115,12 @@ export default class HistoryQueryController extends AbstractController {
     if (!historyQuery) {
       return ctx.notFound();
     }
-    const southManifest = this.southManifests.find(manifest => manifest.id === historyQuery.southType);
+    const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === historyQuery.southType);
     if (!southManifest) {
       return ctx.throw(404, 'South manifest not found');
     }
 
-    const northManifest = this.northManifests.find(manifest => manifest.id === historyQuery.northType);
+    const northManifest = ctx.app.northService.getInstalledNorthManifests().find(manifest => manifest.id === historyQuery.northType);
     if (!northManifest) {
       return ctx.throw(404, 'North manifest not found');
     }
@@ -216,7 +211,7 @@ export default class HistoryQueryController extends AbstractController {
         return ctx.throw(404, 'History query not found');
       }
 
-      const southManifest = this.southManifests.find(manifest => manifest.id === historyQuery.southType);
+      const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === historyQuery.southType);
       if (!southManifest) {
         return ctx.throw(404, 'South manifest not found');
       }
@@ -238,7 +233,7 @@ export default class HistoryQueryController extends AbstractController {
         return ctx.throw(404, 'History query not found');
       }
 
-      const southManifest = this.southManifests.find(manifest => manifest.id === historyQuery.southType);
+      const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === historyQuery.southType);
       if (!southManifest) {
         return ctx.throw(404, 'History query South manifest not found');
       }
@@ -301,7 +296,7 @@ export default class HistoryQueryController extends AbstractController {
       return ctx.throw(404, 'History query not found');
     }
 
-    const southManifest = southManifests.find(manifest => manifest.id === historyQuery.southType);
+    const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === historyQuery.southType);
     if (!southManifest) {
       return ctx.throw(404, 'History query South manifest not found');
     }

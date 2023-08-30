@@ -1,7 +1,7 @@
-import NorthConnectorController, { northManifests } from './north-connector.controller';
+import NorthConnectorController from './north-connector.controller';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from './validators/joi.validator';
-import mqttManifest from '../../north/north-mqtt/manifest';
+import { northTestManifest } from '../../tests/__mocks__/north-service.mock';
 
 jest.mock('./validators/joi.validator');
 
@@ -23,7 +23,7 @@ const northArchiveSettings = {
 };
 const northConnectorCommand = {
   name: 'name',
-  type: 'mqtt',
+  type: 'north-test',
   description: 'description',
   enabled: true,
   settings: {
@@ -39,29 +39,32 @@ const northConnector = {
 
 describe('North connector controller', () => {
   beforeEach(async () => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
   });
 
   it('getNorthConnectorTypes() should return North connector types', async () => {
     await northConnectorController.getNorthConnectorTypes(ctx);
 
-    expect(ctx.ok).toHaveBeenCalledWith(
-      northManifests.map(manifest => ({
-        category: manifest.category,
-        id: manifest.id,
-        name: manifest.name,
-        description: manifest.description,
-        modes: manifest.modes
-      }))
-    );
+    expect(ctx.ok).toHaveBeenCalledWith([
+      {
+        id: 'north-test',
+        category: 'debug',
+        name: 'Test',
+        description: '',
+        modes: {
+          files: true,
+          points: true
+        }
+      }
+    ]);
   });
 
   it('getNorthConnectorManifest() should return North connector manifest', async () => {
-    ctx.params.id = 'mqtt';
+    ctx.params.id = 'north-test';
 
     await northConnectorController.getNorthConnectorManifest(ctx);
 
-    expect(ctx.ok).toHaveBeenCalledWith(mqttManifest);
+    expect(ctx.ok).toHaveBeenCalledWith(northTestManifest);
   });
 
   it('getNorthConnectorManifest() should return not found', async () => {
@@ -79,7 +82,7 @@ describe('North connector controller', () => {
     await northConnectorController.getNorthConnectors(ctx);
 
     expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnectors).toHaveBeenCalled();
-    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(northConnector.settings, mqttManifest.settings);
+    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(northConnector.settings, northTestManifest.settings);
     expect(ctx.ok).toHaveBeenCalledWith([northConnector]);
   });
 
@@ -94,7 +97,7 @@ describe('North connector controller', () => {
     await northConnectorController.getNorthConnectors(ctx);
 
     expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnectors).toHaveBeenCalled();
-    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(northConnector.settings, mqttManifest.settings);
+    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(northConnector.settings, northTestManifest.settings);
     expect(ctx.ok).toHaveBeenCalledWith([northConnector, null]);
   });
 
@@ -106,7 +109,7 @@ describe('North connector controller', () => {
     await northConnectorController.getNorthConnector(ctx);
 
     expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
-    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(northConnector.settings, mqttManifest.settings);
+    expect(ctx.app.encryptionService.filterSecrets).toHaveBeenCalledWith(northConnector.settings, northTestManifest.settings);
     expect(ctx.ok).toHaveBeenCalledWith(northConnector);
   });
 
@@ -145,11 +148,11 @@ describe('North connector controller', () => {
 
     await northConnectorController.createNorthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, northConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       northConnectorCommand.settings,
       null,
-      mqttManifest.settings
+      northTestManifest.settings
     );
     expect(ctx.app.reloadService.onCreateNorth).toHaveBeenCalledWith(northConnectorCommand);
     expect(ctx.created).toHaveBeenCalledWith(northConnector);
@@ -191,7 +194,7 @@ describe('North connector controller', () => {
 
     await northConnectorController.createNorthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, northConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateNorth).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
@@ -207,12 +210,12 @@ describe('North connector controller', () => {
 
     await northConnectorController.updateNorthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, northConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
     expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       northConnectorCommand.settings,
       northConnector.settings,
-      mqttManifest.settings
+      northTestManifest.settings
     );
     expect(ctx.app.reloadService.onUpdateNorthSettings).toHaveBeenCalledWith('id', northConnectorCommand);
     expect(ctx.noContent).toHaveBeenCalled();
@@ -246,7 +249,7 @@ describe('North connector controller', () => {
 
     await northConnectorController.updateNorthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, northConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
     expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onUpdateNorthSettings).not.toHaveBeenCalled();
@@ -262,7 +265,7 @@ describe('North connector controller', () => {
 
     await northConnectorController.updateNorthConnector(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, northConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
     expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onUpdateNorthSettings).not.toHaveBeenCalled();
@@ -719,11 +722,11 @@ describe('North connector controller', () => {
 
     await northConnectorController.testNorthConnection(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, northConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       northConnectorCommand.settings,
       northConnector.settings,
-      mqttManifest.settings
+      northTestManifest.settings
     );
     expect(ctx.noContent).toHaveBeenCalled();
   });
@@ -771,7 +774,7 @@ describe('North connector controller', () => {
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       northConnectorCommand.settings,
       null,
-      mqttManifest.settings
+      northTestManifest.settings
     );
     expect(ctx.notFound).not.toHaveBeenCalled();
   });
@@ -798,7 +801,7 @@ describe('North connector controller', () => {
 
     await northConnectorController.testNorthConnection(ctx);
 
-    expect(validator.validateSettings).toHaveBeenCalledWith(mqttManifest.settings, northConnectorCommand.settings);
+    expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.northService.createNorth).not.toHaveBeenCalled();
     expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);

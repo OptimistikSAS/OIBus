@@ -1,20 +1,5 @@
 import { KoaContext } from '../koa';
 import csv from 'papaparse';
-
-import adsManifest from '../../south/south-ads/manifest';
-import folderScannerManifest from '../../south/south-folder-scanner/manifest';
-import modbusManifest from '../../south/south-modbus/manifest';
-import mqttManifest from '../../south/south-mqtt/manifest';
-import opchdaManifest from '../../south/south-opchda/manifest';
-import opcuaManifest from '../../south/south-opcua/manifest';
-import oianalyticsManifest from '../../south/south-oianalytics/manifest';
-import slimsManifest from '../../south/south-slims/manifest';
-import mssqlManifest from '../../south/south-mssql/manifest';
-import mysqlManifest from '../../south/south-mysql/manifest';
-import postgresqlManifest from '../../south/south-postgresql/manifest';
-import oracleManifest from '../../south/south-oracle/manifest';
-import odbcManifest from '../../south/south-odbc/manifest';
-import sqliteManifest from '../../south/south-sqlite/manifest';
 import {
   SouthConnectorCommandDTO,
   SouthConnectorCreationCommandDTO,
@@ -28,30 +13,12 @@ import { Page } from '../../../../shared/model/types';
 import JoiValidator from './validators/joi.validator';
 import fs from 'node:fs/promises';
 
-// TODO: retrieve south types from a local store
-export const southManifests = [
-  oianalyticsManifest,
-  slimsManifest,
-  opcuaManifest,
-  opchdaManifest,
-  mqttManifest,
-  modbusManifest,
-  folderScannerManifest,
-  adsManifest,
-  mssqlManifest,
-  mysqlManifest,
-  postgresqlManifest,
-  oracleManifest,
-  odbcManifest,
-  sqliteManifest
-];
-
 export default class SouthConnectorController {
   constructor(protected readonly validator: JoiValidator) {}
 
   async getSouthConnectorTypes(ctx: KoaContext<void, Array<SouthType>>): Promise<void> {
     ctx.ok(
-      southManifests.map(manifest => ({
+      ctx.app.southService.getInstalledSouthManifests().map(manifest => ({
         category: manifest.category,
         id: manifest.id,
         name: manifest.name,
@@ -62,7 +29,7 @@ export default class SouthConnectorController {
   }
 
   async getSouthConnectorManifest(ctx: KoaContext<void, object>): Promise<void> {
-    const manifest = southManifests.find(southManifest => southManifest.id === ctx.params.id);
+    const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.params.id);
     if (!manifest) {
       ctx.throw(404, 'South not found');
     }
@@ -73,7 +40,7 @@ export default class SouthConnectorController {
     const southConnectors = ctx.app.repositoryService.southConnectorRepository.getSouthConnectors();
     ctx.ok(
       southConnectors.map(connector => {
-        const manifest = southManifests.find(southManifest => southManifest.id === connector.type);
+        const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === connector.type);
         if (manifest) {
           connector.settings = ctx.app.encryptionService.filterSecrets(connector.settings, manifest.settings);
           return connector;
@@ -86,7 +53,7 @@ export default class SouthConnectorController {
   async getSouthConnector(ctx: KoaContext<void, SouthConnectorDTO>): Promise<void> {
     const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
     if (southConnector) {
-      const manifest = southManifests.find(southManifest => southManifest.id === southConnector.type);
+      const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type);
       if (manifest) {
         southConnector.settings = ctx.app.encryptionService.filterSecrets(southConnector.settings, manifest.settings);
         ctx.ok(southConnector);
@@ -100,7 +67,9 @@ export default class SouthConnectorController {
 
   async testSouthConnection(ctx: KoaContext<SouthConnectorCommandDTO, void>): Promise<void> {
     try {
-      const manifest = ctx.request.body ? southManifests.find(southManifest => southManifest.id === ctx.request.body!.type) : null;
+      const manifest = ctx.request.body
+        ? ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.request.body!.type)
+        : null;
       if (!manifest) {
         return ctx.throw(404, 'South manifest not found');
       }
@@ -136,7 +105,7 @@ export default class SouthConnectorController {
 
     try {
       const command = ctx.request.body!.south;
-      const manifest = southManifests.find(southManifest => southManifest.id === command.type);
+      const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
 
       if (!manifest) {
         return ctx.throw(404, 'South manifest not found');
@@ -163,7 +132,9 @@ export default class SouthConnectorController {
 
   async updateSouthConnector(ctx: KoaContext<SouthConnectorCommandDTO, void>): Promise<void> {
     try {
-      const manifest = ctx.request.body ? southManifests.find(southManifest => southManifest.id === ctx.request.body!.type) : null;
+      const manifest = ctx.request.body
+        ? ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.request.body!.type)
+        : null;
       if (!manifest) {
         return ctx.throw(404, 'South manifest not found');
       }
@@ -275,7 +246,7 @@ export default class SouthConnectorController {
       return ctx.throw(404, 'South not found');
     }
 
-    const manifest = southManifests.find(southManifest => southManifest.id === southConnector.type);
+    const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type);
     if (!manifest) {
       return ctx.throw(404, 'South manifest not found');
     }
@@ -335,7 +306,7 @@ export default class SouthConnectorController {
         return ctx.throw(404, 'South not found');
       }
 
-      const manifest = southManifests.find(southManifest => southManifest.id === southConnector.type);
+      const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type);
       if (!manifest) {
         return ctx.throw(404, 'South manifest not found');
       }
@@ -357,7 +328,7 @@ export default class SouthConnectorController {
         return ctx.throw(404, 'South not found');
       }
 
-      const manifest = southManifests.find(southManifest => southManifest.id === southConnector.type);
+      const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === southConnector.type);
       if (!manifest) {
         return ctx.throw(404, 'South manifest not found');
       }
