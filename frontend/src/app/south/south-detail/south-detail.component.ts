@@ -2,14 +2,14 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import {
-  SouthConnectorItemManifest,
   SouthConnectorCommandDTO,
   SouthConnectorDTO,
+  SouthConnectorItemManifest,
   SouthConnectorManifest
 } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, of, switchMap, tap } from 'rxjs';
+import { of, switchMap, tap } from 'rxjs';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { PageLoader } from '../../shared/page-loader.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
@@ -23,6 +23,8 @@ import { NotificationService } from '../../shared/notification.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
 import { WindowService } from '../../shared/window.service';
+import { ModalService } from '../../shared/modal.service';
+import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 
 @Component({
   selector: 'oib-south-detail',
@@ -60,6 +62,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
     private southConnectorService: SouthConnectorService,
     private scanModeService: ScanModeService,
     private notificationService: NotificationService,
+    private modalService: ModalService,
     protected router: Router,
     private route: ActivatedRoute,
     private cd: ChangeDetectorRef
@@ -125,17 +128,9 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
       settings: this.southConnector!.settings
     };
 
-    this.southConnectorService
-      .testConnection(this.southConnector!.id, command)
-      .pipe(
-        catchError(httpError => {
-          this.notificationService.error('south.test-connection.failure', { error: httpError.error.message });
-          throw httpError;
-        })
-      )
-      .subscribe(() => {
-        this.notificationService.success('south.test-connection.success');
-      });
+    const modalRef = this.modalService.open(TestConnectionResultModalComponent);
+    const component: TestConnectionResultModalComponent = modalRef.componentInstance;
+    component.runTest('south', this.southConnector, command);
   }
 
   toggleConnector(value: boolean) {
