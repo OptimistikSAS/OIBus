@@ -9,11 +9,6 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO
 } from '../../../../shared/model/south-connector.model';
-import {
-  SouthFolderScannerItemSettings,
-  SouthFolderScannerSettings,
-  SouthSQLiteSettings
-} from '../../../../shared/model/south-settings.model';
 import { southTestManifest } from '../../tests/__mocks__/south-service.mock';
 
 jest.mock('./validators/joi.validator');
@@ -24,7 +19,7 @@ const ctx = new KoaContextMock();
 const validator = new JoiValidator();
 const southConnectorController = new SouthConnectorController(validator);
 
-const sqliteConnectorCommand: SouthConnectorCommandDTO<SouthSQLiteSettings> = {
+const sqliteConnectorCommand: SouthConnectorCommandDTO = {
   name: 'name',
   type: 'south-test',
   description: 'description',
@@ -38,7 +33,7 @@ const sqliteConnectorCommand: SouthConnectorCommandDTO<SouthSQLiteSettings> = {
     readDelay: 0
   }
 };
-const southConnectorCommand: SouthConnectorCommandDTO<SouthFolderScannerSettings> = {
+const southConnectorCommand: SouthConnectorCommandDTO = {
   name: 'name',
   type: 'south-test',
   description: 'description',
@@ -56,11 +51,11 @@ const southConnectorCommand: SouthConnectorCommandDTO<SouthFolderScannerSettings
     readDelay: 0
   }
 };
-const southConnector: SouthConnectorDTO<SouthFolderScannerSettings> = {
+const southConnector: SouthConnectorDTO = {
   id: 'id',
   ...southConnectorCommand
 };
-const itemCommand: SouthConnectorItemCommandDTO<SouthFolderScannerItemSettings> = {
+const itemCommand: SouthConnectorItemCommandDTO = {
   name: 'name',
   enabled: true,
   settings: {
@@ -68,7 +63,7 @@ const itemCommand: SouthConnectorItemCommandDTO<SouthFolderScannerItemSettings> 
   },
   scanModeId: 'scanModeId'
 };
-const item: SouthConnectorItemDTO<SouthFolderScannerItemSettings> = {
+const item: SouthConnectorItemDTO = {
   id: 'id',
   connectorId: 'connectorId',
   ...itemCommand

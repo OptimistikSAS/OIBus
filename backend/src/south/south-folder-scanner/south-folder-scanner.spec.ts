@@ -66,7 +66,10 @@ const items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>> = [
     enabled: true,
     connectorId: 'southId',
     settings: {
-      regex: '.*.csv'
+      regex: '.*.csv',
+      preserveFiles: false,
+      ignoreModifiedDate: false,
+      minAge: 1000
     },
     scanModeId: 'scanModeId1'
   },
@@ -76,17 +79,23 @@ const items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>> = [
     enabled: true,
     connectorId: 'southId',
     settings: {
-      regex: '.*.log'
+      regex: '.*.log',
+      preserveFiles: true,
+      ignoreModifiedDate: false,
+      minAge: 1000
     },
     scanModeId: 'scanModeId1'
   },
   {
-    id: 'id2',
-    name: 'item2',
+    id: 'id3',
+    name: 'item3',
     enabled: true,
     connectorId: 'southId',
     settings: {
-      regex: '.*.txt'
+      regex: '.*.txt',
+      preserveFiles: true,
+      ignoreModifiedDate: true,
+      minAge: 1000
     },
     scanModeId: 'scanModeId1'
   }
@@ -107,9 +116,6 @@ const configuration: SouthConnectorDTO<SouthFolderScannerSettings> = {
   },
   settings: {
     inputFolder: 'inputFolder',
-    preserveFiles: false,
-    ignoreModifiedDate: false,
-    minAge: 1000,
     compression: false
   }
 };
@@ -155,8 +161,8 @@ describe('SouthFolderScanner', () => {
     expect(logger.trace).toHaveBeenCalledWith(`Filtering with regex "${items[2].settings.regex}"`);
     expect(logger.trace).toHaveBeenCalledWith(`Sending 2 files`);
     expect(south.sendFile).toHaveBeenCalledTimes(2);
-    expect(south.sendFile).toHaveBeenCalledWith('file2.txt');
-    expect(south.sendFile).toHaveBeenCalledWith('file3.txt');
+    expect(south.sendFile).toHaveBeenCalledWith(items[2], 'file2.txt');
+    expect(south.sendFile).toHaveBeenCalledWith(items[2], 'file3.txt');
   });
 
   it('should properly check age', async () => {
@@ -164,13 +170,13 @@ describe('SouthFolderScanner', () => {
     const timestamp = new Date().getTime();
     (fs.stat as jest.Mock).mockImplementationOnce(() => ({ mtimeMs })).mockImplementationOnce(() => ({ mtimeMs: mtimeMs - 10000 }));
 
-    expect(await south.checkAge('myFile')).toEqual(false);
+    expect(await south.checkAge(items[0], 'myFile')).toEqual(false);
     expect(logger.trace).toHaveBeenCalledWith(
-      `Check age condition: mT:${mtimeMs} + mA ${configuration.settings.minAge} < ts:${timestamp} ` +
-        `= ${mtimeMs + configuration.settings.minAge < timestamp}`
+      `Check age condition: mT:${mtimeMs} + mA ${items[0].settings.minAge} < ts:${timestamp} ` +
+        `= ${mtimeMs + items[0].settings.minAge < timestamp}`
     );
 
-    expect(await south.checkAge('myFile')).toEqual(true);
+    expect(await south.checkAge(items[0], 'myFile')).toEqual(true);
     expect(logger.trace).toHaveBeenCalledWith('File "myFile" matches age');
   });
 
@@ -182,7 +188,7 @@ describe('SouthFolderScanner', () => {
       .mockImplementationOnce(() => {
         throw new Error('error');
       });
-    await south.sendFile('myFile1');
+    await south.sendFile(items[0], 'myFile1');
 
     expect(south.addFile).toHaveBeenCalledTimes(1);
     expect(logger.info).toHaveBeenCalledWith(`Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile1')}" to the engine`);
@@ -190,7 +196,7 @@ describe('SouthFolderScanner', () => {
     expect(logger.error).not.toHaveBeenCalled();
     expect(south.updateModifiedTime).not.toHaveBeenCalled();
 
-    await south.sendFile('myFile2');
+    await south.sendFile(items[0], 'myFile2');
     expect(logger.info).toHaveBeenCalledWith(`Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile2')}" to the engine`);
     expect(fs.unlink).toHaveBeenCalledTimes(2);
     expect(logger.error).toHaveBeenCalledWith(
@@ -225,7 +231,6 @@ describe('SouthFolderScanner with preserve file and compression', () => {
       run: jest.fn()
     }));
     configuration.settings.compression = true;
-    configuration.settings.preserveFiles = true;
     south = new SouthFolderScanner(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
     await south.start();
   });
@@ -237,8 +242,8 @@ describe('SouthFolderScanner with preserve file and compression', () => {
       .fn()
       .mockReturnValueOnce(mtimeMs - 10000) // saved modified time same than mTime (mtimeMs - 10000) => file did not change
       .mockReturnValueOnce(mtimeMs - 999999); // saved modified time is more recent than mTime (mtimeMs - 999999) => file changed
-    expect(await south.checkAge('myFile1')).toEqual(false);
-    expect(await south.checkAge('myFile2')).toEqual(true);
+    expect(await south.checkAge(items[1], 'myFile1')).toEqual(false);
+    expect(await south.checkAge(items[1], 'myFile2')).toEqual(true);
     expect(logger.trace).toHaveBeenCalledWith(
       `File "myFile2" last modified time ${mtimeMs - 999999} is older than mtimeMs ${mtimeMs - 10000}. The file will be sent`
     );
@@ -255,7 +260,7 @@ describe('SouthFolderScanner with preserve file and compression', () => {
         throw new Error('error');
       });
     (fs.stat as jest.Mock).mockImplementation(() => ({ mtimeMs }));
-    await south.sendFile('myFile1');
+    await south.sendFile(items[1], 'myFile1');
 
     expect(logger.info).toHaveBeenCalledWith(`Sending file "${path.resolve(configuration.settings.inputFolder, 'myFile1')}" to the engine`);
     expect(compress).toHaveBeenCalledWith(
@@ -267,7 +272,7 @@ describe('SouthFolderScanner with preserve file and compression', () => {
     expect(logger.error).not.toHaveBeenCalled();
     expect(south.updateModifiedTime).toHaveBeenCalledWith('myFile1', mtimeMs);
 
-    await south.sendFile('myFile2');
+    await south.sendFile(items[1], 'myFile2');
     expect(logger.error).toHaveBeenCalledWith(
       `Error while removing compressed file "${path.resolve('baseFolder', 'tmp', 'myFile2')}.gz": ${new Error('error')}`
     );
@@ -275,7 +280,7 @@ describe('SouthFolderScanner with preserve file and compression', () => {
     (compress as jest.Mock).mockImplementationOnce(() => {
       throw new Error('compression error');
     });
-    await south.sendFile('myFile2');
+    await south.sendFile(items[1], 'myFile2');
     expect(logger.error).toHaveBeenCalledWith(
       `Error compressing file "${path.resolve(configuration.settings.inputFolder, 'myFile2')}". Sending it raw instead.`
     );
@@ -290,8 +295,6 @@ describe('SouthFolderScanner with preserve file ignore modified date', () => {
       run: jest.fn()
     }));
     configuration.settings.compression = false;
-    configuration.settings.preserveFiles = true;
-    configuration.settings.ignoreModifiedDate = true;
     south = new SouthFolderScanner(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
 
@@ -302,8 +305,8 @@ describe('SouthFolderScanner with preserve file ignore modified date', () => {
       .fn()
       .mockReturnValueOnce(mtimeMs - 10000) // saved modified time same than mTime (mtimeMs - 10000) => file did not change
       .mockReturnValueOnce(mtimeMs - 999999); // saved modified time is more recent than mTime (mtimeMs - 999999) => file changed
-    expect(await south.checkAge('myFile1')).toEqual(true);
-    expect(await south.checkAge('myFile2')).toEqual(true);
+    expect(await south.checkAge(items[2], 'myFile1')).toEqual(true);
+    expect(await south.checkAge(items[2], 'myFile2')).toEqual(true);
   });
 });
 

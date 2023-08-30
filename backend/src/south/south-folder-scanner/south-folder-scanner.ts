@@ -63,12 +63,10 @@ export default class SouthFolderScanner
   async start(): Promise<void> {
     await super.start();
     // Create a custom table in the south cache database to manage file already sent when preserve file is set to true
-    if (this.connector.settings.preserveFiles) {
-      this.cacheService!.cacheRepository.createCustomTable(
-        `folder_scanner_${this.connector.id}`,
-        'filename TEXT PRIMARY KEY, mtime_ms INTEGER'
-      );
-    }
+    this.cacheService!.cacheRepository.createCustomTable(
+      `folder_scanner_${this.connector.id}`,
+      'filename TEXT PRIMARY KEY, mtime_ms INTEGER'
+    );
   }
 
   /**
@@ -97,7 +95,7 @@ export default class SouthFolderScanner
       // Filters file that may still currently being written (based on minimum age)
       const matchedFiles: Array<string> = [];
       for (const file of filteredFiles) {
-        if (await this.checkAge(file)) {
+        if (await this.checkAge(item, file)) {
           matchedFiles.push(file);
         }
       }
@@ -110,7 +108,7 @@ export default class SouthFolderScanner
       // The files remaining after these checks need to be sent to the engine
       this.logger.trace(`Sending ${matchedFiles.length} files`);
 
-      await Promise.allSettled(matchedFiles.map(file => this.sendFile(file)));
+      await Promise.allSettled(matchedFiles.map(file => this.sendFile(item, file)));
     }
   }
 
@@ -118,22 +116,22 @@ export default class SouthFolderScanner
    * Filter the files if the name and the age of the file meet the request or - when preserveFiles - if they were
    * already sent.
    */
-  async checkAge(filename: string): Promise<boolean> {
+  async checkAge(item: SouthConnectorItemDTO<SouthFolderScannerItemSettings>, filename: string): Promise<boolean> {
     const inputFolder = path.resolve(this.connector.settings.inputFolder);
 
     const timestamp = new Date().getTime();
     const stats = await fs.stat(path.join(inputFolder, filename));
     this.logger.trace(
-      `Check age condition: mT:${stats.mtimeMs} + mA ${this.connector.settings.minAge} < ts:${timestamp} ` +
-        `= ${stats.mtimeMs + this.connector.settings.minAge < timestamp}`
+      `Check age condition: mT:${stats.mtimeMs} + mA ${item.settings.minAge} < ts:${timestamp} ` +
+        `= ${stats.mtimeMs + item.settings.minAge < timestamp}`
     );
 
-    if (stats.mtimeMs + this.connector.settings.minAge > timestamp) return false;
+    if (stats.mtimeMs + item.settings.minAge > timestamp) return false;
     this.logger.trace(`File "${filename}" matches age`);
 
     // Check if the file was already sent (if preserveFiles is true)
-    if (this.connector.settings.preserveFiles) {
-      if (this.connector.settings.ignoreModifiedDate) return true;
+    if (item.settings.preserveFiles) {
+      if (item.settings.ignoreModifiedDate) return true;
       const lastModifiedTime = this.getModifiedTime(filename);
 
       if (stats.mtimeMs <= lastModifiedTime) return false;
@@ -160,7 +158,7 @@ export default class SouthFolderScanner
   /**
    * Send the file to the Engine.
    */
-  async sendFile(filename: string): Promise<void> {
+  async sendFile(item: SouthConnectorItemDTO<SouthFolderScannerItemSettings>, filename: string): Promise<void> {
     const filePath = path.resolve(this.connector.settings.inputFolder, filename);
     this.logger.info(`Sending file "${filePath}" to the engine`);
 
@@ -184,7 +182,7 @@ export default class SouthFolderScanner
     }
 
     // Delete original file if preserveFile is not set
-    if (!this.connector.settings.preserveFiles) {
+    if (!item.settings.preserveFiles) {
       try {
         await fs.unlink(filePath);
       } catch (unlinkError) {

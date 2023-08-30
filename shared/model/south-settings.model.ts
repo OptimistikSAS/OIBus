@@ -176,9 +176,6 @@ export interface SouthADSSettings extends BaseSouthSettings {
 
 export interface SouthFolderScannerSettings extends BaseSouthSettings {
   inputFolder: string;
-  minAge: number;
-  preserveFiles: boolean;
-  ignoreModifiedDate?: boolean;
   compression: boolean;
 }
 
@@ -497,6 +494,9 @@ export interface SouthADSItemSettings extends BaseSouthItemSettings {
 
 export interface SouthFolderScannerItemSettings extends BaseSouthItemSettings {
   regex: string;
+  minAge: number;
+  preserveFiles: boolean;
+  ignoreModifiedDate?: boolean;
 }
 
 export interface SouthModbusItemSettings extends BaseSouthItemSettings {
