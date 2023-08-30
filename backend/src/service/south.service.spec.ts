@@ -5,8 +5,6 @@ import EncryptionService from './encryption.service';
 import RepositoryService from './repository.service';
 import pino from 'pino';
 import SouthService from './south.service';
-import SouthConnector from '../south/south-connector';
-import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 
 jest.mock('./encryption.service');
 jest.mock('./south-cache.service');

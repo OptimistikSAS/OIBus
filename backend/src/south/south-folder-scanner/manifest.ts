@@ -24,44 +24,11 @@ const manifest: SouthConnectorManifest = {
       displayInViewMode: true
     },
     {
-      key: 'minAge',
-      type: 'OibNumber',
-      label: 'Minimum Age',
-      unitLabel: 'ms',
-      defaultValue: 1000,
-      newRow: true,
-      class: 'col-3',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      displayInViewMode: true
-    },
-    {
-      key: 'preserveFiles',
-      type: 'OibCheckbox',
-      label: 'Preserve file',
-      defaultValue: true,
-      newRow: false,
-      class: 'col-3',
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
-    },
-    {
-      key: 'ignoreModifiedDate',
-      type: 'OibCheckbox',
-      label: 'Ignore modified date',
-      defaultValue: false,
-      newRow: false,
-      class: 'col-3',
-      conditionalDisplay: { field: 'preserveFiles', values: [true] },
-      validators: [{ key: 'required' }],
-      displayInViewMode: false
-    },
-    {
       key: 'compression',
       type: 'OibCheckbox',
       label: 'Compress file',
       defaultValue: false,
-      newRow: false,
-      class: 'col-3',
+      newRow: true,
       validators: [{ key: 'required' }],
       displayInViewMode: true
     }
@@ -79,6 +46,36 @@ const manifest: SouthConnectorManifest = {
         defaultValue: '.txt',
         validators: [{ key: 'required' }],
         displayInViewMode: true
+      },
+      {
+        key: 'minAge',
+        type: 'OibNumber',
+        label: 'Minimum Age',
+        unitLabel: 'ms',
+        defaultValue: 1000,
+        newRow: true,
+        class: 'col-4',
+        validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
+        displayInViewMode: true
+      },
+      {
+        key: 'preserveFiles',
+        type: 'OibCheckbox',
+        label: 'Preserve file',
+        defaultValue: true,
+        class: 'col-4',
+        validators: [{ key: 'required' }],
+        displayInViewMode: true
+      },
+      {
+        key: 'ignoreModifiedDate',
+        type: 'OibCheckbox',
+        label: 'Ignore modified date',
+        defaultValue: false,
+        class: 'col-4',
+        conditionalDisplay: { field: 'preserveFiles', values: [true] },
+        validators: [{ key: 'required' }],
+        displayInViewMode: false
       }
     ]
   }
