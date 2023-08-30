@@ -6,7 +6,7 @@ import { formDirectives } from '../../shared/form-directives';
 import { FormControl, FormGroup, NonNullableFormBuilder, Validators } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { catchError, combineLatest, Observable, of, switchMap, tap } from 'rxjs';
+import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
 import { FormComponent } from '../../shared/form/form.component';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
@@ -17,6 +17,8 @@ import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-m
 import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
+import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { ModalService } from '../../shared/modal.service';
 
 @Component({
   selector: 'oib-edit-north',
@@ -72,6 +74,7 @@ export class EditNorthComponent implements OnInit {
     private fb: NonNullableFormBuilder,
     private notificationService: NotificationService,
     private scanModeService: ScanModeService,
+    private modalService: ModalService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
@@ -194,17 +197,9 @@ export class EditNorthComponent implements OnInit {
     if (value === 'save') {
       this.createOrUpdateNorthConnector(command);
     } else {
-      this.northConnectorService
-        .testConnection(this.northConnector?.id || 'create', command)
-        .pipe(
-          catchError(httpError => {
-            this.notificationService.error('north.test-connection.failure', { error: httpError.error.message });
-            throw httpError;
-          })
-        )
-        .subscribe(() => {
-          this.notificationService.success('north.test-connection.success');
-        });
+      const modalRef = this.modalService.open(TestConnectionResultModalComponent);
+      const component: TestConnectionResultModalComponent = modalRef.componentInstance;
+      component.runTest('north', this.northConnector, command);
     }
   }
 }

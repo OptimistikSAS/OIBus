@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { DecimalPipe, NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { catchError, of, switchMap, tap } from 'rxjs';
+import { of, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
 import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -17,6 +17,8 @@ import { NotificationService } from '../../shared/notification.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { WindowService } from '../../shared/window.service';
 import { NorthConnectorMetrics } from '../../../../../shared/model/engine.model';
+import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { ModalService } from '../../shared/modal.service';
 
 @Component({
   selector: 'oib-north-detail',
@@ -53,6 +55,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
     private northConnectorService: NorthConnectorService,
     private scanModeService: ScanModeService,
     private notificationService: NotificationService,
+    private modalService: ModalService,
     private route: ActivatedRoute,
     private cd: ChangeDetectorRef
   ) {}
@@ -111,17 +114,9 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
       archive: this.northConnector!.archive
     };
 
-    this.northConnectorService
-      .testConnection(this.northConnector!.id, command)
-      .pipe(
-        catchError(httpError => {
-          this.notificationService.error('north.test-connection.failure', { error: httpError.error.message });
-          throw httpError;
-        })
-      )
-      .subscribe(() => {
-        this.notificationService.success('north.test-connection.success');
-      });
+    const modalRef = this.modalService.open(TestConnectionResultModalComponent);
+    const component: TestConnectionResultModalComponent = modalRef.componentInstance;
+    component.runTest('north', this.northConnector, command);
   }
 
   toggleConnector(value: boolean) {

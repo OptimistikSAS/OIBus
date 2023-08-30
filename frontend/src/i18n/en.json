@@ -392,8 +392,10 @@
       "read-delay": "Read delay"
     },
     "test-connection": {
+      "title": "Testing settings",
+      "button": "Test settings",
       "success": "Connection successfully tested",
-      "failure": "Connection failed: {{ error }}"
+      "error": "Error when testing settings"
     },
     "type": "Type",
     "general-settings": "General settings",
@@ -465,8 +467,10 @@
     "started": "North connector {{ name }} started",
     "stopped": "North connector {{ name }} stopped",
     "test-connection": {
+      "title": "Testing settings",
+      "button": "Test settings",
       "success": "Connection successfully tested",
-      "failure": "Connection failed: {{ error }}"
+      "error": "Error when testing settings"
     },
     "type": "Type",
     "general-settings": "General settings",
