@@ -8,10 +8,10 @@ import NorthAzureBlob from '../north/north-azure-blob/north-azure-blob';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../shared/model/north-connector.model';
 import NorthAmazonS3 from '../north/north-amazon-s3/north-amazon-s3';
 import NorthFileWriter from '../north/north-file-writer/north-file-writer';
-import NorthOIConnect from '../north/north-oiconnect/north-oiconnect';
+import NorthOIBus from '../north/north-oibus/north-oibus';
 import azureManifest from '../north/north-azure-blob/manifest';
 import oianalyticsManifest from '../north/north-oianalytics/manifest';
-import oiconnectManifest from '../north/north-oiconnect/manifest';
+import oibusManifest from '../north/north-oibus/manifest';
 import fileWriterManifest from '../north/north-file-writer/manifest';
 import consoleManifest from '../north/north-console/manifest';
 import amazonManifest from '../north/north-amazon-s3/manifest';
@@ -19,7 +19,7 @@ import amazonManifest from '../north/north-amazon-s3/manifest';
 const northList: Array<{ class: typeof NorthConnector<any>; manifest: NorthConnectorManifest }> = [
   { class: NorthConsole, manifest: consoleManifest },
   { class: NorthOIAnalytics, manifest: oianalyticsManifest },
-  { class: NorthOIConnect, manifest: oiconnectManifest },
+  { class: NorthOIBus, manifest: oibusManifest },
   { class: NorthAzureBlob, manifest: azureManifest },
   { class: NorthAmazonS3, manifest: amazonManifest },
   { class: NorthFileWriter, manifest: fileWriterManifest }

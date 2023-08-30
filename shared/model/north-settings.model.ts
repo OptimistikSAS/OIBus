@@ -133,7 +133,7 @@ export interface NorthOIAnalyticsSettings extends BaseNorthSettings {
   proxyPassword?: string | null;
 }
 
-export interface NorthOIConnectSettings extends BaseNorthSettings {
+export interface NorthOIBusSettings extends BaseNorthSettings {
   host: string;
   timeout: number;
   acceptUnauthorized: boolean;
@@ -190,7 +190,7 @@ export type NorthSettings =
   | NorthMongoDBSettings
   | NorthMqttSettings
   | NorthOIAnalyticsSettings
-  | NorthOIConnectSettings
+  | NorthOIBusSettings
   | NorthRestAPISettings
   | NorthTimescaleDBSettings
   | NorthWatsySettings

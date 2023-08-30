@@ -2,8 +2,8 @@ import { NorthConnectorManifest } from '../../../../shared/model/north-connector
 import { proxy } from '../../../../shared/model/manifest-factory';
 
 const manifest: NorthConnectorManifest = {
-  id: 'oiconnect',
-  name: 'OIConnect',
+  id: 'oibus',
+  name: 'OIBus',
   category: 'api',
   description: 'Send files and values to another OIBus',
   modes: {
