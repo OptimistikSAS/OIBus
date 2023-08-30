@@ -5,6 +5,8 @@ import EncryptionService from './encryption.service';
 import RepositoryService from './repository.service';
 import pino from 'pino';
 import SouthService from './south.service';
+import SouthConnector from '../south/south-connector';
+import { SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 
 jest.mock('./encryption.service');
 jest.mock('./south-cache.service');
@@ -93,17 +95,8 @@ describe('south service', () => {
     expect(connector).not.toBeDefined();
   });
 
-  it('should get South type', () => {
-    expect(service.getSouthClass('mqtt')).toBeDefined();
-  });
-
-  it('should throw an error if South type not found', () => {
-    let error;
-    try {
-      service.getSouthClass('bad type');
-    } catch (err) {
-      error = err;
-    }
-    expect(error).toEqual(new Error(`South connector of type bad type not installed`));
+  it('should retrieve a list of south manifest', () => {
+    const list = service.getInstalledSouthManifests();
+    expect(list).toBeDefined();
   });
 });

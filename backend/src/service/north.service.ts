@@ -5,20 +5,24 @@ import NorthConnector from '../north/north-connector';
 import NorthConsole from '../north/north-console/north-console';
 import NorthOIAnalytics from '../north/north-oianalytics/north-oianalytics';
 import NorthAzureBlob from '../north/north-azure-blob/north-azure-blob';
-import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorManifest } from '../../../shared/model/north-connector.model';
 import NorthAmazonS3 from '../north/north-amazon-s3/north-amazon-s3';
 import NorthFileWriter from '../north/north-file-writer/north-file-writer';
 import NorthOIConnect from '../north/north-oiconnect/north-oiconnect';
-import NorthRestApi from '../north/north-rest-api/north-rest-api';
+import azureManifest from '../north/north-azure-blob/manifest';
+import oianalyticsManifest from '../north/north-oianalytics/manifest';
+import oiconnectManifest from '../north/north-oiconnect/manifest';
+import fileWriterManifest from '../north/north-file-writer/manifest';
+import consoleManifest from '../north/north-console/manifest';
+import amazonManifest from '../north/north-amazon-s3/manifest';
 
-const northList: Array<typeof NorthConnector<any>> = [
-  NorthConsole,
-  NorthOIAnalytics,
-  NorthOIConnect,
-  NorthAzureBlob,
-  NorthAmazonS3,
-  NorthFileWriter,
-  NorthRestApi
+const northList: Array<{ class: typeof NorthConnector<any>; manifest: NorthConnectorManifest }> = [
+  { class: NorthConsole, manifest: consoleManifest },
+  { class: NorthOIAnalytics, manifest: oianalyticsManifest },
+  { class: NorthOIConnect, manifest: oiconnectManifest },
+  { class: NorthAzureBlob, manifest: azureManifest },
+  { class: NorthAmazonS3, manifest: amazonManifest },
+  { class: NorthFileWriter, manifest: fileWriterManifest }
 ];
 
 export default class NorthService {
@@ -31,12 +35,12 @@ export default class NorthService {
    * Return the North connector
    */
   createNorth(settings: NorthConnectorDTO, baseFolder: string, logger: pino.Logger): NorthConnector {
-    const NorthConnector = northList.find(connector => connector.type === settings.type);
+    const NorthConnector = northList.find(connector => connector.class.type === settings.type);
     if (!NorthConnector) {
       throw Error(`North connector of type ${settings.type} not installed`);
     }
 
-    return new NorthConnector(settings, this.encryptionService, this.repositoryService, logger, baseFolder);
+    return new NorthConnector.class(settings, this.encryptionService, this.repositoryService, logger, baseFolder);
   }
 
   /**
@@ -48,5 +52,9 @@ export default class NorthService {
 
   getNorthList(): Array<NorthConnectorDTO> {
     return this.repositoryService.northConnectorRepository.getNorthConnectors();
+  }
+
+  getInstalledNorthManifests(): Array<NorthConnectorManifest> {
+    return northList.map(element => element.manifest);
   }
 }

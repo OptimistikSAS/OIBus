@@ -1,3 +1,27 @@
+import { SouthConnectorManifest } from '../../../../shared/model/south-connector.model';
+
+export const southTestManifest: SouthConnectorManifest = {
+  id: 'south-test',
+  category: 'debug',
+  name: 'Test',
+  description: '',
+  modes: {
+    subscription: true,
+    lastPoint: true,
+    lastFile: true,
+    history: true,
+    forceMaxInstantPerItem: true
+  },
+  settings: [],
+  items: {
+    scanMode: {
+      acceptSubscription: false,
+      subscriptionOnly: false
+    },
+    settings: []
+  }
+};
+
 /**
  * Create a mock object for South Service
  */
@@ -6,5 +30,5 @@ export default jest.fn().mockImplementation(() => ({
   getSouth: jest.fn(),
   getSouthList: jest.fn(),
   getSouthItems: jest.fn(),
-  getSouthClass: jest.fn()
+  getInstalledSouthManifests: jest.fn(() => [southTestManifest])
 }));

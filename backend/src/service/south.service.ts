@@ -17,25 +17,39 @@ import SouthADS from '../south/south-ads/south-ads';
 import SouthModbus from '../south/south-modbus/south-modbus';
 import SouthOIAnalytics from '../south/south-oianalytics/south-oianalytics';
 
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
+import { SouthConnectorDTO, SouthConnectorItemDTO, SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 import SouthConnector from '../south/south-connector';
 import SouthSlims from '../south/south-slims/south-slims';
+import oianalyticsManifest from '../south/south-oianalytics/manifest';
+import slimsManifest from '../south/south-slims/manifest';
+import opcuaManifest from '../south/south-opcua/manifest';
+import opchdaManifest from '../south/south-opchda/manifest';
+import mqttManifest from '../south/south-mqtt/manifest';
+import modbusManifest from '../south/south-modbus/manifest';
+import folderScannerManifest from '../south/south-folder-scanner/manifest';
+import adsManifest from '../south/south-ads/manifest';
+import mssqlManifest from '../south/south-mssql/manifest';
+import mysqlManifest from '../south/south-mysql/manifest';
+import postgresqlManifest from '../south/south-postgresql/manifest';
+import oracleManifest from '../south/south-oracle/manifest';
+import odbcManifest from '../south/south-odbc/manifest';
+import sqliteManifest from '../south/south-sqlite/manifest';
 
-const southList: Array<typeof SouthConnector<any, any>> = [
-  SouthFolderScanner,
-  SouthMQTT,
-  SouthOPCUA,
-  SouthOPCHDA,
-  SouthMSSQL,
-  SouthMySQL,
-  SouthODBC,
-  SouthOracle,
-  SouthPostgreSQL,
-  SouthSQLite,
-  SouthADS,
-  SouthModbus,
-  SouthOIAnalytics,
-  SouthSlims
+const southList: Array<{ class: typeof SouthConnector<any, any>; manifest: SouthConnectorManifest }> = [
+  { class: SouthFolderScanner, manifest: folderScannerManifest },
+  { class: SouthMQTT, manifest: mqttManifest },
+  { class: SouthOPCUA, manifest: opcuaManifest },
+  { class: SouthOPCHDA, manifest: opchdaManifest },
+  { class: SouthMSSQL, manifest: mssqlManifest },
+  { class: SouthMySQL, manifest: mysqlManifest },
+  { class: SouthODBC, manifest: odbcManifest },
+  { class: SouthOracle, manifest: oracleManifest },
+  { class: SouthPostgreSQL, manifest: postgresqlManifest },
+  { class: SouthSQLite, manifest: sqliteManifest },
+  { class: SouthADS, manifest: adsManifest },
+  { class: SouthModbus, manifest: modbusManifest },
+  { class: SouthOIAnalytics, manifest: oianalyticsManifest },
+  { class: SouthSlims, manifest: slimsManifest }
 ];
 
 export default class SouthService {
@@ -55,24 +69,20 @@ export default class SouthService {
     baseFolder: string,
     logger: pino.Logger
   ): SouthConnector {
-    const SouthConnector = southList.find(connector => connector.type === settings.type);
+    const SouthConnector = southList.find(connector => connector.class.type === settings.type);
     if (!SouthConnector) {
       throw Error(`South connector of type ${settings.type} not installed`);
     }
-    return new SouthConnector(settings, items, addValues, addFile, this.encryptionService, this.repositoryService, logger, baseFolder);
-  }
-
-  /**
-   * Retrieve south class
-   * @param type SouthConnector type ID
-   */
-  getSouthClass(type: string): typeof SouthConnector {
-    const SouthConnectorClass = southList.find(connector => connector.type === type);
-    if (!SouthConnectorClass) {
-      throw Error(`South connector of type ${type} not installed`);
-    }
-
-    return SouthConnectorClass;
+    return new SouthConnector.class(
+      settings,
+      items,
+      addValues,
+      addFile,
+      this.encryptionService,
+      this.repositoryService,
+      logger,
+      baseFolder
+    );
   }
 
   /**
@@ -88,5 +98,9 @@ export default class SouthService {
 
   getSouthItems(southId: string): Array<SouthConnectorItemDTO> {
     return this.repositoryService.southItemRepository.getSouthItems(southId);
+  }
+
+  getInstalledSouthManifests(): Array<SouthConnectorManifest> {
+    return southList.map(element => element.manifest);
   }
 }
