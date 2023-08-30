@@ -11,19 +11,19 @@ import FormData from 'form-data';
 import https from 'node:https';
 import { HandlesFile, HandlesValues } from '../north-interface';
 import { filesExists } from '../../service/utils';
-import { NorthOIConnectSettings } from '../../../../shared/model/north-settings.model';
+import { NorthOIBusSettings } from '../../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy.service';
 
 /**
- * Class NorthOIConnect - Send files through a POST Multipart HTTP request and values as JSON payload into another OIBus
+ * Class NorthOIBus - Send files through a POST Multipart HTTP request and values as JSON payload into another OIBus
  */
-export default class NorthOIConnect extends NorthConnector<NorthOIConnectSettings> implements HandlesFile, HandlesValues {
+export default class NorthOibus extends NorthConnector<NorthOIBusSettings> implements HandlesFile, HandlesValues {
   static type = manifest.id;
 
   private proxyAgent: any | undefined;
 
   constructor(
-    configuration: NorthConnectorDTO<NorthOIConnectSettings>,
+    configuration: NorthConnectorDTO<NorthOIBusSettings>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
     logger: pino.Logger,
