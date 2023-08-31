@@ -43,7 +43,6 @@ Name: "en"; MessagesFile: "compiler:Default.isl"
 
 [Files]
 Source: "..\..\bin\win\oibus.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\..\bin\win\HdaAgent\*"; DestDir: "{app}\HdaAgent"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "..\..\bin\win\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\bin\win\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -396,5 +395,4 @@ Name: {app}\nssm.exe; Type: files
 Name: {app}\LICENSE; Type: files
 Name: {app}\install.log; Type: files
 Name: {app}\go.bat; Type: files
-Name: {app}\HdaAgent; Type: filesandordirs
 Name: {app}; Type: dirifempty

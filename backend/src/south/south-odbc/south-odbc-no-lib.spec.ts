@@ -78,6 +78,7 @@ describe('SouthODBC without ODBC Library', () => {
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
       password: 'password',
       connectionTimeout: 1000,
+      retryInterval: 1000,
       requestTimeout: 1000
     }
   };
