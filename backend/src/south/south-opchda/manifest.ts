@@ -4,7 +4,7 @@ const manifest: SouthConnectorManifest = {
   id: 'opc-hda',
   name: 'OPC HDA',
   category: 'iot',
-  description: 'Retrieve data from OPC HDA server through COM/DCOM communication ports (Windows only)',
+  description: 'Connect to OIBus agent to retrieve data from OPC HDA server through COM/DCOM communication ports',
   modes: {
     subscription: false,
     lastPoint: false,
@@ -14,46 +14,36 @@ const manifest: SouthConnectorManifest = {
   },
   settings: [
     {
-      key: 'agentFilename',
+      key: 'agentUrl',
       type: 'OibText',
-      label: 'Agent file path',
-      defaultValue: '\\HdaAgent\\HdaAgent.exe',
-      newRow: true,
-      validators: [{ key: 'required' }],
-      displayInViewMode: true
+      label: 'Remote agent URL',
+      defaultValue: 'http://ip-adress-or-host:2224',
+      validators: [{ key: 'required' }]
     },
     {
-      key: 'tcpPort',
+      key: 'connectionTimeout',
       type: 'OibNumber',
-      label: 'HDA Agent Port',
-      defaultValue: 2224,
-      newRow: false,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
-      displayInViewMode: true
+      label: 'Connection timeout',
+      defaultValue: 1000,
+      unitLabel: 'ms',
+      class: 'col-3',
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }]
     },
     {
-      key: 'logLevel',
-      type: 'OibSelect',
-      label: 'Agent log level',
-      options: ['trace', 'debug', 'info', 'warning', 'error'],
-      defaultValue: 'debug',
-      newRow: false,
-      validators: [{ key: 'required' }],
-      displayInViewMode: false
+      key: 'retryInterval',
+      type: 'OibNumber',
+      label: 'Connection timeout',
+      defaultValue: 1000,
+      unitLabel: 'ms',
+      class: 'col-3',
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }]
     },
     {
-      key: 'host',
+      key: 'serverUrl',
       type: 'OibText',
-      label: 'Host',
+      label: 'Server URL (from the agent)',
+      defaultValue: 'opchda://domain.name/Matrikon.OPC.Simulation',
       newRow: true,
-      validators: [{ key: 'required' }],
-      displayInViewMode: false
-    },
-    {
-      key: 'serverName',
-      type: 'OibText',
-      label: 'Server name',
-      newRow: false,
       validators: [{ key: 'required' }],
       displayInViewMode: false
     },
@@ -62,15 +52,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibNumber',
       label: 'Read timeout (s)',
       defaultValue: 180,
-      newRow: true,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
-      displayInViewMode: false
-    },
-    {
-      key: 'retryInterval',
-      type: 'OibNumber',
-      label: 'Retry interval (ms)',
-      defaultValue: 10_000,
+      class: 'col-3',
       newRow: false,
       validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 3_600_000 } }],
       displayInViewMode: false
@@ -80,6 +62,7 @@ const manifest: SouthConnectorManifest = {
       type: 'OibNumber',
       label: 'Max return values',
       defaultValue: 1000,
+      class: 'col-3',
       newRow: false,
       validators: [{ key: 'required' }],
       displayInViewMode: false

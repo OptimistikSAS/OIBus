@@ -181,6 +181,7 @@ describe('SouthODBC odbc driver with authentication', () => {
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
       password: 'password',
       connectionTimeout: 1000,
+      retryInterval: 1000,
       requestTimeout: 1000
     }
   };
@@ -349,6 +350,7 @@ describe('SouthODBC odbc driver without authentication', () => {
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
       password: null,
       connectionTimeout: 1000,
+      retryInterval: 1000,
       requestTimeout: 1000
     }
   };
@@ -430,6 +432,7 @@ describe('SouthODBC odbc driver test connection', () => {
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
       password: 'password',
       connectionTimeout: 1000,
+      retryInterval: 1000,
       requestTimeout: 1000
     }
   };
@@ -644,6 +647,7 @@ describe('SouthODBC odbc remote with authentication', () => {
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
       password: 'password',
       connectionTimeout: 1000,
+      retryInterval: 1000,
       requestTimeout: 1000
     }
   };
@@ -675,6 +679,57 @@ describe('SouthODBC odbc remote with authentication', () => {
       method: 'DELETE',
       timeout: configuration.settings.connectionTimeout
     });
+  });
+
+  it('should properly reconnect to when connection fails ', async () => {
+    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('connection failed');
+    });
+
+    await south.connect();
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/odbc/${configuration.id}/connect`, {
+      method: 'PUT',
+      body: JSON.stringify({
+        connectionString: configuration.settings.connectionString,
+        connectionTimeout: configuration.settings.connectionTimeout
+      }),
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      timeout: configuration.settings.connectionTimeout
+    });
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    jest.advanceTimersByTime(configuration.settings.retryInterval);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('should properly clear reconnect timeout on disconnect', async () => {
+    (fetch as unknown as jest.Mock)
+      .mockImplementationOnce(() => {
+        throw new Error('connection failed');
+      })
+      .mockImplementationOnce(() => {
+        throw new Error('disconnection failed');
+      });
+
+    const clearTimeoutSpy = jest.spyOn(global, 'clearTimeout');
+
+    await south.connect();
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    await south.disconnect();
+    expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
+    jest.advanceTimersByTime(configuration.settings.retryInterval);
+    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while sending connection HTTP request into agent. Reconnecting in ${configuration.settings.retryInterval} ms. ${new Error(
+        'connection failed'
+      )}`
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while sending disconnection HTTP request into agent. ${new Error('disconnection failed')}`
+    );
   });
 
   it('should properly run historyQuery', async () => {
@@ -831,6 +886,7 @@ describe('SouthODBC odbc remote test connection', () => {
       connectionString: 'Driver={SQL Server};SERVER=127.0.0.1;TrustServerCertificate=yes',
       password: 'password',
       connectionTimeout: 1000,
+      retryInterval: 1000,
       requestTimeout: 1000
     }
   };

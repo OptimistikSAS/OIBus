@@ -73,9 +73,6 @@ export type SouthOIAnalyticsItemSettingsSerializationType = (typeof SOUTH_O_I_AN
 const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
 export type SouthOIAnalyticsItemSettingsSerializationDelimiter = (typeof SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-const SOUTH_O_P_C_H_D_A_SETTINGS_LOG_LEVELS = ['trace', 'debug', 'info', 'warning', 'error'] as const
-export type SouthOPCHDASettingsLogLevel = (typeof SOUTH_O_P_C_H_D_A_SETTINGS_LOG_LEVELS)[number];
-
 const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES = ['Raw', 'Average', 'Minimum', 'Maximum', 'Count'] as const
 export type SouthOPCHDAItemSettingsAggregate = (typeof SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES)[number];
 
@@ -225,9 +222,10 @@ export interface SouthMySQLSettings extends BaseSouthSettings {
 export interface SouthODBCSettings extends BaseSouthSettings {
   remoteAgent: boolean;
   agentUrl?: string;
+  connectionTimeout: number;
+  retryInterval: number;
   connectionString: string;
   password: string | null;
-  connectionTimeout: number;
   requestTimeout?: number;
 }
 
@@ -243,13 +241,11 @@ export interface SouthOIAnalyticsSettings extends BaseSouthSettings {
 }
 
 export interface SouthOPCHDASettings extends BaseSouthSettings {
-  agentFilename: string;
-  tcpPort: number;
-  logLevel: SouthOPCHDASettingsLogLevel;
-  host: string;
-  serverName: string;
-  readTimeout: number;
+  agentUrl: string;
+  connectionTimeout: number;
   retryInterval: number;
+  serverUrl: string;
+  readTimeout: number;
   maxReturnValues: number;
 }
 

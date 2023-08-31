@@ -32,6 +32,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
 
   private readonly tmpFolder: string;
   private connected = false;
+  private reconnectTimeout: NodeJS.Timeout | null = null;
 
   constructor(
     connector: SouthConnectorDTO<SouthODBCSettings>,
@@ -57,30 +58,47 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
 
   override async connect(): Promise<void> {
     if (this.connector.settings.remoteAgent) {
-      this.connected = false;
-      const headers: Record<string, string> = {};
-      headers['Content-Type'] = 'application/json';
-      const fetchOptions = {
-        method: 'PUT',
-        body: JSON.stringify({
-          connectionString: this.connector.settings.connectionString,
-          connectionTimeout: this.connector.settings.connectionTimeout
-        }),
-        headers,
-        timeout: this.connector.settings.connectionTimeout
-      };
+      try {
+        this.connected = false;
+        const headers: Record<string, string> = {};
+        headers['Content-Type'] = 'application/json';
+        const fetchOptions = {
+          method: 'PUT',
+          body: JSON.stringify({
+            connectionString: this.connector.settings.connectionString,
+            connectionTimeout: this.connector.settings.connectionTimeout
+          }),
+          headers,
+          timeout: this.connector.settings.connectionTimeout
+        };
 
-      await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/connect`, fetchOptions);
-      this.connected = true;
+        await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/connect`, fetchOptions);
+        this.connected = true;
+      } catch (error) {
+        this.logger.error(
+          `Error while sending connection HTTP request into agent. Reconnecting in ${this.connector.settings.retryInterval} ms. ${error}`
+        );
+
+        this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
+      }
     }
     await super.connect();
   }
 
   async disconnect(): Promise<void> {
     this.connected = false;
+    if (this.reconnectTimeout) {
+      clearTimeout(this.reconnectTimeout);
+    }
+    this.reconnectTimeout = null;
+
     if (this.connector.settings.remoteAgent) {
-      const fetchOptions = { method: 'DELETE', timeout: this.connector.settings.connectionTimeout };
-      await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/disconnect`, fetchOptions);
+      try {
+        const fetchOptions = { method: 'DELETE', timeout: this.connector.settings.connectionTimeout };
+        await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/disconnect`, fetchOptions);
+      } catch (error) {
+        this.logger.error(`Error while sending disconnection HTTP request into agent. ${error}`);
+      }
     }
     await super.disconnect();
   }
