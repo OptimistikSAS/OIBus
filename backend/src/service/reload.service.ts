@@ -107,12 +107,12 @@ export default class ReloadService {
     this.repositoryService.southConnectorRepository.updateSouthConnector(southId, command);
 
     if (previousSettings.history.maxInstantPerItem != command.history.maxInstantPerItem) {
-      const maxInstants = this.repositoryService.southCacheRepository.getLatestMaxInstants(southId);
-      const latestInstant = maxInstants?.values().next().value as Instant;
-      const southItems = this.repositoryService.southItemRepository.getSouthItems(southId);
       this.repositoryService.southCacheRepository.deleteAllCacheScanModes(southId);
-      if (!maxInstants) return;
+      const maxInstants = this.repositoryService.southCacheRepository.getLatestMaxInstants(southId);
 
+      if (!maxInstants) return;
+      const latestInstant = maxInstants.values().next().value as Instant;
+      const southItems = this.repositoryService.southItemRepository.getSouthItems(southId);
       for (const item of southItems) {
         this.repositoryService.southCacheRepository.createOrUpdateCacheScanMode({
           southId,

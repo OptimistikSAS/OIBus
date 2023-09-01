@@ -8,7 +8,6 @@ import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import { createReadStream } from 'node:fs';
 import path from 'node:path';
 import FormData from 'form-data';
-import https from 'node:https';
 import { HandlesFile, HandlesValues } from '../north-interface';
 import { filesExists } from '../../service/utils';
 import { NorthOIBusSettings } from '../../../../shared/model/north-settings.model';

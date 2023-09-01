@@ -142,12 +142,24 @@ describe('SouthCacheRepository', () => {
     expect(resultMap).toEqual(expectedMap);
   });
 
-  it("should update a chache row's scan mode id", () => {
+  it('should return null if no max instant found', () => {
+    all.mockReturnValueOnce([]);
+    const result = repository.getLatestMaxInstants('southId');
+    expect(result).toEqual(null);
+  });
+
+  it("should update a cache row's scan mode id", () => {
     get.mockReturnValueOnce({});
     repository.updateCacheScanModeId('southId', 'itemId', 'oldScanModeId', 'newScanModeId');
     expect(database.prepare).toHaveBeenCalledWith(
       `UPDATE ${SOUTH_CACHE_TABLE} SET scan_mode_id = ? WHERE south_id = ? AND scan_mode_id = ? AND item_id = ?;`
     );
     expect(run).toHaveBeenCalledWith('newScanModeId', 'southId', 'oldScanModeId', 'itemId');
+  });
+
+  it('should not query if no scan mode found', () => {
+    get.mockReturnValueOnce(null);
+    repository.updateCacheScanModeId('southId', 'itemId', 'oldScanModeId', 'newScanModeId');
+    expect(get).toHaveBeenCalledTimes(1);
   });
 });
