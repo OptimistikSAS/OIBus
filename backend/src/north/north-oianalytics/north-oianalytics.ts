@@ -11,7 +11,6 @@ import { createReadStream } from 'node:fs';
 import FormData from 'form-data';
 import path from 'node:path';
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
-import https from 'node:https';
 import { HandlesFile, HandlesValues } from '../north-interface';
 import { filesExists } from '../../service/utils';
 import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
@@ -23,8 +22,6 @@ import { OIBusDataValue } from '../../../../shared/model/engine.model';
  */
 export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSettings> implements HandlesFile, HandlesValues {
   static type = manifest.id;
-
-  private proxyAgent: any | undefined;
 
   constructor(
     connector: NorthConnectorDTO<NorthOIAnalyticsSettings>,
@@ -40,28 +37,6 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     }
   }
 
-  /**
-   * Initialize services (logger, certificate, status data) at startup
-   */
-  override async start(): Promise<void> {
-    await super.start();
-
-    if (this.connector.settings.useProxy) {
-      this.proxyAgent = createProxyAgent(
-        {
-          url: this.connector.settings.proxyUrl!,
-          username: this.connector.settings.proxyUsername!,
-          password: this.connector.settings.proxyPassword
-            ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
-            : null
-        },
-        this.connector.settings.acceptUnauthorized
-      );
-    } else if (this.connector.settings.acceptUnauthorized && this.connector.settings.host.startsWith('https://')) {
-      this.proxyAgent = new https.Agent({ rejectUnauthorized: false });
-    }
-  }
-
   override async testConnection(): Promise<void> {
     this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
 
@@ -70,13 +45,25 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       `${this.connector.settings.accessKey}:${await this.encryptionService.decryptText(this.connector.settings.secretKey!)}`
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
+    const requestUrl = `${this.connector.settings.host}/info`;
     const fetchOptions: RequestInit = {
       method: 'POST',
       headers,
-      agent: this.proxyAgent
+      agent: createProxyAgent(
+        this.connector.settings.useProxy,
+        requestUrl,
+        this.connector.settings.useProxy
+          ? {
+              url: this.connector.settings.proxyUrl!,
+              username: this.connector.settings.proxyUsername!,
+              password: this.connector.settings.proxyPassword
+                ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+                : null
+            }
+          : null,
+        this.connector.settings.acceptUnauthorized
+      )
     };
-    const requestUrl = `${this.connector.settings.host}/info`;
-
     try {
       const response = await fetch(requestUrl, fetchOptions);
       if (response.ok) {
@@ -112,7 +99,20 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         method: 'POST',
         headers,
         body: JSON.stringify(values),
-        agent: this.proxyAgent
+        agent: createProxyAgent(
+          this.connector.settings.useProxy,
+          valuesUrl,
+          this.connector.settings.useProxy
+            ? {
+                url: this.connector.settings.proxyUrl!,
+                username: this.connector.settings.proxyUsername!,
+                password: this.connector.settings.proxyPassword
+                  ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+                  : null
+              }
+            : null,
+          this.connector.settings.acceptUnauthorized
+        )
       });
     } catch (fetchError) {
       throw {
@@ -162,7 +162,20 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         method: 'POST',
         headers,
         body,
-        agent: this.proxyAgent
+        agent: createProxyAgent(
+          this.connector.settings.useProxy,
+          fileUrl,
+          this.connector.settings.useProxy
+            ? {
+                url: this.connector.settings.proxyUrl!,
+                username: this.connector.settings.proxyUsername!,
+                password: this.connector.settings.proxyPassword
+                  ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+                  : null
+              }
+            : null,
+          this.connector.settings.acceptUnauthorized
+        )
       });
       readStream.close();
     } catch (fetchError) {

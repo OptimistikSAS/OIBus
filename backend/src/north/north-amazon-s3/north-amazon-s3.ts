@@ -19,8 +19,6 @@ import { createProxyAgent } from '../../service/proxy.service';
  */
 export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings> implements HandlesFile {
   static type = manifest.id;
-
-  private proxyAgent: any | undefined;
   private s3: S3Client | undefined;
 
   constructor(
@@ -42,18 +40,20 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
   }
 
   async prepareConnection(): Promise<void> {
-    if (this.connector.settings.useProxy) {
-      this.proxyAgent = createProxyAgent(
-        {
-          url: this.connector.settings.proxyUrl!,
-          username: this.connector.settings.proxyUsername!,
-          password: this.connector.settings.proxyPassword
-            ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
-            : null
-        },
-        false
-      );
-    }
+    const proxy = createProxyAgent(
+      this.connector.settings.useProxy,
+      'https://',
+      this.connector.settings.useProxy
+        ? {
+            url: this.connector.settings.proxyUrl!,
+            username: this.connector.settings.proxyUsername!,
+            password: this.connector.settings.proxyPassword
+              ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+              : null
+          }
+        : null,
+      false
+    );
 
     this.s3 = new S3Client({
       region: this.connector.settings.region,
@@ -63,7 +63,11 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
           ? await this.encryptionService.decryptText(this.connector.settings.secretKey)
           : ''
       },
-      requestHandler: this.proxyAgent ? new NodeHttpHandler({ httpAgent: this.proxyAgent }) : undefined
+      requestHandler: proxy
+        ? new NodeHttpHandler({
+            httpAgent: proxy
+          })
+        : undefined
     });
   }
 

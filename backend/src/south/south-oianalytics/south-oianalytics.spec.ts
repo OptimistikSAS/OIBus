@@ -308,7 +308,6 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
 
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(fetch).toHaveBeenCalledWith('https://localhost:4200/info', {
-      agent: {},
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
       method: 'POST'
     });
@@ -491,10 +490,12 @@ describe('SouthOIAnalytics with proxy', () => {
       proxyUsername: 'proxyUsername'
     }
   };
+  const fakeAgent = { rejectUnauthorized: false };
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
 
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
@@ -504,20 +505,38 @@ describe('SouthOIAnalytics with proxy', () => {
   });
 
   it('should test connection', async () => {
-    (createProxyAgent as jest.Mock).mockReturnValue({});
-
-    await south.start();
     (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
       throw new Error('Timeout error');
     });
 
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(fetch).toHaveBeenCalledWith('http://localhost:4200/info', {
-      agent: {},
+      agent: fakeAgent,
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
       method: 'POST'
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
+  });
+
+  it('should properly fetch', async () => {
+    (fetch as unknown as jest.Mock).mockReturnValue(
+      Promise.resolve({
+        json: () => ({ result: [] }),
+        ok: true
+      })
+    );
+
+    const result = await south.queryData(items[2], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    expect(result).toEqual({ result: [] });
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost:4200/api/my/endpoint' +
+        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
+      {
+        headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+        method: 'GET',
+        agent: fakeAgent
+      }
+    );
   });
 });
 
@@ -544,11 +563,13 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
       proxyUsername: 'proxyUsername'
     }
   };
+  const fakeAgent = { rejectUnauthorized: false };
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
+    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
     (utils.formatQueryParams as jest.Mock).mockReturnValue(
       '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z' + '&aggregation=RAW_VALUES&data-reference=SP_003_X'
     );
@@ -557,19 +578,48 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
   });
 
   it('should test connection', async () => {
-    (createProxyAgent as jest.Mock).mockReturnValue({});
-
-    await south.start();
     (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
       throw new Error('Timeout error');
     });
 
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(fetch).toHaveBeenCalledWith('http://localhost:4200/info', {
-      agent: {},
+      agent: fakeAgent,
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
       method: 'POST'
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
+  });
+
+  it('should properly fetch', async () => {
+    (fetch as unknown as jest.Mock).mockReturnValue(
+      Promise.resolve({
+        json: () => ({ result: [] }),
+        ok: true
+      })
+    );
+
+    const result = await south.queryData(items[2], '2019-10-03T13:36:38.590Z', '2019-10-03T15:36:38.590Z');
+    expect(result).toEqual({ result: [] });
+    expect(fetch).toHaveBeenCalledWith(
+      'http://localhost:4200/api/my/endpoint' +
+        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
+      {
+        headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
+        method: 'GET',
+        agent: fakeAgent
+      }
+    );
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      true,
+      'http://localhost:4200/api/my/endpoint' +
+        '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
+      {
+        url: configuration.settings.proxyUrl!,
+        username: configuration.settings.proxyUsername!,
+        password: null
+      },
+      configuration.settings.acceptUnauthorized
+    );
   });
 });

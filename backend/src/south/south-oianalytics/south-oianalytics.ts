@@ -41,7 +41,6 @@ export default class SouthOIAnalytics
   implements QueriesHistory
 {
   static type = manifest.id;
-  private proxyAgent: any | undefined;
 
   private readonly tmpFolder: string;
 
@@ -67,22 +66,6 @@ export default class SouthOIAnalytics
    */
   async start(): Promise<void> {
     await createFolder(this.tmpFolder);
-
-    if (this.connector.settings.useProxy) {
-      this.proxyAgent = createProxyAgent(
-        {
-          url: this.connector.settings.proxyUrl!,
-          username: this.connector.settings.proxyUsername!,
-          password: this.connector.settings.proxyPassword
-            ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
-            : null
-        },
-        this.connector.settings.acceptUnauthorized
-      );
-    } else if (this.connector.settings.acceptUnauthorized && this.connector.settings.host.startsWith('https://')) {
-      this.proxyAgent = new https.Agent({ rejectUnauthorized: false });
-    }
-
     await super.start();
   }
 
@@ -94,12 +77,25 @@ export default class SouthOIAnalytics
       `${this.connector.settings.accessKey}:${await this.encryptionService.decryptText(this.connector.settings.secretKey!)}`
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
+    const requestUrl = `${this.connector.settings.host}/info`;
     const fetchOptions: RequestInit = {
       method: 'POST',
       headers,
-      agent: this.proxyAgent
+      agent: createProxyAgent(
+        this.connector.settings.useProxy,
+        requestUrl,
+        this.connector.settings.useProxy
+          ? {
+              url: this.connector.settings.proxyUrl!,
+              username: this.connector.settings.proxyUsername!,
+              password: this.connector.settings.proxyPassword
+                ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+                : null
+            }
+          : null,
+        this.connector.settings.acceptUnauthorized
+      )
     };
-    const requestUrl = `${this.connector.settings.host}/info`;
 
     try {
       const response = await fetch(requestUrl, fetchOptions);
@@ -161,16 +157,29 @@ export default class SouthOIAnalytics
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
 
-    const fetchOptions: RequestInit = {
-      method: 'GET',
-      headers,
-      agent: this.proxyAgent
-    };
     const requestUrl = `${this.connector.settings.host}${item.settings.endpoint}${formatQueryParams(
       startTime,
       endTime,
       item.settings.queryParams || []
     )}`;
+    const fetchOptions: RequestInit = {
+      method: 'GET',
+      headers,
+      agent: createProxyAgent(
+        this.connector.settings.useProxy,
+        requestUrl,
+        this.connector.settings.useProxy
+          ? {
+              url: this.connector.settings.proxyUrl!,
+              username: this.connector.settings.proxyUsername!,
+              password: this.connector.settings.proxyPassword
+                ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+                : null
+            }
+          : null,
+        this.connector.settings.acceptUnauthorized
+      )
+    };
 
     this.logger.info(`Requesting data from URL "${requestUrl}"`);
 
