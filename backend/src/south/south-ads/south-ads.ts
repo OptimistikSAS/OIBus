@@ -11,6 +11,7 @@ import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
 import { QueriesLastPoint } from '../south-interface';
 import { SouthADSItemSettings, SouthADSSettings } from '../../../../shared/model/south-settings.model';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 interface ADSOptions {
   targetAmsNetId: string;
@@ -34,7 +35,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
   constructor(
     connector: SouthConnectorDTO<SouthADSSettings>,
     items: Array<SouthConnectorItemDTO<SouthADSItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -174,7 +175,7 @@ export default class SouthADS extends SouthConnector<SouthADSSettings, SouthADSI
     }
   }
 
-  readAdsSymbol(item: SouthConnectorItemDTO<SouthADSItemSettings>, timestamp: Instant): Promise<Array<any>> {
+  readAdsSymbol(item: SouthConnectorItemDTO<SouthADSItemSettings>, timestamp: Instant): Promise<Array<OIBusDataValue>> {
     return new Promise((resolve, reject) => {
       this.client
         .readSymbol(item.settings.address)

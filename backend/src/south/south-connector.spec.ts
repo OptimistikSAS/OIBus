@@ -13,6 +13,7 @@ import { delay, generateIntervals } from '../service/utils';
 import { QueriesFile, QueriesHistory, QueriesLastPoint, QueriesSubscription } from './south-interface';
 import { Instant } from '../../../shared/model/types';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
+import { OIBusDataValue } from '../../../shared/model/engine.model';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -320,7 +321,7 @@ describe('SouthConnector enabled', () => {
     expect(logger.debug).not.toHaveBeenCalled();
     expect(addValues).not.toHaveBeenCalled();
 
-    await south.addValues([{}, {}]);
+    await south.addValues([{}, {}] as Array<OIBusDataValue>);
     expect(logger.debug).toHaveBeenCalledWith(`Add 2 values to cache from South "${configuration.name}"`);
     expect(addValues).toHaveBeenCalledWith(configuration.id, [{}, {}]);
   });

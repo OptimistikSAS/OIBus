@@ -33,6 +33,7 @@ import { randomUUID } from 'crypto';
 import { HistoryReadValueIdOptions } from 'node-opcua-types/source/_generated_opcua_types';
 import { createFolder } from '../../service/utils';
 import { OPCUACertificateManager } from 'node-opcua-certificate-manager';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 export const MAX_NUMBER_OF_NODE_TO_LOG = 10;
 
@@ -55,7 +56,7 @@ export default class SouthOPCUA
   constructor(
     connector: SouthConnectorDTO<SouthOPCUASettings>,
     items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -241,7 +242,7 @@ export default class SouthOPCUA
 
             if (response.results) {
               this.logger.debug(`Received a response of ${response.results.length} nodes`);
-              let dataByItems: Array<any> = [];
+              let dataByItems: Array<OIBusDataValue> = [];
 
               nodesToRead = nodesToRead
                 .map((node, i) => {
@@ -562,7 +563,7 @@ export default class SouthOPCUA
         await this.addValues([
           {
             pointId: item.name,
-            timestamp: DateTime.now().toUTC().toISO(),
+            timestamp: DateTime.now().toUTC().toISO()!,
             data: {
               value: dataValue.value.value,
               quality: JSON.stringify(dataValue.statusCode)

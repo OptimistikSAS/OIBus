@@ -12,6 +12,7 @@ import ModbusTCPClient from 'jsmodbus/dist/modbus-tcp-client';
 import { QueriesLastPoint } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthModbusItemSettings, SouthModbusSettings } from '../../../../shared/model/south-settings.model';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthModbus - Provides instruction for Modbus client connection
@@ -26,7 +27,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   constructor(
     connector: SouthConnectorDTO<SouthModbusSettings>,
     items: Array<SouthConnectorItemDTO<SouthModbusItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -80,7 +81,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     await this.addValues([
       {
         pointId: item.name,
-        timestamp: DateTime.now().toUTC().toISO(),
+        timestamp: DateTime.now().toUTC().toISO()!,
         data: { value: JSON.stringify(value) }
       }
     ]);

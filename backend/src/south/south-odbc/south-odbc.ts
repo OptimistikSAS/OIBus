@@ -12,6 +12,7 @@ import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthODBCItemSettings, SouthODBCSettings } from '../../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 let odbc: any | null = null;
 // @ts-ignore
@@ -37,7 +38,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   constructor(
     connector: SouthConnectorDTO<SouthODBCSettings>,
     items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,

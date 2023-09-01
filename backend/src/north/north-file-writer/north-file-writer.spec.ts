@@ -12,6 +12,7 @@ import { NorthConnectorDTO } from '../../../../shared/model/north-connector.mode
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 jest.mock('node:fs/promises');
 
@@ -99,10 +100,10 @@ describe('NorthFileWriter', () => {
   });
 
   it('should properly handle values', async () => {
-    const values = [
+    const values: Array<OIBusDataValue> = [
       {
         timestamp: '2021-07-29T12:13:31.883Z',
-        data: { value: 666, quality: 'good' },
+        data: { value: '666', quality: 'good' },
         pointId: 'pointId'
       }
     ];
@@ -115,10 +116,10 @@ describe('NorthFileWriter', () => {
   });
 
   it('should properly catch handle values error', async () => {
-    const values = [
+    const values: Array<OIBusDataValue> = [
       {
         timestamp: '2021-07-29T12:13:31.883Z',
-        data: { value: 666, quality: 'good' },
+        data: { value: '666', quality: 'good' },
         pointId: 'pointId'
       }
     ];

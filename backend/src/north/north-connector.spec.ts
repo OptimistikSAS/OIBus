@@ -16,6 +16,7 @@ import { HandlesFile, HandlesValues } from './north-interface';
 import fs from 'node:fs/promises';
 import { dirSize } from '../service/utils';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
+import { OIBusDataValue } from '../../../shared/model/engine.model';
 
 // Mock fs
 jest.mock('node:fs/promises');
@@ -294,7 +295,7 @@ describe('NorthConnector enabled', () => {
   });
 
   it('should properly cache values', async () => {
-    await north.cacheValues([{}, {}]);
+    await north.cacheValues([{}, {}] as Array<OIBusDataValue>);
     expect(logger.debug).toHaveBeenCalledWith(`Caching 2 values (cache size: 0 MB)`);
   });
 

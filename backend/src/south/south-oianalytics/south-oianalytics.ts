@@ -15,6 +15,7 @@ import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthOIAnalyticsItemSettings, SouthOIAnalyticsSettings } from '../../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy.service';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 interface OIATimeValues {
   type: string;
@@ -47,7 +48,7 @@ export default class SouthOIAnalytics
   constructor(
     connector: SouthConnectorDTO<SouthOIAnalyticsSettings>,
     items: Array<SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -130,7 +131,7 @@ export default class SouthOIAnalytics
       const result: Array<any> = await this.queryData(item, updatedStartTime, endTime);
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
-      const { formattedResult, maxInstant } = this.parseData(item, result);
+      const { formattedResult, maxInstant } = this.parseData(result);
 
       if (maxInstant > updatedStartTime) {
         updatedStartTime = maxInstant;
@@ -215,7 +216,7 @@ export default class SouthOIAnalytics
    * Return the formatted results flattened for easier access
    * (into csv files for example) and the latestDateRetrieved in ISO String format
    */
-  parseData(item: SouthConnectorItemDTO<any>, httpResult: Array<OIATimeValues>): { formattedResult: Array<any>; maxInstant: Instant } {
+  parseData(httpResult: Array<OIATimeValues>): { formattedResult: Array<OIBusDataValue>; maxInstant: Instant } {
     if (!Array.isArray(httpResult)) {
       throw Error('Bad data: expect OIAnalytics time values to be an array');
     }

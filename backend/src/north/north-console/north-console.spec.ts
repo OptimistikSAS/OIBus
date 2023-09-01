@@ -12,6 +12,7 @@ import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.moc
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import { NorthConsoleSettings } from '../../../../shared/model/north-settings.model';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 jest.mock('node:fs/promises');
 // Spy on console table and info
@@ -98,11 +99,11 @@ describe('NorthConsole with verbose mode', () => {
   });
 
   it('should properly handle values in verbose mode', async () => {
-    const values = [
+    const values: Array<OIBusDataValue> = [
       {
         pointId: 'pointId',
         timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
+        data: { value: '666', quality: 'good' }
       }
     ];
     await north.handleValues(values);
@@ -131,11 +132,11 @@ describe('NorthConsole without verbose mode', () => {
   });
 
   it('should properly handle values in non verbose mode', async () => {
-    const values = [
+    const values: Array<OIBusDataValue> = [
       {
         pointId: 'pointId',
         timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
+        data: { value: '666', quality: 'good' }
       }
     ];
     await north.handleValues(values);

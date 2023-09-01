@@ -20,6 +20,7 @@ import {
   SouthMQTTSettings
 } from '../../../../shared/model/south-settings.model';
 import { convertDateTimeToInstant } from '../../service/utils';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthMQTT - Subscribe to data topic from a MQTT broker
@@ -32,7 +33,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
   constructor(
     connector: SouthConnectorDTO<SouthMQTTSettings>,
     items: Array<SouthConnectorItemDTO<SouthMQTTItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -153,7 +154,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
               pointId: associatedItem.name,
               timestamp: messageTimestamp,
               data: {
-                value: parseInt(message.toString())
+                value: message.toString()
               }
             }
           ]);
@@ -178,7 +179,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     }
   }
 
-  formatValues(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): Array<any> {
+  formatValues(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): Array<OIBusDataValue> {
     if (item.settings.jsonPayload!.useArray) {
       const array = objectPath.get(data, item.settings.jsonPayload!.dataArrayPath!);
       if (!array || !Array.isArray(array)) {
@@ -189,7 +190,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     return [this.formatValue(item, data, messageTimestamp)];
   }
 
-  formatValue(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): any {
+  formatValue(item: SouthConnectorItemDTO<SouthMQTTItemSettings>, data: any, messageTimestamp: Instant): OIBusDataValue {
     const dataTimestamp =
       item.settings.jsonPayload!.timestampOrigin === 'oibus'
         ? messageTimestamp
@@ -200,7 +201,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
         ? item.name
         : this.getPointId(data, item.settings.jsonPayload!.pointIdPath!, item.name);
 
-    const dataValue: Record<string, string> = {
+    const dataValue: { value: string; [key: string]: any } = {
       value: objectPath.get(data, item.settings.jsonPayload!.valuePath)
     };
 
@@ -252,7 +253,7 @@ export default class SouthMQTT extends SouthConnector<SouthMQTTSettings, SouthMQ
     return matchedPoints[0];
   }
 
-  getTimestamp(data: any, formatOptions: SouthMQTTItemSettingsJsonPayloadTimestampPayload, messageTimestamp: Instant): string | void {
+  getTimestamp(data: any, formatOptions: SouthMQTTItemSettingsJsonPayloadTimestampPayload, messageTimestamp: Instant): string {
     const timestamp = objectPath.get(data, formatOptions.timestampPath!);
     if (!timestamp) {
       this.logger.warn(

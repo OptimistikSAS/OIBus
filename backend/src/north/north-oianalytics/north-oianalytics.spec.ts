@@ -18,6 +18,7 @@ import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-setting
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 import { createProxyAgent } from '../../service/proxy.service';
 import https from 'node:https';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -127,37 +128,11 @@ describe('NorthOIAnalytics without proxy', () => {
 
   it('should properly handle values', async () => {
     await north.start();
-    const values = [
+    const values: Array<OIBusDataValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
-      },
-      undefined,
-      {
-        pointId: 'pointId2',
-        timestamp: nowDateString,
-        data: undefined
-      },
-      {
-        pointId: 'pointId3',
-        timestamp: nowDateString,
-        data: { value: undefined, quality: 'good' }
-      },
-      {
-        pointId: 'pointId4',
-        timestamp: nowDateString,
-        data: { value: null, quality: 'good' }
-      },
-      {
-        pointId: 'pointId4',
-        timestamp: undefined,
-        data: { value: 666, quality: 'good' }
-      },
-      {
-        pointId: undefined,
-        timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
+        data: { value: '666', quality: 'good' }
       }
     ];
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
@@ -168,13 +143,7 @@ describe('NorthOIAnalytics without proxy', () => {
         authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:${configuration.settings.secretKey}`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify([
-        {
-          timestamp: values[0]!.timestamp,
-          data: values[0]!.data,
-          pointId: values[0]!.pointId
-        }
-      ]),
+      body: JSON.stringify(values),
       timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
@@ -189,37 +158,11 @@ describe('NorthOIAnalytics without proxy', () => {
 
   it('should properly throw fetch error with values', async () => {
     await north.start();
-    const values = [
+    const values: Array<OIBusDataValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
-      },
-      undefined,
-      {
-        pointId: 'pointId2',
-        timestamp: nowDateString,
-        data: undefined
-      },
-      {
-        pointId: 'pointId3',
-        timestamp: nowDateString,
-        data: { value: undefined, quality: 'good' }
-      },
-      {
-        pointId: 'pointId4',
-        timestamp: nowDateString,
-        data: { value: null, quality: 'good' }
-      },
-      {
-        pointId: 'pointId4',
-        timestamp: undefined,
-        data: { value: 666, quality: 'good' }
-      },
-      {
-        pointId: undefined,
-        timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
+        data: { value: '666', quality: 'good' }
       }
     ];
     (fetch as unknown as jest.Mock).mockImplementation(() => {
@@ -242,37 +185,11 @@ describe('NorthOIAnalytics without proxy', () => {
 
   it('should properly throw error on values bad response', async () => {
     await north.start();
-    const values = [
+    const values: Array<OIBusDataValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
-      },
-      undefined,
-      {
-        pointId: 'pointId2',
-        timestamp: nowDateString,
-        data: undefined
-      },
-      {
-        pointId: 'pointId3',
-        timestamp: nowDateString,
-        data: { value: undefined, quality: 'good' }
-      },
-      {
-        pointId: 'pointId4',
-        timestamp: nowDateString,
-        data: { value: null, quality: 'good' }
-      },
-      {
-        pointId: 'pointId4',
-        timestamp: undefined,
-        data: { value: 666, quality: 'good' }
-      },
-      {
-        pointId: undefined,
-        timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
+        data: { value: '666', quality: 'good' }
       }
     ];
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve({ ok: false, status: 400, statusText: 'statusText' }));
@@ -283,13 +200,7 @@ describe('NorthOIAnalytics without proxy', () => {
         authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:${configuration.settings.secretKey}`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify([
-        {
-          timestamp: values[0]!.timestamp,
-          data: values[0]!.data,
-          pointId: values[0]!.pointId
-        }
-      ]),
+      body: JSON.stringify(values),
       timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
@@ -481,37 +392,11 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
 
   it('should properly handle values', async () => {
     await north.start();
-    const values = [
+    const values: Array<OIBusDataValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
-      },
-      undefined,
-      {
-        pointId: 'pointId2',
-        timestamp: nowDateString,
-        data: undefined
-      },
-      {
-        pointId: 'pointId3',
-        timestamp: nowDateString,
-        data: { value: undefined, quality: 'good' }
-      },
-      {
-        pointId: 'pointId4',
-        timestamp: nowDateString,
-        data: { value: null, quality: 'good' }
-      },
-      {
-        pointId: 'pointId4',
-        timestamp: undefined,
-        data: { value: 666, quality: 'good' }
-      },
-      {
-        pointId: undefined,
-        timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
+        data: { value: '666', quality: 'good' }
       }
     ];
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
@@ -522,13 +407,7 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
         authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify([
-        {
-          timestamp: values[0]!.timestamp,
-          data: values[0]!.data,
-          pointId: values[0]!.pointId
-        }
-      ]),
+      body: JSON.stringify(values),
       timeout: configuration.settings.timeout * 1000,
       agent: expect.any(https.Agent)
     };

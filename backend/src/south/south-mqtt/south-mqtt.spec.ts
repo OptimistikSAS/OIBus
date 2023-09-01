@@ -556,7 +556,7 @@ describe('SouthMQTT with Basic Auth', () => {
         pointId: items[0].name,
         timestamp: nowDateString,
         data: {
-          value: 12
+          value: '12'
         }
       }
     ]);

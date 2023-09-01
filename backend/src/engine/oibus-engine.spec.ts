@@ -19,6 +19,7 @@ import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import { filesExists } from '../service/utils';
 import HomeMetricsServiceMock from '../tests/__mocks__/home-metrics-service.mock';
 import HomeMetricsService from '../service/home-metrics.service';
+import { OIBusDataValue } from '../../../shared/model/engine.model';
 
 jest.mock('../south/south-mqtt/south-mqtt');
 jest.mock('../service/south.service');
@@ -241,14 +242,14 @@ describe('OIBusEngine', () => {
     expect(logger.trace).toHaveBeenCalledWith(`North connector "${northConnectors[1].name}" not enabled`);
 
     createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
-    await engine.addValues('southId', ['', '']);
+    await engine.addValues('southId', [{}, {}] as Array<OIBusDataValue>);
     expect(createdNorth.cacheValues).toHaveBeenCalledTimes(1);
-    expect(createdNorth.cacheValues).toHaveBeenCalledWith(['', '']);
+    expect(createdNorth.cacheValues).toHaveBeenCalledWith([{}, {}]);
 
     createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
-    await engine.addExternalValues('externalSourceId', ['', '']);
+    await engine.addExternalValues('externalSourceId', [{}, {}] as Array<OIBusDataValue>);
     expect(createdNorth.cacheValues).toHaveBeenCalledTimes(2);
-    expect(createdNorth.cacheValues).toHaveBeenCalledWith(['', '']);
+    expect(createdNorth.cacheValues).toHaveBeenCalledWith([{}, {}]);
 
     createdNorth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
     await engine.addExternalValues(null, ['', '']);
