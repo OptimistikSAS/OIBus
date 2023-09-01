@@ -178,6 +178,19 @@ describe('reload service', () => {
     });
   });
 
+  it('should handle with no max instant found', async () => {
+    const command = { enabled: false, history: { maxInstantPerItem: true } };
+    (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ history: { maxInstantPerItem: 0 } });
+    (repositoryService.southCacheRepository.getLatestMaxInstants as jest.Mock).mockReturnValueOnce(null);
+
+    await service.onUpdateSouth('southId', command as SouthConnectorCommandDTO);
+    expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
+    expect(repositoryService.southConnectorRepository.updateSouthConnector).toHaveBeenCalledWith('southId', command);
+    expect(oibusEngine.startSouth).not.toHaveBeenCalled();
+    expect(repositoryService.southCacheRepository.deleteAllCacheScanModes).toHaveBeenCalled();
+    expect(repositoryService.southCacheRepository.createOrUpdateCacheScanMode).not.toHaveBeenCalled();
+  });
+
   it('should handle disabling max instant per item', async () => {
     const command = { enabled: false, history: { maxInstantPerItem: false } };
     (repositoryService.southConnectorRepository.getSouthConnector as jest.Mock).mockReturnValueOnce({ history: { maxInstantPerItem: 1 } });

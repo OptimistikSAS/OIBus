@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
-import https from 'https';
 
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
