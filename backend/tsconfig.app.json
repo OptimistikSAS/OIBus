@@ -9,7 +9,8 @@
     "src/service/logger/loki-transport.ts",
   ],
   "include": [
-    "src/db/**/*.ts"
+    "src/db/**/*.ts",
+    "src/**/manifest.ts"
   ],
   "exclude": [
     "./**/*.spec.ts"

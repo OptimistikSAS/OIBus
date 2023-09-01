@@ -50,7 +50,6 @@ const manifest: NorthConnectorManifest = {
       validators: [{ key: 'required' }],
       displayInViewMode: true
     },
-    { key: 'timeout', type: 'OibNumber', label: 'Timeout', newRow: true, validators: [{ key: 'required' }] },
     ...proxy,
     {
       key: 'authentication',

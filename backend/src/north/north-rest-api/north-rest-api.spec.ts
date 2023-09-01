@@ -94,7 +94,6 @@ const configuration: NorthConnectorDTO<NorthRestAPISettings> = {
     acceptUnauthorized: false,
     valuesEndpoint: '/api/values',
     fileEndpoint: '/api/file',
-    timeout: 10,
     useProxy: false,
     authentication: {
       type: 'basic',
@@ -147,7 +146,6 @@ describe('NorthRestApi', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 
@@ -201,7 +199,6 @@ describe('NorthRestApi', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 
@@ -233,7 +230,6 @@ describe('NorthRestApi', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 
@@ -288,7 +284,6 @@ describe('NorthRestApi', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 
@@ -337,7 +332,6 @@ describe('NorthOIConnect without proxy nor password and with acceptUnauthorized'
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      timeout: configuration.settings.timeout * 1000,
       agent: expect.any(https.Agent)
     };
 
@@ -357,7 +351,6 @@ describe('NorthOIConnect without proxy nor password and with acceptUnauthorized'
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      timeout: configuration.settings.timeout * 1000,
       agent: expect.any(https.Agent)
     };
 
@@ -396,7 +389,6 @@ describe('NorthOIConnect without authentication', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 
@@ -415,7 +407,6 @@ describe('NorthOIConnect without authentication', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 

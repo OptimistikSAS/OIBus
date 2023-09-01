@@ -11,8 +11,9 @@ const TIMEZONE_IMPORT = "import { Timezone } from './types';\n";
 
 type ConnectorType = 'South' | 'North';
 
-generateSettingsInterfaces();
-
+(async () => {
+  await generateSettingsInterfaces();
+})();
 async function generateSettingsInterfaces() {
   // create the destination file
   openSync(SOUTH_SETTINGS_DESTINATION_PATH, 'w');

@@ -67,7 +67,6 @@ const items: Array<SouthConnectorItemDTO<SouthSlimsItemSettings>> = [
     connectorId: 'southId',
     settings: {
       endpoint: '/api/my/endpoint',
-      requestTimeout: 3000,
       body: 'my body',
       queryParams: [],
       dateTimeFields: [],
@@ -89,7 +88,6 @@ const items: Array<SouthConnectorItemDTO<SouthSlimsItemSettings>> = [
     connectorId: 'southId',
     settings: {
       endpoint: '/api/my/endpoint',
-      requestTimeout: 3000,
       body: '',
       queryParams: [{ key: 'my key', value: 'my value' }],
       dateTimeFields: [{ useAsReference: false, type: 'iso-string', fieldName: 'rslt_cf_samplingDateAndTime' }],
@@ -111,7 +109,6 @@ const items: Array<SouthConnectorItemDTO<SouthSlimsItemSettings>> = [
     connectorId: 'southId',
     settings: {
       endpoint: '/api/my/endpoint',
-      requestTimeout: 3000,
       body: null,
       queryParams: null,
       dateTimeFields: [
@@ -143,7 +140,6 @@ const items: Array<SouthConnectorItemDTO<SouthSlimsItemSettings>> = [
     connectorId: 'southId',
     settings: {
       endpoint: '/api/my/endpoint',
-      requestTimeout: 3000,
       body: 'my body',
       queryParams: [],
       dateTimeFields: [{ useAsReference: true, type: 'iso-string', fieldName: 'timestamp' }],
@@ -262,12 +258,11 @@ describe('SouthSlims with body', () => {
     expect(result).toEqual({ result: [] });
     const expectedOptions = {
       method: 'GET',
-      timeout: items[0].settings.requestTimeout,
       host: 'localhost',
       protocol: 'http:',
       port: connector.settings.port,
       path: items[0].settings.endpoint,
-      headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=', 'content-length': 7, 'content-type': 'application/json' }
+      headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=', 'content-length': '7', 'content-type': 'application/json' }
     };
     expect(utils.httpGetWithBody).toHaveBeenCalledWith('my body', expectedOptions);
     expect(logger.info).toHaveBeenCalledWith(
@@ -317,8 +312,7 @@ describe('SouthSlims with body and accept self signed', () => {
     expect(fetch).toHaveBeenCalledWith('https://localhost:4200/slimsrest/rest', {
       agent: {},
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-      method: 'GET',
-      timeout: 10000
+      method: 'GET'
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -332,12 +326,11 @@ describe('SouthSlims with body and accept self signed', () => {
     const expectedOptions = {
       method: 'GET',
       agent: {},
-      timeout: items[3].settings.requestTimeout,
       host: 'localhost',
       protocol: 'https:',
       port: connector.settings.port,
       path: items[3].settings.endpoint,
-      headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=', 'content-length': 7, 'content-type': 'application/json' }
+      headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=', 'content-length': '7', 'content-type': 'application/json' }
     };
     expect(utils.httpGetWithBody).toHaveBeenCalledWith('my body', expectedOptions);
     expect(logger.info).toHaveBeenCalledWith(
@@ -395,8 +388,7 @@ describe('SouthSlims with query params', () => {
       {
         agent: {},
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET',
-        timeout: 3000
+        method: 'GET'
       }
     );
     expect(logger.info).toHaveBeenCalledWith(
@@ -425,8 +417,7 @@ describe('SouthSlims with query params', () => {
       {
         agent: {},
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET',
-        timeout: 3000
+        method: 'GET'
       }
     );
     expect(logger.info).toHaveBeenCalledWith(
@@ -955,8 +946,7 @@ describe('SouthSlims with query params and accept self signed', () => {
       {
         agent: {},
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET',
-        timeout: 3000
+        method: 'GET'
       }
     );
     expect(logger.info).toHaveBeenCalledWith(

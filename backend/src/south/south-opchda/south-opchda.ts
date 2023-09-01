@@ -110,7 +110,11 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
     };
     const response = await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}/read`, fetchOptions);
     if (response.status === 200) {
-      const result: { recordCount: number; content: Array<OIBusDataValue>; maxInstantRetrieved: Instant } = await response.json();
+      const result: { recordCount: number; content: Array<OIBusDataValue>; maxInstantRetrieved: Instant } = (await response.json()) as {
+        recordCount: number;
+        content: OIBusDataValue[];
+        maxInstantRetrieved: string;
+      };
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.content.length > 0) {

@@ -4,7 +4,7 @@ import { NorthConnectorDTO } from '../../../../shared/model/north-connector.mode
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import fetch from 'node-fetch';
+import fetch, { HeadersInit } from 'node-fetch';
 import { createReadStream } from 'node:fs';
 import path from 'node:path';
 import FormData from 'form-data';
@@ -67,7 +67,7 @@ export default class NorthRestApi extends NorthConnector<NorthRestAPISettings> i
    * Handle values by sending them to the specified endpoint
    */
   async handleValues(values: Array<OIBusDataValue>): Promise<void> {
-    const headers: Record<string, string> = {
+    const headers: HeadersInit = {
       'Content-Type': 'application/json'
     };
     switch (this.connector.settings.authentication.type) {
@@ -92,7 +92,6 @@ export default class NorthRestApi extends NorthConnector<NorthRestAPISettings> i
         method: 'POST',
         headers,
         body: JSON.stringify(values),
-        timeout: this.connector.settings.timeout * 1000,
         agent: this.proxyAgent
       });
     } catch (fetchError) {
@@ -114,7 +113,7 @@ export default class NorthRestApi extends NorthConnector<NorthRestAPISettings> i
    * Handle the file by sending it to the specified endpoint
    */
   async handleFile(filePath: string): Promise<void> {
-    const headers: Record<string, string> = {};
+    const headers: HeadersInit = {};
     switch (this.connector.settings.authentication.type) {
       case 'basic':
         headers.authorization = `Basic ${Buffer.from(
@@ -151,7 +150,6 @@ export default class NorthRestApi extends NorthConnector<NorthRestAPISettings> i
         method: 'POST',
         headers,
         body,
-        timeout: this.connector.settings.timeout * 1000,
         agent: this.proxyAgent
       });
       readStream.close();

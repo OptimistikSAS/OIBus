@@ -10,7 +10,7 @@ import pino from 'pino';
 import { createReadStream } from 'node:fs';
 import FormData from 'form-data';
 import path from 'node:path';
-import fetch from 'node-fetch';
+import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import https from 'node:https';
 import { HandlesFile, HandlesValues } from '../north-interface';
 import { filesExists } from '../../service/utils';
@@ -65,16 +65,15 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   override async testConnection(): Promise<void> {
     this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
 
-    const headers: Record<string, string | number> = {};
+    const headers: HeadersInit = {};
     const basic = Buffer.from(
       `${this.connector.settings.accessKey}:${await this.encryptionService.decryptText(this.connector.settings.secretKey!)}`
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
-    const fetchOptions: Record<string, any> = {
+    const fetchOptions: RequestInit = {
       method: 'POST',
       headers,
-      agent: this.proxyAgent,
-      timeout: 10000
+      agent: this.proxyAgent
     };
     const requestUrl = `${this.connector.settings.host}/info`;
 
@@ -96,7 +95,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
    * Handle values by sending them to OIAnalytics
    */
   async handleValues(values: Array<OIBusDataValue>): Promise<void> {
-    const headers: Record<string, string> = {
+    const headers: HeadersInit = {
       'Content-Type': 'application/json'
     };
 
@@ -113,7 +112,6 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         method: 'POST',
         headers,
         body: JSON.stringify(values),
-        timeout: this.connector.settings.timeout * 1000,
         agent: this.proxyAgent
       });
     } catch (fetchError) {
@@ -135,7 +133,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
    * Handle the file by sending it to OIAnalytics.
    */
   async handleFile(filePath: string): Promise<void> {
-    const headers: Record<string, string> = {};
+    const headers: HeadersInit = {};
     headers.authorization = `Basic ${Buffer.from(
       `${this.connector.settings.accessKey}:${
         this.connector.settings.secretKey ? await this.encryptionService.decryptText(this.connector.settings.secretKey) : ''
@@ -164,7 +162,6 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
         method: 'POST',
         headers,
         body,
-        timeout: this.connector.settings.timeout * 1000,
         agent: this.proxyAgent
       });
       readStream.close();

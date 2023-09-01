@@ -97,7 +97,6 @@ describe('NorthOIConnect with proxy', () => {
     settings: {
       host: 'https://hostname/',
       acceptUnauthorized: false,
-      timeout: 10,
       useProxy: true,
       proxyUrl: 'http://localhost',
       proxyUsername: 'my username',
@@ -158,7 +157,6 @@ describe('NorthOIConnect with proxy', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      timeout: configuration.settings.timeout * 1000,
       agent: {}
     };
 
@@ -212,7 +210,6 @@ describe('NorthOIConnect with proxy', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      timeout: configuration.settings.timeout * 1000,
       agent: {}
     };
 
@@ -242,7 +239,6 @@ describe('NorthOIConnect with proxy', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      timeout: configuration.settings.timeout * 1000,
       agent: {}
     };
 
@@ -295,7 +291,6 @@ describe('NorthOIConnect with proxy', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      timeout: configuration.settings.timeout * 1000,
       agent: {}
     };
 
@@ -323,8 +318,7 @@ describe('NorthOIConnect with proxy', () => {
     expect(fetch).toHaveBeenCalledWith('https://hostname/api/info', {
       agent: {},
       headers: { authorization: 'Basic dXNlcjpwYXNz' },
-      method: 'GET',
-      timeout: 10000
+      method: 'GET'
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -362,7 +356,6 @@ describe('NorthOIConnect with proxy but without proxy password', () => {
     settings: {
       host: 'https://hostname',
       acceptUnauthorized: false,
-      timeout: 10,
       useProxy: true,
       proxyUrl: 'http://localhost',
       proxyUsername: 'my username',
@@ -416,7 +409,6 @@ describe('NorthOIConnect without proxy with acceptUnauthorized', () => {
     settings: {
       host: 'https://hostname',
       acceptUnauthorized: true,
-      timeout: 10,
       useProxy: false,
       username: 'user',
       password: 'pass'
@@ -462,7 +454,6 @@ describe('NorthOIConnect without proxy with acceptUnauthorized', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      timeout: configuration.settings.timeout * 1000,
       agent: expect.any(https.Agent)
     };
 
@@ -482,7 +473,6 @@ describe('NorthOIConnect without proxy with acceptUnauthorized', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      timeout: configuration.settings.timeout * 1000,
       agent: expect.any(https.Agent)
     };
 

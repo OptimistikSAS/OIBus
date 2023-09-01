@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import fetch from 'node-fetch';
+import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import https from 'https';
 
 import manifest from './manifest';
@@ -89,16 +89,15 @@ export default class SouthOIAnalytics
   override async testConnection(): Promise<void> {
     this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
 
-    const headers: Record<string, string | number> = {};
+    const headers: HeadersInit = {};
     const basic = Buffer.from(
       `${this.connector.settings.accessKey}:${await this.encryptionService.decryptText(this.connector.settings.secretKey!)}`
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
-    const fetchOptions: Record<string, any> = {
+    const fetchOptions: RequestInit = {
       method: 'POST',
       headers,
-      agent: this.proxyAgent,
-      timeout: 10000
+      agent: this.proxyAgent
     };
     const requestUrl = `${this.connector.settings.host}/info`;
 
@@ -156,17 +155,16 @@ export default class SouthOIAnalytics
   }
 
   async queryData(item: SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>, startTime: Instant, endTime: Instant): Promise<any> {
-    const headers: Record<string, string> = {};
+    const headers: HeadersInit = {};
     const basic = Buffer.from(
       `${this.connector.settings.accessKey}:${await this.encryptionService.decryptText(this.connector.settings.secretKey!)}`
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
 
-    const fetchOptions: Record<string, any> = {
+    const fetchOptions: RequestInit = {
       method: 'GET',
       headers,
-      agent: this.proxyAgent,
-      timeout: item.settings.requestTimeout
+      agent: this.proxyAgent
     };
     const requestUrl = `${this.connector.settings.host}${item.settings.endpoint}${formatQueryParams(
       startTime,
