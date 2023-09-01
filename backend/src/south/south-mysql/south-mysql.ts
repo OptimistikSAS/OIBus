@@ -19,6 +19,7 @@ import { Instant } from '../../../../shared/model/types';
 import { QueriesHistory } from '../south-interface';
 import { DateTime } from 'luxon';
 import { SouthMySQLItemSettings, SouthMySQLSettings } from '../../../../shared/model/south-settings.model';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthMySQL - Retrieve data from MySQL / MariaDB databases and send them to the cache as CSV files.
@@ -31,7 +32,7 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
   constructor(
     connector: SouthConnectorDTO<SouthMySQLSettings>,
     items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,

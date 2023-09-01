@@ -11,6 +11,7 @@ import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import { QueriesFile } from '../south-interface';
 import { SouthFolderScannerItemSettings, SouthFolderScannerSettings } from '../../../../shared/model/south-settings.model';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthFolderScanner - Retrieve file from a local or remote folder
@@ -29,7 +30,7 @@ export default class SouthFolderScanner
   constructor(
     connector: SouthConnectorDTO<SouthFolderScannerSettings>,
     items: Array<SouthConnectorItemDTO<SouthFolderScannerItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,

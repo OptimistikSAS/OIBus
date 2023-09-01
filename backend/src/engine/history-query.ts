@@ -14,6 +14,7 @@ import HistoryQueryService from '../service/history-query.service';
 import { PassThrough } from 'node:stream';
 import { SouthItemSettings, SouthSettings } from '../../../shared/model/south-settings.model';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
+import { OIBusDataValue } from '../../../shared/model/engine.model';
 
 const FINISH_INTERVAL = 5000;
 
@@ -115,7 +116,7 @@ export default class HistoryQuery {
    * Add new values from a South connector to the Engine.
    * The Engine will forward the values to the Cache.
    */
-  async addValues(historyId: string, values: Array<any>): Promise<void> {
+  async addValues(_historyId: string, values: Array<OIBusDataValue>): Promise<void> {
     if (this.north) {
       this.logger.info(`Add ${values.length} values from History Query "${this.historyConfiguration.name}" to north connector`);
       await this.north.cacheValues(values);
@@ -126,7 +127,7 @@ export default class HistoryQuery {
    * Add a new file from a South connector to the Engine.
    * The Engine will forward the file to the Cache.
    */
-  async addFile(southId: string, filePath: string): Promise<void> {
+  async addFile(_historyId: string, filePath: string): Promise<void> {
     if (this.north) {
       this.logger.info(`Add file "${filePath}" from History Query "${this.historyConfiguration.name}" to north connector`);
       await this.north.cacheFile(filePath);

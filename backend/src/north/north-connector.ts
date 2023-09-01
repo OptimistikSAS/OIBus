@@ -10,7 +10,7 @@ import { CronJob } from 'cron';
 import { EventEmitter } from 'node:events';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import DeferredPromise from '../service/deferred-promise';
-import { OIBusError } from '../../../shared/model/engine.model';
+import { OIBusDataValue, OIBusError } from '../../../shared/model/engine.model';
 import { ExternalSubscriptionDTO, SubscriptionDTO } from '../../../shared/model/subscription.model';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
@@ -49,7 +49,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
 
   private fileBeingSent: string | null = null;
   private fileErrorCount = 0;
-  private valuesBeingSent: Map<string, Array<any>> = new Map();
+  private valuesBeingSent: Map<string, Array<OIBusDataValue>> = new Map();
   private valueErrorCount = 0;
 
   private taskJobQueue: Array<ScanModeDTO> = [];
@@ -330,7 +330,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * Method called by the Engine to cache an array of values in order to cache them
    * and send them to a third party application.
    */
-  async cacheValues(values: Array<any>): Promise<void> {
+  async cacheValues(values: Array<OIBusDataValue>): Promise<void> {
     if (this.connector.caching.maxSize !== 0 && this.cacheSize >= this.connector.caching.maxSize * 1024 * 1024) {
       this.logger.debug(
         `North cache is exceeding the maximum allowed size ` +

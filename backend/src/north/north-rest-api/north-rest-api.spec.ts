@@ -17,6 +17,7 @@ import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.moc
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
 import { NorthRestAPISettings } from '../../../../shared/model/north-settings.model';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
@@ -128,11 +129,11 @@ describe('NorthRestApi', () => {
 
   it('should properly handle values', async () => {
     await north.start();
-    const values = [
+    const values: Array<OIBusDataValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
+        data: { value: '666', quality: 'good' }
       }
     ];
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
@@ -157,11 +158,11 @@ describe('NorthRestApi', () => {
 
   it('should properly throw fetch error with values', async () => {
     await north.start();
-    const values = [
+    const values: Array<OIBusDataValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
+        data: { value: '666', quality: 'good' }
       }
     ];
     (fetch as unknown as jest.Mock).mockImplementation(() => {
@@ -182,11 +183,11 @@ describe('NorthRestApi', () => {
 
   it('should properly throw error on values bad response', async () => {
     await north.start();
-    const values = [
+    const values: Array<OIBusDataValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
+        data: { value: '666', quality: 'good' }
       }
     ];
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve({ ok: false, status: 400, statusText: 'statusText' }));
@@ -320,11 +321,11 @@ describe('NorthOIConnect without proxy nor password and with acceptUnauthorized'
 
   it('should properly handle values without password', async () => {
     await north.start();
-    const values = [
+    const values: Array<OIBusDataValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
+        data: { value: '666', quality: 'good' }
       }
     ];
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
@@ -380,11 +381,11 @@ describe('NorthOIConnect without authentication', () => {
 
   it('should properly handle values without auth', async () => {
     await north.start();
-    const values = [
+    const values: Array<OIBusDataValue> = [
       {
         pointId: 'pointId1',
         timestamp: nowDateString,
-        data: { value: 666, quality: 'good' }
+        data: { value: '666', quality: 'good' }
       }
     ];
     (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));

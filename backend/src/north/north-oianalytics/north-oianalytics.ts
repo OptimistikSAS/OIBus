@@ -15,6 +15,7 @@ import https from 'node:https';
 import { HandlesFile, HandlesValues } from '../north-interface';
 import { filesExists } from '../../service/utils';
 import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class NorthOIAnalytics - Send files to a POST Multipart HTTP request and values as JSON payload
@@ -94,18 +95,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
   /**
    * Handle values by sending them to OIAnalytics
    */
-  async handleValues(values: Array<any>): Promise<void> {
-    // Remove empty values
-    const cleanedValues = values
-      .filter(
-        value => value && value.data && value.data.value !== undefined && value.data.value !== null && value.timestamp && value.pointId
-      )
-      .map(value => ({
-        timestamp: value.timestamp,
-        data: value.data,
-        pointId: value.pointId
-      }));
-
+  async handleValues(values: Array<OIBusDataValue>): Promise<void> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     };
@@ -122,7 +112,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       response = await fetch(valuesUrl, {
         method: 'POST',
         headers,
-        body: JSON.stringify(cleanedValues),
+        body: JSON.stringify(values),
         timeout: this.connector.settings.timeout * 1000,
         agent: this.proxyAgent
       });

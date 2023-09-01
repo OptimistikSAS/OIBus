@@ -17,6 +17,7 @@ import HistoryServiceMock from '../tests/__mocks__/history-query-service.mock';
 import HistoryQueryService from '../service/history-query.service';
 import Stream from 'node:stream';
 import { EventEmitter } from 'node:events';
+import { OIBusDataValue } from '../../../shared/model/engine.model';
 
 jest.mock('../service/south.service');
 jest.mock('../service/north.service');
@@ -213,9 +214,9 @@ describe('HistoryQuery enabled', () => {
   it('should cache values', async () => {
     await historyQuery.start();
 
-    await historyQuery.addValues('southId', ['', '']);
+    await historyQuery.addValues('southId', [{}, {}] as Array<OIBusDataValue>);
     expect(logger.info).toHaveBeenCalledWith(`Add 2 values from History Query "${configuration.name}" to north connector`);
-    expect(createdNorth.cacheValues).toHaveBeenCalledWith(['', '']);
+    expect(createdNorth.cacheValues).toHaveBeenCalledWith([{}, {}]);
   });
 
   it('should cache file', async () => {

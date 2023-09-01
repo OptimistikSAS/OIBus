@@ -198,7 +198,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
       .mockReturnValue([]);
     south.parseData = jest
       .fn()
-      .mockImplementationOnce((item: SouthConnectorItemDTO, httpResults: Array<any>) => ({
+      .mockImplementationOnce((httpResults: Array<any>) => ({
         formattedResult: httpResults,
         maxInstant: '2020-03-01T00:00:00.000Z'
       }))
@@ -348,25 +348,25 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
 
   it('should reject bad data', () => {
     try {
-      south.parseData(items[0], {} as any);
+      south.parseData({} as any);
     } catch (error) {
       expect(error).toEqual(Error('Bad data: expect OIAnalytics time values to be an array'));
     }
 
     try {
-      south.parseData(items[0], [{}] as any);
+      south.parseData([{}] as any);
     } catch (error) {
       expect(error).toEqual(Error('Bad data: expect data.reference field'));
     }
 
     try {
-      south.parseData(items[0], [{ data: { reference: 'dataReference' } }] as any);
+      south.parseData([{ data: { reference: 'dataReference' } }] as any);
     } catch (error) {
       expect(error).toEqual(Error('Bad data: expect unit.label field'));
     }
 
     try {
-      south.parseData(items[0], [
+      south.parseData([
         {
           data: { reference: 'dataReference' },
           unit: { label: 'g/L' }
@@ -377,7 +377,7 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
     }
 
     try {
-      south.parseData(items[0], [
+      south.parseData([
         {
           data: { reference: 'dataReference' },
           unit: { label: 'g/L' },
@@ -417,7 +417,7 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
       }
     ];
 
-    expect(south.parseData(items[0], oiaData)).toEqual({
+    expect(south.parseData(oiaData)).toEqual({
       formattedResult: [
         {
           pointId: 'ref1',
@@ -455,9 +455,9 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
       maxInstant: '2022-01-01T00:10:00.000Z'
     });
 
-    expect(south.parseData(items[0], [])).toEqual({ formattedResult: [], maxInstant: '1970-01-01T00:00:00.000Z' });
+    expect(south.parseData([])).toEqual({ formattedResult: [], maxInstant: '1970-01-01T00:00:00.000Z' });
     expect(
-      south.parseData(items[0], [
+      south.parseData([
         {
           type: 'time-values',
           unit: { id: '2', label: '%' },

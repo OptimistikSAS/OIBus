@@ -15,6 +15,7 @@ import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
 import HomeMetricsService from '../service/home-metrics.service';
+import { OIBusDataValue } from '../../../shared/model/engine.model';
 
 const CACHE_FOLDER = './cache/data-stream';
 
@@ -39,7 +40,7 @@ export default class OIBusEngine extends BaseEngine {
    * Add new values from a South connector to the Engine.
    * The Engine will forward the values to the Cache.
    */
-  async addValues(southId: string, values: Array<any>): Promise<void> {
+  async addValues(southId: string, values: Array<OIBusDataValue>): Promise<void> {
     for (const north of this.northConnectors.values()) {
       if (north.isEnabled() && north.isSubscribed(southId)) {
         await north.cacheValues(values);
@@ -124,7 +125,7 @@ export default class OIBusEngine extends BaseEngine {
     }
   }
 
-  async startSouth(southId: string, settings: SouthConnectorDTO): Promise<void> {
+  async startSouth(_southId: string, settings: SouthConnectorDTO): Promise<void> {
     const baseFolder = path.resolve(this.cacheFolder, `south-${settings.id}`);
     await createFolder(baseFolder);
 
@@ -153,7 +154,7 @@ export default class OIBusEngine extends BaseEngine {
     this.southConnectors.set(settings.id, south);
   }
 
-  async startNorth(northId: string, settings: NorthConnectorDTO): Promise<void> {
+  async startNorth(_northId: string, settings: NorthConnectorDTO): Promise<void> {
     const baseFolder = path.resolve(this.cacheFolder, `north-${settings.id}`);
     await createFolder(baseFolder);
 

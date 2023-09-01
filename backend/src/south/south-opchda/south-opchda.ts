@@ -9,6 +9,7 @@ import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthOPCHDAItemSettings, SouthOPCHDASettings } from '../../../../shared/model/south-settings.model';
 import fetch from 'node-fetch';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class SouthOPCHDA - Run a HDA agent to connect to an OPCHDA server.
@@ -24,7 +25,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
   constructor(
     connector: SouthConnectorDTO<SouthOPCHDASettings>,
     items: Array<SouthConnectorItemDTO<SouthOPCHDAItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -109,7 +110,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
     };
     const response = await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}/read`, fetchOptions);
     if (response.status === 200) {
-      const result: { recordCount: number; content: Array<any>; maxInstantRetrieved: Instant } = await response.json();
+      const result: { recordCount: number; content: Array<OIBusDataValue>; maxInstantRetrieved: Instant } = await response.json();
       const requestDuration = DateTime.now().toMillis() - startRequest;
 
       if (result.content.length > 0) {

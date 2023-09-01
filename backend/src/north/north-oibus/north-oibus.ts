@@ -13,6 +13,7 @@ import { HandlesFile, HandlesValues } from '../north-interface';
 import { filesExists } from '../../service/utils';
 import { NorthOIBusSettings } from '../../../../shared/model/north-settings.model';
 import { createProxyAgent } from '../../service/proxy.service';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 /**
  * Class NorthOIBus - Send files through a POST Multipart HTTP request and values as JSON payload into another OIBus
@@ -91,7 +92,7 @@ export default class NorthOibus extends NorthConnector<NorthOIBusSettings> imple
   /**
    * Handle values by sending them to the specified endpoint
    */
-  async handleValues(values: Array<any>): Promise<void> {
+  async handleValues(values: Array<OIBusDataValue>): Promise<void> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json'
     };

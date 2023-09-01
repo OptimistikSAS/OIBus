@@ -22,6 +22,7 @@ import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthSlimsItemSettings, SouthSlimsSettings } from '../../../../shared/model/south-settings.model';
 import { createProxyAgent } from '../../service/proxy.service';
+import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 export interface SlimsColumn {
   name: string;
@@ -49,7 +50,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
   constructor(
     connector: SouthConnectorDTO<SouthSlimsSettings>,
     items: Array<SouthConnectorItemDTO<SouthSlimsItemSettings>>,
-    engineAddValuesCallback: (southId: string, values: Array<any>) => Promise<void>,
+    engineAddValuesCallback: (southId: string, values: Array<OIBusDataValue>) => Promise<void>,
     engineAddFileCallback: (southId: string, filePath: string) => Promise<void>,
     encryptionService: EncryptionService,
     repositoryService: RepositoryService,
@@ -228,13 +229,13 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
     item: SouthConnectorItemDTO<SouthSlimsItemSettings>,
     httpResult: SlimsResults
   ): {
-    formattedResult: Array<any>;
+    formattedResult: Array<OIBusDataValue>;
     maxInstant: Instant;
   } {
     if (!httpResult?.entities || !Array.isArray(httpResult.entities)) {
       throw new Error('Bad data: expect SLIMS values to be an array.');
     }
-    const formattedData: Array<any> = [];
+    const formattedData: Array<OIBusDataValue> = [];
     let maxInstant = DateTime.fromMillis(0).toUTC().toISO()!;
     for (const element of httpResult.entities) {
       const rsltCfPid = element.columns.find(column => column.name === 'rslt_cf_pid');
@@ -277,7 +278,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
 
       formattedData.push({
         pointId: `${rsltCfPid.value}-${testName.value}`,
-        timestamp: formatInstant(resultInstant, { type: 'iso-string' }),
+        timestamp: formatInstant(resultInstant, { type: 'iso-string' }) as Instant,
         data: { value: rsltValue.value, unit: rsltValue.unit || 'Ø' }
       });
       if (referenceInstant > maxInstant) {
