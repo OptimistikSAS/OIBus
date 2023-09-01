@@ -144,7 +144,7 @@ class LokiTransport {
         timeout: 10000
       };
       const response = await fetch(this.options.tokenAddress, fetchOptions);
-      const responseData = await response.json();
+      const responseData = (await response.json()) as { expires_in: number; access_token: string };
 
       if (this.mustRenewTokenTimeout) {
         clearTimeout(this.mustRenewTokenTimeout);

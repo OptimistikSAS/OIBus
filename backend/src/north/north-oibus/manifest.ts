@@ -24,7 +24,6 @@ const manifest: NorthConnectorManifest = {
       ],
       displayInViewMode: true
     },
-    { key: 'timeout', type: 'OibNumber', label: 'Timeout', unitLabel: 's', defaultValue: 30, validators: [{ key: 'required' }] },
     {
       key: 'acceptUnauthorized',
       type: 'OibCheckbox',

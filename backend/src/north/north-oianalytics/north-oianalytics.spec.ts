@@ -96,7 +96,6 @@ describe('NorthOIAnalytics without proxy', () => {
     enabled: true,
     settings: {
       host: 'https://hostname/',
-      timeout: 1000,
       acceptUnauthorized: false,
       accessKey: 'anyUser',
       secretKey: 'anypass',
@@ -144,7 +143,6 @@ describe('NorthOIAnalytics without proxy', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 
@@ -201,7 +199,6 @@ describe('NorthOIAnalytics without proxy', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 
@@ -234,7 +231,6 @@ describe('NorthOIAnalytics without proxy', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 
@@ -292,7 +288,6 @@ describe('NorthOIAnalytics without proxy', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      timeout: configuration.settings.timeout * 1000,
       agent: undefined
     };
 
@@ -322,8 +317,7 @@ describe('NorthOIAnalytics without proxy', () => {
     await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(fetch).toHaveBeenCalledWith('https://hostname/info', {
       headers: { authorization: 'Basic YW55VXNlcjphbnlwYXNz' },
-      method: 'POST',
-      timeout: 10000
+      method: 'POST'
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -360,7 +354,6 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     enabled: true,
     settings: {
       host: 'https://hostname',
-      timeout: 1000,
       acceptUnauthorized: true,
       accessKey: 'anyUser',
       secretKey: null,
@@ -408,7 +401,6 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      timeout: configuration.settings.timeout * 1000,
       agent: expect.any(https.Agent)
     };
 
@@ -431,7 +423,6 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      timeout: configuration.settings.timeout * 1000,
       agent: expect.any(https.Agent)
     };
 
@@ -453,7 +444,6 @@ describe('NorthOIAnalytics with proxy', () => {
     enabled: true,
     settings: {
       host: 'https://hostname',
-      timeout: 1000,
       acceptUnauthorized: false,
       accessKey: 'anyUser',
       secretKey: 'anypass',
@@ -509,7 +499,6 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     enabled: true,
     settings: {
       host: 'https://hostname',
-      timeout: 1000,
       acceptUnauthorized: false,
       accessKey: 'anyUser',
       secretKey: 'anypass',

@@ -71,7 +71,6 @@ const items: Array<SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>> = [
     connectorId: 'southId',
     settings: {
       endpoint: '/api/my/endpoint',
-      requestTimeout: 3000,
       queryParams: [],
       serialization: {
         type: 'csv',
@@ -91,7 +90,6 @@ const items: Array<SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>> = [
     connectorId: 'southId',
     settings: {
       endpoint: '/api/my/endpoint',
-      requestTimeout: 3000,
       queryParams: null,
       serialization: {
         type: 'csv',
@@ -111,7 +109,6 @@ const items: Array<SouthConnectorItemDTO<SouthOIAnalyticsItemSettings>> = [
     connectorId: 'southId',
     settings: {
       endpoint: '/api/my/endpoint',
-      requestTimeout: 3000,
       queryParams: [],
       serialization: {
         type: 'csv',
@@ -237,8 +234,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET',
-        timeout: 3000
+        method: 'GET'
       }
     );
     expect(logger.info).toHaveBeenCalledWith(
@@ -262,8 +258,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET',
-        timeout: 3000
+        method: 'GET'
       }
     );
     expect(logger.info).toHaveBeenCalledWith(
@@ -315,8 +310,7 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
     expect(fetch).toHaveBeenCalledWith('https://localhost:4200/info', {
       agent: {},
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-      method: 'POST',
-      timeout: 10000
+      method: 'POST'
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -336,8 +330,7 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET',
-        timeout: 3000
+        method: 'GET'
       }
     );
     expect(logger.info).toHaveBeenCalledWith(
@@ -522,8 +515,7 @@ describe('SouthOIAnalytics with proxy', () => {
     expect(fetch).toHaveBeenCalledWith('http://localhost:4200/info', {
       agent: {},
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-      method: 'POST',
-      timeout: 10000
+      method: 'POST'
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -576,8 +568,7 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
     expect(fetch).toHaveBeenCalledWith('http://localhost:4200/info', {
       agent: {},
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-      method: 'POST',
-      timeout: 10000
+      method: 'POST'
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });

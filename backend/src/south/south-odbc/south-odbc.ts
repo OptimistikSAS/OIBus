@@ -11,7 +11,7 @@ import { Instant } from '../../../../shared/model/types';
 import { DateTime } from 'luxon';
 import { QueriesHistory } from '../south-interface';
 import { SouthODBCItemSettings, SouthODBCSettings } from '../../../../shared/model/south-settings.model';
-import fetch from 'node-fetch';
+import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 let odbc: any | null = null;
@@ -69,8 +69,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
             connectionString: this.connector.settings.connectionString,
             connectionTimeout: this.connector.settings.connectionTimeout
           }),
-          headers,
-          timeout: this.connector.settings.connectionTimeout
+          headers
         };
 
         await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/connect`, fetchOptions);
@@ -95,7 +94,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
 
     if (this.connector.settings.remoteAgent) {
       try {
-        const fetchOptions = { method: 'DELETE', timeout: this.connector.settings.connectionTimeout };
+        const fetchOptions = { method: 'DELETE' };
         await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/disconnect`, fetchOptions);
       } catch (error) {
         this.logger.error(`Error while sending disconnection HTTP request into agent. ${error}`);
@@ -231,7 +230,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     let updatedStartTime = startTime;
     const startRequest = DateTime.now().toMillis();
 
-    const headers: Record<string, string> = {};
+    const headers: HeadersInit = {};
     headers['Content-Type'] = 'application/json';
 
     const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference);
@@ -240,7 +239,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, `${odbcStartTime}`).replace(/@EndTime/g, `${odbcEndTime}`);
     logQuery(adaptedQuery, odbcStartTime, odbcEndTime, this.logger);
 
-    const fetchOptions = {
+    const fetchOptions: RequestInit = {
       method: 'PUT',
       body: JSON.stringify({
         connectionString: this.connector.settings.connectionString,
@@ -257,7 +256,11 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     };
     const response = await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/read`, fetchOptions);
     if (response.status === 200) {
-      const result: { recordCount: number; content: Array<any>; maxInstantRetrieved: Instant } = await response.json();
+      const result: { recordCount: number; content: Array<any>; maxInstantRetrieved: Instant } = (await response.json()) as {
+        recordCount: number;
+        content: OIBusDataValue[];
+        maxInstantRetrieved: string;
+      };
       const requestDuration = DateTime.now().toMillis() - startRequest;
       this.logger.info(`Found ${result.recordCount} results for item ${item.name} in ${requestDuration} ms`);
 

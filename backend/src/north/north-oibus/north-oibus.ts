@@ -4,7 +4,7 @@ import { NorthConnectorDTO } from '../../../../shared/model/north-connector.mode
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
 import pino from 'pino';
-import fetch from 'node-fetch';
+import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import { createReadStream } from 'node:fs';
 import path from 'node:path';
 import FormData from 'form-data';
@@ -62,16 +62,15 @@ export default class NorthOibus extends NorthConnector<NorthOIBusSettings> imple
   override async testConnection(): Promise<void> {
     this.logger.info(`Testing connection on "${this.connector.settings.host}"`);
 
-    const headers: Record<string, string | number> = {};
+    const headers: HeadersInit = {};
     const basic = Buffer.from(
       `${this.connector.settings.username}:${await this.encryptionService.decryptText(this.connector.settings.password!)}`
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
-    const fetchOptions: Record<string, any> = {
+    const fetchOptions: RequestInit = {
       method: 'GET',
       headers,
-      agent: this.proxyAgent,
-      timeout: 10000
+      agent: this.proxyAgent
     };
     const requestUrl = `${this.connector.settings.host}/api/info`;
 
@@ -93,7 +92,7 @@ export default class NorthOibus extends NorthConnector<NorthOIBusSettings> imple
    * Handle values by sending them to the specified endpoint
    */
   async handleValues(values: Array<OIBusDataValue>): Promise<void> {
-    const headers: Record<string, string> = {
+    const headers: HeadersInit = {
       'Content-Type': 'application/json'
     };
     headers.authorization = `Basic ${Buffer.from(
@@ -107,7 +106,6 @@ export default class NorthOibus extends NorthConnector<NorthOIBusSettings> imple
         method: 'POST',
         headers,
         body: JSON.stringify(values),
-        timeout: this.connector.settings.timeout * 1000,
         agent: this.proxyAgent
       });
     } catch (fetchError) {
@@ -129,7 +127,7 @@ export default class NorthOibus extends NorthConnector<NorthOIBusSettings> imple
    * Handle the file by sending it to the specified endpoint
    */
   async handleFile(filePath: string): Promise<void> {
-    const headers: Record<string, string> = {};
+    const headers: HeadersInit = {};
     headers.authorization = `Basic ${Buffer.from(
       `${this.connector.settings.username}:${await this.encryptionService.decryptText(this.connector.settings.password!)}`
     ).toString('base64')}`;
@@ -156,7 +154,6 @@ export default class NorthOibus extends NorthConnector<NorthOIBusSettings> imple
         method: 'POST',
         headers,
         body,
-        timeout: this.connector.settings.timeout * 1000,
         agent: this.proxyAgent
       });
       readStream.close();

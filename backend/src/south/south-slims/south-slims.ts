@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import fetch from 'node-fetch';
+import fetch, { HeadersInit, RequestInit } from 'node-fetch';
 import https from 'https';
 
 import manifest from './manifest';
@@ -91,16 +91,15 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
   override async testConnection(): Promise<void> {
     this.logger.info(`Testing connection on "${this.connector.settings.url}"`);
 
-    const headers: Record<string, string | number> = {};
+    const headers: HeadersInit = {};
     const basic = Buffer.from(
       `${this.connector.settings.username}:${await this.encryptionService.decryptText(this.connector.settings.password!)}`
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
-    const fetchOptions: Record<string, any> = {
+    const fetchOptions: RequestInit = {
       method: 'GET',
       headers,
-      agent: this.proxyAgent,
-      timeout: 10000
+      agent: this.proxyAgent
     };
     const requestUrl = `${this.connector.settings.url}:${this.connector.settings.port}/slimsrest/rest`;
 
@@ -158,7 +157,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
   }
 
   async queryData(item: SouthConnectorItemDTO<SouthSlimsItemSettings>, startTime: Instant, endTime: Instant): Promise<SlimsResults> {
-    const headers: Record<string, string | number> = {};
+    const headers: HeadersInit = {};
     const basic = Buffer.from(
       `${this.connector.settings.username}:${await this.encryptionService.decryptText(this.connector.settings.password!)}`
     ).toString('base64');
@@ -172,7 +171,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
     if (item.settings.body) {
       const bodyToSend = item.settings.body.replace(/@StartTime/g, `${slimsStartTime}`).replace(/@EndTime/g, `${slimsEndTime}`);
       headers['content-type'] = 'application/json';
-      headers['content-length'] = bodyToSend.length;
+      headers['content-length'] = `${bodyToSend.length}`;
       let host: string = this.connector.settings.url;
       let protocol = 'http:';
       if (this.connector.settings.url.startsWith('http://')) {
@@ -181,10 +180,9 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
         host = this.connector.settings.url.substring(8);
         protocol = 'https:';
       }
-      const requestOptions = {
+      const requestOptions: Record<string, string | number | object> = {
         method: 'GET',
         agent: this.proxyAgent,
-        timeout: item.settings.requestTimeout,
         host,
         protocol,
         port: this.connector.settings.port,
@@ -199,11 +197,10 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
       return httpGetWithBody(bodyToSend, requestOptions);
     }
 
-    const fetchOptions: Record<string, any> = {
+    const fetchOptions: RequestInit = {
       method: 'GET',
       headers,
-      agent: this.proxyAgent,
-      timeout: item.settings.requestTimeout
+      agent: this.proxyAgent
     };
     const requestUrl = `${this.connector.settings.url}:${this.connector.settings.port}${item.settings.endpoint}${formatQueryParams(
       slimsStartTime,
@@ -217,7 +214,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
     if (!response.ok) {
       throw new Error(`HTTP request failed with status code ${response.status} and message: ${response.statusText}`);
     }
-    return response.json();
+    return (await response.json()) as SlimsResults;
   }
 
   /**

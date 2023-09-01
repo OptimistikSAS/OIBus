@@ -70,15 +70,6 @@ const manifest: SouthConnectorManifest = {
         validators: [{ key: 'required' }]
       },
       {
-        key: 'requestTimeout',
-        type: 'OibNumber',
-        label: 'Request timeout (ms)',
-        defaultValue: 3000,
-        class: 'col-2',
-        newRow: false,
-        validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 60_000 } }]
-      },
-      {
         key: 'body',
         type: 'OibCodeBlock',
         label: 'Body',

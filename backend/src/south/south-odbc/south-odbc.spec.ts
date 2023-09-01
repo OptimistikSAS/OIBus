@@ -670,14 +670,12 @@ describe('SouthODBC odbc remote with authentication', () => {
       }),
       headers: {
         'Content-Type': 'application/json'
-      },
-      timeout: configuration.settings.connectionTimeout
+      }
     });
 
     await south.disconnect();
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/odbc/${configuration.id}/disconnect`, {
-      method: 'DELETE',
-      timeout: configuration.settings.connectionTimeout
+      method: 'DELETE'
     });
   });
 
@@ -695,8 +693,7 @@ describe('SouthODBC odbc remote with authentication', () => {
       }),
       headers: {
         'Content-Type': 'application/json'
-      },
-      timeout: configuration.settings.connectionTimeout
+      }
     });
 
     expect(fetch).toHaveBeenCalledTimes(1);

@@ -529,7 +529,6 @@ export interface SouthODBCItemSettings extends BaseSouthItemSettings {
 
 export interface SouthOIAnalyticsItemSettings extends BaseSouthItemSettings {
   endpoint: string;
-  requestTimeout: number;
   queryParams: Array<SouthOIAnalyticsItemSettingsQueryParams> | null;
   serialization: SouthOIAnalyticsItemSettingsSerialization;
 }
@@ -561,7 +560,6 @@ export interface SouthPostgreSQLItemSettings extends BaseSouthItemSettings {
 
 export interface SouthSlimsItemSettings extends BaseSouthItemSettings {
   endpoint: string;
-  requestTimeout: number;
   body: string | null;
   queryParams: Array<SouthSlimsItemSettingsQueryParams> | null;
   dateTimeFields: Array<SouthSlimsItemSettingsDateTimeFields>;
