@@ -261,7 +261,7 @@ export class EditHistoryQueryComponent implements OnInit {
     let createOrUpdate: Observable<HistoryQueryDTO>;
     // if we are editing
     if (this.mode === 'edit') {
-      createOrUpdate = this.historyQueryService.update(this.historyQuery!.id, command).pipe(
+      createOrUpdate = this.historyQueryService.update(this.historyQuery!.id, command, this.inMemoryItems).pipe(
         tap(() => this.notificationService.success('history-query.updated', { name: command.name })),
         switchMap(() => this.historyQueryService.get(this.historyQuery!.id))
       );

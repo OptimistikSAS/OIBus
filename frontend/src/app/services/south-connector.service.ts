@@ -76,8 +76,8 @@ export class SouthConnectorService {
    * @param southId - the ID of the South connector
    * @param command - the new values of the selected South connector
    */
-  update(southId: string, command: SouthConnectorCommandDTO<any>) {
-    return this.http.put<void>(`/api/south/${southId}`, command);
+  update(southId: string, command: SouthConnectorCommandDTO<any>, items: Array<SouthConnectorItemDTO<any>>) {
+    return this.http.put<void>(`/api/south/${southId}`, { south: command, items });
   }
 
   /**

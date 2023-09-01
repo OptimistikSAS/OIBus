@@ -13,7 +13,7 @@ import { HistoryQueryService } from '../../services/history-query.service';
 
 @Component({
   template: `<oib-history-query-items
-    [displayItemToggle]="true"
+    [inMemory]="false"
     [historyQuery]="historyQuery"
     [southConnectorItemSchema]="manifest.items"
   ></oib-history-query-items>`,
