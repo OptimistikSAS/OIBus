@@ -52,7 +52,7 @@ export class SouthItemsComponent implements OnInit {
   @Input() southConnector: SouthConnectorDTO | null = null;
   @Input({ required: true }) southConnectorItemSchema!: SouthConnectorItemManifest;
   @Input({ required: true }) scanModes!: Array<ScanModeDTO>;
-  @Input() displayItemToggle = false;
+  @Input() inMemory = false;
 
   @Output() readonly inMemoryItems = new EventEmitter<Array<SouthConnectorItemDTO>>();
 
@@ -73,7 +73,7 @@ export class SouthItemsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.fetchItemsAndResetPage();
+    this.fetchItemsAndResetPage(false);
     this.displaySettings = this.southConnectorItemSchema.settings.filter(setting => setting.displayInViewMode);
 
     // subscribe to changes to search control
@@ -83,8 +83,8 @@ export class SouthItemsComponent implements OnInit {
     });
   }
 
-  fetchItemsAndResetPage() {
-    if (this.southConnector) {
+  fetchItemsAndResetPage(fromMemory: boolean) {
+    if (this.southConnector && !fromMemory) {
       this.southConnectorService.listItems(this.southConnector.id).subscribe(items => {
         this.allItems = items;
         this.filteredItems = this.filter(items);
@@ -140,16 +140,16 @@ export class SouthItemsComponent implements OnInit {
     modalRef.result
       .pipe(
         switchMap((command: SouthConnectorItemCommandDTO) => {
-          if (this.southConnector) {
-            return this.southConnectorService.createItem(this.southConnector.id, command);
+          if (!this.inMemory) {
+            return this.southConnectorService.createItem(this.southConnector!.id, command);
           } else {
-            this.allItems.push({ id: '', connectorId: '', ...command });
+            this.allItems.push({ id: command.id ?? '', connectorId: this.southConnector?.id ?? '', ...command });
             return of(null);
           }
         })
       )
       .subscribe(() => {
-        this.fetchItemsAndResetPage();
+        this.fetchItemsAndResetPage(this.inMemory);
         this.notificationService.success(`south.items.created`);
       });
   }
@@ -170,7 +170,7 @@ export class SouthItemsComponent implements OnInit {
         })
       )
       .subscribe(() => {
-        this.fetchItemsAndResetPage();
+        this.fetchItemsAndResetPage(this.inMemory);
         this.notificationService.success(`south.items.updated`);
       });
   }
@@ -185,7 +185,7 @@ export class SouthItemsComponent implements OnInit {
       })
       .pipe(
         switchMap(() => {
-          if (this.southConnector) {
+          if (!this.inMemory) {
             return this.southConnectorService.deleteItem(this.southConnector!.id, item.id);
           } else {
             this.allItems = this.allItems.filter(element => element.name !== item.name);
@@ -194,7 +194,7 @@ export class SouthItemsComponent implements OnInit {
         })
       )
       .subscribe(() => {
-        this.fetchItemsAndResetPage();
+        this.fetchItemsAndResetPage(this.inMemory);
         this.notificationService.success('south.items.deleted');
       });
   }
@@ -225,7 +225,7 @@ export class SouthItemsComponent implements OnInit {
       })
       .pipe(
         switchMap(() => {
-          if (this.southConnector) {
+          if (!this.inMemory) {
             return this.southConnectorService.deleteAllItems(this.southConnector!.id);
           } else {
             this.allItems = [];
@@ -234,7 +234,7 @@ export class SouthItemsComponent implements OnInit {
         })
       )
       .subscribe(() => {
-        this.fetchItemsAndResetPage();
+        this.fetchItemsAndResetPage(this.inMemory);
         this.notificationService.success('south.items.all-deleted');
       });
   }

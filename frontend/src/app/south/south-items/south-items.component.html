@@ -51,7 +51,7 @@
       <table class="mb-2 table table-sm table-hover oib-table">
         <thead class="light">
           <tr>
-            <th *ngIf="displayItemToggle" style="width: 3%"></th>
+            <th *ngIf="!inMemory" style="width: 3%"></th>
             <th translate="south.items.name"></th>
             <th *ngIf="!southConnectorItemSchema.scanMode.subscriptionOnly" translate="south.items.scan-mode"></th>
             <th *ngFor="let setting of displaySettings">{{ setting.label }}</th>
@@ -60,7 +60,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let item of displayedItems.content" class="south-item">
-            <td *ngIf="displayItemToggle">
+            <td *ngIf="!inMemory">
               <div class="form-check form-switch">
                 <input (click)="toggleItem(item, !item.enabled)" [checked]="item.enabled" type="checkbox" class="form-check-input" />
               </div>

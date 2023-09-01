@@ -51,7 +51,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   @Input() southConnectorItemSchema!: SouthConnectorItemManifest;
   @Input() initItems: Array<SouthConnectorItemDTO> = [];
   @Output() readonly inMemoryItems = new EventEmitter<Array<SouthConnectorItemDTO>>();
-  @Input() displayItemToggle = false;
+  @Input() inMemory = false;
 
   allItems: Array<SouthConnectorItemDTO> = [];
   private filteredItems: Array<SouthConnectorItemDTO> = [];
@@ -73,7 +73,7 @@ export class HistoryQueryItemsComponent implements OnInit {
     if (!this.historyQuery) {
       this.allItems = this.initItems;
     }
-    this.fetchItemsAndResetPage();
+    this.fetchItemsAndResetPage(false);
     this.displaySettings = this.southConnectorItemSchema.settings.filter(setting => setting.displayInViewMode);
 
     // subscribe to changes to search control
@@ -83,8 +83,8 @@ export class HistoryQueryItemsComponent implements OnInit {
     });
   }
 
-  fetchItemsAndResetPage() {
-    if (this.historyQuery) {
+  fetchItemsAndResetPage(fromMemory: boolean) {
+    if (this.historyQuery && !fromMemory) {
       this.historyQueryService.listItems(this.historyQuery.id).subscribe(items => {
         this.allItems = items;
         this.filteredItems = this.filter(items);
@@ -140,16 +140,16 @@ export class HistoryQueryItemsComponent implements OnInit {
     modalRef.result
       .pipe(
         switchMap((command: SouthConnectorItemCommandDTO) => {
-          if (this.historyQuery) {
-            return this.historyQueryService.createItem(this.historyQuery.id, command);
+          if (!this.inMemory) {
+            return this.historyQueryService.createItem(this.historyQuery!.id, command);
           } else {
-            this.allItems.push({ id: '', connectorId: '', ...command });
+            this.allItems.push({ id: command.id ?? '', connectorId: this.historyQuery?.id ?? '', ...command });
             return of(null);
           }
         })
       )
       .subscribe(() => {
-        this.fetchItemsAndResetPage();
+        this.fetchItemsAndResetPage(this.inMemory);
         this.notificationService.success(`history-query.items.created`);
       });
   }
@@ -170,7 +170,7 @@ export class HistoryQueryItemsComponent implements OnInit {
         })
       )
       .subscribe(() => {
-        this.fetchItemsAndResetPage();
+        this.fetchItemsAndResetPage(this.inMemory);
         this.notificationService.success(`history-query.items.updated`);
       });
   }
@@ -185,7 +185,7 @@ export class HistoryQueryItemsComponent implements OnInit {
       })
       .pipe(
         switchMap(() => {
-          if (this.historyQuery) {
+          if (!this.inMemory) {
             return this.historyQueryService.deleteItem(this.historyQuery!.id, item.id);
           } else {
             this.allItems = this.allItems.filter(element => element.name !== item.name);
@@ -194,7 +194,7 @@ export class HistoryQueryItemsComponent implements OnInit {
         })
       )
       .subscribe(() => {
-        this.fetchItemsAndResetPage();
+        this.fetchItemsAndResetPage(this.inMemory);
         this.notificationService.success('history-query.items.deleted');
       });
   }
@@ -225,7 +225,7 @@ export class HistoryQueryItemsComponent implements OnInit {
       })
       .pipe(
         switchMap(() => {
-          if (this.historyQuery) {
+          if (!this.inMemory) {
             return this.historyQueryService.deleteAllItems(this.historyQuery!.id);
           } else {
             this.allItems = [];
@@ -234,7 +234,7 @@ export class HistoryQueryItemsComponent implements OnInit {
         })
       )
       .subscribe(() => {
-        this.fetchItemsAndResetPage();
+        this.fetchItemsAndResetPage(this.inMemory);
         this.notificationService.success('history-query.items.all-deleted');
       });
   }

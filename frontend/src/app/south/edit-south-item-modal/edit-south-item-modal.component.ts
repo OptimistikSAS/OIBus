@@ -165,7 +165,7 @@ export class EditSouthItemModalComponent {
     const formValue = this.form!.value;
 
     const command: SouthConnectorItemCommandDTO = {
-      id: this.item ? this.item.id : undefined,
+      id: this.item ? this.item.id : '',
       enabled: formValue.enabled!,
       name: formValue.name!,
       scanModeId: this.subscriptionOnly ? 'subscription' : formValue.scanModeId!,

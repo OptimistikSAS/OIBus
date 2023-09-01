@@ -118,9 +118,9 @@ describe('SouthConnectorService', () => {
       settings: {}
     };
 
-    service.update('id1', command).subscribe(() => (done = true));
+    service.update('id1', command, []).subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/south/id1' });
-    expect(testRequest.request.body).toEqual(command);
+    expect(testRequest.request.body).toEqual({ south: command, items: [] });
     testRequest.flush(null);
     expect(done).toBe(true);
   });

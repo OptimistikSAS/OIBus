@@ -57,9 +57,10 @@ export class HistoryQueryService {
    * Update the selected History query
    * @param historyQueryId - the ID of the History query
    * @param command - the new values of the selected History query
+   * @param items - the new History query items
    */
-  update(historyQueryId: string, command: HistoryQueryCommandDTO) {
-    return this.http.put<void>(`/api/history-queries/${historyQueryId}`, command);
+  update(historyQueryId: string, command: HistoryQueryCommandDTO, items: Array<SouthConnectorItemDTO>) {
+    return this.http.put<void>(`/api/history-queries/${historyQueryId}`, { historyQuery: command, items });
   }
 
   /**

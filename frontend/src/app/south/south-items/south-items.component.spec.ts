@@ -16,7 +16,7 @@ import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
     [southConnector]="southConnector"
     [scanModes]="scanModes"
     [southConnectorItemSchema]="manifest.items"
-    [displayItemToggle]="true"
+    [inMemory]="false"
   ></oib-south-items>`,
   standalone: true,
   imports: [SouthItemsComponent]

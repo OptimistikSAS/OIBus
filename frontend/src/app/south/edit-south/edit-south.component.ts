@@ -142,7 +142,7 @@ export class EditSouthComponent implements OnInit {
     let createOrUpdate: Observable<SouthConnectorDTO>;
     // if we are editing
     if (this.mode === 'edit') {
-      createOrUpdate = this.southConnectorService.update(this.southConnector!.id, command).pipe(
+      createOrUpdate = this.southConnectorService.update(this.southConnector!.id, command, this.inMemoryItems).pipe(
         tap(() => this.notificationService.success('south.updated', { name: command.name })),
         switchMap(() => this.southConnectorService.get(this.southConnector!.id))
       );
