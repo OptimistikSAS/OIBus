@@ -10,7 +10,6 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 import fetch from 'node-fetch';
-import https from 'node:https';
 import * as utils from '../../service/utils';
 
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
@@ -118,25 +117,15 @@ describe('NorthOIConnect with proxy', () => {
       retentionDuration: 720
     }
   };
+  const fakeAgent = { rejectUnauthorized: false };
 
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (utils.filesExists as jest.Mock).mockReturnValue(true);
-    (createProxyAgent as jest.Mock).mockReturnValue({});
+    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
     north = new NorthOibus(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
-  });
-
-  it('should properly create proxy', () => {
-    expect(createProxyAgent).toHaveBeenCalledWith(
-      {
-        url: configuration.settings.proxyUrl,
-        username: configuration.settings.proxyUsername,
-        password: configuration.settings.proxyPassword
-      },
-      configuration.settings.acceptUnauthorized
-    );
   });
 
   it('should properly handle values', async () => {
@@ -157,7 +146,7 @@ describe('NorthOIConnect with proxy', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      agent: {}
+      agent: fakeAgent
     };
 
     await north.handleValues(values);
@@ -210,7 +199,7 @@ describe('NorthOIConnect with proxy', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      agent: {}
+      agent: fakeAgent
     };
 
     let err;
@@ -239,7 +228,7 @@ describe('NorthOIConnect with proxy', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      agent: {}
+      agent: fakeAgent
     };
 
     await north.handleFile(filePath);
@@ -291,7 +280,7 @@ describe('NorthOIConnect with proxy', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      agent: {}
+      agent: fakeAgent
     };
 
     let err;
@@ -309,14 +298,14 @@ describe('NorthOIConnect with proxy', () => {
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/add-file?name=${configuration.name}`, expectedFetchOptions);
   });
 
-  it('should test connection', async () => {
+  it('should manage timeout error on test connection', async () => {
     (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
       throw new Error('Timeout error');
     });
 
     await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(fetch).toHaveBeenCalledWith('https://hostname/api/info', {
-      agent: {},
+      agent: fakeAgent,
       headers: { authorization: 'Basic dXNlcjpwYXNz' },
       method: 'GET'
     });
@@ -377,29 +366,91 @@ describe('NorthOIConnect with proxy but without proxy password', () => {
       retentionDuration: 720
     }
   };
+  const fakeAgent = { rejectUnauthorized: false };
 
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
     (utils.filesExists as jest.Mock).mockReturnValue(true);
-    (createProxyAgent as jest.Mock).mockReturnValue({});
+    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
+
     north = new NorthOibus(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
 
-  it('should properly create proxy', () => {
+  it('should test connection', async () => {
+    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('Timeout error');
+    });
+
+    await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
+    expect(fetch).toHaveBeenCalledWith('https://hostname/api/info', {
+      headers: { authorization: 'Basic dXNlcjpwYXNz' },
+      method: 'GET',
+      agent: fakeAgent
+    });
+    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
+  });
+
+  it('should properly handle values without password', async () => {
+    await north.start();
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
+
+    const expectedFetchOptions = {
+      method: 'POST',
+      headers: {
+        authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify([]),
+      agent: fakeAgent
+    };
+
+    await north.handleValues([]);
     expect(createProxyAgent).toHaveBeenCalledWith(
+      true,
+      `${configuration.settings.host}/api/add-values?name=${configuration.name}`,
       {
-        url: configuration.settings.proxyUrl,
-        username: configuration.settings.proxyUsername,
+        url: configuration.settings.proxyUrl!,
+        username: configuration.settings.proxyUsername!,
         password: null
       },
-      configuration.settings.acceptUnauthorized
+      false
     );
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/add-values?name=${configuration.name}`, expectedFetchOptions);
+  });
+
+  it('should properly handle files without password', async () => {
+    const filePath = '/path/to/file/example.file';
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
+
+    const expectedFetchOptions = {
+      method: 'POST',
+      headers: {
+        authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
+        'content-type': expect.stringContaining('multipart/form-data; boundary=')
+      },
+      body: expect.anything(),
+      agent: fakeAgent
+    };
+
+    await north.handleFile(filePath);
+
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      true,
+      `${configuration.settings.host}/api/add-file?name=${configuration.name}`,
+      {
+        url: configuration.settings.proxyUrl!,
+        username: configuration.settings.proxyUsername!,
+        password: null
+      },
+      false
+    );
+    expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/add-file?name=${configuration.name}`, expectedFetchOptions);
   });
 });
 
-describe('NorthOIConnect without proxy with acceptUnauthorized', () => {
+describe('NorthOIConnect without proxy', () => {
   const configuration: NorthConnectorDTO<NorthOIBusSettings> = {
     id: 'id',
     name: 'north',
@@ -408,7 +459,7 @@ describe('NorthOIConnect without proxy with acceptUnauthorized', () => {
     enabled: true,
     settings: {
       host: 'https://hostname',
-      acceptUnauthorized: true,
+      acceptUnauthorized: false,
       useProxy: false,
       username: 'user',
       password: 'pass'
@@ -431,9 +482,23 @@ describe('NorthOIConnect without proxy with acceptUnauthorized', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    (createProxyAgent as jest.Mock).mockReturnValue(undefined);
 
     north = new NorthOibus(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
+  });
+
+  it('should manage timeout error on test connection', async () => {
+    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('Timeout error');
+    });
+
+    await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
+    expect(fetch).toHaveBeenCalledWith('https://hostname/api/info', {
+      headers: { authorization: 'Basic dXNlcjpwYXNz' },
+      method: 'GET'
+    });
+    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
 
   it('should properly handle values without password', async () => {
@@ -453,8 +518,7 @@ describe('NorthOIConnect without proxy with acceptUnauthorized', () => {
         authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(values),
-      agent: expect.any(https.Agent)
+      body: JSON.stringify(values)
     };
 
     await north.handleValues(values);
@@ -472,8 +536,7 @@ describe('NorthOIConnect without proxy with acceptUnauthorized', () => {
         authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
-      body: expect.anything(),
-      agent: expect.any(https.Agent)
+      body: expect.anything()
     };
 
     await north.handleFile(filePath);

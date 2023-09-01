@@ -8,7 +8,6 @@ import fetch, { HeadersInit } from 'node-fetch';
 import { createReadStream } from 'node:fs';
 import path from 'node:path';
 import FormData from 'form-data';
-import https from 'node:https';
 import { HandlesFile, HandlesValues } from '../north-interface';
 import { filesExists } from '../../service/utils';
 import { NorthRestAPISettings } from '../../../../shared/model/north-settings.model';
@@ -25,8 +24,6 @@ import { OIBusDataValue } from '../../../../shared/model/engine.model';
 export default class NorthRestApi extends NorthConnector<NorthRestAPISettings> implements HandlesFile, HandlesValues {
   static type = manifest.id;
 
-  private proxyAgent: any | undefined;
-
   constructor(
     configuration: NorthConnectorDTO<NorthRestAPISettings>,
     encryptionService: EncryptionService,
@@ -37,29 +34,6 @@ export default class NorthRestApi extends NorthConnector<NorthRestAPISettings> i
     super(configuration, encryptionService, repositoryService, logger, baseFolder);
     if (this.connector.settings.host.endsWith('/')) {
       this.connector.settings.host = this.connector.settings.host.slice(0, this.connector.settings.host.length - 1);
-    }
-  }
-
-  /**
-   * Initialize services (logger, certificate, status data) at startup
-   */
-  override async start(): Promise<void> {
-    await super.start();
-
-    if (this.connector.settings.useProxy) {
-      this.proxyAgent = createProxyAgent(
-        {
-          url: this.connector.settings.proxyUrl!,
-          username: this.connector.settings.proxyUsername!,
-          password:
-            this.connector.settings.proxyPassword != null
-              ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
-              : null
-        },
-        this.connector.settings.acceptUnauthorized
-      );
-    } else if (this.connector.settings.acceptUnauthorized && this.connector.settings.host.startsWith('https://')) {
-      this.proxyAgent = new https.Agent({ rejectUnauthorized: false });
     }
   }
 
@@ -92,7 +66,20 @@ export default class NorthRestApi extends NorthConnector<NorthRestAPISettings> i
         method: 'POST',
         headers,
         body: JSON.stringify(values),
-        agent: this.proxyAgent
+        agent: createProxyAgent(
+          this.connector.settings.useProxy,
+          valuesUrl,
+          this.connector.settings.useProxy
+            ? {
+                url: this.connector.settings.proxyUrl!,
+                username: this.connector.settings.proxyUsername!,
+                password: this.connector.settings.proxyPassword
+                  ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+                  : null
+              }
+            : null,
+          this.connector.settings.acceptUnauthorized
+        )
       });
     } catch (fetchError) {
       throw {
@@ -150,7 +137,20 @@ export default class NorthRestApi extends NorthConnector<NorthRestAPISettings> i
         method: 'POST',
         headers,
         body,
-        agent: this.proxyAgent
+        agent: createProxyAgent(
+          this.connector.settings.useProxy,
+          fileUrl,
+          this.connector.settings.useProxy
+            ? {
+                url: this.connector.settings.proxyUrl!,
+                username: this.connector.settings.proxyUsername!,
+                password: this.connector.settings.proxyPassword
+                  ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+                  : null
+              }
+            : null,
+          this.connector.settings.acceptUnauthorized
+        )
       });
       readStream.close();
     } catch (fetchError) {

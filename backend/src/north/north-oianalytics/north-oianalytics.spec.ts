@@ -17,7 +17,6 @@ import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock'
 import { NorthOIAnalyticsSettings } from '../../../../shared/model/north-settings.model';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 import { createProxyAgent } from '../../service/proxy.service';
-import https from 'node:https';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
 
 jest.mock('node:fs/promises');
@@ -123,6 +122,25 @@ describe('NorthOIAnalytics without proxy', () => {
     (utils.filesExists as jest.Mock).mockReturnValue(true);
     north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
+  });
+
+  it('should manage timeout error on test connection', async () => {
+    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('Timeout error');
+    });
+
+    await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
+    expect(fetch).toHaveBeenCalledWith('https://hostname/info', {
+      headers: { authorization: 'Basic YW55VXNlcjphbnlwYXNz' },
+      method: 'POST'
+    });
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      false,
+      `${configuration.settings.host}/info`,
+      null,
+      configuration.settings.acceptUnauthorized
+    );
+    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
 
   it('should properly handle values', async () => {
@@ -308,41 +326,6 @@ describe('NorthOIAnalytics without proxy', () => {
       expectedFetchOptions
     );
   });
-
-  it('should test connection', async () => {
-    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('Timeout error');
-    });
-
-    await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
-    expect(fetch).toHaveBeenCalledWith('https://hostname/info', {
-      headers: { authorization: 'Basic YW55VXNlcjphbnlwYXNz' },
-      method: 'POST'
-    });
-    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
-  });
-
-  it('should test connection', async () => {
-    (fetch as unknown as jest.Mock)
-      .mockReturnValueOnce(
-        Promise.resolve({
-          ok: true,
-          status: 200
-        })
-      )
-      .mockReturnValueOnce(
-        Promise.resolve({
-          ok: false,
-          status: 401,
-          statusText: 'Unauthorized'
-        })
-      );
-
-    await north.testConnection();
-    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${configuration.settings.host}"`);
-    expect(logger.info).toHaveBeenCalledWith('OIAnalytics request successful');
-    await expect(north.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
-  });
 });
 
 describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
@@ -373,12 +356,14 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
       retentionDuration: 720
     }
   };
+  const fakeAgent = { rejectUnauthorized: false };
 
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     (utils.filesExists as jest.Mock).mockReturnValue(true);
+    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
     north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
@@ -401,7 +386,7 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      agent: expect.any(https.Agent)
+      agent: fakeAgent
     };
 
     await north.handleValues(values);
@@ -409,6 +394,12 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     expect(fetch).toHaveBeenCalledWith(
       `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
       expectedFetchOptions
+    );
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      false,
+      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      null,
+      true
     );
   });
 
@@ -423,7 +414,7 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      agent: expect.any(https.Agent)
+      agent: fakeAgent
     };
 
     await north.handleFile(filePath);
@@ -431,6 +422,12 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     expect(fetch).toHaveBeenCalledWith(
       `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
       expectedFetchOptions
+    );
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      false,
+      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      null,
+      true
     );
   });
 });
@@ -466,23 +463,90 @@ describe('NorthOIAnalytics with proxy', () => {
       retentionDuration: 720
     }
   };
+  const fakeAgent = { rejectUnauthorized: false };
 
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     (utils.filesExists as jest.Mock).mockReturnValue(true);
-    (createProxyAgent as jest.Mock).mockReturnValue({});
+    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
 
     north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
 
-  it('should properly create proxy', () => {
+  it('should manage timeout error on test connection', async () => {
+    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('Timeout error');
+    });
+
+    await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
+    expect(fetch).toHaveBeenCalledWith('https://hostname/info', {
+      headers: { authorization: 'Basic YW55VXNlcjphbnlwYXNz' },
+      method: 'POST',
+      agent: fakeAgent
+    });
     expect(createProxyAgent).toHaveBeenCalledWith(
+      true,
+      `${configuration.settings.host}/info`,
       {
-        url: configuration.settings.proxyUrl,
-        username: configuration.settings.proxyUsername,
+        url: configuration.settings.proxyUrl!,
+        username: configuration.settings.proxyUsername!,
+        password: configuration.settings.proxyPassword
+      },
+      configuration.settings.acceptUnauthorized
+    );
+    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
+  });
+
+  it('should test connection', async () => {
+    (fetch as unknown as jest.Mock)
+      .mockReturnValueOnce(
+        Promise.resolve({
+          ok: true,
+          status: 200
+        })
+      )
+      .mockReturnValueOnce(
+        Promise.resolve({
+          ok: false,
+          status: 401,
+          statusText: 'Unauthorized'
+        })
+      );
+
+    await north.testConnection();
+    expect(logger.info).toHaveBeenCalledWith(`Testing connection on "${configuration.settings.host}"`);
+    expect(logger.info).toHaveBeenCalledWith('OIAnalytics request successful');
+    await expect(north.testConnection()).rejects.toThrow(`HTTP request failed with status code 401 and message: Unauthorized`);
+  });
+
+  it('should properly handle values', async () => {
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
+    await north.handleValues([]);
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      true,
+      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      {
+        url: configuration.settings.proxyUrl!,
+        username: configuration.settings.proxyUsername!,
+        password: configuration.settings.proxyPassword
+      },
+      configuration.settings.acceptUnauthorized
+    );
+  });
+
+  it('should properly handle files', async () => {
+    const filePath = '/path/to/file/example.file';
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
+    await north.handleFile(filePath);
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      true,
+      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      {
+        url: configuration.settings.proxyUrl!,
+        username: configuration.settings.proxyUsername!,
         password: configuration.settings.proxyPassword
       },
       configuration.settings.acceptUnauthorized
@@ -533,11 +597,50 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     await north.start();
   });
 
-  it('should properly create proxy', () => {
+  it('should manage timeout error on test connection', async () => {
+    (fetch as unknown as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('Timeout error');
+    });
+
+    await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(createProxyAgent).toHaveBeenCalledWith(
+      true,
+      `${configuration.settings.host}/info`,
       {
-        url: configuration.settings.proxyUrl,
-        username: configuration.settings.proxyUsername,
+        url: configuration.settings.proxyUrl!,
+        username: configuration.settings.proxyUsername!,
+        password: configuration.settings.proxyPassword
+      },
+      configuration.settings.acceptUnauthorized
+    );
+    expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
+  });
+
+  it('should properly handle values', async () => {
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
+    await north.handleValues([]);
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      true,
+      `${configuration.settings.host}/api/oianalytics/oibus/time-values?dataSourceId=${configuration.name}`,
+      {
+        url: configuration.settings.proxyUrl!,
+        username: configuration.settings.proxyUsername!,
+        password: null
+      },
+      configuration.settings.acceptUnauthorized
+    );
+  });
+
+  it('should properly handle files', async () => {
+    const filePath = '/path/to/file/example.file';
+    (fetch as unknown as jest.Mock).mockReturnValueOnce(Promise.resolve(new Response('Ok')));
+    await north.handleFile(filePath);
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      true,
+      `${configuration.settings.host}/api/oianalytics/file-uploads?dataSourceId=${configuration.name}`,
+      {
+        url: configuration.settings.proxyUrl!,
+        username: configuration.settings.proxyUsername!,
         password: null
       },
       configuration.settings.acceptUnauthorized

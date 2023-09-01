@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 import fetch, { HeadersInit, RequestInit } from 'node-fetch';
-import https from 'https';
 
 import manifest from './manifest';
 import SouthConnector from '../south-connector';
@@ -43,7 +42,6 @@ export interface SlimsResults {
  */
 export default class SouthSlims extends SouthConnector<SouthSlimsSettings, SouthSlimsItemSettings> implements QueriesHistory {
   static type = manifest.id;
-  private proxyAgent: any | undefined;
 
   private readonly tmpFolder: string;
 
@@ -69,22 +67,6 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
    */
   async start(): Promise<void> {
     await createFolder(this.tmpFolder);
-
-    if (this.connector.settings.useProxy) {
-      this.proxyAgent = createProxyAgent(
-        {
-          url: this.connector.settings.proxyUrl!,
-          username: this.connector.settings.proxyUsername!,
-          password: this.connector.settings.proxyPassword
-            ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
-            : null
-        },
-        this.connector.settings.acceptUnauthorized
-      );
-    } else if (this.connector.settings.acceptUnauthorized && this.connector.settings.url.startsWith('https://')) {
-      this.proxyAgent = new https.Agent({ rejectUnauthorized: false });
-    }
-
     await super.start();
   }
 
@@ -96,12 +78,26 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
       `${this.connector.settings.username}:${await this.encryptionService.decryptText(this.connector.settings.password!)}`
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
+    const requestUrl = `${this.connector.settings.url}:${this.connector.settings.port}/slimsrest/rest`;
+
     const fetchOptions: RequestInit = {
       method: 'GET',
       headers,
-      agent: this.proxyAgent
+      agent: createProxyAgent(
+        this.connector.settings.useProxy,
+        requestUrl,
+        this.connector.settings.useProxy
+          ? {
+              url: this.connector.settings.proxyUrl!,
+              username: this.connector.settings.proxyUsername!,
+              password: this.connector.settings.proxyPassword
+                ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+                : null
+            }
+          : null,
+        this.connector.settings.acceptUnauthorized
+      )
     };
-    const requestUrl = `${this.connector.settings.url}:${this.connector.settings.port}/slimsrest/rest`;
 
     try {
       const response = await fetch(requestUrl, fetchOptions);
@@ -172,7 +168,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
       const bodyToSend = item.settings.body.replace(/@StartTime/g, `${slimsStartTime}`).replace(/@EndTime/g, `${slimsEndTime}`);
       headers['content-type'] = 'application/json';
       headers['content-length'] = `${bodyToSend.length}`;
-      let host: string = this.connector.settings.url;
+      let host = this.connector.settings.url;
       let protocol = 'http:';
       if (this.connector.settings.url.startsWith('http://')) {
         host = this.connector.settings.url.substring(7);
@@ -180,9 +176,22 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
         host = this.connector.settings.url.substring(8);
         protocol = 'https:';
       }
-      const requestOptions: Record<string, string | number | object> = {
+      const requestOptions: Record<string, any> = {
         method: 'GET',
-        agent: this.proxyAgent,
+        agent: createProxyAgent(
+          this.connector.settings.useProxy,
+          this.connector.settings.url,
+          this.connector.settings.useProxy
+            ? {
+                url: this.connector.settings.proxyUrl!,
+                username: this.connector.settings.proxyUsername!,
+                password: this.connector.settings.proxyPassword
+                  ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+                  : null
+              }
+            : null,
+          this.connector.settings.acceptUnauthorized
+        ),
         host,
         protocol,
         port: this.connector.settings.port,
@@ -200,7 +209,20 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
     const fetchOptions: RequestInit = {
       method: 'GET',
       headers,
-      agent: this.proxyAgent
+      agent: createProxyAgent(
+        this.connector.settings.useProxy,
+        this.connector.settings.url,
+        this.connector.settings.useProxy
+          ? {
+              url: this.connector.settings.proxyUrl!,
+              username: this.connector.settings.proxyUsername!,
+              password: this.connector.settings.proxyPassword
+                ? await this.encryptionService.decryptText(this.connector.settings.proxyPassword)
+                : null
+            }
+          : null,
+        this.connector.settings.acceptUnauthorized
+      )
     };
     const requestUrl = `${this.connector.settings.url}:${this.connector.settings.port}${item.settings.endpoint}${formatQueryParams(
       slimsStartTime,

@@ -10,7 +10,6 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 import fetch from 'node-fetch';
-import https from 'node:https';
 import * as utils from '../../service/utils';
 
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
@@ -18,10 +17,12 @@ import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock'
 import { NorthRestAPISettings } from '../../../../shared/model/north-settings.model';
 import ArchiveServiceMock from '../../tests/__mocks__/archive-service.mock';
 import { OIBusDataValue } from '../../../../shared/model/engine.model';
+import { createProxyAgent } from '../../service/proxy.service';
 
 jest.mock('node:fs/promises');
 jest.mock('node:fs');
 jest.mock('../../service/utils');
+jest.mock('../../service/proxy.service');
 
 jest.mock('node-fetch');
 const { Response } = jest.requireActual('node-fetch');
@@ -83,41 +84,43 @@ const encryptionService: EncryptionService = new EncryptionServiceMock('', '');
 const repositoryService: RepositoryService = new RepositoryServiceMock();
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
-const configuration: NorthConnectorDTO<NorthRestAPISettings> = {
-  id: 'id',
-  name: 'north',
-  type: 'test',
-  description: 'my test connector',
-  enabled: true,
-  settings: {
-    host: 'https://hostname/',
-    acceptUnauthorized: false,
-    valuesEndpoint: '/api/values',
-    fileEndpoint: '/api/file',
-    useProxy: false,
-    authentication: {
-      type: 'basic',
-      username: 'user',
-      password: 'pass'
-    }
-  },
-  caching: {
-    scanModeId: 'id1',
-    retryInterval: 5000,
-    groupCount: 10000,
-    maxSendCount: 10000,
-    retryCount: 2,
-    sendFileImmediately: true,
-    maxSize: 30000
-  },
-  archive: {
-    enabled: true,
-    retentionDuration: 720
-  }
-};
+
 let north: NorthRestApi;
 
-describe('NorthRestApi', () => {
+describe('NorthRestApi without proxy', () => {
+  const configuration: NorthConnectorDTO<NorthRestAPISettings> = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      host: 'https://hostname/',
+      acceptUnauthorized: false,
+      valuesEndpoint: '/api/values',
+      fileEndpoint: '/api/file',
+      useProxy: false,
+      authentication: {
+        type: 'basic',
+        username: 'user',
+        password: 'pass'
+      }
+    },
+    caching: {
+      scanModeId: 'id1',
+      retryInterval: 5000,
+      groupCount: 10000,
+      maxSendCount: 10000,
+      retryCount: 2,
+      sendFileImmediately: true,
+      maxSize: 30000
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 720
+    }
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
@@ -303,13 +306,47 @@ describe('NorthRestApi', () => {
   });
 });
 
-describe('NorthOIConnect without proxy nor password and with acceptUnauthorized', () => {
+describe('NorthOIConnect with proxy but no password', () => {
+  const configuration: NorthConnectorDTO<NorthRestAPISettings> = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      host: 'https://hostname/',
+      acceptUnauthorized: true,
+      valuesEndpoint: '/api/values',
+      fileEndpoint: '/api/file',
+      useProxy: true,
+      proxyUsername: 'proxy username',
+      proxyPassword: null,
+      authentication: {
+        type: 'basic',
+        username: 'user'
+      }
+    },
+    caching: {
+      scanModeId: 'id1',
+      retryInterval: 5000,
+      groupCount: 10000,
+      maxSendCount: 10000,
+      retryCount: 2,
+      sendFileImmediately: true,
+      maxSize: 30000
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 720
+    }
+  };
+  const fakeAgent = { rejectUnauthorized: false };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+    (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
 
-    configuration.settings.authentication.password = undefined;
-    configuration.settings.acceptUnauthorized = true;
     north = new NorthRestApi(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
@@ -332,11 +369,20 @@ describe('NorthOIConnect without proxy nor password and with acceptUnauthorized'
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      agent: expect.any(https.Agent)
+      agent: fakeAgent
     };
 
     await north.handleValues(values);
-
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      true,
+      `${configuration.settings.host}${configuration.settings.valuesEndpoint}?name=${configuration.name}`,
+      {
+        url: configuration.settings.proxyUrl!,
+        username: configuration.settings.proxyUsername!,
+        password: null
+      },
+      configuration.settings.acceptUnauthorized
+    );
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/values?name=${configuration.name}`, expectedFetchOptions);
   });
 
@@ -351,22 +397,63 @@ describe('NorthOIConnect without proxy nor password and with acceptUnauthorized'
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      agent: expect.any(https.Agent)
+      agent: fakeAgent
     };
 
     await north.handleFile(filePath);
 
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      true,
+      `${configuration.settings.host}${configuration.settings.fileEndpoint}?name=${configuration.name}`,
+      {
+        url: configuration.settings.proxyUrl!,
+        username: configuration.settings.proxyUsername!,
+        password: null
+      },
+      configuration.settings.acceptUnauthorized
+    );
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/file?name=${configuration.name}`, expectedFetchOptions);
   });
 });
 
-describe('NorthOIConnect without authentication', () => {
+describe('NorthOIConnect without authentication but with proxy', () => {
+  const configuration: NorthConnectorDTO<NorthRestAPISettings> = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      host: 'https://hostname/',
+      acceptUnauthorized: true,
+      valuesEndpoint: '/api/values',
+      fileEndpoint: '/api/file',
+      useProxy: true,
+      proxyPassword: 'proxy password',
+      proxyUsername: 'proxy password',
+      authentication: {
+        type: 'none'
+      }
+    },
+    caching: {
+      scanModeId: 'id1',
+      retryInterval: 5000,
+      groupCount: 10000,
+      maxSendCount: 10000,
+      retryCount: 2,
+      sendFileImmediately: true,
+      maxSize: 30000
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 720
+    }
+  };
+  const fakeAgent = { rejectUnauthorized: false };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
-
-    configuration.settings.authentication = { type: 'none' };
-    configuration.settings.acceptUnauthorized = false;
 
     north = new NorthRestApi(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
@@ -389,11 +476,20 @@ describe('NorthOIConnect without authentication', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      agent: undefined
+      agent: fakeAgent
     };
 
     await north.handleValues(values);
-
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      true,
+      `${configuration.settings.host}${configuration.settings.valuesEndpoint}?name=${configuration.name}`,
+      {
+        url: configuration.settings.proxyUrl!,
+        username: configuration.settings.proxyUsername!,
+        password: configuration.settings.proxyPassword
+      },
+      configuration.settings.acceptUnauthorized
+    );
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/values?name=${configuration.name}`, expectedFetchOptions);
   });
 
@@ -407,11 +503,20 @@ describe('NorthOIConnect without authentication', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      agent: undefined
+      agent: fakeAgent
     };
 
     await north.handleFile(filePath);
-
+    expect(createProxyAgent).toHaveBeenCalledWith(
+      true,
+      `${configuration.settings.host}${configuration.settings.fileEndpoint}?name=${configuration.name}`,
+      {
+        url: configuration.settings.proxyUrl!,
+        username: configuration.settings.proxyUsername!,
+        password: configuration.settings.proxyPassword
+      },
+      configuration.settings.acceptUnauthorized
+    );
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.host}/api/file?name=${configuration.name}`, expectedFetchOptions);
   });
 });
