@@ -150,7 +150,9 @@ export class SouthItemsComponent implements OnInit {
       )
       .subscribe(() => {
         this.fetchItemsAndResetPage(this.inMemory);
-        this.notificationService.success(`south.items.created`);
+        if (!this.inMemory) {
+          this.notificationService.success(`south.items.created`);
+        }
       });
   }
 
@@ -171,7 +173,9 @@ export class SouthItemsComponent implements OnInit {
       )
       .subscribe(() => {
         this.fetchItemsAndResetPage(this.inMemory);
-        this.notificationService.success(`south.items.updated`);
+        if (!this.inMemory) {
+          this.notificationService.success(`south.items.updated`);
+        }
       });
   }
 
@@ -195,7 +199,9 @@ export class SouthItemsComponent implements OnInit {
       )
       .subscribe(() => {
         this.fetchItemsAndResetPage(this.inMemory);
-        this.notificationService.success('south.items.deleted');
+        if (!this.inMemory) {
+          this.notificationService.success('south.items.deleted');
+        }
       });
   }
 
@@ -235,7 +241,9 @@ export class SouthItemsComponent implements OnInit {
       )
       .subscribe(() => {
         this.fetchItemsAndResetPage(this.inMemory);
-        this.notificationService.success('south.items.all-deleted');
+        if (!this.inMemory) {
+          this.notificationService.success('south.items.all-deleted');
+        }
       });
   }
 

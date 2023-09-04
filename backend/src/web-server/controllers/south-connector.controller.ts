@@ -2,7 +2,7 @@ import { KoaContext } from '../koa';
 import csv from 'papaparse';
 import {
   SouthConnectorCommandDTO,
-  SouthConnectorCreationCommandDTO,
+  SouthConnectorWithItemsCommandDTO,
   SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
@@ -98,7 +98,7 @@ export default class SouthConnectorController {
     }
   }
 
-  async createSouthConnector(ctx: KoaContext<SouthConnectorCreationCommandDTO, void>): Promise<void> {
+  async createSouthConnector(ctx: KoaContext<SouthConnectorWithItemsCommandDTO, void>): Promise<void> {
     if (!ctx.request.body || !ctx.request.body.items || !ctx.request.body.south) {
       return ctx.badRequest();
     }
@@ -130,29 +130,33 @@ export default class SouthConnectorController {
     }
   }
 
-  async updateSouthConnector(ctx: KoaContext<SouthConnectorCommandDTO, void>): Promise<void> {
+  async updateSouthConnector(ctx: KoaContext<SouthConnectorWithItemsCommandDTO, void>): Promise<void> {
+    if (!ctx.request.body || !ctx.request.body.items || !ctx.request.body.south) {
+      return ctx.badRequest();
+    }
+
+    const command = ctx.request.body!.south;
     try {
-      const manifest = ctx.request.body
-        ? ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.request.body!.type)
-        : null;
+      const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === command.type);
+
       if (!manifest) {
         return ctx.throw(404, 'South manifest not found');
       }
 
-      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
+      await this.validator.validateSettings(manifest.settings, command!.settings);
 
       const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
       if (!southConnector) {
         return ctx.notFound();
       }
 
-      const command: SouthConnectorCommandDTO = ctx.request.body!;
       command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
         command.settings,
         southConnector.settings,
         manifest.settings
       );
 
+      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, ctx.request.body!.items, []);
       await ctx.app.reloadService.onUpdateSouth(ctx.params.id, command);
       ctx.noContent();
     } catch (error: any) {

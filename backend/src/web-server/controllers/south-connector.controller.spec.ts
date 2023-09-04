@@ -264,9 +264,7 @@ describe('South connector controller', () => {
   });
 
   it('updateSouthConnector() should update South connector', async () => {
-    ctx.request.body = {
-      ...southConnectorCommand
-    };
+    ctx.request.body = { south: { ...southConnectorCommand }, items: [] };
     ctx.params.id = 'id';
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
@@ -286,8 +284,11 @@ describe('South connector controller', () => {
 
   it('updateSouthConnector() should throw 404 when manifest not found', async () => {
     ctx.request.body = {
-      ...southConnectorCommand,
-      type: 'invalid'
+      south: {
+        ...southConnectorCommand,
+        type: 'invalid'
+      },
+      items: []
     };
     ctx.params.id = 'id';
 
@@ -300,8 +301,8 @@ describe('South connector controller', () => {
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
   });
 
-  it('updateSouthConnector() should return 404 when body is null', async () => {
-    ctx.request.body = null;
+  it('updateSouthConnector() should return 400 when south is null', async () => {
+    ctx.request.body = { south: null, items: [] };
     ctx.params.id = 'id';
 
     await southConnectorController.updateSouthConnector(ctx);
@@ -310,12 +311,13 @@ describe('South connector controller', () => {
     expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+    expect(ctx.badRequest).toHaveBeenCalled();
   });
 
   it('updateSouthConnector() should return bad request when validation fails', async () => {
     ctx.request.body = {
-      ...southConnectorCommand
+      south: { ...southConnectorCommand },
+      items: []
     };
     ctx.params.id = 'id';
     const validationError = new Error('invalid body');
@@ -334,7 +336,8 @@ describe('South connector controller', () => {
 
   it('updateSouthConnector() should return not found when South connector not found', async () => {
     ctx.request.body = {
-      ...southConnectorCommand
+      south: { ...southConnectorCommand },
+      items: []
     };
     ctx.params.id = 'id';
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
