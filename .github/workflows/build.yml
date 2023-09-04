@@ -18,6 +18,8 @@ jobs:
     timeout-minutes: 20
 
     steps:
+      - run: sleep 3
+
       - name: Checkout
         uses: actions/checkout@v3
         with:
@@ -70,7 +72,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         run:
-          gh release upload ${{ inputs.tag_name }} ./build/bin/win-setup-release/oibus-setup-win32x64.exe
+          gh release upload ${{ github.ref }} ./build/bin/win-setup-release/oibus-setup-win32x64.exe
 
   slack:
     name: 'Slack notification'
