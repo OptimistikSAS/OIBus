@@ -48,7 +48,7 @@ export interface SouthConnectorCommandDTO<T = any> {
 /**
  * Command DTO for South connector
  */
-export interface SouthConnectorCreationCommandDTO<> {
+export interface SouthConnectorWithItemsCommandDTO<> {
   south: SouthConnectorDTO;
   items: Array<SouthConnectorItemDTO>;
 }
