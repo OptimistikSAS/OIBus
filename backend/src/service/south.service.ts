@@ -5,7 +5,7 @@ import RepositoryService from './repository.service';
 // South imports
 import SouthFolderScanner from '../south/south-folder-scanner/south-folder-scanner';
 import SouthOPCUA from '../south/south-opcua/south-opcua';
-import SouthOPCHDA from '../south/south-opchda/south-opchda';
+// import SouthOPCHDA from '../south/south-opchda/south-opchda';
 import SouthMQTT from '../south/south-mqtt/south-mqtt';
 import SouthMSSQL from '../south/south-mssql/south-mssql';
 import SouthMySQL from '../south/south-mysql/south-mysql';
@@ -23,7 +23,7 @@ import SouthSlims from '../south/south-slims/south-slims';
 import oianalyticsManifest from '../south/south-oianalytics/manifest';
 import slimsManifest from '../south/south-slims/manifest';
 import opcuaManifest from '../south/south-opcua/manifest';
-import opchdaManifest from '../south/south-opchda/manifest';
+// import opchdaManifest from '../south/south-opchda/manifest';
 import mqttManifest from '../south/south-mqtt/manifest';
 import modbusManifest from '../south/south-modbus/manifest';
 import folderScannerManifest from '../south/south-folder-scanner/manifest';
@@ -39,7 +39,7 @@ const southList: Array<{ class: typeof SouthConnector<any, any>; manifest: South
   { class: SouthFolderScanner, manifest: folderScannerManifest },
   { class: SouthMQTT, manifest: mqttManifest },
   { class: SouthOPCUA, manifest: opcuaManifest },
-  { class: SouthOPCHDA, manifest: opchdaManifest },
+  // { class: SouthOPCHDA, manifest: opchdaManifest },
   { class: SouthMSSQL, manifest: mssqlManifest },
   { class: SouthMySQL, manifest: mysqlManifest },
   { class: SouthODBC, manifest: odbcManifest },
