@@ -60,7 +60,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         run:
-          gh release upload ${{ github.ref_name }} ./build/bin/${{ matrix.config['archiveName'] }}
+          gh release upload ${{ github.ref }} ./build/bin/${{ matrix.config['archiveName'] }}
 
       - name: Package Windows installer
         env:
@@ -85,7 +85,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         run:
-          gh release upload ${{ inputs.tag_name }} ./build/bin/win-setup-release/oibus-setup-win_x64.exe
+          gh release upload ${{ github.ref }} ./build/bin/win-setup-release/oibus-setup-win_x64.exe
 
   build-binaries-arm64:
     name: Build for ${{ matrix.config['friendlyName'] }}
@@ -126,7 +126,7 @@ jobs:
         run: |
           npm run build
           npm run internal:build:lib-${{ matrix.config['platform'] }}
-      
+
 
       - name: Run arm64 pkg command
         uses: uraimo/run-on-arch-action@v2
@@ -161,7 +161,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         run:
-          gh release upload ${{ github.ref_name }} ./build/bin/${{ matrix.config['archiveName'] }}
+          gh release upload ${{ github.ref }} ./build/bin/${{ matrix.config['archiveName'] }}
 
   slack:
     name: 'Slack notification'
