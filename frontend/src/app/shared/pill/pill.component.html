@@ -8,12 +8,8 @@
 >
   <div class="d-flex align-items-center">
     <ng-content></ng-content>
-    <button
-      *ngIf="removable"
-      tabindex="-1"
-      type="button"
-      class="btn btn-link fa fa-remove py-0 my-0 px-1 text-white"
-      (click)="remove()"
-    ></button>
+    <button *ngIf="removable" tabindex="-1" type="button" class="btn btn-link py-0 my-0 px-1 text-white" (click)="remove()">
+      <span class="fa fa-remove"></span>
+    </button>
   </div>
 </span>

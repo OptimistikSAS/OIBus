@@ -26,9 +26,13 @@
         <td class="text-nowrap action-buttons">
           <div class="pull-right">
             <!-- Edit button -->
-            <button type="button" class="btn btn-link edit-ip-filter fa fa-pencil px-1 py-0" (click)="editIpFilter(ipFilter)"></button>
+            <button type="button" class="btn btn-link edit-ip-filter px-1 py-0" (click)="editIpFilter(ipFilter)">
+              <span class="fa fa-pencil"></span>
+            </button>
             <!-- Delete button -->
-            <button type="button" class="btn btn-link delete-ip-filter fa fa-trash px-1 py-0" (click)="deleteIpFilter(ipFilter)"></button>
+            <button type="button" class="btn btn-link delete-ip-filter px-1 py-0" (click)="deleteIpFilter(ipFilter)">
+              <span class="fa fa-trash"></span>
+            </button>
           </div>
         </td>
       </tr>

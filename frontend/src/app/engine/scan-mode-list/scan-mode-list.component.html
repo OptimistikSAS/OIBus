@@ -28,9 +28,13 @@
         <td class="text-nowrap action-buttons">
           <div class="pull-right">
             <!-- Edit button -->
-            <button type="button" class="btn btn-link edit-scan-mode fa fa-pencil px-1 py-0" (click)="editScanMode(scanMode)"></button>
+            <button type="button" class="btn btn-link edit-scan-mode px-1 py-0" (click)="editScanMode(scanMode)">
+              <span class="fa fa-pencil"></span>
+            </button>
             <!-- Delete button -->
-            <button type="button" class="btn btn-link delete-scan-mode fa fa-trash px-1 py-0" (click)="deleteScanMode(scanMode)"></button>
+            <button type="button" class="btn btn-link delete-scan-mode px-1 py-0" (click)="deleteScanMode(scanMode)">
+              <span class="fa fa-trash"></span>
+            </button>
           </div>
         </td>
       </tr>

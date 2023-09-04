@@ -26,17 +26,13 @@
         <td class="text-nowrap action-buttons">
           <div class="pull-right">
             <!-- Edit button -->
-            <button
-              type="button"
-              class="btn btn-link edit-external-source fa fa-pencil px-1 py-0"
-              (click)="editExternalSource(externalSource)"
-            ></button>
+            <button type="button" class="btn btn-link edit-external-source px-1 py-0" (click)="editExternalSource(externalSource)">
+              <span class="fa fa-pencil"></span>
+            </button>
             <!-- Delete button -->
-            <button
-              type="button"
-              class="btn btn-link delete-external-source fa fa-trash px-1 py-0"
-              (click)="deleteExternalSource(externalSource)"
-            ></button>
+            <button type="button" class="btn btn-link delete-external-source px-1 py-0" (click)="deleteExternalSource(externalSource)">
+              <span class="fa fa-trash"></span>
+            </button>
           </div>
         </td>
       </tr>
