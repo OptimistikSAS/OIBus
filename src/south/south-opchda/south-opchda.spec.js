@@ -75,6 +75,7 @@ describe('South OPCHDA', () => {
         readIntervalDelay: 200,
         maxReturnValues: 0,
         readTimeout: 60,
+        overlap: 60000,
         agentFilename: './HdaAgent/HdaAgent.exe',
         logLevel: 'trace',
         host: '1.2.3.4',
@@ -131,8 +132,8 @@ describe('South OPCHDA', () => {
     const startTime = new Date('2020-01-01T00:00:00.000Z')
     const endTime = new Date('2021-01-01T00:00:00.000Z')
 
-    await south.historyQuery('myScanMode', startTime, endTime)
-    expect(south.sendReadMessage).toHaveBeenCalledWith('myScanMode', startTime, endTime)
+    await south.historyQuery('myScanMode', startTime, endTime) // overlap -1min
+    expect(south.sendReadMessage).toHaveBeenCalledWith('myScanMode', new Date('2019-12-31T23:59:00.000Z'), endTime)
 
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1)
   })
@@ -157,7 +158,7 @@ describe('South OPCHDA', () => {
     await expect(
       Promise.resolve().then(() => jest.advanceTimersByTime(configuration.settings.readTimeout * 1000)),
     ).rejects.toThrowError('History query has not succeeded in the requested readTimeout: 60s.')
-    expect(south.sendReadMessage).toHaveBeenCalledWith('myScanMode', startTime, endTime)
+    expect(south.sendReadMessage).toHaveBeenCalledWith('myScanMode', new Date('2019-12-31T23:59:00.000Z'), endTime)
 
     expect(clearTimeoutSpy).not.toHaveBeenCalled()
   })

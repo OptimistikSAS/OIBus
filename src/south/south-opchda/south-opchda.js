@@ -53,6 +53,7 @@ export default class SouthOPCHDA extends SouthConnector {
       readIntervalDelay,
       maxReturnValues,
       readTimeout,
+      overlap = 0,
     } = configuration.settings
 
     this.agentFilename = agentFilename
@@ -65,6 +66,7 @@ export default class SouthOPCHDA extends SouthConnector {
     this.readIntervalDelay = readIntervalDelay
     this.maxReturnValues = maxReturnValues
     this.readTimeout = readTimeout
+    this.overlap = overlap
 
     // Initialized at connection
     this.tcpServer = null
@@ -125,7 +127,8 @@ export default class SouthOPCHDA extends SouthConnector {
    */
   async historyQuery(scanMode, startTime, endTime) {
     this.historyRead$ = new DeferredPromise()
-    await this.sendReadMessage(scanMode, startTime, endTime)
+    const overlappedStartTime = new Date(startTime.valueOf() - this.overlap)
+    await this.sendReadMessage(scanMode, overlappedStartTime, endTime)
 
     this.historyReadTimeout = setTimeout(() => {
       this.historyRead$.reject(new Error(`History query has not succeeded in the requested readTimeout: ${this.readTimeout}s.`))

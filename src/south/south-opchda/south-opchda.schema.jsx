@@ -579,6 +579,14 @@ schema.form = {
     defaultValue: 180,
     help: <div>Read timeout (s)</div>,
   },
+  overlap: {
+    type: 'OibInteger',
+    newRow: false,
+    label: 'Overlap (ms)',
+    md: 2,
+    valid: minValue(0),
+    defaultValue: 0,
+  },
   scanGroupsSection: {
     type: 'OibTitle',
     label: 'ScanGroups',
