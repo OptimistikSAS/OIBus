@@ -1,4 +1,4 @@
-@import 'src/common.scss';
+@import '../../common.scss';
 
 .level-badge {
   display: inline-block;
@@ -36,6 +36,8 @@
 // changes of the default display
 .oib-table-logs {
   // table header
+  --bs-table-bg: $white;
+  --bs-table-color: $white;
   thead {
     color: white;
     background-color: $darkGrey;
