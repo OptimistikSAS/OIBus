@@ -73,7 +73,7 @@
     "luxon": "3.4.2",
     "minimist": "1.2.8",
     "mongodb": "6.0.0",
-    "mqtt": "5.0.3",
+    "mqtt": "5.0.4",
     "mssql": "9.2.0",
     "mysql2": "3.6.0",
     "node-fetch": "2.7.0",
