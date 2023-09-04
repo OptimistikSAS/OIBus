@@ -21,15 +21,6 @@ const manifest: SouthConnectorManifest = {
       validators: [{ key: 'required' }]
     },
     {
-      key: 'connectionTimeout',
-      type: 'OibNumber',
-      label: 'Connection timeout',
-      defaultValue: 1000,
-      unitLabel: 'ms',
-      class: 'col-3',
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 100 } }, { key: 'max', params: { max: 30_000 } }]
-    },
-    {
       key: 'retryInterval',
       type: 'OibNumber',
       label: 'Connection timeout',

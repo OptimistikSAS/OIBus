@@ -242,7 +242,6 @@ export interface SouthOIAnalyticsSettings extends BaseSouthSettings {
 
 export interface SouthOPCHDASettings extends BaseSouthSettings {
   agentUrl: string;
-  connectionTimeout: number;
   retryInterval: number;
   serverUrl: string;
   readTimeout: number;

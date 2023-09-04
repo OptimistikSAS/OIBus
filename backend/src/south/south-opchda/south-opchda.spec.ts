@@ -104,7 +104,6 @@ const configuration: SouthConnectorDTO<SouthOPCHDASettings> = {
   },
   settings: {
     agentUrl: 'http://localhost:2224',
-    connectionTimeout: 1000,
     retryInterval: 1000,
     maxReturnValues: 0,
     readTimeout: 60,
@@ -130,14 +129,12 @@ describe('South OPCHDA', () => {
       }),
       headers: {
         'Content-Type': 'application/json'
-      },
-      timeout: configuration.settings.connectionTimeout
+      }
     });
 
     await south.disconnect();
     expect(fetch).toHaveBeenCalledWith(`${configuration.settings.agentUrl}/api/opc/${configuration.id}/disconnect`, {
-      method: 'DELETE',
-      timeout: configuration.settings.connectionTimeout
+      method: 'DELETE'
     });
   });
 
@@ -154,8 +151,7 @@ describe('South OPCHDA', () => {
       }),
       headers: {
         'Content-Type': 'application/json'
-      },
-      timeout: configuration.settings.connectionTimeout
+      }
     });
 
     expect(fetch).toHaveBeenCalledTimes(1);

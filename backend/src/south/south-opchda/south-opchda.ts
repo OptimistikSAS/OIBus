@@ -44,8 +44,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
         body: JSON.stringify({
           url: this.connector.settings.serverUrl
         }),
-        headers,
-        timeout: this.connector.settings.connectionTimeout
+        headers
       };
 
       await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}/connect`, fetchOptions);
@@ -144,7 +143,7 @@ export default class SouthOPCHDA extends SouthConnector implements QueriesHistor
     this.connected = false;
 
     try {
-      const fetchOptions = { method: 'DELETE', timeout: this.connector.settings.connectionTimeout };
+      const fetchOptions = { method: 'DELETE' };
       await fetch(`${this.connector.settings.agentUrl}/api/opc/${this.connector.id}/disconnect`, fetchOptions);
     } catch (error) {
       this.logger.error(`Error while sending disconnection HTTP request into agent. ${error}`);
