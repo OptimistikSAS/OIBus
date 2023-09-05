@@ -9,26 +9,37 @@ import DownloadButton from '@site/src/components/DownloadButton';
 # Migrate to v3
 Migrate from OIBus v1 and v2 into the new OIBus v3 version with our migration tool and a few manuel steps.
 
-:::caution
-WORK IN PROGRESS
-:::
-
 ## Download link
 <Tabs>
   <TabItem value="windows" label="Windows" default>
-    <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-win_x64.zip'>
-      Migration tool (x64)
-    </DownloadButton>
+    <div style={{ display: "flex", justifyContent: "space-around" }}>
+      <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-win_x64.zip'>
+        <div>
+          <div>{`OIBus migration tool`}</div>
+          <div>Windows (x64)</div>
+        </div>
+      </DownloadButton>
+    </div>
   </TabItem>
   <TabItem value="linux" label="Linux">
-    <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-linux_x64.zip'>
-      Migration tool (x64)
-    </DownloadButton>
+    <div style={{ display: "flex", justifyContent: "space-around" }}>
+      <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-linux_x64.zip'>
+        <div>
+          <div>{`OIBus migration tool`}</div>
+          <div>Linux (x64)</div>
+        </div>
+      </DownloadButton>
+    </div>
   </TabItem>
   <TabItem value="macos" label="MacOS">
-    <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-macos_x64.zip'>
-      Migration tool (x64)
-    </DownloadButton>
+    <div style={{ display: "flex", justifyContent: "space-around" }}>
+      <DownloadButton link='https://github.com/OptimistikSAS/OIBus-upgrade-v3/releases/latest/download/oibus-upgrade-tool-macos_x64.zip'>
+        <div>
+          <div>{`OIBus migration tool`}</div>
+          <div>macOS (Intel chip)</div>
+        </div>
+      </DownloadButton>
+    </div>
   </TabItem>
 </Tabs>
 
@@ -40,24 +51,49 @@ from one of the links below, and then update OIBus from v3.0.0 to a later versio
 
 <Tabs>
   <TabItem value="windows" label="Windows" default>
-    <div style={{display: "flex", justifyContent:"space-around"}}>
-      <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/download/v3.1.0-story-angular.0/oibus-setup-win_x64.exe'>
-        OIBus 3.0 Windows installer (x64)
+    <div style={{ display: "flex", justifyContent: "space-around" }}>
+      <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/download/v3.0.0/oibus-setup-win_x64-v3.0.0.exe'>
+        <div>
+          <div>{`OIBus v3.0.0 (installer)`}</div>
+          <div>Windows (x64)</div>
+        </div>
       </DownloadButton>
-      <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/download/v3.1.0-story-angular.0/oibus-win_x64.zip'>
-        OIBus 3.0 bat scripts (x64)
+      <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/download/v3.0.0/oibus-win_x64-v3.0.0.zip'>
+        <div>
+          <div>{`OIBus v3.0.0 (zip)`}</div>
+          <div>Windows (x64)</div>
+        </div>
       </DownloadButton>
+    </div>
+    <div style={{ display: "flex", justifyContent: "space-around" }}>
+      <a href='./windows'>Installation</a>
     </div>
   </TabItem>
   <TabItem value="linux" label="Linux">
-    <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/download/v3.1.0-story-angular.0/oibus-linux_x64.zip'>
-      OIBus 3.0 (x64)
-    </DownloadButton>
+    <div style={{ display: "flex", justifyContent: "space-around" }}>
+      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.0.0/oibus-linux_x64-v3.0.0.zip`}>
+        <div>
+          <div>{`OIBus v3.0.0`}</div>
+          <div>Linux (x64)</div>
+        </div>
+      </DownloadButton>
+    </div>
+    <div style={{ display: "flex", justifyContent: "space-around" }}>
+      <a href='./linux'>Installation</a>
+    </div>
   </TabItem>
   <TabItem value="macos" label="MacOS">
-    <DownloadButton link='https://github.com/OptimistikSAS/OIBus/releases/download/v3.1.0-story-angular.0/oibus-macos_x64.zip'>
-      OIBus 3.0 (x64)
-    </DownloadButton>
+    <div style={{ display: "flex", justifyContent: "space-around" }}>
+      <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v3.0.0/oibus-macos_x64-v3.0.0.zip`}>
+        <div>
+          <div>{`OIBus v3.0.0`}</div>
+          <div>MacOS (Intel chip)</div>
+        </div>
+      </DownloadButton>
+    </div>
+    <div style={{ display: "flex", justifyContent: "space-around" }}>
+      <a href='./macos'>Installation</a>
+    </div>
   </TabItem>
 </Tabs>
 
