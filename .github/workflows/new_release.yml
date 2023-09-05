@@ -29,8 +29,15 @@ jobs:
           config-file: .github/release-please-config.json
           manifest-file: .github/release-please-manifest.json
 
+      - name: Checkout
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+
       - name: Build documentation
         if: ${{ steps.release.outputs.release_created }}
+        shell: bash
         run: |
           cd documentation
           npm ci
