@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.10.0](https://github.com/OptimistikSAS/OIBus/compare/v2.9.1...v2.10.0) (2023-09-05)
+
+
+### Features
+
+* **opchda:** Add overlap settings in ms ([6a2801a](https://github.com/OptimistikSAS/OIBus/commit/6a2801a202cb13d1f1fcba6b6fdbf7ed1278be7b))
+
 ### [2.9.1](https://github.com/OptimistikSAS/OIBus/compare/v2.9.0...v2.9.1) (2023-07-27)
 
 
