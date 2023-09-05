@@ -12,9 +12,9 @@ jobs:
     strategy:
       matrix:
         config:
-          - { friendlyName: 'MacOS x64', os: 'macos-latest',   platform: 'macos', archiveName: 'oibus-macos_x64.zip', zip: 'zip -r' }
-          - { friendlyName: 'Windows x64', os: 'windows-latest', platform: 'win',   archiveName: 'oibus-win_x64.zip', zip: '7z a -tzip' }
-          - { friendlyName: 'Linux x64', os: 'ubuntu-latest',  platform: 'linux', archiveName: 'oibus-linux_x64.zip', zip: 'zip -r' }
+          - { friendlyName: 'MacOS x64', os: 'macos-latest',   platform: 'macos', archiveName: 'oibus-macos_x64', zip: 'zip -r' }
+          - { friendlyName: 'Windows x64', os: 'windows-latest', platform: 'win',   archiveName: 'oibus-win_x64', zip: '7z a -tzip' }
+          - { friendlyName: 'Linux x64', os: 'ubuntu-latest',  platform: 'linux', archiveName: 'oibus-linux_x64', zip: 'zip -r' }
     timeout-minutes: 20
 
     steps:
@@ -54,13 +54,13 @@ jobs:
       - name: Package OIBus for ${{ matrix.config['friendlyName'] }}
         run: |
           cd build/bin/${{ matrix.config['platform'] }}
-          ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }} .
+          ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.zip .
 
-      - name: Upload Artifact ${{ matrix.config['archiveName'] }}
+      - name: Upload Artifact ${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         run:
-          gh release upload ${{ github.ref_name }} ./build/bin/${{ matrix.config['archiveName'] }}
+          gh release upload ${{ github.ref_name }} ./build/bin/${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.zip
 
       - name: Package Windows installer
         env:
@@ -85,7 +85,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         run:
-          gh release upload ${{ github.ref_name }} ./build/bin/win-setup-release/oibus-setup-win_x64.exe
+          gh release upload ${{ github.ref_name }} ./build/bin/win-setup-release/oibus-setup-win_x64-${{ github.ref_name }}.exe
 
   build-binaries-arm64:
     name: Build for ${{ matrix.config['friendlyName'] }}
@@ -93,7 +93,7 @@ jobs:
     strategy:
       matrix:
         config:
-          - { friendlyName: 'Linux ARM64', os: 'ubuntu-latest',  platform: 'linux-arm64', archiveName: 'oibus-linux_arm64.zip', zip: 'zip -r' }
+          - { friendlyName: 'Linux ARM64', os: 'ubuntu-latest',  platform: 'linux-arm64', archiveName: 'oibus-linux_arm64', zip: 'zip -r' }
     timeout-minutes: 440
 
     steps:
@@ -155,13 +155,13 @@ jobs:
           stat build/bin/${{ matrix.config['platform'] }}/oibus
           sudo cp build/deps/${{ matrix.config['platform'] }}/* ./build/bin/${{ matrix.config['platform'] }}/
           cd build/bin/${{ matrix.config['platform'] }}
-          sudo ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }} .
+          sudo ${{ matrix.config['zip'] }} ../${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.zip .
 
-      - name: Upload Artifact ${{ matrix.config['archiveName'] }}
+      - name: Upload Artifact ${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.zip
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_ACCESS_TOKEN }}
         run:
-          gh release upload ${{ github.ref_name }} ./build/bin/${{ matrix.config['archiveName'] }}
+          gh release upload ${{ github.ref_name }} ./build/bin/${{ matrix.config['archiveName'] }}-${{ github.ref_name }}.zip
 
   slack:
     name: 'Slack notification'
