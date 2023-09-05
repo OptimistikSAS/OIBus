@@ -13,7 +13,7 @@ jobs:
       matrix:
         config:
           - { friendlyName: 'MacOS x64', os: 'macos-latest',   platform: 'macos', archiveName: 'oibus-macos_x64', zip: 'zip -r' }
-          - { friendlyName: 'Windows x64', os: 'windows-latest', platform: 'win',   archiveName: 'oibus-win_x64', zip: '7z a -tzip' }
+          - { friendlyName: 'Windows x64', os: 'windows-latest', platform: 'win', archiveName: 'oibus-win_x64', zip: '7z a -tzip' }
           - { friendlyName: 'Linux x64', os: 'ubuntu-latest',  platform: 'linux', archiveName: 'oibus-linux_x64', zip: 'zip -r' }
     timeout-minutes: 20
 
@@ -78,7 +78,7 @@ jobs:
 
       - name: Rename windows installer
         if: ${{ matrix.config['platform'] == 'win' }}
-        run: mv ./build/bin/win-setup-release/oibus-setup.exe ./build/bin/win-setup-release/oibus-setup-win_x64.exe
+        run: mv ./build/bin/win-setup-release/oibus-setup.exe ./build/bin/win-setup-release/oibus-setup-win_x64-${{ github.ref_name }}.exe
 
       - name: Upload Windows installer Artifact ${{ matrix.config['archiveName'] }}
         if: ${{ matrix.config['platform'] == 'win' }}
