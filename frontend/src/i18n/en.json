@@ -574,7 +574,7 @@
     "none": "No History query",
     "name": "Name",
     "description": "Description",
-    "enabled": "Enabled",
+    "status": "Status",
     "started": "History query {{ name }} started",
     "stopped": "History query {{ name }} stopped",
     "start": "Start",

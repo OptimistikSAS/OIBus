@@ -16,6 +16,8 @@
       </div>
 
       <oib-history-metrics
+        *ngIf="historyMetrics"
+        [historyMetrics]="historyMetrics"
         [historyQuery]="historyQuery"
         [northManifest]="northManifest"
         [southManifest]="southManifest"
