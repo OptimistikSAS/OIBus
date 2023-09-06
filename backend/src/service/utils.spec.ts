@@ -6,7 +6,24 @@ import zlib from 'node:zlib';
 import minimist from 'minimist';
 
 import { DateTime } from 'luxon';
-import * as utils from './utils';
+import {
+  compress,
+  convertDateTimeToInstant,
+  convertDelimiter,
+  createFolder,
+  delay,
+  dirSize,
+  filesExists,
+  formatInstant,
+  formatQueryParams,
+  generateIntervals,
+  generateRandomId,
+  generateReplacementParameters,
+  getCommandLineArguments,
+  httpGetWithBody,
+  logQuery,
+  persistResults
+} from './utils';
 import csv from 'papaparse';
 import pino from 'pino';
 import PinoLogger from '../tests/__mocks__/logger.mock';
@@ -33,13 +50,13 @@ describe('Service utils', () => {
 
     it('should parse command line arguments without args', () => {
       (minimist as unknown as jest.Mock).mockReturnValue({});
-      const result = utils.getCommandLineArguments();
+      const result = getCommandLineArguments();
       expect(result).toEqual({ check: false, configFile: path.resolve('./') });
     });
 
     it('should parse command line arguments with args', () => {
       (minimist as unknown as jest.Mock).mockReturnValue({ check: true, config: 'myConfig.json' });
-      const result = utils.getCommandLineArguments();
+      const result = getCommandLineArguments();
       expect(result).toEqual({ check: true, configFile: path.resolve('myConfig.json') });
     });
   });
@@ -55,7 +72,7 @@ describe('Service utils', () => {
         return callback();
       });
 
-      await utils.delay(1000);
+      await delay(1000);
       jest.advanceTimersToNextTimer();
       expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 1000);
     });
@@ -66,7 +83,7 @@ describe('Service utils', () => {
       const startTime = '2020-01-01T00:00:00.000Z';
       const endTime = '2020-01-01T01:00:00.000Z';
       const expectedIntervals = [{ start: startTime, end: endTime }];
-      const results = utils.generateIntervals(startTime, endTime, 3600);
+      const results = generateIntervals(startTime, endTime, 3600);
       expect(results).toEqual(expectedIntervals);
     });
 
@@ -79,7 +96,7 @@ describe('Service utils', () => {
         { start: startTime1, end: endTime1 },
         { start: startTime2, end: endTime2 }
       ];
-      const results = utils.generateIntervals(startTime1, endTime2, 3600);
+      const results = generateIntervals(startTime1, endTime2, 3600);
       expect(results).toEqual(expectedIntervals);
     });
   });
@@ -94,10 +111,10 @@ describe('Service utils', () => {
         throw new Error('File does not exist');
       });
 
-      expect(await utils.filesExists('myConfigFile.json')).toEqual(false);
+      expect(await filesExists('myConfigFile.json')).toEqual(false);
 
       (fs.stat as jest.Mock).mockImplementation(() => null);
-      expect(await utils.filesExists('myConfigFile.json')).toEqual(true);
+      expect(await filesExists('myConfigFile.json')).toEqual(true);
     });
   });
 
@@ -111,14 +128,14 @@ describe('Service utils', () => {
       (fs.mkdir as jest.Mock).mockImplementation(() => null);
       (fs.stat as jest.Mock).mockImplementation(() => null);
 
-      await utils.createFolder(folderToCreate);
+      await createFolder(folderToCreate);
       expect(fs.mkdir).not.toHaveBeenCalled();
 
       (fs.stat as jest.Mock).mockImplementation(() => {
         throw new Error('File does not exist');
       });
 
-      await utils.createFolder(folderToCreate);
+      await createFolder(folderToCreate);
 
       expect(fs.mkdir).toHaveBeenCalledTimes(1);
       expect(fs.mkdir).toHaveBeenCalledWith(path.resolve(folderToCreate), { recursive: true });
@@ -151,7 +168,7 @@ describe('Service utils', () => {
       (fsSync.createReadStream as jest.Mock).mockReturnValueOnce(myWriteStream);
 
       (zlib.createGzip as jest.Mock).mockReturnValue({});
-      await utils.compress('myInputFile', 'myOutputFile');
+      await compress('myInputFile', 'myOutputFile');
 
       expect(fsSync.createReadStream).toBeCalledTimes(1);
       expect(fsSync.createReadStream).toHaveBeenCalledWith('myInputFile');
@@ -182,7 +199,7 @@ describe('Service utils', () => {
       (zlib.createGzip as jest.Mock).mockReturnValue({});
       let expectedError = null;
       try {
-        await utils.compress('myInputFile', 'myOutputFile');
+        await compress('myInputFile', 'myOutputFile');
       } catch (error) {
         expectedError = error;
       }
@@ -197,17 +214,17 @@ describe('Service utils', () => {
 
   describe('generateRandomId', () => {
     it('should properly generate a random ID with a standard size', () => {
-      const randomId = utils.generateRandomId();
+      const randomId = generateRandomId();
       expect(randomId.length).toEqual(16);
     });
 
     it('should properly generate a random ID with smaller size', () => {
-      const randomId = utils.generateRandomId(8);
+      const randomId = generateRandomId(8);
       expect(randomId.length).toEqual(8);
     });
 
     it('should properly generate a random ID with bigger size', () => {
-      const randomId = utils.generateRandomId(32);
+      const randomId = generateRandomId(32);
       expect(randomId.length).toEqual(32);
     });
   });
@@ -237,7 +254,7 @@ describe('Service utils', () => {
         })
         .mockReturnValueOnce({ size: 8 } as Stats);
 
-      const dirSize = await utils.dirSize('myDir');
+      const result = await dirSize('myDir');
       expect(fs.readdir).toHaveBeenCalledWith('myDir', { withFileTypes: true });
       expect(fs.readdir).toHaveBeenCalledWith(path.join('myDir', 'dir'), { withFileTypes: true });
       expect(fs.stat).toHaveBeenCalledWith(path.join('myDir', 'file1'));
@@ -245,7 +262,7 @@ describe('Service utils', () => {
       expect(fs.stat).toHaveBeenCalledWith(path.join('myDir', 'dir', 'file3'));
       expect(fs.stat).toHaveBeenCalledWith(path.join('myDir', 'dir', 'file5'));
       expect(fs.stat).toHaveBeenCalledTimes(4);
-      expect(dirSize).toEqual(11);
+      expect(result).toEqual(11);
     });
   });
 
@@ -256,7 +273,7 @@ describe('Service utils', () => {
       const query = 'SELECT * FROM table WHERE timestamp > @StartTime && timestamp < @EndTime && @StartTime > timestamp';
 
       const expectedResult = [startTime, endTime, startTime];
-      const result = utils.generateReplacementParameters(query, startTime, endTime);
+      const result = generateReplacementParameters(query, startTime, endTime);
       expect(result).toEqual(expectedResult);
     });
   });
@@ -270,7 +287,7 @@ describe('Service utils', () => {
 
     it('should properly log a query with string variables', () => {
       const query = 'SELECT * FROM logs WHERE timestamp > @StartTime AND timestamp < @EndTime';
-      utils.logQuery(query, '2020-01-01T00:00:00.000Z', '2023-01-01T00:00:00.000Z', logger);
+      logQuery(query, '2020-01-01T00:00:00.000Z', '2023-01-01T00:00:00.000Z', logger);
 
       expect(logger.info).toHaveBeenCalledWith(
         `Sending "${query}" with @StartTime = 2020-01-01T00:00:00.000Z @EndTime = 2023-01-01T00:00:00.000Z`
@@ -279,7 +296,7 @@ describe('Service utils', () => {
 
     it('should properly log a query with number variables', () => {
       const query = 'SELECT * FROM logs WHERE timestamp > @StartTime AND timestamp < @EndTime';
-      utils.logQuery(
+      logQuery(
         query,
         DateTime.fromISO('2020-01-01T00:00:00.000Z').toMillis(),
         DateTime.fromISO('2023-01-01T00:00:00.000Z').toMillis(),
@@ -291,7 +308,7 @@ describe('Service utils', () => {
 
     it('should properly log a query without variable', () => {
       const query = 'SELECT * FROM logs';
-      utils.logQuery(query, '2020-01-01T00:00:00.000Z', '2023-01-01T00:00:00.000Z', logger);
+      logQuery(query, '2020-01-01T00:00:00.000Z', '2023-01-01T00:00:00.000Z', logger);
 
       expect(logger.info).toHaveBeenCalledWith(`Sending "${query}"`);
     });
@@ -309,7 +326,7 @@ describe('Service utils', () => {
         (csv.unparse as jest.Mock).mockReturnValue('csv content');
       });
       it('should properly write results without compression', async () => {
-        await utils.persistResults(
+        await persistResults(
           dataToWrite,
           {
             type: 'csv',
@@ -335,7 +352,7 @@ describe('Service utils', () => {
         (fs.unlink as jest.Mock).mockImplementation(() => {
           throw new Error('unlink error');
         });
-        await utils.persistResults(
+        await persistResults(
           dataToWrite,
           {
             type: 'csv',
@@ -386,7 +403,7 @@ describe('Service utils', () => {
       });
 
       it('should properly persists results into file', async () => {
-        await utils.persistResults(
+        await persistResults(
           dataToWrite,
           {
             type: 'csv',
@@ -410,7 +427,7 @@ describe('Service utils', () => {
       });
 
       it('should properly persists results into values', async () => {
-        await utils.persistResults(
+        await persistResults(
           dataToWrite,
           {
             type: 'json',
@@ -433,7 +450,7 @@ describe('Service utils', () => {
         (fs.unlink as jest.Mock).mockImplementation(() => {
           throw new Error('unlink error');
         });
-        await utils.persistResults(
+        await persistResults(
           dataToWrite,
           {
             type: 'csv',
@@ -471,7 +488,7 @@ describe('Service utils', () => {
         type: 'unix-epoch-ms' as DateTimeType
       };
       const expectedResult = DateTime.fromISO(testInstant).toMillis();
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      const result = formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(expectedResult);
       expect(
         DateTime.fromMillis(result as number)
@@ -485,7 +502,7 @@ describe('Service utils', () => {
         type: 'unix-epoch' as DateTimeType
       };
       const expectedResult = Math.floor(DateTime.fromISO(testInstant).toMillis() / 1000);
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      const result = formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(expectedResult);
       expect(
         DateTime.fromMillis((result as number) * 1000)
@@ -502,7 +519,7 @@ describe('Service utils', () => {
         locale: 'en-US'
       };
       const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format);
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      const result = formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(expectedResult);
       // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
       expect(result).toEqual('2020-02-02 11:02:02.222');
@@ -512,7 +529,7 @@ describe('Service utils', () => {
       const dateTimeFormat = {
         type: 'iso-string' as DateTimeType
       };
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      const result = formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(testInstant);
     });
 
@@ -521,7 +538,7 @@ describe('Service utils', () => {
         type: 'Date' as DateTimeType,
         timezone: 'Asia/Tokyo'
       };
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      const result = formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual('2020-02-02');
     });
 
@@ -530,7 +547,7 @@ describe('Service utils', () => {
         type: 'SmallDateTime' as DateTimeType,
         timezone: 'Asia/Tokyo'
       };
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      const result = formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual('2020-02-02 11:02:02');
     });
 
@@ -539,7 +556,7 @@ describe('Service utils', () => {
         type: 'DateTime' as DateTimeType,
         timezone: 'Asia/Tokyo'
       };
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      const result = formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual('2020-02-02 11:02:02.222');
     });
 
@@ -552,7 +569,7 @@ describe('Service utils', () => {
       };
       // From Zulu string
       const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format);
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      const result = formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(expectedResult);
       // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
       expect(result).toEqual('02-Feb-20 11:02:02');
@@ -568,7 +585,7 @@ describe('Service utils', () => {
       const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format, {
         locale: dateTimeFormat.locale
       });
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      const result = formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(expectedResult);
       // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
       expect(result).toEqual('02-févr.-20 11:02:02');
@@ -581,43 +598,43 @@ describe('Service utils', () => {
       };
       // From Zulu string
       const expectedResult = DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toUTC().toISO()!;
-      const result = utils.formatInstant(testInstant, dateTimeFormat);
+      const result = formatInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(expectedResult);
     });
   });
 
   describe('convertDelimiter', () => {
     it('should convert to csv delimiter', () => {
-      expect(utils.convertDelimiter('NON_BREAKING_SPACE')).toEqual(' ');
-      expect(utils.convertDelimiter('COLON')).toEqual(':');
-      expect(utils.convertDelimiter('COMMA')).toEqual(',');
-      expect(utils.convertDelimiter('DOT')).toEqual('.');
-      expect(utils.convertDelimiter('SLASH')).toEqual('/');
-      expect(utils.convertDelimiter('PIPE')).toEqual('|');
-      expect(utils.convertDelimiter('SEMI_COLON')).toEqual(';');
-      expect(utils.convertDelimiter('TAB')).toEqual(' ');
+      expect(convertDelimiter('NON_BREAKING_SPACE')).toEqual(' ');
+      expect(convertDelimiter('COLON')).toEqual(':');
+      expect(convertDelimiter('COMMA')).toEqual(',');
+      expect(convertDelimiter('DOT')).toEqual('.');
+      expect(convertDelimiter('SLASH')).toEqual('/');
+      expect(convertDelimiter('PIPE')).toEqual('|');
+      expect(convertDelimiter('SEMI_COLON')).toEqual(';');
+      expect(convertDelimiter('TAB')).toEqual(' ');
     });
   });
 
   describe('convertDateTimeToInstant', () => {
     const testInstant = '2020-02-02T02:02:02.222Z';
     it('should return current value if no type specified', () => {
-      const result = utils.convertDateTimeToInstant(testInstant, { type: '' as DateTimeType });
+      const result = convertDateTimeToInstant(testInstant, { type: '' as DateTimeType });
       expect(result).toEqual(testInstant);
     });
 
     it('should return ISO String if no dateTimeFormat specified', () => {
-      const result = utils.convertDateTimeToInstant(testInstant, { type: 'iso-string' });
+      const result = convertDateTimeToInstant(testInstant, { type: 'iso-string' });
       expect(result).toEqual('2020-02-02T02:02:02.222Z');
     });
 
     it('should return ISO String from unix-epoch', () => {
-      const result = utils.convertDateTimeToInstant(Math.floor(DateTime.fromISO(testInstant).toMillis() / 1000), { type: 'unix-epoch' });
+      const result = convertDateTimeToInstant(Math.floor(DateTime.fromISO(testInstant).toMillis() / 1000), { type: 'unix-epoch' });
       expect(result).toEqual('2020-02-02T02:02:02.000Z');
     });
 
     it('should return ISO String from unix-epoch-ms', () => {
-      const result = utils.convertDateTimeToInstant(DateTime.fromISO(testInstant).toMillis(), { type: 'unix-epoch-ms' });
+      const result = convertDateTimeToInstant(DateTime.fromISO(testInstant).toMillis(), { type: 'unix-epoch-ms' });
       expect(result).toEqual('2020-02-02T02:02:02.222Z');
     });
 
@@ -628,7 +645,7 @@ describe('Service utils', () => {
         format: 'yyyy-MM-dd HH:mm:ss.SSS',
         locale: 'en-US'
       };
-      const result = utils.convertDateTimeToInstant(
+      const result = convertDateTimeToInstant(
         DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format),
         dateTimeFormat
       );
@@ -640,7 +657,7 @@ describe('Service utils', () => {
       const dateTimeFormat = {
         type: 'iso-string' as DateTimeType
       };
-      const result = utils.convertDateTimeToInstant(testInstant, dateTimeFormat);
+      const result = convertDateTimeToInstant(testInstant, dateTimeFormat);
       expect(result).toEqual(testInstant);
     });
 
@@ -651,7 +668,7 @@ describe('Service utils', () => {
         format: 'dd-MMM-yy HH:mm:ss', // format with localized month
         locale: 'en-US'
       };
-      const result = utils.convertDateTimeToInstant(
+      const result = convertDateTimeToInstant(
         DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format),
         dateTimeFormat
       );
@@ -665,7 +682,7 @@ describe('Service utils', () => {
         format: 'dd-MMM-yy HH:mm:ss', // format with localized month
         locale: 'fr-FR'
       };
-      const result = utils.convertDateTimeToInstant(
+      const result = convertDateTimeToInstant(
         DateTime.fromISO(testInstant, { zone: 'Asia/Tokyo' }).toFormat(dateTimeFormat.format, {
           locale: dateTimeFormat.locale
         }),
@@ -680,7 +697,7 @@ describe('Service utils', () => {
         timezone: 'Asia/Tokyo'
       };
       // From Zulu string
-      const result = utils.convertDateTimeToInstant(new Date(testInstant), dateTimeFormat);
+      const result = convertDateTimeToInstant(new Date(testInstant), dateTimeFormat);
       // The date was converted from a zulu string to Asia/Tokyo time, so with the formatter, we retrieve the Asia Tokyo time with +9 offset
       expect(result).toEqual('2020-02-01T17:02:02.222Z');
     });
@@ -690,14 +707,14 @@ describe('Service utils', () => {
         type: 'DateTimeOffset' as DateTimeType,
         timezone: 'Asia/Tokyo'
       };
-      const result = utils.convertDateTimeToInstant(new Date(testInstant), dateTimeFormat);
+      const result = convertDateTimeToInstant(new Date(testInstant), dateTimeFormat);
       expect(result).toEqual('2020-02-02T02:02:02.222Z');
     });
   });
 
   describe('formatQueryParams', () => {
     it('should correctly return void string when there is no query params', () => {
-      const result = utils.formatQueryParams('2020-01-01T00:00:00.000Z', '2021-01-01T00:00:00.000Z', []);
+      const result = formatQueryParams('2020-01-01T00:00:00.000Z', '2021-01-01T00:00:00.000Z', []);
       expect(result).toEqual('');
     });
 
@@ -710,7 +727,7 @@ describe('Service utils', () => {
         { key: 'anotherParam', value: 'anotherQueryParam' }
       ];
 
-      const result = utils.formatQueryParams(startTime, endTime, queryParams);
+      const result = formatQueryParams(startTime, endTime, queryParams);
       expect(result).toEqual('?start=2020-01-01T00%3A00%3A00.000Z&end=2021-01-01T00%3A00%3A00.000Z&' + 'anotherParam=anotherQueryParam');
     });
   });
@@ -738,7 +755,7 @@ describe('Service utils', () => {
         };
       });
       const expectedResult = { data: 'myValue' };
-      const result = await utils.httpGetWithBody('body', { protocol: 'http:' });
+      const result = await httpGetWithBody('body', { protocol: 'http:' });
       expect(result).toEqual(expectedResult);
       expect(onMock).toHaveBeenCalledTimes(1);
       expect(writeMock).toHaveBeenCalledTimes(1);
@@ -763,7 +780,7 @@ describe('Service utils', () => {
         };
       });
       const expectedResult = { data: 'myValue' };
-      const result = await utils.httpGetWithBody('body', { protocol: 'https:' });
+      const result = await httpGetWithBody('body', { protocol: 'https:' });
       expect(result).toEqual(expectedResult);
       expect(onMock).toHaveBeenCalledTimes(1);
       expect(writeMock).toHaveBeenCalledTimes(1);
@@ -789,7 +806,7 @@ describe('Service utils', () => {
           end: jest.fn()
         };
       });
-      await expect(utils.httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrowError('an error');
+      await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrowError('an error');
     });
 
     it('should throw an error when parsing received data', async () => {
@@ -806,7 +823,7 @@ describe('Service utils', () => {
           end: jest.fn()
         };
       });
-      await expect(utils.httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrowError('Unexpected token s in JSON at position 0');
+      await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrowError('Unexpected token s in JSON at position 0');
     });
   });
 });
