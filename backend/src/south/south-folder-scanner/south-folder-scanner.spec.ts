@@ -339,14 +339,26 @@ describe('SouthFolderScanner test connection', () => {
         throw new Error(errorMessage);
       });
 
-    await expect(south.testConnection()).rejects.toThrowError('No read/write access on folder');
+    await expect(south.testConnection()).rejects.toThrowError('No read access on folder');
 
     const accessRegex = new RegExp(`Access error on '.*(${configuration.settings.inputFolder}).*': ${errorMessage}`);
     expect((logger.error as jest.Mock).mock.calls).toEqual([[expect.stringMatching(accessRegex)]]);
   });
 
+  it('Not a directory', async () => {
+    (fs.access as jest.Mock).mockImplementation(() => Promise.resolve());
+    (fs.stat as jest.Mock).mockReturnValue({
+      isDirectory: () => false
+    });
+    await expect(south.testConnection()).rejects.toThrowError(`${path.resolve(configuration.settings.inputFolder)} is not a directory`);
+    expect(logger.error).toHaveBeenCalledWith(`${path.resolve(configuration.settings.inputFolder)} is not a directory`);
+  });
+
   it('should properly test connection', async () => {
     (fs.access as jest.Mock).mockImplementation(() => Promise.resolve());
+    (fs.stat as jest.Mock).mockReturnValue({
+      isDirectory: () => true
+    });
     await south.testConnection();
     expect(logger.error).not.toHaveBeenCalled();
     expect(logger.info).toHaveBeenCalledWith(`Folder "${path.resolve(configuration.settings.inputFolder)}" exists and is reachable`);
