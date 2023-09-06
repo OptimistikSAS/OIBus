@@ -1,11 +1,11 @@
 <oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between">
-      <span translate="history-query.monitoring.title" id="title"></span>
+      <span translate="history-query.monitoring.title" [translateParams]="{ name: historyQuery.name }" id="title"></span>
     </div>
   </ng-template>
 
-  <div *ngIf="historyMetrics">
+  <div>
     <table class="table table-sm table-hover oib-table mb-1">
       <thead class="light">
         <tr>

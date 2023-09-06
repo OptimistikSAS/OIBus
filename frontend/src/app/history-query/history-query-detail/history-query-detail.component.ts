@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { DecimalPipe, NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -25,6 +25,9 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { NotificationService } from '../../shared/notification.service';
 import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
+import { SouthMetricsComponent } from '../../south/south-metrics/south-metrics.component';
+import { HistoryMetrics } from '../../../../../shared/model/engine.model';
+import { WindowService } from '../../shared/window.service';
 
 @Component({
   selector: 'oib-history-query-detail',
@@ -44,13 +47,14 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
     EnabledEnumPipe,
     DurationPipe,
     ReactiveFormsModule,
-    HistoryMetricsComponent
+    HistoryMetricsComponent,
+    SouthMetricsComponent
   ],
   templateUrl: './history-query-detail.component.html',
   styleUrls: ['./history-query-detail.component.scss'],
   providers: [PageLoader]
 })
-export class HistoryQueryDetailComponent implements OnInit {
+export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   historyQuery: HistoryQueryDTO | null = null;
   northDisplayedSettings: Array<{ key: string; value: string }> = [];
   southDisplayedSettings: Array<{ key: string; value: string }> = [];
@@ -64,6 +68,9 @@ export class HistoryQueryDetailComponent implements OnInit {
   importing = false;
   exporting = false;
 
+  historyMetrics: HistoryMetrics | null = null;
+  historyStream: EventSource | null = null;
+
   constructor(
     private historyQueryService: HistoryQueryService,
     private northConnectorService: NorthConnectorService,
@@ -71,7 +78,9 @@ export class HistoryQueryDetailComponent implements OnInit {
     private scanModeService: ScanModeService,
     private notificationService: NotificationService,
     protected router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private windowService: WindowService,
+    private cd: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
@@ -107,6 +116,8 @@ export class HistoryQueryDetailComponent implements OnInit {
         if (!northManifest || !southManifest || !historyItems) {
           return;
         }
+
+        this.connectToEventSource();
 
         this.northManifest = northManifest;
         this.northDisplayedSettings = northManifest.settings
@@ -169,5 +180,20 @@ export class HistoryQueryDetailComponent implements OnInit {
           this.historyQuery = historyQuery;
         });
     }
+  }
+
+  connectToEventSource(): void {
+    const token = this.windowService.getStorageItem('oibus-token');
+    this.historyStream = new EventSource(`/sse/history-queries/${this.historyQuery!.id}?token=${token}`, { withCredentials: true });
+    this.historyStream.addEventListener('message', (event: MessageEvent) => {
+      if (event && event.data) {
+        this.historyMetrics = JSON.parse(event.data);
+        this.cd.detectChanges();
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.historyStream?.close();
   }
 }

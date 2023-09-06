@@ -7,9 +7,12 @@ import { NorthConnectorManifest } from '../../../../../../shared/model/north-con
 import { provideI18nTesting } from '../../../../i18n/mock-i18n';
 import { SouthConnectorManifest } from '../../../../../../shared/model/south-connector.model';
 import { HistoryQueryDTO } from '../../../../../../shared/model/history-query.model';
+import { HistoryMetrics } from '../../../../../../shared/model/engine.model';
+import { provideHttpClient } from '@angular/common/http';
 
 @Component({
   template: `<oib-history-metrics
+    [historyMetrics]="historyMetrics"
     [historyQuery]="historyQuery"
     [northManifest]="northManifest"
     [southManifest]="southManifest"
@@ -114,9 +117,10 @@ class TestComponent {
       retentionDuration: 0
     }
   };
+  historyMetrics: HistoryMetrics = { north: {}, south: {} } as HistoryMetrics;
 }
 
-class NorthMetricsComponentTester extends ComponentTester<TestComponent> {
+class HistoryMetricsComponentTester extends ComponentTester<TestComponent> {
   constructor() {
     super(TestComponent);
   }
@@ -127,14 +131,14 @@ class NorthMetricsComponentTester extends ComponentTester<TestComponent> {
 }
 
 describe('HistoryMetricsComponent', () => {
-  let tester: NorthMetricsComponentTester;
+  let tester: HistoryMetricsComponentTester;
 
   beforeEach(async () => {
     TestBed.configureTestingModule({
-      providers: [provideI18nTesting()]
+      providers: [provideI18nTesting(), provideHttpClient()]
     });
 
-    tester = new NorthMetricsComponentTester();
+    tester = new HistoryMetricsComponentTester();
   });
 
   it('should display a title', () => {
