@@ -58,6 +58,14 @@ describe('EditSouthItemModalComponent', () => {
       connectorId: 'southId',
       scanModeId: 'scanModeId1',
       settings: {}
+    },
+    {
+      id: 'id2',
+      enabled: true,
+      name: 'item2',
+      connectorId: 'southId',
+      scanModeId: 'scanModeId1',
+      settings: {}
     }
   ];
   const scanModes: Array<ScanModeDTO> = [
@@ -190,12 +198,19 @@ describe('EditSouthItemModalComponent', () => {
     });
 
     it('should not save if name already taken', () => {
-      tester.name.fillWith('item');
+      tester.name.fillWith('item2');
       tester.save.click();
-
       // mustBeUnique
       expect(tester.validationErrors.length).toBe(1);
       expect(fakeActiveModal.close).not.toHaveBeenCalled();
+    });
+
+    it('should not display error if name is same as current item', () => {
+      tester.name.fillWith('item');
+      tester.save.click();
+      // no error since it's the same item
+      expect(tester.validationErrors.length).toBe(0);
+      expect(fakeActiveModal.close).toHaveBeenCalled();
     });
 
     it('should save if valid', fakeAsync(() => {

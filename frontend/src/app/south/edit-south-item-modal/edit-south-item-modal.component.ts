@@ -80,7 +80,12 @@ export class EditSouthItemModalComponent {
 
   private checkUniqueness(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      return this.itemList.map(item => item.name).includes(control.value) ? { mustBeUnique: true } : null;
+      return this.itemList
+        .filter(item => item.id && item.id !== this.item?.id)
+        .map(item => item.name)
+        .includes(control.value)
+        ? { mustBeUnique: true }
+        : null;
     };
   }
 

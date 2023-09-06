@@ -120,7 +120,7 @@ export class SouthItemsComponent implements OnInit {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
     component.prepareForEdition(this.southConnectorItemSchema, this.allItems, this.scanModes, southItem);
-    this.refreshAfterEditionModalClosed(modalRef);
+    this.refreshAfterEditionModalClosed(modalRef, southItem);
   }
 
   /**
@@ -159,14 +159,21 @@ export class SouthItemsComponent implements OnInit {
   /**
    * Refresh the South item list when a South item is created
    */
-  private refreshAfterEditionModalClosed(modalRef: Modal<any>) {
+  private refreshAfterEditionModalClosed(modalRef: Modal<any>, oldItem: SouthConnectorItemDTO) {
     modalRef.result
       .pipe(
         switchMap((command: SouthConnectorItemCommandDTO) => {
-          if (this.southConnector) {
-            return this.southConnectorService.updateItem(this.southConnector.id, command.id || '', command);
+          if (!this.inMemory) {
+            return this.southConnectorService.updateItem(this.southConnector!.id, command.id || '', command);
           } else {
-            this.allItems.push({ id: '', connectorId: '', ...command });
+            this.allItems = this.allItems.filter(item => {
+              if (oldItem.id) {
+                return item.id !== oldItem.id;
+              } else {
+                return item.name !== oldItem.name;
+              }
+            });
+            this.allItems.push({ ...oldItem, ...command });
             return of(null);
           }
         })
