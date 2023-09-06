@@ -7,9 +7,6 @@
         <div class="col-6">
           <div class="d-flex flex-column align-items-center">
             <img src="/assets/oibus_white.svg" alt="" class="img-fluid mb-4" />
-            <h5 id="official-site" class="mt-2">
-              <a target="_blank" href="https://oibus.optimistik.com/" translate="about.official-site"></a>
-            </h5>
           </div>
         </div>
         <div class="col-6">
@@ -72,7 +69,12 @@
         </div>
       </div>
       <div class="row mt-2">
-        <span class="text-center" translate="about.copyright" [translateParams]="{nowYear: copyrightYear}"></span>
+        <h5 id="official-site" class="mt-2 text-center">
+          <a target="_blank" href="https://oibus.optimistik.com/">
+            <span translate="about.official-site"></span>
+            <span class="ms-2 fa fa-external-link"></span>
+          </a>
+        </h5>
       </div>
     </div>
   </div>
