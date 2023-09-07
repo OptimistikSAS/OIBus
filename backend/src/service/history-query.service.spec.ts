@@ -29,9 +29,4 @@ describe('history query service', () => {
     service.getHistoryQueryList();
     expect(repositoryRepository.historyQueryRepository.getHistoryQueries).toHaveBeenCalledTimes(1);
   });
-
-  it('should stop an History query', () => {
-    service.stopHistoryQuery('historyId');
-    expect(repositoryRepository.historyQueryRepository.stopHistoryQuery).toHaveBeenCalledTimes(1);
-  });
 });

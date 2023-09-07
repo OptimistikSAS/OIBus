@@ -67,7 +67,7 @@ describe('EditHistoryQueryComponent', () => {
     id: 'id1',
     name: 'Test',
     description: 'My History query description',
-    enabled: true,
+    status: 'PENDING',
     history: {
       maxInstantPerItem: false,
       maxReadInterval: 0,

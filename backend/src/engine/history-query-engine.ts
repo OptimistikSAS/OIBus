@@ -101,7 +101,6 @@ export default class HistoryQueryEngine extends BaseEngine {
     }
 
     await historyQuery.stop(resetCache);
-    this.historyQueries.delete(historyId);
   }
 
   setLogger(value: pino.Logger) {
@@ -124,6 +123,8 @@ export default class HistoryQueryEngine extends BaseEngine {
    */
   async deleteHistoryQuery(historyId: string, name: string): Promise<void> {
     await this.stopHistoryQuery(historyId);
+    this.historyQueries.delete(historyId);
+
     const baseFolder = path.resolve(this.cacheFolder, `history-${historyId}`);
 
     try {

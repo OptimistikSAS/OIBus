@@ -66,7 +66,6 @@ export class EditHistoryQueryComponent implements OnInit {
   historyQueryForm: FormGroup<{
     name: FormControl<string>;
     description: FormControl<string>;
-    enabled: FormControl<boolean>;
     startTime: FormControl<Instant>;
     endTime: FormControl<Instant>;
     history: FormGroup<{
@@ -175,7 +174,6 @@ export class EditHistoryQueryComponent implements OnInit {
         this.historyQueryForm = this.fb.group({
           name: ['', Validators.required],
           description: '',
-          enabled: false as boolean,
           startTime: DateTime.now().minus({ days: 1 }).toUTC().toISO()!,
           endTime: DateTime.now().toUTC().toISO()!,
           history: this.fb.group({
@@ -228,7 +226,6 @@ export class EditHistoryQueryComponent implements OnInit {
     const command: HistoryQueryCommandDTO = {
       name: formValue.name!,
       description: formValue.description!,
-      enabled: formValue.enabled!,
       startTime: formValue.startTime!,
       endTime: formValue.endTime!,
       northType: this.northType,

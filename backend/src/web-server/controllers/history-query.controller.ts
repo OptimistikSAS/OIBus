@@ -13,6 +13,11 @@ import fs from 'node:fs/promises';
 import AbstractController from './abstract.controller';
 import Joi from 'joi';
 
+interface HistoryQueryWithItemsCommandDTO {
+  historyQuery: HistoryQueryCommandDTO;
+  items: Array<SouthConnectorItemDTO>;
+}
+
 export default class HistoryQueryController extends AbstractController {
   constructor(
     protected readonly validator: JoiValidator,
@@ -110,7 +115,11 @@ export default class HistoryQueryController extends AbstractController {
     }
   };
 
-  updateHistoryQuery = async (ctx: KoaContext<HistoryQueryCommandDTO, void>) => {
+  updateHistoryQuery = async (ctx: KoaContext<HistoryQueryWithItemsCommandDTO, void>) => {
+    if (!ctx.request.body || !ctx.request.body.items || !ctx.request.body.historyQuery) {
+      return ctx.badRequest();
+    }
+
     const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id);
     if (!historyQuery) {
       return ctx.notFound();
@@ -125,7 +134,7 @@ export default class HistoryQueryController extends AbstractController {
       return ctx.throw(404, 'North manifest not found');
     }
 
-    const command = ctx.request.body as HistoryQueryCommandDTO;
+    const command = ctx.request.body.historyQuery as HistoryQueryCommandDTO;
     try {
       await this.validator.validateSettings(southManifest.settings, historyQuery.southSettings);
       await this.validator.validateSettings(northManifest.settings, historyQuery.northSettings);
@@ -142,6 +151,7 @@ export default class HistoryQueryController extends AbstractController {
         northManifest.settings
       );
       await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, command);
+      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, ctx.request.body!.items, []);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);
@@ -162,14 +172,14 @@ export default class HistoryQueryController extends AbstractController {
     }
   };
 
-  stopHistoryQuery = async (ctx: KoaContext<void, void>) => {
+  pauseHistoryQuery = async (ctx: KoaContext<void, void>) => {
     const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
     if (!historyQuery) {
       return ctx.notFound();
     }
 
     try {
-      await ctx.app.reloadService.onStopHistoryQuery(ctx.params.historyQueryId);
+      await ctx.app.reloadService.onPauseHistoryQuery(ctx.params.historyQueryId);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);

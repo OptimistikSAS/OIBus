@@ -29,7 +29,7 @@ describe('History Query repository', () => {
         id: 'id1',
         name: 'historyQuery1',
         description: 'My history query',
-        enabled: true,
+        status: 'RUNNING',
         history: {
           maxInstantPerItem: true,
           maxReadInterval: 3600,
@@ -59,7 +59,7 @@ describe('History Query repository', () => {
         id: 'id2',
         name: 'historyQuery2',
         description: 'My second history query',
-        enabled: true,
+        status: 'PAUSED',
         history: {
           maxInstantPerItem: true,
           maxReadInterval: 3600,
@@ -91,7 +91,7 @@ describe('History Query repository', () => {
         id: 'id1',
         name: 'historyQuery1',
         description: 'My history query',
-        enabled: true,
+        status: 'RUNNING',
         maxInstantPerItem: true,
         maxReadInterval: 3600,
         readDelay: 0,
@@ -115,7 +115,7 @@ describe('History Query repository', () => {
         id: 'id2',
         name: 'historyQuery2',
         description: 'My second history query',
-        enabled: true,
+        status: 'PAUSED',
         maxInstantPerItem: true,
         maxReadInterval: 3600,
         readDelay: 0,
@@ -138,7 +138,7 @@ describe('History Query repository', () => {
     ]);
     const southConnectors = repository.getHistoryQueries();
     expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
+      `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
         `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
         `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
@@ -154,7 +154,7 @@ describe('History Query repository', () => {
       id: 'id1',
       name: 'historyQuery1',
       description: 'My history query',
-      enabled: true,
+      status: 'RUNNING',
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
@@ -184,7 +184,7 @@ describe('History Query repository', () => {
       id: 'id1',
       name: 'historyQuery1',
       description: 'My history query',
-      enabled: true,
+      status: 'RUNNING',
       maxInstantPerItem: true,
       maxReadInterval: 3600,
       readDelay: 0,
@@ -206,7 +206,7 @@ describe('History Query repository', () => {
     });
     const historyQuery = repository.getHistoryQuery('id1');
     expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
+      `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
         `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
         `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
@@ -222,7 +222,7 @@ describe('History Query repository', () => {
     get.mockReturnValueOnce(null);
     const historyQuery = repository.getHistoryQuery('id1');
     expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
+      `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
         `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
         `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
@@ -238,7 +238,6 @@ describe('History Query repository', () => {
     const command: HistoryQueryCommandDTO = {
       name: 'historyQuery1',
       description: 'My history query',
-      enabled: false,
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
@@ -269,7 +268,7 @@ describe('History Query repository', () => {
       id: 'id1',
       name: 'historyQuery1',
       description: 'My history query',
-      enabled: false,
+      status: 'PENDING',
       maxInstantPerItem: true,
       maxReadInterval: 3600,
       readDelay: 0,
@@ -295,7 +294,7 @@ describe('History Query repository', () => {
     repository.createHistoryQuery(command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
-      `INSERT INTO history_queries (id, name, description, enabled, history_max_instant_per_item, history_max_read_interval, ` +
+      `INSERT INTO history_queries (id, name, description, status, history_max_instant_per_item, history_max_read_interval, ` +
         `history_read_delay, start_time, end_time, south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
         `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_send_file_immediately, caching_max_size, archive_enabled, ` +
         `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -304,7 +303,7 @@ describe('History Query repository', () => {
       '123456',
       command.name,
       command.description,
-      0,
+      'PENDING',
       +command.history.maxInstantPerItem,
       command.history.maxReadInterval,
       command.history.readDelay,
@@ -326,7 +325,7 @@ describe('History Query repository', () => {
     );
 
     expect(database.prepare).toHaveBeenCalledWith(
-      `SELECT id, name, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
+      `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
         `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
         `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
         `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
@@ -340,7 +339,6 @@ describe('History Query repository', () => {
     const command: HistoryQueryCommandDTO = {
       name: 'historyQuery1',
       description: 'My history query',
-      enabled: false,
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
@@ -400,16 +398,10 @@ describe('History Query repository', () => {
     );
   });
 
-  it('should start a history query', () => {
-    repository.startHistoryQuery('id1');
-    expect(database.prepare).toHaveBeenCalledWith(`UPDATE history_queries SET enabled = ? WHERE id = ?;`);
-    expect(run).toHaveBeenCalledWith(1, 'id1');
-  });
-
   it('should stop a history query', () => {
-    repository.stopHistoryQuery('id1');
-    expect(database.prepare).toHaveBeenCalledWith(`UPDATE history_queries SET enabled = ? WHERE id = ?;`);
-    expect(run).toHaveBeenCalledWith(0, 'id1');
+    repository.setHistoryQueryStatus('id1', 'PENDING');
+    expect(database.prepare).toHaveBeenCalledWith(`UPDATE history_queries SET status = ? WHERE id = ?;`);
+    expect(run).toHaveBeenCalledWith('PENDING', 'id1');
   });
 
   it('should delete a history query', () => {

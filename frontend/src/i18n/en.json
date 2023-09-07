@@ -576,7 +576,7 @@
     "description": "Description",
     "status": "Status",
     "started": "History query {{ name }} started",
-    "stopped": "History query {{ name }} stopped",
+    "paused": "History query {{ name }} paused",
     "start": "Start",
     "end": "End",
     "modal": {

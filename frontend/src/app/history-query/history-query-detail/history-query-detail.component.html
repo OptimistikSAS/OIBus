@@ -8,8 +8,29 @@
               <i class="fa fa-pencil"></i>
             </button>
             <button class="ms-2 btn btn-cancel" translate="common.back" id="cancel-edit-button" oibBackButton></button>
-            <button class="btn btn-primary pull-right me-2" id="history-query-enabled" (click)="toggleHistoryQuery(!historyQuery.enabled)">
-              <i [class]="historyQuery.enabled ?  'fa fa-pause' : 'fa fa-play'"></i>
+            <button
+              *ngIf="historyQuery.status === 'PENDING'"
+              class="btn btn-primary pull-right me-2"
+              id="history-query-start"
+              (click)="toggleHistoryQuery('RUNNING')"
+            >
+              <span [class]="'fa fa-play'"></span>
+            </button>
+            <button
+              *ngIf="historyQuery.status === 'RUNNING'"
+              class="btn btn-primary pull-right me-2"
+              id="history-query-pause"
+              (click)="toggleHistoryQuery('PAUSED')"
+            >
+              <span [class]="'fa fa-pause'"></span>
+            </button>
+            <button
+              *ngIf="historyQuery.status === 'PAUSED'"
+              class="btn btn-primary pull-right me-2"
+              id="history-query-unpause"
+              (click)="toggleHistoryQuery('RUNNING')"
+            >
+              <span [class]="'fa fa-play'"></span>
             </button>
           </span>
         </h1>

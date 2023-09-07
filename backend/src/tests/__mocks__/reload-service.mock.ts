@@ -23,7 +23,7 @@ export default jest.fn().mockImplementation(() => ({
   onCreateHistoryQuery: jest.fn(),
   onUpdateHistoryQuerySettings: jest.fn(),
   onStartHistoryQuery: jest.fn(),
-  onStopHistoryQuery: jest.fn(),
+  onPauseHistoryQuery: jest.fn(),
   onDeleteHistoryQuery: jest.fn(),
   onUpdateHistoryItemsSettings: jest.fn(),
   onDeleteHistoryItem: jest.fn(),

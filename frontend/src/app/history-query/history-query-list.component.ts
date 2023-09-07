@@ -121,40 +121,4 @@ export class HistoryQueryListComponent implements OnInit {
 
     return filteredItems;
   }
-
-  toggleHistoryQuery(historyQueryId: string, historyQueryName: string, value: boolean) {
-    if (value) {
-      this.historyQueryService
-        .startHistoryQuery(historyQueryId)
-        .pipe(
-          tap(() => {
-            this.notificationService.success('history-query.started', { name: historyQueryName });
-          }),
-          switchMap(() => {
-            return this.historyQueryService.list();
-          })
-        )
-        .subscribe(historyQueries => {
-          this.allHistoryQueries = historyQueries;
-          this.filteredHistoryQueries = this.filter(historyQueries);
-          this.displayedHistoryQueries = this.createPage(this.displayedHistoryQueries.number);
-        });
-    } else {
-      this.historyQueryService
-        .stopHistoryQuery(historyQueryId)
-        .pipe(
-          tap(() => {
-            this.notificationService.success('history-query.stopped', { name: historyQueryName });
-          }),
-          switchMap(() => {
-            return this.historyQueryService.list();
-          })
-        )
-        .subscribe(historyQueries => {
-          this.allHistoryQueries = historyQueries;
-          this.filteredHistoryQueries = this.filter(historyQueries);
-          this.displayedHistoryQueries = this.createPage(this.displayedHistoryQueries.number);
-        });
-    }
-  }
 }

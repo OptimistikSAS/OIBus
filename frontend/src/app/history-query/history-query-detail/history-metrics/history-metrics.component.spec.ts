@@ -87,7 +87,7 @@ class TestComponent {
     id: 'id1',
     name: 'History query',
     description: 'My History query description',
-    enabled: true,
+    status: 'RUNNING',
     history: {
       maxInstantPerItem: false,
       maxReadInterval: 0,

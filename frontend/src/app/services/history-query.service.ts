@@ -179,7 +179,7 @@ export class HistoryQueryService {
     return this.http.put<void>(`/api/history-queries/${historyQueryId}/start`, null);
   }
 
-  stopHistoryQuery(historyQueryId: string): Observable<void> {
-    return this.http.put<void>(`/api/history-queries/${historyQueryId}/stop`, null);
+  pauseHistoryQuery(historyQueryId: string): Observable<void> {
+    return this.http.put<void>(`/api/history-queries/${historyQueryId}/pause`, null);
   }
 }

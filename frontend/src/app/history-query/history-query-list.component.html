@@ -49,31 +49,22 @@
         </thead>
         <tbody>
           <tr *ngFor="let query of displayedHistoryQueries.content">
-            <td>
-              <div class="form-check form-switch">
-                <input
-                  (click)="toggleHistoryQuery(query.id, query.name, !query.enabled)"
-                  [checked]="query.enabled"
-                  type="checkbox"
-                  class="form-check-input"
-                />
-              </div>
-            </td>
+            <td>{{ query.status }}</td>
             <td>{{ query.name }}</td>
             <td>{{ query.description }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
-                <button
-                  class="btn btn-link enable-history-query px-1 py-0"
-                  id="history-query-enabled"
-                  (click)="toggleHistoryQuery(query.id, query.name, !query.enabled)"
-                ></button>
                 <!-- Display button -->
                 <a class="btn btn-link display-history-query px-1 py-0" id="display-link" [routerLink]="[query.id]">
                   <span class="fa fa-search"></span>
                 </a>
                 <!-- Edit button -->
-                <a class="btn btn-link edit-history-query px-1 py-0" id="edit-link" [routerLink]="[query.id, 'edit']">
+                <a
+                  *ngIf="query.status === 'PENDING'"
+                  class="btn btn-link edit-history-query px-1 py-0"
+                  id="edit-link"
+                  [routerLink]="[query.id, 'edit']"
+                >
                   <span class="fa fa-pencil"></span>
                 </a>
                 <!-- Delete button -->

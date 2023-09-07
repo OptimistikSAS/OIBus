@@ -2,13 +2,16 @@ import { NorthArchiveSettings, NorthCacheSettingsDTO } from './north-connector.m
 import { SouthConnectorHistorySettings, SouthConnectorItemDTO } from './south-connector.model';
 import { BaseEntity } from './types';
 
+export const HISTORY_QUERY_STATUS = ['PENDING', 'RUNNING', 'PAUSED', 'FINISHED', 'ERRORED'];
+export type HistoryQueryStatus = (typeof HISTORY_QUERY_STATUS)[number];
+
 /**
  * DTO for history queries
  */
 export interface HistoryQueryDTO extends BaseEntity {
   name: string;
   description: string;
-  enabled: boolean;
+  status: HistoryQueryStatus;
   startTime: string;
   endTime: string;
   southType: string;
@@ -26,7 +29,6 @@ export interface HistoryQueryDTO extends BaseEntity {
 export interface HistoryQueryCommandDTO {
   name: string;
   description: string;
-  enabled: boolean;
   startTime: string;
   endTime: string;
   southType: string;

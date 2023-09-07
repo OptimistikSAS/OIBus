@@ -1,3 +1,6 @@
+import SouthMetricsRepositoryMock from './south-metrics-repository.mock';
+import NorthMetricsRepositoryMock from './north-metrics-repository.mock';
+
 /**
  * Create a mock object for Repository Service
  */
@@ -38,8 +41,7 @@ export default jest.fn().mockImplementation(() => ({
     getHistoryQuery: jest.fn(),
     createHistoryQuery: jest.fn(),
     updateHistoryQuery: jest.fn(),
-    startHistoryQuery: jest.fn(),
-    stopHistoryQuery: jest.fn(),
+    setHistoryQueryStatus: jest.fn(),
     deleteHistoryQuery: jest.fn()
   },
   historyQueryItemRepository: {
@@ -115,20 +117,8 @@ export default jest.fn().mockImplementation(() => ({
     deleteNorthSubscriptions: jest.fn(),
     deleteExternalNorthSubscriptions: jest.fn()
   },
-  southMetricsRepository: {
-    database: jest.fn(),
-    initMetrics: jest.fn(),
-    getMetrics: jest.fn(),
-    updateMetrics: jest.fn(),
-    removeMetrics: jest.fn()
-  },
-  northMetricsRepository: {
-    database: jest.fn(),
-    initMetrics: jest.fn(),
-    getMetrics: jest.fn(),
-    updateMetrics: jest.fn(),
-    removeMetrics: jest.fn()
-  },
+  southMetricsRepository: new SouthMetricsRepositoryMock(),
+  northMetricsRepository: new NorthMetricsRepositoryMock(),
   southCacheRepository: {
     deleteAllCacheScanModes: jest.fn(),
     deleteCacheScanModesByItem: jest.fn(),
