@@ -50,7 +50,7 @@ export default class HistoryQuery {
       id: this.historyConfiguration.id,
       name: `${this.historyConfiguration.name} (South)`,
       description: '',
-      enabled: this.historyConfiguration.enabled,
+      enabled: true,
       history: this.historyConfiguration.history,
       type: this.historyConfiguration.southType,
       settings: this.historyConfiguration.southSettings
@@ -69,7 +69,7 @@ export default class HistoryQuery {
       id: this.historyConfiguration.id,
       name: `${this.historyConfiguration.name} (North)`,
       description: '',
-      enabled: this.historyConfiguration.enabled,
+      enabled: true,
       type: this.historyConfiguration.northType,
       settings: this.historyConfiguration.northSettings,
       caching: this.historyConfiguration.caching,
@@ -91,7 +91,7 @@ export default class HistoryQuery {
       this._metricsService.updateMetrics({ ...this._metricsService.metrics, north: northMetrics });
     });
 
-    if (!this.historyConfiguration.enabled) {
+    if (this.historyConfiguration.status === 'PENDING') {
       this.logger.trace(`History Query "${this.historyConfiguration.name}" not enabled`);
       return;
     }
@@ -163,6 +163,7 @@ export default class HistoryQuery {
     if (!this.north || !this.south || ((await this.north.isCacheEmpty()) && !this.south.historyIsRunning)) {
       this.logger.info(`Finish "${this.historyConfiguration.name}" (${this.historyConfiguration.id})`);
       await this.stop();
+      this.historyService.repositoryService.historyQueryRepository.setHistoryQueryStatus(this.historyConfiguration.id, 'FINISHED');
     } else {
       this.logger.debug(`History query "${this.historyConfiguration.name}" is still running`);
     }
@@ -173,7 +174,7 @@ export default class HistoryQuery {
       return;
     }
     await this.stop();
-    this.south.addItem(item);
+    await this.south.addItem(item);
     await this.start();
   }
 
@@ -185,18 +186,18 @@ export default class HistoryQuery {
     await this.addItem(item);
   }
 
-  deleteItem<I extends SouthItemSettings>(item: SouthConnectorItemDTO<I>) {
+  async deleteItem<I extends SouthItemSettings>(item: SouthConnectorItemDTO<I>): Promise<void> {
     if (!this.south) {
       return;
     }
-    this.south.deleteItem(item);
+    await this.south.deleteItem(item);
   }
 
-  deleteItems() {
+  async deleteItems(): Promise<void> {
     if (!this.south) {
       return;
     }
-    this.south.deleteAllItems();
+    await this.south.deleteAllItems();
   }
 
   setLogger(value: pino.Logger) {

@@ -2,13 +2,13 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { DecimalPipe, NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { combineLatest, of, switchMap, tap } from 'rxjs';
+import { combineLatest, of, switchMap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
 import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
+import { HistoryQueryDTO, HistoryQueryStatus } from '../../../../../shared/model/history-query.model';
 import {
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
@@ -21,13 +21,13 @@ import { HistoryQueryItemsComponent } from '../history-query-items/history-query
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { DurationPipe } from '../../shared/duration.pipe';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { NotificationService } from '../../shared/notification.service';
+import { ReactiveFormsModule } from '@angular/forms';
 import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { SouthMetricsComponent } from '../../south/south-metrics/south-metrics.component';
 import { HistoryMetrics } from '../../../../../shared/model/engine.model';
 import { WindowService } from '../../shared/window.service';
+import { NotificationService } from '../../shared/notification.service';
 
 @Component({
   selector: 'oib-history-query-detail',
@@ -64,7 +64,6 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   northManifest: NorthConnectorManifest | null = null;
   southManifest: SouthConnectorManifest | null = null;
   historyQueryItems: Array<SouthConnectorItemDTO> = [];
-  enabled = new FormControl(false);
   importing = false;
   exporting = false;
 
@@ -75,8 +74,8 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     private historyQueryService: HistoryQueryService,
     private northConnectorService: NorthConnectorService,
     private southConnectorService: SouthConnectorService,
-    private scanModeService: ScanModeService,
     private notificationService: NotificationService,
+    private scanModeService: ScanModeService,
     protected router: Router,
     private route: ActivatedRoute,
     private windowService: WindowService,
@@ -101,10 +100,6 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
             return combineLatest([of(null), of(null), of(null)]);
           }
           this.historyQuery = historyQuery;
-          this.enabled.setValue(historyQuery.enabled, { emitEvent: false });
-          this.enabled.valueChanges.subscribe(value => {
-            this.toggleHistoryQuery(value!);
-          });
           return combineLatest([
             this.historyQueryService.listItems(historyQuery.id),
             this.northConnectorService.getNorthConnectorTypeManifest(historyQuery.northType),
@@ -150,38 +145,6 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     this.router.navigate(['.'], { queryParams: { page: 0, name: searchParams.name }, relativeTo: this.route });
   }
 
-  toggleHistoryQuery(value: boolean) {
-    if (value) {
-      this.historyQueryService
-        .startHistoryQuery(this.historyQuery!.id)
-        .pipe(
-          tap(() => {
-            this.notificationService.success('history-query.started', { name: this.historyQuery!.name });
-          }),
-          switchMap(() => {
-            return this.historyQueryService.get(this.historyQuery!.id);
-          })
-        )
-        .subscribe(historyQuery => {
-          this.historyQuery = historyQuery;
-        });
-    } else {
-      this.historyQueryService
-        .stopHistoryQuery(this.historyQuery!.id)
-        .pipe(
-          tap(() => {
-            this.notificationService.success('history-query.stopped', { name: this.historyQuery!.name });
-          }),
-          switchMap(() => {
-            return this.historyQueryService.get(this.historyQuery!.id);
-          })
-        )
-        .subscribe(historyQuery => {
-          this.historyQuery = historyQuery;
-        });
-    }
-  }
-
   connectToEventSource(): void {
     const token = this.windowService.getStorageItem('oibus-token');
     this.historyStream = new EventSource(`/sse/history-queries/${this.historyQuery!.id}?token=${token}`, { withCredentials: true });
@@ -195,5 +158,33 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.historyStream?.close();
+  }
+
+  toggleHistoryQuery(newStatus: HistoryQueryStatus) {
+    if (newStatus === 'RUNNING') {
+      this.historyQueryService
+        .startHistoryQuery(this.historyQuery!.id)
+        .pipe(
+          switchMap(() => {
+            return this.historyQueryService.get(this.historyQuery!.id);
+          })
+        )
+        .subscribe(updatedHistoryQuery => {
+          this.historyQuery = updatedHistoryQuery;
+          this.notificationService.success('history-query.started', { name: this.historyQuery!.name });
+        });
+    } else {
+      this.historyQueryService
+        .pauseHistoryQuery(this.historyQuery!.id)
+        .pipe(
+          switchMap(() => {
+            return this.historyQueryService.get(this.historyQuery!.id);
+          })
+        )
+        .subscribe(updatedHistoryQuery => {
+          this.historyQuery = updatedHistoryQuery;
+          this.notificationService.success('history-query.paused', { name: this.historyQuery!.name });
+        });
+    }
   }
 }

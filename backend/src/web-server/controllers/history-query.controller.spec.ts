@@ -65,7 +65,6 @@ const northConnector: NorthConnectorDTO = {
 const historyQueryCommand: HistoryQueryCommandDTO = {
   name: 'name',
   description: 'description',
-  enabled: false,
   history: {
     maxInstantPerItem: true,
     maxReadInterval: 3600,
@@ -217,7 +216,6 @@ describe('History query controller', () => {
       {
         name: 'name',
         description: 'description',
-        enabled: false,
         history: southConnector.history,
         startTime: '2020-02-01T02:02:59.999Z',
         endTime: '2020-02-02T02:02:59.999Z',
@@ -264,7 +262,6 @@ describe('History query controller', () => {
       {
         name: 'name',
         description: 'description',
-        enabled: false,
         history: {
           maxInstantPerItem: true,
           maxReadInterval: 3600,
@@ -400,27 +397,27 @@ describe('History query controller', () => {
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
-  it('stopHistoryQuery() should enable History query', async () => {
+  it('pauseHistoryQuery() should pause History query', async () => {
     ctx.params.enable = true;
     ctx.params.id = 'id';
     ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
 
-    await historyQueryController.stopHistoryQuery(ctx);
+    await historyQueryController.pauseHistoryQuery(ctx);
 
-    expect(ctx.app.reloadService.onStopHistoryQuery).toHaveBeenCalledTimes(1);
+    expect(ctx.app.reloadService.onPauseHistoryQuery).toHaveBeenCalledTimes(1);
     expect(ctx.badRequest).not.toHaveBeenCalled();
   });
 
-  it('stopHistoryQuery() should throw badRequest if fail to enable', async () => {
+  it('pauseHistoryQuery() should throw badRequest if fail to enable', async () => {
     ctx.params.enable = true;
     ctx.params.id = 'id';
     ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
 
-    ctx.app.reloadService.onStopHistoryQuery.mockImplementation(() => {
+    ctx.app.reloadService.onPauseHistoryQuery.mockImplementation(() => {
       throw new Error('bad');
     });
 
-    await historyQueryController.stopHistoryQuery(ctx);
+    await historyQueryController.pauseHistoryQuery(ctx);
 
     expect(ctx.badRequest).toHaveBeenCalled();
   });
@@ -429,16 +426,17 @@ describe('History query controller', () => {
     ctx.params.id = 'id';
     ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
 
-    await historyQueryController.stopHistoryQuery(ctx);
+    await historyQueryController.pauseHistoryQuery(ctx);
 
-    expect(ctx.app.reloadService.onStopHistoryQuery).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onPauseHistoryQuery).not.toHaveBeenCalled();
     expect(ctx.badRequest).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
   it('updateHistoryQuery() should update History Query', async () => {
     ctx.request.body = {
-      ...historyQueryCommand
+      historyQuery: { ...historyQueryCommand },
+      items: []
     };
     ctx.params.id = 'id';
     ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
@@ -469,7 +467,8 @@ describe('History query controller', () => {
 
   it('updateHistoryQuery() should throw 404 when South manifest not found', async () => {
     ctx.request.body = {
-      ...historyQueryCommand
+      historyQuery: { ...historyQueryCommand },
+      items: []
     };
     ctx.params.id = 'id';
     ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue({ ...historyQuery, southType: 'invalid' });
@@ -484,7 +483,8 @@ describe('History query controller', () => {
 
   it('updateHistoryQuery() should throw 404 when North manifest not found', async () => {
     ctx.request.body = {
-      ...historyQueryCommand
+      historyQuery: { ...historyQueryCommand },
+      items: []
     };
     ctx.params.id = 'id';
     ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue({ ...historyQuery, northType: 'invalid' });
@@ -500,7 +500,8 @@ describe('History query controller', () => {
   it('updateHistoryQuery() should return bad request when validation fails', async () => {
     ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
     ctx.request.body = {
-      ...historyQueryCommand
+      historyQuery: { ...historyQueryCommand },
+      items: []
     };
     ctx.params.id = 'id';
     const validationError = new Error('invalid body');
@@ -518,7 +519,8 @@ describe('History query controller', () => {
   it('updateHistoryQuery() should return not found when history query is not found', async () => {
     ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
     ctx.request.body = {
-      ...historyQueryCommand
+      historyQuery: { ...historyQueryCommand },
+      items: []
     };
     ctx.params.id = 'id';
 
@@ -528,6 +530,21 @@ describe('History query controller', () => {
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
     expect(ctx.notFound).toHaveBeenCalled();
+  });
+
+  it('updateHistoryQuery() should return bad request if empty history query', async () => {
+    ctx.request.body = {
+      historyQuery: null,
+      items: []
+    };
+    ctx.params.id = 'id';
+
+    await historyQueryController.updateHistoryQuery(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateSouth).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalled();
   });
 
   it('deleteHistoryQuery() should delete history query', async () => {

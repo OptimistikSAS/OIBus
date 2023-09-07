@@ -513,14 +513,10 @@ describe('reload service', () => {
   });
 
   it('should update history query and start', async () => {
-    (repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValueOnce({ id: 'historyId' });
-
-    const command = { enabled: true };
+    const command = {};
     (repositoryService.historyQueryRepository.updateHistoryQuery as jest.Mock).mockReturnValueOnce({ id: 'historyId' });
     await service.onUpdateHistoryQuerySettings('historyId', command as HistoryQueryCommandDTO);
     expect(repositoryService.historyQueryRepository.updateHistoryQuery).toHaveBeenCalledWith('historyId', command);
-    expect(repositoryService.historyQueryRepository.startHistoryQuery).toHaveBeenCalledWith('historyId');
-    expect(historyQueryEngine.startHistoryQuery).toHaveBeenCalledWith({ id: 'historyId' });
   });
 
   it('should delete history query', async () => {
@@ -565,12 +561,12 @@ describe('reload service', () => {
     (repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValueOnce({ id: 'historyId' });
     await service.onStartHistoryQuery('historyId');
     expect(repositoryService.historyQueryRepository.getHistoryQuery).toHaveBeenCalledWith('historyId');
-    expect(repositoryService.historyQueryRepository.startHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(repositoryService.historyQueryRepository.setHistoryQueryStatus).toHaveBeenCalledWith('historyId', 'RUNNING');
     expect(historyQueryEngine.startHistoryQuery).toHaveBeenCalledWith({ id: 'historyId' });
   });
 
   it('should stop history query', async () => {
-    await service.onStopHistoryQuery('historyId');
+    await service.onPauseHistoryQuery('historyId');
     expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith('historyId');
   });
 

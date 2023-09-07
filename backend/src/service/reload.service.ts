@@ -81,11 +81,11 @@ export default class ReloadService {
       JSON.stringify(oldSettings.logParameters) !== JSON.stringify(newSettings.logParameters) ||
       oldSettings.name !== newSettings.name
     ) {
-      await this.loggerService.stop();
+      this.loggerService.stop();
       await this.loggerService.start(newSettings.id, newSettings.name, newSettings.logParameters);
-      await this.webServerChangeLoggerCallback(this.loggerService.createChildLogger('web-server'));
-      await this.engineMetricsService.setLogger(this.loggerService.createChildLogger('metrics'));
-      await this.oibusEngine.setLogger(this.loggerService.createChildLogger('data-stream'));
+      this.webServerChangeLoggerCallback(this.loggerService.createChildLogger('web-server'));
+      this.engineMetricsService.setLogger(this.loggerService.createChildLogger('metrics'));
+      this.oibusEngine.setLogger(this.loggerService.createChildLogger('data-stream'));
     }
     if (!oldSettings || oldSettings.port !== newSettings.port) {
       await this.webServerChangePortCallback(newSettings.port);
@@ -316,26 +316,20 @@ export default class ReloadService {
   }
 
   async onUpdateHistoryQuerySettings(historyId: string, command: HistoryQueryCommandDTO): Promise<void> {
+    this.repositoryService.historyQueryRepository.setHistoryQueryStatus(historyId, 'PENDING');
     await this.historyEngine.stopHistoryQuery(historyId, true); // Reset cache to start the history from scratch when changing the settings
     this.repositoryService.historyQueryRepository.updateHistoryQuery(historyId, command);
-    if (command.enabled) {
-      this.repositoryService.historyQueryRepository.startHistoryQuery(historyId);
-      const settings = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId)!;
-      await this.historyEngine.startHistoryQuery(settings);
-    } else {
-      this.repositoryService.historyQueryRepository.stopHistoryQuery(historyId);
-    }
   }
 
   async onStartHistoryQuery(historyId: string): Promise<void> {
-    this.repositoryService.historyQueryRepository.startHistoryQuery(historyId);
+    this.repositoryService.historyQueryRepository.setHistoryQueryStatus(historyId, 'RUNNING');
     const settings = this.repositoryService.historyQueryRepository.getHistoryQuery(historyId);
     await this.historyEngine.startHistoryQuery(settings!);
   }
 
-  async onStopHistoryQuery(historyId: string): Promise<void> {
+  async onPauseHistoryQuery(historyId: string): Promise<void> {
     await this.historyEngine.stopHistoryQuery(historyId);
-    this.repositoryService.historyQueryRepository.stopHistoryQuery(historyId);
+    this.repositoryService.historyQueryRepository.setHistoryQueryStatus(historyId, 'PAUSED');
   }
 
   async onDeleteHistoryQuery(historyId: string): Promise<void> {

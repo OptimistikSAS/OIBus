@@ -18,8 +18,4 @@ export default class HistoryQueryService {
   getItems<I extends SouthItemSettings>(historyQueryId: string): Array<SouthConnectorItemDTO<I>> {
     return this.repositoryService.historyQueryItemRepository.getHistoryItems(historyQueryId);
   }
-
-  stopHistoryQuery(historyQueryId: string): void {
-    return this.repositoryService.historyQueryRepository.stopHistoryQuery(historyQueryId);
-  }
 }

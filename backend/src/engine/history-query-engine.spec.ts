@@ -72,7 +72,7 @@ describe('HistoryQueryEngine', () => {
       southType: 'FolderScanner',
       northType: 'Console',
       description: 'my test history query',
-      enabled: true,
+      status: 'RUNNING',
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,

@@ -1,4 +1,4 @@
-import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../shared/model/history-query.model';
+import { HistoryQueryCommandDTO, HistoryQueryDTO, HistoryQueryStatus } from '../../../shared/model/history-query.model';
 import { generateRandomId } from '../service/utils';
 import { Database } from 'better-sqlite3';
 
@@ -8,7 +8,7 @@ interface HistoryQueryResult {
   id: string;
   name: string;
   description: string;
-  enabled: boolean;
+  status: HistoryQueryStatus;
   maxInstantPerItem: boolean;
   maxReadInterval: number;
   readDelay: number;
@@ -37,7 +37,7 @@ export default class HistoryQueryRepository {
    */
   getHistoryQueries(): Array<HistoryQueryDTO> {
     const query =
-      `SELECT id, name, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
+      `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
       `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
       `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
@@ -53,7 +53,7 @@ export default class HistoryQueryRepository {
    */
   getHistoryQuery(id: string): HistoryQueryDTO | null {
     const query =
-      `SELECT id, name, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
+      `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
       `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
       `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
@@ -76,7 +76,7 @@ export default class HistoryQueryRepository {
     const id = generateRandomId(6);
 
     const insertQuery =
-      `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, enabled, history_max_instant_per_item, history_max_read_interval, ` +
+      `INSERT INTO ${HISTORY_QUERIES_TABLE} (id, name, description, status, history_max_instant_per_item, history_max_read_interval, ` +
       `history_read_delay, start_time, end_time, south_type, north_type, south_settings, north_settings, caching_scan_mode_id, caching_group_count, ` +
       `caching_retry_interval, caching_retry_count, caching_max_send_count, caching_send_file_immediately, caching_max_size, archive_enabled, ` +
       `archive_retention_duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
@@ -84,7 +84,7 @@ export default class HistoryQueryRepository {
       id,
       command.name,
       command.description,
-      0, // disabled by default at creation
+      'PENDING', // disabled by default at creation
       +command.history.maxInstantPerItem,
       command.history.maxReadInterval,
       command.history.readDelay,
@@ -106,7 +106,7 @@ export default class HistoryQueryRepository {
     );
 
     const query =
-      `SELECT id, name, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
+      `SELECT id, name, description, status, history_max_instant_per_item AS maxInstantPerItem, ` +
       `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, start_time AS startTime, end_time AS endTime, ` +
       `south_type AS southType, north_type AS northType, south_settings AS southSettings, north_settings AS northSettings, ` +
       `caching_scan_mode_id AS cachingScanModeId, caching_group_count AS cachingGroupCount, caching_retry_interval AS ` +
@@ -118,14 +118,9 @@ export default class HistoryQueryRepository {
     return this.toHistoryQueryDTO(result);
   }
 
-  startHistoryQuery(id: string) {
-    const query = `UPDATE ${HISTORY_QUERIES_TABLE} SET enabled = ? WHERE id = ?;`;
-    this.database.prepare(query).run(1, id);
-  }
-
-  stopHistoryQuery(id: string) {
-    const query = `UPDATE ${HISTORY_QUERIES_TABLE} SET enabled = ? WHERE id = ?;`;
-    this.database.prepare(query).run(0, id);
+  setHistoryQueryStatus(id: string, status: HistoryQueryStatus) {
+    const query = `UPDATE ${HISTORY_QUERIES_TABLE} SET status = ? WHERE id = ?;`;
+    this.database.prepare(query).run(status, id);
   }
 
   /**
@@ -179,7 +174,7 @@ export default class HistoryQueryRepository {
       id: result.id,
       name: result.name,
       description: result.description,
-      enabled: result.enabled,
+      status: result.status,
       history: { maxInstantPerItem: result.maxInstantPerItem, readDelay: result.readDelay, maxReadInterval: result.maxReadInterval },
       startTime: result.startTime,
       endTime: result.endTime,

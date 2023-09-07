@@ -13,7 +13,6 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { NotificationService } from '../../shared/notification.service';
 
 class HistoryQueryDisplayComponentTester extends ComponentTester<HistoryQueryDetailComponent> {
   constructor() {
@@ -22,10 +21,6 @@ class HistoryQueryDisplayComponentTester extends ComponentTester<HistoryQueryDet
 
   get title() {
     return this.element('#title');
-  }
-
-  get toggleButton() {
-    return this.button('#history-query-enabled')!;
   }
 
   get southSettings() {
@@ -47,7 +42,6 @@ describe('HistoryQueryDisplayComponent', () => {
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
-  let notificationService: jasmine.SpyObj<NotificationService>;
 
   const southManifest: SouthConnectorManifest = {
     id: 'mssql',
@@ -114,7 +108,7 @@ describe('HistoryQueryDisplayComponent', () => {
     id: 'id1',
     name: 'History query',
     description: 'My History query description',
-    enabled: true,
+    status: 'PENDING',
     history: {
       maxInstantPerItem: false,
       maxReadInterval: 0,
@@ -150,7 +144,6 @@ describe('HistoryQueryDisplayComponent', () => {
     northConnectorService = createMock(NorthConnectorService);
     historyQueryService = createMock(HistoryQueryService);
     scanModeService = createMock(ScanModeService);
-    notificationService = createMock(NotificationService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -168,14 +161,13 @@ describe('HistoryQueryDisplayComponent', () => {
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: HistoryQueryService, useValue: historyQueryService },
-        { provide: NotificationService, useValue: notificationService },
         { provide: ScanModeService, useValue: scanModeService }
       ]
     });
 
     historyQueryService.get.and.returnValue(of(historyQuery));
     historyQueryService.startHistoryQuery.and.returnValue(of(undefined));
-    historyQueryService.stopHistoryQuery.and.returnValue(of(undefined));
+    historyQueryService.pauseHistoryQuery.and.returnValue(of(undefined));
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(southManifest));
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(of(northManifest));
     historyQueryService.listItems.and.returnValue(
@@ -217,20 +209,5 @@ describe('HistoryQueryDisplayComponent', () => {
     const item = tester.items[0];
     expect(item.elements('td')[1]).toContainText('item1');
     expect(item.elements('td')[2]).toContainText('sql');
-  });
-
-  it('should stop history query', () => {
-    tester.detectChanges();
-    tester.toggleButton.click();
-    expect(historyQueryService.stopHistoryQuery).toHaveBeenCalledWith(historyQuery.id);
-    expect(notificationService.success).toHaveBeenCalledWith('history-query.stopped', { name: historyQuery.name });
-  });
-
-  it('should start history query', () => {
-    historyQueryService.get.and.returnValue(of({ ...historyQuery, enabled: false }));
-    tester.detectChanges();
-    tester.toggleButton.click();
-    expect(historyQueryService.startHistoryQuery).toHaveBeenCalledWith(historyQuery.id);
-    expect(notificationService.success).toHaveBeenCalledWith('history-query.started', { name: historyQuery.name });
   });
 });
