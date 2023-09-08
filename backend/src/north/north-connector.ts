@@ -16,6 +16,7 @@ import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
 import { ReadStream } from 'node:fs';
 import path from 'node:path';
+import { HandlesItemValues } from './north-interface';
 import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { dirSize, validateCronExpression } from '../service/utils';
