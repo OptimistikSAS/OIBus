@@ -14,7 +14,7 @@ import { OIBusDataValue, OIBusError } from '../../../shared/model/engine.model';
 import { ExternalSubscriptionDTO, SubscriptionDTO } from '../../../shared/model/subscription.model';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
-import { HandlesFile, HandlesValues } from './north-interface';
+import { HandlesFile, HandlesItemValues, HandlesValues } from './north-interface';
 import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { dirSize } from '../service/utils';
@@ -216,7 +216,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
       this.metricsService!.updateMetrics(this.connector.id, { ...this.metricsService!.metrics, lastRunStart: runStart.toUTC().toISO() });
     }
 
-    if (this.handlesValues() && (flag === 'scan' || flag === 'value-trigger')) {
+    if ((this.handlesValues() || this.handlesItemValues()) && (flag === 'scan' || flag === 'value-trigger')) {
       await this.handleValuesWrapper();
     }
 
@@ -252,8 +252,12 @@ export default class NorthConnector<T extends NorthSettings = any> {
         arrayValues.push(...array);
       }
       try {
-        // @ts-ignore
-        await this.handleValues(arrayValues);
+        if (this.handlesItemValues()) {
+          await this.handleItemValues(arrayValues);
+        } else if (this.handlesValues()) {
+          await this.handleValues(arrayValues);
+        }
+
         await this.valueCacheService.removeSentValues(this.valuesBeingSent);
         const currentMetrics = this.metricsService!.metrics;
         this.metricsService!.updateMetrics(this.connector.id, {
@@ -523,6 +527,10 @@ export default class NorthConnector<T extends NorthSettings = any> {
 
   handlesValues(): this is HandlesValues {
     return 'handleValues' in this;
+  }
+
+  handlesItemValues(): this is HandlesItemValues {
+    return 'handleItemValues' in this;
   }
 
   /**

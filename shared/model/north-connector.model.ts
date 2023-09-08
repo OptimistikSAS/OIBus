@@ -54,7 +54,11 @@ export interface NorthConnectorCommandDTO<T extends NorthSettings = any> {
   archive: NorthArchiveSettings;
 }
 
-export interface NorthConnectorManifest {
+export interface NorthConnectorItemManifest {
+  settings: Array<OibFormControl>;
+}
+
+interface NorthConnectorManifestBase<THandlesItems = false | true> {
   id: string;
   category: string;
   name: string;
@@ -62,9 +66,15 @@ export interface NorthConnectorManifest {
   modes: {
     files: boolean;
     points: boolean;
+    items: THandlesItems;
   };
   settings: Array<OibFormControl>;
 }
+
+// When modes.items is set to true, require an items definition
+export type NorthConnectorManifest<THandlesItems = false | true> = THandlesItems extends true
+  ? NorthConnectorManifestBase<THandlesItems> & { items: NorthConnectorItemManifest }
+  : NorthConnectorManifestBase<THandlesItems>;
 
 export interface NorthCacheFiles {
   filename: string;
