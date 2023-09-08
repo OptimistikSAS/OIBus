@@ -12,7 +12,7 @@ export async function migrateEntities(dbPath: string): Promise<Knex> {
       tableName: 'migrations'
     }
   });
-  await knexConfig.migrate.up({ directory: path.resolve(__dirname, 'entity-migrations') });
+  await knexConfig.migrate.latest({ directory: path.resolve(__dirname, 'entity-migrations') });
   return knexConfig;
 }
 
@@ -27,7 +27,7 @@ export async function migrateLogsAndMetrics(dbPath: string): Promise<Knex> {
       tableName: 'migrations'
     }
   });
-  await knexConfig.migrate.up({ directory: path.resolve(__dirname, 'logs-and-metrics-migrations') });
+  await knexConfig.migrate.latest({ directory: path.resolve(__dirname, 'logs-and-metrics-migrations') });
   return knexConfig;
 }
 
@@ -42,7 +42,7 @@ export async function migrateCrypto(dbPath: string): Promise<Knex> {
       tableName: 'migrations'
     }
   });
-  await knexConfig.migrate.up({ directory: path.resolve(__dirname, 'crypto-migrations') });
+  await knexConfig.migrate.latest({ directory: path.resolve(__dirname, 'crypto-migrations') });
   return knexConfig;
 }
 
@@ -57,6 +57,6 @@ export async function migrateSouthCache(dbPath: string): Promise<Knex> {
       tableName: 'migrations'
     }
   });
-  await knexConfig.migrate.up({ directory: path.resolve(__dirname, 'south-cache-migrations') });
+  await knexConfig.migrate.latest({ directory: path.resolve(__dirname, 'south-cache-migrations') });
   return knexConfig;
 }
