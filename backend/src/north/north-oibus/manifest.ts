@@ -8,7 +8,8 @@ const manifest: NorthConnectorManifest = {
   description: 'Send files and values to another OIBus',
   modes: {
     files: true,
-    points: true
+    points: true,
+    items: false
   },
   settings: [
     {
