@@ -575,6 +575,7 @@
     "name": "Name",
     "description": "Description",
     "status": "Status",
+    "interval": "Interval",
     "started": "History query {{ name }} started",
     "paused": "History query {{ name }} paused",
     "start": "Start",
