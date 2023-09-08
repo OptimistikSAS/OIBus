@@ -33,13 +33,17 @@ describe('HistoryQueryListComponent', () => {
       id: 'id1',
       name: 'myHistoryQuery1',
       description: 'a test history query',
-      status: 'RUNNING'
+      status: 'RUNNING',
+      startTime: '2020-02-02T02:02:02.222Z',
+      endTime: '2022-02-02T02:02:02.222Z'
     } as HistoryQueryDTO,
     {
       id: 'id2',
       name: 'myHistoryQuery2',
       description: 'a test history query',
-      status: 'PENDING'
+      status: 'PENDING',
+      startTime: '2020-02-02T02:02:02.222Z',
+      endTime: '2022-02-02T02:02:02.222Z'
     } as HistoryQueryDTO
   ];
 
@@ -69,12 +73,14 @@ describe('HistoryQueryListComponent', () => {
     expect(tester.title).toContainText('History queries');
     expect(tester.historyQueryList.length).toBe(2);
     expect(tester.historyQueryList[0].elements('td')[1]).toContainText(historyQueries[0].name);
-    expect(tester.historyQueryList[0].elements('td')[2]).toContainText(historyQueries[0].description);
-    expect(tester.historyQueryList[0].elements('td')[3].elements('button').length).toBe(1);
-    expect(tester.historyQueryList[0].elements('td')[3].elements('a').length).toBe(1);
+    expect(tester.historyQueryList[0].elements('td')[2]).toContainText('2 Feb 2020, 03:02 -> 2 Feb 2022, 03:02');
+    expect(tester.historyQueryList[0].elements('td')[3]).toContainText(historyQueries[0].description);
+    expect(tester.historyQueryList[0].elements('td')[4].elements('button').length).toBe(1);
+    expect(tester.historyQueryList[0].elements('td')[4].elements('a').length).toBe(2);
     expect(tester.historyQueryList[1].elements('td')[1]).toContainText(historyQueries[1].name);
-    expect(tester.historyQueryList[1].elements('td')[2]).toContainText(historyQueries[1].description);
-    expect(tester.historyQueryList[1].elements('td')[3].elements('button').length).toBe(1);
-    expect(tester.historyQueryList[1].elements('td')[3].elements('a').length).toBe(2);
+    expect(tester.historyQueryList[1].elements('td')[2]).toContainText('2 Feb 2020, 03:02 -> 2 Feb 2022, 03:02');
+    expect(tester.historyQueryList[1].elements('td')[3]).toContainText(historyQueries[1].description);
+    expect(tester.historyQueryList[1].elements('td')[4].elements('button').length).toBe(1);
+    expect(tester.historyQueryList[1].elements('td')[4].elements('a').length).toBe(2);
   });
 });

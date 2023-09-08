@@ -5,9 +5,9 @@ import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
 import { ModalService } from '../shared/modal.service';
 import { Router, RouterLink } from '@angular/router';
-import { NgForOf, NgIf } from '@angular/common';
+import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
 import { CreateHistoryQueryModalComponent } from './create-history-query-modal/create-history-query-modal.component';
-import { HistoryQueryDTO } from '../../../../shared/model/history-query.model';
+import { HistoryQueryDTO, HistoryQueryStatus } from '../../../../shared/model/history-query.model';
 import { HistoryQueryService } from '../services/history-query.service';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { createPageFromArray, Page } from '../../../../shared/model/types';
@@ -16,6 +16,8 @@ import { emptyPage } from '../shared/test-utils';
 import { FormControlValidationDirective } from '../shared/form-control-validation.directive';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
+import { DatetimePipe } from '../shared/datetime.pipe';
+import { ObservableState } from '../shared/save-button/save-button.component';
 
 const PAGE_SIZE = 20;
 
@@ -32,7 +34,9 @@ const PAGE_SIZE = 20;
     FormsModule,
     ReactiveFormsModule,
     LoadingSpinnerComponent,
-    EnabledEnumPipe
+    EnabledEnumPipe,
+    DatetimePipe,
+    AsyncPipe
   ],
   templateUrl: './history-query-list.component.html',
   styleUrls: ['./history-query-list.component.scss']
@@ -41,6 +45,7 @@ export class HistoryQueryListComponent implements OnInit {
   allHistoryQueries: Array<HistoryQueryDTO> | null = null;
   filteredHistoryQueries: Array<HistoryQueryDTO> = [];
   displayedHistoryQueries: Page<HistoryQueryDTO> = emptyPage();
+  states = new Map<string, ObservableState>();
 
   searchForm = this.fb.group({
     name: [null as string | null]
@@ -58,6 +63,10 @@ export class HistoryQueryListComponent implements OnInit {
   ngOnInit() {
     this.historyQueryService.list().subscribe(queries => {
       this.allHistoryQueries = queries;
+      this.states.clear();
+      this.allHistoryQueries.forEach(historyQuery => {
+        this.states.set(historyQuery.id, new ObservableState());
+      });
       this.filteredHistoryQueries = this.filter(queries);
       this.changePage(0);
     });
@@ -87,6 +96,10 @@ export class HistoryQueryListComponent implements OnInit {
           .pipe(tap(() => (this.allHistoryQueries = null)))
           .subscribe(queries => {
             this.allHistoryQueries = queries;
+            this.states.clear();
+            this.allHistoryQueries.forEach(historyQuery => {
+              this.states.set(historyQuery.id, new ObservableState());
+            });
             this.filteredHistoryQueries = this.filter(queries);
             this.changePage(0);
           });
@@ -120,5 +133,40 @@ export class HistoryQueryListComponent implements OnInit {
     }
 
     return filteredItems;
+  }
+
+  toggleHistoryQuery(query: HistoryQueryDTO, newStatus: HistoryQueryStatus) {
+    if (newStatus === 'RUNNING') {
+      this.historyQueryService
+        .startHistoryQuery(query.id)
+        .pipe(
+          this.states.get(query.id)!.pendingUntilFinalization(),
+          switchMap(() => {
+            return this.historyQueryService.list();
+          })
+        )
+        .subscribe(queries => {
+          this.allHistoryQueries = queries;
+          this.filteredHistoryQueries = this.filter(queries);
+
+          this.changePage(this.displayedHistoryQueries.number);
+          this.notificationService.success('history-query.started', { name: query.name });
+        });
+    } else {
+      this.historyQueryService
+        .pauseHistoryQuery(query.id)
+        .pipe(
+          this.states.get(query.id)!.pendingUntilFinalization(),
+          switchMap(() => {
+            return this.historyQueryService.list();
+          })
+        )
+        .subscribe(queries => {
+          this.allHistoryQueries = queries;
+          this.filteredHistoryQueries = this.filter(queries);
+          this.changePage(this.displayedHistoryQueries.number);
+          this.notificationService.success('history-query.paused', { name: query.name });
+        });
+    }
   }
 }
