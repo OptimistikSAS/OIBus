@@ -89,6 +89,8 @@ const createdSouth = {
   resetCache: jest.fn(),
   getMetricsDataStream: jest.fn(() => southStream),
   historyIsRunning: false,
+  createDeferredPromise: jest.fn(),
+  resolveDeferredPromise: jest.fn(),
   connectedEvent
 };
 
@@ -113,7 +115,7 @@ describe('HistoryQuery enabled', () => {
 
     (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
     (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
-
+    (historyService.repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValue({ status: 'RUNNING' });
     configuration = {
       id: 'historyId',
       name: 'history',
@@ -333,6 +335,7 @@ describe('HistoryQuery disabled', () => {
 
     (southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
     (northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
+    (historyService.repositoryService.historyQueryRepository.getHistoryQuery as jest.Mock).mockReturnValue({ status: 'PENDING' });
 
     configuration = {
       id: 'historyId',
