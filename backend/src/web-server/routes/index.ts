@@ -162,8 +162,8 @@ router.put('/api/south/:southId/cache/reset-metrics', (ctx: KoaContext<any, any>
 router.get('/api/history-queries', (ctx: KoaContext<any, any>) => historyQueryController.getHistoryQueries(ctx));
 router.get('/api/history-queries/:id', (ctx: KoaContext<any, any>) => historyQueryController.getHistoryQuery(ctx));
 router.post('/api/history-queries', (ctx: KoaContext<any, any>) => historyQueryController.createHistoryQuery(ctx));
-router.put('/api/history-queries/:historyQueryId/start', (ctx: KoaContext<any, any>) => historyQueryController.startHistoryQuery(ctx));
-router.put('/api/history-queries/:historyQueryId/pause', (ctx: KoaContext<any, any>) => historyQueryController.pauseHistoryQuery(ctx));
+router.put('/api/history-queries/:id/start', (ctx: KoaContext<any, any>) => historyQueryController.startHistoryQuery(ctx));
+router.put('/api/history-queries/:id/pause', (ctx: KoaContext<any, any>) => historyQueryController.pauseHistoryQuery(ctx));
 router.put('/api/history-queries/:id', (ctx: KoaContext<any, any>) => historyQueryController.updateHistoryQuery(ctx));
 router.delete('/api/history-queries/:id', (ctx: KoaContext<any, any>) => historyQueryController.deleteHistoryQuery(ctx));
 

@@ -91,7 +91,8 @@ export default class HistoryQuery {
       this._metricsService.updateMetrics({ ...this._metricsService.metrics, north: northMetrics });
     });
 
-    if (this.historyConfiguration.status === 'PENDING') {
+    const { status } = this.historyService.repositoryService.historyQueryRepository.getHistoryQuery(this.historyConfiguration.id)!;
+    if (status !== 'RUNNING') {
       this.logger.trace(`History Query "${this.historyConfiguration.name}" not enabled`);
       return;
     }
@@ -99,14 +100,19 @@ export default class HistoryQuery {
     await this.north.start();
 
     this.south.connectedEvent.on('connected', async () => {
+      this.south!.createDeferredPromise();
       this.south!.historyQueryHandler(
         this.items.filter(item => item.enabled),
         this.historyConfiguration.startTime,
         this.historyConfiguration.endTime,
         'history'
-      ).catch(error => {
-        this.logger.error(`Error while executing history query. ${error}`);
-      });
+      )
+        .catch(error => {
+          this.logger.error(`Error while executing history query. ${error}`);
+        })
+        .finally(() => {
+          this.south!.resolveDeferredPromise();
+        });
       this.finishInterval = setInterval(this.finish.bind(this), FINISH_INTERVAL);
     });
     await this.south.start();
