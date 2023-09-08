@@ -7,7 +7,8 @@ const manifest: NorthConnectorManifest = {
   description: 'TimescaleDB description',
   modes: {
     files: false,
-    points: true
+    points: true,
+    items: false
   },
   settings: [
     {
