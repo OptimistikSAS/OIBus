@@ -32,7 +32,24 @@ export default class SouthConnectorRepository {
           readDelay: result.readDelay
         },
         settings: JSON.parse(result.settings)
-      }));
+      }))
+      .filter(result =>
+        [
+          'ads',
+          'folder-scanner',
+          'modbus',
+          'mqtt',
+          'mssql',
+          'mysql',
+          'odbc',
+          'oianalytics',
+          'opcua',
+          'oracle',
+          'postgresql',
+          'slims',
+          'sqlite'
+        ].includes(result.type)
+      );
   }
 
   /**

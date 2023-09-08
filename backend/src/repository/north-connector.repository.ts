@@ -43,7 +43,8 @@ export default class NorthConnectorRepository {
           enabled: result.archiveEnabled,
           retentionDuration: result.archiveRetentionDuration
         }
-      }));
+      }))
+      .filter(result => ['aws-s3', 'azure-blob', 'console', 'file-writer', 'oianalytics', 'oibus', 'rest-api'].includes(result.type));
   }
 
   /**

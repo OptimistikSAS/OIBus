@@ -28,7 +28,7 @@ describe('South connector repository', () => {
       {
         id: 'id1',
         name: 'south1',
-        type: 'SouthConnector',
+        type: 'oianalytics',
         description: 'My south connector',
         enabled: true,
         history: {
@@ -41,7 +41,7 @@ describe('South connector repository', () => {
       {
         id: 'id2',
         name: 'south2',
-        type: 'SouthConnector',
+        type: 'oianalytics',
         description: 'My second south connector',
         enabled: true,
         history: {
@@ -56,7 +56,7 @@ describe('South connector repository', () => {
       {
         id: 'id1',
         name: 'south1',
-        type: 'SouthConnector',
+        type: 'oianalytics',
         description: 'My south connector',
         enabled: true,
         maxInstantPerItem: true,
@@ -67,7 +67,7 @@ describe('South connector repository', () => {
       {
         id: 'id2',
         name: 'south2',
-        type: 'SouthConnector',
+        type: 'oianalytics',
         description: 'My second south connector',
         enabled: true,
         maxInstantPerItem: false,
@@ -88,7 +88,7 @@ describe('South connector repository', () => {
     const expectedValue: SouthConnectorDTO = {
       id: 'id1',
       name: 'south1',
-      type: 'SouthConnector',
+      type: 'oianalytics',
       description: 'My south connector',
       enabled: true,
       history: {
@@ -101,7 +101,7 @@ describe('South connector repository', () => {
     get.mockReturnValueOnce({
       id: 'id1',
       name: 'south1',
-      type: 'SouthConnector',
+      type: 'oianalytics',
       description: 'My south connector',
       enabled: true,
       maxInstantPerItem: false,
