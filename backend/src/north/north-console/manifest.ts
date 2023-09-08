@@ -5,7 +5,8 @@ const manifest: NorthConnectorManifest = {
   category: 'debug',
   modes: {
     files: true,
-    points: true
+    points: true,
+    items: false
   },
   settings: [
     {

@@ -57,7 +57,8 @@ class TestComponent {
     category: 'api',
     modes: {
       files: true,
-      points: true
+      points: true,
+      items: false
     },
     settings: [
       {
