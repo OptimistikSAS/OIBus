@@ -53,7 +53,8 @@ describe('North connector controller', () => {
         description: '',
         modes: {
           files: true,
-          points: true
+          points: true,
+          items: false
         }
       }
     ]);

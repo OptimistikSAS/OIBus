@@ -8,7 +8,8 @@ const manifest: NorthConnectorManifest = {
   description: 'CsvToHttp description',
   modes: {
     files: true,
-    points: false
+    points: false,
+    items: false
   },
   settings: [
     {
