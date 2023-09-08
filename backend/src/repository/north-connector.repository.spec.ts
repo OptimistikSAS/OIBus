@@ -28,7 +28,7 @@ describe('North connector repository', () => {
       {
         id: 'id1',
         name: 'north1',
-        type: 'NorthConnector',
+        type: 'oianalytics',
         description: 'My north connector',
         enabled: true,
         settings: {},
@@ -49,7 +49,7 @@ describe('North connector repository', () => {
       {
         id: 'id2',
         name: 'north2',
-        type: 'NorthConnector',
+        type: 'oianalytics',
         description: 'My second north connector',
         enabled: true,
         settings: {},
@@ -72,7 +72,7 @@ describe('North connector repository', () => {
       {
         id: 'id1',
         name: 'north1',
-        type: 'NorthConnector',
+        type: 'oianalytics',
         description: 'My north connector',
         enabled: true,
         settings: JSON.stringify({}),
@@ -89,7 +89,7 @@ describe('North connector repository', () => {
       {
         id: 'id2',
         name: 'north2',
-        type: 'NorthConnector',
+        type: 'oianalytics',
         description: 'My second north connector',
         enabled: true,
         settings: JSON.stringify({}),
