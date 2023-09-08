@@ -19,6 +19,9 @@ import ScanModeRepository from '../repository/config/scan-mode.repository';
 import { ScanMode } from '../model/scan-mode.model';
 import { OIBusError } from '../model/engine.model';
 import { BaseFolders, Instant } from '../model/types';
+import { HandlesItemValues } from './north-interface';
+import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
+import { dirSize, validateCronExpression } from '../service/utils';
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
