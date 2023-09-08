@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { DecimalPipe, NgForOf, NgIf, NgSwitch } from '@angular/common';
+import { AsyncPipe, DecimalPipe, NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, of, switchMap } from 'rxjs';
@@ -28,6 +28,7 @@ import { SouthMetricsComponent } from '../../south/south-metrics/south-metrics.c
 import { HistoryMetrics } from '../../../../../shared/model/engine.model';
 import { WindowService } from '../../shared/window.service';
 import { NotificationService } from '../../shared/notification.service';
+import { ObservableState } from '../../shared/save-button/save-button.component';
 
 @Component({
   selector: 'oib-history-query-detail',
@@ -48,7 +49,8 @@ import { NotificationService } from '../../shared/notification.service';
     DurationPipe,
     ReactiveFormsModule,
     HistoryMetricsComponent,
-    SouthMetricsComponent
+    SouthMetricsComponent,
+    AsyncPipe
   ],
   templateUrl: './history-query-detail.component.html',
   styleUrls: ['./history-query-detail.component.scss'],
@@ -69,6 +71,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
 
   historyMetrics: HistoryMetrics | null = null;
   historyStream: EventSource | null = null;
+  state = new ObservableState();
 
   constructor(
     private historyQueryService: HistoryQueryService,
@@ -165,6 +168,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
       this.historyQueryService
         .startHistoryQuery(this.historyQuery!.id)
         .pipe(
+          this.state.pendingUntilFinalization(),
           switchMap(() => {
             return this.historyQueryService.get(this.historyQuery!.id);
           })
@@ -177,6 +181,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
       this.historyQueryService
         .pauseHistoryQuery(this.historyQuery!.id)
         .pipe(
+          this.state.pendingUntilFinalization(),
           switchMap(() => {
             return this.historyQueryService.get(this.historyQuery!.id);
           })
