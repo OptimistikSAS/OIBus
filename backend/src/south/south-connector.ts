@@ -481,7 +481,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   }
 
   async resetCache(): Promise<void> {
-    this.cacheService!.resetCacheScanMode();
+    this.cacheService!.resetCacheScanMode(this.connector.id);
   }
 
   getMetricsDataStream(): PassThrough {

@@ -33,7 +33,7 @@ export default class SouthCacheService {
     this._cacheRepository.createOrUpdateCacheScanMode(command);
   }
 
-  resetCacheScanMode(): void {
-    this._cacheRepository.resetSouthCacheDatabase();
+  resetCacheScanMode(id: string): void {
+    this._cacheRepository.resetSouthCacheDatabase(id);
   }
 }
