@@ -53,12 +53,12 @@ describe('South cache service', () => {
   });
 
   it('should reset cache', () => {
-    service.resetCacheScanMode();
+    service.resetCacheScanMode('id');
     expect(service.cacheRepository.resetSouthCacheDatabase).toHaveBeenCalledTimes(1);
   });
 
   it('should reset cache', () => {
-    service.resetCacheScanMode();
+    service.resetCacheScanMode('id');
     expect(service.cacheRepository.resetSouthCacheDatabase).toHaveBeenCalledTimes(1);
   });
 });

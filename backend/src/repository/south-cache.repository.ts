@@ -73,9 +73,9 @@ export default class SouthCacheRepository {
     this._database.prepare(query).run(southId, scanModeId, itemId);
   }
 
-  resetSouthCacheDatabase(): void {
-    const query = `DELETE FROM ${SOUTH_CACHE_TABLE};`;
-    this._database.prepare(query).run();
+  resetSouthCacheDatabase(southId: string): void {
+    const query = `DELETE FROM ${SOUTH_CACHE_TABLE} WHERE south_id = ?;`;
+    this._database.prepare(query).run(southId);
   }
 
   createCustomTable(tableName: string, fields: string): void {

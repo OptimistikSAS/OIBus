@@ -80,8 +80,8 @@ describe('SouthCacheRepository', () => {
   });
 
   it('should reset cache', () => {
-    repository.resetSouthCacheDatabase();
-    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM cache_history;');
+    repository.resetSouthCacheDatabase('id');
+    expect(database.prepare).toHaveBeenCalledWith('DELETE FROM cache_history WHERE south_id = ?;');
     expect(run).toHaveBeenCalledTimes(1);
   });
 
