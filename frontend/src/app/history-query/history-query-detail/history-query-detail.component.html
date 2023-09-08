@@ -13,24 +13,30 @@
               class="btn btn-primary pull-right me-2"
               id="history-query-start"
               (click)="toggleHistoryQuery('RUNNING')"
+              [disabled]="state.isPending | async"
             >
-              <span [class]="'fa fa-play'"></span>
+              <span class="fa fa-spinner fa-spin" role="status" *ngIf="state.isPending | async"></span>
+              <span class="fa fa-play" role="status" *ngIf="(state.isPending | async) === false"></span>
             </button>
             <button
               *ngIf="historyQuery.status === 'RUNNING'"
               class="btn btn-primary pull-right me-2"
               id="history-query-pause"
               (click)="toggleHistoryQuery('PAUSED')"
+              [disabled]="state.isPending | async"
             >
-              <span [class]="'fa fa-pause'"></span>
+              <span class="fa fa-spinner fa-spin" role="status" *ngIf="state.isPending | async"></span>
+              <span class="fa fa-pause" role="status" *ngIf="(state.isPending | async) === false"></span>
             </button>
             <button
               *ngIf="historyQuery.status === 'PAUSED'"
               class="btn btn-primary pull-right me-2"
               id="history-query-unpause"
               (click)="toggleHistoryQuery('RUNNING')"
+              [disabled]="state.isPending | async"
             >
-              <span [class]="'fa fa-play'"></span>
+              <span class="fa fa-spinner fa-spin" role="status" *ngIf="state.isPending | async"></span>
+              <span class="fa fa-play" role="status" *ngIf="(state.isPending | async) === false"></span>
             </button>
           </span>
         </h1>
