@@ -12,9 +12,8 @@ AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
-AppSupportURL=https://github.com/OptimistikSAS/OIBus
+AppSupportURL=https://oibus.optimistik.com/
 AppUpdatesURL={#MyAppURL}
-AppCopyright=Copyright 2019-2022 Optimistik, all rights reserved
 ArchitecturesAllowed=x64
 Compression=lzma
 DefaultDirName=C:\Program Files\{#MyAppName}
@@ -36,28 +35,21 @@ WizardStyle=modern
 WizardSizePercent=100
 WizardResizable=no
 
-
 [Languages]
 Name: "en"; MessagesFile: "compiler:Default.isl"
-
 
 [Files]
 Source: "..\..\bin\win\oibus.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\bin\win\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\..\bin\win\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
-
 [Messages]
 WelcomeLabel2=This will install [name/ver] on your computer.%n%n%nIMPORTANT:%nInternet Explorer is NOT supported. OIBus can only be configured using an up-to-date browser, like Google Chrome, Mozilla Firefox or Microsoft Edge.
-
 
 [Code]
 var
   OverwriteConfig: boolean;
   ConfExists: boolean;
-  License2Accepted: TRadioButton;
-  License2NotAccepted: TRadioButton;
-  SecondLicensePage: TOutputMsgMemoWizardPage;
   OIBus_DataDirPage: TInputDirWizardPage;
   AfterID: Integer;
 
@@ -261,22 +253,6 @@ begin
     end
 end;
 
-// License-related functions
-procedure CheckLicense2Accepted;
-begin
-  WizardForm.NextButton.Enabled := License2Accepted.Checked;
-end;
-
-procedure License2NextButton(Sender: TObject);
-begin
-  CheckLicense2Accepted;
-end;
-
-procedure License2Active(Sender: TWizardPage);
-begin
-  CheckLicense2Accepted;
-end;
-
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   Dir: string;
@@ -328,32 +304,8 @@ begin
 end;
 
 procedure InitializeWizard();
-var
-  LicenseFilePath: string;
 begin
   AfterID := wpSelectTasks;
-  // Create second license page, with the same labels as the original license page
-  SecondLicensePage := CreateOutputMsgMemoPage(wpLicense, SetupMessage(msgWizardLicense),
-                        SetupMessage(msgLicenseLabel), SetupMessage(msgLicenseLabel3), '');
-  // Load license
-  ExtractTemporaryFile('OPC REDISTRIBUTABLES Agreement of Use.md');
-  LicenseFilePath := ExpandConstant('{tmp}\' + 'OPC REDISTRIBUTABLES Agreement of Use.md');
-  SecondLicensePage.RichEditViewer.Lines.LoadFromFile(LicenseFilePath);
-  SecondLicensePage.RichEditViewer.Height := WizardForm.LicenseMemo.Height;
-  SecondLicensePage.OnActivate := @License2Active;
-  License2Accepted := TRadioButton.Create(WizardForm);
-  License2Accepted.Top := WizardForm.LicenseAcceptedRadio.Top;
-  License2Accepted.Width := WizardForm.LicenseAcceptedRadio.Width;
-  License2Accepted.Parent := SecondLicensePage.Surface;
-  License2Accepted.Caption := SetupMessage(msgLicenseAccepted);
-  License2NotAccepted := TRadioButton.Create(WizardForm);
-  License2NotAccepted.Top := WizardForm.LicenseNotAcceptedRadio.Top;
-  License2NotAccepted.Width := WizardForm.LicenseNotAcceptedRadio.Width;
-  License2NotAccepted.Parent := SecondLicensePage.Surface;
-  License2NotAccepted.Caption := SetupMessage(msgLicenseNotAccepted);
-  License2NotAccepted.Checked := True;
-  License2NotAccepted.OnClick := @License2NextButton;
-  License2Accepted.OnClick := @License2NextButton;
   // Page for user input : OIBus_Data folder-path
   OIBus_DataDirPage := CreateInputDirPage(AfterID, 'Select OIBus data-directory', 'Where do you want to save your OIBus-related data (configuration, cache, logs...) ?', '', False, 'OIBusData');
   OIBus_DataDirPage.Add('&To continue, click Next. If you would like to select a different folder, click Browse.');
