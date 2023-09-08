@@ -1,5 +1,24 @@
 # Changelog
 
+## [3.0.1](https://github.com/OptimistikSAS/OIBus/compare/v3.0.0...v3.0.1) (2023-09-08)
+
+
+### Bug Fixes
+
+* **about:** Small rework of about page ([1d1eac5](https://github.com/OptimistikSAS/OIBus/commit/1d1eac592d6eee4b084181a991b08696eb653ba9))
+* **connector:** Fix test connection modal wording ([8f04334](https://github.com/OptimistikSAS/OIBus/commit/8f04334f517fa663a17b11f639b7f872f23f3585))
+* **connectors:** filter up-to-date connectors only ([0e5f40d](https://github.com/OptimistikSAS/OIBus/commit/0e5f40d9b83d4388c3973a40c71dc5b658cddfa0))
+* **folder-scanner:** Do not need write access and test if directory ([c916046](https://github.com/OptimistikSAS/OIBus/commit/c916046f8be4ea2d88ae459811a0cc6062fc7ea9))
+* **history-query:** Fix cache reset ([0bebc40](https://github.com/OptimistikSAS/OIBus/commit/0bebc408d94ac7f4fdb22991ac469e09a1afd432))
+* **history-query:** Fix History Query metrics display ([b53822b](https://github.com/OptimistikSAS/OIBus/commit/b53822be3c45860c770298f675f8ee2161e87564))
+* **history-query:** Fix history query status update in engine ([ee3c24a](https://github.com/OptimistikSAS/OIBus/commit/ee3c24a8d447d1b78ebe5e3f9737f855458cbf1d))
+* **history-query:** Fix toggle button feedback ([6b44f85](https://github.com/OptimistikSAS/OIBus/commit/6b44f850abcd9eb0dcbee94f919fa622a7217b2c))
+* **history-query:** Fix toggle button feedback on history queries list ([2e13a92](https://github.com/OptimistikSAS/OIBus/commit/2e13a924a89d303fe2b7fb56a4f27f5715c2f43d))
+* **history-query:** update history query status ([f2492bd](https://github.com/OptimistikSAS/OIBus/commit/f2492bd10ead15c02f7e8ada9dced73b2e35e234))
+* **item:** Fix item edit form when same name ([dee29b6](https://github.com/OptimistikSAS/OIBus/commit/dee29b6245cbcc84ea9931b9eb79e5c2c47f489a))
+* **migration:** Migrate to latest ([d73b4d1](https://github.com/OptimistikSAS/OIBus/commit/d73b4d167b7efdeb32ed6e2738b20aa9157c52cb))
+* **win-setup:** Fix Windows installer license ([6b2ae75](https://github.com/OptimistikSAS/OIBus/commit/6b2ae75212579cc59a7ae60103a3cb64b179603e))
+
 ## [3.0.0](https://github.com/OptimistikSAS/OIBus/compare/v2.9.1...v3.0.0) (2023-09-05)
 
 
