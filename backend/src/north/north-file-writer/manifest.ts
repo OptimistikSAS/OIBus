@@ -7,7 +7,8 @@ const manifest: NorthConnectorManifest = {
   description: 'Write files and values into an output folder',
   modes: {
     files: true,
-    points: true
+    points: true,
+    items: false
   },
   settings: [
     {
