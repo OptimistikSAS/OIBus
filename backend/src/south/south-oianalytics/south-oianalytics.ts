@@ -76,9 +76,9 @@ export default class SouthOIAnalytics
       `${this.connector.settings.accessKey}:${await this.encryptionService.decryptText(this.connector.settings.secretKey!)}`
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
-    const requestUrl = `${this.connector.settings.host}/info`;
+    const requestUrl = `${this.connector.settings.host}/api/optimistik/oibus/status`;
     const fetchOptions: RequestInit = {
-      method: 'POST',
+      method: 'GET',
       headers,
       agent: createProxyAgent(
         this.connector.settings.useProxy,

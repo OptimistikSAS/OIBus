@@ -19,7 +19,8 @@ jest.mock('../../service/utils', () => ({
   formatInstant: jest.fn((instant: string) => instant),
   persistResults: jest.fn(),
   createFolder: jest.fn(),
-  formatQueryParams: jest.fn()
+  formatQueryParams: jest.fn(),
+  getOIBusInfo: jest.fn()
 }));
 
 // Mock node-fetch
@@ -307,9 +308,9 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
     });
 
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
-    expect(fetch).toHaveBeenCalledWith('https://localhost:4200/info', {
+    expect(fetch).toHaveBeenCalledWith('https://localhost:4200/api/optimistik/oibus/status', {
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-      method: 'POST'
+      method: 'GET'
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -510,10 +511,10 @@ describe('SouthOIAnalytics with proxy', () => {
     });
 
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
-    expect(fetch).toHaveBeenCalledWith('http://localhost:4200/info', {
+    expect(fetch).toHaveBeenCalledWith('http://localhost:4200/api/optimistik/oibus/status', {
       agent: fakeAgent,
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-      method: 'POST'
+      method: 'GET'
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -583,10 +584,10 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
     });
 
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
-    expect(fetch).toHaveBeenCalledWith('http://localhost:4200/info', {
+    expect(fetch).toHaveBeenCalledWith('http://localhost:4200/api/optimistik/oibus/status', {
       agent: fakeAgent,
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-      method: 'POST'
+      method: 'GET'
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });

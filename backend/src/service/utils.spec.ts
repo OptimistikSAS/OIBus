@@ -2,6 +2,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import fsSync, { Dirent, Stats } from 'node:fs';
 import zlib from 'node:zlib';
+import { version } from '../../package.json';
 
 import minimist from 'minimist';
 
@@ -20,6 +21,7 @@ import {
   generateRandomId,
   generateReplacementParameters,
   getCommandLineArguments,
+  getOIBusInfo,
   httpGetWithBody,
   logQuery,
   persistResults
@@ -31,6 +33,7 @@ import { DateTimeType } from '../../../shared/model/types';
 import Stream from 'node:stream';
 import http from 'node:http';
 import https from 'node:https';
+import os from 'node:os';
 
 jest.mock('node:zlib');
 jest.mock('node:fs/promises');
@@ -825,5 +828,19 @@ describe('Service utils', () => {
       });
       await expect(httpGetWithBody('body', { protocol: 'https:' })).rejects.toThrowError('Unexpected token s in JSON at position 0');
     });
+  });
+
+  it('should get OIBus info', () => {
+    const expectedResult = {
+      architecture: process.arch,
+      binaryDirectory: process.execPath,
+      dataDirectory: process.cwd(),
+      hostname: os.hostname(),
+      operatingSystem: `${os.type()} ${os.release()}`,
+      processId: process.pid.toString(),
+      version: version
+    };
+    const result = getOIBusInfo();
+    expect(result).toEqual(expectedResult);
   });
 });

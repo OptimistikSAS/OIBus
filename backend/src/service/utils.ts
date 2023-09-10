@@ -11,6 +11,9 @@ import pino from 'pino';
 import csv from 'papaparse';
 import https from 'node:https';
 import http from 'node:http';
+import { OIBusInfo } from '../../../shared/model/engine.model';
+import os from 'node:os';
+import { version } from '../../package.json';
 
 const COMPRESSION_LEVEL = 9;
 
@@ -388,3 +391,15 @@ export const httpGetWithBody = (body: string, options: any): Promise<any> =>
     req.write(body);
     req.end();
   });
+
+export const getOIBusInfo = (): OIBusInfo => {
+  return {
+    dataDirectory: process.cwd(),
+    binaryDirectory: process.execPath,
+    processId: process.pid.toString(),
+    hostname: os.hostname(),
+    operatingSystem: `${os.type()} ${os.release()}`,
+    architecture: process.arch,
+    version
+  };
+};

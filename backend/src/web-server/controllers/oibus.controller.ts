@@ -1,6 +1,7 @@
 import { KoaContext } from '../koa';
 import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../shared/model/engine.model';
 import AbstractController from './abstract.controller';
+import { getOIBusInfo } from '../../service/utils';
 
 export default class OibusController extends AbstractController {
   async getEngineSettings(ctx: KoaContext<void, EngineSettingsDTO>): Promise<void> {
@@ -50,7 +51,7 @@ export default class OibusController extends AbstractController {
   }
 
   async getOIBusInfo(ctx: KoaContext<void, OIBusInfo>): Promise<void> {
-    const oibusInfo = ctx.app.oibusService.getOIBusInfo();
+    const oibusInfo = getOIBusInfo();
     ctx.ok(oibusInfo);
   }
 
