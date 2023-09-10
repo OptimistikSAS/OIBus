@@ -3,7 +3,7 @@ import WebServer from './web-server/web-server';
 import LoggerService from './service/logger/logger.service';
 import EncryptionService from './service/encryption.service';
 
-import { createFolder, getCommandLineArguments } from './service/utils';
+import { createFolder, getCommandLineArguments, getOIBusInfo } from './service/utils';
 import RepositoryService from './service/repository.service';
 import ReloadService from './service/reload.service';
 import EngineMetricsService from './service/engine-metrics.service';
@@ -149,6 +149,6 @@ const LOG_DB_NAME = 'logs.db';
     });
   });
 
-  loggerService.logger!.info(`OIBus fully started: ${JSON.stringify(oibusService.getOIBusInfo())}`);
-  console.info(`OIBus fully started: ${JSON.stringify(oibusService.getOIBusInfo())}`);
+  loggerService.logger!.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo())}`);
+  console.info(`OIBus fully started: ${JSON.stringify(getOIBusInfo())}`);
 })();

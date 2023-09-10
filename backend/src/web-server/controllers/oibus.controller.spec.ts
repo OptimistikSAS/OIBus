@@ -4,8 +4,10 @@ import OibusController from './oibus.controller';
 import JoiValidator from './validators/joi.validator';
 import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import { EngineSettingsCommandDTO, EngineSettingsDTO, OIBusInfo } from '../../../../shared/model/engine.model';
+import { getOIBusInfo } from '../../service/utils';
 
 jest.mock('./validators/joi.validator');
+jest.mock('../../service/utils');
 
 const validator = new JoiValidator();
 const schema = Joi.object({});
@@ -116,8 +118,9 @@ describe('Oibus controller', () => {
   });
 
   it('should get OIBus info', async () => {
-    (ctx.app.oibusService.getOIBusInfo as jest.Mock).mockReturnValue({ version: '3.0' } as OIBusInfo);
+    (getOIBusInfo as jest.Mock).mockReturnValue({ version: '3.0' } as OIBusInfo);
     await oibusController.getOIBusInfo(ctx);
+    expect(getOIBusInfo).toHaveBeenCalledTimes(1);
     expect(ctx.ok).toHaveBeenCalledWith({ version: '3.0' });
   });
 

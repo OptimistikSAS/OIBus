@@ -10,7 +10,7 @@ import RepositoryServiceMock from '../../tests/__mocks__/repository-service.mock
 import { NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 import fetch from 'node-fetch';
-import * as utils from '../../service/utils';
+import { filesExists } from '../../service/utils';
 
 import ValueCacheServiceMock from '../../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../../tests/__mocks__/file-cache-service.mock';
@@ -119,7 +119,7 @@ describe('NorthOIAnalytics without proxy', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    (utils.filesExists as jest.Mock).mockReturnValue(true);
+    (filesExists as jest.Mock).mockReturnValue(true);
     north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
   });
@@ -130,13 +130,13 @@ describe('NorthOIAnalytics without proxy', () => {
     });
 
     await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
-    expect(fetch).toHaveBeenCalledWith('https://hostname/info', {
+    expect(fetch).toHaveBeenCalledWith('https://hostname/api/optimistik/oibus/status', {
       headers: { authorization: 'Basic YW55VXNlcjphbnlwYXNz' },
-      method: 'POST'
+      method: 'GET'
     });
     expect(createProxyAgent).toHaveBeenCalledWith(
       false,
-      `${configuration.settings.host}/info`,
+      `${configuration.settings.host}/api/optimistik/oibus/status`,
       null,
       configuration.settings.acceptUnauthorized
     );
@@ -263,7 +263,7 @@ describe('NorthOIAnalytics without proxy', () => {
   it('should properly throw error when file does not exist', async () => {
     const filePath = '/path/to/file/example.file';
 
-    (utils.filesExists as jest.Mock).mockReturnValueOnce(false);
+    (filesExists as jest.Mock).mockReturnValueOnce(false);
     let err;
     try {
       await north.handleFile(filePath);
@@ -362,7 +362,7 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    (utils.filesExists as jest.Mock).mockReturnValue(true);
+    (filesExists as jest.Mock).mockReturnValue(true);
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
     north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     await north.start();
@@ -469,7 +469,7 @@ describe('NorthOIAnalytics with proxy', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    (utils.filesExists as jest.Mock).mockReturnValue(true);
+    (filesExists as jest.Mock).mockReturnValue(true);
     (createProxyAgent as jest.Mock).mockReturnValue(fakeAgent);
 
     north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
@@ -482,14 +482,14 @@ describe('NorthOIAnalytics with proxy', () => {
     });
 
     await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
-    expect(fetch).toHaveBeenCalledWith('https://hostname/info', {
+    expect(fetch).toHaveBeenCalledWith('https://hostname/api/optimistik/oibus/status', {
       headers: { authorization: 'Basic YW55VXNlcjphbnlwYXNz' },
-      method: 'POST',
+      method: 'GET',
       agent: fakeAgent
     });
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
-      `${configuration.settings.host}/info`,
+      `${configuration.settings.host}/api/optimistik/oibus/status`,
       {
         url: configuration.settings.proxyUrl!,
         username: configuration.settings.proxyUsername!,
@@ -590,7 +590,7 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
-    (utils.filesExists as jest.Mock).mockReturnValue(true);
+    (filesExists as jest.Mock).mockReturnValue(true);
     (createProxyAgent as jest.Mock).mockReturnValue({});
 
     north = new NorthOIAnalytics(configuration, encryptionService, repositoryService, logger, 'baseFolder');
@@ -605,7 +605,7 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
-      `${configuration.settings.host}/info`,
+      `${configuration.settings.host}/api/optimistik/oibus/status`,
       {
         url: configuration.settings.proxyUrl!,
         username: configuration.settings.proxyUsername!,
