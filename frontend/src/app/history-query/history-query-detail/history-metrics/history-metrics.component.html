@@ -30,12 +30,17 @@
           <td>{{ historyMetrics.north.lastConnection | datetime:'mediumWithSeconds' }}</td>
         </tr>
         <!-- last value -->
-        <tr *ngIf="northManifest.modes.points">
+        <tr *ngIf="northManifest.modes.points && historyMetrics.north.lastValueSent">
           <td translate="history-query.monitoring.north.last-value"></td>
-          <td>{{ historyMetrics.north.lastValueSent | json }}</td>
+          <td>
+            <span
+              translate="history-query.monitoring.north.last-value-content"
+              [translateParams]="{ pointId: historyMetrics.north.lastValueSent.pointId, timestamp: historyMetrics.north.lastValueSent.timestamp, data: historyMetrics.north.lastValueSent.data | json }"
+            ></span>
+          </td>
         </tr>
         <!-- last file -->
-        <tr *ngIf="northManifest.modes.files">
+        <tr *ngIf="northManifest.modes.files && historyMetrics.north.lastFileSent">
           <td translate="history-query.monitoring.north.last-file"></td>
           <td>{{ historyMetrics.north.lastFileSent }}</td>
         </tr>
@@ -75,12 +80,17 @@
           <td>{{ historyMetrics.south.lastConnection | datetime:'mediumWithSeconds' }}</td>
         </tr>
         <!-- last value -->
-        <tr>
+        <tr *ngIf="historyMetrics.south.lastValueRetrieved">
           <td translate="history-query.monitoring.south.last-value"></td>
-          <td>{{ historyMetrics.south.lastValueRetrieved | json }}</td>
+          <td>
+            <span
+              translate="history-query.monitoring.south.last-value-content"
+              [translateParams]="{ pointId: historyMetrics.south.lastValueRetrieved.pointId, timestamp: historyMetrics.south.lastValueRetrieved.timestamp, data: historyMetrics.south.lastValueRetrieved.data | json }"
+            ></span>
+          </td>
         </tr>
         <!-- last file -->
-        <tr>
+        <tr *ngIf="historyMetrics.south.lastFileRetrieved">
           <td translate="history-query.monitoring.south.last-file"></td>
           <td>{{ historyMetrics.south.lastFileRetrieved }}</td>
         </tr>

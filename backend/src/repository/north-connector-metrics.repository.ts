@@ -29,7 +29,7 @@ export default class NorthConnectorMetricsRepository {
       `SELECT metrics_start AS metricsStart, nb_values AS numberOfValuesSent, nb_files AS numberOfFilesSent, ` +
       `last_value AS lastValueSent, last_file AS lastFileSent, last_connection AS lastConnection, last_run_start AS lastRunStart, ` +
       `last_run_duration AS lastRunDuration, cache_size AS cacheSize FROM ${NORTH_METRICS_TABLE} WHERE north_id = ?;`;
-    const result: NorthConnectorMetrics | undefined = this._database.prepare(query).get(northId) as NorthConnectorMetrics;
+    const result: any = this._database.prepare(query).get(northId);
     if (!result) return null;
     return {
       metricsStart: result.metricsStart,

@@ -23,7 +23,7 @@ class TestComponent {
     lastRunDuration: 10,
     numberOfValuesRetrieved: 11,
     numberOfFilesRetrieved: 12,
-    lastValueRetrieved: 13,
+    lastValueRetrieved: { pointId: 'pointId', timestamp: '2020-02-02T00:00:00.000Z', data: { value: '13' } },
     lastFileRetrieved: 'file',
     historyMetrics: {}
   };

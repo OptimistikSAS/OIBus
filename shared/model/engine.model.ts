@@ -106,7 +106,7 @@ export interface BaseConnectorMetrics {
 export interface NorthConnectorMetrics extends BaseConnectorMetrics {
   numberOfValuesSent: number;
   numberOfFilesSent: number;
-  lastValueSent: any | null;
+  lastValueSent: OIBusDataValue | null;
   lastFileSent: string | null;
   cacheSize: number;
 }
@@ -116,7 +116,7 @@ export interface SouthHistoryMetrics {}
 export interface SouthConnectorMetrics extends BaseConnectorMetrics {
   numberOfValuesRetrieved: number;
   numberOfFilesRetrieved: number;
-  lastValueRetrieved: any | null;
+  lastValueRetrieved: OIBusDataValue | null;
   lastFileRetrieved: string | null;
   historyMetrics: SouthHistoryMetrics;
 }

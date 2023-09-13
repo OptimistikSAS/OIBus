@@ -23,7 +23,7 @@ class TestComponent {
     lastRunDuration: 10,
     numberOfValuesSent: 11,
     numberOfFilesSent: 12,
-    lastValueSent: 13,
+    lastValueSent: { pointId: 'pointId', timestamp: '2020-02-02T00:00:00.000Z', data: { value: '13' } },
     lastFileSent: 'file',
     cacheSize: 14
   };
