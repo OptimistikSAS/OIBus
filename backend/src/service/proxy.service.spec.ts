@@ -20,11 +20,22 @@ describe('proxy service', () => {
     jest.clearAllMocks();
   });
 
-  it('should create proxy agent with HTTP', () => {
+  it('should create proxy agent with HTTP and user', () => {
     const proxyConfig: ProxyConfig = {
       url: 'http://localhost:8080',
-      username: 'my user',
-      password: 'my password'
+      username: 'user',
+      password: 'password'
+    };
+    const agent = createProxyAgent(true, 'http://target-url', proxyConfig);
+    expect(HttpProxyAgent).toHaveBeenCalledWith('http://user:password@localhost:8080');
+    expect(agent).toEqual({ host: 'http://localhost:8080' });
+  });
+
+  it('should create proxy agent with HTTP and without user', () => {
+    const proxyConfig: ProxyConfig = {
+      url: 'http://localhost:8080',
+      username: null,
+      password: null
     };
     const agent = createProxyAgent(true, 'http://target-url', proxyConfig);
     expect(HttpProxyAgent).toHaveBeenCalledWith('http://localhost:8080');
@@ -42,7 +53,20 @@ describe('proxy service', () => {
     expect(agent).toEqual({ rejectUnauthorized: false });
   });
 
-  it('should create proxy agent with HTTPS', () => {
+  it('should create proxy agent with HTTPS and with user', () => {
+    const proxyConfig: ProxyConfig = {
+      url: 'https://localhost:8080',
+      username: 'user',
+      password: 'password'
+    };
+    const agent = createProxyAgent(true, 'http://target-url', proxyConfig, true);
+    expect(HttpsProxyAgent).toHaveBeenCalledWith('https://user:password@localhost:8080', {
+      rejectUnauthorized: false
+    });
+    expect(agent).toEqual({ host: 'https://localhost:8080' });
+  });
+
+  it('should create proxy agent with HTTPS and without user', () => {
     const proxyConfig: ProxyConfig = {
       url: 'https://localhost:8080',
       username: null,
