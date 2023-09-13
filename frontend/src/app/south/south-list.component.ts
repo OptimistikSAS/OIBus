@@ -5,7 +5,7 @@ import { SouthConnectorService } from '../services/south-connector.service';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
-import { NgForOf, NgIf } from '@angular/common';
+import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ModalService } from '../shared/modal.service';
 import { ChooseSouthConnectorTypeModalComponent } from './choose-south-connector-type-modal/choose-south-connector-type-modal.component';
@@ -16,6 +16,7 @@ import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinn
 import { createPageFromArray, Page } from '../../../../shared/model/types';
 import { emptyPage } from '../shared/test-utils';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
+import { ObservableState } from '../shared/save-button/save-button.component';
 
 const PAGE_SIZE = 15;
 
@@ -32,7 +33,8 @@ const PAGE_SIZE = 15;
     FormsModule,
     LoadingSpinnerComponent,
     ReactiveFormsModule,
-    PaginationComponent
+    PaginationComponent,
+    AsyncPipe
   ],
   templateUrl: './south-list.component.html',
   styleUrls: ['./south-list.component.scss']
@@ -41,6 +43,7 @@ export class SouthListComponent implements OnInit {
   allSouths: Array<SouthConnectorDTO> | null = null;
   private filteredSouths: Array<SouthConnectorDTO> = [];
   displayedSouths: Page<SouthConnectorDTO> = emptyPage();
+  states = new Map<string, ObservableState>();
 
   searchForm = this.fb.group({
     name: [null as string | null]
@@ -57,6 +60,10 @@ export class SouthListComponent implements OnInit {
   ngOnInit() {
     this.southConnectorService.list().subscribe(souths => {
       this.allSouths = souths;
+      this.states.clear();
+      this.allSouths.forEach(south => {
+        this.states.set(south.id, new ObservableState());
+      });
       this.filteredSouths = this.filter(souths);
       this.changePage(0);
     });
@@ -89,6 +96,10 @@ export class SouthListComponent implements OnInit {
           .pipe(tap(() => (this.allSouths = null)))
           .subscribe(southList => {
             this.allSouths = southList;
+            this.states.clear();
+            this.allSouths.forEach(south => {
+              this.states.set(south.id, new ObservableState());
+            });
             this.filteredSouths = this.filter(this.allSouths);
             this.changePage(0);
           });
@@ -130,6 +141,7 @@ export class SouthListComponent implements OnInit {
       this.southConnectorService
         .startSouth(southId)
         .pipe(
+          this.states.get(southId)!.pendingUntilFinalization(),
           tap(() => {
             this.notificationService.success('south.started', { name: northName });
           }),
@@ -146,6 +158,7 @@ export class SouthListComponent implements OnInit {
       this.southConnectorService
         .stopSouth(southId)
         .pipe(
+          this.states.get(southId)!.pendingUntilFinalization(),
           tap(() => {
             this.notificationService.success('south.stopped', { name: northName });
           }),

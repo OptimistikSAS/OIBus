@@ -41,7 +41,7 @@
       <table class="mt-2 table table-sm table-hover oib-table">
         <thead>
           <tr>
-            <th style="width: 3%"></th>
+            <th translate="history-query.status" style="width: 3%"></th>
             <th translate="history-query.name"></th>
             <th translate="history-query.interval"></th>
             <th translate="history-query.description"></th>
@@ -50,43 +50,42 @@
         </thead>
         <tbody>
           <tr *ngFor="let query of displayedHistoryQueries.content">
-            <td>
-              <button
-                *ngIf="query.status === 'PENDING'"
-                class="btn btn-link"
-                id="history-query-start"
-                (click)="toggleHistoryQuery(query, 'RUNNING')"
-                [disabled]="states.get(query.id)?.isPending | async"
-              >
-                <span class="fa fa-spinner fa-spin" role="status" *ngIf="states.get(query.id)?.isPending | async"></span>
-                <span class="fa fa-play" role="status" *ngIf="(states.get(query.id)?.isPending | async) === false"></span>
-              </button>
-              <button
-                *ngIf="query.status === 'RUNNING'"
-                class="btn btn-link"
-                id="history-query-pause"
-                (click)="toggleHistoryQuery(query, 'PAUSED')"
-                [disabled]="states.get(query.id)?.isPending | async"
-              >
-                <span class="fa fa-spinner fa-spin" role="status" *ngIf="states.get(query.id)?.isPending | async"></span>
-                <span class="fa fa-pause" role="status" *ngIf="(states.get(query.id)?.isPending | async) === false"></span>
-              </button>
-              <button
-                *ngIf="query.status === 'PAUSED'"
-                class="btn btn-link"
-                id="history-query-unpause"
-                (click)="toggleHistoryQuery(query, 'RUNNING')"
-                [disabled]="states.get(query.id)?.isPending | async"
-              >
-                <span class="fa fa-spinner fa-spin" role="status" *ngIf="states.get(query.id)?.isPending | async"></span>
-                <span class="fa fa-play" role="status" *ngIf="(states.get(query.id)?.isPending | async) === false"></span>
-              </button>
-            </td>
+            <td>{{ 'enums.status.' + query.status | translate }}</td>
             <td>{{ query.name }}</td>
             <td>{{ query.startTime | datetime:'ff' }} -> {{ query.endTime | datetime:'ff' }}</td>
             <td>{{ query.description }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
+                <button
+                  *ngIf="query.status === 'PENDING'"
+                  class="btn btn-link py-0 px-1 m-0"
+                  id="history-query-start"
+                  (click)="toggleHistoryQuery(query, 'RUNNING')"
+                  [disabled]="states.get(query.id)?.isPending | async"
+                >
+                  <span class="fa fa-spinner fa-spin" role="status" *ngIf="states.get(query.id)?.isPending | async"></span>
+                  <span class="fa fa-play" role="status" *ngIf="(states.get(query.id)?.isPending | async) === false"></span>
+                </button>
+                <button
+                  *ngIf="query.status === 'RUNNING'"
+                  class="btn btn-link py-0 px-1 m-0"
+                  id="history-query-pause"
+                  (click)="toggleHistoryQuery(query, 'PAUSED')"
+                  [disabled]="states.get(query.id)?.isPending | async"
+                >
+                  <span class="fa fa-spinner fa-spin" role="status" *ngIf="states.get(query.id)?.isPending | async"></span>
+                  <span class="fa fa-pause" role="status" *ngIf="(states.get(query.id)?.isPending | async) === false"></span>
+                </button>
+                <button
+                  *ngIf="query.status === 'PAUSED'"
+                  class="btn btn-link py-0 px-1 m-0"
+                  id="history-query-unpause"
+                  (click)="toggleHistoryQuery(query, 'RUNNING')"
+                  [disabled]="states.get(query.id)?.isPending | async"
+                >
+                  <span class="fa fa-spinner fa-spin" role="status" *ngIf="states.get(query.id)?.isPending | async"></span>
+                  <span class="fa fa-play" role="status" *ngIf="(states.get(query.id)?.isPending | async) === false"></span>
+                </button>
                 <!-- Display button -->
                 <a class="btn btn-link display-history-query px-1 py-0" id="display-link" [routerLink]="[query.id]">
                   <span class="fa fa-search"></span>

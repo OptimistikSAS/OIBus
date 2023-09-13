@@ -50,26 +50,31 @@
         </thead>
         <tbody>
           <tr *ngFor="let south of displayedSouths.content">
-            <td>
-              <div class="form-check form-switch">
-                <input
-                  (click)="toggleConnector(south.id, south.name, !south.enabled)"
-                  [checked]="south.enabled"
-                  type="checkbox"
-                  class="form-check-input"
-                />
-              </div>
-            </td>
+            <td *ngIf="!south.enabled">{{ 'south.disabled' | translate }}</td>
+            <td *ngIf="south.enabled">{{ 'south.enabled' | translate }}</td>
             <td>{{ south.name }}</td>
             <td>{{ south.type }}</td>
             <td>{{ south.description }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
                 <button
-                  class="btn btn-link enable-history-query px-1 py-0"
-                  id="history-query-enabled"
+                  class="btn btn-link py-0 px-1 m-0"
+                  id="south-enable"
                   (click)="toggleConnector(south.id, south.name, !south.enabled)"
-                ></button>
+                  [disabled]="states.get(south.id)?.isPending | async"
+                >
+                  <span class="fa fa-spinner fa-spin" role="status" *ngIf="states.get(south.id)?.isPending | async"></span>
+                  <span
+                    class="fa fa-pause"
+                    role="status"
+                    *ngIf="south.enabled && (states.get(south.id)?.isPending | async) === false"
+                  ></span>
+                  <span
+                    class="fa fa-play"
+                    role="status"
+                    *ngIf="!south.enabled && (states.get(south.id)?.isPending | async) === false"
+                  ></span>
+                </button>
                 <!-- Display button -->
                 <a class="btn btn-link display-south px-1 py-0" id="display-link" [routerLink]="[south.id]">
                   <span class="fa fa-search"></span>
