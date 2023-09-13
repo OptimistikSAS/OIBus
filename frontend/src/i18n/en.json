@@ -450,6 +450,7 @@
       "last-connection": "Last connection",
       "last-file": "Last file retrieved",
       "last-value": "Last value retrieved",
+      "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
       "last-run-start": "Last run",
       "last-run-duration": "Last run duration"
     }
@@ -540,6 +541,7 @@
       "last-connection": "Last connection",
       "last-file": "Last file sent",
       "last-value": "Last value sent",
+      "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
       "last-run-start": "Last run",
       "last-run-duration": "Last run duration",
       "cache-size": "Cache size"
@@ -647,6 +649,7 @@
         "last-connection": "Last connection",
         "last-file": "Last file sent",
         "last-value": "Last value sent",
+        "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
         "last-run-start": "Last run",
         "last-run-duration": "Last run duration"
       },
@@ -660,6 +663,7 @@
         "last-connection": "Last connection",
         "last-file": "Last file retrieved",
         "last-value": "Last value retrieved",
+        "last-value-content": "{{ pointId }} at {{ timestamp }} with content {{ data }}",
         "last-run-start": "Last run",
         "last-run-duration": "Last run duration"
       }

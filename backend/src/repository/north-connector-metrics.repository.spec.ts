@@ -98,7 +98,7 @@ describe('NorthConnectorMetricsRepository', () => {
       metricsStart: '2020-02-02T02:02:02.222Z',
       numberOfValuesSent: 22,
       numberOfFilesSent: 33,
-      lastValueSent: {},
+      lastValueSent: { pointId: 'pointId', timestamp: '2020-02-02T02:02:02.222Z', data: { value: '13' } },
       lastFileSent: 'myFile',
       lastConnection: '2020-02-02T02:02:02.222Z',
       lastRunStart: '2020-02-02T02:02:02.222Z',

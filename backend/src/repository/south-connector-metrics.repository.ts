@@ -29,7 +29,7 @@ export default class SouthConnectorMetricsRepository {
       `SELECT metrics_start AS metricsStart, nb_values AS numberOfValuesRetrieved, nb_files AS numberOfFilesRetrieved, ` +
       `last_value AS lastValueRetrieved, last_file AS lastFileRetrieved, last_connection AS lastConnection, last_run_start AS lastRunStart, ` +
       `last_run_duration AS lastRunDuration FROM ${SOUTH_METRICS_TABLE} WHERE south_id = ?;`;
-    const result: SouthConnectorMetrics | undefined = this._database.prepare(query).get(southId) as SouthConnectorMetrics;
+    const result: any = this._database.prepare(query).get(southId);
     if (!result) return null;
     return {
       metricsStart: result.metricsStart,

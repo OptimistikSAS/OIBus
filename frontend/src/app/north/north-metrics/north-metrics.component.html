@@ -42,12 +42,17 @@
           <td>{{ connectorMetrics.lastConnection | datetime:'mediumWithSeconds' }}</td>
         </tr>
         <!-- last value -->
-        <tr *ngIf="manifest.modes.points">
+        <tr *ngIf="manifest.modes.points && connectorMetrics.lastValueSent">
           <td translate="north.monitoring.last-value"></td>
-          <td>{{ connectorMetrics.lastValueSent | json }}</td>
+          <td>
+            <span
+              translate="north.monitoring.last-value-content"
+              [translateParams]="{ pointId: connectorMetrics.lastValueSent.pointId, timestamp: connectorMetrics.lastValueSent.timestamp, data: connectorMetrics.lastValueSent.data | json }"
+            ></span>
+          </td>
         </tr>
         <!-- last file -->
-        <tr *ngIf="manifest.modes.files">
+        <tr *ngIf="manifest.modes.files && connectorMetrics.lastFileSent">
           <td translate="north.monitoring.last-file"></td>
           <td>{{ connectorMetrics.lastFileSent }}</td>
         </tr>

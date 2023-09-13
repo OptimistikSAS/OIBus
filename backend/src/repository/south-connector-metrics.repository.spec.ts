@@ -96,7 +96,7 @@ describe('SouthConnectorMetricsRepository', () => {
       metricsStart: '2020-02-02T02:02:02.222Z',
       numberOfValuesRetrieved: 22,
       numberOfFilesRetrieved: 33,
-      lastValueRetrieved: {},
+      lastValueRetrieved: { pointId: 'pointId', timestamp: '2020-02-02T02:02:02.222Z', data: { value: '13' } },
       lastFileRetrieved: 'myFile',
       lastConnection: '2020-02-02T02:02:02.222Z',
       lastRunStart: '2020-02-02T02:02:02.222Z',

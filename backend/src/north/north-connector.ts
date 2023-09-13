@@ -287,6 +287,12 @@ export default class NorthConnector<T extends NorthSettings = any> {
       try {
         // @ts-ignore
         await this.handleFile(this.fileBeingSent);
+        const currentMetrics = this.metricsService!.metrics;
+        this.metricsService!.updateMetrics(this.connector.id, {
+          ...currentMetrics,
+          numberOfFilesSent: currentMetrics.numberOfFilesSent + 1,
+          lastFileSent: this.fileBeingSent
+        });
         this.fileCacheService.removeFileFromQueue();
         await this.archiveService.archiveOrRemoveFile(this.fileBeingSent);
         this.fileBeingSent = null;
