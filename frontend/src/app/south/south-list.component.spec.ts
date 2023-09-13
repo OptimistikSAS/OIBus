@@ -95,12 +95,12 @@ describe('SouthListComponent', () => {
   });
 
   it('should toggle south connector', () => {
-    const toggle1 = tester.southList[0].elements('td')[0].elements('.form-check-input')[0] as TestButton;
+    const toggle1 = tester.southList[0].elements('td')[4].elements('button')[0] as TestButton;
     toggle1.click();
     expect(southConnectorService.stopSouth).toHaveBeenCalledWith('id1');
     expect(notificationService.success).toHaveBeenCalledWith('south.stopped', { name: southConnectors[0].name });
 
-    const toggle2 = tester.southList[1].elements('td')[0].elements('.form-check-input')[0] as TestButton;
+    const toggle2 = tester.southList[1].elements('td')[4].elements('button')[0] as TestButton;
     toggle2.click();
     expect(southConnectorService.startSouth).toHaveBeenCalledWith('id2');
     expect(notificationService.success).toHaveBeenCalledWith('south.started', { name: southConnectors[1].name });

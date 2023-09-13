@@ -169,6 +169,13 @@
       "TAB": "Tab",
       "NON_BREAKING_SPACE": "Space",
       "PIPE": "Pipe |"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "PAUSED": "Paused",
+      "FINISHED": "Finished",
+      "RUNNING": "Running",
+      "ABORTED": "Aborted"
     }
   },
   "nav": {
@@ -383,6 +390,7 @@
     "description": "Description",
     "status": "Status",
     "enabled": "Enabled",
+    "disabled": "Disabled",
     "started": "South connector {{ name }} started",
     "stopped": "South connector {{ name }} stopped",
     "history": {
@@ -464,6 +472,7 @@
     "description": "Description",
     "status": "Status",
     "enabled": "Enabled",
+    "disabled": "Disabled",
     "started": "North connector {{ name }} started",
     "stopped": "North connector {{ name }} stopped",
     "test-connection": {

@@ -8,7 +8,7 @@ import { NorthConnectorDTO } from '../../../../shared/model/north-connector.mode
 import { NorthConnectorService } from '../services/north-connector.service';
 import { ChooseNorthConnectorTypeModalComponent } from './choose-north-connector-type-modal/choose-north-connector-type-modal.component';
 import { RouterLink } from '@angular/router';
-import { NgForOf, NgIf } from '@angular/common';
+import { AsyncPipe, NgForOf, NgIf } from '@angular/common';
 import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinner.component';
 import { NonNullableFormBuilder } from '@angular/forms';
 import { formDirectives } from '../shared/form-directives';
@@ -16,13 +16,24 @@ import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
 import { createPageFromArray, Page } from '../../../../shared/model/types';
 import { emptyPage } from '../shared/test-utils';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
+import { ObservableState } from '../shared/save-button/save-button.component';
 
 const PAGE_SIZE = 15;
 
 @Component({
   selector: 'oib-north-list',
   standalone: true,
-  imports: [TranslateModule, RouterLink, NgIf, NgForOf, LoadingSpinnerComponent, ...formDirectives, EnabledEnumPipe, PaginationComponent],
+  imports: [
+    TranslateModule,
+    RouterLink,
+    NgIf,
+    NgForOf,
+    LoadingSpinnerComponent,
+    ...formDirectives,
+    EnabledEnumPipe,
+    PaginationComponent,
+    AsyncPipe
+  ],
   templateUrl: './north-list.component.html',
   styleUrls: ['./north-list.component.scss']
 })
@@ -30,6 +41,7 @@ export class NorthListComponent implements OnInit {
   allNorths: Array<NorthConnectorDTO> | null = null;
   private filteredNorths: Array<NorthConnectorDTO> = [];
   displayedNorths: Page<NorthConnectorDTO> = emptyPage();
+  states = new Map<string, ObservableState>();
 
   searchForm = this.fb.group({
     name: [null as string | null]
@@ -46,6 +58,10 @@ export class NorthListComponent implements OnInit {
   ngOnInit() {
     this.northConnectorService.list().subscribe(norths => {
       this.allNorths = norths;
+      this.states.clear();
+      this.allNorths.forEach(north => {
+        this.states.set(north.id, new ObservableState());
+      });
       this.filteredNorths = this.filter(norths);
       this.changePage(0);
     });
@@ -78,6 +94,10 @@ export class NorthListComponent implements OnInit {
           .pipe(tap(() => (this.allNorths = null)))
           .subscribe(norths => {
             this.allNorths = norths;
+            this.states.clear();
+            this.allNorths.forEach(north => {
+              this.states.set(north.id, new ObservableState());
+            });
             this.filteredNorths = this.filter(this.allNorths);
             this.changePage(0);
           });
@@ -119,6 +139,7 @@ export class NorthListComponent implements OnInit {
       this.northConnectorService
         .startNorth(northId)
         .pipe(
+          this.states.get(northId)!.pendingUntilFinalization(),
           tap(() => {
             this.notificationService.success('north.started', { name: northName });
           }),
@@ -135,6 +156,7 @@ export class NorthListComponent implements OnInit {
       this.northConnectorService
         .stopNorth(northId)
         .pipe(
+          this.states.get(northId)!.pendingUntilFinalization(),
           tap(() => {
             this.notificationService.success('north.stopped', { name: northName });
           }),
