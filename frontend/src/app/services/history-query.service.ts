@@ -58,9 +58,10 @@ export class HistoryQueryService {
    * @param historyQueryId - the ID of the History query
    * @param command - the new values of the selected History query
    * @param items - the new History query items
+   * @param itemIdsToDelete - The item ids to delete
    */
-  update(historyQueryId: string, command: HistoryQueryCommandDTO, items: Array<SouthConnectorItemDTO>) {
-    return this.http.put<void>(`/api/history-queries/${historyQueryId}`, { historyQuery: command, items });
+  update(historyQueryId: string, command: HistoryQueryCommandDTO, items: Array<SouthConnectorItemDTO>, itemIdsToDelete: Array<string>) {
+    return this.http.put<void>(`/api/history-queries/${historyQueryId}`, { historyQuery: command, items, itemIdsToDelete });
   }
 
   /**

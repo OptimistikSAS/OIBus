@@ -16,6 +16,7 @@ import Joi from 'joi';
 interface HistoryQueryWithItemsCommandDTO {
   historyQuery: HistoryQueryCommandDTO;
   items: Array<SouthConnectorItemDTO>;
+  itemIdsToDelete: Array<string>;
 }
 
 export default class HistoryQueryController extends AbstractController {
@@ -138,6 +139,10 @@ export default class HistoryQueryController extends AbstractController {
     try {
       await this.validator.validateSettings(southManifest.settings, historyQuery.southSettings);
       await this.validator.validateSettings(northManifest.settings, historyQuery.northSettings);
+      // Check if item settings match the item schema, throw an error otherwise
+      for (const item of ctx.request.body!.items) {
+        await this.validator.validateSettings(southManifest.items.settings, item.settings);
+      }
 
       command.southSettings = await ctx.app.encryptionService.encryptConnectorSecrets(
         command.southSettings,
@@ -150,8 +155,14 @@ export default class HistoryQueryController extends AbstractController {
         historyQuery.northSettings,
         northManifest.settings
       );
+
+      const itemsToAdd = ctx.request.body!.items.filter(item => !item.id);
+      const itemsToUpdate = ctx.request.body!.items.filter(item => item.id);
+      for (const itemId of ctx.request.body!.itemIdsToDelete) {
+        await ctx.app.reloadService.onDeleteHistoryItem(historyQuery.id, itemId);
+      }
+      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, itemsToAdd, itemsToUpdate);
       await ctx.app.reloadService.onUpdateHistoryQuerySettings(ctx.params.id, command);
-      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, ctx.request.body!.items, []);
       ctx.noContent();
     } catch (error: any) {
       ctx.badRequest(error.message);

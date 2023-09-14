@@ -68,6 +68,7 @@ export class EditSouthComponent implements OnInit {
   }> | null = null;
 
   inMemoryItems: Array<SouthConnectorItemDTO> = [];
+  inMemoryItemIdsToDelete: Array<string> = [];
 
   constructor(
     private southConnectorService: SouthConnectorService,
@@ -142,10 +143,12 @@ export class EditSouthComponent implements OnInit {
     let createOrUpdate: Observable<SouthConnectorDTO>;
     // if we are editing
     if (this.mode === 'edit') {
-      createOrUpdate = this.southConnectorService.update(this.southConnector!.id, command, this.inMemoryItems).pipe(
-        tap(() => this.notificationService.success('south.updated', { name: command.name })),
-        switchMap(() => this.southConnectorService.get(this.southConnector!.id))
-      );
+      createOrUpdate = this.southConnectorService
+        .update(this.southConnector!.id, command, this.inMemoryItems, this.inMemoryItemIdsToDelete)
+        .pipe(
+          tap(() => this.notificationService.success('south.updated', { name: command.name })),
+          switchMap(() => this.southConnectorService.get(this.southConnector!.id))
+        );
     } else {
       createOrUpdate = this.southConnectorService
         .create(command, this.inMemoryItems)
@@ -183,7 +186,8 @@ export class EditSouthComponent implements OnInit {
     }
   }
 
-  updateInMemoryItems(items: Array<SouthConnectorItemDTO>) {
+  updateInMemoryItems({ items, itemIdsToDelete }: { items: Array<SouthConnectorItemDTO>; itemIdsToDelete: Array<string> }) {
     this.inMemoryItems = items;
+    this.inMemoryItemIdsToDelete = itemIdsToDelete;
   }
 }

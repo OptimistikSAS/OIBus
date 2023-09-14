@@ -91,6 +91,7 @@ export class EditHistoryQueryComponent implements OnInit {
   }> | null = null;
 
   inMemoryItems: Array<SouthConnectorItemDTO> = [];
+  inMemoryItemIdsToDelete: Array<string> = [];
 
   constructor(
     private historyQueryService: HistoryQueryService,
@@ -258,10 +259,12 @@ export class EditHistoryQueryComponent implements OnInit {
     let createOrUpdate: Observable<HistoryQueryDTO>;
     // if we are editing
     if (this.mode === 'edit') {
-      createOrUpdate = this.historyQueryService.update(this.historyQuery!.id, command, this.inMemoryItems).pipe(
-        tap(() => this.notificationService.success('history-query.updated', { name: command.name })),
-        switchMap(() => this.historyQueryService.get(this.historyQuery!.id))
-      );
+      createOrUpdate = this.historyQueryService
+        .update(this.historyQuery!.id, command, this.inMemoryItems, this.inMemoryItemIdsToDelete)
+        .pipe(
+          tap(() => this.notificationService.success('history-query.updated', { name: command.name })),
+          switchMap(() => this.historyQueryService.get(this.historyQuery!.id))
+        );
     } else {
       createOrUpdate = this.historyQueryService
         .create(command, this.inMemoryItems, this.fromSouthId, this.fromNorthId)
@@ -272,7 +275,8 @@ export class EditHistoryQueryComponent implements OnInit {
     });
   }
 
-  updateInMemoryItems(items: Array<SouthConnectorItemDTO>) {
+  updateInMemoryItems({ items, itemIdsToDelete }: { items: Array<SouthConnectorItemDTO>; itemIdsToDelete: Array<string> }) {
     this.inMemoryItems = items;
+    this.inMemoryItemIdsToDelete = itemIdsToDelete;
   }
 }

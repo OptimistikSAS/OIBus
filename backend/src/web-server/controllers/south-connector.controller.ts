@@ -144,6 +144,10 @@ export default class SouthConnectorController {
       }
 
       await this.validator.validateSettings(manifest.settings, command!.settings);
+      // Check if item settings match the item schema, throw an error otherwise
+      for (const item of ctx.request.body!.items) {
+        await this.validator.validateSettings(manifest.items.settings, item.settings);
+      }
 
       const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
       if (!southConnector) {
@@ -156,7 +160,12 @@ export default class SouthConnectorController {
         manifest.settings
       );
 
-      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, ctx.request.body!.items, []);
+      const itemsToAdd = ctx.request.body!.items.filter(item => !item.id);
+      const itemsToUpdate = ctx.request.body!.items.filter(item => item.id);
+      for (const itemId of ctx.request.body!.itemIdsToDelete) {
+        await ctx.app.reloadService.onDeleteSouthItem(itemId);
+      }
+      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, itemsToAdd, itemsToUpdate);
       await ctx.app.reloadService.onUpdateSouth(ctx.params.id, command);
       ctx.noContent();
     } catch (error: any) {

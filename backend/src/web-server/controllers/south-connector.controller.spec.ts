@@ -264,7 +264,7 @@ describe('South connector controller', () => {
   });
 
   it('updateSouthConnector() should update South connector', async () => {
-    ctx.request.body = { south: { ...southConnectorCommand }, items: [] };
+    ctx.request.body = { south: { ...southConnectorCommand }, items: [{}], itemIdsToDelete: ['id1'] };
     ctx.params.id = 'id';
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
@@ -279,6 +279,7 @@ describe('South connector controller', () => {
       southTestManifest.settings
     );
     expect(ctx.app.reloadService.onUpdateSouth).toHaveBeenCalledWith('id', southConnectorCommand);
+    expect(ctx.app.reloadService.onDeleteSouthItem).toHaveBeenCalledWith('id1');
     expect(ctx.noContent).toHaveBeenCalled();
   });
 

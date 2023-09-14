@@ -50,10 +50,11 @@ export class HistoryQueryItemsComponent implements OnInit {
   @Input() historyQuery: HistoryQueryDTO | null = null;
   @Input() southConnectorItemSchema!: SouthConnectorItemManifest;
   @Input() initItems: Array<SouthConnectorItemDTO> = [];
-  @Output() readonly inMemoryItems = new EventEmitter<Array<SouthConnectorItemDTO>>();
+  @Output() readonly inMemoryItems = new EventEmitter<{ items: Array<SouthConnectorItemDTO>; itemIdsToDelete: Array<string> }>();
   @Input() inMemory = false;
 
   allItems: Array<SouthConnectorItemDTO> = [];
+  itemIdsToDelete: Array<string> = [];
   private filteredItems: Array<SouthConnectorItemDTO> = [];
   displayedItems: Page<SouthConnectorItemDTO> = emptyPage();
   displaySettings: Array<OibFormControl> = [];
@@ -93,7 +94,7 @@ export class HistoryQueryItemsComponent implements OnInit {
     } else {
       this.filteredItems = this.filter(this.allItems);
       this.changePage(0);
-      this.inMemoryItems.emit(this.allItems);
+      this.inMemoryItems.emit({ items: this.allItems, itemIdsToDelete: this.itemIdsToDelete });
     }
   }
 
@@ -150,7 +151,9 @@ export class HistoryQueryItemsComponent implements OnInit {
       )
       .subscribe(() => {
         this.fetchItemsAndResetPage(this.inMemory);
-        this.notificationService.success(`history-query.items.created`);
+        if (!this.inMemory) {
+          this.notificationService.success(`history-query.items.created`);
+        }
       });
   }
 
@@ -161,12 +164,6 @@ export class HistoryQueryItemsComponent implements OnInit {
     modalRef.result
       .pipe(
         switchMap((command: SouthConnectorItemCommandDTO) => {
-          if (!this.inMemory) {
-            return this.historyQueryService.updateItem(this.historyQuery!.id, command.id || '', command);
-          } else {
-            this.allItems.push({ id: '', connectorId: '', ...command });
-            return of(null);
-          }
           if (!this.inMemory) {
             return this.historyQueryService.updateItem(this.historyQuery!.id, command.id || '', command);
           } else {
@@ -184,7 +181,9 @@ export class HistoryQueryItemsComponent implements OnInit {
       )
       .subscribe(() => {
         this.fetchItemsAndResetPage(this.inMemory);
-        this.notificationService.success(`history-query.items.updated`);
+        if (!this.inMemory) {
+          this.notificationService.success(`history-query.items.updated`);
+        }
       });
   }
 
@@ -201,14 +200,21 @@ export class HistoryQueryItemsComponent implements OnInit {
           if (!this.inMemory) {
             return this.historyQueryService.deleteItem(this.historyQuery!.id, item.id);
           } else {
-            this.allItems = this.allItems.filter(element => element.name !== item.name);
+            if (item.id) {
+              this.itemIdsToDelete.push(item.id);
+              this.allItems = this.allItems.filter(element => element.id !== item.id);
+            } else {
+              this.allItems = this.allItems.filter(element => element.name !== item.name);
+            }
             return of(null);
           }
         })
       )
       .subscribe(() => {
         this.fetchItemsAndResetPage(this.inMemory);
-        this.notificationService.success('history-query.items.deleted');
+        if (!this.inMemory) {
+          this.notificationService.success('history-query.items.deleted');
+        }
       });
   }
 
@@ -241,6 +247,7 @@ export class HistoryQueryItemsComponent implements OnInit {
           if (!this.inMemory) {
             return this.historyQueryService.deleteAllItems(this.historyQuery!.id);
           } else {
+            this.itemIdsToDelete = [...this.itemIdsToDelete, ...this.allItems.filter(item => item.id).map(item => item.id)];
             this.allItems = [];
             return of(null);
           }
@@ -248,7 +255,9 @@ export class HistoryQueryItemsComponent implements OnInit {
       )
       .subscribe(() => {
         this.fetchItemsAndResetPage(this.inMemory);
-        this.notificationService.success('history-query.items.all-deleted');
+        if (!this.inMemory) {
+          this.notificationService.success('history-query.items.all-deleted');
+        }
       });
   }
 

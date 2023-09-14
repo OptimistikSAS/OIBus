@@ -75,9 +75,16 @@ export class SouthConnectorService {
    * Update the selected South connector
    * @param southId - the ID of the South connector
    * @param command - the new values of the selected South connector
+   * @param items - The items to create or update
+   * @param itemIdsToDelete - The item ids to delete
    */
-  update(southId: string, command: SouthConnectorCommandDTO<any>, items: Array<SouthConnectorItemDTO<any>>) {
-    return this.http.put<void>(`/api/south/${southId}`, { south: command, items });
+  update(
+    southId: string,
+    command: SouthConnectorCommandDTO<any>,
+    items: Array<SouthConnectorItemDTO<any>>,
+    itemIdsToDelete: Array<string>
+  ) {
+    return this.http.put<void>(`/api/south/${southId}`, { south: command, items, itemIdsToDelete });
   }
 
   /**
