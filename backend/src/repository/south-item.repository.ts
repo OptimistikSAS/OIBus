@@ -174,13 +174,12 @@ export default class SouthItemRepository {
     const update = this.database.prepare(`UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`);
 
     const transaction = this.database.transaction(() => {
-      for (const item of itemsToAdd) {
-        const id = generateRandomId(6);
-
-        insert.run(id, item.name, 1, southId, item.scanModeId, JSON.stringify(item.settings));
-      }
       for (const item of itemsToUpdate) {
         update.run(item.name, item.scanModeId, JSON.stringify(item.settings), item.id);
+      }
+      for (const item of itemsToAdd) {
+        const id = generateRandomId(6);
+        insert.run(id, item.name, 1, southId, item.scanModeId, JSON.stringify(item.settings));
       }
     });
     transaction();

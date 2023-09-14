@@ -51,6 +51,7 @@ export interface SouthConnectorCommandDTO<T = any> {
 export interface SouthConnectorWithItemsCommandDTO<> {
   south: SouthConnectorDTO;
   items: Array<SouthConnectorItemDTO>;
+  itemIdsToDelete: Array<string>;
 }
 
 /**

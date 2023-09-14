@@ -54,9 +54,10 @@ export class SouthItemsComponent implements OnInit {
   @Input({ required: true }) scanModes!: Array<ScanModeDTO>;
   @Input() inMemory = false;
 
-  @Output() readonly inMemoryItems = new EventEmitter<Array<SouthConnectorItemDTO>>();
+  @Output() readonly inMemoryItems = new EventEmitter<{ items: Array<SouthConnectorItemDTO>; itemIdsToDelete: Array<string> }>();
 
   allItems: Array<SouthConnectorItemDTO> = [];
+  itemIdsToDelete: Array<string> = [];
   private filteredItems: Array<SouthConnectorItemDTO> = [];
   displayedItems: Page<SouthConnectorItemDTO> = emptyPage();
   displaySettings: Array<OibFormControl> = [];
@@ -93,7 +94,7 @@ export class SouthItemsComponent implements OnInit {
     } else {
       this.filteredItems = this.filter(this.allItems);
       this.changePage(0);
-      this.inMemoryItems.emit(this.allItems);
+      this.inMemoryItems.emit({ items: this.allItems, itemIdsToDelete: this.itemIdsToDelete });
     }
   }
 
@@ -199,7 +200,12 @@ export class SouthItemsComponent implements OnInit {
           if (!this.inMemory) {
             return this.southConnectorService.deleteItem(this.southConnector!.id, item.id);
           } else {
-            this.allItems = this.allItems.filter(element => element.name !== item.name);
+            if (item.id) {
+              this.itemIdsToDelete.push(item.id);
+              this.allItems = this.allItems.filter(element => element.id !== item.id);
+            } else {
+              this.allItems = this.allItems.filter(element => element.name !== item.name);
+            }
             return of(null);
           }
         })
@@ -241,6 +247,7 @@ export class SouthItemsComponent implements OnInit {
           if (!this.inMemory) {
             return this.southConnectorService.deleteAllItems(this.southConnector!.id);
           } else {
+            this.itemIdsToDelete = [...this.itemIdsToDelete, ...this.allItems.filter(item => item.id).map(item => item.id)];
             this.allItems = [];
             return of(null);
           }

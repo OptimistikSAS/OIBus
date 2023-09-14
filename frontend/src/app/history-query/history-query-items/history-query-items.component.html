@@ -19,13 +19,13 @@
           class="btn btn-primary btn-sm"
           id="export-items"
           (click)="exportItems()"
-          *ngIf="this.historyQuery"
+          *ngIf="!this.inMemory"
           translate="south.items.export"
         ></button>
         <button
           type="button"
           class="btn btn-primary btn-sm"
-          *ngIf="this.historyQuery"
+          *ngIf="!this.inMemory"
           (click)="fileInput.click()"
           (drop)="onImportDrop($event)"
           (dragover)="onImportDragOver($event)"
