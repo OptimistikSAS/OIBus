@@ -1,5 +1,18 @@
 # Changelog
 
+## [3.0.2](https://github.com/OptimistikSAS/OIBus/compare/v3.0.1...v3.0.2) (2023-09-17)
+
+
+### Bug Fixes
+
+* **connectors-oia:** Fix test command for South and North OIA connectors ([941792e](https://github.com/OptimistikSAS/OIBus/commit/941792e6f34e541cf7a5449e0fd2cab3216a7ecf))
+* **connectors:** Fix connector metrics ([e26f334](https://github.com/OptimistikSAS/OIBus/commit/e26f3344e3325a8fed3495fb4e0d1141802dfa1b))
+* **connectors:** Harmonize status display for connectors and history queries ([ce504b8](https://github.com/OptimistikSAS/OIBus/commit/ce504b8f2107e47fe799680ffee03dea2551b518))
+* **proxy:** Fix HTTP(S) proxy with user ([8db1bff](https://github.com/OptimistikSAS/OIBus/commit/8db1bff4dc651d5f300efb1e460e56517396449c))
+* **south:** Fix ODBC serialization ([ffade20](https://github.com/OptimistikSAS/OIBus/commit/ffade207599ea7c4340f29e49fdae38a577b7900))
+* **south:** Fix south items deletion ([f1c8546](https://github.com/OptimistikSAS/OIBus/commit/f1c8546baddb4f1ec17813f67f6972d9b434face))
+* **south:** Remove required attribute for form arrays ([9eb6f07](https://github.com/OptimistikSAS/OIBus/commit/9eb6f07d7a27800e211a56090bdf06342795131a))
+
 ## [3.0.1](https://github.com/OptimistikSAS/OIBus/compare/v3.0.0...v3.0.1) (2023-09-08)
 
 
