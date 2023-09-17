@@ -205,21 +205,15 @@ export const persistResults = async (
     case 'json':
       await addValueFn(data);
       break;
-    case 'csv':
-      const options = {
-        header: true,
-        delimiter: convertDelimiter(serializationSettings.delimiter)
-      };
+    case 'file':
       const filePath = path.join(
         baseFolder,
         serializationSettings.filename
           .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
           .replace('@ConnectorName', connectorName)
       );
-      const csvContent = csv.unparse(data, options);
-
-      logger.debug(`Writing ${csvContent.length} bytes into file at "${filePath}"`);
-      await fs.writeFile(filePath, csvContent);
+      logger.debug(`Writing ${data.length} bytes into file at "${filePath}"`);
+      await fs.writeFile(filePath, data);
 
       if (serializationSettings.compression) {
         // Compress and send the compressed file
@@ -249,6 +243,53 @@ export const persistResults = async (
           logger.trace(`File ${filePath} deleted`);
         } catch (unlinkError) {
           logger.error(`Error when deleting file "${filePath}" after caching it. ${unlinkError}`);
+        }
+      }
+      break;
+    case 'csv':
+      const options = {
+        header: true,
+        delimiter: convertDelimiter(serializationSettings.delimiter)
+      };
+      const csvPath = path.join(
+        baseFolder,
+        serializationSettings.filename
+          .replace('@CurrentDate', DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
+          .replace('@ConnectorName', connectorName)
+      );
+      const csvContent = csv.unparse(data, options);
+
+      logger.debug(`Writing ${csvContent.length} bytes into CSV file at "${csvPath}"`);
+      await fs.writeFile(csvPath, csvContent);
+
+      if (serializationSettings.compression) {
+        // Compress and send the compressed file
+        const gzipPath = `${csvPath}.gz`;
+        await compress(csvPath, gzipPath);
+
+        try {
+          await fs.unlink(csvPath);
+          logger.info(`CSV file "${csvPath}" compressed and deleted`);
+        } catch (unlinkError) {
+          logger.error(`Error when deleting CSV file "${csvPath}" after compression. ${unlinkError}`);
+        }
+
+        logger.debug(`Sending compressed CSV file "${gzipPath}" to Engine`);
+        await addFileFn(gzipPath);
+        try {
+          await fs.unlink(gzipPath);
+          logger.trace(`CSV file "${gzipPath}" deleted`);
+        } catch (unlinkError) {
+          logger.error(`Error when deleting compressed CSV file "${gzipPath}" after caching it. ${unlinkError}`);
+        }
+      } else {
+        logger.debug(`Sending CSV file "${csvPath}" to Engine`);
+        await addFileFn(csvPath);
+        try {
+          await fs.unlink(csvPath);
+          logger.trace(`CSV file ${csvPath} deleted`);
+        } catch (unlinkError) {
+          logger.error(`Error when deleting CSV file "${csvPath}" after caching it. ${unlinkError}`);
         }
       }
       break;
