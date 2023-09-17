@@ -328,7 +328,28 @@ describe('Service utils', () => {
         jest.clearAllMocks();
         (csv.unparse as jest.Mock).mockReturnValue('csv content');
       });
+
       it('should properly write results without compression', async () => {
+        await persistResults(
+          dataToWrite,
+          {
+            type: 'file',
+            filename: 'myFilename.csv',
+            compression: false
+          },
+          'connectorName',
+          'myTmpFolder',
+          addFile,
+          addValues,
+          logger
+        );
+        const filePath = path.join('myTmpFolder', 'myFilename.csv');
+        expect(addFile).toHaveBeenCalledWith(filePath);
+        expect(fs.unlink).toHaveBeenCalledWith(filePath);
+        expect(fs.unlink).toHaveBeenCalledTimes(1);
+      });
+
+      it('should properly write results into CSV without compression', async () => {
         await persistResults(
           dataToWrite,
           {
@@ -351,7 +372,7 @@ describe('Service utils', () => {
         expect(fs.unlink).toHaveBeenCalledTimes(1);
       });
 
-      it('should properly write results without compression and log unlink errors', async () => {
+      it('should properly write results into CSV without compression and log unlink errors', async () => {
         (fs.unlink as jest.Mock).mockImplementation(() => {
           throw new Error('unlink error');
         });
@@ -364,6 +385,32 @@ describe('Service utils', () => {
             compression: false,
             outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
             outputTimezone: 'UTC'
+          },
+          'connectorName',
+          'myTmpFolder',
+          addFile,
+          addValues,
+          logger
+        );
+        const filePath = path.join('myTmpFolder', 'myFilename.csv');
+        expect(addFile).toHaveBeenCalledWith(filePath);
+        expect(fs.unlink).toHaveBeenCalledWith(filePath);
+        expect(fs.unlink).toHaveBeenCalledTimes(1);
+        expect(logger.error).toHaveBeenCalledWith(
+          `Error when deleting CSV file "${filePath}" after caching it. ${new Error('unlink error')}`
+        );
+      });
+
+      it('should properly write results without compression and log unlink errors', async () => {
+        (fs.unlink as jest.Mock).mockImplementation(() => {
+          throw new Error('unlink error');
+        });
+        await persistResults(
+          dataToWrite,
+          {
+            type: 'file',
+            filename: 'myFilename.csv',
+            compression: false
           },
           'connectorName',
           'myTmpFolder',
@@ -405,7 +452,7 @@ describe('Service utils', () => {
         (zlib.createGzip as jest.Mock).mockReturnValue({});
       });
 
-      it('should properly persists results into file', async () => {
+      it('should properly persists results into CSV file', async () => {
         await persistResults(
           dataToWrite,
           {
@@ -429,16 +476,32 @@ describe('Service utils', () => {
         expect(fs.unlink).toHaveBeenCalledTimes(2);
       });
 
+      it('should properly persists results into file', async () => {
+        await persistResults(
+          dataToWrite,
+          {
+            type: 'file',
+            filename: 'myFilename.csv',
+            compression: true
+          },
+          'connectorName',
+          'myTmpFolder',
+          addFile,
+          addValues,
+          logger
+        );
+        const filePath = path.join('myTmpFolder', 'myFilename.csv');
+        expect(addFile).toHaveBeenCalledWith(`${filePath}.gz`);
+        expect(fs.unlink).toHaveBeenCalledWith(filePath);
+        expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
+        expect(fs.unlink).toHaveBeenCalledTimes(2);
+      });
+
       it('should properly persists results into values', async () => {
         await persistResults(
           dataToWrite,
           {
-            type: 'json',
-            filename: '',
-            compression: false,
-            delimiter: 'COMMA',
-            outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
-            outputTimezone: 'UTC'
+            type: 'json'
           },
           'connectorName',
           'myTmpFolder',
@@ -449,7 +512,7 @@ describe('Service utils', () => {
         expect(addValues).toHaveBeenCalledWith(dataToWrite);
       });
 
-      it('should properly persists results into file and log unlink errors', async () => {
+      it('should properly persists results into CSV file and log unlink errors', async () => {
         (fs.unlink as jest.Mock).mockImplementation(() => {
           throw new Error('unlink error');
         });
@@ -462,6 +525,35 @@ describe('Service utils', () => {
             compression: true,
             outputTimestampFormat: 'yyyy-MM-ddTHH:mm:ss.SSS',
             outputTimezone: 'UTC'
+          },
+          'connectorName',
+          'myTmpFolder',
+          addFile,
+          addValues,
+          logger
+        );
+        const filePath = path.join('myTmpFolder', 'myFilename.csv');
+        expect(logger.error).toHaveBeenCalledTimes(2);
+        expect(logger.error).toHaveBeenCalledWith(`Error when deleting CSV file "${filePath}" after compression. Error: unlink error`);
+        expect(logger.error).toHaveBeenCalledWith(
+          `Error when deleting compressed CSV file "${filePath}.gz" after caching it. Error: unlink error`
+        );
+        expect(addFile).toHaveBeenCalledWith(`${filePath}.gz`);
+        expect(fs.unlink).toHaveBeenCalledWith(filePath);
+        expect(fs.unlink).toHaveBeenCalledWith(`${filePath}.gz`);
+        expect(fs.unlink).toHaveBeenCalledTimes(2);
+      });
+
+      it('should properly persists results into file and log unlink errors', async () => {
+        (fs.unlink as jest.Mock).mockImplementation(() => {
+          throw new Error('unlink error');
+        });
+        await persistResults(
+          dataToWrite,
+          {
+            type: 'file',
+            filename: 'myFilename.csv',
+            compression: true
           },
           'connectorName',
           'myTmpFolder',

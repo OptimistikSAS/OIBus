@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import SouthConnector from '../south-connector';
 import manifest from './manifest';
-import { convertDateTimeToInstant, createFolder, formatInstant, logQuery, persistResults } from '../../service/utils';
+import { convertDateTimeToInstant, convertDelimiter, createFolder, formatInstant, logQuery, persistResults } from '../../service/utils';
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import EncryptionService from '../../service/encryption.service';
 import RepositoryService from '../../service/repository.service';
@@ -248,7 +248,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
         timeColumn: referenceTimestampField?.fieldName,
         datasourceTimestampFormat: referenceTimestampField?.format,
         datasourceTimezone: referenceTimestampField?.timezone,
-        delimiter: item.settings.serialization.delimiter,
+        delimiter: convertDelimiter(item.settings.serialization.delimiter),
         outputTimestampFormat: item.settings.serialization.outputTimestampFormat,
         outputTimezone: item.settings.serialization.outputTimezone
       }),
@@ -267,7 +267,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       if (result.content.length > 0) {
         await persistResults(
           result.content,
-          item.settings.serialization,
+          { type: 'file', filename: item.settings.serialization.filename, compression: item.settings.serialization.compression },
           this.connector.name,
           this.tmpFolder,
           this.addFile.bind(this),

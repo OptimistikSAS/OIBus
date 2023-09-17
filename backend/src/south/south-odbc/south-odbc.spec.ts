@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import SouthODBC from './south-odbc';
 import * as utils from '../../service/utils';
-import { convertDateTimeToInstant, formatInstant, persistResults } from '../../service/utils';
+import { convertDateTimeToInstant, convertDelimiter, formatInstant, persistResults } from '../../service/utils';
 import DatabaseMock from '../../tests/__mocks__/database.mock';
 
 import pino from 'pino';
@@ -656,6 +656,7 @@ describe('SouthODBC odbc remote with authentication', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     (convertDateTimeToInstant as jest.Mock).mockImplementation(value => value);
+    (convertDelimiter as jest.Mock).mockImplementation(value => value);
 
     south = new SouthODBC(configuration, items, addValues, addFile, encryptionService, repositoryService, logger, 'baseFolder');
   });
@@ -791,7 +792,7 @@ describe('SouthODBC odbc remote with authentication', () => {
     expect(result).toEqual('2020-03-01T00:00:00.000Z');
     expect(persistResults).toHaveBeenCalledWith(
       [{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }],
-      items[0].settings.serialization,
+      { type: 'file', filename: items[0].settings.serialization.filename, compression: items[0].settings.serialization.compression },
       configuration.name,
       path.resolve('baseFolder', 'tmp'),
       expect.any(Function),
