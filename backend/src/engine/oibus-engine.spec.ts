@@ -3,7 +3,7 @@ import SouthServiceMock from '../tests/__mocks__/south-service.mock';
 import NorthServiceMock from '../tests/__mocks__/north-service.mock';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
-import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorItemDTO } from '../../../shared/model/north-connector.model';
 
 import SouthService from '../service/south.service';
 import NorthService from '../service/north.service';
@@ -41,7 +41,7 @@ const nowDateString = '2020-02-02T02:02:02.222Z';
 
 let engine: OIBusEngine;
 
-const items: Array<SouthConnectorItemDTO> = [
+const southItems: Array<SouthConnectorItemDTO> = [
   {
     id: 'id1',
     name: 'item1',
@@ -67,6 +67,13 @@ const items: Array<SouthConnectorItemDTO> = [
     scanModeId: 'subscription'
   }
 ];
+const northItem: NorthConnectorItemDTO = {
+  id: 'northItemId',
+  name: 'item1',
+  enabled: true,
+  connectorId: 'northId',
+  settings: {}
+};
 
 const connectedEvent = new EventEmitter();
 
@@ -86,6 +93,13 @@ const northConnectors: Array<NorthConnectorDTO> = [
     type: 'oiconnect'
   } as NorthConnectorDTO
 ];
+const northConnectorWithItems: NorthConnectorDTO = {
+  id: 'northIdWithItems',
+  name: 'myNorthConnectorWithItems3',
+  description: 'a test north connector with items',
+  enabled: true,
+  type: 'modbus'
+} as NorthConnectorDTO;
 const southConnectors: Array<SouthConnectorDTO> = [
   {
     id: 'id1',
@@ -154,7 +168,15 @@ const createdNorth = {
   removeAllArchiveFiles: jest.fn(),
   retryAllArchiveFiles: jest.fn(),
   getMetricsDataStream: jest.fn(),
-  resetMetrics: jest.fn()
+  resetMetrics: jest.fn(),
+  addItem: jest.fn(),
+  updateItem: jest.fn(),
+  deleteItem: jest.fn(),
+  deleteAllItems: jest.fn()
+};
+
+const createdNorthWithItems = {
+  ...createdNorth
 };
 
 describe('OIBusEngine', () => {
@@ -216,7 +238,7 @@ describe('OIBusEngine', () => {
     createdNorth.isSubscribed.mockReturnValue(true);
     createdNorth.isSubscribedToExternalSource.mockReturnValue(true);
     createdSouth.isEnabled.mockReturnValueOnce(true).mockReturnValueOnce(false);
-    (southService.getSouthItems as jest.Mock).mockReturnValue(items);
+    (southService.getSouthItems as jest.Mock).mockReturnValue(southItems);
 
     await engine.startSouth(southConnectors[0].id, southConnectors[0]);
     expect(southService.getSouthItems).toHaveBeenCalledWith(southConnectors[0].id);
@@ -227,7 +249,9 @@ describe('OIBusEngine', () => {
     );
 
     createdSouth.connectedEvent.emit('connected');
-    expect(createdSouth.createSubscriptions).toHaveBeenCalledWith(items.filter(item => item.scanModeId === 'subscription' && item.enabled));
+    expect(createdSouth.createSubscriptions).toHaveBeenCalledWith(
+      southItems.filter(item => item.scanModeId === 'subscription' && item.enabled)
+    );
 
     await engine.startNorth(northConnectors[0].id, northConnectors[0]);
     expect(northService.createNorth).toHaveBeenCalledTimes(1);
@@ -329,13 +353,13 @@ describe('OIBusEngine', () => {
     expect(engine.resetNorthMetrics('northId')).toEqual(null);
     expect(engine.resetNorthMetrics(northConnectors[1].id)).toEqual({ status: 'myStatus' });
 
-    engine.addItemToSouth('southId', items[0]);
+    engine.addItemToSouth('southId', southItems[0]);
     expect(createdSouth.addItem).not.toHaveBeenCalled();
-    engine.deleteItemFromSouth('southId', items[0]);
+    engine.deleteItemFromSouth('southId', southItems[0]);
     expect(createdSouth.deleteItem).not.toHaveBeenCalled();
     engine.deleteAllItemsFromSouth('southId');
     expect(createdSouth.deleteAllItems).not.toHaveBeenCalled();
-    engine.updateItemInSouth('southId', items[0], {
+    engine.updateItemInSouth('southId', southItems[0], {
       id: 'itemId',
       connectorId: 'id',
       name: 'new name',
@@ -345,13 +369,13 @@ describe('OIBusEngine', () => {
     });
     expect(createdSouth.updateItem).not.toHaveBeenCalled();
 
-    engine.addItemToSouth(southConnectors[1].id, items[0]);
-    expect(createdSouth.addItem).toHaveBeenCalledWith(items[0]);
-    engine.deleteItemFromSouth(southConnectors[1].id, items[0]);
-    expect(createdSouth.deleteItem).toHaveBeenCalledWith(items[0]);
+    engine.addItemToSouth(southConnectors[1].id, southItems[0]);
+    expect(createdSouth.addItem).toHaveBeenCalledWith(southItems[0]);
+    engine.deleteItemFromSouth(southConnectors[1].id, southItems[0]);
+    expect(createdSouth.deleteItem).toHaveBeenCalledWith(southItems[0]);
     engine.deleteAllItemsFromSouth(southConnectors[1].id);
     expect(createdSouth.deleteAllItems).toHaveBeenCalled();
-    engine.updateItemInSouth(southConnectors[1].id, items[0], {
+    engine.updateItemInSouth(southConnectors[1].id, southItems[0], {
       id: 'itemId',
       connectorId: 'id',
       name: 'new name',
@@ -359,7 +383,7 @@ describe('OIBusEngine', () => {
       settings: {},
       scanModeId: 'scanModeId'
     });
-    expect(createdSouth.updateItem).toHaveBeenCalledWith(items[0], {
+    expect(createdSouth.updateItem).toHaveBeenCalledWith(southItems[0], {
       connectorId: 'id',
       id: 'itemId',
       name: 'new name',
@@ -420,9 +444,51 @@ describe('OIBusEngine', () => {
     await engine.stopNorth('northId');
     expect(createdNorth.stop).not.toHaveBeenCalled();
 
+    // North with items
+    (northService.createNorth as jest.Mock).mockReturnValueOnce(createdNorthWithItems);
+    await engine.startNorth(northConnectorWithItems.id, northConnectorWithItems);
+    expect(northService.createNorth).toHaveBeenCalled();
+    expect(createdNorth.isEnabled).toHaveBeenCalled();
+
+    engine.addItemToNorth('nonexistentId', northItem);
+    expect(createdNorthWithItems.addItem).not.toHaveBeenCalled();
+    engine.deleteItemFromNorth('nonexistentId', northItem);
+    expect(createdNorthWithItems.deleteItem).not.toHaveBeenCalled();
+    engine.deleteAllItemsFromNorth('nonexistentId');
+    expect(createdNorthWithItems.deleteAllItems).not.toHaveBeenCalled();
+    engine.updateItemInNorth('nonexistentId', northItem, {
+      id: 'itemId',
+      connectorId: 'id',
+      name: 'new name',
+      enabled: true,
+      settings: {}
+    });
+    expect(createdNorthWithItems.updateItem).not.toHaveBeenCalled();
+
+    engine.addItemToNorth(northConnectorWithItems.id, northItem);
+    expect(createdNorthWithItems.addItem).toHaveBeenCalledWith(northItem);
+    engine.deleteItemFromNorth(northConnectorWithItems.id, northItem);
+    expect(createdNorthWithItems.deleteItem).toHaveBeenCalledWith(northItem);
+    engine.deleteAllItemsFromNorth(northConnectorWithItems.id);
+    expect(createdNorthWithItems.deleteAllItems).toHaveBeenCalled();
+    engine.updateItemInNorth(northConnectorWithItems.id, northItem, {
+      id: 'itemId',
+      connectorId: 'id',
+      name: 'new name',
+      enabled: true,
+      settings: {}
+    });
+    expect(createdNorthWithItems.updateItem).toHaveBeenCalledWith(northItem, {
+      connectorId: 'id',
+      id: 'itemId',
+      name: 'new name',
+      enabled: true,
+      settings: {}
+    });
+
     await engine.stop();
     expect(createdSouth.stop).toHaveBeenCalledTimes(2);
-    expect(createdNorth.stop).toHaveBeenCalledTimes(2);
+    expect(createdNorth.stop).toHaveBeenCalledTimes(3);
   });
 
   it('should delete south connector', async () => {
