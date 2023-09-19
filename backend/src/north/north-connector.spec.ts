@@ -60,6 +60,11 @@ const logger: pino.Logger = new PinoLogger();
 const anotherLogger: pino.Logger = new PinoLogger();
 
 let north: NorthConnector<NorthSettings>;
+class TestNorthWithItems extends NorthConnector {
+  async handleItemValues(): Promise<void> {}
+}
+let northWithItems: TestNorthWithItems;
+
 describe('NorthConnector', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -67,6 +72,7 @@ describe('NorthConnector', () => {
 
     (northConnectorRepository.findNorthById as jest.Mock).mockReturnValue(testData.north.list[0]);
     (scanModeRepository.findById as jest.Mock).mockImplementation(id => testData.scanMode.list.find(element => element.id === id));
+    northWithItems = new TestNorthWithItems(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     (dirSize as jest.Mock).mockReturnValue(123);
 
     north = new NorthFileWriter(
@@ -78,6 +84,7 @@ describe('NorthConnector', () => {
       mockBaseFolders(testData.north.list[0].id)
     );
     await north.start();
+    await northWithItems.start();
   });
 
   afterEach(() => {
@@ -506,6 +513,11 @@ describe('NorthConnector', () => {
   it('should get archive file content', async () => {
     await north.getArchiveFileContent('file1.queue.tmp');
     expect(fileCacheService.getArchiveFileContent).toHaveBeenCalledWith('file1.queue.tmp');
+  });
+
+  it('should properly handle item change', async () => {
+    await north.onItemChange();
+    expect(repositoryService.northItemRepository.listNorthItems).toHaveBeenCalledWith(configuration.id, { enabled: true });
   });
 });
 
