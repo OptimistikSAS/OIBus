@@ -19,6 +19,10 @@ export default jest.fn().mockImplementation(() => {
     getErrorFiles: jest.fn(),
     updateScanMode: jest.fn(),
     deleteSouth: jest.fn(),
-    deleteNorth: jest.fn()
+    deleteNorth: jest.fn(),
+    addItemToNorth: jest.fn(),
+    updateItemInNorth: jest.fn(),
+    deleteItemFromNorth: jest.fn(),
+    deleteAllItemsFromNorth: jest.fn()
   };
 });

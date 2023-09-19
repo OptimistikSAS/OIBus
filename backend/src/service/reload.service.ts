@@ -8,7 +8,13 @@ import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO
 } from '../../../shared/model/south-connector.model';
-import { NorthCacheFiles, NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
+import {
+  NorthCacheFiles,
+  NorthConnectorCommandDTO,
+  NorthConnectorDTO,
+  NorthConnectorItemCommandDTO,
+  NorthConnectorItemDTO
+} from '../../../shared/model/north-connector.model';
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../shared/model/history-query.model';
 import pino from 'pino';
 import EngineMetricsService from './engine-metrics.service';
@@ -307,6 +313,58 @@ export default class ReloadService {
     if (settings && settings.enabled) {
       await this.oibusEngine.startNorth(northId, settings);
     }
+  }
+
+  async onCreateNorthItem(northId: string, command: NorthConnectorItemCommandDTO): Promise<NorthConnectorItemDTO> {
+    const northItem = this.repositoryService.northItemRepository.createNorthItem(northId, command);
+    this.oibusEngine.addItemToNorth(northId, northItem);
+    return northItem;
+  }
+
+  async onUpdateNorthItemsSettings(
+    northId: string,
+    northItem: NorthConnectorItemDTO,
+    command: NorthConnectorItemCommandDTO
+  ): Promise<void> {
+    this.repositoryService.northItemRepository.updateNorthItem(northItem.id, command);
+    const newItem = this.repositoryService.northItemRepository.getNorthItem(northItem.id)!;
+    this.oibusEngine.updateItemInNorth(northId, northItem, newItem);
+  }
+
+  async onCreateOrUpdateNorthItems(
+    northConnector: NorthConnectorDTO,
+    itemsToAdd: Array<NorthConnectorItemDTO>,
+    itemsToUpdate: Array<NorthConnectorItemDTO>
+  ): Promise<void> {
+    await this.oibusEngine.stopNorth(northConnector.id);
+    this.repositoryService.northItemRepository.createAndUpdateNorthItems(northConnector.id, itemsToAdd, itemsToUpdate);
+    await this.oibusEngine.startNorth(northConnector.id, northConnector);
+  }
+
+  async onDeleteNorthItem(itemId: string): Promise<void> {
+    const northItem = this.repositoryService.northItemRepository.getNorthItem(itemId);
+    if (!northItem) throw new Error('North item not found');
+    this.oibusEngine.deleteItemFromNorth(northItem.connectorId, northItem);
+    this.repositoryService.northItemRepository.deleteNorthItem(itemId);
+  }
+
+  async onEnableNorthItem(itemId: string): Promise<void> {
+    const northItem = this.repositoryService.northItemRepository.getNorthItem(itemId);
+    if (!northItem) throw new Error('North item not found');
+    this.repositoryService.northItemRepository.enableNorthItem(itemId);
+    this.oibusEngine.updateItemInNorth(northItem.connectorId, northItem, { ...northItem, enabled: true });
+  }
+
+  async onDisableNorthItem(itemId: string): Promise<void> {
+    const northItem = this.repositoryService.northItemRepository.getNorthItem(itemId);
+    if (!northItem) throw new Error('North item not found');
+    this.repositoryService.northItemRepository.disableNorthItem(itemId);
+    this.oibusEngine.updateItemInNorth(northItem.connectorId, northItem, { ...northItem, enabled: false });
+  }
+
+  async onDeleteAllNorthItems(northId: string): Promise<void> {
+    this.oibusEngine.deleteAllItemsFromNorth(northId);
+    this.repositoryService.northItemRepository.deleteAllNorthItems(northId);
   }
 
   async onCreateHistoryQuery(command: HistoryQueryCommandDTO, southItems: Array<SouthConnectorItemDTO>): Promise<HistoryQueryDTO> {
