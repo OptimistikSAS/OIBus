@@ -8,6 +8,8 @@ import { toNorthConnectorDTO, toNorthConnectorLightDTO } from '../../service/nor
 
 jest.mock('./validators/joi.validator');
 jest.mock('../../service/utils');
+jest.mock('papaparse');
+jest.mock('node:fs/promises');
 
 const logger: pino.Logger = new PinoLogger();
 const ctx = new KoaContextMock();
@@ -140,7 +142,11 @@ describe('North connector controller', () => {
 
     await northConnectorController.delete(ctx);
     expect(ctx.app.northService.deleteNorth).toHaveBeenCalledWith(testData.north.list[0].id);
-    expect(ctx.badRequest).toHaveBeenCalledWith('error');
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onUpdateNorthSettings).not.toHaveBeenCalledWith('error');
+    expect(ctx.badRequest).toHaveBeenCalledTimes(1);
   });
 
   it('start() should enable North connector', async () => {
