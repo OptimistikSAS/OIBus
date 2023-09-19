@@ -3,7 +3,7 @@ import PinoLogger from '../tests/__mocks__/logger.mock';
 import EncryptionServiceMock from '../tests/__mocks__/encryption-service.mock';
 import RepositoryServiceMock from '../tests/__mocks__/repository-service.mock';
 
-import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorItemDTO } from '../../../shared/model/north-connector.model';
 
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
@@ -12,7 +12,7 @@ import ValueCacheServiceMock from '../tests/__mocks__/value-cache-service.mock';
 import FileCacheServiceMock from '../tests/__mocks__/file-cache-service.mock';
 import ArchiveServiceMock from '../tests/__mocks__/archive-service.mock';
 import { EventEmitter } from 'node:events';
-import { HandlesFile, HandlesValues } from './north-interface';
+import { HandlesFile, HandlesItemValues, HandlesValues } from './north-interface';
 import fs from 'node:fs/promises';
 import { dirSize } from '../service/utils';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
@@ -107,6 +107,11 @@ class TestNorth extends NorthConnector implements HandlesFile, HandlesValues {
 }
 let north: TestNorth;
 
+class TestNorthWithItems extends NorthConnector implements HandlesItemValues {
+  async handleItemValues(): Promise<void> {}
+}
+let northWithItems: TestNorthWithItems;
+
 describe('NorthConnector enabled', () => {
   beforeEach(async () => {
     jest.resetAllMocks();
@@ -140,8 +145,10 @@ describe('NorthConnector enabled', () => {
       }
     };
     north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    northWithItems = new TestNorthWithItems(configuration, encryptionService, repositoryService, logger, 'baseFolder', []);
     (dirSize as jest.Mock).mockReturnValue(123);
     await north.start();
+    await northWithItems.start();
   });
 
   afterEach(() => {
@@ -468,6 +475,117 @@ describe('NorthConnector enabled', () => {
     expect(logger.error).toHaveBeenCalledWith(`Error while handling file "file.csv" (2). oibus error`);
     await north.handleFilesWrapper();
     expect(logger.error).toHaveBeenCalledWith(`Error while handling file "file.csv" (3). oibus error 2`);
+  });
+
+  it('should properly add item', () => {
+    const item: NorthConnectorItemDTO = {
+      id: 'itemId',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my item',
+      settings: {}
+    };
+
+    northWithItems.addItem(item);
+    expect(northWithItems['items']).toEqual([item]);
+  });
+
+  it('should properly update item', () => {
+    const item: NorthConnectorItemDTO = {
+      id: 'itemId',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my item',
+      settings: {}
+    };
+    northWithItems.addItem = jest.fn();
+    northWithItems.deleteItem = jest.fn();
+
+    northWithItems.updateItem(item, {
+      id: 'itemId',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my updated item',
+      settings: {}
+    });
+
+    expect(northWithItems.deleteItem).toHaveBeenCalledTimes(1);
+    expect(northWithItems.addItem).toHaveBeenCalledTimes(1);
+  });
+
+  it('should properly delete item', () => {
+    const item1: NorthConnectorItemDTO = {
+      id: 'itemId1',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my item',
+      settings: {}
+    };
+    const item2: NorthConnectorItemDTO = {
+      id: 'itemId2',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my item',
+      settings: {}
+    };
+    const item3: NorthConnectorItemDTO = {
+      id: 'itemId3',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my item',
+      settings: {}
+    };
+    const item4: NorthConnectorItemDTO = {
+      id: 'itemId4',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my item',
+      settings: {}
+    };
+
+    northWithItems['items'] = [item1, item2, item3, item4];
+
+    northWithItems.deleteItem(item1);
+    northWithItems.deleteItem(item1); // Second deletion should do nothing
+    expect(northWithItems['items']).toEqual([item2, item3, item4]);
+
+    northWithItems.deleteAllItems();
+    expect(northWithItems['items']).toEqual([]);
+  });
+
+  it('should do nothing with items if does not support items mode', () => {
+    const item: NorthConnectorItemDTO = {
+      id: 'itemId',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my item',
+      settings: {}
+    };
+
+    // Adding items
+    const pushSpy = jest.spyOn(north['items'], 'push');
+    north.addItem(item);
+    expect(pushSpy).not.toBeCalled();
+
+    // Updating items
+    north.addItem = jest.fn();
+    north.deleteItem = jest.fn();
+
+    north.updateItem(item, {
+      id: 'itemId',
+      enabled: true,
+      connectorId: 'id',
+      name: 'my updated item',
+      settings: {}
+    });
+
+    expect(north.deleteItem).not.toBeCalled();
+    expect(north.addItem).not.toBeCalled();
+
+    // Deleting items
+    const filterSpy = jest.spyOn(north['items'], 'filter');
+    north.deleteItem(item);
+    expect(filterSpy).not.toBeCalled();
   });
 });
 
