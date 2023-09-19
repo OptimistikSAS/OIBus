@@ -15,7 +15,7 @@ import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
   template: `<oib-south-items
     [southConnector]="southConnector"
     [scanModes]="scanModes"
-    [southConnectorItemSchema]="manifest.items"
+    [southManifest]="manifest"
     [inMemory]="false"
   ></oib-south-items>`,
   standalone: true,
@@ -201,10 +201,10 @@ describe('SouthItemsComponent', () => {
   });
 
   it('should trigger the upload', () => {
-    southConnectorService.uploadItems.and.returnValue(of(undefined));
+    southConnectorService.checkImportItems.and.returnValue(of({ items: [], errors: [] }));
 
     const event = new Event('change');
     tester.fileInput.dispatchEvent(event);
-    expect(southConnectorService.uploadItems).toHaveBeenCalled();
+    expect(southConnectorService.checkImportItems).toHaveBeenCalled();
   });
 });

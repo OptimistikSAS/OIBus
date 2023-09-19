@@ -750,9 +750,58 @@ describe('South connector controller', () => {
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
+  it('southItemsToCsv() should download a csv file', async () => {
+    ctx.params.southId = 'id';
+    ctx.request.body = {
+      items: [
+        item,
+        {
+          id: 'id2',
+          name: 'item2',
+          scanModeId: 'scanModeId',
+          enabled: true,
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
+        }
+      ]
+    };
+    (csv.unparse as jest.Mock).mockReturnValue('csv content');
+
+    await southConnectorController.southItemsToCsv(ctx);
+
+    expect(ctx.ok).toHaveBeenCalled();
+    expect(ctx.body).toEqual('csv content');
+    expect(csv.unparse).toHaveBeenCalledWith([
+      {
+        id: 'id',
+        name: 'name',
+        enabled: true,
+        scanModeId: 'scanModeId',
+        settings_regex: '.*'
+      },
+      {
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        scanModeId: 'scanModeId',
+        settings_objectArray: '[]',
+        settings_objectSettings: '{}',
+        settings_objectValue: 1
+      }
+    ]);
+  });
+
   it('exportSouthItems() should download a csv file', async () => {
     ctx.params.southId = 'id';
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([item, item]);
+    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([
+      item,
+      {
+        id: 'id2',
+        name: 'item2',
+        scanModeId: 'scanModeId',
+        enabled: true,
+        settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
+      }
+    ]);
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
     await southConnectorController.exportSouthItems(ctx);
@@ -768,21 +817,29 @@ describe('South connector controller', () => {
         settings_regex: '.*'
       },
       {
-        id: 'id',
-        name: 'name',
+        id: 'id2',
+        name: 'item2',
         enabled: true,
         scanModeId: 'scanModeId',
-        settings_regex: '.*'
+        settings_objectArray: '[]',
+        settings_objectSettings: '{}',
+        settings_objectValue: 1
       }
     ]);
   });
 
-  it('uploadSouthItems() should import a csv file', async () => {
-    ctx.params.southId = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+  it('checkImportSouthItems() should check import of items in a csv file', async () => {
+    ctx.params.southType = 'south-test';
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([item, item]);
     (fs.readFile as jest.Mock).mockReturnValue('file content');
+    (validator.validateSettings as jest.Mock)
+      .mockImplementationOnce(() => {
+        return true;
+      })
+      .mockImplementationOnce(() => {
+        throw new Error('validation fail');
+      });
     (csv.parse as jest.Mock).mockReturnValue({
       data: [
         {
@@ -792,15 +849,17 @@ describe('South connector controller', () => {
           settings_field: 'value'
         },
         {
-          id: 'id',
-          name: 'name',
+          id: 'id2',
+          name: 'item2',
           scanModeId: 'scanModeId',
-          settings_field: 'value'
+          settings_objectArray: '[]',
+          settings_objectSettings: '{}',
+          settings_objectValue: 1
         }
       ]
     });
 
-    await southConnectorController.uploadSouthItems(ctx);
+    await southConnectorController.checkImportSouthItems(ctx);
 
     expect(ctx.badRequest).not.toHaveBeenCalled();
     expect(ctx.throw).not.toHaveBeenCalled();
@@ -808,15 +867,38 @@ describe('South connector controller', () => {
     expect(validator.validateSettings).toHaveBeenCalledTimes(2);
     expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
     expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
-    expect(ctx.app.reloadService.onCreateOrUpdateSouthItems).toHaveBeenCalledTimes(1);
-    expect(ctx.noContent).toHaveBeenCalled();
+    expect(ctx.ok).toHaveBeenCalledWith({
+      items: [
+        {
+          id: '',
+          name: 'name',
+          scanModeId: 'scanModeId',
+          settings: {}
+        }
+      ],
+      errors: [
+        {
+          item: {
+            id: '',
+            name: 'item2',
+            scanModeId: 'scanModeId',
+            settings: {
+              objectArray: [],
+              objectSettings: {},
+              objectValue: 1
+            }
+          },
+          message: 'validation fail'
+        }
+      ]
+    });
   });
 
-  it('uploadSouthItems() should throw not found connector', async () => {
-    ctx.params.southId = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValueOnce(null);
+  it('checkImportSouthItems() should throw not found connector', async () => {
+    ctx.params.southType = 'id';
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
 
-    await southConnectorController.uploadSouthItems(ctx);
+    await southConnectorController.checkImportSouthItems(ctx);
 
     expect(csv.parse).not.toHaveBeenCalled();
     expect(fs.readFile).not.toHaveBeenCalled();
@@ -825,25 +907,11 @@ describe('South connector controller', () => {
     expect(ctx.throw).toHaveBeenCalledTimes(1);
   });
 
-  it('uploadSouthItems() should throw not found manifest', async () => {
-    ctx.params.southId = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValueOnce({ type: 'bad type' });
-
-    await southConnectorController.uploadSouthItems(ctx);
-
-    expect(csv.parse).not.toHaveBeenCalled();
-    expect(fs.readFile).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateOrUpdateSouthItems).not.toHaveBeenCalled();
-    expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledTimes(1);
-  });
-
-  it('uploadSouthItems() should reject bad file type', async () => {
-    ctx.params.southId = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+  it('checkImportSouthItems() should reject bad file type', async () => {
+    ctx.params.southType = 'south-test';
     ctx.request.file = { path: 'myFile.txt', mimetype: 'bad type' };
 
-    await southConnectorController.uploadSouthItems(ctx);
+    await southConnectorController.checkImportSouthItems(ctx);
 
     expect(ctx.badRequest).toHaveBeenCalledTimes(1);
     expect(csv.parse).not.toHaveBeenCalled();
@@ -853,17 +921,15 @@ describe('South connector controller', () => {
     expect(ctx.throw).not.toHaveBeenCalled();
   });
 
-  it('uploadSouthItems() should throw badRequest when file not parsed', async () => {
-    ctx.params.southId = 'id';
-    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+  it('checkImportSouthItems() should throw badRequest when file not parsed', async () => {
+    ctx.params.southType = 'south-test';
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([item, item]);
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (csv.parse as jest.Mock).mockImplementationOnce(() => {
       throw new Error('parsing error');
     });
 
-    await southConnectorController.uploadSouthItems(ctx);
+    await southConnectorController.checkImportSouthItems(ctx);
 
     expect(ctx.badRequest).toHaveBeenCalledWith('parsing error');
     expect(ctx.throw).not.toHaveBeenCalled();
@@ -875,41 +941,94 @@ describe('South connector controller', () => {
     expect(ctx.noContent).not.toHaveBeenCalled();
   });
 
-  it('uploadSouthItems() should send bad request when fail to save in database', async () => {
+  it('importSouthItems() should throw not found if connector not found', async () => {
+    ctx.params.southId = 'id';
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(null);
+    await southConnectorController.importSouthItems(ctx);
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South not found');
+  });
+
+  it('importSouthItems() should throw not found if connector not found', async () => {
     ctx.params.southId = 'id';
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
-    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([item, item]);
-    (fs.readFile as jest.Mock).mockReturnValue('file content');
-    (csv.parse as jest.Mock).mockReturnValue({
-      data: [
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([]);
+    await southConnectorController.importSouthItems(ctx);
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+  });
+
+  it('importSouthItems() should throw error on validation fail', async () => {
+    ctx.params.southId = 'id';
+    ctx.request.body = {
+      items: [
+        item,
         {
-          id: 'id',
-          name: 'name',
+          id: 'id2',
+          name: 'item2',
           scanModeId: 'scanModeId',
-          settings_field: 'value'
-        },
-        {
-          id: 'id',
-          name: 'name',
-          scanModeId: 'scanModeId',
-          settings_field: 'value'
+          enabled: true,
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
         }
       ]
+    };
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    (validator.validateSettings as jest.Mock).mockImplementation(() => {
+      throw new Error('validation fail');
     });
-    (ctx.app.reloadService.onCreateOrUpdateSouthItems as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('save error');
+    await southConnectorController.importSouthItems(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('validation fail');
+  });
+
+  it('importSouthItems() should throw error on creation fail', async () => {
+    ctx.params.southId = 'id';
+    ctx.request.body = {
+      items: [
+        item,
+        {
+          id: 'id2',
+          name: 'item2',
+          scanModeId: 'scanModeId',
+          enabled: true,
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
+        }
+      ]
+    };
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    (validator.validateSettings as jest.Mock).mockImplementation(() => {
+      return true;
     });
+    ctx.app.reloadService.onCreateOrUpdateSouthItems.mockImplementation(() => {
+      throw new Error('onCreateOrUpdateSouthItems error');
+    });
+    await southConnectorController.importSouthItems(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('onCreateOrUpdateSouthItems error');
+  });
 
-    await southConnectorController.uploadSouthItems(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledTimes(1);
-    expect(ctx.throw).not.toHaveBeenCalled();
-    expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalledTimes(2);
-    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
-    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
-    expect(ctx.app.reloadService.onCreateOrUpdateSouthItems).toHaveBeenCalledTimes(1);
+  it('importSouthItems() should import items', async () => {
+    ctx.params.southId = 'id';
+    ctx.request.body = {
+      items: [
+        item,
+        {
+          id: 'id2',
+          name: 'item2',
+          scanModeId: 'scanModeId',
+          enabled: true,
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
+        }
+      ]
+    };
+    ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    (validator.validateSettings as jest.Mock).mockImplementation(() => {
+      return true;
+    });
+    ctx.app.reloadService.onCreateOrUpdateSouthItems.mockImplementation(() => {
+      return true;
+    });
+    await southConnectorController.importSouthItems(ctx);
+    expect(ctx.noContent).toHaveBeenCalledTimes(1);
   });
 
   it('testSouthConnection() should test South connector settings on connector update', async () => {
@@ -920,6 +1039,7 @@ describe('South connector controller', () => {
       ...southConnectorCommand
     };
     ctx.params.id = 'id1';
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
     (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);

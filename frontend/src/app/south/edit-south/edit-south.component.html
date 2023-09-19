@@ -104,7 +104,7 @@
         <!-- items -->
         <oib-south-items
           [southConnector]="southConnector"
-          [southConnectorItemSchema]="manifest.items"
+          [southManifest]="manifest"
           [scanModes]="scanModes"
           (inMemoryItems)="updateInMemoryItems($event)"
           [inMemory]="true"

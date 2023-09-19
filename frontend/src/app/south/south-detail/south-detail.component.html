@@ -1,4 +1,4 @@
-<div class="oib-padded-container" *ngIf="southConnector && manifest && southItemSchema">
+<div class="oib-padded-container" *ngIf="southConnector && manifest">
   <div class="row justify-content-center">
     <div class="col-md-10 col-lg-8">
       <div class="oib-header-container">
@@ -59,7 +59,7 @@
       <!-- Items -->
       <oib-south-items
         [southConnector]="southConnector"
-        [southConnectorItemSchema]="southItemSchema"
+        [southManifest]="manifest"
         [scanModes]="scanModes"
         [inMemory]="false"
       ></oib-south-items>

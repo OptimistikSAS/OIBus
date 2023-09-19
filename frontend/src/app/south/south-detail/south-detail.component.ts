@@ -1,12 +1,7 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import {
-  SouthConnectorCommandDTO,
-  SouthConnectorDTO,
-  SouthConnectorItemManifest,
-  SouthConnectorManifest
-} from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { of, switchMap, tap } from 'rxjs';
@@ -51,7 +46,6 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
 export class SouthDetailComponent implements OnInit, OnDestroy {
   southConnector: SouthConnectorDTO | null = null;
   displayedSettings: Array<{ key: string; value: string }> = [];
-  southItemSchema: SouthConnectorItemManifest | null = null;
   scanModes: Array<ScanModeDTO> = [];
   manifest: SouthConnectorManifest | null = null;
   connectorMetrics: SouthConnectorMetrics | null = null;
@@ -96,7 +90,6 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
           return;
         }
         this.manifest = manifest;
-        this.southItemSchema = manifest.items;
         this.connectToEventSource();
 
         this.displayedSettings = manifest.settings

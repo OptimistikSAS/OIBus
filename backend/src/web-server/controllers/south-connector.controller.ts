@@ -235,13 +235,17 @@ export default class SouthConnectorController {
     ctx.ok(southItems);
   }
 
-  async exportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
-    const southItems = ctx.app.repositoryService.southItemRepository.getSouthItems(ctx.params.southId).map(item => {
+  async southItemsToCsv(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO> }, any>): Promise<void> {
+    const southItems = ctx.request.body!.items.map(item => {
       const flattenedItem: Record<string, any> = {
         ...item
       };
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
-        flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
+        if (typeof itemSettingsValue === 'object') {
+          flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
+        } else {
+          flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
+        }
       }
       delete flattenedItem.settings;
       delete flattenedItem.connectorId;
@@ -253,7 +257,80 @@ export default class SouthConnectorController {
     ctx.ok();
   }
 
-  async uploadSouthItems(ctx: KoaContext<void, any>): Promise<void> {
+  async exportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
+    const southItems = ctx.app.repositoryService.southItemRepository.getSouthItems(ctx.params.southId).map(item => {
+      const flattenedItem: Record<string, any> = {
+        ...item
+      };
+      for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
+        if (typeof itemSettingsValue === 'object') {
+          flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
+        } else {
+          flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
+        }
+      }
+      delete flattenedItem.settings;
+      delete flattenedItem.connectorId;
+      return flattenedItem;
+    });
+    ctx.body = csv.unparse(southItems);
+    ctx.set('Content-disposition', 'attachment; filename=items.csv');
+    ctx.set('Content-Type', 'application/force-download');
+    ctx.ok();
+  }
+
+  async checkImportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
+    const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.params.southType);
+    if (!manifest) {
+      return ctx.throw(404, 'South manifest not found');
+    }
+
+    const file = ctx.request.file;
+    if (file.mimetype !== 'text/csv') {
+      return ctx.badRequest();
+    }
+    const validItems: Array<any> = [];
+    const errors: Array<any> = [];
+    try {
+      const fileContent = await fs.readFile(file.path);
+      const csvContent = csv.parse(fileContent.toString('utf8'), { header: true });
+
+      const items = csvContent.data.map((data: any) => {
+        const item: Record<string, any> = { settings: {} };
+        for (const [key, value] of Object.entries(data)) {
+          if (key.startsWith('settings_')) {
+            const settingsKey = key.replace('settings_', '');
+            const manifestSettings = manifest.items.settings.find(settings => settings.key === settingsKey);
+            if (!manifestSettings) continue;
+            if (manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') {
+              item.settings[settingsKey] = JSON.parse(value as string);
+            } else {
+              item.settings[settingsKey] = value;
+            }
+          } else {
+            item[key] = value;
+          }
+        }
+        item.id = ''; // Remove existing ID to only add items from import
+        return item;
+      });
+      // Check if item settings match the item schema, throw an error otherwise
+      for (const item of items) {
+        try {
+          await this.validator.validateSettings(manifest.items.settings, item.settings);
+          validItems.push(item);
+        } catch (itemError: any) {
+          errors.push({ item, message: itemError.message });
+        }
+      }
+    } catch (error: any) {
+      return ctx.badRequest(error.message);
+    }
+
+    ctx.ok({ items: validItems, errors });
+  }
+
+  async importSouthItems(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO> }, any>): Promise<void> {
     const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.southId);
     if (!southConnector) {
       return ctx.throw(404, 'South not found');
@@ -264,25 +341,8 @@ export default class SouthConnectorController {
       return ctx.throw(404, 'South manifest not found');
     }
 
-    const file = ctx.request.file;
-    if (file.mimetype !== 'text/csv') {
-      return ctx.badRequest();
-    }
-    let items: Array<any> = [];
+    const items = ctx.request.body!.items;
     try {
-      const fileContent = await fs.readFile(file.path);
-      const csvContent = csv.parse(fileContent.toString('utf8'), { header: true });
-      items = csvContent.data.map((data: any) => {
-        const item: Record<string, any> = { settings: {} };
-        for (const [key, value] of Object.entries(data)) {
-          if (key.startsWith('settings_')) {
-            item.settings[key.replace('settings_', '')] = value;
-          } else {
-            item[key] = value;
-          }
-        }
-        return item;
-      });
       // Check if item settings match the item schema, throw an error otherwise
       for (const item of items) {
         await this.validator.validateSettings(manifest.items.settings, item.settings);
@@ -294,12 +354,10 @@ export default class SouthConnectorController {
     try {
       const itemsToAdd = items.filter(item => !item.id);
       const itemsToUpdate = items.filter(item => item.id);
-
       await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, itemsToAdd, itemsToUpdate);
-    } catch {
-      return ctx.badRequest();
+    } catch (error: any) {
+      return ctx.badRequest(error.message);
     }
-
     ctx.noContent();
   }
 
@@ -381,5 +439,6 @@ export default class SouthConnectorController {
   }
 
   async addValues(_southId: string, _values: Array<any>): Promise<void> {}
+
   async addFile(_southId: string, _filename: string): Promise<void> {}
 }

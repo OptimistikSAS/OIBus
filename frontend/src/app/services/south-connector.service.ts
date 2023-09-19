@@ -199,12 +199,46 @@ export class SouthConnectorService {
   }
 
   /**
+   * Export south items in CSV file
+   */
+  itemsToCsv(items: Array<SouthConnectorItemDTO>, southName: string): Observable<void> {
+    return this.http
+      .put(
+        `/api/south/items/to-csv`,
+        {
+          items
+        },
+        { responseType: 'blob', observe: 'response' }
+      )
+      .pipe(map(response => this.downloadService.download(response, `${southName}.csv`)));
+  }
+
+  /**
    * Upload south items from a CSV file
    */
-  uploadItems(southId: string, file: File): Observable<void> {
+  checkImportItems(
+    southType: string,
+    file: File
+  ): Observable<{
+    items: Array<SouthConnectorItemDTO>;
+    errors: Array<{
+      item: SouthConnectorItemDTO;
+      message: string;
+    }>;
+  }> {
     const formData = new FormData();
     formData.set('file', file);
-    return this.http.post<void>(`/api/south/${southId}/items/upload`, formData);
+    return this.http.post<{ items: Array<SouthConnectorItemDTO>; errors: Array<{ item: SouthConnectorItemDTO; message: string }> }>(
+      `/api/south/${southType}/items/check-import`,
+      formData
+    );
+  }
+
+  /**
+   * Upload south items from a CSV file
+   */
+  importItems(southId: string, items: Array<SouthConnectorItemDTO>): Observable<void> {
+    return this.http.post<void>(`/api/south/${southId}/items/import`, { items });
   }
 
   testConnection(southId: string, settings: SouthConnectorCommandDTO<any>): Observable<void> {

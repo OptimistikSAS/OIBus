@@ -19,19 +19,17 @@
           class="btn btn-primary btn-sm oib-box-btn"
           id="export-items"
           (click)="exportItems()"
-          *ngIf="!this.inMemory"
           translate="south.items.export"
         ></button>
         <button
           type="button"
           class="btn btn-primary btn-sm oib-box-btn"
-          *ngIf="!this.inMemory"
           (click)="fileInput.click()"
           (drop)="onImportDrop($event)"
           (dragover)="onImportDragOver($event)"
           id="import-button"
         >
-          <span translate="south.items.import"></span>
+          <span translate="south.items.import.button"></span>
         </button>
         <button
           type="button"
@@ -53,7 +51,7 @@
           <tr>
             <th *ngIf="!inMemory" style="width: 3%"></th>
             <th translate="south.items.name"></th>
-            <th *ngIf="!southConnectorItemSchema.scanMode.subscriptionOnly" translate="south.items.scan-mode"></th>
+            <th *ngIf="!southManifest.items.scanMode.subscriptionOnly" translate="south.items.scan-mode"></th>
             <th *ngFor="let setting of displaySettings">{{ setting.label }}</th>
             <th style="width: 3%"></th>
           </tr>
@@ -66,10 +64,10 @@
               </div>
             </td>
             <td>{{ item.name }}</td>
-            <td *ngIf="!southConnectorItemSchema.scanMode.subscriptionOnly && item.scanModeId !== 'subscription'">
+            <td *ngIf="!southManifest.items.scanMode.subscriptionOnly && item.scanModeId !== 'subscription'">
               {{ getScanMode(item.scanModeId)?.name }}
             </td>
-            <td *ngIf="!southConnectorItemSchema.scanMode.subscriptionOnly && item.scanModeId === 'subscription'">
+            <td *ngIf="!southManifest.items.scanMode.subscriptionOnly && item.scanModeId === 'subscription'">
               {{ 'scan-mode.subscription' | translate }}
             </td>
             <td *ngFor="let setting of displaySettings">{{ getFieldValue(item.settings, setting.key, setting.pipe) }}</td>
