@@ -1,12 +1,19 @@
 import { KoaContext } from '../koa';
+import csv from 'papaparse';
 import {
   NorthCacheSettingsDTO,
   NorthConnectorCommandDTO,
   NorthConnectorDTO,
   NorthConnectorWithItemsCommandDTO,
+  NorthConnectorItemDTO,
+  NorthConnectorItemSearchParam,
+  NorthConnectorManifest,
+  NorthConnectorItemCommandDTO,
   NorthType
 } from '../../../../shared/model/north-connector.model';
 import JoiValidator from './validators/joi.validator';
+import { Page } from '../../../../shared/model/types';
+import fs from 'node:fs/promises';
 
 export default class NorthConnectorController {
   constructor(protected readonly validator: JoiValidator) {}
@@ -193,8 +200,8 @@ export default class NorthConnectorController {
   };
 
   stopNorthConnector = async (ctx: KoaContext<void, void>) => {
-    const southConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
-    if (!southConnector) {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
+    if (!northConnector) {
       return ctx.notFound();
     }
 
@@ -554,5 +561,179 @@ export default class NorthConnectorController {
     } catch (error: any) {
       ctx.badRequest(error.message);
     }
+  }
+
+  async listNorthItems(ctx: KoaContext<void, Array<NorthConnectorItemDTO>>): Promise<void> {
+    this.getManifestWithItemsMode(ctx);
+    const northItems = ctx.app.repositoryService.northItemRepository.listNorthItems(ctx.params.northId);
+    ctx.ok(northItems);
+  }
+
+  async searchNorthItems(ctx: KoaContext<void, Page<NorthConnectorItemDTO>>): Promise<void> {
+    this.getManifestWithItemsMode(ctx);
+    const searchParams: NorthConnectorItemSearchParam = {
+      page: ctx.query.page ? parseInt(ctx.query.page as string, 10) : 0,
+      name: (ctx.query.name as string) || null
+    };
+    const northItems = ctx.app.repositoryService.northItemRepository.searchNorthItems(ctx.params.northId, searchParams);
+    ctx.ok(northItems);
+  }
+
+  async exportNorthItems(ctx: KoaContext<void, any>): Promise<void> {
+    this.getManifestWithItemsMode(ctx);
+
+    const northItems = ctx.app.repositoryService.northItemRepository.getNorthItems(ctx.params.northId).map(item => {
+      const flattenedItem: Record<string, any> = {
+        ...item
+      };
+      for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
+        flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
+      }
+      delete flattenedItem.settings;
+      delete flattenedItem.connectorId;
+      return flattenedItem;
+    });
+    ctx.body = csv.unparse(northItems);
+    ctx.set('Content-disposition', 'attachment; filename=items.csv');
+    ctx.set('Content-Type', 'application/force-download');
+    ctx.ok();
+  }
+
+  async uploadNorthItems(ctx: KoaContext<void, any>): Promise<void> {
+    const manifest = this.getManifestWithItemsMode(ctx);
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    if (!northConnector) {
+      return ctx.throw(404, 'North not found');
+    }
+
+    const file = ctx.request.file;
+    if (file.mimetype !== 'text/csv') {
+      return ctx.badRequest();
+    }
+    let items: Array<any> = [];
+    try {
+      const fileContent = await fs.readFile(file.path);
+      const csvContent = csv.parse(fileContent.toString('utf8'), { header: true });
+      items = csvContent.data.map((data: any) => {
+        const item: Record<string, any> = { settings: {} };
+        for (const [key, value] of Object.entries(data)) {
+          if (key.startsWith('settings_')) {
+            item.settings[key.replace('settings_', '')] = value;
+          } else {
+            item[key] = value;
+          }
+        }
+        return item;
+      });
+
+      for (const item of items) {
+        await this.validator.validateSettings(manifest.items.settings, item.settings);
+      }
+    } catch (error: any) {
+      return ctx.badRequest(error.message);
+    }
+
+    try {
+      const itemsToAdd = items.filter(item => !item.id);
+      const itemsToUpdate = items.filter(item => item.id);
+
+      await ctx.app.reloadService.onCreateOrUpdateNorthItems(northConnector, itemsToAdd, itemsToUpdate);
+    } catch {
+      return ctx.badRequest();
+    }
+
+    ctx.noContent();
+  }
+
+  async getNorthItem(ctx: KoaContext<void, NorthConnectorItemDTO>): Promise<void> {
+    this.getManifestWithItemsMode(ctx);
+    const northItem = ctx.app.repositoryService.northItemRepository.getNorthItem(ctx.params.id);
+    if (northItem) {
+      ctx.ok(northItem);
+    } else {
+      ctx.notFound();
+    }
+  }
+
+  async createNorthItem(ctx: KoaContext<NorthConnectorItemCommandDTO, NorthConnectorItemDTO>): Promise<void> {
+    try {
+      const manifest = this.getManifestWithItemsMode(ctx);
+
+      await this.validator.validateSettings(manifest.items.settings, ctx.request.body?.settings);
+
+      const command: NorthConnectorItemCommandDTO = ctx.request.body!;
+      const northItem = await ctx.app.reloadService.onCreateNorthItem(ctx.params.northId, command);
+      ctx.created(northItem);
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
+  async updateNorthItem(ctx: KoaContext<NorthConnectorItemCommandDTO, void>): Promise<void> {
+    try {
+      const manifest = this.getManifestWithItemsMode(ctx);
+
+      const northItem = ctx.app.repositoryService.northItemRepository.getNorthItem(ctx.params.id);
+
+      if (northItem) {
+        await this.validator.validateSettings(manifest.items.settings, ctx.request.body?.settings);
+        const command: NorthConnectorItemCommandDTO = ctx.request.body!;
+        await ctx.app.reloadService.onUpdateNorthItemsSettings(ctx.params.northId, northItem, command);
+        ctx.noContent();
+      } else {
+        ctx.notFound();
+      }
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
+  async deleteNorthItem(ctx: KoaContext<void, void>): Promise<void> {
+    this.getManifestWithItemsMode(ctx);
+    await ctx.app.reloadService.onDeleteNorthItem(ctx.params.id);
+    ctx.noContent();
+  }
+
+  async enableNorthItem(ctx: KoaContext<void, void>): Promise<void> {
+    this.getManifestWithItemsMode(ctx);
+    await ctx.app.reloadService.onEnableNorthItem(ctx.params.id);
+    ctx.noContent();
+  }
+
+  async disableNorthItem(ctx: KoaContext<void, void>): Promise<void> {
+    this.getManifestWithItemsMode(ctx);
+    await ctx.app.reloadService.onDisableNorthItem(ctx.params.id);
+    ctx.noContent();
+  }
+
+  async deleteAllNorthItem(ctx: KoaContext<void, void>): Promise<void> {
+    this.getManifestWithItemsMode(ctx);
+    await ctx.app.reloadService.onDeleteAllNorthItems(ctx.params.northId);
+    ctx.noContent();
+  }
+
+  /**
+   * Checks if the north connector exists and if it supports items mode.
+   * If both are true it returns the manifest, otherwize throws koa errors.
+   *
+   * @throws koa errors
+   */
+  private getManifestWithItemsMode(ctx: KoaContext<any, any>): NorthConnectorManifest<true> {
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    if (!northConnector) {
+      return ctx.throw(404, 'North not found');
+    }
+
+    const manifest = ctx.app.northService
+      .getInstalledNorthManifests()
+      .find(northManifest => northManifest.id === northConnector.type && northManifest.modes.items) as
+      | NorthConnectorManifest<true>
+      | undefined;
+
+    if (!manifest) {
+      return ctx.throw(404, 'North does not support items');
+    }
+
+    return manifest;
   }
 }
