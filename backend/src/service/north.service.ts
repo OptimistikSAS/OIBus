@@ -14,7 +14,7 @@ import fileWriterManifest from '../north/north-file-writer/manifest';
 import consoleManifest from '../north/north-console/manifest';
 import amazonManifest from '../north/north-amazon-s3/manifest';
 
-const northList: Array<{ class: typeof NorthConnector<any>; manifest: NorthConnectorManifest }> = [
+const northList: Array<{ class: typeof NorthConnector<any>; manifest: NorthConnectorManifest<boolean> }> = [
   { class: NorthConsole, manifest: consoleManifest },
   { class: NorthOIAnalytics, manifest: oianalyticsManifest },
   { class: NorthAzureBlob, manifest: azureManifest },
@@ -37,7 +37,12 @@ export default class NorthService {
       throw Error(`North connector of type ${settings.type} not installed`);
     }
 
-    return new NorthConnector.class(settings, this.encryptionService, this.repositoryService, logger, baseFolder);
+    if (NorthConnector.manifest.modes.items) {
+      const items = this.repositoryService.northItemRepository.getNorthItems(settings.id);
+      return new NorthConnector.class(settings, this.encryptionService, this.repositoryService, logger, baseFolder, items);
+    } else {
+      return new NorthConnector.class(settings, this.encryptionService, this.repositoryService, logger, baseFolder);
+    }
   }
 
   /**
