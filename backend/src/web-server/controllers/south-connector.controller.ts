@@ -205,7 +205,7 @@ export default class SouthConnectorController {
         }
       }
 
-      let southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
+      const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
       if (!southConnector) {
         return ctx.notFound();
       }
