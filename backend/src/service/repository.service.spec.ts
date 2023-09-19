@@ -21,12 +21,7 @@ import NorthConnectorMetricsRepository from '../repository/north-connector-metri
 import CertificateRepository from '../repository/certificate.repository';
 import RegistrationRepository from '../repository/registration.repository';
 import CommandRepository from '../repository/command.repository';
-import OianalyticsMessageRepository from '../repository/oianalytics-message.repository';
 import NorthItemRepository from '../repository/north-item.repository';
-import TransformerRepository from '../repository/transformer.repository';
-import NorthTransformerRepository from '../repository/north-transformer.repository';
-import SouthTransformerRepository from '../repository/south-transformer.repository';
-import HistoryTransformerRepository from '../repository/history-transformer.repository';
 
 jest.mock('better-sqlite3', () => jest.fn(() => 'sqlite database'));
 jest.mock('../repository/crypto.repository');
@@ -48,12 +43,7 @@ jest.mock('../repository/subscription.repository');
 jest.mock('../repository/certificate.repository');
 jest.mock('../repository/registration.repository');
 jest.mock('../repository/command.repository');
-jest.mock('../repository/oianalytics-message.repository');
 jest.mock('../repository/north-item.repository');
-jest.mock('../repository/transformer.repository');
-jest.mock('../repository/north-transformer.repository');
-jest.mock('../repository/south-transformer.repository');
-jest.mock('../repository/history-transformer.repository');
 
 describe('Repository service', () => {
   it('should properly initialize service', () => {

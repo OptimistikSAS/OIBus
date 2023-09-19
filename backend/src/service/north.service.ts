@@ -37,9 +37,6 @@ export default class NorthService {
       throw Error(`North connector of type ${settings.type} not installed`);
     }
 
-    // TODO: Remove comment once we have north connectors that support items
-    // As of now, this is needed, because we can't modify the northList using jest
-    /* istanbul ignore next */
     if (NorthConnector.manifest.modes.items) {
       const items = this.repositoryService.northItemRepository.getNorthItems(settings.id);
       return new NorthConnector.class(settings, this.encryptionService, this.repositoryService, logger, baseFolder, items);

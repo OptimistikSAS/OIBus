@@ -14,7 +14,6 @@ import {
 import JoiValidator from './validators/joi.validator';
 import { Page } from '../../../../shared/model/types';
 import fs from 'node:fs/promises';
-import { TransformerDTO, TransformerFilterDTO } from '../../../../shared/model/transformer.model';
 
 export default class NorthConnectorController {
   constructor(protected readonly validator: JoiValidator) {}
@@ -580,32 +579,7 @@ export default class NorthConnectorController {
     ctx.ok(northItems);
   }
 
-  async northItemsToCsv(ctx: KoaContext<{ items: Array<NorthConnectorItemDTO> }, any>): Promise<void> {
-    this.getManifestWithItemsMode(ctx);
-
-    const northItems = ctx.request.body!.items.map(item => {
-      const flattenedItem: Record<string, any> = {
-        ...item
-      };
-      for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
-        if (typeof itemSettingsValue === 'object') {
-          flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
-        } else {
-          flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
-        }
-      }
-      delete flattenedItem.id;
-      delete flattenedItem.settings;
-      delete flattenedItem.connectorId;
-      return flattenedItem;
-    });
-    ctx.body = csv.unparse(northItems);
-    ctx.set('Content-disposition', 'attachment; filename=items.csv');
-    ctx.set('Content-Type', 'application/force-download');
-    ctx.ok();
-  }
-
-  async exportNorthItems(ctx: KoaContext<any, any>): Promise<void> {
+  async exportNorthItems(ctx: KoaContext<void, any>): Promise<void> {
     this.getManifestWithItemsMode(ctx);
 
     const northItems = ctx.app.repositoryService.northItemRepository.getNorthItems(ctx.params.northId).map(item => {
@@ -613,13 +587,8 @@ export default class NorthConnectorController {
         ...item
       };
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
-        if (typeof itemSettingsValue === 'object') {
-          flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
-        } else {
-          flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
-        }
+        flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
       }
-      delete flattenedItem.id;
       delete flattenedItem.settings;
       delete flattenedItem.connectorId;
       return flattenedItem;
@@ -630,88 +599,33 @@ export default class NorthConnectorController {
     ctx.ok();
   }
 
-  async checkImportNorthItems(ctx: KoaContext<{ itemIdsToDelete: string }, any>): Promise<void> {
-    const manifest = this.getManifestWithItemsMode(ctx);
-
-    const file = ctx.request.file;
-
-    let itemIdsToDelete: Array<string>;
-    try {
-      itemIdsToDelete = JSON.parse(ctx.request.body!.itemIdsToDelete);
-    } catch (error) {
-      return ctx.throw(400, 'Could not parse item ids to delete array');
-    }
-
-    const existingItems: Array<NorthConnectorItemDTO> =
-      ctx.params.northId === 'create'
-        ? []
-        : ctx.app.repositoryService.northItemRepository
-            .getNorthItems(ctx.params.northId)
-            .filter(item => !itemIdsToDelete.includes(item.id));
-    const validItems: Array<any> = [];
-    const errors: Array<any> = [];
-    try {
-      const fileContent = await fs.readFile(file.path);
-      const csvContent = csv.parse(fileContent.toString('utf8'), { header: true });
-
-      for (const data of csvContent.data) {
-        const item: NorthConnectorItemDTO = {
-          id: '',
-          name: (data as any).name,
-          enabled: true,
-          connectorId: ctx.params.northId !== 'create' ? ctx.params.northId : '',
-          settings: {}
-        };
-
-        try {
-          for (const [key, value] of Object.entries(data as any)) {
-            if (key.startsWith('settings_')) {
-              const settingsKey = key.replace('settings_', '');
-              const manifestSettings = manifest.items.settings.find(settings => settings.key === settingsKey);
-              if (!manifestSettings) {
-                throw new Error(`Settings "${settingsKey}" not accepted in manifest`);
-              }
-              if (manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') {
-                item.settings[settingsKey] = JSON.parse(value as string);
-              } else {
-                item.settings[settingsKey] = value;
-              }
-            }
-          }
-        } catch (err: any) {
-          errors.push({ item, message: err.message });
-          continue;
-        }
-
-        if (existingItems.find(existingItem => existingItem.name === item.name)) {
-          errors.push({ item, message: `Item name "${(data as any).name}" already used` });
-          continue;
-        }
-
-        try {
-          await this.validator.validateSettings(manifest.items.settings, item.settings);
-          validItems.push(item);
-        } catch (itemError: any) {
-          errors.push({ item, message: itemError.message });
-        }
-      }
-    } catch (error: any) {
-      return ctx.badRequest(error.message);
-    }
-
-    ctx.ok({ items: validItems, errors });
-  }
-
-  async importNorthItems(ctx: KoaContext<{ items: Array<NorthConnectorItemDTO> }, any>): Promise<void> {
+  async uploadNorthItems(ctx: KoaContext<void, any>): Promise<void> {
     const manifest = this.getManifestWithItemsMode(ctx);
     const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
     if (!northConnector) {
       return ctx.throw(404, 'North not found');
     }
 
-    const items = ctx.request.body!.items;
+    const file = ctx.request.file;
+    if (file.mimetype !== 'text/csv') {
+      return ctx.badRequest();
+    }
+    let items: Array<any> = [];
     try {
-      // Check if item settings match the item schema, throw an error otherwise
+      const fileContent = await fs.readFile(file.path);
+      const csvContent = csv.parse(fileContent.toString('utf8'), { header: true });
+      items = csvContent.data.map((data: any) => {
+        const item: Record<string, any> = { settings: {} };
+        for (const [key, value] of Object.entries(data)) {
+          if (key.startsWith('settings_')) {
+            item.settings[key.replace('settings_', '')] = value;
+          } else {
+            item[key] = value;
+          }
+        }
+        return item;
+      });
+
       for (const item of items) {
         await this.validator.validateSettings(manifest.items.settings, item.settings);
       }
@@ -720,10 +634,14 @@ export default class NorthConnectorController {
     }
 
     try {
-      await ctx.app.reloadService.onCreateOrUpdateNorthItems(northConnector, items, []);
-    } catch (error: any) {
-      return ctx.badRequest(error.message);
+      const itemsToAdd = items.filter(item => !item.id);
+      const itemsToUpdate = items.filter(item => item.id);
+
+      await ctx.app.reloadService.onCreateOrUpdateNorthItems(northConnector, itemsToAdd, itemsToUpdate);
+    } catch {
+      return ctx.badRequest();
     }
+
     ctx.noContent();
   }
 
@@ -738,14 +656,10 @@ export default class NorthConnectorController {
   }
 
   async createNorthItem(ctx: KoaContext<NorthConnectorItemCommandDTO, NorthConnectorItemDTO>): Promise<void> {
-    if (!ctx.request.body || !ctx.request.body.settings) {
-      return ctx.badRequest();
-    }
-
     try {
       const manifest = this.getManifestWithItemsMode(ctx);
 
-      await this.validator.validateSettings(manifest.items.settings, ctx.request.body.settings);
+      await this.validator.validateSettings(manifest.items.settings, ctx.request.body?.settings);
 
       const command: NorthConnectorItemCommandDTO = ctx.request.body!;
       const northItem = await ctx.app.reloadService.onCreateNorthItem(ctx.params.northId, command);
@@ -756,17 +670,13 @@ export default class NorthConnectorController {
   }
 
   async updateNorthItem(ctx: KoaContext<NorthConnectorItemCommandDTO, void>): Promise<void> {
-    if (!ctx.request.body || !ctx.request.body.settings) {
-      return ctx.badRequest();
-    }
-
     try {
       const manifest = this.getManifestWithItemsMode(ctx);
 
       const northItem = ctx.app.repositoryService.northItemRepository.getNorthItem(ctx.params.id);
 
       if (northItem) {
-        await this.validator.validateSettings(manifest.items.settings, ctx.request.body.settings);
+        await this.validator.validateSettings(manifest.items.settings, ctx.request.body?.settings);
         const command: NorthConnectorItemCommandDTO = ctx.request.body!;
         await ctx.app.reloadService.onUpdateNorthItemsSettings(ctx.params.northId, northItem, command);
         ctx.noContent();
@@ -802,64 +712,6 @@ export default class NorthConnectorController {
     ctx.noContent();
   }
 
-  async addTransformer(ctx: KoaContext<void, void>): Promise<void> {
-    try {
-      const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-      if (!northConnector) {
-        return ctx.throw(404, 'North not found');
-      }
-
-      const transformer = ctx.app.repositoryService.transformerRepository.getTransformer(ctx.params.transformerId);
-      if (!transformer) {
-        return ctx.throw(404, 'Transformer not found');
-      }
-
-      ctx.app.repositoryService.northTransformerRepository.addTransformer(ctx.params.northId, ctx.params.transformerId);
-      ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  }
-
-  async getTransformers(ctx: KoaContext<void, Array<TransformerDTO>>): Promise<void> {
-    try {
-      const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-      if (!northConnector) {
-        return ctx.throw(404, 'North not found');
-      }
-
-      const filter: TransformerFilterDTO = {
-        inputType: ctx.query.inputType as string,
-        outputType: ctx.query.outputType as string,
-        name: ctx.query.name as string
-      };
-
-      const transformers = ctx.app.repositoryService.northTransformerRepository.getTransformers(ctx.params.northId, filter);
-      ctx.ok(transformers);
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  }
-
-  async removeTransformer(ctx: KoaContext<void, void>): Promise<void> {
-    try {
-      const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-      if (!northConnector) {
-        return ctx.throw(404, 'North not found');
-      }
-
-      const transformer = ctx.app.repositoryService.transformerRepository.getTransformer(ctx.params.transformerId);
-      if (!transformer) {
-        return ctx.throw(404, 'Transformer not found');
-      }
-
-      ctx.app.repositoryService.northTransformerRepository.removeTransformer(ctx.params.northId, ctx.params.transformerId);
-      ctx.noContent();
-    } catch (error: any) {
-      ctx.badRequest(error.message);
-    }
-  }
-
   /**
    * Checks if the north connector exists and if it supports items mode.
    * If both are true it returns the manifest, otherwize throws koa errors.
@@ -867,20 +719,16 @@ export default class NorthConnectorController {
    * @throws koa errors
    */
   private getManifestWithItemsMode(ctx: KoaContext<any, any>): NorthConnectorManifest<true> {
-    let northType: string;
-    if (ctx.params.northId === 'create') {
-      northType = ctx.params.northType;
-    } else {
-      const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
-      if (!northConnector) {
-        return ctx.throw(404, 'North not found');
-      }
-      northType = northConnector.type;
+    const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.northId);
+    if (!northConnector) {
+      return ctx.throw(404, 'North not found');
     }
 
     const manifest = ctx.app.northService
       .getInstalledNorthManifests()
-      .find(northManifest => northManifest.id === northType && northManifest.modes.items) as NorthConnectorManifest<true> | undefined;
+      .find(northManifest => northManifest.id === northConnector.type && northManifest.modes.items) as
+      | NorthConnectorManifest<true>
+      | undefined;
 
     if (!manifest) {
       return ctx.throw(404, 'North does not support items');

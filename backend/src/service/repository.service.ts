@@ -19,12 +19,7 @@ import EngineMetricsRepository from '../repository/engine-metrics.repository';
 import CertificateRepository from '../repository/certificate.repository';
 import RegistrationRepository from '../repository/registration.repository';
 import CommandRepository from '../repository/command.repository';
-import OianalyticsMessageRepository from '../repository/oianalytics-message.repository';
 import NorthItemRepository from '../repository/north-item.repository';
-import TransformerRepository from '../repository/transformer.repository';
-import NorthTransformerRepository from '../repository/north-transformer.repository';
-import SouthTransformerRepository from '../repository/south-transformer.repository';
-import HistoryTransformerRepository from '../repository/history-transformer.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -47,11 +42,6 @@ export default class RepositoryService {
   private readonly _registrationRepository: RegistrationRepository;
   private readonly _commandRepository: CommandRepository;
   private readonly _northItemRepository: NorthItemRepository;
-  private readonly _transformerRepository: TransformerRepository;
-  private readonly _northTransformerRepository: NorthTransformerRepository;
-  private readonly _southTransformerRepository: SouthTransformerRepository;
-  private readonly _historyTransformerRepository: HistoryTransformerRepository;
-  private readonly _oianalyticsMessageRepository: OianalyticsMessageRepository;
 
   constructor(oibusDatabasePath: string, logsDatabasePath: string, cryptoDatabasePath: string, cacheDatabasePath: string) {
     const oibusDatabase = Database(oibusDatabasePath);

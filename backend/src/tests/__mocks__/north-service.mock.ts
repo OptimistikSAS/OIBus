@@ -23,27 +23,7 @@ export const northTestManifestWithItems: NorthConnectorManifest<true> = {
     points: true,
     items: true
   },
-  items: {
-    settings: [
-      {
-        key: 'objectArray',
-        type: 'OibArray',
-        label: 'Array',
-        content: []
-      },
-      {
-        key: 'objectSettings',
-        type: 'OibFormGroup',
-        label: 'Group',
-        content: []
-      },
-      {
-        key: 'objectValue',
-        type: 'OibNumber',
-        label: 'Number'
-      }
-    ]
-  },
+  items: { settings: [] },
   settings: []
 };
 /**

@@ -4,8 +4,8 @@ import {
   NorthArchiveFiles,
   NorthCacheFiles,
   NorthConnectorDTO,
-  NorthConnectorItemDTO,
-  NorthValueFiles
+  NorthValueFiles,
+  NorthConnectorItemDTO
 } from '../../../shared/model/north-connector.model';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
@@ -615,19 +615,31 @@ export default class NorthConnector<T extends NorthSettings = any, I = any> {
   }
 
   addItem(item: NorthConnectorItemDTO<I>): void {
+    if (!this.handlesItemValues()) {
+      return;
+    }
     this.items.push(item);
   }
 
   updateItem(oldItem: NorthConnectorItemDTO<I>, newItem: NorthConnectorItemDTO<I>): void {
+    if (!this.handlesItemValues()) {
+      return;
+    }
     this.deleteItem(oldItem);
     this.addItem(newItem);
   }
 
   deleteItem(itemToRemove: NorthConnectorItemDTO<I>): void {
+    if (!this.handlesItemValues()) {
+      return;
+    }
     this.items = this.items.filter(item => item.id !== itemToRemove.id);
   }
 
   deleteAllItems(): void {
+    if (!this.handlesItemValues()) {
+      return;
+    }
     this.items = [];
   }
 
