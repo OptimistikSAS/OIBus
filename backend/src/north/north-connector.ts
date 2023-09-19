@@ -11,7 +11,7 @@ import { DateTime } from 'luxon';
 import { ReadStream } from 'node:fs';
 import path from 'node:path';
 import { NorthSettings } from '../../shared/model/north-settings.model';
-import { createBaseFolders, dirSize, validateCronExpression } from '../service/utils';
+import { createBaseFolders } from '../service/utils';
 import { NorthConnectorEntity } from '../model/north-connector.model';
 import { SouthConnectorEntityLight } from '../model/south-connector.model';
 import NorthConnectorRepository from '../repository/config/north-connector.repository';
@@ -19,9 +19,8 @@ import ScanModeRepository from '../repository/config/scan-mode.repository';
 import { ScanMode } from '../model/scan-mode.model';
 import { OIBusError } from '../model/engine.model';
 import { BaseFolders, Instant } from '../model/types';
-import { HandlesItemValues } from './north-interface';
-import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
 import { dirSize, validateCronExpression } from '../service/utils';
+import { NorthConnectorItemDTO } from "../../../shared/model/north-connector.model";
 
 /**
  * Class NorthConnector : provides general attributes and methods for north connectors.
@@ -40,10 +39,11 @@ import { dirSize, validateCronExpression } from '../service/utils';
  * - **getProxy**: get the proxy handler
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
-export default abstract class NorthConnector<T extends NorthSettings> {
+export default abstract class NorthConnector<T extends NorthSettings, I = any> {
   private valueCacheService: ValueCacheService;
   private fileCacheService: FileCacheService;
   private subscribedTo: Array<SouthConnectorEntityLight> = [];
+  protected items: Array<NorthConnectorItemDTO<I>> = [];
 
   private cacheSize = 0;
   private errorSize = 0;
