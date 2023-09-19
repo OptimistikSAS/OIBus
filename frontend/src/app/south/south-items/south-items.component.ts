@@ -10,10 +10,10 @@ import { FormControlValidationDirective } from '../../shared/form-control-valida
 import { FormsModule, NonNullableFormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-spinner.component';
 import {
-  SouthConnectorItemDTO,
-  SouthConnectorItemManifest,
   SouthConnectorDTO,
-  SouthConnectorItemCommandDTO
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorManifest
 } from '../../../../../shared/model/south-connector.model';
 import { EditSouthItemModalComponent } from '../edit-south-item-modal/edit-south-item-modal.component';
 import { debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
@@ -25,6 +25,7 @@ import { OibFormControl } from '../../../../../shared/model/form.model';
 import { createPageFromArray, Page } from '../../../../../shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
 import { PipeProviderService } from '../../shared/form/pipe-provider.service';
+import { ImportSouthItemsModalComponent } from '../import-south-items-modal/import-south-items-modal.component';
 
 const PAGE_SIZE = 20;
 
@@ -50,7 +51,7 @@ const PAGE_SIZE = 20;
 })
 export class SouthItemsComponent implements OnInit {
   @Input() southConnector: SouthConnectorDTO | null = null;
-  @Input({ required: true }) southConnectorItemSchema!: SouthConnectorItemManifest;
+  @Input({ required: true }) southManifest!: SouthConnectorManifest;
   @Input({ required: true }) scanModes!: Array<ScanModeDTO>;
   @Input() inMemory = false;
 
@@ -75,7 +76,7 @@ export class SouthItemsComponent implements OnInit {
 
   ngOnInit() {
     this.fetchItemsAndResetPage(false);
-    this.displaySettings = this.southConnectorItemSchema.settings.filter(setting => setting.displayInViewMode);
+    this.displaySettings = this.southManifest.items.settings.filter(setting => setting.displayInViewMode);
 
     // subscribe to changes to search control
     this.searchControl.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
@@ -120,7 +121,7 @@ export class SouthItemsComponent implements OnInit {
   editItem(southItem: SouthConnectorItemDTO) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForEdition(this.southConnectorItemSchema, this.allItems, this.scanModes, southItem);
+    component.prepareForEdition(this.southManifest.items, this.allItems, this.scanModes, southItem);
     this.refreshAfterEditionModalClosed(modalRef, southItem);
   }
 
@@ -130,7 +131,7 @@ export class SouthItemsComponent implements OnInit {
   addItem() {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.southConnectorItemSchema, this.allItems, this.scanModes);
+    component.prepareForCreation(this.southManifest.items, this.allItems, this.scanModes);
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
@@ -221,7 +222,7 @@ export class SouthItemsComponent implements OnInit {
   duplicateItem(item: SouthConnectorItemDTO) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForCopy(this.southConnectorItemSchema, this.scanModes, item);
+    component.prepareForCopy(this.southManifest.items, this.scanModes, item);
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
@@ -229,8 +230,10 @@ export class SouthItemsComponent implements OnInit {
    * Export items into a csv file
    */
   exportItems() {
-    if (this.southConnector) {
-      this.southConnectorService.exportItems(this.southConnector.id, this.southConnector.name).subscribe();
+    if (!this.inMemory) {
+      this.southConnectorService.exportItems(this.southConnector!.id, this.southConnector!.name).subscribe();
+    } else {
+      this.southConnectorService.itemsToCsv(this.allItems, this.southConnector?.name ?? 'south-items').subscribe();
     }
   }
 
@@ -268,22 +271,57 @@ export class SouthItemsComponent implements OnInit {
   onImportDrop(e: DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer!.files![0];
-    this.importItems(file!);
+    this.checkImportItems(file!);
   }
 
   onImportClick(e: Event) {
     const fileInput = e.target as HTMLInputElement;
     const file = fileInput!.files![0];
     fileInput.value = '';
-    this.importItems(file!);
+    this.checkImportItems(file!);
   }
 
-  importItems(file: File) {
-    if (this.southConnector) {
-      this.southConnectorService.uploadItems(this.southConnector.id, file).subscribe(() => {
-        this.notificationService.success('south.items.imported');
+  checkImportItems(file: File) {
+    this.southConnectorService
+      .checkImportItems(this.southManifest.id, file)
+      .subscribe((result: { items: Array<SouthConnectorItemDTO>; errors: Array<{ item: SouthConnectorItemDTO; message: string }> }) => {
+        const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl' });
+        const component: ImportSouthItemsModalComponent = modalRef.componentInstance;
+        component.prepare(this.southManifest.items, this.allItems, result.items, result.errors, this.scanModes);
+        this.refreshAfterImportModalClosed(modalRef);
       });
-    }
+  }
+
+  /**
+   * Refresh the South item list when a South item is created
+   */
+  private refreshAfterImportModalClosed(modalRef: Modal<any>) {
+    modalRef.result
+      .pipe(
+        switchMap((newItems: Array<SouthConnectorItemDTO>) => {
+          if (!this.inMemory) {
+            return this.southConnectorService.importItems(this.southConnector!.id, newItems);
+          } else {
+            for (const item of newItems) {
+              this.allItems = this.allItems.filter(existingItem => {
+                if (item.id) {
+                  return existingItem.id !== item.id;
+                } else {
+                  return existingItem.name !== item.name;
+                }
+              });
+              this.allItems.push(item);
+            }
+            return of(null);
+          }
+        })
+      )
+      .subscribe(() => {
+        this.fetchItemsAndResetPage(this.inMemory);
+        if (!this.inMemory) {
+          this.notificationService.success(`south.items.import.imported`);
+        }
+      });
   }
 
   getScanMode(scanModeId: string | null): ScanModeDTO | undefined {

@@ -147,10 +147,12 @@ router.put('/api/south/:id/stop', (ctx: KoaContext<any, any>) => southConnectorC
 router.get('/api/south/:southId/items', (ctx: KoaContext<any, any>) => southConnectorController.searchSouthItems(ctx));
 router.get('/api/south/:southId/items/all', (ctx: KoaContext<any, any>) => southConnectorController.listSouthItems(ctx));
 router.post('/api/south/:southId/items', (ctx: KoaContext<any, any>) => southConnectorController.createSouthItem(ctx));
-router.post('/api/south/:southId/items/upload', upload.single('file'), (ctx: KoaContext<any, any>) =>
-  southConnectorController.uploadSouthItems(ctx)
+router.post('/api/south/:southType/items/check-import', upload.single('file'), (ctx: KoaContext<any, any>) =>
+  southConnectorController.checkImportSouthItems(ctx)
 );
+router.post('/api/south/:southId/items/import', (ctx: KoaContext<any, any>) => southConnectorController.importSouthItems(ctx));
 router.get('/api/south/:southId/items/export', (ctx: KoaContext<any, any>) => southConnectorController.exportSouthItems(ctx));
+router.put('/api/south/items/to-csv', (ctx: KoaContext<any, any>) => southConnectorController.southItemsToCsv(ctx));
 router.get('/api/south/:southId/items/:id', (ctx: KoaContext<any, any>) => southConnectorController.getSouthItem(ctx));
 router.put('/api/south/:southId/items/:id', (ctx: KoaContext<any, any>) => southConnectorController.updateSouthItem(ctx));
 router.put('/api/south/:southId/items/:id/enable', (ctx: KoaContext<any, any>) => southConnectorController.enableSouthItem(ctx));

@@ -1,0 +1,57 @@
+<div class="modal-header">
+  <h4 class="modal-title" translate="south.items.import.title"></h4>
+</div>
+<div class="modal-body">
+  <div *ngIf="errorList.length > 0">
+    <h6 translate="south.items.import.error-title"></h6>
+    <table class="mb-2 table table-sm table-hover oib-table">
+      <thead class="light">
+        <tr>
+          <th translate="south.items.name"></th>
+          <th translate="south.items.import.error"></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let error of errorList" class="south-item">
+          <td>{{ error.item.name }}</td>
+          <td>{{ error.message }}</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div *ngIf="newItemList.length > 0">
+    <h6 translate="south.items.import.valid-title"></h6>
+    <table class="table table-sm table-hover oib-table">
+      <thead class="light">
+        <tr>
+          <th translate="south.items.name"></th>
+          <th translate="south.items.scan-mode"></th>
+          <th *ngFor="let setting of displaySettings">{{ setting.label }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of newItemList" class="south-item">
+          <td>{{ item.name }}</td>
+          <td *ngIf="item.scanModeId !== 'subscription'">{{ getScanMode(item.scanModeId)?.name }}</td>
+          <td *ngIf="item.scanModeId === 'subscription'">{{ 'scan-mode.subscription' | translate }}</td>
+          <td *ngFor="let setting of displaySettings">{{ getFieldValue(item.settings, setting.key, setting.pipe) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="modal-footer">
+  <div class="btn-group">
+    <button
+      [disabled]="newItemList.length === 0"
+      type="button"
+      class="btn btn-primary"
+      (click)="submit()"
+      translate="common.ok"
+      id="save-button"
+    ></button>
+    <button type="button" class="btn btn-cancel" (click)="cancel()" translate="common.cancel" id="cancel-button"></button>
+  </div>
+</div>

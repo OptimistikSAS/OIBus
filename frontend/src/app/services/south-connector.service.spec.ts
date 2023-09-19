@@ -229,6 +229,23 @@ describe('SouthConnectorService', () => {
     expect(done).toBe(true);
   });
 
+  it('should download csv items', () => {
+    let downloaded = false;
+
+    spyOn(downloadService, 'download');
+    service.itemsToCsv([], 'southName').subscribe(() => (downloaded = true));
+
+    http
+      .expectOne({
+        method: 'PUT',
+        url: '/api/south/items/to-csv'
+      })
+      .flush(new Blob());
+
+    expect(downloaded).toBe(true);
+    expect(downloadService.download).toHaveBeenCalled();
+  });
+
   it('should download items blob', () => {
     let downloaded = false;
 
@@ -246,18 +263,32 @@ describe('SouthConnectorService', () => {
     expect(downloadService.download).toHaveBeenCalled();
   });
 
-  it('should import items', () => {
+  it('should check import items', () => {
     const file = new Blob() as File;
     const expectedFormData = new FormData();
     expectedFormData.set('file', file);
     let actualImportation = false;
 
-    service.uploadItems('id1', file).subscribe(() => {
+    service.checkImportItems('id1', file).subscribe(() => {
       actualImportation = true;
     });
 
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/upload' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/check-import' });
     expect(testRequest.request.body).toEqual(expectedFormData);
+    testRequest.flush(true);
+
+    expect(actualImportation).toBe(true);
+  });
+
+  it('should import items', () => {
+    let actualImportation = false;
+
+    service.importItems('id1', []).subscribe(() => {
+      actualImportation = true;
+    });
+
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/import' });
+    expect(testRequest.request.body).toEqual({ items: [] });
     testRequest.flush(true);
 
     expect(actualImportation).toBe(true);
