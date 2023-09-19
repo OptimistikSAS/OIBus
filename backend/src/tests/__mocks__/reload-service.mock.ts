@@ -8,6 +8,13 @@ export default jest.fn().mockImplementation(() => ({
   onDeleteNorth: jest.fn(),
   onStartNorth: jest.fn(),
   onStopNorth: jest.fn(),
+  onCreateNorthItem: jest.fn(),
+  onUpdateNorthItemSettings: jest.fn(),
+  onCreateOrUpdateNorthItems: jest.fn(),
+  onDeleteNorthItem: jest.fn(),
+  onEnableNorthItem: jest.fn(),
+  onDisableNorthItem: jest.fn(),
+  onDeleteAllNorthItems: jest.fn(),
   onCreateSouth: jest.fn(),
   onUpdateSouth: jest.fn(),
   onDeleteSouth: jest.fn(),
@@ -67,7 +74,8 @@ export default jest.fn().mockImplementation(() => ({
     retryAllValueErrors: jest.fn(),
     startNorth: jest.fn(),
     startSouth: jest.fn(),
-    onSouthItemsChange: jest.fn()
+    onSouthItemsChange: jest.fn(),
+    onNorthItemsChange: jest.fn()
   },
   historyEngine: {
     startHistoryQuery: jest.fn(),
