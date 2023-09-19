@@ -1,6 +1,12 @@
 import ArchiveService from '../service/cache/archive.service';
 
-import { NorthArchiveFiles, NorthCacheFiles, NorthConnectorDTO, NorthValueFiles } from '../../../shared/model/north-connector.model';
+import {
+  NorthArchiveFiles,
+  NorthCacheFiles,
+  NorthConnectorDTO,
+  NorthValueFiles,
+  NorthConnectorItemDTO
+} from '../../../shared/model/north-connector.model';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import ValueCacheService from '../service/cache/value-cache.service';
@@ -38,7 +44,7 @@ import { dirSize, validateCronExpression } from '../service/utils';
  * - **getProxy**: get the proxy handler
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
-export default class NorthConnector<T extends NorthSettings = any> {
+export default class NorthConnector<T extends NorthSettings = any, I = any> {
   public static type: string;
 
   private archiveService: ArchiveService;
@@ -64,7 +70,8 @@ export default class NorthConnector<T extends NorthSettings = any> {
     protected readonly encryptionService: EncryptionService,
     protected readonly repositoryService: RepositoryService,
     protected logger: pino.Logger,
-    protected readonly baseFolder: string
+    protected readonly baseFolder: string,
+    protected items: Array<NorthConnectorItemDTO<I>> = []
   ) {
     this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.connector.archive);
     this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.connector.caching);
@@ -609,6 +616,35 @@ export default class NorthConnector<T extends NorthSettings = any> {
   async retryAllValueErrors(): Promise<void> {
     this.logger.trace(`Retrying all value error files in North connector "${this.connector.name}"...`);
     await this.valueCacheService.retryAllErrorValues();
+  }
+
+  addItem(item: NorthConnectorItemDTO<I>): void {
+    if (!this.handlesItemValues()) {
+      return;
+    }
+    this.items.push(item);
+  }
+
+  updateItem(oldItem: NorthConnectorItemDTO<I>, newItem: NorthConnectorItemDTO<I>): void {
+    if (!this.handlesItemValues()) {
+      return;
+    }
+    this.deleteItem(oldItem);
+    this.addItem(newItem);
+  }
+
+  deleteItem(itemToRemove: NorthConnectorItemDTO<I>): void {
+    if (!this.handlesItemValues()) {
+      return;
+    }
+    this.items = this.items.filter(item => item.id !== itemToRemove.id);
+  }
+
+  deleteAllItems(): void {
+    if (!this.handlesItemValues()) {
+      return;
+    }
+    this.items = [];
   }
 
   getMetricsDataStream(): PassThrough {
