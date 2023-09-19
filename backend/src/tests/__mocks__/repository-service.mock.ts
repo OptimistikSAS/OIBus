@@ -36,6 +36,19 @@ export default jest.fn().mockImplementation(() => ({
     deleteAllSouthItems: jest.fn(),
     createAndUpdateSouthItems: jest.fn()
   },
+  northItemRepository: {
+    searchNorthItems: jest.fn(),
+    listNorthItems: jest.fn(),
+    getNorthItem: jest.fn(),
+    getNorthItems: jest.fn(),
+    createNorthItem: jest.fn(),
+    updateNorthItem: jest.fn(),
+    deleteNorthItem: jest.fn(),
+    enableNorthItem: jest.fn(),
+    disableNorthItem: jest.fn(),
+    deleteAllNorthItems: jest.fn(),
+    createAndUpdateNorthItems: jest.fn()
+  },
   historyQueryRepository: {
     getHistoryQueries: jest.fn(),
     getHistoryQuery: jest.fn(),
