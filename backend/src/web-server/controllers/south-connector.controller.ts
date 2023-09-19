@@ -189,7 +189,7 @@ export default class SouthConnectorController {
         await this.validator.validateSettings(manifest.items.settings, item.settings);
       }
 
-      let southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
+      const southConnector = ctx.app.repositoryService.southConnectorRepository.getSouthConnector(ctx.params.id);
       if (!southConnector) {
         return ctx.notFound();
       }

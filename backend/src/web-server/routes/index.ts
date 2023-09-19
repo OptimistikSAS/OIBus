@@ -145,7 +145,19 @@ router.delete('/api/north/:northId/cache/archive-files/remove-all', (ctx: KoaCon
 router.delete('/api/north/:northId/cache/archive-files/retry-all', (ctx: KoaContext<any, any>) =>
   northConnectorController.retryAllArchiveFiles(ctx)
 );
-
+router.get('/api/north/:northId/items', (ctx: KoaContext<any, any>) => northConnectorController.searchNorthItems(ctx));
+router.get('/api/north/:northId/items/all', (ctx: KoaContext<any, any>) => northConnectorController.listNorthItems(ctx));
+router.post('/api/north/:northId/items', (ctx: KoaContext<any, any>) => northConnectorController.createNorthItem(ctx));
+router.post('/api/north/:northId/items/upload', upload.single('file'), (ctx: KoaContext<any, any>) =>
+  northConnectorController.uploadNorthItems(ctx)
+);
+router.get('/api/north/:northId/items/export', (ctx: KoaContext<any, any>) => northConnectorController.exportNorthItems(ctx));
+router.get('/api/north/:northId/items/:id', (ctx: KoaContext<any, any>) => northConnectorController.getNorthItem(ctx));
+router.put('/api/north/:northId/items/:id', (ctx: KoaContext<any, any>) => northConnectorController.updateNorthItem(ctx));
+router.put('/api/north/:northId/items/:id/enable', (ctx: KoaContext<any, any>) => northConnectorController.enableNorthItem(ctx));
+router.put('/api/north/:northId/items/:id/disable', (ctx: KoaContext<any, any>) => northConnectorController.disableNorthItem(ctx));
+router.delete('/api/north/:northId/items/all', (ctx: KoaContext<any, any>) => northConnectorController.deleteAllNorthItem(ctx));
+router.delete('/api/north/:northId/items/:id', (ctx: KoaContext<any, any>) => northConnectorController.deleteNorthItem(ctx));
 router.put('/api/north/:northId/cache/reset-metrics', (ctx: KoaContext<any, any>) => northConnectorController.resetNorthMetrics(ctx));
 
 router.get('/api/north/:northId/cache/values', (ctx: KoaContext<any, any>) => northConnectorController.getCacheValues(ctx));
