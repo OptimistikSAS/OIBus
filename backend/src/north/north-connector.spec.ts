@@ -127,6 +127,11 @@ let configuration: NorthConnectorDTO;
 class TestNorth extends NorthConnector {}
 let north: TestNorth;
 
+class TestNorthWithItems extends NorthConnector {
+  async handleItemValues(): Promise<void> {}
+}
+let northWithItems: TestNorthWithItems;
+
 describe('NorthConnector enabled', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -162,8 +167,10 @@ describe('NorthConnector enabled', () => {
     repositoryService.northConnectorRepository.getNorthConnector = jest.fn().mockReturnValue(configuration);
 
     north = new TestNorth(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+    northWithItems = new TestNorthWithItems(configuration, encryptionService, repositoryService, logger, 'baseFolder');
     (dirSize as jest.Mock).mockReturnValue(123);
     await north.start();
+    await northWithItems.start();
   });
 
   it('should be properly initialized', async () => {
@@ -594,6 +601,11 @@ describe('NorthConnector enabled', () => {
   it('should get archive file content', async () => {
     await north.getArchiveFileContent('file1.queue.tmp');
     expect(getArchiveFileContent).toHaveBeenCalledWith('file1.queue.tmp');
+  });
+
+  it('should properly handle item change', async () => {
+    await north.onItemChange();
+    expect(repositoryService.northItemRepository.listNorthItems).toHaveBeenCalledWith(configuration.id, { enabled: true });
   });
 });
 
