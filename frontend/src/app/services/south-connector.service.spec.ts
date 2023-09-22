@@ -269,11 +269,11 @@ describe('SouthConnectorService', () => {
     expectedFormData.set('file', file);
     let actualImportation = false;
 
-    service.checkImportItems('id1', file).subscribe(() => {
+    service.checkImportItems('southType', 'southId', file).subscribe(() => {
       actualImportation = true;
     });
 
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/id1/items/check-import' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/south/southType/items/check-import/southId' });
     expect(testRequest.request.body).toEqual(expectedFormData);
     testRequest.flush(true);
 

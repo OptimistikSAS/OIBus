@@ -218,6 +218,7 @@ export class SouthConnectorService {
    */
   checkImportItems(
     southType: string,
+    southId: string,
     file: File
   ): Observable<{
     items: Array<SouthConnectorItemDTO>;
@@ -229,7 +230,7 @@ export class SouthConnectorService {
     const formData = new FormData();
     formData.set('file', file);
     return this.http.post<{ items: Array<SouthConnectorItemDTO>; errors: Array<{ item: SouthConnectorItemDTO; message: string }> }>(
-      `/api/south/${southType}/items/check-import`,
+      `/api/south/${southType}/items/check-import/${southId}`,
       formData
     );
   }
