@@ -792,12 +792,13 @@ describe('South connector controller', () => {
 
   it('exportSouthItems() should download a csv file', async () => {
     ctx.params.southId = 'id';
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
     ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([
       item,
       {
         id: 'id2',
         name: 'item2',
-        scanModeId: 'scanModeId',
+        scanModeId: 'badScanModeId',
         enabled: true,
         settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
       }
@@ -810,17 +811,15 @@ describe('South connector controller', () => {
     expect(ctx.body).toEqual('csv content');
     expect(csv.unparse).toHaveBeenCalledWith([
       {
-        id: 'id',
         name: 'name',
         enabled: true,
-        scanModeId: 'scanModeId',
+        scanMode: 'scanMode',
         settings_regex: '.*'
       },
       {
-        id: 'id2',
         name: 'item2',
         enabled: true,
-        scanModeId: 'scanModeId',
+        scanMode: '',
         settings_objectArray: '[]',
         settings_objectSettings: '{}',
         settings_objectValue: 1
@@ -828,30 +827,42 @@ describe('South connector controller', () => {
     ]);
   });
 
-  it('checkImportSouthItems() should check import of items in a csv file', async () => {
+  it('checkImportSouthItems() should check import of items in a csv file with new south', async () => {
     ctx.params.southType = 'south-test';
+    ctx.params.southId = 'create';
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
+
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (validator.validateSettings as jest.Mock)
       .mockImplementationOnce(() => {
-        return true;
+        throw new Error('validation fail');
       })
       .mockImplementationOnce(() => {
-        throw new Error('validation fail');
+        return true;
       });
     (csv.parse as jest.Mock).mockReturnValue({
       data: [
         {
-          id: 'id',
-          name: 'name',
-          scanModeId: 'scanModeId',
-          settings_field: 'value'
+          name: 'item1',
+          scanMode: 'badScanMode'
         },
         {
-          id: 'id2',
           name: 'item2',
-          scanModeId: 'scanModeId',
+          scanMode: 'scanMode',
+          settings_badField: 'badField'
+        },
+        {
+          name: 'item3',
+          scanMode: 'scanMode',
+          settings_objectArray: '[]',
+          settings_objectSettings: '{}',
+          settings_objectValue: 1
+        },
+        {
+          name: 'item4',
+          scanMode: 'scanMode',
           settings_objectArray: '[]',
           settings_objectSettings: '{}',
           settings_objectValue: 1
@@ -871,16 +882,46 @@ describe('South connector controller', () => {
       items: [
         {
           id: '',
-          name: 'name',
+          name: 'item4',
+          connectorId: '',
+          enabled: true,
           scanModeId: 'scanModeId',
-          settings: {}
+          settings: {
+            objectArray: [],
+            objectSettings: {},
+            objectValue: 1
+          }
         }
       ],
       errors: [
         {
           item: {
             id: '',
+            name: 'item1',
+            enabled: true,
+            connectorId: '',
+            scanModeId: '',
+            settings: {}
+          },
+          message: 'Scan mode "badScanMode" not found for item item1'
+        },
+        {
+          item: {
+            id: '',
             name: 'item2',
+            enabled: true,
+            connectorId: '',
+            scanModeId: '',
+            settings: {}
+          },
+          message: 'Settings "badField" not accepted in manifest'
+        },
+        {
+          item: {
+            id: '',
+            name: 'item3',
+            enabled: true,
+            connectorId: '',
             scanModeId: 'scanModeId',
             settings: {
               objectArray: [],
@@ -889,6 +930,80 @@ describe('South connector controller', () => {
             }
           },
           message: 'validation fail'
+        }
+      ]
+    });
+  });
+
+  it('checkImportSouthItems() should check import of items in a csv file with existing south', async () => {
+    ctx.params.southType = 'south-test';
+    ctx.params.southId = 'southId';
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
+    ctx.app.repositoryService.southItemRepository.getSouthItems.mockReturnValueOnce([{ id: 'id1', name: 'existingItem' }]);
+
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    (fs.readFile as jest.Mock).mockReturnValue('file content');
+    (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
+      return true;
+    });
+    (csv.parse as jest.Mock).mockReturnValue({
+      data: [
+        {
+          name: 'existingItem',
+          scanMode: 'scanMode',
+          settings_objectArray: '[]',
+          settings_objectSettings: '{}',
+          settings_objectValue: 1
+        },
+        {
+          name: 'newItem',
+          scanMode: 'scanMode',
+          settings_objectArray: '[]',
+          settings_objectSettings: '{}',
+          settings_objectValue: 1
+        }
+      ]
+    });
+
+    await southConnectorController.checkImportSouthItems(ctx);
+
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+    expect(ctx.throw).not.toHaveBeenCalled();
+
+    expect(validator.validateSettings).toHaveBeenCalledTimes(1);
+    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
+    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
+    expect(ctx.ok).toHaveBeenCalledWith({
+      items: [
+        {
+          id: '',
+          name: 'newItem',
+          connectorId: 'southId',
+          enabled: true,
+          scanModeId: 'scanModeId',
+          settings: {
+            objectArray: [],
+            objectSettings: {},
+            objectValue: 1
+          }
+        }
+      ],
+      errors: [
+        {
+          item: {
+            id: '',
+            name: 'existingItem',
+            enabled: true,
+            connectorId: 'southId',
+            scanModeId: '',
+            settings: {
+              objectArray: [],
+              objectSettings: {},
+              objectValue: 1
+            }
+          },
+          message: 'Item name "existingItem" already used'
         }
       ]
     });

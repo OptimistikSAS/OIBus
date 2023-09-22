@@ -283,7 +283,7 @@ export class SouthItemsComponent implements OnInit {
 
   checkImportItems(file: File) {
     this.southConnectorService
-      .checkImportItems(this.southManifest.id, file)
+      .checkImportItems(this.southManifest.id, this.southConnector?.id || 'create', file)
       .subscribe((result: { items: Array<SouthConnectorItemDTO>; errors: Array<{ item: SouthConnectorItemDTO; message: string }> }) => {
         const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl' });
         const component: ImportSouthItemsModalComponent = modalRef.componentInstance;

@@ -258,10 +258,14 @@ export default class SouthConnectorController {
   }
 
   async exportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
+    const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
     const southItems = ctx.app.repositoryService.southItemRepository.getSouthItems(ctx.params.southId).map(item => {
       const flattenedItem: Record<string, any> = {
         ...item
       };
+      delete flattenedItem.id;
+      flattenedItem.scanMode = scanModes.find(scanMode => scanMode.id === flattenedItem.scanModeId)?.name ?? '';
+      delete flattenedItem.scanModeId;
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
         if (typeof itemSettingsValue === 'object') {
           flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
@@ -289,33 +293,56 @@ export default class SouthConnectorController {
     if (file.mimetype !== 'text/csv') {
       return ctx.badRequest();
     }
+    const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
+
+    const existingItems: Array<SouthConnectorItemDTO> =
+      ctx.params.southId === 'create' ? [] : ctx.app.repositoryService.southItemRepository.getSouthItems(ctx.params.southId);
     const validItems: Array<any> = [];
     const errors: Array<any> = [];
     try {
       const fileContent = await fs.readFile(file.path);
       const csvContent = csv.parse(fileContent.toString('utf8'), { header: true });
 
-      const items = csvContent.data.map((data: any) => {
-        const item: Record<string, any> = { settings: {} };
-        for (const [key, value] of Object.entries(data)) {
-          if (key.startsWith('settings_')) {
-            const settingsKey = key.replace('settings_', '');
-            const manifestSettings = manifest.items.settings.find(settings => settings.key === settingsKey);
-            if (!manifestSettings) continue;
-            if (manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') {
-              item.settings[settingsKey] = JSON.parse(value as string);
-            } else {
-              item.settings[settingsKey] = value;
+      for (const data of csvContent.data) {
+        const item: SouthConnectorItemDTO = {
+          id: '',
+          name: (data as any).name,
+          enabled: true,
+          connectorId: ctx.params.southId !== 'create' ? ctx.params.southId : '',
+          scanModeId: '',
+          settings: {}
+        };
+
+        try {
+          for (const [key, value] of Object.entries(data as any)) {
+            if (key.startsWith('settings_')) {
+              const settingsKey = key.replace('settings_', '');
+              const manifestSettings = manifest.items.settings.find(settings => settings.key === settingsKey);
+              if (!manifestSettings) {
+                throw new Error(`Settings "${settingsKey}" not accepted in manifest`);
+              }
+              if (manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') {
+                item.settings[settingsKey] = JSON.parse(value as string);
+              } else {
+                item.settings[settingsKey] = value;
+              }
             }
-          } else {
-            item[key] = value;
           }
+        } catch (err: any) {
+          errors.push({ item, message: err.message });
+          continue;
         }
-        item.id = ''; // Remove existing ID to only add items from import
-        return item;
-      });
-      // Check if item settings match the item schema, throw an error otherwise
-      for (const item of items) {
+
+        if (existingItems.find(existingItem => existingItem.name === item.name)) {
+          errors.push({ item, message: `Item name "${(data as any).name}" already used` });
+          continue;
+        }
+        const foundScanMode = scanModes.find(scanMode => scanMode.name === (data as any).scanMode);
+        if (!foundScanMode) {
+          errors.push({ item, message: `Scan mode "${(data as any).scanMode}" not found for item ${item.name}` });
+          continue;
+        }
+        item.scanModeId = foundScanMode.id;
         try {
           await this.validator.validateSettings(manifest.items.settings, item.settings);
           validItems.push(item);

@@ -29,6 +29,7 @@
           <th translate="south.items.name"></th>
           <th translate="south.items.scan-mode"></th>
           <th *ngFor="let setting of displaySettings">{{ setting.label }}</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -37,6 +38,7 @@
           <td *ngIf="item.scanModeId !== 'subscription'">{{ getScanMode(item.scanModeId)?.name }}</td>
           <td *ngIf="item.scanModeId === 'subscription'">{{ 'scan-mode.subscription' | translate }}</td>
           <td *ngFor="let setting of displaySettings">{{ getFieldValue(item.settings, setting.key, setting.pipe) }}</td>
+          <td></td>
         </tr>
       </tbody>
     </table>

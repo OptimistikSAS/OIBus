@@ -147,7 +147,7 @@ router.put('/api/south/:id/stop', (ctx: KoaContext<any, any>) => southConnectorC
 router.get('/api/south/:southId/items', (ctx: KoaContext<any, any>) => southConnectorController.searchSouthItems(ctx));
 router.get('/api/south/:southId/items/all', (ctx: KoaContext<any, any>) => southConnectorController.listSouthItems(ctx));
 router.post('/api/south/:southId/items', (ctx: KoaContext<any, any>) => southConnectorController.createSouthItem(ctx));
-router.post('/api/south/:southType/items/check-import', upload.single('file'), (ctx: KoaContext<any, any>) =>
+router.post('/api/south/:southType/items/check-import/:southId', upload.single('file'), (ctx: KoaContext<any, any>) =>
   southConnectorController.checkImportSouthItems(ctx)
 );
 router.post('/api/south/:southId/items/import', (ctx: KoaContext<any, any>) => southConnectorController.importSouthItems(ctx));
