@@ -82,7 +82,7 @@ describe('ValueCache', () => {
         'myCacheFolder',
         'values',
         'error.buffer.tmp'
-      )}": SyntaxError: Unexpected token m in JSON at position 0`
+      )}": SyntaxError: Unexpected token 'm', "malformed "... is not valid JSON`
     );
     expect(logger.error).toHaveBeenCalledWith(
       `Error while reading queue file "${path.resolve('myCacheFolder', 'values', 'error.queue.tmp')}": Error: queue error`

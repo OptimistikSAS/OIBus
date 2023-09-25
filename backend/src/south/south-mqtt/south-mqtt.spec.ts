@@ -587,7 +587,7 @@ describe('SouthMQTT with Basic Auth', () => {
 
     await south.handleMessage(items[5].settings.topic, Buffer.from('not a json object'));
     expect(logger.error).toHaveBeenCalledWith(
-      `Could not handle message "not a json object" for topic "${items[5].settings.topic}". SyntaxError: Unexpected token o in JSON at position 1`
+      `Could not handle message "not a json object" for topic "${items[5].settings.topic}". SyntaxError: Unexpected token 'o', "not a json object" is not valid JSON`
     );
   });
 });
