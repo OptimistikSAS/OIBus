@@ -708,6 +708,9 @@ describe('SouthODBC odbc remote with authentication', () => {
         throw new Error('connection failed');
       })
       .mockImplementationOnce(() => {
+        return true;
+      })
+      .mockImplementationOnce(() => {
         throw new Error('disconnection failed');
       });
 
@@ -716,10 +719,12 @@ describe('SouthODBC odbc remote with authentication', () => {
     await south.connect();
 
     expect(fetch).toHaveBeenCalledTimes(1);
+    await south.connect();
+
     await south.disconnect();
     expect(clearTimeoutSpy).toHaveBeenCalledTimes(1);
     jest.advanceTimersByTime(configuration.settings.retryInterval);
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(fetch).toHaveBeenCalledTimes(3);
     expect(logger.error).toHaveBeenCalledWith(
       `Error while sending connection HTTP request into agent. Reconnecting in ${configuration.settings.retryInterval} ms. ${new Error(
         'connection failed'
