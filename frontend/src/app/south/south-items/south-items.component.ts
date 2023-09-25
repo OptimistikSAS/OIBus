@@ -293,7 +293,7 @@ export class SouthItemsComponent implements OnInit {
   }
 
   /**
-   * Refresh the South item list when a South item is created
+   * Refresh the South item list when South items are created
    */
   private refreshAfterImportModalClosed(modalRef: Modal<any>) {
     modalRef.result

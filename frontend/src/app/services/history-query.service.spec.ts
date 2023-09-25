@@ -115,7 +115,7 @@ describe('HistoryQueryService', () => {
 
     service.searchItems('id1', { page: 0, name: null }).subscribe(c => (expectedItems = c));
 
-    http.expectOne({ url: '/api/history-queries/id1/items?page=0', method: 'GET' }).flush(southConnectorItems);
+    http.expectOne({ url: '/api/history-queries/id1/south-items?page=0', method: 'GET' }).flush(southConnectorItems);
     expect(expectedItems!).toEqual(southConnectorItems);
   });
 
@@ -125,7 +125,7 @@ describe('HistoryQueryService', () => {
 
     service.getItem('id1', 'itemId1').subscribe(c => (expectedItem = c));
 
-    http.expectOne({ url: '/api/history-queries/id1/items/itemId1', method: 'GET' }).flush(southConnectorItem);
+    http.expectOne({ url: '/api/history-queries/id1/south-items/itemId1', method: 'GET' }).flush(southConnectorItem);
     expect(expectedItem!).toEqual(southConnectorItem);
   });
 
@@ -139,7 +139,7 @@ describe('HistoryQueryService', () => {
     };
 
     service.createItem('id1', command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries/id1/items' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries/id1/south-items' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -155,7 +155,7 @@ describe('HistoryQueryService', () => {
     };
 
     service.updateItem('id1', 'itemId1', command).subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/items/itemId1' });
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/south-items/itemId1' });
     expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
     expect(done).toBe(true);
@@ -164,7 +164,7 @@ describe('HistoryQueryService', () => {
   it('should delete a History query item', () => {
     let done = false;
     service.deleteItem('id1', 'itemId1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-queries/id1/items/itemId1' });
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-queries/id1/south-items/itemId1' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -172,7 +172,7 @@ describe('HistoryQueryService', () => {
   it('should enable a History query item', () => {
     let done = false;
     service.enableItem('id1', 'historyItemId1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/items/historyItemId1/enable' });
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/south-items/historyItemId1/enable' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -180,7 +180,7 @@ describe('HistoryQueryService', () => {
   it('should disable a History query item', () => {
     let done = false;
     service.disableItem('id1', 'historyItemId1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/items/historyItemId1/disable' });
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/south-items/historyItemId1/disable' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
@@ -188,21 +188,21 @@ describe('HistoryQueryService', () => {
   it('should delete all South connector items', () => {
     let done = false;
     service.deleteAllItems('id1').subscribe(() => (done = true));
-    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-queries/id1/items/all' });
+    const testRequest = http.expectOne({ method: 'DELETE', url: '/api/history-queries/id1/south-items/all' });
     testRequest.flush(null);
     expect(done).toBe(true);
   });
 
-  it('should download items blob', () => {
+  it('should download csv items', () => {
     let downloaded = false;
 
     spyOn(downloadService, 'download');
-    service.exportItems('id1', 'historyName').subscribe(() => (downloaded = true));
+    service.itemsToCsv([], 'historyQueryName').subscribe(() => (downloaded = true));
 
     http
       .expectOne({
-        method: 'GET',
-        url: '/api/history-queries/id1/items/export'
+        method: 'PUT',
+        url: '/api/history-queries/south-items/to-csv'
       })
       .flush(new Blob());
 
@@ -210,18 +210,49 @@ describe('HistoryQueryService', () => {
     expect(downloadService.download).toHaveBeenCalled();
   });
 
-  it('should import items', () => {
+  it('should download history south items blob', () => {
+    let downloaded = false;
+
+    spyOn(downloadService, 'download');
+    service.exportItems('id1', 'historyQueryName').subscribe(() => (downloaded = true));
+
+    http
+      .expectOne({
+        method: 'GET',
+        url: '/api/history-queries/id1/south-items/export'
+      })
+      .flush(new Blob());
+
+    expect(downloaded).toBe(true);
+    expect(downloadService.download).toHaveBeenCalled();
+  });
+
+  it('should check import history south items', () => {
     const file = new Blob() as File;
     const expectedFormData = new FormData();
     expectedFormData.set('file', file);
     let actualImportation = false;
 
-    service.uploadItems('id1', file).subscribe(() => {
+    service.checkImportItems('southType', 'historyId', file).subscribe(() => {
       actualImportation = true;
     });
 
-    const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries/id1/items/upload' });
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries/southType/south-items/check-south-import/historyId' });
     expect(testRequest.request.body).toEqual(expectedFormData);
+    testRequest.flush(true);
+
+    expect(actualImportation).toBe(true);
+  });
+
+  it('should import history south items', () => {
+    let actualImportation = false;
+
+    service.importItems('id1', []).subscribe(() => {
+      actualImportation = true;
+    });
+
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/history-queries/id1/south-items/import' });
+    expect(testRequest.request.body).toEqual({ items: [] });
     testRequest.flush(true);
 
     expect(actualImportation).toBe(true);

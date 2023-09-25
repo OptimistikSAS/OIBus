@@ -99,11 +99,12 @@ const oibusItemCommand = {
   settings: {
     field: 'value'
   },
-  scanModeId: 'scanModeId'
+  scanModeId: ''
 };
 const oibusItem = {
   id: 'id',
   connectorId: 'connectorId',
+  enabled: true,
   ...oibusItemCommand
 };
 const page = {
@@ -847,12 +848,22 @@ describe('History query controller', () => {
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
-  it('exportItems() should download a csv file', async () => {
-    ctx.params.historyQueryId = 'id';
-    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems.mockReturnValueOnce([oibusItem, oibusItem]);
+  it('historySouthItemsToCsv() should download a csv file', async () => {
+    ctx.request.body = {
+      items: [
+        oibusItem,
+        {
+          id: 'id2',
+          name: 'item2',
+          scanModeId: '',
+          enabled: true,
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
+        }
+      ]
+    };
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
 
-    await historyQueryController.exportItems(ctx);
+    await historyQueryController.historySouthItemsToCsv(ctx);
 
     expect(ctx.ok).toHaveBeenCalled();
     expect(ctx.body).toEqual('csv content');
@@ -860,104 +871,269 @@ describe('History query controller', () => {
       {
         id: 'id',
         name: 'name',
-        scanModeId: 'scanModeId',
+        enabled: true,
+        scanModeId: '',
         settings_field: 'value'
       },
       {
-        id: 'id',
-        name: 'name',
-        scanModeId: 'scanModeId',
-        settings_field: 'value'
+        id: 'id2',
+        name: 'item2',
+        enabled: true,
+        scanModeId: '',
+        settings_objectArray: '[]',
+        settings_objectSettings: '{}',
+        settings_objectValue: 1
       }
     ]);
   });
 
-  it('uploadItems() should import a csv file', async () => {
+  it('exportSouthItems() should download a csv file', async () => {
     ctx.params.historyQueryId = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems.mockReturnValueOnce([
+      oibusItem,
+      {
+        id: 'id2',
+        name: 'item2',
+        scanModeId: '',
+        enabled: true,
+        settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
+      }
+    ]);
+    (csv.unparse as jest.Mock).mockReturnValue('csv content');
+
+    await historyQueryController.exportSouthItems(ctx);
+
+    expect(ctx.ok).toHaveBeenCalled();
+    expect(ctx.body).toEqual('csv content');
+    expect(csv.unparse).toHaveBeenCalledWith([
+      {
+        name: 'name',
+        enabled: true,
+        settings_field: 'value'
+      },
+      {
+        name: 'item2',
+        enabled: true,
+        settings_objectArray: '[]',
+        settings_objectSettings: '{}',
+        settings_objectValue: 1
+      }
+    ]);
+  });
+
+  it('checkImportSouthItems() should check import of items in a csv file with new history', async () => {
+    ctx.params.southType = 'south-test';
+    ctx.params.historyQueryId = 'create';
+
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
     (fs.readFile as jest.Mock).mockReturnValue('file content');
+    (validator.validateSettings as jest.Mock)
+      .mockImplementationOnce(() => {
+        throw new Error('validation fail');
+      })
+      .mockImplementationOnce(() => {
+        throw new Error('validation fail');
+      })
+      .mockImplementationOnce(() => {
+        return true;
+      });
     (csv.parse as jest.Mock).mockReturnValue({
       data: [
         {
-          id: 'id',
-          name: 'name',
-          scanModeId: 'scanModeId',
-          settings_field: 'value'
+          name: 'item1'
         },
         {
-          id: 'id',
-          name: 'name',
-          scanModeId: 'scanModeId',
-          settings_field: 'value'
+          name: 'item2',
+          settings_badField: 'badField'
+        },
+        {
+          name: 'item3',
+          settings_objectArray: '[]',
+          settings_objectSettings: '{}',
+          settings_objectValue: 1
+        },
+        {
+          name: 'item4',
+          settings_objectArray: '[]',
+          settings_objectSettings: '{}',
+          settings_objectValue: 1
         }
       ]
     });
 
-    await historyQueryController.uploadItems(ctx);
+    await historyQueryController.checkImportSouthItems(ctx);
 
     expect(ctx.badRequest).not.toHaveBeenCalled();
     expect(ctx.throw).not.toHaveBeenCalled();
 
-    expect(validator.validateSettings).toHaveBeenCalledTimes(2);
+    expect(validator.validateSettings).toHaveBeenCalledTimes(3);
     expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
     expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
-    expect(ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems).toHaveBeenCalledTimes(1);
-    expect(ctx.noContent).toHaveBeenCalled();
+    expect(ctx.ok).toHaveBeenCalledWith({
+      items: [
+        {
+          id: '',
+          name: 'item4',
+          connectorId: '',
+          enabled: true,
+          scanModeId: '',
+          settings: {
+            objectArray: [],
+            objectSettings: {},
+            objectValue: 1
+          }
+        }
+      ],
+      errors: [
+        {
+          item: {
+            id: '',
+            name: 'item1',
+            enabled: true,
+            connectorId: '',
+            scanModeId: '',
+            settings: {}
+          },
+          message: 'validation fail'
+        },
+        {
+          item: {
+            id: '',
+            name: 'item2',
+            enabled: true,
+            connectorId: '',
+            scanModeId: '',
+            settings: {}
+          },
+          message: 'Settings "badField" not accepted in manifest'
+        },
+        {
+          item: {
+            id: '',
+            name: 'item3',
+            enabled: true,
+            connectorId: '',
+            scanModeId: '',
+            settings: {
+              objectArray: [],
+              objectSettings: {},
+              objectValue: 1
+            }
+          },
+          message: 'validation fail'
+        }
+      ]
+    });
   });
 
-  it('uploadItems() should throw not found connector', async () => {
-    ctx.params.historyQueryId = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null);
+  it('checkImportSouthItems() should check import of items in a csv file with existing history', async () => {
+    ctx.params.southType = 'south-test';
+    ctx.params.historyQueryId = 'historyId';
+    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems.mockReturnValueOnce([{ id: 'id1', name: 'existingItem' }]);
 
-    await historyQueryController.uploadItems(ctx);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    (fs.readFile as jest.Mock).mockReturnValue('file content');
+    (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
+      return true;
+    });
+    (csv.parse as jest.Mock).mockReturnValue({
+      data: [
+        {
+          name: 'existingItem',
+          settings_objectArray: '[]',
+          settings_objectSettings: '{}',
+          settings_objectValue: 1
+        },
+        {
+          name: 'newItem',
+          settings_objectArray: '[]',
+          settings_objectSettings: '{}',
+          settings_objectValue: 1
+        }
+      ]
+    });
+
+    await historyQueryController.checkImportSouthItems(ctx);
+
+    expect(ctx.badRequest).not.toHaveBeenCalled();
+    expect(ctx.throw).not.toHaveBeenCalled();
+
+    expect(validator.validateSettings).toHaveBeenCalledTimes(1);
+    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
+    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
+    expect(ctx.ok).toHaveBeenCalledWith({
+      items: [
+        {
+          id: '',
+          name: 'newItem',
+          connectorId: 'historyId',
+          enabled: true,
+          scanModeId: '',
+          settings: {
+            objectArray: [],
+            objectSettings: {},
+            objectValue: 1
+          }
+        }
+      ],
+      errors: [
+        {
+          item: {
+            id: '',
+            name: 'existingItem',
+            enabled: true,
+            connectorId: 'historyId',
+            scanModeId: '',
+            settings: {
+              objectArray: [],
+              objectSettings: {},
+              objectValue: 1
+            }
+          },
+          message: 'Item name "existingItem" already used'
+        }
+      ]
+    });
+  });
+
+  it('checkImportSouthItems() should throw not found connector', async () => {
+    ctx.params.southType = 'id';
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+
+    await historyQueryController.checkImportSouthItems(ctx);
 
     expect(csv.parse).not.toHaveBeenCalled();
     expect(fs.readFile).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onCreateOrUpdateSouthItems).not.toHaveBeenCalled();
     expect(ctx.noContent).not.toHaveBeenCalled();
     expect(ctx.throw).toHaveBeenCalledTimes(1);
   });
 
-  it('uploadItems() should throw not found manifest', async () => {
-    ctx.params.historyQueryId = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce({ type: 'bad type' });
-
-    await historyQueryController.uploadItems(ctx);
-
-    expect(csv.parse).not.toHaveBeenCalled();
-    expect(fs.readFile).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems).not.toHaveBeenCalled();
-    expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledTimes(1);
-  });
-
-  it('uploadItems() should reject bad file type', async () => {
-    ctx.params.historyQueryId = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+  it('checkImportSouthItems() should reject bad file type', async () => {
+    ctx.params.southType = 'south-test';
     ctx.request.file = { path: 'myFile.txt', mimetype: 'bad type' };
 
-    await historyQueryController.uploadItems(ctx);
+    await historyQueryController.checkImportSouthItems(ctx);
 
     expect(ctx.badRequest).toHaveBeenCalledTimes(1);
     expect(csv.parse).not.toHaveBeenCalled();
     expect(fs.readFile).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onCreateOrUpdateSouthItems).not.toHaveBeenCalled();
     expect(ctx.noContent).not.toHaveBeenCalled();
     expect(ctx.throw).not.toHaveBeenCalled();
   });
 
-  it('uploadItems() should throw badRequest when file not parsed', async () => {
-    ctx.params.historyQueryId = 'id';
-    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+  it('checkImportSouthItems() should throw badRequest when file not parsed', async () => {
+    ctx.params.southType = 'south-test';
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems.mockReturnValueOnce([oibusItem, oibusItem]);
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (csv.parse as jest.Mock).mockImplementationOnce(() => {
       throw new Error('parsing error');
     });
 
-    await historyQueryController.uploadItems(ctx);
+    await historyQueryController.checkImportSouthItems(ctx);
 
     expect(ctx.badRequest).toHaveBeenCalledWith('parsing error');
     expect(ctx.throw).not.toHaveBeenCalled();
@@ -965,44 +1141,97 @@ describe('History query controller', () => {
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
     expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
-    expect(ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onCreateOrUpdateSouthItems).not.toHaveBeenCalled();
     expect(ctx.noContent).not.toHaveBeenCalled();
   });
 
-  it('uploadItems() should send bad request when fail to save in database', async () => {
-    ctx.params.historyQueryId = 'id';
+  it('importSouthItems() should throw not found if connector not found', async () => {
+    ctx.params.historyId = 'id';
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(null);
+    await historyQueryController.importSouthItems(ctx);
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'History query not found');
+  });
+
+  it('importSouthItems() should throw not found if connector not found', async () => {
+    ctx.params.historyId = 'id';
     ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
-    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
-    ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems.mockReturnValueOnce([oibusItem, oibusItem]);
-    (fs.readFile as jest.Mock).mockReturnValue('file content');
-    (csv.parse as jest.Mock).mockReturnValue({
-      data: [
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([]);
+    await historyQueryController.importSouthItems(ctx);
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+  });
+
+  it('importSouthItems() should throw error on validation fail', async () => {
+    ctx.params.historyId = 'id';
+    ctx.request.body = {
+      items: [
+        oibusItem,
         {
-          id: 'id',
-          name: 'name',
-          scanModeId: 'scanModeId',
-          settings_field: 'value'
-        },
-        {
-          id: 'id',
-          name: 'name',
-          scanModeId: 'scanModeId',
-          settings_field: 'value'
+          id: 'id2',
+          name: 'item2',
+          scanModeId: '',
+          enabled: true,
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
         }
       ]
+    };
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    (validator.validateSettings as jest.Mock).mockImplementation(() => {
+      throw new Error('validation fail');
     });
-    (ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems as jest.Mock).mockImplementationOnce(() => {
-      throw new Error('save error');
+    await historyQueryController.importSouthItems(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('validation fail');
+  });
+
+  it('importSouthItems() should throw error on creation fail', async () => {
+    ctx.params.historyId = 'id';
+    ctx.request.body = {
+      items: [
+        oibusItem,
+        {
+          id: 'id2',
+          name: 'item2',
+          scanModeId: '',
+          enabled: true,
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
+        }
+      ]
+    };
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    (validator.validateSettings as jest.Mock).mockImplementation(() => {
+      return true;
     });
+    ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems.mockImplementation(() => {
+      throw new Error('onCreateOrUpdateHistoryQueryItems error');
+    });
+    await historyQueryController.importSouthItems(ctx);
+    expect(ctx.badRequest).toHaveBeenCalledWith('onCreateOrUpdateHistoryQueryItems error');
+  });
 
-    await historyQueryController.uploadItems(ctx);
-
-    expect(ctx.badRequest).toHaveBeenCalledTimes(1);
-    expect(ctx.throw).not.toHaveBeenCalled();
-    expect(ctx.noContent).not.toHaveBeenCalled();
-    expect(validator.validateSettings).toHaveBeenCalledTimes(2);
-    expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
-    expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
-    expect(ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems).toHaveBeenCalledTimes(1);
+  it('importSouthItems() should import items', async () => {
+    ctx.params.historyId = 'id';
+    ctx.request.body = {
+      items: [
+        oibusItem,
+        {
+          id: 'id2',
+          name: 'item2',
+          scanModeId: '',
+          enabled: true,
+          settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
+        }
+      ]
+    };
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQuery);
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    (validator.validateSettings as jest.Mock).mockImplementation(() => {
+      return true;
+    });
+    ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems.mockImplementation(() => {
+      return true;
+    });
+    await historyQueryController.importSouthItems(ctx);
+    expect(ctx.noContent).toHaveBeenCalledTimes(1);
   });
 });

@@ -15,7 +15,7 @@ import { HistoryQueryService } from '../../services/history-query.service';
   template: `<oib-history-query-items
     [inMemory]="false"
     [historyQuery]="historyQuery"
-    [southConnectorItemSchema]="manifest.items"
+    [southManifest]="manifest"
   ></oib-history-query-items>`,
   standalone: true,
   imports: [HistoryQueryItemsComponent]
@@ -221,10 +221,10 @@ describe('HistoryQueryItemsComponent', () => {
   });
 
   it('should trigger the upload', () => {
-    historyQueryService.uploadItems.and.returnValue(of(undefined));
+    historyQueryService.checkImportItems.and.returnValue(of({ items: [], errors: [] }));
 
     const event = new Event('change');
     tester.fileInput.dispatchEvent(event);
-    expect(historyQueryService.uploadItems).toHaveBeenCalled();
+    expect(historyQueryService.checkImportItems).toHaveBeenCalled();
   });
 });

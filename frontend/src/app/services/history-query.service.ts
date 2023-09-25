@@ -77,7 +77,7 @@ export class HistoryQueryService {
    * @param southId - the ID of the South connector
    */
   listItems(southId: string): Observable<Array<SouthConnectorItemDTO<any>>> {
-    return this.http.get<Array<SouthConnectorItemDTO<any>>>(`/api/history-queries/${southId}/items/all`);
+    return this.http.get<Array<SouthConnectorItemDTO<any>>>(`/api/history-queries/${southId}/south-items/all`);
   }
 
   /**
@@ -92,7 +92,7 @@ export class HistoryQueryService {
     if (searchParams.name) {
       params['name'] = searchParams.name;
     }
-    return this.http.get<Page<SouthConnectorItemDTO<any>>>(`/api/history-queries/${historyQueryId}/items`, { params });
+    return this.http.get<Page<SouthConnectorItemDTO<any>>>(`/api/history-queries/${historyQueryId}/south-items`, { params });
   }
 
   /**
@@ -101,7 +101,7 @@ export class HistoryQueryService {
    * @param itemId - the ID of the History query item
    */
   getItem(historyQueryId: string, itemId: string): Observable<SouthConnectorItemDTO<any>> {
-    return this.http.get<SouthConnectorItemDTO<any>>(`/api/history-queries/${historyQueryId}/items/${itemId}`);
+    return this.http.get<SouthConnectorItemDTO<any>>(`/api/history-queries/${historyQueryId}/south-items/${itemId}`);
   }
 
   /**
@@ -110,7 +110,7 @@ export class HistoryQueryService {
    * @param command - The values of the History query item to create
    */
   createItem(historyQueryId: string, command: SouthConnectorItemCommandDTO<any>): Observable<SouthConnectorItemDTO<any>> {
-    return this.http.post<SouthConnectorItemDTO<any>>(`/api/history-queries/${historyQueryId}/items`, command);
+    return this.http.post<SouthConnectorItemDTO<any>>(`/api/history-queries/${historyQueryId}/south-items`, command);
   }
 
   /**
@@ -120,7 +120,7 @@ export class HistoryQueryService {
    * @param command - the new values of the selected History query item
    */
   updateItem(historyQueryId: string, itemId: string, command: SouthConnectorItemCommandDTO<any>) {
-    return this.http.put<void>(`/api/history-queries/${historyQueryId}/items/${itemId}`, command);
+    return this.http.put<void>(`/api/history-queries/${historyQueryId}/south-items/${itemId}`, command);
   }
 
   /**
@@ -129,7 +129,7 @@ export class HistoryQueryService {
    * @param itemId - the ID of the History query item to delete
    */
   deleteItem(historyQueryId: string, itemId: string) {
-    return this.http.delete<void>(`/api/history-queries/${historyQueryId}/items/${itemId}`);
+    return this.http.delete<void>(`/api/history-queries/${historyQueryId}/south-items/${itemId}`);
   }
 
   /**
@@ -138,7 +138,7 @@ export class HistoryQueryService {
    * @param itemId - the ID of the History query item to enable
    */
   enableItem(historyId: string, itemId: string) {
-    return this.http.put<void>(`/api/history-queries/${historyId}/items/${itemId}/enable`, null);
+    return this.http.put<void>(`/api/history-queries/${historyId}/south-items/${itemId}/enable`, null);
   }
 
   /**
@@ -147,7 +147,7 @@ export class HistoryQueryService {
    * @param itemId - the ID of the History query item to disable
    */
   disableItem(historyId: string, itemId: string) {
-    return this.http.put<void>(`/api/history-queries/${historyId}/items/${itemId}/disable`, null);
+    return this.http.put<void>(`/api/history-queries/${historyId}/south-items/${itemId}/disable`, null);
   }
 
   /**
@@ -155,7 +155,7 @@ export class HistoryQueryService {
    * @param historyId - the ID of the History Query connector
    */
   deleteAllItems(historyId: string) {
-    return this.http.delete<void>(`/api/history-queries/${historyId}/items/all`);
+    return this.http.delete<void>(`/api/history-queries/${historyId}/south-items/all`);
   }
 
   /**
@@ -163,17 +163,52 @@ export class HistoryQueryService {
    */
   exportItems(historyQueryId: string, historyQueryName: string): Observable<void> {
     return this.http
-      .get(`/api/history-queries/${historyQueryId}/items/export`, { responseType: 'blob', observe: 'response' })
-      .pipe(map(response => this.downloadService.download(response, `${historyQueryName}.csv`)));
+      .get(`/api/history-queries/${historyQueryId}/south-items/export`, { responseType: 'blob', observe: 'response' })
+      .pipe(map(response => this.downloadService.download(response, `${historyQueryName}-south-items.csv`)));
   }
 
   /**
-   * Upload items from a CSV file
+   * Export south items in CSV file
    */
-  uploadItems(historyQueryId: string, file: File): Observable<void> {
+  itemsToCsv(items: Array<SouthConnectorItemDTO>, historyQueryName: string): Observable<void> {
+    return this.http
+      .put(
+        `/api/history-queries/south-items/to-csv`,
+        {
+          items
+        },
+        { responseType: 'blob', observe: 'response' }
+      )
+      .pipe(map(response => this.downloadService.download(response, `${historyQueryName}-south-items.csv`)));
+  }
+
+  /**
+   * Upload south items from a CSV file
+   */
+  checkImportItems(
+    southType: string,
+    historyQueryId: string,
+    file: File
+  ): Observable<{
+    items: Array<SouthConnectorItemDTO>;
+    errors: Array<{
+      item: SouthConnectorItemDTO;
+      message: string;
+    }>;
+  }> {
     const formData = new FormData();
     formData.set('file', file);
-    return this.http.post<void>(`/api/history-queries/${historyQueryId}/items/upload`, formData);
+    return this.http.post<{ items: Array<SouthConnectorItemDTO>; errors: Array<{ item: SouthConnectorItemDTO; message: string }> }>(
+      `/api/history-queries/${southType}/south-items/check-south-import/${historyQueryId}`,
+      formData
+    );
+  }
+
+  /**
+   * Upload south history items from a CSV file
+   */
+  importItems(historyQueryId: string, items: Array<SouthConnectorItemDTO>): Observable<void> {
+    return this.http.post<void>(`/api/history-queries/${historyQueryId}/south-items/import`, { items });
   }
 
   startHistoryQuery(historyQueryId: string): Observable<void> {

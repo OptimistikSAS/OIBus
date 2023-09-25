@@ -11,7 +11,7 @@ import { LoadingSpinnerComponent } from '../../shared/loading-spinner/loading-sp
 import {
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
-  SouthConnectorItemManifest
+  SouthConnectorManifest
 } from '../../../../../shared/model/south-connector.model';
 import { debounceTime, distinctUntilChanged, of, switchMap, tap } from 'rxjs';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
@@ -23,6 +23,7 @@ import { emptyPage } from '../../shared/test-utils';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { EditSouthItemModalComponent } from '../../south/edit-south-item-modal/edit-south-item-modal.component';
+import { ImportSouthItemsModalComponent } from '../../south/import-south-items-modal/import-south-items-modal.component';
 
 const PAGE_SIZE = 20;
 
@@ -48,7 +49,7 @@ const PAGE_SIZE = 20;
 })
 export class HistoryQueryItemsComponent implements OnInit {
   @Input() historyQuery: HistoryQueryDTO | null = null;
-  @Input() southConnectorItemSchema!: SouthConnectorItemManifest;
+  @Input({ required: true }) southManifest!: SouthConnectorManifest;
   @Input() initItems: Array<SouthConnectorItemDTO> = [];
   @Output() readonly inMemoryItems = new EventEmitter<{ items: Array<SouthConnectorItemDTO>; itemIdsToDelete: Array<string> }>();
   @Input() inMemory = false;
@@ -70,12 +71,12 @@ export class HistoryQueryItemsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.southConnectorItemSchema.scanMode.subscriptionOnly = true;
+    this.southManifest.items.scanMode.subscriptionOnly = true;
     if (!this.historyQuery) {
       this.allItems = this.initItems;
     }
     this.fetchItemsAndResetPage(false);
-    this.displaySettings = this.southConnectorItemSchema.settings.filter(setting => setting.displayInViewMode);
+    this.displaySettings = this.southManifest.items.settings.filter(setting => setting.displayInViewMode);
 
     // subscribe to changes to search control
     this.searchControl.valueChanges.pipe(debounceTime(200), distinctUntilChanged()).subscribe(() => {
@@ -120,7 +121,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   editItem(southItem: SouthConnectorItemDTO) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForEdition(this.southConnectorItemSchema, this.allItems, [], southItem);
+    component.prepareForEdition(this.southManifest.items, this.allItems, [], southItem);
     this.refreshAfterEditionModalClosed(modalRef, southItem);
   }
 
@@ -130,7 +131,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   addItem() {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForCreation(this.southConnectorItemSchema, this.allItems, []);
+    component.prepareForCreation(this.southManifest.items, this.allItems, []);
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
@@ -221,7 +222,7 @@ export class HistoryQueryItemsComponent implements OnInit {
   duplicateItem(item: SouthConnectorItemDTO) {
     const modalRef = this.modalService.open(EditSouthItemModalComponent, { size: 'xl' });
     const component: EditSouthItemModalComponent = modalRef.componentInstance;
-    component.prepareForCopy(this.southConnectorItemSchema, [], item);
+    component.prepareForCopy(this.southManifest.items, [], item);
     this.refreshAfterCreationModalClosed(modalRef);
   }
 
@@ -268,22 +269,57 @@ export class HistoryQueryItemsComponent implements OnInit {
   onImportDrop(e: DragEvent) {
     e.preventDefault();
     const file = e.dataTransfer!.files![0];
-    this.importItems(file!);
+    this.checkImportItems(file!);
   }
 
   onImportClick(e: Event) {
     const fileInput = e.target as HTMLInputElement;
     const file = fileInput!.files![0];
     fileInput.value = '';
-    this.importItems(file!);
+    this.checkImportItems(file!);
   }
 
-  importItems(file: File) {
-    if (this.historyQuery) {
-      this.historyQueryService.uploadItems(this.historyQuery.id, file).subscribe(() => {
-        this.notificationService.success('history-query.items.imported');
+  checkImportItems(file: File) {
+    this.historyQueryService
+      .checkImportItems(this.southManifest.id, this.historyQuery?.id || 'create', file)
+      .subscribe((result: { items: Array<SouthConnectorItemDTO>; errors: Array<{ item: SouthConnectorItemDTO; message: string }> }) => {
+        const modalRef = this.modalService.open(ImportSouthItemsModalComponent, { size: 'xl' });
+        const component: ImportSouthItemsModalComponent = modalRef.componentInstance;
+        component.prepare(this.southManifest.items, this.allItems, result.items, result.errors, []);
+        this.refreshAfterImportModalClosed(modalRef);
       });
-    }
+  }
+
+  /**
+   * Refresh the History South item list when a South items are created
+   */
+  private refreshAfterImportModalClosed(modalRef: Modal<any>) {
+    modalRef.result
+      .pipe(
+        switchMap((newItems: Array<SouthConnectorItemDTO>) => {
+          if (!this.inMemory) {
+            return this.historyQueryService.importItems(this.historyQuery!.id, newItems);
+          } else {
+            for (const item of newItems) {
+              this.allItems = this.allItems.filter(existingItem => {
+                if (item.id) {
+                  return existingItem.id !== item.id;
+                } else {
+                  return existingItem.name !== item.name;
+                }
+              });
+              this.allItems.push(item);
+            }
+            return of(null);
+          }
+        })
+      )
+      .subscribe(() => {
+        this.fetchItemsAndResetPage(this.inMemory);
+        if (!this.inMemory) {
+          this.notificationService.success(`south.items.import.imported`);
+        }
+      });
   }
 
   toggleItem(item: SouthConnectorItemDTO, value: boolean) {

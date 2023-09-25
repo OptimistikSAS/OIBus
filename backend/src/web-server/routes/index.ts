@@ -169,32 +169,43 @@ router.put('/api/history-queries/:id/pause', (ctx: KoaContext<any, any>) => hist
 router.put('/api/history-queries/:id', (ctx: KoaContext<any, any>) => historyQueryController.updateHistoryQuery(ctx));
 router.delete('/api/history-queries/:id', (ctx: KoaContext<any, any>) => historyQueryController.deleteHistoryQuery(ctx));
 
-router.get('/api/history-queries/:historyQueryId/items', (ctx: KoaContext<any, any>) =>
+router.get('/api/history-queries/:historyQueryId/south-items', (ctx: KoaContext<any, any>) =>
   historyQueryController.searchHistoryQueryItems(ctx)
 );
-router.get('/api/history-queries/:historyQueryId/items/export', (ctx: KoaContext<any, any>) => historyQueryController.exportItems(ctx));
-router.get('/api/history-queries/:historyQueryId/items/all', (ctx: KoaContext<any, any>) => historyQueryController.listItems(ctx));
+router.post(
+  '/api/history-queries/:southType/south-items/check-south-import/:historyQueryId',
+  upload.single('file'),
+  (ctx: KoaContext<any, any>) => historyQueryController.checkImportSouthItems(ctx)
+);
+router.post('/api/history-queries/:historyQueryId/south-items/import', (ctx: KoaContext<any, any>) =>
+  historyQueryController.importSouthItems(ctx)
+);
+router.get('/api/history-queries/:historyQueryId/south-items/export', (ctx: KoaContext<any, any>) =>
+  historyQueryController.exportSouthItems(ctx)
+);
+router.put('/api/history-queries/south-items/to-csv', (ctx: KoaContext<any, any>) => historyQueryController.historySouthItemsToCsv(ctx));
 
-router.get('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext<any, any>) =>
+router.get('/api/history-queries/:historyQueryId/south-items/all', (ctx: KoaContext<any, any>) => historyQueryController.listItems(ctx));
+
+router.get('/api/history-queries/:historyQueryId/south-items/:id', (ctx: KoaContext<any, any>) =>
   historyQueryController.getHistoryQueryItem(ctx)
 );
-router.post('/api/history-queries/:historyQueryId/items', (ctx: KoaContext<any, any>) =>
+router.post('/api/history-queries/:historyQueryId/south-items', (ctx: KoaContext<any, any>) =>
   historyQueryController.createHistoryQueryItem(ctx)
 );
-router.post('/api/history-queries/:historyQueryId/items/upload', upload.single('file'), (ctx: KoaContext<any, any>) =>
-  historyQueryController.uploadItems(ctx)
-);
-router.put('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext<any, any>) =>
+router.put('/api/history-queries/:historyQueryId/south-items/:id', (ctx: KoaContext<any, any>) =>
   historyQueryController.updateHistoryQueryItem(ctx)
 );
-router.put('/api/history-queries/:historyQueryId/items/:id/enable', (ctx: KoaContext<any, any>) =>
+router.put('/api/history-queries/:historyQueryId/south-items/:id/enable', (ctx: KoaContext<any, any>) =>
   historyQueryController.enableHistoryQueryItem(ctx)
 );
-router.put('/api/history-queries/:historyQueryId/items/:id/disable', (ctx: KoaContext<any, any>) =>
+router.put('/api/history-queries/:historyQueryId/south-items/:id/disable', (ctx: KoaContext<any, any>) =>
   historyQueryController.disableHistoryQueryItem(ctx)
 );
-router.delete('/api/history-queries/:historyQueryId/items/all', (ctx: KoaContext<any, any>) => historyQueryController.deleteAllItems(ctx));
-router.delete('/api/history-queries/:historyQueryId/items/:id', (ctx: KoaContext<any, any>) =>
+router.delete('/api/history-queries/:historyQueryId/south-items/all', (ctx: KoaContext<any, any>) =>
+  historyQueryController.deleteAllItems(ctx)
+);
+router.delete('/api/history-queries/:historyQueryId/south-items/:id', (ctx: KoaContext<any, any>) =>
   historyQueryController.deleteHistoryQueryItem(ctx)
 );
 

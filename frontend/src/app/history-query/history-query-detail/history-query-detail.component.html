@@ -127,11 +127,7 @@
       </oib-box>
 
       <!-- Items -->
-      <oib-history-query-items
-        [inMemory]="false"
-        [historyQuery]="historyQuery"
-        [southConnectorItemSchema]="southManifest.items"
-      ></oib-history-query-items>
+      <oib-history-query-items [inMemory]="false" [historyQuery]="historyQuery" [southManifest]="southManifest"></oib-history-query-items>
     </div>
   </div>
 </div>
