@@ -229,7 +229,7 @@
         <oib-history-query-items
           (inMemoryItems)="updateInMemoryItems($event)"
           [historyQuery]="historyQuery"
-          [southConnectorItemSchema]="southManifest.items"
+          [southManifest]="southManifest"
           [initItems]="inMemoryItems"
           [inMemory]="true"
         ></oib-history-query-items>

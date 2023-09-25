@@ -379,9 +379,7 @@ export default class SouthConnectorController {
     }
 
     try {
-      const itemsToAdd = items.filter(item => !item.id);
-      const itemsToUpdate = items.filter(item => item.id);
-      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, itemsToAdd, itemsToUpdate);
+      await ctx.app.reloadService.onCreateOrUpdateSouthItems(southConnector, items, []);
     } catch (error: any) {
       return ctx.badRequest(error.message);
     }

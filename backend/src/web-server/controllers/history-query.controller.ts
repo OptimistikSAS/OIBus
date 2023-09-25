@@ -293,13 +293,42 @@ export default class HistoryQueryController extends AbstractController {
     ctx.noContent();
   }
 
-  async exportItems(ctx: KoaContext<void, any>): Promise<void> {
-    const southItems = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems(ctx.params.historyQueryId).map(item => {
+  async historySouthItemsToCsv(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO> }, any>): Promise<void> {
+    const southItems = ctx.request.body!.items.map(item => {
       const flattenedItem: Record<string, any> = {
         ...item
       };
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
-        flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
+        if (typeof itemSettingsValue === 'object') {
+          flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
+        } else {
+          flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
+        }
+      }
+      delete flattenedItem.settings;
+      delete flattenedItem.connectorId;
+      delete flattenedItem.scanMode;
+      return flattenedItem;
+    });
+    ctx.body = csv.unparse(southItems);
+    ctx.set('Content-disposition', 'attachment; filename=items.csv');
+    ctx.set('Content-Type', 'application/force-download');
+    ctx.ok();
+  }
+
+  async exportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
+    const southItems = ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems(ctx.params.historyQueryId).map(item => {
+      const flattenedItem: Record<string, any> = {
+        ...item
+      };
+      delete flattenedItem.id;
+      delete flattenedItem.scanModeId;
+      for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
+        if (typeof itemSettingsValue === 'object') {
+          flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
+        } else {
+          flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
+        }
       }
       delete flattenedItem.settings;
       delete flattenedItem.connectorId;
@@ -311,52 +340,102 @@ export default class HistoryQueryController extends AbstractController {
     ctx.ok();
   }
 
-  async uploadItems(ctx: KoaContext<void, any>): Promise<void> {
-    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
-    if (!historyQuery) {
-      return ctx.throw(404, 'History query not found');
-    }
-
-    const southManifest = ctx.app.southService.getInstalledSouthManifests().find(manifest => manifest.id === historyQuery.southType);
-    if (!southManifest) {
-      return ctx.throw(404, 'History query South manifest not found');
+  async checkImportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
+    const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.params.southType);
+    if (!manifest) {
+      return ctx.throw(404, 'South manifest not found');
     }
 
     const file = ctx.request.file;
     if (file.mimetype !== 'text/csv') {
       return ctx.badRequest();
     }
-    let items: Array<any> = [];
+
+    const existingItems: Array<SouthConnectorItemDTO> =
+      ctx.params.historyQueryId === 'create'
+        ? []
+        : ctx.app.repositoryService.historyQueryItemRepository.getHistoryItems(ctx.params.historyQueryId);
+    const validItems: Array<any> = [];
+    const errors: Array<any> = [];
     try {
       const fileContent = await fs.readFile(file.path);
       const csvContent = csv.parse(fileContent.toString('utf8'), { header: true });
-      items = csvContent.data.map((data: any) => {
-        const item: Record<string, any> = { settings: {} };
-        for (const [key, value] of Object.entries(data)) {
-          if (key.startsWith('settings_')) {
-            item.settings[key.replace('settings_', '')] = value;
-          } else {
-            item[key] = value;
+
+      for (const data of csvContent.data) {
+        const item: SouthConnectorItemDTO = {
+          id: '',
+          name: (data as any).name,
+          enabled: true,
+          connectorId: ctx.params.historyQueryId !== 'create' ? ctx.params.historyQueryId : '',
+          scanModeId: '',
+          settings: {}
+        };
+
+        try {
+          for (const [key, value] of Object.entries(data as any)) {
+            if (key.startsWith('settings_')) {
+              const settingsKey = key.replace('settings_', '');
+              const manifestSettings = manifest.items.settings.find(settings => settings.key === settingsKey);
+              if (!manifestSettings) {
+                throw new Error(`Settings "${settingsKey}" not accepted in manifest`);
+              }
+              if (manifestSettings.type === 'OibArray' || manifestSettings.type === 'OibFormGroup') {
+                item.settings[settingsKey] = JSON.parse(value as string);
+              } else {
+                item.settings[settingsKey] = value;
+              }
+            }
           }
+        } catch (err: any) {
+          errors.push({ item, message: err.message });
+          continue;
         }
-        return item;
-      });
+
+        if (existingItems.find(existingItem => existingItem.name === item.name)) {
+          errors.push({ item, message: `Item name "${(data as any).name}" already used` });
+          continue;
+        }
+
+        try {
+          await this.validator.validateSettings(manifest.items.settings, item.settings);
+          validItems.push(item);
+        } catch (itemError: any) {
+          errors.push({ item, message: itemError.message });
+        }
+      }
+    } catch (error: any) {
+      return ctx.badRequest(error.message);
+    }
+
+    ctx.ok({ items: validItems, errors });
+  }
+
+  async importSouthItems(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO> }, any>): Promise<void> {
+    const historyQuery = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.historyQueryId);
+    if (!historyQuery) {
+      return ctx.throw(404, 'History query not found');
+    }
+
+    const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === historyQuery.southType);
+    if (!manifest) {
+      return ctx.throw(404, 'South manifest not found');
+    }
+
+    const items = ctx.request.body!.items;
+    try {
       // Check if item settings match the item schema, throw an error otherwise
       for (const item of items) {
-        await this.validator.validateSettings(southManifest.items.settings, item.settings);
+        await this.validator.validateSettings(manifest.items.settings, item.settings);
       }
     } catch (error: any) {
       return ctx.badRequest(error.message);
     }
 
     try {
-      const itemsToAdd = items.filter(item => !item.id);
-      const itemsToUpdate = items.filter(item => item.id);
-      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, itemsToAdd, itemsToUpdate);
-    } catch {
-      return ctx.badRequest();
+      await ctx.app.reloadService.onCreateOrUpdateHistoryQueryItems(historyQuery, items, []);
+    } catch (error: any) {
+      return ctx.badRequest(error.message);
     }
-
     ctx.noContent();
   }
 }
