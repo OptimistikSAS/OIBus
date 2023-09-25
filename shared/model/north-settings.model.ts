@@ -51,7 +51,7 @@ export interface NorthAzureBlobSettings extends BaseNorthSettings {
   sasToken?: string | null;
   accessKey?: string | null;
   tenantId?: string | null;
-  clientId?: string;
+  clientId?: string | null;
   clientSecret?: string | null;
 }
 

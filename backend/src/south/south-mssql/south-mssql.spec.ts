@@ -103,7 +103,7 @@ const items: Array<SouthConnectorItemDTO<SouthMSSQLItemSettings>> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      dateTimeFields: [],
+      dateTimeFields: null,
       serialization: {
         type: 'csv',
         filename: 'sql-@CurrentDate.csv',
@@ -164,7 +164,7 @@ const close = jest.fn();
 const request = jest.fn(() => ({ input, query }));
 const connect = jest.fn(() => ({ request, close }));
 describe('SouthMSSQL with authentication', () => {
-  const configuration: SouthConnectorDTO = {
+  const configuration: SouthConnectorDTO<SouthMSSQLSettings> = {
     id: 'southId',
     name: 'south',
     type: 'mssql',
@@ -182,7 +182,7 @@ describe('SouthMSSQL with authentication', () => {
       username: 'username',
       password: 'password',
       domain: 'domain',
-      encryption: null,
+      encryption: false,
       connectionTimeout: 1000,
       requestTimeout: 1000,
       trustServerCertificate: true
@@ -210,6 +210,10 @@ describe('SouthMSSQL with authentication', () => {
         { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
         { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
       ])
+      .mockReturnValueOnce([
+        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+      ])
       .mockReturnValue([]);
     (utils.formatInstant as jest.Mock)
       .mockReturnValueOnce('2020-02-01 00:00:00.000')
@@ -218,14 +222,13 @@ describe('SouthMSSQL with authentication', () => {
     (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
 
     await south.historyQuery(items, startTime, nowDateString);
-    expect(utils.persistResults).toHaveBeenCalledTimes(1);
+    expect(utils.persistResults).toHaveBeenCalledTimes(2);
     expect(south.queryData).toHaveBeenCalledTimes(3);
     expect(south.queryData).toHaveBeenCalledWith(items[0], '2020-01-01T00:00:00.000Z', '2020-02-02T02:02:02.222Z');
     expect(south.queryData).toHaveBeenCalledWith(items[1], '2020-03-01T00:00:00.000Z', '2020-02-02T02:02:02.222Z');
     expect(south.queryData).toHaveBeenCalledWith(items[2], '2020-03-01T00:00:00.000Z', '2020-02-02T02:02:02.222Z');
 
     expect(logger.info).toHaveBeenCalledWith(`Found 2 results for item ${items[0].name} in 0 ms`);
-    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${items[1].name}. Request done in 0 ms`);
     expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${items[2].name}. Request done in 0 ms`);
   });
 
@@ -270,6 +273,7 @@ describe('SouthMSSQL with authentication', () => {
       requestTimeout: configuration.settings.requestTimeout,
       options: {
         trustServerCertificate: configuration.settings.trustServerCertificate,
+        encrypt: configuration.settings.encryption,
         useUTC: true
       },
       domain: configuration.settings.domain

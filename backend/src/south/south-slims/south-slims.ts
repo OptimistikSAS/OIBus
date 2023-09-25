@@ -159,7 +159,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
     ).toString('base64');
     headers.authorization = `Basic ${basic}`;
 
-    const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference) || null;
+    const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference) || null;
     const slimsStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);
     const slimsEndTime = referenceTimestampField == null ? endTime : formatInstant(endTime, referenceTimestampField);
 
@@ -279,7 +279,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
         throw new Error('Bad data: expect rslt_cf_samplingDateAndTime to have a value');
       }
 
-      const samplingDatetimeField = item.settings.dateTimeFields.find(
+      const samplingDatetimeField = item.settings.dateTimeFields?.find(
         dateTimeField => dateTimeField.fieldName === 'rslt_cf_samplingDateAndTime'
       );
       if (!samplingDatetimeField) {
@@ -287,7 +287,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
       }
       const resultInstant = convertDateTimeToInstant(rsltCfSamplingDateAndTime.value, samplingDatetimeField);
 
-      const referenceDatetimeField = item.settings.dateTimeFields.find(
+      const referenceDatetimeField = item.settings.dateTimeFields!.find(
         dateTimeField => dateTimeField.fieldName === 'rslt_modifiedOn' && dateTimeField.useAsReference
       );
       if (!referenceDatetimeField) {

@@ -67,7 +67,6 @@ const manifest: NorthConnectorManifest = {
       type: 'OibText',
       label: 'Client ID',
       newRow: false,
-      validators: [{ key: 'required' }],
       conditionalDisplay: { field: 'authentication', values: ['aad'] },
       displayInViewMode: true
     },

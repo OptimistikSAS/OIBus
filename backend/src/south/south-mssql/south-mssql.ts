@@ -54,7 +54,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       connectionTimeout: this.connector.settings.connectionTimeout,
       requestTimeout: this.connector.settings.requestTimeout,
       options: {
-        encrypt: this.connector.settings.encryption || undefined,
+        encrypt: this.connector.settings.encryption,
         trustServerCertificate: this.connector.settings.trustServerCertificate,
         useUTC: true
       }
@@ -140,7 +140,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.fieldName === key);
+            const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key);
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
@@ -182,7 +182,7 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
   async queryData(item: SouthConnectorItemDTO<SouthMSSQLItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
     const config = await this.createConnectionOptions();
 
-    const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference) || null;
+    const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference) || null;
     const mssqlStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);
     const mssqlEndTime = referenceTimestampField == null ? endTime : formatInstant(endTime, referenceTimestampField);
     logQuery(item.settings.query, mssqlStartTime, mssqlEndTime, this.logger);

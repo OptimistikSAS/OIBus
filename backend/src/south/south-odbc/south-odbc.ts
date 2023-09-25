@@ -233,7 +233,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
     const headers: HeadersInit = {};
     headers['Content-Type'] = 'application/json';
 
-    const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference);
+    const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference);
     const odbcStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
     const odbcEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;
     const adaptedQuery = item.settings.query.replace(/@StartTime/g, `${odbcStartTime}`).replace(/@EndTime/g, `${odbcEndTime}`);
@@ -303,7 +303,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       const connectionConfig = await this.createConnectionConfig(this.connector.settings);
       connection = await odbc.connect(connectionConfig);
 
-      const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference);
+      const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference);
       const odbcStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
       const odbcEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;
       const adaptedQuery = item.settings.query.replace(/@StartTime/g, `${odbcStartTime}`).replace(/@EndTime/g, `${odbcEndTime}`);
@@ -327,7 +327,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
       const formattedResult = result.map(entry => {
         const formattedEntry: Record<string, any> = {};
         Object.entries(entry).forEach(([key, value]) => {
-          const datetimeField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.fieldName === key);
+          const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key);
           if (!datetimeField) {
             formattedEntry[key] = value;
           } else {

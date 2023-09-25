@@ -101,7 +101,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.fieldName === key);
+            const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key);
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
@@ -147,7 +147,7 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
     this.logger.debug(`Opening ${path.resolve(this.connector.settings.databasePath)} SQLite database`);
     const database = db(path.resolve(this.connector.settings.databasePath));
 
-    const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference);
+    const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference);
     const sqliteStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);
     const sqliteEndTime = referenceTimestampField == null ? endTime : formatInstant(endTime, referenceTimestampField);
     logQuery(item.settings.query, sqliteStartTime, sqliteEndTime, this.logger);

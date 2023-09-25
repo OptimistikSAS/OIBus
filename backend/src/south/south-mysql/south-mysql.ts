@@ -148,7 +148,7 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.fieldName === key) || null;
+            const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key) || null;
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
@@ -193,7 +193,7 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
   async queryData(item: SouthConnectorItemDTO<SouthMySQLItemSettings>, startTime: Instant, endTime: Instant): Promise<Array<any>> {
     const config = await this.createConnectionOptions();
 
-    const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference) || null;
+    const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference) || null;
     const mysqlStartTime = referenceTimestampField == null ? startTime : formatInstant(startTime, referenceTimestampField);
     const mysqlEndTime = referenceTimestampField == null ? endTime : formatInstant(endTime, referenceTimestampField);
     logQuery(item.settings.query, mysqlStartTime, mysqlEndTime, this.logger);

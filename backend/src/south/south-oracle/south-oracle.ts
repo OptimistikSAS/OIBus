@@ -153,7 +153,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
         const formattedResult = result.map(entry => {
           const formattedEntry: Record<string, any> = {};
           Object.entries(entry).forEach(([key, value]) => {
-            const datetimeField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.fieldName === key);
+            const datetimeField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.fieldName === key);
             if (!datetimeField) {
               formattedEntry[key] = value;
             } else {
@@ -206,7 +206,7 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       connectString: `${this.connector.settings.host}:${this.connector.settings.port}/${this.connector.settings.database}`
     };
 
-    const referenceTimestampField = item.settings.dateTimeFields.find(dateTimeField => dateTimeField.useAsReference);
+    const referenceTimestampField = item.settings.dateTimeFields?.find(dateTimeField => dateTimeField.useAsReference);
     const oracleStartTime = referenceTimestampField ? formatInstant(startTime, referenceTimestampField) : startTime;
     const oracleEndTime = referenceTimestampField ? formatInstant(endTime, referenceTimestampField) : endTime;
     logQuery(item.settings.query, oracleStartTime, oracleEndTime, this.logger);
