@@ -104,24 +104,7 @@ const items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>> = [
     settings: {
       query: 'SELECT * FROM table',
       requestTimeout: 1000,
-      dateTimeFields: [
-        {
-          fieldName: 'anotherTimestamp',
-          useAsReference: false,
-          type: 'unix-epoch-ms',
-          timezone: null,
-          format: null,
-          locale: null
-        } as unknown as SouthMySQLItemSettingsDateTimeFields,
-        {
-          fieldName: 'timestamp',
-          useAsReference: true,
-          type: 'string',
-          timezone: 'Europe/Paris',
-          format: 'yyyy-MM-dd HH:mm:ss.SSS',
-          locale: 'en-US'
-        }
-      ],
+      dateTimeFields: null,
       serialization: {
         type: 'csv',
         filename: 'sql-@CurrentDate.csv',
@@ -141,7 +124,24 @@ const items: Array<SouthConnectorItemDTO<SouthMySQLItemSettings>> = [
     settings: {
       query: 'SELECT * FROM table',
       requestTimeout: 1000,
-      dateTimeFields: [],
+      dateTimeFields: [
+        {
+          fieldName: 'anotherTimestamp',
+          useAsReference: false,
+          type: 'unix-epoch-ms',
+          timezone: null,
+          format: null,
+          locale: null
+        } as unknown as SouthMySQLItemSettingsDateTimeFields,
+        {
+          fieldName: 'timestamp',
+          useAsReference: true,
+          type: 'string',
+          timezone: 'Europe/Paris',
+          format: 'yyyy-MM-dd HH:mm:ss.SSS',
+          locale: 'en-US'
+        }
+      ],
       serialization: {
         type: 'csv',
         filename: 'sql-@CurrentDate.csv',
@@ -201,6 +201,10 @@ describe('SouthMySQL with authentication', () => {
         { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
         { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
       ])
+      .mockReturnValueOnce([
+        { timestamp: '2020-02-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 123 },
+        { timestamp: '2020-03-01T00:00:00.000Z', anotherTimestamp: '2023-02-01T00:00:00.000Z', value: 456 }
+      ])
       .mockReturnValue([]);
     (utils.formatInstant as jest.Mock)
       .mockReturnValueOnce('2020-02-01 00:00:00.000')
@@ -209,14 +213,13 @@ describe('SouthMySQL with authentication', () => {
     (utils.convertDateTimeToInstant as jest.Mock).mockImplementation(instant => instant);
 
     await south.historyQuery(items, startTime, nowDateString);
-    expect(utils.persistResults).toHaveBeenCalledTimes(1);
+    expect(utils.persistResults).toHaveBeenCalledTimes(2);
     expect(south.queryData).toHaveBeenCalledTimes(3);
     expect(south.queryData).toHaveBeenCalledWith(items[0], startTime, nowDateString);
     expect(south.queryData).toHaveBeenCalledWith(items[1], '2020-03-01T00:00:00.000Z', nowDateString);
     expect(south.queryData).toHaveBeenCalledWith(items[2], '2020-03-01T00:00:00.000Z', nowDateString);
 
     expect(logger.info).toHaveBeenCalledWith(`Found 2 results for item ${items[0].name} in 0 ms`);
-    expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${items[1].name}. Request done in 0 ms`);
     expect(logger.debug).toHaveBeenCalledWith(`No result found for item ${items[2].name}. Request done in 0 ms`);
   });
 
@@ -269,9 +272,9 @@ describe('SouthMySQL with authentication', () => {
       execute: jest.fn().mockReturnValue([[{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]])
     };
     (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
-    const result = await south.queryData(items[2], startTime, endTime);
+    const result = await south.queryData(items[1], startTime, endTime);
     expect(utils.formatInstant).not.toHaveBeenCalled();
-    expect(utils.logQuery).toHaveBeenCalledWith(items[2].settings.query, startTime, endTime, logger);
+    expect(utils.logQuery).toHaveBeenCalledWith(items[1].settings.query, startTime, endTime, logger);
 
     expect(result).toEqual([{ timestamp: '2020-02-01T00:00:00.000Z' }, { timestamp: '2020-03-01T00:00:00.000Z' }]);
   });

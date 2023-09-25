@@ -509,20 +509,20 @@ export interface SouthMQTTItemSettings extends BaseSouthItemSettings {
 
 export interface SouthMSSQLItemSettings extends BaseSouthItemSettings {
   query: string;
-  dateTimeFields: Array<SouthMSSQLItemSettingsDateTimeFields>;
+  dateTimeFields: Array<SouthMSSQLItemSettingsDateTimeFields> | null;
   serialization: SouthMSSQLItemSettingsSerialization;
 }
 
 export interface SouthMySQLItemSettings extends BaseSouthItemSettings {
   query: string;
   requestTimeout: number;
-  dateTimeFields: Array<SouthMySQLItemSettingsDateTimeFields>;
+  dateTimeFields: Array<SouthMySQLItemSettingsDateTimeFields> | null;
   serialization: SouthMySQLItemSettingsSerialization;
 }
 
 export interface SouthODBCItemSettings extends BaseSouthItemSettings {
   query: string;
-  dateTimeFields: Array<SouthODBCItemSettingsDateTimeFields>;
+  dateTimeFields: Array<SouthODBCItemSettingsDateTimeFields> | null;
   serialization: SouthODBCItemSettingsSerialization;
 }
 
@@ -547,13 +547,13 @@ export interface SouthOPCUAItemSettings extends BaseSouthItemSettings {
 export interface SouthOracleItemSettings extends BaseSouthItemSettings {
   query: string;
   requestTimeout: number;
-  dateTimeFields: Array<SouthOracleItemSettingsDateTimeFields>;
+  dateTimeFields: Array<SouthOracleItemSettingsDateTimeFields> | null;
   serialization: SouthOracleItemSettingsSerialization;
 }
 
 export interface SouthPostgreSQLItemSettings extends BaseSouthItemSettings {
   query: string;
-  dateTimeFields: Array<SouthPostgreSQLItemSettingsDateTimeFields>;
+  dateTimeFields: Array<SouthPostgreSQLItemSettingsDateTimeFields> | null;
   serialization: SouthPostgreSQLItemSettingsSerialization;
 }
 
@@ -561,13 +561,13 @@ export interface SouthSlimsItemSettings extends BaseSouthItemSettings {
   endpoint: string;
   body: string | null;
   queryParams: Array<SouthSlimsItemSettingsQueryParams> | null;
-  dateTimeFields: Array<SouthSlimsItemSettingsDateTimeFields>;
+  dateTimeFields: Array<SouthSlimsItemSettingsDateTimeFields> | null;
   serialization: SouthSlimsItemSettingsSerialization;
 }
 
 export interface SouthSQLiteItemSettings extends BaseSouthItemSettings {
   query: string;
-  dateTimeFields: Array<SouthSQLiteItemSettingsDateTimeFields>;
+  dateTimeFields: Array<SouthSQLiteItemSettingsDateTimeFields> | null;
   serialization: SouthSQLiteItemSettingsSerialization;
 }
 

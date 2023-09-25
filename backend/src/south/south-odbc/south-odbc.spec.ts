@@ -107,7 +107,7 @@ const items: Array<SouthConnectorItemDTO<SouthODBCItemSettings>> = [
     connectorId: 'southId',
     settings: {
       query: 'SELECT * FROM table',
-      dateTimeFields: [],
+      dateTimeFields: null,
       serialization: {
         type: 'csv',
         filename: 'sql-@CurrentDate.csv',
@@ -782,9 +782,9 @@ describe('SouthODBC odbc remote with authentication', () => {
         connectionString: configuration.settings.connectionString,
         sql: items[0].settings.query,
         readTimeout: configuration.settings.requestTimeout,
-        timeColumn: items[0].settings.dateTimeFields[1].fieldName,
-        datasourceTimestampFormat: items[0].settings.dateTimeFields[1].format,
-        datasourceTimezone: items[0].settings.dateTimeFields[1].timezone,
+        timeColumn: items[0].settings.dateTimeFields![1].fieldName,
+        datasourceTimestampFormat: items[0].settings.dateTimeFields![1].format,
+        datasourceTimezone: items[0].settings.dateTimeFields![1].timezone,
         delimiter: items[0].settings.serialization.delimiter,
         outputTimestampFormat: items[0].settings.serialization.outputTimestampFormat,
         outputTimezone: items[0].settings.serialization.outputTimezone

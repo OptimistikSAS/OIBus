@@ -69,7 +69,7 @@ const items: Array<SouthConnectorItemDTO<SouthSlimsItemSettings>> = [
       endpoint: '/api/my/endpoint',
       body: 'my body',
       queryParams: [],
-      dateTimeFields: [],
+      dateTimeFields: null,
       serialization: {
         type: 'csv',
         filename: 'sql-@CurrentDate.csv',
