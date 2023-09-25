@@ -86,13 +86,12 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
   }
 
   async disconnect(): Promise<void> {
-    this.connected = false;
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
     }
     this.reconnectTimeout = null;
 
-    if (this.connector.settings.remoteAgent) {
+    if (this.connector.settings.remoteAgent && this.connected) {
       try {
         const fetchOptions = { method: 'DELETE' };
         await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/disconnect`, fetchOptions);
@@ -100,6 +99,7 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
         this.logger.error(`Error while sending disconnection HTTP request into agent. ${error}`);
       }
     }
+    this.connected = false;
     await super.disconnect();
   }
 
