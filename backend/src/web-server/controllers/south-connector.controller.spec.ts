@@ -1958,7 +1958,7 @@ describe('South connector controller', () => {
     expect(ctx.throw).toHaveBeenCalledWith(404, 'South not found');
   });
 
-  it('importSouthItems() should throw not found if connector not found', async () => {
+  it('importSouthItems() should throw not found if manifest not found', async () => {
     ctx.params.southId = 'id';
     ctx.app.repositoryService.southConnectorRepository.getSouthConnector.mockReturnValue(southConnector);
     ctx.app.southService.getInstalledSouthManifests.mockReturnValue([]);
