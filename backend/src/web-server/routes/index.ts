@@ -163,10 +163,12 @@ router.delete('/api/north/:northId/cache/archive-files/retry-all', (ctx: KoaCont
 router.get('/api/north/:northId/items', (ctx: KoaContext<any, any>) => northConnectorController.searchNorthItems(ctx));
 router.get('/api/north/:northId/items/all', (ctx: KoaContext<any, any>) => northConnectorController.listNorthItems(ctx));
 router.post('/api/north/:northId/items', (ctx: KoaContext<any, any>) => northConnectorController.createNorthItem(ctx));
-router.post('/api/north/:northId/items/upload', upload.single('file'), (ctx: KoaContext<any, any>) =>
-  northConnectorController.uploadNorthItems(ctx)
+router.post('/api/north/:northType/items/check-import/:northId', upload.single('file'), (ctx: KoaContext<any, any>) =>
+  northConnectorController.checkImportNorthItems(ctx)
 );
+router.post('/api/south/:northId/items/import', (ctx: KoaContext<any, any>) => northConnectorController.importNorthItems(ctx));
 router.get('/api/north/:northId/items/export', (ctx: KoaContext<any, any>) => northConnectorController.exportNorthItems(ctx));
+router.put('/api/north/items/to-csv', (ctx: KoaContext<any, any>) => northConnectorController.northItemsToCsv(ctx));
 router.get('/api/north/:northId/items/:id', (ctx: KoaContext<any, any>) => northConnectorController.getNorthItem(ctx));
 router.put('/api/north/:northId/items/:id', (ctx: KoaContext<any, any>) => northConnectorController.updateNorthItem(ctx));
 router.put('/api/north/:northId/items/:id/enable', (ctx: KoaContext<any, any>) => northConnectorController.enableNorthItem(ctx));
