@@ -440,6 +440,7 @@
       "scan-mode": "Schedule",
       "enabled": "South item {{name}} enabled",
       "disabled": "South item {{name}} disabled",
+      "changed": "The items' changes will be committed on save",
       "search": {
         "name": "Name"
       }
