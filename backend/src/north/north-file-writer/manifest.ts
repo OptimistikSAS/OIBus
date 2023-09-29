@@ -16,7 +16,8 @@ const manifest: NorthConnectorManifest = {
       label: 'Output folder',
       defaultValue: './output',
       newRow: true,
-      validators: [{ key: 'required' }]
+      validators: [{ key: 'required' }],
+      displayInViewMode: true
     },
     {
       key: 'prefix',
@@ -27,7 +28,8 @@ const manifest: NorthConnectorManifest = {
       validators: [
         { key: 'minLength', params: { minLength: 1 } },
         { key: 'maxLength', params: { maxLength: 255 } }
-      ]
+      ],
+      displayInViewMode: true
     },
     {
       key: 'suffix',
@@ -38,7 +40,8 @@ const manifest: NorthConnectorManifest = {
       validators: [
         { key: 'minLength', params: { minLength: 1 } },
         { key: 'maxLength', params: { maxLength: 255 } }
-      ]
+      ],
+      displayInViewMode: true
     }
   ]
 };

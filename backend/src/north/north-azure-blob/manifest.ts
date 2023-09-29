@@ -59,16 +59,14 @@ const manifest: NorthConnectorManifest = {
       type: 'OibText',
       label: 'Tenant ID',
       newRow: true,
-      conditionalDisplay: { field: 'authentication', values: ['aad'] },
-      displayInViewMode: true
+      conditionalDisplay: { field: 'authentication', values: ['aad'] }
     },
     {
       key: 'clientId',
       type: 'OibText',
       label: 'Client ID',
       newRow: false,
-      conditionalDisplay: { field: 'authentication', values: ['aad'] },
-      displayInViewMode: true
+      conditionalDisplay: { field: 'authentication', values: ['aad'] }
     },
     {
       key: 'clientSecret',
