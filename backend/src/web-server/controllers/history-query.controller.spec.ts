@@ -853,7 +853,6 @@ describe('History query controller', () => {
       items: [
         oibusItem,
         {
-          id: 'id2',
           name: 'item2',
           scanModeId: '',
           enabled: true,
@@ -869,17 +868,13 @@ describe('History query controller', () => {
     expect(ctx.body).toEqual('csv content');
     expect(csv.unparse).toHaveBeenCalledWith([
       {
-        id: 'id',
         name: 'name',
         enabled: true,
-        scanModeId: '',
         settings_field: 'value'
       },
       {
-        id: 'id2',
         name: 'item2',
         enabled: true,
-        scanModeId: '',
         settings_objectArray: '[]',
         settings_objectSettings: '{}',
         settings_objectValue: 1

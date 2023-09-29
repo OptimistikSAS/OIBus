@@ -758,13 +758,14 @@ describe('South connector controller', () => {
         {
           id: 'id2',
           name: 'item2',
-          scanModeId: 'scanModeId',
+          scanModeId: 'scanModeId2',
           enabled: true,
           settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
         }
       ]
     };
     (csv.unparse as jest.Mock).mockReturnValue('csv content');
+    ctx.app.repositoryService.scanModeRepository.getScanModes.mockReturnValueOnce([{ id: 'scanModeId', name: 'scanMode' }]);
 
     await southConnectorController.southItemsToCsv(ctx);
 
@@ -772,17 +773,15 @@ describe('South connector controller', () => {
     expect(ctx.body).toEqual('csv content');
     expect(csv.unparse).toHaveBeenCalledWith([
       {
-        id: 'id',
         name: 'name',
         enabled: true,
-        scanModeId: 'scanModeId',
+        scanMode: 'scanMode',
         settings_regex: '.*'
       },
       {
-        id: 'id2',
         name: 'item2',
         enabled: true,
-        scanModeId: 'scanModeId',
+        scanMode: '',
         settings_objectArray: '[]',
         settings_objectSettings: '{}',
         settings_objectValue: 1

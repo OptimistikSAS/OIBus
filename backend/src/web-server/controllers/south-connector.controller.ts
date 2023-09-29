@@ -236,10 +236,13 @@ export default class SouthConnectorController {
   }
 
   async southItemsToCsv(ctx: KoaContext<{ items: Array<SouthConnectorItemDTO> }, any>): Promise<void> {
+    const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
     const southItems = ctx.request.body!.items.map(item => {
       const flattenedItem: Record<string, any> = {
         ...item
       };
+
+      flattenedItem.scanMode = scanModes.find(scanMode => scanMode.id === flattenedItem.scanModeId)?.name ?? '';
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
         if (typeof itemSettingsValue === 'object') {
           flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
@@ -247,6 +250,8 @@ export default class SouthConnectorController {
           flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
         }
       }
+      delete flattenedItem.id;
+      delete flattenedItem.scanModeId;
       delete flattenedItem.settings;
       delete flattenedItem.connectorId;
       return flattenedItem;
@@ -263,9 +268,7 @@ export default class SouthConnectorController {
       const flattenedItem: Record<string, any> = {
         ...item
       };
-      delete flattenedItem.id;
       flattenedItem.scanMode = scanModes.find(scanMode => scanMode.id === flattenedItem.scanModeId)?.name ?? '';
-      delete flattenedItem.scanModeId;
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
         if (typeof itemSettingsValue === 'object') {
           flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
@@ -273,6 +276,8 @@ export default class SouthConnectorController {
           flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
         }
       }
+      delete flattenedItem.id;
+      delete flattenedItem.scanModeId;
       delete flattenedItem.settings;
       delete flattenedItem.connectorId;
       return flattenedItem;

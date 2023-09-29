@@ -305,9 +305,10 @@ export default class HistoryQueryController extends AbstractController {
           flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
         }
       }
+      delete flattenedItem.id;
+      delete flattenedItem.scanModeId;
       delete flattenedItem.settings;
       delete flattenedItem.connectorId;
-      delete flattenedItem.scanMode;
       return flattenedItem;
     });
     ctx.body = csv.unparse(southItems);
@@ -321,8 +322,6 @@ export default class HistoryQueryController extends AbstractController {
       const flattenedItem: Record<string, any> = {
         ...item
       };
-      delete flattenedItem.id;
-      delete flattenedItem.scanModeId;
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
         if (typeof itemSettingsValue === 'object') {
           flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
@@ -330,6 +329,8 @@ export default class HistoryQueryController extends AbstractController {
           flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
         }
       }
+      delete flattenedItem.id;
+      delete flattenedItem.scanModeId;
       delete flattenedItem.settings;
       delete flattenedItem.connectorId;
       return flattenedItem;
