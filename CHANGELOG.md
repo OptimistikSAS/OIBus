@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.0.3](https://github.com/OptimistikSAS/OIBus/compare/v3.0.2...v3.0.3) (2023-09-30)
+
+
+### Bug Fixes
+
+* display fields in file-writer and azure-blob north connectors ([b0276f9](https://github.com/OptimistikSAS/OIBus/commit/b0276f9e74854d6e7676824cb338468f406e4799))
+* **history:** Export and import of items with scan mode names, remove ID and improve validation ([99d44b1](https://github.com/OptimistikSAS/OIBus/commit/99d44b123d54cd28e3268ab32be6907436d43058))
+* **south-items:** Display a warning on item changes ([162939d](https://github.com/OptimistikSAS/OIBus/commit/162939d4c06a4cfea247cf213ae04374af297912))
+* **south-items:** Remove south items id and scan mode ids when exporting ([5425e9f](https://github.com/OptimistikSAS/OIBus/commit/5425e9fe6d9836478e676b813da9411b5c6e97ae))
+* **south-odbc:** Fix disconnection ([e721976](https://github.com/OptimistikSAS/OIBus/commit/e7219766b32a62e63d0cd148059accb0fda0843d))
+* **south:** Export and import of items with scan mode names, remove ID and improve validation ([0c58a43](https://github.com/OptimistikSAS/OIBus/commit/0c58a43b8f930bfd106d377a856926571654cdce))
+* **south:** Fix import / export of south items ([d7d5f8e](https://github.com/OptimistikSAS/OIBus/commit/d7d5f8ef8b9ad27d41c368a8d51bb06a6465304f))
+* update connector manifest interfaces ([768fd73](https://github.com/OptimistikSAS/OIBus/commit/768fd73cfa839481f55b7485da501fc7245cd49f))
+
 ## [3.0.2](https://github.com/OptimistikSAS/OIBus/compare/v3.0.1...v3.0.2) (2023-09-17)
 
 
