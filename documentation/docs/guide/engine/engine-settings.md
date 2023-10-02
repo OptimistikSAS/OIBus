@@ -4,46 +4,45 @@ sidebar_position: 1
 
 # OIBus Settings
 ## OIBus port
-The default port is 2223 and is used to access the OIBus settings from a web interface at `http://localhost:2223`. This 
-port can be changed in case of conflict or for security reasons.
+The default port for accessing OIBus settings through a web interface is 2223, and it is accessible at `http://localhost:2223`. 
+You have the option to modify this port in the event of conflicts or for security purposes.
 
 # Logging parameters
-OIBus logs have five levels (from the most to the less critical):
-- None (deactivate the logs)
+OIBus logs encompass six levels, ranging from the most critical to the least:
+- None (deactivates the logs)
 - Error
 - Warning
 - Info
 - Debug
 - Trace
 
-Activating _**Info**_ logs will also activate _**Warning**_ and _**Error**_ logs. Activating _**Error**_ logs will only
-display _**Error**_ logs.
-Obviously, having _**Trace**_ logs activated will result in extremely verbose logs. Use _**Trace**_ and _**Debug**_ for
-troubleshooting purposes.
+Activating **Info** logs will automatically enable **Warning** and **Error** logs. Enabling **Error** logs will exclusively 
+display Error logs. It's worth noting that activating **Trace** logs will generate highly detailed and verbose logs, 
+primarily intended for advanced troubleshooting. Therefore, it's advisable to use **Trace** and **Debug** log levels 
+specifically for troubleshooting purposes.
+
 
 ## Console
-This section displays the logs in the Console, alongside values if a [North Console connector
-](../../guide/north-connectors/console.md) is used. To see these logs, run OIBus from a terminal.
+This section displays logs in the Console, alongside values if a [North Console connector
+](../../guide/north-connectors/console.md) is used. To access these logs, execute OIBus from a terminal.
 
 ## File
-To store logs in one or several files. You can choose the file maximum size and the number of files to roll logs.
+To store logs in one or more files, you can configure the maximum file size and specify the number of files for log rotation.
 
 ## SQLite
-To store logs in a local SQLite database to be displayed in the _Logs tab_ of OIBus. You can specify a **Max number of logs**
-to avoid to have a too big database.
+To save logs in a local SQLite database for viewing in the **Logs tab** of OIBus, you can set a **maximum number of logs** 
+to prevent the database from becoming overly large. Older entries will be automatically purged.
 
 ## Loki
-To send the logs to a remote _loki_ instance. Logs are sent to the specified host, in batches in a tunable time period
-(default is 60s). You can change this period to have smaller or bigger batches of logs.
+To transmit logs to a remote **Loki** instance, the logs are sent to the designated host in batches at a configurable 
+time interval (default is 60 seconds). You have the flexibility to adjust this interval to control the batch size.
 
-Loki can be accessed directly by _username_ and _password_ using Basic Auth. If a JWT token should be retrieved first,
-fill the _Token address_ to use to retrieve the token, using Basic Auth (with the username and password).
-The token will be used by OIBus to send logs to the remote _loki_ instance. Keep the token address empty if you
-don't use JWT token authentication.
+Loki can be accessed directly using Basic Auth, where you provide a **username** and **password**. If a JWT token is 
+required, you can specify the **Token address** to obtain it through Basic Auth (using the provided username and password). 
+OIBus will utilize this token to send logs to the remote **Loki** instance. If you are not using JWT token authentication, 
+leave the token address field empty.
 
 :::caution Loki logs with multiple OIBus
-
-Logs sent to loki are identified by the OIBus engine name. Be sure to update this name appropriately to find your OIBus
-logs in your loki instance.
-
+Logs sent to Loki are identified by the OIBus ID. The name is sent alongside the ID. Ensure that you update this name 
+correctly to locate your OIBus logs within your Loki instance, specially if you have several OIBus.
 :::

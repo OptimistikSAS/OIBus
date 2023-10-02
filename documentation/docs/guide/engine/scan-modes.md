@@ -3,16 +3,16 @@ sidebar_position: 2
 ---
 
 # Scan modes
-Scan modes are Cron defined and used in OIBus to retrieve or send data at specific dates and interval from 
-[South connectors](../../guide/south-connectors/common-settings.md).
+Cron-defined scan modes are utilized in OIBus to retrieve or send data from 
+[South connectors](../../guide/south-connectors/common-settings.md) at specific dates and intervals.
 
-Six default scan modes are defined:
-- Every second (* * * * * *)
-- Every 10 seconds (*/10 * * * * *)
-- Every minute (0 * * * * *)
-- Every 10 minutes (0 */10 * * * *)
-- Every hour (0 0 * * * *)
-- Every 24 hours (0 0 0 * * *)
+There are six default scan modes:
+- Every second: (* * * * * *)
+- Every 10 seconds: (/10 * * * *)
+- Every minute: (0 * * * * *), running every minute at precisely 0 seconds.
+- Every 10 minutes: (0 /10 * * *), running every 10 minutes at precisely 0 seconds.
+- Every hour: (0 0 * * * *), running every hour at precisely 0 seconds.
+- Every 24 hours: (0 0 0 * * *), running every day at midnight exactly.
 
-You can define your own scan modes by adding one, giving it a name and specifying your Cron. you can test your Cron
-expression on https://crontab.cronhub.io/.
+You have the option to create your custom scan modes by adding one, assigning it a name, and specifying the Cron expression. 
+You can test your Cron expression using the following website: https://crontab.cronhub.io/.
