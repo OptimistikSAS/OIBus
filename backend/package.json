@@ -84,7 +84,7 @@
     "papaparse": "5.4.1",
     "pg": "8.11.3",
     "pino": "8.15.3",
-    "pino-abstract-transport": "1.0.0",
+    "pino-abstract-transport": "1.1.0",
     "pino-pretty": "10.2.0",
     "pino-roll": "1.0.0-rc.1",
     "selfsigned": "2.1.1",
