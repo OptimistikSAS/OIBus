@@ -266,10 +266,12 @@ describe('SouthConnectorService', () => {
   it('should check import items', () => {
     const file = new Blob() as File;
     const expectedFormData = new FormData();
+    const expectedItemIdsToDelete = ['id'];
     expectedFormData.set('file', file);
+    expectedFormData.set('itemIdsToDelete', JSON.stringify(expectedItemIdsToDelete));
     let actualImportation = false;
 
-    service.checkImportItems('southType', 'southId', file).subscribe(() => {
+    service.checkImportItems('southType', 'southId', file, expectedItemIdsToDelete).subscribe(() => {
       actualImportation = true;
     });
 

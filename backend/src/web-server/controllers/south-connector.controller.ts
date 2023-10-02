@@ -288,20 +288,31 @@ export default class SouthConnectorController {
     ctx.ok();
   }
 
-  async checkImportSouthItems(ctx: KoaContext<void, any>): Promise<void> {
+  async checkImportSouthItems(ctx: KoaContext<{ itemIdsToDelete: string }, any>): Promise<void> {
     const manifest = ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.params.southType);
     if (!manifest) {
       return ctx.throw(404, 'South manifest not found');
     }
 
     const file = ctx.request.file;
+    let itemIdsToDelete: Array<string>;
+    try {
+      itemIdsToDelete = JSON.parse(ctx.request.body!.itemIdsToDelete);
+    } catch (error) {
+      return ctx.throw(400, 'Could not parse item ids to delete array');
+    }
+
     if (file.mimetype !== 'text/csv') {
       return ctx.badRequest();
     }
     const scanModes = ctx.app.repositoryService.scanModeRepository.getScanModes();
 
     const existingItems: Array<SouthConnectorItemDTO> =
-      ctx.params.southId === 'create' ? [] : ctx.app.repositoryService.southItemRepository.getSouthItems(ctx.params.southId);
+      ctx.params.southId === 'create'
+        ? []
+        : ctx.app.repositoryService.southItemRepository
+            .getSouthItems(ctx.params.southId)
+            .filter(item => !itemIdsToDelete.includes(item.id));
     const validItems: Array<any> = [];
     const errors: Array<any> = [];
     try {
