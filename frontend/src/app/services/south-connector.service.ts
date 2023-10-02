@@ -219,7 +219,8 @@ export class SouthConnectorService {
   checkImportItems(
     southType: string,
     southId: string,
-    file: File
+    file: File,
+    itemIdsToDelete: Array<string>
   ): Observable<{
     items: Array<SouthConnectorItemDTO>;
     errors: Array<{
@@ -229,6 +230,7 @@ export class SouthConnectorService {
   }> {
     const formData = new FormData();
     formData.set('file', file);
+    formData.set('itemIdsToDelete', JSON.stringify(itemIdsToDelete));
     return this.http.post<{ items: Array<SouthConnectorItemDTO>; errors: Array<{ item: SouthConnectorItemDTO; message: string }> }>(
       `/api/south/${southType}/items/check-import/${southId}`,
       formData
