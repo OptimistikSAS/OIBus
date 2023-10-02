@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { GetBucketAclCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { HeadBucketCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { NodeHttpHandler } from '@aws-sdk/node-http-handler';
 
 import NorthConnector from '../north-connector';
@@ -64,9 +64,10 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
           : ''
       },
       requestHandler: proxy
-        ? new NodeHttpHandler({
-            httpAgent: proxy
-          })
+        ? (new NodeHttpHandler({
+            httpAgent: proxy,
+            httpsAgent: proxy
+          }) as any)
         : undefined
     });
   }
@@ -99,11 +100,11 @@ export default class NorthAmazonS3 extends NorthConnector<NorthAmazonS3Settings>
 
     try {
       const result = await this.s3!.send(
-        new GetBucketAclCommand({
+        new HeadBucketCommand({
           Bucket: this.connector.settings.bucket // required
         })
       );
-      this.logger.info(`Access to bucket ${this.connector.settings.bucket} allowed. ${result}`);
+      this.logger.info(`Access to bucket ${this.connector.settings.bucket} allowed. ${JSON.stringify(result)}`);
     } catch (error) {
       this.logger.error(`Error testing Amazon S3 connection. ${error}`);
       throw new Error(`Error testing Amazon S3 connection. ${error}`);

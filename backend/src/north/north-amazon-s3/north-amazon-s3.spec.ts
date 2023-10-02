@@ -287,7 +287,9 @@ describe('NorthAmazonS3', () => {
       await north.testConnection();
       expect(logger.info).toHaveBeenCalledWith('Testing Amazon S3 connection');
       expect(sendMock).toHaveBeenCalledTimes(1);
-      expect(logger.info).toHaveBeenCalledWith(`Access to bucket ${configuration.settings.bucket} allowed. ${{ result: 'ok' }}`);
+      expect(logger.info).toHaveBeenCalledWith(
+        `Access to bucket ${configuration.settings.bucket} allowed. ${JSON.stringify({ result: 'ok' })}`
+      );
     });
 
     it('should test connection and fail', async () => {
