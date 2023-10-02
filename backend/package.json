@@ -70,7 +70,7 @@
     "koa-helmet": "7.0.2",
     "koa-respond": "2.1.0",
     "koa-send": "5.0.1",
-    "luxon": "3.4.2",
+    "luxon": "3.4.3",
     "minimist": "1.2.8",
     "mongodb": "6.1.0",
     "mqtt": "5.0.5",
