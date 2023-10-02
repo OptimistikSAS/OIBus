@@ -353,14 +353,12 @@ img.oib-image-header {
 input.form-control {
   border-radius: 1rem;
   background-color: $veryLightGrey;
-  border: none;
 }
 
 // override text area
 textarea.form-control {
   border-radius: 1rem;
   background-color: $veryLightGrey;
-  border: none;
 }
 
 // when embedded in search form or box title or modal body we don't want input to be grey as the search form
@@ -376,13 +374,11 @@ textarea.form-control {
 
 .input-group-text {
   border-radius: 1rem;
-  border: none;
 }
 
 .form-select {
   border-radius: 1rem;
   background-color: $veryLightGrey;
-  border: none;
 }
 
 // this is a customization of bootstrap switch to match Optimistik color scheme
