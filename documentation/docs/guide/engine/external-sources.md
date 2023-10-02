@@ -4,28 +4,35 @@ sidebar_position: 4
 
 # External sources and endpoints
 ## External source
-An external source is a remote source that send values to OIBus with HTTP requests. North connectors can subscribe to 
-external sources to filter data streams. If the external source is not defined in OIBus, the data received will be ignored
-to avoid cache saturation.
+An external source refers to a remote entity that transmits data to OIBus endpoints through HTTP requests. This functionality 
+enables other applications to send data to OIBus without configuring South connectors.
+
+North connectors have the capability to subscribe to either South connectors or external sources to retrieve data from 
+these sources. However, if an external source is not defined within OIBus, any incoming data from that source will be 
+disregarded to prevent cache saturation.
+
+To register an external source, simply provide its name, which will be used as the query parameter `name`, as shown below. 
+While optional, adding a description can be beneficial to provide context regarding the purpose of this external source.
 
 ## OIBus data endpoints
-OIBus can receive data from its two endpoints:
-- POST `/api/add-values` to receive values in JSON payload with basic authentication
-- POST `/api/add-file` to receive values as files (HTTP form-data) with basic authentication
+OIBus has the capability to receive data through two distinct endpoints:
+- POST `/api/add-values`: This endpoint is used to accept values in JSON format within the payload. It utilizes basic authentication for security.
+- POST `/api/add-file`: Here, data is received in the form of files using HTTP form-data. Basic authentication is also required for this endpoint.
 
-These two endpoints required a `name` query param. This `name` refers to an external source.
-The data are retrieved by the OIBus engine and stored into the North caches subscribed to the external source.
-
+Both of these endpoints necessitate the inclusion of the query parameter `name`, which specifies the external source 
+associated with the data. The OIBus engine processes this data and stores it within the North caches that are subscribed 
+to the specified external source.
 
 ## Data from another OIBus with OIConnect
-You can send data from one OIBus to another with a [OIConnect](../../guide/north-connectors/oiconnect.md) North connector.
-In this case, the `name` query param will be set to `MyFirstOIBus:MyOIConnect`, so your external source must be set to
-`MyFirstOIBus:MyOIConnect`.
+If you intend to transfer data from one OIBus instance to another using an 
+[OIConnect North connector](../../guide/north-connectors/oiconnect.md), the resulting `name` query parameter is `MyFirstOIBus:MyOIConnect`.
+Consequently, your external source configuration must also be defined as `MyFirstOIBus:MyOIConnect` to establish the 
+connection between the two OIBus instances.
 
 ## Data from another application
 ### JSON payload
-To send data into OIBus with JSON payload, you can use a HTTP request with the following payload:
-```json
+To transmit data to OIBus using a JSON payload, you can make an HTTP request with the following payload:
+```json title=Payload example
 [
     {
         "timestamp": "2023-01-01T00:00:00.000Z",
@@ -44,8 +51,7 @@ To send data into OIBus with JSON payload, you can use a HTTP request with the f
 ]
 ```
 
-Example:
-```
+```curl title="curl command"
 curl --location 'http://localhost:2223/api/add-values?name=%27test%27' \
 --header 'Content-Type: application/json' \
 -u <username>:<password> \
@@ -67,15 +73,14 @@ curl --location 'http://localhost:2223/api/add-values?name=%27test%27' \
 ]'
 ```
 
-This request will successfully return a `204 No Content` status.
+This request will result in a successful response with a `204 No Content` status.
 
 ### File payload
-To send a file to OIBus, you can use the following cURL command
-Example:
-```
+To send a file to OIBus, you can utilize the following curl command:
+```curl title="curl command"
 curl --location 'http://localhost:2223/api/add-file?name=%27test%27' \
 -u <username>:<password> \
 --form 'file=@"<file-path>"'
 ```
 
-This request will successfully return a `204 No Content` status.
+This request will result in a successful response with a `204 No Content` status.
