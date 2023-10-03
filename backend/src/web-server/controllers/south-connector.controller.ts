@@ -342,6 +342,10 @@ export default class SouthConnectorController {
     }
 
     const file = ctx.request.file;
+    if (file.mimetype !== 'text/csv') {
+      return ctx.badRequest();
+    }
+
     let itemIdsToDelete: Array<string>;
     try {
       itemIdsToDelete = JSON.parse(ctx.request.body!.itemIdsToDelete);
