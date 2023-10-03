@@ -3,56 +3,65 @@ sidebar_position: 0
 ---
 
 # Concept
-A South connector is used to retrieve data from a data source. The data are sent into North caches. 
-One connector can request several items. The nature of an item depends on the connector type. For example, an 
-[MQTT item](./mqtt.md) will subscribe to a topic from a remote broker, and a [MSSQL item](./mssql.mdx) will regularly 
-run a query at the Microsoft SQL database.
+A South connector is responsible for fetching data from a specific data source and forwarding that data into North caches. 
+Each connector can request multiple items, and the nature of each item varies depending on the connector type. For example, 
+an [MQTT item](./mqtt.md) subscribes to a topic from a remote broker, while an [MSSQL item](./mssql.mdx) regularly queries 
+a Microsoft SQL database.
 
-To add a South connector, go to the South page, and click on the **+** button. Select one of the available South 
-connector types, and fill its settings. The form may change depending on the type of connector selected. However, some 
-concepts are the same.
+To add a South connector, navigate to the South page and click the '+' button. Choose one of the available South connector 
+types and complete its settings. The form structure may vary based on the selected connector type, but certain principles 
+remain consistent.
 
-You can see the status of the South connector from its display page, or edit its settings.
+You can monitor the status of the South connector from its display page or make adjustments to its settings.
 
 ## General settings
-- **Name**: The name of the connector lets you remind with a user-friendly name what it does. 
-- **Description**: You can add a description to better remember some quirks (about the connection, access rights, etc.). 
-- **Toggle**: You can activate or pause the connector from the **enabled toggle**. However, from the South list or from 
-the display page, you can also toggle the connector.
+- **Name**: The connector's name serves as a user-friendly label to help you easily identify its purpose.
+- **Description**: You have the option to include a description to provide additional context, such as details about the
+  connection, access rights, or any unique characteristics.
+- **Toggle**: You can enable or disable the connector using the toggle switch. Additionally, you can toggle the connector
+  from either the South connector list or its dedicated display page (accessible via the magnifying glass icon of the list
+  page).
 
 ## History settings
-For history capable South connectors (SQL, OPCUA...), intervals of data can be requested. These intervals can be quite large 
-depending on the scan mode, or if a network failure occurred for a long time. In this case, the history settings allows you
-to split intervals into smaller intervals of **Max read interval** seconds. Each sub-intervals will be requested with a delay
-of **Read delay**.
+For South connectors capable of historical data retrieval (e.g., SQL, OPCUA), you have the flexibility to request data 
+in intervals. These intervals can vary in size, depending on factors such as the chosen scan mode or the presence of 
+prolonged network failures. To handle such scenarios, the history settings enable you to divide large intervals into 
+smaller sub-intervals, each no longer than the specified **Max read interval** in seconds. These sub-intervals are requested 
+with a delay defined by the **Read delay** setting.
 
 ## Specific section
-Connector specific settings. Refer to the appropriate connector to have more details.
+Specific settings for the connector can be found in the respective connector's documentation for more detailed information.
+
+### Testing connection
+The **Test settings** button provides a convenient way to verify and test your connection settings.
 
 ## Item section
-- **Name**: The name of the item is used as reference for North target applications. The name must be unique for a given 
-south connector.
-- **Scan mode**: It indicates to OIBus when to request the data. Some connectors (like [MQTT](./mqtt.md) or [OPCUA](./opcua.md))
-can use a specific scan mode: `subscription`. Instead of having OIBus requesting data, it's the broker (MQTT) or server (OPCUA)
-that send the data to the OIBus subscription.
--**Specific settings**: vary according to the connector type.
-
-From the edition form or from the display screen of a connector, each item can be disabled. If so, it won't be requested 
-by the connector.
+Items are entities responsible for retrieving data from the targeted data source, which can be fetched as either files 
+or JSON payloads. A South connector can handle several items. When editing an item, you'll need to provide the following information:
+- **Name**: The item's name serves as a reference for North target applications. It must be unique within a given South connector.
+- **Scan mode**: The [scan mode](../engine/scan-modes.md) indicates to OIBus when to request data. Some connectors (such 
+as MQTT or OPCUA) may have a `subscription` scan mode where the broker (MQTT) or server (OPCUA) sends data to OIBus.
+- **Specific settings** for items may vary based on the connector type. 
+ 
+Additionally, each item can be disabled either from the item's edit form or from the connector's display page. When an 
+item is disabled, it will not be requested by the connector.
 
 ### Item export
-Items can be exported into CSV with the following columns:
-- **id**: the unique ID used internally by OIBus. Must not me edited
-- **name**: The name of the item
-- **enabled**: 1 if the item is enabled, 0 otherwise
-- **scanModeId**: The ID used to reference a scan mode
-- **settings_**: All specific settings
+You can export items into a CSV file with the following columns:
+- **name**: The name of the item.
+- **enabled**: A value of 1 if the item is enabled, or 0 if it's disabled.
+- **scanMode**: The name of the scan mode.
+- **settings_***: All specific settings for the item.
 
-The exported file will have the name of the connector: `connector.csv`.
+The exported file will be named after the connector: `connector.csv`.
 
 ### Item import
-Items can be imported from a CSV. First, export a list of items. This way, you will have a properly set up file.
-To update items, do not change the `id` of the item you want to edit, and edit the other fields.
-To add items, keep and empty field for `id` and fill the other fields
+You can import items from a CSV file. To do this, it's recommended to first export a list of items so that you have a 
+properly formatted file to use as a template for importing.
+
+:::info
+When you upload a CSV file, the system will perform checks for duplicates and validate the settings. After the validation 
+process, all correctly formatted items will be added.
+:::
 
 

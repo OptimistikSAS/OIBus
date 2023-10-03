@@ -1,34 +1,42 @@
 import SerializationSettings from './_south-rest-serialization-settings.mdx';
 
 ## Item settings
+In the South connector, each item can be configured to be queried according to the chosen scan mode. Multiple queries to
+the same database can be configured within the same South connector. OIBus will execute the queries one after another,
+prepare the output file, and then send it to North connectors.
+
 ### Query
-The query fields accept SQL syntax and can use several internal variables. These variables are useful for data stream
-resilience on connection failure, and to cut big intervals into smaller chunks, reducing the load on the serve and network
-(see [the big queries section](#splitting-large-queries).
+The query field in the South connector accepts SQL syntax and can utilize several internal variables. These variables
+serve various purposes, including enhancing data stream resilience in the event of a connection failure and breaking
+down large intervals into smaller chunks, which helps reduce the load on the server and network. For more information,
+refer to the [big queries](#splitting-large-queries) section.
 
 #### Query variables
-Several OIBus variables can be used and will be interpreted by OIBus.
-- **@StartTime**: The @StartTime variable initially takes the date of the first execution of the query. When results are
-retrieved from the database, @StartTime value is set to the most recent timestamp among those results in the field used
-as reference (see [the datetime fields section](#datetime-fields)).
-- **@EndTime**: The @EndTime variable is set to the current time (_now()_) or to the end of the sub-interval if a query is split.
+In OIBus, you can utilize the following internal variables that will be interpreted by the system:
 
-#### Example
-```sql
+- **@StartTime**: Initially, the @StartTime variable is set to the date of the first execution of the query. When results
+are retrieved from the database, the @StartTime value is updated to the most recent timestamp among those results in the
+field used as a reference (refer to [the datetime fields section](#datetime-fields)).
+- **@EndTime**: The @EndTime variable is set to either the current time (_now()_) or the end of the sub-interval if a
+query is split.
+
+```sql title="SQL query with @StartTime and @EndTime"
 SELECT reference, value, timestamp FROM table WHERE timestamp > @StartTime AND timestamp < @EndTime
 ```
+
 ### Datetime fields
-You can specify in this array which fields are a datetime type, and which format to use.
+In the South connector, you can specify an array of fields that are of datetime type and indicate the format to use for
+each field. Here are the details for configuring datetime fields:
 - **Field name**: The field name in the SELECT section of the query.
-- **Reference field**: Use this field as reference for the next @StartTime value (see [query variables](#query-variables)).
-- **Type**: The type of the data in the result.
+- **Reference field**: Use this field as a reference for the next @StartTime value (refer to [query variables](#query-variables)).
+- **Type**: The type of data in the result.
 - **Timezone** (for string, Date, DateTime, DateTime2, SmallDateTime types): The timezone of the datetime stored in the
 database.
 - **Format** (for string only): The string format of the datetime stored in the database.
-- **Locale** (for string only): The locale to use when the format contains locale specific string (such as MMM format for
-months).
+- **Locale** (for string only): The locale to use when the format contains locale-specific strings (such as MMM format
+for months).
 
-OIBus will internally use these dates in ISO UTC format. The output datetime format can be set in the
+OIBus internally uses these dates in ISO UTC format, and the output datetime format can be set in the
 [serialization section](#serialization).
 
 <SerializationSettings></SerializationSettings>

@@ -5,18 +5,20 @@ sidebar_position: 9
 import ItemSettings from './_south-sql-item-settings.mdx';
 
 # MySQL / MariaDB
-Send SQL queries to MySQL and MariaDB.
+Send SQL queries to interact with a MySQL / MariaDB database.
 
 ## Specific settings
-- **Host**: the address of the SQL server
-- **Port**: MySQL server port (default is 3306)
-- **Database**: the name of the database to connect to
-- **Username**: the username used for authentication
-- **Password**: the password used for authentication
-- **Connection timeout**: Timeout on connection
+When configuring the SQL connector to send SQL queries to a MySQL / MariaDB Server, you will need to provide the following
+details:
+- **Host**: The address of the MySQL / MariaDB server.
+- **Port**: The MySQL / MariaDB server port (default is 3306).
+- **Database**: The name of the database to connect to.
+- **Username**: The username used for authentication.
+- **Password**: The password used for authentication.
+- **Connection timeout**: Timeout setting for establishing the connection.
 
 :::tip Database access
-Using a read only user to connect to the database is strongly advised.
+It is strongly advised to use a read-only user when connecting to the database for security and data integrity purposes.
 :::
 
 <ItemSettings></ItemSettings>

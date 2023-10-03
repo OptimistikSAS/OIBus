@@ -3,53 +3,56 @@ sidebar_position: 6
 ---
 
 # MQTT
-MQTT (Message Queuing Telemetry Transport) is a real-time messaging protocol for exchanging data by topic with a 
-_publish / subscribe_ approach. A topic is a point (or a set of points) representing a piece of data (or a set of data).
+MQTT (Message Queuing Telemetry Transport) is a protocol designed for real-time messaging and data exchange using a 
+publish/subscribe model. In MQTT, data is organized into topics, and clients can publish or subscribe to these topics to 
+exchange information.
 
-The MQTT protocol is made up of two main types of entities:
-- The MQTT broker: collects and makes available the requested data. It plays the role of server.
-- The MQTT client: it can publish data to a broker and subscribe topics to receive data from a broker. 
- 
-OIBus is a MQTT client and uses the [MQTT.js](https://github.com/mqttjs/MQTT.js) library.
+The MQTT protocol consists of two primary components:
+- **MQTT Broker**: This acts as the server and is responsible for collecting and distributing data. It manages the topics 
+and facilitates communication between clients.
+- **MQTT Client**: Clients can publish data to a broker by specifying a topic, and they can also subscribe to topics to 
+receive data from the broker.
+
+OIBus functions as an MQTT client and utilizes the [MQTT.js](https://github.com/mqttjs/MQTT.js) library to interact with 
+MQTT brokers for data exchange.
 
 ## Specific settings
-- **URL**: of the form `mqtt://address:1883`. The default MQTT port is 1883 but may differ depending on the broker’s 
-configuration.
-- **Quality of service (QoS)**: agreement between the sender of a message and the receiver of a message that defines the
-guarantee of delivery for a specific message. Three modes are available:
-  - QoS 0: at most once. This means that the message is sent once but MQTT does not guarantee that the message will be 
-received correctly. Good reception will depend on the quality of the underlying network of MQTT.
-  - QoS 1: at least once. This means that the message is sent multiple times as duplicates until the client validates 
-the correct receipt of at least one of the duplicates. In some cases, the client may receive the same message more than
-once.
-  - QoS 2: exactly once. This means that the message is sent only once, and a new attempt to send the message takes 
-place after a certain time until the client confirms the good reception. There is no risk of multiple receptions in this
-case.
-- **Persistence** (QoS1 and QoS2): Both QoS1 and QoS2 allow persistent connections. A persistent connection allows the 
-broker to keep a certain number of messages in memory (set on the broker) until the client reconnects in case of 
-connection loss.
+MQTT is a versatile protocol for exchanging data, and OIBus provides various configuration options to tailor its behavior 
+to your needs. Here are some of the key configuration parameters for MQTT connections in OIBus:
+- **URL**: This specifies the address of the MQTT broker, typically in the format `mqtt://address:port`. The default MQTT 
+port is 1883, but it may vary depending on the broker's configuration.
+- **Quality of Service** (QoS): MQTT offers three levels of QoS for message delivery:
+  - QoS 0: At most once. Messages are sent once, but there's no guarantee of successful receipt.
+  - QoS 1: At least once. Messages are sent multiple times until the recipient acknowledges receipt. Some duplicates may 
+occur.
+  - QoS 2: Exactly once. Messages are sent only once, and retries are attempted until the recipient confirms successful 
+receipt. No duplicates are expected.
+- **Persistence**: QoS 1 and QoS 2 allow for persistent connections. This means that the broker can retain a certain number 
+of messages in memory until the client reconnects, ensuring that no data is lost in case of connection interruptions.
 - **Authentication**:
-  - None: no authentication.
-  - Username and password authentication.
-  - Certificate based:
-    - **Cert file path**: signed file to authenticate OIBus from the broker. The certificate must be accepted by the broker.
-    - **Key file path**: the key used to sign the certificate
-    - **CA file path**: the certificate authority used to generate the cert file. If empty, the cert file is considered as
-      self-signed.
-- **Reject unauthorized connection**: Reject connection that can not be verified (because of a self-signed certificate 
-from the broker for example).
-- **Reconnect period**: Time to wait before reconnection the socket on connection loss.
-- **Connect timeout**: Time to wait before the connection fails.
+  - None: No authentication is required.
+  - Basic: Authenticate using a username and password.
+  - Certificate: Authenticate using certificates.
+    - Cert file path: Path to the signed certificate file used to authenticate OIBus with the broker.
+    - Key file path: Path to the key file used to sign the certificate.
+    - CA file path: Path to the certificate authority file used to generate the certificate. If empty, the certificate is considered self-signed.
+- **Reject unauthorized connection**: Decide whether to reject connections that cannot be verified, such as those with 
+self-signed certificates from the broker.
+- **Reconnect period**: The time to wait before attempting to reconnect the socket in case of a connection loss.
+- **Connect timeout**: The maximum time to wait for a connection to be established before it is considered a failure.
+
+These configuration options provide flexibility in setting up MQTT connections in OIBus to suit your specific requirements 
+and security needs.
 
 ## Item settings
 ### Address space and topic
-MQTT uses subscription only. No scan mode can be set for these items.
+MQTT connectors in OIBus use a subscription-based approach, which means there's no need to set scan modes for these items. 
+Instead, you specify the topics you want to subscribe to, and the MQTT connector retrieves data published to those topics 
+by the broker.
 
-The MQTT connector retrieves values from specific topics. A topic is the address associated to a data in the broker 
-space address. 
-
-The broker organizes the data by tree structures. Here is an example:
-````
+Topics in MQTT are structured hierarchically, organized in a tree-like structure. Topics are used to address specific 
+data points or information within the MQTT broker's address space.
+```text title="Topic structure example"
 France
     | -> Paris
         | -> temperatureTank1
@@ -57,34 +60,41 @@ France
     | -> Chambery
         | -> temperatureTank1
         | -> temperatureTank2
-````
-It is then possible to subscribe to a dataset by entering a parent node, for example `France/#` or `France/Chambery/#`. 
-It is also possible to directly enter a complete path, for example `France/Paris/temperatureTank1` to subscribe to only 
-one data.
+```
 
-When a MQTT client subscribes to a data item on the broker, the broker sends the new values as soon as they are 
-available for each client subscribing to this data.
-
-When subscribing to a set of points as with `France/#`, then the list of topic retrieved will be:
-- France/Paris/temperatureTank1
-- France/Paris/temperatureTank2
-- France/Chambery/temperatureTank1
-- France/Chambery/temperatureTank2
+When you subscribe to a dataset in MQTT, you can use wildcard characters to specify the topics you're interested in. 
+Here are some examples:
+- Using # (hash) as a wildcard:
+  - France/# will subscribe to all topics under the "France" branch, including all subtopics and their data points.
+  - France/Chambery/# will subscribe to all topics under "France/Chambery," including all subtopics and data points specific to Chambery.
+- Using specific topic paths:
+  - France/Paris/temperatureTank1 will subscribe to only the data point "temperatureTank1" in the "France/Paris" branch.
 
 ## Payload and timestamp
-The MQTT payload can be of different type: number, string or json.
+### Data types
+When you subscribe to an MQTT topic and receive a payload, the payload can contain various types of data, such as numbers, 
+strings, or JSON objects. Depending on the type of data you receive, you may need to parse the payload to extract the 
+information you want to store in OIBus North caches.
 
-For the last case, it is possible to parse the payload to form the data that OIBus will store in North caches.
+Here are some common scenarios for parsing MQTT payloads:
+- **Number**: If the payload contains a single numeric value, you can parse it directly as a number and store it in 
+North caches. For example, if you receive a payload like `25.5`, you can parse it as a floating-point number and store 
+it as a numeric data point.
+- **String**: If the payload is a string, you can store it as-is in North caches. For example, if you receive a payload 
+like `Hello, MQTT!`, you can store it as a string data point.
+- **JSON**: If the payload is a JSON object, you'll need to specify the payload format it to extract the relevant data 
+fields. 
 
-For example, if the payload is:
-````
+#### JSON object
+Below is a JSON payload format example where data must be extracted.
+```json title="JSON payload format example"
 {
     "pointId": "point1",
     "value": "666.666",
     "timestamp": "2020-02-02 02:02:02",
     "quality": "true"
 }
-````
+```
 
 Then the following configuration must be applied:
 - **Payload in array**: _false_
@@ -101,16 +111,19 @@ You can retrieve additional fields, such as the quality field, by clicking on th
 - **Field name in output**: _quality_
 - **Path in the retrieved payload**: _quality_
 
-Another example, with a payload such as:
-````
-"metrics": [
+#### JSON array
+Below is another example with an array.
+```json title="JSON payload with array format example"
+{
+  "metrics": [
     {
-        "customValue": "666.666",
-        "customTimestamp": "2020-02-02 02:02:02",
-        "customQuality": "true"
+      "customValue": "666.666",
+      "customTimestamp": "2020-02-02 02:02:02",
+      "customQuality": "true"
     }
-]
-````
+  ]
+}
+```
 
 Then the following configuration must be applied:
 - **Values in array**: _true_
@@ -128,8 +141,19 @@ Here, the quality field can be added with:
 - **Path in the retrieved payload**: _customQuality_
 
 
-When the timestamp is retrieved from the payload, it is parsed according to the specified **timestamp format**, and
-convert to UTC from the specified **timestamp timezone**.
+### Timestamp
+You can either extract the timestamp from the payload or you can use the current UTC timestamp provided by OIBus. The
+choice between these two approaches depends on how timestamps are provided by your MQTT source. OIBus allows you to
+configure these options to suit your data source's requirements.
 
-Otherwise, it is possible to retrieve the timestamp from OIBus. The value will take the current timestamp in UTC format.
+#### Current OIBus Timestamp
+If the MQTT payload doesn't contain a timestamp or if you prefer to use the current timestamp from OIBus, you can 
+configure OIBus to use the current UTC timestamp. In this case, OIBus will automatically generate a UTC timestamp when 
+processing the MQTT payload, and you don't need to extract it from the payload.
+
+#### Timestamp in Payload
+Alternatively, if the MQTT payload contains a timestamp, specify the **Timestamp path** to retrieve it and specify its 
+type (String, ISO8601, UNIX Epoch (s) or UNIX Epoch (ms)). String timestamp can be parsed with the specified**timezone**
+and **timestamp format**.
+
 

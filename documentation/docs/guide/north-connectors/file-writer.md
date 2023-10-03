@@ -7,8 +7,8 @@ The File Writer connector performs a straightforward task of writing the data re
 designated folder.
 
 ## Specific settings
-- **Output folder**: This is the directory where files will be stored. Relative paths are calculated based on the data 
-folder set during installation (e.g., `C:\OIBusData`).
+- **Output folder**: This is the directory where files will be stored. In the case of a relative path, it is computed based 
+on the **Data folder** mentioned in the _About_ section.
 - **Prefix filename**: You can include a prefix to be added to the filename.
 - **Suffix filename**: You have the option to append a suffix to the filename, which appears just before the file extension.
 

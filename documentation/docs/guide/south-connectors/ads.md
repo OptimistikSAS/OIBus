@@ -3,92 +3,95 @@ sidebar_position: 9
 ---
 
 # ADS - TwinCAT
-The ADS protocol (Automation Device Specification) is a transport layer within TwinCAT systems, developed by 
-Beckhoff.
+The Automation Device Specification (ADS) protocol serves as a transport layer integrated into TwinCAT systems, designed 
+and developed by Beckhoff.
 
-Each data item is referenced by a unique address within the controller and can be accessed by OIBus with the ADS 
-connector.
+Every data item is identified by a distinct address within the controller, which can be conveniently accessed through 
+the ADS connector on the OIBus.
 
-OIBus uses the [ads-client](https://github.com/jisotalo/ads-client) library.
+The OIBus utilizes the [ads-client](https://github.com/jisotalo/ads-client) library for this purpose.
 
 ## Specific settings
-The AMS Router is the entity which connects ADS clients (OIBus) to PLCs and TwinCAT runtime. This allows OIBus to
-access PLCs data.
+OIBus uses the ADS protocol to connect to an AMS Router. The AMS Router serves as the intermediary that connects ADS clients, 
+such as OIBus, to PLCs and the TwinCAT runtime. This connectivity enables OIBus to access data from PLCs.
 
-Depending on the AMS Router location, several setups are possible. 
+The specific configuration possibilities depend on the placement and location of the AMS Router.
 
-### With local TwinCAT runtime
-When TwinCAT is installed on the same machine as OIBus, the ADS connector can use the TwinCAT runtime and directly 
-communicate with the PLC, with its **Net ID** and **Port**.
+### With local AMS server (TwinCAT runtime)
+When TwinCAT is installed on the same machine and network as OIBus, the ADS connector has the capability to utilize the 
+TwinCAT runtime, enabling direct communication with the PLC using its **Net ID** and **PLC Port** (no need to specify Router 
+address, Router TCP port, Client AMS Net ID, Client ADS port).
 
-The Net ID is an IP-like address with two additional numbers. Usually, the Net ID is the IP address on which the PLC is 
-addressed from the network, with two additional numbers to address the appropriate PLC (several PLCs can be accessed 
-from one AMS Router), for example `127.0.0.1.1.1`.
+The Net ID is an address resembling an IP address with two extra numeric values. Typically, the Net ID corresponds to 
+the IP address used to access the PLC from the network, with two additional numbers for distinguishing between multiple 
+PLCs that can be accessed through a single AMS Router. For instance, an example Net ID might look like `127.0.0.1.1.1`.
 
-The port is the one used to contact the PLC from the AMS Router (by default 851).
+The port specifies the communication endpoint for connecting with the PLC from the AMS Router, typically set to the default 
+value of 851.
 
-### With remote ADS server
-For a remote ADS server, the Net ID and the ADS Port are still required, and other fields are needed:
-- **Router address**: the IP address (or domain name) of the AMS router
-- **Router TCP port**: the port used by the AMS router. It must be allowed by the firewall (both network and OS)
-- **Client AMS Net ID**: a client identifier used to identify a connection with the TwinCAT runtime.
-- **Client ADS port** (optional): the port used by the client to exchange data. If empty, it is given randomly by the 
-AMS server. If filled, be sure that the port is not used by another client. 
+### With remote AMS server
+When connecting to a remote AMS server, you will need the **Net ID** and **PLC Port** as well as several additional fields:
+- **Router address**: This is the IP address or domain name of the AMS router.
+- **Router TCP port**: The port used by the AMS router for communication. Ensure that this port is allowed by both the 
+network and operating system firewalls.
+- **AMS Net ID**: This is a client identifier used to establish a connection with the TwinCAT runtime.
+- **ADS Client port** (optional): You can specify the port used by the client for data exchange. If left empty, the AMS 
+server will assign a random port. If you choose to specify a port, ensure that it is not already in use by another client.
 
-TwinCAT runtime must accept the communication from the ADS connector. To do so, Static Routes must be added in the 
-_TwinCAT Static Routes_ tool. The following example accepts two routes whose AmsNetId is to be used on the OIBus 
-side. It is important that the **AmsNetId is used through the IP address specified**.
+To enable communication between the ADS connector and the TwinCAT runtime, you must configure Static Routes using the 
+_TwinCAT Static Routes_ tool. The following example illustrates how to configure two routes using the **AMS Net ID**, which 
+should be utilized on the OIBus side. It is crucial that the **AMS Net ID** is used in conjunction with the IP address
+specified in the Static Routes.
 
 ![TwinCAT Static Routes tool](../../../static/img/guide/south/ads/installation-ads-distant.png)
 
 ![Add a TwinCAT Static Route](../../../static/img/guide/south/ads/routes.png)
 
-The AMSNetId specified must be filled in the **Client AMS Net ID** field of the configuration.
+The AMSNetId specified must be filled in the **AMS Net ID** field of the OIBus configuration.
 
 :::danger Multiple ADS connectors
-Only one remote ADS connector can be set for OIBus. If two ADS connectors are needed to connect two PLCs, use a local
-ADS server (available by default if OIBus is installed on the same machine as 
-[the TwinCAT runtime](#with-local-twincat-runtime)).
+OIBus supports only a single remote ADS connector at a time. If you need to connect to two different PLCs simultaneously, 
+you can achieve this by using a local AMS server.
 :::
 
 ### Other specific settings
-- **Retry interval**: Time to wait before retrying the connection
-- **PLC name**: A prefix added to each item name before sending them into North caches. With PLC name _PLC001._ (the dot 
-is included in the name) and the item name is MyVariable.Value, the resulting name once the values are retrieved will be 
-_PLC001.MyVariable.Value_ and this will allow to identify the data in a different way than another PLC which will have 
-a resulting item name of _PLC002.MyVariable.Value_ (for example).
-- **Enumeration value**: Serialize the enumerations as integer or as text
-- **Boolean value**: Serialize the booleans as integer or as text
-- **Structure filtering**: See [below](#data-structures)
+Here are some additional configuration options:
+- **Retry Interval**: This is the amount of time to wait before attempting to retry the connection.
+- **PLC Name**: You can specify a prefix added to each item name before they are sent into North caches. For example, 
+with a PLC name of `PLC001.` (including the dot), and an item name of `MyVariable.Value`, the resulting name, once the 
+values are retrieved, will be `PLC001.MyVariable.Value`. This helps differentiate data from different PLCs. Another PLC 
+might have a resulting item name like `PLC002.MyVariable.Value`.
+- **Enumeration value**: You can choose whether to serialize enumerations as integers or as text.
+- **Boolean value**: You can choose whether to serialize booleans as integers or as text.
+- **Structure filtering**: For details on structure filtering, please refer to the [specific documentation](#data-structures).
 
-:::tip When to use PLC name
-In the case where data from similar PLCs (sharing the same point addresses for example) are retrieved from two ADS
-connectors and sent to the same North, the values will have the same point ID even though they come from two different
+
+:::tip When to use PLC name?
+In scenarios where data from similar PLCs with shared point addresses schema is retrieved via two different ADS connectors 
+and sent to the same North connector, the resulting values may possess identical point IDs despite originating from distinct 
 PLCs.
 
-To avoid this ambiguity, the _PLC name_ can be added in front of each point ID once the data is retrieved. In this way,
-the point IDs sent to the North connector will be differentiated. It is specially useful when exporting the items to import 
-them in another OIBus: just change the PLC name and your data will be unique in the North targeted application.
+To mitigate this potential ambiguity, you can opt to append the **PLC name** in front of each point ID once the data is 
+retrieved. This practice ensures that the point IDs sent to the North connector remain distinct, which proves particularly 
+useful when exporting these items for import into another OIBus. 
+
+By simply altering the PLC name, you can ensure that your data remains unique in the North-targeted application.
 :::
 
-#### Data structures
-It is also possible to query an entire data structure. For example, if the data **MyVariable** is of type _MyStructure_ and 
-has the following fields:
-- MyDate
-- MyNumber
-- Value
+#### Structure filtering
+You can also retrieve an entire data structure using this method. For instance, if the data _MyVariable_ is of the
+_MyStructure_ type and includes fields like _MyDate_, _MyNumber_, and _Value_, but you only need _MyDate_ and
+_MyNumber_, you can create a new structure within the _structure filtering_ section with the **Structure name**
+`MyStructure`. 
+In the **Fields to keep** section, you can specify only the required fields, separated by commas, such as `MyDate, MyNumber`.
 
-And if only _MyDate_ and _MyNumber_ must be retrieved, then, in the _ADS structures section_ a new structure can be added
-with the name _MyStructure_, and in the fields part, only the two fields can be specified, separated by commas: 
-_MyDate,MyNumber_
+This feature is particularly beneficial when dealing with multiple data items, all of which are of the _MyStructure_ type, 
+but you are interested in retrieving only specific fields from the structure, such as _MyDate_ and _MyNumber_. The more
+fields the structure has, the more advantageous this feature becomes.
 
-This is especially useful when several data (here **MyVariable**) are of type MyStructure, and only a few fields of the 
-structure are requested (here _MyDate_ and _MyNumber_). The more fields the structure has, the more useful this feature 
-is.
-
-In the end, each field will give a unique resulting point ID. In the previous example, this will give for the single 
-point **MyVariable** the following two points:
-- MyVariable.MyDate  
+Ultimately, each field specified will result in a unique point ID. In the example provided, using this method for the 
+single point _MyVariable_ will result in two distinct points:
+- MyVariable.MyDate
 - MyVariable.MyNumber
 
 ## Item settings

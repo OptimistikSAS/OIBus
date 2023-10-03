@@ -6,7 +6,7 @@ sidebar_position: 0
 A North connector is employed to transmit data to a designated target application, extracting the data from its cache. 
 Data can be delivered either as files or JSON payloads.
 
-To incorporate a North connector, navigate to the North page and click the '+' button. Choose one of the available North
+To add a North connector, navigate to the North page and click the '+' button. Choose one of the available North
 connector types and complete its settings. The form's structure varies depending on the chosen connector type, but 
 certain principles remain consistent.
 
