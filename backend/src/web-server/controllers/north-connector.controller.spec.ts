@@ -1282,6 +1282,7 @@ describe('North connector controller with items', () => {
   it('checkImportNorthItems() should check import of items in a csv file with new north', async () => {
     ctx.params.northId = 'create';
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    ctx.request.body.itemIdsToDelete = '[]';
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (validator.validateSettings as jest.Mock)
       .mockImplementationOnce(() => {
@@ -1368,6 +1369,7 @@ describe('North connector controller with items', () => {
     getManifestWithItemsModeSpy.mockReturnValueOnce(northTestManifestWithItems);
 
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    ctx.request.body.itemIdsToDelete = JSON.stringify(['itemIdToDelete']);
     (fs.readFile as jest.Mock).mockReturnValue('file content');
     (validator.validateSettings as jest.Mock).mockImplementationOnce(() => {
       return true;
@@ -1385,6 +1387,12 @@ describe('North connector controller with items', () => {
           settings_objectArray: '[]',
           settings_objectSettings: '{}',
           settings_objectValue: 1
+        },
+        {
+          name: 'willBeDeleted',
+          settings_objectArray: '[]',
+          settings_objectSettings: '{}',
+          settings_objectValue: 1
         }
       ]
     });
@@ -1394,7 +1402,7 @@ describe('North connector controller with items', () => {
     expect(ctx.badRequest).not.toHaveBeenCalled();
     expect(ctx.throw).not.toHaveBeenCalled();
 
-    // expect(validator.validateSettings).toHaveBeenCalledTimes(1);
+    expect(validator.validateSettings).toHaveBeenCalledTimes(2);
     expect(csv.parse).toHaveBeenCalledWith('file content', { header: true });
     expect(fs.readFile).toHaveBeenCalledWith('myFile.csv');
     expect(ctx.ok).toHaveBeenCalledWith({
@@ -1402,6 +1410,17 @@ describe('North connector controller with items', () => {
         {
           id: '',
           name: 'newItem',
+          connectorId: 'northId',
+          enabled: true,
+          settings: {
+            objectArray: [],
+            objectSettings: {},
+            objectValue: 1
+          }
+        },
+        {
+          id: '',
+          name: 'willBeDeleted',
           connectorId: 'northId',
           enabled: true,
           settings: {
@@ -1432,6 +1451,7 @@ describe('North connector controller with items', () => {
 
   it('checkImportNorthItems() should reject bad file type', async () => {
     ctx.request.file = { path: 'myFile.txt', mimetype: 'bad type' };
+    ctx.request.body.itemIdsToDelete = '[]';
 
     await northConnectorController.checkImportNorthItems(ctx);
 
@@ -1445,7 +1465,9 @@ describe('North connector controller with items', () => {
 
   it('checkImportNorthItems() should throw badRequest when file not parsed', async () => {
     ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    ctx.request.body.itemIdsToDelete = '[]';
     (fs.readFile as jest.Mock).mockReturnValue('file content');
+    ctx.app.repositoryService.northItemRepository.getNorthItems.mockReturnValueOnce([]);
     (csv.parse as jest.Mock).mockImplementationOnce(() => {
       throw new Error('parsing error');
     });
@@ -1473,6 +1495,24 @@ describe('North connector controller with items', () => {
       expect(csv.unparse).not.toHaveBeenCalled();
       expect(error).toEqual(new Error('jest mock error'));
     }
+  });
+
+  it('checkImportNorthItems() should throw when itemIdsToDelete not parsed', async () => {
+    ctx.params.northType = 'north-test';
+    ctx.request.file = { path: 'myFile.csv', mimetype: 'text/csv' };
+    ctx.request.body.itemIdsToDelete = 'not json';
+    (fs.readFile as jest.Mock).mockReturnValue('file content');
+    ctx.app.repositoryService.northItemRepository.getNorthItems.mockReturnValueOnce([]);
+
+    await northConnectorController.checkImportNorthItems(ctx);
+
+    expect(ctx.throw).toHaveBeenCalledWith(400, 'Could not parse item ids to delete array');
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(csv.parse).not.toHaveBeenCalled();
+    expect(fs.readFile).not.toHaveBeenCalled();
+    expect(ctx.app.reloadService.onCreateOrUpdateNorthItems).not.toHaveBeenCalled();
+    expect(ctx.noContent).not.toHaveBeenCalled();
   });
 
   it('importNorthItems() should import items', async () => {
@@ -1505,7 +1545,6 @@ describe('North connector controller with items', () => {
         {
           id: 'id2',
           name: 'item2',
-          scanModeId: 'scanModeId',
           enabled: true,
           settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
         }
@@ -1529,7 +1568,6 @@ describe('North connector controller with items', () => {
         {
           id: 'id2',
           name: 'item2',
-          scanModeId: 'scanModeId',
           enabled: true,
           settings: { objectSettings: {}, objectArray: [], objectValue: 1 }
         }
