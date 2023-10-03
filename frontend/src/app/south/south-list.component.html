@@ -41,17 +41,17 @@
       <table class="mt-2 table table-sm table-hover oib-table">
         <thead>
           <tr>
-            <th translate="south.status" style="width: 3%"></th>
-            <th translate="south.name"></th>
-            <th translate="south.type"></th>
-            <th translate="south.description"></th>
+            <th style="width: 1%"></th>
+            <th translate="south.name" style="width: 10%"></th>
+            <th translate="south.type" style="width: 10%"></th>
+            <th translate="south.description" style="width: 70%"></th>
             <th style="width: 3%"></th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let south of displayedSouths.content">
-            <td *ngIf="!south.enabled">{{ 'south.disabled' | translate }}</td>
-            <td *ngIf="south.enabled">{{ 'south.enabled' | translate }}</td>
+            <td *ngIf="!south.enabled"><div class="grey-dot"></div></td>
+            <td *ngIf="south.enabled"><div class="green-dot"></div></td>
             <td>{{ south.name }}</td>
             <td>{{ south.type }}</td>
             <td>{{ south.description }}</td>

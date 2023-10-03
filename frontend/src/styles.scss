@@ -529,3 +529,22 @@ val-errors > div {
     background-color: $electricBlue;
   }
 }
+
+.grey-dot {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 1rem;
+  background-color: $blue;
+  margin-top: auto;
+  margin-bottom: auto;
+
+}
+.green-dot {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 1rem;
+  background-color: $green;
+  margin-top: auto;
+  margin-bottom: auto;
+
+}
