@@ -41,17 +41,17 @@
       <table class="mt-2 table table-sm table-hover oib-table">
         <thead>
           <tr>
-            <th translate="north.status" style="width: 3%"></th>
-            <th translate="north.name"></th>
-            <th translate="north.type"></th>
-            <th translate="north.description"></th>
+            <th style="width: 1%"></th>
+            <th translate="north.name" style="width: 10%"></th>
+            <th translate="north.type" style="width: 10%"></th>
+            <th translate="north.description" style="width: 70%"></th>
             <th style="width: 3%"></th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let north of displayedNorths.content">
-            <td *ngIf="!north.enabled">{{ 'north.disabled' | translate }}</td>
-            <td *ngIf="north.enabled">{{ 'north.enabled' | translate }}</td>
+            <td *ngIf="!north.enabled"><div class="red-dot"></div></td>
+            <td *ngIf="north.enabled"><div class="green-dot"></div></td>
             <td>{{ north.name }}</td>
             <td>{{ north.type }}</td>
             <td>{{ north.description }}</td>
