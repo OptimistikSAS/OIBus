@@ -3,19 +3,18 @@ sidebar_position: 5
 ---
 
 # Azure Blob
-The Azure Blob connector writes files received from South connectors to the specified Azure Blob container.
+The Azure Blob North connector is used to write files received from South connectors to a designated Azure Blob container.
 
 ## Specific settings
-- **Account**: Account to use. The account must have access to the container
-- **Container**: Container to use to store the files
-- **Path**: The folder to store the files to
-- **Authentication**: the authentication key used to connect to Amazon S3 bucket
-  - **Access Key**: Connect to the account with an access key
-  - **SAS Token**: The Shared Access Signature Token to connect to the account
-  - **AAD**: Application Active Directory. Need a service account on Azure.
-    - Tenant ID: Azure account name
-    - Client ID: an ID associated with the service account
-    - Client Secret: secret associated to the client ID 
-  - **External** (Windows only): Use the Windows domain authentication
-  - **Powershell** (Windows only): Use the Windows Powershell environment variables to authenticate
-  
+Here are the key parameters for configuring the Azure Blob connector:
+- **Account**: The Azure account to use. This account must have access to the specified container.
+- **Container**: The Azure Blob container where files will be stored.
+- **Path**: The folder within the container where files should be stored.
+- **Authentication**: The method of authentication used to connect to the Azure Blob container.
+  - **Access Key**: Connect to the account using an access key.
+  - **SAS Token**: Use a Shared Access Signature Token to connect to the account.
+  - **AAD (Application Active Directory)**: Requires a service account in Azure.
+    - **Tenant ID**: The Azure account's tenant ID.
+    - **Client ID**: An ID associated with the service account.
+    - **Client Secret**: The secret associated with the client ID.
+  - External (Windows only): Utilize Windows domain authentication.
