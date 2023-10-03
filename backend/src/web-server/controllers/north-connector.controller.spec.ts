@@ -1895,13 +1895,11 @@ describe('North connector controller with items', () => {
     expect(ctx.body).toEqual('csv content');
     expect(csv.unparse).toHaveBeenCalledWith([
       {
-        id: 'id',
         name: 'name',
         enabled: true,
         settings_regex: '.*'
       },
       {
-        id: 'id2',
         name: 'item2',
         enabled: true,
         settings_objectArray: '[]',
