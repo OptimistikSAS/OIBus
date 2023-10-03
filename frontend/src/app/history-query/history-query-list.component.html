@@ -42,9 +42,9 @@
         <thead>
           <tr>
             <th translate="history-query.status" style="width: 3%"></th>
-            <th translate="history-query.name"></th>
-            <th translate="history-query.interval"></th>
-            <th translate="history-query.description"></th>
+            <th translate="history-query.name" style="width: 10%"></th>
+            <th translate="history-query.interval" style="width: 25%"></th>
+            <th translate="history-query.description" style="width: 60%"></th>
             <th style="width: 3%"></th>
           </tr>
         </thead>
@@ -52,7 +52,11 @@
           <tr *ngFor="let query of displayedHistoryQueries.content">
             <td>{{ 'enums.status.' + query.status | translate }}</td>
             <td>{{ query.name }}</td>
-            <td>{{ query.startTime | datetime:'ff' }} -> {{ query.endTime | datetime:'ff' }}</td>
+            <td class="d-flex">
+              <div style="width: 40%">{{ query.startTime | datetime:'ff' }}</div>
+              <div class="fa fa-arrow-right oib-fa-arrow"></div>
+              <div style="width: 40%">{{ query.endTime | datetime:'ff' }}</div>
+            </td>
             <td>{{ query.description }}</td>
             <td class="text-nowrap action-buttons">
               <div class="pull-right">
