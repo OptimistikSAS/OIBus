@@ -593,6 +593,7 @@ export default class NorthConnectorController {
           flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
         }
       }
+      delete flattenedItem.id;
       delete flattenedItem.settings;
       delete flattenedItem.connectorId;
       return flattenedItem;
@@ -610,7 +611,6 @@ export default class NorthConnectorController {
       const flattenedItem: Record<string, any> = {
         ...item
       };
-      delete flattenedItem.id;
       for (const [itemSettingsKey, itemSettingsValue] of Object.entries(item.settings)) {
         if (typeof itemSettingsValue === 'object') {
           flattenedItem[`settings_${itemSettingsKey}`] = JSON.stringify(itemSettingsValue);
@@ -618,6 +618,7 @@ export default class NorthConnectorController {
           flattenedItem[`settings_${itemSettingsKey}`] = itemSettingsValue;
         }
       }
+      delete flattenedItem.id;
       delete flattenedItem.settings;
       delete flattenedItem.connectorId;
       return flattenedItem;
