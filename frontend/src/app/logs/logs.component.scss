@@ -2,35 +2,28 @@
 
 .level-badge {
   display: inline-block;
-  padding: 0.25rem 0.8rem;
-  border-radius: 10rem;
   font-weight: bold;
   text-align: center;
 }
 
 .level-badge.error {
-  background-color: #E24D42;
-  color: $white;
+  color: #E24D42;
 }
 
 .level-badge.warn {
-  background-color: #EAB837;
-  color: $darkGrey;
+  color: #EAB837;
 }
 
 .level-badge.info {
-  background-color: #7CB26C;
-  color: $white;
+  color: #7CB26C;
 }
 
 .level-badge.debug {
-  background-color: #2478BE;
-  color: $white;
+  color: #2478BE;
 }
 
 .level-badge.trace {
-  background-color: #72CDDE;
-  color: $white;
+  color: #72CDDE;
 }
 
 // changes of the default display

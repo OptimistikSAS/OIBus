@@ -86,19 +86,19 @@
         <table class="table table-sm table-hover oib-table-logs">
           <thead>
             <tr>
+              <th translate="logs.level" style="width: 3%"></th>
               <th translate="logs.date"></th>
-              <th translate="logs.level"></th>
-              <th translate="logs.scope-type" style="width: 6%"></th>
+              <th translate="logs.scope-type" style="width: 8%"></th>
               <th translate="logs.scope" style="width: 4%"></th>
               <th translate="logs.message"></th>
             </tr>
           </thead>
           <tbody>
             <tr class="data" *ngFor="let log of logs.content">
-              <td class="text-nowrap">{{ log.timestamp | datetime:'mediumWithSeconds'}}</td>
               <td>
                 <span [class]="'level-badge ' + log.level.toLowerCase()">{{ log.level | logLevelsEnum }}</span>
               </td>
+              <td class="text-nowrap">{{ log.timestamp | datetime:'mediumWithSeconds'}}</td>
               <td>{{ log.scopeType | scopeTypesEnum }}</td>
               <td>{{ log.scopeName }}</td>
               <td class="text-break">{{ log.message }}</td>
