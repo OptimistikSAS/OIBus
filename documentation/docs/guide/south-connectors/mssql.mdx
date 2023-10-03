@@ -8,19 +8,22 @@ import ItemSettings from './_south-sql-item-settings.mdx';
 Send SQL queries to Microsoft SQL Server.
 
 ## Specific settings
-- **Host**: the address of the SQL server
-- **Port**: MSSQL server port (default is 1433)
-- **Database**: the name of the database to connect to
-- **Username**: the username used for authentication
-- **Password**: the password used for authentication
-- **Domain**: this field is useful when the user wishes to connect to an Active Directory domain
-- **Use encryption**: Encrypt the data between the database and OIBus (can overload the server)
-- **Trust server certificate**: Accept server certificates even if outdated or selfsigned
-- **Connection timeout**: Timeout on connection
-- **Request timeout**: Timeout for each query
+When configuring the SQL connector to send SQL queries to a Microsoft SQL Server, you will need to provide the following
+details:
+- **Host**: The address of the Microsoft SQL server.
+- **Port**: The MSSQL server port (default is 1433).
+- **Database**: The name of the database to connect to.
+- **Username**: The username used for authentication.
+- **Password**: The password used for authentication.
+- **Domain** (optional): This field is useful when connecting to an Active Directory domain.
+- **Use encryption**: Option to encrypt the data between the database and OIBus (note that encryption can potentially
+overload the server).
+- **Trust server certificate**: Option to accept server certificates even if they are outdated or self-signed.
+- **Connection timeout**: Timeout setting for establishing the connection.
+- **Request timeout**: Timeout for each SQL query.
 
 :::tip Database access
-Using a read only user to connect to the database is strongly advised.
+It is strongly advised to use a read-only user when connecting to the database for security and data integrity purposes.
 :::
 
 <ItemSettings></ItemSettings>

@@ -3,42 +3,40 @@ sidebar_position: 1
 ---
 
 # Folder Scanner
-
-The Folder Scanner connector periodically checks the input folder for new files, according to Regexp specified in its items.
-When a new file is detected, it is sent to North caches.
+The Folder Scanner South connector operates by periodically scanning the specified input folder for new files. It 
+utilizes regular expressions (Regexp) defined in its items to determine which files to monitor. When a new file matching 
+the defined criteria is detected, it is then transmitted to North caches.
 
 ## Specific settings
-- **Input folder**: Path of the folder scan. The path can be absolute or relative (the relative path is computed from 
-the Data folder, mentioned in the About section). Remote path can be specified (example:
-  `/remote.server/data` or `Z:\\Remote disk\\DATA `). Be careful:**the path is case-sensitive**. 
-
-- **Preserve file**: When enabled, retrieved files are kept in the folder. Useful when another application needs to access the files.
-Preserve file list all the file retrieved in the cache, with their last modification time. If the modification time does 
-not change, the file is ignored, otherwise, the file is retrieved again. 
-
-- **Ignored modified date** (_preserve file must be enabled_): Retrieve the file again, even if its modification time has not changed 
-since the last retrieval.
-
-- **Compress file**: Compress file with gzip locally before sending it into the north caches.
-
-- **Minimum age**: Writing large files to the input folder can take some time. To avoid retrieving a corrupted file 
-(because it is being written), the _Minimum age_ field can be adjusted. By default, OIBus recovers files that has been 
-written more than one second ago.
-
-:::danger User access
-The user running OIBus (the logged user when OIBus run from a terminal or the service session when OIBus run from a service)
-must have read access to the input folder to be able to read the files. If **Preserve file** is not enable, the files will
-be removed, so the write access may be needed.
-:::
+- **Input folder**: This field specifies the path of the folder to be scanned. The path can be either absolute or relative. 
+In the case of a relative path, it is computed based on the **Data folder** mentioned in the _About_ section. Remote paths 
+can also be specified, such as `/remote.server/data` or `Z:\Remote disk\DATA`. Note that the path is case-sensitive.
+- **Compress file**: If enabled, files are compressed using gzip locally before being sent into the North caches.
 
 ## Item settings 
-- RegExp: A Regular Expression can be used to retrieve only certain files matching the regular expression. 
-  - `.*` retrieves all files of the input folder
-  - `.*.txt` retrieves all txt files of the input folder
-  - `.*.csv` retrieves all csv files of the input folder
-  - `.csv||.xlsx` retrieves all csv or xlsx files of the input folder
-
+- **RegExp**: You can use a Regular Expression to selectively retrieve files that match a specific pattern. Here are some 
+examples:
+  - `.*` retrieves all files in the input folder.
+  - `.*.txt` retrieves all text files (with a .txt extension) in the input folder.
+  - `.*.csv` retrieves all CSV files in the input folder.
+  - `.csv||.xlsx` retrieves all files with either a .csv or .xlsx extension in the input folder.
+- **Minimum age**: This field is used to set a minimum age for retrieved files. It helps avoid retrieving potentially
+  corrupted files that are still being written. By default, OIBus retrieves files that have been written for at least one
+  second.
+- **Preserve file**: When enabled, retrieved files are kept in the folder. This can be useful when another application
+  needs access to these files. The **Preserve file** feature lists all retrieved files in the cache, along with their
+  last modification time. If the modification time remains unchanged, the file is ignored. Otherwise, the file is retrieved
+  again.
+- **Ignored modified date** (_Preserve file_ must be enabled): This option forces the retrieval of a file, even if its
+  modification time hasn't changed since the last retrieval. It is useful in situations where you want to ensure that the
+  file is always retrieved.
 
 :::info Regex testing
-To test your regular expressions, you can use https://regex101.com/
+To test your regular expressions, you can utilize a tool like https://regex101.com/.
+:::
+
+:::danger User access
+The user who runs OIBus (the logged-in user when OIBus is executed from a terminal or the service session when OIBus is
+run as a service) must have read access to the input folder in order to read the files. If **Preserve file** is not enabled,
+the files are set to be removed and write access may also be needed to delete the files.
 :::

@@ -5,59 +5,62 @@ sidebar_position: 14
 import ItemSettings from './_south-sql-item-settings.mdx';
 
 # ODBC
-Send SQL queries to a local ODBC driver or to a remote OIBus Agent that can manage ODBC queries on the same machine as
-the server.
+Send SQL queries to a local ODBC driver or to a remote [OIBus Agent](../oibus-agent/odbc.md) that can manage ODBC
+queries on the same machine as the server.
 
 The OIBus agent can be installed separately, as specified in its [documentation](../oibus-agent/installation).
 
-## Specific settings
-- **Use remote agent**: If no, be sure to have an ODBC [driver installed](#driver-installation) on the machine where
-OIBus is installed. Otherwise, you can [install an OIBus agent](../oibus-agent/installation) on a remote machine
-with the appropriate drivers.
-- **Remote agent URL**: The URL of the remote OIBus agent (for example `http://ip-adress-or-host:2224`)
-- **Connection string**: The ODBC connection string
-- **Password**: The password used for authentication. It is stored securely in OIBus configuration. If put directly in the
-connection string, the password will be stored in plaintext. When a password is used, OIBus add `PWD=<password>` at the
-end of the connection string.
-- **Connection timeout**: Timeout on connection
-- **Request timeout**: Timeout for each query
+This connector proves valuable when retrieving data from IP21 ODBC interfaces or other ODBC-compatible applications.
 
-The ODBC connection string must respect the driver format. Be sure to have installed the driver specified in the
-connection string.
+## Specific settings
+- **Use remote agent**: If set to `No`, ensure that an ODBC [driver is installed](#driver-installation) on the machine
+where OIBus is deployed. Alternatively, you can opt to [install an OIBus agent](../oibus-agent/installation) on a remote
+machine equipped with the necessary drivers.
+- **Remote agent URL**: Specify the URL of the remote OIBus agent, e.g., http://ip-address-or-host:2224.
+- **Connection timeout**: Set the timeout for establishing a connection.
+- **Request timeout**: Determine the timeout duration for each query.
+- **Connection string**: The ODBC connection string.
+- **Password**: The authentication password, securely stored within OIBus configuration. If directly included in the
+connection string, the password will be stored in plain text. When a password is used, OIBus appends `PWD=<password>` to
+the end of the connection string.
+
+Please ensure that the ODBC connection string adheres to the specified driver format, and it is imperative to have the
+driver specified in the connection string correctly installed.
 
 :::tip ODBC connection string example
-`Driver={driver};SERVER=localhost,10014;TrustServerCertificate=yes;Database=test;UID=oibus;PWD=<secret>`
+`Driver={driver name};SERVER=localhost,10014;TrustServerCertificate=yes;Database=test;UID=oibus;PWD=<secret>`
 
 The driver is either the name of the driver (Windows) or the path of the driver file (unix like systems).
 The port is optional, and can be replaced by `PORT=10014` (be sure to replace the comma `,` by a semicolon `;`).
 :::
 
 ### Driver Installation
-On Windows, you can directly access the ODBC driver management tool. You can then specify the name of the driver in the
-connection string (for example `MySQL ODBC 3.51 driver` or `SQL Server`...).
+On Windows, you can conveniently access the ODBC driver management tool, where you can specify the driver's name in the
+connection string, such as `MySQL ODBC 3.51 driver` or `SQL Server`.
 
-On UNIX like systems, install it on your machine and specify the path of the driver in the connection string (for example:
-`/opt/lib/libmsodbcsql.18.dylib`)
-
+On UNIX-like systems, you should first install the driver on your machine and then specify the driver's path in the
+connection string, like `/opt/lib/libmsodbcsql.18.dylib`, for example.
 
 ### Using OIBus with IP21
-ODBC connections are often laggy. With large historian queries, specially with IP21, it can overload both the network
-and the server.
+ODBC connections often suffer from latency issues, particularly during large historian queries, such as those involving
+IP21. This can place a heavy load on both the network and the server.
 
-We suggest to install the OIBus Agent as a service on the same machine as IP21. OIBus send the query to its agent with
-the HTTP protocol, and the agent communicate directly to IP21 with ODBC, without any network latency.
+To mitigate these challenges, we recommend installing the OIBus Agent as a service on the same machine as IP21. OIBus
+can then transmit queries to its agent using the HTTP protocol, and the agent can communicate directly with IP21 using
+ODBC, eliminating network latency.
 
-Of course, the appropriate ODBC driver must be installed on the agent machine, and this driver must be specified in
-the connection string.
+Of course, it's essential to ensure that the appropriate ODBC driver is installed **on the agent machine** and specified
+correctly in the connection string.
 
 :::tip IP21 ODBC driver
-You can connect to IP21 through ODBC with the driver `AspenTech SQLplus`. Be sure it is installed on your machine
+To establish a connection to IP21 via ODBC, you will need the `AspenTech SQLplus` driver installed on your machine.
+Please ensure that this driver is correctly installed.
 :::
 
-
 :::caution ODBC Access
-The authentication can be pass through the connection string, but it can also be done locally, as with IP21. If so, be sure
-the OIBus agent run with the correct permission. Maybe run the service as another user, from the service management windows.
+Authentication can be handled either through the connection string or locally. When choosing local authentication, it's
+important to ensure that the OIBus agent runs with the appropriate permissions. You may need to run the service as a
+different user, which can be configured through the service management window.
 :::
 
 The following connection string works with a basic IP21 installation: `Driver={AspenTech SQLplus};HOST=<host>;PORT=10014"`
