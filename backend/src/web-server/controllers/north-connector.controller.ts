@@ -641,7 +641,7 @@ export default class NorthConnectorController {
     ctx.ok();
   }
 
-  async checkImportNorthItems(ctx: KoaContext<void, any>): Promise<void> {
+  async checkImportNorthItems(ctx: KoaContext<{ itemIdsToDelete: string }, any>): Promise<void> {
     const manifest = this.getManifestWithItemsMode(ctx);
 
     const file = ctx.request.file;
@@ -649,8 +649,19 @@ export default class NorthConnectorController {
       return ctx.badRequest();
     }
 
+    let itemIdsToDelete: Array<string>;
+    try {
+      itemIdsToDelete = JSON.parse(ctx.request.body!.itemIdsToDelete);
+    } catch (error) {
+      return ctx.throw(400, 'Could not parse item ids to delete array');
+    }
+
     const existingItems: Array<NorthConnectorItemDTO> =
-      ctx.params.northId === 'create' ? [] : ctx.app.repositoryService.northItemRepository.getNorthItems(ctx.params.northId);
+      ctx.params.northId === 'create'
+        ? []
+        : ctx.app.repositoryService.northItemRepository
+            .getNorthItems(ctx.params.northId)
+            .filter(item => !itemIdsToDelete.includes(item.id));
     const validItems: Array<any> = [];
     const errors: Array<any> = [];
     try {
