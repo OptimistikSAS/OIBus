@@ -71,18 +71,18 @@ export default class SouthODBC extends SouthConnector<SouthODBCSettings, SouthOD
           }),
           headers
         };
-
         await fetch(`${this.connector.settings.agentUrl}/api/odbc/${this.connector.id}/connect`, fetchOptions);
         this.connected = true;
+        await super.connect();
       } catch (error) {
         this.logger.error(
           `Error while sending connection HTTP request into agent. Reconnecting in ${this.connector.settings.retryInterval} ms. ${error}`
         );
-
         this.reconnectTimeout = setTimeout(this.connect.bind(this), this.connector.settings.retryInterval);
       }
+    } else {
+      await super.connect();
     }
-    await super.connect();
   }
 
   async disconnect(): Promise<void> {

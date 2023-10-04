@@ -712,7 +712,7 @@ describe('reload service', () => {
   it('should create or update south items', async () => {
     await service.onCreateOrUpdateHistoryQueryItems({ id: 'historyId' } as HistoryQueryDTO, [], []);
     expect(repositoryService.historyQueryItemRepository.createAndUpdateItems).toHaveBeenCalledWith('historyId', [], []);
-    expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith('historyId');
+    expect(historyQueryEngine.stopHistoryQuery).toHaveBeenCalledWith('historyId', true);
   });
 
   it('should update scan mode', async () => {
