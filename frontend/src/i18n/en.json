@@ -599,7 +599,8 @@
     "start": "Start",
     "end": "End",
     "modal": {
-      "title": "Create a new history query"
+      "title": "Create a new history query",
+      "create-details": "Import existing connector configurations or create a new one from scratch"
     },
     "north": {
       "specific-settings": "{{ type }} settings"

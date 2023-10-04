@@ -100,7 +100,6 @@ export default class HistoryQueryEngine extends BaseEngine {
     }
 
     await historyQuery.stop(resetCache);
-    this.historyQueries.delete(historyId);
   }
 
   setLogger(value: pino.Logger) {
