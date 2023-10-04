@@ -48,7 +48,7 @@ export default class HistoryQuery {
   async start<S extends SouthSettings, N extends NorthSettings>(): Promise<void> {
     const southConfiguration: SouthConnectorDTO<S> = {
       id: this.historyConfiguration.id,
-      name: `${this.historyConfiguration.name} (South)`,
+      name: this.historyConfiguration.name,
       description: '',
       enabled: true,
       history: this.historyConfiguration.history,
@@ -67,7 +67,7 @@ export default class HistoryQuery {
     );
     const northConfiguration: NorthConnectorDTO<N> = {
       id: this.historyConfiguration.id,
-      name: `${this.historyConfiguration.name} (North)`,
+      name: this.historyConfiguration.name,
       description: '',
       enabled: true,
       type: this.historyConfiguration.northType,
@@ -147,6 +147,7 @@ export default class HistoryQuery {
     if (this.finishInterval) {
       clearInterval(this.finishInterval);
     }
+    this.finishInterval = null;
     if (this.south) {
       this.south.connectedEvent.removeAllListeners();
       await this.south.stop();

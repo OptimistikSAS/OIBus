@@ -50,32 +50,31 @@ export default class HistoryQueryEngine extends BaseEngine {
   }
 
   async startHistoryQuery(settings: HistoryQueryDTO): Promise<void> {
+    const items = this.historyQueryService.getItems(settings.id);
+    const baseFolder = path.resolve(this.cacheFolder, `history-${settings.id}`);
+    await createFolder(baseFolder);
+    const historyQuery = new HistoryQuery(
+      settings,
+      this.southService,
+      this.northService,
+      this.historyQueryService,
+      items,
+      this.logger.child({ scopeType: 'history-query', scopeId: settings.id, scopeName: settings.name }),
+      baseFolder
+    );
     if (!this.historyQueries.get(settings.id)) {
-      const items = this.historyQueryService.getItems(settings.id);
-      const baseFolder = path.resolve(this.cacheFolder, `history-${settings.id}`);
-      await createFolder(baseFolder);
-      const historyQuery = new HistoryQuery(
-        settings,
-        this.southService,
-        this.northService,
-        this.historyQueryService,
-        items,
-        this.logger.child({ scopeType: 'history-query', scopeId: settings.id, scopeName: settings.name }),
-        baseFolder
-      );
       this.historyQueries.set(settings.id, historyQuery);
-      historyQuery.start().catch(error => {
-        this.logger.error(error);
-      });
     } else {
       await this.historyQueries.get(settings.id)!.stop();
-      this.historyQueries
-        .get(settings.id)!
-        .start()
-        .catch(error => {
-          this.logger.error(error);
-        });
+      this.historyQueries.delete(settings.id);
+      this.historyQueries.set(settings.id, historyQuery);
     }
+    this.historyQueries
+      .get(settings.id)!
+      .start()
+      .catch(error => {
+        this.logger.error(error);
+      });
   }
 
   async addItemToHistoryQuery(historyId: string, item: SouthConnectorItemDTO): Promise<void> {
@@ -101,6 +100,7 @@ export default class HistoryQueryEngine extends BaseEngine {
     }
 
     await historyQuery.stop(resetCache);
+    this.historyQueries.delete(historyId);
   }
 
   setLogger(value: pino.Logger) {
@@ -122,18 +122,13 @@ export default class HistoryQueryEngine extends BaseEngine {
    * Stops the History query and deletes all cache inside the base folder
    */
   async deleteHistoryQuery(historyId: string, name: string): Promise<void> {
-    await this.stopHistoryQuery(historyId);
-    this.historyQueries.delete(historyId);
-
+    await this.stopHistoryQuery(historyId, true);
     const baseFolder = path.resolve(this.cacheFolder, `history-${historyId}`);
-
     try {
       this.logger.trace(`Deleting base folder "${baseFolder}" of History query "${name}" (${historyId})`);
-
       if (await filesExists(baseFolder)) {
         await fs.rm(baseFolder, { recursive: true });
       }
-
       this.logger.info(`Deleted History query "${name}" (${historyId})`);
     } catch (error) {
       this.logger.error(`Unable to delete History query "${name}" (${historyId}) base folder: ${error}`);

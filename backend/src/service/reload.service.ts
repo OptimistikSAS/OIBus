@@ -387,7 +387,7 @@ export default class ReloadService {
     itemsToAdd: Array<SouthConnectorItemDTO>,
     itemsToUpdate: Array<SouthConnectorItemDTO>
   ): Promise<void> {
-    await this.historyEngine.stopHistoryQuery(historyQuery.id);
+    await this.historyEngine.stopHistoryQuery(historyQuery.id, true);
     this.repositoryService.historyQueryItemRepository.createAndUpdateItems(historyQuery.id, itemsToAdd, itemsToUpdate);
   }
 
