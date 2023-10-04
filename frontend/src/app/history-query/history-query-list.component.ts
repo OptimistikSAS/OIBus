@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
+import { NgClass } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../shared/confirmation.service';
 import { NotificationService } from '../shared/notification.service';
@@ -18,13 +20,16 @@ import { LoadingSpinnerComponent } from '../shared/loading-spinner/loading-spinn
 import { EnabledEnumPipe } from '../shared/enabled-enum.pipe';
 import { DatetimePipe } from '../shared/datetime.pipe';
 import { ObservableState } from '../shared/save-button/save-button.component';
+import { LegendComponent } from '../shared/legend/legend.component';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 15;
 
 @Component({
   selector: 'oib-history-query-list',
   standalone: true,
   imports: [
+    NgClass,
+    CommonModule,
     TranslateModule,
     RouterLink,
     NgIf,
@@ -36,7 +41,8 @@ const PAGE_SIZE = 20;
     LoadingSpinnerComponent,
     EnabledEnumPipe,
     DatetimePipe,
-    AsyncPipe
+    AsyncPipe,
+    LegendComponent
   ],
   templateUrl: './history-query-list.component.html',
   styleUrls: ['./history-query-list.component.scss']
@@ -50,6 +56,14 @@ export class HistoryQueryListComponent implements OnInit {
   searchForm = this.fb.group({
     name: [null as string | null]
   });
+
+  readonly LEGEND = [
+    { label: 'enums.status.PENDING', class: 'grey-dot' },
+    { label: 'enums.status.RUNNING', class: 'green-dot' },
+    { label: 'enums.status.PAUSED', class: 'yellow-dot' },
+    { label: 'enums.status.FINISHED', class: 'dark-green-dot' },
+    { label: 'enums.status.ABORTED', class: 'red-dot' }
+  ];
 
   constructor(
     private confirmationService: ConfirmationService,
@@ -168,5 +182,13 @@ export class HistoryQueryListComponent implements OnInit {
           this.notificationService.success('history-query.paused', { name: query.name });
         });
     }
+  }
+
+  getStatusClass(status: HistoryQueryStatus) {
+    const foundElement = this.LEGEND.find(element => element.label === `enums.status.${status}`);
+    if (foundElement) {
+      return foundElement.class;
+    }
+    return 'red-dot';
   }
 }

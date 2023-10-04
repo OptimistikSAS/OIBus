@@ -13,13 +13,6 @@
         </span>
       </h1>
     </div>
-    <!-- only display it if there is more than 1 page -->
-    <oib-pagination
-      *ngIf="displayedHistoryQueries.totalPages > 1"
-      class="d-flex justify-content-end"
-      [page]="displayedHistoryQueries"
-      (pageChanged)="changePage($event)"
-    ></oib-pagination>
   </div>
 
   <form class="px-3 mb-4 d-none d-lg-block oib-search-form" id="search-form" [formGroup]="searchForm">
@@ -32,6 +25,17 @@
     </div>
   </form>
 
+  <div class="justify-content-between d-flex">
+    <oib-legend *ngIf="this.allHistoryQueries && this.allHistoryQueries.length > 0" [legendList]="LEGEND"></oib-legend>
+    <!-- only display it if there is more than 1 page -->
+    <oib-pagination
+      *ngIf="displayedHistoryQueries.totalPages > 1"
+      class="d-flex justify-content-end"
+      [page]="displayedHistoryQueries"
+      (pageChanged)="changePage($event)"
+    ></oib-pagination>
+  </div>
+
   <!-- the loading spinner when queries are not yet loaded -->
   <oib-loading-spinner *ngIf="!allHistoryQueries"></oib-loading-spinner>
 
@@ -41,7 +45,7 @@
       <table class="mt-2 table table-sm table-hover oib-table">
         <thead>
           <tr>
-            <th translate="history-query.status" style="width: 3%"></th>
+            <th style="width: 1%"></th>
             <th translate="history-query.name" style="width: 10%"></th>
             <th translate="history-query.interval" style="width: 25%"></th>
             <th translate="history-query.description" style="width: 60%"></th>
@@ -50,12 +54,14 @@
         </thead>
         <tbody>
           <tr *ngFor="let query of displayedHistoryQueries.content">
-            <td>{{ 'enums.status.' + query.status | translate }}</td>
+            <td>
+              <div [class]="getStatusClass(query.status)"></div>
+            </td>
             <td>{{ query.name }}</td>
             <td class="d-flex">
-              <div style="width: 40%">{{ query.startTime | datetime:'ff' }}</div>
+              <div>{{ query.startTime | datetime:'ff' }}</div>
               <div class="fa fa-arrow-right oib-fa-arrow"></div>
-              <div style="width: 40%">{{ query.endTime | datetime:'ff' }}</div>
+              <div>{{ query.endTime | datetime:'ff' }}</div>
             </td>
             <td>{{ query.description }}</td>
             <td class="text-nowrap action-buttons">

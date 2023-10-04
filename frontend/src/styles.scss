@@ -503,7 +503,7 @@ val-errors > div {
   color: $darkGrey;
   background-color: $veryLightGrey;
   border: none;
-  border-radius: 0.3rem;
+  border-radius: 0.5rem;
   // the page number changes color on hover
   &:hover {
     color: $white;
@@ -530,15 +530,17 @@ val-errors > div {
   }
 }
 
-.grey-dot {
-  width: 1rem;
-  height: 1rem;
-  border-radius: 1rem;
-  background-color: $blue;
+// arrow to express an interval in History Query
+.oib-fa-arrow {
+  color: $darkGrey;
   margin-top: auto;
   margin-bottom: auto;
-
+  margin-left: 0.6rem;
+  margin-right: 0.6rem;
 }
+
+// Dot to express the status of a connector
+// Active & Running
 .green-dot {
   width: 1rem;
   height: 1rem;
@@ -546,13 +548,44 @@ val-errors > div {
   background-color: $green;
   margin-top: auto;
   margin-bottom: auto;
-
 }
 
-.oib-fa-arrow {
-  color: $darkGrey;
+// Aborted
+.red-dot {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 1rem;
+  background-color: $danger;
   margin-top: auto;
   margin-bottom: auto;
-  margin-left: 0.6rem;
-  margin-right: 0.6rem;
+}
+
+// Pause
+.yellow-dot {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 1rem;
+  background-color: $yellow;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+// Finished
+.dark-green-dot {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 1rem;
+  background-color: #006400;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+// Disabled & Pending
+.grey-dot {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 1rem;
+  background-color: $blue;
+  margin-top: auto;
+  margin-bottom: auto;
 }
