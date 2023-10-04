@@ -17,6 +17,7 @@ import { createPageFromArray, Page } from '../../../../shared/model/types';
 import { emptyPage } from '../shared/test-utils';
 import { PaginationComponent } from '../shared/pagination/pagination.component';
 import { ObservableState } from '../shared/save-button/save-button.component';
+import { LegendComponent } from '../shared/legend/legend.component';
 
 const PAGE_SIZE = 15;
 
@@ -32,7 +33,8 @@ const PAGE_SIZE = 15;
     ...formDirectives,
     EnabledEnumPipe,
     PaginationComponent,
-    AsyncPipe
+    AsyncPipe,
+    LegendComponent
   ],
   templateUrl: './north-list.component.html',
   styleUrls: ['./north-list.component.scss']
@@ -46,6 +48,11 @@ export class NorthListComponent implements OnInit {
   searchForm = this.fb.group({
     name: [null as string | null]
   });
+
+  readonly LEGEND = [
+    { label: 'north.disabled', class: 'grey-dot' },
+    { label: 'north.enabled', class: 'green-dot' }
+  ];
 
   constructor(
     private confirmationService: ConfirmationService,

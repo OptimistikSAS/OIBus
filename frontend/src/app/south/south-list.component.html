@@ -13,13 +13,6 @@
         </span>
       </h1>
     </div>
-    <!-- only display it if there is more than 1 page -->
-    <oib-pagination
-      *ngIf="displayedSouths.totalPages > 1"
-      class="d-flex justify-content-end"
-      [page]="displayedSouths"
-      (pageChanged)="changePage($event)"
-    ></oib-pagination>
   </div>
 
   <form class="px-3 mb-4 d-none d-lg-block oib-search-form" id="search-form" [formGroup]="searchForm">
@@ -31,6 +24,17 @@
       </div>
     </div>
   </form>
+
+  <div class="justify-content-between d-flex">
+    <oib-legend *ngIf="allSouths && allSouths.length > 0" [legendList]="LEGEND"></oib-legend>
+    <!-- only display it if there is more than 1 page -->
+    <oib-pagination
+      *ngIf="displayedSouths.totalPages > 1"
+      class="d-flex justify-content-end"
+      [page]="displayedSouths"
+      (pageChanged)="changePage($event)"
+    ></oib-pagination>
+  </div>
 
   <!-- the loading spinner when south are not yet loaded -->
   <oib-loading-spinner *ngIf="!allSouths"></oib-loading-spinner>
