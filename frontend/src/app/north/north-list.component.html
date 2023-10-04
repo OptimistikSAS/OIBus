@@ -50,7 +50,7 @@
         </thead>
         <tbody>
           <tr *ngFor="let north of displayedNorths.content">
-            <td *ngIf="!north.enabled"><div class="red-dot"></div></td>
+            <td *ngIf="!north.enabled"><div class="grey-dot"></div></td>
             <td *ngIf="north.enabled"><div class="green-dot"></div></td>
             <td>{{ north.name }}</td>
             <td>{{ north.type }}</td>
