@@ -283,9 +283,11 @@ describe('South item repository', () => {
     expect(database.prepare).toHaveBeenCalledWith(
       `INSERT INTO south_items (id, name, enabled, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?, ?);`
     );
-    expect(database.prepare).toHaveBeenCalledWith(`UPDATE south_items SET name = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`);
+    expect(database.prepare).toHaveBeenCalledWith(
+      `UPDATE south_items SET name = ?, enabled = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`
+    );
     expect(run).toHaveBeenCalledWith('123456', 'southScan1', 1, 'connectorId', 'scanModeId', '{}');
-    expect(run).toHaveBeenCalledWith('southScan2', 'scanModeId', '{}', 'id2');
+    expect(run).toHaveBeenCalledWith('southScan2', 0, 'scanModeId', '{}', 'id2');
   });
 
   it('should enable south item', () => {

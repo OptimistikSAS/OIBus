@@ -171,11 +171,13 @@ export default class SouthItemRepository {
     const insert = this.database.prepare(
       `INSERT INTO ${SOUTH_ITEMS_TABLE} (id, name, enabled, connector_id, scan_mode_id, settings) VALUES (?, ?, ?, ?, ?, ?);`
     );
-    const update = this.database.prepare(`UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`);
+    const update = this.database.prepare(
+      `UPDATE ${SOUTH_ITEMS_TABLE} SET name = ?, enabled = ?, scan_mode_id = ?, settings = ? WHERE id = ?;`
+    );
 
     const transaction = this.database.transaction(() => {
       for (const item of itemsToUpdate) {
-        update.run(item.name, item.scanModeId, JSON.stringify(item.settings), item.id);
+        update.run(item.name, +item.enabled, item.scanModeId, JSON.stringify(item.settings), item.id);
       }
       for (const item of itemsToAdd) {
         const id = generateRandomId(6);
