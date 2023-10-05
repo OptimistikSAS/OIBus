@@ -90,20 +90,16 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
       }
     }
 
-    let tables;
+    let table_count;
     try {
       const {
         recordsets: [recordset]
       } = await request.query<Array<any>>(`
-        SELECT TABLES.TABLE_NAME     AS table_name,
-               (SELECT STRING_AGG(CONCAT(COLUMN_NAME, '(', DATA_TYPE, ')'), ', ')
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_NAME = TABLES.TABLE_NAME
-                GROUP BY TABLE_NAME) AS columns
-        FROM INFORMATION_SCHEMA.TABLES TABLES
+        SELECT COUNT_BIG(*) AS table_count
+        FROM INFORMATION_SCHEMA.TABLES
         WHERE TABLE_TYPE = 'BASE TABLE'
       `);
-      tables = recordset as Array<any>;
+      table_count = (recordset[0]?.table_count as number) ?? 0;
     } catch (error: any) {
       await pool.close();
       this.logger.error(`Unable to read tables in database "${this.connector.settings.database}". ${error.message}`);
@@ -112,14 +108,12 @@ export default class SouthMSSQL extends SouthConnector<SouthMSSQLSettings, South
 
     await pool.close();
 
-    if (tables.length === 0) {
-      this.logger.warn(`Database "${this.connector.settings.database}" has no table`);
-      throw new Error('Database has no table');
+    if (table_count === 0) {
+      this.logger.warn(`Database "${this.connector.settings.database}" has no tables`);
+      throw new Error('Database has no tables');
     }
 
-    const tablesString = tables.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
-
-    this.logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
+    this.logger.info(`Database is live with ${table_count} tables`);
   }
 
   /**

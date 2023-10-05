@@ -98,19 +98,15 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
       }
     }
 
-    let tables;
+    let table_count;
     try {
-      [tables] = await connection.execute<mysql.RowDataPacket[]>(`
-        SELECT TABLES.TABLE_NAME AS table_name,
-               (SELECT GROUP_CONCAT(CONCAT(COLUMN_NAME, '(', DATA_TYPE, ')') SEPARATOR ', ')
-                FROM information_schema.COLUMNS
-                WHERE TABLE_SCHEMA = DATABASE()
-                  AND TABLE_NAME = TABLES.TABLE_NAME
-                GROUP BY TABLE_SCHEMA) AS 'columns'
+      const [rows] = await connection.execute<mysql.RowDataPacket[]>(`
+        SELECT COUNT(*) AS table_count
         FROM information_schema.TABLES AS TABLES
         WHERE table_schema = DATABASE()
           AND table_type = 'BASE TABLE'
       `);
+      table_count = rows[0]?.table_count ?? 0;
     } catch (error: any) {
       await connection.end();
 
@@ -120,14 +116,12 @@ export default class SouthMySQL extends SouthConnector<SouthMySQLSettings, South
 
     await connection.end();
 
-    if (tables.length === 0) {
-      this.logger.warn(`Database "${this.connector.settings.database}" has no table`);
-      throw new Error('Database has no table');
+    if (table_count === 0) {
+      this.logger.warn(`Database "${this.connector.settings.database}" has no tables`);
+      throw new Error('Database has no tables');
     }
 
-    const tablesString = tables.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
-
-    this.logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
+    this.logger.info(`Database is live with ${table_count} tables`);
   }
 
   /**

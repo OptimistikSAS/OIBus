@@ -458,7 +458,7 @@ describe('SouthOracle test connection', () => {
   });
 
   it('Database is reachable and has tables', async () => {
-    const result = [{ table_name: 'logs', columns: 'data(INTEGER), timestamp(datetime)' }];
+    const result = [{ TABLE_COUNT: 21 }];
     const oracleConnection = {
       execute: jest.fn().mockReturnValueOnce({ rows: result }),
       ping: jest.fn(),
@@ -470,10 +470,9 @@ describe('SouthOracle test connection', () => {
 
     expect(oracleConnection.close).toHaveBeenCalled();
 
-    const tables = result.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
     expect((logger.info as jest.Mock).mock.calls).toEqual([
       [`Testing connection on "${configuration.settings.host}"`],
-      ['Database is live with tables (table:[columns]):\n%s', tables]
+      ['Database is live with 21 tables']
     ]);
   });
 
@@ -541,6 +540,21 @@ describe('SouthOracle test connection', () => {
   });
 
   it('Database has no tables', async () => {
+    const oracleConnection = {
+      execute: jest.fn().mockReturnValueOnce({ rows: [{ TABLE_COUNT: 0 }] }),
+      ping: jest.fn(),
+      close: jest.fn()
+    };
+    (oracledb.getConnection as jest.Mock).mockReturnValue(oracleConnection);
+
+    await expect(south.testConnection()).rejects.toThrow(new Error(`No tables in the "${configuration.settings.username}" schema`));
+
+    expect(oracleConnection.close).toHaveBeenCalled();
+    expect((logger.warn as jest.Mock).mock.calls).toEqual([[`No tables in the "${configuration.settings.username}" schema`]]);
+    expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.host}"`]]);
+  });
+
+  it('Database does not return count of tables', async () => {
     const oracleConnection = {
       execute: jest.fn().mockReturnValueOnce({ rows: [] }),
       ping: jest.fn(),
