@@ -4,46 +4,55 @@ sidebar_position: 2
 
 # OIBus to OIBus communication
 ## Context
-Sometimes, PLCs or databases are only accessible in a private network. Let's call it the **industrial network**. This 
-network often exists inside or beside another network ; let's call it the **office network**.
-Two options exist to access these data:
-- Allow connections to each data source from the OIBus machine (which is in the office network, outside the industrial 
-network) through the firewall
-- Install one OIBus in the industrial network and one OIBus in the office network.Manage a single communication between 
-the two networks.
+Often, PLCs are exclusively reachable within a restricted network known as the Operational Technology (OT) domain which 
+often coexists either within or adjacent to another network, the Information Technology (IT) domain, with datacenters and
+cloud systems. OT machines, for security reasons, don't have access to internet. OIBus may need an internet access. There 
+are two viable approaches for accessing data within these networks:
+- Install OIBus in the IT domain, and allow connections of PLCs in OT from the OIBus Machine. In this approach, you permit
+connections to each data source from the OIBus machine, which resides in the IT (external to the OT) through the firewall.
+- Installing OIBus in both networks: The second option involves setting up one instance of OIBus within the OT and another 
+within the IT. This enables the management of a single communication link between the two networks.
 
-The first option is acceptable if you have only one machine on which to install OIBus, but it involves more network 
-settings to manage and risk the exposing of your machines. 
-The second option is preferable. Indeed, the first OIBus in the industrial network - OIBus1 - can access the machine in
-the same network, and send data to the office network through a single connection allowed in the firewall (from OIBus1 
-to OIBus2).
+The first option is acceptable when you have only one machine available for OIBus installation, but it entails a more 
+complex network configuration and carries the risk of exposing your machines to potential security threats. The second 
+option is a preferable choice. With this approach, the initial OIBus instance in the OT, referred to as OIBus1, can 
+access machines within the same network and transmit data to the office network via a single firewall-permitted connection 
+(from OIBus1 to OIBus2).
 
-Let's see how to set up this communication.
+Let's delve into the details of setting up this communication method.
 
-## Data
+
+## Data stream set-up
 ### Set up a North connector OIConnect in OIBus1
-[OIConnect](../north-connectors/oiconnect.md) is very useful when one OIBus has no internet access (because it is 
-isolated in an industrial network) but can communicate to another OIBus which is in another network with internet access.
+[OIBus North connector](../north-connectors/oibus.md) proves highly valuable when one OIBus instance lacks direct internet 
+access, often due to isolation within an industrial network. However, it can establish communication with another OIBus 
+located in a different network that does have internet access.
 
-The host could be something like `http://1.2.3.4:2223` where 1.2.3.4 is the IP address and 2223 is the port of the
-second OIBus. Be careful to authorize remote connection in the second OIBus Engine settings in the
-[IP Filter section](../engine/ip-filters.md) and to use the appropriate username and password (using Basic
-Authentication). In this case, the OIBus username and password must be used (by default, admin and pass).
+For instance, the host address might take the form of http://1.2.3.4:2223, (IP address and port of OIBus2). It's crucial 
+to ensure that remote connections are authorized in the settings of the second OIBus Engine, specifically within the 
+[IP Filter section](../engine/ip-filters.md). Additionally, the appropriate username and password should be utilized. In 
+this case, the OIBus default username and password (admin and pass) should be employed for authentication purposes.
 
 ### Set up an External source in OIBus2
-On the second OIBus, if you don't have declared an external source, the data will be discarded. Then, you must first
-declare an [external source](../engine/external-sources.md). Its name must follow the syntax of the [name query
-param](docs/guide/north-connectors/oiconnect.md#query-param), for example `MyOIBus:MyOIConnect`.
+On OIBus2, you must now define an [External Source](../engine/external-sources.md). If no external source is set in OIBus2,
+data sent by OIBus1 to OIBus2 will be discarded. 
 
-The North connector can now subscribe to this specific external source.
+The name of this external source should adhere to the syntax of the name query param, for instance, `MyOIBus:MyOIConnect`.
+
+With the external source defined, the North connector of OIBus2 can then proceed to subscribe to this specific external source, 
+enabling the exchange of data between the two OIBus instances.
 
 ## Logs
 ### Loki through another OIBus
-To send logs to OIBus2, go to the Engine page in the _Loki logs_ section, and specify the OIBus2 address in the 
-**Host** field and its associated endpoint. For example: `http://1.2.3.4:2223/logs`.
-OIBus2 uses Basic Auth. Keep empty the token address field and fill the username and password used to connect to OIBus2. 
+To transmit logs to OIBus2 from OIBus1, navigate to the [Engine page](../engine/engine-settings.md) within the _Loki logs_ 
+section and specify OIBus2's address in the **Host** field, along with its associated endpoint: http://1.2.3.4:2223/logs. 
+It's important to note that OIBus2 utilizes Basic Authentication. Keep the token address field empty and provide the username 
+and password credentials used to connect to OIBus2.
 
-If the loki level set in OIBus1 is **info**, only info and above levels will be sent to OIBus2. In OIBus2, if the 
-console and file levels are set to **error**, only error levels will be logged on the console and 
-file. However, if the loki level is set to **info** too, all the logs received from OIBus1 will be sent to this loki 
-endpoint.
+In cases where the loki level is set to **info** in OIBus1, only logs with **info** level and above will be forwarded to 
+OIBus2. 
+
+In OIBus2, if the console and file levels are configured to **error** only logs with **error** level or higher will be 
+recorded in the console and file. However, if the loki level in OIBus2 is also set to **info** all the logs received 
+from OIBus1 will be sent to this loki endpoint (set in OIBus2).
+
