@@ -87,7 +87,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
   }
 
   async start(): Promise<void> {
-    this.logger.trace(`South connector ${this.connector.name} enabled. Starting services...`);
+    this.logger.debug(`South connector ${this.connector.name} enabled. Starting services...`);
     await this.connect();
   }
 
@@ -98,6 +98,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         lastConnection: DateTime.now().toUTC().toISO()
       });
     }
+    this.logger.info(`South connector "${this.connector.name}" of type ${this.connector.type} started`);
     this.connectedEvent.emit('connected');
   }
 
@@ -399,7 +400,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     }
     this.cronByScanModeIds.clear();
     this.taskJobQueue = [];
-    this.logger.info(`South connector "${this.connector.name}" (${this.connector.id}) disconnected`);
+    this.logger.debug(`South connector "${this.connector.name}" (${this.connector.id}) disconnected`);
   }
 
   async stop(): Promise<void> {
@@ -408,7 +409,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       cronJob.stop();
     }
     this.cronByScanModeIds.clear();
-    this.logger.info(`Stopping South "${this.connector.name}" (${this.connector.id})...`);
+    this.logger.debug(`Stopping South "${this.connector.name}" (${this.connector.id})...`);
 
     if (this.runProgress$) {
       this.logger.debug('Waiting for South task to finish');
@@ -417,6 +418,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
     await this.disconnect();
     this.stopping = false;
+    this.logger.info(`South connector "${this.connector.name}" stopped`);
   }
 
   async addItem(item: SouthConnectorItemDTO<I>): Promise<void> {

@@ -153,7 +153,7 @@ describe('NorthConnector enabled', () => {
 
   it('should be properly initialized', async () => {
     expect(north.isEnabled()).toBeTruthy();
-    expect(logger.trace).toHaveBeenCalledWith(`North connector "${configuration.name}" enabled. Starting services...`);
+    expect(logger.debug).toHaveBeenCalledWith(`North connector "${configuration.name}" enabled. Starting services...`);
     expect(logger.error).toHaveBeenCalledWith(`Scan mode ${configuration.caching.scanModeId} not found`);
     expect(logger.info).toHaveBeenCalledWith(`North connector "${configuration.name}" of type ${configuration.type} started`);
   });
@@ -226,9 +226,9 @@ describe('NorthConnector enabled', () => {
   it('should properly stop', async () => {
     north.disconnect = jest.fn();
     await north.stop();
-    expect(logger.info).toHaveBeenCalledWith(`Stopping North "${configuration.name}" (${configuration.id})...`);
+    expect(logger.debug).toHaveBeenCalledWith(`Stopping North "${configuration.name}" (${configuration.id})...`);
     expect(north.disconnect).toHaveBeenCalledTimes(1);
-    expect(logger.debug(`North connector ${configuration.id} stopped`));
+    expect(logger.info(`North connector "${configuration.name}" stopped`));
   });
 
   it('should properly stop with running task ', async () => {
@@ -243,13 +243,13 @@ describe('NorthConnector enabled', () => {
     north.run('scan');
 
     north.stop();
-    expect(logger.info).toHaveBeenCalledWith(`Stopping North "${configuration.name}" (${configuration.id})...`);
+    expect(logger.debug).toHaveBeenCalledWith(`Stopping North "${configuration.name}" (${configuration.id})...`);
     expect(logger.debug).toHaveBeenCalledWith('Waiting for North task to finish');
     expect(north.disconnect).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
     await flushPromises();
     expect(north.disconnect).toHaveBeenCalledTimes(1);
-    expect(logger.debug(`North connector ${configuration.id} stopped`));
+    expect(logger.info).toHaveBeenCalledWith(`North connector "${configuration.name}" stopped`);
   });
 
   it('should trigger values first', async () => {

@@ -346,6 +346,13 @@ describe('reload service', () => {
     expect(oibusEngine.startSouth).toHaveBeenCalledWith('southId', { id: 'southId' });
   });
 
+  it('should create or update south items without restarting', async () => {
+    await service.onCreateOrUpdateSouthItems({ id: 'southId' } as SouthConnectorDTO, [], [], false);
+    expect(repositoryService.southItemRepository.createAndUpdateSouthItems).toHaveBeenCalledWith('southId', [], []);
+    expect(oibusEngine.stopSouth).toHaveBeenCalledWith('southId');
+    expect(oibusEngine.startSouth).not.toHaveBeenCalled();
+  });
+
   it('should delete south item', async () => {
     const southItem = { id: 'southItemId', connectorId: 'southId', settings: {} };
     (repositoryService.southItemRepository.getSouthItem as jest.Mock).mockReturnValueOnce(southItem);

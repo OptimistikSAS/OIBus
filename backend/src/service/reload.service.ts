@@ -193,11 +193,14 @@ export default class ReloadService {
   async onCreateOrUpdateSouthItems(
     southConnector: SouthConnectorDTO,
     itemsToAdd: Array<SouthConnectorItemDTO>,
-    itemsToUpdate: Array<SouthConnectorItemDTO>
+    itemsToUpdate: Array<SouthConnectorItemDTO>,
+    restart = true
   ): Promise<void> {
     await this.oibusEngine.stopSouth(southConnector.id);
     this.repositoryService.southItemRepository.createAndUpdateSouthItems(southConnector.id, itemsToAdd, itemsToUpdate);
-    await this.oibusEngine.startSouth(southConnector.id, southConnector);
+    if (restart) {
+      await this.oibusEngine.startSouth(southConnector.id, southConnector);
+    }
   }
 
   async onDeleteSouthItem(itemId: string): Promise<void> {
