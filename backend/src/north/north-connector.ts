@@ -133,7 +133,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * Initialize services at startup
    */
   async start(): Promise<void> {
-    this.logger.trace(`North connector "${this.connector.name}" enabled. Starting services...`);
+    this.logger.debug(`North connector "${this.connector.name}" enabled. Starting services...`);
     if (this.connector.id !== 'test') {
       this.cacheSize = await dirSize(this.baseFolder);
       this.metricsService!.updateMetrics(this.connector.id, {
@@ -167,7 +167,6 @@ export default class NorthConnector<T extends NorthSettings = any> {
         this.logger.error(`Scan mode ${this.connector.caching.scanModeId} not found`);
       }
     }
-
     this.logger.info(`North connector "${this.connector.name}" of type ${this.connector.type} started`);
   }
 
@@ -405,7 +404,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
    * Stop services and timer
    */
   async stop(): Promise<void> {
-    this.logger.info(`Stopping North "${this.connector.name}" (${this.connector.id})...`);
+    this.logger.debug(`Stopping North "${this.connector.name}" (${this.connector.id})...`);
 
     if (this.runProgress$) {
       this.logger.debug('Waiting for North task to finish');
@@ -421,7 +420,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
     await this.archiveService.stop();
     await this.valueCacheService.stop();
     await this.disconnect();
-    this.logger.debug(`North connector ${this.connector.id} stopped`);
+    this.logger.info(`North connector "${this.connector.name}" stopped`);
   }
 
   /**

@@ -142,7 +142,7 @@ export default class OIBusEngine extends BaseEngine {
       this.homeMetricsService.addSouth(south, settings.id);
       south.connectedEvent.on('connected', async () => {
         await south.createSubscriptions(items.filter(item => item.scanModeId === 'subscription' && item.enabled));
-        await south.createCronJobs(items.filter(item => item.scanModeId !== 'subscription' && item.enabled));
+        south.createCronJobs(items.filter(item => item.scanModeId !== 'subscription' && item.enabled));
       });
       // Do not await here, so it can start all connectors without blocking the thread
       south.start().catch(error => {

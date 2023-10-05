@@ -283,8 +283,8 @@ describe('SouthConnector enabled', () => {
 
   it('should properly stop', async () => {
     await south.stop();
-    expect(logger.info).toHaveBeenCalledWith('Stopping South "south" (southId)...');
-    expect(logger.info).toHaveBeenCalledWith('South connector "south" (southId) disconnected');
+    expect(logger.debug).toHaveBeenCalledWith('Stopping South "south" (southId)...');
+    expect(logger.info).toHaveBeenCalledWith('South connector "south" stopped');
   });
 
   it('should properly stop with running task ', async () => {
@@ -306,13 +306,13 @@ describe('SouthConnector enabled', () => {
     south.run(scanMode.id, items);
 
     south.stop();
-    expect(logger.info).toHaveBeenCalledWith(`Stopping South "${configuration.name}" (${configuration.id})...`);
+    expect(logger.debug).toHaveBeenCalledWith(`Stopping South "${configuration.name}" (${configuration.id})...`);
     expect(logger.debug).toHaveBeenCalledWith('Waiting for South task to finish');
     expect(south.disconnect).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
     await flushPromises();
     expect(south.disconnect).toHaveBeenCalledTimes(1);
-    expect(logger.debug(`South connector ${configuration.id} stopped`));
+    expect(logger.info(`South connector "${configuration.name}" stopped`));
   });
 
   it('should add values', async () => {
@@ -607,7 +607,7 @@ describe('SouthConnector enabled', () => {
 
     south.setLogger(anotherLogger);
     await south.stop();
-    expect(anotherLogger.info).toHaveBeenCalledTimes(2);
+    expect(anotherLogger.info).toHaveBeenCalledTimes(1);
     expect(logger.info).not.toHaveBeenCalled();
     south.queriesSubscription();
   });
