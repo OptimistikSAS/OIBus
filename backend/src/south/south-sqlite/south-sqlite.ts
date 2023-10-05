@@ -59,28 +59,28 @@ export default class SouthSQLite extends SouthConnector<SouthSQLiteSettings, Sou
     const database = db(dbPath);
     let result;
 
+    let table_count;
     try {
       result = database
         .prepare(
-          `SELECT tbl_name,
-                  (SELECT group_concat(name || '(' || type || ')', ', ')
-                   FROM PRAGMA_TABLE_INFO(tbl_name)) AS columns
+          `SELECT COUNT(*) AS table_count
            FROM sqlite_master
            WHERE type = 'table'`
         )
-        .all();
+        .all() as { table_count: number }[];
+      table_count = result[0]?.table_count ?? 0;
     } catch (error: any) {
       this.logger.error(`Unable to query system table. ${error.message}`);
       throw new Error('Error testing database connection, check logs');
     }
     database.close();
 
-    if (result.length === 0) {
-      this.logger.warn(`Database "${dbPath}" has no table`);
-      throw new Error('Database has no table');
+    if (table_count === 0) {
+      this.logger.warn(`Database "${dbPath}" has no tables`);
+      throw new Error('Database has no tables');
     }
-    const tables = result.map((row: any) => `${row.tbl_name}: [${row.columns}]`).join(',\n');
-    this.logger.info('Database is live with tables (table:[columns]):\n%s', tables);
+
+    this.logger.info(`Database is live with ${table_count} tables`);
   }
 
   /**

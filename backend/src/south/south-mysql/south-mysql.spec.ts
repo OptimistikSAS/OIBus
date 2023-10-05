@@ -425,7 +425,7 @@ describe('SouthMySQL test connection', () => {
   });
 
   it('Database is reachable and has tables', async () => {
-    const result = [{ table_name: 'logs', columns: 'data(INTEGER), timestamp(datetime)' }];
+    const result = [{ table_count: 21 }];
     const mysqlConnection = {
       execute: jest.fn().mockReturnValueOnce([result]),
       ping: jest.fn(),
@@ -437,10 +437,9 @@ describe('SouthMySQL test connection', () => {
 
     expect(mysqlConnection.end).toHaveBeenCalled();
 
-    const tables = result.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
     expect((logger.info as jest.Mock).mock.calls).toEqual([
       [`Testing connection on "${configuration.settings.host}"`],
-      ['Database is live with tables (table:[columns]):\n%s', tables]
+      ['Database is live with 21 tables']
     ]);
   });
 
@@ -509,16 +508,31 @@ describe('SouthMySQL test connection', () => {
 
   it('Database has no tables', async () => {
     const mysqlConnection = {
+      execute: jest.fn().mockReturnValueOnce([[{ table_count: 0 }]]),
+      ping: jest.fn(),
+      end: jest.fn()
+    };
+    (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
+
+    await expect(south.testConnection()).rejects.toThrow(new Error('Database has no tables'));
+
+    expect(mysqlConnection.end).toHaveBeenCalled();
+    expect((logger.warn as jest.Mock).mock.calls).toEqual([[`Database "${configuration.settings.database}" has no tables`]]);
+    expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.host}"`]]);
+  });
+
+  it('Database does not return count of tables', async () => {
+    const mysqlConnection = {
       execute: jest.fn().mockReturnValueOnce([[]]),
       ping: jest.fn(),
       end: jest.fn()
     };
     (mysql.createConnection as jest.Mock).mockReturnValue(mysqlConnection);
 
-    await expect(south.testConnection()).rejects.toThrow(new Error('Database has no table'));
+    await expect(south.testConnection()).rejects.toThrow(new Error('Database has no tables'));
 
     expect(mysqlConnection.end).toHaveBeenCalled();
-    expect((logger.warn as jest.Mock).mock.calls).toEqual([[`Database "${configuration.settings.database}" has no table`]]);
+    expect((logger.warn as jest.Mock).mock.calls).toEqual([[`Database "${configuration.settings.database}" has no tables`]]);
     expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.host}"`]]);
   });
 

@@ -103,21 +103,15 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
       }
     }
 
-    let tables;
+    let table_count;
     try {
       oracledb.outFormat = oracledb.OUT_FORMAT_OBJECT;
       const { rows } = await connection.execute(`
-        SELECT TABLES.TABLE_NAME AS "table_name",
-               (SELECT LISTAGG(column_name || '(' || data_type || ')', ', ')
-                         WITHIN
-        GROUP (ORDER BY TABLE_NAME)
-        FROM USER_TAB_COLUMNS
-        WHERE TABLE_NAME = TABLES.TABLE_NAME
-          ) AS "columns"
-        FROM ALL_TABLES TABLES
+      SELECT COUNT(*) AS TABLE_COUNT
+        FROM ALL_TABLES
         WHERE OWNER = SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA')
       `);
-      tables = rows;
+      table_count = rows[0]?.TABLE_COUNT ?? 0;
     } catch (error: any) {
       await connection.close();
 
@@ -127,12 +121,12 @@ export default class SouthOracle extends SouthConnector<SouthOracleSettings, Sou
 
     await connection.close();
 
-    if (tables.length === 0) {
+    if (table_count === 0) {
       this.logger.warn(`No tables in the "${this.connector.settings.username}" schema`);
       throw new Error(`No tables in the "${this.connector.settings.username}" schema`);
     }
-    const tablesString = tables.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
-    this.logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
+
+    this.logger.info(`Database is live with ${table_count} tables`);
   }
 
   /**

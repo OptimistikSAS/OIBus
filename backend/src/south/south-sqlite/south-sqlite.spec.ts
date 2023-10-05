@@ -283,16 +283,15 @@ describe('SouthSQLite test connection', () => {
   const dbPath = path.resolve(configuration.settings.databasePath);
 
   it('Database is reachable and has tables', async () => {
-    const result = [{ tbl_name: 'logs', columns: 'data(INTEGER), timestamp(datetime)' }];
+    const result = [{ table_count: 21 }];
     all.mockReturnValue(result);
     (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
 
     await expect(south.testConnection()).resolves.not.toThrow();
 
-    const tables = result.map((row: any) => `${row.tbl_name}: [${row.columns}]`).join(',\n');
     expect((logger.info as jest.Mock).mock.calls).toEqual([
       [`Testing connection on "${configuration.settings.databasePath}"`],
-      ['Database is live with tables (table:[columns]):\n%s', tables]
+      ['Database is live with 21 tables']
     ]);
   });
 
@@ -322,12 +321,22 @@ describe('SouthSQLite test connection', () => {
   });
 
   it('Database has no tables', async () => {
+    all.mockReturnValue([{ table_count: 0 }]);
+    (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
+
+    await expect(south.testConnection()).rejects.toThrowError('Database has no table');
+
+    expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.databasePath}"`]]);
+    expect(logger.warn as jest.Mock).toHaveBeenCalledWith(`Database "${dbPath}" has no tables`);
+  });
+
+  it('Database does not return count of tables', async () => {
     all.mockReturnValue([]);
     (mockDatabase.prepare as jest.Mock).mockReturnValue({ all });
 
     await expect(south.testConnection()).rejects.toThrowError('Database has no table');
 
     expect((logger.info as jest.Mock).mock.calls).toEqual([[`Testing connection on "${configuration.settings.databasePath}"`]]);
-    expect(logger.warn as jest.Mock).toHaveBeenCalledWith(`Database "${dbPath}" has no table`);
+    expect(logger.warn as jest.Mock).toHaveBeenCalledWith(`Database "${dbPath}" has no tables`);
   });
 });

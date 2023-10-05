@@ -97,18 +97,15 @@ export default class SouthPostgreSQL
       }
     }
 
-    let tables;
+    let table_count;
     try {
       const { rows } = await connection.query(`
-        SELECT TABLES.table_name,
-               (SELECT string_agg(column_name || '(' || data_type || ')', ', ' ORDER BY table_name)
-                FROM information_schema.columns
-                WHERE table_name = TABLES.table_name) columns
-        FROM information_schema.tables TABLES
+        SELECT COUNT(*) AS table_count
+        FROM information_schema.tables
         WHERE table_type = 'BASE TABLE'
           AND table_schema = current_schema()
       `);
-      tables = rows;
+      table_count = rows[0]?.table_count ?? 0;
     } catch (error: any) {
       await connection.end();
 
@@ -118,12 +115,12 @@ export default class SouthPostgreSQL
 
     await connection.end();
 
-    if (tables.length === 0) {
-      this.logger.warn(`Database "${this.connector.settings.database}" has no table`);
-      throw new Error('Database has no table');
+    if (table_count === 0) {
+      this.logger.warn(`Database "${this.connector.settings.database}" has no tables`);
+      throw new Error('Database has no tables');
     }
-    const tablesString = tables.map((row: any) => `${row.table_name}: [${row.columns}]`).join(',\n');
-    this.logger.info('Database is live with tables (table:[columns]):\n%s', tablesString);
+
+    this.logger.info(`Database is live with ${table_count} tables`);
   }
 
   /**
