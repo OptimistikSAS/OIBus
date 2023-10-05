@@ -62,7 +62,6 @@ export class SouthItemsComponent implements OnInit {
   private filteredItems: Array<SouthConnectorItemDTO> = [];
   displayedItems: Page<SouthConnectorItemDTO> = emptyPage();
   displaySettings: Array<OibFormControl> = [];
-  listHasChanged = false;
 
   searchControl = this.fb.control(null as string | null);
 
@@ -147,7 +146,6 @@ export class SouthItemsComponent implements OnInit {
             return this.southConnectorService.createItem(this.southConnector!.id, command);
           } else {
             this.allItems.push({ id: command.id ?? '', connectorId: this.southConnector?.id ?? '', ...command });
-            this.listHasChanged = true;
             return of(null);
           }
         })
@@ -178,7 +176,6 @@ export class SouthItemsComponent implements OnInit {
               }
             });
             this.allItems.push({ ...oldItem, ...command });
-            this.listHasChanged = true;
             return of(null);
           }
         })
@@ -210,7 +207,6 @@ export class SouthItemsComponent implements OnInit {
             } else {
               this.allItems = this.allItems.filter(element => element.name !== item.name);
             }
-            this.listHasChanged = true;
             return of(null);
           }
         })
@@ -256,7 +252,6 @@ export class SouthItemsComponent implements OnInit {
           } else {
             this.itemIdsToDelete = [...this.itemIdsToDelete, ...this.allItems.filter(item => item.id).map(item => item.id)];
             this.allItems = [];
-            this.listHasChanged = true;
             return of(null);
           }
         })
@@ -317,7 +312,6 @@ export class SouthItemsComponent implements OnInit {
               });
               this.allItems.push(item);
             }
-            this.listHasChanged = true;
             return of(null);
           }
         })

@@ -42,6 +42,35 @@
               </div>
             </div>
           </div>
+
+          <div class="row" formGroupName="history">
+            <div class="col-4">
+              <div class="form-group">
+                <label class="form-label" for="south-max-read-interval" translate="south.history.max-read-interval"></label>
+                <div class="input-group">
+                  <input formControlName="maxReadInterval" id="south-max-read-interval" type="number" class="form-control" />
+                  <span class="input-group-text" translate="common.unit.s"></span>
+                </div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="form-group">
+                <label class="form-label" for="south-read-delay" translate="south.history.read-delay"></label>
+                <div class="input-group">
+                  <input formControlName="readDelay" id="south-read-delay" type="number" class="form-control" />
+                  <span class="input-group-text" translate="common.unit.ms"></span>
+                </div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div class="form-group">
+                <div class="form-check form-switch padded">
+                  <input formControlName="maxInstantPerItem" id="south-max-instant-per-item" type="checkbox" class="form-check-input" />
+                  <label class="form-check-label" for="south-max-instant-per-item" translate="south.history.max-instant-per-item"></label>
+                </div>
+              </div>
+            </div>
+          </div>
         </oib-box>
 
         <!-- Cache settings -->
@@ -188,41 +217,6 @@
             [settingsSchema]="southSettingsControls"
             [scanModes]="scanModes"
           ></oib-form>
-        </oib-box>
-
-        <!-- History settings -->
-        <oib-box formGroupName="history">
-          <ng-template oibBoxTitle>
-            <span translate="south.history.settings" [translateParams]="{ type: southType }" id="history-settings-title"></span>
-          </ng-template>
-          <div class="row">
-            <div class="col-4">
-              <div class="form-group">
-                <label class="form-label" for="south-max-read-interval" translate="south.history.max-read-interval"></label>
-                <div class="input-group">
-                  <input formControlName="maxReadInterval" id="south-max-read-interval" type="number" class="form-control" />
-                  <span class="input-group-text" translate="common.unit.s"></span>
-                </div>
-              </div>
-            </div>
-            <div class="col-4">
-              <div class="form-group">
-                <label class="form-label" for="south-read-delay" translate="south.history.read-delay"></label>
-                <div class="input-group">
-                  <input formControlName="readDelay" id="south-read-delay" type="number" class="form-control" />
-                  <span class="input-group-text" translate="common.unit.ms"></span>
-                </div>
-              </div>
-            </div>
-            <div class="col-4">
-              <div class="form-group">
-                <div class="form-check form-switch padded">
-                  <input formControlName="maxInstantPerItem" id="south-max-instant-per-item" type="checkbox" class="form-check-input" />
-                  <label class="form-check-label" for="south-max-instant-per-item" translate="south.history.max-instant-per-item"></label>
-                </div>
-              </div>
-            </div>
-          </div>
         </oib-box>
 
         <!-- items -->

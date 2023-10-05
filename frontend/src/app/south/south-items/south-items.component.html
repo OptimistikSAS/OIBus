@@ -1,6 +1,10 @@
-<div *ngIf="listHasChanged && inMemory" class="m-1 text-center">
+<div *ngIf="inMemory" class="my-2">
   <span class="fa fa-warning mx-1" style="color: orange"></span>
-  <span translate="south.items.changed"></span>
+  <span translate="south.items.edit-mode-info"></span>
+</div>
+<div *ngIf="!inMemory" class="my-2">
+  <span class="fa fa-info-circle mx-1" style="color: grey"></span>
+  <span translate="south.items.display-mode-info"></span>
 </div>
 <oib-box>
   <ng-template oibBoxTitle>
