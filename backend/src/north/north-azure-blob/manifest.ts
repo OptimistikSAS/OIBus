@@ -7,7 +7,8 @@ const manifest: NorthConnectorManifest = {
   description: 'Store files in Azure Blob',
   modes: {
     files: true,
-    points: false
+    points: false,
+    items: false
   },
   settings: [
     {

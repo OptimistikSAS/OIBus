@@ -10,7 +10,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../shared/model/south-connector.model';
-import { NorthConnectorDTO } from '../../../shared/model/north-connector.model';
+import { NorthConnectorDTO, NorthConnectorItemDTO } from '../../../shared/model/north-connector.model';
 import { Instant } from '../../../shared/model/types';
 import { PassThrough } from 'node:stream';
 import { ScanModeDTO } from '../../../shared/model/scan-mode.model';
@@ -241,6 +241,22 @@ export default class OIBusEngine extends BaseEngine {
     } catch (error) {
       this.logger.error(`Unable to delete North connector "${name}" (${northId}) base folder: ${error}`);
     }
+  }
+
+  addItemToNorth(northId: string, item: NorthConnectorItemDTO): void {
+    this.northConnectors.get(northId)?.addItem(item);
+  }
+
+  deleteItemFromNorth(northId: string, item: NorthConnectorItemDTO): void {
+    this.northConnectors.get(northId)?.deleteItem(item);
+  }
+
+  deleteAllItemsFromNorth(northId: string): void {
+    this.northConnectors.get(northId)?.deleteAllItems();
+  }
+
+  updateItemInNorth(northId: string, oldItem: NorthConnectorItemDTO, newItem: NorthConnectorItemDTO): void {
+    this.northConnectors.get(northId)?.updateItem(oldItem, newItem);
   }
 
   setLogger(value: pino.Logger) {

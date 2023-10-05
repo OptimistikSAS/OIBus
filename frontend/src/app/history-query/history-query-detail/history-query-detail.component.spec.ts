@@ -86,7 +86,8 @@ describe('HistoryQueryDisplayComponent', () => {
     description: 'OIAnalytics description',
     modes: {
       files: true,
-      points: true
+      points: true,
+      items: false
     },
     settings: [
       {

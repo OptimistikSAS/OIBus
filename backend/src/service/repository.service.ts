@@ -17,6 +17,7 @@ import SouthConnectorMetricsRepository from '../repository/south-connector-metri
 import NorthConnectorMetricsRepository from '../repository/north-connector-metrics.repository';
 import SouthCacheRepository from '../repository/south-cache.repository';
 import EngineMetricsRepository from '../repository/engine-metrics.repository';
+import NorthItemRepository from '../repository/north-item.repository';
 
 export default class RepositoryService {
   private readonly _engineRepository: EngineRepository;
@@ -36,6 +37,7 @@ export default class RepositoryService {
   private readonly _historyQueryItemRepository: HistoryQueryItemRepository;
   private readonly _userRepository: UserRepository;
   private readonly _subscriptionRepository: SubscriptionRepository;
+  private readonly _northItemRepository: NorthItemRepository;
 
   constructor(oibusDatabasePath: string, logsDatabasePath: string, cryptoDatabasePath: string, cacheDatabasePath: string) {
     const oibusDatabase = Database(oibusDatabasePath);
@@ -50,7 +52,7 @@ export default class RepositoryService {
     this._northConnectorRepository = new NorthConnectorRepository(oibusDatabase);
     this._southConnectorRepository = new SouthConnectorRepository(oibusDatabase);
     this._southItemRepository = new SouthItemRepository(oibusDatabase);
-    this._southItemRepository = new SouthItemRepository(oibusDatabase);
+    this._northItemRepository = new NorthItemRepository(oibusDatabase);
     this._historyQueryRepository = new HistoryQueryRepository(oibusDatabase);
     this._historyQueryItemRepository = new HistoryQueryItemRepository(oibusDatabase);
     this._userRepository = new UserRepository(oibusDatabase);
@@ -121,6 +123,10 @@ export default class RepositoryService {
 
   get southItemRepository(): SouthItemRepository {
     return this._southItemRepository;
+  }
+
+  get northItemRepository(): NorthItemRepository {
+    return this._northItemRepository;
   }
 
   get historyQueryRepository(): HistoryQueryRepository {

@@ -1,6 +1,6 @@
 import ArchiveService from '../service/cache/archive.service';
 
-import { NorthArchiveFiles, NorthCacheFiles, NorthConnectorDTO } from '../../../shared/model/north-connector.model';
+import { NorthArchiveFiles, NorthCacheFiles, NorthConnectorDTO, NorthConnectorItemDTO } from '../../../shared/model/north-connector.model';
 import pino from 'pino';
 import EncryptionService from '../service/encryption.service';
 import ValueCacheService from '../service/cache/value-cache.service';
@@ -14,7 +14,7 @@ import { OIBusDataValue, OIBusError } from '../../../shared/model/engine.model';
 import { ExternalSubscriptionDTO, SubscriptionDTO } from '../../../shared/model/subscription.model';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
-import { HandlesFile, HandlesValues } from './north-interface';
+import { HandlesFile, HandlesItemValues, HandlesValues } from './north-interface';
 import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
 import { dirSize } from '../service/utils';
@@ -36,7 +36,7 @@ import { dirSize } from '../service/utils';
  * - **getProxy**: get the proxy handler
  * - **logger**: to log an event with different levels (error,warning,info,debug,trace)
  */
-export default class NorthConnector<T extends NorthSettings = any> {
+export default class NorthConnector<T extends NorthSettings = any, I = any> {
   public static type: string;
 
   private archiveService: ArchiveService;
@@ -62,7 +62,8 @@ export default class NorthConnector<T extends NorthSettings = any> {
     protected readonly encryptionService: EncryptionService,
     private readonly repositoryService: RepositoryService,
     protected logger: pino.Logger,
-    protected readonly baseFolder: string
+    protected readonly baseFolder: string,
+    protected items: Array<NorthConnectorItemDTO<I>> = []
   ) {
     this.archiveService = new ArchiveService(this.logger, this.baseFolder, this.connector.archive);
     this.valueCacheService = new ValueCacheService(this.logger, this.baseFolder, this.connector.caching);
@@ -215,7 +216,7 @@ export default class NorthConnector<T extends NorthSettings = any> {
       this.metricsService!.updateMetrics(this.connector.id, { ...this.metricsService!.metrics, lastRunStart: runStart.toUTC().toISO() });
     }
 
-    if (this.handlesValues() && (flag === 'scan' || flag === 'value-trigger')) {
+    if ((this.handlesValues() || this.handlesItemValues()) && (flag === 'scan' || flag === 'value-trigger')) {
       await this.handleValuesWrapper();
     }
 
@@ -251,8 +252,12 @@ export default class NorthConnector<T extends NorthSettings = any> {
         arrayValues.push(...array);
       }
       try {
-        // @ts-ignore
-        await this.handleValues(arrayValues);
+        if (this.handlesItemValues()) {
+          await this.handleItemValues(arrayValues);
+        } else if (this.handlesValues()) {
+          await this.handleValues(arrayValues);
+        }
+
         await this.valueCacheService.removeSentValues(this.valuesBeingSent);
         const currentMetrics = this.metricsService!.metrics;
         this.metricsService!.updateMetrics(this.connector.id, {
@@ -514,6 +519,35 @@ export default class NorthConnector<T extends NorthSettings = any> {
     await this.fileCacheService.removeAllCacheFiles();
   }
 
+  addItem(item: NorthConnectorItemDTO<I>): void {
+    if (!this.handlesItemValues()) {
+      return;
+    }
+    this.items.push(item);
+  }
+
+  updateItem(oldItem: NorthConnectorItemDTO<I>, newItem: NorthConnectorItemDTO<I>): void {
+    if (!this.handlesItemValues()) {
+      return;
+    }
+    this.deleteItem(oldItem);
+    this.addItem(newItem);
+  }
+
+  deleteItem(itemToRemove: NorthConnectorItemDTO<I>): void {
+    if (!this.handlesItemValues()) {
+      return;
+    }
+    this.items = this.items.filter(item => item.id !== itemToRemove.id);
+  }
+
+  deleteAllItems(): void {
+    if (!this.handlesItemValues()) {
+      return;
+    }
+    this.items = [];
+  }
+
   getMetricsDataStream(): PassThrough {
     return this.metricsService!.stream;
   }
@@ -528,6 +562,10 @@ export default class NorthConnector<T extends NorthSettings = any> {
 
   handlesValues(): this is HandlesValues {
     return 'handleValues' in this;
+  }
+
+  handlesItemValues(): this is HandlesItemValues {
+    return 'handleItemValues' in this;
   }
 
   /**
