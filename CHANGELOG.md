@@ -1,5 +1,28 @@
 # Changelog
 
+## [3.0.4](https://github.com/OptimistikSAS/OIBus/compare/v3.0.3...v3.0.4) (2023-10-06)
+
+
+### Bug Fixes
+
+* **connector:** Reimplement timeout (s) in HTTP connectors ([4d6b54f](https://github.com/OptimistikSAS/OIBus/commit/4d6b54f2b5ca8abc9e34ecc71b6e8080d3b5d9bb))
+* **file-writer:** Take CurrentDate and ConnectorName into account for prefix and suffix ([c6d5931](https://github.com/OptimistikSAS/OIBus/commit/c6d59318de6acccdc0d5e84c8cc0198f7e64fe73))
+* **history-query:** Fix metrics loading and add details on creation ([89a9850](https://github.com/OptimistikSAS/OIBus/commit/89a9850033b0c472c5ded67379ed34307e9e92e9))
+* **history-query:** Fix reloading of history query after update ([be1bd13](https://github.com/OptimistikSAS/OIBus/commit/be1bd1348dd55d9e69bacfe01a7ed3876a587e7c))
+* **history-query:** Rearrange history form display ([c007fcf](https://github.com/OptimistikSAS/OIBus/commit/c007fcf9d2d82b7ba3ac7d312d31731a3d18ae57))
+* **lists:** Add legend on connector and history query list ([3996b49](https://github.com/OptimistikSAS/OIBus/commit/3996b49f6ce78a31f37462a8a58b31f08f25ee15))
+* **north-amazon-s3:** Fix test connection and proxy with S3 buckets ([fbef828](https://github.com/OptimistikSAS/OIBus/commit/fbef82843da88277941e231c75ccdb1fe6bf9674))
+* **north:** Fix status display for north list ([468004a](https://github.com/OptimistikSAS/OIBus/commit/468004ade64476857eb38092c71f51569ea3c731))
+* **south-items:** Fix import items after deletion in edit mode ([47fa976](https://github.com/OptimistikSAS/OIBus/commit/47fa9760b0eeff4aa1377dd3cba2ba2e76ee1f4c))
+* **south:** Fix enabled update on south items ([a455db2](https://github.com/OptimistikSAS/OIBus/commit/a455db21c2d6b111f41b21f852f300ee1e724d00))
+* **south:** Fix south connector reload on settings edition ([60588e8](https://github.com/OptimistikSAS/OIBus/commit/60588e81f893b8e82e33b582df525731e86e4360))
+* **south:** Fix SQL queries to only count tables ([5490759](https://github.com/OptimistikSAS/OIBus/commit/54907596cfb3abf72b6f942fb1e03978fbf3a422))
+* **styles:** better align connectors and engine on home screen ([b6e2b08](https://github.com/OptimistikSAS/OIBus/commit/b6e2b08b4564dc0dc9845ca448a2e12190fba570))
+* **styles:** resize history query table + change "-&gt;" for "fa-arrow-right" ([454ab93](https://github.com/OptimistikSAS/OIBus/commit/454ab932894f6fe77e326f6f5f78a275044c07c8))
+* **styles:** resize logs table + change badge pill for color text ([dda54de](https://github.com/OptimistikSAS/OIBus/commit/dda54de3fd8018f195a86f0fc6e40c42ef5ef63d))
+* **styles:** resize table cell for connector lists and replace disabled/enabled by color dot red/green ([a7d280e](https://github.com/OptimistikSAS/OIBus/commit/a7d280e2f753959cb4ba26d0d443e399c21df855))
+* **web-client:** Fix border display ([563f1a0](https://github.com/OptimistikSAS/OIBus/commit/563f1a0d80759b6cd33c23022c825e43bd5b7d0c))
+
 ## [3.0.3](https://github.com/OptimistikSAS/OIBus/compare/v3.0.2...v3.0.3) (2023-09-30)
 
 
