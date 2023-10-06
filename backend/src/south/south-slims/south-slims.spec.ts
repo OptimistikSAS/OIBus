@@ -174,6 +174,7 @@ describe('SouthSlims with body', () => {
     settings: {
       url: 'http://localhost',
       port: 4200,
+      timeout: 30,
       username: 'username',
       password: 'password',
       useProxy: false,
@@ -260,6 +261,7 @@ describe('SouthSlims with body', () => {
       method: 'GET',
       host: 'localhost',
       protocol: 'http:',
+      timeout: 30000,
       port: configuration.settings.port,
       path: items[0].settings.endpoint,
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=', 'content-length': '7', 'content-type': 'application/json' }
@@ -285,7 +287,8 @@ describe('SouthSlims with body', () => {
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET'
+        method: 'GET',
+        timeout: 30000
       }
     );
     expect(createProxyAgent).toHaveBeenCalledWith(false, configuration.settings.url, null, configuration.settings.acceptUnauthorized);
@@ -311,6 +314,7 @@ describe('SouthSlims with body and accept self signed', () => {
     settings: {
       url: 'https://localhost/',
       port: 4200,
+      timeout: 30,
       username: 'username',
       password: 'password',
       useProxy: false,
@@ -336,7 +340,8 @@ describe('SouthSlims with body and accept self signed', () => {
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(fetch).toHaveBeenCalledWith('https://localhost:4200/slimsrest/rest', {
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-      method: 'GET'
+      method: 'GET',
+      timeout: 30000
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -351,6 +356,7 @@ describe('SouthSlims with body and accept self signed', () => {
       method: 'GET',
       host: 'localhost',
       protocol: 'https:',
+      timeout: 30000,
       port: connector.settings.port,
       path: items[3].settings.endpoint,
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=', 'content-length': '7', 'content-type': 'application/json' }
@@ -377,6 +383,7 @@ describe('SouthSlims with query params', () => {
     settings: {
       url: 'http://localhost',
       port: 4200,
+      timeout: 30,
       username: 'username',
       password: 'password',
       useProxy: true,
@@ -406,6 +413,7 @@ describe('SouthSlims with query params', () => {
       host: 'localhost',
       protocol: 'http:',
       agent: fakeAgent,
+      timeout: 30000,
       port: configuration.settings.port,
       path: items[0].settings.endpoint,
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=', 'content-length': '7', 'content-type': 'application/json' }
@@ -442,7 +450,8 @@ describe('SouthSlims with query params', () => {
       {
         agent: fakeAgent,
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET'
+        method: 'GET',
+        timeout: 30000
       }
     );
     expect(createProxyAgent).toHaveBeenCalledWith(
@@ -481,7 +490,8 @@ describe('SouthSlims with query params', () => {
       {
         agent: fakeAgent,
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET'
+        method: 'GET',
+        timeout: 30000
       }
     );
     expect(logger.info).toHaveBeenCalledWith(
@@ -998,6 +1008,7 @@ describe('SouthSlims with query params and accept self signed', () => {
     settings: {
       url: 'http://localhost',
       port: 4200,
+      timeout: 30,
       username: 'username',
       password: 'password',
       useProxy: true,
@@ -1025,6 +1036,7 @@ describe('SouthSlims with query params and accept self signed', () => {
       host: 'localhost',
       protocol: 'http:',
       agent: fakeAgent,
+      timeout: 30000,
       port: configuration.settings.port,
       path: items[0].settings.endpoint,
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=', 'content-length': '7', 'content-type': 'application/json' }
@@ -1062,7 +1074,8 @@ describe('SouthSlims with query params and accept self signed', () => {
       {
         agent: fakeAgent,
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET'
+        method: 'GET',
+        timeout: 30000
       }
     );
     expect(logger.info).toHaveBeenCalledWith(

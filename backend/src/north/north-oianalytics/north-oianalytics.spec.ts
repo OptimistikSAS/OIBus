@@ -95,6 +95,7 @@ describe('NorthOIAnalytics without proxy', () => {
     enabled: true,
     settings: {
       host: 'https://hostname/',
+      timeout: 30,
       acceptUnauthorized: false,
       accessKey: 'anyUser',
       secretKey: 'anypass',
@@ -132,7 +133,8 @@ describe('NorthOIAnalytics without proxy', () => {
     await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(fetch).toHaveBeenCalledWith('https://hostname/api/optimistik/oibus/status', {
       headers: { authorization: 'Basic YW55VXNlcjphbnlwYXNz' },
-      method: 'GET'
+      method: 'GET',
+      timeout: 30000
     });
     expect(createProxyAgent).toHaveBeenCalledWith(
       false,
@@ -160,6 +162,7 @@ describe('NorthOIAnalytics without proxy', () => {
         authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:${configuration.settings.secretKey}`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
+      timeout: 30000,
       body: JSON.stringify(values),
       agent: undefined
     };
@@ -216,6 +219,7 @@ describe('NorthOIAnalytics without proxy', () => {
         authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:${configuration.settings.secretKey}`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
+      timeout: 30000,
       body: JSON.stringify(values),
       agent: undefined
     };
@@ -248,6 +252,7 @@ describe('NorthOIAnalytics without proxy', () => {
         authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:${configuration.settings.secretKey}`).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
+      timeout: 30000,
       body: expect.anything(),
       agent: undefined
     };
@@ -305,6 +310,7 @@ describe('NorthOIAnalytics without proxy', () => {
         authorization: `Basic ${Buffer.from(`${configuration.settings.accessKey}:${configuration.settings.secretKey}`).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
+      timeout: 30000,
       body: expect.anything(),
       agent: undefined
     };
@@ -338,6 +344,7 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
     settings: {
       host: 'https://hostname',
       acceptUnauthorized: true,
+      timeout: 30,
       accessKey: 'anyUser',
       secretKey: null,
       useProxy: false
@@ -386,7 +393,8 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      agent: fakeAgent
+      agent: fakeAgent,
+      timeout: 30000
     };
 
     await north.handleValues(values);
@@ -414,7 +422,8 @@ describe('NorthOIAnalytics without proxy but with acceptUnauthorized', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      agent: fakeAgent
+      agent: fakeAgent,
+      timeout: 30000
     };
 
     await north.handleFile(filePath);
@@ -442,6 +451,7 @@ describe('NorthOIAnalytics with proxy', () => {
     settings: {
       host: 'https://hostname',
       acceptUnauthorized: false,
+      timeout: 30,
       accessKey: 'anyUser',
       secretKey: 'anypass',
       useProxy: true,
@@ -485,7 +495,8 @@ describe('NorthOIAnalytics with proxy', () => {
     expect(fetch).toHaveBeenCalledWith('https://hostname/api/optimistik/oibus/status', {
       headers: { authorization: 'Basic YW55VXNlcjphbnlwYXNz' },
       method: 'GET',
-      agent: fakeAgent
+      agent: fakeAgent,
+      timeout: 30000
     });
     expect(createProxyAgent).toHaveBeenCalledWith(
       true,
@@ -564,6 +575,7 @@ describe('NorthOIAnalytics with proxy but without proxy password', () => {
     settings: {
       host: 'https://hostname',
       acceptUnauthorized: false,
+      timeout: 30,
       accessKey: 'anyUser',
       secretKey: 'anypass',
       useProxy: true,

@@ -83,6 +83,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
     const fetchOptions: RequestInit = {
       method: 'GET',
       headers,
+      timeout: this.connector.settings.timeout * 1000,
       agent: createProxyAgent(
         this.connector.settings.useProxy,
         requestUrl,
@@ -196,6 +197,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
         protocol,
         port: this.connector.settings.port,
         path: item.settings.endpoint,
+        timeout: this.connector.settings.timeout * 1000,
         headers
       };
 
@@ -209,6 +211,7 @@ export default class SouthSlims extends SouthConnector<SouthSlimsSettings, South
     const fetchOptions: RequestInit = {
       method: 'GET',
       headers,
+      timeout: this.connector.settings.timeout * 1000,
       agent: createProxyAgent(
         this.connector.settings.useProxy,
         this.connector.settings.url,

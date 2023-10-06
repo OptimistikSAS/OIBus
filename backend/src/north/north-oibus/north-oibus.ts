@@ -45,6 +45,7 @@ export default class NorthOibus extends NorthConnector<NorthOIBusSettings> imple
     const fetchOptions: RequestInit = {
       method: 'GET',
       headers,
+      timeout: this.connector.settings.timeout * 1000,
       agent: createProxyAgent(
         this.connector.settings.useProxy,
         requestUrl,
@@ -92,6 +93,7 @@ export default class NorthOibus extends NorthConnector<NorthOIBusSettings> imple
       response = await fetch(valuesUrl, {
         method: 'POST',
         headers,
+        timeout: this.connector.settings.timeout * 1000,
         body: JSON.stringify(values),
         agent: createProxyAgent(
           this.connector.settings.useProxy,
@@ -153,6 +155,7 @@ export default class NorthOibus extends NorthConnector<NorthOIBusSettings> imple
       response = await fetch(fileUrl, {
         method: 'POST',
         headers,
+        timeout: this.connector.settings.timeout * 1000,
         body,
         agent: createProxyAgent(
           this.connector.settings.useProxy,

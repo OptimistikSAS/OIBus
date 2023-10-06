@@ -80,6 +80,7 @@ export default class SouthOIAnalytics
     const fetchOptions: RequestInit = {
       method: 'GET',
       headers,
+      timeout: this.connector.settings.timeout * 1000,
       agent: createProxyAgent(
         this.connector.settings.useProxy,
         requestUrl,
@@ -164,6 +165,7 @@ export default class SouthOIAnalytics
     const fetchOptions: RequestInit = {
       method: 'GET',
       headers,
+      timeout: this.connector.settings.timeout * 1000,
       agent: createProxyAgent(
         this.connector.settings.useProxy,
         requestUrl,
