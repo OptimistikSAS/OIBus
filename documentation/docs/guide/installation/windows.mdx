@@ -1,8 +1,27 @@
 ---
 sidebar_position: 2
 ---
+import DownloadButton from "../../../src/components/DownloadButton";
+import packageInfo from '../../../package.json'
+
 
 # Windows
+## Download
+<div style={{ display: "flex", justifyContent: "space-around" }}>
+  <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-setup-win_x64-v${packageInfo.version}.exe`}>
+    <div>
+      <div>{`OIBus v${packageInfo.version} (installer)`}</div>
+      <div>Windows (x64)</div>
+    </div>
+  </DownloadButton>
+  <DownloadButton link={`https://github.com/OptimistikSAS/OIBus/releases/download/v${packageInfo.version}/oibus-win_x64-v${packageInfo.version}.zip`}>
+    <div>
+      <div>{`OIBus v${packageInfo.version} (zip)`}</div>
+      <div>Windows (x64)</div>
+    </div>
+  </DownloadButton>
+</div>
+
 ## Installation
 ### With the Windows Installer
 1. Run the Windows Installer, you should see the following welcome screen:
@@ -14,7 +33,7 @@ sidebar_position: 2
 </div>
 
 
-2. Accept the EU-PL license and the OPCHDA license.
+2. Accept the EU-PL license.
 
 3. Choose the path where you want to install the binaries.
 
@@ -24,7 +43,7 @@ sidebar_position: 2
 
 </div>
 
-4. Choose the path where you want to store the cache, logs and configuration files
+4. Select the directory where you'd like to store the cache, logs, and configuration files.
 
 <div style={{textAlign: 'center'}}>
 
@@ -32,7 +51,7 @@ sidebar_position: 2
 
 </div>
 
-5. Validate the settings and wait for the installer to extract and copy the files in the appropriate folder.
+5. Confirm the settings and await the installer to extract and copy the files to the designated folder.
 
 <div style={{textAlign: 'center'}}>
 
@@ -40,11 +59,13 @@ sidebar_position: 2
 
 </div>
 
-6. The final screen confirms the installation.
+6. The last screen will confirm the completion of the installation process.
 
 :::caution Browser support
 Note that Internet Explorer is not supported.
 :::
+
+Get familiar with the OIBus interface on the [first access page](./first-access.mdx).
 
 ### With the installation bat script
 ``` commandline title="Usage"
@@ -68,12 +89,14 @@ install.bat C:\OIBusData
 ```
 
 :::tip
-If you omit the data path argument, it will be asked as input when running the script
+If you do not provide the data path argument, the script will prompt you to input it during execution.
 :::
+
+Get familiar with the OIBus interface on the [first access page](./first-access.mdx).
 
 ## Uninstall
 ### With the Windows Uninstaller
-Go to the binary folder and run with administration privileges the `unin000.exe` file.
+Navigate to the binary folder and execute the `unin000.exe` file with administrative privileges.
 
 <div style={{textAlign: 'center'}}>
 
@@ -88,7 +111,7 @@ Go to the binary folder and run with administration privileges the `unin000.exe`
 </div>
 
 
-### With the uninstallation bat script
+### With the uninstallation batch script
 ```` title="Example with terminal outputs"
 uninstall.bat
 Administrator permissions required. Detecting permission...
@@ -97,24 +120,26 @@ Removing OIBus service...
 ````
 
 :::caution
-The data folder must be removed manually
+The data folder must be removed manually.
 :::
 
 ## Update
 ### With the Windows Installer
-In case of OIBus update, you can use the OIBus Windows Installer and specify the already existing executable and
-config path. You can choose to keep the existing configuration file or overwrite it.
+If you wish to update OIBus, you can utilize the OIBus Windows Installer and indicate the current executable and configuration
+paths. You have the option to retain the existing configuration file or replace it.
 
-During the update, OIBus service will be stopped briefly.
+During the update process, the OIBus service will experience a brief interruption.
 
-The configuration database `oibus.db` will be updated to its latest version during the first startup.
+Upon the initial startup after the update, the configuration database `oibus.db` will be automatically upgraded to the
+latest version.
 
 ### With binaries (from zip file)
-Once you unzip the files from the zip file:
+After extracting the files from the zip archive:
+1. Open the Windows Service Manager.
+2. Halt the OIBus service.
+3. Copy and paste the contents of the zip file into the OIBus executable directory, replacing any existing files.
+4. Resume the OIBus service.
 
-1. Go to the Windows service manager.
-2. Stop the OIBus service.
-3. Copy and paste the content of the zip file into the OIBus executable folder. Overwrite all existing files.
-4. Start the OIBus service.
+Upon the initial startup after the update, the configuration database `oibus.db` will be automatically upgraded to the
+latest version.
 
-The configuration database `oibus.db` will be updated to its latest version during the first startup.
