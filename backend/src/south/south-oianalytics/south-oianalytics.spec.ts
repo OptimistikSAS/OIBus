@@ -142,6 +142,7 @@ describe('SouthOIAnalytics with Basic auth', () => {
     settings: {
       host: 'http://localhost:4200',
       acceptUnauthorized: false,
+      timeout: 30,
       accessKey: 'username',
       secretKey: 'password',
       useProxy: false
@@ -235,7 +236,8 @@ describe('SouthOIAnalytics with Basic auth', () => {
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET'
+        method: 'GET',
+        timeout: 30000
       }
     );
     expect(logger.info).toHaveBeenCalledWith(
@@ -259,7 +261,8 @@ describe('SouthOIAnalytics with Basic auth', () => {
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET'
+        method: 'GET',
+        timeout: 30000
       }
     );
     expect(logger.info).toHaveBeenCalledWith(
@@ -284,6 +287,7 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
     settings: {
       host: 'https://localhost:4200/',
       acceptUnauthorized: true,
+      timeout: 30,
       accessKey: 'username',
       secretKey: 'password',
       useProxy: false
@@ -310,7 +314,8 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
     await expect(south.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(fetch).toHaveBeenCalledWith('https://localhost:4200/api/optimistik/oibus/status', {
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-      method: 'GET'
+      method: 'GET',
+      timeout: 30000
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -330,7 +335,8 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
         '?from=2019-10-03T13%3A36%3A38.590Z&to=2019-10-03T15%3A36%3A38.590Z&aggregation=RAW_VALUES&data-reference=SP_003_X',
       {
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-        method: 'GET'
+        method: 'GET',
+        timeout: 30000
       }
     );
     expect(logger.info).toHaveBeenCalledWith(
@@ -483,6 +489,7 @@ describe('SouthOIAnalytics with proxy', () => {
     settings: {
       host: 'http://localhost:4200',
       acceptUnauthorized: false,
+      timeout: 30,
       accessKey: 'username',
       secretKey: 'password',
       useProxy: true,
@@ -514,7 +521,8 @@ describe('SouthOIAnalytics with proxy', () => {
     expect(fetch).toHaveBeenCalledWith('http://localhost:4200/api/optimistik/oibus/status', {
       agent: fakeAgent,
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-      method: 'GET'
+      method: 'GET',
+      timeout: 30000
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -535,7 +543,8 @@ describe('SouthOIAnalytics with proxy', () => {
       {
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
         method: 'GET',
-        agent: fakeAgent
+        agent: fakeAgent,
+        timeout: 30000
       }
     );
   });
@@ -556,6 +565,7 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
     settings: {
       host: 'http://localhost:4200',
       acceptUnauthorized: false,
+      timeout: 30,
       accessKey: 'username',
       secretKey: 'password',
       useProxy: true,
@@ -587,7 +597,8 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
     expect(fetch).toHaveBeenCalledWith('http://localhost:4200/api/optimistik/oibus/status', {
       agent: fakeAgent,
       headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
-      method: 'GET'
+      method: 'GET',
+      timeout: 30000
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -608,6 +619,7 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
       {
         headers: { authorization: 'Basic dXNlcm5hbWU6cGFzc3dvcmQ=' },
         method: 'GET',
+        timeout: 30000,
         agent: fakeAgent
       }
     );

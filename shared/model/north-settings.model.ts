@@ -124,6 +124,7 @@ export interface NorthMqttSettings extends BaseNorthSettings {
 export interface NorthOIAnalyticsSettings extends BaseNorthSettings {
   host: string;
   acceptUnauthorized: boolean;
+  timeout: number;
   accessKey: string;
   secretKey: string | null;
   useProxy: boolean;
@@ -135,6 +136,7 @@ export interface NorthOIAnalyticsSettings extends BaseNorthSettings {
 export interface NorthOIBusSettings extends BaseNorthSettings {
   host: string;
   acceptUnauthorized: boolean;
+  timeout: number;
   username: string;
   password: string | null;
   useProxy: boolean;

@@ -21,14 +21,17 @@ const manifest: SouthConnectorManifest = {
       defaultValue: 'http://localhost',
       newRow: true,
       validators: [{ key: 'required' }, { key: 'pattern', params: { pattern: '^(http:\\/\\/|https:\\/\\/|HTTP:\\/\\/|HTTPS:\\/\\/).*' } }],
-      displayInViewMode: true
+      displayInViewMode: true,
+      class: 'col-4'
     },
     {
       key: 'port',
       type: 'OibNumber',
       label: 'Port',
       defaultValue: 80,
-      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }]
+      validators: [{ key: 'required' }, { key: 'min', params: { min: 1 } }, { key: 'max', params: { max: 65535 } }],
+      displayInViewMode: true,
+      class: 'col-2'
     },
     {
       key: 'acceptUnauthorized',
@@ -36,7 +39,17 @@ const manifest: SouthConnectorManifest = {
       label: 'Accept unauthorized certificate',
       validators: [{ key: 'required' }],
       defaultValue: false,
-      displayInViewMode: true
+      displayInViewMode: true,
+      class: 'col-3'
+    },
+    {
+      key: 'timeout',
+      type: 'OibNumber',
+      label: 'Timeout',
+      defaultValue: 30,
+      unitLabel: 's',
+      validators: [{ key: 'required' }],
+      class: 'col-3'
     },
     {
       key: 'username',

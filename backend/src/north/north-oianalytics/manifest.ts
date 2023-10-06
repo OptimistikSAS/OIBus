@@ -23,7 +23,8 @@ const manifest: NorthConnectorManifest = {
         }
       ],
       defaultValue: 'https://instance_name.oianalytics.fr',
-      displayInViewMode: true
+      displayInViewMode: true,
+      class: 'col-6'
     },
     {
       key: 'acceptUnauthorized',
@@ -31,7 +32,17 @@ const manifest: NorthConnectorManifest = {
       label: 'Accept unauthorized certificate',
       validators: [{ key: 'required' }],
       defaultValue: false,
-      displayInViewMode: true
+      displayInViewMode: true,
+      class: 'col-3'
+    },
+    {
+      key: 'timeout',
+      type: 'OibNumber',
+      label: 'Timeout',
+      defaultValue: 30,
+      unitLabel: 's',
+      validators: [{ key: 'required' }],
+      class: 'col-3'
     },
     {
       key: 'accessKey',

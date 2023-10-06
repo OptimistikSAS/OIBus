@@ -49,6 +49,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
     const fetchOptions: RequestInit = {
       method: 'GET',
       headers,
+      timeout: this.connector.settings.timeout * 1000,
       agent: createProxyAgent(
         this.connector.settings.useProxy,
         requestUrl,
@@ -98,6 +99,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       response = await fetch(valuesUrl, {
         method: 'POST',
         headers,
+        timeout: this.connector.settings.timeout * 1000,
         body: JSON.stringify(values),
         agent: createProxyAgent(
           this.connector.settings.useProxy,
@@ -161,6 +163,7 @@ export default class NorthOIAnalytics extends NorthConnector<NorthOIAnalyticsSet
       response = await fetch(fileUrl, {
         method: 'POST',
         headers,
+        timeout: this.connector.settings.timeout * 1000,
         body,
         agent: createProxyAgent(
           this.connector.settings.useProxy,

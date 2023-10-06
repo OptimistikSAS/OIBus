@@ -232,6 +232,7 @@ export interface SouthODBCSettings extends BaseSouthSettings {
 export interface SouthOIAnalyticsSettings extends BaseSouthSettings {
   host: string;
   acceptUnauthorized: boolean;
+  timeout: number;
   accessKey: string;
   secretKey: string | null;
   useProxy: boolean;
@@ -280,6 +281,7 @@ export interface SouthSlimsSettings extends BaseSouthSettings {
   url: string;
   port: number;
   acceptUnauthorized: boolean;
+  timeout: number;
   username: string;
   password: string | null;
   useProxy: boolean;

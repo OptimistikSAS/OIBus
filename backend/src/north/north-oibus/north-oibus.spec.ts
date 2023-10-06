@@ -96,6 +96,7 @@ describe('NorthOIConnect with proxy', () => {
     settings: {
       host: 'https://hostname/',
       acceptUnauthorized: false,
+      timeout: 30,
       useProxy: true,
       proxyUrl: 'http://localhost',
       proxyUsername: 'my username',
@@ -145,6 +146,7 @@ describe('NorthOIConnect with proxy', () => {
         authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
+      timeout: 30000,
       body: JSON.stringify(values),
       agent: fakeAgent
     };
@@ -199,7 +201,8 @@ describe('NorthOIConnect with proxy', () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(values),
-      agent: fakeAgent
+      agent: fakeAgent,
+      timeout: 30000
     };
 
     let err;
@@ -228,7 +231,8 @@ describe('NorthOIConnect with proxy', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      agent: fakeAgent
+      agent: fakeAgent,
+      timeout: 30000
     };
 
     await north.handleFile(filePath);
@@ -279,6 +283,7 @@ describe('NorthOIConnect with proxy', () => {
         authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
+      timeout: 30000,
       body: expect.anything(),
       agent: fakeAgent
     };
@@ -307,7 +312,8 @@ describe('NorthOIConnect with proxy', () => {
     expect(fetch).toHaveBeenCalledWith('https://hostname/api/info', {
       agent: fakeAgent,
       headers: { authorization: 'Basic dXNlcjpwYXNz' },
-      method: 'GET'
+      method: 'GET',
+      timeout: 30000
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -345,6 +351,7 @@ describe('NorthOIConnect with proxy but without proxy password', () => {
     settings: {
       host: 'https://hostname',
       acceptUnauthorized: false,
+      timeout: 30,
       useProxy: true,
       proxyUrl: 'http://localhost',
       proxyUsername: 'my username',
@@ -387,7 +394,8 @@ describe('NorthOIConnect with proxy but without proxy password', () => {
     expect(fetch).toHaveBeenCalledWith('https://hostname/api/info', {
       headers: { authorization: 'Basic dXNlcjpwYXNz' },
       method: 'GET',
-      agent: fakeAgent
+      agent: fakeAgent,
+      timeout: 30000
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -402,6 +410,7 @@ describe('NorthOIConnect with proxy but without proxy password', () => {
         authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
+      timeout: 30000,
       body: JSON.stringify([]),
       agent: fakeAgent
     };
@@ -431,7 +440,8 @@ describe('NorthOIConnect with proxy but without proxy password', () => {
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
       body: expect.anything(),
-      agent: fakeAgent
+      agent: fakeAgent,
+      timeout: 30000
     };
 
     await north.handleFile(filePath);
@@ -460,6 +470,7 @@ describe('NorthOIConnect without proxy', () => {
     settings: {
       host: 'https://hostname',
       acceptUnauthorized: false,
+      timeout: 30,
       useProxy: false,
       username: 'user',
       password: 'pass'
@@ -496,7 +507,8 @@ describe('NorthOIConnect without proxy', () => {
     await expect(north.testConnection()).rejects.toThrow(`Fetch error ${new Error('Timeout error')}`);
     expect(fetch).toHaveBeenCalledWith('https://hostname/api/info', {
       headers: { authorization: 'Basic dXNlcjpwYXNz' },
-      method: 'GET'
+      method: 'GET',
+      timeout: 30000
     });
     expect(logger.error).toHaveBeenCalledWith(`Fetch error ${new Error('Timeout error')}`);
   });
@@ -518,6 +530,7 @@ describe('NorthOIConnect without proxy', () => {
         authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
         'Content-Type': 'application/json'
       },
+      timeout: 30000,
       body: JSON.stringify(values)
     };
 
@@ -536,6 +549,7 @@ describe('NorthOIConnect without proxy', () => {
         authorization: `Basic ${Buffer.from(`${configuration.settings.username}:${configuration.settings.password}`).toString('base64')}`,
         'content-type': expect.stringContaining('multipart/form-data; boundary=')
       },
+      timeout: 30000,
       body: expect.anything()
     };
 
