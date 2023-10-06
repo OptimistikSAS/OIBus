@@ -63,34 +63,35 @@ jest.mock(
 jest.mock('../../service/utils');
 
 const nowDateString = '2020-02-02T02:02:02.222Z';
-const configuration: NorthConnectorDTO = {
-  id: 'id',
-  name: 'north',
-  type: 'test',
-  description: 'my test connector',
-  enabled: true,
-  settings: {
-    outputFolder: 'outputFolder',
-    prefix: 'prefix',
-    suffix: 'suffix'
-  },
-  caching: {
-    scanModeId: 'id1',
-    retryInterval: 5000,
-    groupCount: 10000,
-    maxSendCount: 10000,
-    retryCount: 2,
-    sendFileImmediately: true,
-    maxSize: 1000
-  },
-  archive: {
-    enabled: true,
-    retentionDuration: 720
-  }
-};
+
 let north: NorthFileWriter;
 
 describe('NorthFileWriter', () => {
+  const configuration: NorthConnectorDTO = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      outputFolder: 'outputFolder',
+      prefix: 'prefix',
+      suffix: 'suffix'
+    },
+    caching: {
+      scanModeId: 'id1',
+      retryInterval: 5000,
+      groupCount: 10000,
+      maxSendCount: 10000,
+      retryCount: 2,
+      sendFileImmediately: true,
+      maxSize: 1000
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 720
+    }
+  };
   beforeEach(async () => {
     jest.clearAllMocks();
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
@@ -131,10 +132,8 @@ describe('NorthFileWriter', () => {
 
   it('should properly handle files', async () => {
     (fs.stat as jest.Mock).mockReturnValue({ size: 666 });
-    const filePath = '/path/to/file/example.file';
-    const extension = path.extname(filePath);
-    let expectedFileName = path.basename(filePath, extension);
-    expectedFileName = `${configuration.settings.prefix}${expectedFileName}${configuration.settings.suffix}${extension}`;
+    const filePath = '/path/to/file/example-123456.file';
+    const expectedFileName = `${configuration.settings.prefix}example${configuration.settings.suffix}.file`;
     const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
     await north.handleFile(filePath);
     expect(fs.copyFile).toBeCalledWith(filePath, path.join(expectedOutputFolder, expectedFileName));
@@ -145,12 +144,37 @@ describe('NorthFileWriter', () => {
     (fs.copyFile as jest.Mock).mockImplementationOnce(() => {
       throw new Error('Error handling files');
     });
-    const filePath = '/path/to/file/example.file';
+    const filePath = '/path/to/file/example-123456.file';
     await expect(north.handleFile(filePath)).rejects.toThrowError('Error handling files');
   });
 });
 
-describe('NorthFileWriter test connection', () => {
+describe('NorthFileWriter without suffix or prefix', () => {
+  const configuration: NorthConnectorDTO = {
+    id: 'id',
+    name: 'north',
+    type: 'test',
+    description: 'my test connector',
+    enabled: true,
+    settings: {
+      outputFolder: 'outputFolder',
+      prefix: '',
+      suffix: ''
+    },
+    caching: {
+      scanModeId: 'id1',
+      retryInterval: 5000,
+      groupCount: 10000,
+      maxSendCount: 10000,
+      retryCount: 2,
+      sendFileImmediately: true,
+      maxSize: 1000
+    },
+    archive: {
+      enabled: true,
+      retentionDuration: 720
+    }
+  };
   const outputFolder = path.resolve(configuration.settings.outputFolder);
 
   beforeEach(async () => {
@@ -158,6 +182,30 @@ describe('NorthFileWriter test connection', () => {
     jest.useFakeTimers().setSystemTime(new Date(nowDateString));
 
     north = new NorthFileWriter(configuration, encryptionService, repositoryService, logger, 'baseFolder');
+  });
+
+  it('should properly handle values', async () => {
+    const values: Array<OIBusDataValue> = [
+      {
+        timestamp: '2021-07-29T12:13:31.883Z',
+        data: { value: '666', quality: 'good' },
+        pointId: 'pointId'
+      }
+    ];
+    await north.handleValues(values);
+    const expectedData = JSON.stringify(values);
+    const expectedFileName = `${new Date().getTime()}.json`;
+    const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
+    const expectedPath = path.join(expectedOutputFolder, expectedFileName);
+    expect(fs.writeFile).toBeCalledWith(expectedPath, expectedData);
+  });
+
+  it('should properly handle files', async () => {
+    (fs.stat as jest.Mock).mockReturnValue({ size: 666 });
+    const filePath = '/path/to/file/example-123456.file';
+    const expectedOutputFolder = path.resolve(configuration.settings.outputFolder);
+    await north.handleFile(filePath);
+    expect(fs.copyFile).toBeCalledWith(filePath, path.join(expectedOutputFolder, 'example.file'));
   });
 
   it('should have access to output folder', async () => {

@@ -29,17 +29,32 @@ export default class NorthFileWriter extends NorthConnector<NorthFileWriterSetti
   }
 
   async handleValues(values: Array<OIBusDataValue>): Promise<void> {
-    const fileName = `${this.connector.settings.prefix}${DateTime.now().toUTC().toMillis()}${this.connector.settings.suffix}.json`;
-    await fs.writeFile(path.join(path.resolve(this.connector.settings.outputFolder), fileName), JSON.stringify(values));
-    this.logger.debug(`File "${fileName}" created in "${path.resolve(this.connector.settings.outputFolder)}" output folder`);
+    const nowDate = DateTime.now().toUTC();
+    const prefix = (this.connector.settings.prefix || '')
+      .replace('@CurrentDate', nowDate.toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
+      .replace('@ConnectorName', this.connector.name);
+    const suffix = (this.connector.settings.suffix || '')
+      .replace('@CurrentDate', nowDate.toFormat('yyyy_MM_dd_HH_mm_ss_SSS'))
+      .replace('@ConnectorName', this.connector.name);
+
+    const filename = `${prefix}${nowDate.toMillis()}${suffix}.json`;
+    await fs.writeFile(path.join(path.resolve(this.connector.settings.outputFolder), filename), JSON.stringify(values));
+    this.logger.debug(`File "${filename}" created in "${path.resolve(this.connector.settings.outputFolder)}" output folder`);
   }
 
   async handleFile(filePath: string): Promise<void> {
-    const extension = path.extname(filePath);
-    let fileName = path.basename(filePath, extension);
-    fileName = `${this.connector.settings.prefix}${fileName}${this.connector.settings.suffix}${extension}`;
-    await fs.copyFile(filePath, path.join(path.resolve(this.connector.settings.outputFolder), fileName));
-    this.logger.debug(`File "${filePath}" copied into "${fileName}"`);
+    const nowDate = DateTime.now().toUTC().toFormat('yyyy_MM_dd_HH_mm_ss_SSS');
+
+    // Remove timestamp from the file path
+    const { name, ext } = path.parse(filePath);
+    const filename = name.slice(0, name.lastIndexOf('-'));
+
+    const prefix = (this.connector.settings.prefix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
+    const suffix = (this.connector.settings.suffix || '').replace('@CurrentDate', nowDate).replace('@ConnectorName', this.connector.name);
+
+    const resultingFilename = `${prefix}${filename}${suffix}${ext}`;
+    await fs.copyFile(filePath, path.join(path.resolve(this.connector.settings.outputFolder), resultingFilename));
+    this.logger.debug(`File "${filePath}" copied into "${resultingFilename}"`);
   }
 
   override async testConnection(): Promise<void> {
