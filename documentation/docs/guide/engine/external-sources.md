@@ -25,7 +25,7 @@ to the specified external source.
 
 ## Data from another OIBus with OIConnect
 If you intend to transfer data from one OIBus instance to another using an 
-[OIConnect North connector](../../guide/north-connectors/oiconnect.md), the resulting `name` query parameter is `MyFirstOIBus:MyOIConnect`.
+[OIConnect North connector](../../guide/north-connectors/oibus.md), the resulting `name` query parameter is `MyFirstOIBus:MyOIConnect`.
 Consequently, your external source configuration must also be defined as `MyFirstOIBus:MyOIConnect` to establish the 
 connection between the two OIBus instances.
 
