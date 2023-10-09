@@ -64,7 +64,7 @@
     "joi": "17.10.2",
     "jsmodbus": "4.0.6",
     "jsonwebtoken": "9.0.2",
-    "knex": "2.5.1",
+    "knex": "3.0.1",
     "koa": "2.14.2",
     "koa-bodyparser": "4.4.1",
     "koa-helmet": "7.0.2",
