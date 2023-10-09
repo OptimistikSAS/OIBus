@@ -10,6 +10,10 @@ import { DatetimePipe } from '../../../shared/datetime.pipe';
 import { PaginationComponent } from '../../../shared/pagination/pagination.component';
 import { FileSizePipe } from '../../../shared/file-size.pipe';
 import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.component';
+import { Page, createPageFromArray } from '../../../../../../shared/model/types';
+import { emptyPage } from 'src/app/shared/test-utils';
+
+const PAGE_SIZE = 15;
 
 @Component({
   selector: 'oib-error-files',
@@ -33,6 +37,7 @@ import { BoxComponent, BoxTitleDirective } from '../../../shared/box/box.compone
 export class ErrorFilesComponent implements OnInit {
   @Input() northConnector: NorthConnectorDTO | null = null;
   errorFiles: Array<NorthCacheFiles> = [];
+  errorFilePages: Page<NorthCacheFiles> = emptyPage();
   checkboxByErrorFiles: Map<string, boolean> = new Map<string, boolean>();
 
   // the checkbox states for the input parameters
@@ -47,6 +52,7 @@ export class ErrorFilesComponent implements OnInit {
         this.checkboxByErrorFiles.set(errorFile.filename, false);
       });
       this.errorFiles = errorFiles;
+      this.changePage(0);
     });
   }
 
@@ -108,5 +114,9 @@ export class ErrorFilesComponent implements OnInit {
     } else {
       this.mainErrorFilesCheckboxState = 'INDETERMINATE';
     }
+  }
+
+  changePage(pageNumber: number) {
+    this.errorFilePages = createPageFromArray(this.errorFiles, PAGE_SIZE, pageNumber);
   }
 }

@@ -1,3 +1,9 @@
+<div class="d-flex flex-row-reverse" *ngIf="archiveFilePages?.totalElements">
+  <div [class]="archiveFilePages.totalPages > 1 ? 'ms-2' : ''">
+    <oib-pagination [page]="archiveFilePages" (pageChanged)="changePage($event)"></oib-pagination>
+  </div>
+</div>
+
 <oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between">
@@ -21,7 +27,7 @@
     </div>
   </ng-template>
 
-  <div class="mb-3" *ngIf="archiveFiles.length !== 0; else emptyArchiveFiles">
+  <div class="mb-3" *ngIf="archiveFilePages?.totalElements !== 0; else emptyArchiveFiles">
     <table class="table table-sm table-hover oib-table">
       <thead class="light">
         <tr>
@@ -41,7 +47,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr class="data" *ngFor="let file of archiveFiles">
+        <tr class="data" *ngFor="let file of archiveFilePages.content">
           <td>
             <input
               type="checkbox"
