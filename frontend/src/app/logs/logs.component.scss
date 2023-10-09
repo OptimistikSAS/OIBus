@@ -7,15 +7,15 @@
 }
 
 .level-badge.error {
-  color: #E24D42;
+  color: $danger;
 }
 
 .level-badge.warn {
-  color: #EAB837;
+  color: $yellow;
 }
 
 .level-badge.info {
-  color: #7CB26C;
+  color: $green;
 }
 
 .level-badge.debug {
@@ -23,7 +23,7 @@
 }
 
 .level-badge.trace {
-  color: #72CDDE;
+  color: $blue;
 }
 
 // changes of the default display
