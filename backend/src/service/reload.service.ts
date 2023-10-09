@@ -110,16 +110,17 @@ export default class ReloadService {
       this.repositoryService.southCacheRepository.deleteAllCacheScanModes(southId);
       const maxInstants = this.repositoryService.southCacheRepository.getLatestMaxInstants(southId);
 
-      if (!maxInstants) return;
-      const latestInstant = maxInstants.values().next().value as Instant;
-      const southItems = this.repositoryService.southItemRepository.getSouthItems(southId);
-      for (const item of southItems) {
-        this.repositoryService.southCacheRepository.createOrUpdateCacheScanMode({
-          southId,
-          itemId: command.history.maxInstantPerItem ? item.id : 'all', // When max instant per item is disabled, we use 'all' as item_id
-          scanModeId: item.scanModeId,
-          maxInstant: maxInstants.get(item.scanModeId) || latestInstant
-        });
+      if (maxInstants) {
+        const latestInstant = maxInstants.values().next().value as Instant;
+        const southItems = this.repositoryService.southItemRepository.getSouthItems(southId);
+        for (const item of southItems) {
+          this.repositoryService.southCacheRepository.createOrUpdateCacheScanMode({
+            southId,
+            itemId: command.history.maxInstantPerItem ? item.id : 'all', // When max instant per item is disabled, we use 'all' as item_id
+            scanModeId: item.scanModeId,
+            maxInstant: maxInstants.get(item.scanModeId) || latestInstant
+          });
+        }
       }
     }
 
