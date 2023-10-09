@@ -1,3 +1,9 @@
+<div class="d-flex flex-row-reverse" *ngIf="errorFilePages?.totalElements">
+  <div [class]="errorFilePages.totalPages > 1 ? 'ms-2' : ''">
+    <oib-pagination [page]="errorFilePages" (pageChanged)="changePage($event)"></oib-pagination>
+  </div>
+</div>
+
 <oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between">
@@ -21,7 +27,7 @@
     </div>
   </ng-template>
 
-  <div class="mb-3" *ngIf="errorFiles.length !== 0; else emptyErrorFiles">
+  <div class="mb-3" *ngIf="errorFilePages?.totalElements !== 0; else emptyErrorFiles">
     <table class="table table-sm table-hover oib-table">
       <thead class="light">
         <tr>
@@ -41,7 +47,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr class="data" *ngFor="let file of errorFiles">
+        <tr class="data" *ngFor="let file of errorFilePages.content">
           <td>
             <input
               type="checkbox"
