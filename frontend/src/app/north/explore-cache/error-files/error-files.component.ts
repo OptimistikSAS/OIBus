@@ -79,6 +79,7 @@ export class ErrorFilesComponent implements OnInit {
         this.checkboxByErrorFiles.set(errorFile.filename, false);
       });
       this.errorFiles = errorFiles;
+      this.changePage(0);
     });
   }
 

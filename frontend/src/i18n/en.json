@@ -511,7 +511,8 @@
       "archive-files-none": "No archived files",
       "file-date": "Modification date",
       "file-size": "Size",
-      "filename": "Filename"
+      "filename": "Filename",
+      "refresh-cache": "Refresh cache"
     },
     "archive-settings": {
       "title": "Archive",
