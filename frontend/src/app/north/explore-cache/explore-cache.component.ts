@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { SaveButtonComponent } from '../../shared/save-button/save-button.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { formDirectives } from '../../shared/form-directives';
@@ -36,6 +36,8 @@ import { ArchiveFilesComponent } from './archive-files/archive-files.component';
 })
 export class ExploreCacheComponent implements OnInit {
   northConnector: NorthConnectorDTO | null = null;
+  @ViewChild(ArchiveFilesComponent) archiveFilesComponent!: ArchiveFilesComponent;
+  @ViewChild(ErrorFilesComponent) errorFilesComponent!: ErrorFilesComponent;
 
   constructor(
     private route: ActivatedRoute,
@@ -56,5 +58,10 @@ export class ExploreCacheComponent implements OnInit {
       .subscribe(northConnector => {
         this.northConnector = northConnector;
       });
+  }
+
+  refreshCache() {
+    this.archiveFilesComponent.refreshArchiveFiles();
+    this.errorFilesComponent.refreshErrorFiles();
   }
 }

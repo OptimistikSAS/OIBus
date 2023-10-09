@@ -79,6 +79,7 @@ export class ArchiveFilesComponent implements OnInit {
         this.checkboxByArchiveFiles.set(archiveFile.filename, false);
       });
       this.archiveFiles = archiveFiles;
+      this.changePage(0);
     });
   }
 
