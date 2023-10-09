@@ -1,7 +1,7 @@
 <div class="oib-padded-container" *ngIf="historyQuery && southManifest && northManifest">
   <div class="row justify-content-center">
     <div class="col-md-10 col-lg-8">
-      <div class="oib-header-container">
+      <div class="oib-header-container mb-3">
         <h1 id="title" translate="history-query.title" [translateParams]="{ name: historyQuery.name }">
           <span class="ms-2">
             <button class="btn btn-primary" id="edit-link" routerLink="edit">
@@ -40,6 +40,10 @@
             </button>
           </span>
         </h1>
+        <span class="ms-3 text-disabled"
+          >ID : {{ historyQuery.id }}
+          <i class="fa fa-copy"></i>
+        </span>
       </div>
 
       <oib-history-metrics

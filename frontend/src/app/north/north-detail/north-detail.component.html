@@ -1,7 +1,7 @@
 <div class="oib-padded-container" *ngIf="northConnector && manifest">
   <div class="row justify-content-center">
     <div class="col-md-10 col-lg-8">
-      <div class="oib-header-container">
+      <div class="oib-header-container mb-3">
         <h1 id="title" translate="north.title" [translateParams]="{ name: northConnector.name, type: manifest.name }">
           <span class="ms-3">
             <button class="btn btn-primary" id="edit-link" routerLink="edit">
@@ -13,6 +13,10 @@
             <i [class]="northConnector.enabled ?  'fa fa-pause' : 'fa fa-play'"></i>
           </button>
         </h1>
+        <span class="ms-3 text-disabled"
+          >ID : {{ northConnector.id }}
+          <i class="fa fa-copy"></i>
+        </span>
       </div>
 
       <!-- North metrics -->
