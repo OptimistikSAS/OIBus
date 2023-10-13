@@ -61,7 +61,7 @@ export class ExploreCacheComponent implements OnInit {
   }
 
   refreshCache() {
-    this.archiveFilesComponent.refreshArchiveFiles();
     this.errorFilesComponent.refreshErrorFiles();
+    this.archiveFilesComponent.refreshArchiveFiles();
   }
 }
