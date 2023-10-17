@@ -143,6 +143,18 @@ export class NorthConnectorService {
     return this.http.delete<void>(`/api/north/${northId}/cache/file-errors/remove-all`);
   }
 
+  getNorthConnectorCacheFiles(northId: string): Observable<Array<NorthCacheFiles>> {
+    return this.http.get<Array<NorthCacheFiles>>(`/api/north/${northId}/cache/files`);
+  }
+
+  removeNorthConnectorCacheFiles(northId: string, filenames: Array<string>): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/cache/files/remove`, filenames);
+  }
+
+  archiveNorthConnectorCacheFiles(northId: string, filenames: Array<string>): Observable<void> {
+    return this.http.post<void>(`/api/north/${northId}/cache/files/archive`, filenames);
+  }
+
   getNorthConnectorCacheArchiveFiles(northId: string): Observable<Array<NorthCacheFiles>> {
     return this.http.get<Array<NorthCacheFiles>>(`/api/north/${northId}/cache/archive-files`);
   }

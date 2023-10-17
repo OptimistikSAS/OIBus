@@ -14,9 +14,9 @@ import { emptyPage } from 'src/app/shared/test-utils';
 import { FileTableComponent, FileTableData } from '../file-table/file-table.component';
 
 @Component({
-  selector: 'oib-archive-files',
-  templateUrl: './archive-files.component.html',
-  styleUrls: ['./archive-files.component.scss'],
+  selector: 'oib-cache-files',
+  templateUrl: './cache-files.component.html',
+  styleUrls: ['./cache-files.component.scss'],
   imports: [
     ...formDirectives,
     TranslateModule,
@@ -33,40 +33,40 @@ import { FileTableComponent, FileTableData } from '../file-table/file-table.comp
   ],
   standalone: true
 })
-export class ArchiveFilesComponent implements OnInit {
+export class CacheFilesComponent implements OnInit {
   @Input() northConnector: NorthConnectorDTO | null = null;
-  archiveFiles: Array<NorthCacheFiles> = [];
+  cacheFiles: Array<NorthCacheFiles> = [];
   @ViewChild('fileTable') fileTable!: FileTableComponent;
   fileTablePages = emptyPage<FileTableData>();
 
   constructor(private northConnectorService: NorthConnectorService) {}
 
   ngOnInit() {
-    this.northConnectorService.getNorthConnectorCacheArchiveFiles(this.northConnector!.id).subscribe(archiveFiles => {
-      this.archiveFiles = archiveFiles;
-      this.refreshArchiveFiles();
+    this.northConnectorService.getNorthConnectorCacheFiles(this.northConnector!.id).subscribe(cacheFiles => {
+      this.cacheFiles = cacheFiles;
+      this.refreshCacheFiles();
     });
   }
 
-  retryArchiveFiles() {
-    const files = this.archiveFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
-    this.northConnectorService.retryNorthConnectorCacheArchiveFiles(this.northConnector!.id, files).subscribe(() => {
-      this.refreshArchiveFiles();
+  archiveCacheFiles() {
+    const files = this.cacheFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
+    this.northConnectorService.archiveNorthConnectorCacheFiles(this.northConnector!.id, files).subscribe(() => {
+      this.refreshCacheFiles();
     });
   }
 
-  removeArchiveFiles() {
-    const files = this.archiveFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
-    this.northConnectorService.removeNorthConnectorCacheArchiveFiles(this.northConnector!.id, files).subscribe(() => {
-      this.refreshArchiveFiles();
+  removeCacheFiles() {
+    const files = this.cacheFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
+    this.northConnectorService.removeNorthConnectorCacheFiles(this.northConnector!.id, files).subscribe(() => {
+      this.refreshCacheFiles();
     });
   }
 
-  refreshArchiveFiles() {
-    this.northConnectorService.getNorthConnectorCacheArchiveFiles(this.northConnector!.id).subscribe(archiveFiles => {
-      this.archiveFiles = archiveFiles;
+  refreshCacheFiles() {
+    this.northConnectorService.getNorthConnectorCacheFiles(this.northConnector!.id).subscribe(cacheFiles => {
+      this.cacheFiles = cacheFiles;
       if (this.fileTable) {
-        this.fileTable.refreshTable(archiveFiles);
+        this.fileTable.refreshTable(cacheFiles);
         this.fileTablePages = this.fileTable.pages;
       }
     });

@@ -520,7 +520,10 @@
       "file-date": "Modification date",
       "file-size": "Size",
       "filename": "Filename",
-      "refresh-cache": "Refresh cache"
+      "refresh-cache": "Refresh cache",
+      "cache-files": "Cache files",
+      "cache-files-none": "No cache files",
+      "archive-selected-files": "Archive selected files"
     },
     "archive-settings": {
       "title": "Archive",

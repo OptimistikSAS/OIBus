@@ -14,6 +14,7 @@ import { OIBusDataValue, OIBusError } from '../../../shared/model/engine.model';
 import { ExternalSubscriptionDTO, SubscriptionDTO } from '../../../shared/model/subscription.model';
 import { DateTime } from 'luxon';
 import { PassThrough } from 'node:stream';
+import path from 'node:path';
 import { HandlesFile, HandlesValues } from './north-interface';
 import NorthConnectorMetricsService from '../service/north-connector-metrics.service';
 import { NorthSettings } from '../../../shared/model/north-settings.model';
@@ -460,6 +461,32 @@ export default class NorthConnector<T extends NorthSettings = any> {
   async retryAllErrorFiles(): Promise<void> {
     this.logger.trace(`Retrying all error files in North connector "${this.connector.name}"...`);
     await this.fileCacheService.retryAllErrorFiles();
+  }
+
+  /**
+   * Get list of cache files. Dates are in ISO format
+   */
+  async getCacheFiles(fromDate: string, toDate: string, fileNameContains: string): Promise<Array<NorthCacheFiles>> {
+    return await this.fileCacheService.getCacheFiles(fromDate, toDate, fileNameContains);
+  }
+
+  /**
+   * Remove cache files.
+   */
+  async removeCacheFiles(filenames: Array<string>): Promise<void> {
+    this.logger.trace(`Removing ${filenames.length} cache files from North connector "${this.connector.name}"...`);
+    await this.fileCacheService.removeFiles(this.fileCacheService.fileFolder, filenames);
+  }
+
+  /**
+   * Move cache files into archive.
+   */
+  async archiveCacheFiles(filenames: Array<string>): Promise<void> {
+    this.logger.trace(`Moving ${filenames.length} cache files into archive from North connector "${this.connector.name}"...`);
+    filenames.forEach(async filename => {
+      await this.archiveService.archiveOrRemoveFile(path.join(this.fileCacheService.fileFolder, filename));
+      this.fileCacheService.removeFileFromQueue(path.join(this.fileCacheService.fileFolder, filename));
+    });
   }
 
   /**

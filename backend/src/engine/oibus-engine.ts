@@ -281,6 +281,18 @@ export default class OIBusEngine extends BaseEngine {
     await this.northConnectors.get(northId)?.retryAllErrorFiles();
   }
 
+  async getCacheFiles(northId: string, start: Instant, end: Instant, fileNameContains: string) {
+    return (await this.northConnectors.get(northId)?.getCacheFiles(start, end, fileNameContains)) || [];
+  }
+
+  async removeCacheFiles(northId: string, filenames: Array<string>): Promise<void> {
+    await this.northConnectors.get(northId)?.removeCacheFiles(filenames);
+  }
+
+  async archiveCacheFiles(northId: string, filenames: Array<string>): Promise<void> {
+    await this.northConnectors.get(northId)?.archiveCacheFiles(filenames);
+  }
+
   async getArchiveFiles(northId: string, start: Instant, end: Instant, fileNameContains: string) {
     return (await this.northConnectors.get(northId)?.getArchiveFiles(start, end, fileNameContains)) || [];
   }

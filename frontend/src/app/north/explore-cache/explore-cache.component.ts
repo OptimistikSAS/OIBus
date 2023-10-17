@@ -13,6 +13,7 @@ import { BackNavigationDirective } from '../../shared/back-navigation.directives
 import { FileSizePipe } from '../../shared/file-size.pipe';
 import { ErrorFilesComponent } from './error-files/error-files.component';
 import { ArchiveFilesComponent } from './archive-files/archive-files.component';
+import { CacheFilesComponent } from './cache-files/cache-files.component';
 
 @Component({
   selector: 'oib-explore-cache',
@@ -30,7 +31,8 @@ import { ArchiveFilesComponent } from './archive-files/archive-files.component';
     FileSizePipe,
     RouterLink,
     ErrorFilesComponent,
-    ArchiveFilesComponent
+    ArchiveFilesComponent,
+    CacheFilesComponent
   ],
   standalone: true
 })
@@ -38,6 +40,7 @@ export class ExploreCacheComponent implements OnInit {
   northConnector: NorthConnectorDTO | null = null;
   @ViewChild(ArchiveFilesComponent) archiveFilesComponent!: ArchiveFilesComponent;
   @ViewChild(ErrorFilesComponent) errorFilesComponent!: ErrorFilesComponent;
+  @ViewChild(CacheFilesComponent) cacheFilesComponent!: CacheFilesComponent;
 
   constructor(
     private route: ActivatedRoute,
@@ -63,5 +66,6 @@ export class ExploreCacheComponent implements OnInit {
   refreshCache() {
     this.errorFilesComponent.refreshErrorFiles();
     this.archiveFilesComponent.refreshArchiveFiles();
+    this.cacheFilesComponent.refreshCacheFiles();
   }
 }

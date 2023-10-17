@@ -117,6 +117,10 @@ router.delete('/api/north/:northId/cache/file-errors/retry-all', (ctx: KoaContex
   northConnectorController.retryAllErrorFiles(ctx)
 );
 
+router.get('/api/north/:northId/cache/files', (ctx: KoaContext<any, any>) => northConnectorController.getCacheFiles(ctx));
+router.post('/api/north/:northId/cache/files/remove', (ctx: KoaContext<any, any>) => northConnectorController.removeCacheFiles(ctx));
+router.post('/api/north/:northId/cache/files/archive', (ctx: KoaContext<any, any>) => northConnectorController.archiveCacheFiles(ctx));
+
 router.get('/api/north/:northId/cache/archive-files', (ctx: KoaContext<any, any>) => northConnectorController.getArchiveFiles(ctx));
 router.post('/api/north/:northId/cache/archive-files/remove', (ctx: KoaContext<any, any>) =>
   northConnectorController.removeArchiveFiles(ctx)

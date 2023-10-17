@@ -28,4 +28,9 @@ export default class FileCacheServiceMock {
     on: jest.fn(),
     emit: jest.fn()
   } as unknown as EventEmitter;
+  getCacheFiles = jest.fn(() => [
+    { filename: 'file4.name', modificationDate: '', size: 1 },
+    { filename: 'file5.name', modificationDate: '', size: 2 },
+    { filename: 'file6.name', modificationDate: '', size: 3 }
+  ]);
 }

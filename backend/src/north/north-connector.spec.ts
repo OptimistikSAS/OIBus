@@ -20,6 +20,7 @@ import { OIBusDataValue } from '../../../shared/model/engine.model';
 
 // Mock fs
 jest.mock('node:fs/promises');
+jest.mock('node:path');
 
 const getValuesToSendMock = jest.fn();
 const getFileToSend = jest.fn();
@@ -373,6 +374,27 @@ describe('NorthConnector enabled', () => {
   it('should retry all error files', async () => {
     await north.retryAllErrorFiles();
     expect(logger.trace).toHaveBeenCalledWith(`Retrying all error files in North connector "${configuration.name}"...`);
+  });
+
+  it('should get cache files', async () => {
+    const result = await north.getCacheFiles('2022-11-11T11:11:11.111Z', '2022-11-12T11:11:11.111Z', 'file');
+    expect(result).toEqual([
+      { filename: 'file4.name', modificationDate: '', size: 1 },
+      { filename: 'file5.name', modificationDate: '', size: 2 },
+      { filename: 'file6.name', modificationDate: '', size: 3 }
+    ]);
+  });
+
+  it('should remove cache files', async () => {
+    const files = ['file4.name', 'file5.name', 'file6.name'];
+    await north.removeCacheFiles(files);
+    expect(logger.trace).toHaveBeenCalledWith(`Removing 3 cache files from North connector "${configuration.name}"...`);
+  });
+
+  it('should archive cache files', async () => {
+    const files = ['file4.name', 'file5.name', 'file6.name'];
+    await north.archiveCacheFiles(files);
+    expect(logger.trace).toHaveBeenCalledWith(`Moving 3 cache files into archive from North connector "${configuration.name}"...`);
   });
 
   it('should get archive files', async () => {
