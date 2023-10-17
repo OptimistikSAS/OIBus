@@ -113,7 +113,7 @@
     "@types/object-path": "0.11.2",
     "@types/oracledb": "6.0.1",
     "@types/papaparse": "5.3.9",
-    "@types/pg": "8.10.3",
+    "@types/pg": "8.10.5",
     "@types/serialport": "8.0.3",
     "@types/sprintf-js": "1.1.2",
     "@types/ws": "8.5.6",
