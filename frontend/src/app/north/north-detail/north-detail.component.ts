@@ -2,7 +2,8 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { DecimalPipe, NgForOf, NgIf, NgSwitch } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { of, switchMap, tap } from 'rxjs';
+import { ClipboardModule } from '@angular/cdk/clipboard';
+import { combineLatest, of, switchMap, tap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
 import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
@@ -16,9 +17,10 @@ import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { NotificationService } from '../../shared/notification.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { WindowService } from '../../shared/window.service';
-import { NorthConnectorMetrics } from '../../../../../shared/model/engine.model';
+import { NorthConnectorMetrics, OIBusInfo } from '../../../../../shared/model/engine.model';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
 import { ModalService } from '../../shared/modal.service';
+import { EngineService } from '../../services/engine.service';
 
 @Component({
   selector: 'oib-north-detail',
@@ -36,7 +38,8 @@ import { ModalService } from '../../shared/modal.service';
     BoxComponent,
     BoxTitleDirective,
     DurationPipe,
-    EnabledEnumPipe
+    EnabledEnumPipe,
+    ClipboardModule
   ],
   templateUrl: './north-detail.component.html',
   styleUrls: ['./north-detail.component.scss'],
@@ -49,11 +52,13 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   manifest: NorthConnectorManifest | null = null;
   connectorStream: EventSource | null = null;
   connectorMetrics: NorthConnectorMetrics | null = null;
+  oibusInfo: OIBusInfo | null = null;
 
   constructor(
     private windowService: WindowService,
     private northConnectorService: NorthConnectorService,
     private scanModeService: ScanModeService,
+    private engineService: EngineService,
     private notificationService: NotificationService,
     private modalService: ModalService,
     private route: ActivatedRoute,
@@ -61,8 +66,9 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.scanModeService.list().subscribe(scanModes => {
+    combineLatest([this.scanModeService.list(), this.engineService.getInfo()]).subscribe(([scanModes, engineInfo]) => {
       this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
+      this.oibusInfo = engineInfo;
     });
     this.route.paramMap
       .pipe(
@@ -164,5 +170,13 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.connectorStream?.close();
+  }
+
+  onClipboardCopy(result: boolean) {
+    if (result) {
+      this.notificationService.success('north.cache-path-copy.success');
+    } else {
+      this.notificationService.error('north.cache-path-copy.error');
+    }
   }
 }

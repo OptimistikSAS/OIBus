@@ -25,10 +25,12 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { HistoryMetricsComponent } from './history-metrics/history-metrics.component';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
 import { SouthMetricsComponent } from '../../south/south-metrics/south-metrics.component';
-import { HistoryMetrics } from '../../../../../shared/model/engine.model';
+import { HistoryMetrics, OIBusInfo } from '../../../../../shared/model/engine.model';
 import { WindowService } from '../../shared/window.service';
 import { NotificationService } from '../../shared/notification.service';
 import { ObservableState } from '../../shared/save-button/save-button.component';
+import { EngineService } from '../../services/engine.service';
+import { ClipboardModule } from '@angular/cdk/clipboard';
 
 @Component({
   selector: 'oib-history-query-detail',
@@ -50,7 +52,8 @@ import { ObservableState } from '../../shared/save-button/save-button.component'
     ReactiveFormsModule,
     HistoryMetricsComponent,
     SouthMetricsComponent,
-    AsyncPipe
+    AsyncPipe,
+    ClipboardModule
   ],
   templateUrl: './history-query-detail.component.html',
   styleUrls: ['./history-query-detail.component.scss'],
@@ -72,6 +75,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   historyMetrics: HistoryMetrics | null = null;
   historyStream: EventSource | null = null;
   state = new ObservableState();
+  oibusInfo: OIBusInfo | null = null;
 
   constructor(
     private historyQueryService: HistoryQueryService,
@@ -79,6 +83,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     private southConnectorService: SouthConnectorService,
     private notificationService: NotificationService,
     private scanModeService: ScanModeService,
+    private engineService: EngineService,
     protected router: Router,
     private route: ActivatedRoute,
     private windowService: WindowService,
@@ -86,8 +91,9 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    this.scanModeService.list().subscribe(scanModes => {
-      this.scanModes = scanModes;
+    combineLatest([this.scanModeService.list(), this.engineService.getInfo()]).subscribe(([scanModes, engineInfo]) => {
+      this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
+      this.oibusInfo = engineInfo;
     });
     this.route.paramMap
       .pipe(
@@ -190,6 +196,14 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
           this.historyQuery = updatedHistoryQuery;
           this.notificationService.success('history-query.paused', { name: this.historyQuery!.name });
         });
+    }
+  }
+
+  onClipboardCopy(result: boolean) {
+    if (result) {
+      this.notificationService.success('history-query.cache-path-copy.success');
+    } else {
+      this.notificationService.error('history-query.cache-path-copy.error');
     }
   }
 }

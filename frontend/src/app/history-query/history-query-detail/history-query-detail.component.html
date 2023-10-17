@@ -40,9 +40,14 @@
             </button>
           </span>
         </h1>
-        <span class="ms-3 text-disabled"
-          >ID : {{ historyQuery.id }}
-          <i class="fa fa-copy"></i>
+        <span class="text-disabled pull-right me-2">
+          {{ historyQuery.id }}
+          <i
+            class="fa fa-copy"
+            role="button"
+            [cdkCopyToClipboard]="oibusInfo!.dataDirectory + '/cache/history-query/history-' + historyQuery.id"
+            (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
+          ></i>
         </span>
       </div>
 

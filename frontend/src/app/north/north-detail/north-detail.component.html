@@ -13,9 +13,14 @@
             <i [class]="northConnector.enabled ?  'fa fa-pause' : 'fa fa-play'"></i>
           </button>
         </h1>
-        <span class="ms-3 text-disabled"
-          >ID : {{ northConnector.id }}
-          <i class="fa fa-copy"></i>
+        <span class="text-disabled pull-right me-2">
+          {{ northConnector.id }}
+          <i
+            class="fa fa-copy"
+            role="button"
+            [cdkCopyToClipboard]="oibusInfo!.dataDirectory + '/cache/data-stream/north-' + northConnector.id"
+            (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
+          ></i>
         </span>
       </div>
 
