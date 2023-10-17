@@ -10,6 +10,8 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { NotificationService } from '../../shared/notification.service';
+import { EngineService } from '../../services/engine.service';
+import { OIBusInfo } from '../../../../../shared/model/engine.model';
 
 class NorthDetailComponentTester extends ComponentTester<NorthDetailComponent> {
   constructor() {
@@ -33,6 +35,7 @@ describe('NorthDetailComponent', () => {
   let tester: NorthDetailComponentTester;
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
+  let engineService: jasmine.SpyObj<EngineService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
 
   const northConnector: NorthConnectorDTO = {
@@ -58,7 +61,6 @@ describe('NorthDetailComponent', () => {
       retentionDuration: 0
     }
   };
-
   const manifest: NorthConnectorManifest = {
     id: 'oianalytics',
     name: 'OIAnalytics',
@@ -84,11 +86,21 @@ describe('NorthDetailComponent', () => {
       }
     ]
   };
+  const engineInfo: OIBusInfo = {
+    version: '3.0',
+    dataDirectory: 'data-folder',
+    processId: '1234',
+    architecture: 'x64',
+    hostname: 'hostname',
+    binaryDirectory: 'bin-directory',
+    operatingSystem: 'Windows'
+  };
 
   beforeEach(() => {
     northConnectorService = createMock(NorthConnectorService);
     scanModeService = createMock(ScanModeService);
     notificationService = createMock(NotificationService);
+    engineService = createMock(EngineService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -105,6 +117,7 @@ describe('NorthDetailComponent', () => {
         },
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: NotificationService, useValue: notificationService },
+        { provide: EngineService, useValue: engineService },
         { provide: ScanModeService, useValue: scanModeService }
       ]
     });
@@ -113,6 +126,7 @@ describe('NorthDetailComponent', () => {
     northConnectorService.getNorthConnectorTypeManifest.and.returnValue(of(manifest));
     northConnectorService.startNorth.and.returnValue(of(undefined));
     northConnectorService.stopNorth.and.returnValue(of(undefined));
+    engineService.getInfo.and.returnValue(of(engineInfo));
     scanModeService.list.and.returnValue(of([]));
 
     tester = new NorthDetailComponentTester();

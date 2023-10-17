@@ -4,7 +4,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { of, switchMap, tap } from 'rxjs';
+import { combineLatest, of, switchMap, tap } from 'rxjs';
 import { PaginationComponent } from '../../shared/pagination/pagination.component';
 import { PageLoader } from '../../shared/page-loader.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
@@ -16,10 +16,12 @@ import { EnabledEnumPipe } from '../../shared/enabled-enum.pipe';
 import { SouthItemsComponent } from '../south-items/south-items.component';
 import { NotificationService } from '../../shared/notification.service';
 import { BackNavigationDirective } from '../../shared/back-navigation.directives';
-import { SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
+import { OIBusInfo, SouthConnectorMetrics } from '../../../../../shared/model/engine.model';
 import { WindowService } from '../../shared/window.service';
 import { ModalService } from '../../shared/modal.service';
 import { TestConnectionResultModalComponent } from '../../shared/test-connection-result-modal/test-connection-result-modal.component';
+import { EngineService } from '../../services/engine.service';
+import { ClipboardModule } from '@angular/cdk/clipboard';
 
 @Component({
   selector: 'oib-south-detail',
@@ -37,7 +39,8 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
     BoxComponent,
     BoxTitleDirective,
     EnabledEnumPipe,
-    SouthItemsComponent
+    SouthItemsComponent,
+    ClipboardModule
   ],
   templateUrl: './south-detail.component.html',
   styleUrls: ['./south-detail.component.scss'],
@@ -50,6 +53,7 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
   manifest: SouthConnectorManifest | null = null;
   connectorMetrics: SouthConnectorMetrics | null = null;
   connectorStream: EventSource | null = null;
+  oibusInfo: OIBusInfo | null = null;
 
   constructor(
     private windowService: WindowService,
@@ -57,14 +61,16 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
     private scanModeService: ScanModeService,
     private notificationService: NotificationService,
     private modalService: ModalService,
+    private engineService: EngineService,
     protected router: Router,
     private route: ActivatedRoute,
     private cd: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
-    this.scanModeService.list().subscribe(scanModes => {
+    combineLatest([this.scanModeService.list(), this.engineService.getInfo()]).subscribe(([scanModes, engineInfo]) => {
       this.scanModes = scanModes.filter(scanMode => scanMode.id !== 'subscription');
+      this.oibusInfo = engineInfo;
     });
 
     this.route.paramMap
@@ -171,5 +177,13 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.connectorStream?.close();
+  }
+
+  onClipboardCopy(result: boolean) {
+    if (result) {
+      this.notificationService.success('south.cache-path-copy.success');
+    } else {
+      this.notificationService.error('south.cache-path-copy.error');
+    }
   }
 }

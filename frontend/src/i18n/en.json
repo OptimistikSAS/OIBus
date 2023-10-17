@@ -393,6 +393,10 @@
     "disabled": "Disabled",
     "started": "South connector {{ name }} started",
     "stopped": "South connector {{ name }} stopped",
+    "cache-path-copy": {
+      "success": "Cache path copied into clipboard",
+      "error": "Error while copying cache path into clipboard"
+    },
     "history": {
       "settings": "History settings",
       "max-instant-per-item": "Max instant per item",
@@ -484,6 +488,10 @@
     "disabled": "Disabled",
     "started": "North connector {{ name }} started",
     "stopped": "North connector {{ name }} stopped",
+    "cache-path-copy": {
+      "success": "Cache path copied into clipboard",
+      "error": "Error while copying cache path into clipboard"
+    },
     "test-connection": {
       "title": "Testing settings",
       "button": "Test settings",
@@ -600,6 +608,10 @@
     "paused": "History query {{ name }} paused",
     "start": "Start",
     "end": "End",
+    "cache-path-copy": {
+      "success": "Cache path copied into clipboard",
+      "error": "Error while copying cache path into clipboard"
+    },
     "modal": {
       "title": "Create a new history query",
       "create-details": "Import existing connector configurations or create a new one from scratch"

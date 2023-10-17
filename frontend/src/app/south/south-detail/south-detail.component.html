@@ -13,9 +13,14 @@
             <i [class]="southConnector.enabled ?  'fa fa-pause' : 'fa fa-play'"></i>
           </button>
         </h1>
-        <span class="ms-3 text-disabled"
-          >ID : {{ southConnector.id }}
-          <i class="fa fa-copy"></i>
+        <span class="text-disabled pull-right me-2">
+          {{ southConnector.id }}
+          <i
+            class="fa fa-copy"
+            role="button"
+            [cdkCopyToClipboard]="oibusInfo!.dataDirectory + '/cache/data-stream/south-' + southConnector.id"
+            (cdkCopyToClipboardCopied)="onClipboardCopy($event)"
+          ></i>
         </span>
       </div>
 

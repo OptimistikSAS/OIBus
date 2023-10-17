@@ -13,6 +13,8 @@ import { SouthConnectorService } from '../../services/south-connector.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { ScanModeService } from '../../services/scan-mode.service';
+import { OIBusInfo } from '../../../../../shared/model/engine.model';
+import { EngineService } from '../../services/engine.service';
 
 class HistoryQueryDisplayComponentTester extends ComponentTester<HistoryQueryDetailComponent> {
   constructor() {
@@ -42,6 +44,7 @@ describe('HistoryQueryDisplayComponent', () => {
   let northConnectorService: jasmine.SpyObj<NorthConnectorService>;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
+  let engineService: jasmine.SpyObj<EngineService>;
 
   const southManifest: SouthConnectorManifest = {
     id: 'mssql',
@@ -138,12 +141,22 @@ describe('HistoryQueryDisplayComponent', () => {
       retentionDuration: 0
     }
   };
+  const engineInfo: OIBusInfo = {
+    version: '3.0',
+    dataDirectory: 'data-folder',
+    processId: '1234',
+    architecture: 'x64',
+    hostname: 'hostname',
+    binaryDirectory: 'bin-directory',
+    operatingSystem: 'Windows'
+  };
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
     northConnectorService = createMock(NorthConnectorService);
     historyQueryService = createMock(HistoryQueryService);
     scanModeService = createMock(ScanModeService);
+    engineService = createMock(EngineService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -158,6 +171,7 @@ describe('HistoryQueryDisplayComponent', () => {
             }
           })
         },
+        { provide: EngineService, useValue: engineService },
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: HistoryQueryService, useValue: historyQueryService },
@@ -185,6 +199,7 @@ describe('HistoryQueryDisplayComponent', () => {
       ])
     );
     scanModeService.list.and.returnValue(of([]));
+    engineService.getInfo.and.returnValue(of(engineInfo));
 
     tester = new HistoryQueryDisplayComponentTester();
   });

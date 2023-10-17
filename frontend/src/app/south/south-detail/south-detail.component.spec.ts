@@ -11,6 +11,8 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { ScanModeService } from '../../services/scan-mode.service';
+import { OIBusInfo } from '../../../../../shared/model/engine.model';
+import { EngineService } from '../../services/engine.service';
 
 class SouthDisplayComponentTester extends ComponentTester<SouthDetailComponent> {
   constructor() {
@@ -40,6 +42,7 @@ describe('SouthDetailComponent', () => {
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let confirmationService: jasmine.SpyObj<ConfirmationService>;
   let notificationService: jasmine.SpyObj<NotificationService>;
+  let engineService: jasmine.SpyObj<EngineService>;
 
   const manifest: SouthConnectorManifest = {
     id: 'mssql',
@@ -69,7 +72,6 @@ describe('SouthDetailComponent', () => {
       forceMaxInstantPerItem: false
     }
   };
-
   const southConnector: SouthConnectorDTO = {
     id: 'id1',
     type: 'Generic',
@@ -83,12 +85,22 @@ describe('SouthDetailComponent', () => {
     },
     settings: {}
   };
+  const engineInfo: OIBusInfo = {
+    version: '3.0',
+    dataDirectory: 'data-folder',
+    processId: '1234',
+    architecture: 'x64',
+    hostname: 'hostname',
+    binaryDirectory: 'bin-directory',
+    operatingSystem: 'Windows'
+  };
 
   beforeEach(() => {
     southConnectorService = createMock(SouthConnectorService);
     scanModeService = createMock(ScanModeService);
     confirmationService = createMock(ConfirmationService);
     notificationService = createMock(NotificationService);
+    engineService = createMock(EngineService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -106,6 +118,7 @@ describe('SouthDetailComponent', () => {
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: ScanModeService, useValue: scanModeService },
         { provide: ConfirmationService, useValue: confirmationService },
+        { provide: EngineService, useValue: engineService },
         { provide: NotificationService, useValue: notificationService }
       ]
     });
@@ -120,7 +133,7 @@ describe('SouthDetailComponent', () => {
         }
       ])
     );
-
+    engineService.getInfo.and.returnValue(of(engineInfo));
     southConnectorService.get.and.returnValue(of(southConnector));
     southConnectorService.getSouthConnectorTypeManifest.and.returnValue(of(manifest));
     southConnectorService.startSouth.and.returnValue(of(undefined));
