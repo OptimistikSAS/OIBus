@@ -93,7 +93,7 @@
   },
   "optionalDependencies": {
     "odbc": "2.4.8",
-    "oracledb": "6.1.0"
+    "oracledb": "6.2.0"
   },
   "devDependencies": {
     "@types/basic-auth": "1.1.4",
