@@ -1,0 +1,35 @@
+<div class="d-flex flex-row-reverse" *ngIf="fileTablePages.totalElements">
+  <div [class]="fileTablePages.totalPages > 1 ? 'ms-2' : ''">
+    <oib-pagination [page]="fileTablePages" (pageChanged)="fileTable.changePage($event)"></oib-pagination>
+  </div>
+</div>
+
+<oib-box>
+  <ng-template oibBoxTitle>
+    <div class="d-flex justify-content-between">
+      <span translate="north.cache-settings.cache-files"></span>
+      <div *ngIf="cacheFiles.length !== 0">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm oib-box-btn me-1"
+          (click)="archiveCacheFiles()"
+          translate="north.cache-settings.archive-selected-files"
+          id="archive-selected-files"
+        ></button>
+        <button
+          type="button"
+          class="btn btn-primary btn-sm oib-box-btn"
+          (click)="removeCacheFiles()"
+          translate="north.cache-settings.remove-selected-files"
+          id="remove-selected-files"
+        ></button>
+      </div>
+    </div>
+  </ng-template>
+
+  <oib-file-table #fileTable [files]="cacheFiles" *ngIf="cacheFiles?.length !== 0; else emptyCacheFiles"></oib-file-table>
+</oib-box>
+
+<ng-template #emptyCacheFiles>
+  <div class="mb-3 oib-grey-container" translate="north.cache-settings.cache-files-none"></div>
+</ng-template>

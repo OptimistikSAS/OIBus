@@ -214,6 +214,32 @@ describe('NorthConnectorService', () => {
     expect(done).toBe(true);
   });
 
+  it('should get cache files', () => {
+    let expectedNorthCacheFiles: Array<NorthCacheFiles> | null = null;
+    const northCacheFiles: Array<NorthCacheFiles> = [];
+
+    service.getNorthConnectorCacheFiles('id1').subscribe(c => (expectedNorthCacheFiles = c));
+
+    http.expectOne({ url: '/api/north/id1/cache/files', method: 'GET' }).flush(northCacheFiles);
+    expect(expectedNorthCacheFiles!).toEqual(northCacheFiles);
+  });
+
+  it('should remove listed cache files', () => {
+    let done = false;
+    service.removeNorthConnectorCacheFiles('id1', ['file1', 'file2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/files/remove' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should archive listed cache files', () => {
+    let done = false;
+    service.archiveNorthConnectorCacheFiles('id1', ['file1', 'file2']).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'POST', url: '/api/north/id1/cache/files/archive' });
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
   it('should get archive files', () => {
     let expectedNorthArchiveFiles: Array<NorthArchiveFiles> | null = null;
     const northArchiveFiles: Array<NorthArchiveFiles> = [];

@@ -285,6 +285,26 @@ describe('FileCache', () => {
     expect(noMoreFile).toBeNull();
   });
 
+  it('should properly remove a specific file from queue', async () => {
+    (fs.stat as jest.Mock).mockImplementation(() => ({ size: 123 }));
+
+    const noFile = cache.getFileToSend();
+
+    expect(noFile).toBeNull();
+
+    await cache.cacheFile('myFile1.csv');
+    await cache.cacheFile('myFile2.csv');
+    await cache.cacheFile('myFile3.csv');
+    await cache.cacheFile('myFile4.csv');
+
+    cache.removeFileFromQueue(path.resolve('myCacheFolder', 'files', 'myFile3-1580608922222.csv'));
+    expect(cache['filesQueue']).toEqual([
+      path.resolve('myCacheFolder', 'files', 'myFile1-1580608922222.csv'),
+      path.resolve('myCacheFolder', 'files', 'myFile2-1580608922222.csv'),
+      path.resolve('myCacheFolder', 'files', 'myFile4-1580608922222.csv')
+    ]);
+  });
+
   it('should properly get error files', async () => {
     (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2', 'file3', 'anotherFile', 'errorFile']);
     (fs.stat as jest.Mock)
@@ -303,7 +323,11 @@ describe('FileCache', () => {
       { filename: 'file2', modificationDate: '2020-02-02T06:02:02.222Z' }
     ]);
     expect(logger.error).toHaveBeenCalledWith(
-      `Error while reading in error folder file stats "${path.resolve('myCacheFolder', 'files-errors', 'errorFile')}": Error: error file`
+      `Error while reading in files-errors folder file stats "${path.resolve(
+        'myCacheFolder',
+        'files-errors',
+        'errorFile'
+      )}": Error: error file`
     );
   });
 
@@ -325,6 +349,57 @@ describe('FileCache', () => {
       .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis(), size: 60 });
 
     const files = await cache.getErrorFiles('', '', '');
+
+    expect(files).toEqual([
+      { filename: 'file1', modificationDate: '2000-02-02T02:02:02.222Z', size: 100 },
+      {
+        filename: 'file2',
+        modificationDate: '2030-02-02T02:02:02.222Z',
+        size: 60
+      }
+    ]);
+  });
+
+  it('should properly get cache files', async () => {
+    (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2', 'file3', 'anotherFile', 'errorFile']);
+    (fs.stat as jest.Mock)
+      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T04:02:02.222Z').toMillis() }))
+      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-02T06:02:02.222Z').toMillis() }))
+      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-04T02:02:02.222Z').toMillis() }))
+      .mockImplementationOnce(() => ({ mtimeMs: DateTime.fromISO('2020-02-05T02:02:02.222Z').toMillis() }))
+      .mockImplementationOnce(() => {
+        throw new Error('error file');
+      });
+
+    const files = await cache.getCacheFiles('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
+
+    expect(files).toEqual([
+      { filename: 'file1', modificationDate: '2020-02-02T04:02:02.222Z' },
+      { filename: 'file2', modificationDate: '2020-02-02T06:02:02.222Z' }
+    ]);
+    expect(logger.error).toHaveBeenCalledWith(
+      `Error while reading in files folder file stats "${path.resolve('myCacheFolder', 'files', 'errorFile')}": Error: error file`
+    );
+  });
+
+  it('should properly get cache files', async () => {
+    (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
+    (fs.stat as jest.Mock)
+      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis() })
+      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis() });
+
+    const files = await cache.getCacheFiles('2020-02-02T02:02:02.222Z', '2020-02-03T02:02:02.222Z', 'file');
+
+    expect(files).toEqual([]);
+  });
+
+  it('should properly get cache files without filtering', async () => {
+    (fs.readdir as jest.Mock).mockImplementation(() => ['file1', 'file2']);
+    (fs.stat as jest.Mock)
+      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2000-02-02T02:02:02.222Z').toMillis(), size: 100 })
+      .mockReturnValueOnce({ mtimeMs: DateTime.fromISO('2030-02-02T02:02:02.222Z').toMillis(), size: 60 });
+
+    const files = await cache.getCacheFiles('', '', '');
 
     expect(files).toEqual([
       { filename: 'file1', modificationDate: '2000-02-02T02:02:02.222Z', size: 100 },
