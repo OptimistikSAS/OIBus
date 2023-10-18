@@ -539,8 +539,8 @@ val-errors > div {
   margin-right: 0.6rem;
 }
 
-// Dot to express the status of a connector
-// Active & Running
+// Dot to express the status of a connector North/south & historyQuery & logs
+// Active & Running & Info
 .green-dot {
   width: 1rem;
   height: 1rem;
@@ -550,7 +550,7 @@ val-errors > div {
   margin-bottom: auto;
 }
 
-// Aborted
+// Aborted & Error
 .red-dot {
   width: 1rem;
   height: 1rem;
@@ -560,7 +560,7 @@ val-errors > div {
   margin-bottom: auto;
 }
 
-// Pause
+// Pause & Warning
 .yellow-dot {
   width: 1rem;
   height: 1rem;
@@ -570,17 +570,17 @@ val-errors > div {
   margin-bottom: auto;
 }
 
-// Finished
-.dark-green-dot {
+// Finished & Debug
+.blue-dot {
   width: 1rem;
   height: 1rem;
   border-radius: 1rem;
-  background-color: #006400;
+  background-color: #2478BE;
   margin-top: auto;
   margin-bottom: auto;
 }
 
-// Disabled & Pending
+// Disabled & Pending & trace
 .grey-dot {
   width: 1rem;
   height: 1rem;
