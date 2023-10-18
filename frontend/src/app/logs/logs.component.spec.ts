@@ -98,13 +98,11 @@ describe('LogsComponent', () => {
     expect(tester.logs.length).toBe(2);
 
     expect(tester.logs[0].elements('td').length).toBe(5);
-    expect(tester.logs[0].elements('td')[0]).toContainText('Error');
     expect(tester.logs[0].elements('td')[1]).toContainText('1 Jan 2023, 01:00:00');
     expect(tester.logs[0].elements('td')[2]).toContainText('Data stream engine');
     expect(tester.logs[0].elements('td')[3]).toHaveText('');
     expect(tester.logs[0].elements('td')[4]).toContainText('my log 1');
 
-    expect(tester.logs[1].elements('td')[0]).toContainText('Error');
     expect(tester.logs[1].elements('td')[1]).toContainText('2 Jan 2023, 01:00:00');
     expect(tester.logs[1].elements('td')[2]).toContainText('South');
     expect(tester.logs[1].elements('td')[3]).toContainText('My South');

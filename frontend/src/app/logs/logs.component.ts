@@ -36,6 +36,7 @@ import { ScopeTypesEnumPipe } from '../shared/scope-types-enum.pipe';
 import { TYPEAHEAD_DEBOUNCE_TIME } from '../shared/typeahead';
 import { NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { PillComponent } from '../shared/pill/pill.component';
+import { LegendComponent } from '../shared/legend/legend.component';
 
 @Component({
   selector: 'oib-logs',
@@ -53,7 +54,8 @@ import { PillComponent } from '../shared/pill/pill.component';
     DatetimePipe,
     ScopeTypesEnumPipe,
     NgbTypeahead,
-    PillComponent
+    PillComponent,
+    LegendComponent
   ],
   templateUrl: './logs.component.html',
   styleUrls: ['./logs.component.scss'],
@@ -72,6 +74,15 @@ export class LogsComponent implements OnInit, OnDestroy {
     },
     { validators: [ascendingDates] }
   );
+
+  readonly LEGEND = [
+    { label: 'enums.log-levels.error', class: 'red-dot' },
+    { label: 'enums.log-levels.warn', class: 'yellow-dot' },
+    { label: 'enums.log-levels.info', class: 'green-dot' },
+    { label: 'enums.log-levels.debug', class: 'blue-dot' },
+    { label: 'enums.log-levels.trace', class: 'grey-dot' }
+  ];
+
   searchParams: LogSearchParam | null = null;
   readonly levels = LOG_LEVELS.filter(level => level !== 'silent');
   readonly scopeTypes = SCOPE_TYPES;
@@ -180,5 +191,13 @@ export class LogsComponent implements OnInit, OnDestroy {
 
   removeScope(scopeToRemove: Scope) {
     this.selectedScopes = this.selectedScopes.filter(scope => scope.scopeId !== scopeToRemove.scopeId);
+  }
+
+  getLevelClass(logLevel: LogLevel): string {
+    const foundElement = this.LEGEND.find(element => element.label === `enums.log-levels.${logLevel}`);
+    if (foundElement) {
+      return foundElement.class;
+    }
+    return 'red-dot';
   }
 }

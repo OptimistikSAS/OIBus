@@ -61,7 +61,7 @@ export class HistoryQueryListComponent implements OnInit {
     { label: 'enums.status.PENDING', class: 'grey-dot' },
     { label: 'enums.status.RUNNING', class: 'green-dot' },
     { label: 'enums.status.PAUSED', class: 'yellow-dot' },
-    { label: 'enums.status.FINISHED', class: 'dark-green-dot' },
+    { label: 'enums.status.FINISHED', class: 'blue-dot' },
     { label: 'enums.status.ABORTED', class: 'red-dot' }
   ];
 
