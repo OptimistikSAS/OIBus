@@ -24,7 +24,7 @@ class TestComponentTester extends ComponentTester<TestComponent> {
   }
 
   get content() {
-    return this.element('.oib-box-content');
+    return this.element('.box-content');
   }
 }
 
