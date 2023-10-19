@@ -37,6 +37,7 @@ export class BoxTitleDirective {
 export class BoxComponent implements AfterContentInit {
   @Input() boxTitle = '';
   titleTemplateRef: TemplateRef<void> | null = null;
+  removePadding = false;
   @Input() imagePath = '';
 
   @ViewChild('boxContent', { static: true }) boxContent: ElementRef<any> | undefined;
@@ -58,26 +59,11 @@ export class BoxComponent implements AfterContentInit {
       const multipleContentElement = contentElement.querySelector('oib-form');
       const normalContentElement = contentElement.querySelector('.row');
 
-      contentElement.classList.remove('has-empty-div', 'has-table', 'has-alert-warning', 'has-grey-container'); // Deletes the existing class
-
-      if (tableElement) {
-        contentElement.classList.add('has-table');
-      }
-      if (emptyDivElements.length <= 0) {
-        contentElement.classList.add('has-empty-div');
-      }
-      if (alertWarningElement) {
-        contentElement.classList.add('has-alert-warning');
-      }
-      if (greyContainerElement) {
-        contentElement.classList.add('has-grey-container');
-      }
-      if (multipleContentElement) {
-        contentElement.classList.add('oib-box-content');
-        contentElement.classList.remove('has-grey-container');
+      if (tableElement || emptyDivElements.length <= 0 || alertWarningElement || greyContainerElement || multipleContentElement) {
+        this.removePadding = true;
       }
       if (normalContentElement) {
-        contentElement.classList.add('oib-box-content');
+        this.removePadding = false;
       }
     }
   }

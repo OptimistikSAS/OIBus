@@ -10,7 +10,7 @@
       </ng-template>
     </div>
   </div>
-  <div class="oib-box-content" #boxContent>
+  <div [class]="removePadding ? 'p-0 box-content' : 'px-2 py-1 box-content'" #boxContent>
     <ng-content></ng-content>
   </div>
 </div>
