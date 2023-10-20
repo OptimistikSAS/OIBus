@@ -95,6 +95,14 @@ schema.form = {
     defaultValue: 3600,
     help: <div>Split the time interval into smaller intervals of this duration (in s).</div>,
   },
+  overlap: {
+    type: 'OibInteger',
+    newRow: false,
+    label: 'Overlap (ms)',
+    md: 2,
+    valid: minValue(0),
+    defaultValue: 0,
+  },
   readIntervalDelay: {
     type: 'OibInteger',
     label: 'Read interval delay (ms)',
