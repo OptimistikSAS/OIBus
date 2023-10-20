@@ -72,6 +72,7 @@ describe('SouthOPCUAHA', () => {
         readIntervalDelay: 200,
         maxReturnValues: 1000,
         readTimeout: 180000,
+        overlap: 60000,
         username: '',
         password: '',
         securityMode: 'None',
@@ -548,7 +549,10 @@ describe('SouthOPCUAHA', () => {
     south.addValues = jest.fn()
     south.formatAndSendValues = jest.fn()
 
-    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, new Date(), new Date())
+    const startTime = new Date('2020-01-01T00:00:00.000Z')
+    const endTime = new Date('2021-01-01T00:00:00.000Z')
+
+    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, startTime, endTime)
 
     const expectedOptions = {
       timeout: configuration.settings.readTimeout,
@@ -557,57 +561,105 @@ describe('SouthOPCUAHA', () => {
     const expectedNodes = [{ nodeId: 'ns=3;s=Random', pointId: 'Random', scanMode: 'every10Second' }]
 
     expect(south.readHistoryValue).toBeCalledTimes(1)
-    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions, 'every10Second')
+    expect(south.readHistoryValue).toHaveBeenCalledWith(
+      expectedNodes,
+      new Date('2019-12-31T23:59:00.000Z'),
+      endTime,
+      expectedOptions,
+      'every10Second',
+    )
 
     south.readHistoryValue.mockReturnValue(Promise.resolve([{}]))
     south.scanGroups[0].resampling = 'Second'
     south.scanGroups[0].aggregate = 'Average'
     expectedOptions.aggregateFn = AggregateFunction.Average
     expectedOptions.processingInterval = 1000
-    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, new Date(), new Date())
-    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions, 'every10Second')
+    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, startTime, endTime)
+    expect(south.readHistoryValue).toHaveBeenCalledWith(
+      expectedNodes,
+      new Date('2019-12-31T23:59:00.000Z'),
+      endTime,
+      expectedOptions,
+      'every10Second',
+    )
 
     south.scanGroups[0].resampling = '10 Seconds'
     south.scanGroups[0].aggregate = 'Minimum'
     expectedOptions.aggregateFn = AggregateFunction.Minimum
     expectedOptions.processingInterval = 1000 * 10
-    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, new Date(), new Date())
-    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions, 'every10Second')
+    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, startTime, endTime)
+    expect(south.readHistoryValue).toHaveBeenCalledWith(
+      expectedNodes,
+      new Date('2019-12-31T23:59:00.000Z'),
+      endTime,
+      expectedOptions,
+      'every10Second',
+    )
 
     south.scanGroups[0].resampling = '30 Seconds'
     south.scanGroups[0].aggregate = 'Maximum'
     expectedOptions.aggregateFn = AggregateFunction.Maximum
     expectedOptions.processingInterval = 1000 * 30
-    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, new Date(), new Date())
-    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions, 'every10Second')
+    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, startTime, endTime)
+    expect(south.readHistoryValue).toHaveBeenCalledWith(
+      expectedNodes,
+      new Date('2019-12-31T23:59:00.000Z'),
+      endTime,
+      expectedOptions,
+      'every10Second',
+    )
 
     south.scanGroups[0].resampling = 'Minute'
     south.scanGroups[0].aggregate = 'Count'
     expectedOptions.aggregateFn = AggregateFunction.Count
     expectedOptions.processingInterval = 1000 * 60
-    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, new Date(), new Date())
-    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions, 'every10Second')
+    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, startTime, endTime)
+    expect(south.readHistoryValue).toHaveBeenCalledWith(
+      expectedNodes,
+      new Date('2019-12-31T23:59:00.000Z'),
+      endTime,
+      expectedOptions,
+      'every10Second',
+    )
 
     south.scanGroups[0].resampling = 'Hour'
     south.scanGroups[0].aggregate = 'Count'
     expectedOptions.aggregateFn = AggregateFunction.Count
     expectedOptions.processingInterval = 1000 * 3600
-    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, new Date(), new Date())
-    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions, 'every10Second')
+    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, startTime, endTime)
+    expect(south.readHistoryValue).toHaveBeenCalledWith(
+      expectedNodes,
+      new Date('2019-12-31T23:59:00.000Z'),
+      endTime,
+      expectedOptions,
+      'every10Second',
+    )
 
     south.scanGroups[0].resampling = 'Day'
     south.scanGroups[0].aggregate = 'Count'
     expectedOptions.aggregateFn = AggregateFunction.Count
     expectedOptions.processingInterval = 1000 * 3600 * 24
-    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, new Date(), new Date())
-    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions, 'every10Second')
+    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, startTime, endTime)
+    expect(south.readHistoryValue).toHaveBeenCalledWith(
+      expectedNodes,
+      new Date('2019-12-31T23:59:00.000Z'),
+      endTime,
+      expectedOptions,
+      'every10Second',
+    )
 
     south.scanGroups[0].resampling = 'Bad resampling'
     south.scanGroups[0].aggregate = 'Bad aggregate'
     expectedOptions.aggregateFn = undefined
     expectedOptions.processingInterval = undefined
-    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, new Date(), new Date())
-    expect(south.readHistoryValue).toHaveBeenCalledWith(expectedNodes, new Date(), new Date(), expectedOptions, 'every10Second')
+    await south.historyQuery(configuration.settings.scanGroups[0].scanMode, startTime, endTime)
+    expect(south.readHistoryValue).toHaveBeenCalledWith(
+      expectedNodes,
+      new Date('2019-12-31T23:59:00.000Z'),
+      endTime,
+      expectedOptions,
+      'every10Second',
+    )
     expect(south.logger.error).toHaveBeenCalledWith('Unsupported resampling: "Bad resampling".')
     expect(south.logger.error).toHaveBeenCalledWith('Unsupported aggregate: "Bad aggregate".')
   })

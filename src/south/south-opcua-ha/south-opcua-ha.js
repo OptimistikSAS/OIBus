@@ -62,6 +62,7 @@ export default class SouthOPCUAHA extends SouthConnector {
       keepSessionAlive,
       certFile,
       keyFile,
+      overlap = 0,
     } = configuration.settings
 
     this.url = url
@@ -77,6 +78,7 @@ export default class SouthOPCUAHA extends SouthConnector {
     this.keepSessionAlive = keepSessionAlive
     this.certFile = certFile
     this.keyFile = keyFile
+    this.overlap = overlap
 
     // Initialized at connection
     this.clientCertificateManager = null
@@ -359,10 +361,12 @@ export default class SouthOPCUAHA extends SouthConnector {
    */
   async historyQuery(scanMode, startTime, endTime) {
     const scanGroup = this.scanGroups.find((item) => item.scanMode === scanMode)
+    const overlappedStartTime = new Date(startTime.valueOf() - this.overlap)
+
     try {
       const nodesToRead = scanGroup.points.map((point) => point)
-      this.logger.debug(`Read from ${startTime.toISOString()} to ${endTime.toISOString()} `
-              + `(${endTime - startTime}ms) ${nodesToRead.length} nodes `
+      this.logger.debug(`Read from ${overlappedStartTime.toISOString()} to ${endTime.toISOString()} `
+              + `(${endTime - overlappedStartTime}ms) ${nodesToRead.length} nodes `
               + `[${nodesToRead[0].nodeId}...${nodesToRead[nodesToRead.length - 1].nodeId}]`)
       const options = {
         timeout: this.readTimeout,
@@ -411,7 +415,7 @@ export default class SouthOPCUAHA extends SouthConnector {
           this.logger.error(`Unsupported aggregate: "${scanGroup.aggregate}".`)
       }
 
-      await this.readHistoryValue(nodesToRead, startTime, endTime, options, scanMode)
+      await this.readHistoryValue(nodesToRead, overlappedStartTime, endTime, options, scanMode)
     } catch (error) {
       if (!this.disconnecting) {
         await this.internalDisconnect()
