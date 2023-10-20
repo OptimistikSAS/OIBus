@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [2.11.0](https://github.com/OptimistikSAS/OIBus/compare/v2.10.0...v2.11.0) (2023-10-20)
+
+
+### Features
+
+* **opcua-ha:** Add overlap setting for OPCUA HA ([3766c5c](https://github.com/OptimistikSAS/OIBus/commit/3766c5ce1b497cfd60e91466244927418bf0187b))
+
 ## [2.10.0](https://github.com/OptimistikSAS/OIBus/compare/v2.9.1...v2.10.0) (2023-09-05)
 
 
