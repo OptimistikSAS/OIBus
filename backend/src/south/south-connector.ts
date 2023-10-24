@@ -153,6 +153,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
   addToQueue(scanMode: ScanModeDTO): void {
     if (this.stopping) {
+      this.logger.trace(`Connector is exiting. Cron "${scanMode.name}" (${scanMode.cron}) not added.`);
       return;
     }
     const foundJob = this.taskJobQueue.find(element => element.id === scanMode.id);
@@ -174,6 +175,23 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     const runStart = DateTime.now();
     this.metricsService!.updateMetrics(this.connector.id, { ...this.metricsService!.metrics, lastRunStart: runStart.toUTC().toISO() });
 
+    if (this.queriesFile()) {
+      try {
+        this.logger.trace(`Querying file for ${items.length} items`);
+        await this.fileQuery(items);
+      } catch (error) {
+        this.logger.error(`Error when calling fileQuery. ${error}`);
+      }
+    }
+    if (this.queriesLastPoint()) {
+      try {
+        this.logger.trace(`Querying points for ${items.length} items`);
+        await this.lastPointQuery(items);
+      } catch (error) {
+        this.logger.error(`Error when calling lastPointQuery. ${error}`);
+      }
+    }
+
     if (this.queriesHistory()) {
       try {
         // By default, retrieve the last hour. If the scan mode has already run, and retrieve a data, the max instant will
@@ -190,22 +208,6 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       } catch (error) {
         this.historyIsRunning = false;
         this.logger.error(`Error when calling historyQuery. ${error}`);
-      }
-    }
-    if (this.queriesFile()) {
-      try {
-        this.logger.trace(`Querying file for ${items.length} items`);
-        await this.fileQuery(items);
-      } catch (error) {
-        this.logger.error(`Error when calling fileQuery. ${error}`);
-      }
-    }
-    if (this.queriesLastPoint()) {
-      try {
-        this.logger.trace(`Querying points for ${items.length} items`);
-        await this.lastPointQuery(items);
-      } catch (error) {
-        this.logger.error(`Error when calling lastPointQuery. ${error}`);
       }
     }
 
@@ -247,11 +249,17 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
     endTime: Instant,
     scanModeId: string
   ): Promise<void> {
-    this.logger.trace(`Querying history for ${items.length} items`);
+    const itemsToRead = this.filterHistoryItems(items);
+    if (!itemsToRead.length) {
+      this.logger.trace('No history items to read. Ignoring historyQuery');
+      return;
+    }
+
+    this.logger.trace(`Querying history for ${itemsToRead.length} items`);
 
     this.historyIsRunning = true;
     if (this.connector.history.maxInstantPerItem) {
-      for (const [index, item] of items.entries()) {
+      for (const [index, item] of itemsToRead.entries()) {
         if (this.stopping) {
           this.logger.debug(`Connector is stopping. Exiting history query at item ${item.name}`);
           this.metricsService!.updateMetrics(this.connector.id, {
@@ -268,7 +276,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         const intervals = generateIntervals(southCache.maxInstant, endTime, this.connector.history.maxReadInterval);
         this.logIntervals(intervals);
         await this.queryIntervals(intervals, [item], southCache, startTime);
-        if (index !== items.length - 1) {
+        if (index !== itemsToRead.length - 1) {
           await delay(this.connector.history.readDelay);
         }
       }
@@ -279,7 +287,7 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
       const intervals = generateIntervals(southCache.maxInstant, endTime, this.connector.history.maxReadInterval);
       this.logIntervals(intervals);
 
-      await this.queryIntervals(intervals, items, southCache, startTime);
+      await this.queryIntervals(intervals, itemsToRead, southCache, startTime);
     }
     this.metricsService!.updateMetrics(this.connector.id, {
       ...this.metricsService!.metrics,
@@ -496,6 +504,10 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
 
   queriesFile(): this is QueriesFile {
     return 'fileQuery' in this;
+  }
+
+  filterHistoryItems(items: Array<SouthConnectorItemDTO>): Array<SouthConnectorItemDTO> {
+    return items;
   }
 
   queriesLastPoint(): this is QueriesLastPoint {
