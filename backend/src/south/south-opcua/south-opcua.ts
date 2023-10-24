@@ -98,7 +98,7 @@ export default class SouthOPCUA
     // It is useful for offline instances of OIBus where downloading openssl is not possible
     clientCertificateManager.state = 2;
 
-    this.logger.trace(`Created OPCUA HA temporary folder for certificates: ${tempCertFolder}`);
+    this.logger.trace(`Created OPCUA temporary folder for certificates: ${tempCertFolder}`);
 
     let session;
     try {
@@ -109,9 +109,9 @@ export default class SouthOPCUA
         'OIBus Connector test'
       );
       session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
-      this.logger.info(`OPCUA HA connected on "${this.connector.settings.url}"`);
+      this.logger.info(`OPCUA connected on "${this.connector.settings.url}"`);
     } catch (error: any) {
-      this.logger.error(`Error while connecting to the OPCUA HA server. ${error}`);
+      this.logger.error(`Error while connecting to the OPCUA server. ${error}`);
       const message = error.message;
 
       if (/BadTcpEndpointUrlInvalid/i.test(message)) {
@@ -148,7 +148,7 @@ export default class SouthOPCUA
       throw new Error('Please check logs');
     } finally {
       await fs.rm(tempCertFolder, { recursive: true, force: true });
-      this.logger.trace('OPCUA HA temporary folder deleted');
+      this.logger.trace('OPCUA temporary folder deleted');
 
       if (session) {
         await session.close();
@@ -157,8 +157,13 @@ export default class SouthOPCUA
     }
   }
 
+  override filterHistoryItems(
+    items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>
+  ): Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>> {
+    return items.filter(item => item.settings.mode === 'HA');
+  }
   /**
-   * Connect to OPCUA_HA server with retry.
+   * Connect to OPCUA server with retry.
    */
   async connectToOpcuaServer(): Promise<void> {
     try {
@@ -169,12 +174,12 @@ export default class SouthOPCUA
         this.connector.id // the id of the connector
       );
 
-      this.logger.debug(`Connecting to OPCUA_HA on ${this.connector.settings.url}`);
+      this.logger.debug(`Connecting to OPCUA on ${this.connector.settings.url}`);
       this.session = await OPCUAClient.createSession(this.connector.settings.url, userIdentity, options);
-      this.logger.info(`OPCUA_HA ${this.connector.name} connected`);
+      this.logger.info(`OPCUA ${this.connector.name} connected`);
       await super.connect();
     } catch (error) {
-      this.logger.error(`Error while connecting to the OPCUA HA server. ${error}`);
+      this.logger.error(`Error while connecting to the OPCUA server. ${error}`);
       await this.disconnect();
       this.reconnectTimeout = setTimeout(this.connectToOpcuaServer.bind(this), this.connector.settings.retryInterval);
     }
@@ -186,37 +191,35 @@ export default class SouthOPCUA
   async historyQuery(items: Array<SouthConnectorItemDTO<SouthOPCUAItemSettings>>, startTime: Instant, endTime: Instant): Promise<Instant> {
     try {
       let maxTimestamp = DateTime.fromISO(startTime).toMillis();
-
       if (!this.session) {
         this.logger.error('OPCUA session not set. The connector cannot read values');
         return startTime;
       }
       const itemsByAggregates = new Map<Aggregate, Map<Resampling | undefined, Array<{ nodeId: string; itemName: string }>>>();
-      items
-        .filter(item => item.settings.mode === 'HA')
-        .forEach(item => {
-          if (!itemsByAggregates.has(item.settings.haMode!.aggregate)) {
-            itemsByAggregates.set(
-              item.settings.haMode!.aggregate,
-              new Map<
-                Resampling,
-                Array<{
-                  nodeId: string;
-                  itemName: string;
-                }>
-              >()
-            );
-          }
-          if (!itemsByAggregates.get(item.settings.haMode!.aggregate!)!.has(item.settings.haMode!.resampling)) {
-            itemsByAggregates
-              .get(item.settings.haMode!.aggregate)!
-              .set(item.settings.haMode!.resampling, [{ itemName: item.name, nodeId: item.settings.nodeId }]);
-          } else {
-            const currentList = itemsByAggregates.get(item.settings.haMode!.aggregate)!.get(item.settings.haMode!.resampling)!;
-            currentList.push({ itemName: item.name, nodeId: item.settings.nodeId });
-            itemsByAggregates.get(item.settings.haMode!.aggregate)!.set(item.settings.haMode!.resampling, currentList);
-          }
-        });
+
+      items.forEach(item => {
+        if (!itemsByAggregates.has(item.settings.haMode!.aggregate)) {
+          itemsByAggregates.set(
+            item.settings.haMode!.aggregate,
+            new Map<
+              Resampling,
+              Array<{
+                nodeId: string;
+                itemName: string;
+              }>
+            >()
+          );
+        }
+        if (!itemsByAggregates.get(item.settings.haMode!.aggregate!)!.has(item.settings.haMode!.resampling)) {
+          itemsByAggregates
+            .get(item.settings.haMode!.aggregate)!
+            .set(item.settings.haMode!.resampling, [{ itemName: item.name, nodeId: item.settings.nodeId }]);
+        } else {
+          const currentList = itemsByAggregates.get(item.settings.haMode!.aggregate)!.get(item.settings.haMode!.resampling)!;
+          currentList.push({ itemName: item.name, nodeId: item.settings.nodeId });
+          itemsByAggregates.get(item.settings.haMode!.aggregate)!.set(item.settings.haMode!.resampling, currentList);
+        }
+      });
 
       for (const [aggregate, aggregatedItems] of itemsByAggregates.entries()) {
         for (const [resampling, resampledItems] of aggregatedItems.entries()) {
@@ -493,23 +496,26 @@ export default class SouthOPCUA
     }
     try {
       if (itemsToRead.length > 1) {
-        this.logger.debug(`Read ${items.length} nodes ` + `[${items[0].settings.nodeId}...${items[items.length - 1].settings.nodeId}]`);
+        this.logger.debug(
+          `Read ${itemsToRead.length} nodes ` +
+            `[${itemsToRead[0].settings.nodeId}...${itemsToRead[itemsToRead.length - 1].settings.nodeId}]`
+        );
       } else {
-        this.logger.debug(`Read node ${items[0].settings.nodeId}`);
+        this.logger.debug(`Read node ${itemsToRead[0].settings.nodeId}`);
       }
 
-      const dataValues = await this.session.read(items.map(item => ({ nodeId: item.settings.nodeId })));
+      const dataValues = await this.session.read(itemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
       if (!dataValues) {
         this.logger.error(`Could not read nodes`);
         return;
       }
-      if (dataValues.length !== items.length) {
-        this.logger.error(`Received ${dataValues.length} node results, requested ${items.length} nodes`);
+      if (dataValues.length !== itemsToRead.length) {
+        this.logger.error(`Received ${dataValues.length} node results, requested ${itemsToRead.length} nodes`);
       }
 
       const timestamp = new Date().toISOString();
       const values = dataValues.map((dataValue, i) => ({
-        pointId: items[i].name,
+        pointId: itemsToRead[i].name,
         timestamp,
         data: {
           value: dataValue.value.value,

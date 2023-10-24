@@ -252,7 +252,7 @@ describe('SouthOPCUA', () => {
     await south.start();
 
     expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(connector.settings.url, expectedUserIdentity, expectedOptions);
-    expect(logger.info).toHaveBeenCalledWith(`OPCUA_HA ${connector.name} connected`);
+    expect(logger.info).toHaveBeenCalledWith(`OPCUA ${connector.name} connected`);
     expect(setTimeoutSpy).not.toHaveBeenCalled();
   });
 
@@ -266,7 +266,7 @@ describe('SouthOPCUA', () => {
     await south.start();
 
     expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), connector.settings.retryInterval);
-    expect(logger.error).toHaveBeenCalledWith(`Error while connecting to the OPCUA HA server. ${new Error('connection error')}`);
+    expect(logger.error).toHaveBeenCalledWith(`Error while connecting to the OPCUA server. ${new Error('connection error')}`);
     await south.disconnect();
   });
 
@@ -504,13 +504,30 @@ describe('SouthOPCUA', () => {
 
     await south.start();
     south.disconnect();
-    await expect(south.historyQuery(items, nowDateString, nowDateString)).rejects.toThrowError('opcua read error');
+    await expect(
+      south.historyQuery(
+        items.filter(item => item.settings.mode === 'HA'),
+        nowDateString,
+        nowDateString
+      )
+    ).rejects.toThrowError('opcua read error');
     expect(south.addValues).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
     await south.start();
-    await expect(south.historyQuery(items, nowDateString, nowDateString)).rejects.toThrowError('opcua read error');
+    await expect(
+      south.historyQuery(
+        items.filter(item => item.settings.mode === 'HA'),
+        nowDateString,
+        nowDateString
+      )
+    ).rejects.toThrowError('opcua read error');
 
     await south.connect();
+  });
+
+  it('should filter HA items', () => {
+    const result = south.filterHistoryItems(items);
+    expect(result).toEqual(items.filter(item => item.settings.mode === 'HA'));
   });
 
   it('should not query items if session is not set', async () => {
@@ -531,13 +548,16 @@ describe('SouthOPCUA', () => {
 
     await south.start();
     await south.lastPointQuery(items);
+    const expectedItemsToRead = items.filter(item => item.settings.mode === 'DA');
+
     expect(logger.debug).toHaveBeenCalledWith(
-      `Read ${items.length} nodes ` + `[${items[0].settings.nodeId}...${items[items.length - 1].settings.nodeId}]`
+      `Read ${expectedItemsToRead.length} nodes ` +
+        `[${expectedItemsToRead[0].settings.nodeId}...${expectedItemsToRead[expectedItemsToRead.length - 1].settings.nodeId}]`
     );
-    expect(read).toHaveBeenCalledWith(items.map(item => ({ nodeId: item.settings.nodeId })));
+    expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
     expect(south.addValues).toHaveBeenCalledWith([
       {
-        pointId: items[0].name,
+        pointId: expectedItemsToRead[0].name,
         timestamp: nowDateString,
         data: {
           value: 1,
@@ -545,7 +565,7 @@ describe('SouthOPCUA', () => {
         }
       },
       {
-        pointId: items[1].name,
+        pointId: expectedItemsToRead[1].name,
         timestamp: nowDateString,
         data: {
           value: 2,
@@ -553,7 +573,7 @@ describe('SouthOPCUA', () => {
         }
       },
       {
-        pointId: items[2].name,
+        pointId: expectedItemsToRead[2].name,
         timestamp: nowDateString,
         data: {
           value: 3,
@@ -578,7 +598,9 @@ describe('SouthOPCUA', () => {
     await south.start();
     south.disconnect();
     await expect(south.lastPointQuery(items)).rejects.toThrowError('opcua read error');
-    expect(read).toHaveBeenCalledWith(items.map(item => ({ nodeId: item.settings.nodeId })));
+    const expectedItemsToRead = items.filter(item => item.settings.mode === 'DA');
+
+    expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
     expect(south.addValues).not.toHaveBeenCalled();
     jest.advanceTimersByTime(1000);
     await south.start();
@@ -621,11 +643,12 @@ describe('SouthOPCUA', () => {
 
     await south.start();
     await south.lastPointQuery(items);
-    expect(logger.error).toHaveBeenCalledWith(`Received 2 node results, requested ${items.length} nodes`);
-    expect(read).toHaveBeenCalledWith(items.map(item => ({ nodeId: item.settings.nodeId })));
+    const expectedItemsToRead = items.filter(item => item.settings.mode === 'DA');
+    expect(logger.error).toHaveBeenCalledWith(`Received 2 node results, requested ${expectedItemsToRead.length} nodes`);
+    expect(read).toHaveBeenCalledWith(expectedItemsToRead.map(item => ({ nodeId: item.settings.nodeId })));
     expect(south.addValues).toHaveBeenCalledWith([
       {
-        pointId: items[0].name,
+        pointId: expectedItemsToRead[0].name,
         timestamp: nowDateString,
         data: {
           value: 1,
@@ -633,7 +656,7 @@ describe('SouthOPCUA', () => {
         }
       },
       {
-        pointId: items[1].name,
+        pointId: expectedItemsToRead[1].name,
         timestamp: nowDateString,
         data: {
           value: 2,
@@ -764,7 +787,7 @@ describe('SouthOPCUA with basic auth', () => {
     await south.connectToOpcuaServer();
 
     expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(connector.settings.url, expectedUserIdentity, expectedOptions);
-    expect(logger.info).toHaveBeenCalledWith(`OPCUA_HA ${connector.name} connected`);
+    expect(logger.info).toHaveBeenCalledWith(`OPCUA ${connector.name} connected`);
   });
 });
 
@@ -831,7 +854,7 @@ describe('SouthOPCUA with certificate', () => {
     await south.connectToOpcuaServer();
 
     expect(nodeOPCUAClient.OPCUAClient.createSession).toHaveBeenCalledWith(connector.settings.url, expectedUserIdentity, expectedOptions);
-    expect(logger.info).toHaveBeenCalledWith(`OPCUA_HA ${connector.name} connected`);
+    expect(logger.info).toHaveBeenCalledWith(`OPCUA ${connector.name} connected`);
     expect(setTimeoutSpy).not.toBeCalled();
   });
 
@@ -985,8 +1008,8 @@ describe('SouthOPCUA test connection', () => {
 
   afterEach(async () => {
     expect((logger.trace as jest.Mock).mock.calls).toEqual([
-      [`Created OPCUA HA temporary folder for certificates: ${tempCertFolder}`],
-      ['OPCUA HA temporary folder deleted']
+      [`Created OPCUA temporary folder for certificates: ${tempCertFolder}`],
+      ['OPCUA temporary folder deleted']
     ]);
   });
 
@@ -999,7 +1022,7 @@ describe('SouthOPCUA test connection', () => {
     expect(close).toHaveBeenCalled();
     expect((logger.info as jest.Mock).mock.calls).toEqual([
       [`Testing connection on "${connector.settings.url}"`],
-      [`OPCUA HA connected on "${connector.settings.url}"`]
+      [`OPCUA connected on "${connector.settings.url}"`]
     ]);
   });
 
@@ -1011,7 +1034,7 @@ describe('SouthOPCUA test connection', () => {
 
     await expect(south.testConnection()).rejects.toThrow(new Error('Please check the URL'));
 
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server. ${error}`]]);
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 
   it.each(securityPolicies)('Server does not support Security policy: %s', async securityPolicy => {
@@ -1024,7 +1047,7 @@ describe('SouthOPCUA test connection', () => {
 
     await expect(south.testConnection()).rejects.toThrow(new Error(`Security Policy "${securityPolicy}" is not supported on the server`));
 
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server. ${error}`]]);
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 
   it.each(securityPolicies.slice(1))('Server did not trust certificate using Security policy: %s', async securityPolicy => {
@@ -1037,7 +1060,7 @@ describe('SouthOPCUA test connection', () => {
 
     await expect(south.testConnection()).rejects.toThrow(new Error('Please check if the OIBus certificate has been trusted by the server'));
 
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server. ${error}`]]);
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 
   it('Wrong user credentials', async () => {
@@ -1050,7 +1073,7 @@ describe('SouthOPCUA test connection', () => {
 
     await expect(south.testConnection()).rejects.toThrow(new Error('Please check username and password'));
 
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server. ${error}`]]);
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 
   it('Wrong certificate', async () => {
@@ -1072,7 +1095,7 @@ describe('SouthOPCUA test connection', () => {
 
     await expect(south.testConnection()).rejects.toThrow(new Error('Please check the certificate and key'));
 
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server. ${error}`]]);
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 
   it('Certificate file does not exist', async () => {
@@ -1093,7 +1116,7 @@ describe('SouthOPCUA test connection', () => {
 
     await expect(south.testConnection()).rejects.toThrow(new Error(`File "${error.path}" does not exist`));
 
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server. ${error}`]]);
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 
   it('Failed to read private key', async () => {
@@ -1115,7 +1138,7 @@ describe('SouthOPCUA test connection', () => {
 
     await expect(south.testConnection()).rejects.toThrow(new Error(`Could not read private key "${keyPath}"`));
 
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server. ${error}`]]);
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 
   it('Unknown error', async () => {
@@ -1134,6 +1157,6 @@ describe('SouthOPCUA test connection', () => {
 
     await expect(south.testConnection()).rejects.toThrow(new Error('Please check logs'));
 
-    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA HA server. ${error}`]]);
+    expect((logger.error as jest.Mock).mock.calls).toEqual([[`Error while connecting to the OPCUA server. ${error}`]]);
   });
 });

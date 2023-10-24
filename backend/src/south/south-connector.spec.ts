@@ -953,4 +953,10 @@ describe('SouthConnector disabled', () => {
     await basicSouth.testConnection();
     expect(logger.warn).toHaveBeenCalledWith('testConnection must be override');
   });
+
+  it('should ignore history query when not history items', async () => {
+    south.filterHistoryItems = jest.fn().mockReturnValueOnce([]);
+    await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2020-02-02T02:02:02.222Z', 'scanModeId');
+    expect(logger.trace).toHaveBeenCalledWith('No history items to read. Ignoring historyQuery');
+  });
 });
