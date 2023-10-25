@@ -20,7 +20,7 @@ const HomepageHeader = () => {
               <Link
                 className={clsx('button button--secondary button--md', styles.welcomeButtons)}
                 style={{ marginTop: '1em', marginBottom: '1em', color: '#f5f5f5' }}
-                to="/docs/guide"
+                to="/docs/guide/"
               >
                 Get familiar with OIBus
               </Link>
@@ -31,7 +31,7 @@ const HomepageHeader = () => {
               <Link
                 className={clsx('button button--secondary button--md', styles.welcomeButtons)}
                 style={{ marginLeft: '2em', marginRight: '2em', marginTop: '1em', marginBottom: '1em', color: '#f5f5f5' }}
-                to="/docs/guide/installation"
+                to="/docs/guide/installation/"
               >
                 Install OIBus
               </Link>
@@ -42,7 +42,7 @@ const HomepageHeader = () => {
               <Link
                 className={clsx('button button--secondary button--md', styles.welcomeButtons)}
                 style={{ marginTop: '1em', marginBottom: '1em', color: '#f5f5f5' }}
-                to="/docs/developer"
+                to="/docs/developer/"
               >
                 Develop OIBus
               </Link>
