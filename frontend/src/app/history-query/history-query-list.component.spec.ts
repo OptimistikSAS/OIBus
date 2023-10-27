@@ -76,11 +76,11 @@ describe('HistoryQueryListComponent', () => {
     expect(tester.historyQueryList[0].elements('td')[2]).toContainText('2 Feb 2020, 03:022 Feb 2022, 03:02');
     expect(tester.historyQueryList[0].elements('td')[3]).toContainText(historyQueries[0].description);
     expect(tester.historyQueryList[0].elements('td')[4].elements('button').length).toBe(2);
-    expect(tester.historyQueryList[0].elements('td')[4].elements('a').length).toBe(2);
+    expect(tester.historyQueryList[0].elements('td')[4].elements('a').length).toBe(3);
     expect(tester.historyQueryList[1].elements('td')[1]).toContainText(historyQueries[1].name);
     expect(tester.historyQueryList[1].elements('td')[2]).toContainText('2 Feb 2020, 03:022 Feb 2022, 03:02');
     expect(tester.historyQueryList[1].elements('td')[3]).toContainText(historyQueries[1].description);
     expect(tester.historyQueryList[1].elements('td')[4].elements('button').length).toBe(2);
-    expect(tester.historyQueryList[1].elements('td')[4].elements('a').length).toBe(2);
+    expect(tester.historyQueryList[1].elements('td')[4].elements('a').length).toBe(3);
   });
 });
