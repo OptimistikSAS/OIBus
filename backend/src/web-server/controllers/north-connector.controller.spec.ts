@@ -202,29 +202,48 @@ describe('North connector controller', () => {
 
   it('updateNorthConnector() should update North connector', async () => {
     ctx.request.body = {
-      ...northConnectorCommand
+      north: { ...northConnectorCommand },
+      subscriptions: [
+        { type: 'south', subscription: { id: 'id1' } },
+        { type: 'south', subscription: { id: 'id2' } },
+        { type: 'external-source', externalSubscription: { id: 'id3' } },
+        { type: 'external-source', externalSubscription: { id: 'id4' } }
+      ],
+      subscriptionsToDelete: [
+        { type: 'south', subscription: { id: 'id5' } },
+        { type: 'external-source', externalSubscription: { id: 'id6' } }
+      ]
     };
     ctx.params.id = 'id';
     ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(northConnector);
+    ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions.mockReturnValue(['id1']);
+    ctx.app.repositoryService.subscriptionRepository.getExternalNorthSubscriptions.mockReturnValue(['id3']);
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
 
     await northConnectorController.updateNorthConnector(ctx);
 
     expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
     expect(ctx.app.repositoryService.northConnectorRepository.getNorthConnector).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions).toHaveBeenCalledWith('id');
+    expect(ctx.app.repositoryService.subscriptionRepository.getExternalNorthSubscriptions).toHaveBeenCalledWith('id');
     expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
       northConnectorCommand.settings,
       northConnector.settings,
       northTestManifest.settings
     );
+    expect(ctx.app.repositoryService.subscriptionRepository.createNorthSubscription).toHaveBeenCalledWith('id', 'id2');
+    expect(ctx.app.repositoryService.subscriptionRepository.createExternalNorthSubscription).toHaveBeenCalledWith('id', 'id4');
+    expect(ctx.app.repositoryService.subscriptionRepository.deleteNorthSubscription).toHaveBeenCalledWith('id', 'id5');
+    expect(ctx.app.repositoryService.subscriptionRepository.deleteExternalNorthSubscription).toHaveBeenCalledWith('id', 'id6');
     expect(ctx.app.reloadService.onUpdateNorthSettings).toHaveBeenCalledWith('id', northConnectorCommand);
     expect(ctx.noContent).toHaveBeenCalled();
   });
 
   it('updateNorthConnector() should throw 404 when manifest not found', async () => {
     ctx.request.body = {
-      ...northConnectorCommand,
-      type: 'invalid'
+      north: { ...northConnectorCommand, type: 'invalid' },
+      subscriptions: [],
+      subscriptionsToDelete: []
     };
     ctx.params.id = 'id';
 
@@ -239,7 +258,9 @@ describe('North connector controller', () => {
 
   it('updateNorthConnector() should return bad request when validation fails', async () => {
     ctx.request.body = {
-      ...northConnectorCommand
+      north: { ...northConnectorCommand },
+      subscriptions: [],
+      subscriptionsToDelete: []
     };
     ctx.params.id = 'id';
     const validationError = new Error('invalid body');
@@ -258,7 +279,9 @@ describe('North connector controller', () => {
 
   it('updateNorthConnector() should return not found when North connector not found', async () => {
     ctx.request.body = {
-      ...northConnectorCommand
+      north: { ...northConnectorCommand },
+      subscriptions: [],
+      subscriptionsToDelete: []
     };
     ctx.params.id = 'id';
     ctx.app.repositoryService.northConnectorRepository.getNorthConnector.mockReturnValue(null);
@@ -272,17 +295,16 @@ describe('North connector controller', () => {
     expect(ctx.notFound).toHaveBeenCalled();
   });
 
-  it('updateNorthConnector() should return 404 when body is null', async () => {
-    ctx.request.body = null;
+  it('updateNorthConnector() should return bad request when body is null', async () => {
+    ctx.request.body = {
+      north: null,
+      subscriptions: [],
+      subscriptionsToDelete: []
+    };
     ctx.params.id = 'id';
 
     await northConnectorController.updateNorthConnector(ctx);
-
-    expect(validator.validateSettings).not.toHaveBeenCalled();
-    expect(ctx.app.repositoryService.southConnectorRepository.getSouthConnector).not.toHaveBeenCalled();
-    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
-    expect(ctx.app.reloadService.onUpdateNorthSettings).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
+    expect(ctx.badRequest).toHaveBeenCalled();
   });
 
   it('deleteNorthConnector() should delete North connector', async () => {

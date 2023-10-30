@@ -134,7 +134,7 @@ export class EditHistoryQueryComponent implements OnInit {
               this.southType = queryParams.get('southType') || '';
             }
             if (northId) {
-              northObs = this.northConnectorService.getNorthConnector(northId);
+              northObs = this.northConnectorService.get(northId);
             } else {
               this.northType = queryParams.get('northType') || '';
             }

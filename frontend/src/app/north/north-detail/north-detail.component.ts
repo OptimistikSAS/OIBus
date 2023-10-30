@@ -80,7 +80,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
           const paramNorthId = params.get('northId');
 
           if (paramNorthId) {
-            return this.northConnectorService.getNorthConnector(paramNorthId);
+            return this.northConnectorService.get(paramNorthId);
           }
           return of(null);
         }),
@@ -171,7 +171,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
             this.notificationService.success('north.started', { name: this.northConnector!.name });
           }),
           switchMap(() => {
-            return this.northConnectorService.getNorthConnector(this.northConnector!.id);
+            return this.northConnectorService.get(this.northConnector!.id);
           })
         )
         .subscribe(northConnector => {
@@ -185,7 +185,7 @@ export class NorthDetailComponent implements OnInit, OnDestroy {
             this.notificationService.success('north.stopped', { name: this.northConnector!.name });
           }),
           switchMap(() => {
-            return this.northConnectorService.getNorthConnector(this.northConnector!.id);
+            return this.northConnectorService.get(this.northConnector!.id);
           })
         )
         .subscribe(northConnector => {

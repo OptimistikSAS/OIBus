@@ -53,7 +53,7 @@ export class ExploreCacheComponent implements OnInit {
         switchMap(params => {
           const paramNorthId = params.get('northId');
           if (paramNorthId) {
-            return this.northConnectorService.getNorthConnector(paramNorthId);
+            return this.northConnectorService.get(paramNorthId);
           }
           return of(null);
         })

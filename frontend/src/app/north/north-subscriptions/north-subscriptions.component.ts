@@ -1,25 +1,19 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { NgForOf, NgIf } from '@angular/common';
-import { combineLatest, switchMap, tap } from 'rxjs';
-import { Modal, ModalService } from '../../shared/modal.service';
+import { combineLatest, Observable, of, switchMap, tap } from 'rxjs';
 import { ConfirmationService } from '../../shared/confirmation.service';
 import { NotificationService } from '../../shared/notification.service';
 import { TranslateModule } from '@ngx-translate/core';
-import { ExternalSubscriptionDTO, SubscriptionDTO } from '../../../../../shared/model/subscription.model';
+import { ExternalSubscriptionDTO, OIBusSubscription, SubscriptionDTO } from '../../../../../shared/model/subscription.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
 import { SouthConnectorDTO } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
-import { CreateNorthSubscriptionModalComponent } from '../create-north-subscription-modal/create-north-subscription-modal.component';
 import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component';
 import { ExternalSourceService } from '../../services/external-source.service';
 import { ExternalSourceDTO } from '../../../../../shared/model/external-sources.model';
-
-interface Subscription {
-  type: 'south' | 'external-source';
-  externalSubscription?: ExternalSourceDTO;
-  subscription?: SouthConnectorDTO;
-}
+import { CreateNorthSubscriptionModalComponent } from '../create-north-subscription-modal/create-north-subscription-modal.component';
+import { Modal, ModalService } from '../../shared/modal.service';
 
 @Component({
   selector: 'oib-north-subscriptions',
@@ -30,8 +24,16 @@ interface Subscription {
 })
 export class NorthSubscriptionsComponent implements OnInit {
   @Input() northConnector: NorthConnectorDTO | null = null;
+  @Input() inMemory = false;
 
-  subscriptions: Array<Subscription> = [];
+  @Output() readonly inMemorySubscriptions = new EventEmitter<{
+    subscriptions: Array<OIBusSubscription>;
+    subscriptionsToDelete: Array<OIBusSubscription>;
+  }>();
+
+  subscriptions: Array<OIBusSubscription> = [];
+  subscriptionsToDelete: Array<OIBusSubscription> = [];
+
   southConnectors: Array<SouthConnectorDTO> = [];
   externalSources: Array<ExternalSourceDTO> = [];
 
@@ -45,22 +47,38 @@ export class NorthSubscriptionsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    combineLatest([
-      this.northConnectorService.getNorthConnectorSubscriptions(this.northConnector!.id),
-      this.northConnectorService.getNorthConnectorExternalSubscriptions(this.northConnector!.id),
-      this.southConnectorService.list(),
-      this.externalSourceService.list()
-    ]).subscribe(([subscriptions, externalSubscriptions, southConnectors, externalSources]) => {
-      this.southConnectors = southConnectors;
-      this.externalSources = externalSources;
-      this.createSubscriptionList(subscriptions, externalSubscriptions);
-    });
+    this.fetchSubscriptionsAndResetPage(false);
+  }
+
+  fetchSubscriptionsAndResetPage(fromMemory: boolean) {
+    if (this.northConnector && !fromMemory) {
+      combineLatest([
+        this.northConnectorService.getSubscriptions(this.northConnector.id),
+        this.northConnectorService.getExternalSubscriptions(this.northConnector.id),
+        this.southConnectorService.list(),
+        this.externalSourceService.list()
+      ]).subscribe(([subscriptions, externalSubscriptions, southConnectors, externalSources]) => {
+        this.southConnectors = southConnectors;
+        this.externalSources = externalSources;
+        this.createSubscriptionList(subscriptions, externalSubscriptions);
+        this.inMemorySubscriptions.emit({ subscriptions: this.subscriptions, subscriptionsToDelete: this.subscriptionsToDelete });
+      });
+    } else {
+      combineLatest([this.southConnectorService.list(), this.externalSourceService.list()]).subscribe(
+        ([southConnectors, externalSources]) => {
+          this.southConnectors = southConnectors;
+          this.externalSources = externalSources;
+        }
+      );
+      this.inMemorySubscriptions.emit({ subscriptions: this.subscriptions, subscriptionsToDelete: this.subscriptionsToDelete });
+    }
   }
 
   /**
    * Open a modal to create a scan mode
    */
-  addSubscription() {
+  addSubscription(e: Event) {
+    e.preventDefault();
     const modalRef = this.modalService.open(CreateNorthSubscriptionModalComponent);
     const component: CreateNorthSubscriptionModalComponent = modalRef.componentInstance;
 
@@ -71,31 +89,64 @@ export class NorthSubscriptionsComponent implements OnInit {
         externalSource => !this.subscriptions.some(subscription => subscription.externalSubscription?.id === externalSource.id)
       )
     );
-    this.refreshAfterEditScanModeModalClosed(modalRef);
+    this.refreshAfterAddSubscriptionModalClosed(modalRef);
   }
 
   /**
    * Refresh the scan mode list when the scan mode is edited
    */
-  private refreshAfterEditScanModeModalClosed(modalRef: Modal<CreateNorthSubscriptionModalComponent>) {
+  private refreshAfterAddSubscriptionModalClosed(modalRef: Modal<CreateNorthSubscriptionModalComponent>) {
     modalRef.result
       .pipe(
-        switchMap(() =>
-          combineLatest([
-            this.northConnectorService.getNorthConnectorSubscriptions(this.northConnector!.id),
-            this.northConnectorService.getNorthConnectorExternalSubscriptions(this.northConnector!.id)
-          ])
-        )
+        switchMap((subscription: OIBusSubscription) => {
+          if (!this.inMemory) {
+            let obs: Observable<void>;
+            if (subscription.type === 'south') {
+              obs = this.northConnectorService.createSubscription(this.northConnector!.id, subscription.subscription!.id).pipe(
+                tap(() =>
+                  this.notificationService.success(`north.subscriptions.south.created`, {
+                    name: subscription.subscription!.name
+                  })
+                )
+              );
+            } else {
+              obs = this.northConnectorService
+                .createExternalSubscription(this.northConnector!.id, subscription.externalSubscription!.id)
+                .pipe(
+                  tap(() =>
+                    this.notificationService.success(`north.subscriptions.external-source.created`, {
+                      name: subscription.externalSubscription!.reference
+                    })
+                  )
+                );
+            }
+            return obs.pipe(
+              switchMap(() =>
+                combineLatest([
+                  this.northConnectorService.getSubscriptions(this.northConnector!.id),
+                  this.northConnectorService.getExternalSubscriptions(this.northConnector!.id)
+                ])
+              ),
+              switchMap(([subscriptions, externalSubscriptions]) => {
+                this.createSubscriptionList(subscriptions, externalSubscriptions);
+                return of(null);
+              })
+            );
+          } else {
+            this.subscriptions.push(subscription);
+            return of(null);
+          }
+        })
       )
-      .subscribe(([subscriptions, externalSubscriptions]) => {
-        this.createSubscriptionList(subscriptions, externalSubscriptions);
+      .subscribe(() => {
+        this.fetchSubscriptionsAndResetPage(this.inMemory);
       });
   }
 
   /**
    * Remove a subscription from the connector
    */
-  deleteSubscription(subscription: Subscription) {
+  deleteSubscription(subscription: OIBusSubscription) {
     this.confirmationService
       .confirm({
         messageKey: `north.subscriptions.${subscription.type}.confirm-deletion`,
@@ -105,28 +156,32 @@ export class NorthSubscriptionsComponent implements OnInit {
       })
       .pipe(
         switchMap(() => {
-          if (subscription.type === 'south') {
-            return this.northConnectorService.deleteNorthConnectorSubscription(this.northConnector!.id, subscription.subscription!.id);
+          if (!this.inMemory) {
+            if (subscription.type === 'south') {
+              return this.northConnectorService.deleteSubscription(this.northConnector!.id, subscription.subscription!.id);
+            }
+            return this.northConnectorService.deleteExternalSubscription(this.northConnector!.id, subscription.externalSubscription!.id);
+          } else {
+            this.subscriptionsToDelete.push(subscription);
+            return of(null);
           }
-          return this.northConnectorService.deleteNorthConnectorExternalSubscription(
-            this.northConnector!.id,
-            subscription.externalSubscription!.id
-          );
-        }),
-        tap(() =>
+        })
+      )
+      .subscribe(() => {
+        this.subscriptions = this.subscriptions.filter(
+          element =>
+            element.type !== subscription.type ||
+            (element.type === subscription.type &&
+              ((subscription.type === 'south' && element.subscription?.id !== subscription.subscription?.id) ||
+                (subscription.type === 'external-source' && element.externalSubscription?.id !== subscription.externalSubscription?.id)))
+        );
+        if (!this.inMemory) {
           this.notificationService.success(`north.subscriptions.${subscription.type}.deleted`, {
             name: subscription.type === 'south' ? subscription.subscription!.name : subscription.externalSubscription!.reference
-          })
-        ),
-        switchMap(() =>
-          combineLatest([
-            this.northConnectorService.getNorthConnectorSubscriptions(this.northConnector!.id),
-            this.northConnectorService.getNorthConnectorExternalSubscriptions(this.northConnector!.id)
-          ])
-        )
-      )
-      .subscribe(([subscriptions, externalSubscriptions]) => {
-        this.createSubscriptionList(subscriptions, externalSubscriptions);
+          });
+        } else {
+          this.fetchSubscriptionsAndResetPage(true);
+        }
       });
   }
 

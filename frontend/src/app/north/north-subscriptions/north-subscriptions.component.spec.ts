@@ -81,8 +81,8 @@ describe('NorthSubscriptionsComponent', () => {
 
     southService.list.and.returnValue(of(southConnectors));
     externalSourceService.list.and.returnValue(of([]));
-    northService.getNorthConnectorSubscriptions.and.returnValue(of(northSubscriptions));
-    northService.getNorthConnectorExternalSubscriptions.and.returnValue(of([]));
+    northService.getSubscriptions.and.returnValue(of(northSubscriptions));
+    northService.getExternalSubscriptions.and.returnValue(of([]));
 
     tester = new NorthSubscriptionsComponentTester();
   });
@@ -100,7 +100,7 @@ describe('NorthSubscriptionsComponent', () => {
   });
 
   it('should display an empty list', () => {
-    northService.getNorthConnectorSubscriptions.and.returnValue(of([]));
+    northService.getSubscriptions.and.returnValue(of([]));
     tester.detectChanges();
 
     expect(tester.title).toContainText('Subscriptions');

@@ -174,8 +174,15 @@
             </div>
           </div>
         </oib-box>
+
+        <!-- subscription -->
+        <oib-north-subscriptions
+          [northConnector]="northConnector"
+          [inMemory]="true"
+          (inMemorySubscriptions)="updateInMemorySubscriptions($event)"
+        ></oib-north-subscriptions>
       </form>
-      <div id="actions" class="d-flex justify-content-end">
+      <div id="actions" class="mt-2 d-flex justify-content-end">
         <div class="btn-group">
           <oib-save-button form="north-form" [state]="state"></oib-save-button>
           <button

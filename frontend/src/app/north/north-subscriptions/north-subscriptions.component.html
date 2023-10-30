@@ -1,3 +1,11 @@
+<div *ngIf="inMemory" class="my-2">
+  <span class="fa fa-warning mx-1" style="color: orange"></span>
+  <span translate="north.subscriptions.edit-mode-info"></span>
+</div>
+<div *ngIf="!inMemory" class="my-2">
+  <span class="fa fa-info-circle mx-1" style="color: grey"></span>
+  <span translate="north.subscriptions.display-mode-info"></span>
+</div>
 <oib-box>
   <ng-template oibBoxTitle>
     <div class="d-flex justify-content-between align-items-center">
@@ -5,7 +13,7 @@
       <button
         class="btn btn-primary btn-sm oib-box-btn"
         *ngIf="externalSources.length + southConnectors.length !== subscriptions.length"
-        (click)="addSubscription()"
+        (click)="addSubscription($event)"
         translate="north.subscriptions.add"
       ></button>
     </div>

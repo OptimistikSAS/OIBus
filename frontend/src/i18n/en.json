@@ -566,6 +566,8 @@
       "title-creation": "Subscribe to a data source",
       "type": "Type",
       "name": "Name",
+      "display-mode-info": "The changes to the subscriptions will be committed directly",
+      "edit-mode-info": "The changes to the subscriptions will be committed on save",
       "south": {
         "title": "South connector",
         "created": "The connector is now subscribed to the South connector {{ name }}",

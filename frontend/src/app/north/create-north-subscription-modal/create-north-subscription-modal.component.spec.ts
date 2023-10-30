@@ -73,8 +73,8 @@ describe('CreateNorthSubscriptionModalComponent', () => {
 
     tester = new CreateNorthSubscriptionModalComponentTester();
     tester.componentInstance.prepareForCreation('northId', southConnectors, externalSources);
-    northConnectorService.createNorthConnectorSubscription.and.returnValue(of(undefined));
-    northConnectorService.createNorthConnectorExternalSubscription.and.returnValue(of(undefined));
+    northConnectorService.createSubscription.and.returnValue(of(undefined));
+    northConnectorService.createExternalSubscription.and.returnValue(of(undefined));
     tester.detectChanges();
   });
 
@@ -102,9 +102,11 @@ describe('CreateNorthSubscriptionModalComponent', () => {
     } as SouthConnectorDTO;
 
     expect(tester.type).toContainText('South connector');
-    expect(northConnectorService.createNorthConnectorSubscription).toHaveBeenCalledWith('northId', expectedSouth.id);
-    expect(notificationService.success).toHaveBeenCalledWith('north.subscriptions.south.created', { name: 'South2' });
-    expect(fakeActiveModal.close).toHaveBeenCalled();
+    expect(fakeActiveModal.close).toHaveBeenCalledWith({
+      type: 'south',
+      subscription: expectedSouth,
+      externalSubscription: undefined
+    });
   }));
 
   it('should save external subscription if valid', fakeAsync(() => {
@@ -118,9 +120,11 @@ describe('CreateNorthSubscriptionModalComponent', () => {
     } as ExternalSourceDTO;
 
     expect(tester.type).toContainText('External source');
-    expect(northConnectorService.createNorthConnectorExternalSubscription).toHaveBeenCalledWith('northId', expectedReference.id);
-    expect(notificationService.success).toHaveBeenCalledWith('north.subscriptions.external-source.created', { name: 'Reference2' });
-    expect(fakeActiveModal.close).toHaveBeenCalled();
+    expect(fakeActiveModal.close).toHaveBeenCalledWith({
+      type: 'external-source',
+      subscription: undefined,
+      externalSubscription: expectedReference
+    });
   }));
 
   it('should cancel', () => {

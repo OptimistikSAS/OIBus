@@ -72,10 +72,10 @@ describe('ExploreCacheComponent', () => {
         { provide: NorthConnectorService, useValue: northConnectorService }
       ]
     });
-    northConnectorService.getNorthConnector.and.returnValue(of(northConnector));
-    northConnectorService.getNorthConnectorCacheErrorFiles.and.returnValue(of([]));
-    northConnectorService.getNorthConnectorCacheArchiveFiles.and.returnValue(of([]));
-    northConnectorService.getNorthConnectorCacheFiles.and.returnValue(of([]));
+    northConnectorService.get.and.returnValue(of(northConnector));
+    northConnectorService.getCacheErrorFiles.and.returnValue(of([]));
+    northConnectorService.getCacheArchiveFiles.and.returnValue(of([]));
+    northConnectorService.getCacheFiles.and.returnValue(of([]));
     tester = new ExploreCacheComponentTester();
     tester.detectChanges();
   });

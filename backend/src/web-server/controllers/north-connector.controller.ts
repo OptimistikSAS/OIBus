@@ -1,5 +1,10 @@
 import { KoaContext } from '../koa';
-import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthType } from '../../../../shared/model/north-connector.model';
+import {
+  NorthConnectorCommandDTO,
+  NorthConnectorDTO,
+  NorthConnectorWithItemsCommandDTO,
+  NorthType
+} from '../../../../shared/model/north-connector.model';
 import JoiValidator from './validators/joi.validator';
 
 export default class NorthConnectorController {
@@ -74,28 +79,66 @@ export default class NorthConnectorController {
     }
   }
 
-  async updateNorthConnector(ctx: KoaContext<NorthConnectorCommandDTO, void>): Promise<void> {
+  async updateNorthConnector(ctx: KoaContext<NorthConnectorWithItemsCommandDTO, void>): Promise<void> {
+    if (!ctx.request.body || !ctx.request.body.subscriptions || !ctx.request.body.subscriptionsToDelete || !ctx.request.body.north) {
+      return ctx.badRequest();
+    }
+    const command = ctx.request.body!.north;
+
     try {
-      const manifest = ctx.request.body
-        ? ctx.app.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === ctx.request.body!.type)
-        : null;
+      const manifest = ctx.app.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
       if (!manifest) {
         return ctx.throw(404, 'North manifest not found');
       }
 
-      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
+      await this.validator.validateSettings(manifest.settings, command!.settings);
 
       const northConnector = ctx.app.repositoryService.northConnectorRepository.getNorthConnector(ctx.params.id);
       if (!northConnector) {
         return ctx.notFound();
       }
 
-      const command: NorthConnectorCommandDTO = ctx.request.body!;
       command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(
         command.settings,
         northConnector.settings,
         manifest.settings
       );
+
+      const existingSubscriptions = ctx.app.repositoryService.subscriptionRepository.getNorthSubscriptions(ctx.params.id);
+      const existingExternalSubscriptions = ctx.app.repositoryService.subscriptionRepository.getExternalNorthSubscriptions(ctx.params.id);
+      const subscriptionsToAdd = ctx.request.body.subscriptions
+        .filter(
+          element =>
+            element.type === 'south' &&
+            !existingSubscriptions.find(existingSubscription => existingSubscription === element.subscription!.id)
+        )
+        .map(element => element.subscription!.id);
+      const externalSubscriptionsToAdd = ctx.request.body.subscriptions
+        .filter(
+          element =>
+            element.type === 'external-source' &&
+            !existingExternalSubscriptions.find(existingSubscription => existingSubscription === element.externalSubscription!.id)
+        )
+        .map(element => element.externalSubscription!.id);
+
+      const subscriptionsToRemove = ctx.request.body.subscriptionsToDelete
+        .filter(element => element.type === 'south')
+        .map(element => element.subscription!.id);
+      const externalSubscriptionsToRemove = ctx.request.body.subscriptionsToDelete
+        .filter(element => element.type === 'external-source')
+        .map(element => element.externalSubscription!.id);
+      for (const subscription of subscriptionsToAdd) {
+        ctx.app.repositoryService.subscriptionRepository.createNorthSubscription(ctx.params.id, subscription);
+      }
+      for (const subscription of externalSubscriptionsToAdd) {
+        ctx.app.repositoryService.subscriptionRepository.createExternalNorthSubscription(ctx.params.id, subscription);
+      }
+      for (const subscription of subscriptionsToRemove) {
+        ctx.app.repositoryService.subscriptionRepository.deleteNorthSubscription(ctx.params.id, subscription);
+      }
+      for (const subscription of externalSubscriptionsToRemove) {
+        ctx.app.repositoryService.subscriptionRepository.deleteExternalNorthSubscription(ctx.params.id, subscription);
+      }
       await ctx.app.reloadService.onUpdateNorthSettings(ctx.params.id, command);
       ctx.noContent();
     } catch (error: any) {
