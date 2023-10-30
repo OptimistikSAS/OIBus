@@ -160,7 +160,8 @@ describe('SouthConnector enabled', () => {
       history: {
         maxInstantPerItem: false,
         maxReadInterval: 3600,
-        readDelay: 0
+        readDelay: 0,
+        overlap: 30
       },
       settings: {}
     };
@@ -729,7 +730,8 @@ describe('SouthConnector with max instant per item', () => {
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
-        readDelay: 0
+        readDelay: 0,
+        overlap: 30
       },
       settings: {}
     };
@@ -752,7 +754,7 @@ describe('SouthConnector with max instant per item', () => {
 
     await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
     expect(generateIntervals).toHaveBeenCalledWith(
-      '2020-02-02T02:02:02.222Z',
+      '2020-02-02T02:02:02.192Z',
       '2023-02-02T02:02:02.222Z',
       configuration.history.maxReadInterval
     );
@@ -787,7 +789,7 @@ describe('SouthConnector with max instant per item', () => {
 
     await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
     expect(generateIntervals).toHaveBeenCalledWith(
-      '2020-02-02T02:02:02.222Z',
+      '2020-02-02T02:02:02.192Z',
       '2023-02-02T02:02:02.222Z',
       configuration.history.maxReadInterval
     );
@@ -819,7 +821,7 @@ describe('SouthConnector with max instant per item', () => {
 
     await south.historyQueryHandler(items, '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
     expect(generateIntervals).toHaveBeenCalledWith(
-      '2020-02-02T02:02:02.222Z',
+      '2020-02-02T02:02:02.192Z',
       '2023-02-02T02:02:02.222Z',
       configuration.history.maxReadInterval
     );
@@ -841,7 +843,7 @@ describe('SouthConnector with max instant per item', () => {
 
     await south.historyQueryHandler([items[0]], '2020-02-02T02:02:02.222Z', '2023-02-02T02:02:02.222Z', 'scanModeId1');
     expect(generateIntervals).toHaveBeenCalledWith(
-      '2020-02-02T02:02:02.222Z',
+      '2020-02-02T02:02:02.192Z',
       '2023-02-02T02:02:02.222Z',
       configuration.history.maxReadInterval
     );
@@ -913,7 +915,8 @@ describe('SouthConnector disabled', () => {
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
-        readDelay: 0
+        readDelay: 0,
+        overlap: 30
       },
       settings: {}
     };

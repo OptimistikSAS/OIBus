@@ -168,7 +168,8 @@ describe('SouthMySQL with authentication', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       host: 'localhost',
@@ -324,7 +325,8 @@ describe('SouthMySQL without authentication', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       host: 'localhost',
@@ -380,7 +382,8 @@ describe('SouthMySQL test connection', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       host: 'localhost',

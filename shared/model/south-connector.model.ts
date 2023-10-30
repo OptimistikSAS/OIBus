@@ -19,6 +19,7 @@ export interface SouthConnectorHistorySettings {
   maxInstantPerItem: boolean;
   maxReadInterval: number;
   readDelay: number;
+  overlap: number;
 }
 
 /**

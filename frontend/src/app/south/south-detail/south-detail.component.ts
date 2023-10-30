@@ -122,7 +122,8 @@ export class SouthDetailComponent implements OnInit, OnDestroy {
       history: {
         maxInstantPerItem: this.southConnector!.history!.maxInstantPerItem,
         maxReadInterval: this.southConnector!.history!.maxReadInterval,
-        readDelay: this.southConnector!.history!.readDelay
+        readDelay: this.southConnector!.history!.readDelay,
+        overlap: this.southConnector!.history!.overlap
       },
       settings: this.southConnector!.settings
     };

@@ -81,7 +81,8 @@ describe('SouthDetailComponent', () => {
     history: {
       maxInstantPerItem: false,
       maxReadInterval: 0,
-      readDelay: 200
+      readDelay: 200,
+      overlap: 0
     },
     settings: {}
   };

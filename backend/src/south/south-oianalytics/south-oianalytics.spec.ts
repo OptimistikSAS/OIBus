@@ -137,7 +137,8 @@ describe('SouthOIAnalytics with Basic auth', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       host: 'http://localhost:4200',
@@ -282,7 +283,8 @@ describe('SouthOIAnalytics without proxy but with accept self signed', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       host: 'https://localhost:4200/',
@@ -484,7 +486,8 @@ describe('SouthOIAnalytics with proxy', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       host: 'http://localhost:4200',
@@ -560,7 +563,8 @@ describe('SouthOIAnalytics with proxy but without proxy password', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       host: 'http://localhost:4200',

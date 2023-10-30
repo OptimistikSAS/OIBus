@@ -197,7 +197,8 @@ describe('SouthMQTT without authentication', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       url: 'mqtt://localhost:1883',
@@ -270,7 +271,8 @@ describe('SouthMQTT with Basic Auth', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       url: 'mqtt://localhost:1883',
@@ -605,7 +607,8 @@ describe('SouthMQTT with Cert', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       url: 'mqtt://localhost:1883',
@@ -667,7 +670,8 @@ describe('SouthMQTT without Cert', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       url: 'mqtt://localhost:1883',

@@ -126,7 +126,8 @@ describe('HistoryQuery enabled', () => {
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
-        readDelay: 0
+        readDelay: 0,
+        overlap: 0
       },
       northSettings: {},
       southSettings: {},
@@ -347,7 +348,8 @@ describe('HistoryQuery disabled', () => {
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
-        readDelay: 0
+        readDelay: 0,
+        overlap: 0
       },
       northSettings: {},
       southSettings: {},

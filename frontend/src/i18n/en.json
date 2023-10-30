@@ -430,7 +430,8 @@
       "settings": "History settings",
       "max-instant-per-item": "Max instant per item",
       "max-read-interval": "Max read interval",
-      "read-delay": "Read delay"
+      "read-delay": "Read delay",
+      "overlap": "Overlap"
     },
     "test-connection": {
       "title": "Testing settings",

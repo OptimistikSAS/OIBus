@@ -273,7 +273,11 @@ export default class SouthConnector<T extends SouthSettings = any, I extends Sou
         const southCache = this.cacheService!.getSouthCacheScanMode(this.connector.id, scanModeId, item.id, startTime);
         // maxReadInterval will divide a huge request (for example 1 year of data) into smaller
         // requests. For example only one hour if maxReadInterval is 3600 (in s)
-        const intervals = generateIntervals(southCache.maxInstant, endTime, this.connector.history.maxReadInterval);
+        const intervals = generateIntervals(
+          DateTime.fromISO(southCache.maxInstant).minus(this.connector.history.overlap).toUTC().toISO()!,
+          endTime,
+          this.connector.history.maxReadInterval
+        );
         this.logIntervals(intervals);
         await this.queryIntervals(intervals, [item], southCache, startTime);
         if (index !== itemsToRead.length - 1) {

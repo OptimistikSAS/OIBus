@@ -33,7 +33,8 @@ describe('History Query repository', () => {
         history: {
           maxInstantPerItem: true,
           maxReadInterval: 3600,
-          readDelay: 0
+          readDelay: 0,
+          overlap: 0
         },
         startTime: '2023-01-01T00:00:00.000Z',
         endTime: '2023-02-01T00:00:00.000Z',
@@ -63,7 +64,8 @@ describe('History Query repository', () => {
         history: {
           maxInstantPerItem: true,
           maxReadInterval: 3600,
-          readDelay: 0
+          readDelay: 0,
+          overlap: 0
         },
         startTime: '2023-01-01T00:00:00.000Z',
         endTime: '2023-02-01T00:00:00.000Z',
@@ -158,7 +160,8 @@ describe('History Query repository', () => {
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
-        readDelay: 0
+        readDelay: 0,
+        overlap: 0
       },
       startTime: '2023-01-01T00:00:00.000Z',
       endTime: '2023-02-01T00:00:00.000Z',
@@ -241,7 +244,8 @@ describe('History Query repository', () => {
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
-        readDelay: 0
+        readDelay: 0,
+        overlap: 0
       },
       startTime: '2023-01-01T00:00:00.000Z',
       endTime: '2023-02-01T00:00:00.000Z',
@@ -342,7 +346,8 @@ describe('History Query repository', () => {
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
-        readDelay: 0
+        readDelay: 0,
+        overlap: 0
       },
       startTime: '2023-01-01T00:00:00.000Z',
       endTime: '2023-02-01T00:00:00.000Z',

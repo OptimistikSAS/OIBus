@@ -174,7 +174,8 @@ describe('SouthOracle with authentication', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       host: 'localhost',
@@ -359,7 +360,8 @@ describe('SouthOracle without authentication', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       host: 'localhost',
@@ -413,7 +415,8 @@ describe('SouthOracle test connection', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       host: 'localhost',

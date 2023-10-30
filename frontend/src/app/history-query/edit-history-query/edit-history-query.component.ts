@@ -236,7 +236,8 @@ export class EditHistoryQueryComponent implements OnInit {
       history: {
         maxInstantPerItem: formValue.history!.maxInstantPerItem!,
         maxReadInterval: formValue.history!.maxReadInterval!,
-        readDelay: formValue.history!.readDelay!
+        readDelay: formValue.history!.readDelay!,
+        overlap: 0
       },
       caching: {
         scanModeId: formValue.caching!.scanModeId!,
