@@ -42,7 +42,7 @@ export class ArchiveFilesComponent implements OnInit {
   constructor(private northConnectorService: NorthConnectorService) {}
 
   ngOnInit() {
-    this.northConnectorService.getNorthConnectorCacheArchiveFiles(this.northConnector!.id).subscribe(archiveFiles => {
+    this.northConnectorService.getCacheArchiveFiles(this.northConnector!.id).subscribe(archiveFiles => {
       this.archiveFiles = archiveFiles;
       this.refreshArchiveFiles();
     });
@@ -50,20 +50,20 @@ export class ArchiveFilesComponent implements OnInit {
 
   retryArchiveFiles() {
     const files = this.archiveFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
-    this.northConnectorService.retryNorthConnectorCacheArchiveFiles(this.northConnector!.id, files).subscribe(() => {
+    this.northConnectorService.retryCacheArchiveFiles(this.northConnector!.id, files).subscribe(() => {
       this.refreshArchiveFiles();
     });
   }
 
   removeArchiveFiles() {
     const files = this.archiveFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
-    this.northConnectorService.removeNorthConnectorCacheArchiveFiles(this.northConnector!.id, files).subscribe(() => {
+    this.northConnectorService.removeCacheArchiveFiles(this.northConnector!.id, files).subscribe(() => {
       this.refreshArchiveFiles();
     });
   }
 
   refreshArchiveFiles() {
-    this.northConnectorService.getNorthConnectorCacheArchiveFiles(this.northConnector!.id).subscribe(archiveFiles => {
+    this.northConnectorService.getCacheArchiveFiles(this.northConnector!.id).subscribe(archiveFiles => {
       this.archiveFiles = archiveFiles;
       if (this.fileTable) {
         this.fileTable.refreshTable(archiveFiles);

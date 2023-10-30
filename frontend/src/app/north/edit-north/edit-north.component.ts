@@ -21,6 +21,8 @@ import { TestConnectionResultModalComponent } from '../../shared/test-connection
 import { ModalService } from '../../shared/modal.service';
 import { CertificateDTO } from '../../../../../shared/model/certificate.model';
 import { CertificateService } from '../../services/certificate.service';
+import { NorthSubscriptionsComponent } from '../north-subscriptions/north-subscriptions.component';
+import { OIBusSubscription } from '../../../../../shared/model/subscription.model';
 
 @Component({
   selector: 'oib-edit-north',
@@ -36,7 +38,8 @@ import { CertificateService } from '../../services/certificate.service';
     OibScanModeComponent,
     BackNavigationDirective,
     BoxComponent,
-    BoxTitleDirective
+    BoxTitleDirective,
+    NorthSubscriptionsComponent
   ],
   templateUrl: './edit-north.component.html',
   styleUrls: ['./edit-north.component.scss']
@@ -72,6 +75,9 @@ export class EditNorthComponent implements OnInit {
     settings: FormGroup;
   }> | null = null;
 
+  inMemorySubscriptions: Array<OIBusSubscription> = [];
+  inMemorySubscriptionsToDelete: Array<OIBusSubscription> = [];
+
   constructor(
     private northConnectorService: NorthConnectorService,
     private fb: NonNullableFormBuilder,
@@ -100,7 +106,7 @@ export class EditNorthComponent implements OnInit {
           }
 
           if (paramNorthId) {
-            return this.northConnectorService.getNorthConnector(paramNorthId).pipe(this.state.pendingUntilFinalization());
+            return this.northConnectorService.get(paramNorthId).pipe(this.state.pendingUntilFinalization());
           }
           // otherwise, we are creating one
           return of(null);
@@ -158,13 +164,15 @@ export class EditNorthComponent implements OnInit {
     let createOrUpdate: Observable<NorthConnectorDTO>;
     // if we are editing
     if (this.mode === 'edit') {
-      createOrUpdate = this.northConnectorService.updateNorthConnector(this.northConnector!.id, command).pipe(
-        tap(() => this.notificationService.success('north.updated', { name: command.name })),
-        switchMap(() => this.northConnectorService.getNorthConnector(this.northConnector!.id))
-      );
+      createOrUpdate = this.northConnectorService
+        .update(this.northConnector!.id, command, this.inMemorySubscriptions, this.inMemorySubscriptionsToDelete)
+        .pipe(
+          tap(() => this.notificationService.success('north.updated', { name: command.name })),
+          switchMap(() => this.northConnectorService.get(this.northConnector!.id))
+        );
     } else {
       createOrUpdate = this.northConnectorService
-        .createNorthConnector(command)
+        .create(command, this.inMemorySubscriptions)
         .pipe(tap(() => this.notificationService.success('north.created', { name: command.name })));
     }
     createOrUpdate.pipe(this.state.pendingUntilFinalization()).subscribe(northConnector => {
@@ -206,5 +214,16 @@ export class EditNorthComponent implements OnInit {
       const component: TestConnectionResultModalComponent = modalRef.componentInstance;
       component.runTest('north', this.northConnector, command);
     }
+  }
+
+  updateInMemorySubscriptions({
+    subscriptions,
+    subscriptionsToDelete
+  }: {
+    subscriptions: Array<OIBusSubscription>;
+    subscriptionsToDelete: Array<OIBusSubscription>;
+  }) {
+    this.inMemorySubscriptions = subscriptions;
+    this.inMemorySubscriptionsToDelete = subscriptionsToDelete;
   }
 }

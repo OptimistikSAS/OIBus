@@ -41,7 +41,7 @@ describe('ArchiveFilesComponent', () => {
     });
 
     tester = new ArchiveFilesComponentTester();
-    northConnectorService.getNorthConnectorCacheArchiveFiles.and.returnValue(of([]));
+    northConnectorService.getCacheArchiveFiles.and.returnValue(of([]));
     tester.detectChanges();
   });
 

@@ -41,7 +41,7 @@ describe('ErrorFilesComponent', () => {
     });
 
     tester = new ErrorFilesComponentTester();
-    northConnectorService.getNorthConnectorCacheErrorFiles.and.returnValue(of([]));
+    northConnectorService.getCacheErrorFiles.and.returnValue(of([]));
     tester.detectChanges();
   });
 

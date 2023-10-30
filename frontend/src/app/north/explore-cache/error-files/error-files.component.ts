@@ -42,7 +42,7 @@ export class ErrorFilesComponent implements OnInit {
   constructor(private northConnectorService: NorthConnectorService) {}
 
   ngOnInit() {
-    this.northConnectorService.getNorthConnectorCacheErrorFiles(this.northConnector!.id).subscribe(errorFiles => {
+    this.northConnectorService.getCacheErrorFiles(this.northConnector!.id).subscribe(errorFiles => {
       this.errorFiles = errorFiles;
       this.refreshErrorFiles();
     });
@@ -50,20 +50,20 @@ export class ErrorFilesComponent implements OnInit {
 
   retryErrorFiles() {
     const files = this.errorFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
-    this.northConnectorService.retryNorthConnectorCacheErrorFiles(this.northConnector!.id, files).subscribe(() => {
+    this.northConnectorService.retryCacheErrorFiles(this.northConnector!.id, files).subscribe(() => {
       this.refreshErrorFiles();
     });
   }
 
   removeErrorFiles() {
     const files = this.errorFiles.filter(file => this.fileTable.checkboxByFiles.get(file.filename)).map(file => file.filename);
-    this.northConnectorService.removeNorthConnectorCacheErrorFiles(this.northConnector!.id, files).subscribe(() => {
+    this.northConnectorService.removeCacheErrorFiles(this.northConnector!.id, files).subscribe(() => {
       this.refreshErrorFiles();
     });
   }
 
   refreshErrorFiles() {
-    this.northConnectorService.getNorthConnectorCacheErrorFiles(this.northConnector!.id).subscribe(errorFiles => {
+    this.northConnectorService.getCacheErrorFiles(this.northConnector!.id).subscribe(errorFiles => {
       this.errorFiles = errorFiles;
       if (this.fileTable) {
         this.fileTable.refreshTable(errorFiles);

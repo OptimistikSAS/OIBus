@@ -92,7 +92,7 @@ export class NorthListComponent implements OnInit {
       })
       .pipe(
         switchMap(() => {
-          return this.northConnectorService.deleteNorthConnector(north.id);
+          return this.northConnectorService.delete(north.id);
         })
       )
       .subscribe(() => {

@@ -126,12 +126,12 @@ describe('EditNorthComponent', () => {
     beforeEach(() => {
       TestBed.overrideProvider(ActivatedRoute, { useValue: stubRoute({ params: { northId: 'id1' } }) });
 
-      northConnectorService.getNorthConnector.and.returnValue(of(northConnector));
+      northConnectorService.get.and.returnValue(of(northConnector));
       tester = new EditNorthComponentTester();
       tester.detectChanges();
     });
     it('should display general settings', () => {
-      expect(northConnectorService.getNorthConnector).toHaveBeenCalledWith('id1');
+      expect(northConnectorService.get).toHaveBeenCalledWith('id1');
       expect(tester.title).toContainText('Edit North Connector');
       expect(tester.enabled).toBeChecked();
       expect(tester.description).toHaveValue('My North connector description');
