@@ -174,7 +174,8 @@ describe('SouthODBC odbc driver with authentication', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       remoteAgent: false,
@@ -343,7 +344,8 @@ describe('SouthODBC odbc driver without authentication', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       remoteAgent: false,
@@ -425,7 +427,8 @@ describe('SouthODBC odbc driver test connection', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       remoteAgent: false,
@@ -639,7 +642,8 @@ describe('SouthODBC odbc remote with authentication', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       remoteAgent: true,
@@ -881,7 +885,8 @@ describe('SouthODBC odbc remote test connection', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       remoteAgent: true,

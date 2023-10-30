@@ -195,7 +195,8 @@ describe('SouthOPCUA', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
@@ -738,7 +739,8 @@ describe('SouthOPCUA with basic auth', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
@@ -801,7 +803,8 @@ describe('SouthOPCUA with certificate', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',
@@ -950,7 +953,8 @@ describe('SouthOPCUA test connection', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       url: 'opc.tcp://localhost:666/OPCUA/SimulationServer',

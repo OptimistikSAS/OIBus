@@ -63,6 +63,7 @@ export class EditSouthComponent implements OnInit {
       maxInstantPerItem: FormControl<boolean>;
       maxReadInterval: FormControl<number>;
       readDelay: FormControl<number>;
+      overlap: FormControl<number>;
     }>;
     settings: FormGroup;
   }> | null = null;
@@ -124,7 +125,8 @@ export class EditSouthComponent implements OnInit {
           history: this.fb.group({
             maxInstantPerItem: manifest.modes.forceMaxInstantPerItem,
             maxReadInterval: 0,
-            readDelay: 200
+            readDelay: 200,
+            overlap: 0
           }),
           settings: createFormGroup(manifest.settings, this.fb)
         });
@@ -173,7 +175,8 @@ export class EditSouthComponent implements OnInit {
       history: {
         maxInstantPerItem: formValue.history!.maxInstantPerItem!,
         maxReadInterval: formValue.history!.maxReadInterval!,
-        readDelay: formValue.history!.readDelay!
+        readDelay: formValue.history!.readDelay!,
+        overlap: formValue.history!.overlap!
       },
       settings: formValue.settings!
     };

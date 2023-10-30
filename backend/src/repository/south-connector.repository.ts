@@ -16,7 +16,8 @@ export default class SouthConnectorRepository {
   getSouthConnectors(): Array<SouthConnectorDTO> {
     const query =
       `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
-      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM ${SOUTH_CONNECTORS_TABLE};`;
+      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, ` +
+      `settings FROM ${SOUTH_CONNECTORS_TABLE};`;
     return this.database
       .prepare(query)
       .all()
@@ -29,7 +30,8 @@ export default class SouthConnectorRepository {
         history: {
           maxInstantPerItem: result.maxInstantPerItem,
           maxReadInterval: result.maxReadInterval,
-          readDelay: result.readDelay
+          readDelay: result.readDelay,
+          overlap: result.overlap
         },
         settings: JSON.parse(result.settings)
       }))
@@ -58,7 +60,8 @@ export default class SouthConnectorRepository {
   getSouthConnector(id: string): SouthConnectorDTO | null {
     const query =
       `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
-      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM ${SOUTH_CONNECTORS_TABLE} WHERE id = ?;`;
+      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, ` +
+      `settings FROM ${SOUTH_CONNECTORS_TABLE} WHERE id = ?;`;
     const result: any = this.database.prepare(query).get(id);
 
     if (!result) {
@@ -74,7 +77,8 @@ export default class SouthConnectorRepository {
       history: {
         maxInstantPerItem: result.maxInstantPerItem,
         maxReadInterval: result.maxReadInterval,
-        readDelay: result.readDelay
+        readDelay: result.readDelay,
+        overlap: result.overlap
       },
       settings: JSON.parse(result.settings)
     };
@@ -86,8 +90,9 @@ export default class SouthConnectorRepository {
   createSouthConnector(command: SouthConnectorCommandDTO): SouthConnectorDTO {
     const id = generateRandomId(6);
     const insertQuery =
-      `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, history_max_instant_per_item, history_max_read_interval, history_read_delay, settings) ` +
-      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`;
+      `INSERT INTO ${SOUTH_CONNECTORS_TABLE} (id, name, type, description, enabled, history_max_instant_per_item, ` +
+      `history_max_read_interval, history_read_delay, history_read_overlap, settings) ` +
+      `VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`;
     const insertResult = this.database
       .prepare(insertQuery)
       .run(
@@ -99,12 +104,14 @@ export default class SouthConnectorRepository {
         +command.history.maxInstantPerItem,
         command.history.maxReadInterval,
         command.history.readDelay,
+        command.history.overlap,
         JSON.stringify(command.settings)
       );
 
     const query =
       `SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ` +
-      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM ${SOUTH_CONNECTORS_TABLE} WHERE ROWID = ?;`;
+      `history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, ` +
+      `settings FROM ${SOUTH_CONNECTORS_TABLE} WHERE ROWID = ?;`;
     const result: any = this.database.prepare(query).get(insertResult.lastInsertRowid);
     return {
       id: result.id,
@@ -115,7 +122,8 @@ export default class SouthConnectorRepository {
       history: {
         maxInstantPerItem: result.maxInstantPerItem,
         maxReadInterval: result.maxReadInterval,
-        readDelay: result.readDelay
+        readDelay: result.readDelay,
+        overlap: result.overlap
       },
       settings: JSON.parse(result.settings)
     };
@@ -137,7 +145,7 @@ export default class SouthConnectorRepository {
   updateSouthConnector(id: string, command: SouthConnectorCommandDTO): void {
     const query =
       `UPDATE ${SOUTH_CONNECTORS_TABLE} SET name = ?, description = ?, ` +
-      `history_max_instant_per_item = ?, history_max_read_interval = ?, history_read_delay = ?, settings = ? WHERE id = ?;`;
+      `history_max_instant_per_item = ?, history_max_read_interval = ?, history_read_delay = ?, history_read_overlap = ?, settings = ? WHERE id = ?;`;
     this.database
       .prepare(query)
       .run(
@@ -146,6 +154,7 @@ export default class SouthConnectorRepository {
         +command.history.maxInstantPerItem,
         command.history.maxReadInterval,
         command.history.readDelay,
+        command.history.overlap,
         JSON.stringify(command.settings),
         id
       );

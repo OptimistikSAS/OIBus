@@ -28,7 +28,8 @@ const southConnector: SouthConnectorDTO = {
   history: {
     maxInstantPerItem: true,
     maxReadInterval: 3600,
-    readDelay: 0
+    readDelay: 0,
+    overlap: 0
   },
   settings: {
     field: 'value'
@@ -68,7 +69,8 @@ const historyQueryCommand: HistoryQueryCommandDTO = {
   history: {
     maxInstantPerItem: true,
     maxReadInterval: 3600,
-    readDelay: 0
+    readDelay: 0,
+    overlap: 0
   },
   startTime: '2020-02-01T02:02:59.999Z',
   endTime: '2020-02-02T02:02:59.999Z',
@@ -266,7 +268,8 @@ describe('History query controller', () => {
         history: {
           maxInstantPerItem: true,
           maxReadInterval: 3600,
-          readDelay: 0
+          readDelay: 0,
+          overlap: 0
         },
         startTime: '2020-02-01T02:02:59.999Z',
         endTime: '2020-02-02T02:02:59.999Z',

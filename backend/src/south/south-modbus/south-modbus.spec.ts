@@ -144,7 +144,8 @@ const configuration: SouthConnectorDTO = {
   history: {
     maxInstantPerItem: true,
     maxReadInterval: 3600,
-    readDelay: 0
+    readDelay: 0,
+    overlap: 0
   },
   settings: {
     port: 502,

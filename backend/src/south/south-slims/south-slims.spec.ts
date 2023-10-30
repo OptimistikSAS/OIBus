@@ -169,7 +169,8 @@ describe('SouthSlims with body', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       url: 'http://localhost',
@@ -309,7 +310,8 @@ describe('SouthSlims with body and accept self signed', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       url: 'https://localhost/',
@@ -378,7 +380,8 @@ describe('SouthSlims with query params', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       url: 'http://localhost',
@@ -1003,7 +1006,8 @@ describe('SouthSlims with query params and accept self signed', () => {
     history: {
       maxInstantPerItem: true,
       maxReadInterval: 3600,
-      readDelay: 0
+      readDelay: 0,
+      overlap: 0
     },
     settings: {
       url: 'http://localhost',

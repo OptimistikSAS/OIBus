@@ -71,7 +71,8 @@ describe('EditHistoryQueryComponent', () => {
     history: {
       maxInstantPerItem: false,
       maxReadInterval: 0,
-      readDelay: 200
+      readDelay: 200,
+      overlap: 0
     },
     startTime: '2023-01-01T00:00:00.000Z',
     endTime: '2023-02-01T00:00:00.000Z',

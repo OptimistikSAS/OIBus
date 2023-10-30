@@ -236,7 +236,8 @@ describe('Encryption service with crypto settings', () => {
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
-        readDelay: 0
+        readDelay: 0,
+        overlap: 0
       },
       settings: {
         field1: 'not a secret',
@@ -261,7 +262,8 @@ describe('Encryption service with crypto settings', () => {
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
-        readDelay: 0
+        readDelay: 0,
+        overlap: 0
       },
       settings: {
         field1: 'not a secret',
@@ -303,7 +305,8 @@ describe('Encryption service with crypto settings', () => {
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
-        readDelay: 0
+        readDelay: 0,
+        overlap: 0
       },
       settings: {
         field1: 'not a secret',
@@ -353,7 +356,8 @@ describe('Encryption service with crypto settings', () => {
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
-        readDelay: 0
+        readDelay: 0,
+        overlap: 0
       },
       settings: {
         field1: 'not a secret',
@@ -378,7 +382,8 @@ describe('Encryption service with crypto settings', () => {
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
-        readDelay: 0
+        readDelay: 0,
+        overlap: 0
       },
       settings: {
         field1: 'not a secret',
@@ -428,7 +433,8 @@ describe('Encryption service with crypto settings', () => {
       history: {
         maxInstantPerItem: true,
         maxReadInterval: 3600,
-        readDelay: 0
+        readDelay: 0,
+        overlap: 0
       },
       settings: {
         field1: 'not a secret',

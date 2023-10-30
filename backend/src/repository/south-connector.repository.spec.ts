@@ -34,7 +34,8 @@ describe('South connector repository', () => {
         history: {
           maxInstantPerItem: true,
           maxReadInterval: 0,
-          readDelay: 200
+          readDelay: 200,
+          overlap: 0
         },
         settings: {}
       },
@@ -47,7 +48,8 @@ describe('South connector repository', () => {
         history: {
           maxInstantPerItem: false,
           maxReadInterval: 0,
-          readDelay: 200
+          readDelay: 200,
+          overlap: 0
         },
         settings: {}
       }
@@ -62,6 +64,7 @@ describe('South connector repository', () => {
         maxInstantPerItem: true,
         maxReadInterval: 0,
         readDelay: 200,
+        overlap: 0,
         settings: JSON.stringify({})
       },
       {
@@ -73,13 +76,14 @@ describe('South connector repository', () => {
         maxInstantPerItem: false,
         maxReadInterval: 0,
         readDelay: 200,
+        overlap: 0,
         settings: JSON.stringify({})
       }
     ]);
     const southConnectors = repository.getSouthConnectors();
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ' +
-        'history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM south_connectors;'
+        'history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, settings FROM south_connectors;'
     );
     expect(southConnectors).toEqual(expectedValue);
   });
@@ -94,7 +98,8 @@ describe('South connector repository', () => {
       history: {
         maxInstantPerItem: false,
         maxReadInterval: 0,
-        readDelay: 200
+        readDelay: 200,
+        overlap: 0
       },
       settings: {}
     };
@@ -107,12 +112,13 @@ describe('South connector repository', () => {
       maxInstantPerItem: false,
       maxReadInterval: 0,
       readDelay: 200,
+      overlap: 0,
       settings: JSON.stringify({})
     });
     const southConnector = repository.getSouthConnector('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ' +
-        'history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM south_connectors WHERE id = ?;'
+        'history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, settings FROM south_connectors WHERE id = ?;'
     );
     expect(get).toHaveBeenCalledWith('id1');
     expect(southConnector).toEqual(expectedValue);
@@ -123,7 +129,7 @@ describe('South connector repository', () => {
     const southConnector = repository.getSouthConnector('id1');
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ' +
-        'history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM south_connectors WHERE id = ?;'
+        'history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, settings FROM south_connectors WHERE id = ?;'
     );
     expect(get).toHaveBeenCalledWith('id1');
     expect(southConnector).toBeNull();
@@ -141,15 +147,16 @@ describe('South connector repository', () => {
       history: {
         maxInstantPerItem: false,
         maxReadInterval: 0,
-        readDelay: 200
+        readDelay: 200,
+        overlap: 0
       },
       settings: {}
     };
     repository.createSouthConnector(command);
     expect(generateRandomId).toHaveBeenCalledWith(6);
     expect(database.prepare).toHaveBeenCalledWith(
-      'INSERT INTO south_connectors (id, name, type, description, enabled, history_max_instant_per_item, history_max_read_interval, history_read_delay, settings) ' +
-        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);'
+      'INSERT INTO south_connectors (id, name, type, description, enabled, history_max_instant_per_item, history_max_read_interval, history_read_delay, history_read_overlap, settings) ' +
+        'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);'
     );
     expect(run).toHaveBeenCalledWith(
       '123456',
@@ -160,13 +167,14 @@ describe('South connector repository', () => {
       +command.history.maxInstantPerItem,
       command.history.maxReadInterval,
       command.history.readDelay,
+      command.history.overlap,
       JSON.stringify(command.settings)
     );
     expect(get).toHaveBeenCalledWith(1);
 
     expect(database.prepare).toHaveBeenCalledWith(
       'SELECT id, name, type, description, enabled, history_max_instant_per_item AS maxInstantPerItem, ' +
-        'history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, settings FROM south_connectors WHERE ROWID = ?;'
+        'history_max_read_interval AS maxReadInterval, history_read_delay AS readDelay, history_read_overlap AS overlap, settings FROM south_connectors WHERE ROWID = ?;'
     );
   });
 
@@ -179,14 +187,15 @@ describe('South connector repository', () => {
       history: {
         maxInstantPerItem: false,
         maxReadInterval: 0,
-        readDelay: 200
+        readDelay: 200,
+        overlap: 0
       },
       settings: {}
     };
     repository.updateSouthConnector('id1', command);
     expect(database.prepare).toHaveBeenCalledWith(
       'UPDATE south_connectors SET name = ?, description = ?, ' +
-        'history_max_instant_per_item = ?, history_max_read_interval = ?, history_read_delay = ?, settings = ? WHERE id = ?;'
+        'history_max_instant_per_item = ?, history_max_read_interval = ?, history_read_delay = ?, history_read_overlap = ?, settings = ? WHERE id = ?;'
     );
     expect(run).toHaveBeenCalledWith(
       command.name,
@@ -194,6 +203,7 @@ describe('South connector repository', () => {
       +command.history.maxInstantPerItem,
       command.history.maxReadInterval,
       command.history.readDelay,
+      command.history.overlap,
       JSON.stringify(command.settings),
       'id1'
     );

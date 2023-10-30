@@ -30,7 +30,8 @@ const sqliteConnectorCommand: SouthConnectorCommandDTO = {
   history: {
     maxInstantPerItem: true,
     maxReadInterval: 0,
-    readDelay: 0
+    readDelay: 0,
+    overlap: 0
   }
 };
 const southConnectorCommand: SouthConnectorCommandDTO = {
@@ -48,7 +49,8 @@ const southConnectorCommand: SouthConnectorCommandDTO = {
   history: {
     maxInstantPerItem: true,
     maxReadInterval: 0,
-    readDelay: 0
+    readDelay: 0,
+    overlap: 0
   }
 };
 const southConnector: SouthConnectorDTO = {

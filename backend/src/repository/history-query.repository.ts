@@ -175,7 +175,12 @@ export default class HistoryQueryRepository {
       name: result.name,
       description: result.description,
       status: result.status,
-      history: { maxInstantPerItem: result.maxInstantPerItem, readDelay: result.readDelay, maxReadInterval: result.maxReadInterval },
+      history: {
+        maxInstantPerItem: result.maxInstantPerItem,
+        readDelay: result.readDelay,
+        maxReadInterval: result.maxReadInterval,
+        overlap: 0
+      },
       startTime: result.startTime,
       endTime: result.endTime,
       southType: result.southType,
