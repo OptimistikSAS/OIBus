@@ -11,12 +11,17 @@ import { FormComponent } from '../../shared/form/form.component';
 import { OibFormControl } from '../../../../../shared/model/form.model';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
-import { NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorCommandDTO, NorthConnectorDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { OibScanModeComponent } from '../../shared/form/oib-scan-mode/oib-scan-mode.component';
 import { createFormGroup, groupFormControlsByRow } from '../../shared/form-utils';
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
-import { SouthConnectorDTO, SouthConnectorItemDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorDTO,
+  SouthConnectorItemDTO,
+  SouthConnectorManifest
+} from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { Instant } from '../../../../../shared/model/types';
@@ -26,6 +31,8 @@ import { BoxComponent, BoxTitleDirective } from '../../shared/box/box.component'
 import { SouthItemsComponent } from '../../south/south-items/south-items.component';
 import { HistoryQueryItemsComponent } from '../history-query-items/history-query-items.component';
 import { DateTime } from 'luxon';
+import { ModalService } from 'src/app/shared/modal.service';
+import { TestConnectionResultModalComponent } from 'src/app/shared/test-connection-result-modal/test-connection-result-modal.component';
 
 @Component({
   selector: 'oib-edit-history-query',
@@ -100,6 +107,7 @@ export class EditHistoryQueryComponent implements OnInit {
     private fb: NonNullableFormBuilder,
     private notificationService: NotificationService,
     private scanModeService: ScanModeService,
+    private modalService: ModalService,
     private router: Router,
     private route: ActivatedRoute
   ) {}
@@ -279,5 +287,36 @@ export class EditHistoryQueryComponent implements OnInit {
   updateInMemoryItems({ items, itemIdsToDelete }: { items: Array<SouthConnectorItemDTO>; itemIdsToDelete: Array<string> }) {
     this.inMemoryItems = items;
     this.inMemoryItemIdsToDelete = itemIdsToDelete;
+  }
+
+  test(type: 'south' | 'north') {
+    this.historyQueryForm?.markAllAsTouched();
+
+    if (!this.historyQueryForm?.valid) {
+      return;
+    }
+    const formValue = this.historyQueryForm.value;
+    const historyQueryId = this.historyQuery?.id ?? null;
+    let command: SouthConnectorCommandDTO | NorthConnectorCommandDTO;
+    let fromConnectorId;
+
+    if (type === 'south') {
+      command = {
+        type: this.southManifest!.id,
+        settings: formValue.southSettings
+      } as SouthConnectorCommandDTO;
+      fromConnectorId = this.fromSouthId;
+    } else {
+      command = {
+        type: this.northManifest!.id,
+        archive: { enabled: false },
+        settings: formValue.northSettings
+      } as NorthConnectorCommandDTO;
+      fromConnectorId = this.fromNorthId;
+    }
+
+    const modalRef = this.modalService.open(TestConnectionResultModalComponent);
+    const component: TestConnectionResultModalComponent = modalRef.componentInstance;
+    component.runHistoryQueryTest(type, command, historyQueryId, fromConnectorId.length ? fromConnectorId : null);
   }
 }

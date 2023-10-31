@@ -4,8 +4,13 @@ import KoaContextMock from '../../tests/__mocks__/koa-context.mock';
 import JoiValidator from './validators/joi.validator';
 import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO } from '../../../../shared/model/history-query.model';
 import { historyQuerySchema } from '../../engine/oibus-validation-schema';
-import { NorthArchiveSettings, NorthCacheSettingsDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
-import { SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import {
+  NorthArchiveSettings,
+  NorthCacheSettingsDTO,
+  NorthConnectorCommandDTO,
+  NorthConnectorDTO
+} from '../../../../shared/model/north-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
 import csv from 'papaparse';
 import fs from 'node:fs/promises';
 import { southTestManifest } from '../../tests/__mocks__/south-service.mock';
@@ -19,6 +24,12 @@ const ctx = new KoaContextMock();
 const validator = new JoiValidator();
 const historyQueryController = new HistoryQueryConnectorController(validator, historyQuerySchema);
 
+const southConnectorCommand: SouthConnectorCommandDTO = {
+  type: 'south-test',
+  settings: {
+    field: 'value'
+  }
+} as SouthConnectorCommandDTO;
 const southConnector: SouthConnectorDTO = {
   id: 'southId',
   name: 'name',
@@ -50,6 +61,12 @@ const northArchiveSettings: NorthArchiveSettings = {
   retentionDuration: 1000
 };
 
+const northConnectorCommand: NorthConnectorCommandDTO = {
+  type: 'north-test',
+  settings: {
+    field: 'value'
+  }
+} as NorthConnectorCommandDTO;
 const northConnector: NorthConnectorDTO = {
   id: 'northId',
   name: 'name',
@@ -1231,5 +1248,521 @@ describe('History query controller', () => {
     });
     await historyQueryController.importSouthItems(ctx);
     expect(ctx.noContent).toHaveBeenCalledTimes(1);
+  });
+
+  it('testSouthConnection() should test South connector settings', async () => {
+    const createdSouth = {
+      testConnection: jest.fn()
+    };
+    ctx.request.body = southConnectorCommand;
+    ctx.params.id = 'historyId';
+
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
+    (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      southConnectorCommand.settings,
+      historyQueryCommand.southSettings,
+      southTestManifest.settings
+    );
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('testSouthConnection() should throw 404 when manifest not found', async () => {
+    ctx.request.body = {
+      ...southConnectorCommand,
+      type: 'invalid'
+    };
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+  });
+
+  it('testSouthConnection() should return 404 when south connector is not found', async () => {
+    ctx.params.id = 'create';
+    ctx.request = {
+      body: southConnectorCommand,
+      query: { fromConnectorId: 'fromSouthId' }
+    };
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.app.southService.getSouth.mockReturnValueOnce(null).mockReturnValueOnce({ settings: null });
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+    await historyQueryController.testSouthConnection(ctx);
+    expect(ctx.notFound).toHaveBeenCalledTimes(2);
+  });
+
+  it('testSouthConnection() should return 404 when History query is not found', async () => {
+    ctx.params.id = 'id';
+    ctx.request = {
+      body: southConnectorCommand,
+      query: { fromConnectorId: 'fromSouthId' }
+    };
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null).mockReturnValueOnce({ southSettings: null });
+
+    await historyQueryController.testSouthConnection(ctx);
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+    await historyQueryController.testSouthConnection(ctx);
+    expect(ctx.notFound).toHaveBeenCalledTimes(2);
+  });
+
+  it('testSouthConnection() should return 404 when body is null', async () => {
+    ctx.request.body = null;
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+  });
+
+  it('testSouthConnection() should return bad request when validation fails', async () => {
+    ctx.request.body = southConnectorCommand;
+    ctx.params.id = 'historyId';
+    const validationError = new Error('invalid body');
+    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
+      throw validationError;
+    });
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, southConnectorCommand.settings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+  });
+
+  it('testNorthConnection() should test North connector settings', async () => {
+    const createdNorth = {
+      testConnection: jest.fn()
+    };
+    ctx.request.body = northConnectorCommand;
+    ctx.params.id = 'historyId';
+
+    ctx.app.northService.getInstalledNorthManifests.mockReturnValue([northTestManifest]);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
+    (ctx.app.northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      northConnectorCommand.settings,
+      historyQueryCommand.northSettings,
+      northTestManifest.settings
+    );
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('testNorthConnection() should throw 404 when manifest not found', async () => {
+    ctx.request.body = {
+      ...northConnectorCommand,
+      type: 'invalid'
+    };
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
+  });
+
+  it('testNorthConnection() should return 404 when North connector is not found', async () => {
+    ctx.params.id = 'create';
+    ctx.request = {
+      body: northConnectorCommand,
+      query: { fromConnectorId: 'fromNorthId' }
+    };
+    ctx.app.northService.getInstalledNorthManifests.mockReturnValue([northTestManifest]);
+    ctx.app.northService.getNorth.mockReturnValueOnce(null).mockReturnValueOnce({ settings: null });
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+    await historyQueryController.testNorthConnection(ctx);
+    expect(ctx.notFound).toHaveBeenCalledTimes(2);
+  });
+
+  it('testNorthConnection() should return 404 when History query is not found', async () => {
+    ctx.params.id = 'id';
+    ctx.request = {
+      body: northConnectorCommand,
+      query: { fromConnectorId: 'fromNorthId' }
+    };
+    ctx.app.northService.getInstalledNorthManifests.mockReturnValue([northTestManifest]);
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null).mockReturnValueOnce({ northSettings: null });
+
+    await historyQueryController.testNorthConnection(ctx);
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+    await historyQueryController.testNorthConnection(ctx);
+    expect(ctx.notFound).toHaveBeenCalledTimes(2);
+  });
+
+  it('testNorthConnection() should return 404 when body is null', async () => {
+    ctx.request.body = null;
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
+  });
+
+  it('testNorthConnection() should return bad request when validation fails', async () => {
+    ctx.request.body = northConnectorCommand;
+    ctx.params.id = 'historyId';
+    const validationError = new Error('invalid body');
+    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
+      throw validationError;
+    });
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, northConnectorCommand.settings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+  });
+});
+
+describe('South connection tests', () => {
+  const createdSouth = {
+    testConnection: jest.fn()
+  };
+  const type = southTestManifest.id;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    ctx.app.southService.getInstalledSouthManifests.mockReturnValue([southTestManifest]);
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(southConnectorCommand.settings);
+    ctx.app.southService.getSouth.mockReturnValue(southConnectorCommand);
+    (ctx.app.southService.createSouth as jest.Mock).mockReturnValue(createdSouth);
+
+    ctx.request = {
+      body: undefined,
+      query: undefined
+    };
+    ctx.params = {};
+  });
+
+  it('testSouthConnection() should test South connector settings with existing history query', async () => {
+    const connectorSettings = southConnectorCommand.settings;
+    ctx.request.body = {
+      type,
+      settings: connectorSettings
+    };
+    ctx.params.id = 'historyId';
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      connectorSettings,
+      historyQueryCommand.southSettings,
+      southTestManifest.settings
+    );
+    expect(createdSouth.testConnection).toHaveBeenCalled();
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('testSouthConnection() should test South connector settings for new history query with new connector', async () => {
+    const connectorSettings = southConnectorCommand.settings;
+    ctx.request.body = {
+      type,
+      settings: connectorSettings
+    };
+    ctx.params.id = 'create';
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(ctx.app.southService.getSouth).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(connectorSettings, null, southTestManifest.settings);
+    expect(createdSouth.testConnection).toHaveBeenCalled();
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('testSouthConnection() should test South connector settings for new history query with existing connector', async () => {
+    const connectorSettings = southConnectorCommand.settings;
+    ctx.request = {
+      body: { type, settings: connectorSettings },
+      query: { fromConnectorId: 'fromSouthId' }
+    };
+    ctx.params.id = 'create';
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(ctx.app.southService.getSouth).toHaveBeenCalledWith('fromSouthId');
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      connectorSettings,
+      southConnectorCommand.settings,
+      southTestManifest.settings
+    );
+    expect(createdSouth.testConnection).toHaveBeenCalled();
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('testSouthConnection() should test South connector settings for new history query with existing connector (wrong id)', async () => {
+    const connectorSettings = southConnectorCommand.settings;
+    ctx.request = {
+      body: { type, settings: connectorSettings },
+      query: { fromConnectorId: null }
+    };
+    ctx.params.id = 'create';
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(ctx.app.southService.getSouth).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(connectorSettings, null, southTestManifest.settings);
+    expect(createdSouth.testConnection).toHaveBeenCalled();
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('testSouthConnection() should throw 404 when manifest not found', async () => {
+    const connectorSettings = southConnectorCommand.settings;
+    ctx.request.body = { type: 'invalid', settings: connectorSettings };
+    ctx.params.id = 'create';
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+  });
+
+  it('testSouthConnection() should return 404 when south connector is not found', async () => {
+    const connectorSettings = southConnectorCommand.settings;
+    ctx.request = {
+      body: { type, settings: connectorSettings },
+      query: { fromConnectorId: 'fromSouthId' }
+    };
+    ctx.params.id = 'create';
+    ctx.app.southService.getSouth.mockReturnValueOnce(null);
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it('testSouthConnection() should return 404 when cannot get history query dto', async () => {
+    const connectorSettings = southConnectorCommand.settings;
+    ctx.request = {
+      body: { type, settings: connectorSettings },
+      query: { fromConnectorId: 'fromSouthId' }
+    };
+    ctx.params.id = 'unknown';
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null);
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it('testSouthConnection() should return 404 when body is null', async () => {
+    ctx.request.body = null;
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'South manifest not found');
+  });
+
+  it('testSouthConnection() should return bad request when validation fails', async () => {
+    const connectorSettings = southConnectorCommand.settings;
+    ctx.request.body = { type, settings: connectorSettings };
+    ctx.params.id = 'historyId';
+    const validationError = new Error('invalid body');
+    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
+      throw validationError;
+    });
+
+    await historyQueryController.testSouthConnection(ctx);
+
+    expect(validator.validateSettings).toHaveBeenCalledWith(southTestManifest.settings, connectorSettings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
+  });
+});
+
+describe('North connection tests', () => {
+  const createdNorth = {
+    testConnection: jest.fn()
+  };
+  const type = northTestManifest.id;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers().setSystemTime(new Date(nowDateString));
+
+    ctx.app.northService.getInstalledNorthManifests.mockReturnValue([northTestManifest]);
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValue(historyQueryCommand);
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+    ctx.app.northService.getNorth.mockReturnValue(northConnectorCommand);
+    (ctx.app.northService.createNorth as jest.Mock).mockReturnValue(createdNorth);
+
+    ctx.request = {
+      body: undefined,
+      query: undefined
+    };
+    ctx.params = {};
+  });
+
+  it('testNorthConnection() should test North connector settings with existing history query', async () => {
+    const connectorSettings = northConnectorCommand.settings;
+    ctx.request.body = {
+      type,
+      settings: connectorSettings
+    };
+    ctx.params.id = 'historyId';
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      connectorSettings,
+      historyQueryCommand.northSettings,
+      northTestManifest.settings
+    );
+    expect(createdNorth.testConnection).toHaveBeenCalled();
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('testNorthConnection() should test North connector settings for new history query with new connector', async () => {
+    const connectorSettings = northConnectorCommand.settings;
+    ctx.request.body = {
+      type,
+      settings: connectorSettings
+    };
+    ctx.params.id = 'create';
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(ctx.app.northService.getNorth).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(connectorSettings, null, northTestManifest.settings);
+    expect(createdNorth.testConnection).toHaveBeenCalled();
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('testNorthConnection() should test North connector settings for new history query with existing connector', async () => {
+    const connectorSettings = northConnectorCommand.settings;
+    ctx.request = {
+      body: { type, settings: connectorSettings },
+      query: { fromConnectorId: 'fromNorthId' }
+    };
+    ctx.params.id = 'create';
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(ctx.app.northService.getNorth).toHaveBeenCalledWith('fromNorthId');
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(
+      connectorSettings,
+      northConnectorCommand.settings,
+      northTestManifest.settings
+    );
+    expect(createdNorth.testConnection).toHaveBeenCalled();
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('testNorthConnection() should test North connector settings for new history query with existing connector (wrong id)', async () => {
+    const connectorSettings = northConnectorCommand.settings;
+    ctx.request = {
+      body: { type, settings: connectorSettings },
+      query: { fromConnectorId: null }
+    };
+    ctx.params.id = 'create';
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(ctx.app.northService.getNorth).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).toHaveBeenCalledWith(connectorSettings, null, northTestManifest.settings);
+    expect(createdNorth.testConnection).toHaveBeenCalled();
+    expect(ctx.noContent).toHaveBeenCalled();
+  });
+
+  it('testNorthConnection() should throw 404 when manifest not found', async () => {
+    const connectorSettings = northConnectorCommand.settings;
+    ctx.request.body = { type: 'invalid', settings: connectorSettings };
+    ctx.params.id = 'create';
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
+  });
+
+  it('testNorthConnection() should return 404 when north connector is not found', async () => {
+    const connectorSettings = northConnectorCommand.settings;
+    ctx.request = {
+      body: { type, settings: connectorSettings },
+      query: { fromConnectorId: 'fromNorthId' }
+    };
+    ctx.params.id = 'create';
+    ctx.app.northService.getNorth.mockReturnValueOnce(null);
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it('testNorthConnection() should return 404 when cannot get history query dto', async () => {
+    const connectorSettings = northConnectorCommand.settings;
+    ctx.request = {
+      body: { type, settings: connectorSettings },
+      query: { fromConnectorId: 'fromNorthId' }
+    };
+    ctx.params.id = 'unknown';
+    ctx.app.repositoryService.historyQueryRepository.getHistoryQuery.mockReturnValueOnce(null);
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.notFound).toHaveBeenCalledTimes(1);
+  });
+
+  it('testNorthConnection() should return 404 when body is null', async () => {
+    ctx.request.body = null;
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).not.toHaveBeenCalled();
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
+  });
+
+  it('testNorthConnection() should return bad request when validation fails', async () => {
+    const connectorSettings = northConnectorCommand.settings;
+    ctx.request.body = { type, settings: connectorSettings };
+    ctx.params.id = 'historyId';
+    const validationError = new Error('invalid body');
+    validator.validateSettings = jest.fn().mockImplementationOnce(() => {
+      throw validationError;
+    });
+
+    await historyQueryController.testNorthConnection(ctx);
+
+    expect(validator.validateSettings).toHaveBeenCalledWith(northTestManifest.settings, connectorSettings);
+    expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
+    expect(ctx.badRequest).toHaveBeenCalledWith(validationError.message);
   });
 });
