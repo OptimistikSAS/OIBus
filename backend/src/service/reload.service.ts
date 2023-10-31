@@ -232,11 +232,7 @@ export default class ReloadService {
   }
 
   async onCreateNorth(command: NorthConnectorCommandDTO): Promise<NorthConnectorDTO> {
-    const northSettings = this.repositoryService.northConnectorRepository.createNorthConnector(command);
-    if (command.enabled) {
-      await this.oibusEngine.startNorth(northSettings.id, northSettings);
-    }
-    return northSettings;
+    return this.repositoryService.northConnectorRepository.createNorthConnector(command);
   }
 
   async onUpdateNorthSettings(northId: string, command: NorthConnectorCommandDTO): Promise<void> {

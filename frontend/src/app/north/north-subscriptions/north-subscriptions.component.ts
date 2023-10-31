@@ -83,7 +83,6 @@ export class NorthSubscriptionsComponent implements OnInit {
     const component: CreateNorthSubscriptionModalComponent = modalRef.componentInstance;
 
     component.prepareForCreation(
-      this.northConnector!.id,
       this.southConnectors.filter(south => !this.subscriptions.some(subscription => subscription.subscription?.id === south.id)),
       this.externalSources.filter(
         externalSource => !this.subscriptions.some(subscription => subscription.externalSubscription?.id === externalSource.id)
