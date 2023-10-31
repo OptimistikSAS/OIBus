@@ -70,10 +70,20 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
         value = await this.readDiscreteInputRegister(address);
         break;
       case 'inputRegister':
-        value = await this.readInputRegister(address, item.settings.multiplierCoefficient!, item.settings.dataType!);
+        value = await this.readInputRegister(
+          address,
+          item.settings.multiplierCoefficient!,
+          item.settings.dataType!,
+          item.settings.bitIndex
+        );
         break;
       case 'holdingRegister':
-        value = await this.readHoldingRegister(address, item.settings.multiplierCoefficient!, item.settings.dataType!);
+        value = await this.readHoldingRegister(
+          address,
+          item.settings.multiplierCoefficient!,
+          item.settings.dataType!,
+          item.settings.bitIndex
+        );
         break;
       default:
         throw new Error(`Wrong Modbus type "${item.settings.modbusType}" for point ${item.name}`);
@@ -112,34 +122,33 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   /**
    * Read a Modbus input register
    */
-  async readInputRegister(address: number, multiplier: number, dataType: string): Promise<number> {
+  async readInputRegister(address: number, multiplier: number, dataType: string, bitIndex: number | undefined): Promise<number> {
     if (!this.client) {
       throw new Error('Read input error: Modbus client not set');
     }
     const numberOfWords = this.getNumberOfWords(dataType);
     const { response } = await this.client.readInputRegisters(address, numberOfWords);
-    return this.getValueFromBuffer(response.body.valuesAsBuffer, multiplier, dataType);
+    return this.getValueFromBuffer(response.body.valuesAsBuffer, multiplier, dataType, bitIndex);
   }
 
   /**
    * Read a Modbus holding register
    */
-  async readHoldingRegister(address: number, multiplier: number, dataType: string): Promise<number> {
+  async readHoldingRegister(address: number, multiplier: number, dataType: string, bitIndex: number | undefined): Promise<number> {
     if (!this.client) {
       throw new Error('Read holding error: Modbus client not set');
     }
     const numberOfWords = this.getNumberOfWords(dataType);
     const { response } = await this.client.readHoldingRegisters(address, numberOfWords);
-    return this.getValueFromBuffer(response.body.valuesAsBuffer, multiplier, dataType);
+    return this.getValueFromBuffer(response.body.valuesAsBuffer, multiplier, dataType, bitIndex);
   }
 
   /**
    * Retrieve a value from buffer with appropriate conversion according to the modbus settings
    */
-  getValueFromBuffer(buffer: any, multiplier: number, dataType: string): number {
-    const endianness = this.connector.settings.endianness === 'Big Endian' ? 'BE' : 'LE';
-    const bufferFunctionName = `read${dataType}${endianness}`;
-    if (!['Int16', 'UInt16'].includes(dataType)) {
+  getValueFromBuffer(buffer: any, multiplier: number, dataType: string, bitIndex: number | undefined): number {
+    const bufferFunctionName = this.getBufferFunctionName(dataType);
+    if (!['Bit', 'Int16', 'UInt16'].includes(dataType)) {
       buffer.swap32().swap16();
       if (this.connector.settings.swapWordsInDWords) {
         buffer.swap16().swap32();
@@ -156,6 +165,11 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
     }
 
     const bufferValue = buffer[bufferFunctionName]();
+
+    if (dataType === 'Bit') {
+      return (bufferValue >> bitIndex!) & 1;
+    }
+
     return parseFloat((bufferValue * multiplier).toFixed(5));
   }
 
@@ -219,6 +233,17 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
   }
 
   /**
+   * Retrieve the right buffer function name according to the data type
+   */
+  getBufferFunctionName(dataType: string): string {
+    const endianness = this.connector.settings.endianness === 'Big Endian' ? 'BE' : 'LE';
+    if (dataType === 'Bit') {
+      return `readUInt16${endianness}`;
+    }
+
+    return `read${dataType}${endianness}`;
+  }
+  /**
    * Close the connection
    */
   async disconnect(): Promise<void> {
@@ -236,7 +261,7 @@ export default class SouthModbus extends SouthConnector<SouthModbusSettings, Sou
    * Retrieve the number of Words in Modbus associated to each data type
    */
   getNumberOfWords(dataType: string): number {
-    if (['Int16', 'UInt16'].includes(dataType)) {
+    if (['Bit', 'Int16', 'UInt16'].includes(dataType)) {
       return 1;
     }
     if (['UInt32', 'Int32', 'Float'].includes(dataType)) {

@@ -131,6 +131,20 @@ const items: Array<SouthConnectorItemDTO> = [
       multiplierCoefficient: 1
     },
     scanModeId: 'scanModeId1'
+  },
+  {
+    id: 'id6',
+    name: 'HoldingRegister',
+    enabled: true,
+    connectorId: 'southId',
+    settings: {
+      modbusType: 'holdingRegister',
+      dataType: 'Bit',
+      address: '0x0E88',
+      bitIndex: 1,
+      multiplierCoefficient: 1
+    },
+    scanModeId: 'scanModeId1'
   }
 ];
 
@@ -235,29 +249,29 @@ describe('SouthModbus', () => {
   });
 
   it('should read input', async () => {
-    await expect(south.readInputRegister(1234, 1, 'UInt16')).rejects.toThrowError('Read input error: Modbus client not set');
+    await expect(south.readInputRegister(1234, 1, 'UInt16', 10)).rejects.toThrowError('Read input error: Modbus client not set');
 
     south.getNumberOfWords = jest.fn().mockReturnValue(2);
     south.getValueFromBuffer = jest.fn().mockReturnValue(123);
     await south.start();
-    const result = await south.readInputRegister(1234, 1, 'UInt16');
+    const result = await south.readInputRegister(1234, 1, 'UInt16', 10);
     expect(readInputRegisters).toHaveBeenCalledTimes(1);
     expect(readInputRegisters).toHaveBeenCalledWith(1234, 2);
     expect(result).toEqual(123);
-    expect(south.getValueFromBuffer).toHaveBeenCalledWith(Buffer.from([1, 2, 3, 4]), 1, 'UInt16');
+    expect(south.getValueFromBuffer).toHaveBeenCalledWith(Buffer.from([1, 2, 3, 4]), 1, 'UInt16', 10);
   });
 
   it('should read holding', async () => {
-    await expect(south.readHoldingRegister(1234, 1, 'UInt16')).rejects.toThrowError('Read holding error: Modbus client not set');
+    await expect(south.readHoldingRegister(1234, 1, 'UInt16', 10)).rejects.toThrowError('Read holding error: Modbus client not set');
 
     south.getNumberOfWords = jest.fn().mockReturnValue(2);
     south.getValueFromBuffer = jest.fn().mockReturnValue(123);
     await south.start();
-    const result = await south.readHoldingRegister(1234, 1, 'UInt16');
+    const result = await south.readHoldingRegister(1234, 1, 'UInt16', 10);
     expect(readHoldingRegisters).toHaveBeenCalledTimes(1);
     expect(readHoldingRegisters).toHaveBeenCalledWith(1234, 2);
     expect(result).toEqual(123);
-    expect(south.getValueFromBuffer).toHaveBeenCalledWith(Buffer.from([1, 2, 3, 4]), 1, 'UInt16');
+    expect(south.getValueFromBuffer).toHaveBeenCalledWith(Buffer.from([1, 2, 3, 4]), 1, 'UInt16', 10);
   });
 
   it('should query last point', async () => {
@@ -375,7 +389,21 @@ describe('SouthModbus', () => {
     expect(south.addValues).not.toHaveBeenCalled();
   });
 
+  it('should generate buffer function name', () => {
+    const endianness = configuration.settings.endianness === 'Big Endian' ? 'BE' : 'LE';
+    expect(south.getBufferFunctionName('Bit')).toEqual('readUInt16' + endianness);
+    expect(south.getBufferFunctionName('UInt16')).toEqual('readUInt16' + endianness);
+    expect(south.getBufferFunctionName('Int16')).toEqual('readInt16' + endianness);
+    expect(south.getBufferFunctionName('UInt32')).toEqual('readUInt32' + endianness);
+    expect(south.getBufferFunctionName('Int32')).toEqual('readInt32' + endianness);
+    expect(south.getBufferFunctionName('Float')).toEqual('readFloat' + endianness);
+    expect(south.getBufferFunctionName('BigUInt64')).toEqual('readBigUInt64' + endianness);
+    expect(south.getBufferFunctionName('BigInt64')).toEqual('readBigInt64' + endianness);
+    expect(south.getBufferFunctionName('Double')).toEqual('readDouble' + endianness);
+  });
+
   it('should retrieve number of words', () => {
+    expect(south.getNumberOfWords('Bit')).toEqual(1);
     expect(south.getNumberOfWords('UInt16')).toEqual(1);
     expect(south.getNumberOfWords('Int16')).toEqual(1);
     expect(south.getNumberOfWords('UInt32')).toEqual(2);
@@ -388,13 +416,15 @@ describe('SouthModbus', () => {
   });
 
   it('should get value from buffer', () => {
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt16')).toEqual(258);
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt32')).toEqual(50594050);
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt16', undefined)).toEqual(258);
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt32', undefined)).toEqual(50594050);
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'Bit', 1)).toEqual(1);
     configuration.settings.swapWordsInDWords = true;
     configuration.settings.swapBytesInWords = true;
     configuration.settings.endianness = 'Little Endian';
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt32')).toEqual(50594050);
-    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt16')).toEqual(258);
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt32', 10)).toEqual(50594050);
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'UInt16', 10)).toEqual(258);
+    expect(south.getValueFromBuffer(Buffer.from([1, 2, 3, 4]), 1, 'Bit', 1)).toEqual(1);
   });
 });
 
