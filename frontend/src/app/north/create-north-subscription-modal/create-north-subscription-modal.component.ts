@@ -20,7 +20,6 @@ export class CreateNorthSubscriptionModalComponent {
   state = new ObservableState();
   southConnectors: Array<SouthConnectorDTO> = [];
   externalSources: Array<ExternalSourceDTO> = [];
-  northId = '';
   form = this.fb.group({
     type: ['south' as 'south' | 'external-source', Validators.required],
     southConnector: [null as SouthConnectorDTO | null, Validators.required],
@@ -46,8 +45,7 @@ export class CreateNorthSubscriptionModalComponent {
   /**
    * Prepares the component for creation.
    */
-  prepareForCreation(northId: string, connectors: Array<SouthConnectorDTO>, externalSources: Array<ExternalSourceDTO>) {
-    this.northId = northId;
+  prepareForCreation(connectors: Array<SouthConnectorDTO>, externalSources: Array<ExternalSourceDTO>) {
     this.southConnectors = connectors;
     this.externalSources = externalSources;
     if (this.southConnectors.length === 0) {

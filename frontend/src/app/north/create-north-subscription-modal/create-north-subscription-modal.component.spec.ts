@@ -72,7 +72,7 @@ describe('CreateNorthSubscriptionModalComponent', () => {
     TestBed.createComponent(DefaultValidationErrorsComponent).detectChanges();
 
     tester = new CreateNorthSubscriptionModalComponentTester();
-    tester.componentInstance.prepareForCreation('northId', southConnectors, externalSources);
+    tester.componentInstance.prepareForCreation(southConnectors, externalSources);
     northConnectorService.createSubscription.and.returnValue(of(undefined));
     northConnectorService.createExternalSubscription.and.returnValue(of(undefined));
     tester.detectChanges();

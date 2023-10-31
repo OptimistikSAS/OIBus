@@ -433,15 +433,6 @@ describe('reload service', () => {
     const command = { enabled: true };
     (repositoryService.northConnectorRepository.createNorthConnector as jest.Mock).mockReturnValueOnce({ id: 'northId' });
     const result = await service.onCreateNorth(command as NorthConnectorCommandDTO);
-    expect(oibusEngine.startNorth).toHaveBeenCalledWith('northId', { id: 'northId' });
-    expect(result).toEqual({ id: 'northId' });
-  });
-
-  it('should create and not start north', async () => {
-    const command = {};
-    (repositoryService.northConnectorRepository.createNorthConnector as jest.Mock).mockReturnValueOnce({ id: 'northId' });
-    const result = await service.onCreateNorth(command as NorthConnectorCommandDTO);
-    expect(oibusEngine.startNorth).not.toHaveBeenCalled();
     expect(result).toEqual({ id: 'northId' });
   });
 

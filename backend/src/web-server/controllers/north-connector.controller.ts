@@ -59,20 +59,40 @@ export default class NorthConnectorController {
     }
   }
 
-  async createNorthConnector(ctx: KoaContext<NorthConnectorCommandDTO, void>): Promise<void> {
+  async createNorthConnector(ctx: KoaContext<NorthConnectorWithItemsCommandDTO, void>): Promise<void> {
+    if (!ctx.request.body || !ctx.request.body.subscriptions || !ctx.request.body.north) {
+      return ctx.badRequest();
+    }
+    const command = ctx.request.body!.north;
+
     try {
-      const manifest = ctx.request.body
-        ? ctx.app.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === ctx.request.body!.type)
-        : null;
+      const manifest = ctx.app.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === command.type);
       if (!manifest) {
         return ctx.throw(404, 'North manifest not found');
       }
 
-      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
-
-      const command: NorthConnectorCommandDTO = ctx.request.body!;
+      await this.validator.validateSettings(manifest.settings, command.settings);
       command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, null, manifest.settings);
+
+      const subscriptionsToAdd = ctx.request.body.subscriptions
+        .filter(element => element.type === 'south')
+        .map(element => element.subscription!.id);
+      const externalSubscriptionsToAdd = ctx.request.body.subscriptions
+        .filter(element => element.type === 'external-source')
+        .map(element => element.externalSubscription!.id);
+
       const northConnector = await ctx.app.reloadService.onCreateNorth(command);
+
+      for (const subscription of subscriptionsToAdd) {
+        ctx.app.repositoryService.subscriptionRepository.createNorthSubscription(northConnector.id, subscription);
+      }
+      for (const subscription of externalSubscriptionsToAdd) {
+        ctx.app.repositoryService.subscriptionRepository.createExternalNorthSubscription(northConnector.id, subscription);
+      }
+
+      if (command.enabled) {
+        await ctx.app.reloadService.onStartNorth(northConnector.id);
+      }
       ctx.created(northConnector);
     } catch (error: any) {
       ctx.badRequest(error.message);

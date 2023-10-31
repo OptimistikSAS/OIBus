@@ -141,7 +141,11 @@ describe('North connector controller', () => {
 
   it('createNorthConnector() should create North connector', async () => {
     ctx.request.body = {
-      ...northConnectorCommand
+      north: { ...northConnectorCommand },
+      subscriptions: [
+        { type: 'south', subscription: { id: 'id1' } },
+        { type: 'external-source', externalSubscription: { id: 'id2' } }
+      ]
     };
     ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
     ctx.app.reloadService.onCreateNorth.mockReturnValue(northConnector);
@@ -155,13 +159,35 @@ describe('North connector controller', () => {
       northTestManifest.settings
     );
     expect(ctx.app.reloadService.onCreateNorth).toHaveBeenCalledWith(northConnectorCommand);
+    expect(ctx.app.reloadService.onStartNorth).toHaveBeenCalledWith('id');
+    expect(ctx.created).toHaveBeenCalledWith(northConnector);
+  });
+
+  it('createNorthConnector() should create North connector and not start it', async () => {
+    ctx.request.body = {
+      north: { ...northConnectorCommand, enabled: false },
+      subscriptions: [
+        { type: 'south', subscription: { id: 'id1' } },
+        { type: 'external-source', externalSubscription: { id: 'id2' } }
+      ]
+    };
+    ctx.app.encryptionService.encryptConnectorSecrets.mockReturnValue(northConnectorCommand.settings);
+    ctx.app.reloadService.onCreateNorth.mockReturnValue(northConnector);
+
+    await northConnectorController.createNorthConnector(ctx);
+
+    expect(ctx.app.reloadService.onCreateNorth).toHaveBeenCalledWith({ ...northConnectorCommand, enabled: false });
+    expect(ctx.app.reloadService.onStartNorth).not.toHaveBeenCalled();
     expect(ctx.created).toHaveBeenCalledWith(northConnector);
   });
 
   it('createNorthConnector() should return 404 when manifest not found', async () => {
     ctx.request.body = {
-      ...northConnectorCommand,
-      type: 'invalid'
+      north: {
+        ...northConnectorCommand,
+        type: 'invalid'
+      },
+      subscriptions: []
     };
 
     await northConnectorController.createNorthConnector(ctx);
@@ -172,20 +198,24 @@ describe('North connector controller', () => {
     expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
   });
 
-  it('createNorthConnector() should return 404 when body is null', async () => {
-    ctx.request.body = null;
+  it('createNorthConnector() should return bad request when north body is null', async () => {
+    ctx.request.body = {
+      subscriptions: [],
+      north: null
+    };
 
     await northConnectorController.createNorthConnector(ctx);
 
     expect(validator.validateSettings).not.toHaveBeenCalled();
     expect(ctx.app.encryptionService.encryptConnectorSecrets).not.toHaveBeenCalled();
     expect(ctx.app.reloadService.onCreateNorth).not.toHaveBeenCalled();
-    expect(ctx.throw).toHaveBeenCalledWith(404, 'North manifest not found');
+    expect(ctx.badRequest).toHaveBeenCalled();
   });
 
   it('createNorthConnector() should return bad request when validation fails', async () => {
     ctx.request.body = {
-      ...northConnectorCommand
+      north: { ...northConnectorCommand },
+      subscriptions: []
     };
     const validationError = new Error('invalid body');
     validator.validateSettings = jest.fn().mockImplementationOnce(() => {
