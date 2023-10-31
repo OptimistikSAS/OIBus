@@ -4,11 +4,13 @@ import { Injectable } from '@angular/core';
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
 import { Page } from '../../../../shared/model/types';
 import {
+  SouthConnectorCommandDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam
 } from '../../../../shared/model/south-connector.model';
 import { DownloadService } from './download.service';
+import { NorthConnectorCommandDTO } from '../../../../shared/model/north-connector.model';
 
 /**
  * Service used to interact with the backend for CRUD operations on History queries
@@ -217,5 +219,17 @@ export class HistoryQueryService {
 
   pauseHistoryQuery(historyQueryId: string): Observable<void> {
     return this.http.put<void>(`/api/history-queries/${historyQueryId}/pause`, null);
+  }
+
+  testSouthConnection(historyQueryId: string, settings: SouthConnectorCommandDTO, fromConnectorId: string | null = null): Observable<void> {
+    return this.http.put<void>(`/api/history-queries/${historyQueryId}/south/test-connection`, settings, {
+      params: fromConnectorId ? { fromConnectorId } : {}
+    });
+  }
+
+  testNorthConnection(historyQueryId: string, settings: NorthConnectorCommandDTO, fromConnectorId: string | null = null): Observable<void> {
+    return this.http.put<void>(`/api/history-queries/${historyQueryId}/north/test-connection`, settings, {
+      params: fromConnectorId ? { fromConnectorId } : {}
+    });
   }
 }

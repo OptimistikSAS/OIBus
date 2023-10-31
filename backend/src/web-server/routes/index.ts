@@ -221,6 +221,12 @@ router.delete('/api/history-queries/:historyQueryId/south-items/all', (ctx: KoaC
 router.delete('/api/history-queries/:historyQueryId/south-items/:id', (ctx: KoaContext<any, any>) =>
   historyQueryController.deleteHistoryQueryItem(ctx)
 );
+router.put('/api/history-queries/:id/south/test-connection', (ctx: KoaContext<any, any>) =>
+  historyQueryController.testSouthConnection(ctx)
+);
+router.put('/api/history-queries/:id/north/test-connection', (ctx: KoaContext<any, any>) =>
+  historyQueryController.testNorthConnection(ctx)
+);
 
 router.get('/api/logs', (ctx: KoaContext<any, any>) => logController.searchLogs(ctx));
 router.get('/api/scope-logs/suggestions', (ctx: KoaContext<any, any>) => logController.suggestScopes(ctx));

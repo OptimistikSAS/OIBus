@@ -6,9 +6,14 @@ import { HistoryQueryService } from './history-query.service';
 import { HistoryQueryCommandDTO, HistoryQueryDTO } from '../../../../shared/model/history-query.model';
 import { toPage } from '../shared/test-utils';
 import { Page } from '../../../../shared/model/types';
-import { SouthConnectorItemCommandDTO, SouthConnectorItemDTO } from '../../../../shared/model/south-connector.model';
+import {
+  SouthConnectorCommandDTO,
+  SouthConnectorItemCommandDTO,
+  SouthConnectorItemDTO
+} from '../../../../shared/model/south-connector.model';
 import { DownloadService } from './download.service';
 import { provideHttpClient } from '@angular/common/http';
+import { NorthConnectorCommandDTO } from '../../../../shared/model/north-connector.model';
 
 describe('HistoryQueryService', () => {
   let http: HttpTestingController;
@@ -275,6 +280,35 @@ describe('HistoryQueryService', () => {
     service.pauseHistoryQuery('id1').subscribe(() => (done = true));
     const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/pause' });
     expect(testRequest.request.body).toEqual(null);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should test a History query North connector connection', () => {
+    let done = false;
+    const command: NorthConnectorCommandDTO = {
+      type: 'Test',
+      archive: { enabled: false },
+      settings: {}
+    } as NorthConnectorCommandDTO;
+
+    service.testNorthConnection('id1', command).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/north/test-connection' });
+    expect(testRequest.request.body).toEqual(command);
+    testRequest.flush(null);
+    expect(done).toBe(true);
+  });
+
+  it('should test a History query South connector connection', () => {
+    let done = false;
+    const command: SouthConnectorCommandDTO = {
+      type: 'Test',
+      settings: {}
+    } as SouthConnectorCommandDTO;
+
+    service.testSouthConnection('id1', command).subscribe(() => (done = true));
+    const testRequest = http.expectOne({ method: 'PUT', url: '/api/history-queries/id1/south/test-connection' });
+    expect(testRequest.request.body).toEqual(command);
     testRequest.flush(null);
     expect(done).toBe(true);
   });

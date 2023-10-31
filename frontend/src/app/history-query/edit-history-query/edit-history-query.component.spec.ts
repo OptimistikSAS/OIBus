@@ -12,8 +12,9 @@ import { NorthConnectorService } from '../../services/north-connector.service';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
-import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
-import { SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { Modal, ModalService } from 'src/app/shared/modal.service';
 
 class EditHistoryQueryComponentTester extends ComponentTester<EditHistoryQueryComponent> {
   constructor() {
@@ -62,6 +63,7 @@ describe('EditHistoryQueryComponent', () => {
   let southConnectorService: jasmine.SpyObj<SouthConnectorService>;
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
+  let modalService: jasmine.SpyObj<ModalService>;
 
   const historyQuery: HistoryQueryDTO = {
     id: 'id1',
@@ -100,6 +102,7 @@ describe('EditHistoryQueryComponent', () => {
     southConnectorService = createMock(SouthConnectorService);
     historyQueryService = createMock(HistoryQueryService);
     scanModeService = createMock(ScanModeService);
+    modalService = createMock(ModalService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -117,7 +120,8 @@ describe('EditHistoryQueryComponent', () => {
               historyQueryId: 'id1'
             }
           })
-        }
+        },
+        { provide: ModalService, useValue: modalService }
       ]
     });
 
@@ -188,5 +192,48 @@ describe('EditHistoryQueryComponent', () => {
     expect(tester.specificForm).toBeDefined();
     expect(tester.northSpecificTitle).toContainText('Console settings');
     expect(tester.southSpecificTitle).toContainText('SQL settings');
+  });
+
+  it('should test north connection', () => {
+    tester.componentInstance.northManifest = { id: 'northId1' } as NorthConnectorManifest;
+    tester.componentInstance.historyQuery = historyQuery;
+
+    const command = {
+      type: 'northId1',
+      archive: { enabled: false },
+      settings: historyQuery.northSettings
+    } as NorthConnectorCommandDTO;
+
+    const spy = jasmine.createSpy();
+    modalService.open.and.returnValue({
+      componentInstance: {
+        runHistoryQueryTest: spy
+      }
+    } as Modal<unknown>);
+
+    tester.componentInstance.test('north');
+    tester.detectChanges();
+    expect(spy).toHaveBeenCalledWith('north', command, 'id1', null);
+  });
+
+  it('should test south connection', () => {
+    tester.componentInstance.southManifest = { id: 'southId1' } as SouthConnectorManifest;
+    tester.componentInstance.historyQuery = historyQuery;
+
+    const command = {
+      type: 'southId1',
+      settings: historyQuery.southSettings
+    } as SouthConnectorCommandDTO;
+
+    const spy = jasmine.createSpy();
+    modalService.open.and.returnValue({
+      componentInstance: {
+        runHistoryQueryTest: spy
+      }
+    } as Modal<unknown>);
+
+    tester.componentInstance.test('south');
+    tester.detectChanges();
+    expect(spy).toHaveBeenCalledWith('south', command, 'id1', null);
   });
 });

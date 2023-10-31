@@ -4,12 +4,13 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest, of, switchMap } from 'rxjs';
 import { PageLoader } from '../../shared/page-loader.service';
-import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
 import { ScanModeDTO } from '../../../../../shared/model/scan-mode.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { HistoryQueryDTO, HistoryQueryStatus } from '../../../../../shared/model/history-query.model';
 import {
+  SouthConnectorCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam,
   SouthConnectorManifest
@@ -31,6 +32,8 @@ import { NotificationService } from '../../shared/notification.service';
 import { ObservableState } from '../../shared/save-button/save-button.component';
 import { EngineService } from '../../services/engine.service';
 import { ClipboardModule } from '@angular/cdk/clipboard';
+import { ModalService } from 'src/app/shared/modal.service';
+import { TestConnectionResultModalComponent } from 'src/app/shared/test-connection-result-modal/test-connection-result-modal.component';
 
 @Component({
   selector: 'oib-history-query-detail',
@@ -83,6 +86,7 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     private southConnectorService: SouthConnectorService,
     private notificationService: NotificationService,
     private scanModeService: ScanModeService,
+    private modalService: ModalService,
     private engineService: EngineService,
     protected router: Router,
     private route: ActivatedRoute,
@@ -205,5 +209,25 @@ export class HistoryQueryDetailComponent implements OnInit, OnDestroy {
     } else {
       this.notificationService.error('history-query.cache-path-copy.error');
     }
+  }
+
+  test(type: 'south' | 'north') {
+    let command: SouthConnectorCommandDTO | NorthConnectorCommandDTO;
+    if (type === 'south') {
+      command = {
+        type: this.southManifest!.id,
+        settings: this.historyQuery!.southSettings
+      } as SouthConnectorCommandDTO;
+    } else {
+      command = {
+        type: this.northManifest!.id,
+        archive: { enabled: false },
+        settings: this.historyQuery!.northSettings
+      } as NorthConnectorCommandDTO;
+    }
+
+    const modalRef = this.modalService.open(TestConnectionResultModalComponent);
+    const component: TestConnectionResultModalComponent = modalRef.componentInstance;
+    component.runHistoryQueryTest(type, command, this.historyQuery!.id);
   }
 }

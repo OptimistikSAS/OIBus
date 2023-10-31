@@ -8,6 +8,7 @@ import { FormComponent } from '../../shared/form/form.component';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../../shared/model/north-connector.model';
 import { NorthConnectorService } from '../../services/north-connector.service';
+import { HistoryQueryService } from 'src/app/services/history-query.service';
 
 @Component({
   selector: 'oib-test-connection-result-modal',
@@ -26,7 +27,8 @@ export class TestConnectionResultModalComponent {
   constructor(
     private modal: NgbActiveModal,
     private southConnectorService: SouthConnectorService,
-    private northConnectorService: NorthConnectorService
+    private northConnectorService: NorthConnectorService,
+    protected historyQueryService: HistoryQueryService
   ) {}
 
   /**
@@ -45,6 +47,35 @@ export class TestConnectionResultModalComponent {
       obs = this.southConnectorService.testConnection(this.connector?.id || 'create', command as SouthConnectorCommandDTO);
     } else {
       obs = this.northConnectorService.testConnection(this.connector?.id || 'create', command as NorthConnectorCommandDTO);
+    }
+    obs.subscribe({
+      error: httpError => {
+        this.error = httpError.error.message;
+        this.loading = false;
+      },
+      next: () => {
+        this.success = true;
+        this.loading = false;
+      }
+    });
+  }
+
+  /**
+   * Prepares the component for history query testing.
+   */
+  runHistoryQueryTest(
+    type: 'south' | 'north',
+    command: SouthConnectorCommandDTO | NorthConnectorCommandDTO,
+    historyQueryId: string | null,
+    fromConnectorId: string | null = null
+  ) {
+    this.type = type;
+    this.loading = true;
+    let obs;
+    if (type === 'south') {
+      obs = this.historyQueryService.testSouthConnection(historyQueryId || 'create', command as SouthConnectorCommandDTO, fromConnectorId);
+    } else {
+      obs = this.historyQueryService.testNorthConnection(historyQueryId || 'create', command as NorthConnectorCommandDTO, fromConnectorId);
     }
     obs.subscribe({
       error: httpError => {

@@ -184,11 +184,16 @@
         <!-- North settings -->
         <oib-box>
           <ng-template oibBoxTitle>
-            <span
-              translate="north.specific-settings"
-              [translateParams]="{ type: northManifest.name}"
-              id="north-specific-settings-title"
-            ></span>
+            <div class="d-flex justify-content-between align-items-center">
+              <span
+                translate="north.specific-settings"
+                [translateParams]="{ type: northManifest.name}"
+                id="north-specific-settings-title"
+              ></span>
+              <button type="button" class="btn btn-primary btn-sm" id="test-connection-north" (click)="test('north')">
+                <span translate="north.test-connection.button"></span>
+              </button>
+            </div>
           </ng-template>
 
           <oib-form
@@ -203,11 +208,16 @@
         <!-- South settings -->
         <oib-box>
           <ng-template oibBoxTitle>
-            <span
-              translate="history-query.south.specific-settings"
-              [translateParams]="{ type: southManifest.name }"
-              id="south-specific-settings-title"
-            ></span>
+            <div class="d-flex justify-content-between align-items-center">
+              <span
+                translate="history-query.south.specific-settings"
+                [translateParams]="{ type: southManifest.name }"
+                id="south-specific-settings-title"
+              ></span>
+              <button type="button" class="btn btn-primary btn-sm" id="test-connection-south" (click)="test('south')">
+                <span translate="south.test-connection.button"></span>
+              </button>
+            </div>
           </ng-template>
 
           <oib-form

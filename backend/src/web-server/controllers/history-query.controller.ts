@@ -3,6 +3,8 @@ import { HistoryQueryCommandDTO, HistoryQueryCreateCommandDTO, HistoryQueryDTO }
 import JoiValidator from './validators/joi.validator';
 
 import {
+  SouthConnectorCommandDTO,
+  SouthConnectorDTO,
   SouthConnectorItemCommandDTO,
   SouthConnectorItemDTO,
   SouthConnectorItemSearchParam
@@ -12,6 +14,7 @@ import csv from 'papaparse';
 import fs from 'node:fs/promises';
 import AbstractController from './abstract.controller';
 import Joi from 'joi';
+import { NorthConnectorCommandDTO, NorthConnectorDTO } from '../../../../shared/model/north-connector.model';
 
 interface HistoryQueryWithItemsCommandDTO {
   historyQuery: HistoryQueryCommandDTO;
@@ -438,5 +441,96 @@ export default class HistoryQueryController extends AbstractController {
       return ctx.badRequest(error.message);
     }
     ctx.noContent();
+  }
+
+  async testSouthConnection(ctx: KoaContext<SouthConnectorCommandDTO, void>) {
+    try {
+      const manifest = ctx.request.body
+        ? ctx.app.southService.getInstalledSouthManifests().find(southManifest => southManifest.id === ctx.request.body!.type)
+        : null;
+      if (!manifest) {
+        return ctx.throw(404, 'South manifest not found');
+      }
+
+      let southSettings: SouthConnectorDTO['settings'] | null = null;
+      // When we have a history query id, we can retrieve the old connector settings from repository
+      if (ctx.params.id !== 'create') {
+        southSettings = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id)?.southSettings;
+        if (!southSettings) {
+          return ctx.notFound();
+        }
+      }
+      // When creating a new history query from exising connector, we can retrieve old connector settings using connector id
+      else if (ctx.request.query?.fromConnectorId && typeof ctx.request.query.fromConnectorId === 'string') {
+        southSettings = ctx.app.southService.getSouth(ctx.request.query!.fromConnectorId)?.settings;
+        if (!southSettings) {
+          return ctx.notFound();
+        }
+      }
+      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
+
+      const command: SouthConnectorDTO = {
+        id: 'test',
+        ...ctx.request.body!,
+        name: `${ctx.request.body!.type}:test-connection`
+      };
+      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, southSettings, manifest.settings);
+      const southToTest = ctx.app.southService.createSouth(
+        command,
+        [],
+        /* istanbul ignore next: noop function */
+        async (_southId: string, _values: Array<any>) => {},
+        /* istanbul ignore next: noop function */
+        async (_southId: string, _filename: string) => {},
+        'baseFolder',
+        ctx.app.logger
+      );
+      await southToTest.testConnection();
+
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
+  }
+
+  async testNorthConnection(ctx: KoaContext<NorthConnectorCommandDTO, void>) {
+    try {
+      const manifest = ctx.request.body
+        ? ctx.app.northService.getInstalledNorthManifests().find(northManifest => northManifest.id === ctx.request.body!.type)
+        : null;
+      if (!manifest) {
+        return ctx.throw(404, 'North manifest not found');
+      }
+
+      let northSettings: NorthConnectorDTO['settings'] | null = null;
+      // When we have a history query id, we can retrieve the old connector settings from repository
+      if (ctx.params.id !== 'create') {
+        northSettings = ctx.app.repositoryService.historyQueryRepository.getHistoryQuery(ctx.params.id)?.northSettings;
+        if (!northSettings) {
+          return ctx.notFound();
+        }
+      }
+      // When creating a new history query from exising connector, we can retrieve old connector settings using connector id
+      else if (ctx.request.query?.fromConnectorId && typeof ctx.request.query.fromConnectorId === 'string') {
+        northSettings = ctx.app.northService.getNorth(ctx.request.query!.fromConnectorId)?.settings;
+        if (!northSettings) {
+          return ctx.notFound();
+        }
+      }
+      await this.validator.validateSettings(manifest.settings, ctx.request.body!.settings);
+
+      const command: NorthConnectorDTO = {
+        id: 'test',
+        ...ctx.request.body!,
+        name: `${ctx.request.body!.type}:test-connection`
+      };
+      command.settings = await ctx.app.encryptionService.encryptConnectorSecrets(command.settings, northSettings, manifest.settings);
+      const northToTest = ctx.app.northService.createNorth(command, 'baseFolder', ctx.app.logger);
+      await northToTest.testConnection();
+
+      ctx.noContent();
+    } catch (error: any) {
+      ctx.badRequest(error.message);
+    }
   }
 }

@@ -8,13 +8,14 @@ import { provideI18nTesting } from '../../../i18n/mock-i18n';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { HistoryQueryService } from '../../services/history-query.service';
 import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model';
-import { SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
+import { SouthConnectorCommandDTO, SouthConnectorManifest } from '../../../../../shared/model/south-connector.model';
 import { SouthConnectorService } from '../../services/south-connector.service';
 import { NorthConnectorService } from '../../services/north-connector.service';
-import { NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
+import { NorthConnectorCommandDTO, NorthConnectorManifest } from '../../../../../shared/model/north-connector.model';
 import { ScanModeService } from '../../services/scan-mode.service';
 import { OIBusInfo } from '../../../../../shared/model/engine.model';
 import { EngineService } from '../../services/engine.service';
+import { Modal, ModalService } from 'src/app/shared/modal.service';
 
 class HistoryQueryDisplayComponentTester extends ComponentTester<HistoryQueryDetailComponent> {
   constructor() {
@@ -45,6 +46,7 @@ describe('HistoryQueryDisplayComponent', () => {
   let historyQueryService: jasmine.SpyObj<HistoryQueryService>;
   let scanModeService: jasmine.SpyObj<ScanModeService>;
   let engineService: jasmine.SpyObj<EngineService>;
+  let modalService: jasmine.SpyObj<ModalService>;
 
   const southManifest: SouthConnectorManifest = {
     id: 'mssql',
@@ -158,6 +160,7 @@ describe('HistoryQueryDisplayComponent', () => {
     historyQueryService = createMock(HistoryQueryService);
     scanModeService = createMock(ScanModeService);
     engineService = createMock(EngineService);
+    modalService = createMock(ModalService);
 
     TestBed.configureTestingModule({
       providers: [
@@ -176,7 +179,8 @@ describe('HistoryQueryDisplayComponent', () => {
         { provide: SouthConnectorService, useValue: southConnectorService },
         { provide: NorthConnectorService, useValue: northConnectorService },
         { provide: HistoryQueryService, useValue: historyQueryService },
-        { provide: ScanModeService, useValue: scanModeService }
+        { provide: ScanModeService, useValue: scanModeService },
+        { provide: ModalService, useValue: modalService }
       ]
     });
 
@@ -225,5 +229,48 @@ describe('HistoryQueryDisplayComponent', () => {
     const item = tester.items[0];
     expect(item.elements('td')[1]).toContainText('item1');
     expect(item.elements('td')[2]).toContainText('sql');
+  });
+
+  it('should test north connection', () => {
+    tester.componentInstance.northManifest = northManifest;
+    tester.componentInstance.historyQuery = historyQuery;
+
+    const command = {
+      type: northManifest.id,
+      archive: { enabled: false },
+      settings: historyQuery.northSettings
+    } as NorthConnectorCommandDTO;
+
+    const spy = jasmine.createSpy();
+    modalService.open.and.returnValue({
+      componentInstance: {
+        runHistoryQueryTest: spy
+      }
+    } as Modal<unknown>);
+
+    tester.componentInstance.test('north');
+    tester.detectChanges();
+    expect(spy).toHaveBeenCalledWith('north', command, 'id1');
+  });
+
+  it('should test south connection', () => {
+    tester.componentInstance.southManifest = southManifest;
+    tester.componentInstance.historyQuery = historyQuery;
+
+    const command = {
+      type: southManifest.id,
+      settings: historyQuery.southSettings
+    } as SouthConnectorCommandDTO;
+
+    const spy = jasmine.createSpy();
+    modalService.open.and.returnValue({
+      componentInstance: {
+        runHistoryQueryTest: spy
+      }
+    } as Modal<unknown>);
+
+    tester.componentInstance.test('south');
+    tester.detectChanges();
+    expect(spy).toHaveBeenCalledWith('south', command, 'id1');
   });
 });
