@@ -5,7 +5,6 @@ import RepositoryService from './repository.service';
 // South imports
 import SouthFolderScanner from '../south/south-folder-scanner/south-folder-scanner';
 import SouthOPCUA from '../south/south-opcua/south-opcua';
-// import SouthOPCHDA from '../south/south-opchda/south-opchda';
 import SouthMQTT from '../south/south-mqtt/south-mqtt';
 import SouthMSSQL from '../south/south-mssql/south-mssql';
 import SouthMySQL from '../south/south-mysql/south-mysql';
@@ -16,14 +15,15 @@ import SouthSQLite from '../south/south-sqlite/south-sqlite';
 import SouthADS from '../south/south-ads/south-ads';
 import SouthModbus from '../south/south-modbus/south-modbus';
 import SouthOIAnalytics from '../south/south-oianalytics/south-oianalytics';
+import SouthSlims from '../south/south-slims/south-slims';
+import SouthOPCHDA from '../south/south-opchda/south-opchda';
 
 import { SouthConnectorDTO, SouthConnectorItemDTO, SouthConnectorManifest } from '../../../shared/model/south-connector.model';
 import SouthConnector from '../south/south-connector';
-import SouthSlims from '../south/south-slims/south-slims';
+
 import oianalyticsManifest from '../south/south-oianalytics/manifest';
 import slimsManifest from '../south/south-slims/manifest';
 import opcuaManifest from '../south/south-opcua/manifest';
-// import opchdaManifest from '../south/south-opchda/manifest';
 import mqttManifest from '../south/south-mqtt/manifest';
 import modbusManifest from '../south/south-modbus/manifest';
 import folderScannerManifest from '../south/south-folder-scanner/manifest';
@@ -34,12 +34,13 @@ import postgresqlManifest from '../south/south-postgresql/manifest';
 import oracleManifest from '../south/south-oracle/manifest';
 import odbcManifest from '../south/south-odbc/manifest';
 import sqliteManifest from '../south/south-sqlite/manifest';
+import opchdaManifest from '../south/south-opchda/manifest';
 
 const southList: Array<{ class: typeof SouthConnector<any, any>; manifest: SouthConnectorManifest }> = [
   { class: SouthFolderScanner, manifest: folderScannerManifest },
   { class: SouthMQTT, manifest: mqttManifest },
   { class: SouthOPCUA, manifest: opcuaManifest },
-  // { class: SouthOPCHDA, manifest: opchdaManifest },
+  { class: SouthOPCHDA, manifest: opchdaManifest },
   { class: SouthMSSQL, manifest: mssqlManifest },
   { class: SouthMySQL, manifest: mysqlManifest },
   { class: SouthODBC, manifest: odbcManifest },
