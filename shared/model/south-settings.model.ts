@@ -73,10 +73,10 @@ export type SouthOIAnalyticsItemSettingsSerializationType = (typeof SOUTH_O_I_AN
 const SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS = ['DOT', 'SEMI_COLON', 'COLON', 'COMMA', 'NON_BREAKING_SPACE', 'SLASH', 'TAB', 'PIPE'] as const
 export type SouthOIAnalyticsItemSettingsSerializationDelimiter = (typeof SOUTH_O_I_ANALYTICS_ITEM_SETTINGS_SERIALIZATION_DELIMITERS)[number];
 
-const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES = ['Raw', 'Average', 'Minimum', 'Maximum', 'Count'] as const
+const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES = ['raw', 'average', 'minimum', 'maximum'] as const
 export type SouthOPCHDAItemSettingsAggregate = (typeof SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_AGGREGATES)[number];
 
-const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_RESAMPLINGS = ['None', 'Second', '10 Seconds', '30 Seconds', 'Minute', 'Hour', 'Day'] as const
+const SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_RESAMPLINGS = ['none', 'second', '10Seconds', '30Seconds', 'minute', 'hour', 'day'] as const
 export type SouthOPCHDAItemSettingsResampling = (typeof SOUTH_O_P_C_H_D_A_ITEM_SETTINGS_RESAMPLINGS)[number];
 
 const SOUTH_O_P_C_U_A_SETTINGS_AUTHENTICATION_TYPES = ['none', 'basic', 'cert'] as const
@@ -244,7 +244,8 @@ export interface SouthOIAnalyticsSettings extends BaseSouthSettings {
 export interface SouthOPCHDASettings extends BaseSouthSettings {
   agentUrl: string;
   retryInterval: number;
-  serverUrl: string;
+  host: string;
+  serverName: string;
   readTimeout: number;
   maxReturnValues: number;
 }
@@ -538,7 +539,7 @@ export interface SouthOIAnalyticsItemSettings extends BaseSouthItemSettings {
 export interface SouthOPCHDAItemSettings extends BaseSouthItemSettings {
   nodeId: string;
   aggregate: SouthOPCHDAItemSettingsAggregate;
-  resampling: SouthOPCHDAItemSettingsResampling;
+  resampling?: SouthOPCHDAItemSettingsResampling;
 }
 
 export interface SouthOPCUAItemSettings extends BaseSouthItemSettings {

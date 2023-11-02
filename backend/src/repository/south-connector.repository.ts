@@ -34,24 +34,7 @@ export default class SouthConnectorRepository {
           overlap: result.overlap
         },
         settings: JSON.parse(result.settings)
-      }))
-      .filter(result =>
-        [
-          'ads',
-          'folder-scanner',
-          'modbus',
-          'mqtt',
-          'mssql',
-          'mysql',
-          'odbc',
-          'oianalytics',
-          'opcua',
-          'oracle',
-          'postgresql',
-          'slims',
-          'sqlite'
-        ].includes(result.type)
-      );
+      }));
   }
 
   /**
