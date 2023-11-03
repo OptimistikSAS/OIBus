@@ -92,6 +92,11 @@
         </tbody>
       </table>
     </ng-container>
+    <div class="d-flex flex-row-reverse" *ngIf="displayedItems.totalElements">
+      <div [class]="displayedItems.totalPages > 1 ? 'ms-2' : ''">
+        <oib-pagination [page]="displayedItems" (pageChanged)="changePage($event)"></oib-pagination>
+      </div>
+    </div>
     <ng-template #empty>
       <div class="oib-grey-container" translate="south.items.none-match" *ngIf="allItems.length !== 0"></div>
       <div class="oib-grey-container" translate="south.items.none" *ngIf="allItems.length === 0"></div>
