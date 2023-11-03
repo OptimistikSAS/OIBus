@@ -24,6 +24,7 @@ import { HistoryQueryDTO } from '../../../../../shared/model/history-query.model
 import { HistoryQueryService } from '../../services/history-query.service';
 import { EditSouthItemModalComponent } from '../../south/edit-south-item-modal/edit-south-item-modal.component';
 import { ImportSouthItemsModalComponent } from '../../south/import-south-items-modal/import-south-items-modal.component';
+import { PaginationComponent } from 'src/app/shared/pagination/pagination.component';
 
 const PAGE_SIZE = 20;
 
@@ -34,6 +35,7 @@ const PAGE_SIZE = 20;
     TranslateModule,
     RouterLink,
     NgIf,
+    PaginationComponent,
     NgForOf,
     FormControlValidationDirective,
     FormsModule,
@@ -112,7 +114,7 @@ export class HistoryQueryItemsComponent implements OnInit {
     if (!searchText) {
       return items;
     }
-    return items.filter(item => item.name.toLowerCase().includes(searchText));
+    return items.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
   }
 
   /**
