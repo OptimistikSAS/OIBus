@@ -26,6 +26,7 @@ import { createPageFromArray, Page } from '../../../../../shared/model/types';
 import { emptyPage } from '../../shared/test-utils';
 import { PipeProviderService } from '../../shared/form/pipe-provider.service';
 import { ImportSouthItemsModalComponent } from '../import-south-items-modal/import-south-items-modal.component';
+import { PaginationComponent } from '../../shared/pagination/pagination.component';
 
 const PAGE_SIZE = 20;
 
@@ -44,7 +45,8 @@ const PAGE_SIZE = 20;
     BoxComponent,
     BoxTitleDirective,
     DatetimePipe,
-    DurationPipe
+    DurationPipe,
+    PaginationComponent
   ],
   templateUrl: './south-items.component.html',
   styleUrls: ['./south-items.component.scss']
@@ -112,7 +114,7 @@ export class SouthItemsComponent implements OnInit {
     if (!searchText) {
       return items;
     }
-    return items.filter(item => item.name.toLowerCase().includes(searchText));
+    return items.filter(item => item.name.toLowerCase().includes(searchText.toLowerCase()));
   }
 
   /**
